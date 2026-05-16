@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Security Notice | SigmaFidelity™ Secured Access{% endblock %}
+
+{% block content %}
+<section class="security-notice-view" style="padding: 10rem 0; text-align: center; background: #f8fafc;">
+    <div style="max-width: 600px; margin: 0 auto; background: white; padding: 4rem; border-radius: 16px; border: 1px solid #fee2e2; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);">
+        <div style="font-size: 4rem; margin-bottom: 2rem;">🛡️</div>
+        <h1 style="font-size: 2.5rem; font-weight: 900; color: #991b1b; margin-bottom: 1.5rem; letter-spacing: -0.02em;">Secured System Access</h1>
+        
+        <div style="background: #fff1f2; border-left: 4px solid #ef4444; padding: 1.5rem; text-align: left; margin-bottom: 2.5rem;">
+            <p style="color: #991b1b; font-weight: 700; margin-bottom: 0.5rem;">AUTHORIZATION REQUIRED</p>
+            <p style="color: #b91c1c; font-size: 0.95rem; line-height: 1.6;">You have attempted to access a restricted administrative area of the SigmaFidelity™ Backoffice. This website is secured and monitored for corporate compliance.</p>
+        </div>
+
+        <p style="color: var(--text-secondary); margin-bottom: 3rem; line-height: 1.7;">To proceed, you must provide valid executive or employee credentials. Unauthorized access attempts are logged per ISO 9001:2015 security protocols.</p>
+        
+        <div style="display: flex; gap: 1rem; justify-content: center;">
+            <a href="{{ url_for('login') }}" class="nav-cta" style="background: var(--cdata-dark); padding: 1rem 2rem;">Go to Secure Login</a>
+            <a href="/" style="padding: 1rem 2rem; text-decoration: none; color: var(--text-primary); font-weight: 700; border: 1px solid var(--border); border-radius: 4px;">Return Home</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

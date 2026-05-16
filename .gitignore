@@ -1,0 +1,20 @@
+# System
+.venv*/
+.venv_*/
+node_modules/
+__pycache__/
+*.pyc
+
+# Large Data & Build Artifacts (Blocked by GitHub)
+HWB-COMPANY/HWB-SALES-MARKETING/HWB-RAW-DATA/ARCHIVE/
+HWB-COMPANY/HWB-OPERATIONS/hwb-mobile-ops/hwb_sigma_field/build/
+trash-out/
+
+# Individual Large Files
+*.csv
+*.so
+*.apk
+*.zip
+
+# Environment
+.env

@@ -1,0 +1,208 @@
+from flask import Blueprint, jsonify, request
+from flask_login import login_required
+import sqlite3
+from config import sys_config
+
+api_bp = Blueprint('api', __name__, url_prefix='/api/v1')
+
+def get_db():
+    conn = sqlite3.connect(sys_config.DATABASE)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+@api_bp.route('/leads')
+@login_required
+def get_leads():
+    """High-Fidelity Lead Retrieval with ISO-8601 Sorting."""
+    search_q = request.args.get('q', '').strip()
+    conn = get_db()
+    try:
+        if search_q:
+            query = "SELECT * FROM Leads WHERE company_name LIKE ? OR contact_person_name LIKE ? ORDER BY input_date DESC"
+            leads = conn.execute(query, (f"%{search_q}%", f"%{search_q}%")).fetchall()
+        else:
+            leads = conn.execute("SELECT * FROM Leads ORDER BY input_date DESC LIMIT 100").fetchall()
+        
+        return jsonify([dict(row) for row in leads])
+    finally:
+        conn.close()
+
+@api_bp.route('/customers')
+@login_required
+def get_customers():
+    """Customer Retrieval with Contact Counts."""
+    conn = get_db()
+    try:
+        query = """
+            SELECT c.*, 
+                   (SELECT COUNT(*) FROM Contacts WHERE account_id = c.customer_id) as contact_count
+            FROM Customers c 
+            ORDER BY company_name ASC
+        """
+        customers = conn.execute(query).fetchall()
+        return jsonify([dict(row) for row in customers])
+    finally:
+        conn.close()
+
+@api_bp.route('/leads/<int:id>')
+@login_required
+def get_lead_details(id):
+    conn = get_db()
+    try:
+        lead = conn.execute("SELECT * FROM Leads WHERE id = ?", (id,)).fetchone()
+        activities = conn.execute("SELECT * FROM GlobalActivities WHERE parent_id = ? AND parent_type = 'Lead' ORDER BY timestamp DESC", (id,)).fetchall()
+        return jsonify({
+            'lead': dict(lead) if lead else None,
+            'activities': [dict(a) for a in activities]
+        })
+    finally:
+        conn.close()
+
+@api_bp.route('/accounts/<int:id>')
+@login_required
+def get_account_details(id):
+    conn = get_db()
+    try:
+        account = conn.execute("SELECT * FROM Customers WHERE customer_id = ?", (id,)).fetchone()
+        contacts = conn.execute("SELECT * FROM Contacts WHERE account_id = ?", (id,)).fetchall()
+        activities = conn.execute("SELECT * FROM GlobalActivities WHERE parent_id = ? AND parent_type = 'Account' ORDER BY timestamp DESC", (id,)).fetchall()
+        return jsonify({
+            'account': dict(account) if account else None,
+            'contacts': [dict(c) for c in contacts],
+            'activities': [dict(a) for a in activities]
+        })
+    finally:
+        conn.close()
+
+@api_bp.route('/activities', methods=['POST'])
+@login_required
+def create_activity():
+    data = request.json
+    p_id = data.get('parent_id')
+    p_type = data.get('parent_type')
+    a_type = data.get('activity_type')
+    desc = data.get('description')
+    auto_follow = data.get('auto_followup', False)
+
+    conn = get_db()
+    try:
+        conn.execute("""
+            INSERT INTO GlobalActivities (parent_id, parent_type, activity_type, description)
+            VALUES (?, ?, ?, ?)
+        """, (p_id, p_type, a_type, desc))
+        
+        # ISO 9001: Mandatory Follow-up logic
+        if auto_follow and p_type == 'Lead':
+            from datetime import date, timedelta
+            next_date = (date.today() + timedelta(days=2)).isoformat()
+            conn.execute("UPDATE Leads SET next_action_date = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (next_date, p_id))
+            
+        conn.commit()
+        return jsonify({'status': 'success'})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        conn.close()
+
+@api_bp.route('/leads/<int:id>', methods=['PUT'])
+@login_required
+def update_lead(id):
+    data = request.json
+    conn = get_db()
+    try:
+        conn.execute("""
+            UPDATE Leads SET 
+                company_name = ?, decision_maker = ?, email = ?, phone = ?, 
+                address = ?, city = ?, state = ?, sqf = ?, 
+                facility_type = ?, traffic_cycle = ?, service_interest = ?,
+                estimated_annual_value = ?, status = ?, next_action_date = ?
+            WHERE id = ?
+        """, (data.get('company_name'), data.get('decision_maker'), data.get('email'), data.get('phone'),
+              data.get('address'), data.get('city'), data.get('state'), data.get('sqf'),
+              data.get('facility_type'), data.get('traffic_cycle'), data.get('service_interest'),
+              data.get('estimated_annual_value'), data.get('status'), data.get('next_action_date'), id))
+        conn.commit()
+        return jsonify({'status': 'success'})
+    finally:
+        conn.close()
+
+@api_bp.route('/leads/<int:id>', methods=['DELETE'])
+@login_required
+def delete_lead(id):
+    conn = get_db()
+    try:
+        conn.execute("DELETE FROM Leads WHERE id = ?", (id,))
+        conn.execute("DELETE FROM GlobalActivities WHERE parent_id = ? AND parent_type = 'Lead'", (id,))
+        conn.commit()
+        return jsonify({'status': 'success'})
+    finally:
+        conn.close()
+
+@api_bp.route('/leads/<int:id>/promote', methods=['POST'])
+@login_required
+def promote_lead(id):
+    conn = get_db()
+    try:
+        lead = conn.execute("SELECT * FROM Leads WHERE id = ?", (id,)).fetchone()
+        if not lead:
+            return jsonify({'status': 'error', 'message': 'Lead not found'}), 404
+        
+        # 1. Create Customer (Account)
+        cur = conn.execute("""
+            INSERT INTO Customers (company_name, company_address, city, state, annual_revenue, status)
+            VALUES (?, ?, ?, ?, ?, 'Active')
+        """, (lead['company_name'], lead['address'], lead['city'], lead['state'], lead['estimated_annual_value']))
+        customer_id = cur.lastrowid
+        
+        # 2. Create Contact
+        if lead['decision_maker']:
+            conn.execute("""
+                INSERT INTO Contacts (account_id, full_name, email, phone, role)
+                VALUES (?, ?, ?, ?, 'Primary Decision Maker')
+            """, (customer_id, lead['decision_maker'], lead['email'], lead['phone']))
+        
+        # 3. Log Conversion
+        conn.execute("""
+            INSERT INTO GlobalActivities (parent_id, parent_type, activity_type, description)
+            VALUES (?, 'Account', 'CONVERTED', ?)
+        """, (customer_id, f"Converted from Lead #{id}: {lead['company_name']}"))
+        
+        # 4. Remove Lead
+        conn.execute("DELETE FROM Leads WHERE id = ?", (id,))
+        
+        conn.commit()
+        return jsonify({'status': 'success', 'customer_id': customer_id})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        conn.close()
+
+@api_bp.route('/accounts/<int:id>', methods=['PUT'])
+@login_required
+def update_account(id):
+    data = request.json
+    conn = get_db()
+    try:
+        conn.execute("""
+            UPDATE Customers 
+            SET company_name = ?, company_address = ?, email = ?, phone = ?, annual_revenue = ?, quote_number = ?, frequency = ?, notes = ?
+            WHERE customer_id = ?
+        """, (data.get('company_name'), data.get('company_address'), data.get('email'), data.get('phone'), 
+              data.get('annual_revenue'), data.get('quote_number'), data.get('frequency'), data.get('notes'), id))
+        conn.commit()
+        return jsonify({'status': 'success'})
+    finally:
+        conn.close()
+
+@api_bp.route('/accounts/<int:id>', methods=['DELETE'])
+@login_required
+def delete_account(id):
+    conn = get_db()
+    try:
+        conn.execute("DELETE FROM Customers WHERE customer_id = ?", (id,))
+        conn.execute("DELETE FROM Contacts WHERE account_id = ?", (id,))
+        conn.execute("DELETE FROM GlobalActivities WHERE parent_id = ? AND parent_type = 'Account'", (id,))
+        conn.commit()
+        return jsonify({'status': 'success'})
+    finally:
+        conn.close()

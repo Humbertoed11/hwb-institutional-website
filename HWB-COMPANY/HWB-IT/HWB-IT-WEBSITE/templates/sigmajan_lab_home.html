@@ -1,0 +1,173 @@
+{% extends "backoffice_base.html" %}
+
+{% block title %}SigmaJan™ Prototype | Concept Lab{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --sigma-navy: #0f172a;
+        --sigma-blue: #2563eb;
+        --sigma-green: #10b981;
+        --sigma-red: #ef4444;
+        --sigma-amber: #f59e0b;
+        --sigma-white: #ffffff;
+        --sigma-silver: #f8fafc;
+        --sigma-border: #e2e8f0;
+    }
+
+    .sigma-hero {
+        background: var(--sigma-navy);
+        color: var(--sigma-white);
+        padding: 4rem 2rem;
+        border-radius: 16px;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+
+    .sigma-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+    }
+
+    .sigma-card {
+        background: var(--sigma-white);
+        border: 1px solid var(--sigma-border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .sigma-status-pill {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        margin-bottom: 1rem;
+    }
+
+    .status-success { background: #d1fae5; color: var(--sigma-green); }
+    .status-alert { background: #fee2e2; color: var(--sigma-red); }
+    .status-warning { background: #fef3c7; color: var(--sigma-amber); }
+
+    .sigma-btn-primary {
+        background: var(--sigma-blue);
+        color: white;
+        padding: 1rem 2rem;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 700;
+        display: inline-block;
+        transition: transform 0.2s;
+        min-height: 48px; /* Field-First Mandate */
+        border: none;
+        cursor: pointer;
+    }
+
+    .sigma-btn-primary:hover {
+        transform: translateY(-2px);
+        background: #1d4ed8;
+    }
+
+    .worker-interface-preview {
+        background: var(--sigma-silver);
+        padding: 2rem;
+        border-radius: 16px;
+        border: 2px dashed var(--sigma-border);
+    }
+
+    .touch-target-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+
+    .big-touch-btn {
+        background: var(--sigma-white);
+        border: 2px solid var(--sigma-border);
+        height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        font-weight: 800;
+        color: var(--sigma-navy);
+        cursor: pointer;
+    }
+</style>
+{% endblock %}
+
+{% block bo_header %}
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+        <div>
+            <h1>SigmaJan™ Excellence Platform</h1>
+            <p style="color: var(--text-secondary);">Institutional R&D Prototype v1.0.0</p>
+        </div>
+        <div class="sigma-status-pill status-success">System Stable</div>
+    </div>
+{% endblock %}
+
+{% block bo_content %}
+<!-- Hero Prototype -->
+<div class="sigma-hero">
+    <h2 style="font-size: 2.5rem; font-weight: 900; margin-bottom: 1rem;">Sanitary precision. Relational authority.</h2>
+    <p style="font-size: 1.1rem; opacity: 0.9; max-width: 700px; margin: 0 auto 2rem;">
+        The next-generation SaaS ecosystem for Building Service Contractors, engineered with 
+        Lean Six Sigma protocols and ISO 9001 fidelity.
+    </p>
+    <a href="#" class="sigma-btn-primary">Initialize Audit Cycle</a>
+</div>
+
+<!-- Executive Data Table Prototype -->
+<div class="sigma-card" style="margin-bottom: 2rem;">
+    <h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+        <span style="color: var(--sigma-blue);">📊</span> Executive Intelligence Dashboard
+    </h3>
+    <div class="sigma-grid">
+        <div class="sigma-card" style="background: var(--sigma-silver); border-left: 4px solid var(--sigma-green);">
+            <div class="sigma-status-pill status-success">Compliance</div>
+            <p style="font-size: 0.8rem; color: var(--sigma-navy); font-weight: 600;">SDS AUDIT STATUS</p>
+            <p style="font-size: 1.8rem; font-weight: 900; color: var(--sigma-green);">100%</p>
+        </div>
+        <div class="sigma-card" style="background: var(--sigma-silver); border-left: 4px solid var(--sigma-red);">
+            <div class="sigma-status-pill status-alert">Defect Warning</div>
+            <p style="font-size: 0.8rem; color: var(--sigma-navy); font-weight: 600;">ACTIVE COPQ ITEMS</p>
+            <p style="font-size: 1.8rem; font-weight: 900; color: var(--sigma-red);">03</p>
+        </div>
+        <div class="sigma-card" style="background: var(--sigma-silver); border-left: 4px solid var(--sigma-blue);">
+            <div class="sigma-status-pill status-warning" style="background: #dbeafe; color: var(--sigma-blue);">Strategic</div>
+            <p style="font-size: 0.8rem; color: var(--sigma-navy); font-weight: 600;">PENDING MILESTONES</p>
+            <p style="font-size: 1.8rem; font-weight: 900; color: var(--sigma-blue);">12</p>
+        </div>
+    </div>
+</div>
+
+<!-- Worker Interface (Field-First) Prototype -->
+<div class="worker-interface-preview">
+    <h3 style="color: var(--sigma-navy); font-weight: 800;">Worker Field-Interface (v2026)</h3>
+    <p style="font-size: 0.9rem; color: var(--text-secondary);">High-adoption design for rapid on-site data entry.</p>
+    
+    <div class="touch-target-grid">
+        <div class="big-touch-btn" style="border-color: var(--sigma-green);">
+            <span style="font-size: 1.5rem; margin-right: 0.5rem;">🕒</span> CLOCK IN
+        </div>
+        <div class="big-touch-btn" style="border-color: var(--sigma-blue);">
+            <span style="font-size: 1.5rem; margin-right: 0.5rem;">📝</span> START AUDIT
+        </div>
+        <div class="big-touch-btn" style="border-color: var(--sigma-amber);">
+            <span style="font-size: 1.5rem; margin-right: 0.5rem;">🧪</span> VIEW SDS
+        </div>
+        <div class="big-touch-btn" style="border-color: var(--sigma-red);">
+            <span style="font-size: 1.5rem; margin-right: 0.5rem;">⚠️</span> REPORT INCIDENT
+        </div>
+    </div>
+</div>
+
+<div style="margin-top: 3rem; text-align: center; font-size: 0.8rem; color: var(--text-secondary);">
+    <p>Produced under the SigmaFidelity™ Quality Mandate. Approved by Humberto Dominguez, CEO.</p>
+</div>
+{% endblock %}

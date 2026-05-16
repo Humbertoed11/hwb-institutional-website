@@ -1,0 +1,199 @@
+<!-- 2026 Official Company Menu (Sigmaquality Standard) -->
+<div class="top-utility-bar">
+ <div class="content-wrapper" style="display: flex; justify-content: space-between; align-items: center;">
+ <span>North Texas Commercial Cleaning Experts | Call <strong>(214)-586-0257</strong></span>
+ <div class="top-social">
+ <a href="https://www.linkedin.com/company/hwb-cleaning-services-llc/" target="_blank"><i class="fa-brands fa-linkedin"></i></a>
+ <a href="https://www.facebook.com/cleaningdfw" target="_blank"><i class="fa-brands fa-facebook"></i></a>
+ <a href="https://www.youtube.com/@hwbcleaning" target="_blank"><i class="fa-brands fa-youtube"></i></a>
+ </div>
+ </div>
+</div>
+
+<header class="main-header">
+ <div class="header-container">
+ <div class="logo-container">
+ <a href="/">
+ <img src="{{ url_for('static', filename='logo_standard.png') }}" alt="HWB Cleaning Official Logo" class="header-logo" style="height: 64px;">
+ </a>
+ </div>
+
+ <nav class="desktop-nav">
+ <a href="/">Home</a>
+ 
+ {% if current_user.is_authenticated %}
+ <!-- PRODUCTION: Main Work Views (Authenticated Only) -->
+ <div class="nav-item">
+ <a href="javascript:void(0)" style="cursor: default;">Work Hub</a>
+ <div class="mega-menu">
+     <div class="mega-menu-grid" style="grid-template-columns: repeat(4, 1fr);">
+         <div class="mega-column">
+             <h4>Sales Management</h4>
+             <a href="{{ url_for('admin_operations', view='leads') }}" class="mega-option">
+                 <span class="title">Leads List</span>
+                 <span class="desc">Manage and track new sales prospects and company leads.</span>
+             </a>
+             <a href="{{ url_for('admin_operations', view='marketing') }}" class="mega-option">
+                 <span class="title">Marketing Reports</span>
+                 <span class="desc">View performance data on lead generation and outreach.</span>
+             </a>
+         </div>
+         <div class="mega-column">
+             <h4>Operations Control</h4>
+             <a href="{{ url_for('admin_operations', view='accounts') }}" class="mega-option">
+                 <span class="title">Active Accounts</span>
+                 <span class="desc">Operational oversight for all active building contracts.</span>
+             </a>
+             <a href="{{ url_for('admin_operations', view='monitor') }}" class="mega-option">
+                 <span class="title">Work Monitor</span>
+                 <span class="desc">Real-time technician tracking and verification.</span>
+             </a>
+         </div>
+         <div class="mega-column">
+             <h4>Company Standards</h4>
+             <a href="{{ url_for('compliance') }}" class="mega-option">
+                 <span class="title">System Rules</span>
+                 <span class="desc">OSHA compliance, SDS chemical lists, and site rules.</span>
+             </a>
+             <a href="{{ url_for('admin_master') }}" class="mega-option">
+                 <span class="title">Assets & Safety</span>
+                 <span class="desc">Manage company equipment and safety documentation.</span>
+             </a>
+         </div>
+         <div class="mega-column">
+             <h4>Executive Tools</h4>
+             {% if current_user.role in ['Executive', 'Admin'] %}
+             <a href="{{ url_for('sigma_executive') }}" class="mega-option">
+                 <span class="title" style="color: var(--brand);">Executive Pulse</span>
+                 <span class="desc">CEO dashboard for high-level company metrics.</span>
+             </a>
+             <a href="{{ url_for('sigma_executive') }}#outbox" class="mega-option">
+                 <span class="title" style="color: var(--brand);">Email Outbox</span>
+                 <span class="desc">Approve and send institutional communications.</span>
+             </a>
+             <a href="{{ url_for('concept_lab') }}" class="mega-option">
+                 <span class="title" style="color: var(--brand);">Concept Lab (R&D)</span>
+                 <span class="desc">Incubator for next-gen automation and experimental SigmaFidelity™ workflows.</span>
+             </a>
+             {% else %}
+             <p style="font-size: 0.75rem; color: var(--slate-400); padding: 1rem; line-height: 1.4;">Executive clearance required for this module.</p>
+             {% endif %}
+         </div>
+     </div>
+ </div>
+ </div>
+ {% else %}
+ <!-- Public Services View -->
+ <div class="nav-item">
+ <a href="javascript:void(0)" style="cursor: default;">Services</a>
+ <div class="mega-menu">
+ <div class="mega-menu-grid">
+ <a href="{{ url_for('services_janitorial') }}" class="mega-option">
+ <span class="title">Janitorial Services</span>
+ <span class="desc">Reliable daily cleaning for small offices and large distribution centers.</span>
+ </a>
+ <a href="{{ url_for('services_commercial') }}" class="mega-option">
+ <span class="title">Commercial Cleaning</span>
+ <span class="desc">Expert deep cleaning including floor strip and wax and window washing.</span>
+ </a>
+ <a href="{{ url_for('services_industrial') }}" class="mega-option">
+ <span class="title">Industrial and Warehouse</span>
+ <span class="desc">Deep floor cleaning to remove objects that can damage forklifts.</span>
+ </a>
+ <a href="{{ url_for('services_construction') }}" class="mega-option">
+ <span class="title">Construction Cleaning</span>
+ <span class="desc">Detailed 3-step cleanup ensuring the site is ready for final handover.</span>
+ </a>
+ </div>
+ </div>
+ </div>
+ <a href="{{ url_for('about') }}">About Us</a>
+ {% endif %}
+ 
+ <div class="desktop-ease-controls" style="display: flex; align-items: center; gap: 1.5rem;">
+ {% if current_user.is_authenticated %}
+ <!-- User Identity Dropdown -->
+ <div class="nav-item user-identity-container">
+ <div class="user-trigger">
+ <div class="user-avatar-circle">
+ <i class="fas fa-user-shield"></i>
+ </div>
+ <span class="user-full-name">{{ current_user.username }}</span> <!-- Full name fallback -->
+ <i class="fas fa-chevron-down" style="font-size: 0.6rem; opacity: 0.5;"></i>
+ </div>
+ <div class="mega-menu user-dropdown">
+ <div class="sigma-utility-menu" style="right: 0; min-width: 200px;">
+ <div style="padding: 1rem; border-bottom: 1px solid var(--slate-100);">
+ <div style="font-size: 0.65rem; font-weight: 800; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.25rem;">Active Session</div>
+ <div style="font-size: 0.85rem; font-weight: 700; color: var(--slate-900);">{{ current_user.username }}</div>
+ </div>
+ <a href="{{ url_for('sigma_executive') }}#users" class="sigma-utility-btn">
+ <i class="fas fa-user-cog" style="margin-right: 0.75rem; width: 14px; opacity: 0.5;"></i> Account Settings
+ </a>
+ <a href="{{ url_for('logout') }}" id="desktop-logout-link" class="sigma-utility-btn" style="color: #ef4444;">
+ <i class="fas fa-power-off" style="margin-right: 0.75rem; width: 14px; opacity: 0.5;"></i> Log Out
+ </a>
+ </div>
+ </div>
+ </div>
+ {% endif %}
+
+ <a href="{{ url_for('get_quote') }}" class="nav-cta">Start a quote <i class="fas fa-arrow-right" style="margin-left: 0.5rem; font-size: 0.8rem;"></i></a>
+ 
+ <button class="mobile-toggle" aria-label="Open Menu" onclick="toggleMobileMenu()">
+ <div style="display: flex; flex-direction: column; gap: 6px; width: 32px;">
+ <span style="height: 3px; background: var(--hwb-dark); border-radius: 10px;"></span>
+ <span style="height: 3px; background: var(--hwb-dark); border-radius: 10px;"></span>
+ <span style="height: 3px; background: var(--hwb-dark); border-radius: 10px;"></span>
+ </div>
+ <span style="font-size: 0.6rem; font-weight: 800; text-transform: uppercase; color: var(--hwb-slate); margin-top: 4px;">Menu</span>
+ </button>
+ </div>
+ </div>
+</header>
+
+<!-- 2026 Sigmaquality™ Mobile Menu System -->
+<div id="mobile-overlay" class="mobile-overlay">
+ <div class="mobile-overlay-links">
+ <a href="/">Home</a>
+ 
+ {% if current_user.is_authenticated %}
+ <div style="font-weight: 900; color: var(--hwb-blue); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: -1rem;">Work Hub</div>
+ <a href="{{ url_for('admin_operations', view='leads') }}" class="sub-link">Leads List</a>
+ <a href="{{ url_for('admin_operations', view='accounts') }}" class="sub-link">Active Accounts</a>
+ <a href="{{ url_for('compliance') }}" class="sub-link">System Rules</a>
+ <a href="{{ url_for('concept_lab') }}" class="sub-link">Concept Lab (R&D)</a>
+ <a href="{{ url_for('logout') }}" class="sub-link" style="color: #ef4444;">Log Out</a>
+ {% else %}
+ <div style="font-weight: 900; color: var(--hwb-blue); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: -1rem;">Our Services</div>
+ <a href="{{ url_for('services_janitorial') }}" class="sub-link">Janitorial Cleaning</a>
+ <a href="{{ url_for('services_commercial') }}" class="sub-link">Commercial deep cleaning</a>
+ <a href="{{ url_for('services_industrial') }}" class="sub-link">Industrial & Warehouse</a>
+ <a href="{{ url_for('services_construction') }}" class="sub-link">Construction Services</a>
+ <a href="{{ url_for('about') }}">About Us</a>
+ {% endif %}
+ </div>
+ 
+ <div class="mobile-overlay-footer">
+ <div style="font-weight: 900; color: var(--hwb-dark); font-size: 1.25rem;">(214)-586-0257</div>
+ <p style="color: var(--hwb-slate); font-size: 0.9rem; margin-top: 0.5rem; font-weight: 600;">Plano, Texas | Serving North Texas</p>
+ <a href="{{ url_for('get_quote') }}" class="nav-cta" style="display: block; margin-top: 2rem; text-align: center;">Start a quote</a>
+ </div>
+</div>
+
+<script>
+ function toggleMobileMenu() {
+ const overlay = document.getElementById('mobile-overlay');
+ const toggle = document.querySelector('.mobile-toggle');
+ const isOpening = !overlay.classList.contains('active');
+ 
+ overlay.classList.toggle('active');
+ toggle.classList.toggle('active');
+ document.body.style.overflow = isOpening ? 'hidden' : 'auto';
+ 
+ // --- Sigmaquality™ Interaction Feedback ---
+ if (isOpening) {
+ console.log("[Sigmaquality] Mobile Navigation Drawer Active.");
+ }
+ }
+</script>

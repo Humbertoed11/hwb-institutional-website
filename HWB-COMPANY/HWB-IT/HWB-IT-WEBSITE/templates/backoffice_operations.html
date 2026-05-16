@@ -1,0 +1,2124 @@
+{% extends "backoffice_base.html" %}
+
+{% block title %}Operations Control | SigmaQuality™ Admin Dashboard{% endblock %}
+
+{% block bo_main_class %}{% if active_view == 'leads' or active_view == 'accounts' %}fluid{% endif %}{% endblock %}
+
+{% block bo_title %}Operations Control{% endblock %}
+{% block bo_subtitle %}Professional Standardized Control{% endblock %}
+
+{% block breadcrumbs %}
+<a href="/">HWB</a> <i class="fas fa-chevron-right" style="font-size: 0.5rem; opacity: 0.4;"></i> <a href="{{ url_for('admin_operations') }}" style="color: var(--slate-400); text-decoration: none;">Operations</a> <i class="fas fa-chevron-right" style="font-size: 0.5rem; opacity: 0.4;"></i> <span id="breadcrumb-tab" style="text-transform: capitalize; color: var(--slate-900); font-weight: 900;">{{ active_view }}</span>
+{% endblock %}
+
+{% block bo_content %}
+<div class="workspace-stage">
+    <div style="display: flex; gap: 1rem; margin-bottom: 4rem; border-bottom: 1px solid var(--slate-100); padding-bottom: 2rem;">
+        <button onclick="switchView('leads')" class="isc-btn {% if active_view == 'leads' %}isc-btn-primary{% else %}isc-btn-outline{% endif %}" id="btn-leads">Leads ({{ leads_count }})</button>
+        <button onclick="switchView('accounts')" class="isc-btn {% if active_view == 'accounts' %}isc-btn-primary{% else %}isc-btn-outline{% endif %}" id="btn-accounts">Accounts ({{ clients|length }})</button>
+        <button onclick="switchView('monitor')" class="isc-btn {% if active_view == 'monitor' %}isc-btn-primary{% else %}isc-btn-outline{% endif %}" id="btn-monitor">Work Monitor</button>
+        <button onclick="switchView('scope')" class="isc-btn {% if active_view == 'scope' %}isc-btn-primary{% else %}isc-btn-outline{% endif %}" id="btn-scope">Service Planner</button>
+        
+        <div style="flex-grow: 1; text-align: right; position: relative;">
+            <button onclick="toggleAddMenu()" class="isc-btn isc-btn-primary" id="btn-add-main">
+                <i class="fas fa-plus"></i> Add New
+                <i class="fas fa-chevron-down" style="font-size: 0.6rem; transition: transform 0.3s;" id="add-arrow"></i>
+            </button>
+            <div id="add-menu" style="display: none; position: absolute; right: 0; top: 110%; background: var(--white); border: 1px solid var(--slate-200); border-radius: 1rem; box-shadow: 0 20px 40px -5px rgba(0,0,0,0.1); padding: 0.75rem; z-index: 1000; min-width: 200px;">
+                <button onclick="openAddForm('lead')" class="isc-dropdown-btn">New Lead</button>
+                <button onclick="openAddForm('account')" class="isc-dropdown-btn">New Account</button>
+            </div>
+        </div>
+    </div>
+
+    <main>
+                <!-- View: Leads -->
+        <div id="view-leads" class="isc-view" style="display: {% if active_view == 'leads' %}block{% else %}none{% endif %};">
+            <div class="isc-card {% if active_view == 'leads' %}fluid-data{% endif %}">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem; gap: 2rem;">
+                    <div style="display: flex; align-items: baseline; gap: 1.5rem;">
+                        <h2 style="font-weight: 900; font-size: 1.75rem; color: var(--slate-900); margin: 0;">Leads</h2>
+                        <span id="count-leads" style="font-size: 0.7rem; font-weight: 900; color: var(--brand); text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap;">Records: {{ leads_count }}</span>
+                    </div>
+                    
+                    <div style="display: flex; gap: 1.5rem; align-items: center;">
+                        <!-- Column Manager Dropdown -->
+                        <div style="position: relative;">
+                            <button type="button" onclick="toggleColumnMenu()" class="isc-btn isc-btn-outline" style="padding: 0.85rem 1.5rem; border-radius: 1rem; border-color: var(--slate-200); color: var(--slate-600); background: var(--white);">
+                                <i class="fas fa-columns" style="margin-right: 0.5rem;"></i> Columns
+                            </button>
+                            <div id="col-mgr-menu" style="display: none; position: absolute; right: 0; top: 110%; background: var(--white); border: 1px solid var(--slate-200); border-radius: 1.5rem; box-shadow: 0 20px 40px -5px rgba(0,0,0,0.1); padding: 2rem; z-index: 1000; width: 600px;">
+                                <h4 style="font-size: 0.7rem; font-weight: 900; color: var(--slate-400); text-transform: uppercase; margin-bottom: 1.5rem; letter-spacing: 0.05em;">Customize Lead View</h4>
+                                <form id="col-form" onsubmit="applyColumns(event)">
+                                    <input type="hidden" name="cols" value="company">
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem;">
+                                        <label class="sigma-col-label"><input type="checkbox" checked disabled> Company</label>
+                                        <label class="sigma-col-label"><input type="checkbox" name="cols" value="status" {% if 'status' in active_cols %}checked{% endif %}> Status</label>
+                                        <label class="sigma-col-label"><input type="checkbox" name="cols" value="dm" {% if 'dm' in active_cols %}checked{% endif %}> Manager</label>
+                                        <label class="sigma-col-label"><input type="checkbox" name="cols" value="building" {% if 'building' in active_cols %}checked{% endif %}> Type</label>
+                                        <label class="sigma-col-label"><input type="checkbox" name="cols" value="sqf" {% if 'sqf' in active_cols %}checked{% endif %}> SQF</label>
+                                        <label class="sigma-col-label"><input type="checkbox" name="cols" value="value" {% if 'value' in active_cols %}checked{% endif %}> Value</label>
+                                        <label class="sigma-col-label"><input type="checkbox" name="cols" value="priority" {% if 'priority' in active_cols %}checked{% endif %}> Priority</label>
+                                        <label class="sigma-col-label"><input type="checkbox" name="cols" value="address" {% if 'address' in active_cols %}checked{% endif %}> Address</label>
+                                        <label class="sigma-col-label"><input type="checkbox" name="cols" value="city" {% if 'city' in active_cols %}checked{% endif %}> City</label>
+                                        <label class="sigma-col-label"><input type="checkbox" name="cols" value="state" {% if 'state' in active_cols %}checked{% endif %}> State</label>
+                                        <label class="sigma-col-label"><input type="checkbox" name="cols" value="zip" {% if 'zip' in active_cols %}checked{% endif %}> Zip</label>
+                                        <label class="sigma-col-label"><input type="checkbox" name="cols" value="phone" {% if 'phone' in active_cols %}checked{% endif %}> Phone</label>
+                                        <label class="sigma-col-label"><input type="checkbox" name="cols" value="email" {% if 'email' in active_cols %}checked{% endif %}> Email</label>
+                                        <label class="sigma-col-label"><input type="checkbox" name="cols" value="input_date" {% if 'input_date' in active_cols %}checked{% endif %}> Date Added</label>
+                                        <label class="sigma-col-label"><input type="checkbox" name="cols" value="next_action" {% if 'next_action' in active_cols %}checked{% endif %}> Next Action</label>
+                                        <label class="sigma-col-label"><input type="checkbox" name="cols" value="activities" {% if 'activities' in active_cols %}checked{% endif %}> Activity</label>
+                                        <label class="sigma-col-label"><input type="checkbox" name="cols" value="source" {% if 'source' in active_cols %}checked{% endif %}> Source</label>
+                                        <label class="sigma-col-label"><input type="checkbox" name="cols" value="interest" {% if 'interest' in active_cols %}checked{% endif %}> Interest</label>
+                                    </div>
+                                    <div style="margin-top: 2rem; display: flex; justify-content: space-between; border-top: 1px solid var(--slate-100); padding-top: 1.5rem;">
+                                        <button type="button" onclick="resetColumns()" class="sigma-text-btn">Reset Default</button>
+                                        <button type="submit" class="isc-btn isc-btn-primary" style="padding: 0.5rem 1rem;">Apply View</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <form action="{{ url_for('admin_operations') }}" method="GET" style="display: flex; gap: 0.5rem; align-items: center;" id="form-search-leads">
+                            <input type="hidden" name="view" value="leads">
+                            <input type="hidden" name="sort" value="{{ sort_by }}">
+                            <input type="hidden" name="dir" value="{{ sort_dir }}">
+                            <input type="hidden" name="cols" id="search-cols-input" value="{{ active_cols_str }}">
+                            <div style="position: relative;">
+                                <input type="text" name="q" value="{{ search_q }}" placeholder="Search Buildings..." style="padding: 0.85rem 1.5rem; border-radius: 1rem; border: 1px solid var(--slate-200); font-size: 0.875rem; background: var(--slate-50); width: 260px; font-weight: 600; outline: none;">
+                                <button type="button" onclick="openModal('modal-search-help')" style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--slate-400); cursor: pointer; font-size: 0.9rem;">ⓘ</button>
+                            </div>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; background: var(--slate-50); border: 1px solid var(--slate-200); padding: 0 1rem; border-radius: 1rem; height: 42px; cursor: pointer; user-select: none;">
+                                <input type="checkbox" name="active_only" value="true" {% if request.args.get('active_only') == 'true' %}checked{% endif %} onchange="document.getElementById('form-search-leads').submit()" style="accent-color: var(--brand); width: 16px; height: 16px;">
+                                <span style="font-size: 0.75rem; font-weight: 800; color: var(--slate-500); text-transform: uppercase;">Active</span>
+                            </label>
+                            <button type="submit" class="isc-btn isc-btn-primary" style="padding: 0.5rem 1.5rem;">Search</button>
+                        </form>
+                    </div>
+                </div>
+                
+                <div style="overflow-x: auto; width: 100%; padding-bottom: 1rem;">
+                    <table class="isc-grid isc-grid-expansive" id="table-leads">
+                        <thead>
+                            <tr id="leads-header-row">
+                                {% for col_key in active_cols %}
+                                    {% if col_key == 'company' %}
+                                    <th data-col="company" onclick="iscSortLeads('company')" class="sticky-1">Company {% if sort_by == 'company' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
+                                    {% elif col_key == 'status' %}<th data-col="status" onclick="iscSortLeads('status')" class="sticky-2">Status {% if sort_by == 'status' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
+                                    {% elif col_key == 'dm' %}<th data-col="dm" onclick="iscSortLeads('dm')" class="sticky-3">Manager {% if sort_by == 'dm' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
+                                    {% elif col_key == 'building' %}<th data-col="building" onclick="iscSortLeads('building')">Type {% if sort_by == 'building' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
+                                    {% elif col_key == 'sqf' %}<th data-col="sqf" onclick="iscSortLeads('sqf')">SQF {% if sort_by == 'sqf' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
+                                    {% elif col_key == 'value' %}<th data-col="value" onclick="iscSortLeads('value')">Value {% if sort_by == 'value' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
+                                    {% elif col_key == 'priority' %}<th data-col="priority" onclick="iscSortLeads('priority')">Priority {% if sort_by == 'priority' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
+                                    {% elif col_key == 'address' %}<th data-col="address" onclick="iscSortLeads('address')">Address {% if sort_by == 'address' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
+                                    {% elif col_key == 'city' %}<th data-col="city" onclick="iscSortLeads('city')">City {% if sort_by == 'city' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
+                                    {% elif col_key == 'state' %}<th data-col="state" onclick="iscSortLeads('state')">State {% if sort_by == 'state' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
+                                    {% elif col_key == 'zip' %}<th data-col="zip" onclick="iscSortLeads('zip')">Zip {% if sort_by == 'zip' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
+                                    {% elif col_key == 'phone' %}<th data-col="phone" onclick="iscSortLeads('phone')">Phone {% if sort_by == 'phone' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
+                                    {% elif col_key == 'email' %}<th data-col="email" onclick="iscSortLeads('email')">Email {% if sort_by == 'email' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
+                                    {% elif col_key == 'input_date' %}<th data-col="input_date" onclick="iscSortLeads('input_date')">Added {% if sort_by == 'input_date' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
+                                    {% elif col_key == 'next_action' %}<th data-col="next_action" onclick="iscSortLeads('next_action')">Next Action {% if sort_by == 'next_action' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
+                                    {% elif col_key == 'activities' %}<th data-col="activities" onclick="iscSortLeads('activities')">Activity {% if sort_by == 'activities' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
+                                    {% elif col_key == 'source' %}<th data-col="source" onclick="iscSortLeads('source')">Source {% if sort_by == 'source' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
+                                    {% elif col_key == 'interest' %}<th data-col="interest" onclick="iscSortLeads('interest')">Interest {% if sort_by == 'interest' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
+                                    {% endif %}
+                                {% endfor %}
+                                <th style="text-align: right; cursor: default;" class="no-drag">Action</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for lead in leads %}
+                            <tr class="leads-row">
+                                {% for col_key in active_cols %}
+                                    {% if col_key == 'company' %}
+                                    <td class="sticky-1"><div class="sigma-unit-data"><div class="sigma-unit-primary">{{ lead.center_name }}</div><div class="sigma-unit-secondary" style="font-weight: 500;">{{ lead.address }}</div></div></td>
+                                    {% elif col_key == 'status' %}<td class="sticky-2"><span class="sigma-unit-pill" style="background:#f1f5f9; color:#475569">{{ lead.status or 'New' }}</span></td>
+                                    {% elif col_key == 'dm' %}<td class="sticky-3"><div class="sigma-unit-data"><div class="sigma-unit-primary" style="font-size:0.85rem">{{ lead.decision_maker or '--' }}</div><div class="sigma-unit-secondary" style="font-weight: 500;">{{ lead.job_title or 'Owner/Manager' }}</div></div></td>
+                                    {% elif col_key == 'building' %}<td>{{ lead.facility_type or '--' }}</td>
+                                    {% elif col_key == 'sqf' %}<td style="font-weight:700">{{ "{:,}".format(lead.sqf) if lead.sqf else '--' }}</td>
+                                    {% elif col_key == 'value' %}<td style="font-weight:800; color:var(--brand)">${{ "{:,.0f}".format(lead.estimated_annual_value) if lead.estimated_annual_value else '0' }}</td>
+                                    {% elif col_key == 'priority' %}<td><span class="sigma-unit-pill" style="background:#fff7ed; color:#c2410c">{{ lead.priority_level or 'Normal' }}</span></td>
+                                    {% elif col_key == 'address' %}<td><small>{{ lead.address or '--' }}</small></td>
+                                    {% elif col_key == 'city' %}<td>{{ lead.city or '--' }}</td>
+                                    {% elif col_key == 'state' %}<td>{{ lead.state or '--' }}</td>
+                                    {% elif col_key == 'zip' %}<td>{{ lead.zipcode or '--' }}</td>
+                                    {% elif col_key == 'phone' %}<td><a href="tel:{{ lead.phone }}" style="color:var(--brand); text-decoration:none">{{ lead.phone or '--' }}</a></td>
+                                    {% elif col_key == 'email' %}<td><small>{{ lead.email or '--' }}</small></td>
+                                    {% elif col_key == 'input_date' %}<td>{{ lead.input_date|format_mdy }}</td>
+                                    {% elif col_key == 'next_action' %}<td>{{ lead.next_action_date or '--' }}</td>
+                                    {% elif col_key == 'activities' %}<td style="text-align:center; font-weight:800">{{ lead.activity_count or 0 }}</td>
+                                    {% elif col_key == 'source' %}<td>{{ lead.lead_source or '--' }}</td>
+                                    {% elif col_key == 'interest' %}<td>{{ lead.service_interest or '--' }}</td>
+                                    {% endif %}
+                                {% endfor %}
+                                <td style="text-align: right;">
+                                    <div style="position: relative; display: inline-block;">
+                                        <button onclick="toggleRowMenu('lead-menu-{{ lead.id }}')" class="isc-btn isc-btn-outline" style="padding: 0.5rem; width: 32px; height: 32px;">
+                                            <i class="fas fa-cog fa-spin-hover" style="font-size: 0.85rem; color: var(--slate-400);"></i>
+                                        </button>
+                                        <div id="lead-menu-{{ lead.id }}" class="isc-row-menu" style="display: none; position: absolute; top: 100%; right: 0; background: white; border: 1px solid var(--slate-200); border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 1000; width: 240px; padding: 0.5rem;">
+                                            <button onclick="openLeadCommand('{{ lead.id }}')" class="isc-dropdown-btn"><i class="fas fa-info-circle" style="margin-right:0.75rem; color: var(--brand); width: 14px;"></i> Lead Details</button>
+                                            <button onclick="openLeadCommand('{{ lead.id }}', 'edit')" class="isc-dropdown-btn"><i class="fas fa-edit" style="margin-right:0.75rem; color: var(--slate-400); width: 14px;"></i> Edit Lead</button>
+                                            <div style="height: 1px; background: var(--slate-100); margin: 0.5rem 0;"></div>
+                                            <button onclick="openLeadCommand('{{ lead.id }}', 'actions')" class="isc-dropdown-btn"><i class="fas fa-plus-circle" style="margin-right:0.75rem; color: #10b981; width: 14px;"></i> Add Note</button>
+                                            <button onclick="openLeadCommand('{{ lead.id }}', 'visit')" class="isc-dropdown-btn"><i class="fas fa-map-marker-alt" style="margin-right:0.75rem; color: #f59e0b; width: 14px;"></i> Request Visit</button>
+                                            <div style="height: 1px; background: var(--slate-100); margin: 0.5rem 0;"></div>
+                                            <button onclick="promoteLead('{{ lead.id }}')" class="isc-dropdown-btn" style="color: var(--brand); font-weight: 800;"><i class="fas fa-exchange-alt" style="margin-right:0.75rem; width: 14px;"></i> Promote to Account</button>
+                                            <button onclick="deleteLead('{{ lead.id }}')" class="isc-dropdown-btn" style="color: #ef4444;"><i class="fas fa-trash-alt" style="margin-right:0.75rem; width: 14px;"></i> Delete Lead</button>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- SigmaFidelity™ Navigation Architecture (BUG-014) -->
+                <div style="margin-top: 2rem; display: flex; justify-content: space-between; align-items: center; padding-top: 2rem; border-top: 1px solid var(--slate-100);">
+                    <div style="font-size: 0.75rem; font-weight: 800; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.05em;">
+                        {% if active_view == 'leads' %}
+                        Page {{ page }} of {{ total_pages }} • {{ leads_count }} Total Market Leads
+                        {% else %}
+                        Active Portfolio View • {{ clients|length }} High-Density Records
+                        {% endif %}
+                    </div>
+                    <div style="display: flex; gap: 0.75rem;">
+                        {% if active_view == 'leads' %}
+                            {% if page > 1 %}
+                            <a href="{{ url_for('admin_operations', view='leads', page=page-1, q=search_q, sort=sort_by, dir=sort_dir, active_only=request.args.get('active_only')) }}" class="isc-btn isc-btn-outline" style="height: 36px; padding: 0 1.25rem; font-size: 0.75rem; border-radius: 6px;">
+                                <i class="fas fa-chevron-left" style="margin-right: 0.5rem;"></i> Previous
+                            </a>
+                            {% endif %}
+                            {% if page < total_pages %}
+                            <a href="{{ url_for('admin_operations', view='leads', page=page+1, q=search_q, sort=sort_by, dir=sort_dir, active_only=request.args.get('active_only')) }}" class="isc-btn isc-btn-outline" style="height: 36px; padding: 0 1.25rem; font-size: 0.75rem; border-radius: 6px;">
+                                Next <i class="fas fa-chevron-right" style="margin-left: 0.5rem;"></i>
+                            </a>
+                            {% endif %}
+                        {% else %}
+                            <button disabled class="isc-btn isc-btn-outline" style="height: 36px; padding: 0 1.25rem; font-size: 0.75rem; border-radius: 6px; opacity: 0.5;">
+                                <i class="fas fa-chevron-left" style="margin-right: 0.5rem;"></i> Previous
+                            </button>
+                            <button disabled class="isc-btn isc-btn-outline" style="height: 36px; padding: 0 1.25rem; font-size: 0.75rem; border-radius: 6px; opacity: 0.5;">
+                                Next <i class="fas fa-chevron-right" style="margin-left: 0.5rem;"></i>
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- View: Marketing Pipeline (The Hive) -->
+        <div id="view-marketing" class="isc-view" style="display: {% if active_view == 'marketing' %}block{% else %}none{% endif %};">
+            <div class="isc-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem;">
+                    <div>
+                        <h2 style="font-weight: 900; font-size: 1.75rem; color: var(--slate-900);">Marketing Pipeline</h2>
+                        <p style="font-size: 0.875rem; color: var(--slate-500); font-weight: 600; margin-top: 0.5rem;">Autonomous Lead Harvesting & Pipeline Intelligence (The Hive).</p>
+                    </div>
+                </div>
+                <div style="overflow-x: auto; width: 100%;">
+                    <table class="isc-grid">
+                        <thead>
+                            <tr>
+                                <th>Facility Name</th>
+                                <th>Industry</th>
+                                <th>Director</th>
+                                <th>Location</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for lead in leads %}
+                            <tr>
+                                <td><strong>{{ lead.center_name }}</strong></td>
+                                <td><span class="sigma-unit-pill">{{ lead.industry or 'N/A' }}</span></td>
+                                <td>{{ lead.director or lead.decision_maker or '--' }}</td>
+                                <td>{{ lead.city }}, {{ lead.state }}</td>
+                                <td><a href="{{ url_for('crm_edit_lead', id=lead.id) }}" class="isc-btn isc-btn-outline" style="padding: 0.4rem 1rem; font-size: 0.7rem;">Manage</a></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+                <!-- View: All Accounts -->
+        <div id="view-accounts" class="isc-view" style="display: {% if active_view == 'accounts' %}block{% else %}none{% endif %};">
+            <div class="isc-card {% if active_view == 'accounts' %}fluid-data{% endif %}">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem; gap: 2rem;">
+                    <div style="display: flex; align-items: baseline; gap: 1.5rem;">
+                        <h2 style="font-weight: 900; font-size: 1.75rem; color: var(--slate-900); margin: 0;">Accounts</h2>
+                        <span id="count-accounts" style="font-size: 0.7rem; font-weight: 900; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap;">{{ clients|length }} Active Clients</span>
+                        <span style="font-size: 0.7rem; color: var(--brand); font-weight: 900; text-transform: uppercase; white-space: nowrap;">Portfolio: ${{ "{:,.0f}".format(portfolio_total) }}</span>
+                    </div>
+                    
+                    <div style="display: flex; gap: 1.5rem; align-items: center;">
+                        <!-- Column Manager (Accounts) -->
+                        <div style="position: relative;">
+                            <button type="button" onclick="toggleColumnMenuAcc()" class="isc-btn isc-btn-outline" style="padding: 0.85rem 1.5rem; border-radius: 1rem; border-color: var(--slate-200); color: var(--slate-600); background: var(--white);">
+                                <i class="fas fa-columns" style="margin-right: 0.5rem;"></i> Columns
+                            </button>
+                            <div id="col-mgr-menu-acc" style="display: none; position: absolute; right: 0; top: 110%; background: var(--white); border: 1px solid var(--slate-200); border-radius: 1.5rem; box-shadow: 0 20px 40px -5px rgba(0,0,0,0.1); padding: 2rem; z-index: 1000; width: 600px;">
+                                <h4 style="font-size: 0.7rem; font-weight: 900; color: var(--slate-400); text-transform: uppercase; margin-bottom: 1.5rem; letter-spacing: 0.05em;">Customize Account View</h4>
+                                <form id="col-form-acc" onsubmit="applyColumnsAcc(event)">
+                                    <input type="hidden" name="cols" value="company">
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem;">
+                                        <label class="sigma-col-label"><input type="checkbox" checked disabled> Company</label>
+                                        <label class="sigma-col-label"><input type="checkbox" name="cols" value="status" {% if 'status' in active_cols %}checked{% endif %}> Status</label>
+                                        <label class="sigma-col-label"><input type="checkbox" name="cols" value="contact" {% if 'contact' in active_cols %}checked{% endif %}> Manager</label>
+                                        <label class="sigma-col-label"><input type="checkbox" name="cols" value="address" {% if 'address' in active_cols %}checked{% endif %}> Address</label>
+                                        <label class="sigma-col-label"><input type="checkbox" name="cols" value="city" {% if 'city' in active_cols %}checked{% endif %}> City</label>
+                                        <label class="sigma-col-label"><input type="checkbox" name="cols" value="state" {% if 'state' in active_cols %}checked{% endif %}> State</label>
+                                        <label class="sigma-col-label"><input type="checkbox" name="cols" value="zip" {% if 'zip' in active_cols %}checked{% endif %}> Zip</label>
+                                        <label class="sigma-col-label"><input type="checkbox" name="cols" value="phone" {% if 'phone' in active_cols %}checked{% endif %}> Phone</label>
+                                        <label class="sigma-col-label"><input type="checkbox" name="cols" value="email" {% if 'email' in active_cols %}checked{% endif %}> Email</label>
+                                        <label class="sigma-col-label"><input type="checkbox" name="cols" value="revenue" {% if 'revenue' in active_cols %}checked{% endif %}> Value</label>
+                                        <label class="sigma-col-label"><input type="checkbox" name="cols" value="sqf" {% if 'sqf' in active_cols %}checked{% endif %}> SQF</label>
+                                        <label class="sigma-col-label"><input type="checkbox" name="cols" value="cycle" {% if 'cycle' in active_cols %}checked{% endif %}> Cycle</label>
+                                        <label class="sigma-col-label"><input type="checkbox" name="cols" value="quote" {% if 'quote' in active_cols %}checked{% endif %}> Quote #</label>
+                                        <label class="sigma-col-label"><input type="checkbox" name="cols" value="frequency" {% if 'frequency' in active_cols %}checked{% endif %}> Freq</label>
+                                        <label class="sigma-col-label"><input type="checkbox" name="cols" value="activities" {% if 'activities' in active_cols %}checked{% endif %}> Activity</label>
+                                        <label class="sigma-col-label"><input type="checkbox" name="cols" value="start_date" {% if 'start_date' in active_cols %}checked{% endif %}> Started</label>
+                                        <label class="sigma-col-label"><input type="checkbox" name="cols" value="website" {% if 'website' in active_cols %}checked{% endif %}> Website</label>
+                                    </div>
+                                    <div style="margin-top: 2rem; display: flex; justify-content: space-between; border-top: 1px solid var(--slate-100); padding-top: 1.5rem;">
+                                        <button type="button" onclick="resetColumnsAcc()" class="sigma-text-btn">Reset Default</button>
+                                        <button type="submit" class="isc-btn isc-btn-primary" style="padding: 0.5rem 1rem;">Apply View</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <form action="{{ url_for('admin_operations') }}" method="GET" style="display: flex; gap: 0.5rem; align-items: center;" id="form-search-acc">
+                            <input type="hidden" name="view" value="accounts">
+                            <input type="hidden" name="sort" value="{{ sort_by }}">
+                            <input type="hidden" name="dir" value="{{ sort_dir }}">
+                            <input type="hidden" name="cols" id="acc-cols-input" value="{{ active_cols_str }}">
+                            <div style="position: relative;">
+                                <input type="text" name="q" value="{% if active_view == 'accounts' %}{{ search_q }}{% endif %}" placeholder="Find an Account..." style="padding: 0.85rem 1.5rem; border-radius: 1rem; border: 1px solid var(--slate-200); font-size: 0.875rem; background: var(--slate-50); width: 260px; font-weight: 600; outline: none;">
+                                <button type="button" onclick="openModal('modal-search-help')" style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--slate-400); cursor: pointer; font-size: 0.9rem;">ⓘ</button>
+                            </div>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; background: var(--slate-50); border: 1px solid var(--slate-200); padding: 0 1rem; border-radius: 1rem; height: 42px; cursor: pointer; user-select: none;">
+                                <input type="checkbox" name="active_only" value="true" {% if request.args.get('active_only') == 'true' %}checked{% endif %} onchange="document.getElementById('form-search-acc').submit()" style="accent-color: var(--brand); width: 16px; height: 16px;">
+                                <span style="font-size: 0.75rem; font-weight: 800; color: var(--slate-500); text-transform: uppercase;">Active</span>
+                            </label>
+                            <button type="submit" class="isc-btn isc-btn-primary" style="padding: 0.5rem 1.5rem;">Search</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div style="overflow-x: auto; width: 100%; padding-bottom: 1rem;">
+                    <table class="isc-grid isc-grid-expansive" id="table-accounts">
+                        <thead>
+                            <tr id="accounts-header-row">
+                                {% for col_key in active_cols %}
+                                    {% if col_key == 'company' %}
+                                    <th data-col="company" onclick="iscSortAcc('company')" class="sticky-1">Company {% if sort_by == 'company' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
+                                    {% elif col_key == 'status' %}<th data-col="status" onclick="iscSortAcc('status')" class="sticky-2">Status {% if sort_by == 'status' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
+                                    {% elif col_key == 'contact' %}<th data-col="contact" onclick="iscSortAcc('contact')" class="sticky-3">Manager {% if sort_by == 'contact' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
+                                    {% elif col_key == 'address' %}<th data-col="address" onclick="iscSortAcc('address')">Address {% if sort_by == 'address' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
+                                    {% elif col_key == 'city' %}<th data-col="city" onclick="iscSortAcc('city')">City {% if sort_by == 'city' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
+                                    {% elif col_key == 'state' %}<th data-col="state" onclick="iscSortAcc('state')">State {% if sort_by == 'state' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
+                                    {% elif col_key == 'zip' %}<th data-col="zip" onclick="iscSortAcc('zip')">Zip {% if sort_by == 'zip' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
+                                    {% elif col_key == 'phone' %}<th data-col="phone" onclick="iscSortAcc('phone')">Phone {% if sort_by == 'phone' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
+                                    {% elif col_key == 'email' %}<th data-col="email" onclick="iscSortAcc('email')">Email {% if sort_by == 'email' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
+                                    {% elif col_key == 'revenue' %}<th data-col="revenue" onclick="iscSortAcc('revenue')">Value {% if sort_by == 'revenue' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
+                                    {% elif col_key == 'sqf' %}<th data-col="sqf" onclick="iscSortAcc('sqf')">SQF {% if sort_by == 'sqf' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
+                                    {% elif col_key == 'cycle' %}<th data-col="cycle" onclick="iscSortAcc('cycle')">Cycle {% if sort_by == 'cycle' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
+                                    {% elif col_key == 'quote' %}<th data-col="quote" onclick="iscSortAcc('quote')">Quote # {% if sort_by == 'quote' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
+                                    {% elif col_key == 'frequency' %}<th data-col="frequency" onclick="iscSortAcc('frequency')">Freq {% if sort_by == 'frequency' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
+                                    {% elif col_key == 'activities' %}<th data-col="activities" onclick="iscSortAcc('activities')">Activity {% if sort_by == 'activities' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
+                                    {% elif col_key == 'start_date' %}<th data-col="start_date" onclick="iscSortAcc('start_date')">Started {% if sort_by == 'start_date' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
+                                    {% elif col_key == 'website' %}<th data-col="website" onclick="iscSortAcc('website')">Website {% if sort_by == 'website' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
+                                    {% endif %}
+                                {% endfor %}
+                                <th style="text-align: right; cursor: default;" class="no-drag">Action</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for client in clients %}
+                            <tr>
+                                {% for col_key in active_cols %}
+                                    {% if col_key == 'company' %}
+                                    <td class="sticky-1"><div class="sigma-unit-data"><div class="sigma-unit-primary">{{ client.company_name }}</div><div class="sigma-unit-secondary" style="font-weight: 500;">ACC-{{ client.customer_id }}</div></div></td>
+                                    {% elif col_key == 'status' %}<td class="sticky-2"><span class="sigma-unit-pill" style="background:#f1f5f9; color:#475569">{{ client.status or 'Active' }}</span></td>
+                                    {% elif col_key == 'contact' %}<td class="sticky-3"><div class="sigma-unit-data"><div class="sigma-unit-primary" style="font-size:0.85rem">{{ client.contact_person_name or '--' }}</div><div class="sigma-unit-secondary" style="font-weight: 500;">Main Manager</div></div></td>
+                                    {% elif col_key == 'address' %}<td><small style="font-weight:600; color:var(--slate-600)">{{ client.company_address or '--' }}</small></td>
+                                    {% elif col_key == 'city' %}<td>{{ client.city or '--' }}</td>
+                                    {% elif col_key == 'state' %}<td>{{ client.state or '--' }}</td>
+                                    {% elif col_key == 'zip' %}<td>{{ client.zip or '--' }}</td>
+                                    {% elif col_key == 'phone' %}<td><a href="tel:{{ client.phone }}" style="color:var(--brand); text-decoration:none">{{ client.phone or '--' }}</a></td>
+                                    {% elif col_key == 'email' %}<td><small>{{ client.email or '--' }}</small></td>
+                                    {% elif col_key == 'revenue' %}<td style="font-weight:800; color:var(--brand)">${{ "{:,.2f}".format(client.annual_revenue) if client.annual_revenue else '0.00' }}</td>
+                                    {% elif col_key == 'sqf' %}<td>{{ "{:,}".format(client.sqf) if client.sqf else '0' }}</td>
+                                    {% elif col_key == 'cycle' %}<td>{{ client.traffic_cycle or '--' }}</td>
+                                    {% elif col_key == 'quote' %}<td>{{ client.quote_number or '--' }}</td>
+                                    {% elif col_key == 'frequency' %}<td>{{ client.frequency or '--' }}</td>
+                                    {% elif col_key == 'activities' %}<td style="text-align:center; font-weight:800">{{ client.activity_count or 0 }}</td>
+                                    {% elif col_key == 'start_date' %}<td>{{ client.start_date or '--' }}</td>
+                                    {% elif col_key == 'website' %}<td><small>{{ client.website or '--' }}</small></td>
+                                    {% endif %}
+                                {% endfor %}
+                                <td style="text-align: right;">
+                                    <div style="position: relative; display: inline-block;">
+                                        <button onclick="toggleRowMenu('acc-menu-{{ client.customer_id }}')" class="isc-btn isc-btn-outline" style="padding: 0.5rem; width: 32px; height: 32px;">
+                                            <i class="fas fa-cog fa-spin-hover" style="font-size: 0.85rem; color: var(--slate-400);"></i>
+                                        </button>
+                                        <div id="acc-menu-{{ client.customer_id }}" class="isc-row-menu" style="display: none; position: absolute; top: 100%; right: 0; background: white; border: 1px solid var(--slate-200); border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 1000; width: 240px; padding: 0.5rem;">
+                                            <button onclick="openAccountCommand('{{ client.customer_id }}')" class="isc-dropdown-btn"><i class="fas fa-info-circle" style="margin-right:0.75rem; color: var(--brand); width: 14px;"></i> Account Details</button>
+                                            <button onclick="openAccountCommand('{{ client.customer_id }}', 'edit')" class="isc-dropdown-btn"><i class="fas fa-edit" style="margin-right:0.75rem; color: var(--slate-400); width: 14px;"></i> Edit Account</button>
+                                            <div style="height: 1px; background: var(--slate-100); margin: 0.5rem 0;"></div>
+                                            <button onclick="openAccountCommand('{{ client.customer_id }}', 'actions')" class="isc-dropdown-btn"><i class="fas fa-plus-circle" style="margin-right:0.75rem; color: #10b981; width: 14px;"></i> Add Note</button>
+                                            <button onclick="openAccountCommand('{{ client.customer_id }}', 'contacts')" class="isc-dropdown-btn"><i class="fas fa-users" style="margin-right:0.75rem; color: #6366f1; width: 14px;"></i> Contacts</button>
+                                            <div style="height: 1px; background: var(--slate-100); margin: 0.5rem 0;"></div>
+                                            <button onclick="deleteAccount('{{ client.customer_id }}')" class="isc-dropdown-btn" style="color: #ef4444;"><i class="fas fa-trash-alt" style="margin-right:0.75rem; width: 14px;"></i> Delete Account</button>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- SigmaFidelity™ Navigation Architecture (BUG-014) -->
+                <div style="margin-top: 2rem; display: flex; justify-content: space-between; align-items: center; padding-top: 2rem; border-top: 1px solid var(--slate-100);">
+                    <div style="font-size: 0.75rem; font-weight: 800; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.05em;">
+                        {% if active_view == 'leads' %}
+                        Page {{ page }} of {{ total_pages }} • {{ leads_count }} Total Market Leads
+                        {% else %}
+                        Active Portfolio View • {{ clients|length }} High-Density Records
+                        {% endif %}
+                    </div>
+                    <div style="display: flex; gap: 0.75rem;">
+                        {% if active_view == 'leads' %}
+                            {% if page > 1 %}
+                            <a href="{{ url_for('admin_operations', view='leads', page=page-1, q=search_q, sort=sort_by, dir=sort_dir, active_only=request.args.get('active_only')) }}" class="isc-btn isc-btn-outline" style="height: 36px; padding: 0 1.25rem; font-size: 0.75rem; border-radius: 6px;">
+                                <i class="fas fa-chevron-left" style="margin-right: 0.5rem;"></i> Previous
+                            </a>
+                            {% endif %}
+                            {% if page < total_pages %}
+                            <a href="{{ url_for('admin_operations', view='leads', page=page+1, q=search_q, sort=sort_by, dir=sort_dir, active_only=request.args.get('active_only')) }}" class="isc-btn isc-btn-outline" style="height: 36px; padding: 0 1.25rem; font-size: 0.75rem; border-radius: 6px;">
+                                Next <i class="fas fa-chevron-right" style="margin-left: 0.5rem;"></i>
+                            </a>
+                            {% endif %}
+                        {% else %}
+                            <button disabled class="isc-btn isc-btn-outline" style="height: 36px; padding: 0 1.25rem; font-size: 0.75rem; border-radius: 6px; opacity: 0.5;">
+                                <i class="fas fa-chevron-left" style="margin-right: 0.5rem;"></i> Previous
+                            </button>
+                            <button disabled class="isc-btn isc-btn-outline" style="height: 36px; padding: 0 1.25rem; font-size: 0.75rem; border-radius: 6px; opacity: 0.5;">
+                                Next <i class="fas fa-chevron-right" style="margin-left: 0.5rem;"></i>
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- View: Execution Monitor -->
+        <div id="view-monitor" class="isc-view" style="display: {% if active_view == 'monitor' %}block{% else %}none{% endif %};">
+            <div class="isc-card">
+                <div style="margin-bottom: 3rem;">
+                    <h2 style="font-weight: 900; font-size: 1.75rem; color: var(--slate-900);">Work Monitor</h2>
+                    <p style="font-size: 0.875rem; color: var(--slate-500); font-weight: 600; margin-top: 0.5rem;">Direct synchronization with CleanSync™ active technicians.</p>
+                </div>
+                <table class="isc-grid">
+                    <thead>
+                        <tr>
+                            <th>Building Account</th>
+                            <th>Work Status</th>
+                            <th>Field Stamp</th>
+                            <th>Integrity Check</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in work_orders %}
+                        <tr>
+                            <td><strong>{{ order.company_name }}</strong><br><small style="color: var(--slate-500); font-weight: 700;">{{ order.service_requested }}</small></td>
+                            <td><span style="font-size: 0.65rem; font-weight: 900; padding: 0.4rem 1rem; border-radius: 100px; text-transform: uppercase; background: {% if order.status == 'COMPLETED' %}#f1f5f9; color: #475569; border: 1px solid #e2e8f0;{% else %}#fef3c7; color: #92400e; border: 1px solid #fde68a;{% endif %}">{{ order.status }}</span></td>
+                            <td style="font-family: monospace; font-size: 0.8rem; color: var(--slate-600);">{{ order.actual_start_time or '--:--' }}</td>
+                            <td>
+                                {% if order.status == 'COMPLETED' and order.last_gps_lat %}
+                                <a href="https://www.google.com/maps?q={{ order.last_gps_lat }},{{ order.last_gps_long }}" target="_blank" style="font-size: 0.7rem; font-weight: 900; color: var(--brand); text-decoration: none; border-bottom: 2px solid;">GPS Verified ✓</a>
+                                {% else %}
+                                <span style="font-size: 0.7rem; color: var(--slate-400); font-weight: 700; font-style: italic;">Field Active</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- View: Service Planner -->
+        <div id="view-scope" class="isc-view" style="display: {% if active_view == 'scope' %}block{% else %}none{% endif %};">
+            <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 3rem; align-items: start;">
+                <!-- Column 1: Data Entry -->
+                <div class="isc-card">
+                    <span class="sigma-form-header">Scope Intelligence</span>
+                    <form class="sigma-form-container">
+                        <div class="sigma-form-group">
+                            <div class="sigma-field">
+                                <label>1. Select Client Building</label>
+                                <select id="service_id_select" class="sigma-input">
+                                    <option value="" disabled selected>-- Choose Building --</option>
+                                    {% for s in services %}
+                                    <option value="{{ s.service_id }}">{{ s.company_name }} — {{ s.service_requested }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div style="height: 1px; background: var(--slate-100); margin: 2rem 0;"></div>
+
+                        <div class="sigma-form-group">
+                            <div class="sigma-field">
+                                <label>Service Area</label>
+                                <input type="text" id="input_area" list="lib_areas" placeholder="e.g. Main Operations Floor" class="sigma-input">
+                            </div>
+                            <div class="sigma-field">
+                                <label>Service Task</label>
+                                <input type="text" id="input_task" list="lib_tasks" placeholder="e.g. High Volume Scrubbing" class="sigma-input">
+                            </div>
+                            <div class="sigma-field">
+                                <label>Section or Item</label>
+                                <input type="text" id="input_item" list="lib_items" placeholder="e.g. North Bay A" class="sigma-input">
+                            </div>
+                            <button type="button" onclick="addToScope()" class="isc-btn isc-btn-primary" style="width: 100%; margin-top: 1rem;">Add to Professional Scope</button>
+                        </div>
+                        <datalist id="lib_areas"></datalist><datalist id="lib_tasks"></datalist><datalist id="lib_items"></datalist>
+                    </form>
+                </div>
+
+                <!-- Column 2: Scope Preview -->
+                <div class="isc-card" style="padding: 0; overflow: hidden;">
+                    <div style="padding: 2.5rem 2.5rem 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+                        <h2 style="font-weight: 800; font-size: 1.1rem; color: var(--slate-900);">Plan Preview</h2>
+                        <button type="button" onclick="clearScope()" style="background: none; border: none; color: var(--muted-coral); font-weight: 700; font-size: 0.7rem; cursor: pointer; text-transform: uppercase; letter-spacing: 0.05em;">Clear Current Plan</button>
+                    </div>
+                    
+                    <div style="padding: 0 2.5rem 2.5rem;">
+                        <div id="scope_tree" style="min-height: 400px; border: 1px solid var(--slate-100); border-radius: 12px; padding: 2rem; background: #fcfdfe;">
+                            <p id="empty_msg" style="color: var(--slate-400); text-align: center; margin-top: 8rem; font-style: italic; font-weight: 600; font-size: 0.9rem;">No items added to scope yet.</p>
+                        </div>
+                        <form action="{{ url_for('scope_builder') }}" method="POST" style="margin-top: 2rem;">
+                            <input type="hidden" name="service_id" id="final_service_id">
+                            <input type="hidden" name="scope_json" id="final_scope_json">
+                            <button type="submit" id="submit_btn" disabled class="isc-btn isc-btn-primary" style="width: 100%; opacity: 0.5; padding: 1.25rem;">Secure & Save Planner</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Modals -->
+<!-- Modal: Account Command (Hardened 2026) -->
+<div id="modal-account-command" class="isc-modal-overlay" style="display:none;">
+    <div class="isc-modal">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2.5rem;">
+            <div>
+                <h2 id="modal-title" style="font-weight: 900; font-size: 1.5rem; color: var(--slate-900); letter-spacing: -0.01em;">Account Details</h2>
+                <p id="modal-subtitle" style="font-size: 0.75rem; color: var(--slate-500); margin-top: 0.25rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;"></p>
+            </div>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <button type="button" onclick="toggleEditAccount()" class="isc-btn isc-btn-outline" style="height: 32px; font-size: 0.7rem; border-radius: 6px;">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <button onclick="closeModal('modal-account-command')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; color: var(--slate-500); transition: all 0.2s;">
+                    <i class="fas fa-times" style="font-size: 0.9rem;"></i>
+                </button>
+            </div>
+        </div>
+        <div id="account-modal-tabs" style="display: flex; gap: 2rem; border-bottom: 1px solid var(--slate-100); margin-bottom: 2.5rem;">
+            <button onclick="iscTab('overview')" class="isc-tab-trigger active" id="tab-btn-overview">Overview</button>
+            <button onclick="iscTab('visit')" class="isc-tab-trigger" id="tab-btn-visit">Request Visit</button>
+            <button onclick="iscTab('actions')" class="isc-tab-trigger" id="tab-btn-actions">Actions</button>
+            <button onclick="iscTab('contacts')" class="isc-tab-trigger" id="tab-btn-contacts">Contacts</button>
+            <button onclick="iscTab('timeline')" class="isc-tab-trigger" id="tab-btn-timeline">History</button>
+        </div>
+                <div id="pane-overview" class="isc-pane">
+            <div id="list-overview" style="display: grid; grid-template-columns: 1fr 1fr 1fr !important; gap: 1.5rem;"></div>
+            <div style="margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--slate-100); text-align: right; position: relative;">
+                <button onclick="toggleAccountMenu()" class="isc-btn isc-btn-outline" id="btn-account-plan" style="padding: 0.75rem 2rem;">Manage Account</button>
+                <div id="account-command-menu" style="display: none; position: absolute; bottom: 110%; right: 0; background: white; border: 1px solid var(--slate-200); border-radius: 0.75rem; box-shadow: 0 10px 25px rgba(0,0,0,0.1); padding: 0.5rem; z-index: 1000; min-width: 180px;">
+                    <button onclick="deleteAccount()" class="isc-dropdown-btn" style="width: 100%; text-align: left; padding: 0.75rem 1rem; background: none; border: none; font-weight: 600; color: #ef4444; cursor: pointer; border-radius: 0.4rem; font-size: 0.85rem;">Delete Account</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="pane-visit" class="isc-pane" style="display:none;">
+            <form onsubmit="saveVisitRequestAcc(event)" class="sigma-form-container">
+                <div class="sigma-form-section">
+                    <div class="sigma-form-group">
+                        <span class="sigma-form-header">Visit Scheduling</span>
+                        <div class="sigma-row sigma-row-60-40">
+                            <div class="sigma-field"><label>Target Date</label><input type="date" id="visit-date-acc" required class="sigma-input"></div>
+                            <div class="sigma-field"><label>Preferred Time</label><input type="time" id="visit-time-acc" class="sigma-input"></div>
+                        </div>
+                        <div class="sigma-row sigma-row-75-25">
+                            <div class="sigma-field"><label>Manager to Meet</label><input type="text" id="visit-manager-acc" class="sigma-input"></div>
+                            <div class="sigma-field"><label>Phone</label><input type="text" id="visit-phone-acc" class="sigma-input" oninput="maskPhone(event)"></div>
+                        </div>
+                    </div>
+                    <div class="sigma-form-group">
+                        <span class="sigma-form-header">Building Instructions</span>
+                        <div class="sigma-field">
+                            <label>Google Maps Link</label>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <input type="url" id="visit-map-link-acc" class="sigma-input" style="flex-grow: 1;">
+                                <button type="button" onclick="pasteFromClipboard('visit-map-link-acc')" class="isc-btn isc-btn-outline" style="height: 44px; width: 44px; padding: 0; border-radius: 12px;"><i class="fas fa-clipboard"></i></button>
+                                <button type="button" onclick="verifyMapLinkAcc()" class="isc-btn isc-btn-outline" style="height: 44px; width: 44px; padding: 0; border-radius: 12px;"><i class="fas fa-external-link-alt"></i></button>
+                            </div>
+                        </div>
+                        <div class="sigma-field"><label>Gate Access / Instructions</label><textarea id="visit-instructions-acc" class="sigma-input" style="height: 80px; resize: none;"></textarea></div>
+                    </div>
+                </div>
+                <div class="sigma-form-actions">
+                    <button type="button" onclick="iscTab('overview')" class="isc-btn isc-btn-outline">Cancel</button>
+                    <button type="submit" class="isc-btn isc-btn-primary" style="padding: 0.85rem 4rem;">Schedule Visit</button>
+                </div>
+            </form>
+        </div>
+
+        <div id="pane-visit-confirm" class="isc-pane" style="display:none; text-align: center; padding: 4rem 2rem;">
+            <div style="font-size: 3.5rem; color: #10b981; margin-bottom: 2rem;"><i class="fas fa-check-circle"></i></div>
+            <h2 style="font-weight: 900; font-size: 1.75rem; color: var(--slate-900);">Visit scheduled</h2>
+            <p style="color: var(--slate-500); margin-bottom: 3rem;">Walkthrough registered for this portfolio hub.</p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; text-align: left; max-width: 600px; margin: 0 auto 4rem auto; background: var(--slate-50); padding: 2rem; border-radius: 12px;">
+                <div><div style="font-size:0.65rem; font-weight:500; color:var(--slate-500); text-transform:uppercase;">Target Date</div><div id="confirm-visit-date-acc" style="font-weight:800;">--</div></div>
+                <div><div style="font-size:0.65rem; font-weight:500; color:var(--slate-500); text-transform:uppercase;">Preferred Time</div><div id="confirm-visit-time-acc" style="font-weight:800;">--</div></div>
+                <div><div style="font-size:0.65rem; font-weight:500; color:var(--slate-500); text-transform:uppercase;">Manager</div><div id="confirm-visit-manager-acc" style="font-weight:800;">--</div></div>
+                <div><div style="font-size:0.65rem; font-weight:500; color:var(--slate-500); text-transform:uppercase;">Contact</div><div id="confirm-visit-phone-acc" style="font-weight:800;">--</div></div>
+            </div>
+            <button onclick="iscTab('overview')" class="isc-btn isc-btn-outline" style="width: 200px;">Return to Overview</button>
+        </div>
+
+        <div id="pane-edit-account" class="isc-pane" style="display:none;">
+            <form onsubmit="updateAccount(event)" class="sigma-form-container">
+                <input type="hidden" id="form-acc-id" name="id">
+                <div class="sigma-form-section" style="grid-template-columns: 1fr 1fr 1fr !important; gap: 2rem;">
+                    <!-- Column 1: Identity & Contact -->
+                    <div class="sigma-form-group">
+                        <span class="sigma-form-header">Identity & Contact</span>
+                        <div class="sigma-field"><label>Company Name</label><input type="text" id="form-acc-name" name="company_name" required class="sigma-input"></div>
+                        <div class="sigma-field"><label>Main Manager</label><input type="text" id="form-acc-manager" name="contact_person_name" placeholder="Full Name" class="sigma-input"></div>
+                        <div class="sigma-field"><label>Email Address</label><input type="email" id="form-acc-email" name="email" class="sigma-input"></div>
+                        <div class="sigma-field"><label>Phone Number</label><input type="text" id="form-acc-phone" name="phone" class="sigma-input" oninput="maskPhone(event)"></div>
+                        <div class="sigma-field"><label>Website</label><input type="url" id="form-acc-website" name="website" placeholder="https://..." class="sigma-input"></div>
+                    </div>
+                    <!-- Column 2: Geography & Logistics -->
+                    <div class="sigma-form-group">
+                        <span class="sigma-form-header">Geography & Logistics</span>
+                        <div class="sigma-field"><label>Building Address</label><input type="text" id="form-acc-address" name="company_address" required class="sigma-input"></div>
+                        <div class="sigma-row sigma-row-60-40">
+                            <div class="sigma-field"><label>City</label><input type="text" id="form-acc-city" name="city" class="sigma-input"></div>
+                            <div class="sigma-field"><label>State</label><input type="text" id="form-acc-state" name="state" class="sigma-input"></div>
+                        </div>
+                        <div class="sigma-row sigma-row-60-40">
+                            <div class="sigma-field"><label>Zip</label><input type="text" id="form-acc-zip" name="zip" class="sigma-input"></div>
+                            <div class="sigma-field"><label>SQF</label><input type="number" id="form-acc-sqf" name="sqf" class="sigma-input"></div>
+                        </div>
+                        <div class="sigma-row sigma-row-60-40">
+                            <div class="sigma-field"><label>Start Date</label><input type="date" id="form-acc-start-date" name="start_date" class="sigma-input"></div>
+                            <div class="sigma-field"><label>Start Time</label><input type="time" id="form-acc-start-time" name="start_time" class="sigma-input"></div>
+                        </div>
+                    </div>
+                    <!-- Column 3: Business & Fiscal -->
+                    <div class="sigma-form-group">
+                        <span class="sigma-form-header">Business & Fiscal</span>
+                        <div class="sigma-row sigma-row-60-40">
+                            <div class="sigma-field"><label>Status</label><select id="form-acc-status" name="status" class="sigma-input"><option value="Active">Active</option><option value="On Hold">On Hold</option><option value="Terminated">Terminated</option></select></div>
+                            <div class="sigma-field"><label>Cycle</label><select id="form-acc-traffic" name="traffic_cycle" class="sigma-input"><option value="Slow">Slow</option><option value="High">High</option><option value="24/7">24/7</option></select></div>
+                        </div>
+                        <div class="sigma-row sigma-row-60-40">
+                            <div class="sigma-field"><label>Value (Annual)</label><input type="number" step="0.01" id="form-acc-revenue" name="annual_revenue" class="sigma-input"></div>
+                            <div class="sigma-field"><label>Frequency</label><input type="text" id="form-acc-frequency" name="frequency" class="sigma-input"></div>
+                        </div>
+                        <div class="sigma-row sigma-row-60-40">
+                            <div class="sigma-field"><label>Quote #</label><input type="text" id="form-acc-quote" name="quote_number" class="sigma-input"></div>
+                            <div class="sigma-field"><label>Period</label><input type="text" id="form-acc-period" name="contract_period" placeholder="12 Mo" class="sigma-input"></div>
+                        </div>
+                        <div class="sigma-field"><label>Billing Address</label><input type="text" id="form-acc-billing" name="billing_address" placeholder="If different from site..." class="sigma-input"></div>
+                    </div>
+                </div>
+                <div class="sigma-field" style="margin-top: 2rem;"><label>Next Action Date</label><input type="date" id="form-acc-next" name="next_action_date" class="sigma-input" style="width: 200px;"></div>
+                <div class="sigma-field" style="margin-top: 1rem;"><label>Work Notes</label><textarea id="form-acc-notes" name="notes" placeholder="Key details..." class="sigma-input" style="height: 60px; resize: none;"></textarea></div>
+                <div class="sigma-form-actions">
+                    <button type="button" onclick="toggleEditAccount()" class="isc-btn isc-btn-outline">Cancel</button>
+                    <button type="submit" class="isc-btn isc-btn-primary">Save Account</button>
+                </div>
+            </form>
+        </div>
+
+        <div id="pane-actions" class="isc-pane" style="display:none;">
+            <div style="display: grid; grid-template-columns: 280px 1fr; gap: 2.5rem; align-items: start;">
+                <div class="isc-card" style="padding: 1.5rem; background: var(--slate-50); border: 1px solid var(--slate-100);">
+                    <span class="sigma-form-header" style="margin-bottom: 1.5rem;">Quick Profile Update</span>
+                    <div class="sigma-field"><label style="font-size: 0.65rem;">Main Manager</label><input type="text" id="acc-action-manager" class="sigma-input" style="height: 36px; font-size: 0.85rem;"></div>
+                    <div class="sigma-field"><label style="font-size: 0.65rem;">Phone Number</label><input type="text" id="acc-action-phone" class="sigma-input" style="height: 36px; font-size: 0.85rem;" oninput="maskPhone(event)"></div>
+                    <div class="sigma-field"><label style="font-size: 0.65rem;">Email Address</label><input type="email" id="acc-action-email" class="sigma-input" style="height: 36px; font-size: 0.85rem;"></div>
+                </div>
+                <div>
+                    <h3 class="form-section-label">Add Note</h3>
+                    <form onsubmit="logActivity(event)" class="sigma-form-container">
+                        <input type="hidden" name="parent_id" id="activity-parent-id">
+                        <input type="hidden" name="parent_type" value="Account">
+                        <div class="sigma-form-section">
+                            <div class="sigma-form-group">
+                                <div class="sigma-row sigma-row-60-40">
+                                    <div class="sigma-field">
+                                        <label>Action Type</label>
+                                        <select name="activity_type" id="activity-type" class="sigma-input">
+                                            <option value="Phone Call">Phone Call</option>
+                                            <option value="Email Sent">Email Sent</option>
+                                            <option value="Site Visit">Site Visit</option>
+                                            <option value="Note">Internal Note</option>
+                                        </select>
+                                    </div>
+                                    <div class="sigma-field">
+                                        <label>Timestamp</label>
+                                        <input type="text" value="Recorded Automatically" readonly class="sigma-input" style="color: var(--slate-400); cursor: default;">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="sigma-field" style="margin-top: 1.5rem;">
+                            <label>Details</label>
+                            <textarea name="description" id="activity-desc" required placeholder="Detailed notes..." class="sigma-input" style="height: 120px; resize: none;"></textarea>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2rem;">
+                            <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer; font-size: 0.85rem; font-weight: 500; color: var(--slate-600);">
+                                <input type="checkbox" id="update-next-action-acc" checked style="width: 18px; height: 18px; border-radius: 4px; border: 1px solid var(--slate-300);">
+                                Update next action date automatically
+                            </label>
+                            <button type="submit" class="isc-btn isc-btn-primary" style="padding: 0 4rem;">Save Note</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div id="pane-contacts" class="isc-pane" style="display:none;">
+            <div style="display: grid; grid-template-columns: 350px 1fr; gap: 3rem; width: 100%;">
+                <div>
+                    <h3 class="form-section-label" style="margin-bottom: 2rem;">Add New Contact</h3>
+                    <form onsubmit="addAccountContact(event)" class="sigma-form-container">
+                        <div class="sigma-field"><label>Full Name</label><input type="text" id="acc-contact-name" required placeholder="John Doe" class="sigma-input"></div>
+                        <div class="sigma-field"><label>Role / Title</label><input type="text" id="acc-contact-role" placeholder="Facilities Manager" class="sigma-input"></div>
+                        <div class="sigma-field"><label>Email Address</label><input type="email" id="acc-contact-email" placeholder="john@company.com" class="sigma-input"></div>
+                        <div class="sigma-field"><label>Phone Number</label><input type="text" id="acc-contact-phone" placeholder="1-(000)-000-0000" class="sigma-input" oninput="maskPhone(event)"></div>
+                        <button type="submit" class="isc-btn isc-btn-primary" style="width: 100%; margin-top: 1.5rem;">Add to Account</button>
+                    </form>
+                </div>
+                <div>
+                    <h3 class="form-section-label" style="margin-bottom: 2rem;">Primary Stakeholders</h3>
+                    <div id="list-contacts" style="display: grid; gap: 1.5rem; max-height: 500px; overflow-y: auto;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="pane-timeline" class="isc-pane" style="display:none;">
+            <div style="margin-bottom: 2rem;">
+                <span class="sigma-form-header">Activity History</span>
+            </div>
+            <div id="list-timeline" style="display: grid; gap: 2.5rem; border-left: 2px solid var(--slate-100); padding-left: 2.5rem; margin-left: 1rem; max-height: 500px; overflow-y: auto; padding-right: 1rem;"></div>
+        </div>
+    </div>
+</div>
+
+<div id="modal-lead-command" class="isc-modal-overlay" style="display:none;">
+    <div class="isc-modal">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2.5rem;">
+            <div>
+                <h2 id="lead-modal-title" style="font-weight: 900; font-size: 1.5rem; color: var(--slate-900); letter-spacing: -0.01em;">Lead Details</h2>
+                <p id="lead-modal-subtitle" style="font-size: 0.75rem; color: var(--slate-500); margin-top: 0.25rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;"></p>
+            </div>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <button type="button" onclick="toggleEditLead()" class="isc-btn isc-btn-outline" style="height: 32px; font-size: 0.7rem; border-radius: 6px;">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <button onclick="closeModal('modal-lead-command')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; color: var(--slate-500); transition: all 0.2s;">
+                    <i class="fas fa-times" style="font-size: 0.9rem;"></i>
+                </button>
+            </div>
+        </div>
+        <div id="lead-modal-tabs" style="display: flex; gap: 2rem; border-bottom: 1px solid var(--slate-100); margin-bottom: 2.5rem;">
+            <button onclick="iscLeadTab('overview')" class="isc-tab-trigger active" id="lead-tab-btn-overview">Overview</button>
+            <button onclick="iscLeadTab('visit')" class="isc-tab-trigger" id="lead-tab-btn-visit">Request Visit</button>
+            <button onclick="iscLeadTab('actions')" class="isc-tab-trigger" id="lead-tab-btn-actions">Actions</button>
+            <button onclick="iscLeadTab('contacts')" class="isc-tab-trigger" id="lead-tab-btn-contacts">Contacts</button>
+            <button onclick="iscLeadTab('timeline')" class="isc-tab-trigger" id="lead-tab-btn-timeline">History</button>
+        </div>
+                <div id="lead-pane-overview" class="isc-lead-pane">
+            <div id="lead-list-overview" style="display: grid; grid-template-columns: 1fr 1fr 1fr !important; gap: 1.5rem;"></div>
+            <div style="margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--slate-100); text-align: right; position: relative;">
+                <button onclick="toggleLeadMenu()" class="isc-btn isc-btn-outline" id="btn-lead-plan" style="padding: 0.75rem 2rem;">Manage Lead</button>
+                <div id="lead-command-menu" style="display: none; position: absolute; bottom: 110%; right: 0; background: white; border: 1px solid var(--slate-200); border-radius: 0.75rem; box-shadow: 0 10px 25px rgba(0,0,0,0.1); padding: 0.5rem; z-index: 1000; min-width: 180px;">
+                    <button onclick="promoteLead()" class="isc-dropdown-btn" style="width: 100%; text-align: left; padding: 0.75rem 1rem; background: none; border: none; font-weight: 600; color: var(--brand); cursor: pointer; border-radius: 0.4rem; font-size: 0.85rem;">Promote to Account</button>
+                    <button onclick="deleteLead()" class="isc-dropdown-btn" style="width: 100%; text-align: left; padding: 0.75rem 1rem; background: none; border: none; font-weight: 600; color: #ef4444; cursor: pointer; border-radius: 0.4rem; font-size: 0.85rem;">Delete Lead</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="lead-pane-visit" class="isc-lead-pane" style="display:none;">
+            <form onsubmit="saveVisitRequest(event)" class="sigma-form-container">
+                <div class="sigma-form-section">
+                    <div class="sigma-form-group">
+                        <span class="sigma-form-header">Visit Scheduling</span>
+                        <div class="sigma-row sigma-row-60-40">
+                            <div class="sigma-field"><label>Target Date</label><input type="date" id="visit-date" required class="sigma-input"></div>
+                            <div class="sigma-field"><label>Preferred Time</label><input type="time" id="visit-time" class="sigma-input"></div>
+                        </div>
+                        <div class="sigma-row sigma-row-75-25">
+                            <div class="sigma-field"><label>Manager to Meet</label><input type="text" id="visit-manager" placeholder="Full Name" class="sigma-input"></div>
+                            <div class="sigma-field"><label>Phone</label><input type="text" id="visit-phone" placeholder="Phone" class="sigma-input" oninput="maskPhone(event)"></div>
+                        </div>
+                    </div>
+                    <div class="sigma-form-group">
+                        <span class="sigma-form-header">Building Instructions</span>
+                        <div class="sigma-field">
+                            <label>Google Maps Link</label>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <input type="url" id="visit-map-link" placeholder="https://maps.google.com/..." class="sigma-input" style="flex-grow: 1;">
+                                <button type="button" onclick="pasteFromClipboard('visit-map-link')" class="isc-btn isc-btn-outline" style="height: 44px; width: 44px; padding: 0; border-radius: 12px;"><i class="fas fa-clipboard"></i></button>
+                                <button type="button" onclick="verifyMapLink()" class="isc-btn isc-btn-outline" style="height: 44px; width: 44px; padding: 0; border-radius: 12px;"><i class="fas fa-external-link-alt"></i></button>
+                            </div>
+                        </div>
+                        <div class="sigma-field"><label>Gate Access / Instructions</label><textarea id="visit-instructions" placeholder="Codes..." class="sigma-input" style="height: 80px; resize: none;"></textarea></div>
+                    </div>
+                </div>
+                <div class="sigma-form-actions">
+                    <button type="button" onclick="iscLeadTab('overview')" class="isc-btn isc-btn-outline">Cancel</button>
+                    <button type="submit" class="isc-btn isc-btn-primary" style="padding: 0.85rem 4rem;">Schedule Visit</button>
+                </div>
+            </form>
+        </div>
+
+        <div id="lead-pane-visit-confirm" class="isc-lead-pane" style="display:none; text-align: center; padding: 4rem 2rem;">
+            <div style="font-size: 3.5rem; color: #10b981; margin-bottom: 2rem;"><i class="fas fa-check-circle"></i></div>
+            <h2 style="font-weight: 900; font-size: 1.75rem; color: var(--slate-900);">Visit scheduled</h2>
+            <p style="color: var(--slate-500); margin-bottom: 3rem;">Walkthrough registered for this market lead.</p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; text-align: left; max-width: 600px; margin: 0 auto 4rem auto; background: var(--slate-50); padding: 2rem; border-radius: 12px;">
+                <div><div style="font-size:0.65rem; font-weight:500; color:var(--slate-500); text-transform:uppercase;">Target Date</div><div id="confirm-visit-date" style="font-weight:800;">--</div></div>
+                <div><div style="font-size:0.65rem; font-weight:500; color:var(--slate-500); text-transform:uppercase;">Preferred Time</div><div id="confirm-visit-time" style="font-weight:800;">--</div></div>
+                <div><div style="font-size:0.65rem; font-weight:500; color:var(--slate-500); text-transform:uppercase;">Manager</div><div id="confirm-visit-manager" style="font-weight:800;">--</div></div>
+                <div><div style="font-size:0.65rem; font-weight:500; color:var(--slate-500); text-transform:uppercase;">Contact</div><div id="confirm-visit-phone" style="font-weight:800;">--</div></div>
+            </div>
+            <button onclick="iscLeadTab('overview')" class="isc-btn isc-btn-outline" style="width: 200px;">Return to Overview</button>
+        </div>
+
+        <div id="lead-pane-edit" class="isc-lead-pane" style="display:none;">
+            <form onsubmit="saveLeadUpdate(event)" class="sigma-form-container">
+                <input type="hidden" id="edit-lead-id">
+                <div class="sigma-form-section" style="grid-template-columns: 1fr 1fr 1fr !important; gap: 2rem;">
+                    <!-- Column 1: Identity -->
+                    <div class="sigma-form-group">
+                        <span class="sigma-form-header">Identity</span>
+                        <div class="sigma-field"><label>Company Name</label><input type="text" id="edit-lead-company" name="company_name" required class="sigma-input"></div>
+                        <div class="sigma-field"><label>Main Manager</label><input type="text" id="edit-lead-dm" name="decision_maker" class="sigma-input"></div>
+                        <div class="sigma-field"><label>Manager Title</label><input type="text" id="edit-lead-job-title" name="job_title" class="sigma-input"></div>
+                        <div class="sigma-field"><label>Email Address</label><input type="email" id="edit-lead-email" name="email" class="sigma-input"></div>
+                        <div class="sigma-field"><label>Phone Number</label><input type="text" id="edit-lead-phone" name="phone" class="sigma-input" oninput="maskPhone(event)"></div>
+                    </div>
+                    <!-- Column 2: Logistics -->
+                    <div class="sigma-form-group">
+                        <span class="sigma-form-header">Logistics</span>
+                        <div class="sigma-field"><label>Building Address</label><input type="text" id="edit-lead-address" name="address" class="sigma-input"></div>
+                        <div class="sigma-row sigma-row-60-40">
+                            <div class="sigma-field"><label>City</label><input type="text" id="edit-lead-city" name="city" class="sigma-input"></div>
+                            <div class="sigma-field"><label>State</label><input type="text" id="edit-lead-state" name="state" class="sigma-input"></div>
+                        </div>
+                        <div class="sigma-field"><label>Zip</label><input type="text" id="edit-lead-zip" name="zipcode" class="sigma-input"></div>
+                        <div class="sigma-field"><label>SQF</label><input type="number" id="edit-lead-sqf" name="sqf" class="sigma-input"></div>
+                        <div class="sigma-field"><label>Industry</label><input type="text" id="edit-lead-industry" name="industry" class="sigma-input"></div>
+                    </div>
+                    <!-- Column 3: Strategic -->
+                    <div class="sigma-form-group">
+                        <span class="sigma-form-header">Strategic</span>
+                        <div class="sigma-field">
+                            <label>Building Type</label>
+                            <select id="edit-lead-building" name="facility_type" class="sigma-input">
+                                <option value="Office">Office</option>
+                                <option value="Medical">Medical</option>
+                                <option value="Warehouse">Warehouse</option>
+                                <option value="Retail">Retail</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="sigma-field">
+                            <label>Traffic Cycle</label>
+                            <select id="edit-lead-traffic" name="traffic_cycle" class="sigma-input">
+                                <option value="Slow">Slow Traffic</option>
+                                <option value="High">High Traffic</option>
+                                <option value="24/7 Production">24/7 Production</option>
+                            </select>
+                        </div>
+                        <div class="sigma-field">
+                            <label>Status</label>
+                            <select id="edit-lead-status" name="status" class="sigma-input">
+                                <option value="New">New</option>
+                                <option value="Contacted">Contacted</option>
+                                <option value="Trained">Trained</option>
+                                <option value="Lost">Lost</option>
+                            </select>
+                        </div>
+                        <div class="sigma-field"><label>Value</label><input type="number" step="0.01" id="edit-lead-value" name="estimated_annual_value" class="sigma-input"></div>
+                        <div class="sigma-field"><label>Next Action</label><input type="date" id="edit-lead-next" name="next_action_date" class="sigma-input"></div>
+                    </div>
+                </div>
+                <div class="sigma-row sigma-row-60-40" style="margin-top: 1.5rem;">
+                    <div class="sigma-field">
+                        <label>Source</label>
+                        <select id="edit-lead-source" name="lead_source" class="sigma-input">
+                            <option value="Google">Google Search</option>
+                            <option value="Referral">Referral</option>
+                            <option value="Flyer">Flyer</option>
+                            <option value="Cold Call">Outreach</option>
+                        </select>
+                    </div>
+                    <div class="sigma-field">
+                        <label>Priority</label>
+                        <select id="edit-lead-priority" name="priority_level" class="sigma-input">
+                            <option value="Needs Call Now">CRITICAL</option>
+                            <option value="Follow up soon">STANDARD</option>
+                            <option value="Just looking">LOW</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="sigma-field" style="margin-top: 1rem;"><label>Service Interest</label><input type="text" id="edit-lead-interest" name="service_interest" class="sigma-input"></div>
+                <div class="sigma-field" style="margin-top: 1rem;"><label>Work Notes</label><textarea id="edit-lead-notes" name="notes" class="sigma-input" style="height: 60px; resize: none;"></textarea></div>
+                <div class="sigma-form-actions">
+                    <button type="button" onclick="toggleEditLead()" class="isc-btn isc-btn-outline">Cancel</button>
+                    <button type="submit" class="isc-btn isc-btn-primary">Save Lead</button>
+                </div>
+            </form>
+        </div>
+
+        <div id="lead-pane-actions" class="isc-lead-pane" style="display:none;">
+            <div style="display: grid; grid-template-columns: 280px 1fr; gap: 2.5rem; align-items: start;">
+                <div class="isc-card" style="padding: 1.5rem; background: var(--slate-50); border: 1px solid var(--slate-100);">
+                    <span class="sigma-form-header" style="margin-bottom: 1.5rem;">Quick Profile Update</span>
+                    <div class="sigma-field"><label style="font-size: 0.65rem;">Main Manager</label><input type="text" id="lead-action-manager" class="sigma-input" style="height: 36px; font-size: 0.85rem;"></div>
+                    <div class="sigma-field"><label style="font-size: 0.65rem;">Phone Number</label><input type="text" id="lead-action-phone" class="sigma-input" style="height: 36px; font-size: 0.85rem;" oninput="maskPhone(event)"></div>
+                    <div class="sigma-field"><label style="font-size: 0.65rem;">Email Address</label><input type="email" id="lead-action-email" class="sigma-input" style="height: 36px; font-size: 0.85rem;"></div>
+                </div>
+                <div>
+                    <h3 class="form-section-label">Add Note</h3>
+                    <form onsubmit="logLeadActivity(event)">
+                        <div class="sigma-row sigma-row-60-40" style="margin-bottom: 1.5rem;">
+                            <div class="sigma-field"><label>Action Type</label><select id="lead-activity-type" required class="sigma-input"><option value="Phone Call">Phone Call</option><option value="Email Sent">Email Sent</option><option value="Site Visit">Site Visit</option><option value="Note">Internal Note</option></select></div>
+                            <div class="sigma-field"><label>Result</label><select id="lead-activity-result" class="sigma-input"><option value="">-- No Result --</option><option value="Spoke to them">Spoke to them</option><option value="Left message">Left message</option></select></div>
+                        </div>
+                        <div class="sigma-field"><label>Details</label><textarea id="lead-activity-desc" required class="sigma-input" style="height: 120px; resize: none;"></textarea></div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2rem;">
+                            <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer; font-size: 0.85rem; font-weight: 500; color: var(--slate-600);">
+                                <input type="checkbox" id="update-next-action" checked style="width: 18px; height: 18px; border-radius: 4px; border: 1px solid var(--slate-300);">
+                                Update next action date automatically
+                            </label>
+                            <button type="submit" class="isc-btn isc-btn-primary" style="padding: 0 3rem;">Save Note</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div id="lead-pane-contacts" class="isc-lead-pane" style="display:none;">
+            <div style="display: grid; grid-template-columns: 350px 1fr; gap: 3rem; width: 100%;">
+                <div>
+                    <h3 class="form-section-label" style="margin-bottom: 2rem;">Add New Contact</h3>
+                    <form onsubmit="addLeadContact(event)" class="sigma-form-container">
+                        <div class="sigma-field"><label>Full Name</label><input type="text" id="lead-contact-name" required placeholder="John Doe" class="sigma-input"></div>
+                        <div class="sigma-field"><label>Role / Title</label><input type="text" id="lead-contact-role" placeholder="Facilities Manager" class="sigma-input"></div>
+                        <div class="sigma-field"><label>Email Address</label><input type="email" id="lead-contact-email" placeholder="john@company.com" class="sigma-input"></div>
+                        <div class="sigma-field"><label>Phone Number</label><input type="text" id="lead-contact-phone" placeholder="1-(000)-000-0000" class="sigma-input" oninput="maskPhone(event)"></div>
+                        <button type="submit" class="isc-btn isc-btn-primary" style="width: 100%; margin-top: 1.5rem;">Add to Lead</button>
+                    </form>
+                </div>
+                <div>
+                    <h3 class="form-section-label" style="margin-bottom: 2rem;">Decision Makers</h3>
+                    <div id="lead-list-contacts" style="display: grid; gap: 1.5rem; max-height: 500px; overflow-y: auto;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="lead-pane-timeline" class="isc-lead-pane" style="display:none;">
+            <div style="margin-bottom: 2rem;">
+                <span class="sigma-form-header">Activity History</span>
+            </div>
+            <div id="lead-list-timeline" style="display: grid; gap: 2.5rem; border-left: 2px solid var(--slate-100); padding-left: 2.5rem; margin-left: 1rem; max-height: 500px; overflow-y: auto; padding-right: 1.5rem;"></div>
+        </div>
+    </div>
+</div>
+
+<div id="modal-add-account" class="isc-modal-overlay" style="display:none;">
+    <div class="isc-modal" style="max-width: 1100px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4rem;">
+            <div><h2 style="font-weight: 900; font-size: 2.25rem; color: var(--slate-900); letter-spacing: -0.02em;">Add New Account</h2><p style="font-size: 0.875rem; color: var(--brand); margin-top: 0.25rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;">New Client Registration</p></div>
+            <button onclick="closeModal('modal-add-account')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 10px; cursor: pointer; color: var(--slate-400); transition: all 0.2s;">&times;</button>
+        </div>
+        <form action="{{ url_for('add_account') }}" method="POST" class="sigma-form-container">
+            <div class="sigma-form-section">
+                <!-- Column 1: Institutional Identity -->
+                <div class="sigma-form-group">
+                    <span class="sigma-form-header">Identity & Contact</span>
+                    <div class="sigma-field"><label>Company Name</label><input type="text" name="company_name" required placeholder="Legal Entity Name" class="sigma-input"></div>
+                    <div class="sigma-row sigma-row-60-40">
+                        <div class="sigma-field"><label>Main Manager</label><input type="text" name="contact_person_name" placeholder="Full Name" class="sigma-input"></div>
+                        <div class="sigma-field"><label>Phone Number</label><input type="text" name="phone" placeholder="1-(000)-000-0000" class="sigma-input" oninput="maskPhone(event)"></div>
+                    </div>
+                    <div class="sigma-row sigma-row-60-40">
+                        <div class="sigma-field"><label>Email Address</label><input type="email" name="email" required placeholder="billing@company.com" class="sigma-input"></div>
+                        <div class="sigma-field"><label>Website</label><input type="url" name="website" placeholder="https://..." class="sigma-input"></div>
+                    </div>
+                    <div class="sigma-field"><label>Billing Address</label><input type="text" name="company_address" required placeholder="Street Address" class="sigma-input" oninput="smartType(this, 'results-add-acc')"><div id="results-add-acc" class="address-results"></div></div>
+                    <div class="sigma-row sigma-row-60-40">
+                        <div class="sigma-field"><label>City</label><input type="text" name="city" placeholder="City" class="sigma-input"></div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                            <div class="sigma-field"><label>State</label><input type="text" name="state" placeholder="TX" class="sigma-input"></div>
+                            <div class="sigma-field"><label>Zip</label><input type="text" name="zip" placeholder="75024" class="sigma-input"></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Column 2: Financial & Operational -->
+                <div class="sigma-form-group">
+                    <span class="sigma-form-header">Financial & Operational</span>
+                    <div class="sigma-row sigma-row-60-40">
+                        <div class="sigma-field"><label>Quote Number</label><input type="text" name="quote_number" placeholder="HWB-QT-..." class="sigma-input"></div>
+                        <div class="sigma-field"><label>Service Frequency</label><input type="text" name="frequency" placeholder="e.g. 5x/Week" class="sigma-input"></div>
+                    </div>
+                    <div class="sigma-row sigma-row-60-40">
+                        <div class="sigma-field"><label>Building SQF</label><input type="number" name="sqf" placeholder="e.g. 5000" class="sigma-input"></div>
+                        <div class="sigma-field"><label>Annual Revenue</label><input type="number" step="0.01" name="annual_revenue" placeholder="0.00" class="sigma-input"></div>
+                    </div>
+                    <div class="sigma-row sigma-row-60-40">
+                        <div class="sigma-field">
+                            <label>Traffic Cycle</label>
+                            <select name="traffic_cycle" class="sigma-input">
+                                <option value="Slow">Slow Traffic</option>
+                                <option value="High" selected>High Traffic</option>
+                                <option value="24/7 Production">24/7 Production</option>
+                            </select>
+                        </div>
+                        <div class="sigma-field"><label>Start Date</label><input type="date" name="start_date" class="sigma-input"></div>
+                    </div>
+                    <div class="sigma-field"><label>Account Notes</label><textarea name="notes" placeholder="Contractual details or special requirements..." class="sigma-input" style="height: 100px; resize: none;"></textarea></div>
+                </div>
+            </div>
+            <div class="sigma-form-actions">
+                <button type="button" onclick="closeModal('modal-add-account')" class="isc-btn isc-btn-outline" style="padding: 1rem 3rem;">Cancel</button>
+                <button type="submit" class="isc-btn isc-btn-primary" style="padding: 1rem 4rem;">Create Account</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="modal-add-lead" class="isc-modal-overlay" style="display:none;">
+    <div class="isc-modal" style="max-width: 1100px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4rem;">
+            <div><h2 style="font-weight: 900; font-size: 2.25rem; color: var(--slate-900); letter-spacing: -0.02em;">Add New Lead</h2><p style="font-size: 0.875rem; color: var(--brand); margin-top: 0.25rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;">Quick Lead Entry</p></div>
+            <button onclick="closeModal('modal-add-lead')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 10px; cursor: pointer; color: var(--slate-400); transition: all 0.2s;">&times;</button>
+        </div>
+        <form action="{{ url_for('add_manual_lead') }}" method="POST" class="sigma-form-container">
+            <div class="sigma-form-section">
+                <!-- Column 1: Contact Information -->
+                <div class="sigma-form-group">
+                    <span class="sigma-form-header">Contact Information</span>
+                    <div class="sigma-field"><label>Company Name</label><input type="text" name="company_name" required placeholder="Legal Entity Name" class="sigma-input"></div>
+                    <div class="sigma-row sigma-row-60-40">
+                        <div class="sigma-field"><label>Main Manager</label><input type="text" name="decision_maker" placeholder="Full Name" class="sigma-input"></div>
+                        <div class="sigma-field"><label>Manager Title</label><input type="text" name="job_title" placeholder="e.g. Facilities Manager" class="sigma-input"></div>
+                    </div>
+                    <div class="sigma-row sigma-row-60-40">
+                        <div class="sigma-field"><label>Email Address</label><input type="email" name="email" required placeholder="client@company.com" class="sigma-input"></div>
+                        <div class="sigma-field"><label>Phone Number</label><input type="text" name="phone" placeholder="1-(000)-000-0000" class="sigma-input" oninput="maskPhone(event)"></div>
+                    </div>
+                    <div class="sigma-field"><label>Building Address</label><input type="text" name="address" required placeholder="Street Address" class="sigma-input" oninput="smartType(this, 'results-add-lead')"><div id="results-add-lead" class="address-results"></div></div>
+                    <div class="sigma-row sigma-row-60-40">
+                        <div class="sigma-field"><label>City</label><input type="text" name="city" placeholder="City" class="sigma-input"></div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                            <div class="sigma-field"><label>State</label><input type="text" name="state" placeholder="TX" class="sigma-input"></div>
+                            <div class="sigma-field"><label>Zip</label><input type="text" name="zipcode" placeholder="75024" class="sigma-input"></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Column 2: Building & Sales -->
+                <div class="sigma-form-group">
+                    <span class="sigma-form-header">Building & Sales</span>
+                    <div class="sigma-row sigma-row-60-40">
+                        <div class="sigma-field">
+                            <label>Building Type</label>
+                            <select name="facility_type" required class="sigma-input">
+                                <option value="Office">Office</option>
+                                <option value="Medical">Medical</option>
+                                <option value="Warehouse">Warehouse</option>
+                                <option value="Retail">Retail</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="sigma-field"><label>Building SQF</label><input type="number" name="sqf" placeholder="e.g. 5000" class="sigma-input"></div>
+                    </div>
+                    <div class="sigma-row sigma-row-60-40">
+                        <div class="sigma-field">
+                            <label>Traffic Cycle</label>
+                            <select name="traffic_cycle" required class="sigma-input">
+                                <option value="Slow">Slow Traffic</option>
+                                <option value="High" selected>High Traffic</option>
+                                <option value="24/7 Production">24/7 Production</option>
+                            </select>
+                        </div>
+                        <div class="sigma-field">
+                            <label>Service Type</label>
+                            <select name="service_interest" required class="sigma-input">
+                                <option value="Janitorial">Janitorial Cleaning</option>
+                                <option value="Post-Construction">Post-Construction</option>
+                                <option value="Window Cleaning">Window Cleaning</option>
+                                <option value="Floor Care">Floor Care / Polishing</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="sigma-row sigma-row-60-40">
+                        <div class="sigma-field"><label>How they found us</label><select name="lead_source" class="sigma-input"><option value="Google">Google Search</option><option value="Referral">Referral</option><option value="Flyer">Flyer</option><option value="Cold Call">Outreach</option></select></div>
+                        <div class="sigma-field"><label>Importance</label><select name="priority_level" class="sigma-input"><option value="Needs Call Now">CRITICAL</option><option value="Follow up soon">STANDARD</option><option value="Just looking">LOW</option></select></div>
+                    </div>
+                    <div class="sigma-field"><label>Work Notes</label><textarea name="notes" placeholder="Initial company insights..." class="sigma-input" style="height: 100px; resize: none;"></textarea></div>
+                </div>
+            </div>
+            <div class="sigma-form-actions">
+                <button type="button" onclick="closeModal('modal-add-lead')" class="isc-btn isc-btn-outline" style="padding: 1rem 3rem;">Cancel</button>
+                <button type="submit" class="isc-btn isc-btn-primary" style="padding: 1rem 4rem;">Add Lead</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="modal-search-help" class="isc-modal-overlay" style="display:none;">
+    <div class="isc-modal" style="max-width: 800px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem;">
+            <div><h2 style="font-weight: 900; font-size: 1.75rem; color: var(--slate-900);">Search Reports</h2><p style="font-size: 0.75rem; color: var(--slate-500); font-weight: 800; text-transform: uppercase;">SigmaFidelity™ Advanced Operators</p></div>
+            <button onclick="closeModal('modal-search-help')" style="background: none; border: none; font-size: 2.5rem; cursor: pointer; color: var(--slate-300);">&times;</button>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+            <div class="isc-list-item" style="padding: 1.25rem;"><div style="font-weight: 900; color: var(--brand); font-size: 0.7rem; margin-bottom: 0.5rem; text-transform: uppercase;">EXACT PHRASE</div><code style="background: var(--slate-100); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem; font-weight: 700;">"North Texas"</code><p style="font-size: 0.8rem; color: var(--slate-600); margin-top: 0.5rem;">Finds literal text matches within quotes.</p></div>
+            <div class="isc-list-item" style="padding: 1.25rem;"><div style="font-weight: 900; color: var(--brand); font-size: 0.7rem; margin-bottom: 0.5rem; text-transform: uppercase;">WILDCARDS</div><code style="background: var(--slate-100); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem; font-weight: 700;">Dist*</code><p style="font-size: 0.8rem; color: var(--slate-600); margin-top: 0.5rem;">The asterisk matches any following characters.</p></div>
+            <div class="isc-list-item" style="padding: 1.25rem;"><div style="font-weight: 900; color: var(--brand); font-size: 0.7rem; margin-bottom: 0.5rem; text-transform: uppercase;">EXCLUSION</div><code style="background: var(--slate-100); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem; font-weight: 700;">Lobby -Main</code><p style="font-size: 0.8rem; color: var(--slate-600); margin-top: 0.5rem;">Use the minus sign to hide specific results.</p></div>
+            <div class="isc-list-item" style="padding: 1.25rem;"><div style="font-weight: 900; color: var(--brand); font-size: 0.7rem; margin-bottom: 0.5rem; text-transform: uppercase;">FIELD TARGETING</div><code style="background: var(--slate-100); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem; font-weight: 700;">city:Plano industry:Medical</code><p style="font-size: 0.8rem; color: var(--slate-600); margin-top: 0.5rem;">Search specific columns directly.</p></div>
+            <div class="isc-list-item" style="padding: 1.25rem;"><div style="font-weight: 900; color: var(--brand); font-size: 0.7rem; margin-bottom: 0.5rem; text-transform: uppercase;">AMERICAN DATES</div><code style="background: var(--slate-100); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem; font-weight: 700;">04/10/2026 or 04/10/*</code><p style="font-size: 0.8rem; color: var(--slate-600); margin-top: 0.5rem;">The system automatically flips American dates to match the database engine.</p></div>
+            <div class="isc-list-item" style="padding: 1.25rem;"><div style="font-weight: 900; color: var(--brand); font-size: 0.7rem; margin-bottom: 0.5rem; text-transform: uppercase;">NUMERIC PRECISION</div><code style="background: var(--slate-100); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem; font-weight: 700;">sqf:>=10000</code><p style="font-size: 0.8rem; color: var(--slate-600); margin-top: 0.5rem;">Use <span style="color:var(--brand); font-weight:800;">&gt;, &lt;, &gt;=, &lt;=, =</span> for mathematical comparisons.</p></div>
+            <div class="isc-list-item" style="padding: 1.25rem;"><div style="font-weight: 900; color: var(--brand); font-size: 0.7rem; margin-bottom: 0.5rem; text-transform: uppercase;">RANGE SEARCH</div><code style="background: var(--slate-100); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem; font-weight: 700;">sqf:>10000 sqf:<20000</code><p style="font-size: 0.8rem; color: var(--slate-600); margin-top: 0.5rem;">Combine operators to isolate a specific data range.</p></div>
+        </div>
+    </div>
+</div>
+
+<!-- SigmaFidelity™ Decision Modal (Hardened 2026) -->
+<div id="modal-decision" class="isc-modal-overlay" style="display:none;">
+    <div class="isc-modal" style="max-width: 440px; text-align: center; padding: 3rem;">
+        <div id="decision-icon" style="font-size: 2.5rem; color: var(--brand); margin-bottom: 1.5rem;"><i class="fas fa-question-circle"></i></div>
+        <h2 id="decision-title" style="font-size: 1.5rem; font-weight: 800; color: var(--slate-900); margin-bottom: 0.5rem;">Are you sure?</h2>
+        <p id="decision-text" style="color: var(--slate-500); font-size: 0.95rem; margin-bottom: 2.5rem;">Please confirm this action to proceed.</p>
+        <div style="display: flex; gap: 1rem; justify-content: center;">
+            <button onclick="closeModal('modal-decision')" class="isc-btn isc-btn-outline" style="width: 140px;">Cancel</button>
+            <button id="btn-decision-confirm" class="isc-btn isc-btn-primary" style="width: 140px;">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentLeadId = null;
+    let currentAccountId = null;
+    let currentScope = []; 
+    const library = {{ library|safe }};
+
+    function toggleColumnMenu() { const m = document.getElementById('col-mgr-menu'); if(m) m.style.display = m.style.display === 'none' ? 'block' : 'none'; }
+    function toggleColumnMenuAcc() { const m = document.getElementById('col-mgr-menu-acc'); if(m) m.style.display = m.style.display === 'none' ? 'block' : 'none'; }
+    
+    function applyColumns(e) { e.preventDefault(); const formData = new FormData(e.target); const cols = formData.getAll('cols').join(','); const url = new URL(window.location); url.searchParams.set('cols', cols); window.location.href = url.href; }
+    function applyColumnsAcc(e) { e.preventDefault(); const formData = new FormData(e.target); const cols = formData.getAll('cols').join(','); const url = new URL(window.location); url.searchParams.set('cols', cols); window.location.href = url.href; }
+    
+    function resetColumns() { 
+        showDecision({
+            title: 'Reset your view?',
+            text: 'This will restore the standard columns for the Leads tab.',
+            confirmText: 'Reset View',
+            icon: 'fa-sync-alt',
+            onConfirm: () => {
+                const url = new URL(window.location);
+                url.searchParams.delete('cols');
+                window.location.href = url.href;
+            }
+        });
+    }
+    function resetColumnsAcc() { 
+        showDecision({
+            title: 'Reset your view?',
+            text: 'This will restore the standard columns for the Accounts tab.',
+            confirmText: 'Reset View',
+            icon: 'fa-sync-alt',
+            onConfirm: () => {
+                const url = new URL(window.location);
+                url.searchParams.delete('cols');
+                window.location.href = url.href;
+            }
+        });
+    }
+    
+    function iscQuickFilter(field, value) { const url = new URL(window.location); url.searchParams.set('q', `${field}:${value}`); url.searchParams.set('page', '1'); window.location.href = url.href; }
+    function iscFilter(tid, q, cid) { const f = q.toLowerCase(); let count = 0; document.querySelectorAll(`#${tid} tbody tr`).forEach(r => { const m = r.innerText.toLowerCase().includes(f); r.style.display = m ? '' : 'none'; if(m) count++; }); if(document.getElementById(cid)) document.getElementById(cid).innerText = `${count} Records Found`; }
+    
+    function iscSortLeads(col) {
+        const url = new URL(window.location);
+        let currentSort = url.searchParams.get('sort') || 'input_date';
+        let currentDir = url.searchParams.get('dir') || 'desc';
+        let newDir = (currentSort === col && currentDir.toLowerCase() === 'desc') ? 'asc' : 'desc';
+        url.searchParams.set('view', 'leads');
+        url.searchParams.set('sort', col);
+        url.searchParams.set('dir', newDir);
+        url.searchParams.set('page', '1');
+        window.location.href = url.href;
+    }
+    
+    function iscSortAcc(col) {
+        const url = new URL(window.location);
+        let currentSort = url.searchParams.get('sort') || 'company';
+        let currentDir = url.searchParams.get('dir') || 'asc';
+        let newDir = (currentSort === col && currentDir.toLowerCase() === 'asc') ? 'desc' : 'asc';
+        url.searchParams.set('view', 'accounts');
+        url.searchParams.set('sort', col);
+        url.searchParams.set('dir', newDir);
+        url.searchParams.set('page', '1');
+        window.location.href = url.href;
+    }
+
+    function showDecision(options) {
+        const modal = document.getElementById('modal-decision');
+        const title = document.getElementById('decision-title');
+        const text = document.getElementById('decision-text');
+        const icon = document.getElementById('decision-icon');
+        const confirmBtn = document.getElementById('btn-decision-confirm');
+        if(!modal) return;
+        
+        title.innerText = options.title || 'Are you sure?';
+        text.innerText = options.text || 'Please confirm to proceed.';
+        confirmBtn.innerText = options.confirmText || 'Confirm';
+        confirmBtn.style.background = options.isDestructive ? '#ef4444' : 'var(--brand-gradient)';
+        icon.style.color = options.isDestructive ? '#ef4444' : 'var(--brand)';
+        icon.innerHTML = `<i class="fas ${options.icon || 'fa-question-circle'}"></i>`;
+
+        confirmBtn.onclick = () => {
+            options.onConfirm();
+            closeModal('modal-decision');
+        };
+        openModal('modal-decision');
+    }
+
+    function showToast(message, type = 'success') {
+        const container = document.getElementById('isc-toast-container') || (function() {
+            const div = document.createElement('div');
+            div.id = 'isc-toast-container';
+            div.style.cssText = 'position: fixed; bottom: 2rem; right: 2rem; z-index: 9999; display: flex; flex-direction: column; gap: 1rem; pointer-events: none;';
+            document.body.appendChild(div);
+            return div;
+        })();
+        const toast = document.createElement('div');
+        const icon = type === 'success' ? '<i class="fas fa-check-circle" style="color: #10b981;"></i>' : '<i class="fas fa-exclamation-circle" style="color: #ef4444;"></i>';
+        const borderColor = type === 'success' ? '#10b981' : '#ef4444';
+        toast.style.cssText = `background: white; border-left: 4px solid ${borderColor}; padding: 1.25rem 2rem; border-radius: 0.5rem; box-shadow: 0 10px 25px rgba(0,0,0,0.1); font-weight: 700; color: var(--slate-800); display: flex; align-items: center; gap: 1rem; animation: slideInUp 0.3s ease forwards;`;
+        toast.innerHTML = `${icon} <span>${message}</span>`;
+        container.appendChild(toast);
+        setTimeout(() => {
+            toast.style.animation = 'fadeOut 0.3s ease forwards';
+            setTimeout(() => toast.remove(), 300);
+        }, 4000);
+    }
+
+    function formatDashboardDate(ts) { 
+        if(!ts) return '--/--/----'; 
+        // Force manual string split to avoid browser timezone subtraction
+        const isISO = ts.includes('T') || ts.includes(' ');
+        const datePart = ts.split(ts.includes('T') ? 'T' : ' ')[0];
+        const parts = datePart.split('-');
+        if (parts.length !== 3) return ts;
+        
+        const mdy = `${parts[1]}/${parts[2]}/${parts[0]}`;
+        
+        if (isISO) {
+            try {
+                const timePart = ts.split(ts.includes('T') ? 'T' : ' ')[1].split('.')[0];
+                const timeClean = timePart.substring(0, 5); // Just HH:MM
+                return `${mdy} @ ${timeClean}`;
+            } catch(e) { return mdy; }
+        }
+        return mdy;
+    }
+
+    function maskPhone(e) {
+        const input = e.target || e;
+        if (e.inputType === 'deleteContentBackward') return;
+        
+        let v = input.value.replace(/\D/g,'');
+        if (v.length > 10) v = v.substring(0, 10);
+        if (v.length > 6) input.value = `1-(${v.substring(0,3)})-${v.substring(3,6)}-${v.substring(6)}`;
+        else if (v.length > 3) input.value = `1-(${v.substring(0,3)})-${v.substring(3)}`;
+        else if (v.length > 0) input.value = `1-(${v}`;
+    }
+
+    async function pasteFromClipboard(inputId) {
+        try {
+            const text = await navigator.clipboard.readText();
+            if (text) {
+                const el = document.getElementById(inputId);
+                if(el) { el.value = text; showToast("Link captured from clipboard.", "success"); }
+            }
+        } catch (err) {
+            showToast("Clipboard access denied.", "error");
+        }
+    }
+
+    function verifyMapLink() {
+        const el = document.getElementById('visit-map-link');
+        if (el && el.value.startsWith('http')) { window.open(el.value, '_blank'); } 
+        else { showToast("Invalid or empty map link.", "error"); }
+    }
+    
+    function verifyMapLinkAcc() {
+        const el = document.getElementById('visit-map-link-acc');
+        if (el && el.value.startsWith('http')) { window.open(el.value, '_blank'); } 
+        else { showToast("Invalid or empty map link.", "error"); }
+    }
+
+    function openModal(id) { const el = document.getElementById(id); if(el) { el.style.display = 'flex'; document.body.style.overflow = 'hidden'; } }
+    function closeModal(id) { const el = document.getElementById(id); if(el) { el.style.display = 'none'; document.body.style.overflow = 'auto'; } }
+
+    function switchView(id) {
+        document.querySelectorAll('.isc-view').forEach(v => v.style.display = 'none');
+        document.querySelectorAll('.isc-btn').forEach(b => { if (b.id && b.id.startsWith('btn-')) { b.classList.remove('isc-btn-primary'); b.classList.add('isc-btn-outline'); } });
+        const targetView = document.getElementById('view-' + id);
+        if (targetView) targetView.style.display = 'block';
+        const activeBtn = document.getElementById('btn-' + id);
+        if (activeBtn) { activeBtn.classList.remove('isc-btn-outline'); activeBtn.classList.add('isc-btn-primary'); }
+        const url = new URL(window.location); url.searchParams.set('view', id); window.history.pushState({}, '', url);
+        const bTab = document.getElementById('breadcrumb-tab');
+        if (bTab) bTab.innerText = id.charAt(0).toUpperCase() + id.slice(1);
+    }
+
+    function iscTab(id) {
+        document.querySelectorAll('.isc-pane').forEach(p => p.style.display = 'none');
+        document.querySelectorAll('.isc-tab-trigger').forEach(t => { if(t.id && t.id.startsWith('tab-btn-')) t.classList.remove('active'); });
+        const pane = document.getElementById('pane-' + id);
+        if(pane) pane.style.display = 'flex';
+        const btn = document.getElementById('tab-btn-' + id);
+        if(btn) btn.classList.add('active');
+    }
+
+    function iscLeadTab(id) {
+        document.querySelectorAll('.isc-lead-pane').forEach(p => p.style.display = 'none');
+        document.querySelectorAll('.isc-tab-trigger').forEach(t => { if(t.id && t.id.startsWith('lead-tab-btn-')) t.classList.remove('active'); });
+        const pane = document.getElementById('lead-pane-' + id);
+        if(pane) pane.style.display = 'flex';
+        const btn = document.getElementById('lead-tab-btn-' + id);
+        if(btn) btn.classList.add('active');
+    }
+    function toggleRowMenu(id) {
+        const m = document.getElementById(id);
+        document.querySelectorAll('.isc-row-menu').forEach(x => { if(x.id !== id) x.style.display = 'none'; });
+        if(m) m.style.display = m.style.display === 'block' ? 'none' : 'block';
+    }
+
+    const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = val || ''; };
+
+    async function openLeadCommand(id, mode = 'overview') {
+        try {
+            const res = await fetch(`/api/v1/leads/${id}`);
+            if (!res.ok) throw new Error("Lead fetch failed");
+            const data = await res.json(); 
+            if (!data || !data.lead) throw new Error("Invalid lead data");
+            const lead = data.lead;
+            currentLeadId = id;
+            const subtitle = document.getElementById('lead-modal-subtitle');
+            if (subtitle) subtitle.innerText = `${lead.center_name || 'Unnamed'} • LEAD-${id}`;
+            
+            const overview = [
+                { label: 'Company', val: lead.center_name || '--' },
+                { label: 'Main Manager', val: (lead.decision_maker || '--') + (lead.job_title ? ' (' + lead.job_title + ')' : '') },
+                { label: 'Contact Hub', val: (lead.phone || '--') + ' | ' + (lead.email || '--') },
+                { label: 'Building Hub', val: (lead.address || '--') + ' | ' + (lead.city || '') + ', ' + (lead.state || '') + ' ' + (lead.zipcode || '') },
+                { label: 'Type', val: lead.facility_type || '--' },
+                { label: 'SQ Footage', val: (lead.sqf || 0).toLocaleString() + ' SQF' },
+                { label: 'Usage', val: lead.traffic_cycle || '--' },
+                { label: 'Status', val: lead.status || 'New' },
+                { label: 'Priority', val: lead.priority_level || 'Normal' },
+                { label: 'Expected Value', val: '$' + (lead.estimated_annual_value || 0).toLocaleString() },
+                { label: 'Next Action', val: formatDashboardDate(lead.next_action_date) },
+                { label: 'Lead Source', val: lead.lead_source || '--' },
+                { label: 'Industry', val: lead.industry || '--' },
+                { label: 'Service Interest', val: lead.service_interest || '--' }
+            ];
+            const listOverview = document.getElementById('lead-list-overview');
+            if (listOverview) { listOverview.innerHTML = overview.map(o => `<div class="isc-list-item"><div style="font-size:0.65rem; font-weight:500; color:var(--slate-500); text-transform:uppercase; margin-bottom:0.5rem">${o.label}</div><div style="font-weight:800; color:var(--slate-900); font-size:1.15rem">${o.val}</div></div>`).join(''); }
+
+            setVal('edit-lead-company', lead.center_name);
+            setVal('edit-lead-dm', lead.decision_maker);
+            setVal('edit-lead-job-title', lead.job_title);
+            setVal('edit-lead-email', lead.email);
+            setVal('edit-lead-phone', lead.phone);
+            setVal('edit-lead-address', lead.address);
+            setVal('edit-lead-city', lead.city);
+            setVal('edit-lead-state', lead.state);
+            setVal('edit-lead-zip', lead.zipcode);
+            setVal('edit-lead-sqf', lead.sqf);
+            setVal('edit-lead-status', lead.status);
+            setVal('edit-lead-value', lead.estimated_annual_value);
+            setVal('edit-lead-next', lead.next_action_date);
+            setVal('edit-lead-notes', lead.notes);
+            setVal('edit-lead-industry', lead.industry);
+            setVal('edit-lead-building', lead.facility_type);
+            setVal('edit-lead-traffic', lead.traffic_cycle);
+            setVal('edit-lead-priority', lead.priority_level);
+            setVal('edit-lead-source', lead.lead_source);
+            setVal('edit-lead-interest', lead.service_interest);
+            setVal('edit-lead-id', id);
+            
+            setVal('visit-manager', lead.decision_maker);
+            setVal('visit-phone', lead.phone);
+            const mapEl = document.getElementById('visit-map-link');
+            if(mapEl) {
+                const query = encodeURIComponent(`${lead.address || ''} ${lead.city || ''} ${lead.state || ''}`.trim());
+                mapEl.value = query ? `https://www.google.com/maps/search/?api=1&query=${query}` : '';
+            }
+
+            setVal('lead-action-manager', lead.decision_maker);
+            setVal('lead-action-phone', lead.phone);
+            setVal('lead-action-email', lead.email);
+
+            const contactList = document.getElementById('lead-list-contacts');
+            if (contactList) {
+                contactList.innerHTML = (data.contacts || []).map(c => `<div class="isc-list-item"><div style="font-weight:900; font-size:1.1rem">${c.full_name}</div><div style="font-size:0.75rem; color:var(--brand); font-weight:800; text-transform:uppercase;">${c.role || 'Lead Contact'}</div><div style="height:1px; background:var(--slate-100); margin:1rem 0;"></div><div style="display:flex; gap:1.5rem;"><div style="font-size:0.85rem; color:var(--slate-600);"><i class="fas fa-phone"></i> ${c.phone || '--'}</div><div style="font-size:0.85rem; color:var(--slate-600);"><i class="fas fa-envelope"></i> ${c.email || '--'}</div></div></div>`).join('') || '<p style="text-align:center; padding:2rem; color:var(--slate-400);">No additional contacts.</p>';
+            }
+
+            const typeMap = { 'LEAD_CREATED': 'Lead added', 'PHONE_CALL': 'Phone call', 'EMAIL_SENT': 'Email sent', 'SITE_VISIT': 'Building visit', 'NOTE': 'Note added' };
+            const timeline = document.getElementById('lead-list-timeline');
+            if (timeline) {
+                timeline.innerHTML = (data.activities || []).map(a => `<div class="timeline-node"><div style="font-size:0.7rem; font-weight:900; color:var(--brand); text-transform:uppercase"><i class="fas fa-stream"></i> ${formatDashboardDate(a.timestamp)}</div><div style="font-weight:800; margin:0.5rem 0;">${typeMap[a.activity_type] || a.activity_type}</div><div style="font-size:0.9rem; color:var(--slate-600)">${a.description}</div></div>`).join('') || '<p style="text-align:center; padding:2rem; color:var(--slate-400);">No history.</p>';
+            }
+
+            const paneEdit = document.getElementById('lead-pane-edit');
+            const paneOverview = document.getElementById('lead-pane-overview');
+            const tabs = document.getElementById('lead-modal-tabs');
+            if (mode === 'edit') {
+                if(paneEdit) paneEdit.style.display = 'flex'; if(paneOverview) paneOverview.style.display = 'none'; if(tabs) tabs.style.display = 'none';
+            } else if (['actions', 'visit', 'contacts', 'timeline', 'visit-confirm'].includes(mode)) {
+                if(paneEdit) paneEdit.style.display = 'none'; if(paneOverview) paneOverview.style.display = 'none'; if(tabs) tabs.style.display = 'flex';
+                iscLeadTab(mode);
+            } else {
+                if(paneEdit) paneEdit.style.display = 'none'; if(paneOverview) paneOverview.style.display = 'flex'; if(tabs) tabs.style.display = 'flex';
+                iscLeadTab('overview');
+            }
+            openModal('modal-lead-command');
+        } catch (err) { console.error("Lead Error:", err); showToast("Failed to load Lead.", "error"); }
+    }
+
+    async function openAccountCommand(id, mode = 'overview') {
+        try {
+            const res = await fetch(`/api/v1/accounts/${id}`);
+            if (!res.ok) throw new Error("Account fetch failed");
+            const data = await res.json();
+            if (!data || !data.account) throw new Error("Invalid account data");
+            const acc = data.account;
+            currentAccountId = id;
+            const subtitle = document.getElementById('modal-subtitle');
+            if (subtitle) subtitle.innerText = `${acc.company_name || 'Unnamed'} • ACC-${id}`;
+            
+            const overview = [
+                { label: 'Company', val: acc.company_name || '--' },
+                { label: 'Main Manager', val: acc.contact_person_name || '--' },
+                { label: 'Contact Hub', val: (acc.phone || '--') + ' | ' + (acc.email || '--') },
+                { label: 'Building Hub', val: (acc.company_address || '--') + ' | ' + (acc.city || '') + ', ' + (acc.state || '') + ' ' + (acc.zip || '') },
+                { label: 'SQ Footage', val: (acc.sqf || 0).toLocaleString() + ' SQF' },
+                { label: 'Traffic Cycle', val: acc.traffic_cycle || 'High' },
+                { label: 'Status', val: acc.status || 'Active' },
+                { label: 'Estimated Value', val: '$' + (acc.annual_revenue || 0).toLocaleString() },
+                { label: 'Next Action', val: formatDashboardDate(acc.next_action_date) },
+                { label: 'Quote #', val: acc.quote_number || '--' },
+                { label: 'Frequency', val: acc.frequency || '--' },
+                { label: 'Contract Period', val: acc.contract_period || '--' },
+                { label: 'Started', val: (acc.start_date || '--') + ' @ ' + (acc.start_time || '--') },
+                { label: 'Website', val: acc.website || '--' },
+                { label: 'Billing Address', val: acc.billing_address || 'Same as site' }
+            ];
+            const listOverview = document.getElementById('list-overview');
+            if (listOverview) { listOverview.innerHTML = overview.map(o => `<div class="isc-list-item"><div style="font-size:0.65rem; font-weight:500; color:var(--slate-500); text-transform:uppercase; margin-bottom:0.5rem">${o.label}</div><div style="font-weight:800; color:var(--slate-900); font-size:1.15rem">${o.val}</div></div>`).join(''); }
+
+            setVal('form-acc-name', acc.company_name);
+            setVal('form-acc-manager', acc.contact_person_name);
+            setVal('form-acc-email', acc.email);
+            setVal('form-acc-phone', acc.phone);
+            setVal('form-acc-address', acc.company_address);
+            setVal('form-acc-city', acc.city);
+            setVal('form-acc-state', acc.state);
+            setVal('form-acc-zip', acc.zip);
+            setVal('form-acc-sqf', acc.sqf);
+            setVal('form-acc-traffic', acc.traffic_cycle);
+            setVal('form-acc-revenue', acc.annual_revenue);
+            setVal('form-acc-quote', acc.quote_number);
+            setVal('form-acc-frequency', acc.frequency);
+            setVal('form-acc-status', acc.status);
+            setVal('form-acc-notes', acc.notes);
+            setVal('form-acc-website', acc.website);
+            setVal('form-acc-period', acc.contract_period);
+            setVal('form-acc-start-date', acc.start_date);
+            setVal('form-acc-start-time', acc.start_time);
+            setVal('form-acc-billing', acc.billing_address);
+            setVal('form-acc-next', acc.next_action_date);
+            setVal('form-acc-id', id);
+            setVal('activity-parent-id', id);
+
+            setVal('acc-action-manager', acc.contact_person_name);
+            setVal('acc-action-phone', acc.phone);
+            setVal('acc-action-email', acc.email);
+            setVal('visit-manager-acc', acc.contact_person_name);
+            setVal('visit-phone-acc', acc.phone);
+            const mapAcc = document.getElementById('visit-map-link-acc');
+            if(mapAcc) {
+                const query = encodeURIComponent(`${acc.company_address || ''} ${acc.city || ''} ${acc.state || ''}`.trim());
+                mapAcc.value = query ? `https://www.google.com/maps/search/?api=1&query=${query}` : '';
+            }
+
+            const contactList = document.getElementById('list-contacts');
+            if (contactList) {
+                contactList.innerHTML = (data.contacts || []).map(c => `<div class="isc-list-item"><div style="font-weight:900; font-size:1.1rem">${c.full_name}</div><div style="font-size:0.75rem; color:var(--brand); font-weight:800; text-transform:uppercase;">${c.role || 'Contact'}</div><div style="height:1px; background:var(--slate-100); margin:1rem 0;"></div><div style="display:flex; gap:1.5rem;"><div style="font-size:0.85rem; color:var(--slate-600);"><i class="fas fa-phone"></i> ${c.phone || '--'}</div><div style="font-size:0.85rem; color:var(--slate-600);"><i class="fas fa-envelope"></i> ${c.email || '--'}</div></div></div>`).join('') || '<p style="text-align:center; padding:2rem; color:var(--slate-400);">No additional contacts.</p>';
+            }
+
+            const typeMap = { 'NOTE': 'Note added', 'PHONE_CALL': 'Phone call', 'CONVERTED': 'Converted to Client' };
+            const timeline = document.getElementById('list-timeline');
+            if (timeline) {
+                timeline.innerHTML = (data.activities || []).map(a => `<div class="timeline-node" style="padding:1.5rem; background:var(--slate-50); margin-bottom:1rem; border-radius:10px"><div style="font-size:0.7rem; font-weight:900; color:var(--brand)"><i class="fas fa-stream"></i> ${formatDashboardDate(a.timestamp)}</div><div style="font-weight:800; margin:0.5rem 0">${typeMap[a.activity_type] || a.activity_type}</div><div style="font-size:0.9rem">${a.description}</div></div>`).join('') || '<p style="text-align:center; padding:2rem; color:var(--slate-400);">No history.</p>';
+            }
+
+            const paneEdit = document.getElementById('pane-edit-account');
+            const paneOverview = document.getElementById('pane-overview');
+            const tabs = document.getElementById('account-modal-tabs');
+            if (mode === 'edit') {
+                if(paneEdit) paneEdit.style.display = 'flex'; if(paneOverview) paneOverview.style.display = 'none'; if(tabs) tabs.style.display = 'none';
+            } else if (['actions', 'contacts', 'timeline', 'visit', 'visit-confirm'].includes(mode)) {
+                if(paneEdit) paneEdit.style.display = 'none'; if(paneOverview) paneOverview.style.display = 'none'; if(tabs) tabs.style.display = 'flex';
+                iscTab(mode);
+            } else {
+                if(paneEdit) paneEdit.style.display = 'none'; if(paneOverview) paneOverview.style.display = 'flex'; if(tabs) tabs.style.display = 'flex';
+                iscTab('overview');
+            }
+            openModal('modal-account-command');
+        } catch (err) { console.error("Account Error:", err); showToast("Failed to load Account.", "error"); }
+    }
+
+    async function logActivity(e) {
+        e.preventDefault();
+        const id = currentAccountId;
+        if (!id) { showToast("Error: No Account ID", "error"); return; }
+
+        const type = document.getElementById('activity-type').value;
+        const desc = document.getElementById('activity-desc').value;
+        const autoFollow = document.getElementById('update-next-action-acc').checked;
+
+        showToast("Synchronizing note...", "success");
+
+        try {
+            const res = await fetch('/api/v1/activities', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ parent_id: id, parent_type: 'Account', activity_type: type, description: desc, auto_followup: autoFollow }) 
+            });
+            
+            const result = res.ok ? await res.json().catch(() => ({})) : null;
+
+            if (res.ok) { 
+                document.getElementById('activity-desc').value = ''; 
+                showToast("Note finalized.", "success"); 
+                // Refresh modal data to show new note in timeline
+                await openAccountCommand(id, 'timeline'); 
+                syncOperationalData();
+            } else {
+                const err = result || {message: "Submission failed"};
+                showToast("System Error: " + (err.message || "Failed to save"), "error");
+            }
+        } catch (err) {
+            console.error("Log Error:", err);
+            showToast("Network Error: Could not reach server", "error");
+        }
+    }
+
+    async function logLeadActivity(e) {
+        e.preventDefault();
+        const id = currentLeadId;
+        if (!id) { showToast("Error: No Lead ID", "error"); return; }
+
+        const type = document.getElementById('lead-activity-type').value;
+        const desc = document.getElementById('lead-activity-desc').value;
+        const autoFollow = document.getElementById('update-next-action').checked;
+
+        showToast("Synchronizing note...", "success");
+
+        try {
+            const res = await fetch('/api/v1/activities', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ parent_id: id, parent_type: 'Lead', activity_type: type, description: desc, auto_followup: autoFollow }) 
+            });
+            
+            const result = res.ok ? await res.json().catch(() => ({})) : null;
+
+            if (res.ok) { 
+                document.getElementById('lead-activity-desc').value = ''; 
+                showToast("Note finalized.", "success"); 
+                // Refresh modal data to show new note in timeline
+                await openLeadCommand(id, 'timeline');
+                syncOperationalData();
+            } else {
+                const err = result || {message: "Submission failed"};
+                showToast("System Error: " + (err.message || "Failed to save"), "error");
+            }
+        } catch (err) {
+            console.error("Log Error:", err);
+            showToast("Network Error: Could not reach server", "error");
+        }
+    }
+
+    // --- SigmaFidelity™ Grid Re-hydration Engine ---
+    async function syncOperationalData() {
+        console.log("[SYNC] Initiating high-fidelity data synchronization...");
+        const url = new URL(window.location.href);
+        url.searchParams.set('format', 'json');
+        
+        try {
+            const res = await fetch(url.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+            
+            const contentType = res.headers.get("content-type");
+            console.log("[SYNC] Content-Type:", contentType);
+
+            if (!res.ok) {
+                const text = await res.text();
+                throw new Error(`Server returned ${res.status}: ${text.substring(0, 100)}`);
+            }
+
+            if (!contentType || !contentType.includes("application/json")) {
+                const text = await res.text();
+                console.error("[SYNC] Received non-JSON response:", text.substring(0, 200));
+                throw new Error("Received HTML instead of JSON. Check session status.");
+            }
+
+            const data = await res.json();
+            
+            if (!data || !data.leads || !data.clients) throw new Error("Incomplete data payload received");
+
+            // 1. Update Leads Table
+            const leadsBody = document.querySelector('#table-leads tbody');
+            if (leadsBody) {
+                leadsBody.innerHTML = data.leads.map(lead => {
+                    try { return buildLeadRow(lead); } catch(e) { console.error("Lead Row Error:", e, lead); return ''; }
+                }).join('');
+            }
+            
+            // 2. Update Accounts Table
+            const accBody = document.querySelector('#table-accounts tbody');
+            if (accBody) {
+                accBody.innerHTML = data.clients.map(client => {
+                    try { return buildAccountRow(client); } catch(e) { console.error("Account Row Error:", e, client); return ''; }
+                }).join('');
+            }
+
+            // 3. Update Global Tab Counts
+            const btnLeads = document.getElementById('btn-leads');
+            const btnAccounts = document.getElementById('btn-accounts');
+            if (btnLeads && data.counts) btnLeads.innerText = `Leads (${data.counts.leads})`;
+            if (btnAccounts && data.counts) btnAccounts.innerText = `Accounts (${data.counts.accounts})`;
+
+            showToast("System state synchronized.", "success");
+        } catch (err) {
+            console.error("[SYNC] Fatal Error:", err);
+            showToast("Sync Error: " + err.message, "error");
+        }
+    }
+
+    function buildLeadRow(lead) {
+        if (!lead) return '';
+        let rowHtml = `<tr class="leads-row">`;
+        
+        // Dynamically identify active columns from the table header
+        const activeCols = Array.from(document.querySelectorAll('#table-leads thead th[data-col]')).map(th => th.dataset.col);
+        
+        activeCols.forEach(col => {
+            if (col === 'company') {
+                rowHtml += `<td class="sticky-1"><div class="sigma-unit-data"><div class="sigma-unit-primary">${lead.center_name || 'Unnamed'}</div><div class="sigma-unit-secondary" style="font-weight: 500;">${lead.address || '--'}</div></div></td>`;
+            } else if (col === 'status') {
+                rowHtml += `<td class="sticky-2"><span class="sigma-unit-pill" style="background:#f1f5f9; color:#475569">${lead.status || 'New'}</span></td>`;
+            } else if (col === 'dm') {
+                rowHtml += `<td class="sticky-3"><div class="sigma-unit-data"><div class="sigma-unit-primary" style="font-size:0.85rem">${lead.decision_maker || '--'}</div><div class="sigma-unit-secondary" style="font-weight: 500;">${lead.job_title || 'Owner/Manager'}</div></div></td>`;
+            } else if (col === 'building') {
+                rowHtml += `<td>${lead.facility_type || '--'}</td>`;
+            } else if (col === 'sqf') {
+                rowHtml += `<td style="font-weight:700">${(lead.sqf || 0).toLocaleString()}</td>`;
+            } else if (col === 'value') {
+                rowHtml += `<td style="font-weight:800; color:var(--brand)">$${(lead.estimated_annual_value || 0).toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}</td>`;
+            } else if (col === 'priority') {
+                rowHtml += `<td><span class="sigma-unit-pill" style="background:#fff7ed; color:#c2410c">${lead.priority_level || 'Normal'}</span></td>`;
+            } else if (col === 'address') {
+                rowHtml += `<td><small>${lead.address || '--'}</small></td>`;
+            } else if (col === 'city') {
+                rowHtml += `<td>${lead.city || '--'}</td>`;
+            } else if (col === 'state') {
+                rowHtml += `<td>${lead.state || '--'}</td>`;
+            } else if (col === 'zip') {
+                rowHtml += `<td>${lead.zipcode || '--'}</td>`;
+            } else if (col === 'phone') {
+                rowHtml += `<td><a href="tel:${lead.phone}" style="color:var(--brand); text-decoration:none">${lead.phone || '--'}</a></td>`;
+            } else if (col === 'email') {
+                rowHtml += `<td><small>${lead.email || '--'}</small></td>`;
+            } else if (col === 'input_date') {
+                rowHtml += `<td>${formatDashboardDate(lead.input_date)}</td>`;
+            } else if (col === 'next_action') {
+                rowHtml += `<td>${lead.next_action_date || '--'}</td>`;
+            } else if (col === 'activities') {
+                rowHtml += `<td style="text-align:center; font-weight:800">${lead.activity_count || 0}</td>`;
+            } else if (col === 'source') {
+                rowHtml += `<td>${lead.lead_source || '--'}</td>`;
+            } else if (col === 'interest') {
+                rowHtml += `<td>${lead.service_interest || '--'}</td>`;
+            }
+        });
+
+        rowHtml += `<td style="text-align: right;">
+            <div style="position: relative; display: inline-block;">
+                <button onclick="toggleRowMenu('lead-menu-${lead.id}')" class="isc-btn isc-btn-outline" style="padding: 0.5rem; width: 32px; height: 32px;">
+                    <i class="fas fa-cog fa-spin-hover" style="font-size: 0.85rem; color: var(--slate-400);"></i>
+                </button>
+                <div id="lead-menu-${lead.id}" class="isc-row-menu" style="display: none; position: absolute; top: 100%; right: 0; background: white; border: 1px solid var(--slate-200); border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 1000; width: 240px; padding: 0.5rem;">
+                    <button onclick="openLeadCommand('${lead.id}')" class="isc-dropdown-btn"><i class="fas fa-info-circle" style="margin-right:0.75rem; color: var(--brand); width: 14px;"></i> Lead Details</button>
+                    <button onclick="openLeadCommand('${lead.id}', 'edit')" class="isc-dropdown-btn"><i class="fas fa-edit" style="margin-right:0.75rem; color: var(--slate-400); width: 14px;"></i> Edit Strategic</button>
+                    <div style="height: 1px; background: var(--slate-100); margin: 0.5rem 0;"></div>
+                    <button onclick="openLeadCommand('${lead.id}', 'actions')" class="isc-dropdown-btn"><i class="fas fa-plus-circle" style="margin-right:0.75rem; color: #10b981; width: 14px;"></i> Add Note</button>
+                    <button onclick="openLeadCommand('${lead.id}', 'visit')" class="isc-dropdown-btn"><i class="fas fa-calendar-alt" style="margin-right:0.75rem; color: #f59e0b; width: 14px;"></i> Request Visit</button>
+                    <div style="height: 1px; background: var(--slate-100); margin: 0.5rem 0;"></div>
+                    <button onclick="promoteLead('${lead.id}')" class="isc-dropdown-btn" style="color: var(--brand);"><i class="fas fa-exchange-alt" style="margin-right:0.75rem; width: 14px;"></i> Move to Clients</button>
+                    <button onclick="deleteLead('${lead.id}')" class="isc-dropdown-btn" style="color: #ef4444;"><i class="fas fa-trash-alt" style="margin-right:0.75rem; width: 14px;"></i> Delete Lead</button>
+                </div>
+            </div>
+        </td></tr>`;
+        return rowHtml;
+    }
+
+    function buildAccountRow(client) {
+        if (!client) return '';
+        let rowHtml = `<tr>`;
+        
+        // Dynamically identify active columns from the table header
+        const activeCols = Array.from(document.querySelectorAll('#table-accounts thead th[data-col]')).map(th => th.dataset.col);
+        
+        activeCols.forEach(col => {
+            if (col === 'company') {
+                rowHtml += `<td class="sticky-1"><div class="sigma-unit-data"><div class="sigma-unit-primary">${client.company_name}</div><div class="sigma-unit-secondary" style="font-weight: 500;">ACC-${client.customer_id}</div></div></td>`;
+            } else if (col === 'status') {
+                rowHtml += `<td class="sticky-2"><span class="sigma-unit-pill" style="background:#f1f5f9; color:#475569">${client.status || 'Active'}</span></td>`;
+            } else if (col === 'contact') {
+                rowHtml += `<td class="sticky-3"><div class="sigma-unit-data"><div class="sigma-unit-primary" style="font-size:0.85rem">${client.contact_person_name || '--'}</div><div class="sigma-unit-secondary" style="font-weight: 500;">Main Manager</div></div></td>`;
+            } else if (col === 'address') {
+                rowHtml += `<td><small style="font-weight:600; color:var(--slate-600)">${client.company_address || '--'}</small></td>`;
+            } else if (col === 'city') {
+                rowHtml += `<td>${client.city || '--'}</td>`;
+            } else if (col === 'state') {
+                rowHtml += `<td>${client.state || '--'}</td>`;
+            } else if (col === 'zip') {
+                rowHtml += `<td>${client.zip || '--'}</td>`;
+            } else if (col === 'phone') {
+                rowHtml += `<td><a href="tel:${client.phone}" style="color:var(--brand); text-decoration:none">${client.phone || '--'}</a></td>`;
+            } else if (col === 'email') {
+                rowHtml += `<td><small>${client.email || '--'}</small></td>`;
+            } else if (col === 'revenue') {
+                rowHtml += `<td style="font-weight:800; color:var(--brand)">$${(client.annual_revenue || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>`;
+            } else if (col === 'sqf') {
+                rowHtml += `<td>${(client.sqf || 0).toLocaleString()}</td>`;
+            } else if (col === 'cycle') {
+                rowHtml += `<td>${client.traffic_cycle || '--'}</td>`;
+            } else if (col === 'quote') {
+                rowHtml += `<td>${client.quote_number || '--'}</td>`;
+            } else if (col === 'frequency') {
+                rowHtml += `<td>${client.frequency || '--'}</td>`;
+            } else if (col === 'activities') {
+                rowHtml += `<td style="text-align:center; font-weight:800">${client.activity_count || 0}</td>`;
+            } else if (col === 'start_date') {
+                rowHtml += `<td>${client.start_date || '--'}</td>`;
+            } else if (col === 'website') {
+                rowHtml += `<td><small>${client.website || '--'}</small></td>`;
+            }
+        });
+
+        rowHtml += `<td style="text-align: right;">
+            <div style="position: relative; display: inline-block;">
+                <button onclick="toggleRowMenu('acc-menu-${client.customer_id}')" class="isc-btn isc-btn-outline" style="padding: 0.5rem; width: 32px; height: 32px;">
+                    <i class="fas fa-cog fa-spin-hover" style="font-size: 0.85rem; color: var(--slate-400);"></i>
+                </button>
+                <div id="acc-menu-${client.customer_id}" class="isc-row-menu" style="display: none; position: absolute; top: 100%; right: 0; background: white; border: 1px solid var(--slate-200); border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 1000; width: 240px; padding: 0.5rem;">
+                    <button onclick="openAccountCommand('${client.customer_id}')" class="isc-dropdown-btn"><i class="fas fa-info-circle" style="margin-right:0.75rem; color: var(--brand); width: 14px;"></i> Account Details</button>
+                    <button onclick="openAccountCommand('${client.customer_id}', 'edit')" class="isc-dropdown-btn"><i class="fas fa-edit" style="margin-right:0.75rem; color: var(--slate-400); width: 14px;"></i> Edit Account</button>
+                    <div style="height: 1px; background: var(--slate-100); margin: 0.5rem 0;"></div>
+                    <button onclick="openAccountCommand('${client.customer_id}', 'actions')" class="isc-dropdown-btn"><i class="fas fa-plus-circle" style="margin-right:0.75rem; color: #10b981; width: 14px;"></i> Add Note</button>
+                    <button onclick="openAccountCommand('${client.customer_id}', 'contacts')" class="isc-dropdown-btn"><i class="fas fa-users" style="margin-right:0.75rem; color: #6366f1; width: 14px;"></i> Contacts</button>
+                    <div style="height: 1px; background: var(--slate-100); margin: 0.5rem 0;"></div>
+                    <button onclick="deleteAccount('${client.customer_id}')" class="isc-dropdown-btn" style="color: #ef4444;"><i class="fas fa-trash-alt" style="margin-right:0.75rem; width: 14px;"></i> Delete Account</button>
+                </div>
+            </div>
+        </td></tr>`;
+        return rowHtml;
+    }
+
+    async function updateAccount(e) {
+        e.preventDefault();
+        const id = document.getElementById('form-acc-id').value || currentAccountId;
+        if (!id) { showToast("Error: No Account ID identified", "error"); return; }
+
+        const formData = new FormData(e.target);
+        const payload = Object.fromEntries(formData.entries());
+
+        // --- SigmaFidelity™ Data Normalization (BUG-010) ---
+        if (payload.sqf === "" || payload.sqf === null) payload.sqf = 0;
+        if (payload.annual_revenue === "" || payload.annual_revenue === null) payload.annual_revenue = 0.0;
+        if (payload.start_date) payload.next_action_date = payload.start_date;
+
+        showToast("Synchronizing Account data...", "success");
+
+        try {
+            const res = await fetch(`/api/v1/accounts/${id}`, { 
+                method: 'PUT', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify(payload) 
+            });
+
+            if (res.ok) { 
+                showToast("Account updated successfully.", "success"); 
+                // Refresh Modal with new data and return to Overview
+                await openAccountCommand(id, 'overview');
+                // Refresh background table
+                syncOperationalData();
+            } else {
+                const result = await res.json().catch(() => ({}));
+                showToast("System Error: " + (result.message || "Update failed"), "error");
+            }
+        } catch (err) {
+            console.error("Update Error:", err);
+            showToast("Network Error: Could not reach the server", "error");
+        }
+    }
+    async function saveLeadUpdate(e) {
+        e.preventDefault();
+        const id = document.getElementById('edit-lead-id').value || currentLeadId;
+        if (!id) { showToast("Error: No Lead ID identified", "error"); return; }
+
+        const formData = new FormData(e.target);
+        const payload = Object.fromEntries(formData.entries());
+        
+        // --- SigmaFidelity™ Data Normalization ---
+        // Ensure numeric fields are correctly typed for Postgres
+        if (payload.sqf === "") payload.sqf = 0;
+        if (payload.estimated_annual_value === "") payload.estimated_annual_value = 0.0;
+        
+        showToast("Synchronizing lead data...", "success");
+
+        try {
+            const res = await fetch(`/api/v1/leads/${id}`, { 
+                method: 'PUT', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify(payload) 
+            });
+            
+            const result = res.ok ? await res.json().catch(() => ({status: 'error', message: 'Invalid JSON response'})) : null;
+
+            if (res.ok) { 
+                showToast("Strategic update complete.", "success"); 
+                syncOperationalData();
+            } else {
+                const errData = result || {message: "Update failed"};
+                showToast("System Error: " + (errData.message || "Update failed"), "error");
+            }
+        } catch (err) {
+            console.error("Save Error:", err);
+            showToast("Network Error: Could not reach the server", "error");
+        }
+    }
+
+    async function promoteLead(rowId) {
+        const id = rowId || currentLeadId;
+        showDecision({ title: 'Change to Client?', text: 'This will move the lead to your active client list.', confirmText: 'Move to Clients', icon: 'fa-exchange-alt', onConfirm: async () => {
+            showToast("Promoting lead to Account...", "success");
+            try {
+                const res = await fetch(`/api/v1/leads/${id}/promote`, { method: 'POST' });
+                const result = await res.json().catch(() => ({status: 'error', message: 'Invalid JSON response'}));
+                if (res.ok) { 
+                    showToast("Lead moved to Clients.", "success"); 
+                    syncOperationalData(); 
+                } else {
+                    showToast("Promotion failed: " + (result.message || "Unknown error"), "error");
+                }
+            } catch (err) {
+                showToast("Network error during promotion.", "error");
+            }
+        }});
+    }
+
+    async function deleteLead(rowId) {
+        const id = rowId || currentLeadId;
+        showDecision({ title: 'Delete this Lead?', text: 'This action is permanent.', confirmText: 'Delete Lead', isDestructive: true, icon: 'fa-trash-alt', onConfirm: async () => {
+            const res = await fetch(`/api/v1/leads/${id}`, { method: 'DELETE' });
+            if (res.ok) { showToast("Record deleted.", "success"); syncOperationalData(); }
+        }});
+    }
+
+    async function deleteAccount(rowId) {
+        const id = rowId || currentAccountId;
+        showDecision({ title: 'Delete this Account?', text: 'This action is permanent.', confirmText: 'Delete Account', isDestructive: true, icon: 'fa-trash-alt', onConfirm: async () => {
+            const res = await fetch(`/api/v1/accounts/${id}`, { method: 'DELETE' });
+            if (res.ok) { showToast("Account deleted.", "success"); syncOperationalData(); }
+        }});
+    }
+
+    async function saveVisitRequest(e) {
+        e.preventDefault();
+        const id = currentLeadId;
+        if (!id) { showToast("Error: No Lead identified", "error"); return; }
+        
+        const date = document.getElementById('visit-date').value;
+        const time = document.getElementById('visit-time').value || 'Not specified';
+        const manager = document.getElementById('visit-manager').value || '--';
+        const phone = document.getElementById('visit-phone').value || '--';
+        const instructions = document.getElementById('visit-instructions').value;
+        
+        try {
+            const res = await fetch(`/api/v1/leads/${id}`, { 
+                method: 'PUT', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ 
+                    next_action_date: date, 
+                    notes: `[VISIT SCHEDULED] Manager: ${manager} | ${instructions}` 
+                }) 
+            });
+            
+            if (res.ok) {
+                // Populate Confirmation Pane (Receipt)
+                const setElText = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
+                setElText('confirm-visit-date', formatDashboardDate(date));
+                setElText('confirm-visit-time', time);
+                setElText('confirm-visit-manager', manager);
+                setElText('confirm-visit-phone', phone);
+                
+                showToast(`Visit scheduled for ${formatDashboardDate(date)}.`, "success");
+                
+                // Background Sync: Refresh history/timeline without closing modal
+                openLeadCommand(id, 'visit-confirm'); 
+            } else {
+                showToast("System Error: Failed to schedule visit.", "error");
+            }
+        } catch (err) {
+            console.error("Visit Error:", err);
+            showToast("Network Error: Could not reach the server.", "error");
+        }
+    }
+
+    async function saveVisitRequestAcc(e) {
+        e.preventDefault();
+        const id = currentAccountId;
+        if (!id) { showToast("Error: No Account identified", "error"); return; }
+        
+        const date = document.getElementById('visit-date-acc').value;
+        const time = document.getElementById('visit-time-acc').value || 'Not specified';
+        const manager = document.getElementById('visit-manager-acc').value || '--';
+        const phone = document.getElementById('visit-phone-acc').value || '--';
+        const instructions = document.getElementById('visit-instructions-acc').value;
+        
+        try {
+            const res = await fetch(`/api/v1/accounts/${id}`, { 
+                method: 'PUT', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ 
+                    next_action_date: date, 
+                    notes: `[VISIT SCHEDULED] Manager: ${manager} | ${instructions}` 
+                }) 
+            });
+            
+            if (res.ok) {
+                // Populate Confirmation Pane
+                const setElText = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
+                setElText('confirm-visit-date-acc', formatDashboardDate(date));
+                setElText('confirm-visit-time-acc', time);
+                setElText('confirm-visit-manager-acc', manager);
+                setElText('confirm-visit-phone-acc', phone);
+                
+                showToast(`Visit scheduled for ${formatDashboardDate(date)}.`, "success");
+                
+                // Background Sync: Refresh history/timeline while showing receipt
+                openAccountCommand(id, 'visit-confirm'); 
+            } else {
+                showToast("System Error: Failed to schedule visit.", "error");
+            }
+        } catch (err) {
+            console.error("Visit Error:", err);
+            showToast("Network Error: Could not reach the server.", "error");
+        }
+    }
+
+    async function addAccountContact(e) {
+        e.preventDefault();
+        const id = currentAccountId;
+        const payload = { full_name: document.getElementById('acc-contact-name').value, role: document.getElementById('acc-contact-role').value, email: document.getElementById('acc-contact-email').value, phone: document.getElementById('acc-contact-phone').value };
+        const res = await fetch(`/api/v1/accounts/${id}/contacts`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        if (res.ok) { showToast("Contact added.", "success"); e.target.reset(); await openAccountCommand(id, 'contacts'); }
+    }
+
+    async function addLeadContact(e) {
+        e.preventDefault();
+        const id = currentLeadId;
+        const payload = { full_name: document.getElementById('lead-contact-name').value, role: document.getElementById('lead-contact-role').value, email: document.getElementById('lead-contact-email').value, phone: document.getElementById('lead-contact-phone').value };
+        const res = await fetch(`/api/v1/leads/${id}/contacts`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        if (res.ok) { showToast("Contact added.", "success"); e.target.reset(); await openLeadCommand(id, 'contacts'); }
+    }
+
+    function initLibrary() { /* Library logic */ }
+    function openAddForm(type) { 
+        document.getElementById('add-menu').style.display = 'none'; 
+        if (type === 'account') {
+            openModal('modal-add-account');
+        } else {
+            openModal('modal-add-lead');
+        }
+    }
+    function toggleAddMenu() { const m = document.getElementById('add-menu'); if(m) m.style.display = m.style.display === 'block' ? 'none' : 'block'; }
+    function toggleLeadMenu() { const m = document.getElementById('lead-command-menu'); if(m) m.style.display = m.style.display === 'block' ? 'none' : 'block'; }
+    function toggleAccountMenu() { const m = document.getElementById('account-command-menu'); if(m) m.style.display = m.style.display === 'block' ? 'none' : 'block'; }
+    
+    function toggleEditLead() {
+        const pane = document.getElementById('lead-pane-edit');
+        if (pane && pane.style.display === 'block') { openLeadCommand(currentLeadId, 'overview'); } 
+        else { if (document.getElementById('lead-command-menu')) document.getElementById('lead-command-menu').style.display = 'none'; openLeadCommand(currentLeadId, 'edit'); }
+    }
+    
+    function toggleEditAccount() {
+        const pane = document.getElementById('pane-edit-account');
+        if (pane && pane.style.display === 'block') { openAccountCommand(currentAccountId, 'overview'); } 
+        else { if (document.getElementById('account-command-menu')) document.getElementById('account-command-menu').style.display = 'none'; openAccountCommand(currentAccountId, 'edit'); }
+    }
+
+    function setLeadQuickAction(type, text) {
+        const typeEl = document.getElementById('lead-activity-type');
+        const descEl = document.getElementById('lead-activity-desc');
+        if (typeEl) typeEl.value = type;
+        if (descEl) descEl.value = text;
+        showToast("Quick action loaded.", "success");
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        initLibrary();
+        
+        const syncColumns = (evt, tableId) => {
+            const table = document.getElementById(tableId);
+            if (!table) return;
+            const rows = table.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                const cells = Array.from(row.children);
+                const cellToMove = cells[evt.oldIndex];
+                const targetCell = cells[evt.newIndex];
+                if (evt.newIndex > evt.oldIndex) {
+                    row.insertBefore(cellToMove, targetCell.nextSibling);
+                } else {
+                    row.insertBefore(cellToMove, targetCell);
+                }
+            });
+        };
+
+        const lHeader = document.getElementById('leads-header-row');
+        if (lHeader) { 
+            new Sortable(lHeader, { 
+                animation: 150,
+                onEnd: (evt) => syncColumns(evt, 'table-leads')
+            }); 
+        }
+        
+        const aHeader = document.getElementById('accounts-header-row');
+        if (aHeader) { 
+            new Sortable(aHeader, { 
+                animation: 150,
+                onEnd: (evt) => syncColumns(evt, 'table-accounts')
+            }); 
+        }
+    });
+
+    window.addEventListener('click', (e) => {
+        if (e.target.classList.contains('isc-modal-overlay')) closeModal(e.target.id);
+        const colMenu = document.getElementById('col-mgr-menu');
+        if (colMenu && !colMenu.contains(e.target) && !e.target.closest('button')) colMenu.style.display = 'none';
+        const colMenuAcc = document.getElementById('col-mgr-menu-acc');
+        if (colMenuAcc && !colMenuAcc.contains(e.target) && !e.target.closest('button')) colMenuAcc.style.display = 'none';
+        document.querySelectorAll('.isc-row-menu').forEach(m => { if(!m.contains(e.target) && !e.target.closest('button')) m.style.display = 'none'; });
+    });
+</script>
+
+<style>
+    .isc-view { animation: imaxFloat 0.4s ease-out; }
+    .isc-tab-trigger { background: none; border: none; padding: 1.25rem 0; font-weight: 800; font-size: 0.85rem; color: var(--slate-400); cursor: pointer; text-transform: uppercase; border-bottom: 4px solid transparent; transition: all 0.2s; letter-spacing: 0.05em; }
+    .isc-tab-trigger.active { color: var(--brand); border-color: var(--brand); }
+    
+    /* --- SigmaFidelity™ Layout Continuity (BUG-006 Hardening) --- */
+    .isc-pane, .isc-lead-pane { 
+        display: flex;
+        flex-direction: column; 
+        gap: 2rem; 
+        padding: 2.5rem 0; 
+        height: 600px; /* Rigid Footprint */
+        overflow-y: auto; 
+        scrollbar-width: thin;
+    }
+    .timeline-node { position: relative; padding-bottom: 2rem; border-left: 2px solid var(--slate-100); padding-left: 2.5rem; margin-left: 1rem; }
+    .timeline-node::before { content: ''; position: absolute; left: -7px; top: 0.25rem; width: 12px; height: 12px; background: var(--brand); border-radius: 50%; box-shadow: 0 0 0 4px var(--white), 0 0 0 6px var(--slate-50); z-index: 2; }
+    .address-results { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid var(--slate-200); border-radius: 0 0 12px 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 2000; display: none; max-height: 200px; overflow-y: auto; }
+    .address-item { padding: 0.75rem 1.25rem; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: var(--slate-700); border-bottom: 1px solid var(--slate-50); }
+    .address-item:hover { background: var(--slate-50); color: var(--brand); }
+    .isc-list-item { background: #f8fafc; padding: 1.25rem; border-radius: 12px; border: 1px solid var(--slate-100); }
+    .isc-dropdown-btn { 
+        width: 100%; 
+        text-align: left; 
+        padding: 0 1rem; 
+        height: 36px; 
+        display: flex; 
+        align-items: center; 
+        background: none; 
+        border: none; 
+        font-weight: 700; 
+        color: var(--slate-900); 
+        cursor: pointer; 
+        border-radius: 4px; 
+        font-size: 0.85rem; 
+        position: relative; 
+        transition: all 0.2s;
+        box-sizing: border-box;
+    }
+    .isc-dropdown-btn:hover { 
+        background: var(--slate-50); 
+        color: var(--brand); 
+    }
+    .isc-dropdown-btn:hover::before { 
+        content: ''; 
+        position: absolute; 
+        left: 0; 
+        top: 0; 
+        bottom: 0; 
+        width: 3px; 
+        background: var(--brand); 
+    }
+    .fa-spin-hover { transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+    button:hover .fa-spin-hover { transform: rotate(90deg); }
+
+    @media (max-width: 768px) {
+        .isc-pane, .isc-lead-pane, [style*="grid-template-columns: 1fr 1fr"], [style*="grid-template-columns: 1fr 1.5fr"] {
+            grid-template-columns: 1fr !important;
+            gap: 2rem !important;
+        }
+    }
+</style>
+{% endblock %}

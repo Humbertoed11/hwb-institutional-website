@@ -1,0 +1,824 @@
+<div id="modal-lead-command" class="isc-modal-overlay" style="display:none;">
+ <div class="isc-modal">
+ <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2.5rem;">
+ <div>
+ <h2 id="lead-modal-title" style="font-weight: 800; font-size: 1.5rem; color: var(--slate-900); letter-spacing: -0.01em;">Lead Intelligence</h2>
+ <p id="lead-modal-subtitle" style="font-size: 0.75rem; color: var(--slate-500); margin-top: 0.25rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;"></p>
+ </div>
+ <div style="display: flex; gap: 0.5rem; align-items: center;">
+    <div style="position: relative;">
+        <button type="button" onclick="toggleFormFields(edit-lead-fields)" class="isc-btn isc-btn-outline" style="height: 32px; font-size: 0.7rem; border-radius: 6px;">
+            <i class="fas fa-filter"></i> Fields
+        </button>
+        <div id="edit-lead-fields" class="sigma-utility-menu" style="display: none; top: 110%; right: 0; width: 220px; padding: 1rem;">
+            <span style="font-size: 0.6rem; font-weight: 800; color: var(--slate-400); text-transform: uppercase; display: block; margin-bottom: 0.75rem;">Form Display Control</span>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 600;"><input type="checkbox" checked onchange="toggleField(lead, job_title, this.checked)"> Manager Title</label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 600;"><input type="checkbox" checked onchange="toggleField(lead, zipcode, this.checked)"> Zip Code</label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 600;"><input type="checkbox" checked onchange="toggleField(lead, industry, this.checked)"> Industry</label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 600;"><input type="checkbox" checked onchange="toggleField(lead, notes, this.checked)"> Lead Notes</label>
+            </div>
+        </div>
+    </div>
+    <button onclick="closeModal(modal-lead-command)" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; color: var(--slate-500); transition: all 0.2s;">
+        <i class="fas fa-times" style="font-size: 0.9rem;"></i>
+    </button>
+ </div>
+ </div>
+ <div id="lead-modal-tabs" style="display: flex; gap: 2rem; border-bottom: 1px solid var(--slate-100); margin-bottom: 2.5rem;">
+ <button onclick="iscLeadTab(overview)" class="isc-tab-trigger active" id="lead-tab-btn-overview">Overview</button>
+ <button onclick="iscLeadTab(actions)" class="isc-tab-trigger" id="lead-tab-btn-actions">Actions</button>
+ <button onclick="iscLeadTab(timeline)" class="isc-tab-trigger" id="lead-tab-btn-timeline">History</button>
+ </div>
+ <div id="lead-pane-overview" class="isc-lead-pane">
+ <div id="lead-list-overview" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;"></div>
+ <div style="margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--slate-100); text-align: right; position: relative;">
+ <button onclick="toggleLeadMenu()" class="isc-btn isc-btn-outline" id="btn-lead-plan" style="">Manage Lead</button>
+ <div id="lead-command-menu" style="display: none; position: absolute; bottom: 110%; right: 0; background: white; border: 1px solid var(--slate-200); border-radius: 6px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); padding: 0.5rem; z-index: 1000; min-width: 180px;">
+ <button onclick="toggleEditLead()" class="isc-dropdown-btn" style="width: 100%; text-align: left; padding: 0.75rem 1rem; background: none; border: none; font-weight: 600; color: var(--slate-900); cursor: pointer; border-radius: 0.4rem; font-size: 0.85rem;"><i class="fas fa-edit" style="margin-right:0.5rem;"></i> Edit Details</button>
+ <button onclick="promoteLead()" class="isc-dropdown-btn" style="width: 100%; text-align: left; padding: 0.75rem 1rem; background: none; border: none; font-weight: 600; color: var(--brand); cursor: pointer; border-radius: 0.4rem; font-size: 0.85rem;"><i class="fas fa-exchange-alt" style="margin-right:0.5rem;"></i> Promote to Account</button>
+ <button onclick="deleteLead()" class="isc-dropdown-btn" style="width: 100%; text-align: left; padding: 0.75rem 1rem; background: none; border: none; font-weight: 600; color: #ef4444; cursor: pointer; border-radius: 0.4rem; font-size: 0.85rem;"><i class="fas fa-trash-alt" style="margin-right:0.5rem;"></i> Delete Lead</button>
+ </div>
+ </div>
+ </div>
+ <div id="lead-pane-edit" class="isc-lead-pane" style="display:none;">
+ <form onsubmit="saveLeadUpdate(event)" class="sigma-form-container">
+ <input type="hidden" id="edit-lead-id">
+ <div class="sigma-form-body">
+ <div class="sigma-form-section">
+ <div class="sigma-form-group">
+ <span class="sigma-form-header">Lead Intelligence</span>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Company Name</label><input type="text" id="edit-lead-company" name="company_name" required placeholder="Legal Entity Name" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Main Manager</label><input type="text" id="edit-lead-dm" name="decision_maker" placeholder="Full Name" class="sigma-input"></div>
+ <div class="sigma-field" data-field="job_title"><label style="font-weight: 500; color: var(--slate-500);">Manager Title</label><input type="text" id="edit-lead-job-title" name="job_title" placeholder="e.g. Facilities Director" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Email Address</label><input type="email" id="edit-lead-email" name="email" placeholder="client@company.com" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Phone Number</label><input type="text" id="edit-lead-phone" name="phone" placeholder="1-(000)-000-0000" class="sigma-input" oninput="maskPhone(this)"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Building Address</label><input type="text" id="edit-lead-address" name="address" placeholder="Street Address" class="sigma-input" oninput="smartType(this, \u0027results-edit-lead\u0027)"><div id="results-edit-lead" class="address-results"></div></div>
+ <div class="sigma-row sigma-row-75-25">
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">City</label><input type="text" id="edit-lead-city" name="city" placeholder="City" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">State</label><input type="text" id="edit-lead-state" name="state" placeholder="TX" class="sigma-input"></div>
+ </div>
+ <div class="sigma-field" data-field="zipcode"><label style="font-weight: 500; color: var(--slate-500);">Zip Code</label><input type="text" id="edit-lead-zip" name="zipcode" placeholder="75001" class="sigma-input"></div>
+ </div>
+ <div class="sigma-form-group">
+ <span class="sigma-form-header">Sales & Performance</span>
+ <div class="sigma-field" data-field="industry"><label style="font-weight: 500; color: var(--slate-500);">Industry</label><input type="text" id="edit-lead-industry" name="industry" placeholder="e.g. Healthcare, Logistics" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Building SQF</label><input type="number" id="edit-lead-sqf" name="sqf" placeholder="e.g. 5000" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Status</label><select id="edit-lead-status" name="status" class="sigma-input"><option value="New">New Lead</option><option value="Contacted">Contacted</option><option value="Qualified">Qualified</option><option value="Lost">Lost</option></select></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Estimated Value</label><input type="number" id="edit-lead-value" name="estimated_annual_value" step="0.01" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Next Action</label><input type="date" id="edit-lead-next" name="next_action_date" class="sigma-input"></div>
+ <div class="sigma-field" data-field="notes"><label style="font-weight: 500; color: var(--slate-500);">Work Notes</label><textarea id="edit-lead-notes" name="notes" placeholder="Company insights and work goals..." class="sigma-input" style="height: 100px; resize: none;"></textarea></div>
+ </div>
+ </div>
+ </div>
+ <div class="sigma-form-actions">
+ <button type="button" onclick="toggleEditLead()" class="isc-btn isc-btn-outline">Discard Changes</button>
+ <button type="submit" class="isc-btn isc-btn-primary">Save Changes</button>
+ </div>
+ </form>
+ </div>
+ <div id="lead-pane-actions" class="isc-lead-pane" style="display:none;">
+ <div style="display: grid; grid-template-columns: 280px 1fr; gap: 2.5rem; align-items: start;">
+     <div class="isc-card" style="padding: 1.5rem; background: var(--slate-50); border: 1px solid var(--slate-100);">
+         <span class="sigma-form-header" style="margin-bottom: 1.5rem;">Quick Profile Update</span>
+         <div class="sigma-field"><label style="font-size: 0.65rem;">Main Manager</label><input type="text" id="lead-action-manager" class="sigma-input" style="height: 36px; font-size: 0.85rem;"></div>
+         <div class="sigma-field"><label style="font-size: 0.65rem;">Phone Number</label><input type="text" id="lead-action-phone" class="sigma-input" style="height: 36px; font-size: 0.85rem;" oninput="maskPhone(this)"></div>
+         <div class="sigma-field"><label style="font-size: 0.65rem;">Email Address</label><input type="email" id="lead-action-email" class="sigma-input" style="height: 36px; font-size: 0.85rem;"></div>
+         <div class="sigma-field" style="margin-top: 1rem;"><label style="font-size: 0.65rem;">Physical Address</label><input type="text" id="lead-action-address" class="sigma-input" style="height: 36px; font-size: 0.85rem;" oninput="smartType(this, \u0027results-sidebar-lead\u0027)"><div id="results-sidebar-lead" class="address-results"></div></div>
+         <div style="margin-top: 2rem; padding: 1rem; border-top: 1px solid var(--slate-100);"><span style="font-size: 0.65rem; font-weight: 800; color: var(--brand); text-transform: uppercase;"><i class="fas fa-robot"></i> Smart Note Tip</span><p style="font-size: 0.7rem; color: var(--slate-600); margin-top: 0.5rem; line-height: 1.4;">Sync data by typing: <br><code style="color: var(--brand);">new phone: 1-...</code><br><code style="color: var(--brand);">new address: 123...</code></p></div>
+     </div>
+     <div>
+         <h3 class="form-section-label">Activity Log</h3>
+         <div style="display: flex; gap: 1rem; margin-bottom: 2rem; overflow-x: auto; padding-bottom: 0.5rem;">
+             <button onclick="setLeadQuickAction(\u0027Phone Call\u0027, \u0027Spoke to decision maker. Scheduled walk-through.\u0027)" class="isc-btn isc-btn-outline" style="white-space: nowrap; border-color: var(--brand); color: var(--brand); height: 32px; font-size: 0.7rem;"><i class="fas fa-phone"></i> Spoke to DM</button>
+             <button onclick="setLeadQuickAction(\u0027Phone Call\u0027, \u0027Left message with receptionist.\u0027)" class="isc-btn isc-btn-outline" style="white-space: nowrap; height: 32px; font-size: 0.7rem;"><i class="fas fa-voicemail"></i> Left Message</button>
+             <button onclick="setLeadQuickAction(\u0027Note\u0027, \u0027Site walk completed. Pricing verified.\u0027)" class="isc-btn isc-btn-outline" style="white-space: nowrap; height: 32px; font-size: 0.7rem;"><i class="fas fa-clipboard-check"></i> Site Walk Done</button>
+         </div>
+         <form onsubmit="logLeadActivity(event)">
+             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 1.5rem;">
+                 <div class="form-field"><label>Action Type</label><select id="lead-activity-type" required class="sigma-input"><option value="Phone Call">Phone Call</option><option value="Email Sent">Email Sent</option><option value="Site Visit">Site Visit</option><option value="Note">Internal Note</option></select></div>
+                 <div class="form-field"><label>Call Result</label><select id="lead-activity-result" class="sigma-input"><option value="">-- No Result --</option><option value="Spoke to them">Spoke to them</option><option value="Left message">Left message</option></select></div>
+             </div>
+             <div class="form-field"><label>Activity Details</label><textarea id="lead-activity-desc" required class="sigma-input" style="height: 120px; resize: none;"></textarea></div>
+             <div style="margin-top: 2rem; display: flex; justify-content: space-between; align-items: center;">
+                 <div style="display: flex; align-items: center; gap: 1rem;"><input type="checkbox" id="update-next-action" checked><label for="update-next-action" style="font-size: 0.75rem; font-weight: 600; color: var(--slate-500);">Auto-schedule followup</label></div>
+                 <button type="submit" class="isc-btn isc-btn-primary">Record Touchpoint</button>
+             </div>
+         </form>
+     </div>
+ </div>
+ </div>
+ <div id="lead-pane-timeline" class="isc-lead-pane" style="display:none;"><div id="lead-list-timeline" style="display: grid; gap: 2.5rem; border-left: 2px solid var(--slate-100); padding-left: 2.5rem; margin-left: 1rem;"></div></div>
+ </div>
+</div>
+{<div id="modal-lead-command" class="isc-modal-overlay" style="display:none;">
+ <div class="isc-modal">
+ <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2.5rem;">
+ <div>
+ <h2 id="lead-modal-title" style="font-weight: 800; font-size: 1.5rem; color: var(--slate-900); letter-spacing: -0.01em;">Lead Intelligence</h2>
+ <p id="lead-modal-subtitle" style="font-size: 0.75rem; color: var(--slate-500); margin-top: 0.25rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;"></p>
+ </div>
+ <div style="display: flex; gap: 0.5rem; align-items: center;">
+    <div style="position: relative;">
+        <button type="button" onclick="toggleFormFields(edit-lead-fields)" class="isc-btn isc-btn-outline" style="height: 32px; font-size: 0.7rem; border-radius: 6px;">
+            <i class="fas fa-filter"></i> Fields
+        </button>
+        <div id="edit-lead-fields" class="sigma-utility-menu" style="display: none; top: 110%; right: 0; width: 220px; padding: 1rem;">
+            <span style="font-size: 0.6rem; font-weight: 800; color: var(--slate-400); text-transform: uppercase; display: block; margin-bottom: 0.75rem;">Form Display Control</span>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 600;"><input type="checkbox" checked onchange="toggleField(lead, job_title, this.checked)"> Manager Title</label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 600;"><input type="checkbox" checked onchange="toggleField(lead, zipcode, this.checked)"> Zip Code</label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 600;"><input type="checkbox" checked onchange="toggleField(lead, industry, this.checked)"> Industry</label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 600;"><input type="checkbox" checked onchange="toggleField(lead, notes, this.checked)"> Lead Notes</label>
+            </div>
+        </div>
+    </div>
+    <button onclick="closeModal(modal-lead-command)" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; color: var(--slate-500); transition: all 0.2s;">
+        <i class="fas fa-times" style="font-size: 0.9rem;"></i>
+    </button>
+ </div>
+ </div>
+ <div id="lead-modal-tabs" style="display: flex; gap: 2rem; border-bottom: 1px solid var(--slate-100); margin-bottom: 2.5rem;">
+ <button onclick="iscLeadTab(overview)" class="isc-tab-trigger active" id="lead-tab-btn-overview">Overview</button>
+ <button onclick="iscLeadTab(actions)" class="isc-tab-trigger" id="lead-tab-btn-actions">Actions</button>
+ <button onclick="iscLeadTab(timeline)" class="isc-tab-trigger" id="lead-tab-btn-timeline">History</button>
+ </div>
+ <div id="lead-pane-overview" class="isc-lead-pane">
+ <div id="lead-list-overview" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;"></div>
+ <div style="margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--slate-100); text-align: right; position: relative;">
+ <button onclick="toggleLeadMenu()" class="isc-btn isc-btn-outline" id="btn-lead-plan" style="">Manage Lead</button>
+ <div id="lead-command-menu" style="display: none; position: absolute; bottom: 110%; right: 0; background: white; border: 1px solid var(--slate-200); border-radius: 6px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); padding: 0.5rem; z-index: 1000; min-width: 180px;">
+ <button onclick="toggleEditLead()" class="isc-dropdown-btn" style="width: 100%; text-align: left; padding: 0.75rem 1rem; background: none; border: none; font-weight: 600; color: var(--slate-900); cursor: pointer; border-radius: 0.4rem; font-size: 0.85rem;"><i class="fas fa-edit" style="margin-right:0.5rem;"></i> Edit Details</button>
+ <button onclick="promoteLead()" class="isc-dropdown-btn" style="width: 100%; text-align: left; padding: 0.75rem 1rem; background: none; border: none; font-weight: 600; color: var(--brand); cursor: pointer; border-radius: 0.4rem; font-size: 0.85rem;"><i class="fas fa-exchange-alt" style="margin-right:0.5rem;"></i> Promote to Account</button>
+ <button onclick="deleteLead()" class="isc-dropdown-btn" style="width: 100%; text-align: left; padding: 0.75rem 1rem; background: none; border: none; font-weight: 600; color: #ef4444; cursor: pointer; border-radius: 0.4rem; font-size: 0.85rem;"><i class="fas fa-trash-alt" style="margin-right:0.5rem;"></i> Delete Lead</button>
+ </div>
+ </div>
+ </div>
+ <div id="lead-pane-edit" class="isc-lead-pane" style="display:none;">
+ <form onsubmit="saveLeadUpdate(event)" class="sigma-form-container">
+ <input type="hidden" id="edit-lead-id">
+ <div class="sigma-form-body">
+ <div class="sigma-form-section">
+ <div class="sigma-form-group">
+ <span class="sigma-form-header">Lead Intelligence</span>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Company Name</label><input type="text" id="edit-lead-company" name="company_name" required placeholder="Legal Entity Name" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Main Manager</label><input type="text" id="edit-lead-dm" name="decision_maker" placeholder="Full Name" class="sigma-input"></div>
+ <div class="sigma-field" data-field="job_title"><label style="font-weight: 500; color: var(--slate-500);">Manager Title</label><input type="text" id="edit-lead-job-title" name="job_title" placeholder="e.g. Facilities Director" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Email Address</label><input type="email" id="edit-lead-email" name="email" placeholder="client@company.com" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Phone Number</label><input type="text" id="edit-lead-phone" name="phone" placeholder="1-(000)-000-0000" class="sigma-input" oninput="maskPhone(this)"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Building Address</label><input type="text" id="edit-lead-address" name="address" placeholder="Street Address" class="sigma-input" oninput="smartType(this, \u0027results-edit-lead\u0027)"><div id="results-edit-lead" class="address-results"></div></div>
+ <div class="sigma-row sigma-row-75-25">
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">City</label><input type="text" id="edit-lead-city" name="city" placeholder="City" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">State</label><input type="text" id="edit-lead-state" name="state" placeholder="TX" class="sigma-input"></div>
+ </div>
+ <div class="sigma-field" data-field="zipcode"><label style="font-weight: 500; color: var(--slate-500);">Zip Code</label><input type="text" id="edit-lead-zip" name="zipcode" placeholder="75001" class="sigma-input"></div>
+ </div>
+ <div class="sigma-form-group">
+ <span class="sigma-form-header">Sales & Performance</span>
+ <div class="sigma-field" data-field="industry"><label style="font-weight: 500; color: var(--slate-500);">Industry</label><input type="text" id="edit-lead-industry" name="industry" placeholder="e.g. Healthcare, Logistics" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Building SQF</label><input type="number" id="edit-lead-sqf" name="sqf" placeholder="e.g. 5000" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Status</label><select id="edit-lead-status" name="status" class="sigma-input"><option value="New">New Lead</option><option value="Contacted">Contacted</option><option value="Qualified">Qualified</option><option value="Lost">Lost</option></select></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Estimated Value</label><input type="number" id="edit-lead-value" name="estimated_annual_value" step="0.01" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Next Action</label><input type="date" id="edit-lead-next" name="next_action_date" class="sigma-input"></div>
+ <div class="sigma-field" data-field="notes"><label style="font-weight: 500; color: var(--slate-500);">Work Notes</label><textarea id="edit-lead-notes" name="notes" placeholder="Company insights and work goals..." class="sigma-input" style="height: 100px; resize: none;"></textarea></div>
+ </div>
+ </div>
+ </div>
+ <div class="sigma-form-actions">
+ <button type="button" onclick="toggleEditLead()" class="isc-btn isc-btn-outline">Discard Changes</button>
+ <button type="submit" class="isc-btn isc-btn-primary">Save Changes</button>
+ </div>
+ </form>
+ </div>
+ <div id="lead-pane-actions" class="isc-lead-pane" style="display:none;">
+ <div style="display: grid; grid-template-columns: 280px 1fr; gap: 2.5rem; align-items: start;">
+     <div class="isc-card" style="padding: 1.5rem; background: var(--slate-50); border: 1px solid var(--slate-100);">
+         <span class="sigma-form-header" style="margin-bottom: 1.5rem;">Quick Profile Update</span>
+         <div class="sigma-field"><label style="font-size: 0.65rem;">Main Manager</label><input type="text" id="lead-action-manager" class="sigma-input" style="height: 36px; font-size: 0.85rem;"></div>
+         <div class="sigma-field"><label style="font-size: 0.65rem;">Phone Number</label><input type="text" id="lead-action-phone" class="sigma-input" style="height: 36px; font-size: 0.85rem;" oninput="maskPhone(this)"></div>
+         <div class="sigma-field"><label style="font-size: 0.65rem;">Email Address</label><input type="email" id="lead-action-email" class="sigma-input" style="height: 36px; font-size: 0.85rem;"></div>
+         <div class="sigma-field" style="margin-top: 1rem;"><label style="font-size: 0.65rem;">Physical Address</label><input type="text" id="lead-action-address" class="sigma-input" style="height: 36px; font-size: 0.85rem;" oninput="smartType(this, \u0027results-sidebar-lead\u0027)"><div id="results-sidebar-lead" class="address-results"></div></div>
+         <div style="margin-top: 2rem; padding: 1rem; border-top: 1px solid var(--slate-100);"><span style="font-size: 0.65rem; font-weight: 800; color: var(--brand); text-transform: uppercase;"><i class="fas fa-robot"></i> Smart Note Tip</span><p style="font-size: 0.7rem; color: var(--slate-600); margin-top: 0.5rem; line-height: 1.4;">Sync data by typing: <br><code style="color: var(--brand);">new phone: 1-...</code><br><code style="color: var(--brand);">new address: 123...</code></p></div>
+     </div>
+     <div>
+         <h3 class="form-section-label">Activity Log</h3>
+         <div style="display: flex; gap: 1rem; margin-bottom: 2rem; overflow-x: auto; padding-bottom: 0.5rem;">
+             <button onclick="setLeadQuickAction(\u0027Phone Call\u0027, \u0027Spoke to decision maker. Scheduled walk-through.\u0027)" class="isc-btn isc-btn-outline" style="white-space: nowrap; border-color: var(--brand); color: var(--brand); height: 32px; font-size: 0.7rem;"><i class="fas fa-phone"></i> Spoke to DM</button>
+             <button onclick="setLeadQuickAction(\u0027Phone Call\u0027, \u0027Left message with receptionist.\u0027)" class="isc-btn isc-btn-outline" style="white-space: nowrap; height: 32px; font-size: 0.7rem;"><i class="fas fa-voicemail"></i> Left Message</button>
+             <button onclick="setLeadQuickAction(\u0027Note\u0027, \u0027Site walk completed. Pricing verified.\u0027)" class="isc-btn isc-btn-outline" style="white-space: nowrap; height: 32px; font-size: 0.7rem;"><i class="fas fa-clipboard-check"></i> Site Walk Done</button>
+         </div>
+         <form onsubmit="logLeadActivity(event)">
+             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 1.5rem;">
+                 <div class="form-field"><label>Action Type</label><select id="lead-activity-type" required class="sigma-input"><option value="Phone Call">Phone Call</option><option value="Email Sent">Email Sent</option><option value="Site Visit">Site Visit</option><option value="Note">Internal Note</option></select></div>
+                 <div class="form-field"><label>Call Result</label><select id="lead-activity-result" class="sigma-input"><option value="">-- No Result --</option><option value="Spoke to them">Spoke to them</option><option value="Left message">Left message</option></select></div>
+             </div>
+             <div class="form-field"><label>Activity Details</label><textarea id="lead-activity-desc" required class="sigma-input" style="height: 120px; resize: none;"></textarea></div>
+             <div style="margin-top: 2rem; display: flex; justify-content: space-between; align-items: center;">
+                 <div style="display: flex; align-items: center; gap: 1rem;"><input type="checkbox" id="update-next-action" checked><label for="update-next-action" style="font-size: 0.75rem; font-weight: 600; color: var(--slate-500);">Auto-schedule followup</label></div>
+                 <button type="submit" class="isc-btn isc-btn-primary">Record Touchpoint</button>
+             </div>
+         </form>
+     </div>
+ </div>
+ </div>
+ <div id="lead-pane-timeline" class="isc-lead-pane" style="display:none;"><div id="lead-list-timeline" style="display: grid; gap: 2.5rem; border-left: 2px solid var(--slate-100); padding-left: 2.5rem; margin-left: 1rem;"></div></div>
+ </div>
+</div>
+%<div id="modal-lead-command" class="isc-modal-overlay" style="display:none;">
+ <div class="isc-modal">
+ <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2.5rem;">
+ <div>
+ <h2 id="lead-modal-title" style="font-weight: 800; font-size: 1.5rem; color: var(--slate-900); letter-spacing: -0.01em;">Lead Intelligence</h2>
+ <p id="lead-modal-subtitle" style="font-size: 0.75rem; color: var(--slate-500); margin-top: 0.25rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;"></p>
+ </div>
+ <div style="display: flex; gap: 0.5rem; align-items: center;">
+    <div style="position: relative;">
+        <button type="button" onclick="toggleFormFields(edit-lead-fields)" class="isc-btn isc-btn-outline" style="height: 32px; font-size: 0.7rem; border-radius: 6px;">
+            <i class="fas fa-filter"></i> Fields
+        </button>
+        <div id="edit-lead-fields" class="sigma-utility-menu" style="display: none; top: 110%; right: 0; width: 220px; padding: 1rem;">
+            <span style="font-size: 0.6rem; font-weight: 800; color: var(--slate-400); text-transform: uppercase; display: block; margin-bottom: 0.75rem;">Form Display Control</span>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 600;"><input type="checkbox" checked onchange="toggleField(lead, job_title, this.checked)"> Manager Title</label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 600;"><input type="checkbox" checked onchange="toggleField(lead, zipcode, this.checked)"> Zip Code</label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 600;"><input type="checkbox" checked onchange="toggleField(lead, industry, this.checked)"> Industry</label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 600;"><input type="checkbox" checked onchange="toggleField(lead, notes, this.checked)"> Lead Notes</label>
+            </div>
+        </div>
+    </div>
+    <button onclick="closeModal(modal-lead-command)" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; color: var(--slate-500); transition: all 0.2s;">
+        <i class="fas fa-times" style="font-size: 0.9rem;"></i>
+    </button>
+ </div>
+ </div>
+ <div id="lead-modal-tabs" style="display: flex; gap: 2rem; border-bottom: 1px solid var(--slate-100); margin-bottom: 2.5rem;">
+ <button onclick="iscLeadTab(overview)" class="isc-tab-trigger active" id="lead-tab-btn-overview">Overview</button>
+ <button onclick="iscLeadTab(actions)" class="isc-tab-trigger" id="lead-tab-btn-actions">Actions</button>
+ <button onclick="iscLeadTab(timeline)" class="isc-tab-trigger" id="lead-tab-btn-timeline">History</button>
+ </div>
+ <div id="lead-pane-overview" class="isc-lead-pane">
+ <div id="lead-list-overview" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;"></div>
+ <div style="margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--slate-100); text-align: right; position: relative;">
+ <button onclick="toggleLeadMenu()" class="isc-btn isc-btn-outline" id="btn-lead-plan" style="">Manage Lead</button>
+ <div id="lead-command-menu" style="display: none; position: absolute; bottom: 110%; right: 0; background: white; border: 1px solid var(--slate-200); border-radius: 6px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); padding: 0.5rem; z-index: 1000; min-width: 180px;">
+ <button onclick="toggleEditLead()" class="isc-dropdown-btn" style="width: 100%; text-align: left; padding: 0.75rem 1rem; background: none; border: none; font-weight: 600; color: var(--slate-900); cursor: pointer; border-radius: 0.4rem; font-size: 0.85rem;"><i class="fas fa-edit" style="margin-right:0.5rem;"></i> Edit Details</button>
+ <button onclick="promoteLead()" class="isc-dropdown-btn" style="width: 100%; text-align: left; padding: 0.75rem 1rem; background: none; border: none; font-weight: 600; color: var(--brand); cursor: pointer; border-radius: 0.4rem; font-size: 0.85rem;"><i class="fas fa-exchange-alt" style="margin-right:0.5rem;"></i> Promote to Account</button>
+ <button onclick="deleteLead()" class="isc-dropdown-btn" style="width: 100%; text-align: left; padding: 0.75rem 1rem; background: none; border: none; font-weight: 600; color: #ef4444; cursor: pointer; border-radius: 0.4rem; font-size: 0.85rem;"><i class="fas fa-trash-alt" style="margin-right:0.5rem;"></i> Delete Lead</button>
+ </div>
+ </div>
+ </div>
+ <div id="lead-pane-edit" class="isc-lead-pane" style="display:none;">
+ <form onsubmit="saveLeadUpdate(event)" class="sigma-form-container">
+ <input type="hidden" id="edit-lead-id">
+ <div class="sigma-form-body">
+ <div class="sigma-form-section">
+ <div class="sigma-form-group">
+ <span class="sigma-form-header">Lead Intelligence</span>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Company Name</label><input type="text" id="edit-lead-company" name="company_name" required placeholder="Legal Entity Name" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Main Manager</label><input type="text" id="edit-lead-dm" name="decision_maker" placeholder="Full Name" class="sigma-input"></div>
+ <div class="sigma-field" data-field="job_title"><label style="font-weight: 500; color: var(--slate-500);">Manager Title</label><input type="text" id="edit-lead-job-title" name="job_title" placeholder="e.g. Facilities Director" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Email Address</label><input type="email" id="edit-lead-email" name="email" placeholder="client@company.com" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Phone Number</label><input type="text" id="edit-lead-phone" name="phone" placeholder="1-(000)-000-0000" class="sigma-input" oninput="maskPhone(this)"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Building Address</label><input type="text" id="edit-lead-address" name="address" placeholder="Street Address" class="sigma-input" oninput="smartType(this, \u0027results-edit-lead\u0027)"><div id="results-edit-lead" class="address-results"></div></div>
+ <div class="sigma-row sigma-row-75-25">
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">City</label><input type="text" id="edit-lead-city" name="city" placeholder="City" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">State</label><input type="text" id="edit-lead-state" name="state" placeholder="TX" class="sigma-input"></div>
+ </div>
+ <div class="sigma-field" data-field="zipcode"><label style="font-weight: 500; color: var(--slate-500);">Zip Code</label><input type="text" id="edit-lead-zip" name="zipcode" placeholder="75001" class="sigma-input"></div>
+ </div>
+ <div class="sigma-form-group">
+ <span class="sigma-form-header">Sales & Performance</span>
+ <div class="sigma-field" data-field="industry"><label style="font-weight: 500; color: var(--slate-500);">Industry</label><input type="text" id="edit-lead-industry" name="industry" placeholder="e.g. Healthcare, Logistics" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Building SQF</label><input type="number" id="edit-lead-sqf" name="sqf" placeholder="e.g. 5000" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Status</label><select id="edit-lead-status" name="status" class="sigma-input"><option value="New">New Lead</option><option value="Contacted">Contacted</option><option value="Qualified">Qualified</option><option value="Lost">Lost</option></select></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Estimated Value</label><input type="number" id="edit-lead-value" name="estimated_annual_value" step="0.01" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Next Action</label><input type="date" id="edit-lead-next" name="next_action_date" class="sigma-input"></div>
+ <div class="sigma-field" data-field="notes"><label style="font-weight: 500; color: var(--slate-500);">Work Notes</label><textarea id="edit-lead-notes" name="notes" placeholder="Company insights and work goals..." class="sigma-input" style="height: 100px; resize: none;"></textarea></div>
+ </div>
+ </div>
+ </div>
+ <div class="sigma-form-actions">
+ <button type="button" onclick="toggleEditLead()" class="isc-btn isc-btn-outline">Discard Changes</button>
+ <button type="submit" class="isc-btn isc-btn-primary">Save Changes</button>
+ </div>
+ </form>
+ </div>
+ <div id="lead-pane-actions" class="isc-lead-pane" style="display:none;">
+ <div style="display: grid; grid-template-columns: 280px 1fr; gap: 2.5rem; align-items: start;">
+     <div class="isc-card" style="padding: 1.5rem; background: var(--slate-50); border: 1px solid var(--slate-100);">
+         <span class="sigma-form-header" style="margin-bottom: 1.5rem;">Quick Profile Update</span>
+         <div class="sigma-field"><label style="font-size: 0.65rem;">Main Manager</label><input type="text" id="lead-action-manager" class="sigma-input" style="height: 36px; font-size: 0.85rem;"></div>
+         <div class="sigma-field"><label style="font-size: 0.65rem;">Phone Number</label><input type="text" id="lead-action-phone" class="sigma-input" style="height: 36px; font-size: 0.85rem;" oninput="maskPhone(this)"></div>
+         <div class="sigma-field"><label style="font-size: 0.65rem;">Email Address</label><input type="email" id="lead-action-email" class="sigma-input" style="height: 36px; font-size: 0.85rem;"></div>
+         <div class="sigma-field" style="margin-top: 1rem;"><label style="font-size: 0.65rem;">Physical Address</label><input type="text" id="lead-action-address" class="sigma-input" style="height: 36px; font-size: 0.85rem;" oninput="smartType(this, \u0027results-sidebar-lead\u0027)"><div id="results-sidebar-lead" class="address-results"></div></div>
+         <div style="margin-top: 2rem; padding: 1rem; border-top: 1px solid var(--slate-100);"><span style="font-size: 0.65rem; font-weight: 800; color: var(--brand); text-transform: uppercase;"><i class="fas fa-robot"></i> Smart Note Tip</span><p style="font-size: 0.7rem; color: var(--slate-600); margin-top: 0.5rem; line-height: 1.4;">Sync data by typing: <br><code style="color: var(--brand);">new phone: 1-...</code><br><code style="color: var(--brand);">new address: 123...</code></p></div>
+     </div>
+     <div>
+         <h3 class="form-section-label">Activity Log</h3>
+         <div style="display: flex; gap: 1rem; margin-bottom: 2rem; overflow-x: auto; padding-bottom: 0.5rem;">
+             <button onclick="setLeadQuickAction(\u0027Phone Call\u0027, \u0027Spoke to decision maker. Scheduled walk-through.\u0027)" class="isc-btn isc-btn-outline" style="white-space: nowrap; border-color: var(--brand); color: var(--brand); height: 32px; font-size: 0.7rem;"><i class="fas fa-phone"></i> Spoke to DM</button>
+             <button onclick="setLeadQuickAction(\u0027Phone Call\u0027, \u0027Left message with receptionist.\u0027)" class="isc-btn isc-btn-outline" style="white-space: nowrap; height: 32px; font-size: 0.7rem;"><i class="fas fa-voicemail"></i> Left Message</button>
+             <button onclick="setLeadQuickAction(\u0027Note\u0027, \u0027Site walk completed. Pricing verified.\u0027)" class="isc-btn isc-btn-outline" style="white-space: nowrap; height: 32px; font-size: 0.7rem;"><i class="fas fa-clipboard-check"></i> Site Walk Done</button>
+         </div>
+         <form onsubmit="logLeadActivity(event)">
+             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 1.5rem;">
+                 <div class="form-field"><label>Action Type</label><select id="lead-activity-type" required class="sigma-input"><option value="Phone Call">Phone Call</option><option value="Email Sent">Email Sent</option><option value="Site Visit">Site Visit</option><option value="Note">Internal Note</option></select></div>
+                 <div class="form-field"><label>Call Result</label><select id="lead-activity-result" class="sigma-input"><option value="">-- No Result --</option><option value="Spoke to them">Spoke to them</option><option value="Left message">Left message</option></select></div>
+             </div>
+             <div class="form-field"><label>Activity Details</label><textarea id="lead-activity-desc" required class="sigma-input" style="height: 120px; resize: none;"></textarea></div>
+             <div style="margin-top: 2rem; display: flex; justify-content: space-between; align-items: center;">
+                 <div style="display: flex; align-items: center; gap: 1rem;"><input type="checkbox" id="update-next-action" checked><label for="update-next-action" style="font-size: 0.75rem; font-weight: 600; color: var(--slate-500);">Auto-schedule followup</label></div>
+                 <button type="submit" class="isc-btn isc-btn-primary">Record Touchpoint</button>
+             </div>
+         </form>
+     </div>
+ </div>
+ </div>
+ <div id="lead-pane-timeline" class="isc-lead-pane" style="display:none;"><div id="lead-list-timeline" style="display: grid; gap: 2.5rem; border-left: 2px solid var(--slate-100); padding-left: 2.5rem; margin-left: 1rem;"></div></div>
+ </div>
+</div>
+ <div id="modal-lead-command" class="isc-modal-overlay" style="display:none;">
+ <div class="isc-modal">
+ <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2.5rem;">
+ <div>
+ <h2 id="lead-modal-title" style="font-weight: 800; font-size: 1.5rem; color: var(--slate-900); letter-spacing: -0.01em;">Lead Intelligence</h2>
+ <p id="lead-modal-subtitle" style="font-size: 0.75rem; color: var(--slate-500); margin-top: 0.25rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;"></p>
+ </div>
+ <div style="display: flex; gap: 0.5rem; align-items: center;">
+    <div style="position: relative;">
+        <button type="button" onclick="toggleFormFields(edit-lead-fields)" class="isc-btn isc-btn-outline" style="height: 32px; font-size: 0.7rem; border-radius: 6px;">
+            <i class="fas fa-filter"></i> Fields
+        </button>
+        <div id="edit-lead-fields" class="sigma-utility-menu" style="display: none; top: 110%; right: 0; width: 220px; padding: 1rem;">
+            <span style="font-size: 0.6rem; font-weight: 800; color: var(--slate-400); text-transform: uppercase; display: block; margin-bottom: 0.75rem;">Form Display Control</span>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 600;"><input type="checkbox" checked onchange="toggleField(lead, job_title, this.checked)"> Manager Title</label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 600;"><input type="checkbox" checked onchange="toggleField(lead, zipcode, this.checked)"> Zip Code</label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 600;"><input type="checkbox" checked onchange="toggleField(lead, industry, this.checked)"> Industry</label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 600;"><input type="checkbox" checked onchange="toggleField(lead, notes, this.checked)"> Lead Notes</label>
+            </div>
+        </div>
+    </div>
+    <button onclick="closeModal(modal-lead-command)" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; color: var(--slate-500); transition: all 0.2s;">
+        <i class="fas fa-times" style="font-size: 0.9rem;"></i>
+    </button>
+ </div>
+ </div>
+ <div id="lead-modal-tabs" style="display: flex; gap: 2rem; border-bottom: 1px solid var(--slate-100); margin-bottom: 2.5rem;">
+ <button onclick="iscLeadTab(overview)" class="isc-tab-trigger active" id="lead-tab-btn-overview">Overview</button>
+ <button onclick="iscLeadTab(actions)" class="isc-tab-trigger" id="lead-tab-btn-actions">Actions</button>
+ <button onclick="iscLeadTab(timeline)" class="isc-tab-trigger" id="lead-tab-btn-timeline">History</button>
+ </div>
+ <div id="lead-pane-overview" class="isc-lead-pane">
+ <div id="lead-list-overview" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;"></div>
+ <div style="margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--slate-100); text-align: right; position: relative;">
+ <button onclick="toggleLeadMenu()" class="isc-btn isc-btn-outline" id="btn-lead-plan" style="">Manage Lead</button>
+ <div id="lead-command-menu" style="display: none; position: absolute; bottom: 110%; right: 0; background: white; border: 1px solid var(--slate-200); border-radius: 6px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); padding: 0.5rem; z-index: 1000; min-width: 180px;">
+ <button onclick="toggleEditLead()" class="isc-dropdown-btn" style="width: 100%; text-align: left; padding: 0.75rem 1rem; background: none; border: none; font-weight: 600; color: var(--slate-900); cursor: pointer; border-radius: 0.4rem; font-size: 0.85rem;"><i class="fas fa-edit" style="margin-right:0.5rem;"></i> Edit Details</button>
+ <button onclick="promoteLead()" class="isc-dropdown-btn" style="width: 100%; text-align: left; padding: 0.75rem 1rem; background: none; border: none; font-weight: 600; color: var(--brand); cursor: pointer; border-radius: 0.4rem; font-size: 0.85rem;"><i class="fas fa-exchange-alt" style="margin-right:0.5rem;"></i> Promote to Account</button>
+ <button onclick="deleteLead()" class="isc-dropdown-btn" style="width: 100%; text-align: left; padding: 0.75rem 1rem; background: none; border: none; font-weight: 600; color: #ef4444; cursor: pointer; border-radius: 0.4rem; font-size: 0.85rem;"><i class="fas fa-trash-alt" style="margin-right:0.5rem;"></i> Delete Lead</button>
+ </div>
+ </div>
+ </div>
+ <div id="lead-pane-edit" class="isc-lead-pane" style="display:none;">
+ <form onsubmit="saveLeadUpdate(event)" class="sigma-form-container">
+ <input type="hidden" id="edit-lead-id">
+ <div class="sigma-form-body">
+ <div class="sigma-form-section">
+ <div class="sigma-form-group">
+ <span class="sigma-form-header">Lead Intelligence</span>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Company Name</label><input type="text" id="edit-lead-company" name="company_name" required placeholder="Legal Entity Name" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Main Manager</label><input type="text" id="edit-lead-dm" name="decision_maker" placeholder="Full Name" class="sigma-input"></div>
+ <div class="sigma-field" data-field="job_title"><label style="font-weight: 500; color: var(--slate-500);">Manager Title</label><input type="text" id="edit-lead-job-title" name="job_title" placeholder="e.g. Facilities Director" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Email Address</label><input type="email" id="edit-lead-email" name="email" placeholder="client@company.com" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Phone Number</label><input type="text" id="edit-lead-phone" name="phone" placeholder="1-(000)-000-0000" class="sigma-input" oninput="maskPhone(this)"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Building Address</label><input type="text" id="edit-lead-address" name="address" placeholder="Street Address" class="sigma-input" oninput="smartType(this, \u0027results-edit-lead\u0027)"><div id="results-edit-lead" class="address-results"></div></div>
+ <div class="sigma-row sigma-row-75-25">
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">City</label><input type="text" id="edit-lead-city" name="city" placeholder="City" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">State</label><input type="text" id="edit-lead-state" name="state" placeholder="TX" class="sigma-input"></div>
+ </div>
+ <div class="sigma-field" data-field="zipcode"><label style="font-weight: 500; color: var(--slate-500);">Zip Code</label><input type="text" id="edit-lead-zip" name="zipcode" placeholder="75001" class="sigma-input"></div>
+ </div>
+ <div class="sigma-form-group">
+ <span class="sigma-form-header">Sales & Performance</span>
+ <div class="sigma-field" data-field="industry"><label style="font-weight: 500; color: var(--slate-500);">Industry</label><input type="text" id="edit-lead-industry" name="industry" placeholder="e.g. Healthcare, Logistics" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Building SQF</label><input type="number" id="edit-lead-sqf" name="sqf" placeholder="e.g. 5000" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Status</label><select id="edit-lead-status" name="status" class="sigma-input"><option value="New">New Lead</option><option value="Contacted">Contacted</option><option value="Qualified">Qualified</option><option value="Lost">Lost</option></select></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Estimated Value</label><input type="number" id="edit-lead-value" name="estimated_annual_value" step="0.01" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Next Action</label><input type="date" id="edit-lead-next" name="next_action_date" class="sigma-input"></div>
+ <div class="sigma-field" data-field="notes"><label style="font-weight: 500; color: var(--slate-500);">Work Notes</label><textarea id="edit-lead-notes" name="notes" placeholder="Company insights and work goals..." class="sigma-input" style="height: 100px; resize: none;"></textarea></div>
+ </div>
+ </div>
+ </div>
+ <div class="sigma-form-actions">
+ <button type="button" onclick="toggleEditLead()" class="isc-btn isc-btn-outline">Discard Changes</button>
+ <button type="submit" class="isc-btn isc-btn-primary">Save Changes</button>
+ </div>
+ </form>
+ </div>
+ <div id="lead-pane-actions" class="isc-lead-pane" style="display:none;">
+ <div style="display: grid; grid-template-columns: 280px 1fr; gap: 2.5rem; align-items: start;">
+     <div class="isc-card" style="padding: 1.5rem; background: var(--slate-50); border: 1px solid var(--slate-100);">
+         <span class="sigma-form-header" style="margin-bottom: 1.5rem;">Quick Profile Update</span>
+         <div class="sigma-field"><label style="font-size: 0.65rem;">Main Manager</label><input type="text" id="lead-action-manager" class="sigma-input" style="height: 36px; font-size: 0.85rem;"></div>
+         <div class="sigma-field"><label style="font-size: 0.65rem;">Phone Number</label><input type="text" id="lead-action-phone" class="sigma-input" style="height: 36px; font-size: 0.85rem;" oninput="maskPhone(this)"></div>
+         <div class="sigma-field"><label style="font-size: 0.65rem;">Email Address</label><input type="email" id="lead-action-email" class="sigma-input" style="height: 36px; font-size: 0.85rem;"></div>
+         <div class="sigma-field" style="margin-top: 1rem;"><label style="font-size: 0.65rem;">Physical Address</label><input type="text" id="lead-action-address" class="sigma-input" style="height: 36px; font-size: 0.85rem;" oninput="smartType(this, \u0027results-sidebar-lead\u0027)"><div id="results-sidebar-lead" class="address-results"></div></div>
+         <div style="margin-top: 2rem; padding: 1rem; border-top: 1px solid var(--slate-100);"><span style="font-size: 0.65rem; font-weight: 800; color: var(--brand); text-transform: uppercase;"><i class="fas fa-robot"></i> Smart Note Tip</span><p style="font-size: 0.7rem; color: var(--slate-600); margin-top: 0.5rem; line-height: 1.4;">Sync data by typing: <br><code style="color: var(--brand);">new phone: 1-...</code><br><code style="color: var(--brand);">new address: 123...</code></p></div>
+     </div>
+     <div>
+         <h3 class="form-section-label">Activity Log</h3>
+         <div style="display: flex; gap: 1rem; margin-bottom: 2rem; overflow-x: auto; padding-bottom: 0.5rem;">
+             <button onclick="setLeadQuickAction(\u0027Phone Call\u0027, \u0027Spoke to decision maker. Scheduled walk-through.\u0027)" class="isc-btn isc-btn-outline" style="white-space: nowrap; border-color: var(--brand); color: var(--brand); height: 32px; font-size: 0.7rem;"><i class="fas fa-phone"></i> Spoke to DM</button>
+             <button onclick="setLeadQuickAction(\u0027Phone Call\u0027, \u0027Left message with receptionist.\u0027)" class="isc-btn isc-btn-outline" style="white-space: nowrap; height: 32px; font-size: 0.7rem;"><i class="fas fa-voicemail"></i> Left Message</button>
+             <button onclick="setLeadQuickAction(\u0027Note\u0027, \u0027Site walk completed. Pricing verified.\u0027)" class="isc-btn isc-btn-outline" style="white-space: nowrap; height: 32px; font-size: 0.7rem;"><i class="fas fa-clipboard-check"></i> Site Walk Done</button>
+         </div>
+         <form onsubmit="logLeadActivity(event)">
+             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 1.5rem;">
+                 <div class="form-field"><label>Action Type</label><select id="lead-activity-type" required class="sigma-input"><option value="Phone Call">Phone Call</option><option value="Email Sent">Email Sent</option><option value="Site Visit">Site Visit</option><option value="Note">Internal Note</option></select></div>
+                 <div class="form-field"><label>Call Result</label><select id="lead-activity-result" class="sigma-input"><option value="">-- No Result --</option><option value="Spoke to them">Spoke to them</option><option value="Left message">Left message</option></select></div>
+             </div>
+             <div class="form-field"><label>Activity Details</label><textarea id="lead-activity-desc" required class="sigma-input" style="height: 120px; resize: none;"></textarea></div>
+             <div style="margin-top: 2rem; display: flex; justify-content: space-between; align-items: center;">
+                 <div style="display: flex; align-items: center; gap: 1rem;"><input type="checkbox" id="update-next-action" checked><label for="update-next-action" style="font-size: 0.75rem; font-weight: 600; color: var(--slate-500);">Auto-schedule followup</label></div>
+                 <button type="submit" class="isc-btn isc-btn-primary">Record Touchpoint</button>
+             </div>
+         </form>
+     </div>
+ </div>
+ </div>
+ <div id="lead-pane-timeline" class="isc-lead-pane" style="display:none;"><div id="lead-list-timeline" style="display: grid; gap: 2.5rem; border-left: 2px solid var(--slate-100); padding-left: 2.5rem; margin-left: 1rem;"></div></div>
+ </div>
+</div>
+e<div id="modal-lead-command" class="isc-modal-overlay" style="display:none;">
+ <div class="isc-modal">
+ <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2.5rem;">
+ <div>
+ <h2 id="lead-modal-title" style="font-weight: 800; font-size: 1.5rem; color: var(--slate-900); letter-spacing: -0.01em;">Lead Intelligence</h2>
+ <p id="lead-modal-subtitle" style="font-size: 0.75rem; color: var(--slate-500); margin-top: 0.25rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;"></p>
+ </div>
+ <div style="display: flex; gap: 0.5rem; align-items: center;">
+    <div style="position: relative;">
+        <button type="button" onclick="toggleFormFields(edit-lead-fields)" class="isc-btn isc-btn-outline" style="height: 32px; font-size: 0.7rem; border-radius: 6px;">
+            <i class="fas fa-filter"></i> Fields
+        </button>
+        <div id="edit-lead-fields" class="sigma-utility-menu" style="display: none; top: 110%; right: 0; width: 220px; padding: 1rem;">
+            <span style="font-size: 0.6rem; font-weight: 800; color: var(--slate-400); text-transform: uppercase; display: block; margin-bottom: 0.75rem;">Form Display Control</span>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 600;"><input type="checkbox" checked onchange="toggleField(lead, job_title, this.checked)"> Manager Title</label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 600;"><input type="checkbox" checked onchange="toggleField(lead, zipcode, this.checked)"> Zip Code</label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 600;"><input type="checkbox" checked onchange="toggleField(lead, industry, this.checked)"> Industry</label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 600;"><input type="checkbox" checked onchange="toggleField(lead, notes, this.checked)"> Lead Notes</label>
+            </div>
+        </div>
+    </div>
+    <button onclick="closeModal(modal-lead-command)" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; color: var(--slate-500); transition: all 0.2s;">
+        <i class="fas fa-times" style="font-size: 0.9rem;"></i>
+    </button>
+ </div>
+ </div>
+ <div id="lead-modal-tabs" style="display: flex; gap: 2rem; border-bottom: 1px solid var(--slate-100); margin-bottom: 2.5rem;">
+ <button onclick="iscLeadTab(overview)" class="isc-tab-trigger active" id="lead-tab-btn-overview">Overview</button>
+ <button onclick="iscLeadTab(actions)" class="isc-tab-trigger" id="lead-tab-btn-actions">Actions</button>
+ <button onclick="iscLeadTab(timeline)" class="isc-tab-trigger" id="lead-tab-btn-timeline">History</button>
+ </div>
+ <div id="lead-pane-overview" class="isc-lead-pane">
+ <div id="lead-list-overview" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;"></div>
+ <div style="margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--slate-100); text-align: right; position: relative;">
+ <button onclick="toggleLeadMenu()" class="isc-btn isc-btn-outline" id="btn-lead-plan" style="">Manage Lead</button>
+ <div id="lead-command-menu" style="display: none; position: absolute; bottom: 110%; right: 0; background: white; border: 1px solid var(--slate-200); border-radius: 6px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); padding: 0.5rem; z-index: 1000; min-width: 180px;">
+ <button onclick="toggleEditLead()" class="isc-dropdown-btn" style="width: 100%; text-align: left; padding: 0.75rem 1rem; background: none; border: none; font-weight: 600; color: var(--slate-900); cursor: pointer; border-radius: 0.4rem; font-size: 0.85rem;"><i class="fas fa-edit" style="margin-right:0.5rem;"></i> Edit Details</button>
+ <button onclick="promoteLead()" class="isc-dropdown-btn" style="width: 100%; text-align: left; padding: 0.75rem 1rem; background: none; border: none; font-weight: 600; color: var(--brand); cursor: pointer; border-radius: 0.4rem; font-size: 0.85rem;"><i class="fas fa-exchange-alt" style="margin-right:0.5rem;"></i> Promote to Account</button>
+ <button onclick="deleteLead()" class="isc-dropdown-btn" style="width: 100%; text-align: left; padding: 0.75rem 1rem; background: none; border: none; font-weight: 600; color: #ef4444; cursor: pointer; border-radius: 0.4rem; font-size: 0.85rem;"><i class="fas fa-trash-alt" style="margin-right:0.5rem;"></i> Delete Lead</button>
+ </div>
+ </div>
+ </div>
+ <div id="lead-pane-edit" class="isc-lead-pane" style="display:none;">
+ <form onsubmit="saveLeadUpdate(event)" class="sigma-form-container">
+ <input type="hidden" id="edit-lead-id">
+ <div class="sigma-form-body">
+ <div class="sigma-form-section">
+ <div class="sigma-form-group">
+ <span class="sigma-form-header">Lead Intelligence</span>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Company Name</label><input type="text" id="edit-lead-company" name="company_name" required placeholder="Legal Entity Name" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Main Manager</label><input type="text" id="edit-lead-dm" name="decision_maker" placeholder="Full Name" class="sigma-input"></div>
+ <div class="sigma-field" data-field="job_title"><label style="font-weight: 500; color: var(--slate-500);">Manager Title</label><input type="text" id="edit-lead-job-title" name="job_title" placeholder="e.g. Facilities Director" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Email Address</label><input type="email" id="edit-lead-email" name="email" placeholder="client@company.com" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Phone Number</label><input type="text" id="edit-lead-phone" name="phone" placeholder="1-(000)-000-0000" class="sigma-input" oninput="maskPhone(this)"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Building Address</label><input type="text" id="edit-lead-address" name="address" placeholder="Street Address" class="sigma-input" oninput="smartType(this, \u0027results-edit-lead\u0027)"><div id="results-edit-lead" class="address-results"></div></div>
+ <div class="sigma-row sigma-row-75-25">
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">City</label><input type="text" id="edit-lead-city" name="city" placeholder="City" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">State</label><input type="text" id="edit-lead-state" name="state" placeholder="TX" class="sigma-input"></div>
+ </div>
+ <div class="sigma-field" data-field="zipcode"><label style="font-weight: 500; color: var(--slate-500);">Zip Code</label><input type="text" id="edit-lead-zip" name="zipcode" placeholder="75001" class="sigma-input"></div>
+ </div>
+ <div class="sigma-form-group">
+ <span class="sigma-form-header">Sales & Performance</span>
+ <div class="sigma-field" data-field="industry"><label style="font-weight: 500; color: var(--slate-500);">Industry</label><input type="text" id="edit-lead-industry" name="industry" placeholder="e.g. Healthcare, Logistics" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Building SQF</label><input type="number" id="edit-lead-sqf" name="sqf" placeholder="e.g. 5000" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Status</label><select id="edit-lead-status" name="status" class="sigma-input"><option value="New">New Lead</option><option value="Contacted">Contacted</option><option value="Qualified">Qualified</option><option value="Lost">Lost</option></select></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Estimated Value</label><input type="number" id="edit-lead-value" name="estimated_annual_value" step="0.01" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Next Action</label><input type="date" id="edit-lead-next" name="next_action_date" class="sigma-input"></div>
+ <div class="sigma-field" data-field="notes"><label style="font-weight: 500; color: var(--slate-500);">Work Notes</label><textarea id="edit-lead-notes" name="notes" placeholder="Company insights and work goals..." class="sigma-input" style="height: 100px; resize: none;"></textarea></div>
+ </div>
+ </div>
+ </div>
+ <div class="sigma-form-actions">
+ <button type="button" onclick="toggleEditLead()" class="isc-btn isc-btn-outline">Discard Changes</button>
+ <button type="submit" class="isc-btn isc-btn-primary">Save Changes</button>
+ </div>
+ </form>
+ </div>
+ <div id="lead-pane-actions" class="isc-lead-pane" style="display:none;">
+ <div style="display: grid; grid-template-columns: 280px 1fr; gap: 2.5rem; align-items: start;">
+     <div class="isc-card" style="padding: 1.5rem; background: var(--slate-50); border: 1px solid var(--slate-100);">
+         <span class="sigma-form-header" style="margin-bottom: 1.5rem;">Quick Profile Update</span>
+         <div class="sigma-field"><label style="font-size: 0.65rem;">Main Manager</label><input type="text" id="lead-action-manager" class="sigma-input" style="height: 36px; font-size: 0.85rem;"></div>
+         <div class="sigma-field"><label style="font-size: 0.65rem;">Phone Number</label><input type="text" id="lead-action-phone" class="sigma-input" style="height: 36px; font-size: 0.85rem;" oninput="maskPhone(this)"></div>
+         <div class="sigma-field"><label style="font-size: 0.65rem;">Email Address</label><input type="email" id="lead-action-email" class="sigma-input" style="height: 36px; font-size: 0.85rem;"></div>
+         <div class="sigma-field" style="margin-top: 1rem;"><label style="font-size: 0.65rem;">Physical Address</label><input type="text" id="lead-action-address" class="sigma-input" style="height: 36px; font-size: 0.85rem;" oninput="smartType(this, \u0027results-sidebar-lead\u0027)"><div id="results-sidebar-lead" class="address-results"></div></div>
+         <div style="margin-top: 2rem; padding: 1rem; border-top: 1px solid var(--slate-100);"><span style="font-size: 0.65rem; font-weight: 800; color: var(--brand); text-transform: uppercase;"><i class="fas fa-robot"></i> Smart Note Tip</span><p style="font-size: 0.7rem; color: var(--slate-600); margin-top: 0.5rem; line-height: 1.4;">Sync data by typing: <br><code style="color: var(--brand);">new phone: 1-...</code><br><code style="color: var(--brand);">new address: 123...</code></p></div>
+     </div>
+     <div>
+         <h3 class="form-section-label">Activity Log</h3>
+         <div style="display: flex; gap: 1rem; margin-bottom: 2rem; overflow-x: auto; padding-bottom: 0.5rem;">
+             <button onclick="setLeadQuickAction(\u0027Phone Call\u0027, \u0027Spoke to decision maker. Scheduled walk-through.\u0027)" class="isc-btn isc-btn-outline" style="white-space: nowrap; border-color: var(--brand); color: var(--brand); height: 32px; font-size: 0.7rem;"><i class="fas fa-phone"></i> Spoke to DM</button>
+             <button onclick="setLeadQuickAction(\u0027Phone Call\u0027, \u0027Left message with receptionist.\u0027)" class="isc-btn isc-btn-outline" style="white-space: nowrap; height: 32px; font-size: 0.7rem;"><i class="fas fa-voicemail"></i> Left Message</button>
+             <button onclick="setLeadQuickAction(\u0027Note\u0027, \u0027Site walk completed. Pricing verified.\u0027)" class="isc-btn isc-btn-outline" style="white-space: nowrap; height: 32px; font-size: 0.7rem;"><i class="fas fa-clipboard-check"></i> Site Walk Done</button>
+         </div>
+         <form onsubmit="logLeadActivity(event)">
+             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 1.5rem;">
+                 <div class="form-field"><label>Action Type</label><select id="lead-activity-type" required class="sigma-input"><option value="Phone Call">Phone Call</option><option value="Email Sent">Email Sent</option><option value="Site Visit">Site Visit</option><option value="Note">Internal Note</option></select></div>
+                 <div class="form-field"><label>Call Result</label><select id="lead-activity-result" class="sigma-input"><option value="">-- No Result --</option><option value="Spoke to them">Spoke to them</option><option value="Left message">Left message</option></select></div>
+             </div>
+             <div class="form-field"><label>Activity Details</label><textarea id="lead-activity-desc" required class="sigma-input" style="height: 120px; resize: none;"></textarea></div>
+             <div style="margin-top: 2rem; display: flex; justify-content: space-between; align-items: center;">
+                 <div style="display: flex; align-items: center; gap: 1rem;"><input type="checkbox" id="update-next-action" checked><label for="update-next-action" style="font-size: 0.75rem; font-weight: 600; color: var(--slate-500);">Auto-schedule followup</label></div>
+                 <button type="submit" class="isc-btn isc-btn-primary">Record Touchpoint</button>
+             </div>
+         </form>
+     </div>
+ </div>
+ </div>
+ <div id="lead-pane-timeline" class="isc-lead-pane" style="display:none;"><div id="lead-list-timeline" style="display: grid; gap: 2.5rem; border-left: 2px solid var(--slate-100); padding-left: 2.5rem; margin-left: 1rem;"></div></div>
+ </div>
+</div>
+x<div id="modal-lead-command" class="isc-modal-overlay" style="display:none;">
+ <div class="isc-modal">
+ <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2.5rem;">
+ <div>
+ <h2 id="lead-modal-title" style="font-weight: 800; font-size: 1.5rem; color: var(--slate-900); letter-spacing: -0.01em;">Lead Intelligence</h2>
+ <p id="lead-modal-subtitle" style="font-size: 0.75rem; color: var(--slate-500); margin-top: 0.25rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;"></p>
+ </div>
+ <div style="display: flex; gap: 0.5rem; align-items: center;">
+    <div style="position: relative;">
+        <button type="button" onclick="toggleFormFields(edit-lead-fields)" class="isc-btn isc-btn-outline" style="height: 32px; font-size: 0.7rem; border-radius: 6px;">
+            <i class="fas fa-filter"></i> Fields
+        </button>
+        <div id="edit-lead-fields" class="sigma-utility-menu" style="display: none; top: 110%; right: 0; width: 220px; padding: 1rem;">
+            <span style="font-size: 0.6rem; font-weight: 800; color: var(--slate-400); text-transform: uppercase; display: block; margin-bottom: 0.75rem;">Form Display Control</span>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 600;"><input type="checkbox" checked onchange="toggleField(lead, job_title, this.checked)"> Manager Title</label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 600;"><input type="checkbox" checked onchange="toggleField(lead, zipcode, this.checked)"> Zip Code</label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 600;"><input type="checkbox" checked onchange="toggleField(lead, industry, this.checked)"> Industry</label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 600;"><input type="checkbox" checked onchange="toggleField(lead, notes, this.checked)"> Lead Notes</label>
+            </div>
+        </div>
+    </div>
+    <button onclick="closeModal(modal-lead-command)" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; color: var(--slate-500); transition: all 0.2s;">
+        <i class="fas fa-times" style="font-size: 0.9rem;"></i>
+    </button>
+ </div>
+ </div>
+ <div id="lead-modal-tabs" style="display: flex; gap: 2rem; border-bottom: 1px solid var(--slate-100); margin-bottom: 2.5rem;">
+ <button onclick="iscLeadTab(overview)" class="isc-tab-trigger active" id="lead-tab-btn-overview">Overview</button>
+ <button onclick="iscLeadTab(actions)" class="isc-tab-trigger" id="lead-tab-btn-actions">Actions</button>
+ <button onclick="iscLeadTab(timeline)" class="isc-tab-trigger" id="lead-tab-btn-timeline">History</button>
+ </div>
+ <div id="lead-pane-overview" class="isc-lead-pane">
+ <div id="lead-list-overview" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;"></div>
+ <div style="margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--slate-100); text-align: right; position: relative;">
+ <button onclick="toggleLeadMenu()" class="isc-btn isc-btn-outline" id="btn-lead-plan" style="">Manage Lead</button>
+ <div id="lead-command-menu" style="display: none; position: absolute; bottom: 110%; right: 0; background: white; border: 1px solid var(--slate-200); border-radius: 6px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); padding: 0.5rem; z-index: 1000; min-width: 180px;">
+ <button onclick="toggleEditLead()" class="isc-dropdown-btn" style="width: 100%; text-align: left; padding: 0.75rem 1rem; background: none; border: none; font-weight: 600; color: var(--slate-900); cursor: pointer; border-radius: 0.4rem; font-size: 0.85rem;"><i class="fas fa-edit" style="margin-right:0.5rem;"></i> Edit Details</button>
+ <button onclick="promoteLead()" class="isc-dropdown-btn" style="width: 100%; text-align: left; padding: 0.75rem 1rem; background: none; border: none; font-weight: 600; color: var(--brand); cursor: pointer; border-radius: 0.4rem; font-size: 0.85rem;"><i class="fas fa-exchange-alt" style="margin-right:0.5rem;"></i> Promote to Account</button>
+ <button onclick="deleteLead()" class="isc-dropdown-btn" style="width: 100%; text-align: left; padding: 0.75rem 1rem; background: none; border: none; font-weight: 600; color: #ef4444; cursor: pointer; border-radius: 0.4rem; font-size: 0.85rem;"><i class="fas fa-trash-alt" style="margin-right:0.5rem;"></i> Delete Lead</button>
+ </div>
+ </div>
+ </div>
+ <div id="lead-pane-edit" class="isc-lead-pane" style="display:none;">
+ <form onsubmit="saveLeadUpdate(event)" class="sigma-form-container">
+ <input type="hidden" id="edit-lead-id">
+ <div class="sigma-form-body">
+ <div class="sigma-form-section">
+ <div class="sigma-form-group">
+ <span class="sigma-form-header">Lead Intelligence</span>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Company Name</label><input type="text" id="edit-lead-company" name="company_name" required placeholder="Legal Entity Name" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Main Manager</label><input type="text" id="edit-lead-dm" name="decision_maker" placeholder="Full Name" class="sigma-input"></div>
+ <div class="sigma-field" data-field="job_title"><label style="font-weight: 500; color: var(--slate-500);">Manager Title</label><input type="text" id="edit-lead-job-title" name="job_title" placeholder="e.g. Facilities Director" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Email Address</label><input type="email" id="edit-lead-email" name="email" placeholder="client@company.com" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Phone Number</label><input type="text" id="edit-lead-phone" name="phone" placeholder="1-(000)-000-0000" class="sigma-input" oninput="maskPhone(this)"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Building Address</label><input type="text" id="edit-lead-address" name="address" placeholder="Street Address" class="sigma-input" oninput="smartType(this, \u0027results-edit-lead\u0027)"><div id="results-edit-lead" class="address-results"></div></div>
+ <div class="sigma-row sigma-row-75-25">
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">City</label><input type="text" id="edit-lead-city" name="city" placeholder="City" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">State</label><input type="text" id="edit-lead-state" name="state" placeholder="TX" class="sigma-input"></div>
+ </div>
+ <div class="sigma-field" data-field="zipcode"><label style="font-weight: 500; color: var(--slate-500);">Zip Code</label><input type="text" id="edit-lead-zip" name="zipcode" placeholder="75001" class="sigma-input"></div>
+ </div>
+ <div class="sigma-form-group">
+ <span class="sigma-form-header">Sales & Performance</span>
+ <div class="sigma-field" data-field="industry"><label style="font-weight: 500; color: var(--slate-500);">Industry</label><input type="text" id="edit-lead-industry" name="industry" placeholder="e.g. Healthcare, Logistics" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Building SQF</label><input type="number" id="edit-lead-sqf" name="sqf" placeholder="e.g. 5000" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Status</label><select id="edit-lead-status" name="status" class="sigma-input"><option value="New">New Lead</option><option value="Contacted">Contacted</option><option value="Qualified">Qualified</option><option value="Lost">Lost</option></select></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Estimated Value</label><input type="number" id="edit-lead-value" name="estimated_annual_value" step="0.01" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Next Action</label><input type="date" id="edit-lead-next" name="next_action_date" class="sigma-input"></div>
+ <div class="sigma-field" data-field="notes"><label style="font-weight: 500; color: var(--slate-500);">Work Notes</label><textarea id="edit-lead-notes" name="notes" placeholder="Company insights and work goals..." class="sigma-input" style="height: 100px; resize: none;"></textarea></div>
+ </div>
+ </div>
+ </div>
+ <div class="sigma-form-actions">
+ <button type="button" onclick="toggleEditLead()" class="isc-btn isc-btn-outline">Discard Changes</button>
+ <button type="submit" class="isc-btn isc-btn-primary">Save Changes</button>
+ </div>
+ </form>
+ </div>
+ <div id="lead-pane-actions" class="isc-lead-pane" style="display:none;">
+ <div style="display: grid; grid-template-columns: 280px 1fr; gap: 2.5rem; align-items: start;">
+     <div class="isc-card" style="padding: 1.5rem; background: var(--slate-50); border: 1px solid var(--slate-100);">
+         <span class="sigma-form-header" style="margin-bottom: 1.5rem;">Quick Profile Update</span>
+         <div class="sigma-field"><label style="font-size: 0.65rem;">Main Manager</label><input type="text" id="lead-action-manager" class="sigma-input" style="height: 36px; font-size: 0.85rem;"></div>
+         <div class="sigma-field"><label style="font-size: 0.65rem;">Phone Number</label><input type="text" id="lead-action-phone" class="sigma-input" style="height: 36px; font-size: 0.85rem;" oninput="maskPhone(this)"></div>
+         <div class="sigma-field"><label style="font-size: 0.65rem;">Email Address</label><input type="email" id="lead-action-email" class="sigma-input" style="height: 36px; font-size: 0.85rem;"></div>
+         <div class="sigma-field" style="margin-top: 1rem;"><label style="font-size: 0.65rem;">Physical Address</label><input type="text" id="lead-action-address" class="sigma-input" style="height: 36px; font-size: 0.85rem;" oninput="smartType(this, \u0027results-sidebar-lead\u0027)"><div id="results-sidebar-lead" class="address-results"></div></div>
+         <div style="margin-top: 2rem; padding: 1rem; border-top: 1px solid var(--slate-100);"><span style="font-size: 0.65rem; font-weight: 800; color: var(--brand); text-transform: uppercase;"><i class="fas fa-robot"></i> Smart Note Tip</span><p style="font-size: 0.7rem; color: var(--slate-600); margin-top: 0.5rem; line-height: 1.4;">Sync data by typing: <br><code style="color: var(--brand);">new phone: 1-...</code><br><code style="color: var(--brand);">new address: 123...</code></p></div>
+     </div>
+     <div>
+         <h3 class="form-section-label">Activity Log</h3>
+         <div style="display: flex; gap: 1rem; margin-bottom: 2rem; overflow-x: auto; padding-bottom: 0.5rem;">
+             <button onclick="setLeadQuickAction(\u0027Phone Call\u0027, \u0027Spoke to decision maker. Scheduled walk-through.\u0027)" class="isc-btn isc-btn-outline" style="white-space: nowrap; border-color: var(--brand); color: var(--brand); height: 32px; font-size: 0.7rem;"><i class="fas fa-phone"></i> Spoke to DM</button>
+             <button onclick="setLeadQuickAction(\u0027Phone Call\u0027, \u0027Left message with receptionist.\u0027)" class="isc-btn isc-btn-outline" style="white-space: nowrap; height: 32px; font-size: 0.7rem;"><i class="fas fa-voicemail"></i> Left Message</button>
+             <button onclick="setLeadQuickAction(\u0027Note\u0027, \u0027Site walk completed. Pricing verified.\u0027)" class="isc-btn isc-btn-outline" style="white-space: nowrap; height: 32px; font-size: 0.7rem;"><i class="fas fa-clipboard-check"></i> Site Walk Done</button>
+         </div>
+         <form onsubmit="logLeadActivity(event)">
+             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 1.5rem;">
+                 <div class="form-field"><label>Action Type</label><select id="lead-activity-type" required class="sigma-input"><option value="Phone Call">Phone Call</option><option value="Email Sent">Email Sent</option><option value="Site Visit">Site Visit</option><option value="Note">Internal Note</option></select></div>
+                 <div class="form-field"><label>Call Result</label><select id="lead-activity-result" class="sigma-input"><option value="">-- No Result --</option><option value="Spoke to them">Spoke to them</option><option value="Left message">Left message</option></select></div>
+             </div>
+             <div class="form-field"><label>Activity Details</label><textarea id="lead-activity-desc" required class="sigma-input" style="height: 120px; resize: none;"></textarea></div>
+             <div style="margin-top: 2rem; display: flex; justify-content: space-between; align-items: center;">
+                 <div style="display: flex; align-items: center; gap: 1rem;"><input type="checkbox" id="update-next-action" checked><label for="update-next-action" style="font-size: 0.75rem; font-weight: 600; color: var(--slate-500);">Auto-schedule followup</label></div>
+                 <button type="submit" class="isc-btn isc-btn-primary">Record Touchpoint</button>
+             </div>
+         </form>
+     </div>
+ </div>
+ </div>
+ <div id="lead-pane-timeline" class="isc-lead-pane" style="display:none;"><div id="lead-list-timeline" style="display: grid; gap: 2.5rem; border-left: 2px solid var(--slate-100); padding-left: 2.5rem; margin-left: 1rem;"></div></div>
+ </div>
+</div>
+t<div id="modal-lead-command" class="isc-modal-overlay" style="display:none;">
+ <div class="isc-modal">
+ <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2.5rem;">
+ <div>
+ <h2 id="lead-modal-title" style="font-weight: 800; font-size: 1.5rem; color: var(--slate-900); letter-spacing: -0.01em;">Lead Intelligence</h2>
+ <p id="lead-modal-subtitle" style="font-size: 0.75rem; color: var(--slate-500); margin-top: 0.25rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;"></p>
+ </div>
+ <div style="display: flex; gap: 0.5rem; align-items: center;">
+    <div style="position: relative;">
+        <button type="button" onclick="toggleFormFields(edit-lead-fields)" class="isc-btn isc-btn-outline" style="height: 32px; font-size: 0.7rem; border-radius: 6px;">
+            <i class="fas fa-filter"></i> Fields
+        </button>
+        <div id="edit-lead-fields" class="sigma-utility-menu" style="display: none; top: 110%; right: 0; width: 220px; padding: 1rem;">
+            <span style="font-size: 0.6rem; font-weight: 800; color: var(--slate-400); text-transform: uppercase; display: block; margin-bottom: 0.75rem;">Form Display Control</span>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 600;"><input type="checkbox" checked onchange="toggleField(lead, job_title, this.checked)"> Manager Title</label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 600;"><input type="checkbox" checked onchange="toggleField(lead, zipcode, this.checked)"> Zip Code</label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 600;"><input type="checkbox" checked onchange="toggleField(lead, industry, this.checked)"> Industry</label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 600;"><input type="checkbox" checked onchange="toggleField(lead, notes, this.checked)"> Lead Notes</label>
+            </div>
+        </div>
+    </div>
+    <button onclick="closeModal(modal-lead-command)" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; color: var(--slate-500); transition: all 0.2s;">
+        <i class="fas fa-times" style="font-size: 0.9rem;"></i>
+    </button>
+ </div>
+ </div>
+ <div id="lead-modal-tabs" style="display: flex; gap: 2rem; border-bottom: 1px solid var(--slate-100); margin-bottom: 2.5rem;">
+ <button onclick="iscLeadTab(overview)" class="isc-tab-trigger active" id="lead-tab-btn-overview">Overview</button>
+ <button onclick="iscLeadTab(actions)" class="isc-tab-trigger" id="lead-tab-btn-actions">Actions</button>
+ <button onclick="iscLeadTab(timeline)" class="isc-tab-trigger" id="lead-tab-btn-timeline">History</button>
+ </div>
+ <div id="lead-pane-overview" class="isc-lead-pane">
+ <div id="lead-list-overview" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;"></div>
+ <div style="margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--slate-100); text-align: right; position: relative;">
+ <button onclick="toggleLeadMenu()" class="isc-btn isc-btn-outline" id="btn-lead-plan" style="">Manage Lead</button>
+ <div id="lead-command-menu" style="display: none; position: absolute; bottom: 110%; right: 0; background: white; border: 1px solid var(--slate-200); border-radius: 6px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); padding: 0.5rem; z-index: 1000; min-width: 180px;">
+ <button onclick="toggleEditLead()" class="isc-dropdown-btn" style="width: 100%; text-align: left; padding: 0.75rem 1rem; background: none; border: none; font-weight: 600; color: var(--slate-900); cursor: pointer; border-radius: 0.4rem; font-size: 0.85rem;"><i class="fas fa-edit" style="margin-right:0.5rem;"></i> Edit Details</button>
+ <button onclick="promoteLead()" class="isc-dropdown-btn" style="width: 100%; text-align: left; padding: 0.75rem 1rem; background: none; border: none; font-weight: 600; color: var(--brand); cursor: pointer; border-radius: 0.4rem; font-size: 0.85rem;"><i class="fas fa-exchange-alt" style="margin-right:0.5rem;"></i> Promote to Account</button>
+ <button onclick="deleteLead()" class="isc-dropdown-btn" style="width: 100%; text-align: left; padding: 0.75rem 1rem; background: none; border: none; font-weight: 600; color: #ef4444; cursor: pointer; border-radius: 0.4rem; font-size: 0.85rem;"><i class="fas fa-trash-alt" style="margin-right:0.5rem;"></i> Delete Lead</button>
+ </div>
+ </div>
+ </div>
+ <div id="lead-pane-edit" class="isc-lead-pane" style="display:none;">
+ <form onsubmit="saveLeadUpdate(event)" class="sigma-form-container">
+ <input type="hidden" id="edit-lead-id">
+ <div class="sigma-form-body">
+ <div class="sigma-form-section">
+ <div class="sigma-form-group">
+ <span class="sigma-form-header">Lead Intelligence</span>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Company Name</label><input type="text" id="edit-lead-company" name="company_name" required placeholder="Legal Entity Name" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Main Manager</label><input type="text" id="edit-lead-dm" name="decision_maker" placeholder="Full Name" class="sigma-input"></div>
+ <div class="sigma-field" data-field="job_title"><label style="font-weight: 500; color: var(--slate-500);">Manager Title</label><input type="text" id="edit-lead-job-title" name="job_title" placeholder="e.g. Facilities Director" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Email Address</label><input type="email" id="edit-lead-email" name="email" placeholder="client@company.com" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Phone Number</label><input type="text" id="edit-lead-phone" name="phone" placeholder="1-(000)-000-0000" class="sigma-input" oninput="maskPhone(this)"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Building Address</label><input type="text" id="edit-lead-address" name="address" placeholder="Street Address" class="sigma-input" oninput="smartType(this, \u0027results-edit-lead\u0027)"><div id="results-edit-lead" class="address-results"></div></div>
+ <div class="sigma-row sigma-row-75-25">
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">City</label><input type="text" id="edit-lead-city" name="city" placeholder="City" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">State</label><input type="text" id="edit-lead-state" name="state" placeholder="TX" class="sigma-input"></div>
+ </div>
+ <div class="sigma-field" data-field="zipcode"><label style="font-weight: 500; color: var(--slate-500);">Zip Code</label><input type="text" id="edit-lead-zip" name="zipcode" placeholder="75001" class="sigma-input"></div>
+ </div>
+ <div class="sigma-form-group">
+ <span class="sigma-form-header">Sales & Performance</span>
+ <div class="sigma-field" data-field="industry"><label style="font-weight: 500; color: var(--slate-500);">Industry</label><input type="text" id="edit-lead-industry" name="industry" placeholder="e.g. Healthcare, Logistics" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Building SQF</label><input type="number" id="edit-lead-sqf" name="sqf" placeholder="e.g. 5000" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Status</label><select id="edit-lead-status" name="status" class="sigma-input"><option value="New">New Lead</option><option value="Contacted">Contacted</option><option value="Qualified">Qualified</option><option value="Lost">Lost</option></select></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Estimated Value</label><input type="number" id="edit-lead-value" name="estimated_annual_value" step="0.01" class="sigma-input"></div>
+ <div class="sigma-field"><label style="font-weight: 500; color: var(--slate-500);">Next Action</label><input type="date" id="edit-lead-next" name="next_action_date" class="sigma-input"></div>
+ <div class="sigma-field" data-field="notes"><label style="font-weight: 500; color: var(--slate-500);">Work Notes</label><textarea id="edit-lead-notes" name="notes" placeholder="Company insights and work goals..." class="sigma-input" style="height: 100px; resize: none;"></textarea></div>
+ </div>
+ </div>
+ </div>
+ <div class="sigma-form-actions">
+ <button type="button" onclick="toggleEditLead()" class="isc-btn isc-btn-outline">Discard Changes</button>
+ <button type="submit" class="isc-btn isc-btn-primary">Save Changes</button>
+ </div>
+ </form>
+ </div>
+ <div id="lead-pane-actions" class="isc-lead-pane" style="display:none;">
+ <div style="display: grid; grid-template-columns: 280px 1fr; gap: 2.5rem; align-items: start;">
+     <div class="isc-card" style="padding: 1.5rem; background: var(--slate-50); border: 1px solid var(--slate-100);">
+         <span class="sigma-form-header" style="margin-bottom: 1.5rem;">Quick Profile Update</span>
+         <div class="sigma-field"><label style="font-size: 0.65rem;">Main Manager</label><input type="text" id="lead-action-manager" class="sigma-input" style="height: 36px; font-size: 0.85rem;"></div>
+         <div class="sigma-field"><label style="font-size: 0.65rem;">Phone Number</label><input type="text" id="lead-action-phone" class="sigma-input" style="height: 36px; font-size: 0.85rem;" oninput="maskPhone(this)"></div>
+         <div class="sigma-field"><label style="font-size: 0.65rem;">Email Address</label><input type="email" id="lead-action-email" class="sigma-input" style="height: 36px; font-size: 0.85rem;"></div>
+         <div class="sigma-field" style="margin-top: 1rem;"><label style="font-size: 0.65rem;">Physical Address</label><input type="text" id="lead-action-address" class="sigma-input" style="height: 36px; font-size: 0.85rem;" oninput="smartType(this, \u0027results-sidebar-lead\u0027)"><div id="results-sidebar-lead" class="address-results"></div></div>
+         <div style="margin-top: 2rem; padding: 1rem; border-top: 1px solid var(--slate-100);"><span style="font-size: 0.65rem; font-weight: 800; color: var(--brand); text-transform: uppercase;"><i class="fas fa-robot"></i> Smart Note Tip</span><p style="font-size: 0.7rem; color: var(--slate-600); margin-top: 0.5rem; line-height: 1.4;">Sync data by typing: <br><code style="color: var(--brand);">new phone: 1-...</code><br><code style="color: var(--brand);">new address: 123...</code></p></div>
+     </div>
+     <div>
+         <h3 class="form-section-label">Activity Log</h3>
+         <div style="display: flex; gap: 1rem; margin-bottom: 2rem; overflow-x: auto; padding-bottom: 0.5rem;">
+             <button onclick="setLeadQuickAction(\u0027Phone Call\u0027, \u0027Spoke to decision maker. Scheduled walk-through.\u0027)" class="isc-btn isc-btn-outline" style="white-space: nowrap; border-color: var(--brand); color: var(--brand); height: 32px; font-size: 0.7rem;"><i class="fas fa-phone"></i> Spoke to DM</button>
+             <button onclick="setLeadQuickAction(\u0027Phone Call\u0027, \u0027Left message with receptionist.\u0027)" class="isc-btn isc-btn-outline" style="white-space: nowrap; height: 32px; font-size: 0.7rem;"><i class="fas fa-voicemail"></i> Left Message</button>
+             <button onclick="setLeadQuickAction(\u0027Note\u0027, \u0027Site walk completed. Pricing verified.\u0027)" class="isc-btn isc-btn-outline" style="white-space: nowrap; height: 32px; font-size: 0.7rem;"><i class="fas fa-clipboard-check"></i> Site Walk Done</button>
+         </div>
+         <form onsubmit="logLeadActivity(event)">
+             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 1.5rem;">
+                 <div class="form-field"><label>Action Type</label><select id="lead-activity-type" required class="sigma-input"><option value="Phone Call">Phone Call</option><option value="Email Sent">Email Sent</option><option value="Site Visit">Site Visit</option><option value="Note">Internal Note</option></select></div>
+                 <div class="form-field"><label>Call Result</label><select id="lead-activity-result" class="sigma-input"><option value="">-- No Result --</option><option value="Spoke to them">Spoke to them</option><option value="Left message">Left message</option></select></div>
+             </div>
+             <div class="form-field"><label>Activity Details</label><textarea id="lead-activity-desc" required class="sigma-input" style="height: 120px; resize: none;"></textarea></div>
+             <div style="margin-top: 2rem; display: flex; justify-content: space-between; align-items: center;">
+                 <div style="display: flex; align-items: center; gap: 1rem;"><input type="checkbox" id="update-next-action" checked><label for="update-next-action" style="font-size: 0.75rem; font-weight: 600; color: var(--slate-500);">Auto-schedule followup</label></div>
+                 <button type="submit" class="isc-btn isc-btn-primary">Record Touchpoint</button>
+             </div>
+         </form>
+     </div>
+ </div>
+ </div>
+ <div id="lead-pane-timeline" class="isc-lead-pane" style="display:none;"><div id="lead-list-timeline" style="display: grid; gap: 2.5rem; border-left: 2px solid var(--slate-100); padding-left: 2.5rem; margin-left: 1rem;"></div></div>
+ </div>
+</div>
+e<div id="modal-lead-command" class="isc-modal-overlay" style="display:none;">
+ <div class="isc-modal">
+ <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2.5rem;">
+ <div>
+ <h2 id="lead-modal-title" style="font-weight: 800; font-size: 1.5rem; color: var(--slate-900); letter-spacing: -0.01em;">Lead Intelligence</h2>
+ <p id="lead-modal-subtitle" style="font-size: 0.75rem; color: var(--slate-500); margin-top: 0.25rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;"></p>
+ </div>
+ <div style="display: flex; gap: 0.5rem; align-items: center;">
+    <div style="position: relative;">
+        <button type="button" onclick="toggleFormFields(edit-lead-fields)" class="isc-btn isc-btn-outline" style="height: 32px; font-size: 0.7rem; border-radius: 6px;">
+            <i class="fas fa-filter"></i> Fields
+        </button>
+        <div id="edit-lead-fields" class="sigma-utility-menu" style="display: none; top: 110%; right: 0; width: 220px; padding: 1rem;">
+            <span style="font-size: 0.6rem; font-weight: 800; color: var(--slate-400); text-transform: uppercase; display: block; margin-bottom: 0.75rem;">Form Display Control</span>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 600;"><input type="checkbox" checked onchange="toggleField(lead, job_title, this.checked)"> Manager Title</label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 600;"><input type="checkbox" checked onchange="toggleField(lead, zipcode, this.checked)"> Zip Code</label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 600;"><input type="checkbox" checked onchange="toggleField(lead, industry, this.checked)"> Industry</label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 600;"><input type="checkbox" checked onchange="toggleField(lead, notes, this.checked)"> Lead Notes</label>
+            </div>
+        </div>
+    </div>
+    <button onclick="closeModal(modal-lead-command)" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; color: var(--slate-500); transition: all 0.2s;">
+        <i class="fas fa-times" style="font-size: 0.9rem;"></i>
+    </button>
+ </div>
+ </div>
+ <div id="lead-modal-tabs" style="display: flex; gap: 2rem; border-bottom: 1px solid var(--slate-100); margin-bottom: 2.5rem;">
+ <button onclick="iscLeadTab(overview)" class="isc-tab-trigger active" id="lead-tab-btn-overview">Overview</button>
+ <button onclick="iscLeadTab(actions)" class="isc-tab-trigger" id="lead-tab-btn-actions">Actions</button>
+ <button onclick="iscLeadTab(timeline)" class="isc-tab-trigger" id="lead-tab-btn-timeline">History</button>
+ </div>
+ <div id="lead-pane-overview"

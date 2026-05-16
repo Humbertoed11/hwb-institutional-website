@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Quote Request Received | HWB Cleaning Services LLC{% endblock %}
+
+{% block content %}
+<div class="content-wrapper" style="max-width: 800px; margin: 0 auto; padding: 6rem 2rem; text-align: center;">
+ <div style="margin-bottom: 3rem;">
+ <div style="width: 80px; height: 80px; background: #28a745; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 2rem; font-size: 2.5rem; box-shadow: 0 10px 25px rgba(40, 167, 69, 0.3);">
+ ✓
+ </div>
+ <h2 style="font-size: 2.25rem; font-weight: 800; color: var(--hwb-dark); margin-bottom: 1rem;">Request Received Successfully.</h2>
+ <p style="font-size: 1.25rem; color: #64748b;">Thank you, {{ data['name'] }}. The initial cleaning plan has been registered.</p>
+ </div>
+
+ <div style="background: #ffffff; border-radius: 6px; border: 1px solid rgba(37, 99, 235, 0.1); padding: 2rem; text-align: left; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 4rem;">
+ <h3 style="font-size: 1.2rem; color: var(--hwb-blue); border-bottom: 2px solid #ffffff; padding-bottom: 1rem; margin-bottom: 2rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 900;">Request Summary</h3>
+ 
+ <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem;">
+ <div>
+ <div style="margin-bottom: 1.5rem;">
+ <label style="display: block; font-size: 0.8rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; margin-bottom: 0.25rem;">Organization</label>
+ <div style="font-size: 1.1rem; color: #1e293b; font-weight: 700;">{{ data['company'] }}</div>
+ </div>
+ <div style="margin-bottom: 1.5rem;">
+ <label style="display: block; font-size: 0.8rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; margin-bottom: 0.25rem;">Building Type</label>
+ <div style="font-size: 1.1rem; color: #1e293b; font-weight: 700;">{{ data['facility_type'].capitalize() }}</div>
+ </div>
+ <div>
+ <label style="display: block; font-size: 0.8rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; margin-bottom: 0.25rem;">Square Footage</label>
+ <div style="font-size: 1.1rem; color: #1e293b; font-weight: 700;">{{ data['sqft'] }} SQF</div>
+ </div>
+ {% if data['pref_date'] %}
+ <div style="margin-top: 1.5rem;">
+ <label style="display: block; font-size: 0.8rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; margin-bottom: 0.25rem;">Preferred Date</label>
+ <div style="font-size: 1.1rem; color: var(--hwb-blue); font-weight: 700;">{{ data['pref_date'] }}</div>
+ </div>
+ {% endif %}
+ </div>
+ 
+ <div>
+ <div style="margin-bottom: 1.5rem;">
+ <label style="display: block; font-size: 0.8rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; margin-bottom: 0.25rem;">Service Need</label>
+ <div style="font-size: 1.1rem; color: var(--hwb-blue); font-weight: 800;">{{ data['need_label'] }}</div>
+ </div>
+ <div style="margin-bottom: 1.5rem;">
+ <label style="display: block; font-size: 0.8rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; margin-bottom: 0.25rem;">Contact Phone</label>
+ <div style="font-size: 1.1rem; color: #1e293b; font-weight: 700;">{{ data['phone'] }}</div>
+ </div>
+ <div style="margin-bottom: 1.5rem;">
+ <label style="display: block; font-size: 0.8rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; margin-bottom: 0.25rem;">Contact Email</label>
+ <div style="font-size: 1.1rem; color: #1e293b; font-weight: 700;">{{ data['email'] }}</div>
+ </div>
+ {% if data['pref_time'] %}
+ <div>
+ <label style="display: block; font-size: 0.8rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; margin-bottom: 0.25rem;">Preferred Time</label>
+ <div style="font-size: 1.1rem; color: var(--hwb-blue); font-weight: 700;">{{ data['pref_time'] }}</div>
+ </div>
+ {% endif %}
+ </div>
+ </div>
+
+ {% if data['message'] %}
+ <div style="margin-top: 2.5rem; padding-top: 2rem; border-top: 1px dashed rgba(37, 99, 235, 0.1);">
+ <label style="display: block; font-size: 0.8rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; margin-bottom: 0.5rem;">Special Instructions</label>
+ <div style="font-size: 1rem; color: #475569; font-style: italic;">"{{ data['message'] }}"</div>
+ </div>
+ {% endif %}
+ </div>
+
+ <div style="background: #ffffff; border-radius: 6px; padding: 2rem; border: 1px solid rgba(37, 99, 235, 0.1);">
+ <h3 style="font-size: 1.5rem; color: var(--hwb-dark); font-weight: 800; margin-bottom: 1.5rem;">What to expect next</h3>
+ <div style="display: flex; gap: 2rem; text-align: left; align-items: flex-start;">
+ <div style="font-size: 2rem;">📞</div>
+ <p style="font-size: 1.1rem; color: #475569; line-height: 1.6;">
+ A company representative from <strong>HWB Cleaning Services LLC</strong> will call within the next 24 business hours at <strong>{{ data['phone'] }}</strong> to schedule the professional site walkthrough and finalize the Scope of Work.
+ </p>
+ </div>
+ </div>
+
+ <div style="margin-top: 4rem;">
+ <a href="/" style="color: var(--hwb-blue); font-weight: 800; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;">
+ ← Return to Home Page
+ </a>
+ </div>
+</div>
+{% endblock %}

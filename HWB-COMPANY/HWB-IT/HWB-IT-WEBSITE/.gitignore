@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+env/
+venv/
+ENV/
+
+# Database
+database/
+*.db
+*.sqlite3
+
+# Environment variables
+.env
+
+# Legacy
+legacy_clone/
+
+# IDE
+.vscode/
+.idea/
+.obsidian/
+
+# Large files (Exclude by default)
+*.JPG
+*.png
+
+# Mandatory Site Assets (Whitelisted)
+!static/hwb-cleaning-services-llc-logo-plano-tx.png
+!static/gen_ai_staging/*.png
+!static/gen_ai_staging/*.jpg
+
+# Specific large files to stay excluded
+HWB-WEB Facebook Banner.JPG
+HWB-WEB Sigma Fidelity Logo.png
+HWB-WEB HWB New Logo 2.png

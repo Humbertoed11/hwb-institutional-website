@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:13
+    container_name: hwb_postgres_dev
+    restart: always
+    environment:
+      - POSTGRES_USER=hwbdev
+      - POSTGRES_PASSWORD=hwbpassword
+      - POSTGRES_DB=hwb_dev_db
+      - TZ=America/Chicago
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - hwb-net
+
+  web:
+    build:
+      context: ./HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE
+      dockerfile: Dockerfile
+    container_name: hwb_web_app
+    restart: always
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql://hwbdev:hwbpassword@db:5432/hwb_dev_db
+      - CLIENT_DATABASE_URL=postgresql://hwbdev:hwbpassword@db:5432/hwb_dev_db
+      - TZ=America/Chicago
+    depends_on:
+      - db
+    networks:
+      - hwb-net
+    volumes:
+      - ./HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE:/app
+      - ./HWB-COMPANY/HWB-IT/HWB-IT-SYSTEM-LOGS:/app/logs
+
+  worker:
+    build:
+      context: ./HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE
+      dockerfile: Dockerfile
+    container_name: hwb_agent_worker
+    restart: always
+    command: python worker_launcher.py
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql://hwbdev:hwbpassword@db:5432/hwb_dev_db
+      - CLIENT_DATABASE_URL=postgresql://hwbdev:hwbpassword@db:5432/hwb_dev_db
+      - TZ=America/Chicago
+    depends_on:
+      - db
+    networks:
+      - hwb-net
+    volumes:
+      - ./HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE:/app
+      - ./HWB-COMPANY/HWB-IT/HWB-IT-SYSTEM-LOGS:/app/logs
+
+  gateway:
+    image: python:3.12-slim
+    container_name: hwb_traffic_director
+    restart: always
+    ports:
+      - "8000:8000"
+    command: python /app/proxy_gateway.py
+    volumes:
+      - ./scripts/proxy_gateway.py:/app/proxy_gateway.py
+    networks:
+      - hwb-net
+    environment:
+      # Map the internal Docker names for routing
+      - TARGET_APP=http://web:5000
+    depends_on:
+      - web
+
+networks:
+  hwb-net:
+    driver: bridge
+
+volumes:
+  postgres_data:

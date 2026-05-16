@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}Industrial & Warehouse Cleaning | DFW Metroplex & Statewide Texas | HWB Cleaning{% endblock %}
+{% block head %}
+ <meta name="description" content="HWB provides professional Industrial cleaning and warehouse floor scrubbing across the DFW Metroplex and statewide Texas. Certified teams for 24/7 distribution center cleaning.">
+ <meta name="keywords" content="Warehouse cleaning DFW Metroplex, Industrial floor scrubbing Texas, distribution center cleaning, large-scale building cleanup Plano, Frisco warehouse care">
+{% endblock %}
+
+{% block content %}
+<section class="services-view">
+ <div class="services-hero dark-variant" style="background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('/static/img/industrial_hero_ppe_aisles.png');">
+ <h1>Heavy Duty Industrial Cleaning</h1>
+ <p class="subtitle">We keep DFW warehouses clean and ready for work around the clock.</p>
+ <a href="{{ url_for('get_quote') }}" class="executive-hero-cta">Start a quote <i class="fas fa-arrow-right" style="margin-left: 0.5rem; font-size: 0.8rem;"></i></a>
+ </div>
+
+ <div class="detailed-services">
+ <div class="split-feature image-left">
+ <div class="split-image-container"><div class=\"sigma-image-frame\"><img src="/static/img/industrial_m20_scrubber.png" alt="HWB Industrial Warehouse Scrubbing"></div></div>
+ <div class="split-content">
+ <h2 style="; margin-bottom: 1.5rem; ">Reliable Warehouse Cleaning</h2>
+ <p style="font-size: 1.1rem; color: var(--hwb-dark); margin-bottom: 2rem; line-height: 1.8;">Industrial buildings need more than just a quick clean. They need a plan that keeps the workspace running. Our team uses industrial-grade machines to manage large-scale Class A, B, and C facilities with no missed spots.</p>
+ <div style="display: flex; gap: 2rem; margin-top: 2rem;">
+ <div style="flex: 1;">
+ <div style="font-size: 2rem; margin-bottom: 0.5rem;">🚛</div>
+ <h4 style=" margin-bottom: 0.5rem;">24/7 Support</h4>
+ <p style="font-size: 0.9rem; color: var(--hwb-slate);">We work around building shifts so operations never have to stop.</p>
+ </div>
+ <div style="flex: 1;">
+ <div style="font-size: 2rem; margin-bottom: 0.5rem; ">🛡️</div>
+ <h4 style=" margin-bottom: 0.5rem;">Reliable Cleaning</h4>
+ <p style="font-size: 0.9rem; color: var(--hwb-slate);">Our operators are PIT certified and follow strict OSHA safety rules while wearing proper PPE.</p>
+ </div>
+ </div>
+ </div>
+ </div>
+
+ <div style="margin-bottom: 4rem;">
+ <div class="section-header"><h2>Industrial Cleaning Standards</h2></div>
+ 
+ <div class="service-grid">
+ <!-- Floor Scrubbing -->
+ <a href="{{ url_for('get_quote') }}" style="text-decoration: none; color: inherit; display: block;">
+ <div class="service-card">
+ <div class="card-image" style="background-image: url('/static/img/industrial_m20_scrubber.png');"></div>
+ <div class="card-content">
+ <div class="card-badge">accuracy</div>
+ <h3>Floor Scrubbing</h3>
+ <p>High-volume cleaning using Tennant M20 integrated scrubber-sweepers for a safe, zero-debris finish on industrial concrete.</p>
+ </div>
+ <div class="card-footer">
+ <span class="starting-price"><strong>Heavy-Duty Grade</strong></span>
+ </div>
+ </div>
+ </a>
+
+ <!-- Trash & Debris Removal -->
+ <a href="{{ url_for('get_quote') }}" style="text-decoration: none; color: inherit; display: block;">
+ <div class="service-card">
+ <div class="card-image" style="background-image: url('/static/img/industrial_hopper_dump.png');"></div>
+ <div class="card-content">
+ <div class="card-badge">Logistics</div>
+ <h3>Trash & Debris Handling</h3>
+ <p>Professional management of heavy-duty trash removal and forklift-mounted hopper dumping to keep your loading docks clear.</p>
+ </div>
+ <div class="card-footer">
+ <span class="starting-price"><strong>Work Flow</strong></span>
+ </div>
+ </div>
+ </a>
+
+ <!-- High-Volume Restroom Care -->
+ <a href="{{ url_for('get_quote') }}" style="text-decoration: none; color: inherit; display: block;">
+ <div class="service-card">
+ <div class="card-image" style="background-image: url('{{ url_for('static', filename='img/industrial_restroom_sanitation_no_mask.png') }}');"></div>
+ <div class="card-content">
+ <div class="card-badge">Sanitation</div>
+ <h3>High-Volume Restroom Care</h3>
+ <p>Designed for 24/7 buildings with 250+ workers. We focus on deep disinfection and odor control to keep your large workforce healthy.</p>
+ </div>
+ <div class="card-footer">
+ <span class="starting-price"><strong>Inspection-Ready</strong></span>
+ </div>
+ </div>
+ </a>
+ </div>
+ </div>
+ </div>
+
+ <section class="cta-section"><div class="executive-cta">
+ <h2 class="final-ask-title">Need a reliable warehouse crew?</h2>
+ <p>We provide 24/7 cleaning for busy warehouses in Plano, Dallas, and across North Texas.</p>
+ <a href="{{ url_for('get_quote') }}" class="executive-hero-cta">Start a quote <i class="fas fa-arrow-right" style="margin-left: 0.5rem; font-size: 0.8rem;"></i></a>
+ </div>
+</section>
+{% endblock %}

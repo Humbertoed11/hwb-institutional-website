@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}Company Access | Sigmaquality™ Portal{% endblock %}
+
+{% block head %}
+<style>
+ .login-vault-container {
+ width: 100%;
+ max-width: 440px;
+ background: rgba(255, 255, 255, 0.03);
+ backdrop-filter: blur(20px);
+ border: 1px solid rgba(255, 255, 255, 0.1);
+ border-radius: 6px;
+ padding: 4rem;
+ box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5);
+ position: relative;
+ overflow: hidden;
+ }
+
+ .logo-merge-zone {
+ height: 100px;
+ display: flex;
+ justify-content: center;
+ align-items: center;
+ margin-bottom: 3rem;
+ position: relative;
+ }
+
+ .logo-half {
+ height: 80px;
+ width: auto;
+ position: absolute;
+ }
+
+ .logo-left {
+ clip-path: inset(0 72% 0 0);
+ animation: logoMergeLeft 1.2s cubic-bezier(0.2, 1, 0.3, 1) forwards;
+ }
+
+ .logo-right {
+ clip-path: inset(0 0 0 28%);
+ animation: logoMergeRight 1.2s cubic-bezier(0.2, 1, 0.3, 1) forwards;
+ }
+
+ .vault-label {
+ font-size: 0.7rem;
+ font-weight: 900;
+ text-transform: uppercase;
+ letter-spacing: 0.2em;
+ color: rgba(255, 255, 255, 0.4);
+ margin-bottom: 1rem;
+ display: block;
+ text-align: center;
+ }
+
+ .vault-input {
+ width: 100%;
+ background: rgba(255, 255, 255, 0.05);
+ border: 1px solid rgba(255, 255, 255, 0.1);
+ padding: 1.25rem;
+ border-radius: 6px;
+ color: white;
+ font-family: inherit;
+ font-weight: 600;
+ font-size: 1rem;
+ transition: all 0.3s;
+ outline: none;
+ margin-bottom: 1.5rem;
+ }
+
+ .vault-input:focus {
+ background: rgba(255, 255, 255, 0.1);
+ border-color: var(--hwb-blue);
+ box-shadow: 0 0 20px var(--hwb-blue-glow);
+ }
+
+ .vault-btn {
+ width: 100%;
+ padding: 1.25rem;
+ background: var(--hwb-blue);
+ color: white;
+ border: none;
+ border-radius: 6px;
+ font-weight: 800;
+ text-transform: uppercase;
+ letter-spacing: 0.1em;
+ cursor: pointer;
+ transition: all 0.3s;
+ margin-top: 1rem;
+ }
+
+ .vault-btn:hover {
+ transform: translateY(-2px);
+ box-shadow: 0 10px 30px var(--hwb-blue-glow);
+ }
+
+ .status-reel {
+ margin-top: 2rem;
+ font-size: 0.75rem;
+ font-weight: 700;
+ color: var(--hwb-blue);
+ text-align: center;
+ height: 20px;
+ opacity: 0;
+ transition: opacity 0.3s;
+ }
+
+ /* Override main content padding for vault */
+ .main-content { padding: 0 !important; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="vault-background">
+ <div class="login-vault-container">
+ <div class="logo-merge-zone">
+ <img src="{{ url_for('static', filename='logo_standard.png') }}" alt="HWB Cleaning Official Logo" class="logo-half logo-left">
+ <img src="{{ url_for('static', filename='logo_standard.png') }}" alt="HWB Cleaning Official Logo" class="logo-half logo-right">
+ </div>
+ 
+ <span class="vault-label">Login Required</span>
+ 
+ <form method="POST" id="vault-form">
+ <div class="sigma-field">
+ <input type="text" name="username" required placeholder="Company ID" class="vault-input">
+ </div>
+ <div class="sigma-field">
+ <input type="password" name="password" required placeholder="Password" class="vault-input">
+ </div>
+ <button type="submit" class="vault-btn" id="entry-btn">Log In</button>
+ </form>
+
+ <div id="status-reel" class="status-reel">Setting up Connection...</div>
+
+ <div style="margin-top: 3rem; text-align: center;">
+ <a href="/" style="color: rgba(255,255,255,0.3); text-decoration: none; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;">← Exit to Terminal</a>
+ </div>
+ </div>
+</div>
+
+<script>
+ const form = document.getElementById('vault-form');
+ const reel = document.getElementById('status-reel');
+ const btn = document.getElementById('entry-btn');
+ const messages = [
+ "Validating ID...",
+ "Syncing Database...",
+ "Authorizing Connection...",
+ "Decrypting Session...",
+ "Entering Backoffice..."
+ ];
+
+ form.onsubmit = function() {
+ btn.disabled = true;
+ btn.innerHTML = "Authenticating...";
+ btn.style.opacity = "0.5";
+ reel.style.opacity = "1";
+ 
+ let i = 0;
+ const interval = setInterval(() => {
+ if (i < messages.length) {
+ reel.innerText = messages[i];
+ i++;
+ } else {
+ clearInterval(interval);
+ }
+ }, 600);
+ };
+</script>
+{% endblock %}

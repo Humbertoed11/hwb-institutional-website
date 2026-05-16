@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Custom Service Builder | SigmaQuality™ Standards{% endblock %}
+
+{% block head %}
+ <style>
+ .client-builder-layout { display: grid; grid-template-columns: 1fr 400px; gap: 3rem; margin-top: 4rem; align-items: start; }
+ .area-card { background: var(--white); padding: 2rem; border-radius: 16px; border: 1px solid var(--border); transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; }
+ .area-card:hover { border-color: var(--accent); box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.04); }
+ .area-card.selected { border: 2px solid var(--accent); background: #eff6ff; }
+ .area-card.selected .check-icon { display: block; }
+ .check-icon { display: none; position: absolute; top: 1rem; right: 1rem; color: var(--accent); font-weight: 900; }
+ 
+ .summary-panel { background: var(--white); padding: 2.5rem; border-radius: 16px; border: 1px solid var(--border); position: sticky; top: 2rem; box-shadow: 0 20px 25px -5px rgba(37, 99, 235, 0.04); }
+ .step-badge { font-size: 0.65rem; font-weight: 800; background: var(--bg-color); padding: 0.25rem 0.75rem; border-radius: 100px; color: var(--text-secondary); margin-right: 0.5rem; }
+ </style>
+{% endblock %}
+
+{% block content %}
+<section class="services-view">
+ <div class="services-hero">
+ <h1 style="background: linear-gradient(135deg, var(--text-primary) 0%, #3b82f6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Build a Custom Cleaning Scope</h1>
+ <p class="subtitle">Select the areas required by the building. The SigmaQuality™ Seven Step Sequence is automatically applied to each selected zone.</p>
+ </div>
+
+ <div class="client-builder-layout">
+ <!-- Left: Area Selection -->
+ <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="areaContainer">
+ <div class="area-card" data-area="Reception" data-icon="🛋️">
+ <h3 style="margin-bottom: 0.5rem;">Reception & Lobby</h3>
+ <p style="font-size: 0.85rem; color: var(--text-secondary);">High touch glass detail and daily furniture sanitation.</p>
+ </div>
+ <div class="area-card" data-area="Classrooms" data-icon="🖍️">
+ <h3 style="margin-bottom: 0.5rem;">Classrooms / Training</h3>
+ <p style="font-size: 0.85rem; color: var(--text-secondary);">Focus on infection control, rug vacuuming, and desk disinfection.</p>
+ </div>
+ <div class="area-card" data-area="Bathrooms" data-icon="🚻">
+ <h3 style="margin-bottom: 0.5rem;">Professional Grade Restrooms</h3>
+ <p style="font-size: 0.85rem; color: var(--text-secondary);">Strict professional grade sanitation safety rules for all fixtures.</p>
+ </div>
+ <div class="area-card" data-area="Kitchen" data-icon="🍳">
+ <h3 style="margin-bottom: 0.5rem;">Kitchen & Breakrooms</h3>
+ <p style="font-size: 0.85rem; color: var(--text-secondary);">Degreasing surfaces and careful waste management.</p>
+ </div>
+ <div class="area-card" data-area="Offices" data-icon="💼">
+ <h3 style="margin-bottom: 0.5rem;">Executive Offices</h3>
+ <p style="font-size: 0.85rem; color: var(--text-secondary);">Confidential waste handling and professional surface care.</p>
+ </div>
+ <div class="area-card" data-area="Common Areas" data-icon="🏢">
+ <h3 style="margin-bottom: 0.5rem;">Common Halls & Entrances</h3>
+ <p style="font-size: 0.85rem; color: var(--text-secondary);">Consistent floor care and high traffic touchpoint disinfection.</p>
+ </div>
+ </div>
+
+ <!-- Right: Real-time Summary -->
+ <aside class="summary-panel">
+ <h3 style="color: var(--accent); margin-bottom: 1.5rem;">Custom Proposal</h3>
+ <div id="selectedList" style="margin-bottom: 2rem;">
+ <p style="color: var(--text-secondary); font-style: italic; font-size: 0.9rem;">No areas selected yet.</p>
+ </div>
+ 
+ <div style="background: var(--bg-color); padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem;">
+ <h4 style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; margin-bottom: 1rem;">Included Task Sequence</h4>
+ <div style="font-size: 0.8rem; line-height: 1.8;">
+ <div><span class="step-badge">1</span> Refill Consumables</div>
+ <div><span class="step-badge">2</span> Empty Receptacles</div>
+ <div><span class="step-badge">3</span> Professional Dusting</div>
+ <div><span class="step-badge">4</span> Clean & Polish</div>
+ <div><span class="step-badge">5</span> accuracy Mopping</div>
+ <div><span class="step-badge">6</span> HEPA Vacuuming</div>
+ <div><span class="step-badge">7</span> Professional Disinfection</div>
+ </div>
+ </div>
+
+ <form action="{{ url_for('get_quote') }}" method="GET">
+ <input type="hidden" name="custom_scope" id="scopeInput">
+ <button type="submit" class="btn-primary" style="width: 100%; padding: 1.25rem; text-align: center;">Request Quote for This Scope</button>
+ </form>
+ </aside>
+ </div>
+</section>
+
+<script>
+ document.addEventListener('DOMContentLoaded', function() {
+ const cards = document.querySelectorAll('.area-card');
+ const selectedList = document.getElementById('selectedList');
+ const scopeInput = document.getElementById('scopeInput');
+ let selectedAreas = [];
+
+ function updateSummary() {
+ if (selectedAreas.length === 0) {
+ selectedList.innerHTML = '<p style="color: var(--text-secondary); font-style: italic; font-size: 0.9rem;">Select areas on the left to start.</p>';
+ return;
+ }
+
+ selectedList.innerHTML = selectedAreas.map(area => `
+ <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; font-weight: 700; font-size: 0.95rem;">
+ <span>${area.icon}</span> ${area.name}
+ </div>
+ `).join('');
+ 
+ scopeInput.value = selectedAreas.map(a => a.name).join(', ');
+ }
+
+ cards.forEach(card => {
+ card.addEventListener('click', function() {
+ const name = this.getAttribute('data-area');
+ const icon = this.getAttribute('data-icon');
+ 
+ this.classList.toggle('selected');
+ 
+ if (this.classList.contains('selected')) {
+ selectedAreas.push({ name, icon });
+ } else {
+ selectedAreas = selectedAreas.filter(a => a.name !== name);
+ }
+ 
+ updateSummary();
+ });
+ });
+ });
+</script>
+{% endblock %}

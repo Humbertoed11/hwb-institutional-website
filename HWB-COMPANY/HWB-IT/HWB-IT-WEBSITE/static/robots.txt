@@ -1,0 +1,19 @@
+# SigmaFidelity SEO Force-Unlock [v2026-05-07]
+# Mandated by HWB-QMS-8.2 (Technical SEO Hardening)
+
+User-agent: *
+Allow: /
+# Disallow administrative and private login areas
+Disallow: /admin/
+Disallow: /login
+
+# Block legacy mobile directory and deprecated paths
+Disallow: /m/
+Disallow: /contact
+Disallow: /facility-services
+Disallow: /industries
+Disallow: /vendors-*-subcontractors
+
+# Sitemaps (Updated with 2026 Endpoints)
+Sitemap: https://www.hwbcleaning.com/sitemap.xml
+Sitemap: https://www.hwbcleaning.com/sitemap.website.xml

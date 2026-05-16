@@ -1,0 +1,387 @@
+{% extends "backoffice_base.html" %}
+
+{% block title %}HWB Daily Tasks | Professional Scope of Work App{% endblock %}
+
+{% block head %}
+ <!-- Load React and Tailwind via CDN for standalone execution -->
+ <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+ <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+ <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+ <script src="https://cdn.tailwindcss.com"></script>
+ 
+ <script>
+ tailwind.config = {
+ theme: {
+ extend: {
+ colors: {
+ brand: '#2563eb',
+ refill: '#ffedd5', // light orange
+ empty: '#dbeafe', // blue
+ dust: '#f5f5dc', // tan
+ clean: '#dcfce7', // green
+ mop: '#fef9c3', // yellow
+ vacuum: '#f3f4f6', // gray
+ disinfect: '#fef3c7', // dark gold
+ }
+ }
+ }
+ }
+ </script>
+{% endblock %}
+
+
+
+
+{% block bo_content %}
+<div id="cleaning-workflow-app"></div>
+
+{% raw %}
+<script type="text/babel">
+ const { useState, useEffect, useMemo } = React;
+
+ // --- Professional Data Model ---
+ const INITIAL_DATA = {
+ siteInfo: {
+ name: "Everbrook Academy Plano TX",
+ startTime: "6:30 PM",
+ days: "Monday through Friday",
+ manager: "Contact Person Office"
+ },
+ steps: [
+ { id: 1, name: "Refill", color: "bg-orange-100", border: "border-orange-200", text: "text-orange-800" },
+ { id: 2, name: "Empty", color: "bg-blue-100", border: "border-blue-200", text: "text-blue-800" },
+ { id: 3, name: "Dust", color: "bg-stone-100", border: "border-stone-200", text: "text-stone-800" },
+ { id: 4, name: "Clean/Polish", color: "bg-green-100", border: "border-green-200", text: "text-green-800" },
+ { id: 5, name: "Mop", color: "bg-yellow-100", border: "border-yellow-200", text: "text-yellow-800" },
+ { id: 6, name: "Vacuum", color: "bg-gray-100", border: "border-gray-200", text: "text-gray-800" },
+ { id: 7, name: "Disinfect", color: "bg-yellow-200", border: "border-yellow-400", text: "text-yellow-900" }
+ ],
+ areas: [
+ { 
+ id: "front", name: "Front Entrance", 
+ tasks: {
+ 1: ["Refill Sanitizer Dispensers"],
+ 2: ["Empty Entrance Trash", "Disinfect Receptacle"],
+ 3: ["Dust Window Sills", "Dust Wall Fixtures"],
+ 4: ["Polish Front Glass", "Clean Door Frames"],
+ 5: ["Mop Hard Floor Surfaces"],
+ 6: ["Vacuum Welcome Mat"],
+ 7: ["Disinfect Door Handles", "Disinfect Light Switches"]
+ }
+ },
+ { 
+ id: "reception", name: "Reception", 
+ tasks: {
+ 1: ["Refill Hand Sanitizers"],
+ 2: ["Empty Desk Trash", "Disinfect Receptacle"],
+ 3: ["Dust Ceiling Fans", "Dust Furniture"],
+ 4: ["Polish Front Desk", "Clean Coffee Area"],
+ 5: ["Mop Behind Desk Area"],
+ 6: ["Vacuum Area Rugs"],
+ 7: ["Disinfect Counters", "Disinfect Phone/Keyboard"]
+ }
+ },
+ { 
+ id: "classrooms", name: "Class Rooms", 
+ tasks: {
+ 1: ["Refill Soap/Sanitizer", "Refill Paper Towels"],
+ 2: ["Empty All Trash Cans", "Disinfect Receptacles"],
+ 3: ["Dust High Surfaces", "Dust Wall Fixtures"],
+ 4: ["Clean Inside Observation Windows"],
+ 5: ["Mop Wood/VCT Floors"],
+ 6: ["Vacuum Educational Rugs", "Vacuum Under Furniture"],
+ 7: ["Disinfect Handles", "Disinfect Sinks", "Disinfect Light Switches"]
+ }
+ },
+ { 
+ id: "bathrooms", name: "Bath Rooms", 
+ tasks: {
+ 1: ["Refill Soap", "Refill Paper Towels", "Refill Toilet Paper"],
+ 2: ["Empty Sanitary Trash", "Disinfect Cans"],
+ 3: ["Dust Air Vents", "Dust Wall Fixtures"],
+ 4: ["Polish Mirrors", "Clean Sinks & Fixtures"],
+ 5: ["Mop floors with Professional grade solutions"],
+ 6: ["N/A (Wet Area)"],
+ 7: ["Disinfect Toilet Bowls", "Disinfect Urinals", "Disinfect Handles"]
+ }
+ },
+ { 
+ id: "kitchen", name: "Kitchen", 
+ tasks: {
+ 1: ["Refill Dish Soap", "Refill Paper Towels"],
+ 2: ["Empty Food Waste Trash", "Disinfect Receptacle"],
+ 3: ["Dust Top of Fridge", "Dust Wall Fixtures"],
+ 4: ["Clean Fridge Doors", "Polish Sinks"],
+ 5: ["Mop Kitchen Floor"],
+ 6: ["N/A (Wet Area)"],
+ 7: ["Disinfect Counters", "Disinfect Appliance Handles"]
+ }
+ }
+ ]
+ };
+
+ function SigmaWorkflowApp() {
+ const [view, setView] = useState('tech'); // 'tech' or 'supervisor'
+ const [activeAreaIndex, setActiveAreaIndex] = useState(0);
+ const [progress, setProgress] = useState({}); // Stores { areaId-stepId-taskIndex: bool }
+ const [signoff, setSignoff] = useState("");
+
+ // Start / Persistence
+ useEffect(() => {
+ const saved = localStorage.getItem('hwb_shift_data');
+ if (saved) setProgress(JSON.parse(saved));
+ }, []);
+
+ useEffect(() => {
+ localStorage.setItem('hwb_shift_data', JSON.stringify(progress));
+ }, [progress]);
+
+ const toggleTask = (areaId, stepId, taskIdx) => {
+ const key = `${areaId}-${stepId}-${taskIdx}`;
+ setProgress(prev => ({ ...prev, [key]: !prev[key] }));
+ };
+
+ const isStepComplete = (areaId, stepId) => {
+ const area = INITIAL_DATA.areas.find(a => a.id === areaId);
+ const tasks = area.tasks[stepId] || [];
+ return tasks.every((_, idx) => progress[`${areaId}-${stepId}-${idx}`]);
+ };
+
+ const isStepLocked = (areaId, stepId) => {
+ if (stepId === 1) return false;
+ return !isStepComplete(areaId, stepId - 1);
+ };
+
+ const calculateAreaProgress = (areaId) => {
+ const area = INITIAL_DATA.areas.find(a => a.id === areaId);
+ let totalTasks = 0;
+ let completedTasks = 0;
+ Object.keys(area.tasks).forEach(sId => {
+ area.tasks[sId].forEach((_, tIdx) => {
+ totalTasks++;
+ if (progress[`${areaId}-${sId}-${tIdx}`]) completedTasks++;
+ });
+ });
+ return Math.round((completedTasks / totalTasks) * 100);
+ };
+
+ const totalJobProgress = useMemo(() => {
+ let total = 0;
+ INITIAL_DATA.areas.forEach(a => total += calculateAreaProgress(a.id));
+ return Math.round(total / INITIAL_DATA.areas.length);
+ }, [progress]);
+
+ const handleReset = () => {
+ if (confirm("Reset current shift data? This will clear all progress.")) {
+ setProgress({});
+ setSignoff("");
+ localStorage.removeItem('hwb_shift_data');
+ }
+ };
+
+ return (
+ <div className="min-h-screen bg-slate-50 font-sans text-slate-900 pb-20">
+ {/* --- STICKY HEADER --- */}
+ <header className="sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm">
+ <div className="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
+ <div>
+ <h1 className="text-lg font-bold" style={{ background: 'linear-gradient(135deg, var(--text-primary) 0%, #3b82f6 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{INITIAL_DATA.siteInfo.name}</h1>
+ <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">
+ Shift Start: {INITIAL_DATA.siteInfo.startTime} | {INITIAL_DATA.siteInfo.days}
+ </p>
+ </div>
+ <div className="text-right">
+ <div className="text-2xl font-black text-brand">{totalJobProgress}%</div>
+ <div className="w-24 h-2 bg-slate-100 rounded-full overflow-hidden">
+ <div className="h-full bg-brand transition-all duration-500" style={{ width: `${totalJobProgress}%` }}></div>
+ </div>
+ </div>
+ </div>
+ </header>
+
+ <div className="max-w-5xl mx-auto px-4 mt-6">
+ {/* --- VIEW TOGGLE --- */}
+ <div className="flex bg-slate-200 p-1 rounded-md mb-6 w-fit">
+ <button 
+ onClick={() => setView('tech')}
+ className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${view === 'tech' ? 'bg-white shadow-sm text-brand' : 'text-slate-600'}`}
+ >
+ Technician View
+ </button>
+ <button 
+ onClick={() => setView('supervisor')}
+ className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${view === 'supervisor' ? 'bg-white shadow-sm text-brand' : 'text-slate-600'}`}
+ >
+ Supervisor View
+ </button>
+ </div>
+
+ {view === 'tech' ? (
+ <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+ {/* --- SIDEBAR: AREA NAVIGATION --- */}
+ <aside className="lg:col-span-3 space-y-2">
+ <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Service Areas</span>
+ {INITIAL_DATA.areas.map((area, idx) => (
+ <button
+ key={area.id}
+ onClick={() => setActiveAreaIndex(idx)}
+ className={`w-full text-left px-4 py-3 rounded-md border transition-all flex justify-between items-center ${
+ activeAreaIndex === idx 
+ ? 'bg-brand border-brand text-white shadow-lg shadow-blue-100' 
+ : 'bg-white border-slate-200 hover:border-brand text-slate-600'
+ }`}
+ >
+ <span className="font-bold text-sm">{area.name}</span>
+ <span className={`text-[10px] px-2 py-0.5 rounded-full ${activeAreaIndex === idx ? 'bg-white/20' : 'bg-slate-100'}`}>
+ {calculateAreaProgress(area.id)}%
+ </span>
+ </button>
+ ))}
+ <button 
+ onClick={handleReset}
+ className="w-full mt-8 px-4 py-3 text-xs font-bold text-red-500 border border-red-100 rounded-md hover:bg-red-50 transition-colors"
+ >
+ Reset Shift Data
+ </button>
+ </aside>
+
+ {/* --- MAIN: WORKFLOW STEPS --- */}
+ <main className="lg:col-span-9 space-y-4">
+ <div className="flex justify-between items-end mb-4">
+ <h2 className="text-2xl font-black">{INITIAL_DATA.areas[activeAreaIndex].name}</h2>
+ <span className="text-sm font-bold text-slate-400">Required Steps</span>
+ </div>
+
+ {INITIAL_DATA.steps.map(step => {
+ const locked = isStepLocked(INITIAL_DATA.areas[activeAreaIndex].id, step.id);
+ const complete = isStepComplete(INITIAL_DATA.areas[activeAreaIndex].id, step.id);
+ const tasks = INITIAL_DATA.areas[activeAreaIndex].tasks[step.id] || [];
+
+ return (
+ <div 
+ key={step.id}
+ className={`rounded-lg border-2 transition-all duration-300 ${
+ locked ? 'opacity-40 grayscale pointer-events-none border-slate-100 bg-slate-50' : 
+ complete ? 'border-green-400 bg-white' : `border-brand bg-white shadow-xl shadow-blue-50`
+ }`}
+ >
+ <div className={`px-6 py-4 flex justify-between items-center border-b ${locked ? 'border-slate-100' : 'border-slate-100'}`}>
+ <div className="flex items-center gap-4">
+ <span className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-black ${step.color} ${step.text}`}>
+ {step.id}
+ </span>
+ <div>
+ <h3 className="font-black uppercase tracking-tight text-sm">Step {step.id}: {step.name}</h3>
+ <p className="text-[10px] font-bold text-slate-400 uppercase">Sequence Execution</p>
+ </div>
+ </div>
+ {locked && <span className="text-xs font-bold text-slate-400">LOCKED</span>}
+ </div>
+
+ <div className="p-6 space-y-3">
+ {tasks.length > 0 ? tasks.map((task, tIdx) => (
+ <label 
+ key={tIdx} 
+ className={`flex items-center gap-4 p-4 rounded-md cursor-pointer transition-colors ${
+ progress[`${INITIAL_DATA.areas[activeAreaIndex].id}-${step.id}-${tIdx}`] 
+ ? 'bg-green-50 text-green-800' : 'bg-slate-50 hover:bg-slate-100'
+ }`}
+ >
+ <input 
+ type="checkbox"
+ checked={!!progress[`${INITIAL_DATA.areas[activeAreaIndex].id}-${step.id}-${tIdx}`]}
+ onChange={() => toggleTask(INITIAL_DATA.areas[activeAreaIndex].id, step.id, tIdx)}
+ className="w-5 h-5 accent-brand rounded"
+ />
+ <span className="text-sm font-bold">{task}</span>
+ </label>
+ )) : (
+ <div className="text-xs font-bold text-slate-400 py-2">No tasks required for this area. Proceed to next step.</div>
+ )}
+ </div>
+ </div>
+ );
+ })}
+
+ {/* SIGN OFF */}
+ <div className="bg-white border-2 border-slate-200 rounded-lg p-8 mt-12">
+ <h3 className="text-sm font-black uppercase mb-4">Shift Completion Sign off</h3>
+ <input 
+ type="text" 
+ placeholder="Enter Technician Initials"
+ value={signoff}
+ onChange={(e) => setSignoff(e.target.value)}
+ className="w-full p-4 border border-slate-200 rounded-md mb-4 font-bold"
+ />
+ <button 
+ className={`w-full py-4 rounded-md font-black uppercase tracking-widest transition-all ${
+ totalJobProgress === 100 && signoff ? 'bg-brand text-white shadow-lg' : 'bg-slate-100 text-slate-400 pointer-events-none'
+ }`}
+ >
+ Finalize Shift Submission
+ </button>
+ </div>
+ </main>
+ </div>
+ ) : (
+ /* --- SUPERVISOR VIEW --- */
+ <div className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
+ <div className="bg-slate-50 px-6 py-4 border-b border-slate-200">
+ <h2 className="font-black uppercase text-sm tracking-widest">Audit Overview: All Service Areas</h2>
+ </div>
+ <div className="overflow-x-auto">
+ <table className="w-full text-left border-collapse">
+ <thead>
+ <tr className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
+ <th className="px-6 py-4">Area</th>
+ <th className="px-6 py-4">Progress</th>
+ <th className="px-6 py-4 text-center">Status</th>
+ </tr>
+ </thead>
+ <tbody className="divide-y divide-slate-50">
+ {INITIAL_DATA.areas.map(area => {
+ const p = calculateAreaProgress(area.id);
+ return (
+ <tr key={area.id} className="hover:bg-slate-50 transition-colors">
+ <td className="px-6 py-4 font-bold text-sm">{area.name}</td>
+ <td className="px-6 py-4">
+ <div className="flex items-center gap-3">
+ <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden max-w-[100px]">
+ <div className={`h-full transition-all ${p === 100 ? 'bg-green-500' : 'bg-brand'}`} style={{ width: `${p}%` }}></div>
+ </div>
+ <span className="text-xs font-bold text-slate-500">{p}%</span>
+ </div>
+ </td>
+ <td className="px-6 py-4 text-center">
+ {p === 100 ? (
+ <span className="bg-green-100 text-green-700 text-[10px] px-3 py-1 rounded-full font-black">COMPLETE</span>
+ ) : (
+ <span className="bg-blue-50 text-blue-600 text-[10px] px-3 py-1 rounded-full font-black">IN PROGRESS</span>
+ )}
+ </td>
+ </tr>
+ );
+ })}
+ </tbody>
+ </table>
+ </div>
+ </div>
+ )}
+ </div>
+ </div>
+ );
+ }
+
+ const root = ReactDOM.createRoot(document.getElementById('cleaning-workflow-app'));
+ root.render(<SigmaWorkflowApp />);
+</script>
+{% endraw %}
+
+<style>
+ body { background-color: #ffffff; }
+ /* Hide scrollbar for Chrome, Safari and Opera */
+ .no-scrollbar::-webkit-scrollbar { display: none; }
+ /* Hide scrollbar for IE, Edge and Firefox */
+ .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+</style>
+{% endblock %}

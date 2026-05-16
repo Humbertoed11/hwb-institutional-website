@@ -1,0 +1,25 @@
+[
+    {
+        "cycle": 1,
+        "news": [
+            {
+                "tag": "MARKET",
+                "title": "Clean Energy Standards Update",
+                "desc": "New federal guidelines for green cleaning products in commercial facilities.",
+                "url": "https://hwbcleaning.com/news/green-standards"
+            },
+            {
+                "tag": "TECH",
+                "title": "AI in Facility Management",
+                "desc": "How predictive maintenance is revolutionizing cleaning schedules.",
+                "url": "https://hwbcleaning.com/news/ai-fm"
+            },
+            {
+                "tag": "SAFETY",
+                "title": "HEPA Filtration Efficacy",
+                "desc": "Recent study confirms 99.9% reduction in airborne particulates using HWB standards.",
+                "url": "https://hwbcleaning.com/news/hepa-safety"
+            }
+        ]
+    }
+]

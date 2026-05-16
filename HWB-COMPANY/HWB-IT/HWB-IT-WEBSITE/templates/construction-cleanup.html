@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Construction Site Cleaning and Debris Removal | DFW Standards Experts | HWB Cleaning{% endblock %}
+{% block head %}
+ <meta name="description" content="HWB provides safe construction cleanup in Dallas and Wylie. We use HEPA air filters to remove dust and get your building ready for move-in.">
+{% endblock %}
+
+{% block content %}
+<section class="services-view">
+ <div class="services-hero dark-variant" style="background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('/static/img/construction_rough_clean_ppe.png');">
+ <h1>Construction Cleanup in Dallas, Wylie, & Murphy</h1>
+ <p class="subtitle">We handle the dust and debris so your new building is ready for people to move in. We follow all safety rules and use HEPA filters to keep the air clean.</p>
+ <a href="{{ url_for('get_quote') }}" class="executive-hero-cta">Start a quote <i class="fas fa-arrow-right" style="margin-left: 0.5rem; font-size: 0.8rem;"></i></a>
+ </div>
+
+ <div class="detailed-services">
+ <div class="split-feature image-right">
+ <div class="split-content">
+ <h2 style="; margin-bottom: 1.5rem; ">Site Cleanup and Inspection Readiness</h2>
+ <p style="font-size: 1.1rem; color: var(--hwb-dark); margin-bottom: 2rem; line-height: 1.8;">General contractors are responsible for keeping the site safe and protecting adjacent public ways. We provide professional site cleanup that meets IBC Chapter 33 requirements.</p>
+ <ul class="hwb-checklist">
+ <li>✓ Trained PIT Drivers (Sky Lifts, Brooms, Forklifts)</li>
+ <li>✓ OSHA 29 CFR 1926 Adherence</li>
+ <li>✓ Street and Sidewalk Debris Removal</li>
+ <li>✓ Walkway Hazard Cleanup</li>
+ <li>✓ Pre-Shift Safety Briefings</li>
+ <li>✓ GHS Chemical Safety (HazCom)</li>
+ <li>✓ Transparent Incident Plan</li>
+ </ul>
+ </div>
+ <div class="split-image-container"><div class=\"sigma-image-frame\"><img src="/static/img/construction_sweeper_servicing_street.png" alt="HWB Construction Sweeper Site Cleanup"></div></div>
+ </div>
+
+ <div style="margin-bottom: 4rem;">
+ <div class="section-header"><h2>Construction Cleanup Stages</h2></div>
+ 
+ <div class="service-grid">
+ <!-- Stage 1 -->
+ <a href="{{ url_for('get_quote') }}" style="text-decoration: none; color: inherit; display: block;">
+ <div class="service-card">
+ <div class="card-image" style="background-image: url('/static/img/construction_rough_clean_ppe.png');"></div>
+ <div class="card-content">
+ <div class="card-badge">Stage 01</div>
+ <h3>Rough Cleaning</h3>
+ <p>Removing hazardous debris, obstructions, and framing trash to keep the site safe for other trades. We clear walkways according to OSHA standards.</p>
+ </div>
+ <div class="card-footer">
+ <span class="starting-price"><strong>Rough Cleaning Pass</strong></span>
+ </div>
+ </div>
+ </a>
+
+ <!-- Stage 2 -->
+ <a href="{{ url_for('get_quote') }}" style="text-decoration: none; color: inherit; display: block;">
+ <div class="service-card">
+ <div class="card-image" style="background-image: url('/static/img/construction_final_detail_clean_ppe.png');"></div>
+ <div class="card-content">
+ <div class="card-badge">Stage 02</div>
+ <h3>Final Clean</h3>
+ <p>Thorough cleaning of cabinets, glass, and floors. We use HEPA air filters to remove fine dust so the air is clean and safe for move-in.</p>
+ </div>
+ <div class="card-footer">
+ <span class="starting-price"><strong>Detail & Prep Pass</strong></span>
+ </div>
+ </div>
+ </a>
+
+ <!-- Stage 3 -->
+ <a href="{{ url_for('get_quote') }}" style="text-decoration: none; color: inherit; display: block;">
+ <div class="service-card">
+ <div class="card-image" style="background-image: url('/static/img/construction_final_polish_ppe.png');"></div>
+ <div class="card-content">
+ <div class="card-badge">Stage 03</div>
+ <h3>Fluff Cleaning</h3>
+ <p>The final move-in ready pass. We polish all surfaces and ensure the entire site is free of hazards for a perfect handover to the building owner.</p>
+ </div>
+ <div class="card-footer">
+ <span class="starting-price"><strong>Ready for Move-In</strong></span>
+ </div>
+ </div>
+ </a>
+ </div>
+ </div>
+ </div>
+
+ <section class="cta-section"><div class="executive-cta">
+ <h2 class="final-ask-title">Is the project almost finished?</h2>
+ <p>Let us handle the dust and debris so your building passes city inspections and is safe for the public.</p>
+ <a href="{{ url_for('get_quote') }}" class="executive-hero-cta">Start a quote <i class="fas fa-arrow-right" style="margin-left: 0.5rem; font-size: 0.8rem;"></i></a>
+ </div>
+</section>
+{% endblock %}

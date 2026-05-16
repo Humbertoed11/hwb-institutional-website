@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}Request a Custom Cleaning Plan | HWB Cleaning Services LLC{% endblock %}
+
+{% block content %}
+<div class="content-wrapper" style="max-width: 1100px; margin: 0 auto; padding: 4rem 2rem;">
+    <section class="section-header" style="text-align: center; margin-bottom: 4rem;">
+        <h2 style="font-size: 3.5rem; font-weight: 800; margin-bottom: 1.5rem; color: var(--hwb-dark);">Your Custom Cleaning Plan</h2>
+        <p style="font-size: 1.25rem; color: var(--hwb-slate);">Every building is different. Tell us about your space below to get your initial cleaning list and schedule a walkthrough.</p>
+    </section>
+
+    <div class="form-container" style="background: #ffffff; padding: 4rem; border-radius: 24px; border: 1px solid var(--hwb-border); box-shadow: 0 25px 30px -12px rgba(37, 99, 235, 0.05);">
+        <form action="{{ url_for('get_quote') }}" method="POST" id="quote-form-page">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4rem;">
+                
+                <!-- Column 1: Building Details -->
+                <div class="matrix-column">
+                    <h3 style="font-size: 1.25rem; margin-bottom: 2rem; color: var(--hwb-blue); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 800;">1. Building Details</h3>
+                    
+                    <div class="form-group" style="margin-bottom: 2rem;">
+                        <label style="display: block; font-weight: 700; margin-bottom: 0.75rem; color: var(--hwb-dark);">Facility Type</label>
+                        <select name="facility_type" id="facility_type" required style="width: 100%; padding: 1rem; border-radius: 12px; border: 1px solid var(--hwb-border); background: #ffffff; font-weight: 600; font-family: inherit;">
+                            <option value="office">Professional Office / Corporate</option>
+                            <option value="medical">Medical / Clinical Facility</option>
+                            <option value="industrial">Warehouse / Logistics Hub</option>
+                            <option value="daycare">Childcare / Educational</option>
+                            <option value="worship">House of Worship</option>
+                            <option value="dealership">Car Dealership</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 2rem;">
+                        <label style="display: block; font-weight: 700; margin-bottom: 0.75rem; color: var(--hwb-dark);">How often should we clean?</label>
+                        <select name="need" id="need" required style="width: 100%; padding: 1rem; border-radius: 12px; border: 1px solid var(--hwb-border); background: #ffffff; font-weight: 600; font-family: inherit;">
+                            <option value="1">Slow Traffic (Weekly/Bi-Weekly)</option>
+                            <option value="2" selected>High Traffic (Daily Standard)</option>
+                            <option value="3">24/7 Production Traffic (Multi-Shift)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="display: flex; justify-content: space-between; font-weight: 700; color: var(--hwb-dark);">
+                            <span>Building size (SQF)</span>
+                            <strong id="sqft_label_page" style="color: var(--hwb-blue); font-size: 1.25rem;">50,000 SQF</strong>
+                        </label>
+                        <input type="range" name="sqft" id="sqft_slider_page" min="500" max="1000000" step="500" value="50000" style="width: 100%; margin: 1.5rem 0;" oninput="updateSQFT(this.value)">
+                    </div>
+                </div>
+
+                <!-- Column 2: Contact Information -->
+                <div class="matrix-column">
+                    <h3 style="font-size: 1.25rem; margin-bottom: 2rem; color: var(--hwb-blue); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 800;">2. Contact Information</h3>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                        <div class="form-group">
+                            <label style="display: block; font-weight: 700; margin-bottom: 0.75rem; color: var(--hwb-dark);">Full Name</label>
+                            <input type="text" name="name" required placeholder="Manager Name" style="width: 100%; padding: 1rem; border-radius: 12px; border: 1px solid var(--hwb-border); background: #ffffff;">
+                        </div>
+                        <div class="form-group">
+                            <label style="display: block; font-weight: 700; margin-bottom: 0.75rem; color: var(--hwb-dark);">Organization Name</label>
+                            <input type="text" name="company" required placeholder="Company LLC" style="width: 100%; padding: 1rem; border-radius: 12px; border: 1px solid var(--hwb-border); background: #ffffff;">
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 1.5rem;">
+                        <label style="display: block; font-weight: 700; margin-bottom: 0.75rem; color: var(--hwb-dark);">Work Email</label>
+                        <input type="email" name="email" required placeholder="name@company.com" style="width: 100%; padding: 1rem; border-radius: 12px; border: 1px solid var(--hwb-border); background: #ffffff;">
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 2rem;">
+                        <label style="display: block; font-weight: 700; margin-bottom: 0.75rem; color: var(--hwb-dark);">Phone Number</label>
+                        <input type="tel" name="phone" id="phone_page" required placeholder="(214) 000-0000" style="width: 100%; padding: 1rem; border-radius: 12px; border: 1px solid var(--hwb-border); background: #ffffff;">
+                    </div>
+
+                    <button type="submit" class="btn-main" style="width: 100%; padding: 1.25rem; border-radius: 12px; justify-content: center; font-size: 1.1rem; border: none; cursor: pointer;">Send My Cleaning Request &rarr;</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    input[type=range] {
+        -webkit-appearance: none;
+        height: 8px;
+        background: rgba(37, 99, 235, 0.1);
+        border-radius: 5px;
+    }
+    input[type=range]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        height: 24px;
+        width: 24px;
+        border-radius: 50%;
+        background: var(--hwb-blue);
+        cursor: pointer;
+        box-shadow: 0 0 10px rgba(37, 99, 235, 0.3);
+    }
+</style>
+
+<script>
+    function updateSQFT(val) {
+        document.getElementById('sqft_label_page').innerText = Number(val).toLocaleString() + " SQF";
+    }
+
+    // Phone Masking
+    document.getElementById('phone_page').addEventListener('input', function(e) {
+        let x = e.target.value.replace(/\D/g, '').match(/(\d{0,3})(\d{0,3})(\d{0,4})/);
+        e.target.value = !x[2] ? x[1] : '(' + x[1] + ')-' + x[2] + (x[3] ? '-' + x[3] : '');
+    });
+
+    // Auto-populate from URL Parameters (if any)
+    document.addEventListener('DOMContentLoaded', function() {
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('type')) document.getElementById('facility_type').value = params.get('type');
+        if (params.has('sqft')) {
+            const val = params.get('sqft');
+            document.getElementById('sqft_slider_page').value = val;
+            updateSQFT(val);
+        }
+        if (params.has('need')) document.getElementById('need').value = params.get('need');
+    });
+</script>
+{% endblock %}

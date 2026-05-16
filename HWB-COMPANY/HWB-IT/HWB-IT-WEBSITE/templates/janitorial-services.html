@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Day Porters & Janitorial | DFW Metroplex & Statewide Texas | HWB Cleaning{% endblock %}
+{% block head %}
+ <meta name="description" content="Reliable office cleaning and day porters in Dallas and Plano. We use safe, plant-based cleaners to keep your building spotless.">
+ <meta name="keywords" content="Daily office cleaning Dallas, day porter services Plano, safe cleaning Murphy, Wylie office cleaners">
+{% endblock %}
+
+{% block content %}
+<section class="services-view">
+ <div class="services-hero dark-variant" style="background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('/static/img/janitorial_class_a_day_porter.png');">
+ <h1>Daily Office Cleaning and Day Porters</h1>
+ <p class="subtitle">We keep your building looking great in Dallas, Plano, and across North Texas. Our Day Porters help you during the day, and our Night Crews make sure everything is fresh for the morning.</p>
+ <a href="{{ url_for('get_quote') }}" class="executive-hero-cta">Start a quote <i class="fas fa-arrow-right" style="margin-left: 0.5rem; font-size: 0.8rem;"></i></a>
+ </div>
+
+ <div class="detailed-services">
+ <div class="split-feature image-left">
+ <div class="split-image-container"><div class=\"sigma-image-frame\"><img src="/static/img/janitorial_dealership_night_crew.png" alt="HWB Dealership Evening Crew"></div></div>
+ <div class="split-content">
+ <h2 style="; margin-bottom: 1.5rem; ">Professional Building Management</h2>
+ <p style="font-size: 1.1rem; color: var(--hwb-dark); margin-bottom: 2rem; line-height: 1.8;">We follow the same steps every time to keep things clean. Every shift follows a step-by-step plan to make sure nothing is missed in restrooms, breakrooms, and common areas.</p>
+ <ul class="hwb-checklist">
+ <li>✓ Restroom Cleaning with Safe, Plant-Based Cleaners</li>
+ <li>✓ Thorough Dusting and Surface Care</li>
+ <li>✓ Management of Waste and Recyclables</li>
+ <li>✓ Daily Floor Cleaning and Care</li>
+ </ul>
+ </div>
+ </div>
+
+ <div style="margin-bottom: 4rem;">
+ <div class="section-header"><h2>The Janitorial Quality Promise</h2></div>
+ 
+ <div class="service-grid">
+ <!-- Card 1: Organized Scope of Work -->
+ <div class="service-card">
+ <div class="card-image" style="background-image: url('/static/img/janitorial_digital_checklist.png');"></div>
+ <div class="card-content">
+ <div class="card-badge">accuracy</div>
+ <h3>Organized Scope of Work</h3>
+ <p>Every facility is managed through a detailed, sequential scope of work. Digital checklists ensure every task is completed to the quality standard before the shift ends.</p>
+ </div>
+ <div class="card-footer">
+ <span class="starting-price"><strong>Our Quality Checklist</strong></span>
+ </div>
+ </div>
+
+ <!-- Card 2: Well Equipped & Trained Staff -->
+ <div class="service-card">
+ <div class="card-image" style="background-image: url('/static/img/janitorial_staff.png');"></div>
+ <div class="card-content">
+ <div class="card-badge">Expertise</div>
+ <h3>Professionally Trained Personnel</h3>
+ <p>Teams are specialized and provided with high quality tools for every surface. Rigorous training ensures that cleaning is performed with accuracy and work expertise.</p>
+ </div>
+ <div class="card-footer">
+ <span class="starting-price"><strong>Certified Operators</strong></span>
+ </div>
+ </div>
+
+ <!-- Card 3: High Safety & Security -->
+ <div class="service-card">
+ <div class="card-image" style="background-image: url('/static/img/janitorial_secure_entry.png');"></div>
+ <div class="card-content">
+ <div class="card-badge">Security</div>
+ <h3>Trust and Personnel Vetting</h3>
+ <p>Trust is established through rigorous personnel vetting. Every team member undergoes background checks and training before assignment. Personnel adhere to strict safety rules.</p>
+ </div>
+ <div class="card-footer">
+ <span class="starting-price"><strong>Vetted Professionals</strong></span>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+
+ <section class="cta-section"><div class="executive-cta">
+ <h2 class="final-ask-title">Tired of a messy office?</h2>
+ <p>We follow the same steps every time to make sure your trash is gone and your desk is clean when you arrive.</p>
+ <a href="{{ url_for('get_quote') }}" class="executive-hero-cta">Start a quote <i class="fas fa-arrow-right" style="margin-left: 0.5rem; font-size: 0.8rem;"></i></a>
+ </div>
+</section>
+{% endblock %}

@@ -1,0 +1,189 @@
+{% extends "backoffice_base.html" %}
+
+{% block title %}Detailed Scope Builder | SigmaQuality™ Backoffice{% endblock %}
+
+{% block bo_title %}Service Planner{% endblock %}
+{% block bo_subtitle %}Create and manage detailed work schedules for each building.{% endblock %}
+
+{% block bo_content %}
+<div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 2rem; align-items: start;">
+ <!-- Entry Panel -->
+ <div class="bo-card">
+ <h2 style="margin-bottom: 2rem; font-weight: 800; font-size: 1.25rem;">Data Entry</h2>
+ 
+ <div style="margin-bottom: 1.5rem;">
+ <label style="display: block; font-weight: 700; margin-bottom: 0.5rem; font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em;">1. Select Client Building</label>
+ <select id="service_id_select" style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--bo-border); font-family: inherit; font-weight: 600;">
+ <option value="" disabled selected>-- Choose Building --</option>
+ {% for s in services %}
+ <option value="{{ s.service_id }}">{{ s.company_name }} — {{ s.service_requested }}</option>
+ {% endfor %}
+ </select>
+ </div>
+
+ <hr style="border: 0; border-top: 1px solid var(--bo-border); margin: 2rem 0;">
+
+ <div style="space-y-4">
+ <div style="margin-bottom: 1rem;">
+ <label style="display: block; font-weight: 700; margin-bottom: 0.5rem; font-size: 0.8rem; color: var(--text-secondary);">SERVICE AREA</label>
+ <input type="text" id="input_area" list="lib_areas" placeholder="e.g. Main Operations Floor" style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--bo-border);">
+ </div>
+ <div style="margin-bottom: 1rem;">
+ <label style="display: block; font-weight: 700; margin-bottom: 0.5rem; font-size: 0.8rem; color: var(--text-secondary);">TASK</label>
+ <input type="text" id="input_task" list="lib_tasks" placeholder="e.g. High Volume Scrubbing" style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--bo-border);">
+ </div>
+ <div style="margin-bottom: 1.5rem;">
+ <label style="display: block; font-weight: 700; margin-bottom: 0.5rem; font-size: 0.8rem; color: var(--text-secondary);">SECTION OR ITEM</label>
+ <input type="text" id="input_item" list="lib_items" placeholder="e.g. North Bay A" style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--bo-border);">
+ </div>
+ 
+ <button type="button" onclick="addToScope()" class="nav-cta" style="width: 100%; border: none; padding: 1rem; font-weight: 800; cursor: pointer; background: var(--text-primary); color: white;">Add to Professional Scope</button>
+ </div>
+
+ <!-- Library Datalists -->
+ <datalist id="lib_areas"></datalist>
+ <datalist id="lib_tasks"></datalist>
+ <datalist id="lib_items"></datalist>
+ </div>
+
+ <!-- Preview & Submit Panel -->
+ <div class="bo-card">
+ <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+ <h2 style="font-weight: 800; font-size: 1.25rem;">Scope Preview</h2>
+ <button type="button" onclick="clearScope()" style="background: none; border: none; color: #ef4444; font-weight: 700; font-size: 0.75rem; cursor: pointer; text-transform: uppercase;">Clear All</button>
+ </div>
+
+ <div id="scope_tree" style="min-height: 300px; border: 1px dashed var(--bo-border); border-radius: 12px; padding: 1.5rem; background: #fcfcfc;">
+ <p id="empty_msg" style="color: var(--text-secondary); text-align: center; margin-top: 4rem; font-style: italic;">No items added to scope yet.</p>
+ </div>
+
+ <form action="{{ url_for('scope_builder') }}" method="POST" style="margin-top: 2rem;">
+ <input type="hidden" name="service_id" id="final_service_id">
+ <input type="hidden" name="scope_json" id="final_scope_json">
+ <button type="submit" id="submit_btn" disabled class="nav-cta" style="width: 100%; border: none; padding: 1rem; font-weight: 800; cursor: pointer; opacity: 0.5;">Update to Field Operations</button>
+ </form>
+ </div>
+</div>
+
+<script>
+ const library = {{ library|safe }};
+ let currentScope = []; // [{ name: 'Area', tasks: [{ name: 'Task', items: ['Item'] }] }]
+
+ // Start Datalists
+ function initLibrary() {
+ const areaList = document.getElementById('lib_areas');
+ const taskList = document.getElementById('lib_tasks');
+ const itemList = document.getElementById('lib_items');
+ 
+ library.area.forEach(v => areaList.innerHTML += `<option value="${v}">`);
+ library.task.forEach(v => taskList.innerHTML += `<option value="${v}">`);
+ library.item.forEach(v => itemList.innerHTML += `<option value="${v}">`);
+ }
+
+ function addToScope() {
+ const areaName = document.getElementById('input_area').value.trim();
+ const taskName = document.getElementById('input_task').value.trim();
+ const itemName = document.getElementById('input_item').value.trim();
+
+ if (!areaName || !taskName) {
+ alert("Area and Task are required for professional quality.");
+ return;
+ }
+
+ // 1. Find or Create Area
+ let area = currentScope.find(a => a.name.toLowerCase() === areaName.toLowerCase());
+ if (!area) {
+ area = { name: areaName, tasks: [] };
+ currentScope.push(area);
+ }
+
+ // 2. Find or Create Task in Area
+ let task = area.tasks.find(t => t.name.toLowerCase() === taskName.toLowerCase());
+ if (!task) {
+ task = { name: taskName, items: [] };
+ area.tasks.push(task);
+ }
+
+ // 3. Add Item to Task (Prevent Duplicates)
+ if (itemName) {
+ if (!task.items.some(i => i.toLowerCase() === itemName.toLowerCase())) {
+ task.items.push(itemName);
+ }
+ }
+
+ renderTree();
+ // Reset Item/Task inputs for sequential entry
+ document.getElementById('input_item').value = '';
+ document.getElementById('input_item').focus();
+ }
+
+ function renderTree() {
+ const treeDiv = document.getElementById('scope_tree');
+ const emptyMsg = document.getElementById('empty_msg');
+ const submitBtn = document.getElementById('submit_btn');
+ 
+ if (currentScope.length > 0) {
+ emptyMsg.style.display = 'none';
+ submitBtn.disabled = false;
+ submitBtn.style.opacity = '1';
+ }
+
+ let html = '';
+ currentScope.forEach((area, aIdx) => {
+ html += `
+ <div style="margin-bottom: 1.5rem; border-left: 2px solid var(--accent); padding-left: 1rem;">
+ <div style="font-weight: 900; color: var(--text-primary); font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+ <span>📍</span> ${area.name}
+ </div>
+ <div style="margin-left: 1rem; margin-top: 0.5rem;">
+ `;
+ 
+ area.tasks.forEach((task, tIdx) => {
+ html += `
+ <div style="margin-bottom: 0.75rem;">
+ <div style="font-weight: 700; color: #1e293b; font-size: 0.9rem; display: flex; align-items: center; gap: 0.5rem;">
+ <span>⚡</span> ${task.name}
+ </div>
+ <div style="margin-left: 1.5rem; margin-top: 0.25rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
+ `;
+ 
+ task.items.forEach(item => {
+ html += `<span style="background: #ffffff; color: #475569; padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.7rem; font-weight: 600; border: 1px solid rgba(37, 99, 235, 0.1);">${item}</span>`;
+ });
+ 
+ html += `</div></div>`;
+ });
+ 
+ html += `</div></div>`;
+ });
+
+ treeDiv.innerHTML = html;
+ 
+ // Sync to hidden form fields
+ document.getElementById('final_scope_json').value = JSON.stringify(currentScope);
+ document.getElementById('final_service_id').value = document.getElementById('service_id_select').value;
+ }
+
+ function clearScope() {
+ if (confirm("Reset current builder state?")) {
+ currentScope = [];
+ renderTree();
+ document.getElementById('empty_msg').style.display = 'block';
+ document.getElementById('submit_btn').disabled = true;
+ document.getElementById('submit_btn').style.opacity = '0.5';
+ }
+ }
+
+ document.getElementById('service_id_select').addEventListener('change', (e) => {
+ document.getElementById('final_service_id').value = e.target.value;
+ });
+
+ initLibrary();
+</script>
+
+<style>
+ input::placeholder { color: #cbd5e1; }
+ input:focus { outline: none; border-color: var(--accent); ring: 2px var(--accent); }
+ .nav-cta:hover { filter: brightness(1.1); transform: translateY(-1px); transition: all 0.2s; }
+</style>
+{% endblock %}
