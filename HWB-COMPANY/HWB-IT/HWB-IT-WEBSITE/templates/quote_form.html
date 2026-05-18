@@ -3,102 +3,92 @@
 {% block title %}Request a Custom Cleaning Plan | HWB Cleaning Services LLC{% endblock %}
 
 {% block content %}
-<section class="section-white">
- <div class="content-wrapper" style="max-width: 1200px;">
- <div class="section-header" style="text-align: center; margin-bottom: 1rem;">
- <h2 style="font-size: 2.25rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--hwb-dark); letter-spacing: -0.01em;">Company Quote Request</h2>
- <p style="font-size: 1rem; color: var(--hwb-slate); max-width: 750px; margin: 0 auto; font-weight: 500;">Setting up technical scope and contract planning for your DFW building.</p>
- </div>
+<section class="section-white" style="padding: 6rem 0;">
+    <div class="content-wrapper">
+        <div class="section-header" style="text-align: center; margin-bottom: 4rem;">
+            <h2 style="font-size: 2.75rem; font-weight: 800; margin-bottom: 1rem; color: var(--hwb-dark); letter-spacing: -0.02em;">Your Custom Cleaning Plan</h2>
+            <p style="font-size: 1.15rem; color: var(--hwb-slate); max-width: 750px; margin: 0 auto; font-weight: 500;">Tell us about your facility. We'll generate a technical scope and contract plan for your DFW building.</p>
+        </div>
 
- <div class="isc-card" style="max-width: 1000px; margin: 0 auto; padding: 3rem; border-radius: 6px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06); border: 1px solid var(--slate-200);">
- <form action="{{ url_for('get_quote') }}" method="POST" id="quote-form-page" class="sigma-form-container">
- <div class="sigma-form-body">
- <div class="sigma-form-section" style="gap: 3rem;">
- 
- <!-- Column 1: Building Information -->
- <div class="sigma-form-group">
- <span class="sigma-form-header">Building Information</span>
- 
- <div class="sigma-field">
- <label>Building Type</label>
- <select name="facility_type" id="facility_type" required class="sigma-input">
- <option value="office">Professional Office / Corporate</option>
- <option value="medical">Medical / Clinical Building</option>
- <option value="industrial">Warehouse / Logistics Hub</option>
- <option value="daycare">Childcare / Educational</option>
- <option value="worship">House of Worship</option>
- <option value="dealership">Car Dealership</option>
- <option value="other">Other</option>
- </select>
- </div>
+        <div class="isc-card" style="padding: 4rem; border-radius: 12px; border: 1px solid var(--hwb-border); background: var(--white); box-shadow: 0 20px 40px rgba(0,0,0,0.03);">
+            <form action="{{ url_for('get_quote') }}" method="POST" id="quote-form-page" class="sigma-form-container">
+                <div class="sigma-form-body">
+                    <!-- 4-Column Grid Standard -->
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4rem;">
+                        
+                        <!-- Columns 1-2: Building Information -->
+                        <div style="grid-column: span 2;">
+                            <span class="sigma-form-header" style="display: block; font-size: 0.75rem; font-weight: 900; color: var(--hwb-blue); text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 2.5rem; border-bottom: 2px solid var(--hwb-blue-glow); padding-bottom: 0.75rem;">01. Building Information</span>
+                            
+                            <div class="sigma-field" style="margin-bottom: 2rem;">
+                                <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.75rem;">Facility Category</label>
+                                <select name="facility_type" id="facility_type" required class="sigma-input" style="width: 100%; height: 48px; border: 1px solid var(--hwb-border); border-radius: 6px; padding: 0 1rem; font-weight: 500; font-family: inherit;">
+                                    <option value="office">Professional Office / Corporate</option>
+                                    <option value="medical">Medical / Clinical Building</option>
+                                    <option value="industrial">Warehouse / Logistics Hub</option>
+                                    <option value="daycare">Childcare / Educational</option>
+                                    <option value="worship">House of Worship</option>
+                                    <option value="dealership">Car Dealership</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
 
- <div class="sigma-field">
- <label>Traffic Cycle Requirement</label>
- <select name="need" id="need" required class="sigma-input">
- <option value="1">Slow Traffic (Reduced Wear)</option>
- <option value="2" selected>High Traffic (Daily Use)</option>
- <option value="3">24/7 Production (Extreme Wear)</option>
- </select>
- </div>
+                            <div class="sigma-field" style="margin-bottom: 2rem;">
+                                <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.75rem;">Traffic & Usage Level</label>
+                                <select name="need" id="need" required class="sigma-input" style="width: 100%; height: 48px; border: 1px solid var(--hwb-border); border-radius: 6px; padding: 0 1rem; font-weight: 500; font-family: inherit;">
+                                    <option value="1">Slow Traffic (Reduced Wear)</option>
+                                    <option value="2" selected>High Traffic (Daily Use)</option>
+                                    <option value="3">24/7 Production (Extreme Wear)</option>
+                                </select>
+                            </div>
 
- <div class="sigma-field">
- <label>Service Frequency</label>
- <select name="frequency" id="frequency" required class="sigma-input">
- <option value="Daily (5 Days)">Daily (5 Days)</option>
- <option value="24/7 (7 Days)">24/7 (7 Days)</option>
- <option value="3x Weekly">3x Weekly</option>
- <option value="Weekly">Weekly</option>
- <option value="Bi-Weekly">Bi-Weekly</option>
- </select>
- </div>
+                            <div class="sigma-field">
+                                <label style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 700; color: var(--slate-900); margin-bottom: 1rem;">
+                                    <span>Approximate Size (SQF)</span>
+                                    <strong id="sqft_label_page" style="color: var(--hwb-blue); font-weight: 800;">50,000 SQF</strong>
+                                </label>
+                                <div class="slider-instrument-container">
+                                    <input type="range" name="sqft" id="sqft_slider_page" min="500" max="1000000" step="500" value="50000" class="sigma-range-instrument" oninput="updateSQFT(this.value)">
+                                </div>
+                            </div>
+                        </div>
 
- <div class="sigma-field">
- <label style="display: flex; justify-content: space-between;">
- <span>Building size (SQF)</span>
- <strong id="sqft_label_page" style="color: var(--hwb-blue); font-size: 0.95rem; font-weight: 800;">50,000 SQF</strong>
- </label>
- <div class="slider-instrument-container">
- <input type="range" name="sqft" id="sqft_slider_page" min="500" max="1000000" step="500" value="50000" class="sigma-range-instrument" oninput="updateSQFT(this.value)">
- </div>
- </div>
- </div>
+                        <!-- Columns 3-4: Contact Information -->
+                        <div style="grid-column: span 2;">
+                            <span class="sigma-form-header" style="display: block; font-size: 0.75rem; font-weight: 900; color: var(--hwb-blue); text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 2.5rem; border-bottom: 2px solid var(--hwb-blue-glow); padding-bottom: 0.75rem;">02. Contact Information</span>
+                            
+                            <div class="sigma-field" style="margin-bottom: 2rem;">
+                                <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.75rem;">Your Full Name</label>
+                                <input type="text" name="name" required placeholder="Manager Name" class="sigma-input" style="width: 100%; height: 48px; border: 1px solid var(--hwb-border); border-radius: 6px; padding: 0 1rem; font-weight: 500; font-family: inherit;">
+                            </div>
 
- <!-- Column 2: Manager Information -->
- <div class="sigma-form-group">
- <span class="sigma-form-header">Contact Information</span>
- 
- <div class="sigma-field">
- <label>Authorized Full Name</label>
- <input type="text" name="name" required placeholder="Manager Name" class="sigma-input">
- </div>
+                            <div class="sigma-field" style="margin-bottom: 2rem;">
+                                <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.75rem;">Organization Name</label>
+                                <input type="text" name="company" required placeholder="Company LLC" class="sigma-input" style="width: 100%; height: 48px; border: 1px solid var(--hwb-border); border-radius: 6px; padding: 0 1rem; font-weight: 500; font-family: inherit;">
+                            </div>
 
- <div class="sigma-field">
- <label>Company Name</label>
- <input type="text" name="company" required placeholder="Company LLC" class="sigma-input">
- </div>
+                            <div class="sigma-field" style="margin-bottom: 2rem;">
+                                <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.75rem;">Work Email</label>
+                                <input type="email" name="email" required placeholder="name@company.com" class="sigma-input" style="width: 100%; height: 48px; border: 1px solid var(--hwb-border); border-radius: 6px; padding: 0 1rem; font-weight: 500; font-family: inherit;">
+                            </div>
 
- <div class="sigma-field">
- <label>Secure Work Email</label>
- <input type="email" name="email" required placeholder="name@company.com" class="sigma-input">
- </div>
+                            <div class="sigma-field">
+                                <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.75rem;">Phone Number</label>
+                                <input type="tel" name="phone" id="phone_page" required placeholder="(214) 000-0000" class="sigma-input" style="width: 100%; height: 48px; border: 1px solid var(--hwb-border); border-radius: 6px; padding: 0 1rem; font-weight: 500; font-family: inherit;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
- <div class="sigma-field">
- <label>Phone Contact</label>
- <input type="tel" name="phone" id="phone_page" required placeholder="(214) 000-0000" class="sigma-input">
- </div>
- </div>
- </div>
- </div>
-
- <div class="sigma-form-actions" style="margin-top: 2rem; background: transparent;">
- <button type="submit" id="submit-quote-btn" class="isc-btn isc-btn-primary" style="height: 44px; padding: 0 3rem; font-weight: 700; border-radius: 6px;">
- <span>Start Cleaning Request</span>
- <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 0.5rem;"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
- </button>
- </div>
- </form>
- </div>
- </div>
+                <div class="sigma-form-actions" style="margin-top: 4rem; padding-top: 3rem; border-top: 1px solid var(--slate-100); text-align: center;">
+                    <button type="submit" id="submit-quote-btn" class="nav-cta" style="height: 60px; padding: 0 4rem; font-size: 1.1rem; border: none; cursor: pointer;">
+                        <span>Send My Cleaning Request →</span>
+                    </button>
+                    <p style="margin-top: 1.5rem; font-size: 0.85rem; color: var(--hwb-slate); font-weight: 600;">Safe & Secure Data Transmission • No Obligation Quote</p>
+                </div>
+            </form>
+        </div>
+    </div>
 </section>
 
 <style>
