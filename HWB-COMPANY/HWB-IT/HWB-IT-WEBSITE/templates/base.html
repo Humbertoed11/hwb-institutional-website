@@ -83,7 +83,16 @@
  {% endif %}
  {% block head %}{% endblock %}
 </head>
-<body>
+<body class="app-container">
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-8BX5Q7THYR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-8BX5Q7THYR');
+    </script>
 
  {% if request.endpoint != 'login' %}
  {% include "components/mega_bar.html" %}
