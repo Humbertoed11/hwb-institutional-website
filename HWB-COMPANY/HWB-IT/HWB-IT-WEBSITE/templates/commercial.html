@@ -1,103 +1,105 @@
 {% extends "base.html" %}
 
-{% block title %}Commercial Cleaning Services | Marble Polishing | DFW Metroplex & Statewide Texas{% endblock %}
+{% block title %}Commercial Cleaning & Floor Care | Dallas, Plano & North Texas | HWB Cleaning{% endblock %}
+
 {% block head %}
- <meta name="description" content="Class A Commercial cleaning and expert marble floor polishing for the DFW Metroplex. HWB offers high-quality corporate building cleaning statewide across Texas.">
- <meta name="keywords" content="Commercial cleaning Plano, marble floor polishing Texas, Class A office cleaning DFW Metroplex, corporate building stewardship Frisco, McKinney business cleaning">
+ <meta name="description" content="Professional Commercial Cleaning and Floor Care services in Dallas, Plano, and North Texas. Expert deep cleaning, window washing, and strip and wax services.">
+ <meta name="keywords" content="Commercial cleaning Dallas, floor care Plano, window washing North Texas, office deep cleaning DFW, strip and wax McKinney">
 {% endblock %}
 
 {% block content %}
 <section class="services-view">
- <div class="services-hero dark-variant" style="background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('/static/img/commercial_church_vacuuming.png');">
- <h1>Commercial Cleaning Services</h1>
- <p class="subtitle">From warehouses to local clinics, we specialize in deep cleaning and floor refinishing that keeps the business looking its best.</p>
- <a href="{{ url_for('get_quote') }}" class="executive-hero-cta">Start a quote <i class="fas fa-arrow-right" style="margin-left: 0.5rem; font-size: 0.8rem;"></i></a>
- </div>
+    <!-- High-Fidelity Commercial Hero (Church Variant) -->
+    <div class="services-hero dark-variant" style="background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('/static/img/commercial_church_vacuuming.png');">
+        <div class="content-wrapper">
+            <h1>Commercial Cleaning & Floor Care</h1>
+            <p class="subtitle">From corporate headquarters to local institutions, we specialize in deep cleaning and high-fidelity surface management that keeps your environment professional and inviting.</p>
+            <div class="hero-ctas">
+                <a href="{{ url_for('get_quote') }}" class="isc-btn isc-btn-primary" style="height: 52px; padding: 0 3.5rem; border-radius: 50px; font-weight: 800;">Start a quote <i class="fas fa-arrow-right" style="margin-left: 0.5rem;"></i></a>
+            </div>
+        </div>
+    </div>
 
- <div class="detailed-services">
- <div class="split-feature image-left">
- <div class="split-image-container"><div class=\"sigma-image-frame\"><img src="/static/img/commercial_marble_polishing.png" alt="HWB Professional Marble Polishing"></div></div>
- <div class="split-content">
- <h2 style="; margin-bottom: 1.5rem; ">Professional Surface Management</h2>
- <p style="font-size: 1.1rem; color: var(--hwb-dark); margin-bottom: 2rem; line-height: 1.8;">Daily mopping isn't always enough. High-traffic areas need professional care to remove deep dirt and restore the shine customers expect.</p>
- <div style="background: #ffffff; padding: 2.5rem; border-radius: var(--radius-md); border-left: 4px solid var(--hwb-blue);">
- <h4 style="margin-bottom: 1rem; ">The SigmaQuality™ Finish</h4>
- <p style="font-size: 0.95rem; color: var(--hwb-slate); margin: 0;">Our multi-step stripping and waxing process removes dirt and applies high-solids industrial finishes for maximum durability and visual impact.</p>
- </div>
- </div>
- </div>
+    <div class="detailed-services">
+        <div class="content-wrapper">
+            <!-- Professional Surface Management Section -->
+            <div class="split-feature image-left" style="display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center; margin-bottom: 8rem;">
+                <div class="sigma-image-frame" style="border-radius: 12px; overflow: hidden; height: 450px;">
+                    <img src="/static/img/commercial_marble_polishing.png" alt="HWB Professional Marble Polishing" style="width: 100%; height: 100%; object-fit: cover;">
+                </div>
+                <div class="split-content">
+                    <span style="font-size: 0.75rem; font-weight: 900; color: var(--hwb-blue); text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 1rem; display: block;">Surface Excellence</span>
+                    <h2 style="font-size: 2.5rem; font-weight: 800; color: var(--hwb-dark); margin-bottom: 1.5rem; letter-spacing: -0.02em;">Professional Surface Management</h2>
+                    <p style="font-size: 1.15rem; color: var(--hwb-slate); margin-bottom: 2.5rem; line-height: 1.8; font-weight: 500;">Daily mopping isn't always enough. High-traffic areas need professional care to remove deep dirt and restore the shine customers expect. Our SigmaQuality™ finish ensures long-term durability.</p>
+                    
+                    <div style="background: var(--hwb-mist); padding: 2.5rem; border-radius: 12px; border-left: 4px solid var(--hwb-blue);">
+                        <h4 style="font-weight: 800; color: var(--hwb-dark); margin-bottom: 1rem;">The SigmaQuality™ Finish</h4>
+                        <p style="font-size: 0.95rem; color: var(--hwb-slate); margin: 0; line-height: 1.6; font-weight: 500;">Our multi-step stripping and waxing process removes dirt and applies high-solids industrial finishes for maximum durability and visual impact.</p>
+                    </div>
+                </div>
+            </div>
 
- <div style="margin-bottom: 4rem;">
- <div class="section-header"><h2>Specialized Building Services</h2></div>
- 
- <div class="service-grid">
- <!-- Electrostatic Disinfection -->
- <a href="{{ url_for('get_quote') }}" style="text-decoration: none; color: inherit; display: block;">
- <div class="service-card">
- <div class="card-image" style="background-image: url('{{ url_for('static', filename='img/electrostatic_clean.png') }}');"></div>
- <div class="card-content">
- <div class="card-badge">Sanitization</div>
- <h3>Electrostatic Disinfection</h3>
- <p>High-level sanitization using electrostatic sprayers to treat infections, including COVID-19, ensuring a safe facility for staff and visitors.</p>
- </div>
- <div class="card-footer">
- <span class="starting-price"><strong>Health Grade</strong></span>
- </div>
- </div>
- </a>
+            <div style="margin-bottom: 8rem;">
+                <div class="section-header" style="text-align: center; margin-bottom: 4rem;">
+                    <h2 style="font-size: 2.25rem; font-weight: 800; color: var(--hwb-dark);">Specialized Building Services</h2>
+                    <p style="font-size: 1.1rem; color: var(--hwb-slate); margin-top: 1rem;">Targeted deep cleaning for high-traffic commercial environments.</p>
+                </div>
+                
+                <!-- Restored 4-Column Aligned Grid -->
+                <div class="service-grid">
+                    <!-- Electrostatic Disinfection -->
+                    <div class="service-card">
+                        <div class="card-image" style="background-image: url('/static/img/electrostatic_clean.png');"></div>
+                        <div class="card-content">
+                            <div class="card-badge">Sanitization</div>
+                            <h3>Electrostatic Disinfection</h3>
+                            <p>High-level sanitization using electrostatic sprayers to treat infections, including COVID-19, ensuring a safe facility for staff and visitors.</p>
+                        </div>
+                    </div>
 
- <!-- Window Washing -->
- <a href="{{ url_for('get_quote') }}" style="text-decoration: none; color: inherit; display: block;">
- <div class="service-card">
- <div class="card-image" style="background-image: url('{{ url_for('static', filename='img/bank_window_cleaning.png') }}');"></div>
- <div class="card-content">
- <div class="card-badge">Exterior & Interior</div>
- <h3>Window Washing</h3>
- <p>Professional cleaning for both interior and exterior glass, providing streak-free views for the storefront or office cubicle separations.</p>
- </div>
- <div class="card-footer">
- <span class="starting-price"><strong>Clear-View Tech</strong></span>
- </div>
- </div>
- </a>
+                    <!-- Window Washing -->
+                    <div class="service-card">
+                        <div class="card-image" style="background-image: url('/static/img/bank_window_cleaning.png');"></div>
+                        <div class="card-content">
+                            <div class="card-badge">Exterior & Interior</div>
+                            <h3>Window Washing</h3>
+                            <p>Professional cleaning for both interior and exterior glass, providing streak-free views for the storefront or office cubicle separations.</p>
+                        </div>
+                    </div>
 
- <!-- Carpet & Rug Care -->
- <a href="{{ url_for('get_quote') }}" style="text-decoration: none; color: inherit; display: block;">
- <div class="service-card">
- <div class="card-image" style="background-image: url('{{ url_for('static', filename='img/daycare_rug_extractor.png') }}');"></div>
- <div class="card-content">
- <div class="card-badge">Textiles</div>
- <h3>Carpet and Rug Care</h3>
- <p>Deep extraction cleaning for carpets and area rugs, perfect for high-traffic Class A, B, and C facilities like daycares and schools.</p>
- </div>
- <div class="card-footer">
- <span class="starting-price"><strong>Deep Clean Grade</strong></span>
- </div>
- </div>
- </a>
+                    <!-- Carpet & Rug Care -->
+                    <div class="service-card">
+                        <div class="card-image" style="background-image: url('/static/img/daycare_rug_extractor.png');"></div>
+                        <div class="card-content">
+                            <div class="card-badge">Textiles</div>
+                            <h3>Carpet and Rug Care</h3>
+                            <p>Deep extraction cleaning for carpets and area rugs, perfect for high-traffic facilities like daycares, schools, and professional offices.</p>
+                        </div>
+                    </div>
 
- <!-- Strip and Wax -->
- <a href="{{ url_for('get_quote') }}" style="text-decoration: none; color: inherit; display: block;">
- <div class="service-card">
- <div class="card-image" style="background-image: url('{{ url_for('static', filename='img/vct_floor_waxing.png') }}');"></div>
- <div class="card-content">
- <div class="card-badge">Hard Floors</div>
- <h3>Strip and Wax</h3>
- <p>Comprehensive removal of old finish followed by multi-coat application for a high-gloss, protective professional finish on VCT floors.</p>
- </div>
- <div class="card-footer">
- <span class="starting-price"><strong>High-Gloss Finish</strong></span>
- </div>
- </div>
- </a>
- </div>
- </div>
- </div>
+                    <!-- Strip and Wax -->
+                    <div class="service-card">
+                        <div class="card-image" style="background-image: url('/static/img/vct_floor_waxing.png');"></div>
+                        <div class="card-content">
+                            <div class="card-badge">Hard Floors</div>
+                            <h3>Strip and Wax</h3>
+                            <p>Comprehensive removal of old finish followed by multi-coat application for a high-gloss, protective professional finish on VCT floors.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
- <section class="cta-section"><div class="executive-cta">
- <h2 class="final-ask-title">Need your floors to shine again?</h2>
- <p>Schedule a one-time deep clean or add professional floor care to your regular cleaning plan.</p>
- <a href="{{ url_for('get_quote') }}" class="executive-hero-cta">Start a quote <i class="fas fa-arrow-right" style="margin-left: 0.5rem; font-size: 0.8rem;"></i></a>
- </div>
+    <!-- Department Final CTA -->
+    <section class="cta-section">
+        <div class="executive-cta">
+            <h2 style="font-size: 2.75rem;">Start your custom plan today</h2>
+            <p>Our team is ready to deliver ISO 9001-compliant Commercial Cleaning for your building. Request your no-obligation technical scope today.</p>
+            <div style="display: flex; gap: 1.5rem; justify-content: center;">
+                <a href="{{ url_for('get_quote') }}" class="isc-btn isc-btn-primary" style="height: 56px; padding: 0 4rem; font-weight: 800; border-radius: 50px; font-size: 1.1rem;">Start a quote <i class="fas fa-arrow-right"></i></a>
+            </div>
+        </div>
+    </section>
 </section>
 {% endblock %}
