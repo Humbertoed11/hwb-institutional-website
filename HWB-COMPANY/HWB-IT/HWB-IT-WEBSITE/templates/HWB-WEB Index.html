@@ -66,11 +66,80 @@
     </div>
 </section>
 
-<!-- Authority Formula Section -->
-<section class="formula-strip" style="background: var(--slate-50); padding: 4rem 0; border-top: 1px solid var(--slate-100); border-bottom: 1px solid var(--slate-100);">
-    <div class="content-wrapper" style="text-align: center;">
-        <div style="font-size: 0.75rem; font-weight: 900; color: var(--brand); text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 1.5rem;">The SigmaQuality™ Mandate</div>
-        <p style="font-size: 1.5rem; font-weight: 600; color: var(--slate-900); max-width: 900px; margin: 0 auto;">Proper Training + The Right Tools + Respect for Your Space = The SigmaQuality Clean.</p>
+<!-- Quote Engine (Hardened Bento Layout) -->
+<section id="quote-form-home" style="padding: 8rem 0; background: #f8fafc; border-top: 1px solid var(--slate-200);">
+    <div class="content-wrapper" style="max-width: 800px;">
+        <div class="section-header" style="text-align: center; margin-bottom: 4rem;">
+            <h2 style="font-size: 2.25rem; font-weight: 800; color: var(--hwb-dark);">Get Your Free Cleaning Quote</h2>
+            <p style="font-size: 1.1rem; color: var(--hwb-slate); margin-top: 1rem;">Fill in your details and we will reach out with a simple plan that works.</p>
+        </div>
+
+        <div class="isc-card" style="padding: 3.5rem; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.04); border: 1px solid var(--slate-200); background: white;">
+            <form action="{{ url_for('get_quote') }}" method="POST" id="quote-form-main" class="sigma-form-container">
+                <div class="sigma-form-body">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                        <div class="sigma-field">
+                            <label style="font-weight: 700; margin-bottom: 8px; display: block; font-size: 0.85rem; color: var(--hwb-dark);">Your Name</label>
+                            <input type="text" name="name" required placeholder="Full Name" class="sigma-input" style="width: 100%; height: 48px; border: 1px solid var(--slate-200); border-radius: 6px; padding: 0 1rem;">
+                        </div>
+                        <div class="sigma-field">
+                            <label style="font-weight: 700; margin-bottom: 8px; display: block; font-size: 0.85rem; color: var(--hwb-dark);">Work Email</label>
+                            <input type="email" name="email" required placeholder="email@company.com" class="sigma-input" style="width: 100%; height: 48px; border: 1px solid var(--slate-200); border-radius: 6px; padding: 0 1rem;">
+                        </div>
+                        <div class="sigma-field" style="grid-column: span 2;">
+                            <label style="font-weight: 700; margin-bottom: 8px; display: block; font-size: 0.85rem; color: var(--hwb-dark);">Phone Number</label>
+                            <input type="tel" name="phone" id="phone_home" required placeholder="(214) 000-0000" class="sigma-input" style="width: 100%; height: 48px; border: 1px solid var(--slate-200); border-radius: 6px; padding: 0 1rem;">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sigma-form-actions" style="margin-top: 2.5rem; text-align: center;">
+                    <button type="submit" id="submit-quote-btn" class="isc-btn isc-btn-primary" style="width: 100%; height: 56px; font-weight: 800; font-size: 1.1rem; border-radius: 8px;">
+                        <span>Get My Free Quote</span>
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </section>
+
+<!-- Formula (Dark Mandate Banner) -->
+<section style="padding: 6rem 0; background: var(--hwb-dark); color: white;">
+    <div class="content-wrapper" style="text-align: center; max-width: 900px;">
+        <h2 style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.25em; color: var(--hwb-blue); margin-bottom: 2rem; font-weight: 900;">The HWB Quality Formula</h2>
+        <p style="font-size: 1.75rem; font-weight: 700; margin-bottom: 2rem; line-height: 1.35;">Proper Training + The Right Tools + Respect for Your Space = The SigmaQuality Clean</p>
+        <p style="font-size: 1.1rem; opacity: 0.7; line-height: 1.6; font-weight: 500;">We believe doing the small things right every single day creates a clean you can actually rely on.</p>
+    </div>
+</section>
+
+<!-- Final Closing CTA -->
+<section class="cta-section" style="padding: 8rem 0;">
+    <div class="executive-cta">
+        <h2>Ready for a spotless building?</h2>
+        <p>View our cleaning standards or start your custom plan today. Our team is ready to deliver ISO 9001-compliant excellence.</p>
+        <div style="display: flex; gap: 1.5rem; justify-content: center;">
+            <a href="{{ url_for('get_quote') }}" class="isc-btn isc-btn-primary" style="height: 52px; padding: 0 3rem; font-weight: 800; border-radius: 50px;">Start your plan</a>
+            <a href="{{ url_for('compliance') }}" class="isc-btn isc-btn-outline" style="height: 52px; padding: 0 3rem; font-weight: 800; border-radius: 50px;">View Standards</a>
+        </div>
+    </div>
+</section>
+
+<script>
+ // Phone Masking for Home Form
+ document.getElementById('phone_home').addEventListener('input', function(e) {
+    let x = e.target.value.replace(/\D/g, '').match(/(\d{0,3})(\d{0,3})(\d{0,4})/);
+    e.target.value = !x[2] ? x[1] : '(' + x[1] + ')-' + x[2] + (x[3] ? '-' + x[3] : '');
+ });
+
+ // Submit Narrative Sync
+ const form = document.getElementById('quote-form-main');
+ const btn = document.getElementById('submit-quote-btn');
+ const span = btn.querySelector('span');
+
+ form.onsubmit = function() {
+    btn.disabled = true;
+    span.innerText = "Processing...";
+    setTimeout(() => span.innerText = "Syncing Field Ops...", 700);
+ };
+</script>
 {% endblock %}
