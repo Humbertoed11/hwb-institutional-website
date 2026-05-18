@@ -2727,3 +2727,55 @@ header.main-header {
     margin-top: -90px; /* Tucking under the glass header */
     padding-top: calc(90px + 8rem) !important;
 }
+
+/* --- RECONSTRUCTED: Mobile Overlay System (2026) --- */
+/* Ensures the menu is hidden by default and correctly styled for small screens */
+
+.mobile-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: white;
+    z-index: 2500;
+    display: flex;
+    flex-direction: column;
+    padding: 120px 40px 40px;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-y: auto;
+}
+
+.mobile-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.mobile-overlay-links {
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+}
+
+.mobile-overlay-links a {
+    text-decoration: none;
+    color: var(--hwb-dark);
+    font-size: 1.75rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.mobile-overlay-links .sub-link {
+    font-size: 1.1rem;
+    color: var(--hwb-slate);
+    font-weight: 600;
+    margin-left: 1.5rem;
+}
+
+.mobile-overlay-footer {
+    margin-top: auto;
+    padding-top: 4rem;
+    border-top: 1px solid var(--hwb-border);
+}
