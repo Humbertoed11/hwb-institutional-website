@@ -8,7 +8,7 @@ import datetime
 import re
 import requests
 import msal
-from urllib.parse import urlencode, urlparse
+from urllib.parse import urlencode, urlparse, urlunparse
 from dotenv import load_dotenv
 from werkzeug.exceptions import HTTPException
 from config import sys_config
@@ -48,6 +48,15 @@ if missing_configs:
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
+
+# --- SigmaFidelity™ SEO: Domain Consolidation (BUG-045) ---
+# Mandated to force all traffic to the canonical WWW domain.
+@app.before_request
+def redirect_to_www():
+    url_parts = urlparse(request.url)
+    if url_parts.netloc == 'hwbcleaning.com':
+        url_parts = url_parts._replace(netloc='www.hwbcleaning.com')
+        return redirect(urlunparse(url_parts), code=301)
 
 with app.app_context():
     try:
@@ -104,6 +113,7 @@ def load_user(user_id):
             cur.execute('SELECT * FROM "Users" WHERE id = %s', (user_id,))
             u = cur.fetchone()
             if u:
+                print(f"[GUARD] Loaded user {u['username']} with role: {u['role']}", flush=True)
                 return User(u['id'], u['username'], u['role'])
         conn.close()
     except Exception as e:
@@ -191,6 +201,47 @@ def transmit_email(recipient, subject, body_html):
     err_desc = result.get('error_description', 'Token Acquisition Failed')
     print(f"[GRAPH] AUTH FAILURE: {err_desc}", flush=True)
     return False, err_desc
+
+# --- HWB Concept Lab: R&D Laboratory ---
+
+
+# --- Jinja2 Institutional Filters ---
+@app.template_filter('format_mdy')
+def format_mdy_filter(s):
+    if not s: return "--"
+    if isinstance(s, (datetime.date, datetime.datetime)):
+        return s.strftime('%m/%d/%Y')
+    return str(s)
+
+@app.template_filter('ts')
+def ts_filter(s):
+    if not s: return ""
+    return str(s)
+
+@app.route('/admin/concept-lab', endpoint='concept_lab')
+@login_required
+def concept_lab():
+    return render_template('concept_lab.html')
+
+@app.route('/admin/concept-lab/sigmajan', endpoint='sigmajan_lab')
+@login_required
+def sigmajan_lab():
+    return render_template('sigmajan_lab_home.html')
+
+@app.route('/admin/concept-lab/babysop', endpoint='babysop')
+@login_required
+def babysop():
+    return render_template('babysop_lab.html')
+
+@app.route('/admin/concept-lab/legacy-site', endpoint='legacy_site')
+@login_required
+def legacy_site():
+    return render_template('legacy_site_mirror.html')
+
+@app.route('/admin/concept-lab/quote-v2', endpoint='quote_v2')
+@login_required
+def quote_v2():
+    return render_template('quote_form.html')
 
 # --- HWB Command v5.0: Unified Backend Hub ---
 
@@ -335,6 +386,7 @@ def admin_operations():
             
             cur.execute(f'{lead_sql_base} ORDER BY {l_sort} {l_dir}, id ASC LIMIT %s OFFSET %s', tuple(lead_params + [per_page, offset]))
             leads = cur.fetchall()
+            print(f"[BOOT] Fetched {len(leads)} leads. Total Count: {leads_count}", flush=True)
             total_pages = (leads_count + per_page - 1) // per_page
 
             # 3. GLOBAL MONITORING
@@ -399,7 +451,8 @@ def login():
         
         if user and check_password_hash(user['password_hash'], p):
             login_user(User(user['id'], user['username'], user['role']))
-            return redirect(url_for('admin_operations'))
+            next_page = request.args.get('next')
+            return redirect(next_page or url_for('admin_operations'))
         flash('Invalid credentials.')
     return render_template('login.html')
 
@@ -407,29 +460,66 @@ def login():
 @login_required
 def logout(): logout_user(); return redirect(url_for('index'))
 
+# --- SigmaFidelity™ SEO: Legacy URL Redirects (BUG-044) ---
+# Mandated to clear incorrect legacy sitelinks from Google's index.
+@app.route('/contact')
+def legacy_contact(): return redirect(url_for('get_quote'), code=301)
+
+@app.route('/facility-services')
+@app.route('/industries')
+def legacy_services(): return redirect(url_for('services_commercial'), code=301)
+
+@app.route('/m/create')
+@app.route('/m/create-account')
+@app.route('/m/login')
+@app.route('/m/<path:path>')
+def legacy_mobile_catchall(path=None): return redirect(url_for('index'), code=301)
+
+@app.route('/vendors-/-subcontractors')
+@app.route('/vendors-%2F-subcontractors')
+def legacy_vendors(): return redirect(url_for('index'), code=301)
+
 @app.route('/', endpoint='index')
-def index(): return render_template('commercial_template.html')
+def index(): return render_template('index.html')
 
 @app.route('/about', endpoint='about')
 def about(): return render_template('about.html')
 
+@app.route('/calculator', endpoint='calculator')
+def calculator(): return render_template('cleaning-calculator.html')
+
+@app.route('/services', endpoint='services')
+def services(): return render_template('HWB-WEB Services.html')
+
 @app.route('/services/janitorial', endpoint='services_janitorial')
-def services_janitorial(): return render_template('janitorial.html')
+def services_janitorial(): return render_template('janitorial-services.html')
 
 @app.route('/services/commercial', endpoint='services_commercial')
-def services_commercial(): return render_template('commercial.html')
+def services_commercial(): return render_template('commercial-cleaning.html')
 
 @app.route('/services/industrial', endpoint='services_industrial')
-def services_industrial(): return render_template('industrial.html')
+def services_industrial(): return render_template('industrial-cleaning.html')
 
 @app.route('/services/construction', endpoint='services_construction')
-def services_construction(): return render_template('HWB-WEB Construction.html')
+def services_construction(): return render_template('construction-cleanup.html')
+
+@app.route('/services/warehouse', endpoint='services_warehouse')
+def services_warehouse(): return render_template('warehouse-cleaning.html')
+
+@app.route('/services/office', endpoint='services_office')
+def services_office(): return render_template('office-management.html')
+
+@app.route('/resources', endpoint='resources')
+def resources(): return render_template('HWB-WEB Resources.html')
+
+@app.route('/legacy-site', endpoint='public_legacy_site')
+def public_legacy_site(): return render_template('legacy_site_mirror.html')
 
 @app.route('/compliance', endpoint='compliance')
-def compliance(): return render_template('HWB-WEB Compliance.html')
+def compliance(): return render_template('compliance.html')
 
 @app.route('/ehsq', endpoint='ehsq')
-def ehsq(): return render_template('HWB-WEB Ehsq.html')
+def ehsq(): return render_template('ehsq.html')
 
 @app.route('/privacy-policy')
 def privacy_policy(): return render_template('privacy_policy.html')
@@ -467,22 +557,36 @@ def get_quote():
                     ''', (data.get('company'), data.get('name'), data.get('email'), data.get('phone'), data.get('facility_type'), sqf, annual_value, 'New', 'Website Quote Form', data.get('frequency')))
                     
                     try:
-                        email_body = f"""
-                        <div style='font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 8px;'>
-                            <h2 style='color: #2563eb;'>New Cleaning Request</h2>
-                            <p><strong>Company:</strong> {data.get('company')}</p>
-                            <p><strong>Manager:</strong> {data.get('name')}</p>
-                            <p><strong>Building:</strong> {data.get('facility_type')} ({int(sqf):,} SQF)</p>
-                            <p><strong>Frequency:</strong> {data.get('frequency')}</p>
-                            <p><strong>Contact:</strong> {data.get('email')} | {data.get('phone')}</p>
-                            <hr>
-                            <p style='font-size: 0.8rem; color: #666;'>Automated lead alert generated by HWB-IT-WEBSITE.</p>
-                        </div>
-                        """
+                        # Institutional Simplified Email Alert
+                        is_v2 = data.get('facility_type') == "Not Specified"
+                        if is_v2:
+                            email_body = f"""
+                            <div style='font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 8px;'>
+                                <h2 style='color: #2563eb;'>New Lead Handshake (V2)</h2>
+                                <p><strong>Company:</strong> {data.get('company')}</p>
+                                <p><strong>Manager:</strong> {data.get('name')}</p>
+                                <p><strong>Contact Email:</strong> {data.get('email')}</p>
+                                <hr>
+                                <p style='font-size: 0.8rem; color: #666;'>Simplified V2 Handshake Protocol.</p>
+                            </div>
+                            """
+                        else:
+                            email_body = f"""
+                            <div style='font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 8px;'>
+                                <h2 style='color: #2563eb;'>New Cleaning Request (V1)</h2>
+                                <p><strong>Company:</strong> {data.get('company')}</p>
+                                <p><strong>Manager:</strong> {data.get('name')}</p>
+                                <p><strong>Building:</strong> {data.get('facility_type')} ({int(sqf):,} SQF)</p>
+                                <p><strong>Frequency:</strong> {data.get('frequency')}</p>
+                                <p><strong>Contact:</strong> {data.get('email')} | {data.get('phone')}</p>
+                                <hr>
+                                <p style='font-size: 0.8rem; color: #666;'>Standard V1 Quote Request.</p>
+                            </div>
+                            """
                         cur.execute('''
                             INSERT INTO "PendingOutbox" (recipient, subject, body, status, created_at)
                             VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP)
-                        ''', ('sales@hwbcleaning.com', f"ACTION REQUIRED: New Request from {data.get('company')}", email_body, 'Pending'))
+                        ''', ('sales@hwbcleaning.com', f"ACTION REQUIRED: New Lead from {data.get('company')}", email_body, 'Pending'))
                     except Exception as e:
                         print(f"PendingOutbox Error: {e}") # Log error but don't fail the quote
 
@@ -498,6 +602,9 @@ def get_quote():
             except Exception as e:
                 print(f"Teams Notification Error: {e}")
 
+            # Directional success routing based on form version
+            if data.get('form_version') == "v2":
+                return render_template('quote_success.html', data=data_dict)
             return render_template('quote_success.html', data=data_dict)
         except Exception as e:
             print(f"Quote Error: {e}")
@@ -782,6 +889,8 @@ def robots_txt(): return send_from_directory('static', 'robots.txt')
 
 @app.route('/sitemap.xml')
 def sitemap_xml(): return send_from_directory('static', 'sitemap.xml')
+@app.route("/sitemap.website.xml")
+def sitemap_website_xml(): return send_from_directory("static", "sitemap.website.xml")
 
 @app.route('/favicon.ico')
 def favicon(): return send_from_directory('static', 'favicon.ico')

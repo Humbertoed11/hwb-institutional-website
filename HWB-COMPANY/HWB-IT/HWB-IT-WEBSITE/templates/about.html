@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}About HWB Cleaning Services LLC | The SigmaQuality™ Standard{% endblock %}
+
+{% block content %}
+<div class="services-view">
+    <!-- Hero Section -->
+    <section class="services-hero light-variant" style="background-image: linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.7)), url('{{ url_for('static', filename='img/hero_lobby.png') }}');">
+        <div class="content-wrapper" style="max-width: 1000px; text-align: center;">
+            <h2 style="font-size: 0.85rem; font-weight: 900; color: var(--brand); text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 1.5rem;">Our Identity</h2>
+            <h1 style="font-size: 3.5rem; font-weight: 800; color: var(--hwb-dark); margin-bottom: 2rem; letter-spacing: -0.03em;">The SigmaQuality™ Standard</h1>
+            <p style="font-size: 1.25rem; color: var(--hwb-slate); max-width: 800px; margin: 0 auto; line-height: 1.6; font-weight: 500;">
+                Founded on the principles of Lean Six Sigma, HWB Cleaning Services LLC provides institutional-grade care for commercial environments across the DFW Metroplex and statewide Texas.
+            </p>
+        </div>
+    </section>
+
+    <!-- Mission Section -->
+    <section class="content-section" style="padding: 10rem 0; background: #ffffff;">
+        <div class="content-wrapper" style="max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 6rem; align-items: center;">
+            <div>
+                <img src="{{ url_for('static', filename='img/hwb_core_team_v2.png') }}" alt="HWB Core Team" style="width: 100%; border-radius: 1.25rem; box-shadow: 0 40px 100px rgba(0,0,0,0.1);">
+            </div>
+            <div>
+                <h3 style="font-size: 2.25rem; font-weight: 800; color: var(--hwb-dark); margin-bottom: 2rem;">Built for Industrial Stability</h3>
+                <p style="font-size: 1.1rem; line-height: 1.7; color: var(--hwb-slate); margin-bottom: 2rem;">
+                    We don't just clean; we engineer environments. By applying the "Zero-Defect" philosophy to facilities management, HWB ensures that every square foot of your space reflects professional excellence.
+                </p>
+                <div style="display: grid; gap: 1.5rem;">
+                    <div style="display: flex; gap: 1.5rem; align-items: flex-start;">
+                        <span style="font-size: 1.5rem;">🛡️</span>
+                        <div>
+                            <strong style="display: block; font-size: 1.1rem; color: var(--hwb-dark);">ISO 9001 Compliant</strong>
+                            <span style="font-size: 0.95rem; color: var(--hwb-slate);">Standardized quality management protocols in every facility.</span>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 1.5rem; align-items: flex-start;">
+                        <span style="font-size: 1.5rem;">📊</span>
+                        <div>
+                            <strong style="display: block; font-size: 1.1rem; color: var(--hwb-dark);">Data-Driven Operations</strong>
+                            <span style="font-size: 0.95rem; color: var(--hwb-slate);">Real-time tracking and relational reporting for maximum accountability.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

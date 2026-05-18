@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}Commercial Cleaning Services | Marble Polishing | DFW Metroplex & Statewide Texas{% endblock %}
+{% block head %}
+ <meta name="description" content="Class A Commercial cleaning and expert marble floor polishing for the DFW Metroplex. HWB offers high-quality corporate building cleaning statewide across Texas.">
+ <meta name="keywords" content="Commercial cleaning Plano, marble floor polishing Texas, Class A office cleaning DFW Metroplex, corporate building stewardship Frisco, McKinney business cleaning">
+{% endblock %}
+
+{% block content %}
+<section class="services-view">
+ <div class="services-hero dark-variant" style="background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('/static/img/commercial_church_vacuuming.png');">
+ <h1>Commercial Cleaning Services</h1>
+ <p class="subtitle">From warehouses to local clinics, we specialize in deep cleaning and floor refinishing that keeps the business looking its best.</p>
+ <a href="{{ url_for('get_quote') }}" class="executive-hero-cta">Start a quote <i class="fas fa-arrow-right" style="margin-left: 0.5rem; font-size: 0.8rem;"></i></a>
+ </div>
+
+ <div class="detailed-services">
+ <div class="split-feature image-left">
+ <div class="split-image-container"><div class=\"sigma-image-frame\"><img src="/static/img/commercial_marble_polishing.png" alt="HWB Professional Marble Polishing"></div></div>
+ <div class="split-content">
+ <h2 style="; margin-bottom: 1.5rem; ">Professional Surface Management</h2>
+ <p style="font-size: 1.1rem; color: var(--hwb-dark); margin-bottom: 2rem; line-height: 1.8;">Daily mopping isn't always enough. High-traffic areas need professional care to remove deep dirt and restore the shine customers expect.</p>
+ <div style="background: #ffffff; padding: 2.5rem; border-radius: var(--radius-md); border-left: 4px solid var(--hwb-blue);">
+ <h4 style="margin-bottom: 1rem; ">The SigmaQuality™ Finish</h4>
+ <p style="font-size: 0.95rem; color: var(--hwb-slate); margin: 0;">Our multi-step stripping and waxing process removes dirt and applies high-solids industrial finishes for maximum durability and visual impact.</p>
+ </div>
+ </div>
+ </div>
+
+ <div style="margin-bottom: 4rem;">
+ <div class="section-header"><h2>Specialized Building Services</h2></div>
+ 
+ <div class="service-grid">
+ <!-- Electrostatic Disinfection -->
+ <a href="{{ url_for('get_quote') }}" style="text-decoration: none; color: inherit; display: block;">
+ <div class="service-card">
+ <div class="card-image" style="background-image: url('{{ url_for('static', filename='img/electrostatic_clean.png') }}');"></div>
+ <div class="card-content">
+ <div class="card-badge">Sanitization</div>
+ <h3>Electrostatic Disinfection</h3>
+ <p>High-level sanitization using electrostatic sprayers to treat infections, including COVID-19, ensuring a safe facility for staff and visitors.</p>
+ </div>
+ <div class="card-footer">
+ <span class="starting-price"><strong>Health Grade</strong></span>
+ </div>
+ </div>
+ </a>
+
+ <!-- Window Washing -->
+ <a href="{{ url_for('get_quote') }}" style="text-decoration: none; color: inherit; display: block;">
+ <div class="service-card">
+ <div class="card-image" style="background-image: url('{{ url_for('static', filename='img/bank_window_cleaning.png') }}');"></div>
+ <div class="card-content">
+ <div class="card-badge">Exterior & Interior</div>
+ <h3>Window Washing</h3>
+ <p>Professional cleaning for both interior and exterior glass, providing streak-free views for the storefront or office cubicle separations.</p>
+ </div>
+ <div class="card-footer">
+ <span class="starting-price"><strong>Clear-View Tech</strong></span>
+ </div>
+ </div>
+ </a>
+
+ <!-- Carpet & Rug Care -->
+ <a href="{{ url_for('get_quote') }}" style="text-decoration: none; color: inherit; display: block;">
+ <div class="service-card">
+ <div class="card-image" style="background-image: url('{{ url_for('static', filename='img/daycare_rug_extractor.png') }}');"></div>
+ <div class="card-content">
+ <div class="card-badge">Textiles</div>
+ <h3>Carpet and Rug Care</h3>
+ <p>Deep extraction cleaning for carpets and area rugs, perfect for high-traffic Class A, B, and C facilities like daycares and schools.</p>
+ </div>
+ <div class="card-footer">
+ <span class="starting-price"><strong>Deep Clean Grade</strong></span>
+ </div>
+ </div>
+ </a>
+
+ <!-- Strip and Wax -->
+ <a href="{{ url_for('get_quote') }}" style="text-decoration: none; color: inherit; display: block;">
+ <div class="service-card">
+ <div class="card-image" style="background-image: url('{{ url_for('static', filename='img/vct_floor_waxing.png') }}');"></div>
+ <div class="card-content">
+ <div class="card-badge">Hard Floors</div>
+ <h3>Strip and Wax</h3>
+ <p>Comprehensive removal of old finish followed by multi-coat application for a high-gloss, protective professional finish on VCT floors.</p>
+ </div>
+ <div class="card-footer">
+ <span class="starting-price"><strong>High-Gloss Finish</strong></span>
+ </div>
+ </div>
+ </a>
+ </div>
+ </div>
+ </div>
+
+ <section class="cta-section"><div class="executive-cta">
+ <h2 class="final-ask-title">Need your floors to shine again?</h2>
+ <p>Schedule a one-time deep clean or add professional floor care to your regular cleaning plan.</p>
+ <a href="{{ url_for('get_quote') }}" class="executive-hero-cta">Start a quote <i class="fas fa-arrow-right" style="margin-left: 0.5rem; font-size: 0.8rem;"></i></a>
+ </div>
+</section>
+{% endblock %}
