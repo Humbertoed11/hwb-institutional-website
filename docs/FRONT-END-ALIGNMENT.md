@@ -10,6 +10,7 @@ This document tracks the surgical reconstruction of the HWB Cleaning front end t
 | **FE-004** | Quote Engine | 05/18/2026 | 2-column Bento Grid broke the 4-column visual rhythm. | Restructured `quote_form.html` to a 4-column grid (2 building / 2 contact). | **RESOLVED** |
 | **FE-005** | Mobile Overlay | 05/18/2026 | Visible by default; caused full-width button breakage. | Injected missing `.mobile-overlay` CSS to enforce visibility: hidden. | **RESOLVED** |
 | **FE-006** | Local SEO | 05/18/2026 | Hero title lacked specific DFW city targeting. | Updated hero copy to include Dallas, Plano, Wylie, Lavon, and Murphy. | **RESOLVED** |
+| **FE-007** | Specialized Services | 05/18/2026 | 3-column legacy grid; broke 4-column parity with live site. | Restructured `service-grid` to 4 columns and ported live `service-card` CSS. | **RESOLVED** |
 
 ---
 *Note: This log is maintained by the Systems Architect (George) to ensure "Zero Drift" during institutional hardening.*

@@ -22,60 +22,44 @@
             <p style="font-size: 1.1rem; color: var(--slate-500); margin-top: 1rem;">ISO 9001-Compliant Management for every North Texas sector.</p>
         </div>
 
-        <div class="service-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+        <div class="service-grid">
             <!-- Janitorial -->
-            <a href="{{ url_for('services_janitorial') }}" style="text-decoration: none; color: inherit;">
-                <div class="service-card" style="border-radius: 12px; overflow: hidden; background: var(--white); border: 1px solid var(--slate-100); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); transition: transform 0.3s ease;">
-                    <div class="sigma-image-frame" style="height: 240px; padding: 0; border: none; border-radius: 0;">
-                        <img src="/static/img/daycare_busy_active.png" alt="Janitorial Services" style="width: 100%; height: 100%; object-fit: cover;">
-                    </div>
-                    <div class="card-content" style="padding: 2rem;">
-                        <div class="card-badge" style="font-size: 0.7rem; font-weight: 900; color: var(--brand); text-transform: uppercase; margin-bottom: 1rem;">Daily Cleaning</div>
-                        <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--slate-900); margin-bottom: 0.75rem;">Janitorial Services</h3>
-                        <p style="font-size: 0.95rem; color: var(--slate-600); line-height: 1.6;">Reliable cleaning for schools, daycare centers, and corporate offices.</p>
-                    </div>
+            <a href="{{ url_for('services_janitorial') }}" class="service-card">
+                <div class="card-image" style="background-image: url('/static/img/daycare_busy_active.png');"></div>
+                <div class="card-content">
+                    <div class="card-badge">Daily Cleaning</div>
+                    <h3>Janitorial Services</h3>
+                    <p>Reliable cleaning for schools, daycare centers, and corporate offices.</p>
                 </div>
             </a>
 
             <!-- Commercial -->
-            <a href="{{ url_for('services_commercial') }}" style="text-decoration: none; color: inherit;">
-                <div class="service-card" style="border-radius: 12px; overflow: hidden; background: var(--white); border: 1px solid var(--slate-100); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); transition: transform 0.3s ease;">
-                    <div class="sigma-image-frame" style="height: 240px; padding: 0; border: none; border-radius: 0;">
-                        <img src="/static/img/commercial_marble_polishing.png" alt="Commercial Cleaning" style="width: 100%; height: 100%; object-fit: cover;">
-                    </div>
-                    <div class="card-content" style="padding: 2rem;">
-                        <div class="card-badge" style="font-size: 0.7rem; font-weight: 900; color: var(--brand); text-transform: uppercase; margin-bottom: 1rem;">Specialized</div>
-                        <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--slate-900); margin-bottom: 0.75rem;">Commercial Cleaning</h3>
-                        <p style="font-size: 0.95rem; color: var(--slate-600); line-height: 1.6;">Floor strip and wax, carpet care, and professional surface polishing.</p>
-                    </div>
+            <a href="{{ url_for('services_commercial') }}" class="service-card">
+                <div class="card-image" style="background-image: url('/static/img/commercial_marble_polishing.png');"></div>
+                <div class="card-content">
+                    <div class="card-badge">Specialized</div>
+                    <h3>Commercial Cleaning</h3>
+                    <p>Floor strip and wax, carpet care, and professional surface polishing.</p>
                 </div>
             </a>
 
             <!-- Industrial -->
-            <a href="{{ url_for('services_industrial') }}" style="text-decoration: none; color: inherit;">
-                <div class="service-card" style="border-radius: 12px; overflow: hidden; background: var(--white); border: 1px solid var(--slate-100); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); transition: transform 0.3s ease;">
-                    <div class="sigma-image-frame" style="height: 240px; padding: 0; border: none; border-radius: 0;">
-                        <img src="/static/img/industrial_m20_scrubber.png" alt="Industrial Cleaning" style="width: 100%; height: 100%; object-fit: cover;">
-                    </div>
-                    <div class="card-content" style="padding: 2rem;">
-                        <div class="card-badge" style="font-size: 0.7rem; font-weight: 900; color: var(--brand); text-transform: uppercase; margin-bottom: 1rem;">Heavy Duty</div>
-                        <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--slate-900); margin-bottom: 0.75rem;">Industrial Cleaning</h3>
-                        <p style="font-size: 0.95rem; color: var(--slate-600); line-height: 1.6;">High-volume floor cleaning for 24/7 logistics and distribution hubs.</p>
-                    </div>
+            <a href="{{ url_for('services_industrial') }}" class="service-card">
+                <div class="card-image" style="background-image: url('/static/img/industrial_m20_scrubber.png');"></div>
+                <div class="card-content">
+                    <div class="card-badge">Heavy Duty</div>
+                    <h3>Industrial Cleaning</h3>
+                    <p>High-volume floor cleaning for 24/7 logistics and distribution hubs.</p>
                 </div>
             </a>
 
             <!-- Construction -->
-            <a href="{{ url_for('services_construction') }}" style="text-decoration: none; color: inherit;">
-                <div class="service-card" style="border-radius: 12px; overflow: hidden; background: var(--white); border: 1px solid var(--slate-100); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); transition: transform 0.3s ease;">
-                    <div class="sigma-image-frame" style="height: 240px; padding: 0; border: none; border-radius: 0;">
-                        <img src="/static/img/construction_sweeper_servicing_street.png" alt="Construction Cleanup" style="width: 100%; height: 100%; object-fit: cover;">
-                    </div>
-                    <div class="card-content" style="padding: 2rem;">
-                        <div class="card-badge" style="font-size: 0.7rem; font-weight: 900; color: var(--brand); text-transform: uppercase; margin-bottom: 1rem;">Post-Build</div>
-                        <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--slate-900); margin-bottom: 0.75rem;">Construction Cleanup</h3>
-                        <p style="font-size: 0.95rem; color: var(--slate-600); line-height: 1.6;">Detailed 3-step cleanup ensuring your building is inspection-ready.</p>
-                    </div>
+            <a href="{{ url_for('services_construction') }}" class="service-card">
+                <div class="card-image" style="background-image: url('/static/img/construction_sweeper_servicing_street.png');"></div>
+                <div class="card-content">
+                    <div class="card-badge">Post-Build</div>
+                    <h3>Construction Cleanup</h3>
+                    <p>Detailed 3-step cleanup ensuring your building is inspection-ready.</p>
                 </div>
             </a>
         </div>
