@@ -1,0 +1,1579 @@
+:root {
+    /* 2026 Institutional Palette */
+    --hwb-blue: #2563eb;
+    --primary-blue: var(--hwb-blue);
+    --hwb-blue-glow: rgba(37, 99, 235, 0.15);
+    --hwb-dark: #020617;
+    --hwb-slate: #64748b;
+    --hwb-glass: rgba(255, 255, 255, 0.85);
+    --hwb-border: rgba(226, 232, 240, 0.8);
+    --hwb-white: #ffffff;
+    --pure-white: var(--hwb-white);
+    --hwb-bg: #ffffff;
+    
+    /* Spacing & Layout */
+    --container-width: 1300px;
+    --global-padding: 2rem;
+    --section-gap: 8rem;
+    --radius-lg: 24px;
+    --radius-md: 12px;
+}
+
+body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background-color: var(--hwb-bg);
+    color: var(--hwb-dark);
+    line-height: 1.6;
+}
+
+/* Global Container System */
+.app-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.content-wrapper {
+    width: 100%;
+    max-width: var(--container-width);
+    margin: 0 auto;
+    padding: 0 var(--global-padding);
+}
+
+/* 2026 Navigation Architecture */
+.top-utility-bar {
+    background: var(--hwb-dark);
+    color: white;
+    padding: 8px 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+}
+
+header.main-header {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background: var(--hwb-glass);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--hwb-border);
+    padding: 1.25rem 0;
+}
+
+.header-container {
+    max-width: var(--container-width);
+    margin: 0 auto;
+    padding: 0 var(--global-padding);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header-logo {
+    height: 48px;
+    width: auto;
+}
+
+.desktop-nav {
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+}
+
+.desktop-nav a {
+    text-decoration: none;
+    color: var(--hwb-slate);
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: color 0.2s;
+}
+
+.desktop-nav a:hover { color: var(--hwb-blue); }
+
+.nav-cta {
+    background: var(--hwb-blue);
+    color: white !important;
+    padding: 0.7rem 1.4rem;
+    border-radius: 50px;
+    font-weight: 700;
+    box-shadow: 0 4px 14px var(--hwb-blue-glow);
+    transition: all 0.2s;
+}
+
+/* Dropdown Logic */
+.nav-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: white;
+    min-width: 260px;
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+    border-radius: 6px; /* Salesforce Sharp */
+    border: 1px solid var(--hwb-border);
+    z-index: 1000;
+    padding: 0.75rem;
+    /* Bridge the gap with a transparent pseudo-element */
+}
+
+.dropdown-content::before {
+    content: '';
+    position: absolute;
+    top: -15px; /* Creates an invisible bridge over the gap */
+    left: 0;
+    width: 100%;
+    height: 20px;
+}
+
+.nav-dropdown:hover .dropdown-content { display: block; }
+
+/* --- Institutional Card System (Restored) --- */
+.service-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+    max-width: var(--container-width);
+    margin: 0 auto;
+}
+
+.service-card {
+    background: var(--hwb-white);
+    border: 1px solid var(--hwb-border);
+    border-radius: var(--radius-md) !important;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.card-image {
+    height: 240px;
+    background-size: cover;
+    background-position: center;
+    background-color: #ffffff;
+    border-top-left-radius: var(--radius-md);
+    border-top-right-radius: var(--radius-md);
+}
+
+.card-content {
+    padding: 2.5rem;
+    flex-grow: 1;
+}
+
+.card-badge {
+    display: inline-block;
+    background: var(--hwb-blue);
+    color: white !important;
+    font-size: 0.75rem;
+    font-weight: 800;
+    padding: 0.4rem 1rem;
+    border-radius: 50px;
+    margin-bottom: 1.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    width: fit-content;
+}
+
+.card-content h3 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    color: var(--hwb-dark);
+    font-weight: 700;
+}
+
+.card-content p {
+    font-size: 1rem;
+    color: var(--hwb-slate);
+    line-height: 1.7;
+    margin-bottom: 0;
+}
+
+.card-footer {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 1.5rem 2.5rem;
+    border-top: 1px solid var(--hwb-border);
+    background: var(--hwb-mist); /* Uses the new Clinical Slate */
+    margin-top: auto;
+}
+
+/* --- Menu Hover Stabilization --- */
+.nav-dropdown { padding: 0.5rem 0; cursor: pointer; }
+.dropdown-content {
+    min-width: 260px;
+    padding: 0.75rem;
+    transition: all 0.3s ease;
+}
+.dropdown-content a {
+    transition: all 0.2s ease;
+}
+.dropdown-content a:hover {
+    background: var(--hwb-blue-glow);
+    color: var(--hwb-blue);
+    padding-left: 1.25rem;
+}
+
+/* --- Institutional Hero System (2026) --- */
+.services-hero {
+    background-size: cover;
+    background-position: center;
+    border-radius: var(--radius-lg);
+    padding: 10rem 2rem;
+    color: white;
+    margin-bottom: 6rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Light Variant for sophisticated airy look */
+.services-hero.light-variant {
+    color: var(--hwb-dark);
+    background-color: var(--hwb-white);
+}
+
+.services-hero.light-variant h1 {
+    background: linear-gradient(135deg, var(--hwb-dark) 0%, var(--hwb-blue) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 900;
+}
+
+.services-hero.light-variant .subtitle {
+    color: var(--hwb-slate);
+    font-weight: 500;
+}
+
+.services-hero h1 {
+    background: white;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 900;
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    line-height: 1.05;
+    margin-bottom: 1.5rem;
+}
+
+.services-hero .subtitle {
+    color: rgba(255,255,255,0.9);
+    max-width: 750px;
+    margin: 0 auto;
+    font-size: 1.5rem;
+    font-weight: 500;
+}
+
+/* --- The HWB Formula Section (Refined Solution 1) --- */
+.formula-section {
+    padding: 8rem 0;
+    text-align: center;
+    border-radius: var(--radius-lg);
+    margin: 0 40px 8rem;
+}
+
+.formula-section.light-variant {
+    background: #ffffff;
+    border: 1px solid var(--hwb-border);
+    color: var(--hwb-dark);
+}
+
+.formula-section.light-variant h2 {
+    color: var(--hwb-dark);
+    font-weight: 800;
+    font-size: 3rem;
+    margin-bottom: 2rem;
+}
+
+.formula-section.light-variant .formula-text {
+    color: var(--hwb-blue);
+    font-weight: 700;
+    font-size: 1.75rem;
+    margin-bottom: 2rem;
+    letter-spacing: -0.01em;
+}
+
+.formula-section.light-variant .formula-desc {
+    color: var(--hwb-slate);
+    max-width: 800px;
+    margin: 0 auto;
+    font-size: 1.25rem;
+    line-height: 1.8;
+}
+
+/* --- Split Feature Architecture (Floating Composition) --- */
+.split-feature {
+    background: var(--hwb-white);
+    border: 1px solid var(--hwb-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    align-items: center; /* Vertical center for floating look */
+    margin-bottom: 8rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.02);
+}
+
+.split-content { 
+    padding: 5rem; 
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.split-image-container {
+    background: #ffffff;
+    padding: 4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.split-image-container img { 
+    filter: saturate(0.9) brightness(1.02);
+    max-width: 100%;
+    max-height: 550px;
+    height: auto;
+    width: auto;
+    object-fit: contain; /* CRITICAL: No cropping */
+    border-radius: var(--radius-md);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.1);
+    border: 1px solid var(--hwb-border);
+}
+
+.split-feature.image-left .split-image-container { order: -1; }
+
+/* --- Checklist System --- */
+.hwb-checklist {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: 1.25rem;
+    font-weight: 600;
+    color: var(--hwb-blue);
+    margin-top: 2rem;
+}
+/* --- Executive CTA Block (Class A - Floating Standard) --- */
+.cta-section {
+    width: 100%;
+    padding: 0; /* Remove parent padding to ensure margin consistency */
+    display: block;
+}
+
+.executive-cta {
+    background: linear-gradient(135deg, var(--hwb-dark) 0%, #0f172a 100%);
+    color: white;
+    padding: 8rem 4rem;
+    text-align: center;
+    border-radius: var(--radius-lg);
+    margin: 0 40px 8rem; 
+    max-width: var(--container-width);
+    margin-left: auto;
+    margin-right: auto;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.05);
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+}
+
+/* Subtle background accent for depth */
+.executive-cta::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(37, 99, 235, 0.02) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.executive-cta h2 { 
+    font-size: clamp(2rem, 5vw, 3.5rem); 
+    font-weight: 900; 
+    margin-bottom: 1.5rem; 
+    color: white; 
+    letter-spacing: -0.02em;
+}
+
+.executive-cta p { 
+    font-size: 1.25rem; 
+    color: rgba(255,255,255,0.8); 
+    margin-bottom: 3.5rem; 
+    max-width: 750px; 
+    margin-left: auto; 
+    margin-right: auto; 
+    line-height: 1.6;
+}
+
+.executive-cta .cta-button { 
+    display: none; /* Deprecated in favor of executive-hero-cta */
+}
+
+/* Hero Section */
+/* --- Scope of Work Builder Section --- */
+.sow-builder-section {
+    padding: 120px 0;
+    background-color: #ffffff;
+}
+
+.sow-container {
+    max-width: 900px;
+    margin: 0 auto;
+    background: var(--hwb-white);
+    padding: 60px;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--hwb-border);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.05);
+}
+
+.sow-step { margin-bottom: 50px; }
+.sow-step h3 {
+    font-size: 1.5rem;
+    color: var(--hwb-blue);
+    margin-bottom: 25px;
+    display: flex;
+    align-items: center;
+}
+
+.sow-step h3 span {
+    background: var(--hwb-blue);
+    color: var(--hwb-white);
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1rem;
+    margin-right: 15px;
+}
+
+.sow-options-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 15px;
+}
+
+.sow-option {
+    border: 2px solid #EEE;
+    border-radius: 6px; /* Salesforce Sharp */
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    color: var(--hwb-slate);
+}
+
+.sow-option:hover { border-color: var(--hwb-blue); background-color: var(--hwb-blue-glow); }
+.sow-option.active { border-color: var(--hwb-blue); background-color: var(--hwb-blue-glow); font-weight: 700; color: var(--hwb-blue); }
+
+.sqf-display {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--hwb-blue);
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.need-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    color: var(--hwb-slate);
+    font-weight: 700;
+    margin-top: 1rem;
+}
+
+/* Service Highlights Grid */
+.service-grid-section {
+    padding: 120px 0;
+    background-color: var(--hwb-white);
+}
+
+.view-link {
+    text-decoration: none;
+    color: var(--hwb-blue);
+    font-weight: 700;
+    font-size: 0.9rem;
+    display: inline-block;
+    margin-top: 1rem;
+}
+
+/* --- Institutional Mega-Bar Navigation (2026) --- */
+header.main-header {
+    height: 90px;
+    background: var(--hwb-glass);
+    backdrop-filter: blur(24px);
+    border-bottom: 1px solid var(--hwb-border);
+    position: sticky;
+    top: 0;
+    z-index: 2000;
+}
+
+.header-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    height: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 40px;
+}
+
+.desktop-nav {
+    display: flex;
+    gap: 3.5rem;
+    align-items: center;
+    height: 100%;
+}
+
+.nav-item {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    position: static; /* Required for full-width mega menu */
+}
+
+.nav-item > a {
+    text-decoration: none;
+    color: var(--hwb-dark);
+    font-weight: 700;
+    font-size: 0.95rem;
+    letter-spacing: 0.02em;
+    transition: color 0.2s;
+    height: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.nav-item:hover > a { color: var(--hwb-blue); }
+
+/* Mega Menu Expansion */
+.mega-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background: white;
+    border-bottom: 1px solid var(--hwb-border);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.05);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(1px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 3rem 0;
+    z-index: 1000;
+}
+
+.nav-item:hover .mega-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.mega-menu-grid {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+    padding: 0 40px;
+}
+
+.mega-option {
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1.5rem;
+    border-radius: 16px;
+    transition: all 0.2s ease;
+}
+
+.mega-option:hover {
+    background: var(--hwb-blue-glow);
+}
+
+.mega-option .title {
+    font-weight: 800;
+    color: var(--hwb-blue);
+    font-size: 1.1rem;
+}
+
+.mega-option .desc {
+    font-size: 0.85rem;
+    color: var(--hwb-slate);
+    line-height: 1.5;
+}
+
+/* --- Executive Hero CTA (Class A) --- */
+.executive-hero-cta {
+    display: inline-flex;
+    align-items: center;
+    background: var(--hwb-white);
+    color: var(--hwb-blue) !important;
+    padding: 1.25rem 2.5rem;
+    border-radius: 50px;
+    font-weight: 800;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    text-decoration: none;
+    box-shadow: 0 10px 30px var(--hwb-blue-glow);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid rgba(255,255,255,0.5);
+    margin-top: 2rem;
+}
+
+.executive-hero-cta:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 15px 40px rgba(37, 99, 235, 0.25);
+    background: #ffffff;
+    color: var(--hwb-blue);
+}
+
+/* Hero Section */
+.hero-section { background: var(--hwb-bg); }
+.hero {
+    padding: 8rem 0;
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 4rem;
+    align-items: center;
+}
+
+.hero-content h1 {
+    font-size: clamp(2.5rem, 5vw, 4.5rem);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.04em;
+    margin-bottom: 1.5rem;
+    background: linear-gradient(135deg, var(--hwb-dark) 0%, var(--hwb-blue) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.hero-visual {
+    background: url('/static/gen_ai_staging/hero_lobby.png');
+    background-size: cover;
+    background-position: center;
+    aspect-ratio: 4/3;
+    border-radius: var(--radius-lg);
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.1);
+}
+
+.btn-main {
+    background: var(--hwb-blue);
+    color: white;
+    padding: 1.2rem 2.5rem;
+    border-radius: 16px;
+    font-weight: 700;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    transition: all 0.2s;
+}
+
+/* Trust Bar */
+.trust-bar {
+    background: #ffffff;
+    border-top: 1px solid var(--hwb-border);
+    border-bottom: 1px solid var(--hwb-border);
+    padding: 1.5rem 0;
+}
+
+.trust-container {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+}
+
+.trust-label { font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: var(--hwb-slate); }
+.trust-city { font-size: 1rem; font-weight: 700; color: #94a3b8; }
+
+/* Bento Grid */
+.bento-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-auto-rows: 320px;
+    gap: 1.5rem;
+    margin: var(--section-gap) 0;
+}
+
+.bento-item {
+    background: var(--hwb-white);
+    border: 1px solid var(--hwb-border);
+    border-radius: var(--radius-lg);
+    padding: 2.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    transition: all 0.4s ease;
+}
+
+.bento-large { grid-column: span 2; grid-row: span 2; }
+.bento-medium { grid-column: span 2; }
+
+/* 2026 Unified Mobile Navigation (CENTERED & AESTHETIC) */
+.mobile-nav { display: none; }
+
+@media (max-width: 1024px) {
+    .hero { grid-template-columns: 1fr; gap: 3rem; }
+    .bento-grid { grid-template-columns: repeat(2, 1fr); grid-auto-rows: auto; }
+}
+
+@media (max-width: 768px) {
+    .desktop-nav { display: none; }
+    .bento-grid { grid-template-columns: 1fr; }
+    
+    .mobile-nav {
+        display: flex;
+        position: fixed;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%); /* CRITICAL CENTERING */
+        width: 90%;
+        max-width: 420px;
+        background: rgba(255, 255, 255, 0.9); /* AESTHETIC MATCH (WHITE GLASS) */
+        backdrop-filter: blur(20px);
+        height: 72px;
+        border-radius: 50px;
+        justify-content: space-around;
+        align-items: center;
+        z-index: 2000;
+        border: 1px solid var(--hwb-border);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+    }
+    
+    .mobile-nav a {
+        color: var(--hwb-dark);
+        text-decoration: none;
+        font-size: 0.75rem;
+        font-weight: 700;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+    }
+    
+    .mobile-nav a svg { color: var(--hwb-blue); }
+}
+
+/* --- 2026 SigmaFidelity™ Mobile Toggle & Overlay --- */
+.mobile-toggle {
+    display: none;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 32px;
+    height: 22px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    z-index: 3000;
+}
+
+.mobile-toggle span {
+    width: 100%;
+    height: 3px;
+    background-color: var(--hwb-dark);
+    border-radius: 10px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mobile-toggle.active span:nth-child(1) { transform: translateY(9px) rotate(45deg); }
+.mobile-toggle.active span:nth-child(2) { opacity: 0; }
+.mobile-toggle.active span:nth-child(3) { transform: translateY(-10px) rotate(-45deg); }
+
+.mobile-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: white;
+    z-index: 2500;
+    display: flex;
+    flex-direction: column;
+    padding: 120px 40px 40px;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-y: auto;
+}
+
+.mobile-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.mobile-overlay-links {
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+}
+
+.mobile-overlay-links a {
+    text-decoration: none;
+    color: var(--hwb-dark);
+    font-size: 1.75rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.mobile-overlay-links .sub-link {
+    font-size: 1.1rem;
+    color: var(--hwb-slate);
+    font-weight: 600;
+    margin-left: 1.5rem;
+}
+
+.mobile-overlay-footer {
+    margin-top: auto;
+    padding-top: 4rem;
+    border-top: 1px solid var(--hwb-border);
+}
+
+@media (max-width: 1024px) {
+    .mobile-toggle { display: flex; }
+    .desktop-nav { display: none; }
+}
+
+/* --- SigmaFidelity™ Institutional Form System (2026) --- */
+.sigma-form-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.sigma-form-body {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding-right: 1rem;
+    padding-bottom: 2rem;
+}
+
+/* Custom Scrollbar for Form Body */
+.sigma-form-body::-webkit-scrollbar { width: 6px; }
+.sigma-form-body::-webkit-scrollbar-track { background: transparent; }
+.sigma-form-body::-webkit-scrollbar-thumb { background: var(--slate-200); border-radius: 10px; }
+
+.sigma-form-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem; /* Reduced from 4rem */
+}
+
+@media (max-width: 1024px) {
+    .sigma-form-section { grid-template-columns: 1fr; gap: 2rem; }
+}
+
+.sigma-form-header {
+    font-size: 0.85rem;
+    color: var(--hwb-blue);
+    font-weight: 900;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    letter-spacing: 0.1em;
+    border-bottom: 2px solid var(--hwb-blue-glow);
+    padding-bottom: 0.75rem;
+    display: block;
+}
+
+.sigma-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem; /* High-Density */
+}
+
+.sigma-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.sigma-field label {
+    font-size: 0.85rem;
+    font-weight: 500; /* Refined Salesforce weight */
+    color: var(--slate-700);
+    display: flex;
+    align-items: center;
+    gap: 4px; /* Unitized proximity */
+}
+
+.sigma-field label i {
+    color: var(--hwb-slate);
+    font-size: 0.8rem;
+    width: 16px;
+    text-align: center;
+}
+
+.sigma-input {
+    width: 100%;
+    padding: 0.5rem 0.75rem; /* Max 36-40px height */
+    border-radius: 6px; /* Sharp grid-lock */
+    border: 1px solid var(--slate-300);
+    background: #f8fafc; /* Material Depth */
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--slate-900);
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1); /* Instant snap */
+    outline: none;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.02); /* Internal materiality */
+}
+
+.sigma-input:focus {
+    border-color: var(--brand);
+    background: white;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15); /* Sharper focus */
+}
+
+.sigma-row {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.sigma-row-75-25 { grid-template-columns: 3fr 1fr; }
+.sigma-row-60-40 { grid-template-columns: 1.5fr 1fr; }
+.sigma-row-50-50 { grid-template-columns: 1fr 1fr; }
+
+.sigma-form-actions {
+    margin-top: 1.5rem; /* Liquidated margin debt from 4rem */
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--slate-100);
+    display: flex;
+    justify-content: flex-end;
+    gap: 1.5rem;
+    background: white;
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+}
+
+/* --- SigmaFidelity™ Gateway Hardening & Transitions (2026) --- */
+.vault-background {
+    background: radial-gradient(circle at 50% 50%, #0f172a 0%, #020617 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* --- Phase 2: High-Density Hardening (Operations Control) --- */
+
+/* Enterprise Tabs */
+.sigma-tab-rack {
+    display: flex;
+    gap: 0.5rem;
+    border-bottom: 2px solid var(--slate-200);
+    margin-bottom: 1.5rem;
+}
+
+.sigma-tab {
+    background: none;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--slate-500);
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: -2px; /* Overlap border */
+}
+
+.sigma-tab:hover {
+    color: var(--slate-800);
+}
+
+.sigma-tab.active {
+    color: var(--brand);
+    border-color: var(--brand);
+}
+
+/* Tight-Grid Table */
+.sigma-data-grid {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.sigma-data-grid th {
+    text-align: left;
+    padding: 0.75rem 1rem;
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: var(--slate-500);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--slate-200);
+    background: var(--white);
+    white-space: nowrap;
+}
+
+.sigma-data-grid td {
+    padding: 0.75rem 1rem;
+    font-size: 0.85rem;
+    border-bottom: 1px solid var(--slate-100);
+    vertical-align: middle;
+    color: var(--slate-800);
+    line-height: 1.4;
+}
+
+.sigma-data-grid tr:hover td {
+    background-color: #f8fafc;
+}
+
+/* Muted Status Pills */
+.sigma-status-pill {
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px; /* Salesforce Sharp */
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: inline-block;
+}
+
+.sigma-status-new { background: #f0fdf4; color: #166534; border: 1px solid #dcfce7; }
+.sigma-status-active { background: #eff6ff; color: #1e40af; border: 1px solid #dbeafe; }
+.sigma-status-lost { background: #fef2f2; color: #991b1b; border: 1px solid #fee2e2; }
+.sigma-status-neutral { background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; }
+
+/* Compact Utility Menu */
+.sigma-utility-menu {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background: white;
+    border: 1px solid var(--slate-200);
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    min-width: 160px;
+    z-index: 1000;
+    overflow: hidden;
+}
+
+.sigma-utility-btn {
+    width: 100%;
+    text-align: left;
+    padding: 0.75rem 1rem;
+    background: none;
+    border: none;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--slate-700);
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.sigma-utility-btn:hover { background: var(--slate-50); color: var(--brand); }
+
+/* View Transitions */
+.sigma-view-fade {
+    animation: horizontalSlide 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes horizontalSlide {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+/* Strict Gutter System */
+.sigma-gutter-row { display: flex; gap: 1.5rem; align-items: center; }
+.sigma-gutter-grid { display: grid; gap: 1.5rem; }
+.sigma-control-rail { margin-bottom: 1rem; }
+
+.ambient-security-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: var(--hwb-blue);
+    box-shadow: 0 0 15px var(--hwb-blue);
+    z-index: 9999;
+}
+
+/* Skeleton Loading System */
+.skeleton-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #f8fafc;
+    z-index: 9000;
+    display: flex;
+    flex-direction: column;
+    padding: 3rem 40px;
+    transition: opacity 0.5s ease, visibility 0.5s;
+}
+
+.skeleton-header { height: 60px; background: #e2e8f0; border-radius: 8px; margin-bottom: 3rem; width: 300px; animation: pulse 1.5s infinite; }
+.skeleton-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; }
+.skeleton-card { height: 160px; background: #e2e8f0; border-radius: 16px; animation: pulse 1.5s infinite; }
+
+@keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+}
+
+/* Logo Merge Keyframes */
+@keyframes logoMergeLeft {
+    from { transform: translateX(-90px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes logoMergeRight {
+    from { transform: translateX(90px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+/* Secure Logout Transition */
+.logout-fade {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #020617;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 800;
+    font-size: 1.25rem;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.5s;
+}
+
+.logout-fade.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* --- SigmaFidelity™ Global Hero Standard (2026) --- */
+.services-hero {
+    width: 100%;
+    padding: 8rem 2rem !important; /* Standard Vertical Handshake */
+    margin-bottom: 0 !important;
+    border-radius: 0 !important; /* Infinite Horizon Standard */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+}
+
+.services-hero h1 {
+    font-size: 2.75rem !important; /* Sophisticated Scale */
+    font-weight: 800 !important;
+    letter-spacing: -0.02em !important;
+    line-height: 1.1 !important;
+    margin-bottom: 1.5rem !important;
+    max-width: 900px;
+}
+
+.services-hero .subtitle, .services-hero p {
+    font-size: 1.15rem !important;
+    color: inherit;
+    max-width: 750px !important;
+    margin: 0 auto 2.5rem !important;
+    line-height: 1.6 !important;
+    font-weight: 500 !important;
+}
+
+.services-hero .executive-hero-cta, .services-hero .hero-ctas .isc-btn {
+    height: 48px !important;
+    padding: 0 3rem !important;
+    font-size: 1rem !important;
+    border-radius: 6px !important;
+    font-weight: 700 !important;
+}
+
+/* Dark Variant (Standard for Service Pages) */
+.services-hero.dark-variant {
+    color: white;
+}
+
+/* Light Variant (Standard for Home/Marketing) */
+.services-hero.light-variant {
+    color: var(--hwb-dark);
+}
+
+/* --- User Identity System (Option B) --- */
+.user-identity-container {
+    margin-right: 0.5rem;
+}
+
+.user-trigger {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    padding: 0.4rem 0.6rem;
+    border-radius: 6px;
+    transition: background 0.15s;
+}
+
+.user-trigger:hover {
+    background: #f1f5f9;
+}
+
+.user-avatar-circle {
+    width: 28px;
+    height: 28px;
+    background: var(--hwb-blue-glow);
+    color: var(--brand);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    border: 1px solid var(--hwb-blue-glow);
+}
+
+.user-full-name {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--slate-900);
+}
+
+.user-dropdown {
+    transform: translateY(8px);
+}
+
+/* Sigma-Action Standard (Grid Controls) */
+/* HWB Standard Warning Box */
+.hwb-warning-modal {
+    border-top: 4px solid #ef4444 !important;
+}
+
+.hwb-warning-header {
+    color: #ef4444 !important;
+    font-weight: 800 !important;
+}
+
+.sigma-action-header {
+    text-align: right !important;
+    cursor: default !important;
+    width: 80px;
+}
+
+.sigma-action-cell {
+    text-align: right !important;
+}
+
+/* Vertical Enterprise Dropdown */
+.utility-dropdown {
+    width: 280px !important;
+    left: auto !important;
+    right: 0;
+    border-radius: 6px;
+    border: 1px solid var(--slate-200) !important;
+    padding: 0.5rem 0 !important;
+}
+
+/* Footer */
+/* --- Institutional Command Dashboard Footer (2026 - Glass Variant) --- */
+.site-footer {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(2, 6, 23, 0.8); /* 80% opacity for more pronounced glass look */
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    color: white;
+    padding: 6rem 0 0;
+    margin-top: var(--section-gap);
+    border-top: 1px solid rgba(255,255,255,0.1);
+    position: relative;
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.1);
+}
+
+.social-links {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.social-icon {
+    color: rgba(255,255,255,0.6);
+    text-decoration: none;
+    font-size: 1.25rem;
+    transition: all 0.2s;
+}
+
+.social-icon:hover {
+    color: var(--hwb-blue);
+    transform: translateY(-3px);
+}
+
+.top-social {
+    display: flex;
+    gap: 1rem;
+    margin-left: 2rem;
+}
+
+.top-social a {
+    color: rgba(255,255,255,0.7);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: color 0.2s;
+}
+
+.top-social a:hover { color: white; }
+
+.footer-container {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1fr 1.2fr;
+    gap: 4rem;
+    padding-bottom: 6rem;
+}
+
+.footer-brand {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.footer-logo-large {
+    height: 80px; /* Slightly larger for authority */
+    width: auto;
+    display: block;
+    margin-bottom: 0.5rem;
+    object-fit: contain;
+}
+
+.footer-formula {
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.5);
+    line-height: 1.6;
+    border-left: 2px solid var(--hwb-blue);
+    padding-left: 1.5rem;
+}
+
+.footer-column h4 {
+    color: white;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 2rem;
+    font-weight: 800;
+}
+
+.footer-links {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.footer-links a {
+    color: rgba(255,255,255,0.6);
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.footer-links a:hover {
+    color: var(--hwb-blue);
+    transform: translateX(5px);
+}
+
+.footer-contact-info {
+    color: rgba(255,255,255,0.6);
+    font-size: 0.95rem;
+    line-height: 1.8;
+}
+
+.footer-contact-info strong {
+    display: block;
+    color: white;
+    font-size: 1.25rem;
+    margin: 1rem 0;
+}
+
+.footer-bottom {
+    background: rgba(0,0,0,0.2);
+    padding: 2.5rem 0;
+    border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+.footer-bottom-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: rgba(255,255,255,0.3);
+    font-size: 0.85rem;
+}
+
+.footer-legal a {
+    color: rgba(255,255,255,0.3);
+    text-decoration: none;
+    margin-left: 1.5rem;
+}
+
+.footer-legal a:hover { color: white; }
+
+/* Institutional Form System (2026 Standard) */
+.form-container {
+    max-width: 640px;
+    margin: var(--section-gap) auto;
+    background: var(--hwb-white);
+    padding: 3.5rem;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--hwb-border);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.03);
+}
+
+.form-group {
+    margin-bottom: 1.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.form-group label {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--hwb-dark);
+    letter-spacing: 0.02em;
+}
+
+.form-group input, 
+.form-group select, 
+.form-group textarea {
+    padding: 1rem 1.25rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--hwb-border);
+    background: #ffffff;
+    font-family: inherit;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    color: var(--hwb-dark);
+}
+
+.form-group input:focus, 
+.form-group select:focus, 
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--hwb-blue);
+    background: white;
+    box-shadow: 0 0 0 4px var(--hwb-blue-glow);
+}
+
+.form-submit {
+    width: 100%;
+    margin-top: 1rem;
+    cursor: pointer;
+    border: none;
+    justify-content: center;
+}
+
+/* Section Centering Logic */
+.section-header {
+    text-align: center;
+    max-width: 800px;
+    margin: var(--section-gap) auto 3rem;
+}
+
+.section-header h2 {
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 800;
+    margin-bottom: 1.25rem;
+    letter-spacing: -0.03em;
+    background: linear-gradient(135deg, var(--hwb-dark) 0%, var(--hwb-blue) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.section-header p {
+    font-size: 1.15rem;
+    color: var(--hwb-slate);
+}
+
+
+/* --- SigmaFidelity™ Mechanical Instruments --- */
+.sigma-range-instrument {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    background: #f1f5f9;
+    border: 1px solid var(--slate-200);
+    border-radius: 2px;
+    outline: none;
+    margin: 1.5rem 0;
+}
+
+.sigma-range-instrument::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 24px;
+    background: var(--hwb-blue);
+    border: 2px solid white;
+    border-radius: 4px;
+    cursor: pointer;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    transition: all 0.15s;
+}
+
+.sigma-range-instrument::-webkit-slider-thumb:hover {
+    transform: scaleY(1.1);
+    background: #1d4ed8;
+}
+
+/* --- Global Service Container --- */
+.detailed-services {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 40px; /* Standard Gutter Wall */
+}
+
+@media (max-width: 768px) {
+    .detailed-services { padding: 0 20px; }
+}
+
+/* --- SigmaFidelity™ Zero-Crop Image Standard --- */
+.sigma-image-frame {
+    background: white;
+    border: 1px solid var(--slate-200);
+    border-radius: 6px;
+    padding: 1.5rem; /* Floating padding */
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    height: 100%;
+}
+
+.sigma-image-frame img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.sigma-image-frame:hover img {
+    transform: scale(1.03);
+}

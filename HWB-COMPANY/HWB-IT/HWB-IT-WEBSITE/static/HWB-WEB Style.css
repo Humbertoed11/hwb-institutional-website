@@ -2504,3 +2504,151 @@ nav a:hover {
 .sigma-image-frame:hover img {
     transform: scale(1.03);
 }
+
+/* --- RECONSTRUCTED: Institutional Mega-Bar Navigation (2026) --- */
+/* Ported from Live Production for 100% Fidelity */
+
+.top-utility-bar {
+    background: var(--hwb-dark);
+    color: white;
+    padding: 8px 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    width: 100%;
+}
+
+header.main-header {
+    height: 90px;
+    background: var(--hwb-glass);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-bottom: 1px solid var(--hwb-border);
+    position: sticky;
+    top: 0;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+}
+
+.header-container {
+    width: 100%;
+    max-width: var(--container-width);
+    margin: 0 auto;
+    height: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 var(--global-padding);
+}
+
+.desktop-nav {
+    display: flex;
+    gap: 3.5rem;
+    align-items: center;
+    height: 100%;
+}
+
+.nav-item {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    position: static; /* Required for full-width mega menu */
+}
+
+.nav-item > a {
+    text-decoration: none;
+    color: var(--hwb-dark);
+    font-weight: 700;
+    font-size: 0.95rem;
+    letter-spacing: 0.02em;
+    transition: color 0.2s;
+    height: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.nav-item:hover > a { color: var(--hwb-blue); }
+
+/* Mega Menu Expansion */
+.mega-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background: white;
+    border-bottom: 1px solid var(--hwb-border);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.05);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(1px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 3rem 0;
+    z-index: 1000;
+}
+
+.nav-item:hover .mega-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.mega-menu-grid {
+    max-width: var(--container-width);
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+    padding: 0 var(--global-padding);
+}
+
+.mega-option {
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1.5rem;
+    border-radius: 16px;
+    transition: all 0.2s ease;
+}
+
+.mega-option:hover {
+    background: var(--hwb-blue-glow);
+}
+
+.mega-option .title {
+    font-weight: 800;
+    color: var(--hwb-blue);
+    font-size: 1.1rem;
+}
+
+.mega-option .desc {
+    font-size: 0.85rem;
+    color: var(--hwb-slate);
+    line-height: 1.5;
+}
+
+.desktop-ease-controls {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+/* Mobile Toggle Consistency */
+.mobile-toggle {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    flex-direction: column;
+    align-items: center;
+}
+
+@media (max-width: 1024px) {
+    .desktop-nav, .desktop-ease-controls .nav-cta:not(.mobile-nav-cta) {
+        display: none;
+    }
+    .mobile-toggle {
+        display: flex;
+    }
+}
