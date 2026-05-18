@@ -9,8 +9,8 @@
 
 {% block content %}
 <section class="services-view">
-    <!-- High-Fidelity Construction Hero -->
-    <div class="services-hero dark-variant" style="background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('/static/img/construction_sweeper_servicing_street.png');">
+    <!-- High-Fidelity Construction Hero (Original Graphic Restored) -->
+    <div class="services-hero dark-variant" style="background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('/static/img/construction_rough_clean_ppe.png');">
         <div class="content-wrapper">
             <h1>3-Step Construction Cleanup</h1>
             <p class="subtitle">Detailed 3-step cleanup ensuring your building is inspection-ready. We transform high-stakes job sites into spotless, high-performance facilities across the DFW Metroplex.</p>
@@ -25,7 +25,7 @@
             <!-- Strategic Precision Section -->
             <div class="split-feature image-left" style="display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center; margin-bottom: 8rem;">
                 <div class="sigma-image-frame" style="border-radius: 12px; overflow: hidden; height: 450px;">
-                    <img src="/static/img/construction_new.png" alt="HWB Professional Construction Crew" style="width: 100%; height: 100%; object-fit: cover;">
+                    <img src="/static/img/construction_sweeper_servicing_street.png" alt="HWB Construction Sweeper Site Cleanup" style="width: 100%; height: 100%; object-fit: cover;">
                 </div>
                 <div class="split-content">
                     <span style="font-size: 0.75rem; font-weight: 900; color: var(--hwb-blue); text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 1rem; display: block;">Certified Compliance</span>
@@ -50,7 +50,7 @@
                 <div class="service-grid" style="grid-template-columns: repeat(3, 1fr);">
                     <!-- Card 1: The Rough Clean -->
                     <div class="service-card">
-                        <div class="card-image" style="background-image: url('{{ url_for('static', filename='hwb_construction_1.png') }}');"></div>
+                        <div class="card-image" style="background-image: url('/static/img/construction_rough_clean_ppe.png');"></div>
                         <div class="card-content">
                             <div class="card-badge">Phase 01</div>
                             <h3>The Rough Clean</h3>
@@ -60,7 +60,7 @@
 
                     <!-- Card 2: The Final Clean -->
                     <div class="service-card">
-                        <div class="card-image" style="background-image: url('{{ url_for('static', filename='hwb_construction_2.png') }}');"></div>
+                        <div class="card-image" style="background-image: url('/static/img/construction_final_detail_clean_ppe.png');"></div>
                         <div class="card-content">
                             <div class="card-badge">Phase 02</div>
                             <h3>The Final Clean</h3>
@@ -70,7 +70,7 @@
 
                     <!-- Card 3: The Fluff Clean -->
                     <div class="service-card">
-                        <div class="card-image" style="background-image: url('{{ url_for('static', filename='hwb_construction_3.png') }}');"></div>
+                        <div class="card-image" style="background-image: url('/static/img/construction_final_polish_ppe.png');"></div>
                         <div class="card-content">
                             <div class="card-badge">Phase 03</div>
                             <h3>The Fluff & Touchup</h3>
