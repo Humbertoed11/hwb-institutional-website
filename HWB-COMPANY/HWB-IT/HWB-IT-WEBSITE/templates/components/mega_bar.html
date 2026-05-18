@@ -1,8 +1,6 @@
 <!-- 2026 Official Company Menu (Sigmaquality Standard) -->
-<!-- RECONSTRUCTED: 4-Column Centered Architecture -->
-
 <div class="top-utility-bar">
-    <div class="content-wrapper" style="display: flex; justify-content: space-between; align-items: center;">
+    <div class="header-container" style="display: flex; justify-content: space-between; align-items: center;">
         <span>North Texas Commercial Cleaning Experts | Call <strong>(214)-586-0257</strong></span>
         <div class="top-social">
             <a href="https://www.linkedin.com/company/hwb-cleaning-services-llc/" target="_blank"><i class="fa-brands fa-linkedin"></i></a>
@@ -22,66 +20,6 @@
 
         <nav class="desktop-nav">
             <a href="/">Home</a>
-            
-            {% if current_user.is_authenticated %}
-            <!-- PRODUCTION: Main Work Views (Authenticated Only) -->
-            <div class="nav-item">
-                <a href="javascript:void(0)" style="cursor: default;">Work Hub</a>
-                <div class="mega-menu">
-                    <div class="mega-menu-grid">
-                        <div class="mega-column">
-                            <h4>Sales Management</h4>
-                            <a href="{{ url_for('admin_operations', view='leads') }}" class="mega-option">
-                                <span class="title">Leads List</span>
-                                <span class="desc">Manage and track new sales prospects.</span>
-                            </a>
-                            <a href="{{ url_for('admin_operations', view='marketing') }}" class="mega-option">
-                                <span class="title">Marketing</span>
-                                <span class="desc">View performance data and outreach.</span>
-                            </a>
-                        </div>
-                        <div class="mega-column">
-                            <h4>Operations Control</h4>
-                            <a href="{{ url_for('admin_operations', view='accounts') }}" class="mega-option">
-                                <span class="title">Active Accounts</span>
-                                <span class="desc">Oversight for all active building contracts.</span>
-                            </a>
-                            <a href="{{ url_for('admin_operations', view='monitor') }}" class="mega-option">
-                                <span class="title">Work Monitor</span>
-                                <span class="desc">Real-time technician tracking.</span>
-                            </a>
-                        </div>
-                        <div class="mega-column">
-                            <h4>Company Standards</h4>
-                            <a href="{{ url_for('compliance') }}" class="mega-option">
-                                <span class="title">System Rules</span>
-                                <span class="desc">OSHA compliance and site rules.</span>
-                            </a>
-                            <a href="{{ url_for('admin_master') }}" class="mega-option">
-                                <span class="title">Assets & Safety</span>
-                                <span class="desc">Manage equipment and documentation.</span>
-                            </a>
-                        </div>
-                        <div class="mega-column">
-                            <h4>Executive Tools</h4>
-                            {% if current_user.role in ['Executive', 'Admin'] %}
-                            <a href="{{ url_for('sigma_executive') }}" class="mega-option">
-                                <span class="title" style="color: var(--brand);">Executive Pulse</span>
-                                <span class="desc">High-level company metrics dashboard.</span>
-                            </a>
-                            <a href="{{ url_for('sigma_executive') }}#outbox" class="mega-option">
-                                <span class="title" style="color: var(--brand);">Email Outbox</span>
-                                <span class="desc">Approve institutional communications.</span>
-                            </a>
-                            {% else %}
-                            <p style="font-size: 0.75rem; color: var(--slate-400); padding: 1rem; line-height: 1.4;">Clearance required.</p>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% else %}
-            <!-- Public Services View -->
             <div class="nav-item">
                 <a href="javascript:void(0)" style="cursor: default;">Services</a>
                 <div class="mega-menu">
@@ -106,47 +44,14 @@
                 </div>
             </div>
             <a href="{{ url_for('about') }}">About Us</a>
-            {% endif %}
         </nav>
         
-        <div class="desktop-ease-controls">
-            {% if current_user.is_authenticated %}
-            <!-- User Identity Dropdown -->
-            <div class="nav-item user-identity-container">
-                <div class="user-trigger">
-                    <div class="user-avatar-circle">
-                        <i class="fas fa-user-shield"></i>
-                    </div>
-                    <span class="user-full-name">{{ current_user.username }}</span>
-                    <i class="fas fa-chevron-down" style="font-size: 0.6rem; opacity: 0.5;"></i>
-                </div>
-                <div class="mega-menu user-dropdown">
-                    <div class="sigma-utility-menu" style="right: 0; min-width: 200px;">
-                        <div style="padding: 1rem; border-bottom: 1px solid var(--slate-100);">
-                            <div style="font-size: 0.65rem; font-weight: 800; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.25rem;">Active Session</div>
-                            <div style="font-size: 0.85rem; font-weight: 700; color: var(--slate-900);">{{ current_user.username }}</div>
-                        </div>
-                        <a href="{{ url_for('sigma_executive') }}#users" class="sigma-utility-btn">
-                            <i class="fas fa-user-cog" style="margin-right: 0.75rem; width: 14px; opacity: 0.5;"></i> Settings
-                        </a>
-                        <a href="{{ url_for('logout') }}" id="desktop-logout-link" class="sigma-utility-btn" style="color: #ef4444;">
-                            <i class="fas fa-power-off" style="margin-right: 0.75rem; width: 14px; opacity: 0.5;"></i> Log Out
-                        </a>
-                    </div>
-                </div>
+        <div class="desktop-ease-controls" style="display: flex; align-items: center; gap: 2rem;">
+            <div class="header-phone" style="display: flex; flex-direction: column; text-align: right;">
+                <span style="font-size: 0.65rem; font-weight: 800; color: var(--hwb-slate); text-transform: uppercase; letter-spacing: 0.1em;">Direct Connect</span>
+                <a href="tel:+12145860257" style="font-size: 1.15rem; font-weight: 800; color: var(--hwb-dark); text-decoration: none;">(214)-586-0257</a>
             </div>
-            {% endif %}
-
-            <a href="{{ url_for('get_quote') }}" class="nav-cta">Start a quote <i class="fas fa-arrow-right" style="margin-left: 0.5rem; font-size: 0.8rem;"></i></a>
-            
-            <button class="mobile-toggle" aria-label="Open Menu" onclick="toggleMobileMenu()">
-                <div style="display: flex; flex-direction: column; gap: 6px; width: 32px;">
-                    <span style="height: 3px; background: var(--hwb-dark); border-radius: 10px;"></span>
-                    <span style="height: 3px; background: var(--hwb-dark); border-radius: 10px;"></span>
-                    <span style="height: 3px; background: var(--hwb-dark); border-radius: 10px;"></span>
-                </div>
-                <span style="font-size: 0.6rem; font-weight: 800; text-transform: uppercase; color: var(--hwb-slate); margin-top: 4px;">Menu</span>
-            </button>
+            <a href="{{ url_for('get_quote') }}" class="nav-cta">Start a quote <i class="fas fa-arrow-right"></i></a>
         </div>
     </div>
 </header>

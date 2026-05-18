@@ -2511,8 +2511,8 @@ nav a:hover {
 .top-utility-bar {
     background: var(--hwb-dark);
     color: white;
-    padding: 8px 0;
-    font-size: 0.75rem;
+    padding: 10px 0;
+    font-size: 0.85rem;
     font-weight: 600;
     letter-spacing: 0.05em;
     width: 100%;
@@ -2520,7 +2520,7 @@ nav a:hover {
 
 header.main-header {
     height: 90px;
-    background: var(--hwb-glass);
+    background: rgba(255, 255, 255, 0.8);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
     border-bottom: 1px solid var(--hwb-border);
@@ -2529,6 +2529,12 @@ header.main-header {
     z-index: 2000;
     display: flex;
     align-items: center;
+    transition: all 0.3s ease;
+}
+
+.main-header.scrolled {
+    height: 70px;
+    background: rgba(255, 255, 255, 0.95);
 }
 
 .header-container {
@@ -2651,4 +2657,73 @@ header.main-header {
     .mobile-toggle {
         display: flex;
     }
+}
+
+/* --- RECONSTRUCTED: Institutional Mega-Bar Navigation (2026) --- */
+/* Ported from Live Production for 100% Fidelity */
+
+.top-utility-bar {
+    background: var(--hwb-dark);
+    color: white;
+    padding: 10px 0;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    width: 100%;
+}
+
+header.main-header {
+    height: 90px;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-bottom: 1px solid var(--hwb-border);
+    position: sticky;
+    top: 0;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.header-container {
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    height: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 40px;
+}
+
+.desktop-nav {
+    display: flex;
+    gap: 3.5rem;
+    align-items: center;
+    height: 100%;
+}
+
+.nav-cta {
+    background: var(--hwb-blue);
+    color: white !important;
+    padding: 0.7rem 1.4rem;
+    border-radius: 50px;
+    font-weight: 700;
+    box-shadow: 0 4px 14px var(--hwb-blue-glow);
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.nav-cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px var(--hwb-blue-glow);
+}
+
+.services-hero {
+    margin-top: -90px; /* Tucking under the glass header */
+    padding-top: calc(90px + 8rem) !important;
 }
