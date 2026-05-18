@@ -63,6 +63,13 @@ body {
     padding: 0 2rem;
 }
 
+.content-wrapper {
+    width: 100%;
+    max-width: var(--container-width);
+    margin: 0 auto;
+    padding: 0 var(--global-padding);
+}
+
 /* Header & Status */
 header {
     display: flex;
