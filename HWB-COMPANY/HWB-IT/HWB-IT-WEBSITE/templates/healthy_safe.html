@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Healthy and Safe Class A, B, and C facilities | Specialized Grade Cleaning Guide | HWB Cleaning{% endblock %}
+
+{% block content %}
+<section class="services-view">
+ <div class="services-hero dark-variant" style="background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('/static/img/daycare_busy_active.png');">
+ <h1>Healthy and Safe Class A, B, and C facilities</h1>
+ <p class="subtitle" style="color: rgba(255,255,255,0.9); max-width: 800px; margin: 0 auto 3.5rem; font-size: 1.5rem;">Professional grade maintenance standards for DFW medical, childcare, and corporate Class A, B, and C facilities. Safety Rules are grounded in expert CDC maintenance guidelines.</p>
+ </div>
+
+ <div class="detailed-services">
+ <div style="background: white; border: 1px solid var(--hwb-border); border-radius: 6px; padding: 2.5rem; display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center; margin-bottom: 4rem;">
+ <div>
+ <h2 style="font-size: 2.5rem; margin-bottom: 1.5rem;">Childcare & Education</h2>
+ <p style="color: var(--hwb-slate); margin-bottom: 2rem;">In high-priority Class A, B, and C facilities like daycares and schools, the focus is on eliminating pathogens without introducing harsh residues. Systematic disinfection of touch-points is mandatory.</p>
+ <ul style="list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-weight: 600;">
+ <li style="color: var(--hwb-dark);">✓ Non-Toxic Chemicals</li>
+ <li style="color: var(--hwb-dark);">✓ Toy Sanitization</li>
+ <li style="color: var(--hwb-dark);">✓ Daily Floor Scrubbing</li>
+ <li style="color: var(--hwb-dark);">✓ HEPA Air Filtration</li>
+ </ul>
+ </div>
+ <div style="height: 400px; background: url('/static/img/daycare_busy_active.png'); background-size: cover; background-position: center; border-radius: 6px;"></div>
+ </div>
+
+ <div style="background: white; border: 1px solid var(--hwb-border); border-radius: 6px; padding: 2.5rem; display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center; margin-bottom: 4rem;">
+ <div style="height: 400px; background: url('/static/img/medical_clean.png'); background-size: cover; background-position: center; border-radius: 6px;"></div>
+ <div>
+ <h2 style="font-size: 2.5rem; margin-bottom: 1.5rem;">Clinical & Medical honesty</h2>
+ <p style="color: var(--hwb-slate); margin-bottom: 2rem;">Medical clinics require a different level of quality. Cross-contamination prevention is the primary objective, achieved through color-coded equipment and EPA-registered disinfectants.</p>
+ <ul style="list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-weight: 600;">
+ <li style="color: var(--hwb-dark);">✓ EPA Disinfectants</li>
+ <li style="color: var(--hwb-dark);">✓ Bio-hazard Training</li>
+ <li style="color: var(--hwb-dark);">✓ Sterile Floor Prep</li>
+ <li style="color: var(--hwb-dark);">✓ Exam Room Detailing</li>
+ </ul>
+ </div>
+ </div>
+
+ <div class="final-cta-block" style="background: #002147;">
+ <h2>Protect the managers.</h2>
+ <p>Top-quality cleaning is not a luxury—it is an professional promise that protects the organization.</p>
+ <a href="{{ url_for('get_quote') }}" class="cta-button" style="color: #002147;">Book an facilityal Assessment</a>
+ </div>
+ </div>
+</section>
+{% endblock %}

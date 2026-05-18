@@ -1,0 +1,34 @@
+MCP issues detected. Run /mcp list for status.### OUTPUT SECTION 1 — BABYSOP
+
+**Header:** HWB-BABYSOP-HOME | Version 1.0 | Date: March 12, 2026
+**Title:** "Santo Bazooka's Put Clothes in Hamper Mission"
+
+🌟 **MY BIG GOAL**
+To keep the secret base tidy and make sure every shirt and sock gets to go on its "Bubble Bath Adventure" in the laundry!
+
+📝 **MY STEPS TO SUCCESS**
+1.  **Search & Rescue:** Scan the floor for any sleepy socks or tired shirts. 🧦
+2.  **Super Strength:** Pick them up using your "superhero grip." 💪
+3.  **The Target:** Open the hamper’s mouth wide so it's ready to eat. 🧺
+4.  **The Slam Dunk:** Drop the clothes inside and shout, "Goal!" 🏀
+5.  **Victory Dance:** Give yourself a high-five because the mission is complete! ✋
+
+🌈 **THE GOLDEN RULE PROMISE**
+A clean room is the best place for big imagination and even bigger adventures!
+
+**The Pledge:**
+"I promise to follow my special recipe for a great day!"
+
+**Signature lines:**
+Master Operator: ____________________ (Santo Bazooka)
+Chief Auditor: ____________________ (Parent)
+
+***
+
+### OUTPUT SECTION 2 — IMAGE PROMPT
+
+**Prompt:** 
+A high-fidelity, photorealistic interior shot of a modern family kitchen focusing on a sleek stainless steel refrigerator. Attached to the fridge door is a vibrant, colorful children's Standard Operating Procedure (SOP) poster titled "Santo Bazooka's Put Clothes in Hamper Mission." The poster features bright primary colors, playful rounded typography, and cute hand-drawn style kid icons. A prominent magnet labeled "BABYSOP" in bold letters holds the corner of the sheet, alongside various crayon drawings and colorful alphabet magnets. The scene is illuminated by warm, cinematic morning light streaming through a window, creating a cozy "Pixar-style" warmth with a soft, shallow depth of field that keeps the poster in crisp focus.
+
+**Style tags:** 
+photorealistic, 4k, Pixar warmth, shallow depth of field, high-detail textures, vibrant primary colors, architectural photography.

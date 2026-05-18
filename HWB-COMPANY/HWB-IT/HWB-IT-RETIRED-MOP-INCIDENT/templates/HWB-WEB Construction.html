@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Post-Construction Excellence | SigmaFidelity™ Protocol{% endblock %}
+
+{% block content %}
+<section class="construction-view">
+    <div class="construction-hero">
+        <h1>Post-Construction Excellence</h1>
+        <p class="subtitle">Transforming a job site into a high-performance facility through the 3-Phase SigmaFidelity™ protocol.</p>
+    </div>
+
+    <div class="cleaning-phases">
+        <div class="db-section" style="margin-bottom: 3rem;">
+            <h2 style="color: var(--accent); font-size: 1.5rem; border-bottom: none; margin-bottom: 1rem;">2026 North Texas Target Expansion</h2>
+            <p style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 2rem;">HWB Cleaning Services LLC is strategically positioned to provide high-fidelity phased cleaning for the following landmark developments:</p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                <div class="b-item"><strong>Universal Kids Resort (Frisco):</strong> Phased sanitization for the 97-acre park and 300-room luxury hotel.</div>
+                <div class="b-item"><strong>Knox Street Mixed-Use (Dallas):</strong> High-density cleaning management for 1M sq. ft. of residential and retail.</div>
+                <div class="b-item"><strong>Texas Research Quarter (Plano):</strong> Specialized CSI sanitization for life sciences and lab infrastructure.</div>
+                <div class="b-item"><strong>McKinney National Terminal:</strong> Precision-grade care for the new 48,000 sq. ft. commercial terminal.</div>
+            </div>
+        </div>
+
+        <div class="phase-card">
+            <div class="phase-header">
+                <span class="phase-number">PHASE 01</span>
+                <h2>The Rough Clean</h2>
+            </div>
+            <p>Conducted immediately after framing, plumbing, and electrical are complete. The focus remains on the removal of large debris and preparation for the finish work.</p>
+            <ul>
+                <li>Removal of all trash and construction debris.</li>
+                <li>Detailed sweeping and vacuuming of all surfaces.</li>
+                <li>Sticker and label removal from windows and fixtures.</li>
+                <li>Sanitization of high-traffic transit areas.</li>
+            </ul>
+        </div>
+
+        <div class="phase-card">
+            <div class="phase-header">
+                <span class="phase-number">PHASE 02</span>
+                <h2>The Final Clean</h2>
+            </div>
+            <p>The most intensive stage. A detailed sanitization of every square inch ensures the facility is ready for occupation and official inspection.</p>
+            <ul>
+                <li>Interior window cleaning including frames and tracks.</li>
+                <li>Deep cleaning of all cabinetry, drawers, and closets.</li>
+                <li>Detailed sanitization of restrooms and kitchenettes.</li>
+                <li>Floor restoration and first-pass polishing.</li>
+            </ul>
+        </div>
+
+        <div class="phase-card">
+            <div class="phase-header">
+                <span class="phase-number">PHASE 03</span>
+                <h2>The Fluff & Touch-Up</h2>
+            </div>
+            <p>Conducted 24-48 hours before the grand opening. This phase eliminates settled dust and ensures a zero-defect visual presentation for the client partner.</p>
+            <ul>
+                <li>Removal of new dust settled after the Final Clean.</li>
+                <li>Polishing of chrome, stainless steel, and glass.</li>
+                <li>Fingerprint and smudge removal from all touchpoints.</li>
+                <li>Final audit against the CSI: Clean Scene Investigation standard.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="construction-cta">
+        <div class="cta-dark">
+            <h2>Always Audit-Ready.</h2>
+            <p>Construction cleans are focused on <strong>compliance</strong> and <strong>safety</strong>, ensuring the project meets the highest professional standards.</p>
+            <a href="{{ url_for('calculator') }}" class="btn-primary">Generate Phase-Based Analysis</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

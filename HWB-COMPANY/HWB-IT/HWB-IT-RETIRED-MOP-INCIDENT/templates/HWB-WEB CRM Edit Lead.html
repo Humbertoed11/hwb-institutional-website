@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Edit CRM Lead | SigmaFidelity™{% endblock %}
+
+{% block content %}
+<div class="header-section">
+    <h2>Edit Lead: {{ lead.company_name }}</h2>
+    <a href="{{ url_for('crm_leads_list') }}" class="btn-secondary">Back to List</a>
+</div>
+
+<div class="form-section" style="max-width: 600px; margin: 2rem auto; background: var(--bg-secondary); padding: 2.5rem; border-radius: 12px; border: 1px solid var(--border-color);">
+    <form method="POST">
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="company_name" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Company Name</label>
+            <input type="text" id="company_name" name="company_name" value="{{ lead.company_name }}" style="width: 100%; padding: 0.75rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary);" required>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="source" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Source</label>
+            <input type="text" id="source" name="source" value="{{ lead.source }}" style="width: 100%; padding: 0.75rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary);">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="status" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Status</label>
+            <select id="status" name="status" style="width: 100%; padding: 0.75rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary);">
+                <option value="New" {% if lead.status == 'New' %}selected{% endif %}>New</option>
+                <option value="Qualified" {% if lead.status == 'Qualified' %}selected{% endif %}>Qualified</option>
+                <option value="Disqualified" {% if lead.status == 'Disqualified' %}selected{% endif %}>Disqualified</option>
+                <option value="Converted" {% if lead.status == 'Converted' %}selected{% endif %}>Converted</option>
+            </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 2rem;">
+            <label for="assigned_to" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Assigned To</label>
+            <input type="text" id="assigned_to" name="assigned_to" value="{{ lead.assigned_to }}" style="width: 100%; padding: 0.75rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary);">
+        </div>
+
+        <button type="submit" class="btn-primary" style="width: 100%; padding: 1rem; cursor: pointer; border: none; font-weight: 700;">Update CRM Lead</button>
+    </form>
+</div>
+{% endblock %}

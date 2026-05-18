@@ -1,0 +1,1905 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "CPA API Documentation",
+    "version": "1.0.0",
+    "description": "Documentation for CPA APIs available for use by the public.\n"
+  },
+  "servers": [
+    {
+      "url": "https://api.comptroller.texas.gov",
+      "description": "API Url"
+    }
+  ],
+  "paths": {
+    "/sift/v1/sift/public/get-link": {
+      "get": {
+        "tags": [
+          "Sift"
+        ],
+        "summary": "Retrieve File",
+        "description": "Returns a signed URL that can be used to download the requested file. A successful response returns a 307 redirect, which will automatically begin the file download if your application follows redirects.\n\nExample usage:\n```bash\ncurl -X GET \"https://api.comptroller.texas.gov/sift/v1/sift/public/get-link?file-path=sift%2Fgisss%2FAbilene_MSA-2021Q2.zip\" \\\n  -H \"x-api-key: API_KEY\"\n```",
+        "security": [
+          {
+            "x-api-key": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "file-path",
+            "in": "query",
+            "required": true,
+            "description": "URL-encoded path of file to retrieve.",
+            "schema": {
+              "type": "string",
+              "example": "sift%2Fgisss%2FAbilene_MSA-2021Q2.zip"
+            }
+          },
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "API key for authentication. To obtain an API key, [register here](https://data-secure.comptroller.texas.gov/main/my-profile?section=developer)."
+          }
+        ],
+        "responses": {
+          "307": {
+            "description": "Redirect to signed file URL",
+            "headers": {
+              "Location": {
+                "description": "Signed URL used to download file",
+                "schema": {
+                  "type": "string",
+                  "example": "https://assets-secure.example.com/sift/gisss/Abilene_MSA-2021Q2.zip?signature=abc123"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 307
+                    },
+                    "headers": {
+                      "type": "object",
+                      "properties": {
+                        "Location": {
+                          "type": "string",
+                          "example": "https://assets-secure.example.com/sift/gisss/Abilene_MSA-2021Q2.zip?signature=abc123"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "File currently unavailable via API",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "example": {
+                    "message": "Requested file currently unavailable via API."
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Forbidden - API key not provided or invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "example": {
+                    "message": "You do not have access to this API."
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests - Rate or monthly limits exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "example": {
+                    "message": "Request submissions exceeded rate or monthly limits."
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "example": {
+                    "message": "The file-path query parameter is required."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sift/v1/sift/public/list-files": {
+      "get": {
+        "tags": [
+          "Sift"
+        ],
+        "summary": "List Files",
+        "description": "Return list of files available for download. The filter-by-quarter query parameter is optional. If excluded, will return all available files.\n\nExample usage:\n```bash\ncurl -X GET \"https://api.comptroller.texas.gov/sift/v1/sift/public/list-files?filter-by-quarter=2021Q2\" \\\n  -H \"x-api-key: API_KEY\"\n```",
+        "security": [
+          {
+            "x-api-key": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "filter-by-quarter",
+            "in": "query",
+            "required": false,
+            "description": "Filter for files from a specific quarter, like 2021Q2.",
+            "schema": {
+              "type": "string",
+              "example": "2021Q2"
+            }
+          },
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "API key for authentication. To obtain an API key, [register here](https://data-secure.comptroller.texas.gov/main/my-profile?section=developer)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of files available for download",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "filePath": {
+                            "type": "string"
+                          },
+                          "fileSize": {
+                            "type": "integer"
+                          },
+                          "getLinkEndpoint": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "example": {
+                    "success": true,
+                    "data": [
+                      {
+                        "filePath": "sift/example/path-to-file.zip",
+                        "fileSize": 404855,
+                        "getLinkEndpoint": "https://api.comptroller.texas.gov/sift/v1/sift/public/get-link?file-path=sift%2Fgisss%2FAbilene_MSA-2021Q2.zip"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Forbidden - API key not provided or invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "example": {
+                    "message": "You do not have access to this API."
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests - Rate or monthly limits exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "example": {
+                    "message": "Request submissions exceeded rate or monthly limits."
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "example": {
+                    "message": "error retrieving data"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/open-data/v1/tables/{table_id}/{id}": {
+      "get": {
+        "tags": [
+          "Open Data"
+        ],
+        "summary": "Get single row from Open Data table",
+        "description": "Retrieve a single row from an Open Data table by table name and article id.\nRequires both table_id and id as path parameters.\n\nExample usage:\n```bash\ncurl -X GET \"https://api.comptroller.texas.gov/open-data/v1/tables/exemption/A12345\"\n```",
+        "parameters": [
+          {
+            "name": "table_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Table name."
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Article id."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Row found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "done": {
+                      "type": "boolean"
+                    },
+                    "updated_at": {
+                      "type": "string"
+                    },
+                    "created_at": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "id": 1,
+                  "title": "Study",
+                  "done": false,
+                  "updated_at": "2016-02-10T15:46:51.778Z",
+                  "created_at": "2016-02-10T15:46:51.778Z"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No record found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "An error occurred"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public-data/v1/public/sales-tax-payer/{id}": {
+      "get": {
+        "tags": [
+          "Tax Accounts"
+        ],
+        "summary": "Get sales tax payer by taxpayer ID",
+        "description": "Returns a single sales tax payer (STP) by taxpayer ID.\n\nExample usage:\n```bash\ncurl -X GET \"https://api.comptroller.texas.gov/public-data/v1/public/sales-tax-payer/12345678901\" \\\n-H \"x-api-key: API_KEY\"\n```\n",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{11}$"
+            },
+            "description": "The 11 digit taxpayer ID. Must be 11 digits."
+          },
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "API key for authentication. To obtain an API key, [register here](https://data-secure.comptroller.texas.gov/main/my-profile?section=developer)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sales tax payer found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/SalesTaxPayer"
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "TAXPAYER_ID": "12345678901",
+                    "FEI_NUMBER": "123456789",
+                    "BUSINESS_NAME": "LIMITED EXPRESSIONS, INCORPORATED",
+                    "STREET": "123 Main St",
+                    "CITY": "Austin",
+                    "STATE": "TX",
+                    "ZIPCODE": "78701",
+                    "PLUS_FOUR_ZIPCODE": "1234",
+                    "FOREIGN_COUNTRY": "",
+                    "FOREIGN_PROVINCE": "",
+                    "FOREIGN_POSTAL_CODE": "",
+                    "NAME_PREFIX": "Mr.",
+                    "FIRST_NAME": "John",
+                    "MIDDLE_NAME": "A",
+                    "LAST_NAME": "Doe",
+                    "NAME_SUFFIX": "Jr.",
+                    "STATUS": "Active"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request (invalid id)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "success": false,
+                  "error": "Error - Taxpayer ID must be 11 digits long."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No sales tax payer found for the given taxpayer ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "success": false,
+                  "error": "Record not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "success": false,
+                  "error": "Server Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public-data/v1/public/sales-tax-payer/{id}/locations": {
+      "get": {
+        "tags": [
+          "Tax Accounts"
+        ],
+        "summary": "Search sales tax payer locations by taxpayer ID",
+        "description": "Returns a list of locations for a given sales tax payer (STP) by taxpayer ID with optional filtering.\n\nExample usage:\n```bash\ncurl -X GET \"https://api.comptroller.texas.gov/public-data/v1/public/sales-tax-payer/12345678901/locations?page=1&pageSize=10&globalFilter=test\" \\\n-H \"x-api-key: API_KEY\"\n```\n",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{11}$"
+            },
+            "description": "The 11 digit taxpayer ID. Must be 11 digits."
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d+$",
+              "default": "1"
+            },
+            "description": "Page number for pagination. Must be a positive integer. Defaults to 1."
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d+$",
+              "default": "10"
+            },
+            "description": "Number of results per page. Must be a positive integer. Defaults to 10."
+          },
+          {
+            "name": "globalFilter",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 50
+            },
+            "description": "Optional filter string. 1-50 characters."
+          },
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "API key for authentication. To obtain an API key, [register here](https://data-secure.comptroller.texas.gov/main/my-profile?section=developer)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of locations associated with the given taxpayer ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SalesTaxPayerLocation"
+                      }
+                    },
+                    "count": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "data": [
+                    {
+                      "TAXPAYER_ID": "12345678888",
+                      "LOCATION_NAME": "ACME, INC",
+                      "LOCATION_NUMBER": "1001",
+                      "STREET": "123 Main St",
+                      "CITY": "Austin",
+                      "STATE": "TX",
+                      "ZIPCODE": "78701",
+                      "PERMIT_START_DT": "2020-01-01",
+                      "PERMIT_END_DT": "2025-01-01",
+                      "STATUS": "Active"
+                    }
+                  ],
+                  "count": 1
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request (invalid id or query parameters)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "success": false,
+                  "error": "Error - Taxpayer ID must be 11 digits long."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No locations found for the given taxpayer ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "success": false,
+                  "error": "Record not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "success": false,
+                  "error": "Server Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public-data/v1/public/franchise-tax/{id}": {
+      "get": {
+        "tags": [
+          "Tax Accounts"
+        ],
+        "summary": "Get franchise account details",
+        "description": "Retrieve franchise account and officer details by taxpayer ID.\n\nExample usage:\n```bash\ncurl -X GET \"https://api.comptroller.texas.gov/public-data/v1/public/franchise-tax/12345678901\" \\\n-H \"x-api-key: API_KEY\"\n```\n",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{11}$"
+            },
+            "description": "Taxpayer's unique 11-digit ID"
+          },
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "API key for authentication. To obtain an API key, [register here](https://data-secure.comptroller.texas.gov/main/my-profile?section=developer)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Franchise account details found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/FranchiseAccountWithOfficers"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "data"
+                  ]
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "taxpayerId": "12345678888",
+                    "feiNumber": "000012345",
+                    "name": "LIMITED EXPRESSIONS, INCORPORATED",
+                    "dbaName": "LIMITED EXPRESSIONS",
+                    "mailingAddressStreet": "123 MAIN ST",
+                    "mailingAddressCity": "AUSTIN",
+                    "mailingAddressState": "TX",
+                    "mailingAddressZip": "78701",
+                    "mailingAddressZip4": "1234",
+                    "rightToTransactTX": "Y",
+                    "rightToTransactTXLink": "https://example.com",
+                    "stateOfFormation": "TX",
+                    "sosRegistrationStatus": "Active",
+                    "effectiveSosRegistrationDate": "2022-01-01",
+                    "sosFileNumber": "0123456789",
+                    "registeredAgentName": "JOHN DOE",
+                    "registeredOfficeAddressStreet": "456 AGENT ST",
+                    "registeredOfficeAddressCity": "AUSTIN",
+                    "registeredOfficeAddressState": "TX",
+                    "registeredOfficeAddressZip": "78702",
+                    "taxId": "123456789",
+                    "lastUpdated": "2025-12-09T00:00:00.000Z",
+                    "reportYear": "2025",
+                    "officerInfo": [
+                      {
+                        "AGNT_NM": "JANE DOE",
+                        "AGNT_TITL_TX": "PRESIDENT",
+                        "AGNT_ACTV_YR": "2025",
+                        "AD_STR_POB_TX": "789 OFFICER AVE",
+                        "CITY_NM": "AUSTIN",
+                        "ST_CD": "TX",
+                        "AD_ZP": "78703",
+                        "SOURCE": "SOS"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "error"
+                  ]
+                },
+                "example": {
+                  "success": false,
+                  "error": "The request payload is invalid."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Franchise account not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "error"
+                  ]
+                },
+                "example": {
+                  "success": false,
+                  "error": "Record not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "error"
+                  ]
+                },
+                "example": {
+                  "success": false,
+                  "error": "Server Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public-data/v1/public/franchise-tax-list": {
+      "get": {
+        "tags": [
+          "Tax Accounts"
+        ],
+        "summary": "Search FTAS records",
+        "description": "Search for FTAS records by taxpayer-id, name, or file-number.\n\nExample usage:\n```bash\ncurl -X GET \"https://api.comptroller.texas.gov/public-data/v1/public/franchise-tax-list?taxpayerId=123456789\" \\\n-H \"x-api-key: API_KEY\"\n```\n",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "taxpayerId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{9}$|^\\d{11}$"
+            },
+            "description": "Taxpayer Number (9 or 11 digits)"
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[^<>]{2,50}$"
+            },
+            "description": "Entity Name (2-50 chars, no < >)"
+          },
+          {
+            "name": "fileNumber",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{6,10}$"
+            },
+            "description": "File Number (6-10 digits, left-padded to 10)"
+          },
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "API key for authentication. To obtain an API key, [register here](https://data-secure.comptroller.texas.gov/main/my-profile?section=developer)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful search",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "description": "Indicates if the request was successful"
+                    },
+                    "data": {
+                      "type": "array",
+                      "description": "The list of results",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string"
+                          },
+                          "taxpayerId": {
+                            "type": "string"
+                          },
+                          "mailingAddressZip": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "name",
+                          "taxpayerId",
+                          "mailingAddressZip"
+                        ]
+                      }
+                    },
+                    "count": {
+                      "type": "integer",
+                      "description": "Total number of results"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "data",
+                    "count"
+                  ]
+                },
+                "example": {
+                  "success": true,
+                  "count": 1,
+                  "data": [
+                    {
+                      "taxpayerId": "123456789",
+                      "name": "John Doe",
+                      "fileNumber": "0000123456"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "description": "Indicates if the request was successful"
+                    },
+                    "error": {
+                      "type": "string",
+                      "description": "Error message"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "error"
+                  ]
+                },
+                "example": {
+                  "success": false,
+                  "error": "The request payload is invalid."
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Response too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "description": "Indicates if the request was successful"
+                    },
+                    "error": {
+                      "type": "string",
+                      "description": "Error message"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "error"
+                  ]
+                },
+                "example": {
+                  "success": false,
+                  "error": "Search will return ${count} entries. Please refine search by Entity Name."
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "description": "Indicates if the request was successful"
+                    },
+                    "error": {
+                      "type": "string",
+                      "description": "Error message"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "error"
+                  ]
+                },
+                "example": {
+                  "value": {
+                    "success": false,
+                    "error": "Server Error."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public-data/v1/public/sales-tax-payer-location": {
+      "get": {
+        "tags": [
+          "Tax Accounts"
+        ],
+        "summary": "Search sales tax payer locations",
+        "description": "Returns a list of sales tax payer locations matching the search criteria.\n\nExample usage:\n```bash\ncurl -X GET \"https://api.comptroller.texas.gov/public-data/v1/public/sales-tax-payer-location?ZIPCODE=78701\" \\\n-H \"x-api-key: API_KEY\"\n```\n",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ZIPCODE",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{5}$"
+            },
+            "description": "The 5-digit zip code. Required if LOCATION_NAME is not provided."
+          },
+          {
+            "name": "LOCATION_NAME",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 50
+            },
+            "description": "The location name. Required if ZIPCODE is not provided."
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "minimum": 1
+            },
+            "description": "Page number (default 1)."
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10,
+              "minimum": 1,
+              "maximum": 100
+            },
+            "description": "Number of results per page (default 10)."
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "TAXPAYER_ID",
+                "LOCATION_NAME",
+                "LOCATION_NUMBER",
+                "STREET",
+                "CITY",
+                "STATE",
+                "ZIPCODE",
+                "PERMIT_START_DT",
+                "PERMIT_END_DT",
+                "STATUS"
+              ],
+              "default": "LOCATION_NAME"
+            },
+            "description": "Field to sort by. Allowed values: TAXPAYER_ID, LOCATION_NAME, LOCATION_NUMBER, STREET, CITY, STATE, ZIPCODE, PERMIT_START_DT, PERMIT_END_DT, or STATUS. Defaults to LOCATION_NAME.\n"
+          },
+          {
+            "name": "sortOrder",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ASC",
+                "DESC"
+              ],
+              "default": "ASC"
+            },
+            "description": "Sort order, either ASC (ascending) or DESC (descending). Defaults to ASC."
+          },
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "API key for authentication. To obtain an API key, [register here](https://data-secure.comptroller.texas.gov/main/my-profile?section=developer)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of sales tax payer locations found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SalesTaxPayerLocation"
+                      }
+                    },
+                    "count": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "data",
+                    "count"
+                  ]
+                },
+                "example": {
+                  "success": true,
+                  "data": [
+                    {
+                      "TAXPAYER_ID": "12345678888",
+                      "LOCATION_NAME": "ACME, INC",
+                      "LOCATION_NUMBER": "1001",
+                      "STREET": "123 Main St",
+                      "CITY": "Austin",
+                      "STATE": "TX",
+                      "ZIPCODE": "78701",
+                      "PERMIT_START_DT": "2020-01-01",
+                      "PERMIT_END_DT": "2025-01-01",
+                      "STATUS": "Active"
+                    }
+                  ],
+                  "count": 1
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request (validation error)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "success": false,
+                  "error": "Invalid location name. Must be at least 2 characters."
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "success": false,
+                  "error": "Server Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public-data/v1/public/sales-tax-payer": {
+      "get": {
+        "tags": [
+          "Tax Accounts"
+        ],
+        "summary": "Search sales tax payers",
+        "description": "Returns a list of sales tax payers matching the search criteria.\n\nExample usage:\n```bash\ncurl -X GET \"https://api.comptroller.texas.gov/public-data/v1/public/sales-tax-payer?searchType=taxpayerId&TAXPAYER_ID=12345678901\" \\\n-H \"x-api-key: API_KEY\"\n```\n",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "searchType",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "taxpayerId",
+                "fein",
+                "name",
+                "legalName"
+              ]
+            },
+            "description": "The type of search to perform."
+          },
+          {
+            "name": "TAXPAYER_ID",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{11}$"
+            },
+            "description": "The 11-digit taxpayer ID. Required if searchType is 'taxpayerId'."
+          },
+          {
+            "name": "FEI_NUMBER",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{9}$"
+            },
+            "description": "The 9-digit FEI number. Required if searchType is 'fein'."
+          },
+          {
+            "name": "FIRST_NAME",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 50
+            },
+            "description": "The first name. Required if searchType is 'name'."
+          },
+          {
+            "name": "MIDDLE_NAME",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 50
+            },
+            "description": "The middle name. Optional if searchType is 'name'."
+          },
+          {
+            "name": "LAST_NAME",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 50
+            },
+            "description": "The last name. Required if searchType is 'name'."
+          },
+          {
+            "name": "BUSINESS_NAME",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 50
+            },
+            "description": "The legal name. Required if searchType is 'legalName'."
+          },
+          {
+            "name": "STATUS",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ]
+            },
+            "description": "The permit status."
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "minimum": 1
+            },
+            "description": "Page number (default 1)."
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10,
+              "minimum": 1,
+              "maximum": 100
+            },
+            "description": "Number of results per page (default 10)."
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "TAXPAYER_ID",
+                "FEI_NUMBER",
+                "BUSINESS_NAME",
+                "INDIVIDUAL_NAME",
+                "LAST_NAME",
+                "STREET",
+                "CITY",
+                "STATE",
+                "ZIPCODE",
+                "STATUS"
+              ],
+              "default": "TAXPAYER_ID"
+            },
+            "description": "Field to sort by. Allowed values: TAXPAYER_ID, FEI_NUMBER, BUSINESS_NAME, INDIVIDUAL_NAME, LAST_NAME, STREET, CITY, STATE, ZIPCODE, or STATUS. Defaults to TAXPAYER_ID.\n"
+          },
+          {
+            "name": "sortOrder",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ASC",
+                "DESC"
+              ],
+              "default": "ASC"
+            },
+            "description": "Sort order, either ASC (ascending) or DESC (descending). Defaults to ASC."
+          },
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "API key for authentication. To obtain an API key, [register here](https://data-secure.comptroller.texas.gov/main/my-profile?section=developer)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of sales tax payers found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SalesTaxPayer"
+                      }
+                    },
+                    "count": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "data",
+                    "count"
+                  ]
+                },
+                "example": {
+                  "success": true,
+                  "data": [
+                    {
+                      "TAXPAYER_ID": "12345678901",
+                      "FEI_NUMBER": "123456789",
+                      "BUSINESS_NAME": "LIMITED EXPRESSIONS, INCORPORATED",
+                      "STREET": "123 Main St",
+                      "CITY": "Austin",
+                      "STATE": "TX",
+                      "ZIPCODE": "78701",
+                      "PLUS_FOUR_ZIPCODE": "1234",
+                      "FOREIGN_COUNTRY": "",
+                      "FOREIGN_PROVINCE": "",
+                      "FOREIGN_POSTAL_CODE": "",
+                      "INDIVIDUAL_NAME": "John A Doe",
+                      "NAME_PREFIX": "Mr.",
+                      "FIRST_NAME": "John",
+                      "MIDDLE_NAME": "A",
+                      "LAST_NAME": "Doe",
+                      "NAME_SUFFIX": "Jr.",
+                      "STATUS": "Active"
+                    }
+                  ],
+                  "count": 1
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request (validation error)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "success": false,
+                  "error": "Invalid taxpayer ID. Must be 11 digits."
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "success": false,
+                  "error": "Server Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "SalesTaxPayer": {
+        "type": "object",
+        "properties": {
+          "TAXPAYER_ID": {
+            "type": "string"
+          },
+          "FEI_NUMBER": {
+            "type": "string"
+          },
+          "BUSINESS_NAME": {
+            "type": "string",
+            "description": "The business name. May contain HTML or script-like strings. Clients should sanitize or escape this value before rendering to prevent XSS.\n"
+          },
+          "STREET": {
+            "type": "string",
+            "description": "The street address. May contain HTML or script-like strings. Clients should sanitize or escape this value before rendering to prevent XSS.\n"
+          },
+          "CITY": {
+            "type": "string"
+          },
+          "STATE": {
+            "type": "string"
+          },
+          "ZIPCODE": {
+            "type": "string"
+          },
+          "PLUS_FOUR_ZIPCODE": {
+            "type": "string"
+          },
+          "FOREIGN_COUNTRY": {
+            "type": "string"
+          },
+          "FOREIGN_PROVINCE": {
+            "type": "string"
+          },
+          "FOREIGN_POSTAL_CODE": {
+            "type": "string"
+          },
+          "INDIVIDUAL_NAME": {
+            "type": "string",
+            "description": "The individual name. May contain HTML or script-like strings. Clients should sanitize or escape this value before rendering to prevent XSS.\n"
+          },
+          "NAME_PREFIX": {
+            "type": "string"
+          },
+          "FIRST_NAME": {
+            "type": "string"
+          },
+          "MIDDLE_NAME": {
+            "type": "string"
+          },
+          "LAST_NAME": {
+            "type": "string"
+          },
+          "NAME_SUFFIX": {
+            "type": "string",
+            "description": "The name suffix. May contain HTML or script-like strings. Clients should sanitize or escape this value before rendering to prevent XSS.\n"
+          },
+          "STATUS": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "TAXPAYER_ID",
+          "FEI_NUMBER",
+          "BUSINESS_NAME",
+          "STREET",
+          "CITY",
+          "STATE",
+          "ZIPCODE",
+          "PLUS_FOUR_ZIPCODE",
+          "FOREIGN_COUNTRY",
+          "FOREIGN_PROVINCE",
+          "FOREIGN_POSTAL_CODE",
+          "INDIVIDUAL_NAME",
+          "NAME_PREFIX",
+          "FIRST_NAME",
+          "MIDDLE_NAME",
+          "LAST_NAME",
+          "NAME_SUFFIX",
+          "STATUS"
+        ]
+      },
+      "SalesTaxPayerLocation": {
+        "type": "object",
+        "properties": {
+          "TAXPAYER_ID": {
+            "type": "string"
+          },
+          "LOCATION_NAME": {
+            "type": "string",
+            "description": "The location name. May contain HTML or script-like strings. Clients should sanitize or escape this value before rendering to prevent XSS.\n"
+          },
+          "LOCATION_NUMBER": {
+            "type": "string"
+          },
+          "STREET": {
+            "type": "string",
+            "description": "The street address. May contain HTML or script-like strings. Clients should sanitize or escape this value before rendering to prevent XSS.\n"
+          },
+          "CITY": {
+            "type": "string"
+          },
+          "STATE": {
+            "type": "string"
+          },
+          "ZIPCODE": {
+            "type": "string"
+          },
+          "PERMIT_START_DT": {
+            "type": "string",
+            "format": "date"
+          },
+          "PERMIT_END_DT": {
+            "type": "string",
+            "format": "date"
+          },
+          "STATUS": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "TAXPAYER_ID",
+          "LOCATION_NAME",
+          "LOCATION_NUMBER",
+          "STREET",
+          "CITY",
+          "STATE",
+          "ZIPCODE",
+          "PERMIT_START_DT",
+          "PERMIT_END_DT",
+          "STATUS"
+        ]
+      },
+      "FranchiseAccountWithOfficers": {
+        "type": "object",
+        "properties": {
+          "taxpayerId": {
+            "type": "string"
+          },
+          "feiNumber": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "dbaName": {
+            "type": "string"
+          },
+          "mailingAddressStreet": {
+            "type": "string"
+          },
+          "mailingAddressCity": {
+            "type": "string"
+          },
+          "mailingAddressState": {
+            "type": "string"
+          },
+          "mailingAddressZip": {
+            "type": "string"
+          },
+          "mailingAddressZip4": {
+            "type": "string"
+          },
+          "rightToTransactTX": {
+            "type": "string"
+          },
+          "rightToTransactTXLink": {
+            "type": "string"
+          },
+          "stateOfFormation": {
+            "type": "string"
+          },
+          "sosRegistrationStatus": {
+            "type": "string"
+          },
+          "effectiveSosRegistrationDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "sosFileNumber": {
+            "type": "string"
+          },
+          "registeredAgentName": {
+            "type": "string"
+          },
+          "registeredOfficeAddressStreet": {
+            "type": "string"
+          },
+          "registeredOfficeAddressCity": {
+            "type": "string"
+          },
+          "registeredOfficeAddressState": {
+            "type": "string"
+          },
+          "registeredOfficeAddressZip": {
+            "type": "string"
+          },
+          "taxId": {
+            "type": "string"
+          },
+          "lastUpdated": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reportYear": {
+            "type": "string"
+          },
+          "officerInfo": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FranchiseAccountOfficer"
+            }
+          }
+        },
+        "required": [
+          "taxpayerId",
+          "feiNumber",
+          "name",
+          "dbaName",
+          "mailingAddressStreet",
+          "mailingAddressCity",
+          "mailingAddressState",
+          "mailingAddressZip",
+          "mailingAddressZip4",
+          "rightToTransactTX",
+          "rightToTransactTXLink",
+          "stateOfFormation",
+          "sosRegistrationStatus",
+          "effectiveSosRegistrationDate",
+          "sosFileNumber",
+          "registeredAgentName",
+          "registeredOfficeAddressStreet",
+          "registeredOfficeAddressCity",
+          "registeredOfficeAddressState",
+          "registeredOfficeAddressZip",
+          "taxId",
+          "lastUpdated",
+          "reportYear",
+          "officerInfo"
+        ]
+      },
+      "FranchiseAccountOfficer": {
+        "type": "object",
+        "properties": {
+          "AGNT_NM": {
+            "type": "string"
+          },
+          "AGNT_TITL_TX": {
+            "type": "string"
+          },
+          "AGNT_ACTV_YR": {
+            "type": "string"
+          },
+          "AD_STR_POB_TX": {
+            "type": "string"
+          },
+          "CITY_NM": {
+            "type": "string"
+          },
+          "ST_CD": {
+            "type": "string"
+          },
+          "AD_ZP": {
+            "type": "string"
+          },
+          "SOURCE": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "AGNT_NM",
+          "AGNT_TITL_TX",
+          "AGNT_ACTV_YR",
+          "AD_STR_POB_TX",
+          "CITY_NM",
+          "ST_CD",
+          "AD_ZP",
+          "SOURCE"
+        ]
+      },
+      "FtasSearchRequest": {
+        "type": "object",
+        "properties": {
+          "taxpayerId": {
+            "type": "string",
+            "description": "Taxpayer Number (9 or 11 digits)",
+            "pattern": "^\\\\d{9}$|^\\\\d{11}$"
+          },
+          "name": {
+            "type": "string",
+            "description": "Entity Name (2-50 chars, no < >)",
+            "pattern": "^[^<>]{2,50}$"
+          },
+          "fileNumber": {
+            "type": "string",
+            "description": "File Number (6-10 digits, left-padded to 10)",
+            "pattern": "^\\\\d{6,10}$"
+          }
+        },
+        "oneOf": [
+          {
+            "required": [
+              "taxpayerId"
+            ]
+          },
+          {
+            "required": [
+              "name"
+            ]
+          },
+          {
+            "required": [
+              "fileNumber"
+            ]
+          }
+        ],
+        "description": "Must provide exactly one search criteria."
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Sift",
+      "description": "Secure Information and File Transfer System API Calls"
+    },
+    {
+      "name": "Open Data",
+      "description": "Open Data API Calls"
+    },
+    {
+      "name": "Tax Accounts",
+      "description": "Tax Account Search"
+    }
+  ]
+}

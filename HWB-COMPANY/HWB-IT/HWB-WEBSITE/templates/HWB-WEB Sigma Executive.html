@@ -1,0 +1,128 @@
+{% extends "backoffice_base.html" %}
+
+{% block title %}Executive Pulse | SigmaFidelity™ Backoffice{% endblock %}
+
+{% block bo_header %}
+    <h1>Executive Pulse</h1>
+    <p style="color: var(--text-secondary); margin-top: 0.5rem;">Institutional gateway for SigmaFidelity™ strategic management and operational tools.</p>
+{% endblock %}
+
+{% block bo_actions %}
+    <button class="rack-btn active" id="btn-dashboard" onclick="openExecutiveTab('dashboard')">Pulse Dashboard</button>
+    <button class="rack-btn" id="btn-tools" onclick="openExecutiveTab('tools')">Management Tools</button>
+{% endblock %}
+
+{% block bo_content %}
+<div id="dashboard" class="tab-content active">
+    <div class="bo-stats-grid">
+        <div class="bo-card" style="border-top: 4px solid var(--bo-accent);">
+            <h3 style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 1rem;">Total Market Leads</h3>
+            <p style="font-size: 2.5rem; font-weight: 900; color: var(--bo-sidebar);">{{ leads_count }}</p>
+        </div>
+        <div class="bo-card" style="border-top: 4px solid #10b981;">
+            <h3 style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 1rem;">Est. NVA Waste</h3>
+            <p style="font-size: 2.5rem; font-weight: 900; color: #10b981;">{{ total_waste }}</p>
+        </div>
+        <div class="bo-card" style="border-top: 4px solid {% if uptime.status == 'ACTIVE' %}#10b981{% else %}#ef4444{% endif %};">
+            <h3 style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 1rem;">System Uptime</h3>
+            <p style="font-size: 2.5rem; font-weight: 900; color: {% if uptime.status == 'ACTIVE' %}#10b981{% else %}#ef4444{% endif %};">{{ uptime.status }}</p>
+        </div>
+        <div class="bo-card" style="border-top: 4px solid {% if system_errors > 0 %}#ef4444{% else %}#10b981{% endif %};">
+            <h3 style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 1rem;">System Exceptions</h3>
+            <p style="font-size: 2.5rem; font-weight: 900; color: {% if system_errors > 0 %}#ef4444{% else %}#10b981{% endif %};">{{ system_errors }}</p>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 2rem;">
+        <div class="bo-card">
+            <h2 style="margin-bottom: 2rem; font-weight: 800; font-size: 1.25rem;">SigmaFidelity™ Performance Metrics</h2>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem;">
+                <div style="text-align: center; padding: 1.5rem; background: #f8fafc; border-radius: 8px;">
+                    <div style="font-size: 1.5rem; font-weight: 900; color: var(--bo-accent);">{{ analytics.get('cpk', 'N/A') }}</div>
+                    <div style="font-size: 0.7rem; text-transform: uppercase; margin-top: 0.5rem; font-weight: 700;">Cpk (Capability)</div>
+                </div>
+                <div style="text-align: center; padding: 1.5rem; background: #f8fafc; border-radius: 8px;">
+                    <div style="font-size: 1.5rem; font-weight: 900; color: var(--bo-accent);">{{ analytics.get('dpmo', 'N/A') }}</div>
+                    <div style="font-size: 0.7rem; text-transform: uppercase; margin-top: 0.5rem; font-weight: 700;">DPMO (Defects)</div>
+                </div>
+                <div style="text-align: center; padding: 1.5rem; background: #f8fafc; border-radius: 8px;">
+                    <div style="font-size: 1.5rem; font-weight: 900; color: var(--bo-accent);">{{ analytics.get('rty', 'N/A') }}</div>
+                    <div style="font-size: 0.7rem; text-transform: uppercase; margin-top: 0.5rem; font-weight: 700;">RTY (Yield)</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bo-card">
+            <h2 style="margin-bottom: 2rem; font-weight: 800; font-size: 1.25rem;">Recent Activity</h2>
+            <table class="inventory-table" style="font-size: 0.85rem;">
+                <thead>
+                    <tr>
+                        <th>Facility</th>
+                        <th>Waste (Est.)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for lead in recent_leads %}
+                    <tr>
+                        <td><strong>{{ lead.center_name }}</strong></td>
+                        <td style="color: var(--bo-accent); font-weight: 700;">${{ lead.calculated_waste|round(2) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="tools" class="tab-content" style="display: none;">
+    <div class="bo-card">
+        <h2 style="margin-bottom: 2rem; font-weight: 800; font-size: 1.25rem;">Manage Strategic Metrics (KPIVs)</h2>
+        <form action="{{ url_for('sigma_executive') }}" method="POST" style="display: grid; grid-template-columns: repeat(3, 1fr) auto; gap: 1rem; margin-bottom: 2rem;">
+            <input type="hidden" name="action" value="update_kpiv">
+            <input type="text" name="metric_name" placeholder="Metric Name" required style="padding: 0.75rem; border-radius: 4px; border: 1px solid var(--bo-border);">
+            <input type="text" name="value" placeholder="Current Value" required style="padding: 0.75rem; border-radius: 4px; border: 1px solid var(--bo-border);">
+            <input type="text" name="target" placeholder="Target" required style="padding: 0.75rem; border-radius: 4px; border: 1px solid var(--bo-border);">
+            <button type="submit" class="nav-cta" style="border: none; cursor: pointer;">Update</button>
+        </form>
+        <table class="inventory-table">
+            <thead>
+                <tr>
+                    <th>Metric</th>
+                    <th>Current</th>
+                    <th>Target</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for kpiv in kpivs %}
+                <tr>
+                    <td><strong>{{ kpiv.metric_name }}</strong></td>
+                    <td>{{ kpiv.value }}</td>
+                    <td>{{ kpiv.target }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function openExecutiveTab(tabId) {
+    document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+    document.querySelectorAll('.rack-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(tabId).style.display = 'block';
+    document.getElementById('btn-' + tabId).classList.add('active');
+    window.location.hash = tabId;
+}
+
+window.onload = function() {
+    if(window.location.hash) {
+        let tab = window.location.hash.substring(1);
+        if(document.getElementById(tab)) {
+            openExecutiveTab(tab);
+        }
+    }
+}
+</script>
+{% endblock %}

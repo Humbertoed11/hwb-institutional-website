@@ -1,0 +1,33 @@
+MCP issues detected. Run /mcp list for status.### OUTPUT SECTION 1 — BABYSOP
+
+**HWB-BABYSOP-HOME | Version 1.0 | Date: 2026-03-12**
+
+# "Santo Bazooka's Brush Teeth (Night) Mission"
+
+### 🌟 MY BIG GOAL
+The objective of this mission is to defeat the "Sugar Bugs" and build a sparkling superhero shield over every tooth. By completing this mission, Santo Bazooka ensures a bright, healthy smile and prepares for a night of high-fidelity dreams.
+
+### 📝 MY STEPS TO SUCCESS
+1.  🚰 **The Prep:** Wet the brush bristles and apply a pea-sized drop of the minty magic paste.
+2.  🪥 **The Scrub:** Move the brush in happy little circles on the front, top, and hidden back of every tooth. 
+3.  👅 **The Freshness:** Give the tongue one gentle sweep to make breath as fresh as the morning air.
+4.  💧 **The Cleanup:** Rinse the mouth with cool water and return the brush to its designated docking station.
+5.  ✨ **The Inspection:** Look in the mirror and flash a bright smile to verify the Tooth-Shield is active!
+
+### 🌈 THE GOLDEN RULE PROMISE
+"Every tooth gets a turn because a clean mouth is the secret recipe for a powerful tomorrow!"
+
+***
+
+**I promise to follow my special recipe for a great day!**
+
+**Master Operator:** ____________________ (Santo Bazooka)
+**Chief Auditor:** ____________________ (Humberto Dominguez, CEO)
+
+***
+
+### OUTPUT SECTION 2 — IMAGE PROMPT
+
+> **Prompt:** A high-fidelity, photorealistic close-up of a modern family kitchen featuring a sleek stainless steel refrigerator. Centered on the fridge is a vibrant, colorful children's SOP poster with the title "Santo Bazooka's Brush Teeth Mission" in bold, playful typography. The poster is decorated with bright primary colors, whimsical tooth and toothbrush icons, and hand-drawn stars. A custom magnet labeled "BABYSOP" in colorful block letters holds the top corner, flanked by several charming children's crayon drawings and primary-colored alphabet magnets. The scene is illuminated with warm, cinematic lighting, creating a soft "Pixar warmth" aesthetic with a shallow depth of field that softly blurs the kitchen background. 4k resolution, highly detailed textures on the paper and stainless steel.
+
+**Style tags:** photorealistic, 4k, Pixar warmth, shallow depth of field, SigmaFidelity™ Aesthetic.

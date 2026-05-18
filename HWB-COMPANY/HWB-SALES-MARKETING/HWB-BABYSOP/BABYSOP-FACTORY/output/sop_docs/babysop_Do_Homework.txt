@@ -1,0 +1,32 @@
+MCP issues detected. Run /mcp list for status.### OUTPUT SECTION 1 — BABYSOP
+
+**HWB-BABYSOP-HOME | Version 1.0 | Date: 2026-03-12**
+
+# "Santo Bazooka's Do Homework Mission"
+
+🌟 **MY BIG GOAL**
+The purpose of this mission is to power up the brain, master new skills, and finish tasks early so there is more time for epic adventures and play.
+
+📝 **MY STEPS TO SUCCESS**
+1. 🧼 **Clear the Launchpad:** Clear the table of toys and crumbs to make room for greatness.
+2. 🎒 **Deploy the Tools:** Open the backpack and get out pencils, paper, and the mission folder.
+3. ⚡ **Focus Power:** Turn off the screens and use laser-focus to finish one page at a time.
+4. ✅ **Mission Complete:** Put everything back in the bag and zip it up so it is ready for school.
+
+🌈 **THE GOLDEN RULE PROMISE**
+"A little work every day makes the brain strong and ready for play!"
+
+**The Pledge:**
+"I promise to follow my special recipe for a great day!"
+
+**Signature lines:**
+Master Operator: ____________________ (Santo Bazooka)
+Chief Auditor: ____________________ (Parent)
+
+***
+
+### OUTPUT SECTION 2 — IMAGE PROMPT
+
+**Prompt:** A high-fidelity, photorealistic 4k shot of a modern family kitchen centered on a sleek stainless steel refrigerator. Attached to the fridge door is a vibrant, colorful children's SOP poster titled "Santo Bazooka's Do Homework Mission" featuring bright primary colors, playful rounded typography, and cute kid-friendly icons like stars and pencils. A prominent magnetic clip labeled "BABYSOP" in bold letters holds the document in place, surrounded by charming children's crayon drawings and colorful alphabet magnets. The scene is illuminated with warm, cinematic lighting creating a "Pixar-style" cozy atmosphere. A shallow depth of field softly blurs the background kitchen island and wooden cabinets, focusing sharply on the textures of the paper and the brushed metal of the refrigerator.
+
+**Style tags:** photorealistic, 4k, Pixar warmth, shallow depth of field, high-fidelity, global illumination.

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}CSI Department | Clean Scene Investigation{% endblock %}
+
+{% block content %}
+<section class="csi-view">
+    <div class="hero" style="padding: 4rem 0;">
+        <h1>CSI: Clean Scene Investigation</h1>
+        <p class="subtitle">Our specialized quality audit department utilizes forensic-grade inspection protocols to ensure 100% service fidelity across all facilities.</p>
+    </div>
+
+    <div class="csi-controls">
+        <button class="scene-btn active" onclick="showScene('office')">Office Sector</button>
+        <button class="scene-btn" onclick="showScene('construction')">Construction Site</button>
+        <button class="scene-btn" onclick="showScene('warehouse')">Industrial Hub</button>
+    </div>
+
+    <div id="office" class="scene-content active">
+        <div class="scene-container">
+            <div class="interactive-scene">
+                <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1200&q=80" alt="Office Audit" class="scene-image">
+                <div class="hotspot" style="top: 30%; left: 45%;" onclick="showReport('HWB-CSI-001', 'High-Touch Sanitization Check', 'Verified zero-defect sanitization on desk surfaces using ATP bioluminescence testing.')">
+                    <div class="pulse-marker"></div>
+                    <div class="label">Surface Audit</div>
+                </div>
+                <div class="hotspot" style="top: 70%; left: 20%;" onclick="showReport('HWB-CSI-002', 'HEPA Floor Compliance', 'Verified 100% coverage and HEPA filtration status for textile floor surfaces.')">
+                    <div class="pulse-marker"></div>
+                    <div class="label">Floor Audit</div>
+                </div>
+            </div>
+            <div class="tool-panel" id="officeReport">
+                <div class="panel-placeholder">Select a hotspot to view live audit data...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional scenes follow same pattern -->
+</section>
+
+<script>
+function showScene(sceneId) {
+    document.querySelectorAll('.scene-content').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.scene-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(sceneId).classList.add('active');
+    event.currentTarget.classList.add('active');
+}
+
+function showReport(id, title, desc) {
+    const panel = document.getElementById('officeReport');
+    panel.innerHTML = `
+        <div class="report-content">
+            <span class="tag">AUDIT: ${id}</span>
+            <h3>${title}</h3>
+            <p>${desc}</p>
+            <a href="{{ url_for('ehsq') }}" class="btn-small">View Full Performance Log</a>
+        </div>
+    `;
+}
+</script>
+{% endblock %}

@@ -1,0 +1,31 @@
+MCP issues detected. Run /mcp list for status.### OUTPUT SECTION 1 — BABYSOP
+
+**HWB-BABYSOP-HOME | Version 1.0 | Date: March 12, 2026**
+
+**"Santo Bazooka's Take a Bath Mission"**
+
+**🌟 MY BIG GOAL**
+To get squeaky clean and super fresh so the body is ready for cozy pajamas and the best dreams ever!
+
+**📝 MY STEPS TO SUCCESS**
+1. 🛁 **The Bubble Launch:** Fill the tub with warm water and add the secret bubble potion!
+2. 🧼 **Scrub-a-Dub Command:** Use the soap to wash from the top of the head all the way to the wiggly toes!
+3. 🦆 **Splash Maneuver:** Have a fun time playing with the rubber ducky while the bubbles do their work!
+4. 🧖‍♂️ **The Fluffy Finish:** Dry off with a big, warm towel and put on the favorite super-pajamas!
+
+**🌈 THE GOLDEN RULE PROMISE**
+A clean mission makes the body feel strong, happy, and ready for tomorrow's adventures!
+
+**I promise to follow my special recipe for a great day!**
+
+**Signature lines:**
+Master Operator: ____________________ (Santo Bazooka)
+Chief Auditor: ____________________ (Parent)
+
+***
+
+### OUTPUT SECTION 2 — IMAGE PROMPT
+
+**Prompt:** A high-fidelity, photorealistic medium shot of a modern family kitchen featuring a sleek stainless steel refrigerator as the central focus. Mounted prominently on the fridge door is a vibrant, colorful children's SOP poster titled "Santo Bazooka's Take a Bath Mission." The poster design utilizes bright primary colors, playful rounded typography, and cute illustrated kid icons like soap bubbles and a yellow rubber duck. A colorful alphabet magnet explicitly labeled "BABYSOP" holds the top corner of the document. The surrounding fridge surface is decorated with several hand-drawn crayon drawings of suns and stick figures. The scene is illuminated with cinematic lighting that provides a "Pixar-style" warmth, using a shallow depth of field to keep the text on the BabySOP sharp while the kitchen cabinetry in the background is softly blurred.
+
+**Style tags:** photorealistic, 4k, Pixar warmth, shallow depth of field

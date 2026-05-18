@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SigmaJan™ | Excellence Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sigma-navy: #0f172a;
+            --sigma-blue: #2563eb;
+            --sigma-green: #10b981;
+            --sigma-red: #ef4444;
+            --sigma-silver: #f8fafc;
+            --sigma-white: #ffffff;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--sigma-silver); 
+            color: var(--sigma-navy);
+            line-height: 1.6;
+        }
+
+        .navbar {
+            background: var(--sigma-navy);
+            padding: 1.5rem 2rem;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .status-badge {
+            font-size: 0.75rem;
+            font-weight: 900;
+            padding: 0.4rem 1rem;
+            border-radius: 100px;
+            background: rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: {{ '#10b981' if db_status == 'ACTIVE' else '#ef4444' }};
+            box-shadow: 0 0 10px {{ '#10b981' if db_status == 'ACTIVE' else '#ef4444' }};
+        }
+
+        .hero {
+            padding: 8rem 2rem;
+            text-align: center;
+            background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+            color: white;
+        }
+
+        .hero h1 {
+            font-size: 4rem;
+            font-weight: 900;
+            margin-bottom: 1.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            opacity: 0.8;
+            max-width: 800px;
+            margin: 0 auto 3rem;
+        }
+
+        .btn {
+            padding: 1rem 2.5rem;
+            border-radius: 8px;
+            font-weight: 700;
+            text-decoration: none;
+            display: inline-block;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--sigma-blue);
+            color: white;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.6);
+        }
+
+        .features {
+            padding: 6rem 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin: -4rem auto 0;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 3rem;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--sigma-navy);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 4rem 2rem;
+            opacity: 0.6;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div style="font-weight: 900; font-size: 1.5rem; letter-spacing: -0.05em;">SIGMAJAN<span style="color: var(--sigma-blue);">™</span></div>
+        <div class="status-badge">
+            <div class="status-dot"></div>
+            DB NODES: {{ db_status }}
+        </div>
+    </nav>
+
+    <header class="hero">
+        <h1>High-Fidelity Cleaning Systems.</h1>
+        <p>The next-generation Vertical SaaS for janitorial excellence. Built on Azure, engineered with Lean Six Sigma, and delivered with 100% data fidelity.</p>
+        <div style="display: flex; gap: 1rem; justify-content: center;">
+            <a href="#" class="btn btn-primary">Initialize Audit</a>
+            <a href="#" class="btn" style="border: 1px solid rgba(255,255,255,0.2); color: white;">Documentation</a>
+        </div>
+    </header>
+
+    <section class="features">
+        <div class="feature-card">
+            <h3>Operations Hub</h3>
+            <p>Real-time workforce management with geospatial geofencing and offline-first synchronization logic.</p>
+        </div>
+        <div class="feature-card">
+            <h3>Compliance Engine</h3>
+            <p>Automated SDS tracking and ISO 9001 compliant quality auditing for critical facility environments.</p>
+        </div>
+        <div class="feature-card">
+            <h3>Financial Fidelity</h3>
+            <p>Deep integration with QuickBooks and Gusto to bridge the gap between field labor and payroll accuracy.</p>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <p>&copy; 2026 HWB Cleaning Services LLC. Produced under the SigmaFidelity™ Quality Mandate. Approved by Humberto Dominguez, CEO.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,41 @@
+MCP issues detected. Run /mcp list for status.The architect will execute the mandated startup master script to ensure all autonomous systems are active before generating the BabySOP and image prompt.
+
+The architect will delegate the execution of the mandated startup master script to the generalist agent to ensure system readiness.
+
+The Home Architect provides the following documentation for Santo Bazooka's daily operations.
+
+### **OUTPUT SECTION 1 — BABYSOP**
+
+**Header:** HWB-BABYSOP-HOME | Version 1.0 | Date: Thursday, March 12, 2026
+**Title:** "Santo Bazooka's Get Dressed Mission"
+
+---
+
+**🌟 MY BIG GOAL**
+The big goal is to help Santo Bazooka look sharp and feel great! When Santo gets dressed, he is ready to take on the world and start a fantastic new adventure.
+
+**📝 MY STEPS TO SUCCESS**
+1. 🧦 **Step 1:** Find and put on the socks and undergarments.
+2. 👖 **Step 2:** Step into the pants and pull them up high.
+3. 👕 **Step 3:** Slip on the favorite shirt and check that the tag is in the back.
+4. 👟 **Step 4:** Put on the shoes and make sure they are fastened tight for running.
+
+**🌈 THE GOLDEN RULE PROMISE**
+"I promise to choose my favorite colors and wear them with a big smile!"
+
+---
+
+**Pledge:**
+"I promise to follow my special recipe for a great day!"
+
+**Signature lines:**
+Master Operator: ____________________ (Santo Bazooka)
+Chief Auditor: ____________________ (Parent)
+
+---
+
+### **OUTPUT SECTION 2 — IMAGE PROMPT**
+
+> **Prompt:** A high-fidelity cinematic photograph of a modern family kitchen, focusing on a sleek stainless steel refrigerator. On the fridge door, a vibrant and colorful children's SOP poster titled "Santo Bazooka's Get Dressed Mission" is prominently displayed. The poster features bright primary colors, bold playful typography, and simple, friendly kid icons for each step. A decorative magnet labeled **BABYSOP** holds the poster in place, surrounded by various hand-drawn children's illustrations and fridge drawings. The scene is illuminated with warm, cinematic morning light creating a cozy atmosphere. 
+>
+> **Style tags:** photorealistic, 4k, Pixar warmth, shallow depth of field, high detail, cozy domestic aesthetic.

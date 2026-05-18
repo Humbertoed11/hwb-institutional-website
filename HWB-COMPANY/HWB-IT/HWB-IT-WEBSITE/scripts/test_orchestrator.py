@@ -17,8 +17,8 @@ class MockAgent(SigmaAgent):
 if __name__ == "__main__":
     # Use path that works with get_db lstrip('/')
     db_url = "sqlite:///database/test_sigma.db"
-    if not os.path.exists("/app/database"):
-        os.makedirs("/app/database")
+    if not os.path.exists("database"):
+        os.makedirs("database")
         
     orch = SigmaOrchestrator(db_url=db_url)
     mock = MockAgent(agent_id="Peter", db_url=db_url)

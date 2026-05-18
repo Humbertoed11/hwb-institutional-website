@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- PWA Essential Meta Tags -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#004aad">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="HWB App">
+    
+    <link rel="manifest" href="/static/manifest.json">
+    <link rel="apple-touch-icon" href="/static/icons/icon-192x192.png">
+    
+    <title>HWB SigmaFidelity™ App</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-color: #f1f5f9;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --accent: #004aad;
+            --accent-hover: #1d4ed8;
+            --white: #ffffff;
+            --border: #e2e8f0;
+            --safe-area-inset-bottom: env(safe-area-inset-bottom, 20px);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            overscroll-behavior-y: none; /* Prevent pull-to-refresh on mobile */
+            padding-bottom: calc(70px + var(--safe-area-inset-bottom));
+        }
+
+        /* App Header */
+        .app-header {
+            background-color: var(--accent);
+            color: var(--white);
+            padding: 1rem 1.5rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+
+        .app-title { font-weight: 800; letter-spacing: 0.5px; font-size: 1.2rem; }
+        .app-profile { width: 32px; height: 32px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;}
+
+        /* Main Content Area */
+        .app-content { padding: 1.5rem; }
+
+        /* Segment Controller (Client vs Crew Toggle for Prototype) */
+        .segment-control {
+            display: flex;
+            background: #e2e8f0;
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 2rem;
+        }
+
+        .segment-btn {
+            flex: 1;
+            text-align: center;
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .segment-btn.active {
+            background: var(--white);
+            color: var(--accent);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        /* Cards */
+        .card {
+            background: var(--white);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            border: 1px solid var(--border);
+        }
+
+        .card h3 { margin-bottom: 0.5rem; font-size: 1.1rem; }
+        .card p { color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem; line-height: 1.5; }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+        }
+        .status-pending { background: #fef9c3; color: #854d0e; }
+        .status-active { background: #dcfce7; color: #166534; }
+
+        /* Action Buttons */
+        .btn-full {
+            display: block;
+            width: 100%;
+            background: var(--accent);
+            color: var(--white);
+            border: none;
+            padding: 1rem;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1rem;
+            text-align: center;
+            cursor: pointer;
+            margin-top: 1rem;
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--accent);
+            border: 2px solid var(--accent);
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: var(--white);
+            display: flex;
+            justify-content: space-around;
+            padding: 0.75rem 0 calc(0.75rem + var(--safe-area-inset-bottom));
+            box-shadow: 0 -4px 10px rgba(0,0,0,0.05);
+            border-top: 1px solid var(--border);
+            z-index: 100;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.75rem;
+            font-weight: 600;
+            gap: 4px;
+        }
+
+        .nav-item.active { color: var(--accent); }
+        .nav-icon { font-size: 1.5rem; }
+
+        /* View Toggles */
+        #client-view { display: block; }
+        #crew-view { display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="app-header">
+        <div class="app-title">SIGMAFIDELITY™</div>
+        <div class="app-profile">HD</div>
+    </div>
+
+    <div class="app-content">
+        <!-- Developer Prototype Toggle -->
+        <div class="segment-control">
+            <div class="segment-btn active" onclick="switchView('client')">Client Portal</div>
+            <div class="segment-btn" onclick="switchView('crew')">Crew Portal</div>
+        </div>
+
+        <!-- CLIENT VIEW -->
+        <div id="client-view">
+            <h2 style="margin-bottom: 1.5rem;">My Facilities</h2>
+            
+            <div class="card">
+                <div class="status-badge status-pending">Scheduled Today</div>
+                <h3>Plano Daycare Center</h3>
+                <p>Standard Janitorial + Disinfection Protocol.</p>
+                <div style="font-weight: 600; font-size: 0.9rem;">ETA: 6:00 PM</div>
+            </div>
+
+            <button class="btn-full">Request Emergency Service</button>
+            <button class="btn-full btn-outline" style="margin-top: 0.5rem;">View Recent Invoices</button>
+        </div>
+
+        <!-- CREW VIEW -->
+        <div id="crew-view">
+            <h2 style="margin-bottom: 1.5rem;">My Shift</h2>
+
+            <div class="card">
+                <div class="status-badge status-active">GPS Verified</div>
+                <h3>Plano Daycare Center</h3>
+                <p><strong>Address:</strong> 123 Main St, Plano TX</p>
+                <p><strong>Task:</strong> Standard Janitorial</p>
+                
+                <button class="btn-full" style="background: #10b981;" onclick="alert('Clocked In: 17:58 PM\nGPS: 33.0198, -96.6989')">CLOCK IN</button>
+                <button class="btn-full btn-outline" style="margin-top: 0.5rem;">View ISO 9001 SOPs</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+        <a href="#" class="nav-item active">
+            <span class="nav-icon">🏠</span>
+            <span>Home</span>
+        </a>
+        <a href="#" class="nav-item">
+            <span class="nav-icon">📅</span>
+            <span>Schedule</span>
+        </a>
+        <a href="#" class="nav-item">
+            <span class="nav-icon">⚙️</span>
+            <span>Settings</span>
+        </a>
+    </div>
+
+    <script>
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').then(registration => {
+                    console.log('SW registered: ', registration.scope);
+                }).catch(err => {
+                    console.log('SW registration failed: ', err);
+                });
+            });
+        }
+
+        // View Switcher logic for prototype
+        function switchView(view) {
+            document.querySelectorAll('.segment-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('client-view').style.display = 'none';
+            document.getElementById('crew-view').style.display = 'none';
+
+            if(view === 'client') {
+                document.querySelectorAll('.segment-btn')[0].classList.add('active');
+                document.getElementById('client-view').style.display = 'block';
+            } else {
+                document.querySelectorAll('.segment-btn')[1].classList.add('active');
+                document.getElementById('crew-view').style.display = 'block';
+            }
+        }
+    </script>
+</body>
+</html>

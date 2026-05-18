@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Warehouse & Industrial Cleaning Services | HWB Cleaning LLC{% endblock %}
+{% block head %}
+    <meta name="description" content="Keep your 24/7 logistics operations safe and compliant. HWB provides heavy-duty warehouse cleaning, floor scrubbing (Tennant M20/S20), and industrial sanitation in DFW.">
+    <meta name="keywords" content="Warehouse cleaning DFW, industrial floor scrubbing, Tennant sweeper services, logistics facility cleaning, Dallas industrial sanitation">
+{% endblock %}
+
+{% block content %}
+<section class="warehouse-view">
+    <div class="warehouse-hero">
+        <h1>Industrial Facility Management</h1>
+        <p class="subtitle">Providing high-volume, precision-grade cleaning for warehouse and logistics centers in North Texas.</p>
+    </div>
+
+    <div class="warehouse-grid">
+        <div class="warehouse-card">
+            <h3>Floor Restoration</h3>
+            <p>Our heavy-duty floor scrubbers and specialized chemicals restore industrial concrete surfaces, removing tire marks and deep-set grime.</p>
+            <ul>
+                <li>Power Scrubbing & Degreasing</li>
+                <li>Expansion Joint Cleaning</li>
+                <li>Concrete Sealing & Polishing</li>
+            </ul>
+        </div>
+        <div class="warehouse-card">
+            <h3>High-Dust Removal</h3>
+            <p>We eliminate combustible dust from overhead structures, ensuring facility safety and air quality compliance.</p>
+            <ul>
+                <li>Rafter & Pipe Dusting</li>
+                <li>Conveyor System Cleaning</li>
+                <li>HVAC Vent Sanitization</li>
+            </ul>
+        </div>
+        <div class="warehouse-card">
+            <h3>Loading Dock Care</h3>
+            <p>Maintaining clear and safe loading zones with pressurized cleaning and debris removal protocols.</p>
+            <ul>
+                <li>Pressure Washing (Exterior)</li>
+                <li>Bay Door Track Cleaning</li>
+                <li>Drain & Grate Maintenance</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="warehouse-cta">
+        <div class="cta-blue">
+            <h2>Industrial-Grade Reliability.</h2>
+            <p>Maintain your logistics center to the highest SigmaFidelity™ standards.</p>
+            <a href="{{ url_for('calculator') }}" class="btn-primary">Get an Industrial Quote</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

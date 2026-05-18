@@ -1,0 +1,32 @@
+MCP issues detected. Run /mcp list for status.### OUTPUT SECTION 1 — BABYSOP
+
+**Header:** HWB-BABYSOP-HOME | Version 1.0 | Date: March 12, 2026
+**Title:** "Santo Bazooka's Put Laundry Away Mission"
+
+**🌟 MY BIG GOAL**
+To make the bedroom look amazing and make sure every favorite shirt and lucky pair of socks is exactly where it belongs, ready for the next big adventure!
+
+**📝 MY STEPS TO SUCCESS**
+1. **The Cargo Transport:** Carefully carry the clean laundry basket to the bedroom landing zone. 🧺
+2. **The Great Match-Up:** Find every sock's best friend and fold them together so they never get lost. 🧦
+3. **The Flat Fold:** Lay shirts and pants flat and fold them neatly into small rectangles. 👕
+4. **The Home Base:** Slide the neat piles into the correct drawers and close them softly. 📂
+5. **Mission Complete:** Take the empty basket back to the laundry room and give a giant high-five! ✋
+
+**🌈 THE GOLDEN RULE PROMISE**
+"A tidy room is the perfect launchpad for big dreams and even bigger fun!"
+
+**The Pledge:**
+"I promise to follow my special recipe for a great day!"
+
+**Signature lines:**
+Master Operator: ____________________ (Santo Bazooka)
+Chief Auditor: ____________________ (Parent)
+
+***
+
+### OUTPUT SECTION 2 — IMAGE PROMPT
+
+**Prompt:** A high-fidelity, photorealistic 4k image of a modern family kitchen centered on a sleek stainless steel refrigerator. Secured to the fridge door with a bright red magnet labeled "BABYSOP" is a vibrant, colorful children's SOP poster titled "Santo Bazooka's Put Laundry Away Mission." The poster features playful typography, bright primary colors, and cheerful kid-friendly icons like baskets and folded clothes. Surrounding the poster are various colorful crayon drawings and school schedules. The scene is illuminated by warm, cinematic lighting with a "Pixar-style" glow, utilizing a shallow depth of field that softly blurs the cozy kitchen background.
+
+**Style tags:** photorealistic, 4k, Pixar warmth, shallow depth of field, high-fidelity textures, cinematic composition.

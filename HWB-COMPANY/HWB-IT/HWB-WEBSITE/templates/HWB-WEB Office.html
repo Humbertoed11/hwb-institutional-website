@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Office Cleaning & Janitorial Management | SigmaFidelity™{% endblock %}
+
+{% block content %}
+<section class="office-view">
+    <div class="office-hero">
+        <h1>Professional Office Management</h1>
+        <p class="subtitle">Ensuring high-fidelity cleanliness and employee well-being through systematic janitorial precision.</p>
+    </div>
+
+    <div class="feature-row">
+        <div class="feature-text">
+            <h2>Corporate Environment Care</h2>
+            <p>We provide a comprehensive janitorial strategy designed to maintain a professional atmosphere while prioritizing health and safety. Our team focuses on high-touch sanitization and seamless operational integration.</p>
+            <ul class="check-list">
+                <li>Systematic desk and workstation sanitization.</li>
+                <li>Advanced HEPA-filter floor care and vacuuming.</li>
+                <li>Restroom hygiene management and supply replenishment.</li>
+                <li>Detailed glass and common area maintenance.</li>
+            </ul>
+        </div>
+        <div class="feature-image">
+            <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80" alt="Clean Office Space" class="rounded-img">
+        </div>
+    </div>
+
+    <div class="feature-row reverse">
+        <div class="feature-text">
+            <h2>Medical & Specialty Facilities</h2>
+            <p>Our medical office cleaning protocols adhere to strict sanitization standards, ensuring a sterile and safe environment for patients and healthcare professionals alike.</p>
+            <ul class="check-list">
+                <li>Bio-hazard aware cleaning and disposal.</li>
+                <li>Cross-contamination prevention protocols.</li>
+                <li>Specialized floor care for clinical environments.</li>
+                <li>GHS-compliant chemical utilization and reporting.</li>
+            </ul>
+        </div>
+        <div class="feature-image">
+            <img src="https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=800&q=80" alt="Clean Medical Office" class="rounded-img">
+        </div>
+    </div>
+
+    <div class="office-cta">
+        <div class="cta-white">
+            <h2>Unparalleled Professionalism.</h2>
+            <p>Join the growing list of DFW corporate partners who rely on SigmaFidelity™ for their facility management.</p>
+            <a href="{{ url_for('calculator') }}" class="btn-primary">Request a Custom Proposal</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

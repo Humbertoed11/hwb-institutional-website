@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Super Special BabySOP!</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bubblegum+Sans&family=Fredoka:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sesame-red: #ef4444;
+            --sesame-yellow: #facc15;
+            --sesame-blue: #3b82f6;
+            --sesame-green: #22c55e;
+        }
+        body {
+            background: var(--sesame-yellow);
+            font-family: 'Fredoka', sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .sop-page {
+            background: white;
+            width: 8.5in;
+            height: 11in;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            border: 15px solid var(--sesame-blue);
+            border-radius: 30px;
+            position: relative;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 5px dashed var(--sesame-red);
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+        }
+        .header h1 {
+            font-family: 'Bubblegum Sans', cursive;
+            font-size: 3.5rem;
+            color: var(--sesame-red);
+            margin: 0;
+            text-shadow: 2px 2px var(--sesame-yellow);
+        }
+        .header p {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--sesame-blue);
+            margin-top: 10px;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        .section h2 {
+            background: var(--sesame-green);
+            color: white;
+            display: inline-block;
+            padding: 10px 25px;
+            border-radius: 50px;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+        .purpose-box {
+            background: #f1f5f9;
+            padding: 20px;
+            border-radius: 20px;
+            font-size: 1.4rem;
+            color: #1e293b;
+            border-left: 10px solid var(--sesame-yellow);
+        }
+        .steps-list {
+            list-style: none;
+            padding: 0;
+        }
+        .steps-list li {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .steps-list li::before {
+            content: '⭐';
+            font-size: 1.5rem;
+        }
+        .footer {
+            margin-top: auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            border-top: 5px dashed var(--sesame-green);
+            padding-top: 30px;
+        }
+        .signature-box {
+            text-align: center;
+        }
+        .signature-line {
+            width: 250px;
+            border-bottom: 3px solid #000;
+            margin-bottom: 10px;
+        }
+        .iso-seal {
+            background: var(--sesame-red);
+            color: white;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 0.7rem;
+            font-weight: 900;
+            transform: rotate(-15deg);
+            border: 4px double white;
+        }
+        @media print {
+            body { background: white; padding: 0; }
+            .sop-page { box-shadow: none; margin: 0; }
+            .btn-print { display: none; }
+        }
+        .btn-print {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--sesame-red);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-weight: 800;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+    <button class="btn-print" onclick="window.print()">🖨️ PRINT MY SOP!</button>
+
+    <div class="sop-page">
+        <div class="header">
+            <h1>My Super Secret SOP</h1>
+            <p>HWB-BABYSOP-KID Version 1.0 | Date: {{ data.timestamp }}</p>
+        </div>
+
+        <div class="section">
+            <h2>🌟 My Big Goal!</h2>
+            <div class="purpose-box">
+                {{ data.purpose }}
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📝 My Steps to Success:</h2>
+            <ul class="steps-list">
+                {% for step in data.steps %}
+                    {% if step.strip() %}
+                        <li>{{ step.strip() }}</li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="section">
+            <p style="font-size: 1.1rem; color: #64748b; font-style: italic; text-align: center; margin-top: 40px;">
+                "I promise to follow my special recipe for a great day!"
+            </p>
+        </div>
+
+        <div class="footer">
+            <div class="signature-box">
+                <div class="signature-line"></div>
+                <div style="font-weight: 800;">MASTER OPERATOR: {{ data.child_name }}</div>
+            </div>
+
+            <div class="iso-seal">
+                SIGMA<br>FIDELITY<br>CERTIFIED<br>ISO 9001
+            </div>
+
+            <div class="signature-box">
+                <div class="signature-line"></div>
+                <div style="font-weight: 800;">CHIEF AUDITOR (PARENT)</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

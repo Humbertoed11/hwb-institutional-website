@@ -1,1 +1,0 @@
-# SigmaFidelity™ Scripts Package

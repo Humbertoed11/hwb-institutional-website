@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BabySOP.com | Standardizing Care. Protecting the Future.</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700;900&family=Bubblegum+Sans&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --accent: #3b82f6;
+            --dark: #0f172a;
+            --light: #f8fafc;
+            --border: #e2e8f0;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Roboto', sans-serif;
+            background: var(--light);
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
+        }
+        .container {
+            max-width: 800px;
+            padding: 4rem;
+            background: white;
+            border-radius: 32px;
+            box-shadow: 0 30px 100px rgba(0,0,0,0.05);
+            border: 1px solid var(--border);
+        }
+        .logo-text {
+            font-family: 'Bubblegum Sans', cursive;
+            font-size: 3rem;
+            color: var(--accent);
+            margin-bottom: 1rem;
+        }
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 900;
+            letter-spacing: -0.04em;
+            margin-bottom: 1.5rem;
+            line-height: 1.1;
+        }
+        p.subtitle {
+            font-size: 1.25rem;
+            color: #64748b;
+            margin-bottom: 3rem;
+            line-height: 1.6;
+        }
+        .badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background: #dcfce7;
+            color: #166534;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 2rem;
+        }
+        .waitlist-form {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        input[type="email"] {
+            flex-grow: 1;
+            padding: 1.25rem 1.5rem;
+            border-radius: 12px;
+            border: 2px solid var(--border);
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        input:focus { border-color: var(--accent); }
+        button {
+            padding: 1.25rem 2.5rem;
+            background: var(--dark);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        button:active { transform: scale(0.98); }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            margin-top: 5rem;
+            text-align: left;
+        }
+        .feature-card { font-size: 0.9rem; }
+        .feature-card div { font-size: 1.5rem; margin-bottom: 0.5rem; }
+        .feature-card h4 { margin: 0.5rem 0; font-weight: 800; }
+        .feature-card p { color: #64748b; line-height: 1.5; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="badge">Institutional Launch: April 15, 2026</div>
+        <div class="logo-text">BabySOP.com</div>
+        <h1>Quality Care is a <br>Signed Agreement.</h1>
+        <p class="subtitle">Bringing <b>ISO 9001:2015</b> standards to the crib. Eliminate the "Communication Defect" in childcare, at home, and between spouses.</p>
+        
+        <div class="waitlist-form">
+            <input type="email" id="email" placeholder="Enter your email for early access">
+            <button onclick="joinWaitlist()">JOIN THE FIDELITY WAITLIST</button>
+        </div>
+        <p id="response-msg" style="margin-top: 1rem; font-weight: 700; color: #10b981; display: none;"></p>
+
+        <div class="grid">
+            <div class="feature-card">
+                <div>🍼</div>
+                <h4>The Handover</h4>
+                <p>ISO-standard care instructions for daycares and schools.</p>
+            </div>
+            <div class="feature-card">
+                <div>🧹</div>
+                <h4>Room-Clean</h4>
+                <p>Turn chores into a signed contract for your 6-year-old.</p>
+            </div>
+            <div class="feature-card">
+                <div>💍</div>
+                <h4>Domestic SOP</h4>
+                <p>Eliminate spousal friction with the 'Honey-Do' Poka-Yoke.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function joinWaitlist() {
+            const email = document.getElementById('email').value;
+            if(!email) return alert("Please enter a valid email.");
+            
+            const response = await fetch('/api/waiting-list', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email })
+            });
+            const data = await response.json();
+            
+            document.getElementById('email').style.display = 'none';
+            document.querySelector('button').style.display = 'none';
+            const msg = document.getElementById('response-msg');
+            msg.innerText = data.message;
+            msg.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

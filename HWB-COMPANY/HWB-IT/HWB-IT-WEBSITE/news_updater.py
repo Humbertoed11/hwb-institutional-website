@@ -54,8 +54,7 @@ if __name__ == "__main__":
         try:
             run_sync()
         except Exception as e:
-            print(f"CRITICAL ERROR in News Updater: {e}")
-        
-        # Sleep for 24 hours between cycles
-        print("News Updater: Cycle complete. Sleeping for 86400s...", flush=True)
-        time.sleep(86400)
+            print(f"Marketing Assistant Error: {e}")
+            
+        print("Marketing Assistant: Sleeping for 12 hours.")
+        time.sleep(43200)

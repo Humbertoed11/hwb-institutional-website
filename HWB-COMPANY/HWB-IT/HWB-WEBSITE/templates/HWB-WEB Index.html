@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}HWB Cleaning Services LLC | Precision Janitorial Management{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <h1>Are organizations mopping floors with their payroll?</h1>
+    <p class="subtitle">Research indicates that role dilution can delete <strong>one full month</strong> of professional output annually. SigmaFidelity™ provides the cleaning crew required to protect your most important asset: your employees.</p>
+    <div class="hero-btns">
+        <a href="{{ url_for('calculator') }}" class="btn-primary">Analyze Hidden Deficits</a>
+        <a href="{{ url_for('services') }}" class="btn-secondary">Explore The Standards</a>
+    </div>
+</section>
+
+<section class="beliefs">
+    <div class="belief-card">
+        <div class="icon">🤝</div>
+        <h3>Respect</h3>
+        <p>A foundational commitment to our employees and clients, fostering a culture of mutual professional integrity.</p>
+    </div>
+    <div class="belief-card">
+        <div class="icon">🛡️</div>
+        <h3>Safety</h3>
+        <p>Rigorous OSHA-compliant training and equipment standards ensuring 100% risk-mitigated service delivery.</p>
+    </div>
+    <div class="belief-card">
+        <div class="icon">⚖️</div>
+        <h3>Fidelity</h3>
+        <p>Unwavering loyalty to our promises, backed by empirical data and transparent quality management.</p>
+    </div>
+</section>
+
+<section class="services-list">
+    <h2>Specialized Management Solutions</h2>
+    <div class="service-grid">
+        <a href="{{ url_for('services_office') }}" style="text-decoration: none; color: inherit;">
+            <div class="service-item">
+                <h4>Office Management</h4>
+                <p>High-fidelity janitorial services for corporate and medical office environments.</p>
+            </div>
+        </a>
+        <a href="{{ url_for('services_construction') }}" style="text-decoration: none; color: inherit;">
+            <div class="service-item">
+                <h4>Post-Construction</h4>
+                <p>Precision phased cleaning for large-scale hospitality and retail developments.</p>
+            </div>
+        </a>
+        <a href="{{ url_for('services_warehouse') }}" style="text-decoration: none; color: inherit;">
+            <div class="service-item">
+                <h4>Industrial Facilities</h4>
+                <p>Heavy-duty cleaning and floor restoration for warehouse and logistics centers.</p>
+            </div>
+        </a>
+    </div>
+</section>
+{% endblock %}

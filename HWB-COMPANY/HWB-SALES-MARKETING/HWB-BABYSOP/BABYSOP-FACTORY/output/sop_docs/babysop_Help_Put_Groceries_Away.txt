@@ -1,0 +1,43 @@
+MCP issues detected. Run /mcp list for status.The following printable BabySOP and image generation prompt have been architected to meet SigmaFidelity™ Home Standards and the specific requirements for Santo Bazooka.
+
+### OUTPUT SECTION 1 — BABYSOP
+
+| **Document ID** | **Version** | **Effective Date** | **Author** | **Approved By** |
+| :--- | :--- | :--- | :--- | :--- |
+| HWB-BABYSOP-HOME | 1.0 | 2026-03-12 | SigmaFidelity Architect | Humberto Dominguez (CEO) |
+
+---
+
+# Santo Bazooka's Help Put Groceries Away Mission
+
+### 🌟 MY BIG GOAL
+"Helping our family unpack the groceries keeps our food fresh, our kitchen happy, and makes us all part of the winning home team!"
+
+### 📝 MY STEPS TO SUCCESS
+1. 🛒 **The Bag Scout**: Carefully look at the bags on the floor or counter to see what's inside!
+2. 🥦 **The Cold Sorter**: Find all the "brrr" items like milk, yogurt, and cheese and put them in one spot.
+3. 🧊 **Fridge Hand-off**: Gently hand the cold things to the Chief Auditor to put in the refrigerator.
+4. 🍎 **Pantry Parade**: Carry the apples, crackers, and snacks to their special homes in the pantry.
+5. ♻️ **Recycle Round-up**: Fold up the empty bags and put them in the recycling bin so we can use them again!
+
+### 🌈 THE GOLDEN RULE PROMISE
+"A strong helper makes the whole family smile and keeps our home running like a champion!"
+
+---
+
+**I promise to follow my special recipe for a great day!**
+
+**Signature lines:**
+
+**Master Operator:** ____________________ (Santo Bazooka)
+
+**Chief Auditor:** ____________________ (Parent)
+
+---
+
+### OUTPUT SECTION 2 — IMAGE PROMPT
+
+> **PROMPT:** A photorealistic, high-fidelity 4k wide-angle shot of a modern family kitchen featuring a large, sleek stainless steel refrigerator. Centered on the fridge at a child's height is a vibrant, colorful HWB-BABYSOP-HOME poster titled "Santo Bazooka's Help Put Groceries Away Mission" with playful bold typography and bright primary colors. The poster features friendly illustrated kid icons of groceries and bags. A colorful magnet labeled "BABYSOP" holds the poster firmly, surrounded by whimsical fridge drawings and alphabet magnets. The scene is illuminated with Pixar-style warmth and cinematic lighting, highlighting the texture of the paper and the metallic reflection of the fridge. Shallow depth of field with a soft-focus kitchen background. Style: photorealistic, 4k, Pixar warmth, shallow depth of field.
+
+---
+*Note: An attempt was made to execute the SigmaFidelity™ startup sequence (scripts/startup_master.sh); however, system constraints prevented execution in the current environment.*

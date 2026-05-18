@@ -6,5 +6,3 @@ gunicorn
 msal
 Flask-Compress==1.17
 psycopg2-binary
-pydantic
-google-genai

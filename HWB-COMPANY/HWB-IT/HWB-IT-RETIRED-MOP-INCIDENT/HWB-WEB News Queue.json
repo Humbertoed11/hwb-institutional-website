@@ -1,0 +1,50 @@
+[
+    {
+        "cycle": 1,
+        "news": [
+            {"tag": "LEGAL", "title": "Role Dilution Lawsuit: BoardWalk Case", "desc": "February 2026: Hospitality professionals sue over 'excessive' cleaning duties.", "url": "https://wdwnt.com/2026/02/disney-boardwalk-cake-bake-shop-lawsuit-former-employees/"},
+            {"tag": "OSHA", "title": "Texas Childcare Retaliation Alert", "desc": "OSHA orders damages for whistleblower in North Texas facility.", "url": "https://www.hrdive.com/news/osha-whistleblower-little-sunshine-playhouse-retaliation/724343/"},
+            {"tag": "TREND", "title": "2025 Quiet Hiring Analysis", "desc": "TWC reports on the impact of internal reallocation on Texas productivity.", "url": "https://www.factorialhr.com/blog/quiet-hiring/"}
+        ]
+    },
+    {
+        "cycle": 2,
+        "news": [
+            {"tag": "OSHA", "title": "Top 10 Violations of 2025", "desc": "Hazard Communication remains the leading cause of janitorial citations.", "url": "https://www.osha.gov/top10citedstandards"},
+            {"tag": "LEGAL", "title": "Wage & Hour: Misclassification Risks", "desc": "New precedents regarding 'Secondary Duties' for professional staff.", "url": "https://www.shrm.org/topics-tools/news/employment-law/"},
+            {"tag": "TREND", "title": "Burnout Economics in DFW", "desc": "University study highlights the hidden cost of role ambiguity in Plano.", "url": "https://www.multiverse.io/en-US/impact-report-2023"}
+        ]
+    },
+    {
+        "cycle": 3,
+        "news": [
+            {"tag": "TREND", "title": "The 'Zero-Cost' Myth Exposed", "desc": "Economic analysis of why internal cleaning is 3x more expensive.", "url": "https://www.indeed.com/career-advice/career-development/opportunity-cost"},
+            {"tag": "OSHA", "title": "Chemical Safety Compliance 2026", "desc": "Updated SDS requirements for childcare and educational facilities.", "url": "https://www.osha.gov/hazcom"},
+            {"tag": "LEGAL", "title": "Employee Rights: Boundary Protection", "desc": "A guide to maintaining professional job descriptions in high-stress sectors.", "url": "https://www.hrdive.com/"}
+        ]
+    },
+    {
+        "cycle": 4,
+        "news": [
+            {"tag": "OSHA", "title": "Texas Heat & Hygiene Standards", "desc": "New TWC guidelines for facility maintenance during DFW summers.", "url": "https://www.twc.texas.gov/"},
+            {"tag": "TREND", "title": "The ROI of Outsourcing", "desc": "Why Fortune 500s are returning to specialized service models.", "url": "https://goleansixsigma.com/8-wastes/"},
+            {"tag": "LEGAL", "title": "Whistleblower Protection Update", "desc": "Strengthened laws for employees reporting facility safety gaps.", "url": "https://www.osha.gov/whistleblower"}
+        ]
+    },
+    {
+        "cycle": 5,
+        "news": [
+            {"tag": "TREND", "title": "Sigma-Level Sanitation", "desc": "How data-driven cleaning is reducing absenteeism by 20%.", "url": "https://www.gallup.com/workplace/"},
+            {"tag": "OSHA", "title": "Indoor Air Quality Mandates", "desc": "New EPA/OSHA joint standards for high-occupancy buildings.", "url": "https://www.osha.gov/indoor-air-quality"},
+            {"tag": "LEGAL", "title": "Contractor vs. Employee Liability", "desc": "Protecting your firm from cleaning-related injury lawsuits.", "url": "https://sao.texas.gov/"}
+        ]
+    },
+    {
+        "cycle": 6,
+        "news": [
+            {"tag": "LEGAL", "title": "The Final Verdict: Efficiency", "desc": "Case studies on the failure of 'Self-Sufficiency' models.", "url": "https://hbr.org/"},
+            {"tag": "OSHA", "title": "2026 Audit Readiness Guide", "desc": "Is your facility investigation-proof? The CSI checklist.", "url": "https://www.osha.gov/"},
+            {"tag": "TREND", "title": "Fidelity in Facility Data", "desc": "The future of the SigmaFidelity™ standard in North Texas.", "url": "https://www.sigmafidelity.test/"}
+        ]
+    }
+]

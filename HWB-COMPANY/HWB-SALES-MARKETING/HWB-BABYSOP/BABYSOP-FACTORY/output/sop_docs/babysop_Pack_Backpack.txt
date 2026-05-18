@@ -1,0 +1,37 @@
+MCP issues detected. Run /mcp list for status.The following Standard Operating Procedure (SOP) and accompanying image generation prompt have been developed in accordance with SigmaFidelity™ Quality Management Systems and ISO 9001 standards.
+
+### OUTPUT SECTION 1 — BABYSOP
+
+| Document ID | Version | Date | Approved By |
+| :--- | :--- | :--- | :--- |
+| **HWB-BABYSOP-HOME** | 1.0 | March 12, 2026 | Humberto Dominguez, CEO |
+
+**Title: "Santo Bazooka's Pack Backpack Mission"**
+
+**🌟 MY BIG GOAL**
+To ensure the Master Operator has every tool and snack ready for a heroic day of learning and adventure! Packing the backpack tonight means a fast and happy launch tomorrow morning.
+
+**📝 MY STEPS TO SUCCESS**
+1. 📁 **Paper Patrol**: Place the homework folder and any signed notes safely inside the big pocket.
+2. 🍎 **Fuel Check**: Tuck a delicious snack and a full water bottle into the side pouch.
+3. 🧥 **Gear Up**: Check the weather and pack a hoodie or jacket if the mission looks chilly.
+4. 🤐 **The Great Seal**: Zip up every zipper tight so no treasures fall out during transport.
+5. 🚀 **Launch Pad**: Park the backpack right by the front door, ready for the morning takeoff!
+
+**🌈 THE GOLDEN RULE PROMISE**
+"When I am prepared, I am the captain of my own successful adventure!"
+
+**THE PLEDGE**
+"I promise to follow my special recipe for a great day!"
+
+**SIGNATURES**
+Master Operator: ____________________ (Santo Bazooka)
+Chief Auditor: ____________________ (Parent)
+
+***
+
+### OUTPUT SECTION 2 — IMAGE PROMPT
+
+**Prompt:** Photorealistic interior shot of a warm, sunlit family kitchen, 4k resolution. Centered on a brushed stainless steel refrigerator. A colorful children’s Standard Operating Procedure (SOP) poster is prominently displayed, titled "Santo Bazooka's Pack Backpack Mission". The poster utilizes bright primary colors (red, blue, yellow), playful bold typography, and intuitive kid-friendly icons representing folders, snacks, and backpacks. A prominent colorful magnet labeled "BABYSOP" secures the document. Surrounding the SOP are whimsical child drawings and hand-drawn fridge art. Cinematic lighting creates a cozy, "Pixar warmth" atmosphere with a shallow depth of field, softly blurring the modern kitchen background to emphasize the organizational mission poster. 
+
+**Style tags:** photorealistic, 4k, Pixar warmth, shallow depth of field, high-fidelity textures.

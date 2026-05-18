@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SigmaFidelity™ | S4/IEE Executive Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='HWB-WEB Style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="admin-body">
+    <div class="container">
+        <header>
+            <div class="logo">Sigma<span>Executive</span></div>
+            <nav>
+                <a href="/admin/dashboard" class="active">Dashboard</a>
+                <a href="/admin/metrics">Manage Metrics</a>
+                <a href="/admin/chemicals">Inventory</a>
+                <a href="/">Public Site</a>
+            </nav>
+        </header>
+
+        <main class="admin-view">
+            <h1>Executive Performance Dashboard (S4/IEE)</h1>
+            <p class="subtitle">30,000-Foot-Level visibility into process stability and financial risk.</p>
+
+            <!-- KPOV Section -->
+            <section class="dashboard-stats">
+                <div class="stat-card blue">
+                    <span class="stat-label">KPOV: Total Market Reach</span>
+                    <div class="stat-number">{{ leads_count }}</div>
+                    <span class="stat-desc">Verified Industrial Assets</span>
+                </div>
+                <div class="stat-card red">
+                    <span class="stat-label">CODND: Strategic Leakage</span>
+                    <div class="stat-number">{{ total_waste }}</div>
+                    <span class="stat-desc">Annual Cost of Doing Nothing</span>
+                </div>
+                <div class="stat-card" style="border-left: 5px solid #1e40af;">
+                    <span class="stat-label">System Stability (24H)</span>
+                    <div class="stat-number" style="color: #1e40af;">{{ uptime.pct }}</div>
+                    <span class="stat-desc">Real-time Monitor Status: {{ uptime.status }}</span>
+                </div>
+                <div class="stat-card green">
+                    <span class="stat-label">Organizational Readiness</span>
+                    <div class="stat-number" style="color: #10b981;">{{ readiness_score }}</div>
+                    <span class="stat-desc">Governance Gate Completion</span>
+                </div>
+            </section>
+
+            <!-- Organizational Readiness Detail -->
+            <section class="feed-section" style="margin-top: 0; margin-bottom: 2rem;">
+                <h3>Governance & Launch Readiness</h3>
+                <p class="mini-subtitle">Checklist of finalized strategic prerequisites.</p>
+                <div class="dashboard-stats" style="grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 0;">
+                    {% for r in readiness %}
+                    <div class="stat-card" style="padding: 1.5rem; text-align: left; border-left: 4px solid #10b981;">
+                        <span class="m-status" style="background: #dcfce7; color: #166534; margin-bottom: 0.5rem;">✓</span>
+                        <strong style="font-size: 0.85rem; display: block;">{{ r.category }}</strong>
+                        <span style="font-size: 0.75rem; color: var(--text-secondary);">{{ r.item }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <!-- 30,000-Foot Level Control Chart -->
+            <section class="feed-section" style="margin-top: 0; margin-bottom: 2rem;">
+                <h3>30,000-Foot Level: Daily Lead Yield</h3>
+                <div style="height: 300px; width: 100%;">
+                    <canvas id="controlChart"></canvas>
+                </div>
+            </section>
+
+            <!-- Time Tracking / Effort Analysis -->
+            <section class="feed-section" style="margin-top: 0; margin-bottom: 2rem; background: #f8fafc;">
+                <h3>Daily Process Effort (Value-Add Analysis)</h3>
+                <div class="dashboard-stats" style="margin-bottom: 0;">
+                    <div class="stat-card">
+                        <span class="stat-label">Total Session Hours</span>
+                        <div class="stat-number" style="font-size: 2rem;">{{ total_hours }}H</div>
+                        <span class="stat-desc">Cumulative Agent Effort</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Value-Add (VA)</span>
+                        <div class="stat-number" style="font-size: 1.5rem; color: #10b981;">{{ va_hours }}H</div>
+                        <span class="stat-desc">9.0H Value Produced Today</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Non-Value-Add (NVA)</span>
+                        <div class="stat-number" style="font-size: 1.5rem; color: #ef4444;">{{ nva_hours }}H</div>
+                        <span class="stat-desc">Defect Correction (COPQ)</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- System Stability & Uptime -->
+            <section class="feed-section" style="margin-top: 0; margin-bottom: 2rem; background: #fffbeb;">
+                <h3>System Stability & Uptime (S4/IEE)</h3>
+                <div class="dashboard-stats" style="margin-bottom: 0;">
+                    <div class="stat-card">
+                        <span class="stat-label">Server Uptime (24H)</span>
+                        <div class="stat-number" style="font-size: 2rem; color: #1e40af;">{{ uptime.pct }}</div>
+                        <span class="stat-desc">Target: 99.9% Availability</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Total Downtime</span>
+                        <div class="stat-number" style="font-size: 1.5rem; color: #ef4444;">{{ uptime.downtime }}</div>
+                        <span class="stat-desc">Defect Correction Required</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">System Health Status</span>
+                        <div class="stat-number" style="font-size: 1.5rem; color: {% if uptime.status == 'ACTIVE' %}#10b981{% else %}#ef4444{% endif %};">
+                            {{ uptime.status }}
+                        </div>
+                        <span class="stat-desc">Real-time Monitor Feedback</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sigma Analytics Suite -->
+            <section class="feed-section" style="margin-top: 0; margin-bottom: 2rem;">
+                <h3>Sigma Analytics Suite (Daily Sync)</h3>
+                <div class="dashboard-stats" style="margin-bottom: 0;">
+                    <div class="stat-card">
+                        <span class="stat-label">Capability (Cpk)</span>
+                        <div class="stat-number" style="font-size: 2rem;">{{ analytics.get('cpk', 'N/A') }}</div>
+                        <span class="stat-desc">Fidelity Spec Capability</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">DPMO</span>
+                        <div class="stat-number" style="font-size: 1.5rem; color: #ef4444;">{{ analytics.get('dpmo', 'N/A') }}</div>
+                        <span class="stat-desc">Defects Per Million Opp.</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">RTY (Yield)</span>
+                        <div class="stat-number" style="font-size: 1.5rem; color: #10b981;">{{ analytics.get('rty', 'N/A') }}%</div>
+                        <span class="stat-desc">Rolled Throughput Yield</span>
+                    </div>
+                </div>
+            </section>
+
+            <div class="admin-grid">
+                <div class="admin-form-box">
+                    <h3>Charter Execution (DMAIC)</h3>
+                    <div class="milestone-list">
+                        {% for m in dmaic %}
+                        <div class="milestone-item {{ m.status }}">
+                            <span class="m-status">
+                                {% if m.status == 'complete' %}✓{% elif m.status == 'active' %}⏳{% else %}○{% endif %}
+                            </span>
+                            <div class="m-text"><strong>{{ m.name }}</strong><small>{{ m.description }}</small></div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="admin-form-box">
+                    <h3>Design Pipeline (DMADV)</h3>
+                    <div class="milestone-list">
+                        {% for m in dmadv %}
+                        <div class="milestone-item {{ m.status }}">
+                            <span class="m-status">
+                                {% if m.status == 'complete' %}✓{% elif m.status == 'active' %}⏳{% else %}○{% endif %}
+                            </span>
+                            <div class="m-text"><strong>{{ m.name }}</strong><small>{{ m.description }}</small></div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="admin-grid" style="margin-top: 2rem;">
+                <div class="admin-list-box">
+                    <h3>COPQ (Pareto Analysis)</h3>
+                    <div class="inventory-table-container">
+                        <table class="inventory-table">
+                            <thead><tr><th>Category</th><th>% Impact</th><th>Status</th></tr></thead>
+                            <tbody>
+                                {% if analytics.get('pareto') %}
+                                    {% for cat, val in analytics.get('pareto').items() %}
+                                    <tr><td>{{ cat }}</td><td>{{ val }}%</td><td>MONITORED</td></tr>
+                                    {% endfor %}
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="admin-form-box">
+                    <h3>LSS Risk Assessment</h3>
+                    <div class="risk-item">
+                        <strong>Strategic Stagnation</strong>
+                        <p>Market momentum loss: 5% per week of launch delay.</p>
+                    </div>
+                    <button class="btn-primary" onclick="window.print()">Download Executive PDF</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const labels = {{ chart_labels | safe }};
+        const data = {{ chart_values | safe }};
+        const ctx = document.getElementById('controlChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Daily Lead Yield',
+                    data: data,
+                    borderColor: '#2563eb',
+                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.1,
+                    pointRadius: 5,
+                    pointBackgroundColor: '#2563eb'
+                }, {
+                    label: '30k-Foot Centerline',
+                    data: Array(labels.length).fill(data.reduce((a, b) => a + b, 0) / data.length),
+                    borderColor: '#94a3b8',
+                    borderDash: [5, 5],
+                    borderWidth: 1,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, grid: { color: '#e2e8f0' } },
+                    x: { grid: { display: false } }
+                },
+                plugins: {
+                    legend: { display: true, position: 'bottom' }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

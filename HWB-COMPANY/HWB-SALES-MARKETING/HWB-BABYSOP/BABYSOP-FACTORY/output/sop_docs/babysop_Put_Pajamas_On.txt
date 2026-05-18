@@ -1,0 +1,34 @@
+MCP issues detected. Run /mcp list for status.### OUTPUT SECTION 1 — BABYSOP
+
+**Header:** HWB-BABYSOP-HOME | Version 1.0 | Date: March 12, 2026
+**Title:** "Santo Bazooka's Put Pajamas On Mission"
+
+---
+
+**🌟 MY BIG GOAL**
+The mission is to get cozy, warm, and super comfortable so the best dreams in the world can find their way to Santo Bazooka tonight!
+
+**📝 MY STEPS TO SUCCESS**
+1. 👕 **Hunt for the Suit:** Find the favorite pajamas and lay them out on the bed like a superhero cape!
+2. 🦶 **The Leg Tunnel:** Step into the pajama pants one leg at a time—don't trip on the way through the tunnel!
+3. 🔘 **The Shield Lock:** Pull on the top and make sure all buttons are snapped or the zipper is locked tight for maximum warmth!
+4. 🧦 **Cozy Toes:** Slip on those soft socks to keep the toes happy and ready for bed!
+5. 🦸 **The Hero Pose:** Stand tall, give a big stretch, and strike a "Pajama Hero" pose in the mirror!
+
+**🌈 THE GOLDEN RULE PROMISE**
+Putting on pajamas is the magic secret that tells the stars it is time for a night of big adventures in my sleep!
+
+**The Pledge:**
+"I promise to follow my special recipe for a great day!"
+
+**Signature lines:**
+Master Operator: ____________________ (Santo Bazooka)
+Chief Auditor: ____________________ (Parent)
+
+---
+
+### OUTPUT SECTION 2 — IMAGE PROMPT
+
+**Prompt:** A high-fidelity, wide-angle shot of a modern family kitchen featuring a sleek stainless steel refrigerator. Proudly displayed on the fridge at eye-level is a colorful, high-contrast children's SOP poster titled "BABYSOP" in playful, bold typography. The poster is decorated with bright primary colors, friendly kid-style icons of pajamas and stars, and is held up by a custom magnet also labeled "BABYSOP." Surrounding the poster are various hand-drawn crayon drawings and colorful alphabet magnets. The scene is bathed in Pixar-style warmth with cinematic lighting, creating a cozy and inviting atmosphere. The background shows a soft-focus kitchen counter, emphasizing a shallow depth of field.
+
+**Style tags:** photorealistic, 4k, Pixar warmth, shallow depth of field, vibrant colors, master-class lighting.

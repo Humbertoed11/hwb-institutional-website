@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Backoffice | SigmaFidelity™{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='HWB-WEB Style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='backoffice.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    {% block head %}{% endblock %}
+</head>
+<body class="backoffice-body">
+    <div class="backoffice-container">
+        <!-- Primary Navigation Rail (Far Left) -->
+        <aside class="bo-sidebar">
+            <div class="bo-logo">
+                <a href="/">
+                    <img src="{{ url_for('static', filename='HWB-WEB HWB New Logo.png') }}" alt="SigmaFidelity">
+                </a>
+            </div>
+            
+            <nav class="bo-nav">
+                <a href="{{ url_for('sigma_executive') }}" class="bo-nav-item {% if request.endpoint == 'sigma_executive' %}active{% endif %}">
+                    <span class="bo-nav-icon">📊</span>
+                    <span class="bo-nav-label">Pulse</span>
+                </a>
+                <a href="{{ url_for('crm_dashboard') }}" class="bo-nav-item {% if request.endpoint == 'crm_dashboard' %}active{% endif %}">
+                    <span class="bo-nav-icon">💼</span>
+                    <span class="bo-nav-label">CRM</span>
+                </a>
+                <a href="{{ url_for('admin_master') }}" class="bo-nav-item {% if request.endpoint == 'admin_master' %}active{% endif %}">
+                    <span class="bo-nav-icon">🧪</span>
+                    <span class="bo-nav-label">Assets</span>
+                </a>
+                <a href="{{ url_for('concept_lab') }}" class="bo-nav-item {% if request.endpoint == 'concept_lab' %}active{% endif %}">
+                    <span class="bo-nav-icon">🔬</span>
+                    <span class="bo-nav-label">Lab</span>
+                </a>
+                <div style="margin-top: 2rem; padding: 0 0.5rem; font-size: 0.5rem; color: rgba(255,255,255,0.2); text-transform: uppercase; letter-spacing: 0.1em; text-align: center;">Sys</div>
+                <a href="#" class="bo-nav-item">
+                    <span class="bo-nav-icon">⚙️</span>
+                    <span class="bo-nav-label">CRUD</span>
+                </a>
+            </nav>
+
+            <div class="bo-footer">
+                <a href="{{ url_for('logout') }}" style="color: #ef4444; text-decoration: none; font-weight: 900; font-size: 0.7rem; letter-spacing: 0.05em;">EXIT</a>
+            </div>
+        </aside>
+
+        <!-- Control Rack (Inner Left) -->
+        <aside class="bo-control-rack">
+            <div class="rack-title">Controls</div>
+            <div class="rack-items">
+                {% block bo_actions %}{% endblock %}
+            </div>
+            
+            <div style="margin-top: auto; padding: 1rem; background: #f8fafc; border-radius: 12px; font-size: 0.65rem; border: 1px solid var(--bo-border);">
+                <p style="font-weight: 900; color: var(--bo-sidebar); margin-bottom: 0.75rem; letter-spacing: 0.05em;">FIDELITY STATE</p>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem;">
+                    <span>Database</span>
+                    <span style="color: #10b981; font-weight: 800;">LIVE</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span>Security</span>
+                    <span style="color: #10b981; font-weight: 800;">ACTIVE</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Dashboard Content -->
+        <main class="bo-main">
+            <header class="bo-header">
+                <div class="bo-title">
+                    {% block bo_header %}{% endblock %}
+                </div>
+            </header>
+
+            {% with messages = get_flashed_messages() %}
+              {% if messages %}
+                {% for message in messages %}
+                  <div style="padding: 1rem 1.5rem; background: #dcfce7; color: #166534; border-radius: 8px; margin-bottom: 3rem; border: 1px solid #bbf7d0; font-weight: 600; font-size: 0.9rem;">{{ message }}</div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+
+            <div class="bo-content">
+                {% block bo_content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

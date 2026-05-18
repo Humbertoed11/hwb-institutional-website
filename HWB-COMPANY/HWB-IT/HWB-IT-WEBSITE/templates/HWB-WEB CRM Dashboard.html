@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}CRM Dashboard | SigmaFidelity™{% endblock %}
+
+{% block content %}
+<div class="header-section">
+    <h2>SigmaFidelity™ CRM Dashboard</h2>
+</div>
+
+<div class="stats-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+    <div class="stat-card" style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color); text-align: center;">
+        <h3 style="margin-top: 0; color: var(--text-secondary); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em;">Total Leads</h3>
+        <p style="font-size: 2.5rem; font-weight: 800; color: var(--accent-primary); margin: 0.5rem 0;">{{ lead_count }}</p>
+    </div>
+    <div class="stat-card" style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color); text-align: center;">
+        <h3 style="margin-top: 0; color: var(--text-secondary); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em;">Opportunities</h3>
+        <p style="font-size: 2.5rem; font-weight: 800; color: var(--accent-primary); margin: 0.5rem 0;">{{ opp_count }}</p>
+    </div>
+    <div class="stat-card" style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color); text-align: center;">
+        <h3 style="margin-top: 0; color: var(--text-secondary); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em;">Pending Tasks</h3>
+        <p style="font-size: 2.5rem; font-weight: 800; color: var(--accent-primary); margin: 0.5rem 0;">{{ task_count }}</p>
+    </div>
+</div>
+
+<div class="section">
+    <div class="header-section">
+        <h3>Recent CRM Leads</h3>
+        <a href="{{ url_for('crm_leads_list') }}" class="btn-secondary">View All Leads</a>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>Company</th>
+                <th>Source</th>
+                <th>Status</th>
+                <th>Timestamp</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for lead in recent_leads %}
+            <tr>
+                <td>{{ lead.company_name }}</td>
+                <td>{{ lead.source }}</td>
+                <td>{{ lead.status }}</td>
+                <td>{{ lead.created_at }}</td>
+                <td><a href="{{ url_for('crm_edit_lead', id=lead.lead_id) }}" style="color: var(--accent-primary);">Edit</a></td>
+            </tr>
+            {% endfor %}
+            {% if not recent_leads %}
+            <tr><td colspan="5">No leads in CRM.</td></tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

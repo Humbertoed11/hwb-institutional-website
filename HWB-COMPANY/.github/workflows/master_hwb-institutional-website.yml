@@ -1,0 +1,55 @@
+# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+# More info on Python, GitHub Actions, and Azure App Service: https://aka.ms/python-webapps-actions
+
+name: Build and deploy Python app to Azure Web App - hwb-institutional-website
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python version
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Create and Start virtual environment and Install dependencies
+        run: |
+          python -m venv antenv
+          source antenv/bin/activate
+          pip install -r HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/requirements.txt
+          
+      - name: Prepare Artifact (Institutional Core Architecture)
+        run: |
+          mkdir -p build_artifact
+          cp -r HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/. build_artifact/
+          # Verify deployment structure
+          ls -F build_artifact/
+                
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_7930B79F41E8495EA1C77A4E9168FDC1 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_E8C82D6C60C74188B910C0B5CBC04DAE }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_E50BA29762DD48B788163FC9064C377E }}
+
+      - name: 'Deploy to Azure Web App'
+        uses: azure/webapps-deploy@v3
+        id: deploy-to-webapp
+        with:
+          app-name: 'hwb-institutional-website'
+          slot-name: 'Production'
+          package: build_artifact/
+          startup-command: 'gunicorn --bind=0.0.0.0 --timeout 600 main_app:app'

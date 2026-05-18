@@ -1,0 +1,10 @@
+google-genai
+python-dotenv
+pydantic
+psycopg2-binary
+requests
+flask
+flask-login
+gunicorn
+msal
+Flask-Compress==1.17

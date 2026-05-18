@@ -2,7 +2,7 @@
     "name": "HWB SigmaFidelity™",
     "short_name": "HWB App",
     "description": "Institutional Command Center for HWB Cleaning Services LLC",
-    "start_url": "/app",
+    "start_url": "/app-v2",
     "display": "standalone",
     "background_color": "#004aad",
     "theme_color": "#004aad",

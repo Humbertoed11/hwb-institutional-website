@@ -1,0 +1,32 @@
+MCP issues detected. Run /mcp list for status.### OUTPUT SECTION 1 — BABYSOP
+
+**HWB-BABYSOP-HOME | Version 1.0 | Date: March 12, 2026**
+**Title: "Santo Bazooka's Practice Math Mission"**
+
+---
+
+**🌟 MY BIG GOAL**
+To become a Math Wizard! By practicing my numbers and shapes, I am training my brain to solve any puzzle and build amazing things in the future.
+
+**📝 MY STEPS TO SUCCESS**
+1. **Prepare the Command Center:** Gather my pencils, paper, and math tools at the table so I am ready to go. 🎒
+2. **Read and Think:** Look at each number carefully and say the problem out loud to help my brain understand. 🔢
+3. **Show My Work:** Write down my answers clearly and draw pictures if they help me solve the puzzle. ✏️
+4. **The Final Quality Check:** Review my answers with a big smile to ensure everything is exactly right. ✅
+5. **Clear the Station:** Put my math tools back in their home so the kitchen stays neat and tidy. 🧹
+
+**🌈 THE GOLDEN RULE PROMISE**
+"Math is my superpower, and I grow stronger with every problem I solve!"
+
+**The Pledge:**
+"I promise to follow my special recipe for a great day!"
+
+**Signature Lines:**
+**Master Operator:** ____________________ (Santo Bazooka)
+**Chief Auditor:** ____________________ (Parent)
+
+---
+
+### OUTPUT SECTION 2 — IMAGE PROMPT
+
+> **Prompt:** A high-fidelity, photorealistic 4k close-up of a modern family kitchen, focusing on a sleek stainless steel refrigerator. Hanging prominently on the fridge is a vibrant, colorful children’s SOP poster titled "Santo Bazooka's Practice Math Mission." The poster is designed with bright primary colors, playful chunky typography, and friendly kid-style icons like happy numbers and calculators. A primary-colored magnet clearly labeled "BABYSOP" secures the document, surrounded by charming crayon drawings of houses and suns. The scene is bathed in "Pixar warmth" cinematic lighting, featuring a shallow depth of field that softly blurs the warm wooden kitchen cabinets in the background. High-fidelity material textures on the stainless steel and paper.

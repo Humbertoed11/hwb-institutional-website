@@ -1,0 +1,297 @@
+{% extends "backoffice_base.html" %}
+
+{% block title %}Executive Pulse | SigmaFidelity™ Backoffice{% endblock %}
+
+{% block bo_header %}
+    <h1>Executive Pulse</h1>
+    <p style="color: var(--text-secondary); margin-top: 0.5rem;">Institutional gateway for SigmaFidelity™ strategic management and operational tools.</p>
+{% endblock %}
+
+{% block bo_actions %}
+    <button class="rack-btn active" id="btn-dashboard" onclick="openExecutiveTab('dashboard')">Pulse Dashboard</button>
+    <button class="rack-btn" id="btn-social" onclick="openExecutiveTab('social')">Social Strategy</button>
+    <button class="rack-btn" id="btn-outbox" onclick="openExecutiveTab('outbox')">Email Outbox</button>
+    <button class="rack-btn" id="btn-tools" onclick="openExecutiveTab('tools')">Management Tools</button>
+{% endblock %}
+
+{% block bo_content %}
+<!-- Institutional Navigation Rack -->
+<div style="display: flex; gap: 1rem; margin-bottom: 3rem; background: white; padding: 1.5rem; border-radius: 12px; border: 1px solid var(--bo-border);">
+    <button class="rack-btn active" id="btn-dashboard" onclick="openExecutiveTab('dashboard')" style="margin-bottom: 0; width: auto;">📊 Pulse Dashboard</button>
+    <button class="rack-btn" id="btn-social" onclick="openExecutiveTab('social')" style="margin-bottom: 0; width: auto;">📱 Social Strategy</button>
+    <button class="rack-btn" id="btn-outbox" onclick="openExecutiveTab('outbox')" style="margin-bottom: 0; width: auto;">✉️ Email Outbox</button>
+    <button class="rack-btn" id="btn-users" onclick="openExecutiveTab('users')" style="margin-bottom: 0; width: auto;">👥 User Admin</button>
+    <button class="rack-btn" id="btn-tools" onclick="openExecutiveTab('tools')" style="margin-bottom: 0; width: auto;">🛠️ Management Tools</button>
+</div>
+
+<div id="dashboard" class="tab-content active">
+    <div class="bo-stats-grid">
+        <div class="bo-card" style="border-top: 4px solid var(--bo-accent);">
+            <h3 style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 1rem;">Total Market Leads</h3>
+            <p style="font-size: 2.5rem; font-weight: 900; color: var(--bo-sidebar);">{{ leads_count }}</p>
+        </div>
+        <div class="bo-card" style="border-top: 4px solid #10b981;">
+            <h3 style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 1rem;">Est. NVA Waste</h3>
+            <p style="font-size: 2.5rem; font-weight: 900; color: #10b981;">{{ total_waste }}</p>
+        </div>
+        <div class="bo-card" style="border-top: 4px solid {% if uptime.status == 'ACTIVE' %}#10b981{% else %}#ef4444{% endif %};">
+            <h3 style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 1rem;">System Uptime</h3>
+            <p style="font-size: 2.5rem; font-weight: 900; color: {% if uptime.status == 'ACTIVE' %}#10b981{% else %}#ef4444{% endif %};">{{ uptime.status }}</p>
+        </div>
+        <div class="bo-card" style="border-top: 4px solid {% if system_errors > 0 %}#ef4444{% else %}#10b981{% endif %};">
+            <h3 style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 1rem;">System Exceptions</h3>
+            <p style="font-size: 2.5rem; font-weight: 900; color: {% if system_errors > 0 %}#ef4444{% else %}#10b981{% endif %};">{{ system_errors }}</p>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 2rem;">
+        <div class="bo-card">
+            <h2 style="margin-bottom: 2rem; font-weight: 800; font-size: 1.25rem;">SigmaFidelity™ Performance Metrics</h2>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem;">
+                <div style="text-align: center; padding: 1.5rem; background: #f8fafc; border-radius: 8px;">
+                    <div style="font-size: 1.5rem; font-weight: 900; color: var(--bo-accent);">{{ analytics.get('cpk', 'N/A') }}</div>
+                    <div style="font-size: 0.7rem; text-transform: uppercase; margin-top: 0.5rem; font-weight: 700;">Cpk (Capability)</div>
+                </div>
+                <div style="text-align: center; padding: 1.5rem; background: #f8fafc; border-radius: 8px;">
+                    <div style="font-size: 1.5rem; font-weight: 900; color: var(--bo-accent);">{{ analytics.get('dpmo', 'N/A') }}</div>
+                    <div style="font-size: 0.7rem; text-transform: uppercase; margin-top: 0.5rem; font-weight: 700;">DPMO (Defects)</div>
+                </div>
+                <div style="text-align: center; padding: 1.5rem; background: #f8fafc; border-radius: 8px;">
+                    <div style="font-size: 1.5rem; font-weight: 900; color: var(--bo-accent);">{{ analytics.get('rty', 'N/A') }}</div>
+                    <div style="font-size: 0.7rem; text-transform: uppercase; margin-top: 0.5rem; font-weight: 700;">RTY (Yield)</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bo-card">
+            <h2 style="margin-bottom: 2rem; font-weight: 800; font-size: 1.25rem;">Recent Activity</h2>
+            <table class="inventory-table" style="font-size: 0.85rem;">
+                <thead>
+                    <tr>
+                        <th>Facility</th>
+                        <th>Waste (Est.)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for lead in recent_leads %}
+                    <tr>
+                        <td><strong>{{ lead.center_name }}</strong></td>
+                        <td style="color: var(--bo-accent); font-weight: 700;">${{ lead.calculated_waste|round(2) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="tools" class="tab-content" style="display: none;">
+    <div class="bo-card">
+        <h2 style="margin-bottom: 2rem; font-weight: 800; font-size: 1.25rem;">Manage Strategic Metrics (KPIVs)</h2>
+        <form action="{{ url_for('sigma_executive') }}" method="POST" style="display: grid; grid-template-columns: repeat(3, 1fr) auto; gap: 1rem; margin-bottom: 2rem;">
+            <input type="hidden" name="action" value="update_kpiv">
+            <input type="text" name="metric_name" placeholder="Metric Name" required style="padding: 0.75rem; border-radius: 4px; border: 1px solid var(--bo-border);">
+            <input type="text" name="value" placeholder="Current Value" required style="padding: 0.75rem; border-radius: 4px; border: 1px solid var(--bo-border);">
+            <input type="text" name="target" placeholder="Target" required style="padding: 0.75rem; border-radius: 4px; border: 1px solid var(--bo-border);">
+            <button type="submit" class="nav-cta" style="border: none; cursor: pointer;">Update</button>
+        </form>
+        <table class="inventory-table">
+            <thead>
+                <tr>
+                    <th>Metric</th>
+                    <th>Current</th>
+                    <th>Target</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for kpiv in kpivs %}
+                <tr>
+                    <td><strong>{{ kpiv.metric_name }}</strong></td>
+                    <td>{{ kpiv.value }}</td>
+                    <td>{{ kpiv.target }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="social" class="tab-content" style="display: none;">
+    <div class="bo-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <div>
+                <h2 style="font-weight: 800; font-size: 1.25rem;">LinkedIn Approval Queue</h2>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.5rem;">Review and verify strategic content before institutional publication.</p>
+            </div>
+            <div>
+                {% if linkedin_authorized %}
+                    <span style="padding: 0.5rem 1rem; background: #dcfce7; color: #166534; border-radius: 20px; font-size: 0.75rem; font-weight: 700; border: 1px solid #bbf7d0;">LINKEDIN AUTHORIZED</span>
+                {% else %}
+                    <a href="{{ url_for('linkedin_auth') }}" class="nav-cta" style="text-decoration: none; display: inline-block;">AUTHORIZE LINKEDIN</a>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if pending_social %}
+            <div style="display: grid; gap: 2rem;">
+                {% for post in pending_social %}
+                <div style="padding: 2rem; border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <span style="padding: 0.4rem 0.8rem; background: #dbeafe; color: #1e40af; border-radius: 4px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase;">{{ post.platform }}</span>
+                        <span style="font-size: 0.75rem; color: var(--text-secondary);">Staged: {{ post.created_at }}</span>
+                    </div>
+                    <div style="font-family: 'Roboto', sans-serif; line-height: 1.6; color: var(--text-primary); margin-bottom: 2rem; white-space: pre-wrap;">{{ post.content }}</div>
+                    
+                    <div style="display: flex; gap: 1rem;">
+                        <form action="{{ url_for('sigma_executive') }}" method="POST">
+                            <input type="hidden" name="action" value="approve_social">
+                            <input type="hidden" name="post_id" value="{{ post.id }}">
+                            <button type="submit" style="padding: 0.75rem 1.5rem; background: #10b981; color: white; border: none; border-radius: 4px; font-weight: 700; cursor: pointer;">APPROVE & STAGE FOR DISPATCH</button>
+                        </form>
+                        <form action="{{ url_for('sigma_executive') }}" method="POST">
+                            <input type="hidden" name="action" value="reject_social">
+                            <input type="hidden" name="post_id" value="{{ post.id }}">
+                            <button type="submit" style="padding: 0.75rem 1.5rem; background: #ef4444; color: white; border: none; border-radius: 4px; font-weight: 700; cursor: pointer;">REJECT</button>
+                        </form>
+                        <form action="{{ url_for('sigma_executive') }}" method="POST">
+                            <input type="hidden" name="action" value="delete_social">
+                            <input type="hidden" name="post_id" value="{{ post.id }}">
+                            <button type="submit" style="padding: 0.75rem 1.5rem; background: #64748b; color: white; border: none; border-radius: 4px; font-weight: 700; cursor: pointer;">DELETE</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div style="padding: 4rem; text-align: center; color: var(--text-secondary); border: 2px dashed #e2e8f0; border-radius: 12px;">
+                <p>No posts currently awaiting approval.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<div id="outbox" class="tab-content" style="display: none;">
+    <div class="bo-card">
+        <h2 style="margin-bottom: 2rem; font-weight: 800; font-size: 1.25rem;">Institutional Email Outbox</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 2rem; font-size: 0.9rem;">Review and verify institutional communications before transmission via Microsoft Graph.</p>
+        
+        {% if pending_emails %}
+            <div style="display: grid; gap: 2rem;">
+                {% for email in pending_emails %}
+                <div style="padding: 2rem; border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <span style="padding: 0.4rem 0.8rem; background: #fef3c7; color: #92400e; border-radius: 4px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase;">TO: {{ email.recipient }}</span>
+                        <span style="font-size: 0.75rem; color: var(--text-secondary);">Staged: {{ email.created_at }}</span>
+                    </div>
+                    <div style="font-weight: 800; margin-bottom: 1rem;">Subject: {{ email.subject }}</div>
+                    <div style="max-height: 200px; overflow-y: auto; background: white; padding: 1rem; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 2rem; font-size: 0.85rem;">
+                        {{ email.body | safe }}
+                    </div>
+                    
+                    <div style="display: flex; gap: 1rem;">
+                        <form action="{{ url_for('sigma_executive') }}" method="POST">
+                            <input type="hidden" name="action" value="approve_email">
+                            <input type="hidden" name="email_id" value="{{ email.id }}">
+                            <button type="submit" style="padding: 0.75rem 1.5rem; background: #10b981; color: white; border: none; border-radius: 4px; font-weight: 700; cursor: pointer;">APPROVE & SEND</button>
+                        </form>
+                        <form action="{{ url_for('sigma_executive') }}" method="POST">
+                            <input type="hidden" name="action" value="reject_email">
+                            <input type="hidden" name="email_id" value="{{ email.id }}">
+                            <button type="submit" style="padding: 0.75rem 1.5rem; background: #ef4444; color: white; border: none; border-radius: 4px; font-weight: 700; cursor: pointer;">REJECT</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div style="padding: 4rem; text-align: center; color: var(--text-secondary); border: 2px dashed #e2e8f0; border-radius: 12px;">
+                <p>No emails currently awaiting approval.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<div id="users" class="tab-content" style="display: none;">
+    <div class="bo-card">
+        <h2 style="margin-bottom: 2rem; font-weight: 800; font-size: 1.25rem;">Institutional User Administration</h2>
+        
+        <!-- Add New User Form -->
+        <div style="background: #f8fafc; padding: 2rem; border-radius: 12px; border: 1px solid var(--bo-border); margin-bottom: 3rem;">
+            <h3 style="font-size: 0.9rem; text-transform: uppercase; margin-bottom: 1.5rem; color: var(--bo-sidebar);">Register New Institutional User</h3>
+            <form action="{{ url_for('sigma_executive') }}" method="POST" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <input type="hidden" name="action" value="add_user">
+                <div class="input-group">
+                    <label style="display: block; font-size: 0.75rem; font-weight: 800; margin-bottom: 0.5rem;">Full Name</label>
+                    <input type="text" name="full_name" required style="width: 100%; padding: 0.75rem; border-radius: 4px; border: 1px solid var(--bo-border);">
+                </div>
+                <div class="input-group">
+                    <label style="display: block; font-size: 0.75rem; font-weight: 800; margin-bottom: 0.5rem;">Email Address</label>
+                    <input type="email" name="user_email" required style="width: 100%; padding: 0.75rem; border-radius: 4px; border: 1px solid var(--bo-border);">
+                </div>
+                <div class="input-group">
+                    <label style="display: block; font-size: 0.75rem; font-weight: 800; margin-bottom: 0.5rem;">User ID (Username)</label>
+                    <input type="text" name="new_username" required style="width: 100%; padding: 0.75rem; border-radius: 4px; border: 1px solid var(--bo-border);">
+                </div>
+                <div class="input-group">
+                    <label style="display: block; font-size: 0.75rem; font-weight: 800; margin-bottom: 0.5rem;">Password</label>
+                    <input type="password" name="new_password" required style="width: 100%; padding: 0.75rem; border-radius: 4px; border: 1px solid var(--bo-border);">
+                </div>
+                <div style="grid-column: span 2;">
+                    <button type="submit" class="nav-cta" style="width: 100%; border: none; cursor: pointer; padding: 1rem;">AUTHORIZE & CREATE USER</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- User Roster & Password Management -->
+        <h3 style="font-size: 0.9rem; text-transform: uppercase; margin-bottom: 1.5rem; color: var(--bo-sidebar);">Active Institutional Roster</h3>
+        <table class="inventory-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>User ID</th>
+                    <th>Email</th>
+                    <th>Manage</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td><strong>{{ user.full_name or 'N/A' }}</strong></td>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.email or 'N/A' }}</td>
+                    <td>
+                        <form action="{{ url_for('sigma_executive') }}" method="POST" style="display: flex; gap: 0.5rem;">
+                            <input type="hidden" name="action" value="update_password">
+                            <input type="hidden" name="user_id" value="{{ user.id }}">
+                            <input type="password" name="new_password" placeholder="New PW" required style="padding: 0.4rem; border-radius: 4px; border: 1px solid var(--bo-border); font-size: 0.8rem; width: 100px;">
+                            <button type="submit" style="padding: 0.4rem 0.8rem; background: var(--bo-sidebar); color: white; border: none; border-radius: 4px; font-size: 0.7rem; font-weight: 700; cursor: pointer;">UPDATE</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function openExecutiveTab(tabId) {
+    document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+    document.querySelectorAll('.rack-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(tabId).style.display = 'block';
+    document.getElementById('btn-' + tabId).classList.add('active');
+    window.location.hash = tabId;
+}
+
+window.onload = function() {
+    if(window.location.hash) {
+        let tab = window.location.hash.substring(1);
+        if(document.getElementById(tab)) {
+            openExecutiveTab(tab);
+        }
+    }
+}
+</script>
+{% endblock %}

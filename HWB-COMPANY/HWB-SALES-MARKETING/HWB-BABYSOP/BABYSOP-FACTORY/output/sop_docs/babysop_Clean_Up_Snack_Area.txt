@@ -1,0 +1,30 @@
+MCP issues detected. Run /mcp list for status.### OUTPUT SECTION 1 — BABYSOP
+
+**HWB-BABYSOP-HOME | Version 1.0 | Date: March 12, 2026**
+
+# "Santo Bazooka's Clean Up Snack Area Mission"
+
+🌟 **MY BIG GOAL**
+To keep the snack spot happy and sparkly so it is always ready for the next big adventure! When the crumbs are gone, there is more room for fun!
+
+📝 **MY STEPS TO SUCCESS**
+1. 🍎 **Rescue the Food:** Close all the snack bags and put them back in their secret home in the pantry.
+2. 🗑️ **Hunt for Trash:** Find every wrapper and napkin and toss them into the big blue bin. 
+3. 🧼 **Banish the Crumbs:** Use a damp cloth to wipe the table until it shines like a star.
+4. 🪑 **Chair Hug:** Give the chair a little push until it is tucked safely under the table.
+
+🌈 **THE GOLDEN RULE PROMISE**
+A clean space makes my heart happy and helps my whole family have a wonderful day!
+
+**"I promise to follow my special recipe for a great day!"**
+
+**Master Operator:** ____________________ (Santo Bazooka)
+**Chief Auditor:** ____________________ (Parent)
+
+***
+
+### OUTPUT SECTION 2 — IMAGE PROMPT
+
+**Prompt:** A high-fidelity, photorealistic 4k shot of a modern family kitchen centered on a brushed stainless steel refrigerator. Hanging prominently at eye level is a vibrant, colorful children's SOP poster titled "BABYSOP" in bold, playful typography. The poster is decorated with bright primary colors (red, blue, yellow), whimsical kid icons like stars, sponges, and apples, and is held in place by a large, colorful magnet explicitly labeled "BABYSOP". Surrounding the poster are various hand-drawn crayon sketches and alphabet magnets. The scene is illuminated by warm, cinematic "Pixar-style" lighting streaming through a nearby window, creating a cozy atmosphere with a shallow depth of field that keeps the poster in sharp focus while the kitchen background remains softly blurred.
+
+**Style tags:** photorealistic, 4k, Pixar warmth, shallow depth of field, high-fidelity textures, cinematic lighting.

@@ -7,7 +7,7 @@ import os
 
 AGENTS = [
     ["python", "sigma_orchestrator.py"],
-    ["python", "news_updater.py"],
+    # ["python", "news_updater.py"],
     ["python", "watchdog.py"]
 ]
 

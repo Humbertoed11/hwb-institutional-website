@@ -1,0 +1,35 @@
+MCP issues detected. Run /mcp list for status.The SigmaFidelity™ Home Architect presents the following HWB-BABYSOP-HOME documentation and corresponding creative prompt for Santo Bazooka’s mission.
+
+### OUTPUT SECTION 1 — BABYSOP
+
+**HWB-BABYSOP-HOME | Version 1.0 | Date: 2026-03-12**
+
+**Title: "Santo Bazooka's Organize Desk Mission"**
+
+---
+
+**🌟 MY BIG GOAL**
+The purpose of this mission is to keep the Creative Launchpad clear and ready for action. By organizing the desk, Santo Bazooka ensures there is plenty of room for drawing, building, and dreaming of the next big adventure!
+
+**📝 MY STEPS TO SUCCESS**
+1. 🧸 **Rescue the Heroes**: Move all toys and action figures back to their designated home bases or bins.
+2. ✏️ **The Pencil Parade**: Collect all markers, crayons, and pencils and stand them up straight in the supply cup.
+3. 📄 **The Paper Tower**: Stack all drawings and notebooks into a neat, straight pile at the corner of the desk.
+4. ✨ **The Galaxy Wipe**: Clear away any dust or crumbs so the surface is smooth and shiny like a new spaceship.
+
+**🌈 THE GOLDEN RULE PROMISE**
+"A clear desk is a superhero’s secret weapon for a brilliant mind!"
+
+**I promise to follow my special recipe for a great day!**
+
+**Signature lines:**
+Master Operator: ____________________ (Santo Bazooka)
+Chief Auditor: ____________________ (Parent)
+
+---
+
+### OUTPUT SECTION 2 — IMAGE PROMPT
+
+**Prompt:** A high-fidelity, photorealistic 4k visualization of a modern family kitchen focusing on a brushed stainless steel refrigerator. Centered on the fridge is a vibrant, colorful children's Standard Operating Procedure (SOP) poster titled "Santo Bazooka's Organize Desk Mission." The poster features bold primary colors, playful chunky typography, and intuitive kid-friendly icons representing cleaning tasks. A prominent custom magnet labeled "BABYSOP" holds the document in place, surrounded by various hand-drawn child sketches and colorful magnetic letters. The scene is bathed in "Pixar warmth" cinematic lighting with soft golden hour rays hitting the metallic surface. The camera utilizes a shallow depth of field, keeping the BABYSOP poster and magnet in sharp, crisp focus while the warm kitchen background softly blurs into a cozy bokeh.
+
+**Style tags:** photorealistic, 4k, Pixar warmth, shallow depth of field, high-fidelity textures, SigmaFidelity™ standards.

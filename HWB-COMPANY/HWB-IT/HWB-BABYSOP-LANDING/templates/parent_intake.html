@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+
+{% block title %}BabySOP | Parent Intake - Operational Care Standard{% endblock %}
+
+{% block head %}
+<style>
+    .intake-form-container {
+        max-width: 800px;
+        margin: 4rem auto;
+        padding: 3rem;
+        background: white;
+        border-radius: 24px;
+        border: 1px solid var(--border);
+        box-shadow: 0 20px 50px rgba(0,0,0,0.05);
+    }
+    .form-section {
+        margin-bottom: 3rem;
+        padding-bottom: 2rem;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    .form-section h3 {
+        font-size: 1.1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--accent);
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    .input-group {
+        margin-bottom: 1.5rem;
+    }
+    label {
+        display: block;
+        font-size: 0.85rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        color: var(--text-primary);
+    }
+    input[type="text"], input[type="email"], textarea {
+        width: 100%;
+        padding: 1rem;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: #f8fafc;
+        font-family: inherit;
+        font-size: 1rem;
+        transition: border-color 0.2s;
+    }
+    input:focus, textarea:focus {
+        outline: none;
+        border-color: var(--accent);
+        background: white;
+    }
+    .btn-generate {
+        background: var(--accent);
+        color: white;
+        padding: 1.5rem 3rem;
+        border: none;
+        border-radius: 12px;
+        font-weight: 800;
+        font-size: 1rem;
+        cursor: pointer;
+        width: 100%;
+        transition: transform 0.1s;
+    }
+    .btn-generate:active {
+        transform: scale(0.98);
+    }
+    .fidelity-badge {
+        display: inline-block;
+        padding: 0.4rem 0.8rem;
+        background: #dcfce7;
+        color: #166534;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: 800;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="intake-form-container">
+        <div style="text-align: center; margin-bottom: 4rem;">
+            {% if is_parody %}
+                <span class="fidelity-badge" style="background: #fef08a; color: #854d0e;">FUN SYSTEM-DRIVEN HOME</span>
+                <h1 style="font-size: 2.5rem; margin-bottom: 1rem;">Room-Clean Poka-Yoke</h1>
+                <p style="color: var(--text-secondary); max-width: 500px; margin: 0 auto;">Turn "Clean Your Room" into an Institutional Standard. Create a colorful SOP your child will actually want to follow.</p>
+            {% else %}
+                <span class="fidelity-badge">ISO 9001:2015 COMPLIANT HANDOVER</span>
+                <h1 style="font-size: 2.5rem; margin-bottom: 1rem;">Generate BabySOP</h1>
+                <p style="color: var(--text-secondary); max-width: 500px; margin: 0 auto;">Standardize your child's care instructions. Eliminate miscommunication. Ensure high-fidelity care at any daycare or school.</p>
+            {% endif %}
+        </div>
+
+        <form action="{{ url_for('babysop_intake') }}" method="POST">
+            <input type="hidden" name="is_parody" value="{{ 'true' if is_parody else 'false' }}">
+            
+            {% if is_parody %}
+                <!-- Parody Specific Fields -->
+                <div class="form-section">
+                    <h3><span>🌟</span> My Big Goal</h3>
+                    <div class="input-group">
+                        <label for="purpose">What are we accomplishing? (The Purpose)</label>
+                        <input type="text" id="purpose" name="purpose" required placeholder="e.g., Making my room the cleanest on the street!">
+                    </div>
+                    <div class="input-group">
+                        <label for="child_name">The Master Operator's Name</label>
+                        <input type="text" id="child_name" name="child_name" required placeholder="e.g., Super Sam">
+                    </div>
+                </div>
+
+                <div class="form-section" style="border-bottom: none;">
+                    <h3><span>✅</span> The Standard (One step per line)</h3>
+                    <div class="input-group">
+                        <label for="steps">How do we do it? (Steps to Success)</label>
+                        <textarea id="steps" name="steps" rows="5" required placeholder="1. Put Legos in the yellow bin&#10;2. Put dirty socks in the hamper&#10;3. Make the bed look pretty"></textarea>
+                    </div>
+                </div>
+            {% else %}
+                <!-- Standard Institutional Fields (Original) -->
+                <!-- Section 0: The Big Purpose (Kid Friendly) -->
+                <div class="form-section">
+                    <h3><span>🌟</span> My Big Purpose</h3>
+                    <div class="input-group">
+                        <label for="purpose">What is your goal for the day? (In your own words)</label>
+                        <input type="text" id="purpose" name="purpose" required placeholder="e.g., To play outside, learn my ABCs, and stay safe!">
+                    </div>
+                    <label>Choose Your SOP Style</label>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1rem;">
+                        <div style="text-align: center; padding: 1rem; border: 2px solid #e2e8f0; border-radius: 12px; cursor: pointer; background: #fff;" onclick="this.style.borderColor='#3b82f6'">
+                            <div style="font-size: 2rem;">🦸‍♂️</div>
+                            <div style="font-size: 0.7rem; font-weight: 800; margin-top: 0.5rem;">SUPERHERO</div>
+                        </div>
+                        <div style="text-align: center; padding: 1rem; border: 2px solid #e2e8f0; border-radius: 12px; cursor: pointer; background: #fff;" onclick="this.style.borderColor='#3b82f6'">
+                            <div style="font-size: 2rem;">🎨</div>
+                            <div style="font-size: 0.7rem; font-weight: 800; margin-top: 0.5rem;">EXPLORER</div>
+                        </div>
+                        <div style="text-align: center; padding: 1rem; border: 2px solid #e2e8f0; border-radius: 12px; cursor: pointer; background: #fff;" onclick="this.style.borderColor='#3b82f6'">
+                            <div style="font-size: 2rem;">🐘</div>
+                            <div style="font-size: 0.7rem; font-weight: 800; margin-top: 0.5rem;">GENTLE GIANT</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 1: Institutional Identity -->
+                <div class="form-section">
+                    <h3><span>🆔</span> Child & Guardian Identity</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                        <div class="input-group">
+                            <label for="child_name">Child's Full Name</label>
+                            <input type="text" id="child_name" name="child_name" required placeholder="e.g., Baby John Doe">
+                        </div>
+                        <div class="input-group">
+                            <label for="parent_name">Parent/Guardian Name</label>
+                            <input type="text" id="parent_name" name="parent_name" required placeholder="e.g., Jane Doe">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="email">Parent Email (For SOP Delivery)</label>
+                        <input type="email" id="email" name="email" required placeholder="jane@example.com">
+                    </div>
+                </div>
+
+                <!-- Section 2: Critical-to-Quality (CTQ) Safety Data -->
+                <div class="form-section">
+                    <h3><span>⚠️</span> Safety & Health Protocols (Critical)</h3>
+                    <div class="input-group">
+                        <label for="allergies">Allergies & Dietary Restrictions</label>
+                        <textarea id="allergies" name="allergies" rows="3" placeholder="List all allergies or state 'None'"></textarea>
+                    </div>
+                    <div class="input-group">
+                        <label for="medications">Active Medications & Dosage</label>
+                        <textarea id="medications" name="medications" rows="2" placeholder="Instruction for administering meds"></textarea>
+                    </div>
+                    <div class="input-group">
+                        <label for="emergency_contact">Emergency Contact (Name & Phone)</label>
+                        <input type="text" id="emergency_contact" name="emergency_contact" required placeholder="e.g., John Doe - 555-0123">
+                    </div>
+                </div>
+
+                <!-- Section 3: Operational Control -->
+                <div class="form-section" style="border-bottom: none;">
+                    <h3><span>🔄</span> Operational Care Routine</h3>
+                    <div class="input-group">
+                        <label for="nap_schedule">Nap Schedule & Sleep Environment</label>
+                        <textarea id="nap_schedule" name="nap_schedule" rows="3" placeholder="e.g., 10:00 AM and 2:00 PM. Requires white noise."></textarea>
+                    </div>
+                    <div class="input-group">
+                        <label for="soothing_methods">Soothing & Comfort Methods</label>
+                        <textarea id="soothing_methods" name="soothing_methods" rows="3" placeholder="How to calm the child during friction events?"></textarea>
+                    </div>
+                </div>
+            {% endif %}
+
+            <button type="submit" class="btn-generate">GENERATE MY SOP! ✨</button>
+        </form>
+        
+        <p style="text-align: center; margin-top: 2rem; font-size: 0.75rem; color: var(--text-secondary);">
+            By generating this SOP, you are establishing a documented care standard under the SigmaFidelity™ Quality Mandate.
+        </p>
+    </div>
+</div>
+{% endblock %}

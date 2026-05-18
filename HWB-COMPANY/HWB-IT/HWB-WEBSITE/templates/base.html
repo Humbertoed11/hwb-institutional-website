@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}HWB Cleaning Services LLC | SigmaFidelity™{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='HWB-WEB Style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --cdata-blue: #00A0FF;
+            --cdata-dark: #002147;
+            --font-main: 'Roboto', sans-serif;
+        }
+        body { font-family: var(--font-main); }
+        .header-logo { height: 42px !important; width: auto; }
+        nav { display: flex; gap: 2rem; align-items: center; }
+        .nav-cta { background: var(--cdata-blue); color: white !important; padding: 0.6rem 1.2rem; border-radius: 4px; font-weight: 700; text-decoration: none; }
+    </style>
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <div class="container">
+        {% block header %}
+        <header style="display: flex; justify-content: space-between; align-items: center; padding: 1.5rem 0;">
+            <a href="/" class="logo">
+                <img src="{{ url_for('static', filename='HWB-WEB HWB New Logo.png') }}" alt="SigmaFidelity" class="header-logo">
+            </a>
+            <nav>
+                <!-- Products Mega Menu -->
+                <div class="nav-dropdown">
+                    <a href="#">Products ▾</a>
+                    <div class="dropdown-content">
+                        <a href="{{ url_for('services_office') }}" class="dropdown-item">
+                            <div class="di-icon">🏢</div>
+                            <div class="di-text"><strong>Office Drivers</strong><span>Corporate data connectivity.</span></div>
+                        </a>
+                        <a href="{{ url_for('services_construction') }}" class="dropdown-item">
+                            <div class="di-icon">🏗️</div>
+                            <div class="di-text"><strong>Build Sync</strong><span>Post-construction pipelines.</span></div>
+                        </a>
+                        <a href="{{ url_for('services_warehouse') }}" class="dropdown-item">
+                            <div class="di-icon">🏭</div>
+                            <div class="di-text"><strong>Facility Arc</strong><span>Industrial operational flow.</span></div>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Solutions Mega Menu -->
+                <div class="nav-dropdown">
+                    <a href="#">Solutions ▾</a>
+                    <div class="dropdown-content">
+                        <a href="#" class="dropdown-item">
+                            <div class="di-icon">🏥</div>
+                            <div class="di-text"><strong>Healthcare</strong><span>High-fidelity sanitation.</span></div>
+                        </a>
+                        <a href="#" class="dropdown-item">
+                            <div class="di-icon">🎓</div>
+                            <div class="di-text"><strong>Education</strong><span>Campus-wide connectivity.</span></div>
+                        </a>
+                        <a href="#" class="dropdown-item">
+                            <div class="di-icon">🏬</div>
+                            <div class="di-text"><strong>Retail</strong><span>Multi-site synchronization.</span></div>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Resources Mega Menu -->
+                <div class="nav-dropdown">
+                    <a href="#">Resources ▾</a>
+                    <div class="dropdown-content">
+                        <a href="{{ url_for('resources') }}" class="dropdown-item">
+                            <div class="di-icon">📖</div>
+                            <div class="di-text"><strong>Documentation</strong><span>SOP and QMS guides.</span></div>
+                        </a>
+                        <a href="{{ url_for('compliance') }}" class="dropdown-item">
+                            <div class="di-icon">⚖️</div>
+                            <div class="di-text"><strong>Trust Center</strong><span>Security and compliance.</span></div>
+                        </a>
+                        <a href="{{ url_for('privacy_policy') }}" class="dropdown-item">
+                            <div class="di-icon">🛡️</div>
+                            <div class="di-text"><strong>Privacy Policy</strong><span>Data governance protocols.</span></div>
+                        </a>
+                    </div>
+                </div>
+
+                <a href="{{ url_for('about') }}">Company</a>
+                
+                <div style="display: flex; gap: 1rem; align-items: center; margin-left: 1rem;">
+                    {% if current_user.is_authenticated %}
+                        <a href="{{ url_for('sigma_executive') }}" style="color: var(--text-primary); font-weight: 600;">Backoffice</a>
+                        <a href="{{ url_for('logout') }}" style="color: #ef4444; font-weight: 600;">Log Out</a>
+                    {% else %}
+                        <a href="{{ url_for('login') }}" style="color: var(--text-primary); font-weight: 600;">Log In</a>
+                        <a href="{{ url_for('calculator') }}" class="nav-cta">Free ROI Audit</a>
+                    {% endif %}
+                </div>
+            </nav>
+        </header>
+        {% endblock %}
+
+        <main>
+            {% with messages = get_flashed_messages() %}
+              {% if messages %}
+                {% for message in messages %}
+                  <div style="padding: 1rem; background: #fee2e2; color: #991b1b; border-radius: 8px; margin-bottom: 2rem;">{{ message }}</div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+            {% block content %}{% endblock %}
+        </main>
+
+        <footer>
+            <p>&copy; 2026 HWB Cleaning Services LLC. | <a href="{{ url_for('privacy_policy') }}">Privacy Policy</a></p>
+        </footer>
+    </div>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

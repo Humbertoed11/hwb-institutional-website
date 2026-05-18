@@ -1,0 +1,67 @@
+# HWB-IT-011: BabySOP High-Fidelity Azure Deployment Pipeline
+# This workflow automates the build and deployment of babysop.com to Azure App Service.
+
+name: Build and deploy Python app to Azure Web App - babysop-landing
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python version
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Create and activate virtual environment
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+
+      - name: Install dependencies
+        run: |
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          fi
+
+      - name: Package for deployment
+        run: zip release.zip ./* -r --exclude .git/* venv/*
+
+      - name: Upload artifact for deployment jobs
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-app
+          path: release.zip
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: 'Production'
+    
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: python-app
+
+      - name: Unzip artifact for deployment
+        run: unzip release.zip
+
+      - name: 'Deploy to Azure Web App'
+        uses: azure/webapps-deploy@v3
+        id: deploy-to-webapp
+        with:
+          # CEO ACTION REQUIRED: Replace 'babysop-landing' with the actual Azure App Name
+          app-name: 'babysop-landing'
+          slot-name: 'Production'
+          # CEO ACTION REQUIRED: Ensure AZUREAPPSERVICE_PUBLISHPROFILE is set in GitHub Secrets
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_BABYSOP }}

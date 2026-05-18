@@ -1,0 +1,17 @@
+<!-- 
+    Composable Milestone List Component
+    Params: title, items (list of milestone objects)
+-->
+<div class="admin-form-box">
+    <h3>{{ title }}</h3>
+    <div class="milestone-list">
+        {% for m in items %}
+        <div class="milestone-item {{ m.status }}">
+            <span class="m-status">
+                {% if m.status == 'complete' %}✓{% elif m.status == 'active' %}⏳{% else %}○{% endif %}
+            </span>
+            <div class="m-text"><strong>{{ m.name }}</strong><small>{{ m.description }}</small></div>
+        </div>
+        {% endfor %}
+    </div>
+</div>

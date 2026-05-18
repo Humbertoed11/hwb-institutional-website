@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}Commercial Cleaning & Sanitation Services | HWB Cleaning LLC{% endblock %}
+{% block head %}
+    <meta name="description" content="Explore our high-fidelity commercial cleaning services. From daycares and warehouses to corporate offices, HWB provides customized, data-driven sanitation protocols across DFW.">
+    <meta name="keywords" content="DFW cleaning services, industrial sanitation, commercial floor care, daycare cleaning, warehouse maintenance Plano">
+{% endblock %}
+
+{% block content %}
+<section class="services-view">
+    <div class="services-hero">
+        <h1>Specialized Janitorial Solutions</h1>
+        <p class="subtitle">From corporate headquarters to industrial logistics centers, we provide precision-driven cleaning management tailored to your facility's unique operational requirements.</p>
+    </div>
+
+    <div class="detailed-services">
+        <div class="service-category">
+            <div class="sc-header">
+                <div class="di-icon">🏢</div>
+                <h2>Office & Medical Management</h2>
+            </div>
+            <p>Maintain a professional, healthy environment for your team and clients with our ISO-standard janitorial services.</p>
+            <ul>
+                <li>High-Frequency Disinfection</li>
+                <li>Restroom Sanitization</li>
+                <li>Waste & Recycling Management</li>
+                <li>Carpet & Upholstery Care</li>
+            </ul>
+            <a href="{{ url_for('services_office') }}" class="btn-small" style="margin-top: 2rem;">Learn More</a>
+        </div>
+
+        <div class="service-category">
+            <div class="sc-header">
+                <div class="di-icon">🏗️</div>
+                <h2>Post-Construction Cleaning</h2>
+            </div>
+            <p>Transform construction sites into ready-for-business environments with our rigorous, phased cleaning process.</p>
+            <ul>
+                <li>Rough Clean Phasing</li>
+                <li>Final Detail Cleaning</li>
+                <li>Window & Glass Restoration</li>
+                <li>HEPA Dust Extraction</li>
+            </ul>
+            <a href="{{ url_for('services_construction') }}" class="btn-small" style="margin-top: 2rem;">Learn More</a>
+        </div>
+
+        <div class="service-category">
+            <div class="sc-header">
+                <div class="di-icon">🏭</div>
+                <h2>Industrial & Warehouse Care</h2>
+            </div>
+            <p>Optimize facility safety and longevity with specialized cleaning for large-scale industrial and logistics centers.</p>
+            <ul>
+                <li>Concrete Floor Scrubbing</li>
+                <li>Pressure Washing</li>
+                <li>High-Dust Removal</li>
+                <li>Deep-Degreasing Operations</li>
+            </ul>
+            <a href="{{ url_for('services_warehouse') }}" class="btn-small" style="margin-top: 2rem;">Learn More</a>
+        </div>
+    </div>
+
+    <div class="cta-banner">
+        <h2>Ready for SigmaFidelity™ Quality?</h2>
+        <p>Contact our strategic planning team today for a comprehensive facility assessment and precision quote.</p>
+        <a href="{{ url_for('calculator') }}" class="btn-primary">Calculate Potential Savings</a>
+    </div>
+</section>
+{% endblock %}

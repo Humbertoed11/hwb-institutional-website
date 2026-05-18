@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Industry Resources & Intel | SigmaFidelity™ Research{% endblock %}
+
+{% block content %}
+<section class="resources-view">
+    <div class="resources-hero">
+        <h1>High-Fidelity Industry Intel</h1>
+        <p class="subtitle">Access the same empirical research and regulatory data that drives HWB's SigmaFidelity™ operations.</p>
+    </div>
+
+    <div class="resource-grid">
+        <div class="resource-category">
+            <h3>Strategic Planning</h3>
+            <ul class="resource-links">
+                <a href="https://www.iso.org/standard/62085.html" target="_blank">
+                    <strong>ISO 9001:2015 Standards</strong>
+                    <span>Core quality management requirements.</span>
+                </a>
+                <a href="https://www.osha.gov/hazcom" target="_blank">
+                    <strong>OSHA HazCom Guide</strong>
+                    <span>Chemical safety and GHS protocols.</span>
+                </a>
+            </ul>
+        </div>
+        <div class="resource-category">
+            <h3>Regional Metrics</h3>
+            <ul class="resource-links">
+                <a href="https://www.twc.texas.gov/news/labor-market-information" target="_blank">
+                    <strong>Texas Labor Market Information</strong>
+                    <span>Real-time DFW employment and wage data.</span>
+                </a>
+                <a href="https://comptroller.texas.gov/transparency/open-data/" target="_blank">
+                    <strong>Texas Open Data Portal</strong>
+                    <span>Economic transparency and fiscal trends.</span>
+                </a>
+            </ul>
+        </div>
+        <div class="resource-category">
+            <h3>Technical Standards</h3>
+            <ul class="resource-links">
+                <a href="https://www.epa.gov/greenerproducts" target="_blank">
+                    <strong>EPA Greener Products</strong>
+                    <span>Verified environmentally-conscious chemicals.</span>
+                </a>
+                <a href="https://www.cdc.gov/hygiene/cleaning/facility.html" target="_blank">
+                    <strong>CDC Facility Cleaning</strong>
+                    <span>Public health and sanitization protocols.</span>
+                </a>
+            </ul>
+        </div>
+    </div>
+
+    <div class="industry-news">
+        <h2>SigmaFidelity™ News Cycle</h2>
+        <p class="subtitle">Live updates on North Texas construction and industrial facility milestones.</p>
+        <div class="news-grid">
+                    <div class="news-item">
+                        <span class="news-tag legal">LEGAL INTEL</span>
+                        <h4>The Final Verdict: Efficiency</h4>
+                        <p>Case studies on the failure of 'Self-Sufficiency' models.</p>
+                        <a href="https://hbr.org/" target="_blank">Read Article →</a>
+                    </div>
+                    <div class="news-item">
+                        <span class="news-tag osha">OSHA INTEL</span>
+                        <h4>2026 Audit Readiness Guide</h4>
+                        <p>Is your facility investigation-proof? The CSI checklist.</p>
+                        <a href="https://www.osha.gov/" target="_blank">Read Article →</a>
+                    </div>
+                    <div class="news-item">
+                        <span class="news-tag trend">TREND INTEL</span>
+                        <h4>Fidelity in Facility Data</h4>
+                        <p>The future of the SigmaFidelity™ standard in North Texas.</p>
+                        <a href="https://www.sigmafidelity.test/" target="_blank">Read Article →</a>
+                    </div></div>
+                <h4>{{ item.title }}</h4>
+                <p>{{ item.summary }}</p>
+                <a href="{{ item.link }}" target="_blank">Read Empirical Source →</a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock %}

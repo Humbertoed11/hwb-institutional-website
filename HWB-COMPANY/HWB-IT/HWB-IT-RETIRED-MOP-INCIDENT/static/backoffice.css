@@ -1,0 +1,129 @@
+:root {
+    --sidebar-width: 260px;
+    --control-rack-width: 220px;
+    --bo-bg: #f8fafc;
+    --bo-sidebar: #002147;
+    --bo-accent: #00A0FF;
+    --bo-border: #e2e8f0;
+    --bo-text: #1e293b;
+}
+
+.backoffice-container {
+    display: flex;
+    min-height: 100vh;
+    background: var(--bo-bg);
+    color: var(--bo-text);
+}
+
+/* Primary Sidebar (Far Left) */
+.bo-sidebar {
+    width: var(--sidebar-width);
+    background: var(--bo-sidebar);
+    color: white;
+    position: fixed;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 2rem 0;
+    z-index: 1000;
+    left: 0;
+}
+
+.bo-logo { padding: 0 2rem 3rem; text-align: center; }
+.bo-logo img { height: 32px; filter: brightness(0) invert(1); }
+
+.bo-nav { flex-grow: 1; }
+.bo-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 2rem;
+    color: rgba(255,255,255,0.6);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+    border-left: 4px solid transparent;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.bo-nav-item:hover { background: rgba(255,255,255,0.05); color: white; }
+.bo-nav-item.active { background: rgba(255,255,255,0.1); color: white; border-left-color: var(--bo-accent); }
+
+.bo-footer { padding: 2rem; border-top: 1px solid rgba(255,255,255,0.1); }
+
+/* Control Rack (Inner Left Sidebar) */
+.bo-control-rack {
+    width: var(--control-rack-width);
+    background: white;
+    border-right: 1px solid var(--bo-border);
+    position: fixed;
+    left: var(--sidebar-width);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 2rem 1.25rem;
+    z-index: 900;
+}
+
+.rack-title {
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 2rem;
+    padding: 0 0.5rem;
+}
+
+.rack-btn {
+    display: block;
+    width: 100%;
+    padding: 0.8rem 1rem;
+    margin-bottom: 0.75rem;
+    background: white;
+    border: 1px solid var(--bo-border);
+    border-radius: 8px;
+    color: var(--bo-text);
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-align: left;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.rack-btn:hover {
+    border-color: var(--bo-accent);
+    background: #f0f9ff;
+}
+
+.rack-btn.active {
+    background: var(--bo-accent);
+    color: white;
+    border-color: var(--bo-accent);
+}
+
+/* Main Content Area */
+.bo-main {
+    margin-left: calc(var(--sidebar-width) + var(--control-rack-width));
+    flex-grow: 1;
+    padding: 4rem;
+}
+
+/* Dashboard Elements */
+.bo-header { margin-bottom: 4rem; }
+.bo-title h1 { font-size: 2.25rem; font-weight: 900; letter-spacing: -0.03em; }
+.bo-card {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid var(--bo-border);
+    padding: 2.5rem;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    margin-bottom: 2rem;
+}
+.bo-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 2rem; margin-bottom: 4rem; }
+
+.badge { padding: 0.3rem 0.8rem; border-radius: 999px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; }
+.badge-active { background: #dcfce7; color: #166534; }
+.badge-pending { background: #fee2e2; color: #991b1b; }

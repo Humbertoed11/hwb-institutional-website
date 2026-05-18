@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}HWB Cleaning Services LLC | Precision Janitorial Management{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <h1>SigmaFidelity™ Cleaning Standards</h1>
+    <p class="subtitle">With over 20 years of expertise, we deliver precision-grade janitorial solutions for offices and commercial properties across the DFW metroplex.</p>
+    <div class="hero-btns">
+        <a href="{{ url_for('calculator') }}" class="btn-primary">Calculate Your Cost of Waste</a>
+        <a href="{{ url_for('services') }}" class="btn-secondary">Explore Services</a>
+    </div>
+</section>
+
+<section class="beliefs">
+    <div class="belief-card">
+        <div class="icon">🤝</div>
+        <h3>Respect</h3>
+        <p>A foundational commitment to our employees and clients, fostering a culture of mutual professional integrity.</p>
+    </div>
+    <div class="belief-card">
+        <div class="icon">🛡️</div>
+        <h3>Safety</h3>
+        <p>Rigorous OSHA-compliant training and equipment standards ensuring 100% risk-mitigated service delivery.</p>
+    </div>
+    <div class="belief-card">
+        <div class="icon">⚖️</div>
+        <h3>Fidelity</h3>
+        <p>Unwavering loyalty to our promises, backed by empirical data and transparent quality management.</p>
+    </div>
+</section>
+
+<section class="services-list">
+    <h2>Specialized Management Solutions</h2>
+    <div class="service-grid">
+        <a href="{{ url_for('services_office') }}" style="text-decoration: none; color: inherit;">
+            <div class="service-item">
+                <h4>Office Management</h4>
+                <p>High-fidelity janitorial services for corporate and medical office environments.</p>
+            </div>
+        </a>
+        <a href="{{ url_for('services_construction') }}" style="text-decoration: none; color: inherit;">
+            <div class="service-item">
+                <h4>Post-Construction</h4>
+                <p>Precision phased cleaning for large-scale hospitality and retail developments.</p>
+            </div>
+        </a>
+        <a href="{{ url_for('services_warehouse') }}" style="text-decoration: none; color: inherit;">
+            <div class="service-item">
+                <h4>Industrial Facilities</h4>
+                <p>Heavy-duty cleaning and floor restoration for warehouse and logistics centers.</p>
+            </div>
+        </a>
+    </div>
+</section>
+
+<section class="service-area" style="padding: 6rem 0; background: var(--white); text-align: center; border-top: 1px solid var(--border);">
+    <h2 style="margin-bottom: 3rem;">Serving the DFW Metroplex</h2>
+    <div style="display: flex; justify-content: center; gap: 4rem; flex-wrap: wrap; color: var(--text-secondary); font-weight: 600;">
+        <span>📍 Plano</span>
+        <span>📍 Dallas</span>
+        <span>📍 Richardson</span>
+        <span>📍 Frisco</span>
+        <span>📍 McKinney</span>
+        <span>📍 Fort Worth</span>
+    </div>
+    <p style="margin-top: 3rem; color: var(--text-secondary); max-width: 700px; margin-left: auto; margin-right: auto;">
+        Headquartered in Plano, Texas, HWB Cleaning Services LLC provides localized, rapid-response janitorial management for corporate, industrial, and construction facilities throughout North Texas.
+    </p>
+</section>
+{% endblock %}

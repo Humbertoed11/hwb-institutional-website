@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Operational Compliance | OSHA & GHS Standards | HWB Cleaning{% endblock %}
+{% block head %}
+    <meta name="description" content="Review HWB Cleaning's strict adherence to OSHA, GHS, and ISO 9001 standards. Access our transparent chemical SDS logs and incident reporting protocols. Safety is our priority.">
+    <meta name="keywords" content="Cleaning compliance OSHA, GHS safety data sheets, ISO 9001 cleaning standards, safe janitorial practices DFW">
+{% endblock %}
+
+{% block content %}
+<section class="compliance-view">
+    <div class="compliance-hero">
+        <h1>Safety & Regulatory Compliance</h1>
+        <p class="subtitle">Every HWB operation is built on a foundation of rigorous OSHA standards, GHS compliance, and institutional safety management.</p>
+    </div>
+
+    <div class="compliance-grid">
+        <div class="osha-box">
+            <div class="box-header">
+                <img src="https://www.osha.gov/themes/custom/osha/logo.svg" alt="OSHA" class="osha-logo-small">
+                <h2>OSHA Standards Implementation</h2>
+            </div>
+            <p>HWB Cleaning Services LLC strictly adheres to the <strong>Occupational Safety and Health Act</strong>. Our team is trained on the Hazard Communication Standard (HazCom), ensuring every employee understands chemical risks and safety protocols.</p>
+            <div class="pdf-viewer">
+                <iframe src="{{ url_for('static', filename='sds_files/zeppetshampoo.pdf') }}" width="100%" height="400px" style="border: none;"></iframe>
+            </div>
+        </div>
+
+        <div class="sds-box">
+            <div class="box-header">
+                <div class="di-icon">🧪</div>
+                <h2>Chemical Inventory (GHS)</h2>
+            </div>
+            <p>Our centralized Safety Data Sheet (SDS) repository provides immediate access to critical chemical handling and first-aid information.</p>
+            <div class="sds-search">
+                <input type="text" id="sdsSearch" placeholder="Search Chemical Inventory..." onkeyup="filterSDS()">
+            </div>
+            <div class="sds-results" id="sdsResults">
+                {% for chemical in chemicals %}
+                <div class="sds-item">
+                    <div class="sds-info">
+                        <strong>{{ chemical.name }}</strong>
+                        <span>{{ chemical.product_id }} | {{ chemical.intended_use }}</span>
+                    </div>
+                    <div class="hazard-tag {{ chemical.hazard_level.lower() }}">{{ chemical.hazard_level }}</div>
+                    <a href="{{ chemical.sds_link }}" target="_blank" class="btn-mini">View SDS</a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+function filterSDS() {
+    let input = document.getElementById('sdsSearch');
+    let filter = input.value.toUpperCase();
+    let results = document.getElementById('sdsResults');
+    let items = results.getElementsByClassName('sds-item');
+
+    for (let i = 0; i < items.length; i++) {
+        let text = items[i].innerText;
+        if (text.toUpperCase().indexOf(filter) > -1) {
+            items[i].style.display = "";
+        } else {
+            items[i].style.display = "none";
+        }
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}BabySOP | The Business Birth Certificate & Infrastructure Hub{% endblock %}
+{% block head %}
+    <meta name="description" content="Turn your startup into an institution with BabySOP. Download our foundational Standard Operating Procedures (SOPs) designed specifically for childcare and early-stage businesses.">
+    <meta name="keywords" content="Daycare SOPs, childcare business systems, startup operational procedures, BabySOP, daycare management guides">
+{% endblock %}
+
+{% block content %}
+<!-- BabySOP Specific Hero -->
+<section class="hero babysop-hero" style="background: radial-gradient(circle at center, rgba(59, 130, 246, 0.1), transparent 600px), url('/static/HWB-WEB Fidelity Blueprint.svg'); background-size: cover; background-position: center; padding: 12rem 0;">
+    <div style="background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); padding: 4rem; display: inline-block; border-radius: 24px; border: 1px solid var(--border); box-shadow: 0 20px 50px rgba(0,0,0,0.1);">
+        <h1 style="color: var(--text-primary); margin-bottom: 1rem;">The Business Birth Certificate</h1>
+        <p class="subtitle" style="max-width: 600px; margin: 0 auto 3rem;">Don't just start a business. Give it life with instant infrastructure. From SOPs to policy manuals, we provide the skeletal system for your growth.</p>
+        <div class="hero-btns">
+            <a href="{{ url_for('babysop_intake') }}" class="btn-primary" style="background: #0f172a; border-color: #0f172a;">Generate Baby Care SOP</a>
+            <a href="#library" class="btn-secondary">Explore Startup Library</a>
+        </div>
+    </div>
+</section>
+
+<!-- The "Growth Gap" Section -->
+<section style="padding: 8rem 0; text-align: center; background: #fff;">
+    <div class="container">
+        <h2 style="font-size: 2.5rem; margin-bottom: 4rem;">Bridge the "Identity Gap"</h2>
+        <div class="beliefs" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+            <div class="belief-card">
+                <div class="icon">📜</div>
+                <h3>SOP Templates</h3>
+                <p>Plug-and-play Standard Operating Procedures for HR, Accounting, and Operations. Build like a Black Belt from Day 1.</p>
+            </div>
+            <div class="belief-card">
+                <div class="icon">🛠️</div>
+                <h3>Resource Hub</h3>
+                <p>Verified vendor lists, municipal permit guides, and software kits curated for the "Baby Business" budget.</p>
+            </div>
+            <div class="belief-card">
+                <div class="icon">👕</div>
+                <h3>Founder Merch</h3>
+                <p>Look the part of a system-driven leader. Professional apparel and tools designed for high-fidelity performance.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- NEW: The Silver Fox & Frustration Relief Section -->
+<section style="padding: 8rem 0; background: #fff; border-top: 1px solid var(--border);">
+    <div class="container">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: stretch;">
+            <!-- Silver Fox Network -->
+            <div style="background: #f1f5f9; padding: 4rem; border-radius: 24px; border: 1px solid var(--border);">
+                <div style="font-size: 3rem; margin-bottom: 1.5rem;">🦊</div>
+                <h2 style="margin-bottom: 1.5rem;">Access the Silver Fox Pool</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 2rem;">Stop guessing. Start asking. Our "Silver Foxes" are a pool of retired executives, business owners, and teachers ready to audit your skeletal system.</p>
+                <a href="#" class="btn-primary" style="background: #0f172a; border-color: #0f172a;">Register as a Silver Fox</a>
+            </div>
+            
+            <!-- Frustration Wash -->
+            <div style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); padding: 4rem; border-radius: 24px; color: white; position: relative; overflow: hidden;">
+                <div style="font-size: 3rem; margin-bottom: 1.5rem;">🧼</div>
+                <h2 style="margin-bottom: 1.5rem; color: white;">The "Room-Clean" Poka-Yoke</h2>
+                <p style="opacity: 0.9; margin-bottom: 2rem;">Is your 6-year-old's room a "Continuous Defect"? Stop the yelling. Use our <strong>Parody SOP Generator</strong> to create a professional cleaning standard for their bedroom. Print it, fridge it, and audit it.</p>
+                <a href="{{ url_for('babysop_intake') }}?type=parody" class="btn-primary" style="background: white; color: var(--accent); border-color: white;">Generate Room-Clean SOP</a>
+            </div>
+
+            <!-- Spousal Fidelity (Honey-Do) -->
+            <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 4rem; border-radius: 24px; color: white; position: relative; overflow: hidden; margin-top: 4rem; grid-column: span 2;">
+                <div style="font-size: 3rem; margin-bottom: 1.5rem;">💍</div>
+                <h2 style="margin-bottom: 1.5rem; color: white;">The "Honey-Do" Fidelity Bridge</h2>
+                <p style="opacity: 0.9; margin-bottom: 2rem;">End the "Communication Defect" at home. Create high-fidelity SOPs for the most complex domestic tasks—from "How to change a diaper" to the weekly "Honey-Do" list. Standardize the result, eliminate the friction.</p>
+                <a href="{{ url_for('babysop_intake') }}?type=spousal" class="btn-primary" style="background: var(--accent); border-color: var(--accent);">Generate Domestic SOP</a>
+            </div>
+        </div>
+
+        <!-- NEW: SOP In A Can (Sigma-Spray) -->
+        <div style="margin-top: 4rem; background: #0f172a; padding: 4rem; border-radius: 24px; color: white; display: flex; align-items: center; gap: 4rem; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 300px;">
+                <div style="font-size: 3rem; margin-bottom: 1.5rem;">🥫</div>
+                <h2 style="margin-bottom: 1.5rem; color: white;">Sigma-Spray™: SOP in a Can</h2>
+                <p style="opacity: 0.8; line-height: 1.8; margin-bottom: 2rem;">Is "Process Fog" slowing down your growth? Deploy the skeletal system instantly. Our premium canister contains a metallic USB-C Master Key with the full HWB-BABYSOP library, a waterproof Birth Certificate, and Fidelity Fuel coffee to power your first audit.</p>
+                <a href="#" class="btn-primary" style="background: var(--accent); border-color: var(--accent);">Deploy the Canister</a>
+            </div>
+            <div style="flex: 1; min-width: 300px; background: rgba(255,255,255,0.05); height: 300px; border-radius: 16px; border: 2px dashed rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center;">
+                <span style="opacity: 0.3;">[Visual: High-End Matte Slate Canister]</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- The "Birth-to-Growth" Manual Section -->
+<section id="library" style="padding: 8rem 0; background: var(--bg-color); border-top: 1px solid var(--border);">
+    <div class="container" style="max-width: 1000px;">
+        <div style="display: flex; gap: 4rem; align-items: center; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 300px;">
+                <h2 style="margin-bottom: 2rem;">The "Baby Manual" Library</h2>
+                <p style="color: var(--text-secondary); line-height: 1.8; margin-bottom: 2rem;">Stop Mopping with Payroll before you even hire. Our library provides the foundational policies that 90% of startups forget until it's too late. <strong>HWB-BSOP-001</strong> is your starting point—the legal and philosophical kernel of your brand.</p>
+                <ul style="list-style: none; padding: 0;">
+                    <li style="margin-bottom: 1rem; font-weight: 600; color: var(--accent);">✓ Legal Identity & EIN Filing SOP</li>
+                    <li style="margin-bottom: 1rem; font-weight: 600; color: var(--accent);">✓ Zero-Day Poka-Yoke Quality Manual</li>
+                    <li style="margin-bottom: 1rem; font-weight: 600; color: var(--accent);">✓ Founder Resource Index</li>
+                </ul>
+            </div>
+            <div style="flex: 1; min-width: 300px; background: var(--white); padding: 3rem; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.05);">
+                <h4 style="margin-bottom: 1.5rem;">Coming Soon: HWB-Merch</h4>
+                <p style="font-size: 0.9rem; color: var(--text-secondary);">Wear the Standard. Our first drop of "System-Driven" apparel is in final audit.</p>
+                <div style="margin-top: 2rem; background: var(--bg-color); height: 200px; border-radius: 8px; display: flex; align-items: center; justify-content: center; border: 2px dashed var(--border);">
+                    <span style="color: var(--text-secondary); opacity: 0.5;">Preview: [SigmaFidelity™ T-Shirt]</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Call to Action -->
+<section style="padding: 10rem 0; text-align: center; background: #fff; border-top: 1px solid var(--border);">
+    <div class="container">
+        <h2 style="font-size: 2.5rem; margin-bottom: 4rem;">Select Your Path to Fidelity</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 3rem; max-width: 900px; margin: 0 auto;">
+            <!-- Business Plan -->
+            <div style="padding: 4rem; border-radius: 24px; border: 2px solid var(--border); text-align: left;">
+                <h3 style="margin-bottom: 1rem;">Business Founder</h3>
+                <div style="font-size: 3rem; font-weight: 800; margin-bottom: 2rem;">$49 <small style="font-size: 1rem; font-weight: 400; color: var(--text-secondary);">/month</small></div>
+                <ul style="list-style: none; padding: 0; margin-bottom: 3rem; line-height: 2;">
+                    <li>✓ Complete Baby SOP Library</li>
+                    <li>✓ Access to Silver Fox Pool</li>
+                    <li>✓ Registered Project ID</li>
+                    <li>✓ Merch & Tactical Kit Discounts</li>
+                </ul>
+                <a href="#" class="btn-primary" style="display: block; text-align: center;">Start My Subscription</a>
+            </div>
+            
+            <!-- School Plan -->
+            <div style="padding: 4rem; border-radius: 24px; border: 2px solid var(--accent); text-align: left; background: rgba(37, 99, 235, 0.02); position: relative;">
+                <span style="position: absolute; top: 1.5rem; right: 1.5rem; background: var(--accent); color: white; padding: 0.5rem 1rem; border-radius: 100px; font-size: 0.8rem; font-weight: 700;">FOR SCHOOLS</span>
+                <h3 style="margin-bottom: 1rem;">High School Registry</h3>
+                <div style="font-size: 3rem; font-weight: 800; margin-bottom: 2rem;">FREE</div>
+                <ul style="list-style: none; padding: 0; margin-bottom: 3rem; line-height: 2;">
+                    <li>✓ Future Project Registration</li>
+                    <li>✓ Free Sigma-Junior™ Course</li>
+                    <li>✓ Student Fidelity ID Cards</li>
+                    <li>✓ Classroom Resource Hub</li>
+                </ul>
+                <a href="#" class="btn-secondary" style="display: block; text-align: center; border-color: var(--accent); color: var(--accent);">Register Your School</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section style="padding: 10rem 0; text-align: center; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: var(--white);">
+    <h2 style="margin-bottom: 2rem; color: #fff;">Build Your Legacy on Data, Not Luck.</h2>
+    <p style="margin-bottom: 4rem; opacity: 0.8; max-width: 600px; margin-left: auto; margin-right: auto;">Join the 5% of startups that survive their first three years by building a system-driven organization today.</p>
+    <a href="#" class="btn-primary" style="background: var(--accent); color: white; padding: 1.5rem 3rem;">Download the Baby Infrastructure Kit</a>
+</section>
+{% endblock %}

@@ -71,10 +71,6 @@
                  <span class="title" style="color: var(--brand);">Email Outbox</span>
                  <span class="desc">Approve and send institutional communications.</span>
              </a>
-             <a href="{{ url_for('concept_lab') }}" class="mega-option">
-                 <span class="title" style="color: var(--brand);">Concept Lab (R&D)</span>
-                 <span class="desc">Incubator for next-gen automation and experimental SigmaFidelity™ workflows.</span>
-             </a>
              {% else %}
              <p style="font-size: 0.75rem; color: var(--slate-400); padding: 1rem; line-height: 1.4;">Executive clearance required for this module.</p>
              {% endif %}
@@ -162,7 +158,6 @@
  <a href="{{ url_for('admin_operations', view='leads') }}" class="sub-link">Leads List</a>
  <a href="{{ url_for('admin_operations', view='accounts') }}" class="sub-link">Active Accounts</a>
  <a href="{{ url_for('compliance') }}" class="sub-link">System Rules</a>
- <a href="{{ url_for('concept_lab') }}" class="sub-link">Concept Lab (R&D)</a>
  <a href="{{ url_for('logout') }}" class="sub-link" style="color: #ef4444;">Log Out</a>
  {% else %}
  <div style="font-weight: 900; color: var(--hwb-blue); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: -1rem;">Our Services</div>

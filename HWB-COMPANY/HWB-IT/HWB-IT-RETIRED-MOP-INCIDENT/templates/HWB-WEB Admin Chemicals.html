@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SigmaFidelity™ | Inventory Admin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='HWB-WEB Style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="admin-body">
+    <div class="container">
+        <header>
+            <div class="logo">Sigma<span>Admin</span></div>
+            <nav>
+                <a href="/">Public Site</a>
+                <a href="/compliance">View Compliance Hub</a>
+            </nav>
+        </header>
+
+        <main class="admin-view">
+            <h1>Chemical Inventory Management</h1>
+            <p class="subtitle">System entry for SigmaFidelity™ compliant cleaning agents and SDS documentation.</p>
+
+            <section class="admin-grid">
+                <!-- Entry Form -->
+                <div class="admin-form-box">
+                    <h3>Register New Product</h3>
+                    <form action="/admin/chemicals" method="POST" class="calc-form">
+                        <div class="form-group">
+                            <label>Product Name</label>
+                            <input type="text" name="name" placeholder="e.g., Ultra Disinfectant G2" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Internal Product ID (Optional)</label>
+                            <input type="text" name="product_id" placeholder="HWB-SDS-000">
+                        </div>
+                        <div class="form-group">
+                            <label>Hazard Level</label>
+                            <select name="hazard_level" class="form-select">
+                                <option value="Minimal">Minimal</option>
+                                <option value="Low">Low</option>
+                                <option value="Moderate">Moderate</option>
+                                <option value="High">High</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Primary Use</label>
+                            <input type="text" name="intended_use" placeholder="e.g., Food surface sanitization">
+                        </div>
+                        <div class="form-group">
+                            <label>SDS Link (Direct URL or Local Path)</label>
+                            <input type="text" name="sds_link" placeholder="/static/sds_files/filename.pdf" required>
+                        </div>
+                        <button type="submit" class="btn-primary">Add to Inventory</button>
+                    </form>
+                </div>
+
+                <!-- Current Inventory Table -->
+                <div class="admin-list-box">
+                    <h3>Current Repository</h3>
+                    <div class="inventory-table-container">
+                        <table class="inventory-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Hazard</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for chemical in chemicals %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ chemical.name }}</strong><br>
+                                        <small>{{ chemical.intended_use }}</small>
+                                    </td>
+                                    <td><span class="hazard-tag {{ chemical.hazard_level.lower() }}">{{ chemical.hazard_level }}</span></td>
+                                    <td>
+                                        <a href="{{ chemical.sds_link }}" target="_blank" class="table-link">View SDS</a>
+                                        <a href="/admin/chemicals/delete/{{ chemical.id }}" class="table-link delete" onclick="return confirm('Are you sure?')">Delete</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+</html>

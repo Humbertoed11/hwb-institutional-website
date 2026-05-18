@@ -1,0 +1,43 @@
+MCP issues detected. Run /mcp list for status.I will now generate the printable BabySOP poster and the corresponding image generation prompt, incorporating the required 3rd person perspective and the mandatory Document Control block.
+
+### OUTPUT SECTION 1 — BABYSOP
+
+---
+
+**DOCUMENT CONTROL**
+**Document ID:** HWB-BABYSOP-HOME-001
+**Version:** 1.0
+**Status:** Approved
+**Effective Date:** 2026-03-12
+**Approved By:** Humberto Dominguez (CEO)
+
+---
+
+**Header:** HWB-BABYSOP-HOME | Version 1.0 | Date: Thursday, March 12, 2026
+**Title:** "Santo Bazooka's Water the Plants Mission"
+
+**🌟 THE BIG GOAL**
+The purpose of this mission is to provide thirsty plant friends with water so they remain big, green, and happy.
+
+**📝 STEPS TO SUCCESS**
+1. 💧 The magic watering can is filled half-way to ensure it stays light and easy to carry.
+2. 🚶‍♂️ A careful walking pace is maintained (no running!) while traveling to each plant.
+3. 🪴 Water is poured gently around the base of the stems, keeping the leaves dry.
+4. 🛑 The pouring stops once the soil looks dark and damp, similar to a chocolate cake.
+5. 🧺 The watering can is returned to its special home immediately after the mission.
+
+**🌈 THE GOLDEN RULE PROMISE**
+"Kind hands and gentle water make the whole garden smile!"
+
+**Pledge:**
+"The Master Operator promises to follow this special recipe for a great day!"
+
+**Signatures:**
+Master Operator: ____________________ (Santo Bazooka)
+Chief Auditor: ____________________ (Parent)
+
+---
+
+### OUTPUT SECTION 2 — IMAGE PROMPT
+
+A high-fidelity, photorealistic close-up of a modern family kitchen featuring a sleek stainless steel refrigerator. Attached to the fridge is a vibrant, colorful children's "BabySOP" poster titled "Santo Bazooka's Water the Plants Mission." The poster design uses bright primary colors, playful bold typography, and friendly icons such as smiling suns, green leaves, and blue raindrops. A decorative magnet labeled "BABYSOP" holds the document in place, surrounded by charming child-drawn sketches. The scene is illuminated with warm, cinematic Pixar-style lighting, creating a soft glow. The shot uses a shallow depth of field to emphasize the texture of the paper and the metallic finish of the refrigerator. photorealistic, 4k, Pixar warmth, shallow depth of field.

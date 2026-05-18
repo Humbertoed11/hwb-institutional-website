@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SigmaFidelity™ | Metrics Admin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='HWB-WEB Style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="admin-body">
+    <div class="container">
+        <header>
+            <div class="logo">Sigma<span>Metrics</span></div>
+            <nav>
+                <a href="/admin/dashboard">View Dashboard</a>
+                <a href="/admin/chemicals">Inventory</a>
+            </nav>
+        </header>
+
+        <main class="admin-view">
+            <h1>Strategic Metric Input</h1>
+            <p class="subtitle">Feeding live intelligence into the S4/IEE Dashboard.</p>
+
+            <div class="admin-grid">
+                <!-- Milestone Input -->
+                <div class="admin-form-box">
+                    <h3>Update Phase Milestone</h3>
+                    <form action="/admin/metrics" method="POST" class="calc-form">
+                        <input type="hidden" name="action" value="add_milestone">
+                        <div class="form-group">
+                            <label>Methodology</label>
+                            <select name="category" class="form-select">
+                                <option value="DMAIC">DMAIC (Operational Improvement)</option>
+                                <option value="DMADV">DMADV (New Feature Design)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Phase Name</label>
+                            <input type="text" name="name" placeholder="e.g., Analyze Phase" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Status</label>
+                            <select name="status" class="form-select">
+                                <option value="complete">Complete</option>
+                                <option value="active">Active</option>
+                                <option value="pending">Pending</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Description</label>
+                            <input type="text" name="description" placeholder="e.g., LinkedIn Series Launch">
+                        </div>
+                        <button type="submit" class="btn-primary">Update Milestone</button>
+                    </form>
+                </div>
+
+                <!-- COPQ Input -->
+                <div class="admin-form-box">
+                    <h3>Log Process Defect (COPQ)</h3>
+                    <form action="/admin/metrics" method="POST" class="calc-form">
+                        <input type="hidden" name="action" value="add_defect">
+                        <div class="form-group">
+                            <label>Defect Type</label>
+                            <input type="text" name="defect_type" placeholder="e.g., Rework on Scraper" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Impact (Time/Cost)</label>
+                            <input type="text" name="impact" placeholder="e.g., 2 Hours">
+                        </div>
+                        <div class="form-group">
+                            <label>Status</label>
+                            <select name="status" class="form-select">
+                                <option value="OPEN">OPEN</option>
+                                <option value="RESOLVED">RESOLVED</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn-primary">Log Defect</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="admin-grid" style="margin-top: 2rem;">
+                <!-- KPIV Update -->
+                <div class="admin-form-box" style="grid-column: span 2;">
+                    <h3>Update KPIVs (Key Process Input Variables)</h3>
+                    <form action="/admin/metrics" method="POST" class="calc-form" style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; align-items: end;">
+                        <input type="hidden" name="action" value="update_kpiv">
+                        <div class="form-group">
+                            <label>Metric Name</label>
+                            <input type="text" name="metric_name" placeholder="e.g., Lead Fidelity" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Current Value</label>
+                            <input type="text" name="value" placeholder="e.g., 99%" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Target</label>
+                            <input type="text" name="target" placeholder="e.g., 100%" required>
+                        </div>
+                        <button type="submit" class="btn-primary" style="grid-column: span 3;">Push KPIV Update</button>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

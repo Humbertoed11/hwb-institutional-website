@@ -1,97 +1,184 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-8BX5Q7THYR"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-8BX5Q7THYR');
-    </script>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}HWB Cleaning Services LLC | DFW Metroplex & Statewide Texas Commercial Cleaning{% endblock %}</title>
-    
-    <!-- Institutional Styling -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='HWB-WEB Style.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    {% block head %}{% endblock %}
+ <script type="application/ld+json">
+ {
+ "@context": "https://schema.org",
+ "@type": "LocalBusiness",
+ "name": "HWB Cleaning Services LLC",
+ "image": "https://www.hwbcleaning.com/static/logo_standard.png",
+ "@id": "https://www.hwbcleaning.com",
+ "url": "https://www.hwbcleaning.com",
+ "telephone": "(214)-586-0257",
+ "address": {
+ "@type": "PostalAddress",
+ "streetAddress": "Plano",
+ "addressLocality": "Plano",
+ "addressRegion": "TX",
+ "postalCode": "75024",
+ "addressCountry": "US"
+ },
+ "geo": {
+ "@type": "GeoCoordinates",
+ "latitude": 33.0198,
+ "longitude": -96.6989
+ },
+ "openingHoursSpecification": {
+ "@type": "OpeningHoursSpecification",
+ "dayOfWeek": [
+ "Monday",
+ "Tuesday",
+ "Wednesday",
+ "Thursday",
+ "Friday",
+ "Saturday",
+ "Sunday"
+ ],
+ "opens": "00:00",
+ "closes": "23:59"
+ },
+ "sameAs": [
+ "https://www.linkedin.com/company/hwb-cleaning-services-llc/",
+ "https://www.facebook.com/cleaningdfw",
+ "https://www.youtube.com/@hwbcleaning"
+ ]
+ }
+ </script>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>{% block title %}HWB Cleaning Services LLC | North Texas Commercial Cleaning Experts{% endblock %}</title>
+ 
+ <!-- SigmaFidelity™ SEO Hardening -->
+ <link rel="canonical" href="https://www.hwbcleaning.com{{ request.path }}">
+ 
+ <!-- Social Visibility (OG Tags) -->
+ <meta property="og:title" content="HWB Cleaning Services LLC | DFW Commercial Cleaning">
+ <meta property="og:description" content="ISO 9001-compliant janitorial excellence in Plano & DFW. Proper Training + The Right Tools + Respect = The SigmaQuality Clean.">
+ <meta property="og:image" content="https://www.hwbcleaning.com/static/logo_standard.png">
+ <meta property="og:url" content="https://www.hwbcleaning.com{{ request.path }}">
+ <meta property="og:type" content="website">
+ <meta name="twitter:card" content="summary_large_image">
+
+ <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+ <!-- 
+ HWB-QMS-7.2 Base Template v2.1
+ Professional Cleaning Standards Promise: All content reflects real-world commercial operations.
+ Approved By: Humberto Dominguez (CEO)
+ -->
+ <link rel="stylesheet" href="{{ url_for('static', filename='HWB-WEB Style.css') }}">
+ <link rel="preconnect" href="https://fonts.googleapis.com">
+ <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+ <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+ 
+ {% if config['GA_MEASUREMENT_ID'] %}
+ <!-- Google Reports -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id={{ config['GA_MEASUREMENT_ID'] }}"></script>
+ <script>
+ window.dataLayer = window.dataLayer || [];
+ function gtag(){dataLayer.push(arguments);}
+ gtag('js', new Date());
+ gtag('config', "{{ config['GA_MEASUREMENT_ID'] }}");
+ </script>
+ {% endif %}
+ {% block head %}{% endblock %}
 </head>
-<body class="app-container">
+<body>
 
-    <!-- Official SigmaFidelity™ Navigation Shell -->
-    {% include "components/mega_bar.html" %}
+ {% if request.endpoint != 'login' %}
+ {% include "components/mega_bar.html" %}
+ {% endif %}
 
-    <main class="main-content">
-        {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                <div class="flash-container" style="padding: 1rem; max-width: 1200px; margin: 0 auto;">
-                    {% for message in messages %}
-                        <div style="padding: 1rem; background: #fee2e2; color: #991b1b; border-radius: 8px; margin-bottom: 1rem; font-weight: 600;">
-                            {{ message }}
-                        </div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        {% endwith %}
-        
-        {% block content %}{% endblock %}
-    </main>
+ <main class="main-content">
+ {% with messages = get_flashed_messages() %}
+ {% if messages %}
+ <div class="flash-container" style="padding: 20px 25px; background-color: #e2f3f5; color: #00796b;">
+ {% for message in messages %}
+ <p>{{ message }}</p>
+ {% endfor %}
+ </div>
+ {% endif %}
+ {% endwith %}
+ 
+ {% block content %}{% endblock %}
+ </main>
 
-    <!-- Institutional Footer (Synchronized) -->
-    <footer class="site-footer">
-        <div class="content-wrapper">
-            <div class="footer-container">
-                <div class="footer-brand">
-                    <img src="{{ url_for('static', filename='logo_standard.png') }}" alt="HWB Cleaning Official Logo" class="footer-logo-large">
-                    <p class="footer-formula">Proper Training + The Right Tools + Respect for Your Space = The SigmaQuality Clean</p>
-                    <div class="social-links">
-                        <a href="https://www.linkedin.com/company/hwb-cleaning-services-llc/" target="_blank" class="social-icon"><i class="fa-brands fa-linkedin"></i></a>
-                        <a href="https://www.facebook.com/cleaningdfw" target="_blank" class="social-icon"><i class="fa-brands fa-facebook"></i></a>
-                    </div>
-                </div>
-                <div class="footer-column">
-                    <h4>Core Services</h4>
-                    <ul class="footer-links">
-                        <li><a href="{{ url_for('services_janitorial') }}">Janitorial Services</a></li>
-                        <li><a href="{{ url_for('services_commercial') }}">Commercial Cleaning</a></li>
-                        <li><a href="{{ url_for('services_industrial') }}">Industrial Cleaning</a></li>
-                        <li><a href="{{ url_for('services_construction') }}">Construction Cleanup</a></li>
-                    </ul>
-                </div>
-                <div class="footer-column">
-                    <h4>Company</h4>
-                    <ul class="footer-links">
-                        <li><a href="{{ url_for('about') }}">About HWB</a></li>
-                        <li><a href="{{ url_for('compliance') }}">Safety & Compliance</a></li>
-                        <li><a href="{{ url_for('get_quote') }}">Request a Proposal</a></li>
-                        <li><a href="{{ url_for('login') }}">Employee Login</a></li>
-                    </ul>
-                </div>
-                <div class="footer-column">
-                    <h4>Contact</h4>
-                    <div class="footer-contact-info">
-                        Plano, Texas
-                        <strong>(214)-586-0257</strong>
-                        sales@hwbcleaning.com
-                    </div>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <div class="footer-bottom-container">
-                    <span>&copy; 2026 HWB Cleaning Services LLC. All Rights Reserved.</span>
-                    <div class="footer-legal">
-                        <a href="{{ url_for('privacy_policy') }}">Privacy Policy</a>
-                        <a href="{{ url_for('get_quote') }}">Proposal Request</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </footer>
+ {% if request.endpoint != 'login' %}
+ <!-- 2026 Company Operations Dashboard Footer -->
+ <footer class="site-footer">
+ <div class="content-wrapper">
+ <div class="footer-container">
+ <!-- Column 1: Authority Anchor -->
+ <div class="footer-brand">
+ <a href="/">
+ <img src="{{ url_for('static', filename='logo_standard.png') }}" alt="HWB Cleaning Services LLC" class="footer-logo-large">
+ </a>
+ <div class="footer-formula">
+ <strong>The HWB Quality Formula</strong><br>
+ Proper Training + The Right Tools + Respect for Your Space = The SigmaQuality Clean.
+ </div>
+ </div>
 
-    {% block scripts %}{% endblock %}
+ <!-- Column 2: Services -->
+ <div class="footer-column">
+ <h4>Services</h4>
+ <ul class="footer-links">
+ <li><a href="{{ url_for('services_janitorial') }}">Janitorial Services</a></li>
+ <li><a href="{{ url_for('services_commercial') }}">Commercial Cleaning</a></li>
+ <li><a href="{{ url_for('services_industrial') }}">Industrial and Warehouse</a></li>
+ <li><a href="{{ url_for('services_construction') }}">Construction Cleaning</a></li>
+ </ul>
+ </div>
+
+ <!-- Column 3: Company Management -->
+ <div class="footer-column">
+ <h4>Company</h4>
+ <ul class="footer-links">
+ <li><a href="{{ url_for('about') }}">About HWB</a></li>
+ <li><a href="{{ url_for('compliance') }}">Cleaning Standards</a></li>
+ <li><a href="{{ url_for('ehsq') }}">EHSQ Policy</a></li>
+ {% if current_user.is_authenticated %}
+ <li><a href="{{ url_for('logout') }}">Log Out ({{ current_user.username }})</a></li>
+ {% else %}
+ <li><a href="{{ url_for('login') }}">Client Login</a></li>
+ {% endif %}
+ </ul>
+ </div>
+
+ <!-- Column 4: Quick Connect -->
+ <div class="footer-column">
+ <h4>Quick Connect</h4>
+ <div class="footer-contact-info">
+ Plano, Texas<br>
+ Serving DFW & Statewide
+ <strong>(214)-586-0257</strong>
+ <a href="mailto:sales@hwbcleaning.com" style="color: inherit; text-decoration: none;">sales@hwbcleaning.com</a>
+ </div>
+ <div class="social-links">
+ <a href="https://www.linkedin.com/company/hwb-cleaning-services-llc/" target="_blank" class="social-icon"><i class="fa-brands fa-linkedin"></i></a>
+ <a href="https://www.facebook.com/cleaningdfw" target="_blank" class="social-icon"><i class="fa-brands fa-facebook"></i></a>
+ <a href="https://www.youtube.com/@hwbcleaning" target="_blank" class="social-icon"><i class="fa-brands fa-youtube"></i></a>
+ </div>
+ </div>
+ </div>
+ </div>
+
+ <div class="footer-bottom">
+ <div class="content-wrapper">
+ <div class="footer-bottom-container">
+ <div class="footer-copyright">
+ &copy; 2026 HWB Cleaning Services LLC. Approved by Humberto Dominguez, CEO.
+ </div>
+ <div class="footer-legal">
+ <a href="{{ url_for('privacy_policy') }}">Privacy Policy</a>
+ <a href="{{ url_for('get_quote') }}">Contact Support</a>
+ </div>
+ </div>
+ </div>
+ </div>
+ </footer>
+ {% endif %}
+
+ {% block scripts %}{% endblock %}
 </body>
 </html>

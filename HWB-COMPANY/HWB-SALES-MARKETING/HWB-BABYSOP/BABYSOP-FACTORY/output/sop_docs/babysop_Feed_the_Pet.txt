@@ -1,0 +1,33 @@
+MCP issues detected. Run /mcp list for status.The following documentation is prepared for the SigmaFidelity™ Home Architect project, focusing on the "Feed the Pet" mission for Santo Bazooka.
+
+### OUTPUT SECTION 1 — BABYSOP
+
+---
+**HWB-BABYSOP-HOME | Version 1.0 | Date: March 12, 2026**
+# Santo Bazooka's Feed the Pet Mission
+
+### 🌟 MY BIG GOAL
+The mission's objective is to ensure the family pet remains healthy, strong, and energized by providing consistent access to high-quality nutrition and fresh water.
+
+### 📝 MY STEPS TO SUCCESS
+1. **🥣 Prepare the Station**: Locate the food bowl and ensure it is clean and free of debris from the last meal.
+2. **🥄 Measure the Fuel**: Scoop the exactly correct amount of pet food as specified by the Master Operator's instructions.
+3. **💧 Hydrate the Companion**: Empty the water dish and fill it to the brim with fresh, cool water from the tap.
+4. **🧹 Maintain the Zone**: Check the floor for any stray kibble or water spills and wipe them up to keep the kitchen sparkling.
+5. **🐾 Complete the Connection**: Give the pet a friendly pat or a kind word to signal that the meal is served.
+
+### 🌈 THE GOLDEN RULE PROMISE
+Providing excellent care for another living creature is a superpower that demonstrates responsibility and kindness.
+
+**"I promise to follow my special recipe for a great day!"**
+
+**Master Operator:** ____________________ (Santo Bazooka)
+**Chief Auditor:** ____________________ (Parent)
+
+---
+
+### OUTPUT SECTION 2 — IMAGE PROMPT
+
+**Prompt:** A high-fidelity, photorealistic cinematic shot of a modern family kitchen featuring a sleek stainless steel refrigerator. Attached to the fridge door with a bright, colorful magnet labeled "BABYSOP" is a vibrant, printed children's Standard Operating Procedure poster titled "Santo Bazooka's Feed the Pet Mission." The poster is designed with bright primary colors, playful typography, and clear kid-friendly icons of pet bowls, paws, and water droplets. Surrounding the SOP are whimsical children's drawings and heartwarming family photographs. Soft, warm sunlight streams into the room, creating a Pixar-style warmth and a cozy atmosphere. The background displays a modern kitchen interior with a shallow depth of field, highlighting the textures of the refrigerator and the details of the printed poster.
+
+**Style Tags:** photorealistic, 4k, Pixar warmth, shallow depth of field, high-fidelity textures, cinematic lighting, 8k resolution.

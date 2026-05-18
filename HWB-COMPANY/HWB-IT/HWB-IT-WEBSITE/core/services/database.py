@@ -25,7 +25,6 @@ def db_cursor(db_url):
     """
     SigmaFidelity™ Database Cursor Context Manager.
     Yields a cursor and automatically commits/closes the session.
-    Handles both PostgreSQL (context-aware) and SQLite (manual) cursors.
     """
     with db_session(db_url) as conn:
         cur = conn.cursor()

@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Dashboard</h2>
+
+<div class="stats-container">
+    <div class="stat-card">
+        <h3>Total Leads</h3>
+        <p class="stat-value">{{ lead_count }}</p>
+    </div>
+    <div class="stat-card">
+        <h3>Open Opportunities</h3>
+        <p class="stat-value">{{ opp_count }}</p>
+    </div>
+    <div class="stat-card">
+        <h3>Pending Tasks</h3>
+        <p class="stat-value">{{ task_count }}</p>
+    </div>
+</div>
+
+<div class="section">
+    <h3>Recent Leads</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Company Name</th>
+                <th>Source</th>
+                <th>Status</th>
+                <th>Created At</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for lead in recent_leads %}
+            <tr>
+                <td>{{ lead.company_name }}</td>
+                <td>{{ lead.source }}</td>
+                <td>{{ lead.status }}</td>
+                <td>{{ lead.created_at }}</td>
+                <td><a href="{{ url_for('edit_lead', id=lead.lead_id) }}">Edit</a></td>
+            </tr>
+            {% endfor %}
+            {% if not recent_leads %}
+            <tr>
+                <td colspan="5">No leads found.</td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+    <a href="{{ url_for('leads_list') }}" class="btn">View All Leads</a>
+</div>
+{% endblock %}

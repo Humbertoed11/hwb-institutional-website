@@ -1,0 +1,31 @@
+MCP issues detected. Run /mcp list for status.### OUTPUT SECTION 1 — BABYSOP
+
+**HWB-BABYSOP-HOME | Version 1.0 | Date: 2026-03-12**
+**Title: "Santo Bazooka's Lights Out Mission"**
+
+---
+
+**🌟 MY BIG GOAL**
+This mission ensures the Master Operator recharges his super-batteries so he can be strong, fast, and ready for tomorrow’s big adventures!
+
+**📝 MY STEPS TO SUCCESS**
+1. 🪥 **Clean & Sparkle:** Brush those teeth and wash up for a fresh start.
+2. 👕 **Armor Up:** Put on your favorite cozy pajamas to get ready for sleep.
+3. 📖 **Story Time:** Pick one special book to read together for a quiet mind.
+4. 🫂 **Final Hug:** Give a big hug and get tucked safely into the docking station.
+5. 😴 **Systems Off:** Close your eyes, turn out the lights, and start dreaming big.
+
+**🌈 THE GOLDEN RULE PROMISE**
+A well-rested hero is a happy hero, and great days always start with a great night’s sleep!
+
+**I promise to follow my special recipe for a great day!**
+
+**Signature lines:**
+Master Operator: ____________________ (Santo Bazooka)
+Chief Auditor: ____________________ (Parent)
+
+---
+
+### OUTPUT SECTION 2 — IMAGE PROMPT
+
+**Prompt:** A high-fidelity, cinematic shot of a modern family kitchen featuring a stainless steel refrigerator. The focal point is a colorful, playful children's SOP poster titled "Santo Bazooka's Lights Out Mission" prominently displayed on the fridge door. The poster uses bold primary colors, friendly typography, and kid-friendly icons. A small, customized magnet labeled "BABYSOP" secures the top corner, surrounded by charming hand-drawn doodles and children's sketches. The scene is bathed in "Pixar warmth" lighting, creating a cozy and inviting atmosphere. Photorealistic, 4k, shallow depth of field focusing on the texture of the poster and the metallic sheen of the refrigerator.

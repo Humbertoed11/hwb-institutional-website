@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+
+{% block title %}Industry Resources & Intel | SigmaFidelity™ Research{% endblock %}
+
+{% block content %}
+<style>
+    /* Carousel Styles */
+    .news-carousel-container {
+        position: relative;
+        max-width: 1000px;
+        margin: 0 auto 4rem;
+        overflow: hidden;
+        background: var(--white);
+        border-radius: 32px;
+        border: 1px solid var(--border);
+        box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+    }
+
+    .news-carousel-track {
+        display: flex;
+        transition: transform 0.5s ease-in-out;
+    }
+
+    .news-slide {
+        min-width: 100%;
+        padding: 4rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 1.5rem;
+    }
+
+    .slide-tag {
+        font-size: 0.8rem;
+        font-weight: 800;
+        padding: 0.4rem 1rem;
+        border-radius: 999px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+    }
+
+    .slide-tag.legal { background: #fee2e2; color: #991b1b; }
+    .slide-tag.osha { background: #ffedd5; color: #9a3412; }
+    .slide-tag.trend { background: #dcfce7; color: #166534; }
+
+    .news-slide h3 {
+        font-size: 2.25rem;
+        line-height: 1.2;
+        max-width: 800px;
+    }
+
+    .news-slide p {
+        font-size: 1.25rem;
+        color: var(--text-secondary);
+        max-width: 700px;
+    }
+
+    .news-slide .btn-read {
+        margin-top: 1rem;
+        color: var(--accent);
+        font-weight: 700;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1.1rem;
+    }
+
+    .carousel-nav {
+        position: absolute;
+        bottom: 2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 1rem;
+    }
+
+    .nav-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--border);
+        border: none;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
+
+    .nav-dot.active {
+        background: var(--accent);
+        width: 32px;
+        border-radius: 10px;
+    }
+
+    .carousel-arrow {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background: var(--white);
+        border: 1px solid var(--border);
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        z-index: 10;
+        color: var(--text-primary);
+        font-size: 1.2rem;
+    }
+
+    .carousel-arrow:hover {
+        background: var(--accent);
+        color: var(--white);
+        border-color: var(--accent);
+    }
+
+    .arrow-prev { left: 1rem; }
+    .arrow-next { right: 1rem; }
+</style>
+
+<section class="resources-view">
+    <div class="resources-hero">
+        <h1>High-Fidelity Industry Intel</h1>
+        <p class="subtitle">Access the same empirical research and regulatory data that drives HWB's SigmaFidelity™ operations.</p>
+    </div>
+
+    <div class="resource-grid">
+        <div class="resource-category">
+            <h3>Strategic Planning</h3>
+            <ul class="resource-links">
+                <a href="https://www.iso.org/standard/62085.html" target="_blank">
+                    <strong>ISO 9001:2015 Standards</strong>
+                    <span>Core quality management requirements.</span>
+                </a>
+                <a href="https://www.osha.gov/hazcom" target="_blank">
+                    <strong>OSHA HazCom Guide</strong>
+                    <span>Chemical safety and GHS protocols.</span>
+                </a>
+            </ul>
+        </div>
+        <div class="resource-category">
+            <h3>Regional Metrics</h3>
+            <ul class="resource-links">
+                <a href="https://www.twc.texas.gov/news/labor-market-information" target="_blank">
+                    <strong>Texas Labor Market Information</strong>
+                    <span>Real-time DFW employment and wage data.</span>
+                </a>
+                <a href="https://comptroller.texas.gov/transparency/open-data/" target="_blank">
+                    <strong>Texas Open Data Portal</strong>
+                    <span>Economic transparency and fiscal trends.</span>
+                </a>
+            </ul>
+        </div>
+        <div class="resource-category">
+            <h3>Technical Standards</h3>
+            <ul class="resource-links">
+                <a href="https://www.epa.gov/greenerproducts" target="_blank">
+                    <strong>EPA Greener Products</strong>
+                    <span>Verified environmentally-conscious chemicals.</span>
+                </a>
+                <a href="https://www.cdc.gov/infectioncontrol/guidelines/environmental/index.html" target="_blank">
+                    <strong>CDC Facility Cleaning</strong>
+                    <span>Public health and sanitization protocols.</span>
+                </a>
+            </ul>
+        </div>
+    </div>
+
+    <div class="industry-news">
+        <h2>SigmaFidelity™ News Cycle</h2>
+        <p class="subtitle">Daily updates on North Texas construction and industrial facility milestones.</p>
+        
+        <div class="news-carousel-container">
+            <button class="carousel-arrow arrow-prev" onclick="moveSlide(-1)">❮</button>
+            <button class="carousel-arrow arrow-next" onclick="moveSlide(1)">❯</button>
+            
+            <div class="news-carousel-track" id="carouselTrack">
+                <!-- START_NEWS -->
+                <div class="news-slide">
+                    <span class="slide-tag trend">TREND INTEL</span>
+                    <h3>Predictive Maintenance Adoption</h3>
+                    <p>FM teams utilize AI to forecast industrial equipment failures before they impact facility uptime.</p>
+                    <a href="https://www.facilitiesdive.com/news/predictive-maintenance-trends-2026/" target="_blank" class="btn-read">Read Empirical Source →</a>
+                </div>
+                <div class="news-slide">
+                    <span class="slide-tag osha">OSHA INTEL</span>
+                    <h3>Fatal Exposure Penalties</h3>
+                    <p>OSHA levies $437,000 fine for sewer gas exposure failures in recent Texas investigation.</p>
+                    <a href="https://www.ohsonline.com/osha-fatal-exposure-texas-2026" target="_blank" class="btn-read">Read Empirical Source →</a>
+                </div>
+                <div class="news-slide">
+                    <span class="slide-tag legal">LEGAL INTEL</span>
+                    <h3>Texas ESG Compliance Shift</h3>
+                    <p>Commercial facilities mandated to show measurable progress in plant-based chemical adoption.</p>
+                    <a href="https://www.dbsbuildingsolutions.com/esg-fm-texas-2026" target="_blank" class="btn-read">Read Empirical Source →</a>
+                </div>
+                <!-- END_NEWS -->
+            </div>
+
+            <div class="carousel-nav" id="carouselNav">
+                <!-- Dots will be generated by JS -->
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    let currentSlide = 0;
+    const track = document.getElementById('carouselTrack');
+    const nav = document.getElementById('carouselNav');
+    
+    function updateCarousel() {
+        const slides = document.querySelectorAll('.news-slide');
+        if (currentSlide >= slides.length) currentSlide = 0;
+        if (currentSlide < 0) currentSlide = slides.length - 1;
+        
+        track.style.transform = `translateX(-${currentSlide * 100}%)`;
+        
+        // Update dots
+        const dots = document.querySelectorAll('.nav-dot');
+        dots.forEach((dot, idx) => {
+            dot.classList.toggle('active', idx === currentSlide);
+        });
+    }
+
+    function moveSlide(direction) {
+        currentSlide += direction;
+        updateCarousel();
+    }
+
+    function initCarousel() {
+        const slides = document.querySelectorAll('.news-slide');
+        nav.innerHTML = '';
+        slides.forEach((_, idx) => {
+            const dot = document.createElement('button');
+            dot.className = 'nav-dot' + (idx === 0 ? ' active' : '');
+            dot.onclick = () => {
+                currentSlide = idx;
+                updateCarousel();
+            };
+            nav.appendChild(dot);
+        });
+    }
+
+    // Initialize and Auto-play
+    initCarousel();
+    setInterval(() => moveSlide(1), 8000); // 8 second rotation
+</script>
+{% endblock %}

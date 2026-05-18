@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}HWB Cleaning Services LLC | North Texas Commercial Cleaning Experts{% endblock %}
+
+{% block content %}
+<!-- High-Fidelity Hero Section -->
+<section class="services-hero light-variant" style="background-image: linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.7)), url('/static/img/hero_lobby.png');">
+    <div class="content-wrapper" style="max-width: 1000px; text-align: center;">
+        <h1>Reliable Office Cleaning in Dallas & Plano</h1>
+        <p style="font-size: 1.15rem; color: var(--slate-600); max-width: 750px; margin: 0 auto 2.5rem; line-height: 1.6; font-weight: 500;">Stop managing cleaning issues and start managing your business. We find the gaps in your current setup and provide a reliable plan that actually works in Dallas, Plano, Wylie, Lavon, and Murphy.</p>
+        <div class="hero-ctas">
+            <a href="{{ url_for('get_quote') }}" class="isc-btn isc-btn-primary" style="height: 48px; padding: 0 3rem; font-size: 1rem; border-radius: 6px;">Start a quote <i class="fas fa-arrow-right" style="margin-left: 0.5rem; font-size: 0.8rem;"></i></a>
+        </div>
+    </div>
+</section>
+
+<!-- Specialized Services (High Density Grid) -->
+<section class="section-white" style="padding: 6rem 0;">
+    <div class="content-wrapper">
+        <div class="section-header" style="margin-bottom: 4rem; text-align: center;">
+            <h2 style="font-size: 2.25rem; font-weight: 900; color: var(--slate-900);">Our Specialized Cleaning Services</h2>
+            <p style="font-size: 1.1rem; color: var(--slate-500); margin-top: 1rem;">ISO 9001-Compliant Management for every North Texas sector.</p>
+        </div>
+
+        <div class="service-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+            <!-- Janitorial -->
+            <a href="{{ url_for('services_janitorial') }}" style="text-decoration: none; color: inherit;">
+                <div class="service-card" style="border-radius: 12px; overflow: hidden; background: var(--white); border: 1px solid var(--slate-100); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); transition: transform 0.3s ease;">
+                    <div class="sigma-image-frame" style="height: 240px; padding: 0; border: none; border-radius: 0;">
+                        <img src="/static/img/daycare_busy_active.png" alt="Janitorial Services" style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>
+                    <div class="card-content" style="padding: 2rem;">
+                        <div class="card-badge" style="font-size: 0.7rem; font-weight: 900; color: var(--brand); text-transform: uppercase; margin-bottom: 1rem;">Daily Cleaning</div>
+                        <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--slate-900); margin-bottom: 0.75rem;">Janitorial Services</h3>
+                        <p style="font-size: 0.95rem; color: var(--slate-600); line-height: 1.6;">Reliable cleaning for schools, daycare centers, and corporate offices.</p>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Commercial -->
+            <a href="{{ url_for('services_commercial') }}" style="text-decoration: none; color: inherit;">
+                <div class="service-card" style="border-radius: 12px; overflow: hidden; background: var(--white); border: 1px solid var(--slate-100); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); transition: transform 0.3s ease;">
+                    <div class="sigma-image-frame" style="height: 240px; padding: 0; border: none; border-radius: 0;">
+                        <img src="/static/img/commercial_marble_polishing.png" alt="Commercial Cleaning" style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>
+                    <div class="card-content" style="padding: 2rem;">
+                        <div class="card-badge" style="font-size: 0.7rem; font-weight: 900; color: var(--brand); text-transform: uppercase; margin-bottom: 1rem;">Specialized</div>
+                        <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--slate-900); margin-bottom: 0.75rem;">Commercial Cleaning</h3>
+                        <p style="font-size: 0.95rem; color: var(--slate-600); line-height: 1.6;">Floor strip and wax, carpet care, and professional surface polishing.</p>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Industrial -->
+            <a href="{{ url_for('services_industrial') }}" style="text-decoration: none; color: inherit;">
+                <div class="service-card" style="border-radius: 12px; overflow: hidden; background: var(--white); border: 1px solid var(--slate-100); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); transition: transform 0.3s ease;">
+                    <div class="sigma-image-frame" style="height: 240px; padding: 0; border: none; border-radius: 0;">
+                        <img src="/static/img/industrial_m20_scrubber.png" alt="Industrial Cleaning" style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>
+                    <div class="card-content" style="padding: 2rem;">
+                        <div class="card-badge" style="font-size: 0.7rem; font-weight: 900; color: var(--brand); text-transform: uppercase; margin-bottom: 1rem;">Heavy Duty</div>
+                        <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--slate-900); margin-bottom: 0.75rem;">Industrial Cleaning</h3>
+                        <p style="font-size: 0.95rem; color: var(--slate-600); line-height: 1.6;">High-volume floor cleaning for 24/7 logistics and distribution hubs.</p>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Construction -->
+            <a href="{{ url_for('services_construction') }}" style="text-decoration: none; color: inherit;">
+                <div class="service-card" style="border-radius: 12px; overflow: hidden; background: var(--white); border: 1px solid var(--slate-100); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); transition: transform 0.3s ease;">
+                    <div class="sigma-image-frame" style="height: 240px; padding: 0; border: none; border-radius: 0;">
+                        <img src="/static/img/construction_sweeper_servicing_street.png" alt="Construction Cleanup" style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>
+                    <div class="card-content" style="padding: 2rem;">
+                        <div class="card-badge" style="font-size: 0.7rem; font-weight: 900; color: var(--brand); text-transform: uppercase; margin-bottom: 1rem;">Post-Build</div>
+                        <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--slate-900); margin-bottom: 0.75rem;">Construction Cleanup</h3>
+                        <p style="font-size: 0.95rem; color: var(--slate-600); line-height: 1.6;">Detailed 3-step cleanup ensuring your building is inspection-ready.</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Authority Formula Section -->
+<section class="formula-strip" style="background: var(--slate-50); padding: 4rem 0; border-top: 1px solid var(--slate-100); border-bottom: 1px solid var(--slate-100);">
+    <div class="content-wrapper" style="text-align: center;">
+        <div style="font-size: 0.75rem; font-weight: 900; color: var(--brand); text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 1.5rem;">The SigmaQuality™ Mandate</div>
+        <p style="font-size: 1.5rem; font-weight: 600; color: var(--slate-900); max-width: 900px; margin: 0 auto;">Proper Training + The Right Tools + Respect for Your Space = The SigmaQuality Clean.</p>
+    </div>
+</section>
+{% endblock %}

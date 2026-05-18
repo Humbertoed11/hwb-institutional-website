@@ -1,0 +1,46 @@
+MCP issues detected. Run /mcp list for status.I will now execute the mandatory startup sequence to ensure all SigmaFidelity™ systems are active, followed by the generation of the requested BabySOP and image prompt.
+
+I will now request the `generalist` sub-agent to execute the mandatory startup sequence and then proceed with generating the BabySOP and image prompt.
+
+I will now list the root directory to confirm the location of the Standard Operating Procedures and the SOP template to ensure the BabySOP follows the established project standards.
+
+I will now use the `glob` tool to locate the `sop_template.md` file, which will allow me to ensure the BabySOP adheres to the project's official SOP standards.
+
+I will now list the contents of the `HWB-COMPANY/HWB-QMS/` directory to locate the SOP templates and ensure the BabySOP follows the official documentation structure.
+
+I will now read the `HWB-QMS-7.5 SOP Template.md` and the `HWB-QMS-STRAT-010 BabySOP Business Plan.md` to ensure the poster for Santo Bazooka follows the official SigmaFidelity™ standards and captures the strategic intent of the BabySOP line.
+
+As the SigmaFidelity™ Home Architect, I have developed the following printable BabySOP and high-fidelity image generation prompt for Santo Bazooka. This document integrates the "Institutional Literacy" principles defined in the HWB-QMS-STRAT-010 BabySOP Business Plan, ensuring that early development is aligned with systemic excellence.
+
+### OUTPUT SECTION 1 — BABYSOP
+
+**HWB-BABYSOP-HOME | Version 1.0 | Date: 2026-03-12**
+**Title: "Santo Bazooka's Help a Friend Mission"**
+
+---
+
+**🌟 MY BIG GOAL**
+To exercise my "Super Kindness" powers to ensure every friend feels happy, included, and safe while we play and learn together.
+
+**📝 MY STEPS TO SUCCESS**
+1. 🤝 **Gentle Hands & Warm Smiles:** Always use soft touches and a friendly face to show others that I am a safe and loving friend.
+2. 👂 **The Big Listening Ear:** Listen carefully to my friends' words and feelings so I know exactly how to help them.
+3. 🎁 **The Sharing Secret:** Happily share my toys and wait my turn, because playing together is more fun than playing alone.
+4. 🌟 **The Cheerleader Spirit:** Use my voice to say "Great job!" or "You can do it!" whenever a friend is trying something new.
+
+**🌈 THE GOLDEN RULE PROMISE**
+I will treat every friend with the same kindness and respect that I want for myself, making our world a better place one smile at a time.
+
+**"I promise to follow my special recipe for a great day!"**
+
+**Signature lines:**
+Master Operator: ____________________ (Santo Bazooka)
+Chief Auditor: ____________________ (Parent)
+
+---
+
+### OUTPUT SECTION 2 — IMAGE PROMPT
+
+**Prompt:** A high-fidelity, cinematic photograph of a modern family kitchen featuring a sleek stainless steel refrigerator. Affixed to the center of the fridge door is a vibrant, colorful "BABYSOP" poster titled "Santo Bazooka's Help a Friend Mission," printed on premium matte paper. The poster utilizes bold primary colors, playful rounded typography, and charming kid-friendly icons like golden stars, 🤝 hands, and 👂 ears. A large, stylized magnet labeled "BABYSOP" in block letters holds the document in place, surrounded by charming child-drawn sketches and colorful magnets. The scene is bathed in "Pixar warmth" lighting, with soft sunlight streaming through a nearby window, creating a cozy and inspiring domestic atmosphere. 
+
+**Style tags:** photorealistic, 4k, Pixar warmth, shallow depth of field, SigmaFidelity™ aesthetic, high-quality textures, 8k resolution.

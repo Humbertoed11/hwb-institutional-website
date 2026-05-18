@@ -1,0 +1,417 @@
+{% extends "base.html" %}
+
+{% block title %}SigmaQuality™ | The Data Layer for Building ROI{% endblock %}
+
+{% block head %}
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+ :root {
+ --cdata-blue: #00A0FF;
+ --cdata-dark: #002147;
+ --cdata-gradient: linear-gradient(135deg, #00A0FF 0%, #0B59CE 100%);
+ --cdata-accent: #FB9218;
+ --font-main: 'Roboto', sans-serif;
+ }
+
+ body {
+ font-family: var(--font-main);
+ }
+
+ /* Enterprise Logo Scaling */
+ .header-logo {
+ height: 42px !important; 
+ width: auto;
+ }
+
+ /* Typographic Hierarchy Improvement */
+ h1, h2, h3, .nav-cta {
+ font-family: var(--font-main);
+ font-weight: 700;
+ }
+
+ /* Modernized Hero */
+ .concept-hero {
+ background: var(--cdata-dark);
+ color: white;
+ padding: 8rem 0 12rem;
+ position: relative;
+ overflow: hidden;
+ text-align: left;
+ }
+
+ .concept-hero::before {
+ content: "";
+ position: absolute;
+ top: 0;
+ left: 0;
+ right: 0;
+ bottom: 0;
+ background-image: radial-gradient(circle at 2px 2px, rgba(255,255,255,0.05) 1px, transparent 0);
+ background-size: 25px 25px;
+ z-index: 1;
+ }
+
+ .hero-content {
+ position: relative;
+ z-index: 10;
+ max-width: 800px;
+ }
+
+ .hero-tagline {
+ color: var(--cdata-blue);
+ font-weight: 800;
+ text-transform: uppercase;
+ letter-spacing: 0.2em;
+ font-size: 0.9rem;
+ margin-bottom: 1.5rem;
+ display: block;
+ }
+
+ .concept-hero h1 {
+ font-size: 3.75rem; 
+ line-height: 1.1;
+ font-weight: 900;
+ margin-bottom: 2rem;
+ letter-spacing: -0.02em;
+ }
+
+ .concept-hero p {
+ font-size: 1.25rem;
+ opacity: 0.8;
+ margin-bottom: 3.5rem;
+ line-height: 1.6;
+ }
+
+ /* Feature Carousel (CData Style) */
+ .carousel-container {
+ margin-top: 5rem;
+ display: flex;
+ gap: 1.5rem;
+ overflow-x: auto;
+ padding: 1rem 0 3rem;
+ scrollbar-width: none;
+ position: relative;
+ z-index: 20;
+ -ms-overflow-style: none; /* IE and Edge */
+ }
+
+ .carousel-container::-webkit-scrollbar {
+ display: none; /* Hide scrollbar for Chrome, Safari and Opera */
+ }
+
+ .carousel-card {
+ min-width: 280px;
+ background: white;
+ padding: 2.5rem;
+ border-radius: 8px;
+ transition: transform 0.2s, box-shadow 0.2s;
+ color: var(--cdata-dark);
+ border-bottom: 4px solid transparent;
+ box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+ }
+
+ .carousel-card:hover {
+ transform: translateY(-8px);
+ border-bottom: 4px solid var(--cdata-blue);
+ box-shadow: 0 20px 25px rgba(0,0,0,0.3);
+ }
+
+ .carousel-card .card-icon {
+ font-size: 2.5rem;
+ margin-bottom: 1.5rem;
+ }
+
+ .carousel-card h3 {
+ font-size: 1.25rem;
+ margin-bottom: 1rem;
+ color: var(--cdata-dark);
+ font-weight: 700;
+ }
+
+ .carousel-card p {
+ font-size: 0.9rem;
+ line-height: 1.5;
+ color: #4b5563;
+ margin-bottom: 0;
+ }
+
+ /* Trusted By Logo Bar */
+ .trusted-bar {
+ background: #fcfcfc;
+ padding: 4rem 0;
+ border-bottom: 1px solid var(--border);
+ text-align: center;
+ }
+
+ .trusted-label {
+ font-size: 0.75rem;
+ font-weight: 800;
+ color: #94a3b8;
+ text-transform: uppercase;
+ letter-spacing: 0.15em;
+ margin-bottom: 2.5rem;
+ display: block;
+ }
+
+ .logo-grid {
+ display: flex;
+ justify-content: center;
+ align-items: center;
+ gap: 6rem;
+ opacity: 0.5;
+ filter: grayscale(100%);
+ }
+
+ .logo-grid span {
+ font-weight: 900;
+ font-size: 1.25rem;
+ color: #64748b;
+ letter-spacing: -0.02em;
+ }
+
+ /* Mega Menu Inspired Sub-nav */
+ .sub-nav {
+ background: #fafafa;
+ border-bottom: 1px solid var(--border);
+ padding: 1.25rem 0;
+ }
+
+ .sub-nav ul {
+ display: flex;
+ gap: 3rem;
+ list-style: none;
+ justify-content: center;
+ }
+
+ .sub-nav a {
+ text-decoration: none;
+ color: var(--text-secondary);
+ font-weight: 600;
+ font-size: 0.8rem;
+ text-transform: uppercase;
+ letter-spacing: 0.08em;
+ }
+
+ .sub-nav a:hover {
+ color: var(--cdata-blue);
+ }
+
+ .btn-cdata {
+ background: var(--cdata-accent);
+ color: white;
+ padding: 1rem 2.5rem;
+ border-radius: 4px;
+ font-weight: 700;
+ text-decoration: none;
+ display: inline-block;
+ transition: opacity 0.2s;
+ }
+
+ .btn-cdata:hover {
+ opacity: 0.9;
+ }
+</style>
+{% endblock %}
+
+{% block header %}
+ <a href="/" class="logo">
+ <img src="{{ url_for('static', filename='logo_standard.png') }}" alt="SigmaQuality" class="header-logo">
+ </a>
+ <nav>
+ <div class="nav-dropdown">
+ <a href="#">Products ▾</a>
+ <div class="dropdown-content">
+ <a href="{{ url_for('services_office') }}" class="dropdown-item">
+ <div class="di-text"><strong>Office Drivers</strong><span>Corporate data connectivity.</span></div>
+ </a>
+ <a href="{{ url_for('services_construction') }}" class="dropdown-item">
+ <div class="di-text"><strong>Build Sync</strong><span>Post construction workflows.</span></div>
+ </a>
+ <a href="{{ url_for('services_warehouse') }}" class="dropdown-item">
+ <div class="di-text"><strong>Building Arc</strong><span>Industrial work flow.</span></div>
+ </a>
+ </div>
+ </div>
+ <div class="nav-dropdown">
+ <a href="#">Solutions ▾</a>
+ <div class="dropdown-content">
+ <a href="#" class="dropdown-item">
+ <div class="di-text"><strong>Healthcare</strong><span>High quality sanitation.</span></div>
+ </a>
+ <a href="#" class="dropdown-item">
+ <div class="di-text"><strong>Education</strong><span>Campus wide connectivity.</span></div>
+ </a>
+ <a href="#" class="dropdown-item">
+ <div class="di-text"><strong>Retail</strong><span>Multi site synchronization.</span></div>
+ </a>
+ </div>
+ </div>
+ <div class="nav-dropdown">
+ <a href="#">Resources ▾</a>
+ <div class="dropdown-content">
+ <a href="{{ url_for('resources') }}" class="dropdown-item">
+ <div class="di-text"><strong>Documentation</strong><span>SOP and QMS guides.</span></div>
+ </a>
+ <a href="{{ url_for('compliance') }}" class="dropdown-item">
+ <div class="di-text"><strong>Trust Center</strong><span>Security and safety standards.</span></div>
+ </a>
+ <a href="{{ url_for('method') }}" class="dropdown-item">
+ <div class="di-text"><strong>Support</strong><span>Gemba integrated assistance.</span></div>
+ </a>
+ </div>
+ </div>
+ <a href="#">Partners</a>
+ <div class="nav-dropdown">
+ <a href="{{ url_for('about') }}">Company ▾</a>
+ <div class="dropdown-content" style="width: 200px;">
+ <a href="{{ url_for('about') }}" class="dropdown-item">About Us</a>
+ <a href="#" class="dropdown-item">Careers</a>
+ <a href="#" class="dropdown-item">Contact</a>
+ </div>
+ </div>
+ <div style="display: flex; gap: 1rem; align-items: center; margin-left: 1rem;">
+ <a href="#" style="color: var(--text-primary); font-weight: 600;">Log In</a>
+ <a href="{{ url_for('calculator') }}" class="nav-cta" style="background: var(--cdata-blue); border-radius: 4px;">Free ROI Audit</a>
+ </div>
+ </nav>
+</header>
+{% endblock %}
+
+{% block content %}
+<div class="sub-nav">
+ <div class="container">
+ <ul>
+ <li><a href="#vision">The Vision</a></li>
+ <li><a href="#buildings">Buildings</a></li>
+ <li><a href="#connectivity">Connectivity</a></li>
+ <li><a href="#roi">ROI Engine</a></li>
+ </ul>
+ </div>
+</div>
+
+<section class="concept-hero">
+ <div class="container">
+ <div class="hero-content">
+ <span class="hero-tagline">SigmaQuality™ Enterprise Management</span>
+ <h1 style="background: linear-gradient(135deg, var(--text-primary) 0%, #3b82f6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">The Data Layer That Turns <br>Cleaning into ROI.</h1>
+ <p>Connect building operations to real time reports. SigmaQuality™ provides the high quality buildings required for modern corporate Class A, B, and C facilities.</p>
+ <div class="hero-btns">
+ <a href="#" class="btn-cdata">Start Free Audit</a>
+ <a href="#" class="btn-secondary" style="background: transparent; color: white; border-color: rgba(255,255,255,0.3);">View Documentation</a>
+ </div>
+ </div>
+
+ <div class="carousel-container">
+ <div class="carousel-card">
+ <div class="card-icon">📦</div>
+ <h3>Drivers</h3>
+ <p>Standardized SOP connectors for every building asset.</p>
+ </div>
+ <div class="carousel-card">
+ <div class="card-icon">🔄</div>
+ <h3>Sync</h3>
+ <p>Real time synchronization between Gemba and Dashboard.</p>
+ </div>
+ <div class="carousel-card">
+ <div class="card-icon">⚡</div>
+ <h3>Connect AI</h3>
+ <p>AI driven predictive reports for building maintenance.</p>
+ </div>
+ <div class="carousel-card">
+ <div class="card-icon">🛡️</div>
+ <h3>Arc</h3>
+ <p>End to end security and safety standards management.</p>
+ </div>
+ <div class="carousel-card">
+ <div class="card-icon">📊</div>
+ <h3>Virtuality</h3>
+ <p>Full scale digital twin of the work workflow.</p>
+ </div>
+ <!-- Duplicated for seamless loop -->
+ <div class="carousel-card">
+ <div class="card-icon">📦</div>
+ <h3>Drivers</h3>
+ <p>Standardized SOP connectors for every building asset.</p>
+ </div>
+ <div class="carousel-card">
+ <div class="card-icon">🔄</div>
+ <h3>Sync</h3>
+ <p>Real time synchronization between Gemba and Dashboard.</p>
+ </div>
+ </div>
+ </div>
+</section>
+
+<div class="trusted-bar">
+ <div class="container">
+ <span class="trusted-label">Trusted by 10,000+ High Quality Organizations</span>
+ <div class="logo-grid">
+ <span>OFFICE MAX</span>
+ <span>BUILD CORP</span>
+ <span>HEALTH PRO</span>
+ <span>TECH SYNC</span>
+ <span>LOGIS LINK</span>
+ </div>
+ </div>
+</div>
+
+<section class="data-layer-section" style="padding: 8rem 0; background: white;">
+ <div class="container">
+ <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6rem; align-items: center;">
+ <div class="feature-text">
+ <span style="color: var(--cdata-blue); font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em;">CONNECTIVITY</span>
+ <h2 style="font-size: 3rem; margin: 1.5rem 0; line-height: 1.1; font-weight: 900;">See the building like <br>never before.</h2>
+ <p style="font-size: 1.1rem; color: #4b5563; line-height: 1.7;">The data connectivity platform allows the organization to integrate fragmented cleaning tasks into a single source of truth. No more process fog. No more hidden costs. Just high quality management.</p>
+ <ul style="list-style: none; margin-top: 2.5rem; display: grid; grid-template-columns: 1fr; gap: 1rem;">
+ <li style="font-weight: 700; color: var(--cdata-dark); display: flex; align-items: center; gap: 1rem;">
+ <span style="color: var(--cdata-blue);">✓</span> 300+ Verified SOP Connectors
+ </li>
+ <li style="font-weight: 700; color: var(--cdata-dark); display: flex; align-items: center; gap: 1rem;">
+ <span style="color: var(--cdata-blue);">✓</span> ISO 9001 Audit Automation
+ </li>
+ <li style="font-weight: 700; color: var(--cdata-dark); display: flex; align-items: center; gap: 1rem;">
+ <span style="color: var(--cdata-blue);">✓</span> Real time Chemical Inventory Sync
+ </li>
+ </ul>
+ </div>
+ <div style="background: #ffffff; height: 430px; border-radius: 12px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; position: relative;">
+ <span style="font-size: 0.7rem; font-weight: 800; color: #94a3b8; letter-spacing: 0.2em;">INTEGRATED DASHBOARD PREVIEW</span>
+ </div>
+ </div>
+ </div>
+</section>
+
+<section class="cta-banner" style="background: var(--cdata-gradient); padding: 6rem 0; text-align: center; color: white;">
+ <div class="container">
+ <h2 style="font-size: 2.5rem; font-weight: 900; margin-bottom: 1.5rem;">Ready to build the Data Layer?</h2>
+ <p style="font-size: 1.25rem; opacity: 0.9; margin-bottom: 3rem;">Join 10,000+ buildings leveraging SigmaQuality™ standards.</p>
+ <a href="#" class="btn-cdata" style="background: white; color: var(--cdata-blue);">Get Started for Free</a>
+ </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+ const carousel = document.querySelector('.carousel-container');
+ let isPaused = false;
+
+ carousel.addEventListener('mouseenter', () => isPaused = true);
+ carousel.addEventListener('mouseleave', () => isPaused = false);
+
+ function rotateCarousel() {
+ if (!isPaused) {
+ const scrollAmount = 0.8; // Smooth slow scroll
+ carousel.scrollLeft += scrollAmount;
+ 
+ // Loop logic: if we reached the duplicated items, snap back to start
+ if (carousel.scrollLeft >= (carousel.scrollWidth / 2)) {
+ carousel.scrollLeft = 0;
+ }
+ }
+ requestAnimationFrame(rotateCarousel);
+ }
+
+ // Start rotation
+ setTimeout(rotateCarousel, 1000);
+</script>
+{% endblock %}

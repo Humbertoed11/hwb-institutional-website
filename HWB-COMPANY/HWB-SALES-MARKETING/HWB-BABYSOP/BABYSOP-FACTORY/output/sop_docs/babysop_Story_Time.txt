@@ -1,0 +1,31 @@
+MCP issues detected. Run /mcp list for status.### OUTPUT SECTION 1 — BABYSOP
+
+**HWB-BABYSOP-HOME | Version 1.0 | Date: 2026-03-12**
+**Title: "Santo Bazooka's Story Time Mission"**
+
+**🌟 MY BIG GOAL**
+To travel to magical far-off lands, meet amazing new friends, and discover hidden secrets using the power of my imagination and the magic of books!
+
+**📝 MY STEPS TO SUCCESS**
+1. 🛋️ **Prepare the Base:** Find the coziest, softest spot with pillows and blankets.
+2. 📚 **Select the Mission:** Choose one favorite book from the shelf to explore.
+3. 🤫 **Activate Quiet Mode:** Use a "quiet library voice" so the magic characters can hear us.
+4. 👀 **Search for Clues:** Look closely at every picture to find the hidden secrets.
+5. 🏠 **Safe Return:** Gently place the book back in its home when the adventure is done.
+
+**🌈 THE GOLDEN RULE PROMISE**
+Every book is a new adventure waiting for a brave explorer like Santo!
+
+**"I promise to follow my special recipe for a great day!"**
+
+**Signature lines:**
+Master Operator: ____________________ (Santo Bazooka)
+Chief Auditor: ____________________ (Parent)
+
+***
+
+### OUTPUT SECTION 2 — IMAGE PROMPT
+
+**Prompt:** A high-fidelity, cinematic close-up of a modern family kitchen focusing on a brushed stainless steel refrigerator. A vibrant, colorful children's SOP poster titled "Santo Bazooka's Story Time Mission" is prominently displayed, secured by a chunky primary-blue magnet labeled "BABYSOP" in bold white lettering. The poster features playful, rounded typography and whimsical kid-friendly icons like a smiling open book, a glowing yellow star, and a cozy armchair. Surrounding the SOP are charming crayon drawings of rockets and dinosaurs, and a handwritten weekly chore list. The scene is illuminated with a soft, warm "Pixar-style" golden-hour glow coming from a nearby window, creating a shallow depth of field that beautifully blurs the clean kitchen interior in the background.
+
+**Style tags:** photorealistic, 4k, Pixar warmth, shallow depth of field, high-fidelity textures, industrial design aesthetic.

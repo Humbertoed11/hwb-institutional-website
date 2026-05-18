@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Log In | SigmaFidelity™ Backoffice{% endblock %}
+
+{% block content %}
+<section class="login-view" style="padding: 10rem 0; background: #f8fafc;">
+    <div style="max-width: 400px; margin: 0 auto; background: white; padding: 3rem; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);">
+        <div style="text-align: center; margin-bottom: 2.5rem;">
+            <img src="{{ url_for('static', filename='HWB-WEB HWB New Logo.png') }}" alt="SigmaFidelity" style="height: 50px; margin-bottom: 1.5rem;">
+            <h2 style="font-size: 1.5rem; font-weight: 900; color: var(--cdata-dark);">Backoffice Access</h2>
+            <p style="color: var(--text-secondary); font-size: 0.9rem;">Authorized Personnel Only</p>
+        </div>
+
+        <form method="POST">
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-weight: 700; margin-bottom: 0.5rem; font-size: 0.85rem; text-transform: uppercase;">Username</label>
+                <input type="text" name="username" required style="width: 100%; padding: 0.8rem; border-radius: 4px; border: 1px solid var(--border); font-family: inherit;">
+            </div>
+            <div style="margin-bottom: 2rem;">
+                <label style="display: block; font-weight: 700; margin-bottom: 0.5rem; font-size: 0.85rem; text-transform: uppercase;">Password</label>
+                <input type="password" name="password" required style="width: 100%; padding: 0.8rem; border-radius: 4px; border: 1px solid var(--border); font-family: inherit;">
+            </div>
+            <button type="submit" class="nav-cta" style="width: 100%; border: none; cursor: pointer; padding: 1rem;">Secure Login</button>
+        </form>
+        
+        <div style="margin-top: 2rem; text-align: center;">
+            <a href="/" style="color: var(--text-secondary); text-decoration: none; font-size: 0.8rem;">← Return to Homepage</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

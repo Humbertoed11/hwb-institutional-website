@@ -1,0 +1,31 @@
+MCP issues detected. Run /mcp list for status.### OUTPUT SECTION 1 — BABYSOP
+
+**HWB-BABYSOP-HOME | Version 1.0 | Date: March 12, 2026**
+
+# "Santo Bazooka's Put Shoes Away Mission"
+
+🌟 **MY BIG GOAL**
+To keep the Home Base safe and clear for high-speed playing! By putting shoes in their special parking spot, no one trips and the house stays super tidy.
+
+📝 **MY STEPS TO SUCCESS**
+1. 👟 **Stop and Drop:** As soon as the front door closes, find both shoes.
+2. 🏎️ **Zoom to the Zone:** Carry the shoes over to the special shoe cubby or mat.
+3. 👯‍♂️ **Best Friend Check:** Place the shoes side-by-side so they are touching like best friends.
+4. ✨ **Mission Complete:** Give the shoes a quick "good job" pat and head off to play!
+
+🌈 **THE GOLDEN RULE PROMISE**
+A tidy home is a happy home where every shoe has a cozy place to stay!
+
+"I promise to follow my special recipe for a great day!"
+
+**Signature lines:**
+Master Operator: ____________________ (Santo Bazooka)
+Chief Auditor: ____________________ (Parent)
+
+***
+
+### OUTPUT SECTION 2 — IMAGE PROMPT
+
+**Prompt:** A high-fidelity, photorealistic close-up of a modern family kitchen featuring a sleek brushed stainless steel refrigerator. Mounted prominently on the fridge door is a vibrant, colorful children's Standard Operating Procedure (SOP) poster titled "Santo Bazooka's Put Shoes Away Mission." The poster is designed with bright primary colors, playful rounded typography, and cute illustrative kid icons of sneakers and smiling stars. A colorful magnetic tile labeled "BABYSOP" holds the top corner of the document. The fridge is also decorated with whimsical crayon drawings and a few polaroid family photos. The scene is bathed in warm, cinematic afternoon sunlight, creating a cozy "Pixar warmth" aesthetic with a shallow depth of field that keeps the poster in sharp, crisp focus while the rest of the kitchen softly blurs in the background.
+
+**Style tags:** photorealistic, 4k, Pixar warmth, shallow depth of field, high-detail textures, cinematic lighting.

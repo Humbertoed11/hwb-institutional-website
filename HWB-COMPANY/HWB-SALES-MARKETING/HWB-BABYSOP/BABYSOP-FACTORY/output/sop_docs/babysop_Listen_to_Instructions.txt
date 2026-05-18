@@ -1,0 +1,36 @@
+MCP issues detected. Run /mcp list for status.The SigmaFidelity™ Home Architect has developed the requested documentation and visual conceptualization for the "Listen to Instructions Mission."
+
+***
+
+### OUTPUT SECTION 1 — BABYSOP
+
+**HWB-BABYSOP-HOME | Version 1.0 | Date: March 12, 2026**
+**Title: "Santo Bazooka's Listen to Instructions Mission"**
+
+**🌟 MY BIG GOAL**
+To help Santo Bazooka become a Super Listener! When we listen, we know exactly how to play safely, help our family, and make every day an awesome adventure.
+
+**📝 MY STEPS TO SUCCESS**
+1. 🛑 **STOP:** Freeze like a statue and stop what you are doing.
+2. 👀 **LOOK:** Use your "Laser Eyes" to look at the person who is talking to you.
+3. 👂 **LISTEN:** Open your ears wide to hear every single word of the instruction.
+4. ✅ **ACKNOWLEDGE:** Say "Yes, please!" or "I’ve got it!" so everyone knows you heard.
+5. 🚀 **GO:** Start the task right away with your fastest Super Speed!
+
+**🌈 THE GOLDEN RULE PROMISE**
+"When I listen with my ears and my heart, I show everyone that I am a brave and helpful leader!"
+
+**I promise to follow my special recipe for a great day!**
+
+**Signature lines:**
+Master Operator: ____________________ (Santo Bazooka)
+Chief Auditor: ____________________ (Parent)
+
+***
+
+### OUTPUT SECTION 2 — IMAGE PROMPT
+
+**Prompt:** 
+A high-resolution, photorealistic close-up of a modern family kitchen focusing on a sleek stainless steel refrigerator. Attached to the fridge is a vibrant, colorful children's Standard Operating Procedure (SOP) poster titled "BABYSOP" in playful, bold typography. The poster features bright primary colors, friendly kid icons like ears, eyes, and rockets, and a simple checklist. A specific decorative magnet labeled "BABYSOP" and several colorful crayon drawings of houses and suns surround the document. The scene is illuminated with warm, cinematic lighting creating a cozy "Pixar warmth" atmosphere. Shallow depth of field with the kitchen background softly blurred, 4k, ultra-detailed textures on the brushed metal and paper.
+
+**Style tags:** photorealistic, 4k, Pixar warmth, shallow depth of field.

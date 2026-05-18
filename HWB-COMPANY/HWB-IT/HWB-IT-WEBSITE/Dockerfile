@@ -15,8 +15,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
     curl \
-    postgresql-client \
-    git \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
@@ -37,8 +35,4 @@ RUN mkdir -p /app/logs
 EXPOSE 5000
 
 # Start the application using Gunicorn for commercial reliability
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "main_app:app"]
-# DEPLOY-FORCE: 1778957120
-# WORKFLOW-RECOVERY: 2026-05-16_1345
-# FORCE-DEPLOY-V3: 1778957400
-# VERIFICATION-HEARTBEAT: 2026-05-16_1535
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--timeout", "90", "main_app:app"]

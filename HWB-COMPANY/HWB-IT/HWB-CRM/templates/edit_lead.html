@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Edit Lead: {{ lead.company_name }}</h2>
+
+<form method="POST">
+    <div class="form-group">
+        <label for="company_name">Company Name:</label>
+        <input type="text" id="company_name" name="company_name" value="{{ lead.company_name }}" required>
+    </div>
+    
+    <div class="form-group">
+        <label for="source">Source:</label>
+        <input type="text" id="source" name="source" value="{{ lead.source }}">
+    </div>
+
+    <div class="form-group">
+        <label for="status">Status:</label>
+        <select id="status" name="status">
+            <option value="New" {% if lead.status == 'New' %}selected{% endif %}>New</option>
+            <option value="Qualified" {% if lead.status == 'Qualified' %}selected{% endif %}>Qualified</option>
+            <option value="Disqualified" {% if lead.status == 'Disqualified' %}selected{% endif %}>Disqualified</option>
+            <option value="Converted" {% if lead.status == 'Converted' %}selected{% endif %}>Converted</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="assigned_to">Assigned To:</label>
+        <input type="text" id="assigned_to" name="assigned_to" value="{{ lead.assigned_to }}">
+    </div>
+
+    <button type="submit" class="btn">Update Lead</button>
+    <a href="{{ url_for('leads_list') }}">Cancel</a>
+</form>
+{% endblock %}

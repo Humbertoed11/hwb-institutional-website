@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}ROI Results | SigmaFidelity™ Waste Analysis{% endblock %}
+
+{% block content %}
+<section class="results-view">
+    <div class="result-card">
+        <div class="waste-value">{{ waste }}</div>
+        <div class="waste-label">Estimated Annual Cost of Waste</div>
+    </div>
+
+    <div class="report-summary">
+        <h3>Analysis for {{ job_title }}</h3>
+        <p>Based on <strong>{{ hours }} weekly cleaning hours</strong>, your facility is likely losing significant capital to non-value-add (NVA) activities, as defined by SigmaFidelity™ Lean methodologies.</p>
+        <p>A standard un-monitored cleaning operation typically results in a 15-20% loss in efficiency due to improper chemical utilization, pathing defects, and lack of standardized work instructions.</p>
+    </div>
+
+    <div class="cta-section">
+        <h3>Stop the Bleeding.</h3>
+        <p>Schedule a detailed SigmaFidelity™ audit to transform these losses into operational excellence.</p>
+        <div class="hero-btns" style="margin-top: 2rem;">
+            <a href="{{ url_for('services') }}" class="btn-primary">View Specialized Solutions</a>
+            <a href="{{ url_for('calculator') }}" class="btn-secondary">Recalculate</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

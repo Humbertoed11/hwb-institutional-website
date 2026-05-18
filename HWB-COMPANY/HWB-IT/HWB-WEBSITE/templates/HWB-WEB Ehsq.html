@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}EHSQ Performance | SigmaFidelity™ Analytics{% endblock %}
+
+{% block content %}
+<section class="about-view">
+    <div class="about-hero">
+        <h1>EHSQ Management & Analytics</h1>
+        <p class="subtitle">Every operation is governed by the HWB-QMS-4.5 standard, integrating environment, health, safety, and quality into a single, high-fidelity management system.</p>
+    </div>
+
+    <div class="experience-stats">
+        <div class="stat-card">
+            <div class="stat-number">{{ incidents|length }}</div>
+            <div class="stat-label">YTD Incidents</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ chemical_count }}</div>
+            <div class="stat-label">Verified Chemicals</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">100%</div>
+            <div class="stat-label">GHS Compliance</div>
+        </div>
+    </div>
+
+    <div class="detailed-services">
+        <div class="service-category">
+            <div class="sc-header">
+                <div class="di-icon">🚨</div>
+                <h2>Recent Incident Log</h2>
+            </div>
+            <p>Our proactive incident management system ensures that every safety concern is logged, analyzed, and addressed through the Corrective Action (CAR) process.</p>
+            <div class="inventory-table-container">
+                <table class="inventory-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Category</th>
+                            <th>Description</th>
+                            <th>Severity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for incident in incidents %}
+                        <tr>
+                            <td>{{ incident.date }}</td>
+                            <td>{{ incident.category }}</td>
+                            <td>{{ incident.description }}</td>
+                            <td><span class="hazard-tag {{ incident.severity.lower() }}">{{ incident.severity }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="service-category">
+            <div class="sc-header">
+                <div class="di-icon">📊</div>
+                <h2>Quality Performance Metrics</h2>
+            </div>
+            <p>We utilize Lean Six Sigma methodologies to monitor and improve our operational capability, ensuring a stable and reliable service for every client.</p>
+            <div class="hero-btns" style="justify-content: flex-start; margin-top: 2rem;">
+                <a href="{{ url_for('methodology') }}" class="btn-primary">View Methodology</a>
+                <a href="{{ url_for('compliance') }}" class="btn-secondary">Check GHS Compliance</a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

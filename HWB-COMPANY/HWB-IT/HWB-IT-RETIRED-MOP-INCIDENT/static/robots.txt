@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /crm/
+Disallow: /calculator
+Sitemap: http://mop.test:5000/sitemap.xml

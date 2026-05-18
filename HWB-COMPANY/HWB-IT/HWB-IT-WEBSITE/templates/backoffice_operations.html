@@ -207,42 +207,6 @@
             </div>
         </div>
 
-
-        <!-- View: Marketing Pipeline (The Hive) -->
-        <div id="view-marketing" class="isc-view" style="display: {% if active_view == 'marketing' %}block{% else %}none{% endif %};">
-            <div class="isc-card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem;">
-                    <div>
-                        <h2 style="font-weight: 900; font-size: 1.75rem; color: var(--slate-900);">Marketing Pipeline</h2>
-                        <p style="font-size: 0.875rem; color: var(--slate-500); font-weight: 600; margin-top: 0.5rem;">Autonomous Lead Harvesting & Pipeline Intelligence (The Hive).</p>
-                    </div>
-                </div>
-                <div style="overflow-x: auto; width: 100%;">
-                    <table class="isc-grid">
-                        <thead>
-                            <tr>
-                                <th>Facility Name</th>
-                                <th>Industry</th>
-                                <th>Director</th>
-                                <th>Location</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for lead in leads %}
-                            <tr>
-                                <td><strong>{{ lead.center_name }}</strong></td>
-                                <td><span class="sigma-unit-pill">{{ lead.industry or 'N/A' }}</span></td>
-                                <td>{{ lead.director or lead.decision_maker or '--' }}</td>
-                                <td>{{ lead.city }}, {{ lead.state }}</td>
-                                <td><a href="{{ url_for('crm_edit_lead', id=lead.id) }}" class="isc-btn isc-btn-outline" style="padding: 0.4rem 1rem; font-size: 0.7rem;">Manage</a></td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
                 <!-- View: All Accounts -->
         <div id="view-accounts" class="isc-view" style="display: {% if active_view == 'accounts' %}block{% else %}none{% endif %};">
             <div class="isc-card {% if active_view == 'accounts' %}fluid-data{% endif %}">
