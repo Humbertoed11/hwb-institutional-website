@@ -696,11 +696,8 @@ nav a:hover {
     padding: 4rem 0;
 }
 
-.services-hero {
-    text-align: center;
-    max-width: 800px;
-    margin: 0 auto 6rem;
-}
+/* --- Global Component Alignment --- */
+/* LEGACY HERO OVERRIDE REMOVED FOR INFINITE HORIZON STANDARD */
 
 .detailed-services {
     display: flex;
