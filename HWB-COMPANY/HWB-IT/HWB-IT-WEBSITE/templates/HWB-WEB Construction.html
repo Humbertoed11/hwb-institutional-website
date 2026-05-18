@@ -1,94 +1,96 @@
 {% extends "base.html" %}
 
-{% block title %}Post-Construction Cleaning Services DFW | SigmaFidelity™ Protocol{% endblock %}
+{% block title %}3-Step Post-Construction Cleanup | Dallas, Plano & North Texas | HWB Cleaning{% endblock %}
+
 {% block head %}
-    <meta name="description" content="HWB Cleaning offers rapid, OSHA-compliant post-construction cleaning services in Dallas-Fort Worth. From rough clean to final fluff, ensure your facility is inspection-ready.">
-    <meta name="keywords" content="Post-construction cleaning DFW, construction site cleanup, final clean Dallas, commercial builders cleaning Texas">
+ <meta name="description" content="Professional 3-Step Construction Cleanup services in Dallas, Plano, and North Texas. Rapid OSHA-compliant site cleaning from Rough to Final Fluff.">
+ <meta name="keywords" content="Construction cleanup Dallas, post-construction cleaning Plano, final clean North Texas, builder cleaning DFW, construction site porter McKinney">
 {% endblock %}
 
 {% block content %}
-<section class="construction-view">
-    <div class="construction-hero">
-        <h1>Post-Construction Excellence</h1>
-        <p class="subtitle">Transforming a job site into a high-performance facility through the 3-Phase SigmaFidelity™ protocol.</p>
-    </div>
-
-    <div class="cleaning-phases">
-        <div class="db-section" style="margin-bottom: 3rem;">
-            <h2 style="color: var(--accent); font-size: 1.5rem; border-bottom: none; margin-bottom: 1rem;">2026 North Texas Target Expansion</h2>
-            <p style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 2rem;">HWB Cleaning Services LLC is strategically positioned to provide high-fidelity phased cleaning for the following landmark developments:</p>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
-                <div class="b-item"><strong>Universal Kids Resort (Frisco):</strong> Phased sanitization for the 97-acre park and 300-room luxury hotel.</div>
-                <div class="b-item"><strong>Knox Street Mixed-Use (Dallas):</strong> High-density cleaning management for 1M sq. ft. of residential and retail.</div>
-                <div class="b-item"><strong>Texas Research Quarter (Plano):</strong> Specialized CSI sanitization for life sciences and lab infrastructure.</div>
-                <div class="b-item"><strong>McKinney National Terminal:</strong> Precision-grade care for the new 48,000 sq. ft. commercial terminal.</div>
-            </div>
-        </div>
-
-        <div class="phase-card" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: center; margin-bottom: 3rem;">
-            <div class="phase-image" style="background: #f1f5f9; height: 250px; border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-                <img src="{{ url_for('static', filename='hwb_construction_1.png') }}" alt="The Rough Clean" style="width: 100%; height: 100%; object-fit: cover;">
-            </div>
-            <div class="phase-details">
-                <div class="phase-header">
-                    <span class="phase-number">PHASE 01</span>
-                    <h2>The Rough Clean</h2>
-                </div>
-                <p>Conducted immediately after framing, plumbing, and electrical are complete. The focus remains on the removal of large debris and preparation for the finish work.</p>
-                <ul>
-                    <li>Removal of all trash and construction debris.</li>
-                    <li>Detailed sweeping and vacuuming of all surfaces.</li>
-                    <li>Sticker and label removal from windows and fixtures.</li>
-                    <li>Sanitization of high-traffic transit areas.</li>
-                </ul>
-            </div>
-        </div>
-
-        <div class="phase-card" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: center; margin-bottom: 3rem;">
-            <div class="phase-image" style="background: #f1f5f9; height: 250px; border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden; order: 2;">
-                <img src="{{ url_for('static', filename='hwb_construction_2.png') }}" alt="The Final Clean" style="width: 100%; height: 100%; object-fit: cover;">
-            </div>
-            <div class="phase-details">
-                <div class="phase-header">
-                    <span class="phase-number">PHASE 02</span>
-                    <h2>The Final Clean</h2>
-                </div>
-                <p>The most intensive stage. A detailed sanitization of every square inch ensures the facility is ready for occupation and official inspection.</p>
-                <ul>
-                    <li>Interior window cleaning including frames and tracks.</li>
-                    <li>Deep cleaning of all cabinetry, drawers, and closets.</li>
-                    <li>Detailed sanitization of restrooms and kitchenettes.</li>
-                    <li>Floor restoration and first-pass polishing.</li>
-                </ul>
-            </div>
-        </div>
-
-        <div class="phase-card" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: center; margin-bottom: 3rem;">
-            <div class="phase-image" style="background: #f1f5f9; height: 250px; border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-                <img src="{{ url_for('static', filename='hwb_construction_3.png') }}" alt="The Fluff & Touch-Up" style="width: 100%; height: 100%; object-fit: cover;">
-            </div>
-            <div class="phase-details">
-                <div class="phase-header">
-                    <span class="phase-number">PHASE 03</span>
-                    <h2>The Fluff & Touch-Up</h2>
-                </div>
-                <p>Conducted 24-48 hours before the grand opening. This phase eliminates settled dust and ensures a zero-defect visual presentation for the client partner.</p>
-                <ul>
-                    <li>Removal of new dust settled after the Final Clean.</li>
-                    <li>Polishing of chrome, stainless steel, and glass.</li>
-                    <li>Fingerprint and smudge removal from all touchpoints.</li>
-                    <li>Final audit against the CSI: Clean Scene Investigation standard.</li>
-                </ul>
+<section class="services-view">
+    <!-- High-Fidelity Construction Hero -->
+    <div class="services-hero dark-variant" style="background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('/static/img/construction_sweeper_servicing_street.png');">
+        <div class="content-wrapper">
+            <h1>3-Step Construction Cleanup</h1>
+            <p class="subtitle">Detailed 3-step cleanup ensuring your building is inspection-ready. We transform high-stakes job sites into spotless, high-performance facilities across the DFW Metroplex.</p>
+            <div class="hero-ctas">
+                <a href="{{ url_for('get_quote') }}" class="isc-btn isc-btn-primary" style="height: 52px; padding: 0 3.5rem; border-radius: 50px; font-weight: 800;">Start a quote <i class="fas fa-arrow-right" style="margin-left: 0.5rem;"></i></a>
             </div>
         </div>
     </div>
 
-    <div class="construction-cta">
-        <div class="cta-dark">
-            <h2>Always Audit-Ready.</h2>
-            <p>Construction cleans are focused on <strong>compliance</strong> and <strong>safety</strong>, ensuring the project meets the highest professional standards.</p>
-            <a href="{{ url_for('calculator') }}" class="btn-primary">Generate Phase-Based Analysis</a>
+    <div class="detailed-services">
+        <div class="content-wrapper">
+            <!-- Strategic Precision Section -->
+            <div class="split-feature image-left" style="display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center; margin-bottom: 8rem;">
+                <div class="sigma-image-frame" style="border-radius: 12px; overflow: hidden; height: 450px;">
+                    <img src="/static/img/construction_new.png" alt="HWB Professional Construction Crew" style="width: 100%; height: 100%; object-fit: cover;">
+                </div>
+                <div class="split-content">
+                    <span style="font-size: 0.75rem; font-weight: 900; color: var(--hwb-blue); text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 1rem; display: block;">Certified Compliance</span>
+                    <h2 style="font-size: 2.5rem; font-weight: 800; color: var(--hwb-dark); margin-bottom: 1.5rem; letter-spacing: -0.02em;">OSHA-Compliant Site Reset</h2>
+                    <p style="font-size: 1.15rem; color: var(--hwb-slate); margin-bottom: 2rem; line-height: 1.8; font-weight: 500;">Construction cleans are focused on <strong>compliance</strong> and <strong>safety</strong>. Our teams are equipped with proper PPE and follow a rigorous technical sequence to ensure your project meets the highest professional standards before handover.</p>
+                    <ul class="hwb-checklist" style="list-style: none; padding: 0;">
+                        <li style="margin-bottom: 1rem; font-weight: 600; color: var(--hwb-dark); display: flex; align-items: center; gap: 1rem;"><i class="fas fa-check-circle" style="color: var(--hwb-blue);"></i> Rough Clean: Large Debris Removal</li>
+                        <li style="margin-bottom: 1rem; font-weight: 600; color: var(--hwb-dark); display: flex; align-items: center; gap: 1rem;"><i class="fas fa-check-circle" style="color: var(--hwb-blue);"></i> Final Clean: Detailed Sanitization</li>
+                        <li style="margin-bottom: 1rem; font-weight: 600; color: var(--hwb-dark); display: flex; align-items: center; gap: 1rem;"><i class="fas fa-check-circle" style="color: var(--hwb-blue);"></i> Fluff Clean: Zero-Defect Touchup</li>
+                        <li style="margin-bottom: 1rem; font-weight: 600; color: var(--hwb-dark); display: flex; align-items: center; gap: 1rem;"><i class="fas fa-check-circle" style="color: var(--hwb-blue);"></i> CSI: Clean Scene Investigation Audit</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 8rem;">
+                <div class="section-header" style="text-align: center; margin-bottom: 4rem;">
+                    <h2 style="font-size: 2.25rem; font-weight: 800; color: var(--hwb-dark);">The 3-Phase Handover Protocol</h2>
+                    <p style="font-size: 1.1rem; color: var(--hwb-slate); margin-top: 1rem;">Phased cleaning management for high-stakes North Texas developments.</p>
+                </div>
+                
+                <!-- Restored 4-Column Aligned Grid (using 3 cards) -->
+                <div class="service-grid" style="grid-template-columns: repeat(3, 1fr);">
+                    <!-- Card 1: The Rough Clean -->
+                    <div class="service-card">
+                        <div class="card-image" style="background-image: url('{{ url_for('static', filename='hwb_construction_1.png') }}');"></div>
+                        <div class="card-content">
+                            <div class="card-badge">Phase 01</div>
+                            <h3>The Rough Clean</h3>
+                            <p>Post-framing and MEP completion. We focus on massive debris removal, detailed sweeping, and fixture prep for finish work.</p>
+                        </div>
+                    </div>
+
+                    <!-- Card 2: The Final Clean -->
+                    <div class="service-card">
+                        <div class="card-image" style="background-image: url('{{ url_for('static', filename='hwb_construction_2.png') }}');"></div>
+                        <div class="card-content">
+                            <div class="card-badge">Phase 02</div>
+                            <h3>The Final Clean</h3>
+                            <p>The intensive reset. Detailed sanitization of cabinetry, windows, restrooms, and first-pass floor restoration for official inspection.</p>
+                        </div>
+                    </div>
+
+                    <!-- Card 3: The Fluff Clean -->
+                    <div class="service-card">
+                        <div class="card-image" style="background-image: url('{{ url_for('static', filename='hwb_construction_3.png') }}');"></div>
+                        <div class="card-content">
+                            <div class="card-badge">Phase 03</div>
+                            <h3>The Fluff & Touchup</h3>
+                            <p>Conducted 24-48 hours before opening. We eliminate settled dust and remove smudges to ensure a zero-defect visual presentation.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
+
+    <!-- Department Final CTA -->
+    <section class="cta-section">
+        <div class="executive-cta">
+            <h2 style="font-size: 2.75rem;">Start your custom plan today</h2>
+            <p>Our team is ready to deliver ISO 9001-compliant construction cleanup for your site. Request your technical phase-based scope today.</p>
+            <div style="display: flex; gap: 1.5rem; justify-content: center;">
+                <a href="{{ url_for('get_quote') }}" class="isc-btn isc-btn-primary" style="height: 56px; padding: 0 4rem; font-weight: 800; border-radius: 50px; font-size: 1.1rem;">Start a quote <i class="fas fa-arrow-right"></i></a>
+            </div>
+        </div>
+    </section>
 </section>
 {% endblock %}
