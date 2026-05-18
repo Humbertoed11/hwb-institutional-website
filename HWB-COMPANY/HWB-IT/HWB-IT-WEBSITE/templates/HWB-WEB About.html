@@ -1,54 +1,100 @@
 {% extends "base.html" %}
 
-{% block title %}About Us | 20 Years of Facility Management Excellence | HWB Cleaning{% endblock %}
-{% block head %}
-    <meta name="description" content="With over 20 years of experience, HWB Cleaning Services LLC is the trusted partner for institutional sanitation in DFW. Led by CEO Humberto Dominguez, we guarantee Fidelity, Safety, and Respect.">
-    <meta name="keywords" content="HWB Cleaning history, commercial cleaning experts, Humberto Dominguez, Plano TX business, DFW sanitation leadership">
-{% endblock %}
+{% block title %}About HWB Cleaning | The SigmaQuality™ Standard | Leadership & Vision{% endblock %}
 
 {% block content %}
-<section class="about-view">
-    <div class="about-hero">
-        <h1>Our Commitment to Fidelity</h1>
-        <p class="subtitle">HWB Cleaning Services LLC provides reliable, professional-grade janitorial solutions for offices and commercial properties across the DFW metroplex.</p>
-    </div>
+<section class="services-view">
+ <!-- Class A Hero Narrative -->
+ <div class="services-hero" style="background-image: linear-gradient(rgba(2, 6, 23, 0.75), rgba(2, 6, 23, 0.75)), url('/static/img/hwb_core_team_v2.png'); background-position: center 15%;">
+        <div class="content-wrapper">
+            <h1>Quality is a Personal Promise</h1>
+            <p class="subtitle">A message from Humberto Dominguez, CEO of HWB Cleaning Services LLC, on the sum of all efforts.</p>
+            <div class="hero-ctas">
+                <a href="{{ url_for('get_quote') }}" class="isc-btn isc-btn-primary" style="height: 52px; padding: 0 3.5rem; border-radius: 50px; font-weight: 800;">Start a quote <i class="fas fa-arrow-right" style="margin-left: 0.5rem;"></i></a>
+            </div>
+        </div>
 
-    <div class="experience-stats">
-        <div class="stat-card">
-            <div class="stat-number">20+</div>
-            <div class="stat-label">Years of Experience</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number">DFW</div>
-            <div class="stat-label">Metroplex Service</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number">9001</div>
-            <div class="stat-label">ISO Standards</div>
-        </div>
-    </div>
+ <div id="vision" class="detailed-services" style="padding: 0 40px;">
+ 
+ <!-- Leadership Narrative & Signature Statements -->
+ <div class="split-feature image-right" style="background: white; border: 1px solid var(--hwb-border); box-shadow: 0 20px 50px rgba(37, 99, 235, 0.03); margin-top: -4rem; position: relative; z-index: 10;">
+ <div class="split-content" style="padding: 5rem;">
+ <h2 style="font-size: 2.5rem; margin-bottom: 2rem; color: var(--hwb-dark); font-weight: 900;">The HWB Promise</h2>
+ <div style="font-size: 1.15rem; color: var(--hwb-slate); line-height: 1.8; display: grid; gap: 1.5rem;">
+ <p>HWB was founded to provide a level of accuracy that the North Texas Commercial market demands. We believe that a spotless building is the result of a specific, repeatable plan.</p>
+ <p>We call this the <strong>Sigma Standard</strong>. It is the belief that Quality is the total sum of every small detail handled correctly. When we train our people better and use the right tools, your building succeeds.</p>
+ 
+ <!-- Integrated Mission & Vision (Typography Centric) -->
+ <div style="margin-top: 3rem; display: grid; gap: 2.5rem; border-top: 1px solid #eee; padding-top: 3rem;">
+ <div>
+ <span style="display: block; font-size: 0.8rem; font-weight: 800; color: var(--hwb-blue); text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 0.5rem;">Our Mission</span>
+ <p style="font-size: 1.4rem; font-weight: 700; color: var(--hwb-dark); line-height: 1.4; margin: 0;">To provide consistent, high-quality cleaning to North Texas through better training and the right tools.</p>
+ </div>
+ <div>
+ <span style="display: block; font-size: 0.8rem; font-weight: 800; color: var(--hwb-blue); text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 0.5rem;">Our Vision</span>
+ <p style="font-size: 1.4rem; font-weight: 700; color: var(--hwb-dark); line-height: 1.4; margin: 0;">To set the new standard for professional cleaning across the entire state of Texas.</p>
+ </div>
+ </div>
 
-    <div class="mission-vision">
-        <div class="vision-box">
-            <div class="icon">👁️</div>
-            <h2>Our Vision</h2>
-            <p>To be the most trusted and respected cleaning service provider in the DFW metroplex, recognized for our exceptional quality, reliability, and commitment to our clients and employees.</p>
-        </div>
-        <div class="mission-box">
-            <div class="icon">🚀</div>
-            <h2>Our Mission</h2>
-            <p>To deliver superior and reliable cleaning services to our commercial and industrial clients. We achieve this by fostering a culture of respect and safety for our team, operating with unwavering fidelity, and leveraging efficient processes to ensure complete customer satisfaction.</p>
-        </div>
-    </div>
+ <div style="margin-top: 3rem;">
+ <div style="font-family: 'Times New Roman', serif; font-style: italic; font-size: 2.8rem; color: var(--hwb-dark); margin-bottom: 0.5rem; letter-spacing: -0.02em;">Humberto Dominguez</div>
+ <div style="color: var(--hwb-blue); font-weight: 800; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.12em;">Founder & CEO</div>
+ </div>
+ </div>
+ </div>
+ <div class="split-image-container" style="background: var(--hwb-white); overflow: hidden;">
+ <!-- high-quality 2D Animated Logo Merge (Precise 28% Bisection) -->
+ <div class="logo-merge-wrap" style="position: relative; width: 100%; max-width: 450px; height: 350px; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+ <div class="logo-half left-half" style="position: absolute; width: 100%; height: 100%; background: url('{{ url_for('static', filename='logo_standard.png') }}') no-repeat center; background-size: contain; clip-path: inset(0 72% 0 0); animation: mergeLeft2D 1.8s cubic-bezier(0.2, 1, 0.3, 1) forwards; filter: drop-shadow(-5px 5px 15px rgba(37, 99, 235, 0.1));"></div>
+ <div class="logo-half right-half" style="position: absolute; width: 100%; height: 100%; background: url('{{ url_for('static', filename='logo_standard.png') }}') no-repeat center; background-size: contain; clip-path: inset(0 0 0 28%); animation: mergeRight2D 1.8s cubic-bezier(0.2, 1, 0.3, 1) forwards; filter: drop-shadow(5px 5px 15px rgba(37, 99, 235, 0.03));"></div>
+ </div>
+ </div>
+ </div>
 
-    <div class="qms-intro">
-        <h2>Institutional Quality Management</h2>
-        <p>HWB Cleaning Services LLC is currently implementing <strong>ISO 9001:2015 certification</strong> standards. Every operation is built on a formal Quality Management System (QMS) where every service is documented, audited, and continuously improved.</p>
-        <div class="belief-highlight">
-            <div class="b-item"><strong>Respect:</strong> For employees and clients alike.</div>
-            <div class="b-item"><strong>Safety:</strong> OSHA-compliant training and tools.</div>
-            <div class="b-item"><strong>Fidelity:</strong> Loyalty and truthfulness in all engagements.</div>
-        </div>
-    </div>
+ <!-- The HWB Quality Formula (Refined & Human-Centric) -->
+ <div style="margin-bottom: 8rem; background: #ffffff; border: 1px solid var(--hwb-border); border-radius: var(--radius-lg); padding: 6rem 4rem; text-align: center;">
+ <h2 style="color: var(--hwb-dark); margin-bottom: 1rem; font-size: 2.5rem; font-weight: 900;">The HWB Quality Formula</h2>
+ <p style="color: var(--hwb-blue); font-weight: 700; margin-bottom: 4rem; font-size: 1.25rem;">Every small effort adds up to a professional clean.</p>
+ 
+ <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 3rem;">
+ <div style="background: white; padding: 2.5rem; border-radius: 16px; border: 1px solid var(--hwb-border); box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
+ <h4 style="color: var(--hwb-blue); font-size: 1.1rem; margin-bottom: 1rem; font-weight: 800; text-transform: uppercase;">Better Training</h4>
+ <p style="color: var(--hwb-slate); font-size: 1rem; line-height: 1.6; margin: 0;">Every person on our team is professionally checked and trained to follow our exact cleaning steps.</p>
+ </div>
+ <div style="background: white; padding: 2.5rem; border-radius: 16px; border: 1px solid var(--hwb-border); box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
+ <h4 style="color: var(--hwb-blue); font-size: 1.1rem; margin-bottom: 1rem; font-weight: 800; text-transform: uppercase;">Better Tools</h4>
+ <p style="color: var(--hwb-slate); font-size: 1rem; line-height: 1.6; margin: 0;">We use professional vacuums and floor machines to remove the dust and dirt you can't see.</p>
+ </div>
+ <div style="background: white; padding: 2.5rem; border-radius: 16px; border: 1px solid var(--hwb-border); box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
+ <h4 style="color: var(--hwb-blue); font-size: 1.1rem; margin-bottom: 1rem; font-weight: 800; text-transform: uppercase;">Better Respect</h4>
+ <p style="color: var(--hwb-slate); font-size: 1rem; line-height: 1.6; margin: 0;">We follow your building's specific rules and security steps to make sure your space is treated right.</p>
+ </div>
+ </div>
+ </div>
+ </div>
+
+ <!-- Final CTA Standard -->
+ <section class="cta-section">
+ <div class="executive-cta">
+ <h2>Ready to work with a partner you can trust?</h2>
+ <p>Join the Class A buildings across North Texas that rely on the HWB Sigma Standard every day.</p>
+ <a href="{{ url_for('get_quote') }}" class="isc-btn isc-btn-primary" style="height: 56px; padding: 0 4rem; font-weight: 800; border-radius: 50px; font-size: 1.1rem;">Start a quote <i class="fas fa-arrow-right"></i></a>
+ </div>
+ </section>
 </section>
+
+<style>
+@keyframes mergeLeft2D {
+ 0% { transform: translateX(-180px); opacity: 0; }
+ 100% { transform: translateX(0); opacity: 1; }
+}
+@keyframes mergeRight2D {
+ 0% { transform: translateX(180px); opacity: 0; }
+ 100% { transform: translateX(0); opacity: 1; }
+}
+.logo-merge-wrap:hover {
+ transform: scale(1.01);
+ transition: transform 0.4s ease;
+}
+</style>
 {% endblock %}
