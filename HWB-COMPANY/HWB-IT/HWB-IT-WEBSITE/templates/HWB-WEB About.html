@@ -4,15 +4,13 @@
 
 {% block content %}
 <section class="services-view">
- <!-- Class A Hero Narrative -->
- <div class="services-hero" style="background-image: linear-gradient(rgba(2, 6, 23, 0.75), rgba(2, 6, 23, 0.75)), url('/static/img/hwb_core_team_v2.png'); background-position: center 15%;">
-        <div class="content-wrapper">
-            <h1>Quality is a Personal Promise</h1>
-            <p class="subtitle">A message from Humberto Dominguez, CEO of HWB Cleaning Services LLC, on the sum of all efforts.</p>
-            <div class="hero-ctas">
-                <a href="{{ url_for('get_quote') }}" class="isc-btn isc-btn-primary" style="height: 52px; padding: 0 3.5rem; border-radius: 50px; font-weight: 800;">Start a quote <i class="fas fa-arrow-right" style="margin-left: 0.5rem;"></i></a>
-            </div>
+    <!-- High-Fidelity About Hero (Personal Promise) -->
+    <section class="services-hero dark-variant" style="background-image: linear-gradient(rgba(2, 6, 23, 0.8), rgba(2, 6, 23, 0.7)), url('/static/img/hwb_core_team_v2.png'); background-position: center 15%;">
+        <div class="content-wrapper" style="text-align: center;">
+            <h1 style="color: white !important;">Quality is a Personal Promise</h1>
+            <p class="subtitle" style="color: rgba(255,255,255,0.9) !important; max-width: 800px; margin-left: auto; margin-right: auto;">A message from Humberto Dominguez, CEO of HWB Cleaning Services LLC, on the sum of all efforts.</p>
         </div>
+    </section>
 
  <div id="vision" class="detailed-services" style="padding: 0 40px;">
  
@@ -75,11 +73,13 @@
 
  <!-- Final CTA Standard -->
  <section class="cta-section">
- <div class="executive-cta">
- <h2>Ready to work with a partner you can trust?</h2>
- <p>Join the Class A buildings across North Texas that rely on the HWB Sigma Standard every day.</p>
- <a href="{{ url_for('get_quote') }}" class="isc-btn isc-btn-primary" style="height: 56px; padding: 0 4rem; font-weight: 800; border-radius: 50px; font-size: 1.1rem;">Start a quote <i class="fas fa-arrow-right"></i></a>
- </div>
+    <div class="executive-cta">
+        <h2 style="font-size: 2.75rem;">Ready to work with a partner you can trust?</h2>
+        <p>Join the Class A buildings across North Texas that rely on the HWB Sigma Standard every day.</p>
+        <div style="display: flex; gap: 1.5rem; justify-content: center;">
+            <a href="{{ url_for('get_quote') }}" class="isc-btn isc-btn-primary" style="height: 56px; padding: 0 4rem; font-weight: 800; border-radius: 50px; font-size: 1.1rem;">Start a quote <i class="fas fa-arrow-right"></i></a>
+        </div>
+    </div>
  </section>
 </section>
 

@@ -411,7 +411,7 @@ def logout(): logout_user(); return redirect(url_for('index'))
 def index(): return render_template('commercial_template.html')
 
 @app.route('/about', endpoint='about')
-def about(): return render_template('about.html')
+def about(): return render_template('HWB-WEB About.html')
 
 @app.route('/services/janitorial', endpoint='services_janitorial')
 def services_janitorial(): return render_template('janitorial.html')
