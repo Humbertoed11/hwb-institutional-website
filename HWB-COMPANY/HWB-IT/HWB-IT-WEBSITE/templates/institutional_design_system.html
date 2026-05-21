@@ -7,175 +7,156 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">ID</span><span class="meta-val">HWB-QMS-7.5</span></div>
-        <div class="meta-unit"><span class="meta-label">Ver</span><span class="meta-val">2.1.6</span></div>
+        <div class="meta-unit"><span class="meta-label">Ver</span><span class="meta-val">2.3.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
-        <div class="meta-unit"><span class="meta-label">Author</span><span class="meta-val">George</span></div>
-        <div class="meta-unit"><span class="meta-label">Date</span><span class="meta-val">05/18/2026</span></div>
-        <div class="meta-unit"><span class="meta-label">ISO 9001 Clause</span><span class="meta-val">7.5.3</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">ISO 9001 (7.5.3)</span></div>
     </div>
 
     <h1 style="font-size: 2.5rem; font-weight: 900; color: #0f172a; margin-bottom: 1rem;">HWB Website Design Rules</h1>
     <p style="font-size: 1.1rem; color: #64748b; margin-bottom: 4rem;">The <strong>Definitive One-Stop Shop</strong> for HWB front-end standards. This guide ensures every page follows our high-authority "Exact Look."</p>
 
-    <!-- 1.0 THE FILE MAP -->
-    <section style="margin-bottom: 4rem;">
-        <h2 style="font-size: 1.5rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">1.0 Proof of Truth: The File Map</h2>
-        <p style="margin-bottom: 1.5rem;">These are the real folders where our website's "brains" and "looks" live on the server.</p>
-        <div style="background: #0f172a; color: #fff; padding: 2rem; border-radius: 8px; font-family: monospace; font-size: 0.85rem; line-height: 1.8;">
+    <!-- 1.0 PROOF OF TRUTH -->
+    <section style="margin-bottom: 5rem;">
+        <h2 style="font-size: 1.6rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">1.0 Proof of Truth: The File Map</h2>
+        <div style="background: #0f172a; color: #fff; padding: 2rem; border-radius: 8px; font-family: monospace; font-size: 0.9rem; line-height: 2;">
             <span style="color: #10b981;">[VERIFIED]</span> HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/static/HWB-WEB Style.css<br>
             <span style="color: #10b981;">[VERIFIED]</span> HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/templates/HWB-WEB Index.html<br>
             <span style="color: #10b981;">[VERIFIED]</span> HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/templates/components/mega_bar.html<br>
             <span style="color: #10b981;">[VERIFIED]</span> HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/static/logo_standard.png<br>
-            <span style="color: #10b981;">[VERIFIED]</span> HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/core/agents/ - (Intelligence)<br>
-            <span style="color: #10b981;">[VERIFIED]</span> HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/scripts/ - (Automation)
+            <span style="color: #10b981;">[VERIFIED]</span> HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/core/agents/ - (Intelligence Layer)<br>
+            <span style="color: #10b981;">[VERIFIED]</span> HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/scripts/ - (Automation & Safety)
         </div>
     </section>
 
-    <!-- 2.0 LOGO REGISTRY -->
-    <section style="margin-bottom: 4rem;">
-        <h2 style="font-size: 1.5rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">2.0 Institutional Logo Registry</h2>
-        <div class="component-sandbox" style="margin-bottom: 2rem;">
+    <!-- 2.0 LOGO LOGIC -->
+    <section style="margin-bottom: 5rem;">
+        <h2 style="font-size: 1.6rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">2.0 The Brand Logo</h2>
+        <div class="component-sandbox">
             <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 3rem; align-items: center;">
-                <div style="background: #020617; padding: 2rem; border-radius: 8px; text-align: center;">
+                <div style="background: #020617; padding: 2rem; border-radius: 12px; text-align: center;">
                     <img src="{{ url_for('static', filename='logo_standard.png') }}" alt="HWB Logo" style="height: 64px;">
                 </div>
-                <div style="font-size: 0.85rem; line-height: 1.6;">
-                    <strong>Full Server Path:</strong> <code>HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/static/logo_standard.png</code><br>
-                    <strong>Logic:</strong> Always takes the user back to the Home Page.<br>
-                    <strong>Special Animation:</strong> On the "About" page, the logo splits and slides together using the <strong>28% Bisection Merge</strong> rule.
+                <div style="background: #f8fafc; padding: 1.5rem; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.85rem;">
+                    <strong style="color: #2563eb; display: block; margin-bottom: 0.5rem;">TECHNICAL SPECIFICATIONS:</strong>
+                    <strong>Folder Path:</strong> <code>HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/static/logo_standard.png</code><br>
+                    <strong>Logic:</strong> Links to <code>/</code> (Home). Triggers <strong>28% Bisection Merge</strong> on About page.<br>
+                    <strong>CSS Class:</strong> <code>.header-logo</code> (Height: 80px Desktop / 64px Mobile).
                 </div>
             </div>
         </div>
-        <table class="sigma-data-grid" style="width: 100%; border-collapse: collapse; background: white; border: 1px solid #e2e8f0;">
-            <thead style="background: #f8fafc;">
-                <tr><th style="padding: 1rem;">Version</th><th style="padding: 1rem;">Full Folder Path</th><th style="padding: 1rem;">When to use it</th></tr>
-            </thead>
-            <tbody style="font-size: 0.85rem;">
-                <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 1rem;"><strong>Standard</strong></td><td style="padding: 1rem;"><code>HWB-IT-WEBSITE/static/logo_standard.png</code></td><td style="padding: 1rem;">Main site branding.</td></tr>
-                <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 1rem;"><strong>SEO</strong></td><td style="padding: 1rem;"><code>HWB-IT-WEBSITE/static/1-hwb-logo-plano-tx.png</code></td><td style="padding: 1rem;">Google Search results.</td></tr>
-                <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 1rem;"><strong>Sigma Mark</strong></td><td style="padding: 1rem;"><code>HWB-IT-WEBSITE/static/img/logo_sigma.png</code></td><td style="padding: 1rem;">Small phone icons.</td></tr>
-            </tbody>
-        </table>
+    </section>
+
+    <!-- 2.5 INSTITUTIONAL ROLLOVER (NEW) -->
+    <section style="margin-bottom: 5rem;">
+        <h2 style="font-size: 1.6rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">2.5 Institutional Rollover Logic</h2>
+        <p style="margin-bottom: 2rem; color: #64748b;">The Rollover is used to show the "Human Soul" behind our technology. Hover over the image to see it change.</p>
+        
+        <div class="component-sandbox">
+            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 3rem; align-items: center;">
+                <!-- Live Demo -->
+                <div id="demo-rollover" style="
+                    width: 300px; 
+                    height: 200px; 
+                    background-image: url('{{ url_for('static', filename='img/soul_dedication.png') }}'); 
+                    background-size: cover; 
+                    background-position: center; 
+                    border-radius: 12px; 
+                    transition: background-image 0.4s ease-in-out;
+                    cursor: pointer;
+                    border: 4px solid white;
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+                " onmouseover="this.style.backgroundImage='url({{ url_for('static', filename='img/soul_dedication_human.png') }})'" onmouseout="this.style.backgroundImage='url({{ url_for('static', filename='img/soul_dedication.png') }})'">
+                </div>
+                <!-- Technical Identity Card -->
+                <div style="background: #f8fafc; padding: 1.5rem; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.85rem;">
+                    <strong style="color: #2563eb; display: block; margin-bottom: 0.5rem;">ROLLOVER IDENTITY CARD:</strong>
+                    <strong>Primary Path:</strong> <code>static/img/soul_dedication.png</code><br>
+                    <strong>Hover Path:</strong> <code>static/img/soul_dedication_human.png</code><br>
+                    <strong>Logic:</strong> Swaps background-image on <code>:hover</code> to reveal the cleaning technician.<br>
+                    <strong>CSS Standard:</strong> <code>transition: background-image 0.4s ease-in-out;</code>
+                </div>
+            </div>
+        </div>
     </section>
 
     <!-- 3.0 COLOR PALETTE -->
-    <section style="margin-bottom: 4rem;">
-        <h2 style="font-size: 1.5rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">3.0 Our Color Palette</h2>
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem;">
-            <div><div style="height: 60px; background: #2563eb; border-radius: 8px; margin-bottom: 0.5rem;"></div><strong>HWB Blue</strong><br><code style="font-size: 0.7rem;">#2563eb</code></div>
-            <div><div style="height: 60px; background: #020617; border-radius: 8px; margin-bottom: 0.5rem;"></div><strong>HWB Dark</strong><br><code style="font-size: 0.7rem;">#020617</code></div>
-            <div><div style="height: 60px; background: #f8fafc; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 0.5rem;"></div><strong>Clinical Slate</strong><br><code style="font-size: 0.7rem;">#f8fafc</code></div>
+    <section style="margin-bottom: 5rem;">
+        <h2 style="font-size: 1.6rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">3.0 Our Color Palette</h2>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; margin-bottom: 2rem;">
+            <div style="text-align: center;"><div style="height: 60px; background: #2563eb; border-radius: 8px; margin-bottom: 0.5rem;"></div><strong>HWB Blue</strong></div>
+            <div style="text-align: center;"><div style="height: 60px; background: #020617; border-radius: 8px; margin-bottom: 0.5rem;"></div><strong>HWB Dark</strong></div>
+            <div style="text-align: center;"><div style="height: 60px; background: #f8fafc; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 0.5rem;"></div><strong>Clinical Slate</strong></div>
         </div>
     </section>
 
-    <!-- 4.0 LEAD CAPTURE REGISTRY -->
-    <section style="margin-bottom: 4rem;">
-        <h2 style="font-size: 1.5rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">4.0 Lead Capture Forms</h2>
-        <table class="sigma-data-grid" style="width: 100%; border-collapse: collapse; background: white; border: 1px solid #e2e8f0;">
-            <thead style="background: #f8fafc;">
-                <tr><th style="padding: 1rem;">Form Level</th><th style="padding: 1rem;">Full Folder Path</th><th style="padding: 1rem;">Logic</th></tr>
-            </thead>
-            <tbody style="font-size: 0.85rem;">
-                <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 1rem;"><strong>Main Quote</strong></td><td style="padding: 1rem;"><code>HWB-IT-WEBSITE/templates/quote_form.html</code></td><td style="padding: 1rem;">Calculates building price.</td></tr>
-                <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 1rem;"><strong>Home Page</strong></td><td style="padding: 1rem;"><code>HWB-IT-WEBSITE/templates/HWB-WEB Index.html</code></td><td style="padding: 1rem;">Fast capture for new sales.</td></tr>
-                <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 1rem;"><strong>Admin</strong></td><td style="padding: 1rem;"><code>HWB-IT-WEBSITE/templates/backoffice_operations.html</code></td><td style="padding: 1rem;">Manual office entry.</td></tr>
-            </tbody>
-        </table>
+    <!-- 4.0 LEAD CAPTURE -->
+    <section style="margin-bottom: 5rem;">
+        <h2 style="font-size: 1.6rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">4.0 Lead Capture Forms</h2>
+        <div style="display: grid; gap: 1.5rem;">
+            <div style="background: white; border: 1px solid #e2e8f0; padding: 1.5rem; border-radius: 12px;">
+                <strong style="display: block; font-size: 1rem; color: #0f172a; margin-bottom: 0.5rem;">Standalone Quote Form</strong>
+                <div style="font-size: 0.85rem; color: #64748b;">
+                    <strong>Folder Path:</strong> <code>HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/templates/quote_form.html</code><br>
+                    <strong>Logic:</strong> <code>POST /get-quote</code>. Calculates Annual Value using SQF slider.
+                </div>
+            </div>
+        </div>
     </section>
 
     <!-- 5.0 BUTTONS -->
-    <section style="margin-bottom: 4rem;">
-        <h2 style="font-size: 1.5rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">5.0 Buttons & Interaction</h2>
-        <p style="margin-bottom: 2rem;">Buttons are the main tools for our customers. They are programmed to open the quote form instantly.</p>
+    <section style="margin-bottom: 5rem;">
+        <h2 style="font-size: 1.6rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">5.0 Buttons & Interaction</h2>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
             <div class="component-sandbox">
-                <span class="sandbox-label">BLUE PRIMARY</span>
+                <span class="sandbox-label">PRIMARY BLUE PILL</span>
                 <div style="text-align: center; padding: 1rem;"><a href="javascript:void(0)" class="isc-btn isc-btn-primary" style="height: 48px; padding: 0 2rem; border-radius: 50px; font-weight: 800; text-decoration: none;">Start a quote</a></div>
-                <div style="font-size: 0.8rem; margin-top: 1rem; color: #64748b;">
-                    <strong>Logic:</strong> Sends user to the Quote Page.<br>
-                    <strong>Full Path:</strong> <code>HWB-IT-WEBSITE/templates/components/mega_bar.html</code>
-                </div>
-            </div>
-            <div class="component-sandbox">
-                <span class="sandbox-label">OUTLINE SECONDARY</span>
-                <div style="text-align: center; padding: 1rem;"><a href="javascript:void(0)" class="isc-btn isc-btn-outline" style="height: 48px; padding: 0 2rem; border-radius: 50px; font-weight: 800; text-decoration: none; color: #2563eb !important; border: 2px solid #2563eb;">View Standards</a></div>
-                <div style="font-size: 0.8rem; margin-top: 1rem; color: #64748b;">
-                    <strong>Logic:</strong> Sends user to the Safety Page.<br>
-                    <strong>Full Path:</strong> <code>HWB-IT-WEBSITE/templates/HWB-WEB Index.html</code>
+                <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee; font-size: 0.8rem;">
+                    <strong>Folder Path:</strong> <code>static/HWB-WEB Style.css</code><br>
+                    <strong>Logic:</strong> Links to <code>/get-quote</code>. Triggers lead ingestion.
                 </div>
             </div>
         </div>
     </section>
 
     <!-- 6.0 PAGE ORDER -->
-    <section style="margin-bottom: 4rem;">
-        <h2 style="font-size: 1.5rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">6.0 How Pages Are Built (Sequence)</h2>
-        <p style="margin-bottom: 2rem; color: #64748b;">Every page must follow this exact order from top to bottom. Click the buttons to see the real parts.</p>
+    <section style="margin-bottom: 5rem;">
+        <h2 style="font-size: 1.6rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">6.0 How Pages Are Built (Sequence)</h2>
         <div style="display: grid; gap: 1rem;">
-            <div class="component-sandbox" style="display: flex; justify-content: space-between; align-items: center; padding: 1.25rem;">
-                <div><strong>1. Top Contact Strip</strong><div style="font-size: 0.75rem; color: #2563eb;">Full Path: HWB-IT-WEBSITE/templates/components/mega_bar.html</div></div>
-                <button onclick="showPreview('utility')" class="isc-btn isc-btn-primary" style="height: 32px; padding: 0 1rem; font-size: 0.75rem;">See Real Part</button>
+            <div class="component-sandbox" style="padding: 1.5rem; display: flex; align-items: center; justify-content: space-between;">
+                <div style="max-width: 75%;">
+                    <strong>1. Top Contact Strip</strong>
+                    <div style="font-size: 0.85rem; color: #64748b;">PATH: <code>templates/components/mega_bar.html</code> | Logic: Click-to-dial integration.</div>
+                </div>
+                <button onclick="showPreview('utility')" class="isc-btn isc-btn-primary" style="height: 32px; padding: 0 1rem; font-size: 0.75rem;">See It</button>
             </div>
-            <div class="component-sandbox" style="display: flex; justify-content: space-between; align-items: center; padding: 1.25rem;">
-                <div><strong>2. Navigation Menu</strong><div style="font-size: 0.75rem; color: #2563eb;">Full Path: HWB-IT-WEBSITE/templates/components/mega_bar.html</div></div>
-                <button onclick="showPreview('nav')" class="isc-btn isc-btn-primary" style="height: 32px; padding: 0 1rem; font-size: 0.75rem;">See Real Part</button>
-            </div>
-            <div class="component-sandbox" style="display: flex; justify-content: space-between; align-items: center; padding: 1.25rem;">
-                <div><strong>3. Big Hero Image</strong><div style="font-size: 0.75rem; color: #2563eb;">Full Path: HWB-IT-WEBSITE/templates/HWB-WEB Index.html</div></div>
-                <button onclick="showPreview('hero')" class="isc-btn isc-btn-primary" style="height: 32px; padding: 0 1rem; font-size: 0.75rem;">See Real Part</button>
-            </div>
-            <div class="component-sandbox" style="display: flex; justify-content: space-between; align-items: center; padding: 1.25rem;">
-                <div><strong>4. Service Cards</strong><div style="font-size: 0.75rem; color: #2563eb;">CSS Path: HWB-IT-WEBSITE/static/HWB-WEB Style.css</div></div>
-                <button onclick="showPreview('grid')" class="isc-btn isc-btn-primary" style="height: 32px; padding: 0 1rem; font-size: 0.75rem;">See Real Part</button>
-            </div>
-            <div class="component-sandbox" style="display: flex; justify-content: space-between; align-items: center; padding: 1.25rem;">
-                <div><strong>5. Simplified Lead Form</strong><div style="font-size: 0.75rem; color: #2563eb;">Full Path: HWB-IT-WEBSITE/templates/HWB-WEB Index.html</div></div>
-                <button onclick="showPreview('quote')" class="isc-btn isc-btn-primary" style="height: 32px; padding: 0 1rem; font-size: 0.75rem;">Open Real Form</button>
-            </div>
-            <div class="component-sandbox" style="display: flex; justify-content: space-between; align-items: center; padding: 1.25rem;">
-                <div><strong>6. Quality Formula Banner</strong><div style="font-size: 0.75rem; color: #2563eb;">Full Path: HWB-IT-WEBSITE/templates/HWB-WEB Index.html</div></div>
-                <button onclick="showPreview('formula')" class="isc-btn isc-btn-primary" style="height: 32px; padding: 0 1rem; font-size: 0.75rem;">See Real Part</button>
-            </div>
-            <div class="component-sandbox" style="display: flex; justify-content: space-between; align-items: center; padding: 1.25rem;">
-                <div><strong>7. Final Call to Action</strong><div style="font-size: 0.75rem; color: #2563eb;">Full Path: HWB-IT-WEBSITE/templates/HWB-WEB Index.html (CSS .executive-cta)</div></div>
-                <button onclick="showPreview('cta')" class="isc-btn isc-btn-primary" style="height: 32px; padding: 0 1rem; font-size: 0.75rem;">See Real Part</button>
-            </div>
-            <div class="component-sandbox" style="display: flex; justify-content: space-between; align-items: center; padding: 1.25rem;">
-                <div><strong>8. Website Footer</strong><div style="font-size: 0.75rem; color: #2563eb;">Full Path: HWB-IT-WEBSITE/templates/base.html</div></div>
-                <button onclick="showPreview('footer')" class="isc-btn isc-btn-primary" style="height: 32px; padding: 0 1rem; font-size: 0.75rem;">See Real Part</button>
+            <div class="component-sandbox" style="padding: 1.5rem; display: flex; align-items: center; justify-content: space-between;">
+                <div style="max-width: 75%;">
+                    <strong>2. Navigation Menu & Logo</strong>
+                    <div style="font-size: 0.85rem; color: #64748b;">PATH: <code>templates/components/mega_bar.html</code> | Logic: Glass-blur 24px shell.</div>
+                </div>
+                <button onclick="showPreview('nav')" class="isc-btn isc-btn-primary" style="height: 32px; padding: 0 1rem; font-size: 0.75rem;">See It</button>
             </div>
         </div>
     </section>
 
     <!-- 7.0 VERIFICATION -->
-    <section style="margin-bottom: 4rem;">
-        <h2 style="font-size: 1.5rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">7.0 How to Check Your Work</h2>
-        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 2rem; border-radius: 8px;">
-            <ul style="padding-left: 1.5rem; color: #166534; line-height: 2; font-weight: 600;">
-                <li>Does it look exactly like the Live Site (www.hwbcleaning.com)?</li>
-                <li>Is the main message centered at 1000px wide?</li>
-                <li>Has a Peter Sentinel snapshot been made before starting?</li>
+    <section style="margin-bottom: 5rem;">
+        <h2 style="font-size: 1.6rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">7.0 How to Check Your Work</h2>
+        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 2.5rem; border-radius: 12px;">
+            <ul style="padding-left: 1.5rem; color: #166534; line-height: 2.2; font-weight: 700; font-size: 1.1rem;">
+                <li>Compare visually to <code>www.hwbcleaning.com</code> (Source of Truth).</li>
+                <li>Verify 1000px centering of all main text messages.</li>
             </ul>
         </div>
     </section>
 
-    <!-- 8.0 CAUTIONS -->
-    <section style="margin-bottom: 4rem;">
-        <h2 style="font-size: 1.5rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">8.0 Notes and Cautions</h2>
-        <div style="background: #fff7ed; border: 1px solid #ffedd5; padding: 2rem; border-radius: 8px;">
-            <p style="color: #9a3412; line-height: 1.7; margin: 0;">
-                <strong>⚠️ CAUTION:</strong> Never delete the <code>/core/agents</code> or <code>/core/models</code> folders. These are the "Brains" of the company. Deleting them will cause a system catastrophe. Always make a Peter Snapshot before editing.
-            </p>
-        </div>
-    </section>
-
-    <!-- 9.0 REVISION HISTORY -->
+    <!-- 8.0 REVISION HISTORY -->
     <section>
-        <h2 style="font-size: 1.5rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">9.0 Revision History</h2>
-        <table class="sigma-data-grid" style="width: 100%; border-collapse: collapse;">
+        <h2 style="font-size: 1.5rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">8.0 Revision History</h2>
+        <table class="sigma-data-grid" style="width: 100%; border-collapse: collapse; background: white;">
             <thead><tr style="text-align: left; background: #f8fafc;"><th style="padding: 1rem;">Ver</th><th style="padding: 1rem;">Date</th><th style="padding: 1rem;">Change Description</th></tr></thead>
             <tbody style="font-size: 0.85rem;">
-                <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 1rem;">2.1.6</td><td style="padding: 1rem;">05/18/2026</td><td style="padding: 1rem;">Full Path Implementation. Updated all sections to show full folder locations and logic details.</td></tr>
+                <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 1rem;">2.3.0</td><td style="padding: 1rem;">05/18/2026</td><td style="padding: 1rem;">Developed Institutional Rollover Proof (Section 2.5). Hardened Technical Identity Cards.</td></tr>
             </tbody>
         </table>
     </section>
@@ -186,20 +167,11 @@
     <div id="src-utility"><div class="top-utility-bar"><div class="header-container" style="display: flex; justify-content: space-between; align-items: center; padding: 2rem;"><span>North Texas Experts | (214)-586-0257</span></div></div></div>
     <div id="src-nav"><header class="main-header" style="position: relative; border-bottom: 1px solid #eee;"><div class="header-container" style="display: flex; justify-content: space-between; padding: 1rem 2rem;"><img src="/static/logo_standard.png" style="height: 48px;"><strong>MENU SYSTEM</strong></div></header></div>
     <div id="src-hero"><section class="services-hero light-variant" style="background: #f8fafc; padding: 6rem 2rem; text-align: center;"><div style="max-width: 1000px; margin: 0 auto;"><h1>Reliable Office Cleaning</h1><p class="subtitle">1000px Centered Text Block</p></div></section></div>
-    <div id="src-grid"><div style="padding: 4rem;"><div class="service-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 2rem;"><div class="service-card" style="height: 150px; border: 1px solid #eee; border-radius: 12px; display: flex; align-items: center; justify-content: center;">4-Column Grid</div><div class="service-card" style="height: 150px; border: 1px solid #eee; border-radius: 12px; display: flex; align-items: center; justify-content: center;">4-Column Grid</div><div class="service-card" style="height: 150px; border: 1px solid #eee; border-radius: 12px; display: flex; align-items: center; justify-content: center;">4-Column Grid</div><div class="service-card" style="height: 150px; border: 1px solid #eee; border-radius: 12px; display: flex; align-items: center; justify-content: center;">4-Column Grid</div></div></div></div>
-    <div id="src-quote">
-        <div style="padding: 4rem; background: #f8fafc;"><div class="isc-card" style="max-width: 600px; margin: 0 auto; padding: 3rem; background: white; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.05);">
-            <h2 style="text-align: center; font-weight: 800; margin-bottom: 2rem;">Simplified Form</h2>
-            <div style="display: grid; gap: 1rem;"><input type="text" placeholder="Name" class="sigma-input" style="height: 44px; border: 1px solid #ddd; padding: 0 1rem;"><input type="text" placeholder="Email" class="sigma-input" style="height: 44px; border: 1px solid #ddd; padding: 0 1rem;"></div>
-            <button class="isc-btn isc-btn-primary" style="width: 100%; height: 50px; margin-top: 1.5rem; border-radius: 8px; font-weight: 800; background: #2563eb; color: white;">Get My Free Quote</button>
-        </div></div>
-    </div>
-    <div id="src-footer"><footer class="site-footer" style="position: relative; padding: 4rem; background: #020617; color: white;"><div class="content-wrapper"><div class="footer-container" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 2rem;"><div>Logo</div><div>Services</div><div>Company</div><div>Contact</div></div></div></footer></div>
 </div>
 
 <!-- PREVIEW OVERLAY -->
 <div id="preview-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.95); z-index: 9999; justify-content: center; align-items: center; padding: 2rem;">
-    <button onclick="hidePreview()" style="position: absolute; top: 1.5rem; right: 1.5rem; background: white; border: none; border-radius: 50%; width: 44px; height: 44px; font-size: 1.25rem; cursor: pointer;">&times;</button>
+    <button onclick="hidePreview()" style="position: absolute; top: 1.5rem; right: 1.5rem; background: white; border: none; border-radius: 50%; width: 44px; height: 44px; font-size: 1.25rem; cursor: pointer; z-index: 10000; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">&times;</button>
     <div id="preview-content" style="background: white; width: 100%; max-width: 1400px; max-height: 85vh; border-radius: 12px; overflow-y: auto;"></div>
 </div>
 
