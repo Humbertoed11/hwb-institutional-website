@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}HWB QMS | Institutional Operating Manual{% endblock %}</title>
+    
+    <!-- Institutional Style Link -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='HWB-WEB Style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='backoffice.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --qms-sidebar: #0f172a;
+            --qms-bg: #f8fafc;
+            --qms-accent: #2563eb;
+        }
+
+        body.qms-clinical-shell {
+            background: var(--qms-bg);
+            margin: 0;
+            display: flex;
+            min-height: 100vh;
+            color: #1e293b;
+        }
+
+        .qms-sidebar {
+            width: 300px;
+            background: var(--qms-sidebar);
+            color: white;
+            padding: 2rem;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            border-right: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .qms-main {
+            margin-left: 300px;
+            flex-grow: 1;
+            padding: 4rem;
+        }
+
+        .qms-nav-group { margin-bottom: 2.5rem; }
+        .qms-nav-label { font-size: 0.7rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; color: rgba(255,255,255,0.4); margin-bottom: 1rem; display: block; }
+        .qms-nav-link { display: block; padding: 0.6rem 0; color: rgba(255,255,255,0.8); text-decoration: none; font-size: 0.9rem; font-weight: 600; transition: color 0.2s; }
+        .qms-nav-link:hover, .qms-nav-link.active { color: white; }
+
+        .sop-card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 3rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        .sop-meta { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2rem; margin-bottom: 4rem; padding-bottom: 2rem; border-bottom: 1px solid #eee; }
+        .meta-unit { display: flex; flex-direction: column; gap: 0.5rem; }
+        .meta-label { font-size: 0.65rem; font-weight: 800; text-transform: uppercase; color: #94a3b8; }
+        .meta-val { font-size: 0.95rem; font-weight: 700; color: #1e293b; }
+
+        .component-sandbox { border: 2px dashed #e2e8f0; padding: 3rem; border-radius: 12px; margin: 2rem 0; position: relative; background: #fff; }
+        .sandbox-label { position: absolute; top: -12px; left: 20px; background: white; padding: 0 10px; font-size: 0.7rem; font-weight: 900; color: #2563eb; }
+        
+        pre.code-block { background: #1e293b; color: #f8fafc; padding: 1.5rem; border-radius: 8px; font-size: 0.85rem; overflow-x: auto; margin-top: 1rem; }
+    </style>
+</head>
+<body class="qms-clinical-shell">
+    <aside class="qms-sidebar">
+        <div style="margin-bottom: 3rem;">
+            <img src="{{ url_for('static', filename='logo_standard.png') }}" alt="HWB QMS" style="height: 40px;">
+            <div style="font-size: 0.75rem; font-weight: 800; color: var(--hwb-blue); margin-top: 0.5rem;">INSTITUTIONAL MANUAL</div>
+        </div>
+
+        <div class="qms-nav-group">
+            <span class="qms-nav-label">Foundational</span>
+            <a href="/design-system" class="qms-nav-link active">HWB-QMS-7.5 Web System</a>
+        </div>
+        
+        <div class="qms-nav-group">
+            <span class="qms-nav-label">Departments</span>
+            <a href="javascript:void(0)" class="qms-nav-link" style="opacity: 0.4;">Safety & Compliance</a>
+            <a href="javascript:void(0)" class="qms-nav-link" style="opacity: 0.4;">Human Resources</a>
+            <a href="javascript:void(0)" class="qms-nav-link" style="opacity: 0.4;">Operations</a>
+        </div>
+    </aside>
+
+    <main class="qms-main">
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

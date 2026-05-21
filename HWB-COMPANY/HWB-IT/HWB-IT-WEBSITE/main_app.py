@@ -408,10 +408,14 @@ def login():
 def logout(): logout_user(); return redirect(url_for('index'))
 
 @app.route('/', endpoint='index')
-def index(): return render_template('commercial_template.html')
+def index(): return render_template('HWB-WEB Index.html')
 
 @app.route('/about', endpoint='about')
 def about(): return render_template('HWB-WEB About.html')
+
+@app.route('/design-system', endpoint='design_system')
+@app.route('/design-systems')
+def design_system(): return render_template('institutional_design_system.html')
 
 @app.route('/services/janitorial', endpoint='services_janitorial')
 def services_janitorial(): return render_template('janitorial.html')
