@@ -76,7 +76,7 @@
                     {% for lead in recent_leads %}
                     <tr>
                         <td><strong>{{ lead.center_name }}</strong></td>
-                        <td style="color: var(--bo-accent); font-weight: 700;">${{ lead.calculated_waste|round(2) }}</td>
+                        <td style="color: var(--bo-accent); font-weight: 700;">${{ (lead.calculated_waste or 0)|round(2) }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>

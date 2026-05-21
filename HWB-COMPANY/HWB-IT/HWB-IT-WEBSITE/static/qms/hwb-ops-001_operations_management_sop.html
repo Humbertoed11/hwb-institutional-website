@@ -8,7 +8,8 @@
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
     </div>
 
-    <table>
+    <div class="sop-content-body">
+        <table>
 <thead>
 <tr>
 <th style="text-align: left;"><strong>Document Control</strong></th>
@@ -47,18 +48,18 @@
 </tbody>
 </table>
 <hr />
-<h1>Standard Operating Procedure: <strong>Operations Management SOP</strong></h1>
-<h2>1.0 Purpose</h2>
+<h1 id="standard-operating-procedure-operations-management-sop">Standard Operating Procedure: <strong>Operations Management SOP</strong></h1>
+<h2 id="10-purpose">1.0 Purpose</h2>
 <p>This SOP defines the procedures for the efficient execution and management of cleaning services at HWB Cleaning Services LLC. It ensures that field operations are standardized, safe, and aligned with ISO 9001:2015 requirements for service delivery (Clause 8.1).</p>
-<h2>2.0 Scope</h2>
+<h2 id="20-scope">2.0 Scope</h2>
 <p>Applies to all field personnel, supervisors, and operations managers involved in the delivery of janitorial and specialized cleaning services.</p>
-<h2>3.0 Prerequisites</h2>
+<h2 id="30-prerequisites">3.0 Prerequisites</h2>
 <ul>
 <li>Approved work orders or quotes from the <code>quote_app</code>.</li>
 <li>Trained and competent personnel (verified via <code>HWB-HR</code> files).</li>
 <li>Functional equipment (verified via <code>Equipment Use Log</code>).</li>
 </ul>
-<h2>4.0 Procedure</h2>
+<h2 id="40-procedure">4.0 Procedure</h2>
 <ol>
 <li><strong>Service Planning:</strong> Supervisors review the daily schedule and assign crews to specific client sites.</li>
 <li><strong>Equipment/Supply Issue:</strong> Crews check out required equipment and chemicals, logging usage in <code>[[HWB-FORM-7.1-001 Equipment Use Log]]</code>.</li>
@@ -67,26 +68,28 @@
 <li><strong>Quality Check:</strong> Supervisors or lead cleaners perform a final walkthrough using the service checklist.</li>
 <li><strong>Completion &amp; Logging:</strong> Services are marked as "Complete" in the system, and equipment is returned and inspected.</li>
 </ol>
-<h3>4.1 [Process Flow Chart]</h3>
-<pre><code class="language-mermaid">graph TD
-    A[Daily Schedule Review] --&gt; B[Resource Allocation]
-    B --&gt; C[Equipment/Supply Checkout]
-    C --&gt; D[Site Arrival &amp; Safety Check]
-    D --&gt; E[Service Execution]
-    E --&gt; F[Quality Inspection]
-    F --&gt; G[Service Logging &amp; Checkout]
-</code></pre>
-<h2>5.0 Verification</h2>
+<h3 id="41-process-flow-chart">4.1 [Process Flow Chart]</h3>
+<div class="mermaid">
+graph TD
+    A[Daily Schedule Review] --> B[Resource Allocation]
+    B --> C[Equipment/Supply Checkout]
+    C --> D[Site Arrival & Safety Check]
+    D --> E[Service Execution]
+    E --> F[Quality Inspection]
+    F --> G[Service Logging & Checkout]
+</div>
+
+<h2 id="50-verification">5.0 Verification</h2>
 <ul>
 <li>Completed Service Logs in the <code>quote_app</code>.</li>
 <li>Quarterly Operations Performance Reviews (Clause 9.1).</li>
 </ul>
-<h2>6.0 Notes and Cautions</h2>
+<h2 id="60-notes-and-cautions">6.0 Notes and Cautions</h2>
 <ul>
 <li><strong>Safety First:</strong> PPE must be worn at all times during service execution.</li>
 <li><strong>Zero Synthetic Data:</strong> All service logs must reflect actual site time and completed tasks.</li>
 </ul>
-<h2>7.0 Revision History</h2>
+<h2 id="70-revision-history">7.0 Revision History</h2>
 <table>
 <thead>
 <tr>
@@ -105,4 +108,5 @@
 </tr>
 </tbody>
 </table>
+    </div>
 </div>

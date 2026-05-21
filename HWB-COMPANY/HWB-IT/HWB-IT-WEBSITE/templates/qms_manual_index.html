@@ -7,9 +7,18 @@
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem;">
         <div>
             <h1 style="font-size: 2.5rem; font-weight: 900; color: #0f172a; margin-bottom: 0.5rem;">Institutional Operating Manual</h1>
-            <p style="font-size: 1.1rem; color: #64748b;">Controlled Documented Information | ISO 9001:2015</p>
+            <p style="font-size: 1.1rem; color: #64748b;">Controlled Documented Information | ISO 9001 Compliance Tracker</p>
         </div>
-        <button onclick="window.print()" class="isc-btn isc-btn-primary" style="height: 44px; padding: 0 2rem; border-radius: 6px;"><i class="fas fa-print" style="margin-right: 8px;"></i> Print Index</button>
+        <div style="display: flex; gap: 1rem;">
+            <div style="text-align: right; margin-right: 2rem;">
+                <div style="font-size: 0.6rem; font-weight: 900; color: #94a3b8; text-transform: uppercase;">Compliance Status</div>
+                <div style="display: flex; gap: 1rem; margin-top: 0.25rem;">
+                    <span style="font-size: 0.65rem; font-weight: 800; color: #16a34a;">● UPDATED</span>
+                    <span style="font-size: 0.65rem; font-weight: 800; color: #f59e0b;">● OUTDATED</span>
+                </div>
+            </div>
+            <button onclick="window.print()" class="isc-btn isc-btn-primary" style="height: 44px; padding: 0 2rem; border-radius: 6px;"><i class="fas fa-print" style="margin-right: 8px;"></i> Print Index</button>
+        </div>
     </div>
 
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4rem;">
@@ -18,11 +27,26 @@
             <h2 style="font-size: 1.25rem; font-weight: 800; color: #2563eb; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem; text-transform: uppercase;">{{ dept }}</h2>
             <ul style="list-style: none; padding: 0;">
                 {% for sop in sops %}
-                <li style="margin-bottom: 1rem; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.5rem;">
-                    <a href="{{ url_for('view_sop', filename=sop.file.replace('qms/', '')) }}" style="text-decoration: none; display: block;">
-                        <strong style="color: #0f172a; display: block;">{{ sop.id }} | {{ sop.title }}</strong>
-                        <span style="font-size: 0.75rem; color: #94a3b8;">Version: {{ sop.version }}</span>
+                <li style="margin-bottom: 1.25rem; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: flex-start;">
+                    <a href="{{ url_for('view_sop', filename=sop.file) }}" style="text-decoration: none; flex-grow: 1;">
+                        <strong style="color: #0f172a; display: block; font-size: 0.95rem;">{{ sop.id }} | {{ sop.title }}</strong>
+                        <span style="font-size: 0.75rem; color: #94a3b8;">Version: {{ sop.version }} | Date: {{ sop.date }}</span>
                     </a>
+                    <span style="
+                        font-size: 0.6rem; 
+                        font-weight: 900; 
+                        padding: 0.2rem 0.6rem; 
+                        border-radius: 4px; 
+                        margin-left: 1rem;
+                        white-space: nowrap;
+                        {% if sop.compliance == 'UPDATED' %}
+                            background: #dcfce7; color: #166534; border: 1px solid #bbf7d0;
+                        {% else %}
+                            background: #fef3c7; color: #92400e; border: 1px solid #fde68a;
+                        {% endif %}
+                    ">
+                        {{ sop.compliance }}
+                    </span>
                 </li>
                 {% endfor %}
             </ul>

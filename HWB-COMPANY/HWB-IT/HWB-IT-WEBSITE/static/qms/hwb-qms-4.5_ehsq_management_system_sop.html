@@ -8,7 +8,8 @@
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
     </div>
 
-    <table>
+    <div class="sop-content-body">
+        <table>
 <thead>
 <tr>
 <th style="text-align: left;"><strong>Document Control</strong></th>
@@ -47,52 +48,54 @@
 </tbody>
 </table>
 <hr />
-<h1>Standard Operating Procedure: <strong>EHSQ Management System SOP</strong></h1>
-<h2>1.0 Purpose</h2>
+<h1 id="standard-operating-procedure-ehsq-management-system-sop">Standard Operating Procedure: <strong>EHSQ Management System SOP</strong></h1>
+<h2 id="10-purpose">1.0 Purpose</h2>
 <p>The purpose of this SOP is to establish a unified Environment, Health, Safety, and Quality (EHSQ) Department. This department ensures that all SigmaFidelity™ operations comply with ISO 9001 (Quality), ISO 14001 (Environment), and ISO 45001 (Health &amp; Safety) standards through a single integrated management system.</p>
-<h2>2.0 Scope</h2>
+<h2 id="20-scope">2.0 Scope</h2>
 <p>This SOP applies to all personnel, chemical handling processes, facility maintenance operations, and digital analytics systems within HWB Cleaning Services LLC and the SigmaFidelity™ suite.</p>
-<h2>3.0 Prerequisites</h2>
+<h2 id="30-prerequisites">3.0 Prerequisites</h2>
 <ul>
 <li>Access to the SigmaFidelity™ Admin Dashboard.</li>
 <li>Certified training in GHS Hazard Communication and ISO 9001 auditing.</li>
 <li>Active subscription to the OSHA Digital Regulatory Library.</li>
 </ul>
-<h2>4.0 Procedure</h2>
-<h3>4.1 Governance Structure</h3>
+<h2 id="40-procedure">4.0 Procedure</h2>
+<h3 id="41-governance-structure">4.1 Governance Structure</h3>
 <p>The EHSQ department operates as the central authority for risk mitigation and process fidelity. It is divided into four critical pillars:
 1.  <strong>Environment:</strong> Tracking of chemical waste, water usage, and carbon footprint of cleaning logistics.
 2.  <strong>Health:</strong> Employee wellness, ergonomic safety, and bio-hazard exposure control.
 3.  <strong>Safety:</strong> OSHA compliance, PPE management, and incident reporting.
 4.  <strong>Quality:</strong> Continuous improvement via DMAIC/DMADV, fidelity auditing, and corrective actions (CAR).</p>
-<h3>4.2 Integrated Reporting Cycle</h3>
+<h3 id="42-integrated-reporting-cycle">4.2 Integrated Reporting Cycle</h3>
 <p>The EHSQ department must execute a "Daily Pulse" sync to verify that operational outputs match strategic quality targets.</p>
-<h3>4.3 Process Flow Chart</h3>
-<pre><code class="language-mermaid">graph TD
-    A[Operational Input] --&gt; B{EHSQ Filter}
-    B -- Environment --&gt; C[Waste &amp; Footprint Log]
-    B -- Health &amp; Safety --&gt; D[OSHA/GHS Compliance Check]
-    B -- Quality --&gt; E[Fidelity Audit &amp; Cpk Analysis]
-    C --&gt; F[Integrated EHSQ Dashboard]
-    D --&gt; F
-    E --&gt; F
-    F --&gt; G{Deviation Detected?}
-    G -- Yes --&gt; H[HWB-QMS-10.2 Corrective Action]
-    G -- No --&gt; I[Standard Operations Continued]
-</code></pre>
-<h2>5.0 Verification</h2>
+<h3 id="43-process-flow-chart">4.3 Process Flow Chart</h3>
+<div class="mermaid">
+graph TD
+    A[Operational Input] --> B{EHSQ Filter}
+    B -- Environment --> C[Waste & Footprint Log]
+    B -- Health & Safety --> D[OSHA/GHS Compliance Check]
+    B -- Quality --> E[Fidelity Audit & Cpk Analysis]
+    C --> F[Integrated EHSQ Dashboard]
+    D --> F
+    E --> F
+    F --> G{Deviation Detected?}
+    G -- Yes --> H[HWB-QMS-10.2 Corrective Action]
+    G -- No --> I[Standard Operations Continued]
+</div>
+
+<h2 id="50-verification">5.0 Verification</h2>
 <ul>
 <li>Monthly internal audits of the EHSQ Dashboard.</li>
 <li>Annual ISO 9001/14001/45001 surveillance audits.</li>
 <li>Zero-incident safety records for 365 consecutive days.</li>
 </ul>
-<h2>6.0 Notes and Cautions</h2>
+<h2 id="60-notes-and-cautions">6.0 Notes and Cautions</h2>
 <ul>
 <li>All EHSQ data must be backed up daily to the <code>mop_incident/database/sigma_leads.db</code>.</li>
 <li>Chemical spill protocols (SOP-SPILL-001) take immediate precedence over standard quality checks in an emergency.</li>
 <li>For departmental documents, use the naming convention: <strong>HWB-[Department Name]</strong> (e.g., HWB-HR, HWB-EHSQ).</li>
 </ul>
-<h2>7.0 Revision History</h2>
+<h2 id="70-revision-history">7.0 Revision History</h2>
 <table>
 <thead>
 <tr>
@@ -111,9 +114,10 @@
 </tr>
 </tbody>
 </table>
-<h2>8.0 Document Conventions</h2>
+<h2 id="80-document-conventions">8.0 Document Conventions</h2>
 <ul>
 <li><strong>Document ID:</strong> [HWB-QMS-4.5]</li>
 <li><strong>Naming:</strong> Follows full HWB-QMS ISO convention.</li>
 </ul>
+    </div>
 </div>

@@ -8,7 +8,8 @@
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
     </div>
 
-    <h1>HWB-QMS-7.2: SigmaFidelity™ Web &amp; UI Standardization SOP</h1>
+    <div class="sop-content-body">
+        <h1 id="hwb-qms-72-sigmafidelitytm-web-ui-standardization-sop">HWB-QMS-7.2: SigmaFidelity™ Web &amp; UI Standardization SOP</h1>
 <table>
 <thead>
 <tr>
@@ -44,43 +45,43 @@
 </tbody>
 </table>
 <hr />
-<h2>1. Purpose</h2>
+<h2 id="1-purpose">1. Purpose</h2>
 <p>This Standard Operating Procedure (SOP) establishes the official design and linguistic standards for the HWB Cleaning Services LLC web ecosystem. The objective is to ensure visual stability, "Class A" corporate authority, and accessibility for regular users.</p>
-<h2>2. Scope</h2>
+<h2 id="2-scope">2. Scope</h2>
 <p>This standard applies to all public-facing service templates, the global <code>base.html</code> architecture, and the SigmaFidelity™ Backoffice environment.</p>
-<h2>3. Linguistic Standard ("Everyday Words")</h2>
+<h2 id="3-linguistic-standard-everyday-words">3. Linguistic Standard ("Everyday Words")</h2>
 <p>All website content must be written for a regular person (20-year-old reading level).
 - <strong>Rule</strong>: Replace high-academic or "super-institutional" jargon with simple, direct terms.
 - <strong>Service Focus</strong>: Always lead with cleaning results. Use "Clean," "Clear," or "Debris Removal" instead of "Safety" when describing the work performed.
 - <strong>Perspective</strong>: All official communications must maintain a <strong>3rd person perspective</strong>.</p>
-<h2>4. Visual Specifications: Image Framing</h2>
+<h2 id="4-visual-specifications-image-framing">4. Visual Specifications: Image Framing</h2>
 <p>To prevent technical cropping errors (e.g., cut-off heads), all split-section images MUST follow the <strong>Floating Composition</strong> architecture.
 - <strong>Implementation</strong>: Use a standalone <code>&lt;img&gt;</code> tag with <code>object-fit: contain</code> nested inside a <code>.split-image-container</code>.
 - <strong>Fidelity</strong>: Padded frames must use the institutional <code>#fcfdfe</code> or <code>#f8fafc</code> backgrounds with a 20px - 50px executive shadow.</p>
-<h2>5. Navigation Architecture: The Mega-Bar</h2>
+<h2 id="5-navigation-architecture-the-mega-bar">5. Navigation Architecture: The Mega-Bar</h2>
 <p>The global navigation must utilize the full-width Mega Menu system.
 - <strong>Trigger</strong>: Parent headers (e.g., "Services") must be <strong>non-clickable</strong> triggers (<code>javascript:void(0)</code>).
 - <strong>Submenu</strong>: Every option must include a bold <strong>Title</strong> and a 1-sentence <strong>Description</strong> in Everyday Words.</p>
-<h2>6. Form Standards: The Procurement Matrix</h2>
+<h2 id="6-form-standards-the-procurement-matrix">6. Form Standards: The Procurement Matrix</h2>
 <p>All quote request forms must utilize the high-density <strong>2-Column Procurement Matrix</strong> layout.
 - <strong>Column 1</strong>: Building Details (Type, Cycle, SQF).
 - <strong>Column 2</strong>: Contact Information (Name, Org, Email, Phone).
 - <strong>Parameters</strong>: SQF range must be <strong>500 to 1,000,000</strong>. Cleaning cycles must be <strong>Slow Traffic</strong>, <strong>High Traffic</strong>, or <strong>24/7 Production Traffic</strong>.</p>
-<h2>8. Brand Animation: The Logo Merge</h2>
+<h2 id="8-brand-animation-the-logo-merge">8. Brand Animation: The Logo Merge</h2>
 <p>All primary brand animations must follow the "Converging Forces" standard to represent the meeting of Effort and Trust.
 - <strong>Vertical Split</strong>: The logo MUST be split at the <strong>28% mark</strong>, bisecting the center black connector bar.
 - <strong>Animation Logic</strong>: Components must start <strong>180px apart</strong> using clean 2D linear horizontal motion.
 - <strong>Timing</strong>: Use <code>cubic-bezier(0.2, 1, 0.3, 1)</code> for a 1.8-second smooth-stop convergence.
 - <strong>Recreation Prompt</strong>: 
     &gt; "Implement the HWB 2D Logo Merge Animation using CSS clip-path at the 28% mark. Animate units starting 180px apart using simple translateX over 1.8s with a smooth-stop cubic-bezier."</p>
-<h2>7. SigmaFidelity™ Institutional Form System (2026)</h2>
+<h2 id="7-sigmafidelitytm-institutional-form-system-2026">7. SigmaFidelity™ Institutional Form System (2026)</h2>
 <p>All backoffice forms must adhere to the SigmaFidelity™ Institutional Form System.
 - <strong>Structure</strong>: Use <code>.sigma-form-container</code>, <code>.sigma-form-section</code> (grid), and <code>.sigma-form-group</code>.
 - <strong>Headers</strong>: Section headers must use <code>.sigma-form-header</code> (0.85rem, bold, blue bottom accent).
 - <strong>Inputs</strong>: Inputs must use <code>.sigma-input</code> (f8fafc background, 12px radius, focused glow).
 - <strong>Layouts</strong>: Use asymmetric row splits (<code>.sigma-row-75-25</code> for City/State, <code>.sigma-row-60-40</code> for Quote/Freq).
 - <strong>Clutter</strong>: Eliminate redundant inline styles and excessive visual clutter (icons kept to headers or labels only).</p>
-<h2>8. Professional Polish Standard (2026)</h2>
+<h2 id="8-professional-polish-standard-2026">8. Professional Polish Standard (2026)</h2>
 <p>All administrative UIs must avoid "Loud" or "Amateur" scaling.
 - <strong>Modal Headers</strong>: Limited to 1.5rem (Semi-Bold).
 - <strong>Border Radius</strong>: Strictly capped at 1.25rem for large elements.
@@ -88,7 +89,7 @@
 - <strong>Close Buttons</strong>: Use refined SVG close buttons instead of raw HTML entities.
 - <strong>Materiality</strong>: Implementation of "Material Depth" using subtle grey backgrounds (f8fafc) and soft-focus shadows.</p>
 <hr />
-<h2>Revision History</h2>
+<h2 id="revision-history">Revision History</h2>
 <table>
 <thead>
 <tr>
@@ -143,23 +144,24 @@
 </tr>
 </tbody>
 </table>
-<h2>9. Salesforce-Tier 3-Column Standard (2026)</h2>
+<h2 id="9-salesforce-tier-3-column-standard-2026">9. Salesforce-Tier 3-Column Standard (2026)</h2>
 <p>To achieve maximum Information Velocity, all complex record modals (Leads/Accounts) must utilize the 3-column procurement matrix.
 - <strong>Organization</strong>:
     - <strong>Column 1: Identity &amp; Contact</strong>: Name, Manager, Phone, Email, Website.
     - <strong>Column 2: Geography &amp; Logistics</strong>: Building Address, SQF, Usage, Start Dates.
     - <strong>Column 3: Business &amp; Strategic</strong>: Status, Value, Priority, Source, Fiscal Terms.
 - <strong>Benefit</strong>: Liquidates vertical scroll friction by keeping all 34+ mission-critical fields "above the fold."</p>
-<h2>10. Institutional Typography Standard (Phase 3)</h2>
+<h2 id="10-institutional-typography-standard-phase-3">10. Institutional Typography Standard (Phase 3)</h2>
 <p>The system strictly enforces a weight-based hierarchy to ensure clinical data recognition.
 - <strong>900 (Black)</strong>: Reserved for Modal Headers, Metric Counts, and Breadcrumb active states.
 - <strong>500 (Medium)</strong>: Mandated for all Form Labels, Grid Headers, and Secondary Subtext.
 - <strong>800 (Bold)</strong>: Standard for all primary Data Values and Table Cell content.
 - <strong>Typeface</strong>: The global standard is <strong>'Inter'</strong>.</p>
-<h2>11. Linguistic Sync (Global Mandate)</h2>
+<h2 id="11-linguistic-sync-global-mandate">11. Linguistic Sync (Global Mandate)</h2>
 <p>All system components must comply with the "Everyday Words" mandate.
 - <strong>Liquidated Jargon</strong>: Terms like "Decommission", "Institutional Acquisition", and "Strategic Metrics" are strictly prohibited in the UI.
 - <strong>Permitted Terms</strong>: Use "Delete", "Lead Details", "Key Stats", and "Save Note".</p>
-<h2>12. Fiscal Alignment</h2>
+<h2 id="12-fiscal-alignment">12. Fiscal Alignment</h2>
 <p>For storage and repository standards regarding large media assets and build artifacts, see <strong>HWB-QMS-11.1 Fiscal Storage and Repository Standards</strong>.</p>
+    </div>
 </div>

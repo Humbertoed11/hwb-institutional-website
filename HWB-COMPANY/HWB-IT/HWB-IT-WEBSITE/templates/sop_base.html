@@ -8,6 +8,8 @@
     <!-- Institutional Style Link -->
     <link rel="stylesheet" href="{{ url_for('static', filename='HWB-WEB Style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='backoffice.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/highlight-dark.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/tocbot.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -16,6 +18,9 @@
             --qms-sidebar: #0f172a;
             --qms-bg: #f8fafc;
             --qms-accent: #2563eb;
+            --clinical-blue: #eff6ff;
+            --clinical-amber: #fff7ed;
+            --clinical-red: #fef2f2;
         }
 
         body.qms-clinical-shell {
@@ -24,23 +29,32 @@
             display: flex;
             min-height: 100vh;
             color: #1e293b;
+            font-family: 'Inter', sans-serif;
         }
 
+        /* Sidebar Standard */
         .qms-sidebar {
             width: 300px;
             background: var(--qms-sidebar);
             color: white;
             padding: 2rem;
             position: fixed;
-            height: 100vh;
+            top: 154px; 
+            height: calc(100vh - 154px);
             overflow-y: auto;
             border-right: 1px solid rgba(255,255,255,0.05);
+            z-index: 1000;
         }
 
+        /* Main Content Layout */
         .qms-main {
             margin-left: 300px;
             flex-grow: 1;
-            padding: 4rem;
+            padding: 4rem 6rem;
+            margin-top: 154px;
+            display: grid;
+            grid-template-columns: 1fr 280px;
+            gap: 4rem;
         }
 
         .qms-nav-group { margin-bottom: 2.5rem; }
@@ -48,51 +62,102 @@
         .qms-nav-link { display: block; padding: 0.6rem 0; color: rgba(255,255,255,0.8); text-decoration: none; font-size: 0.9rem; font-weight: 600; transition: color 0.2s; }
         .qms-nav-link:hover, .qms-nav-link.active { color: white; }
 
-        .sop-card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 3rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-        .sop-meta { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2rem; margin-bottom: 4rem; padding-bottom: 2rem; border-bottom: 1px solid #eee; }
-        .meta-unit { display: flex; flex-direction: column; gap: 0.5rem; }
-        .meta-label { font-size: 0.65rem; font-weight: 800; text-transform: uppercase; color: #94a3b8; }
-        .meta-val { font-size: 0.95rem; font-weight: 700; color: #1e293b; }
+        /* Industrial SOP Card */
+        .sop-card { 
+            background: white; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 12px; 
+            padding: 4rem; 
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.02);
+            line-height: 1.8;
+        }
 
-        .component-sandbox { border: 2px dashed #e2e8f0; padding: 3rem; border-radius: 12px; margin: 2rem 0; position: relative; background: #fff; }
-        .sandbox-label { position: absolute; top: -12px; left: 20px; background: white; padding: 0 10px; font-size: 0.7rem; font-weight: 900; color: #2563eb; }
-        
-        pre.code-block { background: #1e293b; color: #f8fafc; padding: 1.5rem; border-radius: 8px; font-size: 0.85rem; overflow-x: auto; margin-top: 1rem; }
+        .sop-meta { 
+            display: grid; 
+            grid-template-columns: repeat(4, 1fr); 
+            gap: 2rem; 
+            margin-bottom: 4rem; 
+            padding: 2rem;
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .meta-unit { display: flex; flex-direction: column; gap: 0.5rem; }
+        .meta-label { font-size: 0.65rem; font-weight: 800; text-transform: uppercase; color: #64748b; letter-spacing: 0.05em; }
+        .meta-val { font-size: 0.95rem; font-weight: 800; color: #0f172a; }
+
+        /* 🏛️ INDUSTRIAL CALLOUT BLOCKS */
+        .callout {
+            padding: 1.5rem 2rem;
+            border-radius: 8px;
+            margin: 2.5rem 0;
+            border-left: 5px solid;
+            font-size: 0.95rem;
+        }
+        .callout-note { background: var(--clinical-blue); border-color: #3b82f6; color: #1e40af; }
+        .callout-caution { background: var(--clinical-amber); border-color: #f59e0b; color: #92400e; }
+        .callout-danger { background: var(--clinical-red); border-color: #ef4444; color: #991b1b; }
+        .callout-logic { background: #0f172a; border-color: #60a5fa; color: #f8fafc; }
+        .callout strong { display: block; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.75rem; }
+
+        /* Table Hardening */
+        .sop-card table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2.5rem 0;
+            font-size: 0.9rem;
+        }
+        .sop-card th {
+            background: #f8fafc;
+            text-align: left;
+            padding: 1rem;
+            border-bottom: 2px solid #e2e8f0;
+            font-weight: 800;
+            color: #0f172a;
+        }
+        .sop-card td {
+            padding: 1rem;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .sop-card tr:hover { background: #fcfcfc; }
+
+        /* Typography */
+        h1 { font-size: 2.75rem; font-weight: 900; letter-spacing: -0.04em; color: #0f172a; margin-bottom: 2rem; }
+        h2 { font-size: 1.5rem; font-weight: 800; color: #0f172a; border-bottom: 2px solid #f1f5f9; padding-bottom: 0.75rem; margin-top: 4rem; margin-bottom: 1.5rem; }
+        h3 { font-size: 1.15rem; font-weight: 700; color: #334155; margin-top: 2rem; }
+
+        /* TOC Standard */
+        .qms-toc-container {
+            position: sticky;
+            top: 194px;
+            height: fit-content;
+        }
+        .toc-label { font-size: 0.65rem; font-weight: 900; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.15em; margin-bottom: 1rem; display: block; }
+        .js-toc { font-size: 0.85rem; }
+        .toc-link { color: #64748b !important; }
+        .is-active-link { color: var(--brand) !important; font-weight: 800; }
 
         /* 🖨️ PRINT & PDF STANDARDS (ISO 9001) */
         @media print {
-            .qms-sidebar, .isc-btn, button, .sandbox-label, #preview-overlay {
+            .qms-sidebar, .isc-btn, button, .sandbox-label, #preview-overlay, .top-utility-bar, .main-header, .qms-toc-container {
                 display: none !important;
             }
             body.qms-clinical-shell {
                 background: white !important;
+                display: block !important;
             }
             .qms-main {
                 margin-left: 0 !important;
                 padding: 0 !important;
                 width: 100% !important;
+                margin-top: 0 !important;
+                display: block !important;
             }
             .sop-card {
                 box-shadow: none !important;
                 border: none !important;
                 padding: 0 !important;
-            }
-            .sop-meta {
-                margin-bottom: 2rem !important;
-                padding-bottom: 1rem !important;
-                border-bottom: 2pt solid #000 !important;
-                grid-template-columns: repeat(4, 1fr) !important;
-            }
-            section {
-                page-break-inside: avoid;
-                margin-bottom: 3rem !important;
-            }
-            h1, h2, h3 {
-                color: black !important;
-            }
-            a {
-                text-decoration: none !important;
-                color: black !important;
             }
             @page {
                 size: letter;
@@ -102,12 +167,11 @@
     </style>
 </head>
 <body class="qms-clinical-shell">
-    <aside class="qms-sidebar">
-        <div style="margin-bottom: 3rem;">
-            <img src="{{ url_for('static', filename='logo_standard.png') }}" alt="HWB QMS" style="height: 40px;">
-            <div style="font-size: 0.75rem; font-weight: 800; color: var(--hwb-blue); margin-top: 0.5rem;">INSTITUTIONAL MANUAL</div>
-        </div>
+    <div style="position: fixed; top: 0; left: 0; width: 100%; z-index: 5000;">
+        {% include "components/mega_bar.html" %}
+    </div>
 
+    <aside class="qms-sidebar">
         <div class="qms-nav-group">
             <span class="qms-nav-label">Foundational</span>
             <a href="/manual" class="qms-nav-link active"><i class="fas fa-book" style="margin-right: 8px;"></i> Master Manual Index</a>
@@ -124,7 +188,36 @@
     </aside>
 
     <main class="qms-main">
-        {% block content %}{% endblock %}
+        <div class="js-toc-content">
+            {% block content %}{% endblock %}
+        </div>
+        <div class="qms-toc-container">
+            <span class="toc-label">Document Structure</span>
+            <div class="js-toc"></div>
+        </div>
     </main>
+
+    <!-- Dependencies -->
+    <script src="{{ url_for('static', filename='js/mermaid.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/highlight.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/tocbot.min.js') }}"></script>
+    
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'loose' });
+        
+        // Initialize Highlighting
+        document.querySelectorAll('pre code').forEach((el) => {
+            hljs.highlightElement(el);
+        });
+
+        // Initialize TocBot
+        tocbot.init({
+            tocSelector: '.js-toc',
+            contentSelector: '.js-toc-content',
+            headingSelector: 'h2, h3',
+            hasInnerContainers: true,
+        });
+    </script>
 </body>
 </html>

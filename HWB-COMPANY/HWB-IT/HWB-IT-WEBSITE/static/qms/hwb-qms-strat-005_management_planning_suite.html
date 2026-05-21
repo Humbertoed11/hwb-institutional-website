@@ -8,7 +8,8 @@
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
     </div>
 
-    <table>
+    <div class="sop-content-body">
+        <table>
 <thead>
 <tr>
 <th style="text-align: left;"><strong>Document Control</strong></th>
@@ -43,58 +44,61 @@
 </tbody>
 </table>
 <hr />
-<h1>Strategic Management &amp; Planning Tools</h1>
-<h2>1.0 Interrelationship Digraph (ID): Causality Mapping</h2>
+<h1 id="strategic-management-planning-tools">Strategic Management &amp; Planning Tools</h1>
+<h2 id="10-interrelationship-digraph-id-causality-mapping">1.0 Interrelationship Digraph (ID): Causality Mapping</h2>
 <p>This diagram identifies the "Drivers" and "Outcomes" of the SigmaFidelity™ ecosystem. Arrows indicate the direction of influence.</p>
-<pre><code class="language-mermaid">graph LR
-    SOP[Standardized SOPs] --&gt; FID[Information Fidelity]
-    TRN[Employee Training] --&gt; FID
-    FID --&gt; EFF[Operational Efficiency]
-    FID --&gt; TST[Customer Trust]
-    EFF --&gt; REV[Revenue Growth]
-    TST --&gt; REV
-    NC[Nonconformity Control] --&gt; TST
-    NC --&gt; EFF
+<div class="mermaid">
+graph LR
+    SOP[Standardized SOPs] --> FID[Information Fidelity]
+    TRN[Employee Training] --> FID
+    FID --> EFF[Operational Efficiency]
+    FID --> TST[Customer Trust]
+    EFF --> REV[Revenue Growth]
+    TST --> REV
+    NC[Nonconformity Control] --> TST
+    NC --> EFF
 
     %% Analysis
     style FID fill:#fff3e0,stroke:#e65100,stroke-width:4px
     style REV fill:#dcfce7,stroke:#166534,stroke-width:2px
-</code></pre>
+</div>
 <p><strong>Strategic Insight:</strong> <em>Information Fidelity</em> has the highest "Out-Degree" (it influences the most factors), making it our primary <strong>KPIV</strong>.</p>
 <hr />
-<h2>2.0 Tree Diagram: Strategic Goal Breakdown</h2>
+<h2 id="20-tree-diagram-strategic-goal-breakdown">2.0 Tree Diagram: Strategic Goal Breakdown</h2>
 <p>This diagram breaks the high-level objective into actionable work streams.</p>
-<pre><code class="language-mermaid">graph TD
-    Goal((SigmaFidelity™ 2026 Leadership)) --&gt; GOV[Governance]
-    Goal --&gt; OPS[Operations]
-    Goal --&gt; MKT[Marketing]
+<div class="mermaid">
+graph TD
+    Goal((SigmaFidelity™ 2026 Leadership)) --> GOV[Governance]
+    Goal --> OPS[Operations]
+    Goal --> MKT[Marketing]
 
     %% Governance Branch
-    GOV --&gt; ISO[ISO 9001 Certification]
-    GOV --&gt; IEE[S4/IEE Data Standards]
-    ISO --&gt; AUD[Internal Audit Cycles]
-    IEE --&gt; DASH[Executive Dashboard]
+    GOV --> ISO[ISO 9001 Certification]
+    GOV --> IEE[S4/IEE Data Standards]
+    ISO --> AUD[Internal Audit Cycles]
+    IEE --> DASH[Executive Dashboard]
 
     %% Operations Branch
-    OPS --&gt; STF[Staff Excellence]
-    OPS --&gt; EQUIP[Asset Management]
-    STF --&gt; COMPET[Competency Tracking]
-    EQUIP --&gt; QR[QR Asset Tags]
+    OPS --> STF[Staff Excellence]
+    OPS --> EQUIP[Asset Management]
+    STF --> COMPET[Competency Tracking]
+    EQUIP --> QR[QR Asset Tags]
 
     %% Marketing Branch
-    MKT --&gt; LNK[LinkedIn Series]
-    MKT --&gt; LEAD[Lead Harvesting]
-    LNK --&gt; VIRAL[1M Impressions Goal]
-    LEAD --&gt; AUDIT[5,000 Verified Assets]
+    MKT --> LNK[LinkedIn Series]
+    MKT --> LEAD[Lead Harvesting]
+    LNK --> VIRAL[1M Impressions Goal]
+    LEAD --> AUDIT[5,000 Verified Assets]
 
     %% Styling
     style Goal fill:#e1f5fe,stroke:#01579b
     style GOV fill:#f3e5f5,stroke:#4a148c
     style OPS fill:#f3e5f5,stroke:#4a148c
     style MKT fill:#f3e5f5,stroke:#4a148c
-</code></pre>
+</div>
+
 <hr />
-<h2>3.0 Revision History</h2>
+<h2 id="30-revision-history">3.0 Revision History</h2>
 <table>
 <thead>
 <tr>
@@ -113,4 +117,5 @@
 </tr>
 </tbody>
 </table>
+    </div>
 </div>

@@ -8,7 +8,8 @@
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
     </div>
 
-    <table>
+    <div class="sop-content-body">
+        <table>
 <thead>
 <tr>
 <th style="text-align: left;"><strong>Document Control</strong></th>
@@ -47,21 +48,21 @@
 </tbody>
 </table>
 <hr />
-<h1>Standard Operating Procedure: <strong>Gemini Master Setup SOP</strong></h1>
-<h2>1.0 Purpose</h2>
+<h1 id="standard-operating-procedure-gemini-master-setup-sop">Standard Operating Procedure: <strong>Gemini Master Setup SOP</strong></h1>
+<h2 id="10-purpose">1.0 Purpose</h2>
 <p>This SOP provides a comprehensive guide for reinstalling and setting up the "Gemini" project environment from a fresh state. It documents all essential components, dependencies, and configurations.</p>
-<h2>2.0 Scope</h2>
+<h2 id="20-scope">2.0 Scope</h2>
 <p>This SOP covers the full restoration of the custom scripts, templates, SOPs, and projects created within the <code>gemini_projects</code> directory.</p>
-<h2>3.0 Prerequisites</h2>
+<h2 id="30-prerequisites">3.0 Prerequisites</h2>
 <p>A Linux-based operating system.</p>
-<h2>4.0 Procedure</h2>
-<h3>4.1 Step 1: Install External Dependencies</h3>
+<h2 id="40-procedure">4.0 Procedure</h2>
+<h3 id="41-step-1-install-external-dependencies">4.1 Step 1: Install External Dependencies</h3>
 <p>Before restoring any files, ensure the following software packages are installed on your system. These are required for the custom scripts and tools to function correctly.</p>
 <ul>
 <li><strong>Git:</strong> For version control. (<code>sudo apt-get install git</code>)</li>
 <li><strong>ALSA Utilities:</strong> For audio recording and playback. (<code>sudo apt-get install alsa-utils</code>)</li>
 </ul>
-<h3>4.2 Step 2: Recreate Directory Structure</h3>
+<h3 id="42-step-2-recreate-directory-structure">4.2 Step 2: Recreate Directory Structure</h3>
 <p>Create the following primary directories in your main <code>gemini_projects</code> folder:</p>
 <ul>
 <li><code>agenda/</code></li>
@@ -70,7 +71,7 @@
 <li><code>desktop/</code></li>
 <li><code>task list 2025/</code></li>
 </ul>
-<h3>4.3 Step 3: Restore Core Scripts</h3>
+<h3 id="43-step-3-restore-core-scripts">4.3 Step 3: Restore Core Scripts</h3>
 <p>Re-create the following shell scripts in the <code>gemini_projects</code> directory. The content for these files must be restored from a backup.</p>
 <ul>
 <li><code>ai_version_agent.sh</code>: An advanced script concept for creating version snapshots with AI-generated summaries.</li>
@@ -78,7 +79,7 @@
 <li><code>retittle_notes.sh</code>: An interactive script to modify the H1 title <em>inside</em> <code>.md</code> files to follow the naming convention.</li>
 <li><code>version_agent.sh</code>: A simple script to create a version snapshot of all files with a timestamp.</li>
 </ul>
-<h3>4.4 Step 4: Restore SOPs and Templates</h3>
+<h3 id="44-step-4-restore-sops-and-templates">4.4 Step 4: Restore SOPs and Templates</h3>
 <p>Re-create the following SOP and template files. Their content must be restored from a backup.</p>
 <ul>
 <li><code>sop_template.md</code>: The master ISO 9001 compliant template for all SOPs.</li>
@@ -88,30 +89,30 @@
 <li><code>task list 2025/google_home_obsidian_sop.md</code>: Instructions for integrating Google Home with Obsidian via IFTTT.</li>
 <li><code>task list 2025/recording_and_playback_sop.md</code>: Instructions for recording and playing audio from the command line.</li>
 </ul>
-<h3>4.5 Step 5: Restore the Agenda Project</h3>
+<h3 id="45-step-5-restore-the-agenda-project">4.5 Step 5: Restore the Agenda Project</h3>
 <p>Re-create the following files within the <code>agenda/</code> directory. The content must be restored from a backup.</p>
 <ul>
 <li><code>agenda.html</code>: The single-file, interactive agenda application.</li>
 <li><code>GEMINI.md</code>: The documentation file for the agenda project.</li>
 <li><code>agenda one page.png</code>: The image asset used as a template for the current agenda.</li>
 </ul>
-<h3>4.6 Step 6: Initialize Git Repository</h3>
+<h3 id="46-step-6-initialize-git-repository">4.6 Step 6: Initialize Git Repository</h3>
 <p>Once all files and directories are restored, you must re-initialize the Git repository.</p>
 <ol>
 <li>Navigate to the <code>gemini_projects</code> directory.</li>
 <li>Follow the detailed procedure outlined in the <strong><code>git_troubleshooting_sop.md</code></strong> document. This is a critical step due to the special requirements of the GVFS filesystem.</li>
 </ol>
-<h2>5.0 Verification</h2>
+<h2 id="50-verification">5.0 Verification</h2>
 <p>A successful restoration is verified when:
 1.  The <code>git status</code> command runs without errors in the <code>gemini_projects</code> directory.
 2.  All custom scripts (<code>rename_notes.sh</code>, etc.) are executable using the <code>bash</code> command.
 3.  The <code>agenda.html</code> file can be opened in a browser and all interactive features work correctly.</p>
-<h2>6.0 Notes and Cautions</h2>
+<h2 id="60-notes-and-cautions">6.0 Notes and Cautions</h2>
 <ul>
 <li>This SOP assumes you have a backup of the content for all the custom files listed. Without a backup, the environment cannot be fully restored to its previous state.</li>
 <li>The most critical and error-prone step is the Git initialization (Step 4.6). It is essential to follow the troubleshooting SOP precisely.</li>
 </ul>
-<h2>7.0 Revision History</h2>
+<h2 id="70-revision-history">7.0 Revision History</h2>
 <table>
 <thead>
 <tr>
@@ -130,9 +131,10 @@
 </tr>
 </tbody>
 </table>
-<h2>8.0 Document Conventions</h2>
+<h2 id="80-document-conventions">8.0 Document Conventions</h2>
 <ul>
 <li><strong>Title:</strong> The document title should follow the format: <strong>[Subject] [Process Name] SOP</strong>. For example: "<strong>Audio Recording and Playback SOP</strong>". Use Title Case for each word and do not use hyphens. The title is already formatted to be bold.</li>
 <li><strong>Document ID:</strong> The document ID should follow the format: <code>[DEPT-XXX-YYY]</code>, where DEPT is a short code for the department or subject (e.g., <code>AUD</code> for Audio).</li>
 </ul>
+    </div>
 </div>

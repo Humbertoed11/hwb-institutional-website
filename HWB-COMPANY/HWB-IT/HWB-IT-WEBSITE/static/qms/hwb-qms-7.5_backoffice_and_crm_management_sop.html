@@ -8,7 +8,8 @@
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
     </div>
 
-    <table>
+    <div class="sop-content-body">
+        <table>
 <thead>
 <tr>
 <th style="text-align: left;"><strong>Document Control</strong></th>
@@ -47,58 +48,58 @@
 </tbody>
 </table>
 <hr />
-<h1>1.0 Purpose</h1>
+<h1 id="10-purpose">1.0 Purpose</h1>
 <p>This SOP defines the procedures for operating and maintaining the SigmaFidelity™ Backoffice Management Suite and the Relational CRM engine. It ensures data integrity, secure access, and efficient "Zero-Fog" synchronization between market intelligence and field operations.</p>
-<h1>2.0 Scope</h1>
+<h1 id="20-scope">2.0 Scope</h1>
 <p>Applies to all administrative personnel, AI Vice Presidents, and technical teams managing the HWB Cleaning Services LLC digital infrastructure.</p>
-<h1>3.0 Prerequisites</h1>
+<h1 id="30-prerequisites">3.0 Prerequisites</h1>
 <ul>
 <li>Valid executive or employee credentials.</li>
 <li>Access to the SigmaFidelity™ local server (Port 5000).</li>
 <li>Installed Python environment with <code>Flask-Login</code> and <code>sqlite3</code>.</li>
 </ul>
-<h1>4.0 Procedures</h1>
-<h2>4.1 System Access (Security Gateway)</h2>
+<h1 id="40-procedures">4.0 Procedures</h1>
+<h2 id="41-system-access-security-gateway">4.1 System Access (Security Gateway)</h2>
 <ol>
 <li>Navigate to <code>/login</code>.</li>
 <li>Provide the centralized corporate credentials.</li>
 <li>Unauthorized access attempts are automatically redirected to the <strong>Security Notice</strong> page and logged for compliance auditing.</li>
 </ol>
-<h2>4.2 Navigating the Double-Sidebar Layout</h2>
+<h2 id="42-navigating-the-double-sidebar-layout">4.2 Navigating the Double-Sidebar Layout</h2>
 <p>The backoffice utilizes a dual-sidebar system for maximum operational speed:
 *   <strong>Primary Rail (Far Left):</strong> Used for switching between high-level departments (Pulse, CRM, Assets, Lab).
 *   <strong>Control Rack (Inner Left):</strong> Used for departmental sub-navigation and contextual action buttons (e.g., "Add Activity," "Management Tools").</p>
-<h2>4.3 Market Intelligence Ingestion (The Hive)</h2>
+<h2 id="43-market-intelligence-ingestion-the-hive">4.3 Market Intelligence Ingestion (The Hive)</h2>
 <ol>
 <li><strong>Harvesting:</strong> AI VP Lauri Tells harvests leads and saves raw CSV files to <code>HWB-COMPANY/HWB-SALES-MARKETING/HWB-RAW-DATA/</code>.</li>
 <li><strong>Ingestion:</strong> Execute <code>python3 scripts/HWB-WEB Lead Ingestor.py</code>.</li>
 <li><strong>Verification:</strong> Confirm leads appear in the <strong>Marketing Pipeline</strong> section of the CRM Dashboard.</li>
 </ol>
-<h2>4.4 Automated Client Conversion</h2>
+<h2 id="44-automated-client-conversion">4.4 Automated Client Conversion</h2>
 <ol>
 <li>Locate a prospect in the <strong>Marketing Pipeline</strong>.</li>
 <li>Click the <strong>"Convert ⚡"</strong> button.</li>
 <li>The system will automatically migrate the facility data to the <code>clients.db</code> and log a "Conversion" activity in the client's historical record.</li>
 </ol>
-<h2>4.5 Relational Activity Logging</h2>
+<h2 id="45-relational-activity-logging">4.5 Relational Activity Logging</h2>
 <ol>
 <li>Select the client from the dropdown menu in the <strong>Log Activity Engine</strong>.</li>
 <li>Choose the Activity Type (Site Audit, Quote, Incident, etc.).</li>
 <li>Input detailed notes and click <strong>"Register Activity."</strong></li>
 <li>The Global Activity Feed will update instantly, maintaining a 100% auditable history.</li>
 </ol>
-<h1>5.0 Verification</h1>
+<h1 id="50-verification">5.0 Verification</h1>
 <ul>
 <li><strong>Audit Trail:</strong> Every activity and conversion must be visible in the Executive Pulse dashboard.</li>
 <li><strong>Database Integrity:</strong> Periodic manual audits of <code>sigma_leads.db</code> vs. <code>clients.db</code> to ensure zero data loss.</li>
 </ul>
-<h1>6.0 Notes and Cautions</h1>
+<h1 id="60-notes-and-cautions">6.0 Notes and Cautions</h1>
 <ul>
 <li><strong>Synthetic Data Prohibition:</strong> Never manually enter placeholder data into the Hive.</li>
 <li><strong>Credential Rotation:</strong> Rotate the administrative password every 90 days via the database CRUD tools.</li>
 </ul>
 <hr />
-<h2>7.0 Revision History</h2>
+<h2 id="70-revision-history">7.0 Revision History</h2>
 <table>
 <thead>
 <tr>
@@ -118,4 +119,5 @@
 </tbody>
 </table>
 <p>---\n<em>Standard Operating Procedure produced under the SigmaFidelity™ Quality Mandate.</em></p>
+    </div>
 </div>

@@ -4,1124 +4,1443 @@
         "id": "HWB-ACC-001",
         "dept": "ACCOUNTING",
         "file": "hwb-acc-001_accounting_management_sop.html",
-        "version": "1.1"
+        "version": "1.1",
+        "compliance": "OUTDATED",
+        "date": "2026-02-28"
     },
     {
         "title": "HWB-ACC-2026-03-13-Azure-Service-Cost-Forecast",
         "id": "HWB-ACC-AZR-2026-01",
         "dept": "ACCOUNTING",
         "file": "hwb-acc-2026-03-13-azure-service-cost-forecast.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-03-13"
     },
     {
         "title": "HWB-ACC-2026-03-20-Monthly-Cost-Audit",
         "id": "HWB-ACC-AUD-2026-03",
         "dept": "ACCOUNTING",
         "file": "hwb-acc-2026-03-20-monthly-cost-audit.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-03-20"
     },
     {
         "title": "HWB-ACC-2026-03-13-BabySOP-Expense-Forecast",
         "id": "HWB-ACC-BSOP-2026-01",
         "dept": "ACCOUNTING",
         "file": "hwb-acc-2026-03-13-babysop-expense-forecast.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-03-13"
     },
     {
         "title": "Standard Operating Procedure: **Accounts Payable (AP) Management**",
         "id": "HWB-ACC-003",
         "dept": "ACCOUNTING",
         "file": "hwb-acc-003_accounts_payable_sop.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-03-01"
     },
     {
         "title": "Live Azure Cost Audit: April 2026",
         "id": "HWB-ACC-04-27-2026-LIVE-AUDIT",
         "dept": "ACCOUNTING",
         "file": "hwb-acc-04-27-2026-live-audit.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "04/27/2026"
     },
     {
         "title": "Standard Operating Procedure: **Accounts Receivable (AR) Management**",
         "id": "HWB-ACC-002",
         "dept": "ACCOUNTING",
         "file": "hwb-acc-002_accounts_receivable_sop.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-03-01"
     },
     {
         "title": "1.0 Executive Overview",
         "id": "HWB-COMMS-2026-03-05-DES",
         "dept": "COMMUNICATION",
         "file": "hwb-comms-2026-03-05-sigmafidelity-executive-summary.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-03-05"
     },
     {
         "title": "1.0 Executive Memorandum",
         "id": "HWB-COMMS-2026-03-05-ESR",
         "dept": "COMMUNICATION",
         "file": "hwb-comms-2026-03-05-executive-skills-review.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-03-05"
     },
     {
         "title": "HWB-COM-002 Official Institutional Logo Rebranding & SEO Audit",
         "id": "HWB-COM-002",
         "dept": "COMMUNICATION",
         "file": "hwb-com-002_official_logo_rebranding_and_seo_audit.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-03-13"
     },
     {
         "title": "Daily Stand-Up: Tuesday, March 3, 2026",
         "id": "HWB-COMMS-2026-03-03-DSU",
         "dept": "COMMUNICATION",
         "file": "hwb-comms-_2026-03-03_daily_stand-up.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-03-03"
     },
     {
         "title": "HWB-COM-001 Official Institutional Letterhead Template",
         "id": "HWB-COM-001",
         "dept": "COMMUNICATION",
         "file": "hwb-com-001_official_letterhead_template.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-03-13"
     },
     {
         "title": "Strategic Review Agenda",
         "id": "HWB-QMS-1.2-STRAT-001",
         "dept": "COMMUNICATION",
         "file": "hwb-comms-_2026-03-03_strategic_review_agenda.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-03-03"
     },
     {
         "title": "1.0 Purpose",
         "id": "HWB-QMS-4.5",
         "dept": "EHSQ",
         "file": "hwb-qms-4.5_environmental_management_system_iso-14001_sop.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-03-08"
     },
     {
         "title": "HWB-FORM-8.1-001 Job Hazard Analysis (JHA) Form",
         "id": "TBD",
         "dept": "EHSQ",
         "file": "hwb-form-8.1-001_job_hazard_analysis_form.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": ""
     },
     {
         "title": "1.0 Purpose",
         "id": "HWB-QMS-4.6",
         "dept": "EHSQ",
         "file": "hwb-qms-4.6_occupational_health_and_safety_iso-45001_sop.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-03-08"
     },
     {
         "title": "Internal Security Audit Report: **System & Webserver Integrity**",
         "id": "HWB-QMS-9.2-FORM-001",
         "dept": "EHSQ",
         "file": "hwb-qms-9.2-form-001_internal_security_audit_report.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-03-01"
     },
     {
         "title": "Standard Operating Procedure: **EHSQ Management System SOP**",
         "id": "[HWB-QMS-4.5]",
         "dept": "EHSQ",
         "file": "hwb-qms-4.5_ehsq_management_system_sop.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-02-28"
     },
     {
         "title": "Standard Operating Procedure: **Job Hazard Analysis SOP**",
         "id": "[HWB-QMS-8.1-001]",
         "dept": "EHSQ",
         "file": "hwb-qms-8.1-001_job_hazard_analysis_sop.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-02-28"
     },
     {
         "title": "Employee Information File Checklist",
         "id": "HWB-FORM-7.2-004",
         "dept": "HR",
         "file": "hwb-form-7.2-004_employee_file_checklist.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-02-20"
     },
     {
         "title": "SYSTEM PROMPT: VP of Finance (Maria Bolanos)",
         "id": "TBD",
         "dept": "HR",
         "file": "maria-bolanos-vp-finance.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     },
     {
         "title": "Standard Operating Procedure: **Employee Competence SOP**",
         "id": "HWB-SOP-7.2-001",
         "dept": "HR",
         "file": "hwb-sop-7.2-001_employee_competence_sop.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-02-20"
     },
     {
         "title": "Standard Operating Procedure: **Employee Onboarding SOP**",
         "id": "HWB-QMS-7.2",
         "dept": "HR",
         "file": "hwb-qms-7.2_employee_onboarding_sop.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-02-28"
     },
     {
         "title": "Training Record",
         "id": "HWB-FORM-7.2-003",
         "dept": "HR",
         "file": "hwb-form-7.2-003_training_record.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-02-20"
     },
     {
         "title": "Job Description Template",
         "id": "HWB-FORM-7.2-001",
         "dept": "HR",
         "file": "hwb-form-7.2-001_job_description_template.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-02-20"
     },
     {
         "title": "HWB-FORM-8.1-001 Job Hazard Analysis (JHA) Form",
         "id": "TBD",
         "dept": "HR",
         "file": "hwb-form-8.1-001_jha_-_humberto_dominguez_-_2026-02-28.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": ""
     },
     {
         "title": "Employee Onboarding Form",
         "id": "HWB-FORM-7.2-005",
         "dept": "HR",
         "file": "hwb-form-7.2-005_employee_onboarding_form.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-02-28"
     },
     {
         "title": "Standard Operating Procedure: **HR Management System SOP**",
         "id": "[HWB-QMS-7.2]",
         "dept": "HR",
         "file": "hwb-qms-7.2_hr_management_system_sop.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-02-28"
     },
     {
         "title": "1.0 Purpose",
         "id": "HWB-HR-002",
         "dept": "HR",
         "file": "hwb-hr-002_ai_executive_prompt_registry.html",
-        "version": "1.3"
+        "version": "2.0.0",
+        "compliance": "UPDATED",
+        "date": "05/21/2026"
     },
     {
         "title": "Training Needs and Plan",
         "id": "HWB-FORM-7.2-002",
         "dept": "HR",
         "file": "hwb-form-7.2-002_training_needs_and_plan.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-02-20"
     },
     {
         "title": "Standard Operating Procedure: **Website Architectural Flowchart SOP**",
         "id": "HWB-QMS-7.1-WEB-001",
         "dept": "IT",
         "file": "hwb-qms-7.1_website_architectural_flowchart_sop.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-03-02"
     },
     {
         "title": "Standard Operating Procedure: **Audio Recording and Playback SOP**",
         "id": "SOP-AUD-001",
         "dept": "IT",
         "file": "recording_and_playback_sop.html",
-        "version": "3.0"
+        "version": "3.0",
+        "compliance": "OUTDATED",
+        "date": "2025-11-01"
     },
     {
         "title": "Standard Operating Procedure: **Webserver Monitoring and Uptime Analytics SOP**",
         "id": "[QMS-9.1-SYS]",
         "dept": "IT",
         "file": "hwb-qms-9.1_webserver_monitoring_and_uptime_analytics_sop.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-02-28"
     },
     {
         "title": "Standard Operating Procedure: **ChatGPT CLI Installation**",
         "id": "SOP-CLI-001",
         "dept": "IT",
         "file": "chatgpt_cli_installation_sop.html",
-        "version": "1.1"
+        "version": "1.1",
+        "compliance": "OUTDATED",
+        "date": "2025-11-04"
     },
     {
         "title": "Standard Operating Procedure: **Disaster Recovery and Data Restoration SOP**",
         "id": "HWB-QMS-9.3",
         "dept": "IT",
         "file": "hwb-qms-9.3_disaster_recovery_and_data_restoration_sop.html",
-        "version": "3.0"
+        "version": "3.0",
+        "compliance": "OUTDATED",
+        "date": "2026-03-02"
     },
     {
         "title": "HWB-AGENTS-NAVY-BIRTH-CERTIFICATE: Natalie Navy",
         "id": "HWB-AGENT-NAVY-001",
         "dept": "IT",
         "file": "hwb-agents-navy-birth-certificate.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-03-12"
     },
     {
         "title": "HWB-IT-010 YouTube Automation & Metadata Protocol",
         "id": "HWB-IT-010",
         "dept": "IT",
         "file": "hwb-it-010_youtube_automation_protocol.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-03-13"
     },
     {
         "title": "SOP: Website Content and SEO Improvement",
         "id": "TBD",
         "dept": "IT",
         "file": "website_improvement_sop.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     },
     {
         "title": "HWB-QMS-IT-008 Intranet Homepage Redesign Specification",
         "id": "HWB-QMS-IT-008",
         "dept": "IT",
         "file": "hwb-qms-it-008_intranet_homepage_redesign_specification.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-03-13"
     },
     {
         "title": "Standard Operating Procedure: **Computer Backup and Restoration**",
         "id": "SOP-BCK-001",
         "dept": "IT",
         "file": "computer_backup_and_restoration_sop.html",
-        "version": "1.1"
+        "version": "1.1",
+        "compliance": "OUTDATED",
+        "date": "2025-11-04"
     },
     {
         "title": "HWB-QMS-7.5 Official Institutional SharePoint & Intranet Management SOP",
         "id": "HWB-QMS-IT-007",
         "dept": "IT",
         "file": "hwb-qms-it-007_sharepoint_management_sop.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-03-13"
     },
     {
         "title": "Untitled SOP",
         "id": "TBD",
         "dept": "IT",
         "file": "hwb-it-001_chatgpt_software_notes.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     },
     {
         "title": "Standard Operating Procedure: **AI Agents and Specialised Scripts SOP**",
         "id": "HWB-QMS-9.2",
         "dept": "IT",
         "file": "hwb-qms-9.2_ai_agents_and_specialised_scripts_sop.html",
-        "version": "1.4"
+        "version": "1.4",
+        "compliance": "OUTDATED",
+        "date": "2026-03-02"
     },
     {
         "title": "Standard Operating Procedure: **Computer Security SOP**",
         "id": "HWB-QMS-9.4",
         "dept": "IT",
         "file": "hwb-qms-9.4_computer_security_sop.html",
-        "version": "1.3"
+        "version": "1.3",
+        "compliance": "OUTDATED",
+        "date": "2026-02-28"
     },
     {
         "title": "1.0 Purpose",
         "id": "HWB-QMS-9.6",
         "dept": "IT",
         "file": "hwb-qms-9.6_information_security_management_iso-27001_sop.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-03-08"
     },
     {
         "title": "Standard Operating Procedure: **Obsidian Android Sync SOP**",
         "id": "SOP-OBS-001",
         "dept": "IT",
         "file": "obsidian_android_sync_sop.html",
-        "version": "3.0"
+        "version": "3.0",
+        "compliance": "OUTDATED",
+        "date": "2025-11-01"
     },
     {
         "title": "Standard Operating Procedure: **Gemini Master Setup SOP**",
         "id": "SOP-GEM-001",
         "dept": "IT",
         "file": "gemini_master_setup_sop.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2025-11-01"
     },
     {
         "title": "HWB-QMS-IT-015: Institutional Website Architecture Report",
         "id": "HWB-QMS-IT-015",
         "dept": "IT",
         "file": "hwb-qms-it-015_institutional_website_architecture_report.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-03-20"
     },
     {
         "title": "Standard Operating Procedure: **IT Management System SOP**",
         "id": "[HWB-QMS-7.1]",
         "dept": "IT",
         "file": "hwb-qms-7.1_it_management_system_sop.html",
-        "version": "1.2"
+        "version": "1.2",
+        "compliance": "OUTDATED",
+        "date": "2026-02-28"
     },
     {
         "title": "Standard Operating Procedure: **Git Troubleshooting SOP**",
         "id": "SOP-GIT-001",
         "dept": "IT",
         "file": "git_troubleshooting_sop.html",
-        "version": "3.0"
+        "version": "3.0",
+        "compliance": "OUTDATED",
+        "date": "2025-11-01"
     },
     {
         "title": "Standard Operating Procedure: **Microsoft 365 Integration SOP**",
         "id": "HWB-QMS-7.6",
         "dept": "IT",
         "file": "hwb-qms-7.6_microsoft_365_integration_sop.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-03-02"
     },
     {
         "title": "1.0 Purpose",
         "id": "HWB-IT-CRED-001",
         "dept": "IT",
         "file": "hwb-company-logins.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-03-05"
     },
     {
         "title": "Standard Operating Procedure: **Google Home Obsidian Integration SOP**",
         "id": "SOP-GHO-001",
         "dept": "IT",
         "file": "google_home_obsidian_sop.html",
-        "version": "3.0"
+        "version": "3.0",
+        "compliance": "OUTDATED",
+        "date": "2025-11-01"
     },
     {
         "title": "Privacy Policy",
         "id": "HWB-LEG-PRV-001",
         "dept": "LEGAL",
         "file": "hwb-leg-prv-001_privacy_policy.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-03-11"
     },
     {
         "title": "HWB-LEG-002: Intellectual Property Master Prompt Registry",
         "id": "HWB-LEG-002",
         "dept": "LEGAL",
         "file": "hwb-leg-002_intellectual_property_prompt_registry.html",
-        "version": "1.2"
+        "version": "1.2",
+        "compliance": "OUTDATED",
+        "date": "2026-03-09"
     },
     {
         "title": "Standard Operating Procedure: **Legal and Compliance SOP**",
         "id": "HWB-LEG-001",
         "dept": "LEGAL",
         "file": "hwb-leg-001_legal_and_compliance_sop.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-02-28"
     },
     {
         "title": "Standard Operating Procedure: **Operations Management SOP**",
         "id": "HWB-OPS-001",
         "dept": "OPERATIONS",
         "file": "hwb-ops-001_operations_management_sop.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-02-28"
     },
     {
         "title": "Standard Operating Procedure: **Equipment Use Log Book SOP**",
         "id": "HWB-SOP-7.1-001",
         "dept": "OPERATIONS",
         "file": "hwb-sop-7.1-001_equipment_use_log_book_sop.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-02-20"
     },
     {
         "title": "1.0 Purpose",
         "id": "HWB-QMS-8.7",
         "dept": "OPERATIONS",
         "file": "hwb-qms-8.7_food_safety_management_iso-22000_sop.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-03-08"
     },
     {
         "title": "Equipment Use Log",
         "id": "HWB-FORM-7.1-001",
         "dept": "OPERATIONS",
         "file": "hwb-form-7.1-001_equipment_use_log.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-02-20"
     },
     {
         "title": "1.0 Purpose",
         "id": "HWB-QMS-8.6",
         "dept": "OPERATIONS",
         "file": "hwb-qms-8.6_data_center_precision_cleaning_and_contamination_control_sop.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-03-08"
     },
     {
         "title": "SOP: Purchasing & Procurement Process",
         "id": "HWB-QMS-8.4-SOP-001",
         "dept": "PURCHASING",
         "file": "hwb-qms-8.4_purchasing_process_sop_with_flowchart.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-02-21"
     },
     {
         "title": "Standard Operating Procedure: **Purchasing and Procurement SOP**",
         "id": "HWB-PUR-001",
         "dept": "PURCHASING",
         "file": "hwb-pur-001_purchasing_and_procurement_sop.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-02-28"
     },
     {
         "title": "Untitled SOP",
         "id": "TBD",
         "dept": "PURCHASING",
         "file": "hwb-pur-001_container_xchange.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     },
     {
         "title": "Untitled SOP",
         "id": "TBD",
         "dept": "QMS",
         "file": "hwb-qms-8.3_google_business_profile_integration_plan.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     },
     {
         "title": "SigmaFidelity\u2122 Market Launch: Arrow Diagram",
         "id": "HWB-QMS-STRAT-008",
         "dept": "QMS",
         "file": "hwb-qms-strat-008_project_arrow_diagram.html",
-        "version": "1.1"
+        "version": "1.1",
+        "compliance": "OUTDATED",
+        "date": "2026-02-21"
     },
     {
         "title": "Untitled SOP",
         "id": "TBD",
         "dept": "QMS",
         "file": "hwb-qms-7.1_website_architectural_flowchart_sop.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     },
     {
         "title": "Untitled SOP",
         "id": "TBD",
         "dept": "QMS",
         "file": "hwb-qms-9.1_webserver_monitoring_and_uptime_analytics_sop.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     },
     {
         "title": "Untitled SOP",
         "id": "HWB-QMS-9.5",
         "dept": "QMS",
         "file": "hwb-qms-9.5_cloud_deployment_and_infrastructure_log.html",
-        "version": "5.0"
+        "version": "5.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     },
     {
         "title": "Untitled SOP",
         "id": "TBD",
         "dept": "QMS",
         "file": "hwb-qms-7.1_sigmajan_saas_development_roadmap_and_milestones.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     },
     {
         "title": "1.0 Objective",
         "id": "HWB-QMS-9.3.2-PANIC",
         "dept": "QMS",
         "file": "hwb-qms-9.3.2_disaster_recovery_-_the_panic_button_sop.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "04/27/2026"
     },
     {
         "title": "Untitled SOP",
         "id": "TBD",
         "dept": "QMS",
         "file": "hwb-qms-7.5_quote_app_setup_and_development_log_sop.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     },
     {
         "title": "Untitled SOP",
         "id": "TBD",
         "dept": "QMS",
         "file": "hwb-qms-7.5_obsidian_android_sync_sop.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     },
     {
         "title": "Untitled SOP",
         "id": "TBD",
         "dept": "QMS",
         "file": "hwb-qms-7.5_python_project_initialization_sop.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     },
     {
         "title": "1.0 Purpose",
         "id": "HWB-QMS-7.5-BO-CRM",
         "dept": "QMS",
         "file": "hwb-qms-7.5_backoffice_and_crm_management_sop.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-03-05"
     },
     {
         "title": "Standard Operating Procedure: **Disaster Recovery and Data Restoration SOP**",
         "id": "HWB-QMS-9.3",
         "dept": "QMS",
         "file": "hwb-qms-9.3_disaster_recovery_and_data_restoration_sop.html",
-        "version": "7.0"
+        "version": "7.0",
+        "compliance": "OUTDATED",
+        "date": "2026-03-23"
     },
     {
         "title": "ISO 9001:2015 Master Audit Mapping Flowchart",
         "id": "HWB-QMS-MASTER-MAP-001",
         "dept": "QMS",
         "file": "hwb-qms-master-iso-9001-audit-mapping-flowchart.html",
-        "version": "3.1"
+        "version": "3.1",
+        "compliance": "OUTDATED",
+        "date": "2026-02-21"
     },
     {
         "title": "SIPOC Diagram: **HWB-MOB-2026 Mobile Execution Engine**",
         "id": "HWB-QMS-BB-002",
         "dept": "QMS",
         "file": "hwb-qms-bb-002_hwb-mob-2026_sipoc_diagram.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-03-20"
     },
     {
         "title": "Quality Management System Manual HWB Cleaning Services LLC",
         "id": "HWB-QMS-001",
         "dept": "QMS",
         "file": "hwb-qms-master_quality_management_system_manual.html",
-        "version": "1.3"
+        "version": "1.3",
+        "compliance": "OUTDATED",
+        "date": "2026-02-21"
     },
     {
         "title": "Untitled SOP",
         "id": "TBD",
         "dept": "QMS",
         "file": "hwb-qms-7.5_institutional_web_design_system_sop.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     },
     {
         "title": "Official Letterhead Template",
         "id": "HWB-QMS-FORM-007",
         "dept": "QMS",
         "file": "hwb-qms-form-007_official_letterhead_template.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-02-21"
     },
     {
         "title": "Why-Why Analysis: The \"Payroll Mop\" Crisis",
         "id": "HWB-QMS-STRAT-006",
         "dept": "QMS",
         "file": "hwb-qms-strat-006_strategic_why-why_diagram.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-02-21"
     },
     {
         "title": "Untitled SOP",
         "id": "TBD",
         "dept": "QMS",
         "file": "hwb-qms-8.6_autonomous_routine_governance_sop.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     },
     {
         "title": "Master SOP Index",
         "id": "HWB-QMS-7.5-IDX-001",
         "dept": "QMS",
         "file": "hwb-qms-7.5_master_sop_index.html",
-        "version": "2.0"
+        "version": "2.0",
+        "compliance": "OUTDATED",
+        "date": "2026-03-20"
     },
     {
         "title": "SigmaFidelity\u2122 DMADV Design Roadmap",
         "id": "HWB-QMS-STRAT-003",
         "dept": "QMS",
         "file": "hwb-qms-strat-003_dmadv_design_roadmap.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-02-21"
     },
     {
         "title": "Untitled SOP",
         "id": "TBD",
         "dept": "QMS",
         "file": "hwb-qms-7.5_note_naming_convention_sop.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     },
     {
         "title": "Untitled SOP",
         "id": "TBD",
         "dept": "QMS",
         "file": "hwb-qms-8.3_hwb_strategic_website_replacement_plan.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     },
     {
         "title": "S4/IEE Project Charter",
         "id": "HWB-QMS-FORM-008",
         "dept": "QMS",
         "file": "hwb-qms-form-008_s4-iee_project_charter_template.html",
-        "version": "1.4"
+        "version": "1.4",
+        "compliance": "OUTDATED",
+        "date": "2026-02-21"
     },
     {
         "title": "Untitled SOP",
         "id": "TBD",
         "dept": "QMS",
         "file": "hwb-qms-7.5_quote_app_database_access_sop.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     },
     {
         "title": "Untitled SOP",
         "id": "TBD",
         "dept": "QMS",
         "file": "hwb-qms-9.5_secret_management_and_api_credential_governance_sop.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     },
     {
         "title": "Untitled SOP",
         "id": "TBD",
         "dept": "QMS",
         "file": "hwb-qms-8.8_certified_high-stakes_sanitation_protocols.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     },
     {
         "title": "Untitled SOP",
         "id": "TBD",
         "dept": "QMS",
         "file": "hwb-qms-7.5_entity_relationship_diagram.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     },
     {
         "title": "Untitled SOP",
         "id": "TBD",
         "dept": "QMS",
         "file": "hwb-qms-7.5_data_flow_diagram.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     },
     {
         "title": "Untitled SOP",
         "id": "TBD",
         "dept": "QMS",
         "file": "hwb-qms-9.2_chatgpt_cli_installation_sop.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     },
     {
         "title": "Technical Specifications: **React 'Scope of Work' Engine**",
         "id": "HWB-QMS-BB-004",
         "dept": "QMS",
         "file": "hwb-qms-bb-004_hwb-mob-2026_technical_specifications_-_react_sow_engine.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-03-20"
     },
     {
         "title": "Standard Operating Procedure: **Note Title Naming Convention SOP**",
         "id": "SOP-NAM-001",
         "dept": "QMS",
         "file": "note_naming_convention_sop.html",
-        "version": "1.1"
+        "version": "1.1",
+        "compliance": "OUTDATED",
+        "date": "2025-11-01"
     },
     {
         "title": "Corrective Action Request Form",
         "id": "HWB-QMS-FORM-005",
         "dept": "QMS",
         "file": "hwb-qms-form-005_corrective_action_request_form.html",
-        "version": "1.1"
+        "version": "1.1",
+        "compliance": "OUTDATED",
+        "date": "2026-02-21"
     },
     {
         "title": "Standard Operating Procedure: **Organizational Structure SOP**",
         "id": "HWB-SOP-002",
         "dept": "QMS",
         "file": "hwb-qms-5.3_organizational_structure_sop_with_flowchart.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-02-20"
     },
     {
         "title": "Standard Operating Procedure: **Quality Planning Process SOP with Flowchart**",
         "id": "HWB-QMS-6.0-PLAN-001",
         "dept": "QMS",
         "file": "hwb-qms-6.0_quality_planning_process_sop_with_flowchart.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-02-21"
     },
     {
         "title": "SigmaFidelity\u2122 DMAIC Execution Roadmap",
         "id": "HWB-QMS-STRAT-002",
         "dept": "QMS",
         "file": "hwb-qms-strat-002_s4-iee_execution_roadmap.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-02-21"
     },
     {
         "title": "Risk and Opportunity Register",
         "id": "HWB-QMS-003",
         "dept": "QMS",
         "file": "hwb-qms-form-003_risk_register.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-02-20"
     },
     {
         "title": "Standard Operating Procedure: **[Subject] [Process Name] SOP**",
         "id": "[DEPT-XXX-YYY]",
         "dept": "QMS",
         "file": "sop_template.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "[YYYY-MM-DD]"
     },
     {
         "title": "Untitled SOP",
         "id": "TBD",
         "dept": "QMS",
         "file": "hwb-qms-7.5_generative_asset_onboarding_sop.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     },
     {
         "title": "HWB-QMS-9.3.1 Disaster Recovery (Shadow Snapshots) SOP",
         "id": "TBD",
         "dept": "QMS",
         "file": "hwb-qms-9.3.1_disaster_recovery_(shadow_snapshots)_sop.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     },
     {
         "title": "S4/IEE Project Charter: **HWB-MOB-2026 Mobile Execution Engine**",
         "id": "HWB-QMS-FORM-008-BB-001",
         "dept": "QMS",
         "file": "hwb-qms-form-008_hwb-mob-2026_black_belt_project_charter.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-03-20"
     },
     {
         "title": "1.0 Purpose",
         "id": "HWB-QMS-FORM-005-LOG",
         "dept": "QMS",
         "file": "hwb-qms-form-005-mistake-log.html",
-        "version": "2.0"
+        "version": "2.0",
+        "compliance": "OUTDATED",
+        "date": "03/23/2026"
     },
     {
         "title": "Corrective Action Request (CAR) Form",
         "id": "HWB-QMS-FORM-005-TEMP",
         "dept": "QMS",
         "file": "hwb-qms-form-005_corrective_action_request_form_template.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-02-21"
     },
     {
         "title": "Standard Operating Procedure: **Ikigai Business Alignment SOP**",
         "id": "HWB-QMS-1.1",
         "dept": "QMS",
         "file": "hwb-qms-1.1_ikigai_business_alignment_sop.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-03-03"
     },
     {
         "title": "Standard Operating Procedure: **Process Efficiency SOP with Flowchart**",
         "id": "HWB-QMS-4.4-EFF-001",
         "dept": "QMS",
         "file": "hwb-qms-4.4_process_efficiency_sop_with_flowchart.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-02-21"
     },
     {
         "title": "Standard Operating Procedure: **Departmental Infrastructure and Governance SOP**",
         "id": "HWB-QMS-5.5",
         "dept": "QMS",
         "file": "hwb-qms-5.5_departmental_infrastructure_and_governance_sop.html",
-        "version": "1.3"
+        "version": "1.3",
+        "compliance": "OUTDATED",
+        "date": "2026-02-28"
     },
     {
         "title": "Untitled SOP",
         "id": "TBD",
         "dept": "QMS",
         "file": "hwb-qms-4.7_risk_management_guidelines_iso-31000_sop.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     },
     {
         "title": "Internal Audit Report Form",
         "id": "HWB-QMS-FORM-004",
         "dept": "QMS",
         "file": "hwb-qms-form-004_internal_audit_report_form.html",
-        "version": "1.1"
+        "version": "1.1",
+        "compliance": "OUTDATED",
+        "date": "2026-02-21"
     },
     {
         "title": "Standard Operating Procedure: **Customer Communication Process SOP with Flowchart**",
         "id": "HWB-QMS-7.4-COM-001",
         "dept": "QMS",
         "file": "hwb-qms-7.4_customer_communication_process_sop_with_flowchart.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-02-21"
     },
     {
         "title": "Standard Operating Procedure: **Corrective Action Process SOP with Flowchart**",
         "id": "HWB-QMS-10.2-CAR-001",
         "dept": "QMS",
         "file": "hwb-qms-10.2_corrective_action_process_sop_with_flowchart.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-02-21"
     },
     {
         "title": "Untitled SOP",
         "id": "TBD",
         "dept": "QMS",
         "file": "hwb-qms-9.2_ai_agents_and_specialised_scripts_sop.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     },
     {
         "title": "Untitled SOP",
         "id": "TBD",
         "dept": "QMS",
         "file": "hwb-qms-9.4_computer_security_sop.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     },
     {
         "title": "Untitled SOP",
         "id": "TBD",
         "dept": "QMS",
         "file": "hwb-qms-5.6_artificial_intelligence_department_charter_sop.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     },
     {
         "title": "Untitled SOP",
         "id": "TBD",
         "dept": "QMS",
         "file": "hwb-qms-9.1_git_troubleshooting_sop.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     },
     {
         "title": "1.0 Purpose",
         "id": "HWB-QMS-7.5-DAF",
         "dept": "QMS",
         "file": "hwb-qms-7.5_data_acquisition_and_fidelity_sop.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-03-05"
     },
     {
         "title": "Standard Operating Procedure: **[Subject] [Process Name] SOP**",
         "id": "[DEPT-XXX-YYY]",
         "dept": "QMS",
         "file": "hwb-qms-7.5_sop_template.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "[YYYY-MM-DD]"
     },
     {
         "title": "Untitled SOP",
         "id": "TBD",
         "dept": "QMS",
         "file": "hwb-qms-strat-009_strategic_data_asset_war_chest.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     },
     {
         "title": "Untitled SOP",
         "id": "TBD",
         "dept": "QMS",
         "file": "hwb-qms-9.1_gemini_master_setup_sop.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     },
     {
         "title": "Strategic AHP: Vertical Prioritization",
         "id": "HWB-QMS-STRAT-007",
         "dept": "QMS",
         "file": "hwb-qms-strat-007_strategic_ahp_model.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-02-21"
     },
     {
         "title": "Untitled SOP",
         "id": "TBD",
         "dept": "QMS",
         "file": "hwb-qms-7.1_azure_provisioning_log_sigmajan.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     },
     {
         "title": "Data Collection Plan: **HWB-MOB-2026 Mobile Execution Engine**",
         "id": "HWB-QMS-BB-003",
         "dept": "QMS",
         "file": "hwb-qms-bb-003_hwb-mob-2026_data_collection_plan.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-03-20"
     },
     {
         "title": "Root Cause Analysis: General Quality Failure",
         "id": "HWB-QMS-STRAT-004",
         "dept": "QMS",
         "file": "hwb-qms-strat-004_quality_failure_fishbone.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-02-21"
     },
     {
         "title": "Untitled SOP",
         "id": "TBD",
         "dept": "QMS",
         "file": "hwb-qms-7.1_it_management_system_sop.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     },
     {
         "title": "Untitled SOP",
         "id": "TBD",
         "dept": "QMS",
         "file": "hwb-qms-8.4_corporate_vendor_outreach_sop.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     },
     {
         "title": "Standard Operating Procedure: **Daily System Maintenance SOP**",
         "id": "HWB-QMS-9.1",
         "dept": "QMS",
         "file": "hwb-qms-9.1_daily_system_maintenance_sop.html",
-        "version": "2.0"
+        "version": "2.0",
+        "compliance": "OUTDATED",
+        "date": "2026-04-27"
     },
     {
         "title": "Untitled SOP",
         "id": "TBD",
         "dept": "QMS",
         "file": "hwb-qms-7.6_microsoft_365_integration_sop.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     },
     {
         "title": "Untitled SOP",
         "id": "TBD",
         "dept": "QMS",
         "file": "hwb-qms-7.5_sigmajan_design_system_and_brand_palette_sop.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     },
     {
         "title": "Untitled SOP",
         "id": "TBD",
         "dept": "QMS",
         "file": "hwb-qms-8.5_mobile_field_operations_sop.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     },
     {
         "title": "Untitled SOP",
         "id": "TBD",
         "dept": "QMS",
         "file": "hwb-qms-7.1_sigmajan_saas_database_architecture_and_erd.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     },
     {
         "title": "Untitled SOP",
         "id": "TBD",
         "dept": "QMS",
         "file": "hwb-qms-9.3_disaster_recovery_and_data_restoration_sop-desktop-bcsqj7i.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     },
     {
         "title": "Strategic Management & Planning Tools",
         "id": "HWB-QMS-STRAT-005",
         "dept": "QMS",
         "file": "hwb-qms-strat-005_management_planning_suite.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-02-21"
     },
     {
         "title": "Untitled SOP",
         "id": "TBD",
         "dept": "QMS",
         "file": "hwb-qms-7.5_google_home_obsidian_integration_sop.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     },
     {
         "title": "Untitled SOP",
         "id": "TBD",
         "dept": "QMS",
         "file": "hwb-qms-9.2_audio_recording_and_playback_sop.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     },
     {
         "title": "Project Communication Plan",
         "id": "HWB-QMS-7.4-PLAN-001",
         "dept": "QMS",
         "file": "hwb-qms-7.4_project_communication_plan.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-02-21"
     },
     {
         "title": "Untitled SOP",
         "id": "TBD",
         "dept": "QMS",
         "file": "hwb-qms-9.5_secret_management_and_api_credential_governance_sop-desktop-bcsqj7i.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     },
     {
         "title": "Untitled SOP",
         "id": "TBD",
         "dept": "QMS",
         "file": "hwb-qms-8.3_website_improvement_sop.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     },
     {
         "title": "HWB-QMS-7.2: SigmaFidelity\u2122 Web & UI Standardization SOP",
         "id": "HWB-QMS-7.2",
         "dept": "QMS",
         "file": "hwb-qms-7.2_backoffice_ui_standardization_sop.html",
-        "version": "4.0"
+        "version": "4.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     },
     {
         "title": "Untitled SOP",
         "id": "TBD",
         "dept": "QMS",
         "file": "hwb-qms-strat-010_babysop_business_plan.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     },
     {
         "title": "Sales Proposal Template",
         "id": "HWB-QMS-FORM-006",
         "dept": "SALES-MARKETING",
         "file": "hwb-qms-form-006_proposal_template.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-02-21"
     },
     {
         "title": "HWB Cleaning Services LLC: Capability Statement",
         "id": "TBD",
         "dept": "SALES-MARKETING",
         "file": "hwb-mkt-004_capability_statement_je_dunn.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     },
     {
         "title": "1.0 Strategic North Star",
         "id": "HWB-MKT-SOC-001",
         "dept": "SALES-MARKETING",
         "file": "hwb-mkt-soc-001_social_media_strategy_and_tactics.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-03-11"
     },
     {
         "title": "Sales Process Flowchart",
         "id": "HWB-QMS-8.0-FLOW-001",
         "dept": "SALES-MARKETING",
         "file": "hwb-qms-8.0_sales_process_flowchart.html",
-        "version": "1.1"
+        "version": "1.1",
+        "compliance": "OUTDATED",
+        "date": "2026-02-21"
     },
     {
         "title": "Standard Operating Procedure: **Sales Process SOP**",
         "id": "HWB-SOP-001",
         "dept": "SALES-MARKETING",
         "file": "hwb-qms-8.0_sales_process_sop_with_flowchart.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-02-20"
     },
     {
         "title": "SigmaFidelity\u2122 Marketing Web Design Portfolio",
         "id": "HWB-QMS-8.1-MKT-WEB-001",
         "dept": "SALES-MARKETING",
         "file": "hwb-qms-8.1_marketing_web_design_concepts.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-03-03"
     },
     {
         "title": "Standard Operating Procedure: **Corporate Vendor Outreach SOP**",
         "id": "SOP-LEAD-001",
         "dept": "SALES-MARKETING",
         "file": "corporate_vendor_outreach_sop.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2025-11-04"
     },
     {
         "title": "Standard Operating Procedure: **Marketing Process SOP with Flowchart**",
         "id": "HWB-QMS-8.0-MKT-001",
         "dept": "SALES-MARKETING",
         "file": "hwb-qms-8.0_marketing_process_sop_with_flowchart.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-02-21"
     },
     {
         "title": "1.0 Strategic Overview",
         "id": "HWB-MKT-SOC-SERIES-001",
         "dept": "SALES-MARKETING",
         "file": "hwb-mkt-soc-series-001_cargo_culture_series.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-03-11"
     },
     {
         "title": "Marketing Form: **Digital Lead Capture (Website)**",
         "id": "HWB-MKT-FORM-001",
         "dept": "SALES-MARKETING",
         "file": "hwb-mkt-form-001_digital_lead_capture_form.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-03-01"
     },
     {
         "title": "Standard Operating Procedure: **Capability Statement Development**",
         "id": "HWB-MKT-001",
         "dept": "SALES-MARKETING",
         "file": "hwb-mkt-001_capability_statement_sop.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-03-01"
     },
     {
         "title": "HWB Cleaning Services LLC: Capability Statement",
         "id": "TBD",
         "dept": "SALES-MARKETING",
         "file": "hwb-mkt-002_capability_statement_austin_commercial.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     },
     {
         "title": "1.0 Executive Summary",
         "id": "HWB-MKT-2026-03-05-NIR",
         "dept": "SALES-MARKETING",
         "file": "hwb-mkt-2026-03-05-national-intelligence-report.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-03-05"
     },
     {
         "title": "Extreme SEO Audit and Optimization Report",
         "id": "HWB-QMS-8.2-SEO-001",
         "dept": "SALES-MARKETING",
         "file": "hwb-qms-8.2_extreme_seo_audit_report.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-03-03"
     },
     {
         "title": "1.0 Executive Summary",
         "id": "HWB-MKT-2026-03-05-TIIR",
         "dept": "SALES-MARKETING",
         "file": "hwb-mkt-2026-03-05-texas-institutional-intelligence-report.html",
-        "version": "1.0"
+        "version": "1.0",
+        "compliance": "OUTDATED",
+        "date": "2026-03-05"
     },
     {
         "title": "HWB-MKT-ART-001: LinkedIn Article Draft - The Digital DNA (Final Executive Version)",
         "id": "HWB-MKT-ART-001",
         "dept": "SALES-MARKETING",
         "file": "hwb-mkt-art-001_the_prompt_is_the_ip.html",
-        "version": "9.0"
+        "version": "9.0",
+        "compliance": "OUTDATED",
+        "date": "2026-03-18"
     },
     {
         "title": "HWB Cleaning Services LLC: Corporate Outreach Log",
         "id": "TBD",
         "dept": "SALES-MARKETING",
         "file": "hwb-outreach-001_je_dunn_trq.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     },
     {
         "title": "HWB Cleaning Services LLC: Capability Statement",
         "id": "TBD",
         "dept": "SALES-MARKETING",
         "file": "hwb-mkt-003_capability_statement_balfour_beatty.html",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "2000-01-01"
     }
-    , { "title": "HWB Website Design Rules", "id": "HWB-QMS-7.5", "dept": "FOUNDATIONAL", "file": "hwb-qms-7.5_web_design_rules.html", "version": "2.3.2" }
-    , { "title": "Backend Architecture & Logic", "id": "HWB-QMS-7.6", "dept": "FOUNDATIONAL", "file": "hwb-qms-7.6_backend_architecture.html", "version": "1.0.0" }
-    , { "title": "Backend Web System Sequence", "id": "HWB-QMS-7.7", "dept": "FOUNDATIONAL", "file": "hwb-qms-7.7_backend_web_system.html", "version": "1.0.0" }
-    , { "title": "Backend UI Component Standard", "id": "HWB-QMS-7.8", "dept": "FOUNDATIONAL", "file": "hwb-qms-7.8_backend_ui_components.html", "version": "1.0.0" }
-    , { "title": "Backend UI Component Standard", "id": "HWB-QMS-7.9", "dept": "FOUNDATIONAL", "file": "hwb-qms-7.9_backend_component_standard.html", "version": "1.0.0" }
+    , { "title": "HWB Website Design Rules", "id": "HWB-QMS-7.5", "dept": "FOUNDATIONAL", "file": "hwb-qms-7.5_web_design_rules.html", "version": "2.3.2", "compliance": "UPDATED", "date": "05/20/2026" }
+    , { "title": "Backend Architecture & Logic", "id": "HWB-QMS-7.6", "dept": "FOUNDATIONAL", "file": "hwb-qms-7.6_backend_architecture.html", "version": "1.0.0", "compliance": "UPDATED", "date": "05/20/2026" }
+    , { "title": "Backend Web System Sequence", "id": "HWB-QMS-7.7", "dept": "FOUNDATIONAL", "file": "hwb-qms-7.7_backend_web_system.html", "version": "1.0.0", "compliance": "UPDATED", "date": "05/20/2026" }
+    , { "title": "Backend Component Standard", "id": "HWB-QMS-7.9", "dept": "FOUNDATIONAL", "file": "hwb-qms-7.9_backend_component_standard.html", "version": "1.4.0", "compliance": "UPDATED", "date": "05/21/2026" }
 ]

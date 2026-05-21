@@ -8,7 +8,8 @@
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
     </div>
 
-    <table>
+    <div class="sop-content-body">
+        <table>
 <thead>
 <tr>
 <th style="text-align: left;"><strong>Document Control</strong></th>
@@ -47,28 +48,28 @@
 </tbody>
 </table>
 <hr />
-<h1>1.0 Objective</h1>
+<h1 id="10-objective">1.0 Objective</h1>
 <p>To provide a definitive, high-velocity response protocol for catastrophic system failures, data corruption, or accidental deletions. This SOP acts as the "Panic Button," guiding the operator through the immediate restoration of SigmaFidelity™ infrastructure.</p>
-<h1>2.0 Roles and Responsibilities</h1>
+<h1 id="20-roles-and-responsibilities">2.0 Roles and Responsibilities</h1>
 <ul>
 <li><strong>George (Systems Architect):</strong> Decision authority on rollback necessity and target timestamps.</li>
 <li><strong>Peter (Recovery Specialist):</strong> Primary autonomous execution agent for all backup/restore logic.</li>
 <li><strong>CEO (Humberto Dominguez):</strong> Final approval for total system rollbacks.</li>
 </ul>
-<h1>3.0 The Recovery Stack (Tactics)</h1>
+<h1 id="30-the-recovery-stack-tactics">3.0 The Recovery Stack (Tactics)</h1>
 <p>The system is protected by five autonomous layers managed by the <strong>Peter Sentinel</strong>:
 1.  <strong>Disk Protection (15m):</strong> Prevents crashes via log/disk monitoring.
 2.  <strong>Shadow Snapshots (15m):</strong> Hard-linked file-level recovery for web development.
 3.  <strong>Binary DB Snapshots (1h):</strong> PostgreSQL state recovery via <code>.sql</code> archives.
 4.  <strong>Vault Guardian (24h):</strong> Full institutional archival of SOPs and secrets.
 5.  <strong>Ghost Checkpoints (Pre-Stop):</strong> Captures uncommitted Git state.</p>
-<h1>4.0 Protocol: The "Panic Button" Sequence</h1>
-<h2>STEP 1: Damage Assessment</h2>
+<h1 id="40-protocol-the-panic-button-sequence">4.0 Protocol: The "Panic Button" Sequence</h1>
+<h2 id="step-1-damage-assessment">STEP 1: Damage Assessment</h2>
 <ol>
 <li>Locate and read the <strong>Black Box</strong> at <code>HWB-COMPANY/HWB-DATA/HWB-SESSION-RECOVERY.md</code>.</li>
 <li>Identify the <strong>Heat Zone Files</strong> and the <strong>Timestamp</strong> of the last successful action.</li>
 </ol>
-<h2>STEP 2: Choose Restoration Path</h2>
+<h2 id="step-2-choose-restoration-path">STEP 2: Choose Restoration Path</h2>
 <ul>
 <li><strong>If Code is Broken:</strong> Locate the nearest <strong>Shadow Snapshot</strong> in <code>backup/shadow_snapshots/</code> and execute:
   <code>cp -r backup/shadow_snapshots/web_dev_[TIMESTAMP]/* HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/</code></li>
@@ -76,15 +77,16 @@
   <code>python3 scripts/peter_sentinel.py --restore backup/hwb_db_snapshot_[TIMESTAMP].sql</code></li>
 <li><strong>If System is Unstable:</strong> Perform a <strong>Ghost Rollback</strong> using the latest <code>kit-ghost-</code> branch in Git.</li>
 </ul>
-<h2>STEP 3: Verification</h2>
+<h2 id="step-3-verification">STEP 3: Verification</h2>
 <ol>
 <li>Run the Diagnostic Dashboard: <code>docker exec hwb_web_app python diag_dashboard.py</code>.</li>
 <li>Verify log health: <code>journalctl -u sigma-peter -n 20</code>.</li>
 </ol>
-<h1>5.0 Emergency Summoning</h1>
+<h1 id="50-emergency-summoning">5.0 Emergency Summoning</h1>
 <p>In a state of total disorientation, the human operator may summon Peter directly for any specific recovery task using the CLI:
 - <code>python3 scripts/peter_sentinel.py --help</code></p>
 <hr />
 <p><strong>Institutional Standard Active</strong>
 <em>This document is a mandate of the SigmaFidelity™ Quality Management System.</em></p>
+    </div>
 </div>

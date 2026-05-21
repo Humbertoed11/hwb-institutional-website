@@ -8,7 +8,8 @@
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
     </div>
 
-    <table>
+    <div class="sop-content-body">
+        <table>
 <thead>
 <tr>
 <th style="text-align: left;"><strong>Document Control</strong></th>
@@ -47,41 +48,43 @@
 </tbody>
 </table>
 <hr />
-<h1>Standard Operating Procedure: <strong>Accounting Management SOP</strong></h1>
-<h2>1.0 Purpose</h2>
+<h1 id="standard-operating-procedure-accounting-management-sop">Standard Operating Procedure: <strong>Accounting Management SOP</strong></h1>
+<h2 id="10-purpose">1.0 Purpose</h2>
 <p>This SOP defines the financial governance, invoicing, and tax compliance procedures for HWB Cleaning Services LLC, ensuring fiscal integrity and alignment with ISO 9001 operational standards.</p>
-<h2>2.0 Scope</h2>
+<h2 id="20-scope">2.0 Scope</h2>
 <p>Applies to all financial transactions, including accounts receivable (AR), accounts payable (AP), and payroll processing.</p>
-<h2>3.0 Prerequisites</h2>
+<h2 id="30-prerequisites">3.0 Prerequisites</h2>
 <ul>
 <li>Access to QuickBooks/Accounting software.</li>
 <li>Verified empirical data from the <code>quote_app</code> for invoicing.</li>
 <li><code>[[HWB-ACC-002 Accounts Receivable SOP]]</code></li>
 <li><code>[[HWB-ACC-003 Accounts Payable SOP]]</code></li>
 </ul>
-<h2>4.0 Procedure</h2>
+<h2 id="40-procedure">4.0 Procedure</h2>
 <ol>
 <li><strong>Accounts Receivable:</strong> Manage client invoicing and collections per <code>[[HWB-ACC-002]]</code>.</li>
 <li><strong>Accounts Payable:</strong> Manage vendor obligations and payments per <code>[[HWB-ACC-003]]</code>.</li>
 <li><strong>Audit Readiness:</strong> Maintain all financial records for a minimum of 7 years in compliance with federal regulations.</li>
 </ol>
-<h3>4.1 [Process Flow Chart]</h3>
-<pre><code class="language-mermaid">graph TD
-    A[Service Completion] --&gt; B[Invoice Generation]
-    B --&gt; C[Client Payment]
-    D[Vendor Invoice] --&gt; E[AP Verification]
-    E --&gt; F[Payment Release]
-</code></pre>
-<h2>5.0 Verification</h2>
+<h3 id="41-process-flow-chart">4.1 [Process Flow Chart]</h3>
+<div class="mermaid">
+graph TD
+    A[Service Completion] --> B[Invoice Generation]
+    B --> C[Client Payment]
+    D[Vendor Invoice] --> E[AP Verification]
+    E --> F[Payment Release]
+</div>
+
+<h2 id="50-verification">5.0 Verification</h2>
 <ul>
 <li>Monthly bank reconciliation reports.</li>
 <li>Annual financial audits by the Managing Director.</li>
 </ul>
-<h2>6.0 Notes and Cautions</h2>
+<h2 id="60-notes-and-cautions">6.0 Notes and Cautions</h2>
 <ul>
 <li><strong>Zero Synthetic Data:</strong> All financial entries must represent actual currency transactions.</li>
 </ul>
-<h2>7.0 Revision History</h2>
+<h2 id="70-revision-history">7.0 Revision History</h2>
 <table>
 <thead>
 <tr>
@@ -106,4 +109,5 @@
 </tr>
 </tbody>
 </table>
+    </div>
 </div>

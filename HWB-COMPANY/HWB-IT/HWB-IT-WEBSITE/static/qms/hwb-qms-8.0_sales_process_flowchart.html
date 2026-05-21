@@ -8,7 +8,8 @@
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
     </div>
 
-    <table>
+    <div class="sop-content-body">
+        <table>
 <thead>
 <tr>
 <th style="text-align: left;"><strong>Document Control</strong></th>
@@ -47,50 +48,51 @@
 </tbody>
 </table>
 <hr />
-<h1>Sales Process Flowchart</h1>
-<h2>1.0 Purpose</h2>
+<h1 id="sales-process-flowchart">Sales Process Flowchart</h1>
+<h2 id="10-purpose">1.0 Purpose</h2>
 <p>The purpose of this document is to provide a visual representation of the Sales Process at HWB Cleaning Services, ensuring all team members understand the sequence of activities from initial contact to client onboarding.</p>
-<h2>2.0 Scope</h2>
+<h2 id="20-scope">2.0 Scope</h2>
 <p>This flowchart applies to all sales activities managed by HWB Cleaning Services personnel.</p>
-<h2>3.0 Prerequisites</h2>
+<h2 id="30-prerequisites">3.0 Prerequisites</h2>
 <ul>
 <li>Understanding of the Sales Process SOP (HWB-QMS-8.0).</li>
 <li>Access to CRM or lead tracking tools.</li>
 </ul>
-<h2>4.0 Procedure</h2>
+<h2 id="40-procedure">4.0 Procedure</h2>
 <p>The following flowchart illustrates the step-by-step progression of the sales cycle.</p>
-<pre><code class="language-mermaid">graph TD
+<div class="mermaid">
+graph TD
     %% Start of Process
-    Start((Customer Contact)) --&gt; Inquiry[Inquiry via Phone, Web, or Email]
+    Start((Customer Contact)) --> Inquiry[Inquiry via Phone, Web, or Email]
 
     %% Qualification Phase
-    Inquiry --&gt; Qualify{Lead Qualification}
-    Qualify -- No --&gt; LogStop[Log Reason &amp; Stop]
-    Qualify -- Yes --&gt; Schedule[Schedule On-Site Assessment]
+    Inquiry --> Qualify{Lead Qualification}
+    Qualify -- No --> LogStop[Log Reason & Stop]
+    Qualify -- Yes --> Schedule[Schedule On-Site Assessment]
 
     %% Assessment Phase
-    Schedule --&gt; Assessment[Conduct On-Site Assessment]
-    Assessment --&gt; Requirements[Document Service Requirements]
+    Schedule --> Assessment[Conduct On-Site Assessment]
+    Assessment --> Requirements[Document Service Requirements]
 
     %% Proposal Phase
-    Requirements --&gt; Proposal[Prepare Quote/Proposal]
-    Proposal --&gt; Delivery[Deliver Proposal to Client]
+    Requirements --> Proposal[Prepare Quote/Proposal]
+    Proposal --> Delivery[Deliver Proposal to Client]
 
     %% Decision Phase
-    Delivery --&gt; FollowUp{Follow-Up}
-    FollowUp --&gt; Decision{Client Decision}
+    Delivery --> FollowUp{Follow-Up}
+    FollowUp --> Decision{Client Decision}
 
-    Decision -- Rejected --&gt; Feedback[Gather Feedback &amp; Log]
-    Feedback --&gt; Archive[Archive for Future Marketing]
+    Decision -- Rejected --> Feedback[Gather Feedback & Log]
+    Feedback --> Archive[Archive for Future Marketing]
 
-    Decision -- Negotiate --&gt; Proposal
+    Decision -- Negotiate --> Proposal
 
-    Decision -- Accepted --&gt; Agreement[Sign Service Agreement]
+    Decision -- Accepted --> Agreement[Sign Service Agreement]
 
     %% Onboarding Phase
-    Agreement --&gt; Scheduling[Schedule First Service]
-    Scheduling --&gt; Operations[Hand-off to Operations Team]
-    Operations --&gt; Finish((Process Complete))
+    Agreement --> Scheduling[Schedule First Service]
+    Scheduling --> Operations[Hand-off to Operations Team]
+    Operations --> Finish((Process Complete))
 
     %% Styling
     style Start fill:#f9f,stroke:#333,stroke-width:2px
@@ -99,15 +101,16 @@
     style Decision fill:#fff4dd,stroke:#d4a017,stroke-width:2px
     style LogStop fill:#ffcccc,stroke:#a00,stroke-width:1px
     style Archive fill:#ffcccc,stroke:#a00,stroke-width:1px
-</code></pre>
-<h2>5.0 Verification</h2>
+</div>
+
+<h2 id="50-verification">5.0 Verification</h2>
 <p>The flowchart's accuracy is verified by comparing it against the physical execution of the sales process as defined in HWB-QMS-8.0.</p>
-<h2>6.0 Notes and Cautions</h2>
+<h2 id="60-notes-and-cautions">6.0 Notes and Cautions</h2>
 <ul>
 <li>The flowchart is a high-level summary; detailed instructions are contained in the Sales Process SOP.</li>
 <li>Exceptions to the flow must be approved by management.</li>
 </ul>
-<h2>7.0 Revision History</h2>
+<h2 id="70-revision-history">7.0 Revision History</h2>
 <table>
 <thead>
 <tr>
@@ -132,10 +135,11 @@
 </tr>
 </tbody>
 </table>
-<h2>8.0 Document Conventions</h2>
+<h2 id="80-document-conventions">8.0 Document Conventions</h2>
 <ul>
 <li><strong>Terminals:</strong> Ovals represent start and end points.</li>
 <li><strong>Decisions:</strong> Diamonds represent points where a choice or qualification occurs.</li>
 <li><strong>Actions:</strong> Rectangles represent specific tasks or steps.</li>
 </ul>
+    </div>
 </div>

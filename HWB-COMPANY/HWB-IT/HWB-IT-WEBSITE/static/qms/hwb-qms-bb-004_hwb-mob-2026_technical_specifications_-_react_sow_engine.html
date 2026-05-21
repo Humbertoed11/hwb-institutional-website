@@ -8,7 +8,8 @@
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
     </div>
 
-    <table>
+    <div class="sop-content-body">
+        <table>
 <thead>
 <tr>
 <th style="text-align: left;"><strong>Document Control</strong></th>
@@ -47,10 +48,10 @@
 </tbody>
 </table>
 <hr />
-<h1>Technical Specifications: <strong>React 'Scope of Work' Engine</strong></h1>
-<h2>1.0 Architectural Overview</h2>
+<h1 id="technical-specifications-react-scope-of-work-engine">Technical Specifications: <strong>React 'Scope of Work' Engine</strong></h1>
+<h2 id="10-architectural-overview">1.0 Architectural Overview</h2>
 <p>The 'Scope of Work' (SOW) engine is the core execution logic of the HWB-MOB-2026 mobile app. It is designed as a standalone React component that renders facility-specific cleaning protocols and enforces Six Sigma "Zero Defect" discipline through sequential task locking and empirical evidence capture.</p>
-<h3>1.1 Core Stack</h3>
+<h3 id="11-core-stack">1.1 Core Stack</h3>
 <ul>
 <li><strong>Frontend:</strong> React (TypeScript) with Vanilla CSS for high-fidelity performance on low-end mobile devices.</li>
 <li><strong>State Management:</strong> Context API with <code>useReducer</code> for robust local state persistence.</li>
@@ -58,63 +59,64 @@
 <li><strong>Backend Integration:</strong> RESTful API handshake with the SigmaFidelity™ Python/SQLite server.</li>
 </ul>
 <hr />
-<h2>2.0 Critical-to-Quality (CTQ) Logic Enforcement</h2>
-<h3>2.1 Poka-Yoke: Sequential Task Locking</h3>
+<h2 id="20-critical-to-quality-ctq-logic-enforcement">2.0 Critical-to-Quality (CTQ) Logic Enforcement</h2>
+<h3 id="21-poka-yoke-sequential-task-locking">2.1 Poka-Yoke: Sequential Task Locking</h3>
 <ul>
 <li><strong>Logic:</strong> Technicians cannot proceed to Task <em>N+1</em> until Task <em>N</em> is marked as complete.</li>
 <li><strong>High-Stakes Gate:</strong> Tasks flagged as "High-Stakes" (e.g., medical-grade disinfection) require a photo upload before the "Complete" button is enabled.</li>
 <li><strong>Exception Handling:</strong> Any task marked as "Unable to Complete" triggers an immediate mandatory comment box and a real-time supervisor alert (once online).</li>
 </ul>
-<h3>2.2 Integrity: GPS Geofencing Handshake</h3>
+<h3 id="22-integrity-gps-geofencing-handshake">2.2 Integrity: GPS Geofencing Handshake</h3>
 <ul>
 <li><strong>Handshake:</strong> The <code>Clock-In</code> and <code>Clock-Out</code> functions are cryptographically disabled if the device GPS coordinates are &gt;50 meters from the facility centroid stored in <code>clients.db</code>.</li>
 <li><strong>Validation:</strong> Every task completion record includes a nested <code>lat/long</code> coordinate pair for post-process audit.</li>
 </ul>
 <hr />
-<h2>3.0 Data Model &amp; Synchronization</h2>
-<h3>3.1 Local SOW Object Structure (JSON)</h3>
-<pre><code class="language-json">{
-  &quot;work_order_id&quot;: &quot;WO-2026-001&quot;,
-  &quot;facility_id&quot;: &quot;PLANO-DAYCARE-01&quot;,
-  &quot;technician_id&quot;: &quot;TECH-04&quot;,
-  &quot;start_time&quot;: &quot;2026-03-20T18:00:00Z&quot;,
-  &quot;tasks&quot;: [
+<h2 id="30-data-model-synchronization">3.0 Data Model &amp; Synchronization</h2>
+<h3 id="31-local-sow-object-structure-json">3.1 Local SOW Object Structure (JSON)</h3>
+<p>```json
+{
+  "work_order_id": "WO-2026-001",
+  "facility_id": "PLANO-DAYCARE-01",
+  "technician_id": "TECH-04",
+  "start_time": "2026-03-20T18:00:00Z",
+  "tasks": [
     {
-      &quot;task_id&quot;: &quot;TSK-001&quot;,
-      &quot;description&quot;: &quot;Disinfect all door handles&quot;,
-      &quot;is_high_stakes&quot;: true,
-      &quot;status&quot;: &quot;pending&quot;,
-      &quot;evidence_url&quot;: null,
-      &quot;timestamp&quot;: null
+      "task_id": "TSK-001",
+      "description": "Disinfect all door handles",
+      "is_high_stakes": true,
+      "status": "pending",
+      "evidence_url": null,
+      "timestamp": null
     }
   ],
-  &quot;sync_status&quot;: &quot;local_only&quot;
+  "sync_status": "local_only"
 }
-</code></pre>
-<h3>3.2 Sync Protocol</h3>
+</div></p>
+<h3 id="32-sync-protocol">3.2 Sync Protocol</h3>
 <ul>
 <li><strong>Mechanism:</strong> Periodic heartbeat (every 30 seconds) checks for network availability.</li>
 <li><strong>Speed Requirement:</strong> Batched JSON payloads must synchronize with the Azure server in &lt;60 seconds upon heartbeat restoration.</li>
 </ul>
 <hr />
-<h2>4.0 User Experience (UX) Fidelity</h2>
+<h2 id="40-user-experience-ux-fidelity">4.0 User Experience (UX) Fidelity</h2>
 <ul>
 <li><strong>Visual Feedback:</strong> Color-coded status (Pending: Yellow, Complete: Green, Blocked: Red).</li>
 <li><strong>Interaction:</strong> Large, high-contrast buttons for use with gloved hands.</li>
 <li><strong>Persistence:</strong> Auto-save to IndexedDB on every task state change to prevent data loss on app crash or battery depletion.</li>
 </ul>
 <hr />
-<h2>5.0 Verification &amp; Readiness</h2>
+<h2 id="50-verification-readiness">5.0 Verification &amp; Readiness</h2>
 <ul>
 <li><strong>Unit Tests:</strong> Jest suite covering task locking logic.</li>
 <li><strong>Integration Tests:</strong> Simulated offline-to-online state transitions.</li>
 <li><strong>User Acceptance:</strong> Pilot test with "Crew A" using the initial prototype.</li>
 </ul>
 <hr />
-<h2>6.0 Approval &amp; Sign-off</h2>
+<h2 id="60-approval-sign-off">6.0 Approval &amp; Sign-off</h2>
 <p><strong>CEO/Operations Director:</strong> <strong><em>_</em></strong><strong><em>_</em></strong><strong><em>_</em></strong>____ <strong>Date:</strong> 2026-03-20</p>
 <hr />
-<h2>7.0 Revision History</h2>
+<h2 id="70-revision-history">7.0 Revision History</h2>
 <table>
 <thead>
 <tr>
@@ -133,4 +135,5 @@
 </tr>
 </tbody>
 </table>
+    </div>
 </div>

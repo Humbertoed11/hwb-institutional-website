@@ -2,78 +2,148 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-7.9</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.2.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.4.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">ISO 9001 (7.1.3)</span></div>
     </div>
 
     <h1 style="font-size: 2.75rem; font-weight: 900; color: #0f172a; margin-bottom: 1rem; letter-spacing: -0.04em;">Backend Component Standard</h1>
-    <p style="font-size: 1.15rem; line-height: 1.6; color: #64748b; margin-bottom: 4rem; max-width: 850px;">The <strong>Technical Catalog</strong> for HWB Backoffice elements. This manual lists every component from the top utility bar down to special row actions, mapping their physical paths and logic.</p>
+    <p style="font-size: 1.15rem; line-height: 1.6; color: #64748b; margin-bottom: 4rem; max-width: 850px;">The <strong>Technical Catalog</strong> for HWB Backoffice elements. This manual lists every component from the top-level utility bar down to special row actions, mapping their physical paths and logic.</p>
 
-    <!-- 1.0 UNIFIED COMMAND COCKPIT -->
+    <!-- 1.0 CLINICAL UTILITY BAR -->
     <section style="margin-bottom: 5rem;">
-        <h2 style="font-size: 1.6rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">1.0 Unified Command Cockpit (Integrated Mega Bar)</h2>
-        <p style="margin-bottom: 2rem; color: #64748b;">The Cockpit serves as the single point of control for both public branding and internal industrial operations.</p>
-        
-        <div style="display: grid; gap: 1.5rem;">
-            <!-- Integrated Utility Bar -->
-            <div style="background: white; border: 1px solid #e2e8f0; padding: 1.5rem; border-radius: 12px;">
-                <strong style="display: block; font-size: 1rem; color: #0f172a; margin-bottom: 0.5rem;">Clinical Utility State</strong>
-                <div style="font-size: 0.85rem; color: #64748b;">
-                    <strong>Folder Path:</strong> <code>HWB-IT-WEBSITE/templates/components/mega_bar.html</code><br>
-                    <strong>Logic:</strong> Conditional <code>{% if current_user.is_authenticated %}</code> block. Displays "Backoffice Control" label and "Authorized Session" status.
+        <h2 style="font-size: 1.6rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">1.0 Clinical Utility Bar (Edge-to-Edge)</h2>
+        <div class="component-sandbox">
+            <div style="background: white; border: 1px solid #e2e8f0; padding: 0.75rem 2rem; display: flex; justify-content: space-between; align-items: center; border-radius: 8px;">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <img src="/static/logo_standard.png" alt="HWB" style="height: 24px;">
+                    <span style="font-weight: 900; color: #0f172a; font-size: 0.75rem; text-transform: uppercase; border-left: 2px solid #eee; padding-left: 1rem;">Backoffice Control</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 2rem;">
+                    <div style="text-align: right;">
+                        <span style="display: block; font-size: 0.7rem; font-weight: 800; color: #2563eb; text-transform: uppercase;">SESSION_ACTIVE</span>
+                        <span style="font-size: 0.6rem; color: #94a3b8; font-weight: 700;">HWB Authorized Session</span>
+                    </div>
+                    <div style="border: 1px solid #fca5a5; color: #ef4444; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.7rem; font-weight: 800;"><i class="fas fa-power-off"></i> Logout</div>
                 </div>
             </div>
-            <!-- Command Hub Dropdown -->
-            <div style="background: white; border: 1px solid #e2e8f0; padding: 1.5rem; border-radius: 12px;">
-                <strong style="display: block; font-size: 1rem; color: #0f172a; margin-bottom: 0.5rem;">Command Hub (4-Column Mega Dropdown)</strong>
-                <div style="font-size: 0.85rem; color: #64748b;">
-                    <strong>Structure:</strong> 4 Columns (CRM, Strategy, R&D Lab, Compliance).<br>
-                    <strong>Logic:</strong> Only visible to authenticated users. Uses standard <code>.mega-menu-grid</code> CSS.
-                </div>
+            <div style="margin-top: 1.5rem; background: #f8fafc; padding: 1.5rem; border-radius: 8px; font-size: 0.85rem;">
+                <strong>Folder Path:</strong> <code>HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/templates/components/mega_bar.html</code><br>
+                <strong>Logic:</strong> Uses <code>.utility-fluid-container</code> (Width: 100%) to extend edge-to-edge. Conditional <code>current_user.is_authenticated</code> logic.
             </div>
         </div>
     </section>
 
-    <!-- 2.0 BREADCRUMB COMPONENT -->
+    <!-- 2.0 COMMAND HUB (MENU) -->
     <section style="margin-bottom: 5rem;">
-        <h2 style="font-size: 1.6rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">2.0 Command Bar (Breadcrumbs)</h2>
+        <h2 style="font-size: 1.6rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">2.0 Command Hub (Unified Menu)</h2>
+        <div class="component-sandbox">
+            <div style="display: flex; gap: 0.75rem; padding: 1.5rem; border-bottom: 1px solid #eee; background: white; border-radius: 12px;">
+                <div style="background: #2563eb; color: white; padding: 0.5rem 1.25rem; border-radius: 6px; font-weight: 800; font-size: 0.75rem;">CRM & Sales</div>
+                <div style="border: 1px solid #e2e8f0; color: #64748b; padding: 0.5rem 1.25rem; border-radius: 6px; font-weight: 800; font-size: 0.75rem;">Strategy</div>
+                <div style="border: 1px solid #e2e8f0; color: #64748b; padding: 0.5rem 1.25rem; border-radius: 6px; font-weight: 800; font-size: 0.75rem;">Lab</div>
+            </div>
+            <div style="margin-top: 1.5rem; background: #f8fafc; padding: 1.5rem; border-radius: 8px; font-size: 0.85rem;">
+                <strong>Folder Path:</strong> <code>HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/templates/components/mega_bar.html</code><br>
+                <strong>Logic:</strong> Integrated authenticated columns (CRM, Executive, Lab, Compliance) in the high-fidelity mega-dropdown.
+            </div>
+        </div>
+    </section>
+
+    <!-- 3.0 BREADCRUMBS -->
+    <section style="margin-bottom: 5rem;">
+        <h2 style="font-size: 1.6rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">3.0 Command Bar (Breadcrumbs)</h2>
         <div class="component-sandbox">
             <div style="font-size: 0.85rem; color: #94a3b8; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; padding: 1rem;">
                 HWB <i class="fas fa-chevron-right" style="font-size: 0.6rem; margin: 0 0.75rem; opacity: 0.5;"></i> OPERATIONS <i class="fas fa-chevron-right" style="font-size: 0.6rem; margin: 0 0.75rem; opacity: 0.5;"></i> <span style="color: #0f172a; font-weight: 900;">LEADS</span>
             </div>
             <div style="margin-top: 1.5rem; background: #f8fafc; padding: 1.5rem; border-radius: 8px; font-size: 0.85rem;">
-                <strong>Folder Path:</strong> <code>HWB-IT-WEBSITE/templates/backoffice_base.html</code><br>
-                <strong>Logic:</strong> Absolute Location awareness. Automatically updates via the <code>{% block breadcrumbs %}</code> injection.
+                <strong>Folder Path:</strong> <code>HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/templates/backoffice_base.html</code><br>
+                <strong>Logic:</strong> Absolute Location awareness via <code>{% block breadcrumbs %}</code>.
             </div>
         </div>
     </section>
 
-    <!-- 3.0 WORKSPACE MENU -->
+    <!-- 4.0 BUTTON STANDARDS -->
     <section style="margin-bottom: 5rem;">
-        <h2 style="font-size: 1.6rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">3.0 Workspace Stage (Action Menu)</h2>
-        <div class="component-sandbox">
-            <div style="display: flex; gap: 0.75rem; padding: 1.5rem; border-bottom: 1px solid #eee; background: white; border-radius: 12px; align-items: center;">
-                <div style="background: #2563eb; color: white; padding: 0.5rem 1.25rem; border-radius: 6px; font-weight: 800; font-size: 0.75rem;">Leads</div>
-                <div style="border: 1px solid #e2e8f0; color: #64748b; padding: 0.5rem 1.25rem; border-radius: 6px; font-weight: 800; font-size: 0.75rem;">Accounts</div>
-                <div style="border: 1px solid #e2e8f0; color: #64748b; padding: 0.5rem 1.25rem; border-radius: 6px; font-weight: 800; font-size: 0.75rem;"><i class="fas fa-crown"></i> Executive</div>
+        <h2 style="font-size: 1.6rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">4.0 Backend Button Standards</h2>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 2rem;">
+            <div style="background: white; border: 1px solid #e2e8f0; padding: 1.5rem; border-radius: 12px;">
+                <button class="isc-btn isc-btn-primary" style="margin-bottom: 1rem;">Primary Action</button>
+                <div style="font-size: 0.8rem; line-height: 1.6;">
+                    <strong>Path:</strong> <code>static/backoffice.css</code><br>
+                    <strong>Standard:</strong> 36px height; 6px radius.
+                </div>
             </div>
-            <div style="margin-top: 1.5rem; background: #f8fafc; padding: 1.5rem; border-radius: 8px; font-size: 0.85rem;">
-                <strong>Folder Path:</strong> <code>HWB-IT-WEBSITE/templates/components/backend_nav.html</code><br>
-                <strong>Logic:</strong> Context-aware module navigation. Uses <code>request.path.startswith()</code> to highlight active groups.
+            <div style="background: white; border: 1px solid #e2e8f0; padding: 1.5rem; border-radius: 12px;">
+                <button class="isc-btn isc-btn-outline" style="margin-bottom: 1rem;">Secondary Action</button>
+                <div style="font-size: 0.8rem; line-height: 1.6;">
+                    <strong>Logic:</strong> High-contrast <code>!important</code> overrides for visibility.
+                </div>
             </div>
         </div>
     </section>
 
-    <!-- 4.0 REVISION HISTORY -->
+    <!-- 5.0 COLOR PALETTE -->
+    <section style="margin-bottom: 5rem;">
+        <h2 style="font-size: 1.6rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">5.0 Color Palette & Identity Card</h2>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-bottom: 2rem;">
+            <div style="text-align: center;"><div style="height: 40px; background: #2563eb; border-radius: 4px; margin-bottom: 0.5rem;"></div><strong>#2563eb</strong></div>
+            <div style="text-align: center;"><div style="height: 40px; background: #0f172a; border-radius: 4px; margin-bottom: 0.5rem;"></div><strong>#0f172a</strong></div>
+            <div style="text-align: center;"><div style="height: 40px; background: #64748b; border-radius: 4px; margin-bottom: 0.5rem;"></div><strong>#64748b</strong></div>
+            <div style="text-align: center;"><div style="height: 40px; background: #f8fafc; border-radius: 4px; border: 1px solid #ddd; margin-bottom: 0.5rem;"></div><strong>#f8fafc</strong></div>
+        </div>
+        <div style="background: #0f172a; color: white; padding: 1.5rem; border-radius: 8px; font-size: 0.85rem;">
+            <strong>Identity Card:</strong> Mandatory summary block listing Physical Path, Logic Trigger, and CSS Identity.
+        </div>
+    </section>
+
+    <!-- 6.0 LEAD CAPTURE REGISTRY -->
+    <section style="margin-bottom: 5rem;">
+        <h2 style="font-size: 1.6rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">6.0 Lead Capture Form Registry</h2>
+        <table class="sigma-data-grid" style="width: 100%; border-collapse: collapse; background: white; border: 1px solid #e2e8f0;">
+            <thead style="background: #f8fafc;">
+                <tr><th style="padding: 1rem;">Form</th><th style="padding: 1rem;">Folder Path</th><th style="padding: 1rem;">Logic</th></tr>
+            </thead>
+            <tbody style="font-size: 0.8rem;">
+                <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 1rem;"><strong>Main Quote</strong></td><td style="padding: 1rem;"><code>/templates/quote_form.html</code></td><td style="padding: 1rem;">Full SQF Calculator</td></tr>
+                <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 1rem;"><strong>Home Page</strong></td><td style="padding: 1rem;"><code>/HWB-WEB Index.html</code></td><td style="padding: 1rem;">Simplified Capture</td></tr>
+                <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 1rem;"><strong>Manual Admin</strong></td><td style="padding: 1rem;"><code>/backoffice_operations.html</code></td><td style="padding: 1rem;">Private Ingestion</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <!-- 7.0 COLUMN DISPLAY -->
+    <section style="margin-bottom: 5rem;">
+        <h2 style="font-size: 1.6rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">7.0 Column Display Component</h2>
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 1.5rem; border-radius: 8px; font-size: 0.85rem;">
+            <strong>Folder Path:</strong> <code>templates/backoffice_operations.html</code> (using <code>#col-mgr-menu</code>)<br>
+            <strong>Logic:</strong> Uses <code>SortableJS</code> for drag-and-drop AJAX column reordering.
+        </div>
+    </section>
+
+    <!-- 8.0 SPECIAL ACTIONS -->
+    <section style="margin-bottom: 5rem;">
+        <h2 style="font-size: 1.6rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">8.0 Special Action Buttons</h2>
+        <div style="display: grid; gap: 1rem;">
+            <div style="background: white; border: 1px solid #e2e8f0; padding: 1.25rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                <div><strong>Promote to Account</strong><div style="font-size: 0.8rem; color: #64748b;">Logic: <code>API POST /leads/promote</code></div></div>
+                <i class="fas fa-exchange-alt" style="color: #2563eb;"></i>
+            </div>
+            <div style="background: white; border: 1px solid #e2e8f0; padding: 1.25rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                <div><strong>Request Site Visit</strong><div style="font-size: 0.8rem; color: #64748b;">Logic: Peter Orchestrator Calendar API</div></div>
+                <i class="fas fa-calendar-alt" style="color: #f59e0b;"></i>
+            </div>
+        </div>
+    </section>
+
+    <!-- 9.0 REVISION HISTORY -->
     <section>
-        <h2 style="font-size: 1.5rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">4.0 Revision History</h2>
+        <h2 style="font-size: 1.6rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">9.0 Revision History</h2>
         <table class="sigma-data-grid" style="width: 100%; border-collapse: collapse; background: white;">
-            <thead><tr style="text-align: left; background: #f8fafc;"><th style="padding: 1rem;">Ver</th><th style="padding: 1rem;">Date</th><th style="padding: 1rem;">Author</th><th style="padding: 1rem;">Change Description</th></tr></thead>
+            <thead><tr style="text-align: left; background: #f8fafc;"><th style="padding: 1rem;">Ver</th><th style="padding: 1rem;">Date</th><th style="padding: 1rem;">Change Description</th></tr></thead>
             <tbody style="font-size: 0.85rem;">
-                <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 1rem;">1.2.0</td><td style="padding: 1rem;">05/20/2026</td><td style="padding: 1rem;">George</td><td style="padding: 1rem;">Integrated Unified Command Cockpit (Mega Bar). Formalized the dual-state Utility Bar.</td></tr>
-                <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 1rem;">1.1.0</td><td style="padding: 1rem;">05/20/2026</td><td style="padding: 1rem;">George</td><td style="padding: 1rem;">Formalized the Clinical Admin Header as the primary backend utility bar. Consolidated navigation tiers.</td></tr>
-                <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 1rem;">1.0.0</td><td style="padding: 1rem;">05/20/2026</td><td style="padding: 1rem;">George</td><td style="padding: 1rem;">Initial Release. Documented 7 core components with top-to-bottom logical mapping.</td></tr>
+                <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 1rem;">1.4.0</td><td style="padding: 1rem;">05/21/2026</td><td style="padding: 1rem;">FINAL COMPREHENSIVE RECONSTRUCTION. Re-sequenced all 9 sections. Verified Full Paths and Logic Cards. Removed all duplicates.</td></tr>
             </tbody>
         </table>
     </section>

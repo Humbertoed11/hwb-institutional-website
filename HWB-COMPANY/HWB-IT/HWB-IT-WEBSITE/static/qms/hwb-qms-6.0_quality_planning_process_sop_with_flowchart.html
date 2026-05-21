@@ -8,7 +8,8 @@
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
     </div>
 
-    <table>
+    <div class="sop-content-body">
+        <table>
 <thead>
 <tr>
 <th style="text-align: left;"><strong>Document Control</strong></th>
@@ -47,57 +48,59 @@
 </tbody>
 </table>
 <hr />
-<h1>Standard Operating Procedure: <strong>Quality Planning Process SOP with Flowchart</strong></h1>
-<h2>1.0 Purpose</h2>
+<h1 id="standard-operating-procedure-quality-planning-process-sop-with-flowchart">Standard Operating Procedure: <strong>Quality Planning Process SOP with Flowchart</strong></h1>
+<h2 id="10-purpose">1.0 Purpose</h2>
 <p>This SOP defines the process for planning the Quality Management System (QMS) at HWB Cleaning Services. It ensures that the organization identifies risks and opportunities, establishes measurable quality objectives, and plans for changes to ensure the QMS achieves its intended results.</p>
-<h2>2.0 Scope</h2>
+<h2 id="20-scope">2.0 Scope</h2>
 <p>This procedure applies to the strategic and operational planning phases of the QMS, managed by top management and process owners.</p>
-<h2>3.0 Prerequisites</h2>
+<h2 id="30-prerequisites">3.0 Prerequisites</h2>
 <ul>
 <li>Defined Context of the Organization (Internal/External Issues).</li>
 <li>Identified Needs and Expectations of Interested Parties.</li>
 <li>Approved Quality Policy.</li>
 </ul>
-<h2>4.0 Procedure</h2>
-<h3>4.1 Quality Planning Process Flowchart</h3>
-<pre><code class="language-mermaid">graph TD
+<h2 id="40-procedure">4.0 Procedure</h2>
+<h3 id="41-quality-planning-process-flowchart">4.1 Quality Planning Process Flowchart</h3>
+<div class="mermaid">
+graph TD
     %% Start of Process
-    Start((Quality Strategy)) --&gt; RiskAsses[Identify Risks &amp; Opportunities]
+    Start((Quality Strategy)) --> RiskAsses[Identify Risks & Opportunities]
 
     %% Objective Setting Phase
-    RiskAsses --&gt; Objectives[Establish SMART Quality Objectives]
+    RiskAsses --> Objectives[Establish SMART Quality Objectives]
 
-    %% Resource &amp; Action Planning
-    Objectives --&gt; ActionPlan[Develop Action Plans: Who, What, When]
-    ActionPlan --&gt; ResourceAlloc[Resource Allocation &amp; Budgeting]
+    %% Resource & Action Planning
+    Objectives --> ActionPlan[Develop Action Plans: Who, What, When]
+    ActionPlan --> ResourceAlloc[Resource Allocation & Budgeting]
 
     %% Integration Phase
-    ResourceAlloc --&gt; Integration[Integrate into Core Processes]
+    ResourceAlloc --> Integration[Integrate into Core Processes]
 
     %% Change Management Phase
-    Integration --&gt; ChangeControl{Change Required?}
+    Integration --> ChangeControl{Change Required?}
 
-    ChangeControl -- Yes --&gt; PlanChange[Plan for Change: Impact &amp; Integrity]
-    PlanChange --&gt; Integration
+    ChangeControl -- Yes --> PlanChange[Plan for Change: Impact & Integrity]
+    PlanChange --> Integration
 
     %% Monitoring Phase
-    ChangeControl -- No --&gt; Monitoring[Monitor Progress against Objectives]
+    ChangeControl -- No --> Monitoring[Monitor Progress against Objectives]
 
     %% Review Phase
-    Monitoring --&gt; Review{Objectives Met?}
-    Review -- No --&gt; Adjust[Adjust Plans / Re-allocate Resources]
-    Adjust --&gt; ActionPlan
+    Monitoring --> Review{Objectives Met?}
+    Review -- No --> Adjust[Adjust Plans / Re-allocate Resources]
+    Adjust --> ActionPlan
 
-    Review -- Yes --&gt; ManagementReview[Management Review &amp; Strategy Update]
-    ManagementReview --&gt; Start
+    Review -- Yes --> ManagementReview[Management Review & Strategy Update]
+    ManagementReview --> Start
 
     %% Styling
     style Start fill:#f9f,stroke:#333,stroke-width:2px
     style Integration fill:#bbf,stroke:#333,stroke-width:2px
     style ChangeControl fill:#fff4dd,stroke:#d4a017,stroke-width:2px
     style Review fill:#fff4dd,stroke:#d4a017,stroke-width:2px
-</code></pre>
-<h3>4.2 Procedural Steps</h3>
+</div>
+
+<h3 id="42-procedural-steps">4.2 Procedural Steps</h3>
 <ol>
 <li><strong>Quality Strategy:</strong> Set the long-term direction based on the Quality Policy and company Vision.</li>
 <li><strong>Risk &amp; Opportunity Assessment:</strong> Analyze PESTLE and Internal issues to determine what might affect the QMS.</li>
@@ -108,14 +111,14 @@
 <li><strong>Planning for Change:</strong> When the QMS needs modification, plan the change systematically to maintain system integrity.</li>
 <li><strong>Monitoring &amp; Review:</strong> Track progress regularly. If targets are missed, adjust the action plans or resources.</li>
 </ol>
-<h2>5.0 Verification</h2>
+<h2 id="50-verification">5.0 Verification</h2>
 <p>The effectiveness of quality planning is verified during the semi-annual Management Review, where progress against Quality Objectives and the status of risks/opportunities are evaluated.</p>
-<h2>6.0 Notes and Cautions</h2>
+<h2 id="60-notes-and-cautions">6.0 Notes and Cautions</h2>
 <ul>
 <li><strong>SMART Criteria:</strong> Objectives that are not measurable cannot be effectively managed.</li>
 <li><strong>Integrity:</strong> Ensure that changes to one part of the QMS do not negatively impact another.</li>
 </ul>
-<h2>7.0 Revision History</h2>
+<h2 id="70-revision-history">7.0 Revision History</h2>
 <table>
 <thead>
 <tr>
@@ -134,10 +137,11 @@
 </tr>
 </tbody>
 </table>
-<h2>8.0 Document Conventions</h2>
+<h2 id="80-document-conventions">8.0 Document Conventions</h2>
 <ul>
 <li><strong>Terminals (Ovals):</strong> Strategic starting point and cyclical milestones.</li>
 <li><strong>Decisions (Diamonds):</strong> Points for change assessment or performance evaluation.</li>
 <li><strong>Actions (Rectangles):</strong> Planning and operational implementation steps.</li>
 </ul>
+    </div>
 </div>

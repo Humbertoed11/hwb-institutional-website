@@ -8,7 +8,8 @@
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
     </div>
 
-    <table>
+    <div class="sop-content-body">
+        <table>
 <thead>
 <tr>
 <th style="text-align: left;"><strong>Document Control</strong></th>
@@ -47,10 +48,10 @@
 </tbody>
 </table>
 <hr />
-<h1>Marketing Form: <strong>Digital Lead Capture (Website)</strong></h1>
-<h2>1.0 Purpose</h2>
+<h1 id="marketing-form-digital-lead-capture-website">Marketing Form: <strong>Digital Lead Capture (Website)</strong></h1>
+<h2 id="10-purpose">1.0 Purpose</h2>
 <p>This form defines the required data fields for the HWB Website "Request a Quote" interface. It ensures that all incoming leads provide the necessary empirical data for accurate SigmaFidelity™ analysis.</p>
-<h2>2.0 Form Structure (Web Interface)</h2>
+<h2 id="20-form-structure-web-interface">2.0 Form Structure (Web Interface)</h2>
 <table>
 <thead>
 <tr>
@@ -111,18 +112,18 @@
 </tr>
 </tbody>
 </table>
-<h2>3.0 Backend Processing (AI Marketing Agent)</h2>
+<h2 id="30-backend-processing-ai-marketing-agent">3.0 Backend Processing (AI Marketing Agent)</h2>
 <ol>
 <li><strong>Capture:</strong> Data is submitted via the Flask webserver and stored in <code>sigma_leads.db</code>.</li>
 <li><strong>Notification:</strong> An immediate notification is sent to the Sales Department.</li>
 <li><strong>Initial Triage:</strong> The AI Agent checks the lead against the "High-Priority GC List" (refer to <code>1 task list 2025/2026-03-01.md</code>).</li>
 </ol>
-<h2>4.0 Verification</h2>
+<h2 id="40-verification">4.0 Verification</h2>
 <ul>
 <li>Lead data successfully populates the <code>Leads</code> table in <code>sigma_leads.db</code>.</li>
 <li>Zero synthetic test data present in production lead records.</li>
 </ul>
-<h2>5.0 Revision History</h2>
+<h2 id="50-revision-history">5.0 Revision History</h2>
 <table>
 <thead>
 <tr>
@@ -141,4 +142,5 @@
 </tr>
 </tbody>
 </table>
+    </div>
 </div>

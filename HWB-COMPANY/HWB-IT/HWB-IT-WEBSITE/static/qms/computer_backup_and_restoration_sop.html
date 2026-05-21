@@ -8,7 +8,8 @@
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
     </div>
 
-    <table>
+    <div class="sop-content-body">
+        <table>
 <thead>
 <tr>
 <th style="text-align: left;"><strong>Document Control</strong></th>
@@ -47,25 +48,26 @@
 </tbody>
 </table>
 <hr />
-<h1>Standard Operating Procedure: <strong>Computer Backup and Restoration</strong></h1>
-<h2>1.0 Purpose</h2>
+<h1 id="standard-operating-procedure-computer-backup-and-restoration">Standard Operating Procedure: <strong>Computer Backup and Restoration</strong></h1>
+<h2 id="10-purpose">1.0 Purpose</h2>
 <p>This SOP provides a routine for backing up and restoring a Linux-based computer system to ensure data integrity and availability in case of system failure.</p>
-<h2>2.0 Scope</h2>
+<h2 id="20-scope">2.0 Scope</h2>
 <p>This SOP applies to the user's primary Linux computer and covers the backup of personal data and system configuration.</p>
-<h2>3.0 Prerequisites</h2>
+<h2 id="30-prerequisites">3.0 Prerequisites</h2>
 <ul>
 <li>An external hard drive or network storage location with sufficient capacity for the backup.</li>
 <li>The <code>rsync</code> utility installed on the system.</li>
 </ul>
-<h2>4.0 Backup Procedure</h2>
-<h3>4.1 Full System Backup (Recommended Weekly)</h3>
+<h2 id="40-backup-procedure">4.0 Backup Procedure</h2>
+<h3 id="41-full-system-backup-recommended-weekly">4.1 Full System Backup (Recommended Weekly)</h3>
 <ol>
 <li>Connect the external backup drive to the computer.</li>
 <li>Open a terminal.</li>
 <li>
 <p>Execute the following <code>rsync</code> command, replacing <code>/path/to/backup/destination</code> with the actual path to your backup drive:</p>
-<p><code>bash
-sudo rsync -aAXv --exclude={"/dev/*","/proc/*","/sys/*","/tmp/*","/run/*","/mnt/*","/media/*","/lost+found"} / /path/to/backup/destination</code></p>
+<p>```bash
+sudo rsync -aAXv --exclude={"/dev/<em>","/proc/</em>","/sys/<em>","/tmp/</em>","/run/<em>","/mnt/</em>","/media/*","/lost+found"} / /path/to/backup/destination
+</div></p>
 <ul>
 <li><strong>-a:</strong> Archive mode (preserves permissions, ownership, etc.)</li>
 <li><strong>-A:</strong> Preserves ACLs (Access Control Lists)</li>
@@ -75,49 +77,52 @@ sudo rsync -aAXv --exclude={"/dev/*","/proc/*","/sys/*","/tmp/*","/run/*","/mnt/
 </ul>
 </li>
 </ol>
-<h3>4.2 Home Directory Backup (Recommended Daily)</h3>
+<h3 id="42-home-directory-backup-recommended-daily">4.2 Home Directory Backup (Recommended Daily)</h3>
 <p>For more frequent backups of your personal files, a backup of your home directory is recommended.</p>
 <ol>
 <li>Connect the external backup drive.</li>
 <li>Open a terminal.</li>
 <li>
 <p>Execute the following command, replacing <code>/path/to/backup/destination/home</code> with the desired backup location:</p>
-<p><code>bash
-rsync -avz --progress ~ /path/to/backup/destination/home</code></p>
+<p>```bash
+rsync -avz --progress ~ /path/to/backup/destination/home
+</div></p>
 <ul>
 <li><strong>-z:</strong> Compresses file data during transfer.</li>
 <li><strong>--progress:</strong> Shows the progress of the transfer.</li>
 </ul>
 </li>
 </ol>
-<h2>5.0 Restoration Procedure</h2>
-<h3>5.1 Full System Restoration</h3>
+<h2 id="50-restoration-procedure">5.0 Restoration Procedure</h2>
+<h3 id="51-full-system-restoration">5.1 Full System Restoration</h3>
 <ol>
 <li>Boot from a live Linux USB drive.</li>
 <li>Mount your system's root partition and the backup drive.</li>
 <li>Open a terminal.</li>
 <li>
 <p>Execute the following <code>rsync</code> command to restore the files:</p>
-<p><code>bash
-sudo rsync -aAXv /path/to/backup/destination/ /path/to/your/system/root</code></p>
+<p>```bash
+sudo rsync -aAXv /path/to/backup/destination/ /path/to/your/system/root
+</div></p>
 </li>
 </ol>
-<h3>5.2 Home Directory Restoration</h3>
+<h3 id="52-home-directory-restoration">5.2 Home Directory Restoration</h3>
 <ol>
 <li>Open a terminal.</li>
 <li>
 <p>Execute the following command to restore your home directory:</p>
-<p><code>bash
-rsync -avz /path/to/backup/destination/home/ ~/</code></p>
+<p>```bash
+rsync -avz /path/to/backup/destination/home/ ~/
+</div></p>
 </li>
 </ol>
-<h2>6.0 Notes and Cautions</h2>
+<h2 id="60-notes-and-cautions">6.0 Notes and Cautions</h2>
 <ul>
 <li><strong>Test your backups!</strong> Periodically test your backups by attempting to restore a few files to ensure the backup is working correctly.</li>
 <li>Store your backup drive in a safe, separate location from your computer.</li>
 <li>This SOP is a draft and should be reviewed and approved by the user.</li>
 </ul>
-<h2>7.0 Revision History</h2>
+<h2 id="70-revision-history">7.0 Revision History</h2>
 <table>
 <thead>
 <tr>
@@ -142,4 +147,5 @@ rsync -avz /path/to/backup/destination/home/ ~/</code></p>
 </tr>
 </tbody>
 </table>
+    </div>
 </div>

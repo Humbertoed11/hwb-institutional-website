@@ -2880,3 +2880,13 @@ header.main-header {
     margin-right: auto; 
     line-height: 1.6;
 }
+
+/* --- Utility Bar Hardening (Edge-to-Edge) --- */
+.utility-fluid-container {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}

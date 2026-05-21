@@ -8,7 +8,8 @@
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
     </div>
 
-    <table>
+    <div class="sop-content-body">
+        <table>
 <thead>
 <tr>
 <th style="text-align: left;"><strong>Document Control</strong></th>
@@ -47,56 +48,58 @@
 </tbody>
 </table>
 <hr />
-<h1>Standard Operating Procedure: <strong>Customer Communication Process SOP with Flowchart</strong></h1>
-<h2>1.0 Purpose</h2>
+<h1 id="standard-operating-procedure-customer-communication-process-sop-with-flowchart">Standard Operating Procedure: <strong>Customer Communication Process SOP with Flowchart</strong></h1>
+<h2 id="10-purpose">1.0 Purpose</h2>
 <p>This SOP defines the standardized approach for managing communications with HWB Cleaning Services customers. It ensures that all interactions are professional, consistent, timely, and aligned with our core values of Respect, Safety, and Fidelity.</p>
-<h2>2.0 Scope</h2>
+<h2 id="20-scope">2.0 Scope</h2>
 <p>This procedure applies to all external communication with current, potential, and past clients across all channels (Email, Phone, Text, and Official Memos).</p>
-<h2>3.0 Prerequisites</h2>
+<h2 id="30-prerequisites">3.0 Prerequisites</h2>
 <ul>
 <li>Access to the Customer Relationship Management (CRM) system or Client Database.</li>
 <li>Standardized communication templates (Email signatures, Quote templates).</li>
 <li>Understanding of the Quality Policy and Service Scope.</li>
 </ul>
-<h2>4.0 Procedure</h2>
-<h3>4.1 Customer Communication Process Flowchart</h3>
-<pre><code class="language-mermaid">graph TD
+<h2 id="40-procedure">4.0 Procedure</h2>
+<h3 id="41-customer-communication-process-flowchart">4.1 Customer Communication Process Flowchart</h3>
+<div class="mermaid">
+graph TD
     %% Start of Process
-    Start((Communication Strategy)) --&gt; Planning[Define Goals, Tone, and Frequency]
+    Start((Communication Strategy)) --> Planning[Define Goals, Tone, and Frequency]
 
     %% Channel Identification
-    Planning --&gt; Channels[Channel Selection: Email, Phone, SMS]
-    Channels --&gt; Segment[Customer Segmentation: Leads, Active, Lapsed]
+    Planning --> Channels[Channel Selection: Email, Phone, SMS]
+    Channels --> Segment[Customer Segmentation: Leads, Active, Lapsed]
 
     %% Execution Phase
-    Segment --&gt; Interaction{Interaction Type}
+    Segment --> Interaction{Interaction Type}
 
-    Interaction -- Proactive --&gt; Routine[Routine Updates &amp; Service Alerts]
-    Interaction -- Reactive --&gt; Inquiry[Customer Inquiry or Request]
+    Interaction -- Proactive --> Routine[Routine Updates & Service Alerts]
+    Interaction -- Reactive --> Inquiry[Customer Inquiry or Request]
 
     %% Response Management
-    Routine --&gt; Feedback[Feedback Collection]
-    Inquiry --&gt; Resolution[Response &amp; Issue Resolution]
+    Routine --> Feedback[Feedback Collection]
+    Inquiry --> Resolution[Response & Issue Resolution]
 
-    %% Feedback &amp; Correction
-    Resolution --&gt; Satisfaction{Is Customer Satisfied?}
-    Satisfaction -- No --&gt; CAR[Initiate CAR Process HWB-QMS-FORM-005]
-    Satisfaction -- Yes --&gt; CRM[Log Interaction in CRM]
+    %% Feedback & Correction
+    Resolution --> Satisfaction{Is Customer Satisfied?}
+    Satisfaction -- No --> CAR[Initiate CAR Process HWB-QMS-FORM-005]
+    Satisfaction -- Yes --> CRM[Log Interaction in CRM]
 
-    CAR --&gt; CRM
-    Feedback --&gt; CRM
+    CAR --> CRM
+    Feedback --> CRM
 
     %% Completion Phase
-    CRM --&gt; Review[Monthly Communication Review]
-    Review --&gt; Start
+    CRM --> Review[Monthly Communication Review]
+    Review --> Start
 
     %% Styling
     style Start fill:#f9f,stroke:#333,stroke-width:2px
     style CRM fill:#bbf,stroke:#333,stroke-width:2px
     style Satisfaction fill:#fff4dd,stroke:#d4a017,stroke-width:2px
     style CAR fill:#ffcccc,stroke:#a00,stroke-width:1px
-</code></pre>
-<h3>4.2 Procedural Steps</h3>
+</div>
+
+<h3 id="42-procedural-steps">4.2 Procedural Steps</h3>
 <ol>
 <li><strong>Communication Strategy:</strong> Establish the "Voice of HWB" — professional, helpful, and transparent. Define how often we touch base with different client segments.</li>
 <li><strong>Planning &amp; Segmentation:</strong> Group customers by their status (e.g., daily commercial accounts vs. one-time residential) to tailor the message.</li>
@@ -106,15 +109,15 @@
 <li><strong>CRM Logging:</strong> Every significant communication (quotes, complaints, schedule changes) must be documented in the customer's file.</li>
 <li><strong>Strategy Review:</strong> Monthly review of communication effectiveness based on response rates and customer satisfaction scores.</li>
 </ol>
-<h2>5.0 Verification</h2>
+<h2 id="50-verification">5.0 Verification</h2>
 <p>Verification is conducted through periodic reviews of CRM logs and the "Annual Customer Satisfaction Survey" to ensure communication meets the 24-hour response time objective and quality standards.</p>
-<h2>6.0 Notes and Cautions</h2>
+<h2 id="60-notes-and-cautions">6.0 Notes and Cautions</h2>
 <ul>
 <li><strong>Confidentiality:</strong> Never share client contact or billing information with third parties.</li>
 <li><strong>Clarity:</strong> Use plain language and avoid technical jargon that may confuse the client.</li>
 <li><strong>Consistency:</strong> Use approved email signatures and templates to maintain brand integrity.</li>
 </ul>
-<h2>7.0 Revision History</h2>
+<h2 id="70-revision-history">7.0 Revision History</h2>
 <table>
 <thead>
 <tr>
@@ -133,10 +136,11 @@
 </tr>
 </tbody>
 </table>
-<h2>8.0 Document Conventions</h2>
+<h2 id="80-document-conventions">8.0 Document Conventions</h2>
 <ul>
 <li><strong>Terminals (Ovals):</strong> Start and end points of the communication strategy cycle.</li>
 <li><strong>Decisions (Diamonds):</strong> Points requiring evaluation of customer satisfaction or categorization.</li>
 <li><strong>Actions (Rectangles):</strong> Specific communication tasks or administrative steps.</li>
 </ul>
+    </div>
 </div>

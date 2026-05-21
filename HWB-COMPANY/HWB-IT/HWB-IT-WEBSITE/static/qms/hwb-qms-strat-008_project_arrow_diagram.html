@@ -8,7 +8,8 @@
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
     </div>
 
-    <table>
+    <div class="sop-content-body">
+        <table>
 <thead>
 <tr>
 <th style="text-align: left;"><strong>Document Control</strong></th>
@@ -43,27 +44,28 @@
 </tbody>
 </table>
 <hr />
-<h1>SigmaFidelity™ Market Launch: Arrow Diagram</h1>
+<h1 id="sigmafidelitytm-market-launch-arrow-diagram">SigmaFidelity™ Market Launch: Arrow Diagram</h1>
 <p>This diagram identifies the sequence of events and dependencies required for the successful launch of the SigmaFidelity™ brand.</p>
-<pre><code class="language-mermaid">graph LR
+<div class="mermaid">
+graph LR
     %% Phase 1: Foundation
-    A[&quot;Finalize Charter &lt;br&gt; &amp; QMS&quot;] --&gt; B[&quot;Build Web App &lt;br&gt; &amp; Dashboard&quot;]
-    A --&gt; C[&quot;Execute Lead &lt;br&gt; Harvesting Cycles&quot;]
+    A["Finalize Charter <br> & QMS"] --> B["Build Web App <br> & Dashboard"]
+    A --> C["Execute Lead <br> Harvesting Cycles"]
 
     %% Phase 2: Content
-    B --&gt; D[&quot;Finalize LinkedIn &lt;br&gt; Post Payloads&quot;]
-    C --&gt; D
+    B --> D["Finalize LinkedIn <br> Post Payloads"]
+    C --> D
 
     %% Phase 3: Launch (The Critical Path)
-    D --&gt; E{&quot;MARCH 2: &lt;br&gt; LINKEDIN LAUNCH&quot;}
+    D --> E{"MARCH 2: <br> LINKEDIN LAUNCH"}
 
     %% Phase 4: Execution
-    E --&gt; F[&quot;HubSpot API &lt;br&gt; Integration&quot;]
-    E --&gt; G[&quot;Initiate Cold &lt;br&gt; Outreach (Tony Holiday)&quot;]
+    E --> F["HubSpot API <br> Integration"]
+    E --> G["Initiate Cold <br> Outreach (Tony Holiday)"]
 
     %% Phase 5: Control
-    F --&gt; H[&quot;30k-Foot &lt;br&gt; Performance Audit&quot;]
-    G --&gt; H
+    F --> H["30k-Foot <br> Performance Audit"]
+    G --> H
 
     %% Styling the Critical Path
     style A fill:#dcfce7,stroke:#166534
@@ -71,9 +73,10 @@
     style C fill:#dcfce7,stroke:#166534
     style D fill:#dcfce7,stroke:#166534
     style E fill:#ef4444,stroke:#991b1b,color:#fff
-</code></pre>
+</div>
+
 <hr />
-<h2>2.0 Critical Path Analysis</h2>
+<h2 id="20-critical-path-analysis">2.0 Critical Path Analysis</h2>
 <p>The <strong>Critical Path</strong> for our 2026 launch is:
 <strong>A → B &amp; C → D → E</strong></p>
 <ul>
@@ -84,7 +87,7 @@
 </ul>
 <p><strong>Strategic Constraint:</strong> Any defect in the scraper logic (C) or the dashboard (B) before March 2nd will bottleneck the launch (E) and increase our <strong>CODND (Cost of Doing Nothing Differently).</strong></p>
 <hr />
-<h2>3.0 Revision History</h2>
+<h2 id="30-revision-history">3.0 Revision History</h2>
 <table>
 <thead>
 <tr>
@@ -109,4 +112,5 @@
 </tr>
 </tbody>
 </table>
+    </div>
 </div>

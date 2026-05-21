@@ -8,7 +8,8 @@
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
     </div>
 
-    <table>
+    <div class="sop-content-body">
+        <table>
 <thead>
 <tr>
 <th style="text-align: left;"><strong>Document Control</strong></th>
@@ -47,52 +48,54 @@
 </tbody>
 </table>
 <hr />
-<h1>Standard Operating Procedure: <strong>Marketing Process SOP with Flowchart</strong></h1>
-<h2>1.0 Purpose</h2>
+<h1 id="standard-operating-procedure-marketing-process-sop-with-flowchart">Standard Operating Procedure: <strong>Marketing Process SOP with Flowchart</strong></h1>
+<h2 id="10-purpose">1.0 Purpose</h2>
 <p>This SOP defines the standardized marketing process for HWB Cleaning Services, ensuring that all marketing activities are strategically aligned, data-driven, and effective in generating high-quality leads for the sales team.</p>
-<h2>2.0 Scope</h2>
+<h2 id="20-scope">2.0 Scope</h2>
 <p>This procedure applies to all marketing activities, including digital marketing, local SEO, community outreach, and brand management.</p>
-<h2>3.0 Prerequisites</h2>
+<h2 id="30-prerequisites">3.0 Prerequisites</h2>
 <ul>
 <li>Approved Marketing Budget.</li>
 <li>Access to Google Analytics and social media platforms.</li>
 <li>Clearly defined service offerings and pricing.</li>
 </ul>
-<h2>4.0 Procedure</h2>
-<h3>4.1 Marketing Process Flowchart</h3>
-<pre><code class="language-mermaid">graph TD
+<h2 id="40-procedure">4.0 Procedure</h2>
+<h3 id="41-marketing-process-flowchart">4.1 Marketing Process Flowchart</h3>
+<div class="mermaid">
+graph TD
     %% Start of Process
-    Start((Marketing Strategy)) --&gt; Research[Market Research &amp; Target Audience ID]
+    Start((Marketing Strategy)) --> Research[Market Research & Target Audience ID]
 
     %% Planning Phase
-    Research --&gt; Channels[Channel Selection: SEO, Social, Outreach]
-    Channels --&gt; Content[Content &amp; Creative Development]
+    Research --> Channels[Channel Selection: SEO, Social, Outreach]
+    Channels --> Content[Content & Creative Development]
 
     %% Execution Phase
-    Content --&gt; Execution[Campaign Launch &amp; Execution]
+    Content --> Execution[Campaign Launch & Execution]
 
     %% Monitoring Phase
-    Execution --&gt; Monitoring[Performance Monitoring &amp; Data Analytics]
+    Execution --> Monitoring[Performance Monitoring & Data Analytics]
 
     %% Decision Phase
-    Monitoring --&gt; Analysis{Performance Meet KPIs?}
+    Monitoring --> Analysis{Performance Meet KPIs?}
 
-    Analysis -- No --&gt; Adjust[Optimize &amp; Adjust Strategy]
-    Adjust --&gt; Content
+    Analysis -- No --> Adjust[Optimize & Adjust Strategy]
+    Adjust --> Content
 
-    Analysis -- Yes --&gt; LeadGen[Lead Generation]
+    Analysis -- Yes --> LeadGen[Lead Generation]
 
     %% Hand-off Phase
-    LeadGen --&gt; SalesHandOff[Hand-off to Sales Process HWB-QMS-8.0]
-    SalesHandOff --&gt; Review[Monthly Marketing Review]
-    Review --&gt; Start
+    LeadGen --> SalesHandOff[Hand-off to Sales Process HWB-QMS-8.0]
+    SalesHandOff --> Review[Monthly Marketing Review]
+    Review --> Start
 
     %% Styling
     style Start fill:#f9f,stroke:#333,stroke-width:2px
     style SalesHandOff fill:#bbf,stroke:#333,stroke-width:2px
     style Analysis fill:#fff4dd,stroke:#d4a017,stroke-width:2px
-</code></pre>
-<h3>4.2 Procedural Steps</h3>
+</div>
+
+<h3 id="42-procedural-steps">4.2 Procedural Steps</h3>
 <ol>
 <li><strong>Marketing Strategy:</strong> Define the overall objectives (e.g., brand awareness, lead volume).</li>
 <li><strong>Market Research:</strong> Identify the ideal client profile (commercial vs. residential) in the DFW metroplex.</li>
@@ -104,14 +107,14 @@
 <li><strong>Lead Generation:</strong> Capture customer contact information for potential leads.</li>
 <li><strong>Sales Hand-off:</strong> Transfer qualified leads to the Sales Process defined in HWB-QMS-8.0.</li>
 </ol>
-<h2>5.0 Verification</h2>
+<h2 id="50-verification">5.0 Verification</h2>
 <p>The effectiveness of the marketing process is verified through monthly lead volume reports and ROI analysis of marketing spend.</p>
-<h2>6.0 Notes and Cautions</h2>
+<h2 id="60-notes-and-cautions">6.0 Notes and Cautions</h2>
 <ul>
 <li>All marketing materials must comply with the brand identity guidelines.</li>
 <li>Ensure compliance with data privacy regulations when capturing customer information.</li>
 </ul>
-<h2>7.0 Revision History</h2>
+<h2 id="70-revision-history">7.0 Revision History</h2>
 <table>
 <thead>
 <tr>
@@ -130,10 +133,11 @@
 </tr>
 </tbody>
 </table>
-<h2>8.0 Document Conventions</h2>
+<h2 id="80-document-conventions">8.0 Document Conventions</h2>
 <ul>
 <li><strong>Terminals (Ovals):</strong> Major process milestones.</li>
 <li><strong>Process (Rectangles):</strong> Specific activities or tasks.</li>
 <li><strong>Decisions (Diamonds):</strong> Points requiring evaluation or adjustment.</li>
 </ul>
+    </div>
 </div>
