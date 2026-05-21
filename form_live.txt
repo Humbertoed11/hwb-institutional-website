@@ -1,0 +1,41 @@
+ <form action="/get-quote" method="POST" id="quote-form-main" class="sigma-form-container">
+ <div class="sigma-form-body">
+ <!-- V2 Handshake Protocol Fields -->
+ <input type="hidden" name="form_version" value="v2">
+ <input type="hidden" name="facility_type" value="Not Specified">
+
+ <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+ <div class="sigma-field">
+ <label style="font-weight: 600; margin-bottom: 8px; display: block;">Company Name</label>
+ <input type="text" name="company" required placeholder="Your Business Name" class="sigma-input">
+ </div>
+ <div class="sigma-field">
+ <label style="font-weight: 600; margin-bottom: 8px; display: block;">Your Name</label>
+ <input type="text" name="name" required placeholder="Full Name" class="sigma-input">
+ </div>
+ <div class="sigma-field">
+ <label style="font-weight: 600; margin-bottom: 8px; display: block;">Work Email</label>
+ <input type="email" name="email" required placeholder="email@company.com" class="sigma-input">
+ </div>
+ <div class="sigma-field">
+ <label style="font-weight: 600; margin-bottom: 8px; display: block;">Phone Number</label>
+ <input type="tel" name="phone" id="phone_home" required placeholder="(214) 000-0000" class="sigma-input">
+ </div>
+ </div>
+ </div>
+
+ <div class="sigma-form-actions" style="margin-top: 2rem;">
+ <button type="submit" id="submit-quote-btn" class="isc-btn isc-btn-primary" style="width: 100%; height: 52px; font-weight: 700; font-size: 1.1rem; border-radius: 8px;">
+ <span>Get My Free Quote</span>
+ </button>
+ </div>
+ </form>
+ </div>
+ </div>
+ </section>
+
+ <!-- Formula (Compact Banner) -->
+ <section style="padding: 4rem 0; background: var(--hwb-dark); color: white;">
+ <div class="content-wrapper" style="text-align: center; max-width: 900px;">
+ <h2 style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.2em; color: var(--hwb-blue); margin-bottom: 1.5rem; font-weight: 900;">The HWB Quality Formula</h2>
+ <p style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem; line-height: 1.4;">Proper Training + The Right Tools + Respect for Your Space = The SigmaQuality Clean</p>

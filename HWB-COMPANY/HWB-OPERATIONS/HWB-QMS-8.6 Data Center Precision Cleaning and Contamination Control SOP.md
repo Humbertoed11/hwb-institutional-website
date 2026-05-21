@@ -1,60 +1,50 @@
 | **Document Control** |                                                               |
 | :------------------- | :------------------------------------------------------------ |
-| **Document Title**   | **Data Center Precision Cleaning and Contamination Control**  |
+| **Document Title**   | **Data Center Contamination Control**                         |
 | **Document ID**      | HWB-QMS-8.6                                                   |
-| **Version**          | 1.0                                                           |
-| **Status**           | Active                                                        |
-| **Author**           | George (VP Systems Architecture)                              |
-| **Approved By**      | Humberto Dominguez (CEO)                                      |
-| **Date**             | 2026-03-08                                                    |
+| **Version**          | 2.0.0                                                         |
+| **Status**           | APPROVED                                                      |
+| **Author**           | George (Architect)                                            |
+| **Approved By**      | Humberto Dominguez, CEO                                       |
+| **Date**             | 05/21/2026                                                    |
+| **ISO 9001 Clause**  | 7.1.3 (Infrastructure)                                        |
 
 ---
 
-# 1.0 Purpose
-This SOP establishes the technical requirements and operational protocols for the cleaning and disinfection of data centers and server rooms. It adheres to **ISO 14644-1 (Class 8 standards)** and **ISO 14644-7 (Separative Devices)** to ensure the longevity of high-fidelity hardware by mitigating airborne particulate matter and ESD (Electrostatic Discharge) risks.
+# Standard Operating Procedure: **Data Center Contamination Control**
 
-# 2.0 Scope
-Applies to all HWB Cleaning Services LLC operations within mission-critical environments, including raised-floor plenums, server rack exteriors, and hot/cold aisle containment systems.
+## 1.0 Purpose
+To define the specialized technical requirements for cleaning mission-critical data centers. This SOP adheres to **ISO 14644-1 (Class 8)** standards to protect high-fidelity hardware from particulate matter and ESD (Electrostatic Discharge) risks.
 
-# 3.0 Procedure: Precision Cleaning Cycles
+## 2.0 Scope
+Applies to all raised-floor plenums, server rack exteriors, and hot/cold aisle containment systems.
 
-## 3.1 Hardware and Material Requirements
-To maintain the "Fidelity Gate," only the following equipment is permitted:
-*   **HEPA-Filtered Vacuums:** Must utilize ULPA/HEPA filtration (efficiency of 99.97% at 0.3 microns).
-*   **Microfiber Materials:** Only lint-free, non-shredding microfibers are allowed.
-*   **Non-Conductive Chemicals:** Use only ammonium-free, non-residue, and non-conductive cleaning agents.
-*   **ESD Protection:** All personnel must wear ESD-safe footwear or wrist straps when working within 24 inches of exposed server components.
+## 3.0 Universal Mandates (2026 Baseline)
+1. **Guidance First:** If a server rack is unsealed, ASK the facility manager before cleaning the exterior.
+2. **Physical Truth:** Reference absolute server paths for "Data Center Contamination Records."
 
-## 3.2 Cleaning Protocols (Phased Approach)
-1.  **Phase I: High-Level Cleaning (Above Floor):**
-    *   Vacuuming of cable trays, ceiling plenums, and tops of server cabinets.
-    *   Wiping of external cabinet surfaces using "Cleanroom-Grade" damp-wiping techniques (S-motion) to prevent re-contamination.
-2.  **Phase II: Floor and Surface Treatment:**
-    *   Vacuuming of floor surfaces using HEPA-filters.
-    *   Damp-mopping with non-conductive, anti-static floor treatment.
-3.  **Phase III: Sub-Floor Plenum (If Applicable):**
-    *   Systematic vacuuming of the concrete sub-floor beneath raised tiles.
-    *   **CAUTION:** Never use compressed air; this relocates contaminants rather than removing them.
+## 4.0 Procedure
 
-## 3.3 Contamination Monitoring
-*   **Particulate Counts:** Periodic air quality monitoring should be conducted to ensure the environment remains within **ISO Class 8** limits (max 3,520,000 particles/m³ at 0.5 µm).
-*   **Temperature & Humidity:** Cleaning cycles must not interfere with the data center's thermal management (Hot/Cold aisle integrity).
+### 4.1 Equipment Standard
+*   **HEPA Vacuums:** 99.97% efficiency at 0.3 microns.
+*   **Microfiber:** Lint-free, non-shredding.
+*   **ESD Protection:** Mandatory ESD-safe footwear in "Hot Zones."
 
-# 4.0 Verification
-*   **Black-Light Audit:** Random spot-checks using UV light to detect organic residues.
-*   **Air Quality Report:** Final verification against ISO 14644-1 standards.
-*   **Activity Log:** All cleanings must be logged in the `ActivityLog` table with the specific timestamp and facility ID.
+### 4.2 Cleaning Phasing
+1.  **Phase I:** Above-floor high-level cleaning (damp-wipe).
+2.  **Phase II:** Floor surface HEPA-vacuuming and anti-static treatment.
+3.  **Phase III:** Sub-floor plenum vacuuming. **Never use compressed air.**
 
-# 5.0 Notes and Cautions
-*   **Zonal Integrity:** Ensure hot/cold aisle barriers (baffles) are not moved or damaged during cleaning.
-*   **Legal/IT Review:** Per HWB-QMS-8.5, this SOP must be reviewed by the **Legal Department** (for liability in high-value asset zones) and the **AI Department** (for technical fidelity) before final production deployment.
+## 5.0 Verification (Zero-Defect Check)
+*   **UV Light Audit:** Spot-check for organic residue.
+*   **Particulate Count:** Air quality remains within ISO Class 8 limits.
 
----
+## 6.0 Notes and Cautions
+> **CAUTION:** Never move hot/cold aisle baffles.
+> **LOGIC:** This SOP must be reviewed by the **Legal Department** for liability protection.
 
-## 6.0 Revision History
+## 7.0 Revision History
 | Version | Date | Author | Change Description |
 | :--- | :--- | :--- | :--- |
-| 1.0 | 2026-03-08 | George | Initial Precision Cleaning protocol for Data Centers established. |
-
----
-*Standard Operating Procedure produced under the SigmaFidelity™ Quality Mandate.*
+| 2.0.0 | 05/21/2026 | George | TOTAL MODERNIZATION. Added 2026 mandates and ESD standards. |
+| 1.0 | 2026-03-08 | George | Initial Release. |

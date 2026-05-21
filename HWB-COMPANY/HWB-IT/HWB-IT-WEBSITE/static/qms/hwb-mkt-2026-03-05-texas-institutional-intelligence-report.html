@@ -2,10 +2,10 @@
 <div class="sop-card">
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
-        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-MKT-2026-03-05-TIIR</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0</span></div>
-        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● For Executive Review</span></div>
-        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-MKT-NIR-002</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">8.1 (Operational Planning)</span></div>
     </div>
 
     <div class="sop-content-body">
@@ -19,80 +19,97 @@
 <tbody>
 <tr>
 <td style="text-align: left;"><strong>Document Title</strong></td>
-<td style="text-align: left;"><strong>Texas Institutional Intelligence Report (Phase 1)</strong></td>
+<td style="text-align: left;"><strong>Texas Institutional Intelligence Report</strong></td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Document ID</strong></td>
-<td style="text-align: left;">HWB-MKT-2026-03-05-TIIR</td>
+<td style="text-align: left;">HWB-MKT-NIR-002</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Version</strong></td>
-<td style="text-align: left;">1.0</td>
+<td style="text-align: left;">2.0.0</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Status</strong></td>
-<td style="text-align: left;">For Executive Review</td>
+<td style="text-align: left;">APPROVED</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Author</strong></td>
-<td style="text-align: left;">Silas Sync (VP Systems) &amp; Lauri Tells (VP Sales)</td>
+<td style="text-align: left;">George (Architect)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Approved By</strong></td>
-<td style="text-align: left;">Humberto Dominguez (CEO)</td>
+<td style="text-align: left;">Humberto Dominguez, CEO</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Date</strong></td>
-<td style="text-align: left;">2026-03-05</td>
+<td style="text-align: left;">05/21/2026</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>ISO 9001 Clause</strong></td>
+<td style="text-align: left;">8.1 (Operational Planning)</td>
 </tr>
 </tbody>
 </table>
 <hr />
-<h1 id="10-executive-summary">1.0 Executive Summary</h1>
+<h1 id="standard-operating-procedure-texas-institutional-intelligence-report">Standard Operating Procedure: <strong>Texas Institutional Intelligence Report</strong></h1>
+<h2 id="10-purpose">1.0 Purpose</h2>
 <p>This report details high-fidelity, free public data assets for the Texas institutional market. We have identified specific portals for Universities, K-12 Districts, and Municipal structures that align with the SigmaFidelity™ market capture strategy.</p>
-<hr />
-<h1 id="20-texas-institutional-data-assets">2.0 Texas Institutional Data Assets</h1>
-<h3 id="21-public-universities-colleges-thecb">2.1 Public Universities &amp; Colleges (THECB)</h3>
+<h2 id="20-scope">2.0 Scope</h2>
+<p>Applies to all Texas-specific datasets including THECB, TEA/AskTED, and TxGIO DataHub.</p>
+<h2 id="30-universal-mandates-2026-baseline">3.0 Universal Mandates (2026 Baseline)</h2>
+<ol>
+<li><strong>Guidance First:</strong> If a state agency's portal is locked, ASK the CEO before attempting to bypass.</li>
+<li><strong>Tier 6 Telemetry:</strong> Log all data extractions from Texas portals.</li>
+<li><strong>Physical Truth:</strong> Store all bulk CSV exports in the <code>/HWB-DATA/</code> directory.</li>
+</ol>
+<h2 id="40-texas-data-assets">4.0 Texas Data Assets</h2>
 <ul>
-<li><strong>Asset:</strong> Master List of Higher Education Institutions.</li>
-<li><strong>Fidelity:</strong> Includes all public 4-year universities, community colleges, and medical institutes.</li>
-<li><strong>Source:</strong> <a href="https://www1.thecb.state.tx.us/apps/Institutions/">THECB Institutional Directory</a></li>
-<li><strong>Strategic Value:</strong> Massive facility footprints; multi-building complex opportunities.</li>
+<li><strong>Public Universities (THECB):</strong> Master list of Higher Ed institutions for multi-building cleaning opportunities.</li>
+<li><strong>K-12 Districts (TEA / AskTED):</strong> 100% verified campus addresses for compliance-heavy cleaning.</li>
+<li><strong>Municipal Structures (TxGIO):</strong> Granular data for courthouses, police stations, and city halls.</li>
 </ul>
-<h3 id="22-k-12-school-districts-campuses-tea-askted">2.2 K-12 School Districts &amp; Campuses (TEA / AskTED)</h3>
+<h2 id="50-procedure">5.0 Procedure</h2>
+<ol>
+<li><strong>Extraction:</strong> Pull data using the unified fields standard (Operation_Name, Address, Phone, Email, SQF).</li>
+<li><strong>Verification:</strong> Cross-check against the Texas Comptroller Business API.</li>
+<li><strong>Injection:</strong> Map data into the Lead Pipeline for Silas Sync.</li>
+</ol>
+<h2 id="60-verification-zero-defect-check">6.0 Verification (Zero-Defect Check)</h2>
 <ul>
-<li><strong>Asset:</strong> Complete Texas Education Directory (CSV).</li>
-<li><strong>Fidelity:</strong> 100% verified campus addresses and administrative director names.</li>
-<li><strong>Source:</strong> <a href="https://tealprod.tea.state.tx.us/Tea.AskTed.Web/Forms/Home.aspx">TEA AskTED Reports</a></li>
-<li><strong>Strategic Value:</strong> High-occupancy facilities requiring recurring, compliance-heavy cleaning.</li>
+<li>No duplicate records for DFW metroplex campuses.</li>
+<li>Emails follow the professional administrative format.</li>
 </ul>
-<h3 id="23-municipal-government-structures-txgio">2.3 Municipal &amp; Government Structures (TxGIO)</h3>
-<ul>
-<li><strong>Asset:</strong> StratMap Statewide Address Points.</li>
-<li><strong>Fidelity:</strong> Granular geographic data for public buildings (Courthouses, Police Stations, City Halls).</li>
-<li><strong>Source:</strong> <a href="https://data.geographic.texas.gov/">TxGIO DataHub</a></li>
-<li><strong>Strategic Value:</strong> Stable, long-term government contracts.</li>
-</ul>
-<hr />
-<h1 id="30-integrated-data-parameters-texas-standard">3.0 Integrated Data Parameters (Texas Standard)</h1>
-<p>All Texas institutional datasets will be extracted with the following unified fields:
-1.  <strong>Operation_Name</strong> (Entity Name)
-2.  <strong>Location_Address</strong> (Physical Site)
-3.  <strong>Phone_Number</strong>
-4.  <strong>County</strong>
-5.  <strong>Zipcode</strong>
-6.  <strong>Director_Name</strong> (Primary Decision Maker)
-7.  <strong>Total_Capacity</strong> (or Building SQF)
-8.  <strong>Email_Address</strong>
-9.  <strong>City / State</strong></p>
-<hr />
-<h1 id="40-strategic-findings">4.0 Strategic Findings</h1>
-<ul>
-<li><strong>Zero-Cost Access:</strong> All primary sources identified are maintained by state agencies and provide free bulk downloads.</li>
-<li><strong>Market Concentration:</strong> DFW and Houston remain the primary "Hubs" for institutional facility growth.</li>
-<li><strong>Next Action:</strong> Initiate the <strong>HWB-QMS-7.5 Data Acquisition SOP</strong> to govern the download and injection of these Texas assets.</li>
-</ul>
-<hr />
-<p><em>Report produced by Silas Sync and Lauri Tells for SigmaFidelity™.</em></p>
+<h2 id="70-revision-history">7.0 Revision History</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Version</th>
+<th style="text-align: left;">Date</th>
+<th style="text-align: left;">Author</th>
+<th style="text-align: left;">Change Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">2.0.0</td>
+<td style="text-align: left;">05/21/2026</td>
+<td style="text-align: left;">George</td>
+<td style="text-align: left;">TOTAL MODERNIZATION. Consolidated report into SOP format and added 2026 mandates.</td>
+</tr>
+<tr>
+<td style="text-align: left;">1.0</td>
+<td style="text-align: left;">2026-03-05</td>
+<td style="text-align: left;">Silas Sync</td>
+<td style="text-align: left;">Initial Texas Intelligence Sweep.</td>
+</tr>
+</tbody>
+</table>
+    </div>
+
+    <div class="sop-card-footer">
+        <span>&copy; 2026 HWB Cleaning Services LLC</span>
+        <span>Controlled Document | HWB-MKT-NIR-002</span>
+        <span>Page <span class="page-number"></span></span>
     </div>
 </div>

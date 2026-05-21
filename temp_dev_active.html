@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}Request a Custom Cleaning Plan | HWB Cleaning Services LLC{% endblock %}
+
+{% block content %}
+<section class="section-white" style="padding: 6rem 0;">
+    <div class="content-wrapper">
+        <div class="section-header" style="text-align: center; margin-bottom: 4rem;">
+            <h2 style="font-size: 2.75rem; font-weight: 800; margin-bottom: 1rem; color: var(--hwb-dark); letter-spacing: -0.02em;">Your Custom Cleaning Plan</h2>
+            <p style="font-size: 1.15rem; color: var(--hwb-slate); max-width: 750px; margin: 0 auto; font-weight: 500;">Tell us about your facility. We'll generate a technical scope and contract plan for your DFW building.</p>
+        </div>
+
+        <div class="isc-card" style="padding: 4rem; border-radius: 12px; border: 1px solid var(--hwb-border); background: var(--white); box-shadow: 0 20px 40px rgba(0,0,0,0.03);">
+            <form action="{{ url_for('get_quote') }}" method="POST" id="quote-form-page" class="sigma-form-container">
+                <div class="sigma-form-body">
+                    <!-- 4-Column Grid Standard -->
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4rem;">
+                        
+                        <!-- Columns 1-2: Building Information -->
+                        <div style="grid-column: span 2;">
+                            <span class="sigma-form-header" style="display: block; font-size: 0.75rem; font-weight: 900; color: var(--hwb-blue); text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 2.5rem; border-bottom: 2px solid var(--hwb-blue-glow); padding-bottom: 0.75rem;">01. Building Information</span>
+                            
+                            <div class="sigma-field" style="margin-bottom: 2rem;">
+                                <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.75rem;">Facility Category</label>
+                                <select name="facility_type" id="facility_type" required class="sigma-input" style="width: 100%; height: 48px; border: 1px solid var(--hwb-border); border-radius: 6px; padding: 0 1rem; font-weight: 500; font-family: inherit;">
+                                    <option value="office">Professional Office / Corporate</option>
+                                    <option value="medical">Medical / Clinical Building</option>
+                                    <option value="industrial">Warehouse / Logistics Hub</option>
+                                    <option value="daycare">Childcare / Educational</option>
+                                    <option value="worship">House of Worship</option>
+                                    <option value="dealership">Car Dealership</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+
+                            <div class="sigma-field" style="margin-bottom: 2rem;">
+                                <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.75rem;">Traffic & Usage Level</label>
+                                <select name="need" id="need" required class="sigma-input" style="width: 100%; height: 48px; border: 1px solid var(--hwb-border); border-radius: 6px; padding: 0 1rem; font-weight: 500; font-family: inherit;">
+                                    <option value="1">Slow Traffic (Reduced Wear)</option>
+                                    <option value="2" selected>High Traffic (Daily Use)</option>
+                                    <option value="3">24/7 Production (Extreme Wear)</option>
+                                </select>
+                            </div>
+
+                            <div class="sigma-field">
+                                <label style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 700; color: var(--slate-900); margin-bottom: 1rem;">
+                                    <span>Approximate Size (SQF)</span>
+                                    <strong id="sqft_label_page" style="color: var(--hwb-blue); font-weight: 800;">50,000 SQF</strong>
+                                </label>
+                                <div class="slider-instrument-container">
+                                    <input type="range" name="sqft" id="sqft_slider_page" min="500" max="1000000" step="500" value="50000" class="sigma-range-instrument" oninput="updateSQFT(this.value)">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Columns 3-4: Contact Information -->
+                        <div style="grid-column: span 2;">
+                            <span class="sigma-form-header" style="display: block; font-size: 0.75rem; font-weight: 900; color: var(--hwb-blue); text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 2.5rem; border-bottom: 2px solid var(--hwb-blue-glow); padding-bottom: 0.75rem;">02. Contact Information</span>
+                            
+                            <div class="sigma-field" style="margin-bottom: 2rem;">
+                                <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.75rem;">Your Full Name</label>
+                                <input type="text" name="name" required placeholder="Manager Name" class="sigma-input" style="width: 100%; height: 48px; border: 1px solid var(--hwb-border); border-radius: 6px; padding: 0 1rem; font-weight: 500; font-family: inherit;">
+                            </div>
+
+                            <div class="sigma-field" style="margin-bottom: 2rem;">
+                                <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.75rem;">Organization Name</label>
+                                <input type="text" name="company" required placeholder="Company LLC" class="sigma-input" style="width: 100%; height: 48px; border: 1px solid var(--hwb-border); border-radius: 6px; padding: 0 1rem; font-weight: 500; font-family: inherit;">
+                            </div>
+
+                            <div class="sigma-field" style="margin-bottom: 2rem;">
+                                <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.75rem;">Work Email</label>
+                                <input type="email" name="email" required placeholder="name@company.com" class="sigma-input" style="width: 100%; height: 48px; border: 1px solid var(--hwb-border); border-radius: 6px; padding: 0 1rem; font-weight: 500; font-family: inherit;">
+                            </div>
+
+                            <div class="sigma-field">
+                                <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.75rem;">Phone Number</label>
+                                <input type="tel" name="phone" id="phone_page" required placeholder="(214) 000-0000" class="sigma-input" style="width: 100%; height: 48px; border: 1px solid var(--hwb-border); border-radius: 6px; padding: 0 1rem; font-weight: 500; font-family: inherit;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sigma-form-actions" style="margin-top: 4rem; padding-top: 3rem; border-top: 1px solid var(--slate-100); text-align: center;">
+                    <button type="submit" id="submit-quote-btn" class="nav-cta" style="height: 60px; padding: 0 4rem; font-size: 1.1rem; border: none; cursor: pointer;">
+                        <span>Send My Cleaning Request →</span>
+                    </button>
+                    <p style="margin-top: 1.5rem; font-size: 0.85rem; color: var(--hwb-slate); font-weight: 600;">Safe & Secure Data Transmission • No Obligation Quote</p>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+
+<style>
+ .slider-instrument-container {
+ padding: 1rem 0;
+ }
+ 
+ .sigma-range-instrument {
+ -webkit-appearance: none;
+ width: 100%;
+ height: 6px;
+ background: #f1f5f9;
+ border: 1px solid var(--slate-200);
+ border-radius: 3px;
+ outline: none;
+ }
+
+ .sigma-range-instrument::-webkit-slider-thumb {
+ -webkit-appearance: none;
+ appearance: none;
+ width: 14px;
+ height: 24px;
+ background: var(--hwb-blue);
+ border: 2px solid white;
+ border-radius: 4px; /* Sharp Handle Aesthetic */
+ cursor: pointer;
+ box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+ transition: all 0.15s;
+ }
+
+ .sigma-range-instrument::-webkit-slider-thumb:hover {
+ transform: scaleY(1.1);
+ background: #1d4ed8;
+ }
+</style>
+
+<script>
+ function updateSQFT(val) {
+ document.getElementById('sqft_label_page').innerText = Number(val).toLocaleString() + " SQF";
+ }
+
+ // Phone Masking
+ document.getElementById('phone_page').addEventListener('input', function(e) {
+ let x = e.target.value.replace(/\D/g, '').match(/(\d{0,3})(\d{0,3})(\d{0,4})/);
+ e.target.value = !x[2] ? x[1] : '(' + x[1] + ')-' + x[2] + (x[3] ? '-' + x[3] : '');
+ });
+
+ // Connection Narrative for Public Form
+ const quoteForm = document.getElementById('quote-form-page');
+ const submitBtn = document.getElementById('submit-quote-btn');
+ const btnSpan = submitBtn.querySelector('span');
+
+ quoteForm.onsubmit = function() {
+ submitBtn.disabled = true;
+ submitBtn.style.opacity = "0.7";
+ btnSpan.innerText = "Saving Information...";
+ 
+ let messages = ["Syncing Field Ops...", "Finalizing Scope...", "Sending Request..."];
+ let i = 0;
+ const interval = setInterval(() => {
+ if (i < messages.length) {
+ btnSpan.innerText = messages[i];
+ i++;
+ } else {
+ clearInterval(interval);
+ }
+ }, 700);
+ };
+
+ // Auto-populate from URL Parameters (if any)
+ document.addEventListener('DOMContentLoaded', function() {
+ const params = new URLSearchParams(window.location.search);
+ if (params.has('type')) document.getElementById('facility_type').value = params.get('type');
+ if (params.has('sqft')) {
+ const val = params.get('sqft');
+ document.getElementById('sqft_slider_page').value = val;
+ updateSQFT(val);
+ }
+ if (params.has('need')) document.getElementById('need').value = params.get('need');
+ });
+</script>
+{% endblock %}

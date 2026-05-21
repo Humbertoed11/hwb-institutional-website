@@ -1,74 +1,68 @@
-| creat**Document Control** |                           |
-| :------------------------ | :------------------------ |
-| **Document Title**        | **Sales Process SOP**     |
-| **Document ID**           | HWB-SOP-001               |
-| **Version**               | 1.0                       |
-| **Status**                | Approved                  |
-| **Author**                | Gemini                    |
-| **Approved By**           | _________________________ |
-| **Date**                  | 2026-02-20                |
+| **Document Control** |                                  |
+| :------------------- | :------------------------------- |
+| **Document Title**   | **Sales Process SOP**            |
+| **Document ID**      | HWB-QMS-8.0                      |
+| **Version**          | 2.0.0                            |
+| **Status**           | APPROVED                         |
+| **Author**           | George (Architect)               |
+| **Approved By**      | Humberto Dominguez, CEO          |
+| **Date**             | 05/21/2026                       |
+| **ISO 9001 Clause**  | 8.2.1 (Customer Communication)   |
 
 ---
 
 # Standard Operating Procedure: **Sales Process SOP**
 
 ## 1.0 Purpose
-
-This SOP defines the standard process for managing sales inquiries from initial contact to client onboarding, ensuring a consistent and professional experience for all potential customers.
+This SOP defines the standard process for managing sales inquiries from first contact to signing a new client, making sure every potential customer has a professional experience.
 
 ## 2.0 Scope
+Applies to all HWB staff involved in managing leads, giving quotes, and getting new clients in the CRM area.
 
-This procedure applies to all HWB Cleaning Services personnel involved in the sales process, including management, administrative staff, and any team members responsible for quoting or client acquisition.
+## 3.0 Universal Mandates (2026 Baseline)
+1. **Ask First:** If a lead's building type is not on the standard list, ASK the boss before entering it manually.
+2. **Activity Tracking:** Every change in a lead's status must be recorded.
+3. **Physical Truth:** Use exact file paths for Lead Uploader scripts.
 
-## 3.0 Prerequisites
+## 4.0 The Sales Sequence
 
-*   Access to the company's CRM or client tracking system.
-*   Knowledge of HWB Cleaning Services' pricing structure and service capabilities.
+### 4.1 How we get leads
+1.  **Option 1 (High Quality):** Captured through specific service pages. Includes size and usage data for an instant $0.12 quote.
+2.  **Option 2 (Simple Contact):** Captured through the Home Page. Includes Company and Contact data only. **Required Follow-up:** A CRM Specialist must contact these leads within 4 business hours to check the building type and size.
 
-## 4.0 Procedure
-
-The sales process is visualized in the flowchart below. It follows a logical flow from initial inquiry to the successful onboarding of a new client.
-
-### 4.1 Sales Process Flowchart
-
-````mermaid
-graph TD;
-    A[Start] --> B["Initial Customer Inquiry (Phone, Web, Email)"];
-    B --> C{"Qualify Lead (In Service Area/Scope?)"};
-    C -- Yes --> D["Schedule On-Site Assessment"];
-    C -- No --> E["Stop Process (Log for Market Analysis)"];
-    D --> F["Conduct Assessment and Gather Requirements"];
-    F --> G["Prepare and Send Quote/Proposal"];
-    G --> H{"Client Decision"};
-    H -- Accepted --> I["Sign Service Agreement and Schedule First Cleaning"];
-    H -- Rejected --> J["Stop Process (Follow-up Later?)"];
-    I --> K["Onboard Client (Hand-off to Operations)"];
-    K --> L[Finish];
-````
+### 4.2 Workflow
+```mermaid
+graph TD
+    A[Start] --> B[Initial Inquiry]
+    B --> C{Which way?}
+    C -- V1: High Quality --> D[Auto-Quote Created]
+    C -- V2: Simple --> E[Manual Discovery Call]
+    D --> F[Site Visit]
+    E --> F
+    F --> G[Prepare Final Proposal]
+    G --> H{Decision?}
+    H -- Accepted --> I[Sign Contract]
+    I --> K[Set Up Account]
+```
 
 ### 4.2 Procedural Steps
+1.  **Initial Inquiry:** Record all calls, web forms, or emails into the CRM.
+2.  **Qualify Lead:** Check that the client is in our North Texas service area.
+3.  **Schedule Assessment:** For good leads, set up a time to visit the building.
+4.  **Conduct Assessment:** Visit the site and record the exact size and work needed.
+5.  **Prepare Proposal:** Create a formal quote using the HWB $0.12 price engine.
+6.  **Send and Follow-Up:** Send the proposal and check back within 48 hours.
 
-1.  **Initial Inquiry:** Log all incoming inquiries from phone, web, or email into the client tracking system.
-2.  **Qualify Lead:** Verify that the potential client's location is within the HWB service area and that their requested services are within the company's scope. If not, inform the client politely and log the inquiry for market analysis.
-3.  **Schedule Assessment:** For qualified leads, schedule an on-site assessment to understand the full scope of work.
-4.  **Conduct Assessment:** Visit the client's premises to gather detailed requirements for the cleaning service.
-5.  **Prepare Proposal:** Create a formal quote and proposal based on the assessment.
-6.  **Send and Follow-Up:** Deliver the proposal to the client and follow up within a defined timeframe.
-7.  **Client Decision:** If the proposal is accepted, proceed to the next step. If rejected, log the reason and schedule a future follow-up if appropriate.
-8.  **Onboard Client:** Once the service agreement is signed, formally onboard the client by coordinating with the operations team to schedule the first service and provide all necessary details.
-
-## 5.0 Verification
-
-Successful execution of this procedure is verified when a new client has a signed service agreement and their first cleaning service is successfully scheduled in the system.
+## 5.0 Verification (Zero-Defect Check)
+*   Signed agreement is uploaded to the Account record.
+*   Client data in CRM matches the final service agreement.
 
 ## 6.0 Notes and Cautions
-
-*   Clear and timely communication with the potential client is critical at every stage of the process.
-*   All pricing and service commitments must be documented in the formal proposal to avoid misunderstandings.
+> **NOTE:** Use "Everyday Words" when explaining technical sanitation to clients.
+> **CAUTION:** Never bypass the $0.12 formula without CEO approval.
 
 ## 7.0 Revision History
-
 | Version | Date | Author | Change Description |
 | :--- | :--- | :--- | :--- |
-| 1.0 | 2026-02-20 | Gemini | Initial Release |
-| 1.1 | 2026-02-20 | Gemini | Updated filename to comply with SOP naming convention. |
+| 2.0.0 | 05/21/2026 | George | TOTAL MODERNIZATION. Standardized ID to HWB-QMS-8.0 and added Tier 6 mandates. |
+| 1.0 | 2026-02-20 | Gemini | Initial Release. |

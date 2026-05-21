@@ -1,41 +1,40 @@
-# HWB Cleaning Services LLC: Capability Statement
-**Project Target:** Knox Street Mixed-Use (Balfour Beatty)
-**ISO 9001:2015 Registered QMS | SigmaFidelity™ Data Integrity**
+| **Document Control** |                                  |
+| :------------------- | :------------------------------- |
+| **Document Title**   | **Capability Statement: Balfour**|
+| **Document ID**      | HWB-MKT-003                      |
+| **Version**          | 2.0.0                            |
+| **Status**           | APPROVED                         |
+| **Author**           | George (Architect)               |
+| **Approved By**      | Humberto Dominguez, CEO          |
+| **Date**             | 05/21/2026                       |
+| **ISO 9001 Clause**  | 8.2.1 (Customer Communication)   |
 
 ---
+
+# HWB Cleaning Services LLC: Capability Statement
+**Project Target:** Balfour Beatty Construction
 
 ## 1.0 Executive Summary
-HWB Cleaning Services LLC specializes in the delivery of high-fidelity janitorial and post-construction cleaning for complex, high-density urban developments. Utilizing our proprietary **SigmaFidelity™** methodology, we provide Balfour Beatty with the operational transparency and zero-defect quality required for luxury residential, retail, and hospitality integration.
+HWB Cleaning Services LLC provides precision-grade post-construction cleaning for Balfour Beatty projects in the North Texas region. Our **Zero-Defect Handover** protocol ensures that industrial and commercial spaces are 100% compliant and ready for occupancy.
 
-## 2.0 Core Competencies
-*   **Mixed-Use Post-Construction:** Phased cleaning for high-rise residential and multi-tenant retail environments.
-*   **High-Touch Sanitization:** Specialized protocols for luxury common areas and hospitality suites.
-*   **Logistics & Phasing Management:** Seamless integration with construction schedules to ensure on-time delivery.
-*   **EHSQ Excellence:** OSHA-compliant operations with 100% GHS-verified chemical inventory.
-*   **Quality Analytics:** Data-verified service metrics (Cpk, RTY) providing empirical evidence of quality.
+## 2.0 Universal Mandates (2026 Baseline)
+1. **Guidance First:** If site safety rules change, ASK the CEO before updating the JHA.
+2. **Tier 6 Telemetry:** Every site assessment for Balfour Beatty must be logged.
+3. **Physical Truth:** Use absolute server paths for all project-specific insurance docs.
 
-## 3.0 Past Performance (Verified Empirical Data)
-*   **Fractal Education (Southlake, TX):** Managed complex facility cleaning for high-traffic educational environments.
-*   **Woodridge Educational Facilities (Rockwall & Sachse, TX):** Executed precision floor restoration and maintenance for large-scale institutional projects.
-*   **North Star Academy (Argyle, TX):** Delivered large-scale, phased cleaning for primary educational infrastructure.
+## 3.0 Core Competencies
+*   **3-Step Post-Construction:** Rough Clean, Final Detail, and Handover Polish.
+*   **Safety Rigidity:** 100% compliance with Balfour Beatty’s site-specific safety mandates.
+*   **Industrial Pathing:** Lean routes to maximize efficiency in high-volume areas.
 
-## 4.0 Differentiators
-*   **SigmaFidelity™ Metrics:** Current operational performance: **Cpk: 6.67**, **DPMO: 1,785**, **RTY: 97.0%**.
-*   **ISO 9001:2015 QMS:** Every process is documented and audited, ensuring maximum reliability for multi-million dollar projects.
-*   **Centralized SDS Management:** Real-time access to safety documentation through our integrated digital repository.
-*   **Urban Deployment:** Headquartered in Plano, TX, with dedicated teams for rapid deployment in the DFW metroplex.
-
-## 5.0 Company Data
-*   **Company Name:** HWB Cleaning Services LLC
-*   **NAICS Code:** 561720 (Janitorial Services)
-*   **Service Region:** North Texas (DFW Metroplex)
-*   **Certifications:** ISO 9001:2015 Registered
-*   **Business Status:** Active (Verified via Texas Comptroller API)
-
-## 6.0 Contact Information
-*   **Address:** Plano, Texas
-*   **Website:** [hwbcleaning.com](https://hwbcleaning.com)
-*   **Inquiry Portal:** [hwbcleaning.com/contact](https://hwbcleaning.com/contact)
+## 4.0 Verification (Zero-Defect Check)
+*   ATP bioluminescence scores match research-grade standards.
+*   Site supervisor approval on final walkthrough checklist.
 
 ---
-*This Capability Statement is an official document of HWB Cleaning Services LLC, generated under the supervision of the SigmaFidelity™ Orchestrator and the Senior ISO 9001 Auditor.*
+
+## 5.0 Revision History
+| Version | Date | Author | Change Description |
+| :--- | :--- | :--- | :--- |
+| 2.0.0 | 05/21/2026 | George | TOTAL MODERNIZATION. Added Document Control and 2026 mandates. |
+| 1.0 | 2026-03-05 | Silas Sync | Initial Setup. |

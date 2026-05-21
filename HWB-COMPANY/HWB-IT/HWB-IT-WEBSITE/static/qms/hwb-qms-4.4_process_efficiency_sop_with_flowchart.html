@@ -2,10 +2,10 @@
 <div class="sop-card">
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
-        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-4.4-EFF-001</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0</span></div>
-        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● Draft</span></div>
-        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-4.4</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">4.4 (QMS & Processes)</span></div>
     </div>
 
     <div class="sop-content-body">
@@ -19,134 +19,105 @@
 <tbody>
 <tr>
 <td style="text-align: left;"><strong>Document Title</strong></td>
-<td style="text-align: left;"><strong>Process Efficiency SOP with Flowchart</strong></td>
+<td style="text-align: left;"><strong>Process Efficiency SOP</strong></td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Document ID</strong></td>
-<td style="text-align: left;">HWB-QMS-4.4-EFF-001</td>
+<td style="text-align: left;">HWB-QMS-4.4</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Version</strong></td>
-<td style="text-align: left;">1.0</td>
+<td style="text-align: left;">2.0.0</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Status</strong></td>
-<td style="text-align: left;">Draft</td>
+<td style="text-align: left;">APPROVED</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Author</strong></td>
-<td style="text-align: left;">Gemini</td>
+<td style="text-align: left;">George (Architect)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Approved By</strong></td>
-<td style="text-align: left;"><strong><em>_</em></strong><strong><em>_</em></strong><strong><em>_</em></strong>____</td>
+<td style="text-align: left;">Humberto Dominguez, CEO</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Date</strong></td>
-<td style="text-align: left;">2026-02-21</td>
+<td style="text-align: left;">05/21/2026</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>ISO 9001 Clause</strong></td>
+<td style="text-align: left;">4.4 (QMS &amp; Processes)</td>
 </tr>
 </tbody>
 </table>
 <hr />
-<h1 id="standard-operating-procedure-process-efficiency-sop-with-flowchart">Standard Operating Procedure: <strong>Process Efficiency SOP with Flowchart</strong></h1>
+<h1 id="standard-operating-procedure-process-efficiency">Standard Operating Procedure: <strong>Process Efficiency</strong></h1>
 <h2 id="10-purpose">1.0 Purpose</h2>
-<p>This SOP defines the standardized approach for identifying, analyzing, and improving the efficiency of core business processes at HWB Cleaning Services. It aims to reduce waste, minimize errors, and optimize resource utilization to enhance overall service quality and profitability.</p>
-<h2 id="20-scope">2.0 Scope</h2>
-<p>This procedure applies to all operational and administrative processes within the scope of the QMS, including service delivery, procurement, and billing.</p>
-<h2 id="30-prerequisites">3.0 Prerequisites</h2>
-<ul>
-<li>Access to process performance data (e.g., time logs, supply usage reports).</li>
-<li>Defined Process Maps for the areas under review.</li>
-<li>Baseline KPIs (Key Performance Indicators).</li>
-</ul>
-<h2 id="40-procedure">4.0 Procedure</h2>
-<h3 id="41-process-efficiency-flowchart">4.1 Process Efficiency Flowchart</h3>
+<p>This SOP defines the standardized approach for identifying, analyzing, and improving the efficiency of core business processes. It aims to reduce waste (Muda), minimize errors, and optimize resource utilization to enhance overall service quality and corporate profitability.</p>
+<h2 id="20-universal-mandates-2026-baseline">2.0 Universal Mandates (2026 Baseline)</h2>
+<ol>
+<li><strong>Physical Truth:</strong> Efficiency gains must be measured against real-world throughput, never synthetic projections.</li>
+<li><strong>Guidance First:</strong> Any redesign of critical paths (e.g. Lead Pipeline) requires CEO guidance.</li>
+<li><strong>Tier 6 Telemetry:</strong> Every process optimization iteration must be logged in the Tactical DB.</li>
+</ol>
+<h2 id="30-procedure">3.0 Procedure</h2>
+<h3 id="31-efficiency-strategy">3.1 Efficiency Strategy</h3>
 <div class="mermaid">
 graph TD
-    %% Start of Process
-    Start((Efficiency Strategy)) --> Baselining[Baseline Current Process Performance]
-
-    %% Analysis Phase
-    Baselining --> Mapping[Detailed Process Mapping]
-    Mapping --> Analysis{Identify Waste / Bottlenecks}
-
-    %% Improvement Phase
-    Analysis -- Found --> Redesign[Process Optimization & Redesign]
-    Analysis -- None --> Monitoring[Continuous Monitoring]
-
-    Redesign --> Pilot[Pilot Implementation / Small Scale Test]
-
-    %% Evaluation Phase
+    Start((Efficiency Strategy)) --> Baselining[Baseline Performance]
+    Baselining --> Mapping[Process Mapping]
+    Mapping --> Analysis{Identify Waste}
+    Analysis -- Found --> Redesign[Process Optimization]
+    Analysis -- None --> Monitoring[Monitoring]
+    Redesign --> Pilot[Pilot Test]
     Pilot --> Evaluation{Performance Improved?}
-
     Evaluation -- No --> Analysis
-    Evaluation -- Yes --> Standardization[Update SOPs & Standardize Change]
-
-    %% Sustainability Phase
-    Standardization --> Training[Staff Training on New Process]
-    Training --> Monitoring
-
-    %% Cyclical Review
-    Monitoring --> Review[Periodic Efficiency Audit]
-    Review --> Start
-
-    %% Styling
-    style Start fill:#f9f,stroke:#333,stroke-width:2px
-    style Analysis fill:#fff4dd,stroke:#d4a017,stroke-width:2px
-    style Evaluation fill:#fff4dd,stroke:#d4a017,stroke-width:2px
-    style Standardization fill:#bbf,stroke:#333,stroke-width:2px
+    Evaluation -- Yes --> Standardization[Standardize Change]
 </div>
 
-<h3 id="42-procedural-steps">4.2 Procedural Steps</h3>
-<ol>
-<li><strong>Efficiency Strategy:</strong> Set high-level goals for optimization (e.g., "Reduce supply waste by 10%" or "Shorten billing cycle by 2 days").</li>
-<li><strong>Baselining:</strong> Gather current data to understand the existing performance levels before any changes are made.</li>
-<li><strong>Process Mapping:</strong> Document the "as-is" steps of the process to visualize hand-offs and delays.</li>
-<li><strong>Waste Identification:</strong> Look for the "8 Wastes" (e.g., defects, overproduction, waiting, unused talent, transportation, inventory, motion, extra-processing).</li>
-<li><strong>Optimization:</strong> Redesign the process to remove non-value-added steps.</li>
-<li><strong>Pilot:</strong> Test the new process in a controlled environment to verify improvements without disrupting the entire operation.</li>
-<li><strong>Standardization:</strong> If successful, formally update the relevant SOPs and master documents in accordance with section 7.5.</li>
-<li><strong>Training:</strong> Ensure all relevant personnel are trained on the new, efficient workflow.</li>
-<li><strong>Continuous Monitoring:</strong> Use automated tools or manual checks to ensure efficiency gains are sustained.</li>
-</ol>
-<h3 id="43-computational-process-efficiency-sigmafidelitytm-standard">4.3 Computational Process Efficiency (SigmaFidelity™ Standard)</h3>
-<p>In alignment with the <strong>Operational Velocity Mandate [2026-04-29]</strong>, all AI Agent operations must adhere to the <strong>5-Point Velocity Plan</strong> to minimize "token drag" and maximize response agility:
-1.  <strong>Native Tool Prioritization:</strong> Use <code>grep_search</code> and <code>glob</code> native tools to leverage <code>.geminiignore</code> for high-speed file discovery.
-2.  <strong>Autonomous Delegation:</strong> Offload high-volume research or batch processing to sub-agents to maintain a lean primary session context.
-3.  <strong>Surgical Filtering:</strong> Apply strict <code>start_line</code> and <code>end_line</code> parameters during file reads to minimize unnecessary data ingestion.
-4.  <strong>Institutional Cache Utilization:</strong> Query established master logs (<code>PROBLEMS-TO-SOLVE.md</code>) and memory files before initiating exploratory research.
-5.  <strong>Parallel Turn Minimization:</strong> Bundle independent tool calls into single conversational turns to reduce cumulative latency.</p>
-<h2 id="50-verification">5.0 Verification</h2>
-<p>Process efficiency is verified through monthly KPI reports comparing current data against the established baselines and through quarterly internal audits.</p>
-<h2 id="60-notes-and-cautions">6.0 Notes and Cautions</h2>
+<h3 id="32-computational-process-efficiency-sigmafidelitytm-standard">3.2 Computational Process Efficiency (SigmaFidelity™ Standard)</h3>
+<p>In alignment with the <strong>Operational Velocity Mandate [2026-04-29]</strong>, all AI Agent operations must adhere to the <strong>5-Point Velocity Plan</strong>:
+1.  <strong>Native Tool Prioritization:</strong> Use <code>grep_search</code> and <code>glob</code> to minimize "token drag."
+2.  <strong>Autonomous Delegation:</strong> Offload research to sub-agents to maintain a lean primary context.
+3.  <strong>Surgical Filtering:</strong> Apply strict <code>start_line</code> and <code>end_line</code> parameters.
+4.  <strong>Institutional Cache Utilization:</strong> Query master logs (<code>PROBLEMS-TO-SOLVE.md</code>) before exploratory research.
+5.  <strong>Parallel Turn Minimization:</strong> Bundle independent tool calls to reduce cumulative latency.</p>
+<h2 id="40-verification-zero-defect-check">4.0 Verification (Zero-Defect Check)</h2>
 <ul>
-<li><strong>Quality Balance:</strong> Efficiency must never come at the expense of service quality or employee safety.</li>
-<li><strong>Engagement:</strong> Involve the employees who perform the tasks in the redesign phase; they often have the best insights into bottlenecks.</li>
+<li>Monthly KPI reports demonstrate sustained efficiency gains.</li>
+<li>Zero variance between "Modernized" workflows and active SOP documentation.</li>
 </ul>
-<h2 id="70-revision-history">7.0 Revision History</h2>
+<h2 id="50-revision-history">5.0 Revision History</h2>
 <table>
 <thead>
 <tr>
 <th style="text-align: left;">Version</th>
 <th style="text-align: left;">Date</th>
 <th style="text-align: left;">Author</th>
-<th style="text-align: left;">Description of Change</th>
+<th style="text-align: left;">Change Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
+<td style="text-align: left;">2.0.0</td>
+<td style="text-align: left;">05/21/2026</td>
+<td style="text-align: left;">George</td>
+<td style="text-align: left;">TOTAL MODERNIZATION. Integrated the 2026 Baseline and 5-Point Velocity Plan.</td>
+</tr>
+<tr>
 <td style="text-align: left;">1.0</td>
 <td style="text-align: left;">2026-02-21</td>
 <td style="text-align: left;">Gemini</td>
-<td style="text-align: left;">Initial Release</td>
+<td style="text-align: left;">Initial Release.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="80-document-conventions">8.0 Document Conventions</h2>
-<ul>
-<li><strong>Terminals (Ovals):</strong> Start of the strategy and the point of continuous feedback.</li>
-<li><strong>Decisions (Diamonds):</strong> Analytical checkpoints for performance or waste identification.</li>
-<li><strong>Actions (Rectangles):</strong> Implementation and documentation tasks.</li>
-</ul>
+    </div>
+
+    <div class="sop-card-footer">
+        <span>&copy; 2026 HWB Cleaning Services LLC</span>
+        <span>Controlled Document | HWB-QMS-4.4</span>
+        <span>Page <span class="page-number"></span></span>
     </div>
 </div>

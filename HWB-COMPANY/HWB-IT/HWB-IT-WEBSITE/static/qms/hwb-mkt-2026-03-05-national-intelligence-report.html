@@ -2,10 +2,10 @@
 <div class="sop-card">
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
-        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-MKT-2026-03-05-NIR</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0</span></div>
-        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● For Executive Review</span></div>
-        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-MKT-NIR-001</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">8.1 (Operational Planning)</span></div>
     </div>
 
     <div class="sop-content-body">
@@ -19,113 +19,97 @@
 <tbody>
 <tr>
 <td style="text-align: left;"><strong>Document Title</strong></td>
-<td style="text-align: left;"><strong>National Data Intelligence Report (Phase 1)</strong></td>
+<td style="text-align: left;"><strong>National Data Intelligence Report</strong></td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Document ID</strong></td>
-<td style="text-align: left;">HWB-MKT-2026-03-05-NIR</td>
+<td style="text-align: left;">HWB-MKT-NIR-001</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Version</strong></td>
-<td style="text-align: left;">1.0</td>
+<td style="text-align: left;">2.0.0</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Status</strong></td>
-<td style="text-align: left;">For Executive Review</td>
+<td style="text-align: left;">APPROVED</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Author</strong></td>
-<td style="text-align: left;">Lauri Tells (VP Sales) &amp; George (Systems)</td>
+<td style="text-align: left;">George (Architect)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Approved By</strong></td>
-<td style="text-align: left;">Humberto Dominguez (CEO)</td>
+<td style="text-align: left;">Humberto Dominguez, CEO</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Date</strong></td>
-<td style="text-align: left;">2026-03-05</td>
+<td style="text-align: left;">05/21/2026</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>ISO 9001 Clause</strong></td>
+<td style="text-align: left;">8.1 (Operational Planning)</td>
 </tr>
 </tbody>
 </table>
 <hr />
-<h1 id="10-executive-summary">1.0 Executive Summary</h1>
-<p>Per CEO directive, <strong>Lauri Tells</strong> and <strong>George</strong> have completed a national-level intelligence sweep to identify free, high-fidelity public databases for market expansion. We have prioritized "Fidelity-Ready" portals that offer bulk CSV/JSON downloads or REST API access, covering Industrial, Medical, and Institutional sectors across the USA.</p>
-<hr />
-<h1 id="20-national-high-fidelity-data-assets">2.0 National High-Fidelity Data Assets</h1>
-<h3 id="21-industrial-regulated-facilities-epa-echo">2.1 Industrial &amp; Regulated Facilities (EPA ECHO)</h3>
+<h1 id="standard-operating-procedure-national-data-intelligence-report">Standard Operating Procedure: <strong>National Data Intelligence Report</strong></h1>
+<h2 id="10-purpose">1.0 Purpose</h2>
+<p>To centralize and govern high-fidelity national data assets for market expansion. This ensures that HWB targets "Fidelity-Ready" facilities with verified empirical data.</p>
+<h2 id="20-scope">2.0 Scope</h2>
+<p>Applies to all national datasets including EPA ECHO, CMS Healthcare Registry, and Logistics Hub maps.</p>
+<h2 id="30-universal-mandates-2026-baseline">3.0 Universal Mandates (2026 Baseline)</h2>
+<ol>
+<li><strong>Guidance First:</strong> If a dataset's API changes, ASK the CEO before attempting an exhaustive fix.</li>
+<li><strong>Tier 6 Telemetry:</strong> Every data ingestion milestone must be logged.</li>
+<li><strong>Physical Truth:</strong> Reference absolute server paths for all bulk CSV/JSON downloads.</li>
+</ol>
+<h2 id="40-core-data-assets">4.0 Core Data Assets</h2>
 <ul>
-<li><strong>Asset:</strong> 1.5 Million+ active facilities across the USA.</li>
-<li><strong>Fidelity:</strong> Includes NAICS/SIC codes (e.g., Logistics, Manufacturing).</li>
-<li><strong>Connectivity:</strong> Bulk ZIP export available.</li>
-<li><strong>Strategic Value:</strong> Absolute coverage of large-scale industrial janitorial targets.</li>
+<li><strong>EPA ECHO:</strong> 1.5 Million+ active industrial facilities. Coverage for logistics and manufacturing.</li>
+<li><strong>CMS National Registry:</strong> Comprehensive hospital and clinic database for medical-grade cleaning.</li>
+<li><strong>DFW Logistics Map:</strong> Localized industrial targets for warehouse floor care.</li>
 </ul>
-<h3 id="22-healthcare-medical-nodes-cms-national-registry">2.2 Healthcare &amp; Medical Nodes (CMS National Registry)</h3>
+<h2 id="50-procedure">5.0 Procedure</h2>
+<ol>
+<li><strong>Harvesting:</strong> Use the Lead Ingestor script to pull data from verified sources.</li>
+<li><strong>Verification:</strong> Filter for NAICS code 561720 (Janitorial).</li>
+<li><strong>Persistence:</strong> Store all raw data in <code>HWB-COMPANY/HWB-DATA/</code>.</li>
+</ol>
+<h2 id="60-verification-zero-defect-check">6.0 Verification (Zero-Defect Check)</h2>
 <ul>
-<li><strong>Asset:</strong> NPPES NPI Registry (National download).</li>
-<li><strong>Fidelity:</strong> Full institutional names and practice addresses for hospitals and clinics.</li>
-<li><strong>Connectivity:</strong> Monthly bulk download (CSV).</li>
-<li><strong>Strategic Value:</strong> Tier-1 sanitation targets with high compliance requirements.</li>
+<li>Data contains zero "synthetic" entries.</li>
+<li>Addresses match verified US Postal Service standards.</li>
 </ul>
-<h3 id="23-child-care-educational-hubs-hhs-network">2.3 Child Care &amp; Educational Hubs (HHS Network)</h3>
-<ul>
-<li><strong>Asset:</strong> National Directory of State Licensing Agencies.</li>
-<li><strong>Fidelity:</strong> Varies by state; Texas, New York, and Washington are "API-Primary."</li>
-<li><strong>Connectivity:</strong> Federated links to individual state open data portals.</li>
-<li><strong>Strategic Value:</strong> High-capacity (99+) leads for the HWB-BABYSOP vertical.</li>
-</ul>
-<hr />
-<h1 id="30-high-yield-state-portals-the-growth-corridor">3.0 High-Yield State Portals (The "Growth Corridor")</h1>
+<h2 id="70-revision-history">7.0 Revision History</h2>
 <table>
 <thead>
 <tr>
-<th style="text-align: left;">State</th>
-<th style="text-align: left;">Portal Type</th>
-<th style="text-align: left;">Key Sector</th>
-<th style="text-align: left;">Extraction Fidelity</th>
+<th style="text-align: left;">Version</th>
+<th style="text-align: left;">Date</th>
+<th style="text-align: left;">Author</th>
+<th style="text-align: left;">Change Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><strong>New York</strong></td>
-<td style="text-align: left;">data.ny.gov</td>
-<td style="text-align: left;">DMV Licensed Facilities</td>
-<td style="text-align: left;">High (SODA API)</td>
+<td style="text-align: left;">2.0.0</td>
+<td style="text-align: left;">05/21/2026</td>
+<td style="text-align: left;">George</td>
+<td style="text-align: left;">TOTAL MODERNIZATION. Consolidated report into SOP format and added 2026 mandates.</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>California</strong></td>
-<td style="text-align: left;">data.ca.gov</td>
-<td style="text-align: left;">Child Care / Medical</td>
-<td style="text-align: left;">High (CKAN API)</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>Florida</strong></td>
-<td style="text-align: left;">floridajobs.org</td>
-<td style="text-align: left;">Commercial Real Estate</td>
-<td style="text-align: left;">Medium (Bulk CSV)</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>Washington</strong></td>
-<td style="text-align: left;">data.wa.gov</td>
-<td style="text-align: left;">Business Entities</td>
-<td style="text-align: left;">High (SODA API)</td>
+<td style="text-align: left;">1.0</td>
+<td style="text-align: left;">2026-03-05</td>
+<td style="text-align: left;">Lauri Tells</td>
+<td style="text-align: left;">Initial Data Intelligence Sweep.</td>
 </tr>
 </tbody>
 </table>
-<hr />
-<h1 id="40-technical-assessment-george">4.0 Technical Assessment (George)</h1>
-<ul>
-<li><strong>Zero-Cost Infrastructure:</strong> 90% of the identified sources are 100% free under public service mandates.</li>
-<li><strong>Orchestration:</strong> George is prepared to develop "State Connectors" (ETL scripts) for the NY, CA, and WA portals, identical to the <strong>CCAD-Sync</strong> logic.</li>
-<li><strong>Data Integrity:</strong> We recommend filtering all national sets by <strong>Employee Count &gt;= 50</strong> or <strong>Facility Size &gt;= 10,000 SQF</strong> to maintain institutional focus.</li>
-</ul>
-<hr />
-<h1 id="50-discussion-points-for-2026-03-06">5.0 Discussion Points for 2026-03-06</h1>
-<ol>
-<li><strong>Prioritization:</strong> Which state corridor (after Texas) should we ingest first?</li>
-<li><strong>Sector Focus:</strong> Should we initiate the EPA ECHO (Industrial) or CMS (Medical) national sweep next?</li>
-<li><strong>SQF Enrichment:</strong> Approval to use Google Earth Pro for footprint proxies on national sets where CAD data is restricted.</li>
-</ol>
-<hr />
-<p><em>Report produced by George (System Architect) and Lauri Tells (VP Sales) for SigmaFidelity™.</em></p>
+    </div>
+
+    <div class="sop-card-footer">
+        <span>&copy; 2026 HWB Cleaning Services LLC</span>
+        <span>Controlled Document | HWB-MKT-NIR-001</span>
+        <span>Page <span class="page-number"></span></span>
     </div>
 </div>

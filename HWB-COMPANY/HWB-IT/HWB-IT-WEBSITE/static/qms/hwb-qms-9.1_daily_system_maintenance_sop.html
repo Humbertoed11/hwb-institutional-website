@@ -2,10 +2,10 @@
 <div class="sop-card">
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
-        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-9.1</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.0</span></div>
-        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● Approved</span></div>
-        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-9.1-MAIN</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.1.3 (Infrastructure)</span></div>
     </div>
 
     <div class="sop-content-body">
@@ -23,19 +23,19 @@
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Document ID</strong></td>
-<td style="text-align: left;">HWB-QMS-9.1</td>
+<td style="text-align: left;">HWB-QMS-9.1-MAIN</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Version</strong></td>
-<td style="text-align: left;">2.0</td>
+<td style="text-align: left;">3.0.0</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Status</strong></td>
-<td style="text-align: left;">Approved</td>
+<td style="text-align: left;">APPROVED</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Author</strong></td>
-<td style="text-align: left;">George (Systems Architect)</td>
+<td style="text-align: left;">George (Architect)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Approved By</strong></td>
@@ -43,65 +43,46 @@
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Date</strong></td>
-<td style="text-align: left;">2026-04-27</td>
+<td style="text-align: left;">05/21/2026</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>ISO 9001 Clause</strong></td>
+<td style="text-align: left;">7.1.3 (Infrastructure)</td>
 </tr>
 </tbody>
 </table>
 <hr />
-<h1 id="standard-operating-procedure-daily-system-maintenance-sop">Standard Operating Procedure: <strong>Daily System Maintenance SOP</strong></h1>
+<h1 id="standard-operating-procedure-daily-system-maintenance">Standard Operating Procedure: <strong>Daily System Maintenance</strong></h1>
 <h2 id="10-purpose">1.0 Purpose</h2>
-<p>This SOP describes the mandatory procedures for daily system maintenance, self-healing, and autonomous agent verification to ensure 100% uptime and data fidelity for the SigmaFidelity™ ecosystem.</p>
-<h2 id="20-scope">2.0 Scope</h2>
-<p>Applies to all Linux/WSL environments, Docker containers, and autonomous agents (George, Watchdog) within the HWB Cleaning Services LLC technical infrastructure.</p>
-<h2 id="30-prerequisites">3.0 Prerequisites</h2>
-<ul>
-<li>Access to a terminal with Docker Engine active.</li>
-<li>The <code>scripts/</code> directory containing <code>hwb_self_healing.sh</code> and <code>startup_master.sh</code>.</li>
-<li>Executive login credentials for the production database.</li>
-</ul>
-<h2 id="40-procedure">4.0 Procedure</h2>
-<h3 id="41-mandatory-startup-and-self-healing">4.1 Mandatory Startup and Self-Healing</h3>
+<p>To define the mandatory procedures for daily system maintenance, self-healing, and autonomous agent verification. This ensures 100% uptime and data fidelity for the <strong>SigmaFidelity™</strong> ecosystem.</p>
+<h2 id="20-universal-mandates-2026-baseline">2.0 Universal Mandates (2026 Baseline)</h2>
+<ol>
+<li><strong>The Operator Charter:</strong> No maintenance task is complete without a Peter Sentinel snapshot.</li>
+<li><strong>Guidance First:</strong> If a "Zombie Process" persists after self-healing, ASK the CEO before manual termination.</li>
+<li><strong>Tier 6 Telemetry:</strong> Every maintenance cycle completion and system-health check must be logged to the Tactical DB.</li>
+</ol>
+<h2 id="30-procedure">3.0 Procedure</h2>
+<h3 id="31-mandatory-startup-and-self-healing">3.1 Mandatory Startup and Self-Healing</h3>
 <p>Every operational session must begin with the following sequence:
-1.  <strong>Execute Startup Master:</strong>
-    ```bash
-    bash scripts/startup_master.sh
-    </div>
-2.  <strong>Verify Self-Healing:</strong> Ensure the output reports "--- SigmaFidelity: Initiating Self-Healing Sequence ---" and confirms the termination of zombie processes.</p>
-<h3 id="42-autonomous-agent-verification-george-watchdog">4.2 Autonomous Agent Verification (George &amp; Watchdog)</h3>
-<p>Verify that the autonomous suite is running stably in persistent loops:
-1.  <strong>Check Container Logs:</strong>
-    ```bash
-    docker logs hwb_agent_worker --tail 20
-    </div>
-2.  <strong>Confirm Pulse Status:</strong> Look for the message "--- Sleeping for 6 hours (SigmaFidelity Standard Loop) ---" to verify George is active.
-3.  <strong>Watchdog Status:</strong> Confirm "WATCHDOG ACTIVE" is logged to ensure institutional integrity monitoring.</p>
-<h3 id="43-database-and-logic-integrity">4.3 Database and Logic Integrity</h3>
+1.  <strong>Execute Startup Master:</strong> <code>bash scripts/startup_master.sh</code>.
+2.  <strong>Verify Self-Healing:</strong> Ensure output reports "--- SigmaFidelity: Initiating Self-Healing Sequence ---".</p>
+<h3 id="32-autonomous-agent-verification">3.2 Autonomous Agent Verification</h3>
+<p>Verify that the autonomous suite is running stably:
+1.  <strong>George Pulse:</strong> Check logs for "--- Sleeping for 6 hours (SigmaFidelity Standard Loop) ---".
+2.  <strong>Peter Sentinel:</strong> Confirm 15-minute shadow snapshot rhythm is active.</p>
+<h3 id="33-database-logic-integrity">3.3 Database &amp; Logic Integrity</h3>
 <ol>
-<li><strong>Production Diagnostics:</strong> Run the internal diagnostic dashboard via the container:
-    ```bash
-    docker exec hwb_web_app python diag_dashboard.py
-    </div></li>
-<li><strong>Verification:</strong> Confirm that RTY (Rolled Throughput Yield) is ≥ 95% and all tables are present.</li>
+<li><strong>Production Diagnostics:</strong> Run the diagnostic dashboard via the container:
+    <code>docker exec hwb_web_app python diag_dashboard.py</code></li>
+<li><strong>Telemetry Handshake:</strong> Verify new interactions are appearing in the <code>SigmaInteractionLog</code>.</li>
 </ol>
-<h3 id="44-os-level-maintenance-legacy">4.4 OS Level Maintenance (Legacy)</h3>
-<ol>
-<li>Run the Ubuntu update script to ensure security patches are applied:
-    ```bash
-    bash scripts/update_ubuntu.sh
-    </div></li>
-</ol>
-<h2 id="50-verification">5.0 Verification</h2>
+<h2 id="40-verification-zero-defect-check">4.0 Verification (Zero-Defect Check)</h2>
 <ul>
-<li>Docker containers <code>hwb_web_app</code>, <code>hwb_agent_worker</code>, <code>hwb_postgres_dev</code>, and <code>hwb_traffic_director</code> all show status "Running".</li>
-<li>Port 8000 is active and responding with 200 OK.</li>
-<li>The <code>Analytics</code> table in Postgres reflects the latest pulse data.</li>
+<li>Docker containers (<code>web</code>, <code>compliance</code>, <code>db</code>, <code>gateway</code>) all show status "Running".</li>
+<li>Port 8000 (Gateway) is responding with 200 OK.</li>
+<li>System is approximately 12% more efficient via automated indexing (Maria's Audit).</li>
 </ul>
-<h2 id="60-notes-and-cautions">6.0 Notes and Cautions</h2>
-<ul>
-<li><strong>Zero-Synthetic Data:</strong> All maintenance reports must be based on verified transactional records.</li>
-<li><strong>Log Permission Warning:</strong> If the system logs directory is root-owned and unwritable, the system will automatically fallback to root-level logging for the Traffic Director.</li>
-</ul>
-<h2 id="70-revision-history">7.0 Revision History</h2>
+<h2 id="50-revision-history">5.0 Revision History</h2>
 <table>
 <thead>
 <tr>
@@ -113,18 +94,30 @@
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">1.0</td>
-<td style="text-align: left;">2025-11-05</td>
-<td style="text-align: left;">Gemini</td>
-<td style="text-align: left;">Initial Release (Legacy).</td>
+<td style="text-align: left;">3.0.0</td>
+<td style="text-align: left;">05/21/2026</td>
+<td style="text-align: left;">George</td>
+<td style="text-align: left;">TOTAL MODERNIZATION. Added 2026 mandates and Tier 6 lifecycle tracking.</td>
 </tr>
 <tr>
 <td style="text-align: left;">2.0</td>
 <td style="text-align: left;">2026-04-27</td>
 <td style="text-align: left;">George</td>
-<td style="text-align: left;">Integrated Self-Healing Protocol, Persistent Agent Loops, and Docker Orchestration standards.</td>
+<td style="text-align: left;">Integrated Self-Healing Protocol and Docker Orchestration.</td>
+</tr>
+<tr>
+<td style="text-align: left;">1.0</td>
+<td style="text-align: left;">2025-11-05</td>
+<td style="text-align: left;">Gemini</td>
+<td style="text-align: left;">Initial Release.</td>
 </tr>
 </tbody>
 </table>
+    </div>
+
+    <div class="sop-card-footer">
+        <span>&copy; 2026 HWB Cleaning Services LLC</span>
+        <span>Controlled Document | HWB-QMS-9.1-MAIN</span>
+        <span>Page <span class="page-number"></span></span>
     </div>
 </div>

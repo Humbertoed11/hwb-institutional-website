@@ -2,11 +2,12 @@
 | :------------------- | :------------------------------- |
 | **Document Title**   | **Accounting Management SOP**    |
 | **Document ID**      | HWB-ACC-001                      |
-| **Version**          | 1.1                              |
-| **Status**           | Approved                         |
-| **Author**           | Gemini (Senior ISO 9001 Auditor) |
-| **Approved By**      | SigmaFidelity™ Orchestrator      |
-| **Date**             | 2026-02-28                       |
+| **Version**          | 2.0.0                            |
+| **Status**           | APPROVED                         |
+| **Author**           | George (Architect)               |
+| **Approved By**      | Humberto Dominguez, CEO          |
+| **Date**             | 05/21/2026                       |
+| **ISO 9001 Clause**  | 7.1.3 (Infrastructure)           |
 
 ---
 
@@ -18,18 +19,23 @@ This SOP defines the financial governance, invoicing, and tax compliance procedu
 ## 2.0 Scope
 Applies to all financial transactions, including accounts receivable (AR), accounts payable (AP), and payroll processing.
 
-## 3.0 Prerequisites
+## 3.0 Universal Mandates (2026 Baseline)
+1. **Guidance First:** If a financial discrepancy or missing file is found, ASK the CEO before searching.
+2. **Tier 6 Telemetry:** Every major fiscal decision must be logged to the `SigmaInteractionLog`.
+3. **Physical Truth:** Reference absolute server paths for all accounting exports.
+
+## 4.0 Prerequisites
 *   Access to QuickBooks/Accounting software.
 *   Verified empirical data from the `quote_app` for invoicing.
-*   `[[HWB-ACC-002 Accounts Receivable SOP]]`
-*   `[[HWB-ACC-003 Accounts Payable SOP]]`
+*   `HWB-ACC-002 Accounts Receivable SOP`
+*   `HWB-ACC-003 Accounts Payable SOP`
 
-## 4.0 Procedure
-1.  **Accounts Receivable:** Manage client invoicing and collections per `[[HWB-ACC-002]]`.
-2.  **Accounts Payable:** Manage vendor obligations and payments per `[[HWB-ACC-003]]`.
+## 5.0 Procedure
+1.  **Accounts Receivable:** Manage client invoicing and collections per `HWB-ACC-002`.
+2.  **Accounts Payable:** Manage vendor obligations and payments per `HWB-ACC-003`.
 3.  **Audit Readiness:** Maintain all financial records for a minimum of 7 years in compliance with federal regulations.
 
-### 4.1 [Process Flow Chart]
+### 5.1 [Process Flow Chart]
 ```mermaid
 graph TD
     A[Service Completion] --> B[Invoice Generation]
@@ -38,16 +44,17 @@ graph TD
     E --> F[Payment Release]
 ```
 
-## 5.0 Verification
-*   Monthly bank reconciliation reports.
+## 6.0 Verification (Zero-Defect Check)
+*   Monthly bank reconciliation reports verified by CEO.
 *   Annual financial audits by the Managing Director.
+*   Zero variance between Lead records and Invoices.
 
-## 6.0 Notes and Cautions
-*   **Zero Synthetic Data:** All financial entries must represent actual currency transactions.
+## 7.0 Notes and Cautions
+> **NOTE:** Use simple, everyday words for high readability.
+> **CAUTION:** All financial entries must represent actual currency transactions. Zero Synthetic Data.
 
-## 7.0 Revision History
+## 8.0 Revision History
 | Version | Date | Author | Change Description |
 | :--- | :--- | :--- | :--- |
-| 1.0 | 2026-02-28 | Gemini | Initial Release. |
+| 2.0.0 | 05/21/2026 | George | TOTAL MODERNIZATION. Added 2026 Baseline mandates and Tier 6 integration. |
 | 1.1 | 2026-03-01 | Gemini | Integrated specific AR and AP management SOPs. |
-

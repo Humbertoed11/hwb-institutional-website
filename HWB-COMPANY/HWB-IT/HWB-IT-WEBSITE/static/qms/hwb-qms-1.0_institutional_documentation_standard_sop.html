@@ -1,0 +1,139 @@
+
+<div class="sop-card">
+    <!-- 0.0 DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-1.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5.3 (Control of Documented Information)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <table>
+<thead>
+<tr>
+<th style="text-align: left;"><strong>Document Control</strong></th>
+<th style="text-align: left;"></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Document Title</strong></td>
+<td style="text-align: left;"><strong>Institutional Documentation Standard SOP</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Document ID</strong></td>
+<td style="text-align: left;">HWB-QMS-1.0</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Version</strong></td>
+<td style="text-align: left;">1.0.0</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Status</strong></td>
+<td style="text-align: left;">APPROVED</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Author</strong></td>
+<td style="text-align: left;">George (Architect)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Approved By</strong></td>
+<td style="text-align: left;">Humberto Dominguez, CEO</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Date</strong></td>
+<td style="text-align: left;">05/21/2026</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>ISO 9001 Clause</strong></td>
+<td style="text-align: left;">7.5.3 (Control of Documented Information)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1 id="standard-operating-procedure-institutional-documentation-standard-sop">Standard Operating Procedure: <strong>Institutional Documentation Standard SOP</strong></h1>
+<h2 id="10-purpose">1.0 Purpose</h2>
+<p>To define the mandatory standard for creating, managing, and modernizing all HWB documented information. This ensures that every manual, guide, and technical blueprint follows the clinical "Industrial Authority" look and is fully audit-ready for ISO 9001.</p>
+<h2 id="20-scope">2.0 Scope</h2>
+<p>Applies to all departments (HR, IT, Ops, Sales) and all AI agents. Covers both internal Markdown files and the public-facing HTML Compliance Engine.</p>
+<h2 id="30-universal-mandates-documentation-continuity">3.0 Universal Mandates (Documentation Continuity)</h2>
+<ol>
+<li><strong>The May 1st Baseline:</strong> Any document dated before May 1st, 2026, is designated as <strong>OUTDATED</strong>. It must be audited and modernized before it can be used as production logic.</li>
+<li><strong>Guidance First Search:</strong> Agents must never perform exhaustive searches for missing files without CEO guidance.</li>
+<li><strong>No Synthetic Data:</strong> Synthetic, placeholder, or "make-belief" data is strictly prohibited in all controlled documents.</li>
+<li><strong>Surgical Continuity:</strong> Large documents must be updated using the <code>replace</code> tool (Surgical Insertion) to prevent <strong>Content Erosion</strong>.</li>
+</ol>
+<h2 id="40-prerequisites">4.0 Prerequisites</h2>
+<ul>
+<li><strong>Master Template:</strong> <code>HWB-COMPANY/HWB-QMS/sop_template.md</code> must be used as the starting point for every new SOP.</li>
+<li><strong>Clinical Shell:</strong> Access to <code>HWB-IT-WEBSITE/templates/sop_base.html</code> for HTML rendering.</li>
+<li><strong>Migration Script:</strong> <code>scripts/migrate_sops.py</code> must be verified and healthy.</li>
+</ul>
+<h2 id="50-procedure">5.0 Procedure</h2>
+<h3 id="51-document-creation-markdown">5.1 Document Creation (Markdown)</h3>
+<ol>
+<li>Copy the <code>sop_template.md</code>.</li>
+<li>Fill in the <strong>0.0 Document Control</strong> table with the accurate ID, Version, and Date (MM-DD-YYYY).</li>
+<li>Draft content using simple "Everyday Words" at a 20-year-old reading level.</li>
+<li>Use <strong>Industrial Callout</strong> blocks for high-impact notes or cautions.</li>
+<li>Save the file in the appropriate <code>HWB-COMPANY/[DEPT]</code> folder.</li>
+</ol>
+<h3 id="52-html-migration-tracker-sync">5.2 HTML Migration &amp; Tracker Sync</h3>
+<ol>
+<li>Run <code>python scripts/migrate_sops.py</code>.</li>
+<li>The script will automatically parse metadata and assign the <strong>UPDATED</strong> or <strong>OUTDATED</strong> status badge.</li>
+<li>The script will generate a memory-efficient HTML fragment in <code>static/qms/</code>.</li>
+<li>The system will automatically update the <strong>Master Manual Index</strong> at <code>/manual</code>.</li>
+</ol>
+<h3 id="53-audit-verification">5.3 Audit Verification</h3>
+<ol>
+<li>Open <code>http://mop.test:5000/manual</code>.</li>
+<li>Locate the new document and verify the <strong>Status Badge</strong> is Green (UPDATED).</li>
+<li>Click the document and verify the <strong>TOC (Table of Contents)</strong> and <strong>Syntax Highlighting</strong> are active.</li>
+<li>Perform a <strong>Print-to-PDF</strong> test to ensure 8.5" x 11" alignment.</li>
+</ol>
+<h2 id="60-verification-zero-defect-check">6.0 Verification (Zero-Defect Check)</h2>
+<ul>
+<li>Every document must have a unique ID: <code>HWB-[DEPT]-[NUMBER]</code>.</li>
+<li>Every document must reference at least one ISO 9001 Clause.</li>
+<li>No document may use the 2000-01-01 sentinel date in production.</li>
+</ul>
+<h2 id="70-notes-and-cautions">7.0 Notes and Cautions</h2>
+<div class="callout callout-logic"><strong>Technical Logic</strong>The Compliance Engine uses Nginx for isolation. If the manual is not loading, check the `hwb_compliance_engine` container status.</div>
+<div class="callout callout-caution"><strong>Caution</strong>Documents are protected by Peter Sentinel snapshots. Reverting a document also reverts its status in the Compliance Tracker.</div>
+
+<h2 id="80-revision-history">8.0 Revision History</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Version</th>
+<th style="text-align: left;">Date</th>
+<th style="text-align: left;">Author</th>
+<th style="text-align: left;">Change Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1.0.0</td>
+<td style="text-align: left;">05/21/2026</td>
+<td style="text-align: left;">George</td>
+<td style="text-align: left;">Initial Release. Formalized the 2026 Documentation Standards and HTML Migration Engine.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="90-document-conventions">9.0 Document Conventions</h2>
+<ul>
+<li><strong>Primary Font:</strong> Inter (900 for Headers, 400 for Body).</li>
+<li><strong>Body Size:</strong> 16px (1rem).</li>
+<li><strong>Line Height:</strong> 1.8.</li>
+<li><strong>H1 Tracking:</strong> -0.04em.</li>
+</ul>
+    </div>
+
+    <div class="sop-card-footer">
+        <span>&copy; 2026 HWB Cleaning Services LLC</span>
+        <span>Controlled Document | HWB-QMS-1.0</span>
+        <span>Page <span class="page-number"></span></span>
+    </div>
+</div>

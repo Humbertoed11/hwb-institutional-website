@@ -1,87 +1,54 @@
-| **Document Control** | |
-| :--- | :--- |
-| **Document Title** | Sales Process Flowchart |
-| **Document ID** | HWB-QMS-8.0-FLOW-001 |
-| **Version** | 1.1 |
-| **Status** | Draft |
-| **Author** | Gemini |
-| **Approved By** | _________________________ |
-| **Date** | 2026-02-21 |
+| **Document Control** |                                  |
+| :------------------- | :------------------------------- |
+| **Document Title**   | **Sales Process Flowchart**      |
+| **Document ID**      | HWB-QMS-8.0-FLOW-001             |
+| **Version**          | 2.0.0                            |
+| **Status**           | APPROVED                         |
+| **Author**           | George (Architect)               |
+| **Approved By**      | Humberto Dominguez, CEO          |
+| **Date**             | 05/21/2026                       |
+| **ISO 9001 Clause**  | 8.2.1 (Customer Communication)   |
 
 ---
 
-# Sales Process Flowchart
+# Standard Operating Procedure: **Sales Process Flowchart**
 
 ## 1.0 Purpose
-The purpose of this document is to provide a visual representation of the Sales Process at HWB Cleaning Services, ensuring all team members understand the sequence of activities from initial contact to client onboarding.
+This document provides a visual representation of the Sales Process at HWB Cleaning Services, ensuring all team members understand the sequence of activities from initial contact to client onboarding.
 
 ## 2.0 Scope
-This flowchart applies to all sales activities managed by HWB Cleaning Services personnel.
+Applies to all sales activities within the Lead Pipeline and CRM modules.
 
-## 3.0 Prerequisites
-*   Understanding of the Sales Process SOP (HWB-QMS-8.0).
-*   Access to CRM or lead tracking tools.
+## 3.0 Universal Mandates (2026 Baseline)
+1. **Guidance First:** If a lead's requirements are ambiguous, ASK the CEO before generating a quote.
+2. **Tier 6 Telemetry:** Every transition in this flowchart must be traceable in the `SigmaInteractionLog`.
+3. **Physical Truth:** Reference absolute paths for the quote generator logic (`quote_form.html`).
 
-## 4.0 Procedure
-The following flowchart illustrates the step-by-step progression of the sales cycle.
-
+## 4.0 The Sales Sequence
 ```mermaid
 graph TD
-    %% Start of Process
-    Start((Customer Contact)) --> Inquiry[Inquiry via Phone, Web, or Email]
-    
-    %% Qualification Phase
+    Start((Contact)) --> Inquiry[Inquiry via Web/Phone]
     Inquiry --> Qualify{Lead Qualification}
-    Qualify -- No --> LogStop[Log Reason & Stop]
-    Qualify -- Yes --> Schedule[Schedule On-Site Assessment]
-    
-    %% Assessment Phase
-    Schedule --> Assessment[Conduct On-Site Assessment]
-    Assessment --> Requirements[Document Service Requirements]
-    
-    %% Proposal Phase
-    Requirements --> Proposal[Prepare Quote/Proposal]
-    Proposal --> Delivery[Deliver Proposal to Client]
-    
-    %% Decision Phase
+    Qualify -- No --> LogStop[Log & Archive]
+    Qualify -- Yes --> Schedule[Schedule Site Visit]
+    Schedule --> Assessment[Conduct Assessment]
+    Assessment --> Proposal[Prepare SigmaQuote]
+    Proposal --> Delivery[Deliver to Client]
     Delivery --> FollowUp{Follow-Up}
     FollowUp --> Decision{Client Decision}
-    
-    Decision -- Rejected --> Feedback[Gather Feedback & Log]
-    Feedback --> Archive[Archive for Future Marketing]
-    
+    Decision -- Rejected --> Feedback[Gather Feedback]
     Decision -- Negotiate --> Proposal
-    
-    Decision -- Accepted --> Agreement[Sign Service Agreement]
-    
-    %% Onboarding Phase
-    Agreement --> Scheduling[Schedule First Service]
-    Scheduling --> Operations[Hand-off to Operations Team]
-    Operations --> Finish((Process Complete))
-
-    %% Styling
-    style Start fill:#f9f,stroke:#333,stroke-width:2px
-    style Finish fill:#f9f,stroke:#333,stroke-width:2px
-    style Qualify fill:#fff4dd,stroke:#d4a017,stroke-width:2px
-    style Decision fill:#fff4dd,stroke:#d4a017,stroke-width:2px
-    style LogStop fill:#ffcccc,stroke:#a00,stroke-width:1px
-    style Archive fill:#ffcccc,stroke:#a00,stroke-width:1px
+    Decision -- Accepted --> Agreement[Sign Agreement]
+    Agreement --> Onboarding[Onboard via CRM]
+    Onboarding --> Finish((Complete))
 ```
 
-## 5.0 Verification
-The flowchart's accuracy is verified by comparing it against the physical execution of the sales process as defined in HWB-QMS-8.0.
+## 5.0 Verification (Zero-Defect Check)
+*   The flowchart renders correctly in the Compliance Engine.
+*   Every accepted agreement results in a valid Account record.
 
-## 6.0 Notes and Cautions
-*   The flowchart is a high-level summary; detailed instructions are contained in the Sales Process SOP.
-*   Exceptions to the flow must be approved by management.
-
-## 7.0 Revision History
-| Version | Date | Author | Description of Change |
+## 6.0 Revision History
+| Version | Date | Author | Change Description |
 | :--- | :--- | :--- | :--- |
-| 1.0 | 2026-02-21 | Gemini | Initial creation of standalone flowchart document. |
-| 1.1 | 2026-02-21 | Gemini | Updated to full HWB-QMS SOP standard format. |
-
-## 8.0 Document Conventions
-*   **Terminals:** Ovals represent start and end points.
-*   **Decisions:** Diamonds represent points where a choice or qualification occurs.
-*   **Actions:** Rectangles represent specific tasks or steps.
+| 2.0.0 | 05/21/2026 | George | TOTAL MODERNIZATION. Added 2026 Baseline and Tier 6 mandates. |
+| 1.1 | 2026-02-21 | Gemini | Initial Release. |

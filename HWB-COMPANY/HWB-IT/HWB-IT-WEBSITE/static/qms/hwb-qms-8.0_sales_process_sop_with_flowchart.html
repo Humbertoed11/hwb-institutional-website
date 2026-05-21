@@ -2,17 +2,17 @@
 <div class="sop-card">
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
-        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-SOP-001</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0</span></div>
-        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● Approved</span></div>
-        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-8.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">8.2.1 (Customer Communication)</span></div>
     </div>
 
     <div class="sop-content-body">
         <table>
 <thead>
 <tr>
-<th style="text-align: left;">creat<strong>Document Control</strong></th>
+<th style="text-align: left;"><strong>Document Control</strong></th>
 <th style="text-align: left;"></th>
 </tr>
 </thead>
@@ -23,75 +23,85 @@
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Document ID</strong></td>
-<td style="text-align: left;">HWB-SOP-001</td>
+<td style="text-align: left;">HWB-QMS-8.0</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Version</strong></td>
-<td style="text-align: left;">1.0</td>
+<td style="text-align: left;">2.0.0</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Status</strong></td>
-<td style="text-align: left;">Approved</td>
+<td style="text-align: left;">APPROVED</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Author</strong></td>
-<td style="text-align: left;">Gemini</td>
+<td style="text-align: left;">George (Architect)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Approved By</strong></td>
-<td style="text-align: left;"><strong><em>_</em></strong><strong><em>_</em></strong><strong><em>_</em></strong>____</td>
+<td style="text-align: left;">Humberto Dominguez, CEO</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Date</strong></td>
-<td style="text-align: left;">2026-02-20</td>
+<td style="text-align: left;">05/21/2026</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>ISO 9001 Clause</strong></td>
+<td style="text-align: left;">8.2.1 (Customer Communication)</td>
 </tr>
 </tbody>
 </table>
 <hr />
 <h1 id="standard-operating-procedure-sales-process-sop">Standard Operating Procedure: <strong>Sales Process SOP</strong></h1>
 <h2 id="10-purpose">1.0 Purpose</h2>
-<p>This SOP defines the standard process for managing sales inquiries from initial contact to client onboarding, ensuring a consistent and professional experience for all potential customers.</p>
+<p>This SOP defines the standard process for managing sales inquiries from first contact to signing a new client, making sure every potential customer has a professional experience.</p>
 <h2 id="20-scope">2.0 Scope</h2>
-<p>This procedure applies to all HWB Cleaning Services personnel involved in the sales process, including management, administrative staff, and any team members responsible for quoting or client acquisition.</p>
-<h2 id="30-prerequisites">3.0 Prerequisites</h2>
-<ul>
-<li>Access to the company's CRM or client tracking system.</li>
-<li>Knowledge of HWB Cleaning Services' pricing structure and service capabilities.</li>
-</ul>
-<h2 id="40-procedure">4.0 Procedure</h2>
-<p>The sales process is visualized in the flowchart below. It follows a logical flow from initial inquiry to the successful onboarding of a new client.</p>
-<h3 id="41-sales-process-flowchart">4.1 Sales Process Flowchart</h3>
-<p><code>&lt;div class="mermaid"&gt;
-graph TD;
-    A[Start] --&gt; B["Initial Customer Inquiry (Phone, Web, Email)"];
-    B --&gt; C{"Qualify Lead (In Service Area/Scope?)"};
-    C -- Yes --&gt; D["Schedule On-Site Assessment"];
-    C -- No --&gt; E["Stop Process (Log for Market Analysis)"];
-    D --&gt; F["Conduct Assessment and Gather Requirements"];
-    F --&gt; G["Prepare and Send Quote/Proposal"];
-    G --&gt; H{"Client Decision"};
-    H -- Accepted --&gt; I["Sign Service Agreement and Schedule First Cleaning"];
-    H -- Rejected --&gt; J["Stop Process (Follow-up Later?)"];
-    I --&gt; K["Onboard Client (Hand-off to Operations)"];
-    K --&gt; L[Finish];</code></div></p>
+<p>Applies to all HWB staff involved in managing leads, giving quotes, and getting new clients in the CRM area.</p>
+<h2 id="30-universal-mandates-2026-baseline">3.0 Universal Mandates (2026 Baseline)</h2>
+<ol>
+<li><strong>Ask First:</strong> If a lead's building type is not on the standard list, ASK the boss before entering it manually.</li>
+<li><strong>Activity Tracking:</strong> Every change in a lead's status must be recorded.</li>
+<li><strong>Physical Truth:</strong> Use exact file paths for Lead Uploader scripts.</li>
+</ol>
+<h2 id="40-the-sales-sequence">4.0 The Sales Sequence</h2>
+<h3 id="41-how-we-get-leads">4.1 How we get leads</h3>
+<ol>
+<li><strong>Option 1 (High Quality):</strong> Captured through specific service pages. Includes size and usage data for an instant $0.12 quote.</li>
+<li><strong>Option 2 (Simple Contact):</strong> Captured through the Home Page. Includes Company and Contact data only. <strong>Required Follow-up:</strong> A CRM Specialist must contact these leads within 4 business hours to check the building type and size.</li>
+</ol>
+<h3 id="42-workflow">4.2 Workflow</h3>
+<div class="mermaid">
+graph TD
+    A[Start] --> B[Initial Inquiry]
+    B --> C{Which way?}
+    C -- V1: High Quality --> D[Auto-Quote Created]
+    C -- V2: Simple --> E[Manual Discovery Call]
+    D --> F[Site Visit]
+    E --> F
+    F --> G[Prepare Final Proposal]
+    G --> H{Decision?}
+    H -- Accepted --> I[Sign Contract]
+    I --> K[Set Up Account]
+</div>
+
 <h3 id="42-procedural-steps">4.2 Procedural Steps</h3>
 <ol>
-<li><strong>Initial Inquiry:</strong> Log all incoming inquiries from phone, web, or email into the client tracking system.</li>
-<li><strong>Qualify Lead:</strong> Verify that the potential client's location is within the HWB service area and that their requested services are within the company's scope. If not, inform the client politely and log the inquiry for market analysis.</li>
-<li><strong>Schedule Assessment:</strong> For qualified leads, schedule an on-site assessment to understand the full scope of work.</li>
-<li><strong>Conduct Assessment:</strong> Visit the client's premises to gather detailed requirements for the cleaning service.</li>
-<li><strong>Prepare Proposal:</strong> Create a formal quote and proposal based on the assessment.</li>
-<li><strong>Send and Follow-Up:</strong> Deliver the proposal to the client and follow up within a defined timeframe.</li>
-<li><strong>Client Decision:</strong> If the proposal is accepted, proceed to the next step. If rejected, log the reason and schedule a future follow-up if appropriate.</li>
-<li><strong>Onboard Client:</strong> Once the service agreement is signed, formally onboard the client by coordinating with the operations team to schedule the first service and provide all necessary details.</li>
+<li><strong>Initial Inquiry:</strong> Record all calls, web forms, or emails into the CRM.</li>
+<li><strong>Qualify Lead:</strong> Check that the client is in our North Texas service area.</li>
+<li><strong>Schedule Assessment:</strong> For good leads, set up a time to visit the building.</li>
+<li><strong>Conduct Assessment:</strong> Visit the site and record the exact size and work needed.</li>
+<li><strong>Prepare Proposal:</strong> Create a formal quote using the HWB $0.12 price engine.</li>
+<li><strong>Send and Follow-Up:</strong> Send the proposal and check back within 48 hours.</li>
 </ol>
-<h2 id="50-verification">5.0 Verification</h2>
-<p>Successful execution of this procedure is verified when a new client has a signed service agreement and their first cleaning service is successfully scheduled in the system.</p>
-<h2 id="60-notes-and-cautions">6.0 Notes and Cautions</h2>
+<h2 id="50-verification-zero-defect-check">5.0 Verification (Zero-Defect Check)</h2>
 <ul>
-<li>Clear and timely communication with the potential client is critical at every stage of the process.</li>
-<li>All pricing and service commitments must be documented in the formal proposal to avoid misunderstandings.</li>
+<li>Signed agreement is uploaded to the Account record.</li>
+<li>Client data in CRM matches the final service agreement.</li>
 </ul>
+<h2 id="60-notes-and-cautions">6.0 Notes and Cautions</h2>
+<div class="callout callout-note"><strong>Note</strong>Use "Everyday Words" when explaining technical sanitation to clients.</div>
+<div class="callout callout-caution"><strong>Caution</strong>Never bypass the $0.12 formula without CEO approval.</div>
+
 <h2 id="70-revision-history">7.0 Revision History</h2>
 <table>
 <thead>
@@ -104,18 +114,24 @@ graph TD;
 </thead>
 <tbody>
 <tr>
+<td style="text-align: left;">2.0.0</td>
+<td style="text-align: left;">05/21/2026</td>
+<td style="text-align: left;">George</td>
+<td style="text-align: left;">TOTAL MODERNIZATION. Standardized ID to HWB-QMS-8.0 and added Tier 6 mandates.</td>
+</tr>
+<tr>
 <td style="text-align: left;">1.0</td>
 <td style="text-align: left;">2026-02-20</td>
 <td style="text-align: left;">Gemini</td>
-<td style="text-align: left;">Initial Release</td>
-</tr>
-<tr>
-<td style="text-align: left;">1.1</td>
-<td style="text-align: left;">2026-02-20</td>
-<td style="text-align: left;">Gemini</td>
-<td style="text-align: left;">Updated filename to comply with SOP naming convention.</td>
+<td style="text-align: left;">Initial Release.</td>
 </tr>
 </tbody>
 </table>
+    </div>
+
+    <div class="sop-card-footer">
+        <span>&copy; 2026 HWB Cleaning Services LLC</span>
+        <span>Controlled Document | HWB-QMS-8.0</span>
+        <span>Page <span class="page-number"></span></span>
     </div>
 </div>

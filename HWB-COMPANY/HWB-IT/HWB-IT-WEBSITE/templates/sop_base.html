@@ -24,20 +24,31 @@
         }
 
         body.qms-clinical-shell {
-            background: var(--qms-bg);
+            background-color: var(--qms-bg);
+            background-image: radial-gradient(#e2e8f0 0.5px, transparent 0.5px);
+            background-size: 24px 24px;
             margin: 0;
             display: flex;
             min-height: 100vh;
             color: #1e293b;
-            font-family: 'Inter', sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 1rem;
+            line-height: 1.8;
+            -webkit-font-smoothing: antialiased;
         }
+
+        /* 🔬 CUSTOM SCROLLBARS (SigmaFidelity Standard) */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
         /* Sidebar Standard */
         .qms-sidebar {
             width: 300px;
             background: var(--qms-sidebar);
             color: white;
-            padding: 2rem;
+            padding: 2.5rem;
             position: fixed;
             top: 154px; 
             height: calc(100vh - 154px);
@@ -50,36 +61,38 @@
         .qms-main {
             margin-left: 300px;
             flex-grow: 1;
-            padding: 4rem 6rem;
+            padding: 5rem 8rem;
             margin-top: 154px;
             display: grid;
-            grid-template-columns: 1fr 280px;
-            gap: 4rem;
+            grid-template-columns: 1fr 300px;
+            gap: 6rem;
+            max-width: 1800px;
         }
 
-        .qms-nav-group { margin-bottom: 2.5rem; }
-        .qms-nav-label { font-size: 0.7rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; color: rgba(255,255,255,0.4); margin-bottom: 1rem; display: block; }
-        .qms-nav-link { display: block; padding: 0.6rem 0; color: rgba(255,255,255,0.8); text-decoration: none; font-size: 0.9rem; font-weight: 600; transition: color 0.2s; }
-        .qms-nav-link:hover, .qms-nav-link.active { color: white; }
+        .qms-nav-group { margin-bottom: 3rem; }
+        .qms-nav-label { font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; color: rgba(255,255,255,0.3); margin-bottom: 1.25rem; display: block; }
+        .qms-nav-link { display: block; padding: 0.75rem 0; color: rgba(255,255,255,0.7); text-decoration: none; font-size: 0.9rem; font-weight: 600; transition: all 0.2s; border-left: 3px solid transparent; }
+        .qms-nav-link:hover { color: white; padding-left: 0.5rem; }
+        .qms-nav-link.active { color: white; border-left-color: var(--qms-accent); padding-left: 1rem; }
 
         /* Industrial SOP Card */
         .sop-card { 
             background: white; 
             border: 1px solid #e2e8f0; 
-            border-radius: 12px; 
-            padding: 4rem; 
-            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.02);
-            line-height: 1.8;
+            border-radius: 16px; 
+            padding: 5rem; 
+            box-shadow: 0 20px 50px -12px rgba(0,0,0,0.03), 0 10px 15px -3px rgba(0,0,0,0.01);
+            position: relative;
         }
 
         .sop-meta { 
             display: grid; 
             grid-template-columns: repeat(4, 1fr); 
-            gap: 2rem; 
-            margin-bottom: 4rem; 
-            padding: 2rem;
+            gap: 2.5rem; 
+            margin-bottom: 5rem; 
+            padding: 2.5rem;
             background: #f8fafc;
-            border-radius: 8px;
+            border-radius: 12px;
             border: 1px solid #e2e8f0;
         }
 
@@ -89,43 +102,65 @@
 
         /* 🏛️ INDUSTRIAL CALLOUT BLOCKS */
         .callout {
-            padding: 1.5rem 2rem;
-            border-radius: 8px;
-            margin: 2.5rem 0;
-            border-left: 5px solid;
-            font-size: 0.95rem;
+            padding: 2rem 2.5rem;
+            border-radius: 12px;
+            margin: 3rem 0;
+            border-left: 6px solid;
+            font-size: 1rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
         }
-        .callout-note { background: var(--clinical-blue); border-color: #3b82f6; color: #1e40af; }
-        .callout-caution { background: var(--clinical-amber); border-color: #f59e0b; color: #92400e; }
-        .callout-danger { background: var(--clinical-red); border-color: #ef4444; color: #991b1b; }
-        .callout-logic { background: #0f172a; border-color: #60a5fa; color: #f8fafc; }
-        .callout strong { display: block; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.75rem; }
+        .callout-note { background: #f0f7ff; border-color: #2563eb; color: #1e40af; }
+        .callout-caution { background: #fffbeb; border-color: #d97706; color: #92400e; }
+        .callout-danger { background: #fef2f2; border-color: #dc2626; color: #991b1b; }
+        .callout-logic { background: #0f172a; border-color: #3b82f6; color: #f8fafc; }
+        .callout strong { display: block; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.15em; font-size: 0.7rem; font-weight: 900; }
 
         /* Table Hardening */
         .sop-card table {
             width: 100%;
             border-collapse: collapse;
-            margin: 2.5rem 0;
-            font-size: 0.9rem;
+            margin: 3rem 0;
+            font-size: 0.95rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
         }
         .sop-card th {
             background: #f8fafc;
             text-align: left;
-            padding: 1rem;
+            padding: 1.25rem;
             border-bottom: 2px solid #e2e8f0;
             font-weight: 800;
             color: #0f172a;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-size: 0.7rem;
         }
         .sop-card td {
-            padding: 1rem;
+            padding: 1.25rem;
             border-bottom: 1px solid #f1f5f9;
         }
+        .sop-card tr:last-child td { border-bottom: none; }
         .sop-card tr:hover { background: #fcfcfc; }
 
+        /* Clinical SOP Footer */
+        .sop-card-footer {
+            margin-top: 6rem;
+            padding-top: 2rem;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
         /* Typography */
-        h1 { font-size: 2.75rem; font-weight: 900; letter-spacing: -0.04em; color: #0f172a; margin-bottom: 2rem; }
-        h2 { font-size: 1.5rem; font-weight: 800; color: #0f172a; border-bottom: 2px solid #f1f5f9; padding-bottom: 0.75rem; margin-top: 4rem; margin-bottom: 1.5rem; }
-        h3 { font-size: 1.15rem; font-weight: 700; color: #334155; margin-top: 2rem; }
+        h1 { font-size: 3rem; font-weight: 900; letter-spacing: -0.04em; color: #0f172a; margin-bottom: 2.5rem; line-height: 1.1; }
+        h2 { font-size: 1.75rem; font-weight: 800; color: #0f172a; border-bottom: 2px solid #f1f5f9; padding-bottom: 1rem; margin-top: 5rem; margin-bottom: 2rem; letter-spacing: -0.02em; }
+        h3 { font-size: 1.25rem; font-weight: 700; color: #334155; margin-top: 3rem; letter-spacing: -0.01em; }
 
         /* TOC Standard */
         .qms-toc-container {

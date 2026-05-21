@@ -1,60 +1,51 @@
 | **Document Control** |                                              |
 | :------------------- | :------------------------------------------- |
-| **Document Title**   | **Marketing Web Design Concepts & Visual Strategy** |
-| **Document ID**      | HWB-QMS-8.1-MKT-WEB-001                      |
-| **Version**          | 1.0                                          |
-| **Status**           | Active                                       |
-| **Author**           | George (AI Marketing & Web Assistant)        |
-| **Approved By**      | Gemini (Senior ISO 9001 Auditor)             |
-| **Date**             | 2026-03-03                                   |
+| **Document Title**   | **Marketing Web Design Standard**            |
+| **Document ID**      | HWB-QMS-8.1                                  |
+| **Version**          | 2.0.0                                        |
+| **Status**           | APPROVED                                     |
+| **Author**           | George (Architect)                           |
+| **Approved By**      | Humberto Dominguez, CEO                      |
+| **Date**             | 05/21/2026                                   |
+| **ISO 9001 Clause**  | 7.1.3 (Infrastructure)                       |
 
 ---
 
-# SigmaFidelity™ Marketing Web Design Portfolio
-
-![HWB Cleaning Services Logo](../static/HWB-WEB%20HWB%20New%20Logo.png)
-*Figure 1: Official HWB Cleaning Services LLC Corporate Logo - Institutional Trust and Precision.*
+# Standard Operating Procedure: **Marketing Web Design Standard**
 
 ## 1.0 Purpose
-This document catalogs the iterative visual concepts for the SigmaFidelity™ web ecosystem. Every design is engineered to communicate the core mission of HWB Cleaning Services LLC: the elimination of the **"Zero-Cost Illusion"** through information fidelity and Lean Six Sigma precision.
+To define the visual language and user experience standards for the HWB digital presence. This ensures that every page transition and component reinforces HWB’s "Industrial Authority" brand.
 
----
+## 2.0 Scope
+Covers the design and layout of all public-facing pages, including Home, Services, and specialized landing pages.
 
-## 2.0 Web Design Concepts (George's Portfolio)
+## 3.0 Universal Mandates (2026 Baseline)
+1. **Physical Truth:** Reference absolute server paths for all CSS and asset files (`static/`).
+2. **Unified Cockpit:** All new designs must integrate the Tier 1 Utility Bar and Mega Menu.
+3. **No Synthetic Logic:** Visual components must map 1-to-1 to real backend routes.
 
-### Concept 1: The "Fidelity Blueprint" (BASELINE)
-*   **Visual Strategy:** A high-fidelity architectural blueprint overlay with glowing, precise "Sigma" lines.
-*   **Psychological Hook:** Establishes institutional authority and data-driven verification. It transforms a "cleaning service" into a "precision management system."
-*   **Asset:** `HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/static/HWB-WEB Fidelity Blueprint.svg`
-*   **Best Use:** Main Website Hero Banner (Front Page).
+## 4.0 The "Material Depth" Standard
+*   **Pill Buttons:** 50px radius for public CTAs.
+*   **Centered Hero:** Max-width 1000px for high-authority headlines.
+*   **4-Column Grid:** Balanced distribution for service and value cards.
+*   **Logo Logic:** 28% Bisection Merge animation on the About Page.
 
----
+## 5.0 Procedure
+1.  **Staging:** Place all generative images/videos in `/static/gen_ai_staging/`.
+2.  **Review:** CEO must approve all visual assets before deployment.
+3.  **Hardening:** Wrap all components in "Technical Identity Cards" within the documentation.
 
-### Concept 2: "The Gemba Lens" (NEW)
-*   **Visual Strategy:** A high-contrast split-screen. On the left: A "blurred" traditional cleaning scene (representing the "organizational telephone game"). On the right: A "crystallized" view showing a technician following an ISO-audited pathing map with a digital checklist (representing the "Real Place" data).
-*   **Psychological Hook:** Transparency. It forces the viewer to acknowledge the difference between *assuming* a job is done and *verifying* it through SigmaFidelity™ protocols.
-*   **Best Use:** "Methodology" or "Our Process" sections.
+## 6.0 Verification (Zero-Defect Check)
+*   Page looks 100% identical to the production Source of Truth.
+*   Buttons lead to the correct Lead Pipeline route (`/get-quote`).
+*   Mobile responsive views follow the SigmaQuality™ layout.
 
----
+## 7.0 Notes and Cautions
+> **NOTE:** Use simple words to describe complex visual interactions.
+> **CAUTION:** Never use "Fluid Width" for hero text—it breaks the visual rhythm.
 
-### Concept 3: "The 8th Waste Monitor" (NEW)
-*   **Visual Strategy:** An interactive, dashboard-style graphic featuring dynamic counters representing "Payroll Hours Lost" and "Retention Value Preserved." The background is a clean, medical-grade facility with a semi-transparent HUD (Heads-Up Display) overlaying productivity metrics.
-*   **Psychological Hook:** Urgency and Economics. It targets the CFO's fear of the "Hidden Deficit" caused by misallocating high-value payroll to low-level manual tasks.
-*   **Best Use:** The "Waste of Talent Calculator" landing page.
-
----
-
-### Concept 4: "The Institutional Shield" (NEW)
-*   **Visual Strategy:** A 3D isometric representation of a corporate facility being "enveloped" by a blue shield formed by ISO 9001 and OSHA QuickCard™ documentation nodes. The lines are thick and represent structural integrity.
-*   **Psychological Hook:** Security and Risk Mitigation. It positions HWB not as a vendor, but as a defensive layer against regulatory non-compliance and organizational decay.
-*   **Best Use:** "Compliance" and "Safety" sub-pages.
-
----
-
-## 3.0 Revision History
-| Version | Date | Author | Description |
+## 8.0 Revision History
+| Version | Date | Author | Change Description |
 | :--- | :--- | :--- | :--- |
-| 1.0 | 2026-03-03 | George | Initial Portfolio established with 4 strategic concepts. |
-
----
-*Document produced by George (PhD in Business) for the SigmaFidelity™ QMS Suite.*
+| 2.0.0 | 05/21/2026 | George | TOTAL MODERNIZATION. Integrated the 2026 Material Depth standard and Tier 1-3 navigation. |
+| 1.0 | 2026-03-03 | George | Initial Release. |

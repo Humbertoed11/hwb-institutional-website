@@ -50,16 +50,16 @@
 <hr />
 <h1 id="standard-operating-procedure-disaster-recovery-and-data-restoration-sop">Standard Operating Procedure: <strong>Disaster Recovery and Data Restoration SOP</strong></h1>
 <h2 id="10-purpose">1.0 Purpose</h2>
-<p>This SOP defines the procedures for ensuring business continuity and data integrity for HWB Cleaning Services LLC in the event of catastrophic data loss, hardware failure, or system compromise. It specifically outlines the process for restoring the QMS infrastructure, absolute institutional paths, and operational code from the GitHub remote repository.</p>
+<p>This SOP defines the procedures for keeping the business running and ensuring accurate information for HWB Cleaning Services LLC if data is lost, hardware breaks, or the system is hacked. It explains how to get the company setup, exact file locations, and code back from GitHub.</p>
 <h2 id="20-scope">2.0 Scope</h2>
-<p>Applies to all digital assets within the <code>gemini_projects</code> workspace and the dedicated <code>hwb-institutional-website</code> repository for Azure cloud operations.</p>
+<p>Applies to all digital files in the <code>gemini_projects</code> folder and the <code>hwb-institutional-website</code> for Azure cloud work.</p>
 <h2 id="30-prerequisites">3.0 Prerequisites</h2>
 <ul>
-<li>Git and GitHub CLI (gh) installed on the restoration machine.</li>
-<li>Authorized access to the GitHub repositories via Personal Access Token (PAT).</li>
+<li>Git and GitHub CLI (gh) installed on the computer.</li>
+<li>Authorized access to GitHub using a Personal Access Token (PAT).</li>
 </ul>
 <h3 id="31-critical-software-dependencies">3.1 Critical Software Dependencies</h3>
-<p>The following software must be installed and configured on the recovery machine (supporting both Linux and WSL environments) to ensure full system functionality:</p>
+<p>The following software must be installed and set up on the recovery computer (works on both Linux and Windows WSL) to make sure everything works:</p>
 <table>
 <thead>
 <tr>
@@ -74,186 +74,183 @@
 <td style="text-align: left;"><strong>OS Environment</strong></td>
 <td style="text-align: left;"><strong>WSL 2 (Ubuntu 24.04 LTS)</strong></td>
 <td style="text-align: left;">Windows</td>
-<td style="text-align: left;">Primary Linux kernel for script execution.</td>
+<td style="text-align: left;">Main Linux system for running scripts.</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Version Control</strong></td>
 <td style="text-align: left;"><strong>Git</strong> (latest)</td>
 <td style="text-align: left;">Linux/WSL</td>
-<td style="text-align: left;">Repository cloning and version management.</td>
+<td style="text-align: left;">Downloading and managing code versions.</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Version Control</strong></td>
 <td style="text-align: left;"><strong>gh (GitHub CLI)</strong></td>
 <td style="text-align: left;">Linux/WSL</td>
-<td style="text-align: left;">Automated repository management and Azure publishing.</td>
+<td style="text-align: left;">Managing code and publishing to Azure.</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Scripting</strong></td>
 <td style="text-align: left;"><strong>Python 3.12+</strong></td>
 <td style="text-align: left;">Linux/WSL</td>
-<td style="text-align: left;">Core execution environment for AI agents.</td>
+<td style="text-align: left;">Main environment for running AI tools.</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Package Manager</strong></td>
 <td style="text-align: left;"><strong>pip</strong></td>
 <td style="text-align: left;">Linux/WSL</td>
-<td style="text-align: left;">Python package installer for virtual environments.</td>
+<td style="text-align: left;">Tool for installing Python packages.</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Security Lib</strong></td>
 <td style="text-align: left;"><strong>libsecret-1-0 / libsecret-common</strong></td>
 <td style="text-align: left;">Linux/WSL</td>
-<td style="text-align: left;">Native keychain support for extensions.</td>
+<td style="text-align: left;">Security support for extensions.</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Data Library</strong></td>
 <td style="text-align: left;"><strong>Pandas / xlrd</strong></td>
 <td style="text-align: left;">Linux/WSL</td>
-<td style="text-align: left;">Empirical data analysis and legacy Excel support.</td>
+<td style="text-align: left;">Analyzing real-world data and old Excel files.</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Data Format</strong></td>
 <td style="text-align: left;"><strong>JSON</strong></td>
 <td style="text-align: left;">Linux/WSL</td>
-<td style="text-align: left;">Standard library for configuration and queue management.</td>
+<td style="text-align: left;">Standard for settings and task lists.</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Auth Library</strong></td>
 <td style="text-align: left;"><strong>msal</strong></td>
 <td style="text-align: left;">Linux/WSL</td>
-<td style="text-align: left;">Microsoft Authentication Library for Graph API access.</td>
+<td style="text-align: left;">Microsoft tool for logging in.</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Webserver</strong></td>
 <td style="text-align: left;"><strong>Flask</strong> (via .venv)</td>
 <td style="text-align: left;">Linux/WSL</td>
-<td style="text-align: left;">Backend engine for the SigmaFidelity™ suite.</td>
+<td style="text-align: left;">Background engine for the HWB suite.</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Security Auth</strong></td>
 <td style="text-align: left;"><strong>Flask-Login</strong></td>
 <td style="text-align: left;">Linux/WSL</td>
-<td style="text-align: left;">Secure backoffice session and identity management.</td>
+<td style="text-align: left;">Secure login and identity management.</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Database</strong></td>
 <td style="text-align: left;"><strong>SQLite3</strong></td>
 <td style="text-align: left;">Linux/WSL</td>
-<td style="text-align: left;">Empirical data storage.</td>
+<td style="text-align: left;">Storing real-world data.</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Virtualization</strong></td>
 <td style="text-align: left;"><strong>python3-venv</strong></td>
 <td style="text-align: left;">Linux/WSL</td>
-<td style="text-align: left;">Isolated environment management.</td>
+<td style="text-align: left;">Keeping environments separate.</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Reverse Proxy</strong></td>
 <td style="text-align: left;"><strong>Nginx</strong></td>
 <td style="text-align: left;">Linux/WSL</td>
-<td style="text-align: left;">Front-end web proxy and security filtering.</td>
+<td style="text-align: left;">Web helper and security filter.</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Extensions</strong></td>
 <td style="text-align: left;"><strong>YouTube-to-Docs</strong></td>
 <td style="text-align: left;">Gemini CLI</td>
-<td style="text-align: left;">YouTube content processing and document generation.</td>
+<td style="text-align: left;">Turning YouTube content into documents.</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Extensions</strong></td>
 <td style="text-align: left;"><strong>ElevenLabs MCP</strong></td>
 <td style="text-align: left;">Gemini CLI</td>
-<td style="text-align: left;">AI voice synthesis and text-to-speech.</td>
+<td style="text-align: left;">AI voice and text-to-speech.</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Extensions</strong></td>
 <td style="text-align: left;"><strong>Deep Research</strong></td>
 <td style="text-align: left;">Gemini CLI</td>
-<td style="text-align: left;">Automated data synthesis and research.</td>
+<td style="text-align: left;">Automated research and data gathering.</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Extensions</strong></td>
 <td style="text-align: left;"><strong>Nano Banana</strong></td>
 <td style="text-align: left;">Gemini CLI</td>
-<td style="text-align: left;">Generative marketing asset production.</td>
+<td style="text-align: left;">Creating marketing images and videos.</td>
 </tr>
 </tbody>
 </table>
 <h3 id="32-secret-management-and-api-keys">3.2 Secret Management and API Keys</h3>
-<p>To maintain the security and integrity of the SigmaFidelity™ infrastructure, the following rules apply to all API keys (Gemini, Google, Vibe, SAM.gov, Microsoft Graph, GitHub, Azure):
-1.  <strong>Zero Raw Storage:</strong> No raw API keys or secrets shall be stored within <code>.md</code> files or any other version-controlled documentation.
-2.  <strong>Institutional Vault:</strong> Keys must be stored in secure <code>.env</code> files which are excluded from Git per HWB-QMS-9.5.
-3.  <strong>GitHub Token Scopes:</strong> Personal Access Tokens (PAT) for <code>gh</code> must include <code>repo</code>, <code>workflow</code>, and <code>admin:org</code> (if applicable) for Azure-automated CI/CD.
-4.  <strong>Azure Service Principal:</strong> The AI agent (George) operates via the <code>hwb-sigmafidelity-agent</code> service principal (App ID: <code>8226641a-7d76-429d-9954-e22fe98ea47a</code>) with <code>Contributor</code> role assigned at the subscription level.</p>
+<p>To keep the HWB system safe, these rules apply to all API keys:
+1.  <strong>No Raw Storage:</strong> Never save API keys or passwords in <code>.md</code> files or other shared documents.
+2.  <strong>Private Vault:</strong> Keys must be kept in secure <code>.env</code> files that are not shared on Git.
+3.  <strong>GitHub Token Scopes:</strong> Access tokens for <code>gh</code> must have the right permissions for automated work.
+4.  <strong>Azure Service Principal:</strong> The AI agent (George) works through a special "service principal" account with <code>Contributor</code> access.</p>
 <h2 id="40-procedure">4.0 Procedure</h2>
 <ol>
-<li><strong>Isolation:</strong> Disconnect the affected machine from the network.</li>
-<li><strong>Assessment:</strong> Identify the extent of data loss.</li>
-<li><strong>Notification:</strong> Notify the Managing Director (Humberto Dominguez).</li>
+<li><strong>Isolation:</strong> Disconnect the computer from the internet.</li>
+<li><strong>Assessment:</strong> Figure out how much data was lost.</li>
+<li><strong>Notification:</strong> Tell the boss (Humberto Dominguez).</li>
 </ol>
 <h3 id="41-cloud-infrastructure-restoration-azure">4.1 Cloud Infrastructure Restoration (Azure)</h3>
-<p>In the event of an Azure environment failure:
-1.  <strong>Verify Agent Identity:</strong> Ensure <code>AZURE_CLIENT_ID</code> and <code>AZURE_CLIENT_SECRET</code> are correctly populated in the <code>.env</code> file.
-2.  <strong>Service Principal Recovery:</strong> If the service principal is deleted, re-provision using the <code>8226641a-7d76-429d-9954-e22fe98ea47a</code> application ID.
-3.  <strong>App Service Recovery:</strong> Use the GitHub Actions workflow to redeploy the <code>hwb-institutional-website</code> from its dedicated repository.
-4.  <strong>Internal Server Error (500) Resolution:</strong> If the site returns a 500 error after deployment, verify:
-    - <code>main_app.py</code> for duplicate route registrations (e.g., <code>/services/office</code> vs <code>/services/warehouse</code>).
-    - <code>init_db()</code> correctly creates the <code>database/</code> directory using <code>BASE_DIR</code> for absolute path resolution.
-    - Template links are synchronized with registered route endpoints (e.g., <code>url_for('service_builder')</code>).</p>
+<p>If the Azure system fails:
+1.  <strong>Verify Agent Identity:</strong> Make sure the login IDs and passwords are correct in the <code>.env</code> file.
+2.  <strong>Account Recovery:</strong> If the service account is deleted, set it up again.
+3.  <strong>Website Recovery:</strong> Use GitHub to redeploy the website.
+4.  <strong>Error (500) Resolution:</strong> If the site doesn't load after deployment, check:
+    - <code>main_app.py</code> for duplicate page links.
+    - <code>init_db()</code> correctly creates the database folder.
+    - Links in the templates match the actual page addresses.</p>
 <h3 id="42-restoring-from-github-primary-source">4.2 Restoring from GitHub (Primary Source)</h3>
 <ol>
-<li><strong>Clone Main Repository:</strong>
+<li><strong>Download Main Code:</strong>
     ```bash
     git clone https://github.com/Humbertoed11/gemini_projects.git
     </div></li>
-<li><strong>Clone Institutional Website (Azure Deployment Point):</strong>
+<li><strong>Download Website Code:</strong>
     ```bash
     git clone https://github.com/hwb-it-website/hwb-institutional-website.git
     </div></li>
-<li><strong>Re-establish Infrastructure (The Nuclear Option):</strong>
+<li><strong>Restart System (The Reset):</strong>
     ```bash
     bash scripts/startup_master.sh
     </div></li>
 </ol>
 <h3 id="43-gemini-extension-recovery-nano-banana-vibe-elevenlabs">4.3 Gemini Extension Recovery (Nano Banana / Vibe / ElevenLabs)</h3>
-<p>If extensions fail to recognize API keys after reinstallation:
-1.  <strong>Diagnose Keychain:</strong> Check for <code>libsecret-1.so.0</code> errors in the environment.
-2.  <strong>Force Key Injection:</strong> Manually configure the extension setting using the following command (example for Nano Banana):
-    <code>``bash
-    echo "$NANOBANANA_GEMINI_API_KEY" | gemini extensions config nanobanana "API Key"
-    &lt;/div&gt;
-3.  **Verify Fallback:** Ensure the system reports</code>Using FileKeychain fallback for secure storage`.</p>
-<h3 id="44-database-restoration-empirical-data">4.4 Database Restoration (Empirical Data)</h3>
+<p>If extensions don't see the API keys:
+1.  <strong>Check Security Library:</strong> Look for <code>libsecret</code> errors.
+2.  <strong>Force Key Update:</strong> Manually add the key using the command line.
+3.  <strong>Verify Backup:</strong> Make sure the system uses the fallback storage if needed.</p>
+<h3 id="44-database-restoration-real-world-data">4.4 Database Restoration (Real-World Data)</h3>
 <ol>
-<li><strong>Secondary Backup:</strong> Restore the <code>clients.db</code> and <code>sigma_leads.db</code> from the most recent secure cloud backup.</li>
-<li><strong>Institutional Path:</strong> Place database files in <code>HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/database/</code>.</li>
-<li><strong>Validation:</strong> Run <code>python HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/HWB-WEB Diag Dashboard.py</code>.</li>
-<li><strong>Credential Synchronization:</strong> If backoffice login fails with "Invalid Credentials", ensure <code>init_db()</code> in <code>main_app.py</code> is configured to synchronize the <code>admin</code> and <code>hdominguez</code> password hashes on startup.</li>
+<li><strong>Backups:</strong> Get the <code>clients.db</code> and <code>sigma_leads.db</code> from the latest cloud backup.</li>
+<li><strong>File Location:</strong> Put the database files in the right folder.</li>
+<li><strong>Check:</strong> Run the diagnostic dashboard to make sure it works.</li>
+<li><strong>Login Sync:</strong> If the login fails, make sure the passwords are updated on startup.</li>
 </ol>
 <h3 id="45-ai-system-initialization-master-prompt">4.5 AI System Initialization (Master Prompt)</h3>
-<p>In a total system re-initialization, the following "Master Prompt" must be provided to the AI agent:</p>
+<p>If starting the AI from scratch, give this "Master Prompt" to the agent:</p>
 <p>```markdown</p>
-<h1 id="system-initialization-hwb-cleaning-services-llc-sigmafidelitytm-protocol">SYSTEM INITIALIZATION: HWB Cleaning Services LLC (SigmaFidelity™ Protocol)</h1>
+<h1 id="system-initialization-hwb-cleaning-services-llc-hwb-standard">SYSTEM INITIALIZATION: HWB Cleaning Services LLC (HWB Standard)</h1>
 <h2 id="10-ai-role-identity-designation">1.0 AI Role &amp; Identity Designation</h2>
-<p>You are the Lead Autonomous Agent for HWB Cleaning Services LLC. Official roles:
+<p>You are the Lead Assistant for HWB Cleaning Services LLC. Official roles:
 1. Certified Lean Six Sigma Master Black Belt (MBB)
 2. Senior Software Engineer &amp; Collaborative Peer Programmer
 3. PhD in Business and Business History
 4. Senior ISO 9001:2015 Auditor
 5. Expert SEO</p>
-<p><strong>George (System Architect):</strong> Master SaaS VP of Development, Master Programmer, and Strategist. Responsible for high-fidelity SaaS architecture, infrastructure, and data pipelines. (Skill: <code>saas-dev-master</code>).
-<strong>Nick Doria (VP Prompt Engineering):</strong> Responsible for AI Persona DNA and Governance.
-<strong>Lauri Tells (VP Sales &amp; Marketing):</strong> Responsible for Market Capture and National ETL.
-<strong>Silas Sync (VP CRM Systems):</strong> Responsible for Relational Data and Backoffice Logic.
-<strong>Natalie Navy (Chief Dream Officer):</strong> Responsible for Blue-Ocean SaaS ideation and future tech forecasting.</p>
-<p><strong>Mandatory Protocol:</strong> Strictly adhere to a 3rd person perspective.
+<p><strong>George (Lead Developer):</strong> In charge of high-quality software setup, infrastructure, and data flows. (Skill: <code>saas-dev-master</code>).
+<strong>Nick Doria (AI Governance):</strong> In charge of AI personality and rules.
+<strong>Lauri Tells (VP Sales &amp; Marketing):</strong> In charge of finding leads and market data.
+<strong>CRM Specialist:</strong> In charge of client data and backoffice tools.
+<strong>Innovation Leader (Natalie Navy):</strong> In charge of new software ideas and future tech planning.</p>
+<p><strong>Mandatory Rules:</strong> Always speak in the 3rd person.
 </div></p>
 <h2 id="50-verification">5.0 Verification</h2>
 <ul>
-<li>Successful <code>git clone</code> operation with 100% file parity.</li>
-<li>Successful execution of <code>HWB-WEB Diag Dashboard.py</code> with zero errors.</li>
-<li>Verified generation of 1 image via Nano Banana to confirm extension fidelity.</li>
+<li>Successful code download with everything matching.</li>
+<li>The diagnostic dashboard runs with no errors.</li>
+<li>Created 1 test image via Nano Banana to confirm the quality is good.</li>
 </ul>
 <h2 id="70-revision-history">7.0 Revision History</h2>
 <table>
@@ -276,49 +273,50 @@
 <td style="text-align: left;">3.5</td>
 <td style="text-align: left;">2026-03-09</td>
 <td style="text-align: left;">George</td>
-<td style="text-align: left;">Added MSAL dependency, updated secret vault rules, and added Expert SEO role.</td>
+<td style="text-align: left;">Added login support, updated secret rules, and added SEO role.</td>
 </tr>
 <tr>
 <td style="text-align: left;">4.0</td>
 <td style="text-align: left;">2026-03-10</td>
 <td style="text-align: left;">George</td>
-<td style="text-align: left;">Standardized on Azure/M365 as exclusive and mandatory platforms.</td>
+<td style="text-align: left;">Standardized on Azure/M365 as main platforms.</td>
 </tr>
 <tr>
 <td style="text-align: left;">5.0</td>
 <td style="text-align: left;">2026-03-12</td>
 <td style="text-align: left;">George</td>
-<td style="text-align: left;">Updated credentials, added Natalie Navy (CDO) to the roster, and implemented dashboard-based outbox verification.</td>
+<td style="text-align: left;">Updated logins, added Natalie Navy to the team, and set up dashboard checks.</td>
 </tr>
 <tr>
 <td style="text-align: left;">6.0</td>
 <td style="text-align: left;">2026-03-20</td>
 <td style="text-align: left;">George</td>
-<td style="text-align: left;">Added recovery protocols for 500 errors and credential synchronization.</td>
+<td style="text-align: left;">Added fixes for website errors and password updates.</td>
 </tr>
 <tr>
 <td style="text-align: left;">7.0</td>
 <td style="text-align: left;">2026-03-23</td>
 <td style="text-align: left;">George</td>
-<td style="text-align: left;">Added libsecret dependency, extension recovery protocol, and formalized the 'Nuclear Option' startup sequence.</td>
+<td style="text-align: left;">Added security support, extension fixes, and formalized the reset procedure.</td>
 </tr>
 <tr>
 <td style="text-align: left;">8.0</td>
 <td style="text-align: left;">2026-04-27</td>
 <td style="text-align: left;">George</td>
-<td style="text-align: left;">Integrated Dockerized Infrastructure, OIDC authentication protocols, and 'Pure Production' repository hardening.</td>
+<td style="text-align: left;">Integrated Docker, new login procedures, and code hardening.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="46-cicd-and-secret-restoration-githubacr">4.6 CI/CD and Secret Restoration (GitHub/ACR)</h2>
-<p>In the event of a deployment failure citing "Missing Username" or "Unauthorized":
-1.  <strong>ACR Credential Ingestion:</strong> Retrieve Admin credentials from Azure Portal (hwbprodacr &gt; Access Keys) and provision as GitHub Secrets (<code>ACR_USERNAME</code>, <code>ACR_PASSWORD</code>).
-2.  <strong>OIDC Handshake Recovery:</strong> Ensure the GitHub Actions workflow includes mandatory permissions:
-    <code>``yaml
-    permissions:
-      id-token: write
-      contents: read
-    &lt;/div&gt;
-3.  **Repository Hardening:** Maintain 'Pure Production' state by ensuring non-essential folders (recuperate, docs, clippings) are explicitly excluded in</code>.gitignore` and untracked from the remote index.</p>
+<h2 id="46-deployment-and-secret-restoration-githubacr">4.6 Deployment and Secret Restoration (GitHub/ACR)</h2>
+<p>If the deployment fails because of login issues:
+1.  <strong>Adding Login Details:</strong> Get the passwords from the Azure Portal and add them as GitHub Secrets.
+2.  <strong>Fixing Login Connection:</strong> Make sure the GitHub settings have the right permissions.
+3.  <strong>Cleaning Up Code:</strong> Keep the code "clean" by making sure non-essential folders are ignored by Git.</p>
+    </div>
+
+    <div class="sop-card-footer">
+        <span>&copy; 2026 HWB Cleaning Services LLC</span>
+        <span>Controlled Document | HWB-QMS-9.3</span>
+        <span>Page <span class="page-number"></span></span>
     </div>
 </div>

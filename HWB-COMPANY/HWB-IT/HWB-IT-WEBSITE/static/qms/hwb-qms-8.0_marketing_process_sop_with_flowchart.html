@@ -3,9 +3,9 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-8.0-MKT-001</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0</span></div>
-        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● Draft</span></div>
-        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.1.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">8.1 (Operational Planning)</span></div>
     </div>
 
     <div class="sop-content-body">
@@ -19,7 +19,7 @@
 <tbody>
 <tr>
 <td style="text-align: left;"><strong>Document Title</strong></td>
-<td style="text-align: left;"><strong>Marketing Process SOP with Flowchart</strong></td>
+<td style="text-align: left;"><strong>Marketing Process SOP</strong></td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Document ID</strong></td>
@@ -27,117 +27,102 @@
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Version</strong></td>
-<td style="text-align: left;">1.0</td>
+<td style="text-align: left;">2.1.0</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Status</strong></td>
-<td style="text-align: left;">Draft</td>
+<td style="text-align: left;">APPROVED</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Author</strong></td>
-<td style="text-align: left;">Gemini</td>
+<td style="text-align: left;">George (Architect)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Approved By</strong></td>
-<td style="text-align: left;"><strong><em>_</em></strong><strong><em>_</em></strong><strong><em>_</em></strong>____</td>
+<td style="text-align: left;">Humberto Dominguez, CEO</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Date</strong></td>
-<td style="text-align: left;">2026-02-21</td>
+<td style="text-align: left;">05/21/2026</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>ISO 9001 Clause</strong></td>
+<td style="text-align: left;">8.1 (Operational Planning)</td>
 </tr>
 </tbody>
 </table>
 <hr />
-<h1 id="standard-operating-procedure-marketing-process-sop-with-flowchart">Standard Operating Procedure: <strong>Marketing Process SOP with Flowchart</strong></h1>
+<h1 id="standard-operating-procedure-marketing-process-sop">Standard Operating Procedure: <strong>Marketing Process SOP</strong></h1>
 <h2 id="10-purpose">1.0 Purpose</h2>
-<p>This SOP defines the standardized marketing process for HWB Cleaning Services, ensuring that all marketing activities are strategically aligned, data-driven, and effective in generating high-quality leads for the sales team.</p>
+<p>This SOP defines the standard marketing steps for HWB Cleaning Services. It ensures all marketing is planned well and helps us find good business leads.</p>
 <h2 id="20-scope">2.0 Scope</h2>
-<p>This procedure applies to all marketing activities, including digital marketing, local SEO, community outreach, and brand management.</p>
-<h2 id="30-prerequisites">3.0 Prerequisites</h2>
-<ul>
-<li>Approved Marketing Budget.</li>
-<li>Access to Google Analytics and social media platforms.</li>
-<li>Clearly defined service offerings and pricing.</li>
-</ul>
+<p>Applies to all social media, local search, and brand work.</p>
+<h2 id="30-universal-mandates-2026-baseline">3.0 Universal Mandates (2026 Baseline)</h2>
+<ol>
+<li><strong>Guidance First:</strong> If a marketing channel is not working, ASK the CEO before changing the plan.</li>
+<li><strong>System Log:</strong> Every campaign launch must be logged.</li>
+<li><strong>Physical Truth:</strong> Reference absolute paths for images in <code>gen_ai_staging</code>.</li>
+</ol>
 <h2 id="40-procedure">4.0 Procedure</h2>
-<h3 id="41-marketing-process-flowchart">4.1 Marketing Process Flowchart</h3>
+<h3 id="41-marketing-workflow">4.1 Marketing Workflow</h3>
 <div class="mermaid">
 graph TD
-    %% Start of Process
-    Start((Marketing Strategy)) --> Research[Market Research & Target Audience ID]
-
-    %% Planning Phase
-    Research --> Channels[Channel Selection: SEO, Social, Outreach]
-    Channels --> Content[Content & Creative Development]
-
-    %% Execution Phase
-    Content --> Execution[Campaign Launch & Execution]
-
-    %% Monitoring Phase
-    Execution --> Monitoring[Performance Monitoring & Data Analytics]
-
-    %% Decision Phase
-    Monitoring --> Analysis{Performance Meet KPIs?}
-
-    Analysis -- No --> Adjust[Optimize & Adjust Strategy]
-    Adjust --> Content
-
-    Analysis -- Yes --> LeadGen[Lead Generation]
-
-    %% Hand-off Phase
-    LeadGen --> SalesHandOff[Hand-off to Sales Process HWB-QMS-8.0]
-    SalesHandOff --> Review[Monthly Marketing Review]
-    Review --> Start
-
-    %% Styling
-    style Start fill:#f9f,stroke:#333,stroke-width:2px
-    style SalesHandOff fill:#bbf,stroke:#333,stroke-width:2px
-    style Analysis fill:#fff4dd,stroke:#d4a017,stroke-width:2px
+    Start((Strategy)) --> Research[Market Research]
+    Research --> Channels[Channel Selection]
+    Channels --> Content[Content Development]
+    Content --> Execution[Campaign Launch]
+    Execution --> Capture{Capture Type?}
+    Capture -- V2: Home Page --> Velocity[Quick Registration]
+    Capture -- V1: Services --> Fidelity[Detailed Specs]
+    Velocity --> CRM[Team Member: Manual Follow-up]
+    Fidelity --> CRM[Team Member: Validation]
+    CRM --> SalesHandOff[Sales Engagement]
 </div>
 
 <h3 id="42-procedural-steps">4.2 Procedural Steps</h3>
 <ol>
-<li><strong>Marketing Strategy:</strong> Define the overall objectives (e.g., brand awareness, lead volume).</li>
-<li><strong>Market Research:</strong> Identify the ideal client profile (commercial vs. residential) in the DFW metroplex.</li>
-<li><strong>Channel Selection:</strong> Determine the best platforms (Google Search, Facebook, local flyers, etc.).</li>
-<li><strong>Content Development:</strong> Create visuals and copy that align with the HWB brand (Respect, Safety, Fidelity).</li>
-<li><strong>Execution:</strong> Deploy campaigns across selected channels.</li>
-<li><strong>Monitoring:</strong> Track metrics such as click-through rates, website traffic, and inquiry volume.</li>
-<li><strong>Analysis:</strong> Compare performance against established KPIs. If underperforming, optimize the creative or channel strategy.</li>
-<li><strong>Lead Generation:</strong> Capture customer contact information for potential leads.</li>
-<li><strong>Sales Hand-off:</strong> Transfer qualified leads to the Sales Process defined in HWB-QMS-8.0.</li>
+<li><strong>Marketing Strategy:</strong> Define what we want to achieve.</li>
+<li><strong>Market Research:</strong> Find the best buildings in DFW to clean.</li>
+<li><strong>Channel Selection:</strong> Pick the best spots (LinkedIn, Google).</li>
+<li><strong>Content Development:</strong> Create images that look professional.</li>
+<li><strong>Lead Capture:</strong> Use simple forms on the Home Page to make it easy for customers to sign up.</li>
+<li><strong>Monitoring:</strong> Check how many people are clicking and signing up.</li>
 </ol>
-<h2 id="50-verification">5.0 Verification</h2>
-<p>The effectiveness of the marketing process is verified through monthly lead volume reports and ROI analysis of marketing spend.</p>
-<h2 id="60-notes-and-cautions">6.0 Notes and Cautions</h2>
+<h2 id="50-verification-zero-defect-check">5.0 Verification (Zero-Defect Check)</h2>
 <ul>
-<li>All marketing materials must comply with the brand identity guidelines.</li>
-<li>Ensure compliance with data privacy regulations when capturing customer information.</li>
+<li>Monthly Lead numbers match our CRM records.</li>
+<li>All images follow our Brand Identity rules.</li>
 </ul>
-<h2 id="70-revision-history">7.0 Revision History</h2>
+<h2 id="60-revision-history">6.0 Revision History</h2>
 <table>
 <thead>
 <tr>
 <th style="text-align: left;">Version</th>
 <th style="text-align: left;">Date</th>
 <th style="text-align: left;">Author</th>
-<th style="text-align: left;">Description of Change</th>
+<th style="text-align: left;">Change Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">1.0</td>
-<td style="text-align: left;">2026-02-21</td>
-<td style="text-align: left;">Gemini</td>
-<td style="text-align: left;">Initial Release</td>
+<td style="text-align: left;">2.1.0</td>
+<td style="text-align: left;">05/21/2026</td>
+<td style="text-align: left;">George</td>
+<td style="text-align: left;">Removed specific names and simplified vocabulary for young managers.</td>
+</tr>
+<tr>
+<td style="text-align: left;">2.0.0</td>
+<td style="text-align: left;">05/21/2026</td>
+<td style="text-align: left;">George</td>
+<td style="text-align: left;">Initial Modernization.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="80-document-conventions">8.0 Document Conventions</h2>
-<ul>
-<li><strong>Terminals (Ovals):</strong> Major process milestones.</li>
-<li><strong>Process (Rectangles):</strong> Specific activities or tasks.</li>
-<li><strong>Decisions (Diamonds):</strong> Points requiring evaluation or adjustment.</li>
-</ul>
+    </div>
+
+    <div class="sop-card-footer">
+        <span>&copy; 2026 HWB Cleaning Services LLC</span>
+        <span>Controlled Document | HWB-QMS-8.0-MKT-001</span>
+        <span>Page <span class="page-number"></span></span>
     </div>
 </div>

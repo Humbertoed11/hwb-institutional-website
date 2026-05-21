@@ -2,10 +2,10 @@
 <div class="sop-card">
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
-        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-8.4-SOP-001</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0</span></div>
-        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● Approved</span></div>
-        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-8.4</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">8.4.1 (General)</span></div>
     </div>
 
     <div class="sop-content-body">
@@ -19,86 +19,70 @@
 <tbody>
 <tr>
 <td style="text-align: left;"><strong>Document Title</strong></td>
-<td style="text-align: left;"><strong>Purchasing &amp; Procurement Process SOP</strong></td>
+<td style="text-align: left;"><strong>Purchasing Process SOP</strong></td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Document ID</strong></td>
-<td style="text-align: left;">HWB-QMS-8.4-SOP-001</td>
+<td style="text-align: left;">HWB-QMS-8.4</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Version</strong></td>
-<td style="text-align: left;">1.0</td>
+<td style="text-align: left;">2.0.0</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Status</strong></td>
-<td style="text-align: left;">Approved</td>
+<td style="text-align: left;">APPROVED</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Author</strong></td>
-<td style="text-align: left;">LSS Black Belt / Purchasing Lead</td>
+<td style="text-align: left;">George (Architect)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Approved By</strong></td>
+<td style="text-align: left;">Humberto Dominguez, CEO</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Date</strong></td>
-<td style="text-align: left;">2026-02-21</td>
+<td style="text-align: left;">05/21/2026</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>ISO 9001 Clause</strong></td>
+<td style="text-align: left;">8.4.1 (General)</td>
 </tr>
 </tbody>
 </table>
 <hr />
-<h1 id="sop-purchasing-procurement-process">SOP: Purchasing &amp; Procurement Process</h1>
+<h1 id="standard-operating-procedure-purchasing-process-iso-84">Standard Operating Procedure: <strong>Purchasing Process (ISO 8.4)</strong></h1>
 <h2 id="10-purpose">1.0 Purpose</h2>
-<p>To define the standardized procedure for the selection, evaluation, and re-evaluation of external providers (suppliers) and the procurement of products and services, ensuring zero-defect inputs into the SigmaFidelity™ value chain.</p>
-<h2 id="20-scope">2.0 Scope</h2>
-<p>This SOP applies to all purchases affecting service quality, including cleaning chemicals, equipment, PPE, and subcontracted labor.</p>
-<h2 id="30-procurement-lifecycle-flowchart">3.0 Procurement Lifecycle Flowchart</h2>
+<p>To define the standardized procedure for the selection and evaluation of external providers, ensuring zero-defect inputs into the SigmaFidelity™ value chain.</p>
+<h2 id="20-universal-mandates-2026-baseline">2.0 Universal Mandates (2026 Baseline)</h2>
+<ol>
+<li><strong>Tier 6 Telemetry:</strong> Every supplier performance audit must be logged.</li>
+<li><strong>Physical Truth:</strong> Use absolute paths for the digital PO repository.</li>
+</ol>
+<h2 id="30-procurement-lifecycle">3.0 Procurement Lifecycle</h2>
 <div class="mermaid">
 graph TD
-    Start([1.0 Identification of Need]) --> Select[2.0 Supplier Selection & Evaluation]
-    Select --> PO[3.0 Purchase Order Creation]
-    PO --> Verify[4.0 Receipt & Verification]
-    Verify --> SDS[5.0 GHS/SDS Registry Update]
-    SDS --> Audit[6.0 Annual Supplier Review]
-    Audit --> End([Process Complete])
-
-    %% Sub-steps
-    Verify -- Defect Found --> CAR[Initiate CAR / Return]
+    Start([Need Identification]) --> Select[Supplier Evaluation]
+    Select --> PO[PO Creation]
+    PO --> Verify[Receipt & Verification]
+    Verify --> SDS[SDS Registry Update]
+    SDS --> Audit[Annual Supplier Review]
+    Audit --> End([Complete])
+    Verify -- Defect --> CAR[Initiate Corrective Action]
     CAR --> Select
 </div>
 
-<h2 id="40-detailed-procedure">4.0 Detailed Procedure</h2>
-<h3 id="41-identification-of-need">4.1 Identification of Need</h3>
-<ul>
-<li>Field personnel or Operations Managers identify a shortage or a requirement for a new tool/chemical.</li>
-<li>The request is logged against the specific <strong>Process ID</strong> (e.g., SAFE-001 for chemicals).</li>
-</ul>
-<h3 id="42-supplier-selection-evaluation-iso-841">4.2 Supplier Selection &amp; Evaluation (ISO 8.4.1)</h3>
-<ul>
-<li>Suppliers are evaluated based on:<ol>
-<li><strong>Fidelity:</strong> Accuracy of delivery and billing.</li>
-<li><strong>Compliance:</strong> Provision of up-to-date SDS/Safety documentation.</li>
-<li><strong>LSS Metrics:</strong> Delivery cycle time and defect rate (COPQ).</li>
+<h2 id="40-procedure">4.0 Procedure</h2>
+<ol>
+<li><strong>Selection:</strong> Evaluate suppliers based on Accuracy, Compliance (SDS), and Cycle Time.</li>
+<li><strong>Execution:</strong> Document all orders via formal PO specifying <strong>SigmaFidelity™ Grade</strong>.</li>
+<li><strong>Verification:</strong> Upon delivery, the Purchasing Lead verifies the shipment for "Poka-Yoke" compliance (intact labels and valid expiration).</li>
 </ol>
-</li>
-<li>Approved suppliers are added to the <strong>Approved Vendor List (AVL)</strong>.</li>
-</ul>
-<h3 id="43-purchase-order-po-execution">4.3 Purchase Order (PO) Execution</h3>
+<h2 id="50-verification-zero-defect-check">5.0 Verification (Zero-Defect Check)</h2>
 <ul>
-<li>All orders must be documented via formal PO.</li>
-<li>PO must specify the required <strong>SigmaFidelity™ Grade</strong> for chemicals or technical specs for equipment.</li>
-</ul>
-<h3 id="44-receipt-verification-iso-842">4.4 Receipt &amp; Verification (ISO 8.4.2)</h3>
-<ul>
-<li>Upon delivery, the "Purchasing Lead" verifies the shipment against the PO.</li>
-<li><strong>Poka-Yoke Check:</strong> Chemicals are checked for intact labels and expiration dates.</li>
-</ul>
-<h3 id="45-sds-inventory-integration">4.5 SDS &amp; Inventory Integration</h3>
-<ul>
-<li>Every new chemical is entered into the <strong><code>mop_incident</code> SDS Registry</strong>.</li>
-<li>Hazard levels are updated on the <strong>Executive Dashboard</strong>.</li>
-</ul>
-<h2 id="50-verification-control">5.0 Verification &amp; Control</h2>
-<ul>
-<li><strong>KPOV:</strong> Supplier On-Time Delivery % (OTD).</li>
-<li><strong>KPIV:</strong> Number of unverified chemicals found at site audits (Target: 0).</li>
+<li>Supplier On-Time Delivery (OTD) &gt;98%.</li>
+<li>Zero unverified chemicals found at client sites.</li>
 </ul>
 <hr />
 <h2 id="60-revision-history">6.0 Revision History</h2>
@@ -108,10 +92,16 @@ graph TD
 <th style="text-align: left;">Version</th>
 <th style="text-align: left;">Date</th>
 <th style="text-align: left;">Author</th>
-<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Change Description</th>
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">2.0.0</td>
+<td style="text-align: left;">05/21/2026</td>
+<td style="text-align: left;">George</td>
+<td style="text-align: left;">TOTAL MODERNIZATION. Consolidated flowchart and added 2026 mandates.</td>
+</tr>
 <tr>
 <td style="text-align: left;">1.0</td>
 <td style="text-align: left;">2026-02-21</td>
@@ -120,5 +110,11 @@ graph TD
 </tr>
 </tbody>
 </table>
+    </div>
+
+    <div class="sop-card-footer">
+        <span>&copy; 2026 HWB Cleaning Services LLC</span>
+        <span>Controlled Document | HWB-QMS-8.4</span>
+        <span>Page <span class="page-number"></span></span>
     </div>
 </div>

@@ -1,43 +1,52 @@
-| **Document Control** |                                              |
-| :------------------- | :------------------------------------------- |
-| **Document Title**   | **Digital Lead Capture Form**                |
-| **Document ID**      | HWB-MKT-FORM-001                             |
-| **Version**          | 1.0                                          |
-| **Status**           | Approved                                     |
-| **Author**           | Gemini (Senior ISO 9001 Auditor)             |
-| **Approved By**      | SigmaFidelity™ Orchestrator                  |
-| **Date**             | 2026-03-01                                   |
+| **Document Control** |                                  |
+| :------------------- | :------------------------------- |
+| **Document Title**   | **Marketing Form Standard**      |
+| **Document ID**      | HWB-MKT-FORM-001                 |
+| **Version**          | 2.1.0                            |
+| **Status**           | APPROVED                         |
+| **Author**           | George (Architect)               |
+| **Approved By**      | Humberto Dominguez, CEO          |
+| **Date**             | 05/21/2026                       |
+| **ISO 9001 Clause**  | 8.2.1 (Communication)            |
 
 ---
 
-# Marketing Form: **Digital Lead Capture (Website)**
+# Standard Operating Procedure: **Marketing Form Standard**
 
 ## 1.0 Purpose
-This form defines the required data fields for the HWB Website "Request a Quote" interface. It ensures that all incoming leads provide the necessary empirical data for accurate SigmaFidelity™ analysis.
+To define how our website forms should look and work. This ensures we get the right information from customers and can help them quickly.
 
-## 2.0 Form Structure (Web Interface)
+## 2.0 Scope
+Applies to the Home Page Form and the Quote Form.
 
-| Field Name | Type | Mandatory? | Purpose |
-| :--- | :--- | :--- | :--- |
-| **Organization Name** | Text | Yes | Identify potential client. |
-| **Contact Person** | Text | Yes | Direct point of communication. |
-| **Email Address** | Email | Yes | Formal correspondence. |
-| **Project Type** | Dropdown | Yes | Category (Construction, Medical, Commercial). |
-| **Facility Square Footage**| Number | Yes | Required for empirical pricing. |
-| **Project Location** | Text | Yes | Identify North Texas jurisdiction. |
-| **Project Start Date** | Date | No | Scheduling and readiness tracking. |
-| **Current Challenges** | Text Area | No | Identify pain points for tailoring. |
+## 3.0 Universal Mandates (2026 Baseline)
+1. **Physical Truth:** Use absolute paths for form templates.
+2. **Clinical Hardening:** All inputs must look clean and professional.
+3. **No Synthetic Data:** Examples must be clearly marked.
 
-## 3.0 Backend Processing (AI Marketing Agent)
-1.  **Capture:** Data is submitted via the Flask webserver and stored in `sigma_leads.db`.
-2.  **Notification:** An immediate notification is sent to the Sales Department.
-3.  **Initial Triage:** The AI Agent checks the lead against the "High-Priority GC List" (refer to `1 task list 2025/2026-03-01.md`).
+## 4.0 Standard Form Protocols
 
-## 4.0 Verification
-*   Lead data successfully populates the `Leads` table in `sigma_leads.db`.
-*   Zero synthetic test data present in production lead records.
+### 4.1 Detailed Plan (Version 1)
+*   **Use Case:** Special service pages (Janitorial, Industrial).
+*   **Fields:** Name, Email, Phone, Building Type, Size Slider.
+*   **Goal:** Get full details for a complete cleaning plan.
 
-## 5.0 Revision History
+### 4.2 Simple Registration (Version 2)
+*   **Use Case:** Home Page.
+*   **Fields:** Business Name, Your Name, Email, Phone.
+*   **Goal:** Make it fast and easy for customers to connect with us. A team member will call later to get more details.
+
+## 5.0 Technical Logic
+*   **Method:** `POST`.
+*   **Route:** `/get-quote`.
+*   **Result:** Data added to our list; Team member gets an alert.
+
+## 6.0 Verification (Zero-Defect Check)
+*   Form works and shows a "Success" page.
+*   The action is logged in our system.
+
+## 7.0 Revision History
 | Version | Date | Author | Change Description |
 | :--- | :--- | :--- | :--- |
-| 1.0 | 2026-03-01 | Gemini | Initial Release: Standardized lead capture. |
+| 2.1.0 | 05/21/2026 | George | Removed specific names and simplified vocabulary for young managers. |
+| 2.0.0 | 05/21/2026 | George | Initial Modernization. |

@@ -3,9 +3,9 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-OPS-001</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0</span></div>
-        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● Approved</span></div>
-        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">8.1 (Operational Planning)</span></div>
     </div>
 
     <div class="sop-content-body">
@@ -27,68 +27,73 @@
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Version</strong></td>
-<td style="text-align: left;">1.0</td>
+<td style="text-align: left;">2.0.0</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Status</strong></td>
-<td style="text-align: left;">Approved</td>
+<td style="text-align: left;">APPROVED</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Author</strong></td>
-<td style="text-align: left;">Gemini (Senior ISO 9001 Auditor)</td>
+<td style="text-align: left;">George (Architect)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Approved By</strong></td>
-<td style="text-align: left;">SigmaFidelity™ Orchestrator</td>
+<td style="text-align: left;">Humberto Dominguez, CEO</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Date</strong></td>
-<td style="text-align: left;">2026-02-28</td>
+<td style="text-align: left;">05/21/2026</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>ISO 9001 Clause</strong></td>
+<td style="text-align: left;">8.1 (Operational Planning)</td>
 </tr>
 </tbody>
 </table>
 <hr />
 <h1 id="standard-operating-procedure-operations-management-sop">Standard Operating Procedure: <strong>Operations Management SOP</strong></h1>
 <h2 id="10-purpose">1.0 Purpose</h2>
-<p>This SOP defines the procedures for the efficient execution and management of cleaning services at HWB Cleaning Services LLC. It ensures that field operations are standardized, safe, and aligned with ISO 9001:2015 requirements for service delivery (Clause 8.1).</p>
+<p>This SOP defines the procedures for the efficient execution and management of cleaning services at HWB Cleaning Services LLC. It ensures that field operations are standardized, safe, and aligned with ISO 9001:2015 requirements for service delivery.</p>
 <h2 id="20-scope">2.0 Scope</h2>
 <p>Applies to all field personnel, supervisors, and operations managers involved in the delivery of janitorial and specialized cleaning services.</p>
-<h2 id="30-prerequisites">3.0 Prerequisites</h2>
-<ul>
-<li>Approved work orders or quotes from the <code>quote_app</code>.</li>
-<li>Trained and competent personnel (verified via <code>HWB-HR</code> files).</li>
-<li>Functional equipment (verified via <code>Equipment Use Log</code>).</li>
-</ul>
-<h2 id="40-procedure">4.0 Procedure</h2>
+<h2 id="30-universal-mandates-2026-baseline">3.0 Universal Mandates (2026 Baseline)</h2>
 <ol>
-<li><strong>Service Planning:</strong> Supervisors review the daily schedule and assign crews to specific client sites.</li>
-<li><strong>Equipment/Supply Issue:</strong> Crews check out required equipment and chemicals, logging usage in <code>[[HWB-FORM-7.1-001 Equipment Use Log]]</code>.</li>
-<li><strong>Site Arrival &amp; Safety:</strong> Upon arrival, crews perform a quick site-specific JHA review before commencing work.</li>
-<li><strong>Service Execution:</strong> Cleaning is performed according to the scope of work defined in the <code>quote_app</code>.</li>
-<li><strong>Quality Check:</strong> Supervisors or lead cleaners perform a final walkthrough using the service checklist.</li>
-<li><strong>Completion &amp; Logging:</strong> Services are marked as "Complete" in the system, and equipment is returned and inspected.</li>
+<li><strong>Guidance First:</strong> If a site-specific requirement is missing, ASK the CEO before commencing work.</li>
+<li><strong>Tier 6 Telemetry:</strong> Every work order completion must be logged to the <code>SigmaInteractionLog</code>.</li>
+<li><strong>Physical Truth:</strong> Use absolute server paths for all site-specific SOW (Scope of Work) documents.</li>
 </ol>
-<h3 id="41-process-flow-chart">4.1 [Process Flow Chart]</h3>
+<h2 id="40-procedure">4.0 Procedure</h2>
+<h3 id="41-service-planning">4.1 Service Planning</h3>
+<p>Supervisors review the daily schedule assigned via the <strong>Backoffice Control</strong> dashboard and assign crews.</p>
+<h3 id="42-resource-allocation">4.2 Resource Allocation</h3>
+<p>Crews check out equipment and chemicals, logging usage in the <strong>Equipment Use Log</strong> (HWB-SOP-7.1-001).</p>
+<h3 id="43-quality-handover">4.3 Quality Handover</h3>
+<ol>
+<li><strong>Site Arrival:</strong> Perform JHA review (HWB-QMS-8.1-001).</li>
+<li><strong>Execution:</strong> Cleaning performed per the digital SOW.</li>
+<li><strong>Verification:</strong> Supervisor final walkthrough using the clinical checklist.</li>
+</ol>
+<h3 id="44-process-flow-chart">4.4 [Process Flow Chart]</h3>
 <div class="mermaid">
 graph TD
-    A[Daily Schedule Review] --> B[Resource Allocation]
-    B --> C[Equipment/Supply Checkout]
-    C --> D[Site Arrival & Safety Check]
+    A[Schedule Review] --> B[Resource Allocation]
+    B --> C[Equipment Checkout]
+    C --> D[Site Safety Check]
     D --> E[Service Execution]
     E --> F[Quality Inspection]
-    F --> G[Service Logging & Checkout]
+    F --> G[Service Log & Safe]
 </div>
 
-<h2 id="50-verification">5.0 Verification</h2>
+<h2 id="50-verification-zero-defect-check">5.0 Verification (Zero-Defect Check)</h2>
 <ul>
-<li>Completed Service Logs in the <code>quote_app</code>.</li>
-<li>Quarterly Operations Performance Reviews (Clause 9.1).</li>
+<li>Service marked "Complete" in CRM with timestamp.</li>
+<li>Zero incidents reported in the EHSQ dashboard for the shift.</li>
 </ul>
 <h2 id="60-notes-and-cautions">6.0 Notes and Cautions</h2>
-<ul>
-<li><strong>Safety First:</strong> PPE must be worn at all times during service execution.</li>
-<li><strong>Zero Synthetic Data:</strong> All service logs must reflect actual site time and completed tasks.</li>
-</ul>
+<div class="callout callout-note"><strong>Note</strong>Use "Everyday Words" for all field-level instructions.</div>
+<div class="callout callout-caution"><strong>Caution</strong>PPE is mandatory. No PPE, No Work.</div>
+
 <h2 id="70-revision-history">7.0 Revision History</h2>
 <table>
 <thead>
@@ -101,6 +106,12 @@ graph TD
 </thead>
 <tbody>
 <tr>
+<td style="text-align: left;">2.0.0</td>
+<td style="text-align: left;">05/21/2026</td>
+<td style="text-align: left;">George</td>
+<td style="text-align: left;">TOTAL MODERNIZATION. Added 2026 mandates and Tier 6 Telemetry.</td>
+</tr>
+<tr>
 <td style="text-align: left;">1.0</td>
 <td style="text-align: left;">2026-02-28</td>
 <td style="text-align: left;">Gemini</td>
@@ -108,5 +119,11 @@ graph TD
 </tr>
 </tbody>
 </table>
+    </div>
+
+    <div class="sop-card-footer">
+        <span>&copy; 2026 HWB Cleaning Services LLC</span>
+        <span>Controlled Document | HWB-OPS-001</span>
+        <span>Page <span class="page-number"></span></span>
     </div>
 </div>

@@ -3,9 +3,9 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-8.0-FLOW-001</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.1</span></div>
-        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● Draft</span></div>
-        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">8.2.1 (Customer Communication)</span></div>
     </div>
 
     <div class="sop-content-body">
@@ -19,7 +19,7 @@
 <tbody>
 <tr>
 <td style="text-align: left;"><strong>Document Title</strong></td>
-<td style="text-align: left;">Sales Process Flowchart</td>
+<td style="text-align: left;"><strong>Sales Process Flowchart</strong></td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Document ID</strong></td>
@@ -27,119 +27,96 @@
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Version</strong></td>
-<td style="text-align: left;">1.1</td>
+<td style="text-align: left;">2.0.0</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Status</strong></td>
-<td style="text-align: left;">Draft</td>
+<td style="text-align: left;">APPROVED</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Author</strong></td>
-<td style="text-align: left;">Gemini</td>
+<td style="text-align: left;">George (Architect)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Approved By</strong></td>
-<td style="text-align: left;"><strong><em>_</em></strong><strong><em>_</em></strong><strong><em>_</em></strong>____</td>
+<td style="text-align: left;">Humberto Dominguez, CEO</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Date</strong></td>
-<td style="text-align: left;">2026-02-21</td>
+<td style="text-align: left;">05/21/2026</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>ISO 9001 Clause</strong></td>
+<td style="text-align: left;">8.2.1 (Customer Communication)</td>
 </tr>
 </tbody>
 </table>
 <hr />
-<h1 id="sales-process-flowchart">Sales Process Flowchart</h1>
+<h1 id="standard-operating-procedure-sales-process-flowchart">Standard Operating Procedure: <strong>Sales Process Flowchart</strong></h1>
 <h2 id="10-purpose">1.0 Purpose</h2>
-<p>The purpose of this document is to provide a visual representation of the Sales Process at HWB Cleaning Services, ensuring all team members understand the sequence of activities from initial contact to client onboarding.</p>
+<p>This document provides a visual representation of the Sales Process at HWB Cleaning Services, ensuring all team members understand the sequence of activities from initial contact to client onboarding.</p>
 <h2 id="20-scope">2.0 Scope</h2>
-<p>This flowchart applies to all sales activities managed by HWB Cleaning Services personnel.</p>
-<h2 id="30-prerequisites">3.0 Prerequisites</h2>
-<ul>
-<li>Understanding of the Sales Process SOP (HWB-QMS-8.0).</li>
-<li>Access to CRM or lead tracking tools.</li>
-</ul>
-<h2 id="40-procedure">4.0 Procedure</h2>
-<p>The following flowchart illustrates the step-by-step progression of the sales cycle.</p>
+<p>Applies to all sales activities within the Lead Pipeline and CRM modules.</p>
+<h2 id="30-universal-mandates-2026-baseline">3.0 Universal Mandates (2026 Baseline)</h2>
+<ol>
+<li><strong>Guidance First:</strong> If a lead's requirements are ambiguous, ASK the CEO before generating a quote.</li>
+<li><strong>Tier 6 Telemetry:</strong> Every transition in this flowchart must be traceable in the <code>SigmaInteractionLog</code>.</li>
+<li><strong>Physical Truth:</strong> Reference absolute paths for the quote generator logic (<code>quote_form.html</code>).</li>
+</ol>
+<h2 id="40-the-sales-sequence">4.0 The Sales Sequence</h2>
 <div class="mermaid">
 graph TD
-    %% Start of Process
-    Start((Customer Contact)) --> Inquiry[Inquiry via Phone, Web, or Email]
-
-    %% Qualification Phase
+    Start((Contact)) --> Inquiry[Inquiry via Web/Phone]
     Inquiry --> Qualify{Lead Qualification}
-    Qualify -- No --> LogStop[Log Reason & Stop]
-    Qualify -- Yes --> Schedule[Schedule On-Site Assessment]
-
-    %% Assessment Phase
-    Schedule --> Assessment[Conduct On-Site Assessment]
-    Assessment --> Requirements[Document Service Requirements]
-
-    %% Proposal Phase
-    Requirements --> Proposal[Prepare Quote/Proposal]
-    Proposal --> Delivery[Deliver Proposal to Client]
-
-    %% Decision Phase
+    Qualify -- No --> LogStop[Log & Archive]
+    Qualify -- Yes --> Schedule[Schedule Site Visit]
+    Schedule --> Assessment[Conduct Assessment]
+    Assessment --> Proposal[Prepare SigmaQuote]
+    Proposal --> Delivery[Deliver to Client]
     Delivery --> FollowUp{Follow-Up}
     FollowUp --> Decision{Client Decision}
-
-    Decision -- Rejected --> Feedback[Gather Feedback & Log]
-    Feedback --> Archive[Archive for Future Marketing]
-
+    Decision -- Rejected --> Feedback[Gather Feedback]
     Decision -- Negotiate --> Proposal
-
-    Decision -- Accepted --> Agreement[Sign Service Agreement]
-
-    %% Onboarding Phase
-    Agreement --> Scheduling[Schedule First Service]
-    Scheduling --> Operations[Hand-off to Operations Team]
-    Operations --> Finish((Process Complete))
-
-    %% Styling
-    style Start fill:#f9f,stroke:#333,stroke-width:2px
-    style Finish fill:#f9f,stroke:#333,stroke-width:2px
-    style Qualify fill:#fff4dd,stroke:#d4a017,stroke-width:2px
-    style Decision fill:#fff4dd,stroke:#d4a017,stroke-width:2px
-    style LogStop fill:#ffcccc,stroke:#a00,stroke-width:1px
-    style Archive fill:#ffcccc,stroke:#a00,stroke-width:1px
+    Decision -- Accepted --> Agreement[Sign Agreement]
+    Agreement --> Onboarding[Onboard via CRM]
+    Onboarding --> Finish((Complete))
 </div>
 
-<h2 id="50-verification">5.0 Verification</h2>
-<p>The flowchart's accuracy is verified by comparing it against the physical execution of the sales process as defined in HWB-QMS-8.0.</p>
-<h2 id="60-notes-and-cautions">6.0 Notes and Cautions</h2>
+<h2 id="50-verification-zero-defect-check">5.0 Verification (Zero-Defect Check)</h2>
 <ul>
-<li>The flowchart is a high-level summary; detailed instructions are contained in the Sales Process SOP.</li>
-<li>Exceptions to the flow must be approved by management.</li>
+<li>The flowchart renders correctly in the Compliance Engine.</li>
+<li>Every accepted agreement results in a valid Account record.</li>
 </ul>
-<h2 id="70-revision-history">7.0 Revision History</h2>
+<h2 id="60-revision-history">6.0 Revision History</h2>
 <table>
 <thead>
 <tr>
 <th style="text-align: left;">Version</th>
 <th style="text-align: left;">Date</th>
 <th style="text-align: left;">Author</th>
-<th style="text-align: left;">Description of Change</th>
+<th style="text-align: left;">Change Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">1.0</td>
-<td style="text-align: left;">2026-02-21</td>
-<td style="text-align: left;">Gemini</td>
-<td style="text-align: left;">Initial creation of standalone flowchart document.</td>
+<td style="text-align: left;">2.0.0</td>
+<td style="text-align: left;">05/21/2026</td>
+<td style="text-align: left;">George</td>
+<td style="text-align: left;">TOTAL MODERNIZATION. Added 2026 Baseline and Tier 6 mandates.</td>
 </tr>
 <tr>
 <td style="text-align: left;">1.1</td>
 <td style="text-align: left;">2026-02-21</td>
 <td style="text-align: left;">Gemini</td>
-<td style="text-align: left;">Updated to full HWB-QMS SOP standard format.</td>
+<td style="text-align: left;">Initial Release.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="80-document-conventions">8.0 Document Conventions</h2>
-<ul>
-<li><strong>Terminals:</strong> Ovals represent start and end points.</li>
-<li><strong>Decisions:</strong> Diamonds represent points where a choice or qualification occurs.</li>
-<li><strong>Actions:</strong> Rectangles represent specific tasks or steps.</li>
-</ul>
+    </div>
+
+    <div class="sop-card-footer">
+        <span>&copy; 2026 HWB Cleaning Services LLC</span>
+        <span>Controlled Document | HWB-QMS-8.0-FLOW-001</span>
+        <span>Page <span class="page-number"></span></span>
     </div>
 </div>

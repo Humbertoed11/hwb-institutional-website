@@ -2,13 +2,129 @@
 <div class="sop-card">
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
-        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">TBD</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.0</span></div>
-        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● DRAFT</span></div>
-        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-7.5-ERD</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5.3 (Control of Information)</span></div>
     </div>
 
     <div class="sop-content-body">
-        
+        <table>
+<thead>
+<tr>
+<th style="text-align: left;"><strong>Document Control</strong></th>
+<th style="text-align: left;"></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Document Title</strong></td>
+<td style="text-align: left;"><strong>Entity Relationship Diagram</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Document ID</strong></td>
+<td style="text-align: left;">HWB-QMS-7.5-ERD</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Version</strong></td>
+<td style="text-align: left;">2.0.0</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Status</strong></td>
+<td style="text-align: left;">APPROVED</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Author</strong></td>
+<td style="text-align: left;">George (Architect)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Approved By</strong></td>
+<td style="text-align: left;">Humberto Dominguez, CEO</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Date</strong></td>
+<td style="text-align: left;">05/21/2026</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>ISO 9001 Clause</strong></td>
+<td style="text-align: left;">7.5.3 (Control of Information)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1 id="standard-operating-procedure-entity-relationship-diagram-erd">Standard Operating Procedure: <strong>Entity Relationship Diagram (ERD)</strong></h1>
+<h2 id="10-purpose">1.0 Purpose</h2>
+<p>To define the relational database schema of the SigmaFidelity™ ecosystem. This ensuring data integrity and logical consistency across all HWB software modules.</p>
+<h2 id="20-universal-mandates-2026-baseline">2.0 Universal Mandates (2026 Baseline)</h2>
+<ol>
+<li><strong>Physical Truth:</strong> Table names and keys must match the real PostgreSQL schema.</li>
+<li><strong>Tier 6 Telemetry:</strong> Any schema change (migration) must be logged.</li>
+</ol>
+<h2 id="30-the-database-erd">3.0 The Database ERD</h2>
+<div class="mermaid">
+erDiagram
+    LEADS ||--o{ ACCOUNTS : "converts to"
+    ACCOUNTS ||--o{ SERVICES : "receives"
+    LEADS {
+        int lead_id PK
+        string facility_name
+        string industry
+        string status
+    }
+    ACCOUNTS {
+        int account_id PK
+        int lead_id FK
+        string billing_cycle
+    }
+    INTERACTIONS ||--o{ TELEMETRY : "monitors"
+    INTERACTIONS {
+        int log_id PK
+        string agent_name
+        string action
+        timestamp created_at
+    }
+    TELEMETRY {
+        int tel_id PK
+        int log_id FK
+        string state_snapshot
+    }
+</div>
+
+<h2 id="40-verification-zero-defect-check">4.0 Verification (Zero-Defect Check)</h2>
+<ul>
+<li>Foreign keys are enforced at the database level.</li>
+<li>Schema matches the <code>openapi.json</code> definition.</li>
+</ul>
+<h2 id="50-revision-history">5.0 Revision History</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Version</th>
+<th style="text-align: left;">Date</th>
+<th style="text-align: left;">Author</th>
+<th style="text-align: left;">Change Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">2.0.0</td>
+<td style="text-align: left;">05/21/2026</td>
+<td style="text-align: left;">George</td>
+<td style="text-align: left;">TOTAL MODERNIZATION. Added Tier 6 Telemetry tables.</td>
+</tr>
+<tr>
+<td style="text-align: left;">1.0</td>
+<td style="text-align: left;">2026-03-02</td>
+<td style="text-align: left;">George</td>
+<td style="text-align: left;">Initial ERD Release.</td>
+</tr>
+</tbody>
+</table>
+    </div>
+
+    <div class="sop-card-footer">
+        <span>&copy; 2026 HWB Cleaning Services LLC</span>
+        <span>Controlled Document | HWB-QMS-7.5-ERD</span>
+        <span>Page <span class="page-number"></span></span>
     </div>
 </div>

@@ -1,112 +1,56 @@
-# HWB-COM-001 Official Institutional Letterhead Template
-
 | **Document Control** |                                              |
 | :------------------- | :------------------------------------------- |
-| **Document Title**   | **Official Institutional Letterhead Template**|
+| **Document Title**   | **Official Institutional Letterhead**        |
 | **Document ID**      | HWB-COM-001                                  |
-| **Version**          | 1.0                                          |
-| **Status**           | Approved                                     |
-| **Author**           | Maria Bolanos (VP of Finance)                |
-| **Approved By**      | Humberto Dominguez (CEO)                     |
-| **Date**             | 2026-03-13                                   |
+| **Version**          | 2.0.0                                        |
+| **Status**           | APPROVED                                     |
+| **Author**           | George (Architect)                           |
+| **Approved By**      | Humberto Dominguez, CEO                      |
+| **Date**             | 05/21/2026                                   |
+| **ISO 9001 Clause**  | 8.2.1 (Customer Communication)               |
 
 ---
 
+# Standard Operating Procedure: **Official Institutional Letterhead**
+
 ## 1.0 Purpose
-To provide a standardized, high-fidelity letterhead for all HWB Cleaning Services LLC correspondence, ensuring brand consistency and professional excellence.
+To provide a standardized, high-fidelity letterhead for all HWB Cleaning Services LLC correspondence. This ensures brand authority and operational excellence in all digital and physical communications.
 
-## 2.0 Template (HTML/CSS)
+## 2.0 Universal Mandates (2026 Baseline)
+1. **Third-Person Perspective:** All correspondence using this letterhead must use the 3rd person standard.
+2. **Physical Truth:** Use absolute server paths for the corporate logo asset.
+3. **Outbox Protocol:** Stage all high-stakes correspondence in the **PendingOutbox** for CEO approval.
+
+## 3.0 Letterhead Template (HTML)
 ```html
-<!DOCTYPE html>
-<html>
-<head>
-    <style>
-        .letterhead {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: #333;
-            max-width: 800px;
-            margin: 0 auto;
-            border: 1px solid #eee;
-            padding: 40px;
-        }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 3px solid #004aad;
-            padding-bottom: 20px;
-            margin-bottom: 30px;
-        }
-        .logo {
-            font-size: 24px;
-            font-weight: bold;
-            color: #004aad;
-            text-transform: uppercase;
-        }
-        .institutional-title {
-            text-align: right;
-            font-size: 12px;
-            color: #666;
-            line-height: 1.4;
-        }
-        .content {
-            line-height: 1.6;
-            min-height: 400px;
-        }
-        .footer {
-            margin-top: 50px;
-            border-top: 1px solid #eee;
-            padding-top: 20px;
-            text-align: center;
-            font-size: 11px;
-            color: #999;
-        }
-        .motto {
-            font-weight: bold;
-            color: #004aad;
-            margin-bottom: 5px;
-        }
-    </style>
-</head>
-<body>
-    <div class="letterhead">
-        <div class="header">
-            <div class="logo">
-                <img src="https://hwbcleaning.com/static/hwb-cleaning-services-llc-logo-plano-tx.png" alt="HWB Cleaning Services LLC" height="60">
-                <br><span style="font-size: 14px; letter-spacing: 2px;">SIGMAFIDELITY™</span>
-            </div>
-            <div class="institutional-title">
-                <b>HWB Cleaning Services LLC</b><br>
-                Institutional Division | SaaS Ecosystem<br>
-                Plano, Texas | DFW Metroplex<br>
-                <a href="https://www.hwbcleaning.com" style="color: #004aad; text-decoration: none;">www.hwbcleaning.com</a>
-            </div>
+<div class="hwb-letterhead" style="font-family: 'Inter', sans-serif; padding: 40px; border: 1px solid #e2e8f0; border-radius: 8px;">
+    <div class="hwb-header" style="display: flex; justify-content: space-between; border-bottom: 3px solid #2563eb; padding-bottom: 20px;">
+        <div>
+            <img src="/static/hwb-cleaning-services-llc-logo-plano-tx.png" alt="HWB Logo" height="60">
+            <div style="font-weight: 900; font-size: 14px; color: #2563eb; margin-top: 5px;">SIGMAFIDELITY™</div>
         </div>
-        
-        <div class="content">
-            <!-- RECIPIENT & DATE -->
-            <div style="margin-bottom: 30px;">
-                <b>Date:</b> [DATE]<br>
-                <b>To:</b> [RECIPIENT_NAME]<br>
-                <b>Subject:</b> [SUBJECT]
-            </div>
-
-            <!-- BODY -->
-            [BODY_CONTENT]
-        </div>
-
-        <div class="footer">
-            <div class="motto">FIDELITY. SAFETY. RESPECT.</div>
-            © 2026 HWB Cleaning Services LLC. All Rights Reserved.<br>
-            ISO 9001:2015 Certified | Operational Excellence Guaranteed.
+        <div style="text-align: right; font-size: 11px; color: #64748b;">
+            <b>HWB Cleaning Services LLC</b><br>
+            Institutional Division | Plano, Texas<br>
+            www.hwbcleaning.com
         </div>
     </div>
-</body>
-</html>
+    <div class="hwb-content" style="padding: 40px 0; min-height: 400px; line-height: 1.8;">
+        [BODY_CONTENT]
+    </div>
+    <div class="hwb-footer" style="border-top: 1px solid #e2e8f0; padding-top: 20px; text-align: center; font-size: 10px; color: #94a3b8;">
+        <b>FIDELITY. SAFETY. RESPECT.</b><br>
+        © 2026 HWB Cleaning Services LLC. ISO 9001:2015 Registered.
+    </div>
+</div>
 ```
 
-## 3.0 Usage Instructions
-1.  **Selection**: Use this template for all emails, PDF reports, and formal business letters.
-2.  **Branding**: Ensure the primary color remains `#004aad` (Institutional Blue).
-3.  **Perspective**: All content must be written in the 3rd person perspective.
-4.  **Logo**: The logo must be high-resolution and placed in the top-left quadrant.
+## 4.0 Verification (Zero-Defect Check)
+*   Logo renders clearly in Microsoft Outlook and Gmail.
+*   The tagline "Fidelity. Safety. Respect." is present and accurate.
+
+## 5.0 Revision History
+| Version | Date | Author | Change Description |
+| :--- | :--- | :--- | :--- |
+| 2.0.0 | 05/21/2026 | George | TOTAL MODERNIZATION. Added 2026 mandates and Inter font standard. |
+| 1.0 | 2026-03-13 | Maria Bolanos | Initial Release. |

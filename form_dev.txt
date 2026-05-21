@@ -1,0 +1,41 @@
+            <form action="{{ url_for('get_quote') }}" method="POST" id="quote-form-page" class="sigma-form-container">
+                <div class="sigma-form-body">
+                    <!-- 4-Column Grid Standard -->
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4rem;">
+                        
+                        <!-- Columns 1-2: Building Information -->
+                        <div style="grid-column: span 2;">
+                            <span class="sigma-form-header" style="display: block; font-size: 0.75rem; font-weight: 900; color: var(--hwb-blue); text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 2.5rem; border-bottom: 2px solid var(--hwb-blue-glow); padding-bottom: 0.75rem;">01. Building Information</span>
+                            
+                            <div class="sigma-field" style="margin-bottom: 2rem;">
+                                <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.75rem;">Facility Category</label>
+                                <select name="facility_type" id="facility_type" required class="sigma-input" style="width: 100%; height: 48px; border: 1px solid var(--hwb-border); border-radius: 6px; padding: 0 1rem; font-weight: 500; font-family: inherit;">
+                                    <option value="office">Professional Office / Corporate</option>
+                                    <option value="medical">Medical / Clinical Building</option>
+                                    <option value="industrial">Warehouse / Logistics Hub</option>
+                                    <option value="daycare">Childcare / Educational</option>
+                                    <option value="worship">House of Worship</option>
+                                    <option value="dealership">Car Dealership</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+
+                            <div class="sigma-field" style="margin-bottom: 2rem;">
+                                <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.75rem;">Traffic & Usage Level</label>
+                                <select name="need" id="need" required class="sigma-input" style="width: 100%; height: 48px; border: 1px solid var(--hwb-border); border-radius: 6px; padding: 0 1rem; font-weight: 500; font-family: inherit;">
+                                    <option value="1">Slow Traffic (Reduced Wear)</option>
+                                    <option value="2" selected>High Traffic (Daily Use)</option>
+                                    <option value="3">24/7 Production (Extreme Wear)</option>
+                                </select>
+                            </div>
+
+                            <div class="sigma-field">
+                                <label style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 700; color: var(--slate-900); margin-bottom: 1rem;">
+                                    <span>Approximate Size (SQF)</span>
+                                    <strong id="sqft_label_page" style="color: var(--hwb-blue); font-weight: 800;">50,000 SQF</strong>
+                                </label>
+                                <div class="slider-instrument-container">
+                                    <input type="range" name="sqft" id="sqft_slider_page" min="500" max="1000000" step="500" value="50000" class="sigma-range-instrument" oninput="updateSQFT(this.value)">
+                                </div>
+                            </div>
+                        </div>

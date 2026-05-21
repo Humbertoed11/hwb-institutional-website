@@ -3,9 +3,9 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-7.5-DAF</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0</span></div>
-        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● Active</span></div>
-        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">8.1 (Operational Planning)</span></div>
     </div>
 
     <div class="sop-content-body">
@@ -27,74 +27,65 @@
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Version</strong></td>
-<td style="text-align: left;">1.0</td>
+<td style="text-align: left;">2.0.0</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Status</strong></td>
-<td style="text-align: left;">Active</td>
+<td style="text-align: left;">APPROVED</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Author</strong></td>
-<td style="text-align: left;">Nick Doria (VP Prompt Engineering)</td>
+<td style="text-align: left;">George (Architect)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Approved By</strong></td>
-<td style="text-align: left;">Humberto Dominguez (CEO)</td>
+<td style="text-align: left;">Humberto Dominguez, CEO</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Date</strong></td>
-<td style="text-align: left;">2026-03-05</td>
+<td style="text-align: left;">05/21/2026</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>ISO 9001 Clause</strong></td>
+<td style="text-align: left;">8.1 (Operational Planning)</td>
 </tr>
 </tbody>
 </table>
 <hr />
-<h1 id="10-purpose">1.0 Purpose</h1>
+<h1 id="standard-operating-procedure-data-acquisition-and-fidelity">Standard Operating Procedure: <strong>Data Acquisition and Fidelity</strong></h1>
+<h2 id="10-purpose">1.0 Purpose</h2>
 <p>This SOP establishes strict protocols for the acquisition, validation, and injection of external datasets into the SigmaFidelity™ CRM. It ensures that only high-fidelity, verified, and non-synthetic data enters the institutional value chain.</p>
-<h1 id="20-scope">2.0 Scope</h1>
-<p>Applies to all ETL (Extract, Transform, Load) operations performed by the Marketing, Sales, and IT divisions across all US state and federal datasets.</p>
-<h1 id="30-procedure-the-fidelity-pipeline">3.0 Procedure: The Fidelity Pipeline</h1>
-<h2 id="31-acquisition-secure-transfer-download">3.1 Acquisition &amp; Secure Transfer (Download)</h2>
+<h2 id="20-universal-mandates-2026-baseline">2.0 Universal Mandates (2026 Baseline)</h2>
+<ol>
+<li><strong>The Operator Charter:</strong> strictly industrial execution—zero synthetic data.</li>
+<li><strong>Guidance First:</strong> If a dataset fails the fidelity gate (sampling), ASK the CEO before attempting manual repair.</li>
+<li><strong>Tier 6 Telemetry:</strong> Every ETL (Extract, Transform, Load) cycle must be logged in the Tactical DB.</li>
+</ol>
+<h2 id="30-procedure-the-fidelity-pipeline">3.0 Procedure: The Fidelity Pipeline</h2>
+<h3 id="31-acquisition-secure-transfer">3.1 Acquisition &amp; Secure Transfer</h3>
 <ol>
 <li><strong>Source Identification:</strong> Datasets must originate from official government (.gov) or verified institutional portals.</li>
-<li><strong>Secure Landing:</strong> All raw files must be stored in <code>HWB-COMPANY/HWB-SALES-MARKETING/HWB-RAW-DATA/</code>.</li>
-<li><strong>Integrity Check:</strong> Execute <code>file [filename]</code> to verify the file format and MD5 checksum (where available) to ensure no corruption occurred during transfer.</li>
+<li><strong>Secure Landing:</strong> Store raw files in <code>/HWB-DATA/HWB-RAW-DATA/</code>.</li>
+<li><strong>Integrity Check:</strong> Execute MD5 checksum to ensure no corruption occurred during transfer.</li>
 </ol>
-<h2 id="32-data-sampling-fidelity-verification">3.2 Data Sampling (Fidelity Verification)</h2>
+<h3 id="32-data-sampling-fidelity-gate">3.2 Data Sampling (Fidelity Gate)</h3>
 <ol>
-<li><strong>Random Sampling:</strong> Extract a 10-record random sample from the raw file.</li>
-<li><strong>Physical Verification:</strong> Use Google Maps or official agency lookups to verify that the 10 sampled facilities physically exist at the listed addresses.</li>
-<li><strong>Fidelity Gate:</strong> If more than 1 record in the sample is unverified or synthetic, the entire dataset is rejected.</li>
+<li><strong>Sampling:</strong> Extract a 10-record random sample.</li>
+<li><strong>Verification:</strong> Physically verify that the 10 facilities exist at the listed addresses.</li>
+<li><strong>Gate:</strong> If &gt;1 record is unverified, the entire dataset is rejected.</li>
 </ol>
-<h2 id="33-data-criteria-selection-transformation">3.3 Data Criteria Selection (Transformation)</h2>
-<p>Before injection, data must be filtered based on the following <strong>Institutional Tiers</strong>:
-*   <strong>Tier 1 (High Yield):</strong> Facilities with Capacity &gt;= 99 OR Square Footage &gt;= 15,000.
-*   <strong>Tier 2 (Growth):</strong> Public institutional entities (Universities, School Districts, Municipal Hubs).
-*   <strong>NAICS Filtering (Mandatory):</strong> For state and federal datasets (e.g., SAM.gov, TX Comptroller), only records matching the following codes are permitted for acquisition:
-    *   <strong>561720:</strong> Janitorial Services (Core Operations)
-    *   <strong>561210:</strong> Facilities Support Services (Strategic Expansion)
-*   <strong>Sector Tagging:</strong> Industry tags must be assigned (e.g., "Child Care," "Higher Ed," "Logistics").</p>
-<h2 id="34-relational-injection-lifecycle-management-loading">3.4 Relational Injection &amp; Lifecycle Management (Loading)</h2>
+<h3 id="33-relational-injection">3.3 Relational Injection</h3>
 <ol>
-<li><strong>Deduplication:</strong> The Ingestion Engine must check for existing <code>center_name</code> or <code>License_Number</code> in <code>sigma_leads.db</code> to prevent redundancy.</li>
-<li><strong>Schema Alignment:</strong> Data must be mapped to the standardized 10-field SigmaFidelity™ schema.</li>
-<li><strong>Execution:</strong> Run the approved <code>Lead Ingestor.py</code> script.</li>
-<li><strong>Lifecycle Logging:</strong> The engine automatically records the file, count, and timestamp in the <code>Data_Processing_Registry.csv</code>.</li>
-<li><strong>Archival:</strong> The raw CSV file is automatically moved to the <code>HWB-RAW-DATA/ARCHIVE/</code> subfolder to maintain a "Zero-Muda" (clean) landing zone.</li>
-<li><strong>Telemetry:</strong> Log the successful injection in the <strong>Executive Pulse</strong> activity feed.</li>
+<li><strong>Deduplication:</strong> Check for existing License Numbers in the Leads table.</li>
+<li><strong>Schema Alignment:</strong> Map data to the standardized 10-field SigmaFidelity™ schema.</li>
+<li><strong>Archival:</strong> Move raw files to the <code>/ARCHIVE</code> subfolder to maintain a "Zero-Muda" landing zone.</li>
 </ol>
-<h1 id="40-verification">4.0 Verification</h1>
+<h2 id="40-verification-zero-defect-check">4.0 Verification (Zero-Defect Check)</h2>
 <ul>
-<li><strong>Audit Live:</strong> All new injections must be visible in the Marketing Pipeline (The Hive).</li>
-<li><strong>Registry Audit:</strong> The Data Processing Registry must perfectly match the archived files.</li>
-<li><strong>Director Verification:</strong> Spot-check Director names against LinkedIn to ensure decision-maker accuracy.</li>
+<li>Registry Audit confirms 100% match between archived files and CRM records.</li>
+<li>Director names verified against LinkedIn decision-maker intelligence.</li>
 </ul>
-<h1 id="50-notes-and-cautions">5.0 Notes and Cautions</h1>
-<ul>
-<li><strong>Muda Reduction:</strong> Avoid ingesting entire states unless the Tier 1 criteria are met. Focus on the "Growth Corridors."</li>
-<li><strong>Absolute Pathing:</strong> Never use relative paths in ingestion scripts to prevent data loss during system migrations.</li>
-</ul>
-<hr />
-<h2 id="60-revision-history">6.0 Revision History</h2>
+<h2 id="50-revision-history">5.0 Revision History</h2>
 <table>
 <thead>
 <tr>
@@ -106,19 +97,30 @@
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">1.0</td>
-<td style="text-align: left;">2026-03-05</td>
-<td style="text-align: left;">Nick Doria</td>
-<td style="text-align: left;">Initial Data Acquisition &amp; Fidelity protocol established.</td>
+<td style="text-align: left;">2.0.0</td>
+<td style="text-align: left;">05/21/2026</td>
+<td style="text-align: left;">George</td>
+<td style="text-align: left;">TOTAL MODERNIZATION. Added 2026 mandates and Tier 6 lifecycle tracking.</td>
 </tr>
 <tr>
 <td style="text-align: left;">1.1</td>
 <td style="text-align: left;">2026-03-05</td>
+<td style="text-align: left;">Nick Doria</td>
+<td style="text-align: left;">Initial Data Acquisition protocol.</td>
+</tr>
+<tr>
+<td style="text-align: left;">1.0</td>
+<td style="text-align: left;">2026-03-05</td>
 <td style="text-align: left;">George</td>
-<td style="text-align: left;">Integrated Institutional Data Lifecycle Management (Archiving).</td>
+<td style="text-align: left;">Initial Release.</td>
 </tr>
 </tbody>
 </table>
-<p>---\n<em>Standard Operating Procedure produced under the SigmaFidelity™ Quality Mandate.</em></p>
+    </div>
+
+    <div class="sop-card-footer">
+        <span>&copy; 2026 HWB Cleaning Services LLC</span>
+        <span>Controlled Document | HWB-QMS-7.5-DAF</span>
+        <span>Page <span class="page-number"></span></span>
     </div>
 </div>

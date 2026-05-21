@@ -30,21 +30,31 @@ HTML_TEMPLATE = """
     <div class="sop-content-body">
         {content_html}
     </div>
+
+    <div class="sop-card-footer">
+        <span>&copy; 2026 HWB Cleaning Services LLC</span>
+        <span>Controlled Document | {doc_id}</span>
+        <span>Page <span class="page-number"></span></span>
+    </div>
 </div>
 """
 
-def extract_metadata(content):
+def extract_metadata(content, filename):
+    # Try to find a Title in H1 or filename
+    title = filename.replace(".md", "").replace("_", " ").title()
+    h1_match = re.search(r'^#\s+(.*)', content, re.MULTILINE)
+    if h1_match: title = h1_match.group(1).strip().replace("**", "")
+
     meta = {
-        "title": "Untitled SOP", 
-        "doc_id": "TBD", 
-        "version": "1.0.0", 
+        "title": title, 
+        "doc_id": "HWB-TBD", 
+        "version": "1.0", 
         "status": "DRAFT", 
         "clause": "7.5",
         "date": "2000-01-01"
     }
-    h1_match = re.search(r'^#\s+(.*)', content, re.MULTILINE)
-    if h1_match: meta["title"] = h1_match.group(1).strip()
     
+    # Try table extraction first
     fields = {
         "doc_id": r'\|\s*\*\*Document ID\*\*\s*\|\s*([^|]*)\|',
         "version": r'\|\s*\*\*Version\*\*\s*\|\s*([^|]*)\|',
@@ -56,27 +66,34 @@ def extract_metadata(content):
     for key, pattern in fields.items():
         match = re.search(pattern, content, re.IGNORECASE)
         if match:
-            meta[key] = match.group(1).strip()
+            meta[key] = match.group(1).strip().replace("**", "")
+
+    # Fallback for missing date/id in non-table format
+    if meta["date"] == "2000-01-01":
+        date_match = re.search(r'Date:\s*(\d{4}-\d{2}-\d{2}|\d{2}/\d{2}/\d{4}|\d{2}-\d{2}-\d{4})', content, re.IGNORECASE)
+        if date_match: meta["date"] = date_match.group(1).strip()
     
+    if meta["doc_id"] == "HWB-TBD":
+        id_match = re.search(r'HWB-[A-Z]+-\d+\.?\d*', filename)
+        if id_match: meta["doc_id"] = id_match.group(0)
+
     return meta
 
 def process_callouts(md_text):
-    """
-    Converts blockquotes with labels into Industrial Callout HTML.
-    """
+    # Improved patterns to capture multi-line content inside blockquotes if needed
+    # (For now keeping them simple as per the previous successful turn)
     patterns = {
         r'>\s*\*\*NOTE:\*\*\s*(.*)': r'<div class="callout callout-note"><strong>Note</strong>\1</div>',
         r'>\s*\*\*CAUTION:\*\*\s*(.*)': r'<div class="callout callout-caution"><strong>Caution</strong>\1</div>',
         r'>\s*\*\*DANGER:\*\*\s*(.*)': r'<div class="callout callout-danger"><strong>Danger</strong>\1</div>',
         r'>\s*\*\*LOGIC:\*\*\s*(.*)': r'<div class="callout callout-logic"><strong>Technical Logic</strong>\1</div>'
     }
-    
     for pattern, replacement in patterns.items():
         md_text = re.sub(pattern, replacement, md_text, flags=re.MULTILINE | re.IGNORECASE)
     
     # Fix Mermaid blocks to ensure they have the .mermaid class
     md_text = re.sub(r'```mermaid', r'<div class="mermaid">', md_text)
-    md_text = re.sub(r'```(?=\s*\n|$)', r'</div>', md_text) # Only close div if it followed a mermaid start
+    md_text = re.sub(r'```(?=\s*\n|$)', r'</div>', md_text)
     
     return md_text
 
@@ -93,7 +110,7 @@ def get_compliance_status(date_str):
     except: return "OUTDATED"
 
 def migrate():
-    print(f"--- SigmaFidelity: Initiating Industrial Hardening Migration ---")
+    print(f"--- SigmaFidelity: Initiating High-Fidelity Migration ---")
     sops = []
     if not os.path.exists(OUTPUT_DIR): os.makedirs(OUTPUT_DIR)
     
@@ -101,20 +118,17 @@ def migrate():
         dept_path = os.path.join(SOURCE_ROOT, dept)
         if not os.path.exists(dept_path): continue
             
-        print(f"[HARDENING] {dept}...")
+        print(f"[PROCESSING] {dept}...")
         for filename in os.listdir(dept_path):
             if filename.endswith(".md"):
                 file_path = os.path.join(dept_path, filename)
                 with open(file_path, "r", encoding="utf-8") as f:
                     md_content = f.read()
                 
-                meta = extract_metadata(md_content)
+                meta = extract_metadata(md_content, filename)
                 compliance = get_compliance_status(meta["date"])
                 
-                # Pre-process for Callouts and Mermaid
                 hardened_md = process_callouts(md_content)
-                
-                # Convert to HTML with TOC and Table support
                 content_html = markdown.markdown(hardened_md, extensions=['tables', 'fenced_code', 'toc'])
                 
                 final_html = HTML_TEMPLATE.format(
@@ -141,7 +155,7 @@ def migrate():
     
     with open(INDEX_FILE, "w", encoding="utf-8") as f:
         json.dump(sops, f, indent=4)
-    print(f"--- SigmaFidelity: Hardening Complete. {len(sops)} Industrial Fragments Saved. ---")
+    print(f"--- SigmaFidelity: Hardening Complete. {len(sops)} Fragments Saved. ---")
 
 if __name__ == "__main__":
     migrate()

@@ -3,9 +3,9 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-ACC-002</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0</span></div>
-        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● Approved</span></div>
-        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">8.2.1 (Customer Communication)</span></div>
     </div>
 
     <div class="sop-content-body">
@@ -27,23 +27,27 @@
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Version</strong></td>
-<td style="text-align: left;">1.0</td>
+<td style="text-align: left;">2.0.0</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Status</strong></td>
-<td style="text-align: left;">Approved</td>
+<td style="text-align: left;">APPROVED</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Author</strong></td>
-<td style="text-align: left;">Gemini (Senior ISO 9001 Auditor)</td>
+<td style="text-align: left;">George (Architect)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Approved By</strong></td>
-<td style="text-align: left;">SigmaFidelity™ Orchestrator</td>
+<td style="text-align: left;">Humberto Dominguez, CEO</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Date</strong></td>
-<td style="text-align: left;">2026-03-01</td>
+<td style="text-align: left;">05/21/2026</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>ISO 9001 Clause</strong></td>
+<td style="text-align: left;">8.2.1 (Customer Communication)</td>
 </tr>
 </tbody>
 </table>
@@ -52,39 +56,45 @@
 <h2 id="10-purpose">1.0 Purpose</h2>
 <p>To define the procedure for generating client invoices, tracking payments, and managing collections using QuickBooks. This ensures cash flow stability and accurate empirical financial reporting.</p>
 <h2 id="20-scope">2.0 Scope</h2>
-<p>Applies to all revenue-generating activities, specifically service quotes and work orders processed via the <code>quote_app</code> and finalized in QuickBooks.</p>
-<h2 id="30-prerequisites">3.0 Prerequisites</h2>
+<p>Applies to all revenue-generating activities, specifically service quotes and work orders processed via the Lead Pipeline and finalized in QuickBooks.</p>
+<h2 id="30-universal-mandates-2026-baseline">3.0 Universal Mandates (2026 Baseline)</h2>
+<ol>
+<li><strong>Guidance First:</strong> If a payment is missing or a file is lost, ASK the CEO before consuming tokens on a search.</li>
+<li><strong>Tier 6 Telemetry:</strong> Log all major AR adjustments to the <code>SigmaInteractionLog</code>.</li>
+<li><strong>Physical Truth:</strong> Use absolute paths for all data exports.</li>
+</ol>
+<h2 id="40-prerequisites">4.0 Prerequisites</h2>
 <ul>
-<li>Verified service completion data from the <code>quote_app</code>.</li>
+<li>Verified service completion data from the Lead Pipeline.</li>
 <li>QuickBooks Online/Desktop access.</li>
 <li>Approved Client Master File.</li>
 </ul>
-<h2 id="40-procedure">4.0 Procedure</h2>
-<h3 id="41-invoice-generation">4.1 Invoice Generation</h3>
+<h2 id="50-procedure">5.0 Procedure</h2>
+<h3 id="51-invoice-generation">5.1 Invoice Generation</h3>
 <ol>
-<li><strong>Data Verification:</strong> At the end of each service week, the Accounting Clerk shall export the "Completed Services" report from the <code>quote_app</code>.</li>
+<li><strong>Data Verification:</strong> At the end of each service week, export the "Completed Services" report.</li>
 <li><strong>QuickBooks Entry:</strong> Create a new invoice in QuickBooks for each client based on the empirical quote number and service date.</li>
-<li><strong>Accuracy Check:</strong> Ensure sales tax rates are correctly applied based on the client's North Texas jurisdiction (e.g., Frisco vs. Dallas).</li>
+<li><strong>Accuracy Check:</strong> Ensure sales tax rates are correctly applied based on the client's North Texas jurisdiction.</li>
 <li><strong>Distribution:</strong> Send invoices via email directly from QuickBooks.</li>
 </ol>
-<h3 id="42-payment-application">4.2 Payment Application</h3>
+<h3 id="52-payment-application">5.2 Payment Application</h3>
 <ol>
 <li><strong>Recording:</strong> Upon receipt of payment (ACH, Check, or Credit Card), record the transaction against the specific invoice in QuickBooks.</li>
 <li><strong>Reconciliation:</strong> Daily matching of bank deposits to QuickBooks payment records.</li>
 </ol>
-<h3 id="43-collections-aging">4.3 Collections &amp; Aging</h3>
+<h3 id="53-collections-aging">5.3 Collections &amp; Aging</h3>
 <ol>
 <li><strong>Review:</strong> Weekly review of the "A/R Aging Detail" report.</li>
 <li><strong>Follow-up:</strong> <ul>
-<li><strong>Net 30+:</strong> Send a polite automated reminder via QuickBooks.</li>
+<li><strong>Net 30+:</strong> Send a polite automated reminder.</li>
 <li><strong>Net 60+:</strong> Direct contact by the Operations Manager.</li>
 </ul>
 </li>
 </ol>
-<h3 id="44-process-flow-chart">4.4 [Process Flow Chart]</h3>
+<h3 id="54-process-flow-chart">5.4 [Process Flow Chart]</h3>
 <div class="mermaid">
 graph TD
-    A[Service Completed] --> B[Export Data from Quote App]
+    A[Service Completed] --> B[Export Data]
     B --> C[Create QuickBooks Invoice]
     C --> D[Email to Client]
     D --> E{Payment Received?}
@@ -93,17 +103,17 @@ graph TD
     G --> H[Management Escalation]
 </div>
 
-<h2 id="50-verification">5.0 Verification</h2>
+<h2 id="60-verification-zero-defect-check">6.0 Verification (Zero-Defect Check)</h2>
 <ul>
 <li>Monthly AR Aging Report signed by the Managing Director.</li>
-<li>Zero variance between <code>quote_app</code> completions and QuickBooks invoices.</li>
+<li>Zero variance between system completions and QuickBooks invoices.</li>
+<li>All client data matches the "Source of Truth" Client Master File.</li>
 </ul>
-<h2 id="60-notes-and-cautions">6.0 Notes and Cautions</h2>
-<ul>
-<li><strong>Zero Synthetic Data:</strong> Never generate "pro-forma" or placeholder invoices.</li>
-<li><strong>Privacy:</strong> Handle client banking information in accordance with Legal/IT security protocols.</li>
-</ul>
-<h2 id="70-revision-history">7.0 Revision History</h2>
+<h2 id="70-notes-and-cautions">7.0 Notes and Cautions</h2>
+<div class="callout callout-note"><strong>Note</strong>Maintain a professional and helpful tone during collection calls.</div>
+<div class="callout callout-caution"><strong>Caution</strong>Never generate placeholder invoices. All billing must be based on real work.</div>
+
+<h2 id="80-revision-history">8.0 Revision History</h2>
 <table>
 <thead>
 <tr>
@@ -115,12 +125,24 @@ graph TD
 </thead>
 <tbody>
 <tr>
+<td style="text-align: left;">2.0.0</td>
+<td style="text-align: left;">05/21/2026</td>
+<td style="text-align: left;">George</td>
+<td style="text-align: left;">TOTAL MODERNIZATION. Added 2026 Baseline mandates and Tier 6 integration.</td>
+</tr>
+<tr>
 <td style="text-align: left;">1.0</td>
 <td style="text-align: left;">2026-03-01</td>
 <td style="text-align: left;">Gemini</td>
-<td style="text-align: left;">Initial Release: Established QuickBooks-based AR workflow.</td>
+<td style="text-align: left;">Initial Release.</td>
 </tr>
 </tbody>
 </table>
+    </div>
+
+    <div class="sop-card-footer">
+        <span>&copy; 2026 HWB Cleaning Services LLC</span>
+        <span>Controlled Document | HWB-ACC-002</span>
+        <span>Page <span class="page-number"></span></span>
     </div>
 </div>

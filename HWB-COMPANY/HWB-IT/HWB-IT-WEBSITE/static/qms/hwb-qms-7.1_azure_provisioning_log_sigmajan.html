@@ -2,13 +2,108 @@
 <div class="sop-card">
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
-        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">TBD</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.0</span></div>
-        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● DRAFT</span></div>
-        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-7.1-AZR</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.1.3 (Infrastructure)</span></div>
     </div>
 
     <div class="sop-content-body">
-        
+        <table>
+<thead>
+<tr>
+<th style="text-align: left;"><strong>Document Control</strong></th>
+<th style="text-align: left;"></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Document Title</strong></td>
+<td style="text-align: left;"><strong>Azure Provisioning Log</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Document ID</strong></td>
+<td style="text-align: left;">HWB-QMS-7.1-AZR</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Version</strong></td>
+<td style="text-align: left;">2.0.0</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Status</strong></td>
+<td style="text-align: left;">APPROVED</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Author</strong></td>
+<td style="text-align: left;">George (Architect)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Approved By</strong></td>
+<td style="text-align: left;">Humberto Dominguez, CEO</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Date</strong></td>
+<td style="text-align: left;">05/21/2026</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>ISO 9001 Clause</strong></td>
+<td style="text-align: left;">7.1.3 (Infrastructure)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1 id="standard-operating-procedure-azure-provisioning-log">Standard Operating Procedure: <strong>Azure Provisioning Log</strong></h1>
+<h2 id="10-purpose">1.0 Purpose</h2>
+<p>To define the technical sequence for provisioning and hardening HWB Azure resources. This ensures absolute environment parity between local development and the high-fidelity cloud production environment.</p>
+<h2 id="20-universal-mandates-2026-baseline">2.0 Universal Mandates (2026 Baseline)</h2>
+<ol>
+<li><strong>Guidance First:</strong> If an Azure resource deployment fails, ASK the CEO before initiating a multi-token troubleshooting sweep.</li>
+<li><strong>Tier 6 Telemetry:</strong> Every infrastructure change must be logged to the <code>SigmaInteractionLog</code>.</li>
+<li><strong>Physical Truth:</strong> Reference absolute server paths for all ARM templates and deployment scripts.</li>
+</ol>
+<h2 id="30-provisioning-sequence">3.0 Provisioning Sequence</h2>
+<ol>
+<li><strong>Identity Hardening:</strong> Establish Microsoft Entra ID (Active Directory) for agent authentication.</li>
+<li><strong>Compute:</strong> Provision Azure App Service (B1 Tier) for the main Flask application.</li>
+<li><strong>Data:</strong> Provision Azure SQL Database (Standard S1) for transactional persistence.</li>
+<li><strong>Security:</strong> Activate Azure Key Vault for <code>.env</code> secret management.</li>
+</ol>
+<h2 id="40-verification-zero-defect-check">4.0 Verification (Zero-Defect Check)</h2>
+<ul>
+<li>Deployment logs show 100% success for all resources.</li>
+<li>Application is reachable via the verified Azure DNS endpoint.</li>
+<li>Tier 6 logs confirm the successful connection to the cloud database.</li>
+</ul>
+<h2 id="50-revision-history">5.0 Revision History</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Version</th>
+<th style="text-align: left;">Date</th>
+<th style="text-align: left;">Author</th>
+<th style="text-align: left;">Change Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">2.0.0</td>
+<td style="text-align: left;">05/21/2026</td>
+<td style="text-align: left;">George</td>
+<td style="text-align: left;">TOTAL MODERNIZATION. Added 2026 Baseline and secret management mandates.</td>
+</tr>
+<tr>
+<td style="text-align: left;">1.0</td>
+<td style="text-align: left;">2026-03-02</td>
+<td style="text-align: left;">George</td>
+<td style="text-align: left;">Initial Provisioning Log.</td>
+</tr>
+</tbody>
+</table>
+    </div>
+
+    <div class="sop-card-footer">
+        <span>&copy; 2026 HWB Cleaning Services LLC</span>
+        <span>Controlled Document | HWB-QMS-7.1-AZR</span>
+        <span>Page <span class="page-number"></span></span>
     </div>
 </div>

@@ -1,56 +1,56 @@
 | **Document Control** |                                              |
 | :------------------- | :------------------------------------------- |
-| **Document Title**   | **SigmaFidelity™ Social Media Strategy & Tactics** |
+| **Document Title**   | **SigmaFidelity™ Social Media Strategy**    |
 | **Document ID**      | HWB-MKT-SOC-001                              |
-| **Version**          | 1.0                                          |
-| **Status**           | Approved                                     |
-| **Author**           | Lauri Tells (VP Sales & Marketing)           |
-| **Approved By**      | Humberto Dominguez (CEO)                     |
-| **Date**             | 2026-03-11                                   |
+| **Version**          | 2.0.0                                        |
+| **Status**           | APPROVED                                     |
+| **Author**           | George (Architect)                           |
+| **Approved By**      | Humberto Dominguez, CEO                      |
+| **Date**             | 05/21/2026                                   |
+| **ISO 9001 Clause**  | 8.2.1 (Customer Communication)   |
 
 ---
 
-# 1.0 Strategic North Star
-The SigmaFidelity™ social media presence is built on **Authority, Empirical Proof, and Local Dominance**. We do not post "filler" content. Every post must provide **Intel** or **Evidence** that reinforces HWB's position as the premier institutional cleaning provider in DFW.
+# Standard Operating Procedure: **SigmaFidelity™ Social Media Strategy**
 
-**Official Tagline:**
-> "The daily sum of our personal efforts adds up to a clean business operation."
+## 1.0 Purpose
+The SigmaFidelity™ social media presence is built on **Authority, Empirical Proof, and Local Dominance**. We do not post "filler" content. Every post must provide **Intel** or **Evidence** that reinforces HWB's position as the premier institutional cleaning provider in North Texas.
 
-# 2.0 Key Pillars (Content Strategy)
+## 2.0 Scope
+Applies to all HWB accounts on LinkedIn, Facebook, and YouTube.
 
-### 2.1 The "Intel" Feed (Authority)
-*   **Tactics:** Automated monitoring of OSHA regional alerts, DFW labor market shifts, and Texas legal precedents (Sopha v. OSHA style).
-*   **Format:** "Alert: New OSHA Penalty in [City]" or "DFW Trend: [X]% Increase in Commercial Permits."
-*   **Platform:** LinkedIn (Primary), Facebook Groups (Secondary).
+## 3.0 Universal Mandates (2026 Baseline)
+1. **Guidance First:** If a post engagement data is missing, ASK the CEO before debugging the API.
+2. **Tier 6 Telemetry:** Every high-authority post must be logged in the `SigmaInteractionLog`.
+3. **Physical Truth:** Use absolute server paths for all media assets in the `static/` directory.
 
-### 2.2 Visual Fidelity (Proof)
-*   **Tactics:** Staging high-definition "Real vs. Synthetic" comparisons. Showing mecha-tech visualizations of cleanroom standards vs. real-world site transformations.
-*   **Format:** Before/After carousels and "Day in the Life of a Sigma-Tech" reels.
-*   **Platform:** Instagram, TikTok.
+## 4.0 Strategic Pillars
+*   **The "Daily Sum" Philosophy:** Focus on how small, daily efforts lead to industrial-grade cleanliness.
+*   **Empirical Evidence:** Share "Before & After" photos and Six Sigma performance metrics.
+*   **Local Authority:** Tag and mention North Texas landmarks (Frisco, Plano, Dallas).
 
-### 2.3 The "GC Connect" (Direct Outreach)
-*   **Tactics:** Using Apify to scrape current projects from Balfour Beatty, Austin Commercial, and JE Dunn. Engaging with project managers on their site-specific updates.
-*   **Format:** Personalized comments and direct outreach referencing 2026 project milestones.
-*   **Platform:** LinkedIn.
+## 5.0 Procedure
 
-### 2.4 Local SEO Loop (Dominance)
-*   **Tactics:** Syncing social media milestones with Google Business Profile (GBP) posts. Highlighting ISO 9001 audit successes.
-*   **Format:** "Milestone: HWB Completes 500th Cleanroom Audit in Arlington."
-*   **Platform:** GBP, Facebook.
+### 5.1 Post Generation
+1.  Source high-fidelity images from the `gen_ai_staging` folder.
+2.  Draft captions using "Everyday Words" at a professional 20-year-old reading level.
+3.  Include the official tagline: "The daily sum of our personal efforts adds up to a clean business operation."
 
-# 3.0 Operational Tactics (The Workflow)
+### 5.2 Approval & Dispatch
+1.  Stage all posts in the **Executive Pulse** (Social Outbox) for CEO review.
+2.  Once approved, use the LinkedIn Dispatcher script to automate transmission.
 
-| Priority | Platform | Frequency | Tooling |
+## 6.0 Verification (Zero-Defect Check)
+*   Post matches the 2026 "Material Depth" aesthetic.
+*   Tagline is spelled correctly.
+*   Links lead to functional Lead Capture forms.
+
+## 7.0 Notes and Cautions
+> **NOTE:** Maintain a clinically disciplined tone—avoid excessive emojis.
+> **CAUTION:** Never post synthetic "Stock Photos." Use real site images or approved AI renders.
+
+## 8.0 Revision History
+| Version | Date | Author | Change Description |
 | :--- | :--- | :--- | :--- |
-| **CRITICAL** | LinkedIn | 3x Weekly | Apify (Lead Scraper) + George (Intel) |
-| **HIGH** | GBP | 2x Weekly | Lauri Tells (SEO Engine) |
-| **MEDIUM** | Instagram | 2x Weekly | Nano Banana (Asset Generation) |
-| **SUPPORT** | Facebook | Daily | News Queue (Auto-Sync) |
-
-# 4.0 Governance: The Zero-Muda Mandate
-*   **No Synthetic Data:** All statistics must be empirical. No "estimated" savings unless backed by HWB-QMS math.
-*   **Mandatory Approval:** No post leaves the "Draft" stage without CEO verification in the `PendingOutbox`.
-*   **Professional Perspective:** All communication must adhere to the 3rd person perspective (The SigmaFidelity™ Standard).
-
----
-*Produced by Lauri Tells under the SigmaFidelity™ Quality Mandate.*
+| 2.0.0 | 05/21/2026 | George | TOTAL MODERNIZATION. Added 2026 mandates and Integrated Executive Pulse logic. |
+| 1.0 | 2026-03-11 | Lauri Tells | Initial Release. |

@@ -1,86 +1,84 @@
 {% extends "base.html" %}
 
-{% block title %}Quote Request Received | HWB Cleaning Services LLC{% endblock %}
+{% block title %}Cleaning Request Received | HWB Cleaning Services LLC{% endblock %}
 
 {% block content %}
-<div class="content-wrapper" style="max-width: 800px; margin: 0 auto; padding: 6rem 2rem; text-align: center;">
- <div style="margin-bottom: 3rem;">
- <div style="width: 80px; height: 80px; background: #28a745; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 2rem; font-size: 2.5rem; box-shadow: 0 10px 25px rgba(40, 167, 69, 0.3);">
- ✓
- </div>
- <h2 style="font-size: 2.25rem; font-weight: 800; color: var(--hwb-dark); margin-bottom: 1rem;">Request Received Successfully.</h2>
- <p style="font-size: 1.25rem; color: #64748b;">Thank you, {{ data['name'] }}. The initial cleaning plan has been registered.</p>
- </div>
+<section class="section-white" style="padding: 8rem 0; background-color: #f8fafc; background-image: radial-gradient(#e2e8f0 0.5px, transparent 0.5px); background-size: 24px 24px;">
+    <div class="content-wrapper" style="max-width: 800px;">
+        
+        <!-- 🏛️ INDUSTRIAL SERVICE IDENTITY CARD -->
+        <div class="isc-card" style="padding: 0; border-radius: 20px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.05); border: 1px solid var(--slate-200); background: white;">
+            
+            <!-- Card Header: Simple Info -->
+            <div style="background: #0f172a; padding: 2rem 3rem; color: white; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; color: rgba(255,255,255,0.4); margin-bottom: 0.5rem;">Request Type</div>
+                    <div style="font-size: 1.1rem; font-weight: 800; letter-spacing: 0.02em;">QUICK CLEANING PLAN</div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; color: rgba(255,255,255,0.4); margin-bottom: 0.5rem;">Status</div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 900; color: #10b981;">
+                        <span style="width: 8px; height: 8px; background: #10b981; border-radius: 50%;"></span>
+                        RECEIVED
+                    </div>
+                </div>
+            </div>
 
- <div style="background: #ffffff; border-radius: 6px; border: 1px solid rgba(37, 99, 235, 0.1); padding: 2rem; text-align: left; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 4rem;">
- <h3 style="font-size: 1.2rem; color: var(--hwb-blue); border-bottom: 2px solid #ffffff; padding-bottom: 1rem; margin-bottom: 2rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 900;">Request Summary</h3>
- 
- <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem;">
- <div>
- <div style="margin-bottom: 1.5rem;">
- <label style="display: block; font-size: 0.8rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; margin-bottom: 0.25rem;">Organization</label>
- <div style="font-size: 1.1rem; color: #1e293b; font-weight: 700;">{{ data['company'] }}</div>
- </div>
- <div style="margin-bottom: 1.5rem;">
- <label style="display: block; font-size: 0.8rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; margin-bottom: 0.25rem;">Building Type</label>
- <div style="font-size: 1.1rem; color: #1e293b; font-weight: 700;">{{ data['facility_type'].capitalize() }}</div>
- </div>
- <div>
- <label style="display: block; font-size: 0.8rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; margin-bottom: 0.25rem;">Square Footage</label>
- <div style="font-size: 1.1rem; color: #1e293b; font-weight: 700;">{{ data['sqft'] }} SQF</div>
- </div>
- {% if data['pref_date'] %}
- <div style="margin-top: 1.5rem;">
- <label style="display: block; font-size: 0.8rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; margin-bottom: 0.25rem;">Preferred Date</label>
- <div style="font-size: 1.1rem; color: var(--hwb-blue); font-weight: 700;">{{ data['pref_date'] }}</div>
- </div>
- {% endif %}
- </div>
- 
- <div>
- <div style="margin-bottom: 1.5rem;">
- <label style="display: block; font-size: 0.8rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; margin-bottom: 0.25rem;">Service Need</label>
- <div style="font-size: 1.1rem; color: var(--hwb-blue); font-weight: 800;">{{ data['need_label'] }}</div>
- </div>
- <div style="margin-bottom: 1.5rem;">
- <label style="display: block; font-size: 0.8rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; margin-bottom: 0.25rem;">Contact Phone</label>
- <div style="font-size: 1.1rem; color: #1e293b; font-weight: 700;">{{ data['phone'] }}</div>
- </div>
- <div style="margin-bottom: 1.5rem;">
- <label style="display: block; font-size: 0.8rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; margin-bottom: 0.25rem;">Contact Email</label>
- <div style="font-size: 1.1rem; color: #1e293b; font-weight: 700;">{{ data['email'] }}</div>
- </div>
- {% if data['pref_time'] %}
- <div>
- <label style="display: block; font-size: 0.8rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; margin-bottom: 0.25rem;">Preferred Time</label>
- <div style="font-size: 1.1rem; color: var(--hwb-blue); font-weight: 700;">{{ data['pref_time'] }}</div>
- </div>
- {% endif %}
- </div>
- </div>
+            <!-- Card Body: Summary -->
+            <div style="padding: 4rem 3rem;">
+                <div style="margin-bottom: 3.5rem; text-align: center;">
+                    <div style="width: 64px; height: 64px; background: #f0fdf4; color: #166534; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; font-size: 1.5rem; border: 1px solid #bbf7d0;">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <h2 style="font-size: 2rem; font-weight: 900; color: #0f172a; letter-spacing: -0.02em;">Success. We have your info.</h2>
+                    <p style="color: #64748b; font-size: 1.1rem; font-weight: 500;">Thank you, {{ data['name'] }}. We have added your business to our list.</p>
+                </div>
 
- {% if data['message'] %}
- <div style="margin-top: 2.5rem; padding-top: 2rem; border-top: 1px dashed rgba(37, 99, 235, 0.1);">
- <label style="display: block; font-size: 0.8rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; margin-bottom: 0.5rem;">Special Instructions</label>
- <div style="font-size: 1rem; color: #475569; font-style: italic;">"{{ data['message'] }}"</div>
- </div>
- {% endif %}
- </div>
+                <!-- Simple Data Grid -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; background: #f8fafc; padding: 2.5rem; border-radius: 12px; border: 1px solid #e2e8f0;">
+                    <div>
+                        <div style="margin-bottom: 1.5rem;">
+                            <label style="display: block; font-size: 0.65rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">Business</label>
+                            <div style="font-size: 1rem; font-weight: 800; color: #1e293b;">{{ data['company'] }}</div>
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.65rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">Plan Type</label>
+                            <div style="font-size: 1rem; font-weight: 800; color: #1e293b;">Standard Cleaning</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="margin-bottom: 1.5rem;">
+                            <label style="display: block; font-size: 0.65rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">Your Phone</label>
+                            <div style="font-size: 1rem; font-weight: 800; color: #1e293b;">{{ data['phone'] }}</div>
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.65rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">Your Email</label>
+                            <div style="font-size: 1rem; font-weight: 800; color: #1e293b;">{{ data['email'] }}</div>
+                        </div>
+                    </div>
+                </div>
 
- <div style="background: #ffffff; border-radius: 6px; padding: 2rem; border: 1px solid rgba(37, 99, 235, 0.1);">
- <h3 style="font-size: 1.5rem; color: var(--hwb-dark); font-weight: 800; margin-bottom: 1.5rem;">What to expect next</h3>
- <div style="display: flex; gap: 2rem; text-align: left; align-items: flex-start;">
- <div style="font-size: 2rem;">📞</div>
- <p style="font-size: 1.1rem; color: #475569; line-height: 1.6;">
- A company representative from <strong>HWB Cleaning Services LLC</strong> will call within the next 24 business hours at <strong>{{ data['phone'] }}</strong> to schedule the professional site walkthrough and finalize the Scope of Work.
- </p>
- </div>
- </div>
+                <!-- Next Steps -->
+                <div style="margin-top: 4rem; padding: 2rem; background: #eff6ff; border-left: 5px solid #2563eb; border-radius: 4px;">
+                    <strong style="display: block; font-size: 0.7rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; color: #1e40af; margin-bottom: 1rem;">What happens next</strong>
+                    <p style="font-size: 1rem; color: #1e40af; line-height: 1.6; margin: 0;">
+                        Our team member just received your information. Someone from HWB will call you within <strong>4 hours</strong> to talk about your building and finish your cleaning plan.
+                    </p>
+                </div>
+            </div>
 
- <div style="margin-top: 4rem;">
- <a href="/" style="color: var(--hwb-blue); font-weight: 800; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;">
- ← Return to Home Page
- </a>
- </div>
-</div>
+            <!-- Card Footer -->
+            <div style="padding: 1.5rem 3rem; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; font-size: 0.65rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em;">
+                <span>© 2026 HWB Cleaning Services LLC</span>
+                <span>ID: {{ range(1000, 9999) | random }}</span>
+            </div>
+        </div>
+
+        <div style="margin-top: 4rem; text-align: center;">
+            <a href="/" style="color: var(--hwb-blue); font-weight: 800; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.95rem;">
+                <i class="fas fa-arrow-left"></i> Back to Home
+            </a>
+        </div>
+    </div>
+</section>
 {% endblock %}

@@ -1,58 +1,53 @@
 | **Document Control** |                                  |
 | :------------------- | :------------------------------- |
 | **Document Title**   | **[Subject] [Process Name] SOP** |
-| **Document ID**      | [DEPT-XXX-YYY]                   |
+| **Document ID**      | [HWB-DEPT-XXX]                   |
 | **Version**          | 1.0                              |
-| **Status**           | [Draft / In Review / Approved]   |
-| **Author**           | [Author Name]                    |
-| **Approved By**      | [Approver Name]                  |
+| **Status**           | [DRAFT / APPROVED]               |
+| **Author**           | [Agent Name]                     |
+| **Approved By**      | Humberto Dominguez, CEO          |
 | **Date**             | [YYYY-MM-DD]                     |
+| **ISO 9001 Clause**  | [e.g., 7.5.3]                    |
 
 ---
 
 # Standard Operating Procedure: **[Subject] [Process Name] SOP**
 
 ## 1.0 Purpose
-
 [State the purpose of this SOP. What is it for?]
 
 ## 2.0 Scope
+[Define the scope of this SOP. Who does it apply to? What systems does it cover?]
 
-[Define the scope of this SOP. Who does it apply to? What systems or processes does it cover?]
+## 3.0 Universal Mandates (2026 Baseline)
+All activities performed under this SOP must adhere to the SigmaFidelity™ 2026 Core Mandates:
+1. **Guidance First:** If a file is missing, ASK the CEO before searching.
+2. **Tier 6 Telemetry:** Every major action must be logged to the `SigmaInteractionLog`.
+3. **Physical Truth:** Reference absolute server paths for all technical files.
 
-## 3.0 Prerequisites
-
+## 4.0 Prerequisites
 [List any prerequisites, such as required software, hardware, or user knowledge.]
 
-## 4.0 Procedure
-
+## 5.0 Procedure
 [Provide a step-by-step description of the procedure.]
 
-### 4.1 [Step 1 Title]
+### 5.1 [Step 1 Title]
+1. [Step 1.1]
+2. [Step 1.2]
 
-1.  [Step 1.1]
-2.  [Step 1.2]
-
-### 4.2 [Step 2 Title]
-
-1.  [Step 2.1]
-2.  [Step 2.2]
-
-## 5.0 Verification
-
+## 6.0 Verification (Zero-Defect Check)
 [Explain how to verify that the procedure was completed successfully.]
 
-## 6.0 Notes and Cautions
+## 7.0 Notes and Cautions
+> **NOTE:** Use simple, everyday words for high readability.
+> **CAUTION:** Never delete /core folders during maintenance.
 
-[Include any additional notes, warnings, or important information.]
-
-## 7.0 Revision History
-
+## 8.0 Revision History
 | Version | Date | Author | Change Description |
 | :--- | :--- | :--- | :--- |
-| 1.0 | [YYYY-MM-DD] | [Author Name] | Initial Release |
+| 1.0 | [YYYY-MM-DD] | [Agent Name] | Initial Release |
 
-## 8.0 Document Conventions
-
-*   **Title:** The document title should follow the format: **[Subject] [Process Name] SOP**. For example: "**Audio Recording and Playback SOP**". Use Title Case for each word and do not use hyphens. The title is already formatted to be bold.
-*   **Document ID:** The document ID should follow the format: `[DEPT-XXX-YYY]`, where DEPT is a short code for the department or subject (e.g., `AUD` for Audio).
+## 9.0 Document Conventions
+* **Storage:** Save as Markdown in `HWB-COMPANY/[DEPT]/`.
+* **HTML Migration:** Must be processed via `scripts/migrate_sops.py` for manual inclusion.
+* **Typography:** Enforce 16px body and 1.8 line-height in the clinical shell.

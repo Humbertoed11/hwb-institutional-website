@@ -3,9 +3,9 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-ACC-003</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0</span></div>
-        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● Approved</span></div>
-        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">8.4 (Control of External)</span></div>
     </div>
 
     <div class="sop-content-body">
@@ -27,57 +27,67 @@
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Version</strong></td>
-<td style="text-align: left;">1.0</td>
+<td style="text-align: left;">2.0.0</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Status</strong></td>
-<td style="text-align: left;">Approved</td>
+<td style="text-align: left;">APPROVED</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Author</strong></td>
-<td style="text-align: left;">Gemini (Senior ISO 9001 Auditor)</td>
+<td style="text-align: left;">George (Architect)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Approved By</strong></td>
-<td style="text-align: left;">SigmaFidelity™ Orchestrator</td>
+<td style="text-align: left;">Humberto Dominguez, CEO</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Date</strong></td>
-<td style="text-align: left;">2026-03-01</td>
+<td style="text-align: left;">05/21/2026</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>ISO 9001 Clause</strong></td>
+<td style="text-align: left;">8.4 (Control of External)</td>
 </tr>
 </tbody>
 </table>
 <hr />
 <h1 id="standard-operating-procedure-accounts-payable-ap-management">Standard Operating Procedure: <strong>Accounts Payable (AP) Management</strong></h1>
 <h2 id="10-purpose">1.0 Purpose</h2>
-<p>To define the procedure for recording, verifying, and paying vendor obligations using QuickBooks. This ensures fiscal accountability and maintains strong relationships with HWB’s supply chain (ISO 9001 Clause 8.4).</p>
+<p>To define the procedure for recording, verifying, and paying vendor obligations using QuickBooks. This ensures fiscal accountability and maintains strong relationships with HWB’s supply chain.</p>
 <h2 id="20-scope">2.0 Scope</h2>
 <p>Applies to all external expenses, including cleaning supplies, equipment maintenance, insurance premiums, and utilities.</p>
-<h2 id="30-prerequisites">3.0 Prerequisites</h2>
+<h2 id="30-universal-mandates-2026-baseline">3.0 Universal Mandates (2026 Baseline)</h2>
+<ol>
+<li><strong>Guidance First:</strong> If a vendor invoice is missing, ASK the CEO before searching the filesystem.</li>
+<li><strong>Tier 6 Telemetry:</strong> Every payment approval must be traceable in the system interaction logs.</li>
+<li><strong>Physical Truth:</strong> Reference absolute server paths for all digital copies of invoices.</li>
+</ol>
+<h2 id="40-prerequisites">4.0 Prerequisites</h2>
 <ul>
-<li>Approved Purchase Order (PO) (refer to <code>[[HWB-PUR-001]]</code>).</li>
+<li>Approved Purchase Order (refer to <code>HWB-PUR-001</code>).</li>
 <li>Verified physical receipt of goods/services.</li>
 <li>QuickBooks access.</li>
 </ul>
-<h2 id="40-procedure">4.0 Procedure</h2>
-<h3 id="41-bill-entry">4.1 Bill Entry</h3>
+<h2 id="50-procedure">5.0 Procedure</h2>
+<h3 id="51-bill-entry">5.1 Bill Entry</h3>
 <ol>
 <li><strong>Document Matching:</strong> Upon receipt of a vendor invoice, match it against the corresponding HWB Purchase Order and packing slip.</li>
 <li><strong>QuickBooks Recording:</strong> Enter the invoice as a "Bill" in QuickBooks, ensuring the "Expense Category" (e.g., Supplies, Maintenance) is accurate.</li>
 <li><strong>Verification:</strong> Confirm that the items received match the empirical price quoted by the vendor.</li>
 </ol>
-<h3 id="42-payment-processing">4.2 Payment Processing</h3>
+<h3 id="52-payment-processing">5.2 Payment Processing</h3>
 <ol>
 <li><strong>Approval:</strong> Weekly review of "Bills to Pay" by the Finance Manager.</li>
-<li><strong>Execution:</strong> Process payments (Check or Bill Pay) directly from QuickBooks to ensure traceability.</li>
-<li><strong>Filing:</strong> Digital copy of the vendor invoice must be attached to the QuickBooks transaction.</li>
+<li><strong>Execution:</strong> Process payments directly from QuickBooks to ensure 100% traceability.</li>
+<li><strong>Filing:</strong> Digital copy of the vendor invoice must be attached to the transaction record.</li>
 </ol>
-<h3 id="43-vendor-reconciliation">4.3 Vendor Reconciliation</h3>
+<h3 id="53-vendor-reconciliation">5.3 Vendor Reconciliation</h3>
 <ol>
 <li><strong>Statement Review:</strong> Monthly comparison of vendor statements against QuickBooks account history.</li>
 <li><strong>Dispute Resolution:</strong> Immediate notification to the Purchasing Department regarding any billing discrepancies.</li>
 </ol>
-<h3 id="44-process-flow-chart">4.4 [Process Flow Chart]</h3>
+<h3 id="54-process-flow-chart">5.4 [Process Flow Chart]</h3>
 <div class="mermaid">
 graph TD
     A[Receive Vendor Invoice] --> B[Match with PO & Receipt]
@@ -87,17 +97,17 @@ graph TD
     E --> F[Reconcile Bank Statement]
 </div>
 
-<h2 id="50-verification">5.0 Verification</h2>
+<h2 id="60-verification-zero-defect-check">6.0 Verification (Zero-Defect Check)</h2>
 <ul>
 <li>Monthly "Profit &amp; Loss" statement review.</li>
-<li>Vendor statement reconciliation records.</li>
+<li>Vendor statement reconciliation records verified.</li>
+<li>Zero variance between physical receipts and digital entries.</li>
 </ul>
-<h2 id="60-notes-and-cautions">6.0 Notes and Cautions</h2>
-<ul>
-<li><strong>Zero Synthetic Data:</strong> All entries must represent actual incurred debts.</li>
-<li><strong>Duplicate Prevention:</strong> Always check the "Vendor Invoice Number" in QuickBooks to prevent double entry.</li>
-</ul>
-<h2 id="70-revision-history">7.0 Revision History</h2>
+<h2 id="70-notes-and-cautions">7.0 Notes and Cautions</h2>
+<div class="callout callout-note"><strong>Note</strong>Use everyday words when communicating with vendors about discrepancies.</div>
+<div class="callout callout-caution"><strong>Caution</strong>Check the "Vendor Invoice Number" to prevent double entry. No synthetic debt records.</div>
+
+<h2 id="80-revision-history">8.0 Revision History</h2>
 <table>
 <thead>
 <tr>
@@ -109,12 +119,24 @@ graph TD
 </thead>
 <tbody>
 <tr>
+<td style="text-align: left;">2.0.0</td>
+<td style="text-align: left;">05/21/2026</td>
+<td style="text-align: left;">George</td>
+<td style="text-align: left;">TOTAL MODERNIZATION. Added 2026 Baseline mandates and Tier 6 integration.</td>
+</tr>
+<tr>
 <td style="text-align: left;">1.0</td>
 <td style="text-align: left;">2026-03-01</td>
 <td style="text-align: left;">Gemini</td>
-<td style="text-align: left;">Initial Release: Established QuickBooks-based AP workflow.</td>
+<td style="text-align: left;">Initial Release.</td>
 </tr>
 </tbody>
 </table>
+    </div>
+
+    <div class="sop-card-footer">
+        <span>&copy; 2026 HWB Cleaning Services LLC</span>
+        <span>Controlled Document | HWB-ACC-003</span>
+        <span>Page <span class="page-number"></span></span>
     </div>
 </div>

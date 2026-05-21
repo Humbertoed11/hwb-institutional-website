@@ -2,13 +2,117 @@
 <div class="sop-card">
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
-        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">TBD</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.0</span></div>
-        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● DRAFT</span></div>
-        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-8.6-AUTO</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">8.5 (Service Provision)</span></div>
     </div>
 
     <div class="sop-content-body">
-        
+        <table>
+<thead>
+<tr>
+<th style="text-align: left;"><strong>Document Control</strong></th>
+<th style="text-align: left;"></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Document Title</strong></td>
+<td style="text-align: left;"><strong>Autonomous Routine Governance</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Document ID</strong></td>
+<td style="text-align: left;">HWB-QMS-8.6-AUTO</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Version</strong></td>
+<td style="text-align: left;">2.0.0</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Status</strong></td>
+<td style="text-align: left;">APPROVED</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Author</strong></td>
+<td style="text-align: left;">George (Architect)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Approved By</strong></td>
+<td style="text-align: left;">Humberto Dominguez, CEO</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Date</strong></td>
+<td style="text-align: left;">05/21/2026</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>ISO 9001 Clause</strong></td>
+<td style="text-align: left;">8.5 (Service Provision)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1 id="standard-operating-procedure-autonomous-routine-governance">Standard Operating Procedure: <strong>Autonomous Routine Governance</strong></h1>
+<h2 id="10-purpose">1.0 Purpose</h2>
+<p>To define the governance for autonomous "Loops" executed by AI agents. This ensures that background tasks (e.g. market harvesting, system checks) remain stable and within the <strong>SigmaFidelity™</strong> operational boundaries.</p>
+<h2 id="20-universal-mandates-2026-baseline">2.0 Universal Mandates (2026 Baseline)</h2>
+<ol>
+<li><strong>The 6-Hour Pulse:</strong> All persistent agent loops must include a mandatory 6-hour sleep interval to prevent token runaway.</li>
+<li><strong>Watchdog Active:</strong> Every autonomous routine must be monitored by a non-looping Watchdog process.</li>
+<li><strong>Tier 6 Telemetry:</strong> Every loop start, heart-beat, and completion must be logged to the <code>SigmaInteractionLog</code>.</li>
+</ol>
+<h2 id="30-governance-framework">3.0 Governance Framework</h2>
+<h3 id="31-loop-architecture">3.1 Loop Architecture</h3>
+<div class="mermaid">
+graph TD
+    A[Routine Start] --> B[Peter Sentinel Snapshot]
+    B --> C[Execute Core Logic]
+    C --> D[Log Interaction to Tier 6]
+    D --> E[Heart-beat Signal]
+    E --> F[Enter 6-Hour Sleep]
+    F --> A
+</div>
+
+<h3 id="32-error-handling">3.2 Error Handling</h3>
+<p>If a loop encounters a fatal error:
+1.  <strong>Stop:</strong> The loop must terminate immediately.
+2.  <strong>Alert:</strong> Send a signal to the CEO via the Teams/Email alert hub.
+3.  <strong>Audit:</strong> George must analyze the failure via Tier 6 logs before restarting.</p>
+<h2 id="40-verification-zero-defect-check">4.0 Verification (Zero-Defect Check)</h2>
+<ul>
+<li>Loop uptime is &gt;99%.</li>
+<li>Interaction logs show consistent 6-hour heart-beats.</li>
+</ul>
+<h2 id="50-revision-history">5.0 Revision History</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Version</th>
+<th style="text-align: left;">Date</th>
+<th style="text-align: left;">Author</th>
+<th style="text-align: left;">Change Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">2.0.0</td>
+<td style="text-align: left;">05/21/2026</td>
+<td style="text-align: left;">George</td>
+<td style="text-align: left;">TOTAL MODERNIZATION. Defined the 6-Hour Pulse and Watchdog mandates.</td>
+</tr>
+<tr>
+<td style="text-align: left;">1.0</td>
+<td style="text-align: left;">2026-03-08</td>
+<td style="text-align: left;">George</td>
+<td style="text-align: left;">Initial Routine Governance.</td>
+</tr>
+</tbody>
+</table>
+    </div>
+
+    <div class="sop-card-footer">
+        <span>&copy; 2026 HWB Cleaning Services LLC</span>
+        <span>Controlled Document | HWB-QMS-8.6-AUTO</span>
+        <span>Page <span class="page-number"></span></span>
     </div>
 </div>

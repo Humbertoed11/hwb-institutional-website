@@ -2,13 +2,122 @@
 <div class="sop-card">
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
-        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">TBD</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.0</span></div>
-        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● DRAFT</span></div>
-        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-7.1</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5.3 (Documented Information)</span></div>
     </div>
 
     <div class="sop-content-body">
-        
+        <table>
+<thead>
+<tr>
+<th style="text-align: left;"><strong>Document Control</strong></th>
+<th style="text-align: left;"></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Document Title</strong></td>
+<td style="text-align: left;"><strong>Website Architectural Flowchart SOP</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Document ID</strong></td>
+<td style="text-align: left;">HWB-QMS-7.1</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Version</strong></td>
+<td style="text-align: left;">2.0.0</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Status</strong></td>
+<td style="text-align: left;">APPROVED</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Author</strong></td>
+<td style="text-align: left;">George (Architect)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Approved By</strong></td>
+<td style="text-align: left;">Humberto Dominguez, CEO</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Date</strong></td>
+<td style="text-align: left;">05/21/2026</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>ISO 9001 Clause</strong></td>
+<td style="text-align: left;">7.5.3 (Documented Information)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1 id="standard-operating-procedure-website-architectural-flowchart-sop">Standard Operating Procedure: <strong>Website Architectural Flowchart SOP</strong></h1>
+<h2 id="10-purpose">1.0 Purpose</h2>
+<p>To define the visual and logical structure of the HWB Cleaning Services ecosystem. This SOP provides a technical roadmap of how the website interacts with the database, agents, and compliance engine.</p>
+<h2 id="20-scope">2.0 Scope</h2>
+<p>Applies to the Main Web App (Flask), the Compliance Engine (Nginx), and the Traffic Director (Gateway).</p>
+<h2 id="30-universal-mandates-2026-baseline">3.0 Universal Mandates (2026 Baseline)</h2>
+<ol>
+<li><strong>Physical Truth:</strong> All flowchart nodes must represent real server paths.</li>
+<li><strong>Logic Proof:</strong> Every path in this diagram must be verifiable at <code>mop.test:5000</code>.</li>
+</ol>
+<h2 id="40-procedure">4.0 Procedure</h2>
+<h3 id="41-system-topology">4.1 System Topology</h3>
+<p>The HWB infrastructure is decoupled into three primary segments:
+1. <strong>Public/CRM Segment:</strong> Handles sales and lead ingestion.
+2. <strong>Compliance Segment:</strong> Dedicated Nginx container for document control.
+3. <strong>Database Segment:</strong> PostgreSQL persistence for all transactional records.</p>
+<h2 id="50-the-architectural-flowchart">5.0 The Architectural Flowchart</h2>
+<div class="mermaid">
+graph TD
+    A[Visitor/Staff] -->|Port 8000| B[Traffic Director]
+    B -->|/manual| C[Compliance Engine]
+    B -->|/admin or /crm| D[Web App Engine]
+    D -->|SQL| E[PostgreSQL DB]
+    D -->|Logic| F[AI Agents /core]
+    C -->|Fragments| G[Static HTML SOPs]
+    D -->|Signal| H[Teams/Email Alert]
+</div>
+
+<h2 id="60-verification-zero-defect-check">6.0 Verification (Zero-Defect Check)</h2>
+<ul>
+<li>The flowchart renders correctly in the HTML manual index.</li>
+<li>The "Traffic Director" correctly routes <code>/manual</code> to the Nginx host.</li>
+<li>Database calls are being logged to Tier 6.</li>
+</ul>
+<h2 id="70-notes-and-cautions">7.0 Notes and Cautions</h2>
+<div class="callout callout-logic"><strong>Technical Logic</strong>Using a separate Compliance Engine prevents OOM crashes on the main app.</div>
+<div class="callout callout-caution"><strong>Caution</strong>Do not change Gateway routing without a Peter Sentinel snapshot.</div>
+
+<h2 id="80-revision-history">8.0 Revision History</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Version</th>
+<th style="text-align: left;">Date</th>
+<th style="text-align: left;">Author</th>
+<th style="text-align: left;">Change Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">2.0.0</td>
+<td style="text-align: left;">05/21/2026</td>
+<td style="text-align: left;">George</td>
+<td style="text-align: left;">TOTAL RECONSTRUCTION. Integrated the Microservice topology and Gateway routing.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="90-document-conventions">9.0 Document Conventions</h2>
+<ul>
+<li><strong>Visual Standard:</strong> Use Mermaid.js for all flowcharts.</li>
+</ul>
+    </div>
+
+    <div class="sop-card-footer">
+        <span>&copy; 2026 HWB Cleaning Services LLC</span>
+        <span>Controlled Document | HWB-QMS-7.1</span>
+        <span>Page <span class="page-number"></span></span>
     </div>
 </div>
