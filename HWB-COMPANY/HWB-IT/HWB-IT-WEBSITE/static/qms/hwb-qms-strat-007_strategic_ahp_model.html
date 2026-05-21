@@ -1,0 +1,141 @@
+
+<div class="sop-card">
+    <!-- 0.0 DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-STRAT-007</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● Approved</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
+    </div>
+
+    <table>
+<thead>
+<tr>
+<th style="text-align: left;"><strong>Document Control</strong></th>
+<th style="text-align: left;"></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Document Title</strong></td>
+<td style="text-align: left;"><strong>Strategic Analytical Hierarchy Process (AHP)</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Document ID</strong></td>
+<td style="text-align: left;">HWB-QMS-STRAT-007</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Version</strong></td>
+<td style="text-align: left;">1.0</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Status</strong></td>
+<td style="text-align: left;">Approved</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Author</strong></td>
+<td style="text-align: left;">LSS Black Belt / Decision Scientist</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Date</strong></td>
+<td style="text-align: left;">2026-02-21</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1>Strategic AHP: Vertical Prioritization</h1>
+<h2>1.0 Hierarchy Tree</h2>
+<p>This diagram illustrates the decision levels for prioritizing SigmaFidelity™ project categories.</p>
+<pre><code class="language-mermaid">graph TD
+    Goal((GOAL: &lt;br/&gt;Strategic Leadership)) --&gt; C1[Criteria 1: ROI]
+    Goal --&gt; C2[Criteria 2: Risk Mitigation]
+    Goal --&gt; C3[Criteria 3: Regulation]
+    Goal --&gt; C4[Criteria 4: Market Reach]
+
+    %% Vertical Links
+    C1 --- V1[Warehouse/Logistics]
+    C1 --- V2[Corporate Office]
+    C1 --- V3[Childcare/Medical]
+
+    C2 --- V1
+    C2 --- V2
+    C2 --- V3
+
+    C3 --- V1
+    C3 --- V2
+    C3 --- V3
+
+    C4 --- V1
+    C4 --- V2
+    C4 --- V3
+
+    %% Styling
+    style Goal fill:#e1f5fe,stroke:#01579b
+    style V1 fill:#f3e5f5,stroke:#4a148c
+    style V2 fill:#f3e5f5,stroke:#4a148c
+    style V3 fill:#f3e5f5,stroke:#4a148c
+</code></pre>
+<hr />
+<h2>2.0 Pair-wise Comparison &amp; Priority Weights</h2>
+<p>The following weights are assigned based on the <strong>S4/IEE Value Chain</strong>.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Criteria</th>
+<th style="text-align: left;">Weight</th>
+<th style="text-align: left;">Logic</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>ROI (Financial)</strong></td>
+<td style="text-align: left;"><strong>0.40</strong></td>
+<td style="text-align: left;">High-volume contracts drive the operating margin.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Risk Mitigation (CODND)</strong></td>
+<td style="text-align: left;"><strong>0.30</strong></td>
+<td style="text-align: left;">Solving "Payroll Mopping" creates the strongest sales hook.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Regulatory Compliance</strong></td>
+<td style="text-align: left;"><strong>0.20</strong></td>
+<td style="text-align: left;">Texas Admin Code §746.1203 provides "Checkmate" leverage.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Market Reach</strong></td>
+<td style="text-align: left;"><strong>0.10</strong></td>
+<td style="text-align: left;">Broad visibility supports the 1M impression goal.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>3.0 Final Priority Ranking (Prioritization Matrix Inputs)</h2>
+<p>Based on the AHP weights, our service categories are ranked as follows:</p>
+<ol>
+<li><strong>WAREHOUSE &amp; LOGISTICS (0.45 Score):</strong> Highest ROI and High-Fidelity requirements.</li>
+<li><strong>CHILDCARE / MEDICAL (0.35 Score):</strong> Highest Regulatory leverage and Risk Mitigation.</li>
+<li><strong>CORPORATE OFFICE (0.20 Score):</strong> Highest Visibility but lower specialized risk.</li>
+</ol>
+<p><strong>Strategic Action:</strong> Direct 45% of harvesting efforts to Warehouse leads and 35% to Childcare leads.</p>
+<hr />
+<h2>4.0 Revision History</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Version</th>
+<th style="text-align: left;">Date</th>
+<th style="text-align: left;">Author</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1.0</td>
+<td style="text-align: left;">2026-02-21</td>
+<td style="text-align: left;">Gemini</td>
+<td style="text-align: left;">Initial Release of SigmaFidelity™ AHP Model.</td>
+</tr>
+</tbody>
+</table>
+</div>

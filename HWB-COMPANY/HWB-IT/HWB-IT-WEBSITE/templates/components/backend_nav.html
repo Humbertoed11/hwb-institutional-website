@@ -1,0 +1,39 @@
+<div class="workspace-stage">
+    <div style="display: flex; gap: 1rem; margin-bottom: 4rem; border-bottom: 1px solid var(--slate-100); padding-bottom: 2rem; align-items: center;">
+        <a href="{{ url_for('admin_operations', view='leads') }}" class="isc-btn {% if request.endpoint == 'admin_operations' and active_view == 'leads' %}isc-btn-primary{% else %}isc-btn-outline{% endif %}" style="text-decoration: none;">Leads</a>
+        <a href="{{ url_for('admin_operations', view='accounts') }}" class="isc-btn {% if request.endpoint == 'admin_operations' and active_view == 'accounts' %}isc-btn-primary{% else %}isc-btn-outline{% endif %}" style="text-decoration: none;">Accounts</a>
+        <a href="{{ url_for('admin_operations', view='monitor') }}" class="isc-btn {% if request.endpoint == 'admin_operations' and active_view == 'monitor' %}isc-btn-primary{% else %}isc-btn-outline{% endif %}" style="text-decoration: none;">Work Monitor</a>
+        <a href="{{ url_for('sigma_executive') }}" class="isc-btn {% if request.endpoint == 'sigma_executive' %}isc-btn-primary{% else %}isc-btn-outline{% endif %}" style="text-decoration: none;"><i class="fas fa-crown" style="margin-right: 8px;"></i> Executive</a>
+        <a href="{{ url_for('sigmajan_lab') }}" class="isc-btn {% if request.endpoint == 'sigmajan_lab' %}isc-btn-primary{% else %}isc-btn-outline{% endif %}" style="text-decoration: none;"><i class="fas fa-flask" style="margin-right: 8px;"></i> Lab</a>
+        <a href="{{ url_for('manual_index') }}" class="isc-btn {% if request.endpoint == 'manual_index' or request.endpoint == 'view_sop' %}isc-btn-primary{% else %}isc-btn-outline{% endif %}" style="text-decoration: none; display: inline-flex; align-items: center;"><i class="fas fa-book" style="margin-right: 8px;"></i> Manual</a>
+        
+        <div style="flex-grow: 1; text-align: right; position: relative;">
+            <button onclick="toggleAddMenu()" class="isc-btn isc-btn-primary" id="btn-add-main">
+                <i class="fas fa-plus"></i> Add New
+                <i class="fas fa-chevron-down" style="font-size: 0.6rem; transition: transform 0.3s;" id="add-arrow"></i>
+            </button>
+            <div id="add-menu" style="display: none; position: absolute; right: 0; top: 110%; background: var(--white); border: 1px solid var(--slate-200); border-radius: 1rem; box-shadow: 0 20px 40px -5px rgba(0,0,0,0.1); padding: 0.75rem; z-index: 1000; min-width: 220px;">
+                <button onclick="openAddForm('lead')" class="isc-dropdown-btn">New Lead</button>
+                <button onclick="openAddForm('account')" class="isc-dropdown-btn">New Account</button>
+                <div style="height: 1px; background: var(--slate-100); margin: 0.5rem 0;"></div>
+                <a href="/manual/hwb-qms-7.6_backend_architecture.html" class="isc-dropdown-btn" style="text-decoration: none; display: block; color: var(--brand); font-weight: 800;">7.6 Backend Architecture</a>
+                <a href="/manual/hwb-qms-7.7_backend_web_system.html" class="isc-dropdown-btn" style="text-decoration: none; display: block; color: var(--brand); font-weight: 800;">7.7 Backend Sequence</a>
+                <a href="/manual/hwb-qms-7.9_backend_component_standard.html" class="isc-dropdown-btn" style="text-decoration: none; display: block; color: var(--brand); font-weight: 800;">7.9 Backend Components</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleAddMenu() {
+        const menu = document.getElementById('add-menu');
+        const arrow = document.getElementById('add-arrow');
+        if (menu.style.display === 'none' || menu.style.display === '') {
+            menu.style.display = 'block';
+            arrow.style.transform = 'rotate(180deg)';
+        } else {
+            menu.style.display = 'none';
+            arrow.style.transform = 'rotate(0deg)';
+        }
+    }
+</script>

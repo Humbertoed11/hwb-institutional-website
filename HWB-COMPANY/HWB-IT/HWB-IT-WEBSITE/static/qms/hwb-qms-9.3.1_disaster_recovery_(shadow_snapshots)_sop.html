@@ -1,0 +1,43 @@
+
+<div class="sop-card">
+    <!-- 0.0 DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">TBD</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● DRAFT</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
+    </div>
+
+    <h1>HWB-QMS-9.3.1 Disaster Recovery (Shadow Snapshots) SOP</h1>
+<h2>1.0 Objective</h2>
+<p>To ensure zero data loss for active web development projects by maintaining a high-frequency (15-minute) rotation of hard-linked snapshots. This protocol allows for near-instant rollback to a specific point-in-time without the overhead of full backups.</p>
+<h2>2.0 Scope</h2>
+<p>This SOP applies to the <code>HWB-IT-WEBSITE</code> directory and related web development assets within the SigmaFidelity™ environment.</p>
+<h2>3.0 Responsibilities</h2>
+<ul>
+<li><strong>Peter (Recovery Specialist):</strong> Responsible for the autonomous execution and verification of the sentinel loop.</li>
+<li><strong>George (Systems Architect):</strong> Responsible for summoning Peter during catastrophic events.</li>
+</ul>
+<h2>4.0 Procedure: Automated Sentinel</h2>
+<ol>
+<li>The <strong>Peter Sentinel</strong> service executes a Shadow Snapshot every 15 minutes.</li>
+<li>Snapshots are stored in <code>backup/shadow_snapshots/web_dev_YYYY-MM-DD_HHMM/</code>.</li>
+<li>The system utilizes <code>rsync</code> with <code>--link-dest</code> to minimize disk usage (hard-links are used for unchanged files).</li>
+<li>A rolling retention policy of <strong>48 snapshots</strong> (12 hours) is enforced to prevent disk saturation.</li>
+</ol>
+<h2>5.0 Procedure: Emergency Rollback (Summoning Peter)</h2>
+<p>In the event of a catastrophic failure:
+1.  Identify the target timestamp folder in <code>backup/shadow_snapshots/</code>.
+2.  Execute the manual restoration command:
+    <code>bash
+    cp -r backup/shadow_snapshots/web_dev_[TIMESTAMP]/* HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/</code>
+3.  Verify system integrity by running <code>diag_dashboard.py</code>.</p>
+<h2>6.0 Manual Summoning</h2>
+<p>To trigger an immediate snapshot outside the 15-minute schedule:</p>
+<pre><code class="language-bash">python3 scripts/peter_sentinel.py --shadow
+</code></pre>
+<hr />
+<p><strong>Status:</strong> Institutional Standard Active
+<strong>Revision:</strong> 1.0.0 (04-27-2026)
+<strong>Approval Authority:</strong> Humberto Dominguez (CEO)</p>
+</div>

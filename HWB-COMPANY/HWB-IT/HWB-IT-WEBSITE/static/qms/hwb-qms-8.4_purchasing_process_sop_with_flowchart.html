@@ -1,0 +1,120 @@
+
+<div class="sop-card">
+    <!-- 0.0 DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-8.4-SOP-001</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● Approved</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
+    </div>
+
+    <table>
+<thead>
+<tr>
+<th style="text-align: left;"><strong>Document Control</strong></th>
+<th style="text-align: left;"></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Document Title</strong></td>
+<td style="text-align: left;"><strong>Purchasing &amp; Procurement Process SOP</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Document ID</strong></td>
+<td style="text-align: left;">HWB-QMS-8.4-SOP-001</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Version</strong></td>
+<td style="text-align: left;">1.0</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Status</strong></td>
+<td style="text-align: left;">Approved</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Author</strong></td>
+<td style="text-align: left;">LSS Black Belt / Purchasing Lead</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Date</strong></td>
+<td style="text-align: left;">2026-02-21</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1>SOP: Purchasing &amp; Procurement Process</h1>
+<h2>1.0 Purpose</h2>
+<p>To define the standardized procedure for the selection, evaluation, and re-evaluation of external providers (suppliers) and the procurement of products and services, ensuring zero-defect inputs into the SigmaFidelity™ value chain.</p>
+<h2>2.0 Scope</h2>
+<p>This SOP applies to all purchases affecting service quality, including cleaning chemicals, equipment, PPE, and subcontracted labor.</p>
+<h2>3.0 Procurement Lifecycle Flowchart</h2>
+<pre><code class="language-mermaid">graph TD
+    Start([1.0 Identification of Need]) --&gt; Select[2.0 Supplier Selection &amp; Evaluation]
+    Select --&gt; PO[3.0 Purchase Order Creation]
+    PO --&gt; Verify[4.0 Receipt &amp; Verification]
+    Verify --&gt; SDS[5.0 GHS/SDS Registry Update]
+    SDS --&gt; Audit[6.0 Annual Supplier Review]
+    Audit --&gt; End([Process Complete])
+
+    %% Sub-steps
+    Verify -- Defect Found --&gt; CAR[Initiate CAR / Return]
+    CAR --&gt; Select
+</code></pre>
+<h2>4.0 Detailed Procedure</h2>
+<h3>4.1 Identification of Need</h3>
+<ul>
+<li>Field personnel or Operations Managers identify a shortage or a requirement for a new tool/chemical.</li>
+<li>The request is logged against the specific <strong>Process ID</strong> (e.g., SAFE-001 for chemicals).</li>
+</ul>
+<h3>4.2 Supplier Selection &amp; Evaluation (ISO 8.4.1)</h3>
+<ul>
+<li>Suppliers are evaluated based on:<ol>
+<li><strong>Fidelity:</strong> Accuracy of delivery and billing.</li>
+<li><strong>Compliance:</strong> Provision of up-to-date SDS/Safety documentation.</li>
+<li><strong>LSS Metrics:</strong> Delivery cycle time and defect rate (COPQ).</li>
+</ol>
+</li>
+<li>Approved suppliers are added to the <strong>Approved Vendor List (AVL)</strong>.</li>
+</ul>
+<h3>4.3 Purchase Order (PO) Execution</h3>
+<ul>
+<li>All orders must be documented via formal PO.</li>
+<li>PO must specify the required <strong>SigmaFidelity™ Grade</strong> for chemicals or technical specs for equipment.</li>
+</ul>
+<h3>4.4 Receipt &amp; Verification (ISO 8.4.2)</h3>
+<ul>
+<li>Upon delivery, the "Purchasing Lead" verifies the shipment against the PO.</li>
+<li><strong>Poka-Yoke Check:</strong> Chemicals are checked for intact labels and expiration dates.</li>
+</ul>
+<h3>4.5 SDS &amp; Inventory Integration</h3>
+<ul>
+<li>Every new chemical is entered into the <strong><code>mop_incident</code> SDS Registry</strong>.</li>
+<li>Hazard levels are updated on the <strong>Executive Dashboard</strong>.</li>
+</ul>
+<h2>5.0 Verification &amp; Control</h2>
+<ul>
+<li><strong>KPOV:</strong> Supplier On-Time Delivery % (OTD).</li>
+<li><strong>KPIV:</strong> Number of unverified chemicals found at site audits (Target: 0).</li>
+</ul>
+<hr />
+<h2>6.0 Revision History</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Version</th>
+<th style="text-align: left;">Date</th>
+<th style="text-align: left;">Author</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1.0</td>
+<td style="text-align: left;">2026-02-21</td>
+<td style="text-align: left;">Gemini</td>
+<td style="text-align: left;">Initial formalized procurement process.</td>
+</tr>
+</tbody>
+</table>
+</div>

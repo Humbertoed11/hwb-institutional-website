@@ -1,0 +1,143 @@
+<div class="sop-card">
+    <!-- 0.0 DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-7.7</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">ISO 9001 (7.1.3)</span></div>
+    </div>
+
+    <h1 style="font-size: 2.75rem; font-weight: 900; color: #0f172a; margin-bottom: 1rem; letter-spacing: -0.04em;">Backend Web System Sequence</h1>
+    <p style="font-size: 1.15rem; line-height: 1.6; color: #64748b; margin-bottom: 4rem; max-width: 850px;">The <strong>Technical Sequence</strong> for the HWB server. This manual maps how data flows from the internet through our routing, logic, and intelligence layers.</p>
+
+    <!-- 1.0 LOGIC FLOW (TOP-DOWN) -->
+    <section style="margin-bottom: 5rem;">
+        <h2 style="font-size: 1.6rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">1.0 The Request Flow (Top-to-Bottom)</h2>
+        <p style="margin-bottom: 2rem; color: #64748b;">Every visitor interaction follows this exact 8-step sequence within our infrastructure.</p>
+        
+        <div style="display: grid; gap: 1.5rem;">
+            <!-- Step 1 -->
+            <div style="background: white; border: 1px solid #e2e8f0; padding: 2rem; border-radius: 12px; display: flex; align-items: center; justify-content: space-between;">
+                <div style="max-width: 75%;">
+                    <strong style="display: block; font-size: 1.1rem; color: #0f172a;">1. Traffic Director (Proxy Gateway)</strong>
+                    <div style="font-size: 0.85rem; color: #64748b; margin-top: 0.5rem;">
+                        <strong>Folder Path:</strong> <code>HWB-COMPANY/scripts/proxy_gateway.py</code><br>
+                        <strong>Logic:</strong> Listens on Port 8000. Decides if a request goes to the Main Web App or the Compliance Engine.
+                    </div>
+                </div>
+                <div style="background: #0f172a; color: #60a5fa; padding: 1rem; border-radius: 8px; font-weight: 900; font-size: 0.7rem;">GATEWAY</div>
+            </div>
+
+            <!-- Step 2 -->
+            <div style="background: white; border: 1px solid #e2e8f0; padding: 2rem; border-radius: 12px; display: flex; align-items: center; justify-content: space-between;">
+                <div style="max-width: 75%;">
+                    <strong style="display: block; font-size: 1.1rem; color: #0f172a;">2. Routing Layer (The App Engine)</strong>
+                    <div style="font-size: 0.85rem; color: #64748b; margin-top: 0.5rem;">
+                        <strong>Folder Path:</strong> <code>HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/main_app.py</code><br>
+                        <strong>Logic:</strong> The Flask Core. Matches URLs (e.g., /admin/operations) to specific Python functions.
+                    </div>
+                </div>
+                <div style="background: #0f172a; color: #60a5fa; padding: 1rem; border-radius: 8px; font-weight: 900; font-size: 0.7rem;">FLASK</div>
+            </div>
+
+            <!-- Step 3 -->
+            <div style="background: white; border: 1px solid #e2e8f0; padding: 2rem; border-radius: 12px; display: flex; align-items: center; justify-content: space-between;">
+                <div style="max-width: 75%;">
+                    <strong style="display: block; font-size: 1.1rem; color: #0f172a;">3. Executive Handshake (Auth)</strong>
+                    <div style="font-size: 0.85rem; color: #64748b; margin-top: 0.5rem;">
+                        <strong>Folder Path:</strong> <code>main_app.py</code> (using Flask-Login)<br>
+                        <strong>Logic:</strong> Prevents unauthorized access to CRM and Admin views. Validates the Microsoft Entra token.
+                    </div>
+                </div>
+                <div style="background: #0f172a; color: #10b981; padding: 1rem; border-radius: 8px; font-weight: 900; font-size: 0.7rem;">SECURE</div>
+            </div>
+
+            <!-- Step 4 -->
+            <div style="background: white; border: 1px solid #e2e8f0; padding: 2rem; border-radius: 12px; display: flex; align-items: center; justify-content: space-between;">
+                <div style="max-width: 75%;">
+                    <strong style="display: block; font-size: 1.1rem; color: #0f172a;">4. Agentic Orchestrator</strong>
+                    <div style="font-size: 0.85rem; color: #64748b; margin-top: 0.5rem;">
+                        <strong>Folder Path:</strong> <code>HWB-IT-WEBSITE/sigma_orchestrator.py</code><br>
+                        <strong>Logic:</strong> Coordinates work between George (Architect) and Silas (CRM) for complex data tasks.
+                    </div>
+                </div>
+                <div style="background: #0f172a; color: #f59e0b; padding: 1rem; border-radius: 8px; font-weight: 900; font-size: 0.7rem;">AI BRAIN</div>
+            </div>
+
+            <!-- Step 5 -->
+            <div style="background: white; border: 1px solid #e2e8f0; padding: 2rem; border-radius: 12px; display: flex; align-items: center; justify-content: space-between;">
+                <div style="max-width: 75%;">
+                    <strong style="display: block; font-size: 1.1rem; color: #0f172a;">5. Lead Ingestion Logic</strong>
+                    <div style="font-size: 0.85rem; color: #64748b; margin-top: 0.5rem;">
+                        <strong>Folder Path:</strong> <code>main_app.py</code> (def get_quote)<br>
+                        <strong>Logic:</strong> Sanitizes web input, runs the $0.12 price formula, and prepares database insertion.
+                    </div>
+                </div>
+                <div style="background: #0f172a; color: #fff; padding: 1rem; border-radius: 8px; font-weight: 900; font-size: 0.7rem;">CAPTURE</div>
+            </div>
+
+            <!-- Step 6 -->
+            <div style="background: white; border: 1px solid #e2e8f0; padding: 2rem; border-radius: 12px; display: flex; align-items: center; justify-content: space-between;">
+                <div style="max-width: 75%;">
+                    <strong style="display: block; font-size: 1.1rem; color: #0f172a;">6. Persistence Layer (Database)</strong>
+                    <div style="font-size: 0.85rem; color: #64748b; margin-top: 0.5rem;">
+                        <strong>Folder Path:</strong> <code>core/services/database.py</code><br>
+                        <strong>Logic:</strong> Commits the sanitized lead data to the "Leads" table in PostgreSQL.
+                    </div>
+                </div>
+                <div style="background: #0f172a; color: #fff; padding: 1rem; border-radius: 8px; font-weight: 900; font-size: 0.7rem;">DATA</div>
+            </div>
+
+            <!-- Step 7 -->
+            <div style="background: white; border: 1px solid #e2e8f0; padding: 2rem; border-radius: 12px; display: flex; align-items: center; justify-content: space-between;">
+                <div style="max-width: 75%;">
+                    <strong style="display: block; font-size: 1.1rem; color: #0f172a;">7. Transmission Hub (Email/Teams)</strong>
+                    <div style="font-size: 0.85rem; color: #64748b; margin-top: 0.5rem;">
+                        <strong>Folder Path:</strong> <code>core/services/email_service.py</code><br>
+                        <strong>Logic:</strong> Notifies the HWB team via MS Teams and stages the Lead Alert in the Outbox.
+                    </div>
+                </div>
+                <div style="background: #0f172a; color: #fff; padding: 1rem; border-radius: 8px; font-weight: 900; font-size: 0.7rem;">SIGNAL</div>
+            </div>
+
+            <!-- Step 8 -->
+            <div style="background: white; border: 1px solid #e2e8f0; padding: 2rem; border-radius: 12px; display: flex; align-items: center; justify-content: space-between;">
+                <div style="max-width: 75%;">
+                    <strong style="display: block; font-size: 1.1rem; color: #0f172a;">8. Telemetry Archive (Tier 6)</strong>
+                    <div style="font-size: 0.85rem; color: #64748b; margin-top: 0.5rem;">
+                        <strong>Folder Path:</strong> <code>scripts/push_telemetry.py</code><br>
+                        <strong>Logic:</strong> Finalizes the transaction by logging the execution state to the "SigmaTelemetry" table.
+                    </div>
+                </div>
+                <div style="background: #0f172a; color: #10b981; padding: 1rem; border-radius: 8px; font-weight: 900; font-size: 0.7rem;">SAFE</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 2.0 SYSTEM CONTAINERS -->
+    <section style="margin-bottom: 5rem;">
+        <h2 style="font-size: 1.6rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">2.0 System Infrastructure (Docker)</h2>
+        <table class="sigma-data-grid" style="width: 100%; border-collapse: collapse; background: white; border: 1px solid #e2e8f0;">
+            <thead style="background: #f8fafc;">
+                <tr><th style="padding: 1rem;">Container Name</th><th style="padding: 1rem;">Primary Job</th><th style="padding: 1rem;">Base Image</th></tr>
+            </thead>
+            <tbody style="font-size: 0.85rem; line-height: 1.6;">
+                <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 1rem;"><code>hwb_web_app</code></td><td style="padding: 1rem;">Handles all CRM and Public traffic.</td><td style="padding: 1rem;">Python 3.12-slim</td></tr>
+                <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 1rem;"><code>hwb_postgres_dev</code></td><td style="padding: 1rem;">The Institutional Source of Truth.</td><td style="padding: 1rem;">Postgres:13</td></tr>
+                <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 1rem;"><code>hwb_compliance_engine</code></td><td style="padding: 1rem;">Serves the ISO 9001 Manual Index.</td><td style="padding: 1rem;">Nginx:alpine</td></tr>
+                <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 1rem;"><code>hwb_traffic_director</code></td><td style="padding: 1rem;">Intelligent Proxy Gateway.</td><td style="padding: 1rem;">Python 3.12-slim</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <!-- 3.0 REVISION HISTORY -->
+    <section>
+        <h2 style="font-size: 1.5rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">3.0 Revision History</h2>
+        <table class="sigma-data-grid" style="width: 100%; border-collapse: collapse; background: white;">
+            <thead><tr style="text-align: left; background: #f8fafc;"><th style="padding: 1rem;">Ver</th><th style="padding: 1rem;">Date</th><th style="padding: 1rem;">Author</th><th style="padding: 1rem;">Change Description</th></tr></thead>
+            <tbody style="font-size: 0.85rem;">
+                <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 1rem;">1.0.0</td><td style="padding: 1rem;">05/20/2026</td><td style="padding: 1rem;">George</td><td style="padding: 1rem;">Initial Release. Established the 8-Step Backend Logic Sequence and Container Registry.</td></tr>
+            </tbody>
+        </table>
+    </section>
+</div>

@@ -1,0 +1,149 @@
+
+<div class="sop-card">
+    <!-- 0.0 DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">SOP-OBS-001</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● Approved</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
+    </div>
+
+    <table>
+<thead>
+<tr>
+<th style="text-align: left;"><strong>Document Control</strong></th>
+<th style="text-align: left;"></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Document Title</strong></td>
+<td style="text-align: left;"><strong>Obsidian Android Sync SOP</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Document ID</strong></td>
+<td style="text-align: left;">SOP-OBS-001</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Version</strong></td>
+<td style="text-align: left;">3.0</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Status</strong></td>
+<td style="text-align: left;">Approved</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Author</strong></td>
+<td style="text-align: left;">Gemini</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Approved By</strong></td>
+<td style="text-align: left;">User</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Date</strong></td>
+<td style="text-align: left;">2025-11-01</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1>Standard Operating Procedure: <strong>Obsidian Android Sync SOP</strong></h1>
+<h2>1.0 Purpose</h2>
+<p>This SOP provides instructions for accessing and editing an existing Obsidian vault, stored in OneDrive, from an Android device. This will enable seamless synchronization of notes between a desktop computer and a Google Pixel phone.</p>
+<h2>2.0 Scope</h2>
+<p>This procedure applies to users who have an existing Obsidian vault in a OneDrive folder and a Google Pixel phone (or other Android device) with both the Obsidian and OneDrive applications installed.</p>
+<h2>3.0 Prerequisites</h2>
+<ul>
+<li>An existing Obsidian vault located in a OneDrive folder.</li>
+<li>A Google Pixel phone with the official <strong>Obsidian</strong> and <strong>OneDrive</strong> apps installed from the Google Play Store.</li>
+<li>You must be logged into the <strong>same Microsoft OneDrive account</strong> on both your desktop computer and your Pixel phone.</li>
+</ul>
+<h2>4.0 Procedure</h2>
+<h3>4.1 Step 1: Make Your Vault Available Offline in OneDrive</h3>
+<p>For Obsidian to be able to see and edit your notes, the files must be physically present on your phone. The OneDrive app has a feature to make files and folders available "offline" for this purpose.</p>
+<ol>
+<li>Open the <strong>OneDrive</strong> app on your Pixel phone.</li>
+<li>Navigate to the folder that contains your Obsidian vault (e.g., <code>gemini_projects</code>).</li>
+<li>Tap the <strong>three dots (...)</strong> next to your vault folder's name.</li>
+<li>From the menu that appears, select <strong>"Keep offline"</strong> (it may also be represented by a parachute icon).</li>
+<li>OneDrive will now download a copy of your entire vault to your phone. This may take some time depending on the size of your vault and your internet connection speed.</li>
+</ol>
+<h3>4.2 Step 2: Open the Vault in Obsidian on Your Phone</h3>
+<p>Now that your notes are on your phone, you need to tell the Obsidian app where to find them.</p>
+<ol>
+<li>Open the <strong>Obsidian</strong> app on your Pixel phone.</li>
+<li>On the initial screen, select <strong>"Open folder as vault"</strong>.</li>
+<li>This will open your phone's file navigator. Use the method in <strong>Section 4.3</strong> to find the exact path to your vault.</li>
+<li>Once you have navigated to your vault folder, tap on it.</li>
+<li>A button will appear at the bottom of the screen that says <strong>"Use this folder"</strong>. Tap it.</li>
+<li>Obsidian will ask for permission to access the files. Grant the permission.</li>
+</ol>
+<h3>4.3 Step 3: Finding the Exact Vault Path on Android</h3>
+<p>Android's file system can make it difficult to find the exact path for cloud-synced files. This method provides a reliable way to locate your vault.</p>
+<ol>
+<li><strong>Create a Test File:</strong> On your desktop computer, create a new, uniquely named file inside your Obsidian vault. For example, <code>find_my_vault_123.txt</code>.</li>
+<li><strong>Sync to Your Phone:</strong> Wait a moment for OneDrive to sync this new file to your Pixel phone. You can open the OneDrive app on your phone and look for the file to confirm it has arrived.</li>
+<li><strong>Use a File Manager:</strong> On your Pixel phone, open a file manager app. The built-in "Files" app can work, but a more advanced file manager from the Play Store like <strong>Solid Explorer</strong> or <strong>FX File Explorer</strong> is recommended as they make it easier to see full file paths.</li>
+<li><strong>Search for the Test File:</strong> Use the search function within your file manager app to search for your unique file (e.g., <code>find_my_vault_123.txt</code>).</li>
+<li><strong>View File Properties:</strong> Once the file manager finds the file, <strong>long-press</strong> on it and look for an option in the menu called <strong>"Properties"</strong>, <strong>"Details"</strong>, or <strong>"Info"</strong>.</li>
+<li><strong>Identify the Path:</strong> The properties view will show you the full <strong>"Parent path"</strong> or <strong>"Location"</strong> of the file. This is the folder path you need to navigate to in Obsidian. It will look something like this:<ul>
+<li><code>/storage/emulated/0/Android/data/com.microsoft.skydrive/files/your_folder/...</code></li>
+</ul>
+</li>
+</ol>
+<h3>4.4 Step 4: Verification</h3>
+<p>Your Obsidian vault should now load on your phone, looking identical to your desktop setup.</p>
+<ol>
+<li>To confirm that the sync is working, create a new note on your phone with a title like "Test note from Pixel".</li>
+<li>Wait a few moments for OneDrive to sync the new file.</li>
+<li>Open Obsidian on your desktop computer. You should see the "Test note from Pixel" appear in your vault.</li>
+</ol>
+<h2>5.0 Notes and Cautions</h2>
+<ul>
+<li><strong>Sync Delays:</strong> Be aware that there can be a delay when syncing between devices. Always give OneDrive a moment to sync before switching devices to avoid potential conflicts.</li>
+<li><strong>Sync Conflicts:</strong> If you edit the same note on both your phone and computer before a sync can complete, OneDrive may create a "conflicted copy" of the file. You will need to manually merge the changes from the conflicted copy into the original.</li>
+<li><strong>Background Sync:</strong> Ensure that the OneDrive app on your phone has permission to run in the background to keep your notes up to date automatically.</li>
+</ul>
+<h2>7.0 Revision History</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Version</th>
+<th style="text-align: left;">Date</th>
+<th style="text-align: left;">Author</th>
+<th style="text-align: left;">Change Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1.0</td>
+<td style="text-align: left;">2025-11-01</td>
+<td style="text-align: left;">Gemini</td>
+<td style="text-align: left;">Initial Release</td>
+</tr>
+<tr>
+<td style="text-align: left;">1.1</td>
+<td style="text-align: left;">2025-11-01</td>
+<td style="text-align: left;">Gemini</td>
+<td style="text-align: left;">Added detailed instructions for finding vault path.</td>
+</tr>
+<tr>
+<td style="text-align: left;">2.0</td>
+<td style="text-align: left;">2025-11-01</td>
+<td style="text-align: left;">Gemini</td>
+<td style="text-align: left;">Updated to ISO 9001 compliant template.</td>
+</tr>
+<tr>
+<td style="text-align: left;">3.0</td>
+<td style="text-align: left;">2025-11-01</td>
+<td style="text-align: left;">Gemini</td>
+<td style="text-align: left;">Applied new title convention.</td>
+</tr>
+</tbody>
+</table>
+<h2>8.0 Document Conventions</h2>
+<ul>
+<li><strong>Title:</strong> The document title should follow the format: <strong>[Subject] [Process Name] SOP</strong>. For example: "<strong>Audio Recording and Playback SOP</strong>". Use Title Case for each word and do not use hyphens. The title is already formatted to be bold.</li>
+<li><strong>Document ID:</strong> The document ID should follow the format: <code>[DEPT-XXX-YYY]</code>, where DEPT is a short code for the department or subject (e.g., <code>AUD</code> for Audio).</li>
+</ul>
+</div>

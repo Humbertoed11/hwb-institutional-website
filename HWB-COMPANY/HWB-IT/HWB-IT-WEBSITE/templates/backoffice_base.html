@@ -449,7 +449,7 @@
  </div>
 
  <div class="backoffice-container">
- {% include "components/mega_bar.html" %}
+ {% include "components/admin_header.html" %}
 
  <main class="bo-main {% block bo_main_class %}{% endblock %}">
  <header class="bo-command-bar">
@@ -495,6 +495,7 @@
  {% endwith %}
 
  <div class="bo-content">
+ {% include "components/backend_nav.html" %}
  {% block bo_content %}{% endblock %}
  </div>
  </main>

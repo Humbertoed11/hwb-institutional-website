@@ -1,0 +1,116 @@
+
+<div class="sop-card">
+    <!-- 0.0 DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-STRAT-005</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● Approved</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
+    </div>
+
+    <table>
+<thead>
+<tr>
+<th style="text-align: left;"><strong>Document Control</strong></th>
+<th style="text-align: left;"></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Document Title</strong></td>
+<td style="text-align: left;"><strong>Management Planning Suite (ID &amp; Tree Diagram)</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Document ID</strong></td>
+<td style="text-align: left;">HWB-QMS-STRAT-005</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Version</strong></td>
+<td style="text-align: left;">1.0</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Status</strong></td>
+<td style="text-align: left;">Approved</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Author</strong></td>
+<td style="text-align: left;">LSS Black Belt / Strategy Professor</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Date</strong></td>
+<td style="text-align: left;">2026-02-21</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1>Strategic Management &amp; Planning Tools</h1>
+<h2>1.0 Interrelationship Digraph (ID): Causality Mapping</h2>
+<p>This diagram identifies the "Drivers" and "Outcomes" of the SigmaFidelity™ ecosystem. Arrows indicate the direction of influence.</p>
+<pre><code class="language-mermaid">graph LR
+    SOP[Standardized SOPs] --&gt; FID[Information Fidelity]
+    TRN[Employee Training] --&gt; FID
+    FID --&gt; EFF[Operational Efficiency]
+    FID --&gt; TST[Customer Trust]
+    EFF --&gt; REV[Revenue Growth]
+    TST --&gt; REV
+    NC[Nonconformity Control] --&gt; TST
+    NC --&gt; EFF
+
+    %% Analysis
+    style FID fill:#fff3e0,stroke:#e65100,stroke-width:4px
+    style REV fill:#dcfce7,stroke:#166534,stroke-width:2px
+</code></pre>
+<p><strong>Strategic Insight:</strong> <em>Information Fidelity</em> has the highest "Out-Degree" (it influences the most factors), making it our primary <strong>KPIV</strong>.</p>
+<hr />
+<h2>2.0 Tree Diagram: Strategic Goal Breakdown</h2>
+<p>This diagram breaks the high-level objective into actionable work streams.</p>
+<pre><code class="language-mermaid">graph TD
+    Goal((SigmaFidelity™ 2026 Leadership)) --&gt; GOV[Governance]
+    Goal --&gt; OPS[Operations]
+    Goal --&gt; MKT[Marketing]
+
+    %% Governance Branch
+    GOV --&gt; ISO[ISO 9001 Certification]
+    GOV --&gt; IEE[S4/IEE Data Standards]
+    ISO --&gt; AUD[Internal Audit Cycles]
+    IEE --&gt; DASH[Executive Dashboard]
+
+    %% Operations Branch
+    OPS --&gt; STF[Staff Excellence]
+    OPS --&gt; EQUIP[Asset Management]
+    STF --&gt; COMPET[Competency Tracking]
+    EQUIP --&gt; QR[QR Asset Tags]
+
+    %% Marketing Branch
+    MKT --&gt; LNK[LinkedIn Series]
+    MKT --&gt; LEAD[Lead Harvesting]
+    LNK --&gt; VIRAL[1M Impressions Goal]
+    LEAD --&gt; AUDIT[5,000 Verified Assets]
+
+    %% Styling
+    style Goal fill:#e1f5fe,stroke:#01579b
+    style GOV fill:#f3e5f5,stroke:#4a148c
+    style OPS fill:#f3e5f5,stroke:#4a148c
+    style MKT fill:#f3e5f5,stroke:#4a148c
+</code></pre>
+<hr />
+<h2>3.0 Revision History</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Version</th>
+<th style="text-align: left;">Date</th>
+<th style="text-align: left;">Author</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1.0</td>
+<td style="text-align: left;">2026-02-21</td>
+<td style="text-align: left;">Gemini</td>
+<td style="text-align: left;">Initial Release of ID and Tree Diagram.</td>
+</tr>
+</tbody>
+</table>
+</div>

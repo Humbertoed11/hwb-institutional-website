@@ -1,0 +1,117 @@
+
+<div class="sop-card">
+    <!-- 0.0 DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-8.6</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● Active</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
+    </div>
+
+    <table>
+<thead>
+<tr>
+<th style="text-align: left;"><strong>Document Control</strong></th>
+<th style="text-align: left;"></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Document Title</strong></td>
+<td style="text-align: left;"><strong>Data Center Precision Cleaning and Contamination Control</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Document ID</strong></td>
+<td style="text-align: left;">HWB-QMS-8.6</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Version</strong></td>
+<td style="text-align: left;">1.0</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Status</strong></td>
+<td style="text-align: left;">Active</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Author</strong></td>
+<td style="text-align: left;">George (VP Systems Architecture)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Approved By</strong></td>
+<td style="text-align: left;">Humberto Dominguez (CEO)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Date</strong></td>
+<td style="text-align: left;">2026-03-08</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1>1.0 Purpose</h1>
+<p>This SOP establishes the technical requirements and operational protocols for the cleaning and disinfection of data centers and server rooms. It adheres to <strong>ISO 14644-1 (Class 8 standards)</strong> and <strong>ISO 14644-7 (Separative Devices)</strong> to ensure the longevity of high-fidelity hardware by mitigating airborne particulate matter and ESD (Electrostatic Discharge) risks.</p>
+<h1>2.0 Scope</h1>
+<p>Applies to all HWB Cleaning Services LLC operations within mission-critical environments, including raised-floor plenums, server rack exteriors, and hot/cold aisle containment systems.</p>
+<h1>3.0 Procedure: Precision Cleaning Cycles</h1>
+<h2>3.1 Hardware and Material Requirements</h2>
+<p>To maintain the "Fidelity Gate," only the following equipment is permitted:
+*   <strong>HEPA-Filtered Vacuums:</strong> Must utilize ULPA/HEPA filtration (efficiency of 99.97% at 0.3 microns).
+*   <strong>Microfiber Materials:</strong> Only lint-free, non-shredding microfibers are allowed.
+*   <strong>Non-Conductive Chemicals:</strong> Use only ammonium-free, non-residue, and non-conductive cleaning agents.
+*   <strong>ESD Protection:</strong> All personnel must wear ESD-safe footwear or wrist straps when working within 24 inches of exposed server components.</p>
+<h2>3.2 Cleaning Protocols (Phased Approach)</h2>
+<ol>
+<li><strong>Phase I: High-Level Cleaning (Above Floor):</strong><ul>
+<li>Vacuuming of cable trays, ceiling plenums, and tops of server cabinets.</li>
+<li>Wiping of external cabinet surfaces using "Cleanroom-Grade" damp-wiping techniques (S-motion) to prevent re-contamination.</li>
+</ul>
+</li>
+<li><strong>Phase II: Floor and Surface Treatment:</strong><ul>
+<li>Vacuuming of floor surfaces using HEPA-filters.</li>
+<li>Damp-mopping with non-conductive, anti-static floor treatment.</li>
+</ul>
+</li>
+<li><strong>Phase III: Sub-Floor Plenum (If Applicable):</strong><ul>
+<li>Systematic vacuuming of the concrete sub-floor beneath raised tiles.</li>
+<li><strong>CAUTION:</strong> Never use compressed air; this relocates contaminants rather than removing them.</li>
+</ul>
+</li>
+</ol>
+<h2>3.3 Contamination Monitoring</h2>
+<ul>
+<li><strong>Particulate Counts:</strong> Periodic air quality monitoring should be conducted to ensure the environment remains within <strong>ISO Class 8</strong> limits (max 3,520,000 particles/m³ at 0.5 µm).</li>
+<li><strong>Temperature &amp; Humidity:</strong> Cleaning cycles must not interfere with the data center's thermal management (Hot/Cold aisle integrity).</li>
+</ul>
+<h1>4.0 Verification</h1>
+<ul>
+<li><strong>Black-Light Audit:</strong> Random spot-checks using UV light to detect organic residues.</li>
+<li><strong>Air Quality Report:</strong> Final verification against ISO 14644-1 standards.</li>
+<li><strong>Activity Log:</strong> All cleanings must be logged in the <code>ActivityLog</code> table with the specific timestamp and facility ID.</li>
+</ul>
+<h1>5.0 Notes and Cautions</h1>
+<ul>
+<li><strong>Zonal Integrity:</strong> Ensure hot/cold aisle barriers (baffles) are not moved or damaged during cleaning.</li>
+<li><strong>Legal/IT Review:</strong> Per HWB-QMS-8.5, this SOP must be reviewed by the <strong>Legal Department</strong> (for liability in high-value asset zones) and the <strong>AI Department</strong> (for technical fidelity) before final production deployment.</li>
+</ul>
+<hr />
+<h2>6.0 Revision History</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Version</th>
+<th style="text-align: left;">Date</th>
+<th style="text-align: left;">Author</th>
+<th style="text-align: left;">Change Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1.0</td>
+<td style="text-align: left;">2026-03-08</td>
+<td style="text-align: left;">George</td>
+<td style="text-align: left;">Initial Precision Cleaning protocol for Data Centers established.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><em>Standard Operating Procedure produced under the SigmaFidelity™ Quality Mandate.</em></p>
+</div>

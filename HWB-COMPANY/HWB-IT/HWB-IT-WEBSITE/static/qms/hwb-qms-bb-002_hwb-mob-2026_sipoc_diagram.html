@@ -1,0 +1,137 @@
+
+<div class="sop-card">
+    <!-- 0.0 DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-BB-002</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● Active / Define Phase</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
+    </div>
+
+    <table>
+<thead>
+<tr>
+<th style="text-align: left;"><strong>Document Control</strong></th>
+<th style="text-align: left;"></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Document Title</strong></td>
+<td style="text-align: left;"><strong>HWB-MOB-2026 SIPOC Diagram</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Document ID</strong></td>
+<td style="text-align: left;">HWB-QMS-BB-002</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Version</strong></td>
+<td style="text-align: left;">1.0</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Status</strong></td>
+<td style="text-align: left;">Active / Define Phase</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Author</strong></td>
+<td style="text-align: left;">George (Master Black Belt)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Approved By</strong></td>
+<td style="text-align: left;">Humberto Dominguez, CEO</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Date</strong></td>
+<td style="text-align: left;">2026-03-20</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1>SIPOC Diagram: <strong>HWB-MOB-2026 Mobile Execution Engine</strong></h1>
+<p>The SIPOC (Supplier, Input, Process, Output, Customer) defines the boundaries of the project and ensures all stakeholders and resources are aligned prior to the Measure phase.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;"><strong>Supplier</strong></th>
+<th style="text-align: left;"><strong>Input</strong></th>
+<th style="text-align: left;"><strong>Process (High-Level)</strong></th>
+<th style="text-align: left;"><strong>Output</strong></th>
+<th style="text-align: left;"><strong>Customer</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>CEO / Ops</strong></td>
+<td style="text-align: left;">Strategic Mandates &amp; Budget</td>
+<td style="text-align: left;"><strong>1. Authentication:</strong> GPS-verified Login/Clock-in.</td>
+<td style="text-align: left;"><strong>Verified Logs:</strong> Audit-ready sanitation records.</td>
+<td style="text-align: left;"><strong>Facility Managers</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>IT Dept</strong></td>
+<td style="text-align: left;">Azure Cloud &amp; SQLite DBs</td>
+<td style="text-align: left;"><strong>2. Retrieval:</strong> Fetch 'Scope of Work' for site.</td>
+<td style="text-align: left;"><strong>Efficiency Data:</strong> Labor utilization vs. Budget.</td>
+<td style="text-align: left;"><strong>HWB Finance</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Supervisors</strong></td>
+<td style="text-align: left;">Site Schedules &amp; SOPs</td>
+<td style="text-align: left;"><strong>3. Execution:</strong> Sequence-locked task completion.</td>
+<td style="text-align: left;"><strong>Compliance Alerts:</strong> Real-time exception reporting.</td>
+<td style="text-align: left;"><strong>Technicians</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Facility Mgrs</strong></td>
+<td style="text-align: left;">Site Access &amp; Special Requests</td>
+<td style="text-align: left;"><strong>4. Evidence:</strong> Photo/Timestamp capture of CTQs.</td>
+<td style="text-align: left;"><strong>Clean Environment:</strong> Physical result of process.</td>
+<td style="text-align: left;"><strong>Building Occupants</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Safety Dept</strong></td>
+<td style="text-align: left;">SDS / Hazard Levels</td>
+<td style="text-align: left;"><strong>5. Sync:</strong> Offline-first data push to CRM.</td>
+<td style="text-align: left;"><strong>Payroll Data:</strong> Precise billable hours.</td>
+<td style="text-align: left;"><strong>CEO / Managing Dir</strong></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3>1.0 Boundary Definitions</h3>
+<ul>
+<li><strong>Start Point:</strong> Technician arrives at the designated GPS geofence and initiates login.</li>
+<li><strong>End Point:</strong> Data successfully synchronizes with the <code>clients.db</code> and <code>sigma_leads.db</code> servers and the technician clocks out.</li>
+</ul>
+<h3>2.0 Critical-to-Quality (CTQ) Requirements</h3>
+<p>Based on initial VOC (Voice of Customer) analysis, the following are the primary "Must-Haves" for the process to be successful:
+1.  <strong>Reliability:</strong> 99.9% app uptime (offline mode must work).
+2.  <strong>Integrity:</strong> GPS coordinates must be within 50 meters of the site.
+3.  <strong>Compliance:</strong> 100% of 'High-Stakes' sanitation items (disinfection) must have photo evidence.
+4.  <strong>Speed:</strong> Sync must occur within 60 seconds of regaining connectivity.</p>
+<h3>3.0 Preliminary Value Stream Mapping (P-VSM)</h3>
+<p>The "Process" column above represents the <strong>Core Value Stream</strong>. During the Measure phase, we will calculate the <strong>Value-Added (VA)</strong> vs. <strong>Non-Value-Added (NVA)</strong> time for each step to identify where the "Payroll Mopping" waste occurs.</p>
+<hr />
+<h2>4.0 Approval &amp; Sign-off</h2>
+<p><strong>CEO/Operations Director:</strong> <strong><em>_</em></strong><strong><em>_</em></strong><strong><em>_</em></strong>____ <strong>Date:</strong> 2026-03-20</p>
+<hr />
+<h2>5.0 Revision History</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Version</th>
+<th style="text-align: left;">Date</th>
+<th style="text-align: left;">Author</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1.0</td>
+<td style="text-align: left;">2026-03-20</td>
+<td style="text-align: left;">George (MBB)</td>
+<td style="text-align: left;">Initial SIPOC for Black Belt track.</td>
+</tr>
+</tbody>
+</table>
+</div>

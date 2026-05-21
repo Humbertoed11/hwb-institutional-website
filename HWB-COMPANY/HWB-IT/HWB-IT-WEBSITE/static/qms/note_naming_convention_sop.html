@@ -1,0 +1,127 @@
+
+<div class="sop-card">
+    <!-- 0.0 DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">SOP-NAM-001</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.1</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● Approved</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
+    </div>
+
+    <table>
+<thead>
+<tr>
+<th style="text-align: left;"><strong>Document Control</strong></th>
+<th style="text-align: left;"></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Document Title</strong></td>
+<td style="text-align: left;"><strong>Note Title Naming Convention SOP</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Document ID</strong></td>
+<td style="text-align: left;">SOP-NAM-001</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Version</strong></td>
+<td style="text-align: left;">1.1</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Status</strong></td>
+<td style="text-align: left;">Approved</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Author</strong></td>
+<td style="text-align: left;">Gemini</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Approved By</strong></td>
+<td style="text-align: left;">User</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Date</strong></td>
+<td style="text-align: left;">2025-11-01</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1>Standard Operating Procedure: <strong>Note Title Naming Convention SOP</strong></h1>
+<h2>1.0 Purpose</h2>
+<p>This SOP defines the standard naming convention for main titles within all Markdown-based notes to ensure consistency and clarity across the documentation.</p>
+<h2>2.0 Scope</h2>
+<ul>
+<li>This convention applies to the primary, level-1 heading of all Markdown notes (<code>.md</code>) within the Obsidian vault.</li>
+<li>This convention also applies to the filenames of any new files created by the Gemini AI assistant.</li>
+</ul>
+<h2>3.0 Prerequisites</h2>
+<p>None.</p>
+<h2>4.0 Procedure</h2>
+<p>The naming convention for note titles is defined by the following rules:</p>
+<ol>
+<li><strong>H1 Heading:</strong> The main title must be a level-1 heading, indicated by a single hash (<code>#</code>) followed by a space at the beginning of the line.</li>
+<li><strong>First Line:</strong> The title must be the first line of the document.</li>
+<li><strong>Title Case:</strong> The title should be written in Title Case, where the first letter of each major word is capitalized.</li>
+<li><strong>No Hyphens or Underscores:</strong> The title must not contain hyphens (<code>-</code>) or underscores (<code>_</code>). Spaces should be used as word separators.</li>
+</ol>
+<h3>4.1 Examples</h3>
+<ul>
+<li>
+<p><strong>Correct / Compliant Examples:</strong>
+    <code>markdown
+    # This Is a Correct Title
+    # Another Example of a Good Title</code></p>
+</li>
+<li>
+<p><strong>Incorrect / Non-Compliant Examples:</strong>
+    <code>markdown
+    # this is an incorrect title (not Title Case)
+    # This-Is-Incorrect (contains hyphens)
+    # This_Is_Also_Incorrect (contains underscores)
+    ## Not a Main Title (this is a level-2 heading)</code></p>
+</li>
+</ul>
+<h2>5.0 Verification</h2>
+<p>Compliance with this naming convention can be verified by running the <code>retittle_notes.sh</code> script.</p>
+<ol>
+<li>Open a terminal in the root project directory.</li>
+<li>Execute the command: <code>bash retittle_notes.sh</code></li>
+<li>If all note titles are compliant, the script will run and report "Note retitling process complete" without suggesting any changes.</li>
+</ol>
+<h2>6.0 Notes and Cautions</h2>
+<ul>
+<li>Enforcing this convention ensures that automated scripts and search functions can operate on titles more reliably.</li>
+<li>The <code>retittle_notes.sh</code> script is the approved tool for correcting non-compliant titles in bulk.</li>
+</ul>
+<h2>7.0 Revision History</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Version</th>
+<th style="text-align: left;">Date</th>
+<th style="text-align: left;">Author</th>
+<th style="text-align: left;">Change Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1.0</td>
+<td style="text-align: left;">2025-11-01</td>
+<td style="text-align: left;">Gemini</td>
+<td style="text-align: left;">Initial Release</td>
+</tr>
+<tr>
+<td style="text-align: left;">1.1</td>
+<td style="text-align: left;">2025-11-01</td>
+<td style="text-align: left;">Gemini</td>
+<td style="text-align: left;">Added note about AI adherence to convention.</td>
+</tr>
+</tbody>
+</table>
+<h2>8.0 Document Conventions</h2>
+<ul>
+<li><strong>Title:</strong> The document title (and filename) should follow the format: <strong>[Subject] [Process Name] SOP</strong>. For example: "<strong>Audio Recording and Playback SOP.md</strong>". Use Title Case for each word. Do not use hyphens (<code>-</code>) or underscores (<code>_</code>); use spaces instead. The title is already formatted to be bold.</li>
+<li><strong>Document ID:</strong> The document ID should follow the format: <code>[DEPT-XXX-YYY]</code>, where DEPT is a short code for the department or subject (e.g., <code>AUD</code> for Audio).</li>
+</ul>
+</div>

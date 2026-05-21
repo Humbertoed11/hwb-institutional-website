@@ -1,0 +1,159 @@
+
+<div class="sop-card">
+    <!-- 0.0 DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">SOP-GHO-001</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● Approved</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
+    </div>
+
+    <table>
+<thead>
+<tr>
+<th style="text-align: left;"><strong>Document Control</strong></th>
+<th style="text-align: left;"></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Document Title</strong></td>
+<td style="text-align: left;"><strong>Google Home Obsidian Integration SOP</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Document ID</strong></td>
+<td style="text-align: left;">SOP-GHO-001</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Version</strong></td>
+<td style="text-align: left;">3.0</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Status</strong></td>
+<td style="text-align: left;">Approved</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Author</strong></td>
+<td style="text-align: left;">Gemini</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Approved By</strong></td>
+<td style="text-align: left;">User</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Date</strong></td>
+<td style="text-align: left;">2025-11-01</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1>Standard Operating Procedure: <strong>Google Home Obsidian Integration SOP</strong></h1>
+<h2>1.0 Purpose</h2>
+<p>This Standard Operating Procedure (SOP) outlines the steps required to integrate Google Home with an Obsidian vault for hands-free note-taking. This procedure enables users to dictate notes to their Google Home device and have them automatically appended to a designated note within their Obsidian vault.</p>
+<h2>2.0 Scope</h2>
+<p>This SOP applies to all users who wish to set up a connection between their Google Home device and their Obsidian vault using IFTTT (If This Then That).</p>
+<h2>3.0 Prerequisites</h2>
+<p>Before beginning this procedure, you must have the following:</p>
+<ul>
+<li>An Obsidian vault located in a cloud-synced folder (e.g., OneDrive, Google Drive, Dropbox).</li>
+<li>A configured Google Home or Google Assistant-enabled device.</li>
+<li>An active account with IFTTT (ifttt.com).</li>
+</ul>
+<h2>4.0 Procedure</h2>
+<h3>4.1 Create an IFTTT Account</h3>
+<ol>
+<li>Navigate to <a href="https://ifttt.com">https://ifttt.com</a>.</li>
+<li>Sign up for a new account or log in to your existing account.</li>
+</ol>
+<h3>4.2 Create a New IFTTT Applet</h3>
+<ol>
+<li>From the IFTTT home screen, click the <strong>"Create"</strong> button.</li>
+</ol>
+<h3>4.3 Configure the Trigger (Google Assistant)</h3>
+<ol>
+<li>Click the <strong>"If This"</strong> button.</li>
+<li>Search for and select the <strong>"Google Assistant"</strong> service.</li>
+<li>Choose the <strong>"Say a phrase with a text ingredient"</strong> trigger.</li>
+<li>In the "What do you want to say?" field, define the voice command. The <code>$</code> symbol will be replaced by your spoken note.<ul>
+<li><strong>Example:</strong> <code>add to my notes $</code></li>
+</ul>
+</li>
+<li>(Optional) Fill in the alternative phrases and the response for the assistant.</li>
+<li>Click <strong>"Create trigger"</strong>.</li>
+</ol>
+<h3>4.4 Configure the Action (OneDrive)</h3>
+<ol>
+<li>Click the <strong>"Then That"</strong> button.</li>
+<li>Search for and select the <strong>"OneDrive"</strong> service.</li>
+<li>You will be prompted to connect your OneDrive account to IFTTT. Follow the on-screen instructions to authorize the connection.</li>
+<li>Choose the <strong>"Append to a text file"</strong> action.</li>
+<li>Configure the action fields:<ul>
+<li><strong>File path:</strong> Specify the path to your target note within your OneDrive-synced Obsidian vault. It is recommended to use a dedicated "inbox" file.<ul>
+<li><strong>Example:</strong> <code>/gemini_projects/inbox.md</code></li>
+</ul>
+</li>
+<li><strong>Content:</strong> Click the <strong>"Add ingredient"</strong> button and select <strong>"TextField"</strong>. To include a timestamp, format the content as follows:<ul>
+<li><code>{{CreatedAt}} - {{TextField}}</code></li>
+</ul>
+</li>
+<li><strong>Create file if it does not exist:</strong> Ensure this option is checked.</li>
+</ul>
+</li>
+<li>Click <strong>"Create action"</strong>.</li>
+</ol>
+<h3>4.5 Finalize the Applet</h3>
+<ol>
+<li>Click <strong>"Continue"</strong> to review the applet.</li>
+<li>Click <strong>"Finish"</strong> to save and activate the applet.</li>
+</ol>
+<h2>5.0 Verification</h2>
+<p>To verify that the integration is working correctly:</p>
+<ol>
+<li>Activate your Google Home device by saying "Hey Google" or "Okay Google".</li>
+<li>Use the phrase you defined in step 4.3. For example: "Hey Google, add to my notes '''This is a test of the Google Home to Obsidian integration.'''"</li>
+<li>Open your Obsidian vault and navigate to the file you specified in step 4.4 (e.g., <code>inbox.md</code>).</li>
+<li>Confirm that the new note, along with the timestamp, has been appended to the file.</li>
+</ol>
+<h2>6.0 Notes and Cautions</h2>
+<ul>
+<li>The file path in step 4.4 is relative to your OneDrive root folder. Ensure the path is correct.</li>
+<li>There may be a slight delay (up to a few minutes) for the note to appear in your Obsidian vault.</li>
+<li>This procedure can be adapted for other cloud storage services supported by IFTTT (e.g., Dropbox, Google Drive) by selecting the appropriate service in step 4.4.</li>
+</ul>
+<h2>7.0 Revision History</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Version</th>
+<th style="text-align: left;">Date</th>
+<th style="text-align: left;">Author</th>
+<th style="text-align: left;">Change Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1.0</td>
+<td style="text-align: left;">2025-11-01</td>
+<td style="text-align: left;">Gemini</td>
+<td style="text-align: left;">Initial Release</td>
+</tr>
+<tr>
+<td style="text-align: left;">2.0</td>
+<td style="text-align: left;">2025-11-01</td>
+<td style="text-align: left;">Gemini</td>
+<td style="text-align: left;">Updated to ISO 9001 compliant template.</td>
+</tr>
+<tr>
+<td style="text-align: left;">3.0</td>
+<td style="text-align: left;">2025-11-01</td>
+<td style="text-align: left;">Gemini</td>
+<td style="text-align: left;">Applied new title convention.</td>
+</tr>
+</tbody>
+</table>
+<h2>8.0 Document Conventions</h2>
+<ul>
+<li><strong>Title:</strong> The document title should follow the format: <strong>[Subject] [Process Name] SOP</strong>. For example: "<strong>Audio Recording and Playback SOP</strong>". Use Title Case for each word and do not use hyphens. The title is already formatted to be bold.</li>
+<li><strong>Document ID:</strong> The document ID should follow the format: <code>[DEPT-XXX-YYY]</code>, where DEPT is a short code for the department or subject (e.g., <code>AUD</code> for Audio).</li>
+</ul>
+</div>

@@ -58,6 +58,47 @@
         .sandbox-label { position: absolute; top: -12px; left: 20px; background: white; padding: 0 10px; font-size: 0.7rem; font-weight: 900; color: #2563eb; }
         
         pre.code-block { background: #1e293b; color: #f8fafc; padding: 1.5rem; border-radius: 8px; font-size: 0.85rem; overflow-x: auto; margin-top: 1rem; }
+
+        /* 🖨️ PRINT & PDF STANDARDS (ISO 9001) */
+        @media print {
+            .qms-sidebar, .isc-btn, button, .sandbox-label, #preview-overlay {
+                display: none !important;
+            }
+            body.qms-clinical-shell {
+                background: white !important;
+            }
+            .qms-main {
+                margin-left: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+            }
+            .sop-card {
+                box-shadow: none !important;
+                border: none !important;
+                padding: 0 !important;
+            }
+            .sop-meta {
+                margin-bottom: 2rem !important;
+                padding-bottom: 1rem !important;
+                border-bottom: 2pt solid #000 !important;
+                grid-template-columns: repeat(4, 1fr) !important;
+            }
+            section {
+                page-break-inside: avoid;
+                margin-bottom: 3rem !important;
+            }
+            h1, h2, h3 {
+                color: black !important;
+            }
+            a {
+                text-decoration: none !important;
+                color: black !important;
+            }
+            @page {
+                size: letter;
+                margin: 0.75in;
+            }
+        }
     </style>
 </head>
 <body class="qms-clinical-shell">
@@ -69,7 +110,9 @@
 
         <div class="qms-nav-group">
             <span class="qms-nav-label">Foundational</span>
-            <a href="/design-system" class="qms-nav-link active">HWB-QMS-7.5 Web System</a>
+            <a href="/manual" class="qms-nav-link active"><i class="fas fa-book" style="margin-right: 8px;"></i> Master Manual Index</a>
+            <a href="/design-system" class="qms-nav-link">HWB-QMS-7.5 Web System</a>
+            <a href="javascript:window.print()" class="qms-nav-link" style="color: #10b981;"><i class="fas fa-print" style="margin-right: 8px;"></i> Print to PDF</a>
         </div>
         
         <div class="qms-nav-group">

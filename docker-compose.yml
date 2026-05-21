@@ -72,10 +72,20 @@ services:
     networks:
       - hwb-net
     environment:
-      # Map the internal Docker names for routing
       - TARGET_APP=http://web:5000
+      - COMPLIANCE_APP=http://compliance:80
     depends_on:
       - web
+      - compliance
+
+  compliance:
+    image: nginx:alpine
+    container_name: hwb_compliance_engine
+    restart: always
+    volumes:
+      - ./HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/static/qms:/usr/share/nginx/html/qms
+    networks:
+      - hwb-net
 
 networks:
   hwb-net:

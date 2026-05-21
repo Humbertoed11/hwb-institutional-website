@@ -1,0 +1,124 @@
+
+<div class="sop-card">
+    <!-- 0.0 DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-9.1</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● Approved</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
+    </div>
+
+    <table>
+<thead>
+<tr>
+<th style="text-align: left;"><strong>Document Control</strong></th>
+<th style="text-align: left;"></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Document Title</strong></td>
+<td style="text-align: left;"><strong>Daily System Maintenance SOP</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Document ID</strong></td>
+<td style="text-align: left;">HWB-QMS-9.1</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Version</strong></td>
+<td style="text-align: left;">2.0</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Status</strong></td>
+<td style="text-align: left;">Approved</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Author</strong></td>
+<td style="text-align: left;">George (Systems Architect)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Approved By</strong></td>
+<td style="text-align: left;">Humberto Dominguez, CEO</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Date</strong></td>
+<td style="text-align: left;">2026-04-27</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1>Standard Operating Procedure: <strong>Daily System Maintenance SOP</strong></h1>
+<h2>1.0 Purpose</h2>
+<p>This SOP describes the mandatory procedures for daily system maintenance, self-healing, and autonomous agent verification to ensure 100% uptime and data fidelity for the SigmaFidelity™ ecosystem.</p>
+<h2>2.0 Scope</h2>
+<p>Applies to all Linux/WSL environments, Docker containers, and autonomous agents (George, Watchdog) within the HWB Cleaning Services LLC technical infrastructure.</p>
+<h2>3.0 Prerequisites</h2>
+<ul>
+<li>Access to a terminal with Docker Engine active.</li>
+<li>The <code>scripts/</code> directory containing <code>hwb_self_healing.sh</code> and <code>startup_master.sh</code>.</li>
+<li>Executive login credentials for the production database.</li>
+</ul>
+<h2>4.0 Procedure</h2>
+<h3>4.1 Mandatory Startup and Self-Healing</h3>
+<p>Every operational session must begin with the following sequence:
+1.  <strong>Execute Startup Master:</strong>
+    <code>bash
+    bash scripts/startup_master.sh</code>
+2.  <strong>Verify Self-Healing:</strong> Ensure the output reports "--- SigmaFidelity: Initiating Self-Healing Sequence ---" and confirms the termination of zombie processes.</p>
+<h3>4.2 Autonomous Agent Verification (George &amp; Watchdog)</h3>
+<p>Verify that the autonomous suite is running stably in persistent loops:
+1.  <strong>Check Container Logs:</strong>
+    <code>bash
+    docker logs hwb_agent_worker --tail 20</code>
+2.  <strong>Confirm Pulse Status:</strong> Look for the message "--- Sleeping for 6 hours (SigmaFidelity Standard Loop) ---" to verify George is active.
+3.  <strong>Watchdog Status:</strong> Confirm "WATCHDOG ACTIVE" is logged to ensure institutional integrity monitoring.</p>
+<h3>4.3 Database and Logic Integrity</h3>
+<ol>
+<li><strong>Production Diagnostics:</strong> Run the internal diagnostic dashboard via the container:
+    <code>bash
+    docker exec hwb_web_app python diag_dashboard.py</code></li>
+<li><strong>Verification:</strong> Confirm that RTY (Rolled Throughput Yield) is ≥ 95% and all tables are present.</li>
+</ol>
+<h3>4.4 OS Level Maintenance (Legacy)</h3>
+<ol>
+<li>Run the Ubuntu update script to ensure security patches are applied:
+    <code>bash
+    bash scripts/update_ubuntu.sh</code></li>
+</ol>
+<h2>5.0 Verification</h2>
+<ul>
+<li>Docker containers <code>hwb_web_app</code>, <code>hwb_agent_worker</code>, <code>hwb_postgres_dev</code>, and <code>hwb_traffic_director</code> all show status "Running".</li>
+<li>Port 8000 is active and responding with 200 OK.</li>
+<li>The <code>Analytics</code> table in Postgres reflects the latest pulse data.</li>
+</ul>
+<h2>6.0 Notes and Cautions</h2>
+<ul>
+<li><strong>Zero-Synthetic Data:</strong> All maintenance reports must be based on verified transactional records.</li>
+<li><strong>Log Permission Warning:</strong> If the system logs directory is root-owned and unwritable, the system will automatically fallback to root-level logging for the Traffic Director.</li>
+</ul>
+<h2>7.0 Revision History</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Version</th>
+<th style="text-align: left;">Date</th>
+<th style="text-align: left;">Author</th>
+<th style="text-align: left;">Change Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1.0</td>
+<td style="text-align: left;">2025-11-05</td>
+<td style="text-align: left;">Gemini</td>
+<td style="text-align: left;">Initial Release (Legacy).</td>
+</tr>
+<tr>
+<td style="text-align: left;">2.0</td>
+<td style="text-align: left;">2026-04-27</td>
+<td style="text-align: left;">George</td>
+<td style="text-align: left;">Integrated Self-Healing Protocol, Persistent Agent Loops, and Docker Orchestration standards.</td>
+</tr>
+</tbody>
+</table>
+</div>

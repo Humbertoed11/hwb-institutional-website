@@ -1,0 +1,153 @@
+
+<div class="sop-card">
+    <!-- 0.0 DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-MASTER-MAP-001</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.1</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● Draft</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
+    </div>
+
+    <table>
+<thead>
+<tr>
+<th style="text-align: left;"><strong>Document Control</strong></th>
+<th style="text-align: left;"></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Document Title</strong></td>
+<td style="text-align: left;"><strong>ISO 9001 QMS Master Audit Mapping Flowchart</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Document ID</strong></td>
+<td style="text-align: left;">HWB-QMS-MASTER-MAP-001</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Version</strong></td>
+<td style="text-align: left;">3.1</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Status</strong></td>
+<td style="text-align: left;">Draft</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Author</strong></td>
+<td style="text-align: left;">Gemini</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Approved By</strong></td>
+<td style="text-align: left;"><strong><em>_</em></strong><strong><em>_</em></strong><strong><em>_</em></strong>____</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Date</strong></td>
+<td style="text-align: left;">2026-02-21</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1>ISO 9001:2015 Master Audit Mapping Flowchart</h1>
+<h2>1.0 Purpose</h2>
+<p>This document provides a comprehensive visual mapping of the HWB Cleaning Services Quality Management System against the ISO 9001:2015 standard.</p>
+<h2>2.0 Procedure: Master PDCA Mapping</h2>
+<pre><code class="language-mermaid">graph TD
+    %% PDCA Cycle
+    subgraph QMS [HWB Quality Management System]
+        direction TB
+        PLAN --&gt; DO --&gt; CHECK --&gt; ACT --&gt; PLAN
+    end
+</code></pre>
+<h2>3.0 Audit Navigation Guide &amp; Document Catalog</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">ISO Clause</th>
+<th style="text-align: left;">HWB Implementation Reference</th>
+<th style="text-align: left;">Key Audit Evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>4.0 Context</strong></td>
+<td style="text-align: left;">[[HWB-QMS-1.0 SigmaFidelity™ Company Charter.md|SigmaFidelity™ Company Charter]]</td>
+<td style="text-align: left;">Strategic intent and mission</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>4.4 Processes</strong></td>
+<td style="text-align: left;">[[mop_incident/sigma_iee_governance.md|S4/IEE Data Governance]]</td>
+<td style="text-align: left;">Value chain and 30k-foot reporting</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>5.0 Charters</strong></td>
+<td style="text-align: left;">[[HWB-QMS-FORM-008 S4-IEE Project Charter Template.md|S4/IEE Project Charter Template]]</td>
+<td style="text-align: left;">Project goals and resource allocation</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>6.1 Planning</strong></td>
+<td style="text-align: left;">[[HWB-QMS-STRAT-008 Project Arrow Diagram.md|Project Arrow Diagram]]</td>
+<td style="text-align: left;">Sequence, dependencies, and critical path</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>7.4 Project Comm.</strong></td>
+<td style="text-align: left;">[[HWB-QMS-7.4 Project Communication Plan.md|Project Communication Plan]]</td>
+<td style="text-align: left;">Structured update frequency</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>8.0 Operation</strong></td>
+<td style="text-align: left;">[[mop_incident/sigma_sipoc_report.md|Daily SIPOC Report]]</td>
+<td style="text-align: left;">Strategic value chain monitoring</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>8.4 Purchasing</strong></td>
+<td style="text-align: left;">[[HWB-QMS-8.4 Purchasing Process SOP with Flowchart.md|Purchasing Process SOP]]</td>
+<td style="text-align: left;">Selection, evaluation, and control of suppliers</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>8.4 Inventory</strong></td>
+<td style="text-align: left;">[[mop_incident/app.py|SDS &amp; Chemical Registry (Admin)]]</td>
+<td style="text-align: left;">Real-time control of chemical hazards</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>9.1 Monitoring</strong></td>
+<td style="text-align: left;">[[mop_incident/sigma_performance_metrics.md|KPOV/KPIV Performance Tracker]]</td>
+<td style="text-align: left;">Data-driven performance monitoring</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>10.2 Improvement</strong></td>
+<td style="text-align: left;">[[HWB-QMS-STRAT-006 Strategic Why-Why Diagram.md|Why-Why Diagram (Higgins 1995)]]</td>
+<td style="text-align: left;">Deep analysis of causal chains</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>10.3 Execution</strong></td>
+<td style="text-align: left;">[[HWB-QMS-STRAT-002 S4-IEE Execution Roadmap.md|S4/IEE Execution Roadmap]]</td>
+<td style="text-align: left;">Standard DMAIC path for projects</td>
+</tr>
+</tbody>
+</table>
+<h2>4.0 Revision History</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Version</th>
+<th style="text-align: left;">Date</th>
+<th style="text-align: left;">Author</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1.0 - 3.0</td>
+<td style="text-align: left;">2026-02-21</td>
+<td style="text-align: left;">Gemini</td>
+<td style="text-align: left;"><a href="#1-0-purpose">Cumulative QMS builds and mappings. reached Version 3.0 milestone.</a></td>
+</tr>
+<tr>
+<td style="text-align: left;">3.1</td>
+<td style="text-align: left;">2026-02-21</td>
+<td style="text-align: left;">Gemini</td>
+<td style="text-align: left;">Formalized Purchasing Process (ISO 8.4) mapping.</td>
+</tr>
+</tbody>
+</table>
+</div>

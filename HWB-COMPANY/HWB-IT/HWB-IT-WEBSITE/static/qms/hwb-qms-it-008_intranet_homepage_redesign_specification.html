@@ -1,0 +1,124 @@
+
+<div class="sop-card">
+    <!-- 0.0 DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-IT-008</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● Approved</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
+    </div>
+
+    <h1>HWB-QMS-IT-008 Intranet Homepage Redesign Specification</h1>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;"><strong>Document Control</strong></th>
+<th style="text-align: left;"></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Document Title</strong></td>
+<td style="text-align: left;"><strong>Intranet Homepage Redesign Specification</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Document ID</strong></td>
+<td style="text-align: left;">HWB-QMS-IT-008</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Version</strong></td>
+<td style="text-align: left;">1.0</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Status</strong></td>
+<td style="text-align: left;">Approved</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Author</strong></td>
+<td style="text-align: left;">George (Systems Architect)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Approved By</strong></td>
+<td style="text-align: left;">Humberto Dominguez (CEO)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Date</strong></td>
+<td style="text-align: left;">2026-03-13</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>1.0 Purpose</h2>
+<p>To define the technical and structural layout for the <strong>HWB SigmaFidelity™ Portal</strong> (Corporate Intranet) homepage. This specification ensures a high-fidelity user experience (UX) that eliminates "Process Fog" and provides instant access to institutional intelligence.</p>
+<h2>2.0 Page Architecture (Home.aspx)</h2>
+<h3>2.1 Section 1: Institutional Hero (Full Width)</h3>
+<ul>
+<li><strong>Web Part:</strong> Hero</li>
+<li><strong>Aesthetic:</strong> High-resolution image of a sanitized facility or the DFW skyline.</li>
+<li><strong>Content:</strong><ul>
+<li><strong>Title:</strong> "Fidelity. Safety. Respect."</li>
+<li><strong>CTA:</strong> "Access ISO 9001 SOPs" (Links to consolidated document library).</li>
+</ul>
+</li>
+</ul>
+<h3>2.2 Section 2: Command &amp; Control (Three Columns)</h3>
+<ul>
+<li><strong>Column 1: Department Hubs (Quick Links)</strong><ul>
+<li>Link 1: <strong>Executive Hub</strong> (Restrictive Access).</li>
+<li>Link 2: <strong>Finance &amp; Warchest</strong> (Maria Bolanos Reports).</li>
+<li>Link 3: <strong>SaaS Ops (BabySOP.com)</strong>.</li>
+</ul>
+</li>
+<li><strong>Column 2: HWB News Desk (News Web Part)</strong><ul>
+<li>Source: Root site "Site News".</li>
+<li>Auto-provisioned updates from the <code>HWB-WEB News Queue</code>.</li>
+</ul>
+</li>
+<li><strong>Column 3: The Warchest (Quick Links)</strong><ul>
+<li>Link 1: <strong>Zip-Code Intelligence</strong> (DFW Market Mapping).</li>
+<li>Link 2: <strong>TX Comptroller Portal</strong>.</li>
+<li>Link 3: <strong>BabySOP Staging Zone</strong>.</li>
+</ul>
+</li>
+</ul>
+<h3>2.3 Section 3: Performance Telemetry (Two Columns)</h3>
+<ul>
+<li><strong>Column 1: Institutional Pulse (Text/HTML)</strong><ul>
+<li>Display real-time metrics: "92% Contract Retention" | "1,785 DPMO".</li>
+</ul>
+</li>
+<li><strong>Column 2: Critical Expirations (List Web Part)</strong><ul>
+<li>Source: <code>sigma_leads.db</code> Milestones (Drone FAA expirations, Insurance renewals).</li>
+</ul>
+</li>
+</ul>
+<h2>3.0 Structural JSON (Reference for Automated Deployment)</h2>
+<pre><code class="language-json">{
+  &quot;title&quot;: &quot;HWB SigmaFidelity™ Portal&quot;,
+  &quot;layout&quot;: &quot;Home&quot;,
+  &quot;canvasLayout&quot;: {
+    &quot;horizontalSections&quot;: [
+      {
+        &quot;columns&quot;: [
+          { &quot;webparts&quot;: [{ &quot;title&quot;: &quot;SigmaFidelity Hero&quot;, &quot;type&quot;: &quot;Hero&quot; }] }
+        ]
+      },
+      {
+        &quot;columns&quot;: [
+          { &quot;webparts&quot;: [{ &quot;title&quot;: &quot;Department Hubs&quot;, &quot;type&quot;: &quot;QuickLinks&quot; }] },
+          { &quot;webparts&quot;: [{ &quot;title&quot;: &quot;Institutional News&quot;, &quot;type&quot;: &quot;News&quot; }] },
+          { &quot;webparts&quot;: [{ &quot;title&quot;: &quot;Operational SOPs&quot;, &quot;type&quot;: &quot;DocumentLibrary&quot; }] }
+        ]
+      }
+    ]
+  }
+}
+</code></pre>
+<h2>4.0 Verification &amp; Audit</h2>
+<ul>
+<li><strong>UX Audit:</strong> Conducted weekly by the Systems Architect.</li>
+<li><strong>Link Integrity:</strong> All links must resolve to high-fidelity internal targets. No dead links permitted.</li>
+</ul>
+<hr />
+<p><em>Produced by George under the SigmaFidelity™ Institutional Standard.</em></p>
+</div>

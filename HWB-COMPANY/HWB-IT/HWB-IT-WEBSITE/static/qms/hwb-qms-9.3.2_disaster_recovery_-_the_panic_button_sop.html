@@ -1,0 +1,90 @@
+
+<div class="sop-card">
+    <!-- 0.0 DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-9.3.2-PANIC</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● ACTIVE</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
+    </div>
+
+    <table>
+<thead>
+<tr>
+<th style="text-align: left;"><strong>Document Control</strong></th>
+<th style="text-align: left;"></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Document Title</strong></td>
+<td style="text-align: left;"><strong>Disaster Recovery: The Panic Button SOP</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Document ID</strong></td>
+<td style="text-align: left;">HWB-QMS-9.3.2-PANIC</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Version</strong></td>
+<td style="text-align: left;">1.0.0</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Status</strong></td>
+<td style="text-align: left;">ACTIVE</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Author</strong></td>
+<td style="text-align: left;">George (Systems Architect)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Approved By</strong></td>
+<td style="text-align: left;">Humberto Dominguez, CEO</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Date</strong></td>
+<td style="text-align: left;">04/27/2026</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1>1.0 Objective</h1>
+<p>To provide a definitive, high-velocity response protocol for catastrophic system failures, data corruption, or accidental deletions. This SOP acts as the "Panic Button," guiding the operator through the immediate restoration of SigmaFidelity™ infrastructure.</p>
+<h1>2.0 Roles and Responsibilities</h1>
+<ul>
+<li><strong>George (Systems Architect):</strong> Decision authority on rollback necessity and target timestamps.</li>
+<li><strong>Peter (Recovery Specialist):</strong> Primary autonomous execution agent for all backup/restore logic.</li>
+<li><strong>CEO (Humberto Dominguez):</strong> Final approval for total system rollbacks.</li>
+</ul>
+<h1>3.0 The Recovery Stack (Tactics)</h1>
+<p>The system is protected by five autonomous layers managed by the <strong>Peter Sentinel</strong>:
+1.  <strong>Disk Protection (15m):</strong> Prevents crashes via log/disk monitoring.
+2.  <strong>Shadow Snapshots (15m):</strong> Hard-linked file-level recovery for web development.
+3.  <strong>Binary DB Snapshots (1h):</strong> PostgreSQL state recovery via <code>.sql</code> archives.
+4.  <strong>Vault Guardian (24h):</strong> Full institutional archival of SOPs and secrets.
+5.  <strong>Ghost Checkpoints (Pre-Stop):</strong> Captures uncommitted Git state.</p>
+<h1>4.0 Protocol: The "Panic Button" Sequence</h1>
+<h2>STEP 1: Damage Assessment</h2>
+<ol>
+<li>Locate and read the <strong>Black Box</strong> at <code>HWB-COMPANY/HWB-DATA/HWB-SESSION-RECOVERY.md</code>.</li>
+<li>Identify the <strong>Heat Zone Files</strong> and the <strong>Timestamp</strong> of the last successful action.</li>
+</ol>
+<h2>STEP 2: Choose Restoration Path</h2>
+<ul>
+<li><strong>If Code is Broken:</strong> Locate the nearest <strong>Shadow Snapshot</strong> in <code>backup/shadow_snapshots/</code> and execute:
+  <code>cp -r backup/shadow_snapshots/web_dev_[TIMESTAMP]/* HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/</code></li>
+<li><strong>If Data is Lost:</strong> Locate the nearest <strong>DB Snapshot</strong> in <code>backup/</code> and execute:
+  <code>python3 scripts/peter_sentinel.py --restore backup/hwb_db_snapshot_[TIMESTAMP].sql</code></li>
+<li><strong>If System is Unstable:</strong> Perform a <strong>Ghost Rollback</strong> using the latest <code>kit-ghost-</code> branch in Git.</li>
+</ul>
+<h2>STEP 3: Verification</h2>
+<ol>
+<li>Run the Diagnostic Dashboard: <code>docker exec hwb_web_app python diag_dashboard.py</code>.</li>
+<li>Verify log health: <code>journalctl -u sigma-peter -n 20</code>.</li>
+</ol>
+<h1>5.0 Emergency Summoning</h1>
+<p>In a state of total disorientation, the human operator may summon Peter directly for any specific recovery task using the CLI:
+- <code>python3 scripts/peter_sentinel.py --help</code></p>
+<hr />
+<p><strong>Institutional Standard Active</strong>
+<em>This document is a mandate of the SigmaFidelity™ Quality Management System.</em></p>
+</div>

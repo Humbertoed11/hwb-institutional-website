@@ -1,0 +1,122 @@
+
+<div class="sop-card">
+    <!-- 0.0 DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-7.5-DAF</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● Active</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
+    </div>
+
+    <table>
+<thead>
+<tr>
+<th style="text-align: left;"><strong>Document Control</strong></th>
+<th style="text-align: left;"></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Document Title</strong></td>
+<td style="text-align: left;"><strong>Data Acquisition and Fidelity SOP</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Document ID</strong></td>
+<td style="text-align: left;">HWB-QMS-7.5-DAF</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Version</strong></td>
+<td style="text-align: left;">1.0</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Status</strong></td>
+<td style="text-align: left;">Active</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Author</strong></td>
+<td style="text-align: left;">Nick Doria (VP Prompt Engineering)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Approved By</strong></td>
+<td style="text-align: left;">Humberto Dominguez (CEO)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Date</strong></td>
+<td style="text-align: left;">2026-03-05</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1>1.0 Purpose</h1>
+<p>This SOP establishes strict protocols for the acquisition, validation, and injection of external datasets into the SigmaFidelity™ CRM. It ensures that only high-fidelity, verified, and non-synthetic data enters the institutional value chain.</p>
+<h1>2.0 Scope</h1>
+<p>Applies to all ETL (Extract, Transform, Load) operations performed by the Marketing, Sales, and IT divisions across all US state and federal datasets.</p>
+<h1>3.0 Procedure: The Fidelity Pipeline</h1>
+<h2>3.1 Acquisition &amp; Secure Transfer (Download)</h2>
+<ol>
+<li><strong>Source Identification:</strong> Datasets must originate from official government (.gov) or verified institutional portals.</li>
+<li><strong>Secure Landing:</strong> All raw files must be stored in <code>HWB-COMPANY/HWB-SALES-MARKETING/HWB-RAW-DATA/</code>.</li>
+<li><strong>Integrity Check:</strong> Execute <code>file [filename]</code> to verify the file format and MD5 checksum (where available) to ensure no corruption occurred during transfer.</li>
+</ol>
+<h2>3.2 Data Sampling (Fidelity Verification)</h2>
+<ol>
+<li><strong>Random Sampling:</strong> Extract a 10-record random sample from the raw file.</li>
+<li><strong>Physical Verification:</strong> Use Google Maps or official agency lookups to verify that the 10 sampled facilities physically exist at the listed addresses.</li>
+<li><strong>Fidelity Gate:</strong> If more than 1 record in the sample is unverified or synthetic, the entire dataset is rejected.</li>
+</ol>
+<h2>3.3 Data Criteria Selection (Transformation)</h2>
+<p>Before injection, data must be filtered based on the following <strong>Institutional Tiers</strong>:
+*   <strong>Tier 1 (High Yield):</strong> Facilities with Capacity &gt;= 99 OR Square Footage &gt;= 15,000.
+*   <strong>Tier 2 (Growth):</strong> Public institutional entities (Universities, School Districts, Municipal Hubs).
+*   <strong>NAICS Filtering (Mandatory):</strong> For state and federal datasets (e.g., SAM.gov, TX Comptroller), only records matching the following codes are permitted for acquisition:
+    *   <strong>561720:</strong> Janitorial Services (Core Operations)
+    *   <strong>561210:</strong> Facilities Support Services (Strategic Expansion)
+*   <strong>Sector Tagging:</strong> Industry tags must be assigned (e.g., "Child Care," "Higher Ed," "Logistics").</p>
+<h2>3.4 Relational Injection &amp; Lifecycle Management (Loading)</h2>
+<ol>
+<li><strong>Deduplication:</strong> The Ingestion Engine must check for existing <code>center_name</code> or <code>License_Number</code> in <code>sigma_leads.db</code> to prevent redundancy.</li>
+<li><strong>Schema Alignment:</strong> Data must be mapped to the standardized 10-field SigmaFidelity™ schema.</li>
+<li><strong>Execution:</strong> Run the approved <code>Lead Ingestor.py</code> script.</li>
+<li><strong>Lifecycle Logging:</strong> The engine automatically records the file, count, and timestamp in the <code>Data_Processing_Registry.csv</code>.</li>
+<li><strong>Archival:</strong> The raw CSV file is automatically moved to the <code>HWB-RAW-DATA/ARCHIVE/</code> subfolder to maintain a "Zero-Muda" (clean) landing zone.</li>
+<li><strong>Telemetry:</strong> Log the successful injection in the <strong>Executive Pulse</strong> activity feed.</li>
+</ol>
+<h1>4.0 Verification</h1>
+<ul>
+<li><strong>Audit Live:</strong> All new injections must be visible in the Marketing Pipeline (The Hive).</li>
+<li><strong>Registry Audit:</strong> The Data Processing Registry must perfectly match the archived files.</li>
+<li><strong>Director Verification:</strong> Spot-check Director names against LinkedIn to ensure decision-maker accuracy.</li>
+</ul>
+<h1>5.0 Notes and Cautions</h1>
+<ul>
+<li><strong>Muda Reduction:</strong> Avoid ingesting entire states unless the Tier 1 criteria are met. Focus on the "Growth Corridors."</li>
+<li><strong>Absolute Pathing:</strong> Never use relative paths in ingestion scripts to prevent data loss during system migrations.</li>
+</ul>
+<hr />
+<h2>6.0 Revision History</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Version</th>
+<th style="text-align: left;">Date</th>
+<th style="text-align: left;">Author</th>
+<th style="text-align: left;">Change Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1.0</td>
+<td style="text-align: left;">2026-03-05</td>
+<td style="text-align: left;">Nick Doria</td>
+<td style="text-align: left;">Initial Data Acquisition &amp; Fidelity protocol established.</td>
+</tr>
+<tr>
+<td style="text-align: left;">1.1</td>
+<td style="text-align: left;">2026-03-05</td>
+<td style="text-align: left;">George</td>
+<td style="text-align: left;">Integrated Institutional Data Lifecycle Management (Archiving).</td>
+</tr>
+</tbody>
+</table>
+<p>---\n<em>Standard Operating Procedure produced under the SigmaFidelity™ Quality Mandate.</em></p>
+</div>

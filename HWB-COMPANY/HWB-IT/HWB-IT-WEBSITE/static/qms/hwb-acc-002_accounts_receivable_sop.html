@@ -1,0 +1,122 @@
+
+<div class="sop-card">
+    <!-- 0.0 DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-ACC-002</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● Approved</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
+    </div>
+
+    <table>
+<thead>
+<tr>
+<th style="text-align: left;"><strong>Document Control</strong></th>
+<th style="text-align: left;"></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Document Title</strong></td>
+<td style="text-align: left;"><strong>Accounts Receivable (AR) SOP</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Document ID</strong></td>
+<td style="text-align: left;">HWB-ACC-002</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Version</strong></td>
+<td style="text-align: left;">1.0</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Status</strong></td>
+<td style="text-align: left;">Approved</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Author</strong></td>
+<td style="text-align: left;">Gemini (Senior ISO 9001 Auditor)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Approved By</strong></td>
+<td style="text-align: left;">SigmaFidelity™ Orchestrator</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Date</strong></td>
+<td style="text-align: left;">2026-03-01</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1>Standard Operating Procedure: <strong>Accounts Receivable (AR) Management</strong></h1>
+<h2>1.0 Purpose</h2>
+<p>To define the procedure for generating client invoices, tracking payments, and managing collections using QuickBooks. This ensures cash flow stability and accurate empirical financial reporting.</p>
+<h2>2.0 Scope</h2>
+<p>Applies to all revenue-generating activities, specifically service quotes and work orders processed via the <code>quote_app</code> and finalized in QuickBooks.</p>
+<h2>3.0 Prerequisites</h2>
+<ul>
+<li>Verified service completion data from the <code>quote_app</code>.</li>
+<li>QuickBooks Online/Desktop access.</li>
+<li>Approved Client Master File.</li>
+</ul>
+<h2>4.0 Procedure</h2>
+<h3>4.1 Invoice Generation</h3>
+<ol>
+<li><strong>Data Verification:</strong> At the end of each service week, the Accounting Clerk shall export the "Completed Services" report from the <code>quote_app</code>.</li>
+<li><strong>QuickBooks Entry:</strong> Create a new invoice in QuickBooks for each client based on the empirical quote number and service date.</li>
+<li><strong>Accuracy Check:</strong> Ensure sales tax rates are correctly applied based on the client's North Texas jurisdiction (e.g., Frisco vs. Dallas).</li>
+<li><strong>Distribution:</strong> Send invoices via email directly from QuickBooks.</li>
+</ol>
+<h3>4.2 Payment Application</h3>
+<ol>
+<li><strong>Recording:</strong> Upon receipt of payment (ACH, Check, or Credit Card), record the transaction against the specific invoice in QuickBooks.</li>
+<li><strong>Reconciliation:</strong> Daily matching of bank deposits to QuickBooks payment records.</li>
+</ol>
+<h3>4.3 Collections &amp; Aging</h3>
+<ol>
+<li><strong>Review:</strong> Weekly review of the "A/R Aging Detail" report.</li>
+<li><strong>Follow-up:</strong> <ul>
+<li><strong>Net 30+:</strong> Send a polite automated reminder via QuickBooks.</li>
+<li><strong>Net 60+:</strong> Direct contact by the Operations Manager.</li>
+</ul>
+</li>
+</ol>
+<h3>4.4 [Process Flow Chart]</h3>
+<pre><code class="language-mermaid">graph TD
+    A[Service Completed] --&gt; B[Export Data from Quote App]
+    B --&gt; C[Create QuickBooks Invoice]
+    C --&gt; D[Email to Client]
+    D --&gt; E{Payment Received?}
+    E -- Yes --&gt; F[Record Payment &amp; Reconcile]
+    E -- No --&gt; G[Automated Reminder]
+    G --&gt; H[Management Escalation]
+</code></pre>
+<h2>5.0 Verification</h2>
+<ul>
+<li>Monthly AR Aging Report signed by the Managing Director.</li>
+<li>Zero variance between <code>quote_app</code> completions and QuickBooks invoices.</li>
+</ul>
+<h2>6.0 Notes and Cautions</h2>
+<ul>
+<li><strong>Zero Synthetic Data:</strong> Never generate "pro-forma" or placeholder invoices.</li>
+<li><strong>Privacy:</strong> Handle client banking information in accordance with Legal/IT security protocols.</li>
+</ul>
+<h2>7.0 Revision History</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Version</th>
+<th style="text-align: left;">Date</th>
+<th style="text-align: left;">Author</th>
+<th style="text-align: left;">Change Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1.0</td>
+<td style="text-align: left;">2026-03-01</td>
+<td style="text-align: left;">Gemini</td>
+<td style="text-align: left;">Initial Release: Established QuickBooks-based AR workflow.</td>
+</tr>
+</tbody>
+</table>
+</div>

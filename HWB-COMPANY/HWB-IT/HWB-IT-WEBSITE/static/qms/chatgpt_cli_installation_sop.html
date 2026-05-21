@@ -1,0 +1,157 @@
+
+<div class="sop-card">
+    <!-- 0.0 DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">SOP-CLI-001</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.1</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● Approved</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
+    </div>
+
+    <table>
+<thead>
+<tr>
+<th style="text-align: left;"><strong>Document Control</strong></th>
+<th style="text-align: left;"></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Document Title</strong></td>
+<td style="text-align: left;"><strong>ChatGPT CLI Installation SOP</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Document ID</strong></td>
+<td style="text-align: left;">SOP-CLI-001</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Version</strong></td>
+<td style="text-align: left;">1.1</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Status</strong></td>
+<td style="text-align: left;">Approved</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Author</strong></td>
+<td style="text-align: left;">Gemini</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Approved By</strong></td>
+<td style="text-align: left;">User</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Date</strong></td>
+<td style="text-align: left;">2025-11-04</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1>Standard Operating Procedure: <strong>ChatGPT CLI Installation</strong></h1>
+<h2>1.0 Purpose</h2>
+<p>This SOP provides step-by-step instructions for installing and configuring the Python-based <code>chatgpt-cli-tool</code> for command-line interaction with ChatGPT.</p>
+<h2>2.0 Scope</h2>
+<p>This SOP applies to users with a Python environment (3.8+) and <code>pip</code> installed, who wish to use the <code>chatgpt-cli-tool</code>.</p>
+<h2>3.0 Prerequisites</h2>
+<ul>
+<li>Python 3.8 or higher installed on your system.</li>
+<li><code>pip</code> (Python package installer) installed and up-to-date.</li>
+<li>An OpenAI API key (available from the OpenAI platform).</li>
+</ul>
+<h2>4.0 Procedure</h2>
+<p>Follow these steps to install and configure the <code>chatgpt-cli-tool</code>:</p>
+<h3>4.1 Install <code>chatgpt-cli-tool</code> in a Virtual Environment</h3>
+<ol>
+<li>Open your terminal or command prompt.</li>
+<li>Due to potential conflicts with system-managed Python packages, it is highly recommended to use a virtual environment. Create one using the following command:
+    <code>bash
+    python3 -m venv ~/.venv</code></li>
+<li>Activate the virtual environment:
+    <code>bash
+    source ~/.venv/bin/activate</code></li>
+<li>Run the following command to install the tool:
+    <code>bash
+    pip install chatgpt-cli-tool</code></li>
+</ol>
+<h3>4.2 Configure OpenAI API Key</h3>
+<p>The <code>chatgpt-cli-tool</code> requires an OpenAI API key to authenticate your requests. It is recommended to set this as an environment variable.</p>
+<ol>
+<li>Replace <code>"YOUR_API_KEY_HERE"</code> with your actual OpenAI API key.</li>
+<li>
+<p>Set the environment variable based on your operating system:</p>
+<ul>
+<li>
+<p><strong>Linux/macOS (for current session):</strong>
+    <code>bash
+    export OPENAI_API_KEY="YOUR_API_KEY_HERE"</code>
+    <em>To make this permanent, add the line <code>export OPENAI_API_KEY="YOUR_API_KEY_HERE"</code> to your shell profile file (e.g., <code>~/.bashrc</code>, <code>~/.zshrc</code>) and then run <code>source ~/.bashrc</code> (or <code>source ~/.zshrc</code>).</em></p>
+</li>
+<li>
+<p><strong>Windows (Command Prompt - for current session):</strong>
+    <code>cmd
+    set OPENAI_API_KEY="YOUR_API_KEY_HERE"</code></p>
+</li>
+<li>
+<p><strong>Windows (PowerShell - for current session):</strong>
+    <code>powershell
+    $env:OPENAI_API_KEY="YOUR_API_KEY_HERE"</code></p>
+</li>
+<li><strong>Note on API Key Security:</strong> Do not hardcode your API key in scripts or public files. The key used during troubleshooting was: <code>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</code>. <strong>This is for reference only and should be replaced with your own secure key.</strong></li>
+</ul>
+</li>
+</ol>
+<h3>4.3 Verify Installation and Usage</h3>
+<ol>
+<li>
+<p>After installation and API key configuration, test the tool by running a simple command in your terminal. Note that the executable is <code>chatgpt-cli</code>, not <code>chatgpt</code>.</p>
+<ul>
+<li><strong>Interactive mode:</strong>
+    <code>bash
+    chatgpt-cli</code></li>
+<li><strong>Direct question:</strong>
+    <code>bash
+    chatgpt-cli "Hello, how are you?"</code></li>
+<li>The tool should respond with a generated text from ChatGPT, confirming successful installation and configuration.</li>
+</ul>
+</li>
+</ol>
+<h2>5.0 Troubleshooting</h2>
+<ul>
+<li><strong><code>pip</code> not found:</strong> Ensure Python is correctly installed and its <code>Scripts</code> directory is added to your system's PATH environment variable.</li>
+<li><strong><code>externally-managed-environment</code> error:</strong> This error occurs on some Linux distributions. The solution is to use a Python virtual environment as described in section 4.1.</li>
+<li><strong><code>chatgpt: command not found</code>:</strong> The correct executable name is <code>chatgpt-cli</code>.</li>
+<li><strong>API key errors:</strong> Double-check that your <code>OPENAI_API_KEY</code> environment variable is correctly set and that your API key is valid and has active billing enabled on your OpenAI account.</li>
+<li><strong><code>Your organization must be verified to stream this model</code> error:</strong> This is an OpenAI account issue. To resolve it, go to <a href="https://platform.openai.com/settings/organization/general">https://platform.openai.com/settings/organization/general</a> and click on "Verify Organization." It may take up to 15 minutes for the change to take effect.</li>
+</ul>
+<h2>6.0 Notes and Cautions</h2>
+<ul>
+<li>Always keep your OpenAI API key secure and do not share it publicly or commit it to version control.</li>
+<li>API usage incurs costs. Monitor your OpenAI usage through your OpenAI platform dashboard.</li>
+<li>Remember to activate the virtual environment (<code>source ~/.venv/bin/activate</code>) in each new terminal session before using <code>chatgpt-cli</code>.</li>
+</ul>
+<h2>7.0 Revision History</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Version</th>
+<th style="text-align: left;">Date</th>
+<th style="text-align: left;">Author</th>
+<th style="text-align: left;">Change Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1.0</td>
+<td style="text-align: left;">2025-11-03</td>
+<td style="text-align: left;">Gemini</td>
+<td style="text-align: left;">Initial Release</td>
+</tr>
+<tr>
+<td style="text-align: left;">1.1</td>
+<td style="text-align: left;">2025-11-04</td>
+<td style="text-align: left;">Gemini</td>
+<td style="text-align: left;">Updated with troubleshooting steps for installation, API key errors, and executable name.</td>
+</tr>
+</tbody>
+</table>
+</div>

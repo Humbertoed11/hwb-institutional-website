@@ -1,0 +1,33 @@
+{% extends "sop_base.html" %}
+
+{% block title %}Institutional Manual Index | HWB QMS{% endblock %}
+
+{% block content %}
+<div class="sop-card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem;">
+        <div>
+            <h1 style="font-size: 2.5rem; font-weight: 900; color: #0f172a; margin-bottom: 0.5rem;">Institutional Operating Manual</h1>
+            <p style="font-size: 1.1rem; color: #64748b;">Controlled Documented Information | ISO 9001:2015</p>
+        </div>
+        <button onclick="window.print()" class="isc-btn isc-btn-primary" style="height: 44px; padding: 0 2rem; border-radius: 6px;"><i class="fas fa-print" style="margin-right: 8px;"></i> Print Index</button>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4rem;">
+        {% for dept, sops in sops_by_dept.items() %}
+        <div class="qms-index-group">
+            <h2 style="font-size: 1.25rem; font-weight: 800; color: #2563eb; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem; text-transform: uppercase;">{{ dept }}</h2>
+            <ul style="list-style: none; padding: 0;">
+                {% for sop in sops %}
+                <li style="margin-bottom: 1rem; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.5rem;">
+                    <a href="{{ url_for('view_sop', filename=sop.file.replace('qms/', '')) }}" style="text-decoration: none; display: block;">
+                        <strong style="color: #0f172a; display: block;">{{ sop.id }} | {{ sop.title }}</strong>
+                        <span style="font-size: 0.75rem; color: #94a3b8;">Version: {{ sop.version }}</span>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

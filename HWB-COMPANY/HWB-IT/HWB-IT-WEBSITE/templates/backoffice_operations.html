@@ -12,25 +12,6 @@
 {% endblock %}
 
 {% block bo_content %}
-<div class="workspace-stage">
-    <div style="display: flex; gap: 1rem; margin-bottom: 4rem; border-bottom: 1px solid var(--slate-100); padding-bottom: 2rem;">
-        <button onclick="switchView('leads')" class="isc-btn {% if active_view == 'leads' %}isc-btn-primary{% else %}isc-btn-outline{% endif %}" id="btn-leads">Leads ({{ leads_count }})</button>
-        <button onclick="switchView('accounts')" class="isc-btn {% if active_view == 'accounts' %}isc-btn-primary{% else %}isc-btn-outline{% endif %}" id="btn-accounts">Accounts ({{ clients|length }})</button>
-        <button onclick="switchView('monitor')" class="isc-btn {% if active_view == 'monitor' %}isc-btn-primary{% else %}isc-btn-outline{% endif %}" id="btn-monitor">Work Monitor</button>
-        <button onclick="switchView('scope')" class="isc-btn {% if active_view == 'scope' %}isc-btn-primary{% else %}isc-btn-outline{% endif %}" id="btn-scope">Service Planner</button>
-        
-        <div style="flex-grow: 1; text-align: right; position: relative;">
-            <button onclick="toggleAddMenu()" class="isc-btn isc-btn-primary" id="btn-add-main">
-                <i class="fas fa-plus"></i> Add New
-                <i class="fas fa-chevron-down" style="font-size: 0.6rem; transition: transform 0.3s;" id="add-arrow"></i>
-            </button>
-            <div id="add-menu" style="display: none; position: absolute; right: 0; top: 110%; background: var(--white); border: 1px solid var(--slate-200); border-radius: 1rem; box-shadow: 0 20px 40px -5px rgba(0,0,0,0.1); padding: 0.75rem; z-index: 1000; min-width: 200px;">
-                <button onclick="openAddForm('lead')" class="isc-dropdown-btn">New Lead</button>
-                <button onclick="openAddForm('account')" class="isc-dropdown-btn">New Account</button>
-            </div>
-        </div>
-    </div>
-
     <main>
                 <!-- View: Leads -->
         <div id="view-leads" class="isc-view" style="display: {% if active_view == 'leads' %}block{% else %}none{% endif %};">

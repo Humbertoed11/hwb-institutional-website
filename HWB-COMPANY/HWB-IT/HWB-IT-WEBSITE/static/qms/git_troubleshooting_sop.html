@@ -1,0 +1,164 @@
+
+<div class="sop-card">
+    <!-- 0.0 DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">SOP-GIT-001</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● Approved</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
+    </div>
+
+    <table>
+<thead>
+<tr>
+<th style="text-align: left;"><strong>Document Control</strong></th>
+<th style="text-align: left;"></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Document Title</strong></td>
+<td style="text-align: left;"><strong>Git Troubleshooting SOP</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Document ID</strong></td>
+<td style="text-align: left;">SOP-GIT-001</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Version</strong></td>
+<td style="text-align: left;">3.0</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Status</strong></td>
+<td style="text-align: left;">Approved</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Author</strong></td>
+<td style="text-align: left;">Gemini</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Approved By</strong></td>
+<td style="text-align: left;">User</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Date</strong></td>
+<td style="text-align: left;">2025-11-01</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1>Standard Operating Procedure: <strong>Git Troubleshooting SOP</strong></h1>
+<h2>1.0 Purpose</h2>
+<p>This SOP documents the issues encountered when initializing a Git repository on a GVFS-mounted OneDrive and the steps taken to resolve them. It serves as a reference for troubleshooting similar issues on filesystems with limited POSIX compliance.</p>
+<h2>2.0 Scope</h2>
+<p>This SOP applies to users attempting to use Git on filesystems that do not fully support standard POSIX file permissions, leading to errors with <code>chmod</code> and other common Git operations.</p>
+<h2>3.0 Prerequisites</h2>
+<ul>
+<li>A Linux system with <code>git</code> installed.</li>
+<li>A project directory located on a GVFS-mounted filesystem or similar non-standard filesystem.</li>
+</ul>
+<h2>4.0 Procedure</h2>
+<p>This section details the chronological troubleshooting process.</p>
+<h3>4.1 Problem 1: <code>git init</code> Fails</h3>
+<ul>
+<li><strong>Symptom:</strong> The <code>git init</code> command fails with an error related to <code>chmod</code> and an inability to set <code>core.filemode</code>.</li>
+<li>
+<p><strong>Analysis:</strong> The underlying GVFS filesystem does not support the file permission changes (<code>chmod</code>) that Git attempts to make during initialization.</p>
+</li>
+<li>
+<p><strong>Attempted Solution 1: Simple Retry:</strong> Re-running <code>git init</code> resulted in the same failure.</p>
+</li>
+<li>
+<p><strong>Attempted Solution 2: Post-Init Configuration:</strong> Attempting to run <code>git config core.filemode false</code> after a failed <code>git init</code> also failed, with Git reporting that the directory was not a valid Git repository. This indicated the initialization process was corrupting the <code>.git</code> directory.</p>
+</li>
+<li>
+<p><strong>Attempted Solution 3: <code>safe.directory</code> Configuration:</strong> Adding the directory to Git's global <code>safe.directory</code> list did not resolve the issue, as the core problem was with the filesystem, not Git's security model.</p>
+</li>
+<li>
+<p><strong>Successful Solution: Manual Repository Creation:</strong> The following manual process was used to create a functional repository:</p>
+<ol>
+<li>A temporary, "bare" Git repository was created in the <code>/tmp</code> directory (<code>git init --bare /tmp/tempgit</code>).</li>
+<li>A new <code>.git</code> directory was manually created in the project folder.</li>
+<li>The contents of the bare repository were copied into the new <code>.git</code> directory.</li>
+<li>The <code>.git/config</code> file was manually edited to set <code>bare = false</code> and <code>filemode = false</code>, bypassing the failing <code>git config</code> commands.</li>
+</ol>
+</li>
+</ul>
+<h3>4.2 Problem 2: Script Execution (<code>chmod +x</code>) Fails</h3>
+<ul>
+<li><strong>Symptom:</strong> The <code>chmod +x</code> command failed with an "Operation not supported" error when attempting to make a shell script executable.</li>
+<li><strong>Analysis:</strong> This is the same underlying filesystem limitation as in Problem 1.</li>
+<li><strong>Successful Solution:</strong> The script was executed by passing it as an argument to the <code>bash</code> interpreter (<code>bash script_name.sh</code>), which does not require the file to have execute permissions.</li>
+</ul>
+<h2>5.0 Verification</h2>
+<p>The successful resolution was verified when the <code>git status</code> command executed without errors, correctly showing the untracked files in the project directory.</p>
+<h2>6.0 Notes and Cautions</h2>
+<ul>
+<li>Working with Git on non-standard filesystems like GVFS can be challenging and may require manual intervention.</li>
+<li>The core issue is the filesystem's lack of support for POSIX file permissions.</li>
+<li>When <code>chmod</code> fails, always consider running scripts with the appropriate interpreter (e.g., <code>bash</code>, <code>python</code>) as a workaround.</li>
+<li>Directly editing the <code>.git/config</code> file is a powerful but potentially risky operation. It should only be done when automated commands fail and you understand the changes you are making.</li>
+</ul>
+<h2>7.0 Undoing Changes</h2>
+<p>Git provides powerful tools to undo changes. Here are some common scenarios:</p>
+<h3>7.1 Discarding Uncommitted Changes</h3>
+<p>If you have made changes to your files but have not yet committed them, you can discard all uncommitted changes and revert your working directory to the last committed state.</p>
+<ul>
+<li><strong>Command:</strong>
+    <code>bash
+    git restore .</code>
+    (For older Git versions, you might use <code>git checkout .</code>)</li>
+</ul>
+<h3>7.2 Undoing the Last Commit</h3>
+<p>If you have made a commit and immediately realize you want to undo it (and discard the changes made in that commit), you can reset to the previous commit.</p>
+<ul>
+<li><strong>Command:</strong>
+    <code>bash
+    git reset --hard HEAD~1</code>
+    <strong>Caution:</strong> This command will permanently discard the last commit and any changes introduced by it. Use with care.</li>
+</ul>
+<h3>7.3 Reverting a Specific Commit</h3>
+<p>If you want to undo the changes introduced by a specific commit while keeping the history intact (by creating a new commit that reverses the changes), you can use <code>git revert</code>.</p>
+<ul>
+<li><strong>Command:</strong>
+    <code>bash
+    git revert &lt;commit-hash&gt;</code>
+    Replace <code>&lt;commit-hash&gt;</code> with the actual hash of the commit you wish to revert (you can find this using <code>git log</code>).</li>
+</ul>
+<h2>8.0 Revision History</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Version</th>
+<th style="text-align: left;">Date</th>
+<th style="text-align: left;">Author</th>
+<th style="text-align: left;">Change Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1.0</td>
+<td style="text-align: left;">2025-11-01</td>
+<td style="text-align: left;">Gemini</td>
+<td style="text-align: left;">Initial Release</td>
+</tr>
+<tr>
+<td style="text-align: left;">2.0</td>
+<td style="text-align: left;">2025-11-01</td>
+<td style="text-align: left;">Gemini</td>
+<td style="text-align: left;">Updated to ISO 9001 compliant template.</td>
+</tr>
+<tr>
+<td style="text-align: left;">3.0</td>
+<td style="text-align: left;">2025-11-01</td>
+<td style="text-align: left;">Gemini</td>
+<td style="text-align: left;">Applied new title convention.</td>
+</tr>
+</tbody>
+</table>
+<h2>9.0 Document Conventions</h2>
+<ul>
+<li><strong>Title:</strong> The document title should follow the format: <strong>[Subject] [Process Name] SOP</strong>. For example: "<strong>Audio Recording and Playback SOP</strong>". Use Title Case for each word and do not use hyphens. The title is already formatted to be bold.</li>
+<li><strong>Document ID:</strong> The document ID should follow the format: <code>[DEPT-XXX-YYY]</code>, where DEPT is a short code for the department or subject (e.g., <code>AUD</code> for Audio).</li>
+</ul>
+</div>
