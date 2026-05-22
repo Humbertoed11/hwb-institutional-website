@@ -11,29 +11,29 @@
 
 ---
 
-# Standard Operating Procedure: **Intellectual Property Master Prompt Registry**
+# Standard Operating Procedure: **AI Brain Rules (Prompt Registry)**
 
 ## 1.0 Purpose
-To centralize and govern the "Master Prompts" used to generate HWB Intellectual Property (IP). In a SigmaFidelity™ organization, the prompt is the **Proprietary Source Code** for our visual and strategic assets.
+To save and manage the "Main Rules" used to make HWB images and AI responses. In our company, the "Recipe" (the instructions we give the AI) is a very valuable asset. 
 
 ## 2.0 Scope
-Covers all generative AI prompts for logos, product designs, marketing graphics, and SOP diagrams.
+Applies to all AI instructions for logos, website designs, and company rules.
 
 ## 3.0 Universal Mandates (2026 Baseline)
-1. **The Prompt is the IP:** The result (the image) is a byproduct; the instruction (the prompt) is the asset.
-2. **Tier 6 Telemetry:** Every new "Master Prompt" adoption must be logged.
-3. **Physical Truth:** Reference absolute paths for the generative outputs in `/static/gen_ai_staging/`.
+1. **The Recipe is the Asset:** The image is just a result; the instructions (the prompt) are the real value.
+2. **Brain Storage:** Every new "Main Rule" must be saved to the **`SigmaPrompts`** database table.
+3. **Real Files:** Always mention the real folder path for where the images are saved.
 
-## 4.0 Standard Custody Protocol
-Before an asset is adopted, its "DNA" must be logged:
-*   **Model & Version:** (e.g., Nano Banana 2).
-*   **Master Prompt:** The exact text used for generation.
-*   **File Location:** The absolute server path.
-*   **IP Status:** Internal, Trademark Pending, or Concept.
+## 4.0 Standard Storage Protocol
+Before we use a new AI rule, we must save its "DNA":
+*   **AI Model:** Which brain did we use? (e.g., Gemini 1.5).
+*   **Main Rule:** The exact words we used.
+*   **File Location:** The exact spot on the server.
+*   **Rule Version:** Which version is this? (e.g., v2.1.0).
 
 ## 5.0 Verification (Zero-Defect Check)
-*   Prompts are reproducible with 100% fidelity.
-*   Final assets match the 2026 "Material Depth" look.
+*   Rules work every time we run them.
+*   Final images look professional and follow our style rules.
 
 ---
 

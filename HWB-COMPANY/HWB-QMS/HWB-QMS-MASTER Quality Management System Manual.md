@@ -26,8 +26,9 @@ All HWB work must follow these core rules:
 ## 3.0 Scope of the QMS
 The QMS applies to all HWB business units, including:
 *   **Operations:** Janitorial, Commercial, and specialized Data Center cleaning.
-*   **Intelligence:** Autonomous AI team (George, CRM Specialist, Lauri, Peter, Natalie).
+*   **Intelligence & Intuition:** Autonomous AI team (George, CRM Specialist, Lauri, Peter, Natalie) powered by Gemini 1.5 logic and the **SigmaVault** (Secure Storage), **SigmaPrompts** (AI DNA), **SigmaAbilities** (New Tools), and **SigmaIntuition** (Pattern Recognition) databases.
 *   **Infrastructure:** Azure Cloud, Compliance System, and the main web entry point.
+*   **Efficiency & Innovation:** High-velocity orchestration and self-improving skill acquisition (HWB-QMS-10.5).
 
 ## 4.0 Leadership and Governance (Clause 5)
 HWB leadership is committed to:

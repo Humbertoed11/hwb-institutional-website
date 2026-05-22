@@ -486,7 +486,7 @@
         "date": "05/21/2026"
     },
     {
-        "title": "Standard Operating Procedure: Intellectual Property Master Prompt Registry",
+        "title": "Standard Operating Procedure: AI Brain Rules (Prompt Registry)",
         "id": "HWB-LEG-002",
         "dept": "LEGAL",
         "file": "hwb-leg-002_intellectual_property_prompt_registry.html",
@@ -747,6 +747,15 @@
         "date": "2026-02-21"
     },
     {
+        "title": "Standard Operating Procedure: Ability and Skill Innovation",
+        "id": "HWB-QMS-10.5",
+        "dept": "QMS",
+        "file": "hwb-qms-10.5_ability_and_skill_innovation_sop.html",
+        "version": "1.0.0",
+        "compliance": "UPDATED",
+        "date": "05/21/2026"
+    },
+    {
         "title": "Standard Operating Procedure: Autonomous Routine Governance",
         "id": "HWB-QMS-8.6-AUTO",
         "dept": "QMS",
@@ -810,13 +819,13 @@
         "date": "2000-01-01"
     },
     {
-        "title": "Hwb-Qms-9.5 Secret Management And Api Credential Governance Sop",
+        "title": "Standard Operating Procedure: Secret Management and API Governance",
         "id": "HWB-QMS-9.5",
         "dept": "QMS",
         "file": "hwb-qms-9.5_secret_management_and_api_credential_governance_sop.html",
-        "version": "1.0",
-        "compliance": "OUTDATED",
-        "date": "2000-01-01"
+        "version": "2.0.0",
+        "compliance": "UPDATED",
+        "date": "05/21/2026"
     },
     {
         "title": "Hwb-Qms-8.8 Certified High-Stakes Sanitation Protocols",
@@ -1031,6 +1040,15 @@
         "dept": "QMS",
         "file": "hwb-qms-10.2_corrective_action_process_sop_with_flowchart.html",
         "version": "2.0.0",
+        "compliance": "UPDATED",
+        "date": "05/21/2026"
+    },
+    {
+        "title": "Standard Operating Procedure: Automated Problem Management",
+        "id": "HWB-QMS-10.3",
+        "dept": "QMS",
+        "file": "hwb-qms-10.3_automated_problem_management_sop.html",
+        "version": "1.0.0",
         "compliance": "UPDATED",
         "date": "05/21/2026"
     },
@@ -1269,6 +1287,15 @@
         "date": "2000-01-01"
     },
     {
+        "title": "Standard Operating Procedure: Operational Velocity and Efficiency",
+        "id": "HWB-QMS-10.4",
+        "dept": "QMS",
+        "file": "hwb-qms-10.4_operational_velocity_and_efficiency_sop.html",
+        "version": "1.0.0",
+        "compliance": "UPDATED",
+        "date": "05/21/2026"
+    },
+    {
         "title": "HWB-QMS-7.2: SigmaFidelity\u2122 Web & UI Standardization SOP",
         "id": "HWB-QMS-7.2",
         "dept": "QMS",
@@ -1276,6 +1303,15 @@
         "version": "4.0",
         "compliance": "OUTDATED",
         "date": "2000-01-01"
+    },
+    {
+        "title": "Standard Operating Procedure: Intuition Engine and Pattern Recognition",
+        "id": "HWB-QMS-9.4",
+        "dept": "QMS",
+        "file": "hwb-qms-9.4_intuition_engine_and_pattern_recognition_sop.html",
+        "version": "1.0.0",
+        "compliance": "UPDATED",
+        "date": "05/21/2026"
     },
     {
         "title": "Hwb-Qms-Strat-010 Babysop Business Plan",
@@ -1448,9 +1484,14 @@
         "compliance": "UPDATED",
         "date": "05/21/2026"
     }
-    , { "title": "Institutional Documentation Standard", "id": "HWB-QMS-1.0", "dept": "FOUNDATIONAL", "file": "hwb-qms-1.0_institutional_documentation_standard_sop.html", "version": "1.0.0", "compliance": "UPDATED", "date": "05/21/2026" }
-    , { "title": "HWB Website Design Rules", "id": "HWB-QMS-7.5", "dept": "FOUNDATIONAL", "file": "hwb-qms-7.5_web_design_rules.html", "version": "2.3.2", "compliance": "UPDATED", "date": "05/20/2026" }
-    , { "title": "Backend Architecture & Logic", "id": "HWB-QMS-7.6", "dept": "FOUNDATIONAL", "file": "hwb-qms-7.6_backend_architecture.html", "version": "1.0.0", "compliance": "UPDATED", "date": "05/20/2026" }
-    , { "title": "Backend Web System Sequence", "id": "HWB-QMS-7.7", "dept": "FOUNDATIONAL", "file": "hwb-qms-7.7_backend_web_system.html", "version": "1.0.0", "compliance": "UPDATED", "date": "05/20/2026" }
-    , { "title": "Backend Component Standard", "id": "HWB-QMS-7.9", "dept": "FOUNDATIONAL", "file": "hwb-qms-7.9_backend_component_standard.html", "version": "1.4.0", "compliance": "UPDATED", "date": "05/21/2026" }
+    , { \"title\": \"Ability and Skill Innovation\", \"id\": \"HWB-QMS-10.5\", \"dept\": \"FOUNDATIONAL\", \"file\": \"hwb-qms-10.5_ability_and_skill_innovation_sop.html\", \"version\": \"1.0.0\", \"compliance\": \"UPDATED\", \"date\": \"05/21/2026\" }
+    , { \"title\": \"Operational Velocity and Efficiency\", \"id\": \"HWB-QMS-10.4\", \"dept\": \"FOUNDATIONAL\", \"file\": \"hwb-qms-10.4_operational_velocity_and_efficiency_sop.html\", \"version\": \"1.0.0\", \"compliance\": \"UPDATED\", \"date\": \"05/21/2026\" }
+    , { \"title\": \"Secret Management and API Governance\", \"id\": \"HWB-QMS-9.5\", \"dept\": \"FOUNDATIONAL\", \"file\": \"hwb-qms-9.5_secret_management_and_api_credential_governance_sop.html\", \"version\": \"2.0.0\", \"compliance\": \"UPDATED\", \"date\": \"05/21/2026\" }
+    , { \"title\": \"Intuition Engine and Pattern Recognition\", \"id\": \"HWB-QMS-9.4\", \"dept\": \"FOUNDATIONAL\", \"file\": \"hwb-qms-9.4_intuition_engine_and_pattern_recognition_sop.html\", \"version\": \"1.0.0\", \"compliance\": \"UPDATED\", \"date\": \"05/21/2026\" }
+    , { \"title\": \"Automated Problem Management\", \"id\": \"HWB-QMS-10.3\", \"dept\": \"FOUNDATIONAL\", \"file\": \"hwb-qms-10.3_automated_problem_management_sop.html\", \"version\": \"1.0.0\", \"compliance\": \"UPDATED\", \"date\": \"05/21/2026\" }
+    , { \"title\": \"Institutional Documentation Standard\", \"id\": \"HWB-QMS-1.0\", \"dept\": \"FOUNDATIONAL\", \"file\": \"hwb-qms-1.0_institutional_documentation_standard_sop.html\", \"version\": \"1.0.0\", \"compliance\": \"UPDATED\", \"date\": \"05/21/2026\" }
+    , { \"title\": \"HWB Website Design Rules\", \"id\": \"HWB-QMS-7.5\", \"dept\": \"FOUNDATIONAL\", \"file\": \"hwb-qms-7.5_web_design_rules.html\", \"version\": \"2.3.2\", \"compliance\": \"UPDATED\", \"date\": \"05/20/2026\" }
+    , { \"title\": \"Backend Architecture & Logic\", \"id\": \"HWB-QMS-7.6\", \"dept\": \"FOUNDATIONAL\", \"file\": \"hwb-qms-7.6_backend_architecture.html\", \"version\": \"1.0.0\", \"compliance\": \"UPDATED\", \"date\": \"05/20/2026\" }
+    , { \"title\": \"Backend Web System Sequence\", \"id\": \"HWB-QMS-7.7\", \"dept\": \"FOUNDATIONAL\", \"file\": \"hwb-qms-7.7_backend_web_system.html\", \"version\": \"1.0.0\", \"compliance\": \"UPDATED\", \"date\": \"05/20/2026\" }
+    , { \"title\": \"Backend Component Standard\", \"id\": \"HWB-QMS-7.9\", \"dept\": \"FOUNDATIONAL\", \"file\": \"hwb-qms-7.9_backend_component_standard.html\", \"version\": \"1.4.0\", \"compliance\": \"UPDATED\", \"date\": \"05/21/2026\" }
 ]
