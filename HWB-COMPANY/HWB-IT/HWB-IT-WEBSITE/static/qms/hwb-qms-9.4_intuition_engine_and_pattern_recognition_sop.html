@@ -1,123 +1,120 @@
-
+<!-- 
+    SigmaFidelity™ Institutional SOP: Intuition Engine & Pattern Recognition
+    Standard: HWB-QMS-1.0 v2.0 (HTML Baseline)
+    Document ID: HWB-QMS-9.4-INTU
+-->
 <div class="sop-card">
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
-        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-9.4</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-9.4-INTU</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.0.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.1.3 (Infrastructure)</span></div>
     </div>
 
     <div class="sop-content-body">
         <table>
-<thead>
-<tr>
-<th style="text-align: left;"><strong>Document Control</strong></th>
-<th style="text-align: left;"></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;"><strong>Document Title</strong></td>
-<td style="text-align: left;"><strong>Intuition Engine and Pattern Recognition</strong></td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>Document ID</strong></td>
-<td style="text-align: left;">HWB-QMS-9.4</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>Version</strong></td>
-<td style="text-align: left;">1.0.0</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>Status</strong></td>
-<td style="text-align: left;">APPROVED</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>Author</strong></td>
-<td style="text-align: left;">George (Architect)</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>Approved By</strong></td>
-<td style="text-align: left;">Humberto Dominguez, CEO</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>Date</strong></td>
-<td style="text-align: left;">05/21/2026</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>ISO 9001 Clause</strong></td>
-<td style="text-align: left;">7.1.3 (Infrastructure)</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h1 id="standard-operating-procedure-intuition-engine-and-pattern-recognition">Standard Operating Procedure: <strong>Intuition Engine and Pattern Recognition</strong></h1>
-<h2 id="10-purpose">1.0 Purpose</h2>
-<p>To define the procedure for using the <strong>Intuition Engine</strong>. This system helps AI agents make fast, safe decisions by learning from previous mistakes and wins. It ensures the company stays safe and uses simple English for all work.</p>
-<h2 id="20-scope">2.0 Scope</h2>
-<p>Applies to all AI agents and the <strong>SigmaIntuition</strong> database.</p>
-<h2 id="30-universal-mandates-2026-baseline">3.0 Universal Mandates (2026 Baseline)</h2>
-<ol>
-<li><strong>Gemini 1.5 Brain:</strong> All intuition logic must use the Gemini 1.5 model for high-speed pattern matching.</li>
-<li><strong>Simple Word Rule:</strong> The engine must flag big PhD words and suggest everyday words.</li>
-<li><strong>Pattern Matching:</strong> Before doing a big task, the agent must check the database for past failures.</li>
-</ol>
-<h2 id="40-the-intuition-workflow">4.0 The Intuition Workflow</h2>
-<div class="mermaid">
-graph TD
-    A[New Task] --> B{Scan History}
-    B -->|Found Failure| C[Stop & Warn Agent]
-    B -->|Found Success| D[Follow Success Path]
-    C --> E[Ask CEO for Help]
-    D --> F[Execute with Simple Words]
-    F --> G[Log Result to SigmaIntuition]
-</div>
+            <thead>
+                <tr>
+                    <th><strong>Document Control</strong></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td><strong>Document Title</strong></td><td><strong>Intuition Engine & Pattern Recognition SOP</strong></td></tr>
+                <tr><td><strong>Document ID</strong></td><td>HWB-QMS-9.4-INTU</td></tr>
+                <tr><td><strong>Version</strong></td><td>2.0.0</td></tr>
+                <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
+                <tr><td><strong>Author</strong></td><td>George (Systems Architect)</td></tr>
+                <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
+                <tr><td><strong>Date</strong></td><td>05-22-2026</td></tr>
+                <tr><td><strong>ISO 9001 Clause</strong></td><td>7.1.3</td></tr>
+            </tbody>
+        </table>
 
-<h2 id="50-procedure">5.0 Procedure</h2>
-<h3 id="51-learning-from-experience">5.1 Learning from Experience</h3>
-<ol>
-<li>Every time a problem is solved, the agent must log the <strong>Problem</strong>, the <strong>Fix</strong>, and the <strong>Rule</strong> into the <code>SigmaIntuition</code> table.</li>
-<li>The agent must "score" the action to help the engine learn what works best.</li>
-</ol>
-<h3 id="52-vocabulary-check">5.2 Vocabulary Check</h3>
-<ol>
-<li>The engine scans all text for big academic words.</li>
-<li>It automatically suggests simpler words that a 20-year-old manager can understand.</li>
-</ol>
-<h2 id="60-verification-zero-defect-check">6.0 Verification (Zero-Defect Check)</h2>
-<ul>
-<li>The agent uses "Everyday Words" in 100% of its reports.</li>
-<li>Zero repeated technical errors from previous sessions.</li>
-</ul>
-<h2 id="70-notes-and-cautions">7.0 Notes and Cautions</h2>
-<div class="callout callout-note"><strong>Note</strong>Intuition is just "Fast Experience." It gets better the more we work together.</div>
-<div class="callout callout-caution"><strong>Caution</strong>Never trust a "feeling" that goes against the Physical Truth of the server.</div>
+        <hr />
 
-<h2 id="80-revision-history">8.0 Revision History</h2>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">Version</th>
-<th style="text-align: left;">Date</th>
-<th style="text-align: left;">Author</th>
-<th style="text-align: left;">Change Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;">1.0.0</td>
-<td style="text-align: left;">05/21/2026</td>
-<td style="text-align: left;">George</td>
-<td style="text-align: left;">Initial Release. Established the Gemini 1.5 Intuition Engine and Simple Word rules.</td>
-</tr>
-</tbody>
-</table>
+        <h1>Standard Operating Procedure: <strong>Intuition Engine & Pattern Recognition</strong></h1>
+
+        <h2>1.0 Purpose</h2>
+        <p>To define the procedure for using the <strong>Intuition Engine</strong>. This system helps AI agents make fast, safe decisions by learning from previous mistakes and wins. It ensures the company stays safe and uses simple English for all work.</p>
+
+        <h2>2.0 Scope</h2>
+        <p>Applies to all AI agents and the <strong>SigmaIntuition</strong> database.</p>
+
+        <h2>3.0 Universal Mandates (2026 Baseline)</h2>
+        <ol>
+            <li><strong>Neural Backbone:</strong> All intuition logic utilizes high-speed pattern matching across the 4-Tier Memory system.</li>
+            <li><strong>Simple Word Rule:</strong> The engine must flag complex PhD-level jargon and suggest <strong>Everyday Words</strong>.</li>
+            <li><strong>Pattern Matching:</strong> Before executing any multi-turn task, the agent must check the SQL Brain for past failures.</li>
+        </ol>
+
+        <h2>4.0 The Intuition Workflow</h2>
+        <div class="mermaid">
+        graph TD
+            A[New Task] --> B{Scan History}
+            B -->|Found Failure| C[Stop & Warn Agent]
+            B -->|Found Success| D[Follow Success Path]
+            C --> E[Ask CEO for Help]
+            D --> F[Execute with Simple Words]
+            F --> G[Log Result to SigmaIntuition]
+        </div>
+
+        <h2>5.0 Procedure</h2>
+
+        <h3>5.1 Learning from Experience</h3>
+        <ol>
+            <li>Every time a problem is solved, the agent must log the <strong>Problem</strong>, the <strong>Fix</strong>, and the <strong>Rule</strong> into the <code>SigmaIntuition</code> table.</li>
+            <li>The agent must "score" the action to help the engine learn what works best.</li>
+        </ol>
+
+        <h3>5.2 Vocabulary Check</h3>
+        <ol>
+            <li>The engine scans all text for complex academic words.</li>
+            <li>It automatically suggests simpler words that a 20-year-old manager can understand.</li>
+        </ol>
+
+        <div class="callout callout-note">
+            <strong>Note</strong>
+            <p>Intuition is simply "Fast Experience." The quality of the engine improves with every interaction logged to the SQL Brain.</p>
+        </div>
+
+        <h2>6.0 Verification (Zero-Defect Check)</h2>
+        <ul>
+            <li>The agent uses "Everyday Words" in 100% of its reports.</li>
+            <li>Zero repeated technical errors from previous sessions.</li>
+        </ul>
+
+        <h2>8.0 Revision History</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Version</th>
+                    <th>Date</th>
+                    <th>Author</th>
+                    <th>Change Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>2.0.0</td>
+                    <td>05-22-2026</td>
+                    <td>George</td>
+                    <td>**ANTIGRAVITY ALIGNMENT.** Rebranded core brain logic and transitioned to HTML.</td>
+                </tr>
+                <tr>
+                    <td>1.0.0</td>
+                    <td>05-21-2026</td>
+                    <td>George</td>
+                    <td>Initial Release.</td>
+                </tr>
+            </tbody>
+        </table>
     </div>
 
     <div class="sop-card-footer">
         <span>&copy; 2026 HWB Cleaning Services LLC</span>
-        <span>Controlled Document | HWB-QMS-9.4</span>
+        <span>Controlled Document | HWB-QMS-9.4-INTU</span>
         <span>Page <span class="page-number"></span></span>
     </div>
 </div>

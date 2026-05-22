@@ -65,7 +65,10 @@ echo "Traffic Director active on Port 8000 (via Docker)"
 
 # 4. Run Production Diagnostics
 echo "Running Production Diagnostics..."
-docker exec hwb_web_app python "diagnostics/diag_dashboard.py"
+docker exec hwb_web_app python "diag_dashboard.py"
+echo "Running Cloud & Communication Diagnostics..."
+docker exec hwb_web_app python "scripts/check_azure_connectivity.py"
+docker exec hwb_web_app python "scripts/test_outlook_direct.py"
 echo "Diagnostics Complete."
 
 echo "--- Startup Sequence Finished ---"

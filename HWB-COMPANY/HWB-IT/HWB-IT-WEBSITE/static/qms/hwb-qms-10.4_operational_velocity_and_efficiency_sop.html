@@ -3,7 +3,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-10.4</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.0.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.1.3 (Infrastructure)</span></div>
     </div>
@@ -27,7 +27,7 @@
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Version</strong></td>
-<td style="text-align: left;">1.0.0</td>
+<td style="text-align: left;">2.0.0</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Status</strong></td>
@@ -43,7 +43,7 @@
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Date</strong></td>
-<td style="text-align: left;">05/21/2026</td>
+<td style="text-align: left;">05/22/2026</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>ISO 9001 Clause</strong></td>
@@ -54,32 +54,40 @@
 <hr />
 <h1 id="standard-operating-procedure-operational-velocity-and-efficiency">Standard Operating Procedure: <strong>Operational Velocity and Efficiency</strong></h1>
 <h2 id="10-purpose">1.0 Purpose</h2>
-<p>To define the procedures for maximizing work speed and minimizing "token drag" (cost) during AI sessions. This SOP ensures the company gets the most value out of every interaction by moving from "File Searching" to "Database Knowing."</p>
-<h2 id="20-universal-mandates-2026-baseline">2.0 Universal Mandates (2026 Baseline)</h2>
+<p>To define the procedures for maximizing work speed, eliminating repetitive manual work, and managing the AI system's "database brain." This standard ensures that all AI team members query our live PostgreSQL databases instead of slowly reading text files, keeping our memory organized, fast, and constantly growing.</p>
+<h2 id="20-universal-mandates-2026-database-brain-baseline">2.0 Universal Mandates (2026 Database-Brain Baseline)</h2>
 <ol>
-<li><strong>Database First:</strong> AI team members must query the SQL databases (sigma_kb, SigmaVault, SigmaPrompts) before searching the filesystem.</li>
-<li><strong>Task Bundling:</strong> Multiple related tools must be used in a single turn to reduce back-and-forth messages.</li>
-<li><strong>Simple Language:</strong> All reports and code comments must use "Everyday Words" to keep memory space clear.</li>
-<li><strong>State Loading:</strong> Every session must start by loading the "Last Known Good State" from the <strong><code>SigmaState</code></strong> table.</li>
+<li><strong>Database-First Operations:</strong> The AI team is strictly forbidden from using flat text files (like <code>HWB-SESSION-RECOVERY.md</code>) for session memory. All session starts and stops must run through our PostgreSQL memory databases.</li>
+<li><strong>Zero Double-Entry Work:</strong> The AI team must never manually record technical issues or bugs in multiple places. The database and the markdown files must sync automatically.</li>
+<li><strong>Everyday Language Standard:</strong> All text, reports, and code comments in this setup must use simple, clear words so the memory stays clean and fast.</li>
+<li><strong>Secure Key Isolation:</strong> All secure keys, passwords, and secrets must live inside our secure database table (<code>SigmaVault</code>) instead of plain-text configuration files.</li>
 </ol>
-<h2 id="30-procedure">3.0 Procedure</h2>
-<h3 id="31-efficient-work-cycle">3.1 Efficient Work Cycle</h3>
-<ol>
-<li><strong>Awake:</strong> Load session state from <code>SigmaState</code>.</li>
-<li><strong>Intuition Check:</strong> Scan <code>SigmaIntuition</code> for past lessons related to the task.</li>
-<li><strong>Knowledge Query:</strong> Get rules directly from <code>sigma_kb</code> (SQL) instead of file searching.</li>
-<li><strong>Bundled Execution:</strong> Read, write, and backup in one turn.</li>
-<li><strong>Log &amp; Sleep:</strong> Save state to <code>SigmaState</code> and log the win to Tier 6.</li>
-</ol>
-<h3 id="32-vocabulary-standard">3.2 Vocabulary Standard</h3>
+<h2 id="30-procedure-the-4-step-brain-architecture">3.0 Procedure (The 4-Step Brain Architecture)</h2>
+<h3 id="31-step-1-active-knowledge-queries-sigma_kb">3.1 Step 1: Active Knowledge Queries (<code>sigma_kb</code>)</h3>
 <ul>
-<li>PhD Words (Forbidden): "Orchestration", "Ingestion", "Synchronicity", "Fidelity".</li>
-<li>Everyday Words (Mandatory): "Teamwork", "Adding Info", "Matching", "Quality".</li>
+<li>Before starting any task, the AI system must run a quick semantic search against the 3,935 rows in <code>sigma_kb</code> to pull relevant company guidelines.</li>
+<li>This removes the need to search through physical file folders, keeping system processing fast and accurate.</li>
+</ul>
+<h3 id="32-step-2-automated-session-state-sigmastate">3.2 Step 2: Automated Session State (<code>SigmaState</code>)</h3>
+<ul>
+<li>On system startup, the AI must automatically query the <code>SigmaState</code> database table to load the "Last Known Good State."</li>
+<li>On system shutdown, the AI must save our new progress and active tasks back to the database. This eliminates the need for manual recovery notes.</li>
+</ul>
+<h3 id="33-step-3-automated-bug-tracking-sigmaproblems">3.3 Step 3: Automated Bug Tracking (<code>SigmaProblems</code>)</h3>
+<ul>
+<li><code>docs/PROBLEMS-TO-SOLVE.md</code> remains our single source of truth for tracking system friction.</li>
+<li>We use a simple background script that automatically reads this markdown file and syncs it to the database table (<code>SigmaProblems</code>) during Git commits.</li>
+</ul>
+<h3 id="34-step-4-vault-protection-sigmavault">3.4 Step 4: Vault Protection (<code>SigmaVault</code>)</h3>
+<ul>
+<li>All passwords and API credentials must be stored securely inside <code>SigmaVault</code>.</li>
+<li>The system loads these keys directly from the database at startup, keeping our environment files clean and safe from leaks.</li>
 </ul>
 <h2 id="40-verification-zero-defect-check">4.0 Verification (Zero-Defect Check)</h2>
 <ul>
-<li>Sessions complete in 50% fewer turns than legacy sessions.</li>
-<li>Zero context "hallucinations" due to direct SQL data access.</li>
+<li>All session startups and shutdowns occur automatically without manual file writing.</li>
+<li>Zero repetitive double-entry work recorded in our audits.</li>
+<li>The system loads and runs 50% faster by using direct database queries instead of folder searches.</li>
 </ul>
 <h2 id="50-revision-history">5.0 Revision History</h2>
 <table>
@@ -97,6 +105,12 @@
 <td style="text-align: left;">05/21/2026</td>
 <td style="text-align: left;">George</td>
 <td style="text-align: left;">Initial Release. Formalized the 5-step Velocity Plan for token efficiency.</td>
+</tr>
+<tr>
+<td style="text-align: left;">2.0.0</td>
+<td style="text-align: left;">05/22/2026</td>
+<td style="text-align: left;">George</td>
+<td style="text-align: left;">Updated to Database-Backed Brain architecture. Eliminated flat-file recovery and double-entry bug tracking.</td>
 </tr>
 </tbody>
 </table>

@@ -1,0 +1,162 @@
+<!-- 
+    SigmaFidelity™ Institutional SOP Template (HTML Version 3.0)
+    Standard: HWB-QMS-1.0
+    Instructions: Copy this file, fill in the metadata, and draft content using Everyday Words.
+-->
+<div class="sop-card">
+    <!-- 0.0 DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-11.2</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.1.6 (Organizational Knowledge)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <table>
+            <thead>
+                <tr>
+                    <th><strong>Document Control</strong></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td><strong>Document Title</strong></td><td><strong>Cognitive Architecture &amp; Neural Growth SOP</strong></td></tr>
+                <tr><td><strong>Document ID</strong></td><td>HWB-QMS-11.2</td></tr>
+                <tr><td><strong>Version</strong></td><td>1.0.0</td></tr>
+                <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
+                <tr><td><strong>Author</strong></td><td>George (Architect)</td></tr>
+                <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
+                <tr><td><strong>Date</strong></td><td>05-22-2026</td></tr>
+                <tr><td><strong>ISO 9001 Clause</strong></td><td>7.1.6</td></tr>
+            </tbody>
+        </table>
+
+        <hr />
+
+        <h1>Standard Operating Procedure: <strong>Cognitive Architecture &amp; Neural Growth</strong></h1>
+
+        <h2>1.0 Purpose</h2>
+        <p>This document details the six-tier memory architecture of the HWB Cleaning Services system. It serves as the definitive manual for explaining how our artificial intelligence systems store, retrieve, and learn from operational data. This system acts as a persistent digital brain, constantly improving and making itself faster, smarter, and more reliable without manual work.</p>
+
+        <h2>2.0 Scope</h2>
+        <p>This procedure applies to all software engineers, developers, and autonomous systems operating in the HWB Cleaning Services corporate ecosystem. It directly governs database queries, state tracking, and logging functions inside the web server, mobile app, and background processes.</p>
+
+        <h2>3.0 The Six-Tier Memory Architecture</h2>
+        <p>To ensure 100% data continuity and prevent system errors, our systems must retrieve and organize information using these six tiers. The first four tiers handle physical data storage, while Tiers 5 and 6 handle cognitive tracking and self-learning.</p>
+
+        <h3>Tier 1: The Relational Core (PostgreSQL)</h3>
+        <ul>
+            <li><strong>Engine:</strong> Docker container <code>hwb_postgres_dev</code>.</li>
+            <li><strong>Role:</strong> Securely stores the primary corporate transactional data.</li>
+            <li><strong>Key Tables:</strong> <code>Leads</code> (37 columns with 19 active persistence fields), <code>Customers</code>, <code>Opportunities</code>, <code>Milestones</code>, <code>Users</code>, and <code>Warchest</code>.</li>
+            <li><strong>Mandate:</strong> The ultimate source of truth for physical transactions.</li>
+        </ul>
+
+        <h3>Tier 2: The Modular Edge Store (SQLite) &amp; Active Task State</h3>
+        <ul>
+            <li><strong>Engine:</strong> Database files in <code>HWB-COMPANY/HWB-DATA/*.db</code> and edge tables.</li>
+            <li><strong>Role:</strong> Manages temporary session files, whatsapp queues, data caching, and the active task tracker table (<code>agent_task_state</code>) for multi-step task recovery.</li>
+            <li><strong>Mandate:</strong> Keeps the system steady if the main internet connection drops.</li>
+        </ul>
+
+        <h3>Tier 3: Institutional Mandates &amp; Vector Database (RAG)</h3>
+        <ul>
+            <li><strong>Engine:</strong> Version-controlled source files (<code>GEMINI.md</code>, <code>HWB-SESSION-RECOVERY.md</code>) and the PostgreSQL table <code>sigma_kb</code> with pgvector search indexes.</li>
+            <li><strong>Role:</strong> Anchors the system rules, compliance instructions, and search logic.</li>
+            <li><strong>Mandate:</strong> Provides the "Cold Boot" setup commands at the start of every session.</li>
+        </ul>
+
+        <h3>Tier 4: Structured Operational Memory (Validated Models)</h3>
+        <ul>
+            <li><strong>Engine:</strong> Pydantic validation structures (e.g., <code>LeadModel</code>, <code>CustomerModel</code> in <code>core/models/memory_tier4.py</code>).</li>
+            <li><strong>Role:</strong> Validates and structures data before it is saved to Tier 1 or Tier 2. Ensures data types match perfectly ("Poka-Yoke" design) during operations like lead-to-customer conversion.</li>
+            <li><strong>Mandate:</strong> Eliminates human formatting errors before they touch the database.</li>
+        </ul>
+
+        <h3>Tier 5: Episodic Memory (Action Audits)</h3>
+        <ul>
+            <li><strong>Engine:</strong> The PostgreSQL tables <code>GlobalActivities</code> and <code>ActivityLog</code>.</li>
+            <li><strong>Role:</strong> Automatically records the "Why" and "How" of every major autonomous action. It registers activity summaries for ISO 9001 audits (e.g., "George ingested lead from Acme Corp").</li>
+            <li><strong>Mandate:</strong> Ensures complete tracking for corporate compliance and accountability.</li>
+        </ul>
+
+        <h3>Tier 6: Cognitive Telemetry &amp; Wisdom Layer</h3>
+        <ul>
+            <li><strong>Engine:</strong> The PostgreSQL tables <code>SigmaTelemetry</code> and <code>SigmaInteractionLog</code>.</li>
+            <li><strong>Role:</strong> Our system flight recorder. It tracks every CLI interaction, session objective, next step, files changed, and the logical steps the system took.</li>
+            <li><strong>Mandate:</strong> Feeds historical success and failure logs back into Tier 3 to allow the system to self-heal and adapt to CEO preferences automatically.</li>
+        </ul>
+
+        <h2>4.0 Cognitive Telemetry &amp; Self-Learning Flow</h2>
+        <p>Our neural growth relies on a continuous feedback loop between raw data operations and deep telemetry logs. When our system performs an action, it records the exact steps in Tier 6 and the audit summary in Tier 5. The next time the system starts a task, it scans the Tier 6 telemetry table to recall past failure patterns. This allows it to correct its own path and apply optimized solutions without human help.</p>
+
+        <div class="callout callout-note">
+            <strong>Note</strong>
+            <p>Our systems do not use fictional or placeholder data. All logs stored in Tier 5 and Tier 6 represent actual operations performed by our automated agents.</p>
+        </div>
+
+        <h2>5.0 Visualizing the Neural Growth</h2>
+        <p>The following diagram depicts the dual-layered flow of the six memory tiers. Data flows upward through physical ingestion (Tiers 1-4) and circulates continuously through the cognitive wisdom layers (Tiers 5-6) to drive automated learning.</p>
+
+        <div class="mermaid">
+graph TD
+    subgraph "Physical Ingestion Layers (Tiers 1 - 4)"
+        A[Client Web Form / CLI Input] -->|1. Ingest & Direct| B[Tier 3: Institutional Mandates & RAG]
+        B -->|2. Validate Structure| C[Tier 4: Structured Operational Memory]
+        C -->|3. Persist Physically| D[Tier 1: PostgreSQL Core - Leads, Customers]
+        C -->|3. Active Task Tracker| E[Tier 2: SQLite Edge Store - agent_task_state]
+    end
+
+    subgraph "Cognitive Telemetry & Wisdom Layers (Tiers 5 - 6)"
+        D & E -->|4. Log Business Actions| F[Tier 5: Episodic Action Audit - GlobalActivities]
+        D & E -->|4. Record Logical Steps| G[Tier 6: Flight Telemetry - SigmaInteractionLog]
+        G -->|5. Pattern Recognition & Wisdom| H{Self-Healing Feedback Loop}
+        H -->|6. Auto-Update RAG Rules| B
+    end
+
+    style A fill:#f8fafc,stroke:#64748b,stroke-width:2px
+    style B fill:#dbeafe,stroke:#2563eb,stroke-width:2px
+    style C fill:#eff6ff,stroke:#3b82f6,stroke-width:2px
+    style D fill:#ecfdf5,stroke:#10b981,stroke-width:2px
+    style E fill:#fef3c7,stroke:#d97706,stroke-width:2px
+    style F fill:#faf5ff,stroke:#8b5cf6,stroke-width:2px
+    style G fill:#fdf2f8,stroke:#ec4899,stroke-width:2px
+    style H fill:#f0fdf4,stroke:#22c55e,stroke-width:3px
+        </div>
+
+        <h2>6.0 Verification (Zero-Defect Check)</h2>
+        <ul>
+            <li>Every database insertion must pass validation through Pydantic (Tier 4).</li>
+            <li>All autonomous business operations must automatically register a log entry in Tier 5 (GlobalActivities).</li>
+            <li>All CLI session transitions must trigger a telemetry push to Tier 6 (SigmaTelemetry).</li>
+            <li>Every document is written in "Everyday Words" at a 20-year-old manager reading level.</li>
+        </ul>
+
+        <h2>7.0 Revision History</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Version</th>
+                    <th>Date</th>
+                    <th>Author</th>
+                    <th>Change Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1.0.0</td>
+                    <td>05-22-2026</td>
+                    <td>George</td>
+                    <td>Initial Release. Codified the complete 6-tier cognitive architecture and neural growth diagram.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="sop-card-footer">
+        <span>&copy; 2026 HWB Cleaning Services LLC</span>
+        <span>Controlled Document | HWB-QMS-11.2</span>
+        <span>Page <span class="page-number"></span></span>
+    </div>
+</div>

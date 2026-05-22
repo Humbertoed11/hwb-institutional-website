@@ -1,41 +1,569 @@
 {% extends "base.html" %}
 
-{% block title %}Edit CRM Lead | SigmaFidelity™{% endblock %}
+{% block title %}Lead Details: {{ lead.center_name }} | SigmaFidelity™{% endblock %}
+
+{% block head %}
+<style>
+    :root {
+        --slate-50: #f8fafc;
+        --slate-100: #f1f5f9;
+        --slate-200: #e2e8f0;
+        --slate-300: #cbd5e1;
+        --slate-400: #94a3b8;
+        --slate-500: #64748b;
+        --slate-600: #475569;
+        --slate-900: #0f172a;
+        --brand-blue: #2563eb;
+        --brand-blue-hover: #1d4ed8;
+        --brand-blue-light: #eff6ff;
+        --border-radius-sm: 6px;
+        --border-radius-lg: 12px;
+    }
+
+    .crm-wrapper {
+        max-width: 1200px;
+        margin: 3rem auto;
+        padding: 0 1.5rem;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        color: var(--slate-900);
+    }
+
+    .crm-header-nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+
+    .crm-header-nav h2 {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--slate-900);
+        margin: 0;
+        letter-spacing: -0.02em;
+    }
+
+    .btn-secondary-compress {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0 1rem;
+        height: 36px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--slate-600);
+        background: white;
+        border: 1px solid var(--slate-200);
+        border-radius: var(--border-radius-sm);
+        text-decoration: none;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+    .btn-secondary-compress:hover {
+        background: var(--slate-50);
+        color: var(--slate-900);
+        border-color: var(--slate-300);
+    }
+
+    /* --- Industrial Service Identity Card (ISC) --- */
+    .isc-dashboard {
+        background: white;
+        border: 1px solid var(--slate-200);
+        border-radius: var(--border-radius-lg);
+        overflow: hidden;
+        box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+        margin-bottom: 2.5rem;
+    }
+
+    .isc-dashboard-header {
+        background: #0f172a;
+        color: white;
+        padding: 1.25rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .isc-title-area {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .isc-title-area i {
+        color: #38bdf8;
+        font-size: 1.25rem;
+    }
+
+    .isc-profile-label {
+        font-size: 0.65rem;
+        font-weight: 800;
+        color: var(--slate-400);
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        margin-bottom: 0.25rem;
+    }
+
+    .isc-profile-title {
+        font-size: 1.1rem;
+        font-weight: 800;
+        letter-spacing: -0.01em;
+        margin: 0;
+    }
+
+    .isc-badge-new { background: #fef3c7; color: #d97706; }
+    .isc-badge-qualified { background: #dbeafe; color: #2563eb; }
+    .isc-badge-disqualified { background: #f1f5f9; color: #64748b; }
+    .isc-badge-converted { background: #d1fae5; color: #059669; }
+
+    .isc-status-badge {
+        font-size: 0.7rem;
+        font-weight: 900;
+        padding: 0.3rem 0.8rem;
+        border-radius: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .isc-status-indicator {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+
+    .isc-badge-new .isc-status-indicator { background: #d97706; }
+    .isc-badge-qualified .isc-status-indicator { background: #2563eb; }
+    .isc-badge-disqualified .isc-status-indicator { background: #64748b; }
+    .isc-badge-converted .isc-status-indicator { background: #059669; }
+
+    .isc-metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        padding: 1.5rem 2rem;
+        background: #fdfdfd;
+        border-top: 1px solid var(--slate-100);
+    }
+
+    .isc-metric-cell {
+        border-right: 1px solid var(--slate-100);
+        padding: 0.5rem 1rem;
+    }
+
+    .isc-metric-cell:last-child {
+        border-right: none;
+    }
+
+    .isc-metric-cell:first-child {
+        padding-left: 0;
+    }
+
+    .isc-metric-label {
+        font-size: 0.65rem;
+        font-weight: 800;
+        color: var(--slate-500);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-bottom: 0.4rem;
+    }
+
+    .isc-metric-value {
+        font-size: 1.05rem;
+        font-weight: 800;
+        color: var(--slate-900);
+    }
+
+    /* --- Asymmetric Two-Column Form Split --- */
+    .sigma-form-container {
+        display: grid;
+        grid-template-columns: 7fr 3fr;
+        gap: 2rem;
+    }
+
+    @media (max-width: 900px) {
+        .sigma-form-container {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .form-column-main {
+        background: white;
+        border: 1px solid var(--slate-200);
+        border-radius: var(--border-radius-lg);
+        padding: 2.5rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    }
+
+    .form-column-side {
+        background: #fafbfc;
+        border: 1px solid var(--slate-200);
+        border-radius: var(--border-radius-lg);
+        padding: 2rem;
+        height: fit-content;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    }
+
+    .section-legend {
+        font-size: 0.85rem;
+        font-weight: 900;
+        color: var(--brand-blue);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid var(--brand-blue-light);
+        padding-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    /* Standardized Form Proximity Field */
+    .sigma-field-group {
+        margin-bottom: 1.25rem;
+    }
+
+    .sigma-field-group label {
+        display: block;
+        font-size: 0.75rem;
+        font-weight: 600; /* 600 Weight hierarchy */
+        color: var(--slate-600);
+        margin-bottom: 4px; /* Strict 4px proximity */
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .sigma-input {
+        width: 100%;
+        height: 38px; /* Compressed 32-40px standard */
+        padding: 0 0.85rem;
+        border: 1px solid var(--slate-200);
+        border-radius: var(--border-radius-sm);
+        background: var(--slate-50);
+        color: var(--slate-900);
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: all 0.15s ease;
+    }
+
+    .sigma-input:focus {
+        outline: none;
+        border-color: var(--brand-blue);
+        background: white;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
+    }
+
+    textarea.sigma-input {
+        height: 100px;
+        padding: 0.75rem 0.85rem;
+        resize: vertical;
+        font-family: inherit;
+    }
+
+    /* Asymmetric Form Row Spilts */
+    .sigma-row-split-50-50 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.25rem;
+    }
+
+    .sigma-row-split-75-25 {
+        display: grid;
+        grid-template-columns: 3fr 1fr;
+        gap: 1.25rem;
+    }
+
+    .sigma-row-split-33-33-33 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.25rem;
+    }
+
+    .btn-brand-submit {
+        width: 100%;
+        height: 40px; /* Compressed standard */
+        background: var(--brand-blue);
+        color: white;
+        border: none;
+        border-radius: var(--border-radius-sm);
+        font-size: 0.9rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+    }
+
+    .btn-brand-submit:hover {
+        background: var(--brand-blue-hover);
+        box-shadow: 0 6px 14px rgba(37, 99, 235, 0.3);
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="header-section">
-    <h2>Edit Lead: {{ lead.company_name }}</h2>
-    <a href="{{ url_for('crm_leads_list') }}" class="btn-secondary">Back to List</a>
-</div>
+<div class="crm-wrapper">
+    <!-- Header Navigation -->
+    <div class="crm-header-nav">
+        <h2>Lead Details</h2>
+        <a href="{{ url_for('admin_operations', view='leads') }}" class="btn-secondary-compress">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 Organ 19" points="12 19 5 12 12 5"></polyline></svg>
+            Back to Dashboard
+        </a>
+    </div>
 
-<div class="form-section" style="max-width: 600px; margin: 2rem auto; background: var(--bg-secondary); padding: 2.5rem; border-radius: 12px; border: 1px solid var(--border-color);">
+    <!-- 🏛️ Industrial Service Identity Card (ISC) -->
+    <div class="isc-dashboard">
+        <div class="isc-dashboard-header">
+            <div class="isc-title-area">
+                <i class="fa-solid fa-building-circle-check"></i>
+                <div>
+                    <div class="isc-profile-label">Identity Card</div>
+                    <h3 class="isc-profile-title">{{ lead.center_name }}</h3>
+                </div>
+            </div>
+            <div>
+                {% if lead.status == 'New' %}
+                <span class="isc-status-badge isc-badge-new">
+                    <span class="isc-status-indicator"></span> New Lead
+                </span>
+                {% elif lead.status == 'Qualified' %}
+                <span class="isc-status-badge isc-badge-qualified">
+                    <span class="isc-status-indicator"></span> Qualified
+                </span>
+                {% elif lead.status == 'Disqualified' %}
+                <span class="isc-status-badge isc-badge-disqualified">
+                    <span class="isc-status-indicator"></span> Disqualified
+                </span>
+                {% elif lead.status == 'Converted' %}
+                <span class="isc-status-badge isc-badge-converted">
+                    <span class="isc-status-indicator"></span> Customer Converted
+                </span>
+                {% else %}
+                <span class="isc-status-badge isc-badge-new">
+                    <span class="isc-status-indicator"></span> {{ lead.status }}
+                </span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="isc-metrics-grid">
+            <div class="isc-metric-cell">
+                <div class="isc-metric-label">Building Size</div>
+                <div class="isc-metric-value">
+                    {% if lead.sqf %}
+                    {{ "{:,.0f}".format(lead.sqf) }} SQFT
+                    {% else %}
+                    0 SQFT
+                    {% endif %}
+                </div>
+            </div>
+            <div class="isc-metric-cell">
+                <div class="isc-metric-label">Estimated Value</div>
+                <div class="isc-metric-value">
+                    {% if lead.estimated_annual_value %}
+                    ${{ "{:,.2f}".format(lead.estimated_annual_value) }} <span style="font-size: 0.75rem; color: var(--slate-500); font-weight: 500;">/ year</span>
+                    {% else %}
+                    $0.00
+                    {% endif %}
+                </div>
+            </div>
+            <div class="isc-metric-cell">
+                <div class="isc-metric-label">Building Use</div>
+                <div class="isc-metric-value">{{ lead.traffic_cycle | default('Slow', true) }}</div>
+            </div>
+            <div class="isc-metric-cell">
+                <div class="isc-metric-label">Interest</div>
+                <div class="isc-metric-value">{{ lead.service_interest | default('Standard Cleaning', true) }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Asymmetric Form Form -->
     <form method="POST">
-        <div class="form-group" style="margin-bottom: 1.5rem;">
-            <label for="company_name" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Company Name</label>
-            <input type="text" id="company_name" name="company_name" value="{{ lead.company_name }}" style="width: 100%; padding: 0.75rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary);" required>
-        </div>
-        
-        <div class="form-group" style="margin-bottom: 1.5rem;">
-            <label for="source" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Source</label>
-            <input type="text" id="source" name="source" value="{{ lead.source }}" style="width: 100%; padding: 0.75rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary);">
+        <div class="sigma-form-container">
+            <!-- Left Main Column (70%): Identity, Contacts & Location -->
+            <div class="form-column-main">
+                <div class="section-legend">
+                    <i class="fa-solid fa-address-card"></i>
+                    Building Details & Contact
+                </div>
+                
+                <div class="sigma-row-split-50-50">
+                    <div class="sigma-field-group">
+                        <label for="company_name">Building Name</label>
+                        <input type="text" id="company_name" name="company_name" value="{{ lead.center_name }}" class="sigma-input" required>
+                    </div>
+                    <div class="sigma-field-group">
+                        <label for="facility_type">Building Type</label>
+                        <select id="facility_type" name="facility_type" class="sigma-input">
+                            <option value="Office" {% if lead.facility_type == 'Office' %}selected{% endif %}>Office Space</option>
+                            <option value="Daycare" {% if lead.facility_type == 'Daycare' %}selected{% endif %}>Daycare / School</option>
+                            <option value="Medical" {% if lead.facility_type == 'Medical' %}selected{% endif %}>Medical / Clinical</option>
+                            <option value="Warehouse" {% if lead.facility_type == 'Warehouse' %}selected{% endif %}>Warehouse</option>
+                            <option value="Industrial" {% if lead.facility_type == 'Industrial' %}selected{% endif %}>Industrial Plant</option>
+                            <option value="Construction" {% if lead.facility_type == 'Construction' %}selected{% endif %}>Post-Construction</option>
+                            <option value="Retail" {% if lead.facility_type == 'Retail' %}selected{% endif %}>Retail Space</option>
+                            <option value="Church" {% if lead.facility_type == 'Church' %}selected{% endif %}>Church / Sanctuary</option>
+                            <option value="Other" {% if lead.facility_type == 'Other' %}selected{% endif %}>Other Commercial</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="sigma-row-split-50-50">
+                    <div class="sigma-field-group">
+                        <label for="decision_maker">Main Manager</label>
+                        <input type="text" id="decision_maker" name="decision_maker" value="{{ lead.decision_maker }}" class="sigma-input">
+                    </div>
+                    <div class="sigma-field-group">
+                        <label for="job_title">Manager's Title</label>
+                        <input type="text" id="job_title" name="job_title" value="{{ lead.job_title }}" class="sigma-input">
+                    </div>
+                </div>
+
+                <div class="sigma-row-split-50-50">
+                    <div class="sigma-field-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" name="email" value="{{ lead.email }}" class="sigma-input">
+                    </div>
+                    <div class="sigma-field-group">
+                        <label for="phone">Phone Number</label>
+                        <input type="text" id="phone" name="phone" value="{{ lead.phone }}" class="sigma-input" oninput="maskPhone(event)">
+                    </div>
+                </div>
+
+                <div style="margin-top: 1.5rem; margin-bottom: 0.5rem;" class="section-legend">
+                    <i class="fa-solid fa-map-location-dot"></i>
+                    Building Location & Specs
+                </div>
+
+                <div class="sigma-field-group">
+                    <label for="address">Building Street Address</label>
+                    <input type="text" id="address" name="address" value="{{ lead.address }}" class="sigma-input">
+                </div>
+
+                <div class="sigma-row-split-33-33-33">
+                    <div class="sigma-field-group">
+                        <label for="city">City</label>
+                        <input type="text" id="city" name="city" value="{{ lead.city }}" class="sigma-input">
+                    </div>
+                    <div class="sigma-field-group">
+                        <label for="state">State</label>
+                        <input type="text" id="state" name="state" value="{{ lead.state }}" class="sigma-input">
+                    </div>
+                    <div class="sigma-field-group">
+                        <label for="zipcode">Zip Code</label>
+                        <input type="text" id="zipcode" name="zipcode" value="{{ lead.zipcode }}" class="sigma-input">
+                    </div>
+                </div>
+
+                <div class="sigma-row-split-50-50">
+                    <div class="sigma-field-group">
+                        <label for="sqf">Building Size (SQFT)</label>
+                        <input type="number" id="sqf" name="sqf" value="{{ lead.sqf }}" class="sigma-input">
+                    </div>
+                    <div class="sigma-field-group">
+                        <label for="industry">Industry Sector</label>
+                        <input type="text" id="industry" name="industry" value="{{ lead.industry }}" class="sigma-input">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column (30%): Relational & Pipeline Parameters -->
+            <div class="form-column-side">
+                <div class="section-legend">
+                    <i class="fa-solid fa-sliders"></i>
+                    Pipeline Step
+                </div>
+
+                <div class="sigma-field-group">
+                    <label for="status">Lead Status</label>
+                    <select id="status" name="status" class="sigma-input" style="background: white; font-weight: 700; border-color: var(--slate-300);">
+                        <option value="New" {% if lead.status == 'New' %}selected{% endif %}>New</option>
+                        <option value="Qualified" {% if lead.status == 'Qualified' %}selected{% endif %}>Qualified</option>
+                        <option value="Disqualified" {% if lead.status == 'Disqualified' %}selected{% endif %}>Disqualified</option>
+                        <option value="Converted" {% if lead.status == 'Converted' %}selected{% endif %}>Customer Converted</option>
+                    </select>
+                </div>
+
+                <div class="sigma-field-group">
+                    <label for="priority_level">Priority Level</label>
+                    <select id="priority_level" name="priority_level" class="sigma-input">
+                        <option value="Low" {% if lead.priority_level == 'Low' %}selected{% endif %}>Low Priority</option>
+                        <option value="Medium" {% if lead.priority_level == 'Medium' or not lead.priority_level %}selected{% endif %}>Medium Priority</option>
+                        <option value="High" {% if lead.priority_level == 'High' %}selected{% endif %}>High Priority</option>
+                        <option value="Critical" {% if lead.priority_level == 'Critical' %}selected{% endif %}>Critical Priority</option>
+                    </select>
+                </div>
+
+                <div class="sigma-field-group">
+                    <label for="lead_source">Lead Source</label>
+                    <select id="lead_source" name="lead_source" class="sigma-input">
+                        <option value="Website Form" {% if lead.lead_source == 'Website Form' %}selected{% endif %}>Website Form</option>
+                        <option value="Cold Call" {% if lead.lead_source == 'Cold Call' %}selected{% endif %}>Cold Outreach</option>
+                        <option value="LinkedIn Outreach" {% if lead.lead_source == 'LinkedIn Outreach' %}selected{% endif %}>LinkedIn</option>
+                        <option value="Referral" {% if lead.lead_source == 'Referral' %}selected{% endif %}>Direct Referral</option>
+                        <option value="B2B Database" {% if lead.lead_source == 'B2B Database' %}selected{% endif %}>B2B Database</option>
+                        <option value="Organic Search" {% if lead.lead_source == 'Organic Search' %}selected{% endif %}>Organic Search</option>
+                        <option value="Other" {% if lead.lead_source == 'Other' %}selected{% endif %}>Other Channels</option>
+                    </select>
+                </div>
+
+                <div class="sigma-field-group">
+                    <label for="traffic_cycle">Building Use</label>
+                    <select id="traffic_cycle" name="traffic_cycle" class="sigma-input">
+                        <option value="Slow" {% if lead.traffic_cycle == 'Slow' %}selected{% endif %}>Slow / Low Use</option>
+                        <option value="Medium" {% if lead.traffic_cycle == 'Medium' %}selected{% endif %}>Medium Standard</option>
+                        <option value="High" {% if lead.traffic_cycle == 'High' %}selected{% endif %}>High Use (1.5x)</option>
+                        <option value="24/7 Production" {% if lead.traffic_cycle == '24/7 Production' %}selected{% endif %}>24/7 Production (2.5x)</option>
+                    </select>
+                </div>
+
+                <div class="sigma-field-group">
+                    <label for="next_action_date">Next Step Date</label>
+                    <input type="date" id="next_action_date" name="next_action_date" value="{{ lead.next_action_date }}" class="sigma-input">
+                </div>
+
+                <div class="sigma-field-group">
+                    <label for="service_interest">Service of Interest</label>
+                    <input type="text" id="service_interest" name="service_interest" value="{{ lead.service_interest | default('Standard Cleaning', true) }}" class="sigma-input">
+                </div>
+
+                <div style="margin-top: 2rem;">
+                    <button type="submit" class="btn-brand-submit">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                        Save Profile Details
+                    </button>
+                </div>
+            </div>
         </div>
 
-        <div class="form-group" style="margin-bottom: 1.5rem;">
-            <label for="status" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Status</label>
-            <select id="status" name="status" style="width: 100%; padding: 0.75rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary);">
-                <option value="New" {% if lead.status == 'New' %}selected{% endif %}>New</option>
-                <option value="Qualified" {% if lead.status == 'Qualified' %}selected{% endif %}>Qualified</option>
-                <option value="Disqualified" {% if lead.status == 'Disqualified' %}selected{% endif %}>Disqualified</option>
-                <option value="Converted" {% if lead.status == 'Converted' %}selected{% endif %}>Converted</option>
-            </select>
+        <!-- Full-Width Bottom Notes Section -->
+        <div class="form-column-main" style="margin-top: 2rem;">
+            <div class="section-legend">
+                <i class="fa-solid fa-file-signature"></i>
+                Private Notes & History
+            </div>
+            <div class="sigma-field-group" style="margin-bottom: 0;">
+                <label for="notes">Internal Work Notes</label>
+                <textarea id="notes" name="notes" class="sigma-input" style="height: 120px;" placeholder="Add private notes on check-in activities, customized cleaning requirements, and site visit summaries here...">{{ lead.notes }}</textarea>
+            </div>
         </div>
-
-        <div class="form-group" style="margin-bottom: 2rem;">
-            <label for="assigned_to" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Assigned To</label>
-            <input type="text" id="assigned_to" name="assigned_to" value="{{ lead.assigned_to }}" style="width: 100%; padding: 0.75rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary);">
-        </div>
-
-        <button type="submit" class="btn-primary" style="width: 100%; padding: 1rem; cursor: pointer; border: none; font-weight: 700;">Update CRM Lead</button>
     </form>
 </div>
+
+<script>
+    function maskPhone(e) {
+        let x = e.target.value.replace(/\D/g, '').match(/(\d{0,3})(\d{0,3})(\d{0,4})/);
+        e.target.value = !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : '');
+    }
+</script>
 {% endblock %}
+ %}
+

@@ -435,11 +435,22 @@ def manual_index():
 @app.route('/manual/<path:filename>', endpoint='view_sop')
 def view_sop(filename):
     import requests
+    import json
     try:
         # Fetch fragment from the dedicated compliance container
         response = requests.get(f"http://compliance/qms/{filename}", timeout=5)
+        sops_by_dept = {}
+        try:
+            with open('qms_index.json', 'r') as f:
+                sops = json.load(f)
+            for sop in sops:
+                dept = sop['dept']
+                if dept not in sops_by_dept: sops_by_dept[dept] = []
+                sops_by_dept[dept].append(sop)
+        except Exception:
+            pass
         if response.status_code == 200:
-            return render_template('qms_shell.html', content=response.text)
+            return render_template('qms_shell.html', content=response.text, sops_by_dept=sops_by_dept, active_file=filename)
         else:
             return f"QMS Error: Document not found ({response.status_code})"
     except Exception as e:
@@ -572,26 +583,35 @@ def edit_lead(id):
         with conn.cursor() as cur:
             if request.method == 'POST':
                 data = request.form
-                sqf = float(data.get('sqf', 0))
+                sqf_str = data.get('sqf', '0')
+                try:
+                    sqf = float(sqf_str) if sqf_str and sqf_str.strip() != '' else 0.0
+                except ValueError:
+                    sqf = 0.0
+                
                 traffic = data.get('traffic_cycle', 'Slow')
                 multiplier = 1.0
                 if traffic == 'High': multiplier = 1.5
                 elif traffic == '24/7 Production': multiplier = 2.5
                 annual_value = (sqf * 0.12) * multiplier * 12
 
+                next_action = data.get('next_action_date')
+                if not next_action or next_action.strip() == '':
+                    next_action = None
+
                 cur.execute('''
                     UPDATE "Leads" SET 
-                        center_name = %s, decision_maker = %s, email = %s, 
-                        phone = %s, address = %s, facility_type = %s, 
-                        sqf = %s, traffic_cycle = %s, service_interest = %s, 
-                        lead_source = %s, status = %s, estimated_annual_value = %s,
+                        center_name = %s, decision_maker = %s, job_title = %s, email = %s, phone = %s, 
+                        address = %s, city = %s, state = %s, zipcode = %s, industry = %s, sqf = %s, 
+                        status = %s, estimated_annual_value = %s, next_action_date = %s, notes = %s,
+                        facility_type = %s, lead_source = %s, service_interest = %s, priority_level = %s, traffic_cycle = %s,
                         updated_at = CURRENT_TIMESTAMP
                     WHERE id = %s
                 ''', (
-                    data.get('company_name'), data.get('decision_maker'), data.get('email'), 
-                    data.get('phone'), data.get('address'), data.get('facility_type'),
-                    sqf, traffic, data.get('service_interest'),
-                    data.get('lead_source'), data.get('status'), annual_value, id
+                    data.get('company_name'), data.get('decision_maker'), data.get('job_title'), data.get('email'), data.get('phone'),
+                    data.get('address'), data.get('city'), data.get('state'), data.get('zipcode'), data.get('industry'), sqf,
+                    data.get('status'), annual_value, next_action, data.get('notes'),
+                    data.get('facility_type'), data.get('lead_source'), data.get('service_interest'), data.get('priority_level'), traffic, id
                 ))
                 conn.commit()
                 flash("Lead intelligence updated successfully.")

@@ -3,7 +3,204 @@
 {% block title %}HWB QMS | Institutional Manual{% endblock %}
 
 {% block content %}
-<div id="sop-injection-point">
-    {{ content|safe }}
+<style>
+    /* Limit header scales strictly to 1.5rem (Semi-Bold) for high density */
+    #sop-injection-point h1 {
+        font-size: 1.5rem !important;
+        font-weight: 600 !important;
+        margin-top: 1rem !important;
+        margin-bottom: 1.5rem !important;
+        color: #0f172a !important;
+        border-bottom: 2px solid #f1f5f9;
+        padding-bottom: 0.75rem;
+    }
+    #sop-injection-point h2 {
+        font-size: 1.25rem !important;
+        font-weight: 600 !important;
+        margin-top: 1.5rem !important;
+        margin-bottom: 1rem !important;
+        color: #1e293b !important;
+    }
+    #sop-injection-point h3 {
+        font-size: 1.1rem !important;
+        font-weight: 600 !important;
+        margin-top: 1.25rem !important;
+        margin-bottom: 0.75rem !important;
+        color: #334155 !important;
+    }
+    
+    /* Smooth slide-fade transition container (.sigma-view-fade) for dynamic document switching */
+    .sigma-view-fade {
+        animation: sigmaFadeSlideIn 0.4s ease-out forwards;
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    
+    @keyframes sigmaFadeSlideIn {
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Compressed navigation buttons (36px, 6px radius) */
+    .qms-nav-btn {
+        height: 36px;
+        padding: 0 1.25rem;
+        border-radius: 6px;
+        border: 1px solid #cbd5e1;
+        background: #ffffff;
+        color: #334155;
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s;
+        text-decoration: none;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .qms-nav-btn:hover {
+        background: #f8fafc;
+        border-color: #94a3b8;
+        color: #0f172a;
+    }
+</style>
+
+<div class="sop-card sigma-view-fade">
+    <!-- Active Work Queue Toggle Control -->
+    <div style="display: flex; justify-content: flex-end; margin-bottom: 1.5rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem;">
+        <button id="qms-pin-toggle" class="qms-nav-btn" style="height: 32px; padding: 0 0.75rem; font-size: 0.75rem; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.35rem; cursor: pointer; background: #fff; border: 1px solid #cbd5e1; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+            <svg id="qms-pin-star" style="width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 2; transition: all 0.2s;" viewBox="0 0 24 24">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+            <span id="qms-pin-text" style="font-weight: 600; color: #334155;">Pin to Active Queue</span>
+        </button>
+    </div>
+    <div id="sop-injection-point">
+        {{ content|safe }}
+    </div>
+    
+    <!-- Next/Previous Navigation Controls -->
+    <div class="sop-navigation-bar" style="margin-top: 4rem; padding-top: 2rem; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <a id="qms-prev-sop" class="qms-nav-btn" style="display: none;">
+                <svg style="width: 14px; height: 14px; fill: currentColor; transform: rotate(180deg);" viewBox="0 0 24 24">
+                    <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+                </svg>
+                Previous: <span id="qms-prev-label" style="font-weight: 800; color: #2563eb;">SOP</span>
+            </a>
+        </div>
+        <div>
+            <a href="/manual" class="qms-nav-btn" style="background: #eff6ff; border-color: #dbeafe; color: #2563eb;">
+                <svg style="width: 14px; height: 14px; fill: currentColor;" viewBox="0 0 24 24">
+                    <path d="M4 15h16v-2H4v2zm0 4h16v-2H4v2zm0-8h16V9H4v2zm0-6v2h16V5H4z"/>
+                </svg>
+                Back to Index
+            </a>
+        </div>
+        <div>
+            <a id="qms-next-sop" class="qms-nav-btn" style="display: none;">
+                Next: <span id="qms-next-label" style="font-weight: 800; color: #2563eb;">SOP</span>
+                <svg style="width: 14px; height: 14px; fill: currentColor;" viewBox="0 0 24 24">
+                    <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+                </svg>
+            </a>
+        </div>
+    </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Find the active link in the sidebar
+        const activeLink = document.querySelector('.dept-sop-link.active');
+        if (activeLink) {
+            const sopId = activeLink.querySelector('.sop-nav-id').textContent;
+            const sopTitle = activeLink.querySelector('.sop-nav-title').textContent.trim();
+            const sopUrl = activeLink.href;
+
+            // 1. Auto-Add to "Recently Viewed"
+            let recentList = JSON.parse(localStorage.getItem('qms_recent_sops') || '[]');
+            // Remove if already exists to move to top
+            recentList = recentList.filter(item => item.id !== sopId);
+            recentList.unshift({ id: sopId, title: sopTitle, url: sopUrl });
+            // Cap at 3 items
+            if (recentList.length > 3) recentList.pop();
+            localStorage.setItem('qms_recent_sops', JSON.stringify(recentList));
+            
+            // Refresh sidebar queue display
+            if (window.renderQMSQueue) window.renderQMSQueue();
+
+            // 2. Initialize Pin Button State
+            const pinBtn = document.getElementById('qms-pin-toggle');
+            const pinStar = document.getElementById('qms-pin-star');
+            const pinText = document.getElementById('qms-pin-text');
+
+            function updatePinButtonState() {
+                const pinnedList = JSON.parse(localStorage.getItem('qms_pinned_sops') || '[]');
+                const isPinned = pinnedList.some(item => item.id === sopId);
+                
+                if (isPinned) {
+                    pinStar.style.fill = '#eab308';
+                    pinStar.style.stroke = '#ca8a04';
+                    pinText.textContent = 'Pinned in Active Queue';
+                    pinText.style.color = '#ca8a04';
+                    pinBtn.style.background = '#fef8e6';
+                    pinBtn.style.borderColor = '#fde68a';
+                } else {
+                    pinStar.style.fill = 'none';
+                    pinStar.style.stroke = 'currentColor';
+                    pinText.textContent = 'Pin to Active Queue';
+                    pinText.style.color = '#334155';
+                    pinBtn.style.background = '#fff';
+                    pinBtn.style.borderColor = '#cbd5e1';
+                }
+            }
+
+            if (pinBtn) {
+                updatePinButtonState();
+                
+                pinBtn.addEventListener('click', () => {
+                    let pinnedList = JSON.parse(localStorage.getItem('qms_pinned_sops') || '[]');
+                    const index = pinnedList.findIndex(item => item.id === sopId);
+                    
+                    if (index > -1) {
+                        pinnedList.splice(index, 1);
+                    } else {
+                        pinnedList.push({ id: sopId, title: sopTitle, url: sopUrl });
+                    }
+                    
+                    localStorage.setItem('qms_pinned_sops', JSON.stringify(pinnedList));
+                    updatePinButtonState();
+                    if (window.renderQMSQueue) window.renderQMSQueue();
+                    window.dispatchEvent(new Event('storage'));
+                });
+            }
+
+            // Find all links in the sidebar in order
+            const allLinks = Array.from(document.querySelectorAll('.dept-sop-link'));
+            const activeIndex = allLinks.indexOf(activeLink);
+            
+            const prevBtn = document.getElementById('qms-prev-sop');
+            const nextBtn = document.getElementById('qms-next-sop');
+            
+            if (activeIndex > 0) {
+                const prevLink = allLinks[activeIndex - 1];
+                prevBtn.href = prevLink.href;
+                prevBtn.style.display = 'inline-flex';
+                const prevId = prevLink.querySelector('.sop-nav-id').textContent;
+                document.getElementById('qms-prev-label').textContent = prevId;
+            }
+            
+            if (activeIndex >= 0 && activeIndex < allLinks.length - 1) {
+                const nextLink = allLinks[activeIndex + 1];
+                nextBtn.href = nextLink.href;
+                nextBtn.style.display = 'inline-flex';
+                const nextId = nextLink.querySelector('.sop-nav-id').textContent;
+                document.getElementById('qms-next-label').textContent = nextId;
+            }
+        }
+    });
+</script>
 {% endblock %}

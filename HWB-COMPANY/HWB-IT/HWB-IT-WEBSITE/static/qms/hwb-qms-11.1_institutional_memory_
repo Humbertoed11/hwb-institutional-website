@@ -1,0 +1,121 @@
+<!-- 
+    SigmaFidelity™ Institutional SOP: Institutional Memory & Neural Integration
+    Standard: HWB-QMS-1.0 v2.0 (HTML Baseline)
+    Document ID: HWB-QMS-11.1-MEM
+-->
+<div class="sop-card">
+    <!-- 0.0 DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-11.1-MEM</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.1.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.1.6 (Organizational Knowledge)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <table>
+            <thead>
+                <tr>
+                    <th><strong>Document Control</strong></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td><strong>Document Title</strong></td><td><strong>Institutional Memory & Neural Integration SOP</strong></td></tr>
+                <tr><td><strong>Document ID</strong></td><td>HWB-QMS-11.1-MEM</td></tr>
+                <tr><td><strong>Version</strong></td><td>3.1.0</td></tr>
+                <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
+                <tr><td><strong>Author</strong></td><td>George (Systems Architect)</td></tr>
+                <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
+                <tr><td><strong>Date</strong></td><td>05-22-2026</td></tr>
+                <tr><td><strong>ISO 9001 Clause</strong></td><td>7.1.6</td></tr>
+            </tbody>
+        </table>
+
+        <hr />
+
+        <h1>Standard Operating Procedure: <strong>Institutional Memory & Neural Integration</strong></h1>
+
+        <h2>1.0 Purpose</h2>
+        <p>To define the definitive "Neural Map" of the SigmaFidelity™ ecosystem for the Antigravity CLI. This SOP ensures 100% data continuity by instructing agents on how to digest, initialize, and maintain our multi-tier memory systems.</p>
+
+        <h2>2.0 The 4-Tier Memory Architecture</h2>
+        <p>The agent MUST prioritize data retrieval according to this hierarchy:</p>
+
+        <h3>Tier 1: The Relational Core (PostgreSQL)</h3>
+        <ul>
+            <li><strong>Engine:</strong> Docker Container <code>hwb_postgres_dev</code>.</li>
+            <li><strong>Database:</strong> <code>hwb_dev_db</code>.</li>
+            <li><strong>Key Synapses:</strong> <code>SigmaInteractionLog</code>, <code>SigmaState</code>, <code>Leads</code>.</li>
+        </ul>
+
+        <h3>Tier 2: The Modular Store (SQLite)</h3>
+        <ul>
+            <li><strong>Engine:</strong> Local files in <code>HWB-COMPANY/HWB-DATA/*.db</code>.</li>
+        </ul>
+
+        <h3>Tier 3: Institutional Mandates (HTML/Git)</h3>
+        <ul>
+            <li><strong>Files:</strong> <code>GEMINI.md</code> and <code>HWB-SESSION-RECOVERY.md</code>.</li>
+            <li><strong>Mandate:</strong> These serve as "Cold Boot" instructions. Effective 05-22-2026, all other SOPs are authored in <strong>HTML</strong> directly.</li>
+        </ul>
+
+        <h3>Tier 4: Episodic Memory (Antigravity Brain)</h3>
+        <ul>
+            <li><strong>Location:</strong> <code>~/.gemini/antigravity-cli/brain/</code>.</li>
+        </ul>
+
+        <div class="callout callout-logic">
+            <strong>Technical Logic</strong>
+            <p>The transition from Markdown to HTML ensures zero-latency ingestion into the Compliance Engine and eliminates the need for manual migration scripts.</p>
+        </div>
+
+        <h2>3.0 Architectural Achievements (May 2026 Baseline)</h2>
+        <ol>
+            <li><strong>"Everyday Words" Standard:</strong> Clinical, simple English only.</li>
+            <li><strong>Industrial Modernization:</strong> Vanilla CSS, Identity Cards, and compressed UI.</li>
+            <li><strong>Autonomous Startup:</strong> Mandatory connectivity checks.</li>
+            <li><strong>HTML Source Mandate:</strong> All new knowledge authored in .html format.</li>
+        </ol>
+
+        <h2>4.0 Initialization Procedure (The "Neural Wake-up")</h2>
+        <ol>
+            <li><strong>Read GEMINI.md:</strong> Load mandates.</li>
+            <li><strong>Read HWB-SESSION-RECOVERY.md:</strong> Sync objective.</li>
+            <li><strong>Execute Audit:</strong> Run <code>startup_master.sh</code>.</li>
+            <li><strong>Confirm Alignment:</strong> Confirm synchronization in 3rd person.</li>
+        </ol>
+
+        <h2>5.0 Revision History</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Version</th>
+                    <th>Date</th>
+                    <th>Author</th>
+                    <th>Change Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>3.1.0</td>
+                    <td>05-22-2026</td>
+                    <td>George</td>
+                    <td>**HTML SHIFT.** Transitioned primary format to HTML.</td>
+                </tr>
+                <tr>
+                    <td>3.0.0</td>
+                    <td>05-22-2026</td>
+                    <td>George</td>
+                    <td>Initial Release for Antigravity.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="sop-card-footer">
+        <span>&copy; 2026 HWB Cleaning Services LLC</span>
+        <span>Controlled Document | HWB-QMS-11.1-MEM</span>
+        <span>Page <span class="page-number"></span></span>
+    </div>
+</div>

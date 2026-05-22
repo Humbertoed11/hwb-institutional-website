@@ -1,0 +1,87 @@
+I0522 14:01:01.320211 89335 server.go:1301] Starting language server process with pid 89335
+I0522 14:01:01.322922 89335 server.go:471] Language server will attempt to listen on host localhost
+I0522 14:01:01.326804 89335 server.go:485] Language server listening on random port at 35703 for HTTPS (gRPC)
+I0522 14:01:01.326974 89335 server.go:492] Language server listening on random port at 35847 for HTTP
+W0522 14:01:01.442831 89335 launchmanager.go:69] Entering local chrome mode! This is WRONG unless you are running tests or in eval mode on Linux.
+E0522 14:01:01.452044 89335 log.go:398] Failed to poll ListExperiments: error getting token source: You are not logged into Antigravity.
+W0522 14:01:01.453769 89335 log_context.go:117] Cache(loadCodeAssistResponse): Singleflight refresh failed: error getting token source: You are not logged into Antigravity.
+W0522 14:01:01.453864 89335 log_context.go:117] Cache(availableModels): Singleflight refresh failed: failed to get load code assist response: error getting token source: You are not logged into Antigravity.
+E0522 14:01:01.453903 89335 log.go:398] Failed to poll FetchAvailableModels: failed to get load code assist response: error getting token source: You are not logged into Antigravity.
+I0522 14:01:01.455282 89335 server.go:2248] Auth succeeded, refreshing features and managers
+E0522 14:01:01.455343 89335 log.go:398] Failed to poll ListExperiments: error getting token source: You are not logged into Antigravity.
+W0522 14:01:01.455779 89335 log_context.go:117] Cache(loadCodeAssistResponse): Singleflight refresh failed: error getting token source: You are not logged into Antigravity.
+W0522 14:01:01.455794 89335 log_context.go:117] Cache(availableModels): Singleflight refresh failed: failed to get load code assist response: error getting token source: You are not logged into Antigravity.
+E0522 14:01:01.455847 89335 log.go:398] Failed to poll FetchAvailableModels: failed to get load code assist response: error getting token source: You are not logged into Antigravity.
+I0522 14:01:01.456149 89335 server.go:2254] State refresh took 0ms
+I0522 14:01:01.485752 89335 server.go:1912] initialized server successfully in 165.010104ms
+I0522 14:01:01.487093 89335 auto_updater.go:253] Spawned background update process with PID 89355
+I0522 14:01:01.487270 89335 common.go:103] Launching CLI mode
+I0522 14:01:01.488488 89335 project.go:64] project: discovered project "/home/humbertoed/gemini_projects" (id=872fac8c-e5d8-417d-a397-56e3d1a2b04c) via /home/humbertoed/gemini_projects/.antigravitycli
+I0522 14:01:01.488531 89335 common.go:156] project: using project "/home/humbertoed/gemini_projects" (id=872fac8c-e5d8-417d-a397-56e3d1a2b04c) at /home/humbertoed/.gemini/config/projects/872fac8c-e5d8-417d-a397-56e3d1a2b04c.json
+E0522 14:01:01.488550 89335 common.go:188] Failed to resolve GeminiDir ".gemini": .gemini must be an absolute path: path is not absolute, falling back to default
+I0522 14:01:01.488573 89335 common.go:197] CLI app data directory: /home/humbertoed/.gemini/antigravity-cli
+I0522 14:01:01.488799 89335 server.go:200] Creating CLI server backend: product=antigravity workspaceDirs=[] appDataDir=/home/humbertoed/.gemini/antigravity-cli cascadeManager=true codeAssist=true
+I0522 14:01:01.489088 89335 token_storage.go:55] Using file-based token storage because WSL environment detected
+W0522 14:01:01.489138 89335 log_context.go:117] Cache(loadCodeAssistResponse): Singleflight refresh failed: error getting token source: You are not logged into Antigravity.
+W0522 14:01:01.489185 89335 log_context.go:117] Cache(userInfo): Singleflight refresh failed: failed to get load code assist response: error getting token source: You are not logged into Antigravity.
+E0522 14:01:01.489440 89335 server.go:604] Failed to get OAuth token: error getting token source from auth provider: You are not logged into Antigravity.
+W0522 14:01:01.489548 89335 client.go:81] failed to set auth token
+I0522 14:01:01.528136 89335 common.go:224] Continuing last-used conversation (from cache): 2644b80d-d27a-49c0-a77f-ba504c9e1392
+I0522 14:01:01.528719 89335 printmode.go:71] Print mode: starting (promptLength=90, model="", conversationID="2644b80d-d27a-49c0-a77f-ba504c9e1392")
+I0522 14:01:01.528925 89335 manager.go:249] Initializing CLI store manager for workspace /home/humbertoed/gemini_projects
+I0522 14:01:01.530546 89335 cli_setting_manager.go:612] Skipping telemetry propagation because user is not logged in
+I0522 14:01:01.530598 89335 cli_setting_manager.go:66] CLI settings initialized: permissions=<nil>, toolPermission=request-review
+I0522 14:01:01.531515 89335 manager.go:312] CLI store manager initialized successfully
+I0522 14:01:01.531568 89335 printmode.go:164] Print mode: not authenticated, trying silent auth
+I0522 14:01:01.634193 89335 auth.go:114] ChainedAuth: authenticated via keyring (effective: keyring)
+I0522 14:01:01.634358 89335 server_oauth.go:212] applyAuthResult: email=humbertoed@gmail.com, authMethod=consumer, quotaProject=
+I0522 14:01:01.634388 89335 server_oauth.go:217] OAuth: authenticated successfully as humbertoed@gmail.com
+I0522 14:01:01.634399 89335 server_oauth.go:223] b.codeAssistClient.AuthProvider (0x38b572f19480) is same as b.cliAuth (0x38b572f19480)
+I0522 14:01:02.036785 89335 http_helpers.go:182] URL: https://daily-cloudcode-pa.googleapis.com/v1internal:loadCodeAssist Trace: 0xb87234c3810fe411
+I0522 14:01:02.245595 89335 http_helpers.go:182] URL: https://daily-cloudcode-pa.googleapis.com/v1internal:fetchAvailableModels Trace: 0xd9e97406b8a62030
+I0522 14:01:02.247966 89335 model_config_manager.go:157] Propagating selected model override to backend: label="Gemini 3.5 Flash (High)"
+I0522 14:01:02.381304 89335 printmode.go:166] Print mode: silent auth succeeded
+I0522 14:01:02.381355 89335 printmode.go:125] Print mode: resuming conversation 2644b80d-d27a-49c0-a77f-ba504c9e1392
+I0522 14:01:02.381404 89335 input_loop.go:499] Auth done received, triggering experiment refresh
+I0522 14:01:02.381678 89335 conversation_manager.go:378] Streaming conversation 2644b80d-d27a-49c0-a77f-ba504c9e1392
+I0522 14:01:02.381796 89335 experiment_manager.go:35] Starting experiment refresh after login
+I0522 14:01:02.382684 89335 server.go:766] Starting conversation update stream for 2644b80d-d27a-49c0-a77f-ba504c9e1392
+I0522 14:01:02.382737 89335 printmode.go:130] Print mode: conversation=2644b80d-d27a-49c0-a77f-ba504c9e1392, sending message
+I0522 14:01:02.468836 89335 experiment_manager.go:39] Experiments refreshed after login
+I0522 14:01:02.468977 89335 conversation_manager.go:321] Forwarding user message to conversation 2644b80d-d27a-49c0-a77f-ba504c9e1392 (items=1, media=0)
+I0522 14:01:02.469064 89335 server.go:1072] Sending user message to conversation 2644b80d-d27a-49c0-a77f-ba504c9e1392 (items=1, media=0)
+I0522 14:01:02.469068 89335 manager.go:932] Reloading system slash commands
+I0522 14:01:02.472025 89335 printmode_manager.go:90] PlannerResponse without ModifiedResponse encountered
+I0522 14:01:02.472037 89335 printmode_manager.go:90] PlannerResponse without ModifiedResponse encountered
+I0522 14:01:02.472041 89335 printmode_manager.go:90] PlannerResponse without ModifiedResponse encountered
+I0522 14:01:02.472044 89335 printmode_manager.go:90] PlannerResponse without ModifiedResponse encountered
+I0522 14:01:02.472047 89335 printmode_manager.go:90] PlannerResponse without ModifiedResponse encountered
+I0522 14:01:02.472051 89335 printmode_manager.go:90] PlannerResponse without ModifiedResponse encountered
+I0522 14:01:02.472056 89335 printmode_manager.go:90] PlannerResponse without ModifiedResponse encountered
+I0522 14:01:02.472059 89335 printmode_manager.go:90] PlannerResponse without ModifiedResponse encountered
+I0522 14:01:02.472063 89335 printmode_manager.go:90] PlannerResponse without ModifiedResponse encountered
+I0522 14:01:02.472066 89335 printmode_manager.go:90] PlannerResponse without ModifiedResponse encountered
+E0522 14:01:02.478890 89335 discovery.go:334] Failed to load JSON config file /home/humbertoed/.gemini/config/mcp_config.json: unexpected end of JSON input
+I0522 14:01:02.735429 89335 http_helpers.go:182] URL: https://daily-cloudcode-pa.googleapis.com/v1internal:loadCodeAssist Trace: 0x28f7157f29cba720
+I0522 14:01:03.081650 89335 http_helpers.go:182] URL: https://daily-cloudcode-pa.googleapis.com/v1internal:loadCodeAssist Trace: 0x2c0f30475ccade15
+I0522 14:01:03.151522 89335 model_config_manager.go:157] Propagating selected model override to backend: label="Gemini 3.5 Flash (High)"
+I0522 14:01:03.151816 89335 model_config_manager.go:157] Propagating selected model override to backend: label="Gemini 3.5 Flash (High)"
+I0522 14:01:03.287077 89335 input_loop.go:499] Auth done received, triggering experiment refresh
+I0522 14:01:03.287213 89335 experiment_manager.go:35] Starting experiment refresh after login
+I0522 14:01:03.315310 89335 input_loop.go:499] Auth done received, triggering experiment refresh
+I0522 14:01:03.315420 89335 experiment_manager.go:35] Starting experiment refresh after login
+E0522 14:01:03.319023 89335 log.go:398] agent executor error: RESOURCE_EXHAUSTED (code 429): Individual quota reached. Contact your administrator to enable overages. Resets in 2m51s.: RESOURCE_EXHAUSTED (code 429): Individual quota reached. Contact your administrator to enable overages. Resets in 2m51s.
+E0522 14:01:03.321062 89335 log.go:398] RESOURCE_EXHAUSTED (code 429): Individual quota reached. Contact your administrator to enable overages. Resets in 2m51s.: RESOURCE_EXHAUSTED (code 429): Individual quota reached. Contact your administrator to enable overages. Resets in 2m51s.
+I0522 14:01:03.349269 89335 experiment_manager.go:39] Experiments refreshed after login
+I0522 14:01:03.349395 89335 manager.go:932] Reloading system slash commands
+I0522 14:01:03.351720 89335 model_config_manager.go:157] Propagating selected model override to backend: label="Gemini 3.5 Flash (High)"
+I0522 14:01:03.352263 89335 experiment_manager.go:39] Experiments refreshed after login
+I0522 14:01:03.352322 89335 manager.go:932] Reloading system slash commands
+I0522 14:01:03.354318 89335 manager.go:936] Slash commands unchanged, skipping update
+I0522 14:01:03.355961 89335 manager.go:936] Slash commands unchanged, skipping update
+I0522 14:01:03.474770 89335 printmode_manager.go:90] PlannerResponse without ModifiedResponse encountered
+I0522 14:01:03.474825 89335 input_loop.go:499] Auth done received, triggering experiment refresh
+I0522 14:01:03.474841 89335 experiment_manager.go:35] Starting experiment refresh after login
+I0522 14:01:03.474920 89335 manager.go:450] CLI store manager shutting down
+I0522 14:01:03.475261 89335 conversation_manager.go:346] Stopping conversation stream
+I0522 14:01:03.475664 89335 server.go:2160] Language server shutting down

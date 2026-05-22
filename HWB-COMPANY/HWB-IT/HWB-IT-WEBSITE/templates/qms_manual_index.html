@@ -4,54 +4,109 @@
 
 {% block content %}
 <div class="sop-card">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
         <div>
-            <h1 style="font-size: 2.5rem; font-weight: 900; color: #0f172a; margin-bottom: 0.5rem;">Institutional Operating Manual</h1>
-            <p style="font-size: 1.1rem; color: #64748b;">Controlled Documented Information | ISO 9001 Compliance Tracker</p>
+            <h1 style="font-size: 2.25rem; font-weight: 900; color: #0f172a; margin: 0 0 0.5rem 0; letter-spacing: -0.03em;">Institutional Operating Manual</h1>
+            <p style="font-size: 0.95rem; color: #64748b; margin: 0;">Controlled Documented Information | ISO 9001 Compliance Tracker</p>
         </div>
-        <div style="display: flex; gap: 1rem;">
-            <div style="text-align: right; margin-right: 2rem;">
-                <div style="font-size: 0.6rem; font-weight: 900; color: #94a3b8; text-transform: uppercase;">Compliance Status</div>
-                <div style="display: flex; gap: 1rem; margin-top: 0.25rem;">
-                    <span style="font-size: 0.65rem; font-weight: 800; color: #16a34a;">● UPDATED</span>
-                    <span style="font-size: 0.65rem; font-weight: 800; color: #f59e0b;">● OUTDATED</span>
+        <div style="display: flex; gap: 1rem; align-items: center;">
+            <div style="text-align: right; margin-right: 1rem;">
+                <div style="font-size: 0.65rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">Compliance Status</div>
+                <div style="display: flex; gap: 0.75rem;">
+                    <span style="font-size: 0.7rem; font-weight: 800; color: #137333; background: #e6f4ea; padding: 0.15rem 0.5rem; border-radius: 10px;">UPDATED</span>
+                    <span style="font-size: 0.7rem; font-weight: 800; color: #b06000; background: #fef7e0; padding: 0.15rem 0.5rem; border-radius: 10px;">OUTDATED</span>
                 </div>
             </div>
-            <button onclick="window.print()" class="isc-btn isc-btn-primary" style="height: 44px; padding: 0 2rem; border-radius: 6px;"><i class="fas fa-print" style="margin-right: 8px;"></i> Print Index</button>
+            <!-- Compressed utility buttons (36px high, sharp 6px border-radius, 600 weight text) -->
+            <button onclick="window.print()" class="isc-btn" style="height: 36px; padding: 0 1.25rem; border-radius: 6px; border: 1px solid #cbd5e1; background: #ffffff; color: #334155; font-size: 0.8rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                <svg style="width: 14px; height: 14px; fill: currentColor;" viewBox="0 0 24 24"><path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z"/></svg>
+                Print Index
+            </button>
         </div>
     </div>
 
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4rem;">
+    <!-- Enterprise Tab Rack -->
+    <div class="sigma-tab-rack" style="display: flex; gap: 0.25rem; margin-bottom: 2.5rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0px; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none;">
+        <button class="sigma-tab active" data-dept="all" style="background: none; border: none; padding: 0.75rem 1.25rem; font-size: 0.85rem; font-weight: 600; color: #2563eb; cursor: pointer; border-bottom: 3px solid #2563eb; transition: all 0.2s; white-space: nowrap;">
+            All Departments
+        </button>
+        {% for dept in sops_by_dept.keys() %}
+        <button class="sigma-tab" data-dept="{{ dept.lower().replace(' ', '-') }}" style="background: none; border: none; padding: 0.75rem 1.25rem; font-size: 0.85rem; font-weight: 600; color: #64748b; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s; white-space: nowrap;">
+            {{ dept }}
+        </button>
+        {% endfor %}
+    </div>
+
+    <!-- SOP list divided by department -->
+    <div id="qms-manual-list" style="display: flex; flex-direction: column; gap: 2.5rem;">
         {% for dept, sops in sops_by_dept.items() %}
-        <div class="qms-index-group">
-            <h2 style="font-size: 1.25rem; font-weight: 800; color: #2563eb; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem; text-transform: uppercase;">{{ dept }}</h2>
-            <ul style="list-style: none; padding: 0;">
+        <div class="qms-index-group" data-dept-group="{{ dept.lower().replace(' ', '-') }}">
+            <h2 style="font-size: 1.15rem; font-weight: 800; color: #0f172a; border-bottom: 2px solid #f1f5f9; padding-bottom: 0.5rem; margin: 0 0 1.25rem 0; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.5rem;">
+                <span style="width: 4px; height: 16px; background: #2563eb; display: inline-block; border-radius: 2px;"></span>
+                {{ dept }}
+            </h2>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
                 {% for sop in sops %}
-                <li style="margin-bottom: 1.25rem; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: flex-start;">
-                    <a href="{{ url_for('view_sop', filename=sop.file) }}" style="text-decoration: none; flex-grow: 1;">
-                        <strong style="color: #0f172a; display: block; font-size: 0.95rem;">{{ sop.id }} | {{ sop.title }}</strong>
-                        <span style="font-size: 0.75rem; color: #94a3b8;">Version: {{ sop.version }} | Date: {{ sop.date }}</span>
+                <div class="sop-item-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.25rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.02); transition: all 0.2s ease-in-out; cursor: pointer;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 10px 20px -5px rgba(0,0,0,0.05), 0 2px 4px rgba(0,0,0,0.02)'; this.style.borderColor='#3b82f6';" onmouseout="this.style.transform='none'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.02)'; this.style.borderColor='#e2e8f0';">
+                    <a href="{{ url_for('view_sop', filename=sop.file) }}" style="text-decoration: none; display: flex; flex-grow: 1; justify-content: space-between; align-items: center; color: inherit;">
+                        <div style="flex-grow: 1; padding-right: 1.5rem;">
+                            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.25rem;">
+                                <span class="sop-id-badge" style="font-size: 0.7rem; font-weight: 800; color: #2563eb; background: #eff6ff; padding: 0.15rem 0.5rem; border-radius: 4px; border: 1px solid #dbeafe;">{{ sop.id }}</span>
+                                <h3 style="font-size: 0.95rem; font-weight: 700; color: #0f172a; margin: 0; line-height: 1.3;">{{ sop.title.replace('Standard Operating Procedure: ', '') }}</h3>
+                            </div>
+                            <span style="font-size: 0.75rem; color: #64748b; font-weight: 500;">Version: {{ sop.version }} | Date: {{ sop.date }}</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <span class="status-pill {% if sop.compliance == 'UPDATED' %}status-updated{% else %}status-outdated{% endif %}" style="
+                                font-size: 0.65rem; 
+                                font-weight: 800; 
+                                padding: 0.25rem 0.6rem; 
+                                border-radius: 12px; 
+                                text-transform: uppercase;
+                                letter-spacing: 0.05em;
+                                {% if sop.compliance == 'UPDATED' %}
+                                    background: #e6f4ea; color: #137333;
+                                {% else %}
+                                    background: #fef7e0; color: #b06000;
+                                {% endif %}
+                            ">
+                                {{ sop.compliance }}
+                            </span>
+                            <svg style="width: 16px; height: 16px; fill: #94a3b8;" viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+                        </div>
                     </a>
-                    <span style="
-                        font-size: 0.6rem; 
-                        font-weight: 900; 
-                        padding: 0.2rem 0.6rem; 
-                        border-radius: 4px; 
-                        margin-left: 1rem;
-                        white-space: nowrap;
-                        {% if sop.compliance == 'UPDATED' %}
-                            background: #dcfce7; color: #166534; border: 1px solid #bbf7d0;
-                        {% else %}
-                            background: #fef3c7; color: #92400e; border: 1px solid #fde68a;
-                        {% endif %}
-                    ">
-                        {{ sop.compliance }}
-                    </span>
-                </li>
+                </div>
                 {% endfor %}
-            </ul>
+            </div>
         </div>
         {% endfor %}
     </div>
 </div>
+
+<script>
+    document.querySelectorAll('.sigma-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.sigma-tab').forEach(t => {
+                t.classList.remove('active');
+                t.style.color = '#64748b';
+                t.style.borderBottomColor = 'transparent';
+            });
+            
+            tab.classList.add('active');
+            tab.style.color = '#2563eb';
+            tab.style.borderBottomColor = '#2563eb';
+            
+            const targetDept = tab.getAttribute('data-dept');
+            
+            document.querySelectorAll('.qms-index-group').forEach(group => {
+                const groupDept = group.getAttribute('data-dept-group');
+                if (targetDept === 'all' || groupDept === targetDept) {
+                    group.style.display = 'block';
+                } else {
+                    group.style.display = 'none';
+                }
+            });
+        });
+    });
+</script>
 {% endblock %}

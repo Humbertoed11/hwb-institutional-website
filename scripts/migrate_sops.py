@@ -97,6 +97,64 @@ def process_callouts(md_text):
     
     return md_text
 
+def extract_metadata_html(content, filename):
+    title = filename.replace(".html", "").replace("_", " ").title()
+    h1_match = re.search(r'<h1>Standard Operating Procedure:\s*<strong>(.*?)</strong></h1>', content, re.IGNORECASE)
+    if not h1_match:
+        h1_match = re.search(r'<h1>Standard Operating Procedure:\s*(.*?)</h1>', content, re.IGNORECASE)
+    if h1_match:
+        title = h1_match.group(1).strip().replace("<strong>", "").replace("</strong>", "")
+    
+    meta = {
+        "title": title, 
+        "doc_id": "HWB-TBD", 
+        "version": "1.0", 
+        "status": "DRAFT", 
+        "clause": "7.5",
+        "date": "2000-01-01"
+    }
+
+    # Extract meta-val elements or table row data
+    id_match = re.search(r'<td><strong>Document ID</strong></td><td>(.*?)</td>', content, re.IGNORECASE)
+    if not id_match:
+        id_match = re.search(r'<td>Document ID</td><td>(.*?)</td>', content, re.IGNORECASE)
+    if not id_match:
+        id_match = re.search(r'<span class="meta-label">Document ID</span><span class="meta-val">(.*?)</span>', content, re.IGNORECASE)
+    if id_match:
+        meta["doc_id"] = id_match.group(1).strip().replace("<strong>", "").replace("</strong>", "")
+        
+    version_match = re.search(r'<td><strong>Version</strong></td><td>(.*?)</td>', content, re.IGNORECASE)
+    if not version_match:
+        version_match = re.search(r'<td>Version</td><td>(.*?)</td>', content, re.IGNORECASE)
+    if not version_match:
+        version_match = re.search(r'<span class="meta-label">Version</span><span class="meta-val">(.*?)</span>', content, re.IGNORECASE)
+    if version_match:
+        meta["version"] = version_match.group(1).strip().replace("<strong>", "").replace("</strong>", "")
+
+    status_match = re.search(r'<td><strong>Status</strong></td><td>(.*?)</td>', content, re.IGNORECASE)
+    if not status_match:
+        status_match = re.search(r'<td>Status</td><td>(.*?)</td>', content, re.IGNORECASE)
+    if not status_match:
+        status_match = re.search(r'<span class="meta-label">Status</span><span class="meta-val".*?>●\s*(.*?)</span>', content, re.IGNORECASE)
+    if status_match:
+        meta["status"] = status_match.group(1).strip().replace("<strong>", "").replace("</strong>", "")
+
+    clause_match = re.search(r'<td><strong>ISO 9001 Clause</strong></td><td>(.*?)</td>', content, re.IGNORECASE)
+    if not clause_match:
+        clause_match = re.search(r'<td>ISO 9001 Clause</td><td>(.*?)</td>', content, re.IGNORECASE)
+    if not clause_match:
+        clause_match = re.search(r'<span class="meta-label">Clause</span><span class="meta-val">(.*?)</span>', content, re.IGNORECASE)
+    if clause_match:
+        meta["clause"] = clause_match.group(1).strip().replace("<strong>", "").replace("</strong>", "")
+
+    date_match = re.search(r'<td><strong>Date</strong></td><td>(.*?)</td>', content, re.IGNORECASE)
+    if not date_match:
+        date_match = re.search(r'<td>Date</td><td>(.*?)</td>', content, re.IGNORECASE)
+    if date_match:
+        meta["date"] = date_match.group(1).strip().replace("<strong>", "").replace("</strong>", "")
+        
+    return meta
+
 def get_compliance_status(date_str):
     try:
         date_str = date_str.replace('/', '-')
@@ -120,24 +178,28 @@ def migrate():
             
         print(f"[PROCESSING] {dept}...")
         for filename in os.listdir(dept_path):
-            if filename.endswith(".md"):
+            if filename.endswith(".md") or filename.endswith(".html"):
                 file_path = os.path.join(dept_path, filename)
                 with open(file_path, "r", encoding="utf-8") as f:
-                    md_content = f.read()
+                    content = f.read()
                 
-                meta = extract_metadata(md_content, filename)
-                compliance = get_compliance_status(meta["date"])
-                
-                hardened_md = process_callouts(md_content)
-                content_html = markdown.markdown(hardened_md, extensions=['tables', 'fenced_code', 'toc'])
-                
-                final_html = HTML_TEMPLATE.format(
-                    doc_id=meta["doc_id"],
-                    version=meta["version"],
-                    status=meta["status"],
-                    clause=meta["clause"],
-                    content_html=content_html
-                )
+                if filename.endswith(".html"):
+                    meta = extract_metadata_html(content, filename)
+                    compliance = get_compliance_status(meta["date"])
+                    final_html = content
+                else:
+                    meta = extract_metadata(content, filename)
+                    compliance = get_compliance_status(meta["date"])
+                    hardened_md = process_callouts(content)
+                    content_html = markdown.markdown(hardened_md, extensions=['tables', 'fenced_code', 'toc'])
+                    
+                    final_html = HTML_TEMPLATE.format(
+                        doc_id=meta["doc_id"],
+                        version=meta["version"],
+                        status=meta["status"],
+                        clause=meta["clause"],
+                        content_html=content_html
+                    )
                 
                 safe_name = filename.replace(".md", ".html").replace(" ", "_").lower()
                 with open(os.path.join(OUTPUT_DIR, safe_name), "w", encoding="utf-8") as f:

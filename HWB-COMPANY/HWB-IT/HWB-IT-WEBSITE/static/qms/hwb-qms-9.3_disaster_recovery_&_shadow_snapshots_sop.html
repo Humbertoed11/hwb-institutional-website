@@ -1,0 +1,130 @@
+<!-- 
+    SigmaFidelity™ Institutional SOP Template (HTML Version 3.0)
+    Standard: HWB-QMS-1.0
+    Document: HWB-QMS-9.3 Disaster Recovery & Shadow Snapshots SOP
+    Approved By: Humberto Dominguez, CEO
+-->
+<div class="sop-card">
+    <!-- 0.0 DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-9.3</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">8.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">9.3 (Disaster Recovery & Safety Snapshots)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <table>
+            <thead>
+                <tr>
+                    <th><strong>Document Control</strong></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td><strong>Document Title</strong></td><td><strong>Disaster Recovery & Shadow Snapshots SOP</strong></td></tr>
+                <tr><td><strong>Document ID</strong></td><td>HWB-QMS-9.3</td></tr>
+                <tr><td><strong>Version</strong></td><td>8.0.0</td></tr>
+                <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
+                <tr><td><strong>Author</strong></td><td>George (Systems Architect)</td></tr>
+                <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
+                <tr><td><strong>Date</strong></td><td>05-22-2026</td></tr>
+                <tr><td><strong>ISO 9001 Clause</strong></td><td>9.3</td></tr>
+            </tbody>
+        </table>
+
+        <hr />
+
+        <h1>Standard Operating Procedure: <strong>Disaster Recovery & Shadow Snapshots</strong></h1>
+
+        <h2>1.0 Purpose</h2>
+        <p>This document explains how to keep our website running and protect our business data if files are broken, deleted by mistake, or if a system crash happens. It provides a simple step-by-step path to backup our code and restore it instantly using safety snapshots.</p>
+
+        <h2>2.0 Scope</h2>
+        <p>This protocol applies to all active website pages, application settings, database structures, and artificial intelligence configurations inside our development workspaces.</p>
+
+        <h2>3.0 Operational Roles</h2>
+        <ul>
+            <li><strong>George (Systems Architect):</strong> In charge of starting emergency rollbacks and confirming that the system is fully healthy.</li>
+            <li><strong>Peter (Recovery Specialist):</strong> In charge of creating regular backups and restoring the files.</li>
+            <li><strong>CEO (Humberto Dominguez):</strong> Final approval authority for any full system rollbacks.</li>
+        </ul>
+
+        <h2>4.0 Safety Snapshot Setup</h2>
+        <p>To prevent loss of work, our system is protected by a background script called <strong>Peter Sentinel</strong>. This script takes a quick picture of our work (a "Shadow Snapshot") and saves it locally. This runs in the background, but we can also start it by hand.</p>
+
+        <div class="callout callout-note">
+            <strong>Important Safety Standard</strong>
+            <p>Every time we begin a complex project, we must run the backup script by hand to create an instant rollback point. This ensures we can easily undo our changes if the new implementation breaks the site.</p>
+        </div>
+
+        <h2>5.0 Step-by-Step Procedures</h2>
+
+        <h3>5.1 Creating a Rollback Point (By Hand)</h3>
+        <p>Before modifying any code, a team member must create a physical rollback point using these simple steps:</p>
+        <ol>
+            <li>Open the terminal in the main project folder.</li>
+            <li>Run our safety backup script using the local virtual environment:
+                <pre><code>.venv_agent/bin/python scripts/peter_sentinel.py</code></pre>
+            </li>
+            <li>Verify that the script outputs a success message listing the protected items. This script automatically saves copies of our main application controller (<code>main_app.py</code>), orchestrator settings, database models, agent logs, and configuration settings (<code>.env</code>).</li>
+            <li>The snapshot will be saved in the safety vault directory:
+                <pre><code>HWB-COMPANY/HWB-IT/HWB-IT-SYSTEM-LOGS/shadow_snapshots/[TIMESTAMP]/</code></pre>
+            </li>
+        </ol>
+
+        <h3>5.2 The Panic Button: Restoring Broken Files</h3>
+        <p>If the website stops working or if files become broken during development, execute the restoration sequence:</p>
+        <ol>
+            <li>Navigate to the safety vault directory to locate your target backup timestamp folder:
+                <pre><code>HWB-COMPANY/HWB-IT/HWB-IT-SYSTEM-LOGS/shadow_snapshots/</code></pre>
+            </li>
+            <li>Copy all backed-up files from the chosen timestamp folder directly back into your active website directory:
+                <pre><code>cp -r HWB-COMPANY/HWB-IT/HWB-IT-SYSTEM-LOGS/shadow_snapshots/[TIMESTAMP]/* HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/</code></pre>
+            </li>
+            <li>If database files are corrupted or missing, restore them using the latest `.sql` database copy inside our database backup folder.</li>
+        </ol>
+
+        <h2>6.0 Verification (Zero-Defect Check)</h2>
+        <p>After a restore operation, the team must verify that the website is fully healthy:</p>
+        <ul>
+            <li>Run a diagnostic script to check for logical errors or missing dependencies:
+                <pre><code>.venv_agent/bin/python diag_dashboard.py</code></pre>
+            </li>
+            <li>Verify that the local website servers start without error and are accessible on ports 5000 and 8000.</li>
+            <li>Open the web manual in a web browser and verify that all dynamic links and standard procedures load correctly.</li>
+        </ul>
+
+        <h2>7.0 Revision History</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Version</th>
+                    <th>Date</th>
+                    <th>Author</th>
+                    <th>Change Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1.0.0 - 7.0.0</td>
+                    <td>02-28-2026 to 04-27-2026</td>
+                    <td>George</td>
+                    <td>Legacy Markdown versions (Retired).</td>
+                </tr>
+                <tr>
+                    <td>8.0.0</td>
+                    <td>05-22-2026</td>
+                    <td>George</td>
+                    <td>First modernized HTML release. Fused legacy 9.3, 9.3.1, and 9.3.2 into a single unified standard in Everyday Words. Added Sentinel manual terminal commands. Approved by CEO.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="sop-card-footer">
+        <span>&copy; 2026 HWB Cleaning Services LLC</span>
+        <span>Controlled Document | HWB-QMS-9.3</span>
+        <span>Page <span class="page-number"></span></span>
+    </div>
+</div>

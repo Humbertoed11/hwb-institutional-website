@@ -630,15 +630,6 @@
         "date": "2000-01-01"
     },
     {
-        "title": "1.0 Objective",
-        "id": "HWB-QMS-9.3.2-PANIC",
-        "dept": "QMS",
-        "file": "hwb-qms-9.3.2_disaster_recovery_-_the_panic_button_sop.html",
-        "version": "1.0.0",
-        "compliance": "OUTDATED",
-        "date": "04/27/2026"
-    },
-    {
         "title": "Hwb-Qms-7.5 Quote App Setup And Development Log Sop",
         "id": "HWB-QMS-7.5",
         "dept": "QMS",
@@ -675,22 +666,22 @@
         "date": "2026-03-05"
     },
     {
-        "title": "Standard Operating Procedure: Disaster Recovery and Data Restoration SOP",
-        "id": "HWB-QMS-9.3",
-        "dept": "QMS",
-        "file": "hwb-qms-9.3_disaster_recovery_and_data_restoration_sop.html",
-        "version": "7.0",
-        "compliance": "OUTDATED",
-        "date": "2026-03-23"
-    },
-    {
         "title": "Standard Operating Procedure: Institutional Documentation Standard SOP",
         "id": "HWB-QMS-1.0",
         "dept": "QMS",
         "file": "hwb-qms-1.0_institutional_documentation_standard_sop.html",
-        "version": "1.0.0",
+        "version": "2.0.0 (HTML Transition)",
         "compliance": "UPDATED",
-        "date": "05/21/2026"
+        "date": "05/22/2026"
+    },
+    {
+        "title": "Master SOP Index",
+        "id": "HWB-QMS-7.5-IDX-001",
+        "dept": "QMS",
+        "file": "hwb-qms-7.5_master_sop_index.html",
+        "version": "2.3.0",
+        "compliance": "UPDATED",
+        "date": "05-22-2026"
     },
     {
         "title": "ISO 9001:2015 Master Audit Mapping Flowchart",
@@ -718,15 +709,6 @@
         "version": "2.0.0",
         "compliance": "UPDATED",
         "date": "05/21/2026"
-    },
-    {
-        "title": "Hwb-Qms-7.5 Institutional Web Design System Sop",
-        "id": "HWB-QMS-7.5",
-        "dept": "QMS",
-        "file": "hwb-qms-7.5_institutional_web_design_system_sop.html",
-        "version": "1.0",
-        "compliance": "OUTDATED",
-        "date": "2000-01-01"
     },
     {
         "title": "Official Letterhead Template",
@@ -765,13 +747,13 @@
         "date": "05/21/2026"
     },
     {
-        "title": "Master SOP Index",
-        "id": "HWB-QMS-7.5-IDX-001",
+        "title": "Institutional QMS Web Layout",
+        "id": "HWB-QMS-7.5",
         "dept": "QMS",
-        "file": "hwb-qms-7.5_master_sop_index.html",
-        "version": "2.0",
-        "compliance": "OUTDATED",
-        "date": "2026-03-20"
+        "file": "hwb-qms-7.5_institutional_qms_web_layout_sop.html",
+        "version": "3.0.0",
+        "compliance": "UPDATED",
+        "date": "05-22-2026"
     },
     {
         "title": "SigmaFidelity\u2122 DMADV Design Roadmap",
@@ -826,6 +808,15 @@
         "version": "2.0.0",
         "compliance": "UPDATED",
         "date": "05/21/2026"
+    },
+    {
+        "title": "Standard Operating Procedure: Institutional Memory & Neural Integration",
+        "id": "HWB-QMS-11.1-MEM",
+        "dept": "QMS",
+        "file": "hwb-qms-11.1_institutional_memory_&_neural_integration_sop.html",
+        "version": "3.1.0 (HTML Baseline)",
+        "compliance": "UPDATED",
+        "date": "05-22-2026"
     },
     {
         "title": "Hwb-Qms-8.8 Certified High-Stakes Sanitation Protocols",
@@ -945,15 +936,6 @@
         "date": "2000-01-01"
     },
     {
-        "title": "HWB-QMS-9.3.1 Disaster Recovery (Shadow Snapshots) SOP",
-        "id": "HWB-QMS-9.3",
-        "dept": "QMS",
-        "file": "hwb-qms-9.3.1_disaster_recovery_(shadow_snapshots)_sop.html",
-        "version": "1.0",
-        "compliance": "OUTDATED",
-        "date": "2000-01-01"
-    },
-    {
         "title": "S4/IEE Project Charter: HWB-MOB-2026 Mobile Execution Engine",
         "id": "HWB-QMS-FORM-008-BB-001",
         "dept": "QMS",
@@ -1008,6 +990,15 @@
         "date": "05/21/2026"
     },
     {
+        "title": "Cognitive Architecture &amp; Neural Growth",
+        "id": "HWB-QMS-11.2",
+        "dept": "QMS",
+        "file": "hwb-qms-11.2_cognitive_architecture_&_neural_growth_sop.html",
+        "version": "1.0.0",
+        "compliance": "UPDATED",
+        "date": "05-22-2026"
+    },
+    {
         "title": "Standard Operating Procedure: Risk Management Guidelines (ISO 31000)",
         "id": "HWB-QMS-4.7",
         "dept": "QMS",
@@ -1015,6 +1006,15 @@
         "version": "2.0.0",
         "compliance": "UPDATED",
         "date": "05/21/2026"
+    },
+    {
+        "title": "AI Delegation & QMS Subagent Governance",
+        "id": "HWB-QMS-11.3",
+        "dept": "QMS",
+        "file": "hwb-qms-11.3_ai_delegation_&_qms_subagent_governance_sop.html",
+        "version": "1.0.0",
+        "compliance": "UPDATED",
+        "date": "05-22-2026"
     },
     {
         "title": "Internal Audit Report Form",
@@ -1042,6 +1042,15 @@
         "version": "2.0.0",
         "compliance": "UPDATED",
         "date": "05/21/2026"
+    },
+    {
+        "title": "[Title Name]",
+        "id": "HWB-XXX-0.0",
+        "dept": "QMS",
+        "file": "sop_template.html",
+        "version": "1.0.0",
+        "compliance": "OUTDATED",
+        "date": "[MM-DD-YYYY]"
     },
     {
         "title": "Standard Operating Procedure: Automated Problem Management",
@@ -1116,13 +1125,13 @@
         "date": "2000-01-01"
     },
     {
-        "title": "Standard Operating Procedure: Gemini Master Setup",
+        "title": "Standard Operating Procedure: Gemini & Antigravity Master Setup",
         "id": "HWB-QMS-9.1-GEM",
         "dept": "QMS",
         "file": "hwb-qms-9.1_gemini_master_setup_sop.html",
-        "version": "2.0.0",
+        "version": "2.1.0",
         "compliance": "UPDATED",
-        "date": "05/21/2026"
+        "date": "05/22/2026"
     },
     {
         "title": "Strategic AHP: Vertical Prioritization",
@@ -1224,15 +1233,6 @@
         "date": "2000-01-01"
     },
     {
-        "title": "Hwb-Qms-9.3 Disaster Recovery And Data Restoration Sop-Desktop-Bcsqj7I",
-        "id": "HWB-QMS-9.3",
-        "dept": "QMS",
-        "file": "hwb-qms-9.3_disaster_recovery_and_data_restoration_sop-desktop-bcsqj7i.html",
-        "version": "1.0",
-        "compliance": "OUTDATED",
-        "date": "2000-01-01"
-    },
-    {
         "title": "Strategic Management & Planning Tools",
         "id": "HWB-QMS-STRAT-005",
         "dept": "QMS",
@@ -1258,6 +1258,15 @@
         "version": "1.0",
         "compliance": "OUTDATED",
         "date": "2000-01-01"
+    },
+    {
+        "title": "Disaster Recovery & Shadow Snapshots",
+        "id": "HWB-QMS-9.3",
+        "dept": "QMS",
+        "file": "hwb-qms-9.3_disaster_recovery_&_shadow_snapshots_sop.html",
+        "version": "8.0.0",
+        "compliance": "UPDATED",
+        "date": "05-22-2026"
     },
     {
         "title": "Project Communication Plan",
@@ -1291,9 +1300,9 @@
         "id": "HWB-QMS-10.4",
         "dept": "QMS",
         "file": "hwb-qms-10.4_operational_velocity_and_efficiency_sop.html",
-        "version": "1.0.0",
+        "version": "2.0.0",
         "compliance": "UPDATED",
-        "date": "05/21/2026"
+        "date": "05/22/2026"
     },
     {
         "title": "HWB-QMS-7.2: SigmaFidelity\u2122 Web & UI Standardization SOP",
@@ -1484,14 +1493,4 @@
         "compliance": "UPDATED",
         "date": "05/21/2026"
     }
-    , { \"title\": \"Ability and Skill Innovation\", \"id\": \"HWB-QMS-10.5\", \"dept\": \"FOUNDATIONAL\", \"file\": \"hwb-qms-10.5_ability_and_skill_innovation_sop.html\", \"version\": \"1.0.0\", \"compliance\": \"UPDATED\", \"date\": \"05/21/2026\" }
-    , { \"title\": \"Operational Velocity and Efficiency\", \"id\": \"HWB-QMS-10.4\", \"dept\": \"FOUNDATIONAL\", \"file\": \"hwb-qms-10.4_operational_velocity_and_efficiency_sop.html\", \"version\": \"1.0.0\", \"compliance\": \"UPDATED\", \"date\": \"05/21/2026\" }
-    , { \"title\": \"Secret Management and API Governance\", \"id\": \"HWB-QMS-9.5\", \"dept\": \"FOUNDATIONAL\", \"file\": \"hwb-qms-9.5_secret_management_and_api_credential_governance_sop.html\", \"version\": \"2.0.0\", \"compliance\": \"UPDATED\", \"date\": \"05/21/2026\" }
-    , { \"title\": \"Intuition Engine and Pattern Recognition\", \"id\": \"HWB-QMS-9.4\", \"dept\": \"FOUNDATIONAL\", \"file\": \"hwb-qms-9.4_intuition_engine_and_pattern_recognition_sop.html\", \"version\": \"1.0.0\", \"compliance\": \"UPDATED\", \"date\": \"05/21/2026\" }
-    , { \"title\": \"Automated Problem Management\", \"id\": \"HWB-QMS-10.3\", \"dept\": \"FOUNDATIONAL\", \"file\": \"hwb-qms-10.3_automated_problem_management_sop.html\", \"version\": \"1.0.0\", \"compliance\": \"UPDATED\", \"date\": \"05/21/2026\" }
-    , { \"title\": \"Institutional Documentation Standard\", \"id\": \"HWB-QMS-1.0\", \"dept\": \"FOUNDATIONAL\", \"file\": \"hwb-qms-1.0_institutional_documentation_standard_sop.html\", \"version\": \"1.0.0\", \"compliance\": \"UPDATED\", \"date\": \"05/21/2026\" }
-    , { \"title\": \"HWB Website Design Rules\", \"id\": \"HWB-QMS-7.5\", \"dept\": \"FOUNDATIONAL\", \"file\": \"hwb-qms-7.5_web_design_rules.html\", \"version\": \"2.3.2\", \"compliance\": \"UPDATED\", \"date\": \"05/20/2026\" }
-    , { \"title\": \"Backend Architecture & Logic\", \"id\": \"HWB-QMS-7.6\", \"dept\": \"FOUNDATIONAL\", \"file\": \"hwb-qms-7.6_backend_architecture.html\", \"version\": \"1.0.0\", \"compliance\": \"UPDATED\", \"date\": \"05/20/2026\" }
-    , { \"title\": \"Backend Web System Sequence\", \"id\": \"HWB-QMS-7.7\", \"dept\": \"FOUNDATIONAL\", \"file\": \"hwb-qms-7.7_backend_web_system.html\", \"version\": \"1.0.0\", \"compliance\": \"UPDATED\", \"date\": \"05/20/2026\" }
-    , { \"title\": \"Backend Component Standard\", \"id\": \"HWB-QMS-7.9\", \"dept\": \"FOUNDATIONAL\", \"file\": \"hwb-qms-7.9_backend_component_standard.html\", \"version\": \"1.4.0\", \"compliance\": \"UPDATED\", \"date\": \"05/21/2026\" }
 ]

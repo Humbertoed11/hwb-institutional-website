@@ -3,9 +3,9 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-9.3</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">7.0</span></div>
-        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● Approved</span></div>
-        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.1.3 (Infrastructure)</span></div>
     </div>
 
     <div class="sop-content-body">
@@ -27,15 +27,15 @@
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Version</strong></td>
-<td style="text-align: left;">7.0</td>
+<td style="text-align: left;">2.0.0</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Status</strong></td>
-<td style="text-align: left;">Approved</td>
+<td style="text-align: left;">APPROVED</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Author</strong></td>
-<td style="text-align: left;">George (System Architect)</td>
+<td style="text-align: left;">George (Architect)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Approved By</strong></td>
@@ -43,216 +43,72 @@
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Date</strong></td>
-<td style="text-align: left;">2026-03-23</td>
+<td style="text-align: left;">05/21/2026</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>ISO 9001 Clause</strong></td>
+<td style="text-align: left;">7.1.3 (Infrastructure)</td>
 </tr>
 </tbody>
 </table>
 <hr />
 <h1 id="standard-operating-procedure-disaster-recovery-and-data-restoration-sop">Standard Operating Procedure: <strong>Disaster Recovery and Data Restoration SOP</strong></h1>
 <h2 id="10-purpose">1.0 Purpose</h2>
-<p>This SOP defines the procedures for keeping the business running and ensuring accurate information for HWB Cleaning Services LLC if data is lost, hardware breaks, or the system is hacked. It explains how to get the company setup, exact file locations, and code back from GitHub.</p>
+<p>This SOP defines how we recover our company data if a computer fails or a "catastrophe" occurs. It ensures that HWB Cleaning Services LLC can get back to work quickly by restoring our files from GitHub and our local backups.</p>
 <h2 id="20-scope">2.0 Scope</h2>
-<p>Applies to all digital files in the <code>gemini_projects</code> folder and the <code>hwb-institutional-website</code> for Azure cloud work.</p>
-<h2 id="30-prerequisites">3.0 Prerequisites</h2>
+<p>Applies to all HWB digital assets, including our manuals, website code, databases, and AI agent "Brains" (/core).</p>
+<h2 id="30-universal-mandates-2026-baseline">3.0 Universal Mandates (2026 Baseline)</h2>
+<ol>
+<li><strong>Guidance First:</strong> If a file is missing, ASK the CEO for guidance before searching the server.</li>
+<li><strong>Tier 6 Telemetry:</strong> Every recovery action must be logged to the <code>SigmaInteractionLog</code>.</li>
+<li><strong>Physical Truth:</strong> Reference absolute server paths for all restoration points.</li>
+</ol>
+<h2 id="40-prerequisites">4.0 Prerequisites</h2>
 <ul>
-<li>Git and GitHub CLI (gh) installed on the computer.</li>
-<li>Authorized access to GitHub using a Personal Access Token (PAT).</li>
+<li><strong>Git:</strong> Must be installed on the recovery machine.</li>
+<li><strong>Authorized Access:</strong> Access to the GitHub repository (Humbertoed11/gemini_projects).</li>
+<li><strong>Peter Sentinel:</strong> Must be configured to perform snapshots every 15 minutes.</li>
 </ul>
-<h3 id="31-critical-software-dependencies">3.1 Critical Software Dependencies</h3>
-<p>The following software must be installed and set up on the recovery computer (works on both Linux and Windows WSL) to make sure everything works:</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">Category</th>
-<th style="text-align: left;">Program / Library</th>
-<th style="text-align: left;">Platform</th>
-<th style="text-align: left;">Purpose</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;"><strong>OS Environment</strong></td>
-<td style="text-align: left;"><strong>WSL 2 (Ubuntu 24.04 LTS)</strong></td>
-<td style="text-align: left;">Windows</td>
-<td style="text-align: left;">Main Linux system for running scripts.</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>Version Control</strong></td>
-<td style="text-align: left;"><strong>Git</strong> (latest)</td>
-<td style="text-align: left;">Linux/WSL</td>
-<td style="text-align: left;">Downloading and managing code versions.</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>Version Control</strong></td>
-<td style="text-align: left;"><strong>gh (GitHub CLI)</strong></td>
-<td style="text-align: left;">Linux/WSL</td>
-<td style="text-align: left;">Managing code and publishing to Azure.</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>Scripting</strong></td>
-<td style="text-align: left;"><strong>Python 3.12+</strong></td>
-<td style="text-align: left;">Linux/WSL</td>
-<td style="text-align: left;">Main environment for running AI tools.</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>Package Manager</strong></td>
-<td style="text-align: left;"><strong>pip</strong></td>
-<td style="text-align: left;">Linux/WSL</td>
-<td style="text-align: left;">Tool for installing Python packages.</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>Security Lib</strong></td>
-<td style="text-align: left;"><strong>libsecret-1-0 / libsecret-common</strong></td>
-<td style="text-align: left;">Linux/WSL</td>
-<td style="text-align: left;">Security support for extensions.</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>Data Library</strong></td>
-<td style="text-align: left;"><strong>Pandas / xlrd</strong></td>
-<td style="text-align: left;">Linux/WSL</td>
-<td style="text-align: left;">Analyzing real-world data and old Excel files.</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>Data Format</strong></td>
-<td style="text-align: left;"><strong>JSON</strong></td>
-<td style="text-align: left;">Linux/WSL</td>
-<td style="text-align: left;">Standard for settings and task lists.</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>Auth Library</strong></td>
-<td style="text-align: left;"><strong>msal</strong></td>
-<td style="text-align: left;">Linux/WSL</td>
-<td style="text-align: left;">Microsoft tool for logging in.</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>Webserver</strong></td>
-<td style="text-align: left;"><strong>Flask</strong> (via .venv)</td>
-<td style="text-align: left;">Linux/WSL</td>
-<td style="text-align: left;">Background engine for the HWB suite.</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>Security Auth</strong></td>
-<td style="text-align: left;"><strong>Flask-Login</strong></td>
-<td style="text-align: left;">Linux/WSL</td>
-<td style="text-align: left;">Secure login and identity management.</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>Database</strong></td>
-<td style="text-align: left;"><strong>SQLite3</strong></td>
-<td style="text-align: left;">Linux/WSL</td>
-<td style="text-align: left;">Storing real-world data.</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>Virtualization</strong></td>
-<td style="text-align: left;"><strong>python3-venv</strong></td>
-<td style="text-align: left;">Linux/WSL</td>
-<td style="text-align: left;">Keeping environments separate.</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>Reverse Proxy</strong></td>
-<td style="text-align: left;"><strong>Nginx</strong></td>
-<td style="text-align: left;">Linux/WSL</td>
-<td style="text-align: left;">Web helper and security filter.</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>Extensions</strong></td>
-<td style="text-align: left;"><strong>YouTube-to-Docs</strong></td>
-<td style="text-align: left;">Gemini CLI</td>
-<td style="text-align: left;">Turning YouTube content into documents.</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>Extensions</strong></td>
-<td style="text-align: left;"><strong>ElevenLabs MCP</strong></td>
-<td style="text-align: left;">Gemini CLI</td>
-<td style="text-align: left;">AI voice and text-to-speech.</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>Extensions</strong></td>
-<td style="text-align: left;"><strong>Deep Research</strong></td>
-<td style="text-align: left;">Gemini CLI</td>
-<td style="text-align: left;">Automated research and data gathering.</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>Extensions</strong></td>
-<td style="text-align: left;"><strong>Nano Banana</strong></td>
-<td style="text-align: left;">Gemini CLI</td>
-<td style="text-align: left;">Creating marketing images and videos.</td>
-</tr>
-</tbody>
-</table>
-<h3 id="32-secret-management-and-api-keys">3.2 Secret Management and API Keys</h3>
-<p>To keep the HWB system safe, these rules apply to all API keys:
-1.  <strong>No Raw Storage:</strong> Never save API keys or passwords in <code>.md</code> files or other shared documents.
-2.  <strong>Private Vault:</strong> Keys must be kept in secure <code>.env</code> files that are not shared on Git.
-3.  <strong>GitHub Token Scopes:</strong> Access tokens for <code>gh</code> must have the right permissions for automated work.
-4.  <strong>Azure Service Principal:</strong> The AI agent (George) works through a special "service principal" account with <code>Contributor</code> access.</p>
-<h2 id="40-procedure">4.0 Procedure</h2>
-<ol>
-<li><strong>Isolation:</strong> Disconnect the computer from the internet.</li>
-<li><strong>Assessment:</strong> Figure out how much data was lost.</li>
-<li><strong>Notification:</strong> Tell the boss (Humberto Dominguez).</li>
-</ol>
-<h3 id="41-cloud-infrastructure-restoration-azure">4.1 Cloud Infrastructure Restoration (Azure)</h3>
-<p>If the Azure system fails:
-1.  <strong>Verify Agent Identity:</strong> Make sure the login IDs and passwords are correct in the <code>.env</code> file.
-2.  <strong>Account Recovery:</strong> If the service account is deleted, set it up again.
-3.  <strong>Website Recovery:</strong> Use GitHub to redeploy the website.
-4.  <strong>Error (500) Resolution:</strong> If the site doesn't load after deployment, check:
-    - <code>main_app.py</code> for duplicate page links.
-    - <code>init_db()</code> correctly creates the database folder.
-    - Links in the templates match the actual page addresses.</p>
-<h3 id="42-restoring-from-github-primary-source">4.2 Restoring from GitHub (Primary Source)</h3>
-<ol>
-<li><strong>Download Main Code:</strong>
-    ```bash
-    git clone https://github.com/Humbertoed11/gemini_projects.git
-    </div></li>
-<li><strong>Download Website Code:</strong>
-    ```bash
-    git clone https://github.com/hwb-it-website/hwb-institutional-website.git
-    </div></li>
-<li><strong>Restart System (The Reset):</strong>
-    ```bash
-    bash scripts/startup_master.sh
-    </div></li>
-</ol>
-<h3 id="43-gemini-extension-recovery-nano-banana-vibe-elevenlabs">4.3 Gemini Extension Recovery (Nano Banana / Vibe / ElevenLabs)</h3>
-<p>If extensions don't see the API keys:
-1.  <strong>Check Security Library:</strong> Look for <code>libsecret</code> errors.
-2.  <strong>Force Key Update:</strong> Manually add the key using the command line.
-3.  <strong>Verify Backup:</strong> Make sure the system uses the fallback storage if needed.</p>
-<h3 id="44-database-restoration-real-world-data">4.4 Database Restoration (Real-World Data)</h3>
-<ol>
-<li><strong>Backups:</strong> Get the <code>clients.db</code> and <code>sigma_leads.db</code> from the latest cloud backup.</li>
-<li><strong>File Location:</strong> Put the database files in the right folder.</li>
-<li><strong>Check:</strong> Run the diagnostic dashboard to make sure it works.</li>
-<li><strong>Login Sync:</strong> If the login fails, make sure the passwords are updated on startup.</li>
-</ol>
-<h3 id="45-ai-system-initialization-master-prompt">4.5 AI System Initialization (Master Prompt)</h3>
-<p>If starting the AI from scratch, give this "Master Prompt" to the agent:</p>
-<p>```markdown</p>
-<h1 id="system-initialization-hwb-cleaning-services-llc-hwb-standard">SYSTEM INITIALIZATION: HWB Cleaning Services LLC (HWB Standard)</h1>
-<h2 id="10-ai-role-identity-designation">1.0 AI Role &amp; Identity Designation</h2>
-<p>You are the Lead Assistant for HWB Cleaning Services LLC. Official roles:
-1. Certified Lean Six Sigma Master Black Belt (MBB)
-2. Senior Software Engineer &amp; Collaborative Peer Programmer
-3. PhD in Business and Business History
-4. Senior ISO 9001:2015 Auditor
-5. Expert SEO</p>
-<p><strong>George (Lead Developer):</strong> In charge of high-quality software setup, infrastructure, and data flows. (Skill: <code>saas-dev-master</code>).
-<strong>Nick Doria (AI Governance):</strong> In charge of AI personality and rules.
-<strong>Lauri Tells (VP Sales &amp; Marketing):</strong> In charge of finding leads and market data.
-<strong>CRM Specialist:</strong> In charge of client data and backoffice tools.
-<strong>Innovation Leader (Natalie Navy):</strong> In charge of new software ideas and future tech planning.</p>
-<p><strong>Mandatory Rules:</strong> Always speak in the 3rd person.
-</div></p>
-<h2 id="50-verification">5.0 Verification</h2>
+<h2 id="50-procedure">5.0 Procedure</h2>
+<h3 id="51-restoring-from-github-the-cloud-master">5.1 Restoring from GitHub (The Cloud Master)</h3>
+<p>In the event of total computer failure, the GitHub repository is our "Source of Truth."
+1.  Navigate to the workspace folder.
+2.  Clone the repository using the command: <code>git clone https://github.com/Humbertoed11/gemini_projects.git</code>
+3.  Run the startup command: <code>bash scripts/startup_master.sh</code></p>
+<h3 id="52-the-panic-button-emergency-reset">5.2 The "Panic Button" (Emergency Reset)</h3>
+<p>If the system is acting strangely or is broken, use the forceful reset:
+<code>git reset --hard HEAD &amp;&amp; git clean -fd</code></p>
+<div class="callout callout-caution"><strong>Caution</strong>This will delete all work that hasn't been saved to Git.</div>
+
+<h3 id="53-physical-restoration-peter-sentinel">5.3 Physical Restoration (Peter Sentinel)</h3>
+<p>If a specific file or folder (like the agents/ folder) is deleted:
+1.  Navigate to <code>HWB-COMPANY/HWB-IT/HWB-IT-SYSTEM-LOGS/shadow_snapshots/</code>.
+2.  Locate the folder with the latest timestamp.
+3.  Copy the missing files back into the active production directory.</p>
+<h2 id="60-verification-zero-defect-check">6.0 Verification (Zero-Defect Check)</h2>
 <ul>
-<li>Successful code download with everything matching.</li>
-<li>The diagnostic dashboard runs with no errors.</li>
-<li>Created 1 test image via Nano Banana to confirm the quality is good.</li>
+<li>System is online and responding at <code>http://mop.test:5000</code>.</li>
+<li>All 900+ SOPs are visible in the manual index.</li>
+<li>Databases are healthy and showing real lead data.</li>
 </ul>
-<h2 id="70-revision-history">7.0 Revision History</h2>
+<h2 id="70-notes-and-cautions">7.0 Notes and Cautions</h2>
+<div class="callout callout-logic"><strong>Technical Logic</strong>The OneDrive mount at `/mnt/c/...` is our physical backup point.</div>
+<div class="callout callout-caution"><strong>Caution</strong>Never delete the `.env` file; it contains our system secrets.</div>
+
+<h2 id="80-process-flow-chart">8.0 Process Flow Chart</h2>
+<div class="mermaid">
+graph TD
+    A[Failure Detected] --> B[Isolate System]
+    B --> C[Assess Impact]
+    C --> D{Total Loss?}
+    D -- Yes --> E[Git Clone from GitHub]
+    D -- No --> F[Restore via Peter Sentinel]
+    E --> G[Run Diagnostics]
+    F --> G
+    G --> H[System Online]
+</div>
+
+<h2 id="90-revision-history">9.0 Revision History</h2>
 <table>
 <thead>
 <tr>
@@ -264,54 +120,19 @@
 </thead>
 <tbody>
 <tr>
+<td style="text-align: left;">2.0.0</td>
+<td style="text-align: left;">05/21/2026</td>
+<td style="text-align: left;">George</td>
+<td style="text-align: left;">TOTAL MODERNIZATION. Added Peter Sentinel physical restoration and Tier 6 mandates.</td>
+</tr>
+<tr>
 <td style="text-align: left;">1.0</td>
-<td style="text-align: left;">2026-02-28</td>
+<td style="text-align: left;">2026-03-02</td>
 <td style="text-align: left;">Gemini</td>
 <td style="text-align: left;">Initial Release.</td>
 </tr>
-<tr>
-<td style="text-align: left;">3.5</td>
-<td style="text-align: left;">2026-03-09</td>
-<td style="text-align: left;">George</td>
-<td style="text-align: left;">Added login support, updated secret rules, and added SEO role.</td>
-</tr>
-<tr>
-<td style="text-align: left;">4.0</td>
-<td style="text-align: left;">2026-03-10</td>
-<td style="text-align: left;">George</td>
-<td style="text-align: left;">Standardized on Azure/M365 as main platforms.</td>
-</tr>
-<tr>
-<td style="text-align: left;">5.0</td>
-<td style="text-align: left;">2026-03-12</td>
-<td style="text-align: left;">George</td>
-<td style="text-align: left;">Updated logins, added Natalie Navy to the team, and set up dashboard checks.</td>
-</tr>
-<tr>
-<td style="text-align: left;">6.0</td>
-<td style="text-align: left;">2026-03-20</td>
-<td style="text-align: left;">George</td>
-<td style="text-align: left;">Added fixes for website errors and password updates.</td>
-</tr>
-<tr>
-<td style="text-align: left;">7.0</td>
-<td style="text-align: left;">2026-03-23</td>
-<td style="text-align: left;">George</td>
-<td style="text-align: left;">Added security support, extension fixes, and formalized the reset procedure.</td>
-</tr>
-<tr>
-<td style="text-align: left;">8.0</td>
-<td style="text-align: left;">2026-04-27</td>
-<td style="text-align: left;">George</td>
-<td style="text-align: left;">Integrated Docker, new login procedures, and code hardening.</td>
-</tr>
 </tbody>
 </table>
-<h2 id="46-deployment-and-secret-restoration-githubacr">4.6 Deployment and Secret Restoration (GitHub/ACR)</h2>
-<p>If the deployment fails because of login issues:
-1.  <strong>Adding Login Details:</strong> Get the passwords from the Azure Portal and add them as GitHub Secrets.
-2.  <strong>Fixing Login Connection:</strong> Make sure the GitHub settings have the right permissions.
-3.  <strong>Cleaning Up Code:</strong> Keep the code "clean" by making sure non-essential folders are ignored by Git.</p>
     </div>
 
     <div class="sop-card-footer">
