@@ -1,0 +1,120 @@
+<!-- 
+    SigmaFidelity™ Institutional SOP: About Page 500 Resolution Walkthrough
+    Standard: HWB-QMS-11.9 v2.0
+    Document ID: HWB-QMS-11.9-DOC
+-->
+<div class="sop-card">
+    <!-- 0.0 DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-11.9-DOC</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5.3 (Control of Documented Information)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <table>
+            <thead>
+                <tr>
+                    <th><strong>Document Control</strong></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td><strong>Document Title</strong></td><td><strong>About Page 500 Resolution Walkthrough</strong></td></tr>
+                <tr><td><strong>Document ID</strong></td><td>HWB-QMS-11.9-DOC</td></tr>
+                <tr><td><strong>Version</strong></td><td>2.0.0</td></tr>
+                <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
+                <tr><td><strong>Author</strong></td><td>George (Systems Architect)</td></tr>
+                <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
+                <tr><td><strong>Date</strong></td><td>06-01-2026</td></tr>
+                <tr><td><strong>ISO 9001 Clause</strong></td><td>7.5.3</td></tr>
+            </tbody>
+        </table>
+
+        <hr />
+
+        <h1>Standard Operating Procedure: <strong>About Page 500 Resolution Walkthrough</strong></h1>
+
+        <h2>1.0 Purpose</h2>
+        <p>To document the technical resolution of the live website's <code>/about</code> page 500 error that previously returned the <code>RECOVERY-MODE-ACTIVE-ALPHA</code> tracer in production.</p>
+
+        <h2>2.0 Scope</h2>
+        <p>Applies to the web application infrastructure, container registry (ACR), and live Azure App Service configurations.</p>
+
+        <h2>3.0 Problem Diagnosis & Findings</h2>
+        <h3>3.1 Startup & Parity Verification</h3>
+        <p>Executed the master container startup sequence (<code>startup_master.sh</code>) to boot up dev systems. Discovered and eliminated a minor PostgreSQL database session state drift by synchronizing the local <code>SigmaSystemCore</code> table with the authoritative <code>HWB-SESSION-RECOVERY.md</code> file.</p>
+
+        <h3>3.2 Real-Time Log Extraction</h3>
+        <p>Extracted and audited live production container tracebacks via the Azure Resource Manager API (using <code>download_azure_zip_logs.py</code>). Found the following log entries:</p>
+        <pre><code>[FATAL] System Exception: about.html</code></pre>
+        <p>This indicated a template rendering error (<code>TemplateNotFound: about.html</code>) in the running container.</p>
+
+        <h3>3.3 Architectural Mismatch Identified</h3>
+        <ul>
+            <li><strong>The Cause:</strong> The live Azure App Service was configured in Docker container mode (referencing the private <code>hwbprodacr.azurecr.io/sigmafidelity-web</code> registry).</li>
+            <li><strong>The Problem:</strong> The active container was extremely outdated. While git pushes successfully deployed new zip code artifacts to Azure's SCM, Azure completely ignored those zip packages because it was running in Docker containerized mode.</li>
+            <li><strong>The Result:</strong> The legacy container continued running an outdated copy of <code>main_app.py</code> that attempted to render the old <code>about.html</code> template instead of the modernized <code>HWB-WEB About.html</code> template, causing a fatal 500 exception.</li>
+        </ul>
+
+        <h2>4.0 Resolution Steps</h2>
+        <h3>4.1 Local Container Compilation</h3>
+        <p>Compiled a new Docker container locally containing all recent master branch code changes (including Texas Data Privacy act updates, TCPA consent parameters, and corrected page routes) using the active workspace production <code>Dockerfile</code>:</p>
+        <pre><code>docker build -t hwbprodacr.azurecr.io/sigmafidelity-web:v5.2-458ee34fc74c93a66c41b816c4d17f24d15853cc -f HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/Dockerfile HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE</code></pre>
+
+        <h3>4.2 Container Registry Update</h3>
+        <p>Logged in to the private registry using the production App Service credentials and pushed the newly compiled container image tag to ACR:</p>
+        <pre><code>docker login hwbprodacr.azurecr.io -u hwbprodacr -p [REDACTED_SECRET]
+docker push hwbprodacr.azurecr.io/sigmafidelity-web:v5.2-458ee34fc74c93a66c41b816c4d17f24d15853cc</code></pre>
+
+        <h3>4.3 Active Site Reload</h3>
+        <p>Issued an authenticated POST request to the Azure App Service restart management API, forcing the production server to download the new Docker image and start the container immediately. The site warm-up probe completed successfully in 10.21 seconds.</p>
+
+        <h2>5.0 Live Status Verification</h2>
+        <p>All core routes are now successfully serving <code>200 OK</code> in production, fully displaying the modernized templates:</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>URL Path</th>
+                    <th>Target Template</th>
+                    <th>Live Response Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td><code>/</code></td><td>HWB-WEB Index.html</td><td>200 OK (VERIFIED)</td></tr>
+                <tr><td><code>/about</code></td><td>HWB-WEB About.html</td><td>200 OK (VERIFIED)</td></tr>
+                <tr><td><code>/services/janitorial</code></td><td>janitorial.html</td><td>200 OK (VERIFIED)</td></tr>
+                <tr><td><code>/services/commercial</code></td><td>commercial.html</td><td>200 OK (VERIFIED)</td></tr>
+                <tr><td><code>/compliance</code></td><td>HWB-WEB Compliance.html</td><td>200 OK (VERIFIED)</td></tr>
+                <tr><td><code>/privacy-policy</code></td><td>privacy_policy.html</td><td>200 OK (VERIFIED)</td></tr>
+            </tbody>
+        </table>
+
+        <h2>8.0 Revision History</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Version</th>
+                    <th>Date</th>
+                    <th>Author</th>
+                    <th>Change Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>2.0.0</td>
+                    <td>06-01-2026</td>
+                    <td>George</td>
+                    <td>Initial document creation mapping the live container deployment resolution.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="sop-card-footer">
+        <span>&copy; 2026 HWB Cleaning Services LLC</span>
+        <span>Controlled Document | HWB-QMS-11.9-DOC</span>
+        <span>Page <span class="page-number"></span></span>
+    </div>
+</div>

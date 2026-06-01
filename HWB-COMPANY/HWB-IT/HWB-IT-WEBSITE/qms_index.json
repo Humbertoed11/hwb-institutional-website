@@ -1501,5 +1501,14 @@
         "version": "1.0.0 (HTML Baseline)",
         "compliance": "UPDATED",
         "date": "05-25-2026"
+    },
+    {
+        "title": "Standard Operating Procedure: About Page 500 Resolution Walkthrough",
+        "id": "HWB-QMS-11.9-DOC",
+        "dept": "QMS",
+        "file": "hwb-qms-11.9_about_page_500_resolution_walkthrough.html",
+        "version": "2.0.0",
+        "compliance": "UPDATED",
+        "date": "06/01/2026"
     }
 ]
