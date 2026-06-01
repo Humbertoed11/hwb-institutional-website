@@ -60,7 +60,7 @@ def sync_new_sops():
                 if f.endswith(".html") and f != "sop_template.html":
                     file_path = os.path.join(sop_dir, f)
                     with open(file_path, "r", encoding="utf-8") as file:
-                        content = f.read()
+                        content = file.read()
                     
                     cur.execute("""
                         INSERT INTO sigma_kb (doc_id, content, metadata)
@@ -72,13 +72,33 @@ def sync_new_sops():
     except Exception as e:
         print(f"Error syncing SOPs: {e}")
 
+def parse_recovery_table(markdown_content):
+    parsed = {}
+    lines = markdown_content.split("\n")
+    for line in lines:
+        match_normal = re.match(r"\|\s*\*\*([^*]+)\*\*\s*\|\s*([^|]+)\|", line)
+        if match_normal:
+            key = match_normal.group(1).strip()
+            val = match_normal.group(2).strip()
+            # Clean bold indicators if present
+            val = re.sub(r"\*\*([^*]+)\*\*", r"\1", val).strip()
+            parsed[key] = val
+    return parsed
+
 def sync_system_state():
     recovery_file = "HWB-SESSION-RECOVERY.md"
     if not os.path.exists(recovery_file): return
     
     print("[SYNC] Synchronizing SigmaSystemCore...")
-    with open(recovery_file, "r") as f:
+    with open(recovery_file, "r", encoding="utf-8") as f:
         content = f.read()
+    
+    parsed_fields = parse_recovery_table(content)
+    state_json = {
+        "raw_text": content,
+        "parsed_fields": parsed_fields,
+        "updated_at": datetime.now().isoformat()
+    }
     
     try:
         conn = psycopg2.connect(DB_URL)
@@ -87,7 +107,7 @@ def sync_system_state():
                 INSERT INTO "SigmaSystemCore" (session_id, state_data)
                 VALUES (%s, %s)
                 ON CONFLICT (session_id) DO UPDATE SET state_data = EXCLUDED.state_data;
-            """, ("ACTIVE-SESSION", Json({"raw_text": content})))
+            """, ("ACTIVE-SESSION", Json(state_json)))
         conn.commit()
         conn.close()
     except Exception as e:

@@ -5,4 +5,4 @@ Disallow: /login
 Disallow: /compliance
 Disallow: /ehsq
 
-Sitemap: https://hwb-institutional-website.azurewebsites.net/sitemap.xml
+Sitemap: https://www.hwbcleaning.com/sitemap.xml

@@ -408,10 +408,53 @@ def login():
 def logout(): logout_user(); return redirect(url_for('index'))
 
 @app.route('/', endpoint='index')
-def index(): return render_template('commercial_template.html')
+def index(): return render_template('HWB-WEB Index.html')
 
 @app.route('/about', endpoint='about')
 def about(): return render_template('HWB-WEB About.html')
+
+@app.route('/design-system', endpoint='design_system')
+@app.route('/design-systems')
+def design_system(): return render_template('institutional_design_system.html')
+
+@app.route('/manual', endpoint='manual_index')
+def manual_index():
+    import json
+    try:
+        with open('qms_index.json', 'r') as f:
+            sops = json.load(f)
+        sops_by_dept = {}
+        for sop in sops:
+            dept = sop['dept']
+            if dept not in sops_by_dept: sops_by_dept[dept] = []
+            sops_by_dept[dept].append(sop)
+        return render_template('qms_manual_index.html', sops_by_dept=sops_by_dept)
+    except Exception as e:
+        return f"QMS Index Error: {e}"
+
+@app.route('/manual/<path:filename>', endpoint='view_sop')
+def view_sop(filename):
+    import requests
+    import json
+    try:
+        # Fetch fragment from the dedicated compliance container
+        response = requests.get(f"http://compliance/qms/{filename}", timeout=5)
+        sops_by_dept = {}
+        try:
+            with open('qms_index.json', 'r') as f:
+                sops = json.load(f)
+            for sop in sops:
+                dept = sop['dept']
+                if dept not in sops_by_dept: sops_by_dept[dept] = []
+                sops_by_dept[dept].append(sop)
+        except Exception:
+            pass
+        if response.status_code == 200:
+            return render_template('qms_shell.html', content=response.text, sops_by_dept=sops_by_dept, active_file=filename)
+        else:
+            return f"QMS Error: Document not found ({response.status_code})"
+    except Exception as e:
+        return f"QMS Connectivity Error: {e}"
 
 @app.route('/services/janitorial', endpoint='services_janitorial')
 def services_janitorial(): return render_template('janitorial.html')
@@ -439,64 +482,91 @@ def get_quote():
     if request.method == 'POST':
         try:
             data = request.form
-            sqf = float(data.get('sqft', 0))
-            need = int(data.get('need', 2))
+            form_version = data.get('form_version', 'v1')
+            
+            # Protocol Branching Logic
+            if form_version == "v2":
+                sqf = 0.0
+                need = 2
+                facility_type = "Not Specified"
+                frequency = "TBD (Handshake)"
+                need_label = "Handshake Protocol"
+            else:
+                sqf = float(data.get('sqft', 0))
+                need = int(data.get('need', 2))
+                facility_type = data.get('facility_type', 'Other')
+                frequency = data.get('frequency', 'Standard')
+                need_labels = { "1": "Slow Traffic", "2": "High Traffic", "3": "24/7 Production" }
+                need_label = need_labels.get(data.get('need'), "Standard")
+            
+            # SigmaFidelity™ $0.12 Calculation
             multiplier = 1.0
             if need == 2: multiplier = 1.5
             if need == 3: multiplier = 2.5
-            
             annual_value = (sqf * 0.12) * multiplier * 12
             
-            need_labels = { "1": "Slow Traffic", "2": "High Traffic", "3": "24/7 Production" }
             data_dict = {
                 'name': data.get('name'),
                 'company': data.get('company'),
                 'email': data.get('email'),
                 'phone': data.get('phone'),
-                'facility_type': data.get('facility_type'),
-                'sqft': f"{int(sqf):,}",
-                'need_label': need_labels.get(data.get('need'), "Standard")
+                'facility_type': facility_type,
+                'sqft': f"{int(sqf):,}" if sqf > 0 else "Pending Verification",
+                'need_label': need_label
             }
 
             conn = get_db(app.config['DATABASE_URL'])
             try:
                 with conn.cursor() as cur:
+                    # 1. SQL Ingestion (Leads)
                     cur.execute('''
                         INSERT INTO "Leads" (center_name, decision_maker, email, phone, facility_type, sqf, estimated_annual_value, status, lead_source, traffic_cycle)
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                    ''', (data.get('company'), data.get('name'), data.get('email'), data.get('phone'), data.get('facility_type'), sqf, annual_value, 'New', 'Website Quote Form', data.get('frequency')))
+                    ''', (data.get('company'), data.get('name'), data.get('email'), data.get('phone'), facility_type, sqf, annual_value, 'New', f'Website Quote Form ({form_version})', frequency))
                     
-                    try:
-                        email_body = f"""
-                        <div style='font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 8px;'>
-                            <h2 style='color: #2563eb;'>New Cleaning Request</h2>
-                            <p><strong>Company:</strong> {data.get('company')}</p>
-                            <p><strong>Manager:</strong> {data.get('name')}</p>
-                            <p><strong>Building:</strong> {data.get('facility_type')} ({int(sqf):,} SQF)</p>
-                            <p><strong>Frequency:</strong> {data.get('frequency')}</p>
-                            <p><strong>Contact:</strong> {data.get('email')} | {data.get('phone')}</p>
-                            <hr>
-                            <p style='font-size: 0.8rem; color: #666;'>Automated lead alert generated by HWB-IT-WEBSITE.</p>
+                    # 2. Institutional Email Alert (HWB-COM-001 Letterhead)
+                    request_type = "Quick Registration" if form_version == "v2" else "Full Cleaning Plan"
+                    email_body = f"""
+                    <div style="font-family: 'Inter', sans-serif; padding: 40px; border: 1px solid #e2e8f0; border-radius: 8px; max-width: 600px;">
+                        <div style="display: flex; justify-content: space-between; border-bottom: 3px solid #2563eb; padding-bottom: 20px; margin-bottom: 30px;">
+                            <div>
+                                <div style="font-weight: 900; font-size: 18px; color: #2563eb;">HWB NOTIFICATION</div>
+                                <div style="font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em; margin-top: 5px;">Request Type: {request_type}</div>
+                            </div>
                         </div>
-                        """
-                        cur.execute('''
-                            INSERT INTO "PendingOutbox" (recipient, subject, body, status, created_at)
-                            VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP)
-                        ''', ('sales@hwbcleaning.com', f"ACTION REQUIRED: New Request from {data.get('company')}", email_body, 'Pending'))
-                    except Exception as e:
-                        print(f"PendingOutbox Error: {e}") # Log error but don't fail the quote
+                        <div style="line-height: 1.8; color: #1e293b; font-size: 14px;">
+                            <h2 style="font-size: 18px; font-weight: 800; margin-bottom: 20px;">New Business Information Received</h2>
+                            <p><strong>Business Name:</strong> {data.get('company')}</p>
+                            <p><strong>Contact Person:</strong> {data.get('name')}</p>
+                            <p><strong>Email Address:</strong> {data.get('email')}</p>
+                            <p><strong>Phone Number:</strong> {data.get('phone')}</p>
+                            <p><strong>Building Details:</strong> {facility_type} ({data_dict['sqft']} SQF)</p>
+                            <hr style="border: none; border-top: 1px solid #f1f5f9; margin: 30px 0;">
+                            <p style="font-size: 12px; color: #94a3b8; font-style: italic;">Automatic message from the HWB system.</p>
+                        </div>
+                    </div>
+                    """
+                    cur.execute('''
+                        INSERT INTO "PendingOutbox" (recipient, subject, body, status, created_at)
+                        VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP)
+                    ''', ('sales@hwbcleaning.com', f"ACTION REQUIRED: New Lead Ingested ({data.get('company')})", email_body, 'Pending'))
+                    
+                    # 3. Tier 6 Telemetry Log
+                    cur.execute('''
+                        INSERT INTO "SigmaInteractionLog" (agent_name, action, details, category)
+                        VALUES (%s, %s, %s, %s)
+                    ''', ('George', 'Lead Ingestion', f"Captured {form_version} lead from {data.get('company')}", 'SALES'))
 
                 conn.commit()
             finally:
                 conn.close()
 
-            # Real-Time Teams Signal (out of transaction)
+            # Real-Time Teams Signal (if available)
             try:
                 from scripts.send_sales_notification import send_teams_alert
-                data_dict['frequency'] = data.get('frequency')
+                data_dict['frequency'] = frequency
                 send_teams_alert(data_dict)
-            except Exception as e:
-                print(f"Teams Notification Error: {e}")
+            except: pass
 
             return render_template('quote_success.html', data=data_dict)
         except Exception as e:
@@ -513,26 +583,35 @@ def edit_lead(id):
         with conn.cursor() as cur:
             if request.method == 'POST':
                 data = request.form
-                sqf = float(data.get('sqf', 0))
+                sqf_str = data.get('sqf', '0')
+                try:
+                    sqf = float(sqf_str) if sqf_str and sqf_str.strip() != '' else 0.0
+                except ValueError:
+                    sqf = 0.0
+                
                 traffic = data.get('traffic_cycle', 'Slow')
                 multiplier = 1.0
                 if traffic == 'High': multiplier = 1.5
                 elif traffic == '24/7 Production': multiplier = 2.5
                 annual_value = (sqf * 0.12) * multiplier * 12
 
+                next_action = data.get('next_action_date')
+                if not next_action or next_action.strip() == '':
+                    next_action = None
+
                 cur.execute('''
                     UPDATE "Leads" SET 
-                        center_name = %s, decision_maker = %s, email = %s, 
-                        phone = %s, address = %s, facility_type = %s, 
-                        sqf = %s, traffic_cycle = %s, service_interest = %s, 
-                        lead_source = %s, status = %s, estimated_annual_value = %s,
+                        center_name = %s, decision_maker = %s, job_title = %s, email = %s, phone = %s, 
+                        address = %s, city = %s, state = %s, zipcode = %s, industry = %s, sqf = %s, 
+                        status = %s, estimated_annual_value = %s, next_action_date = %s, notes = %s,
+                        facility_type = %s, lead_source = %s, service_interest = %s, priority_level = %s, traffic_cycle = %s,
                         updated_at = CURRENT_TIMESTAMP
                     WHERE id = %s
                 ''', (
-                    data.get('company_name'), data.get('decision_maker'), data.get('email'), 
-                    data.get('phone'), data.get('address'), data.get('facility_type'),
-                    sqf, traffic, data.get('service_interest'),
-                    data.get('lead_source'), data.get('status'), annual_value, id
+                    data.get('company_name'), data.get('decision_maker'), data.get('job_title'), data.get('email'), data.get('phone'),
+                    data.get('address'), data.get('city'), data.get('state'), data.get('zipcode'), data.get('industry'), sqf,
+                    data.get('status'), annual_value, next_action, data.get('notes'),
+                    data.get('facility_type'), data.get('lead_source'), data.get('service_interest'), data.get('priority_level'), traffic, id
                 ))
                 conn.commit()
                 flash("Lead intelligence updated successfully.")
@@ -729,7 +808,7 @@ def sigma_executive():
             cur.execute('SELECT * FROM "Leads" ORDER BY input_date DESC LIMIT 5')
             recent_leads = cur.fetchall()
             uptime = {'status': 'ACTIVE'}
-            reports = {'cpk': '6.67', 'dpmo': '1,785', 'rty': '97.0%'}
+            analytics = {'cpk': '6.67', 'dpmo': '1,785', 'rty': '97.0%'}
             cur.execute('SELECT * FROM "KPIVs"')
             kpivs = cur.fetchall()
             cur.execute('SELECT * FROM "Users"')
@@ -756,10 +835,14 @@ def sigma_executive():
         
     return render_template('HWB-WEB Sigma Executive.html', 
                          leads_count=leads_count, recent_leads=recent_leads,
-                         total_waste=total_waste, uptime=uptime, reports=reports,
+                         total_waste=total_waste, uptime=uptime, analytics=analytics,
                          kpivs=kpivs, users=users, system_errors=system_errors,
                          linkedin_authorized=linkedin_authorized,
                          pending_social=pending_social, pending_emails=pending_emails)
+
+@app.route('/calculator', endpoint='calculator')
+def calculator():
+    return redirect(url_for('get_quote'))
 
 @app.route('/admin/scope-builder', methods=['POST'], endpoint='scope_builder')
 @login_required
@@ -1071,6 +1154,11 @@ def api_lead_add_contact(id):
     except Exception as e: return jsonify({'status': 'error', 'message': str(e)}), 500
     finally:
         if "conn" in locals(): conn.close()
+
+@app.route('/admin/lab', endpoint='sigmajan_lab')
+@login_required
+def sigmajan_lab():
+    return render_template('sigmajan_lab_home.html')
 
 @app.route('/api/v1/health')
 def health_check(): return '', 204

@@ -19,7 +19,8 @@ AUTHORITY = f"https://login.microsoftonline.com/{TENANT_ID}"
 SCOPE = ["https://management.azure.com/.default"]
 
 # Institutional Path for the Microsoft Marketing Engine
-engine_path = os.path.join("recuperate", "scripts", "HWB-WEB Microsoft Marketing Engine.py")
+script_dir = os.path.dirname(os.path.abspath(__file__))
+engine_path = os.path.join(script_dir, "HWB-WEB Microsoft Marketing Engine.py")
 spec = importlib.util.spec_from_file_location("MarketingEngine", engine_path)
 marketing_module = importlib.util.module_from_spec(spec)
 sys.modules["MarketingEngine"] = marketing_module
@@ -152,7 +153,7 @@ Maria Bolanos (VP of Finance) has completed a live API-driven cost audit for the
 *Report produced by Maria Bolanos, PhD, under the SigmaFidelity™ Institutional Standard.*
 """
     
-    md_path = os.path.join("recuperate", "HWB-COMPANY", "HWB-ACCOUNTING", f"{REPORT_ID}.md")
+    md_path = os.path.join("HWB-COMPANY", "HWB-ACCOUNTING", f"{REPORT_ID}.md")
     with open(md_path, "w") as f:
         f.write(md_content)
     print(f"SUCCESS: Markdown audit record saved to {md_path}")

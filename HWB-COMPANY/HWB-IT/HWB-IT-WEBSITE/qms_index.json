@@ -1492,5 +1492,14 @@
         "version": "2.0.0",
         "compliance": "UPDATED",
         "date": "05/21/2026"
+    },
+    {
+        "title": "Standard Operating Procedure: HWB Multi-Brain™ Consensus",
+        "id": "HWB-QMS-11.8-CONSENSUS",
+        "dept": "QMS",
+        "file": "hwb-qms-11.8_hwb_multi-brain_consensus_sop.html",
+        "version": "1.0.0 (HTML Baseline)",
+        "compliance": "UPDATED",
+        "date": "05-25-2026"
     }
 ]

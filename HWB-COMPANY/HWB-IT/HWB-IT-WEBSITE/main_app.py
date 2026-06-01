@@ -78,6 +78,18 @@ with app.app_context():
                     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 );
             ''')
+            
+            # 4. Ensure SigmaInteractionLog exists (Self-Healing telemetry table)
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS "SigmaInteractionLog" (
+                    id SERIAL PRIMARY KEY,
+                    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    user_prompt TEXT,
+                    agent_explanation TEXT,
+                    tools_used JSONB,
+                    status VARCHAR(50)
+                );
+            ''')
             conn.commit()
             if "conn" in locals(): conn.close()
             
@@ -515,14 +527,17 @@ def get_quote():
                 'need_label': need_label
             }
 
+            consent_val = data.get('tcpa_consent')
+            consent_notes = "TCPA Consent: Granted (Explicit checkbox checked during quote submission)." if consent_val else "TCPA Consent: Not Provided."
+            
             conn = get_db(app.config['DATABASE_URL'])
             try:
                 with conn.cursor() as cur:
                     # 1. SQL Ingestion (Leads)
                     cur.execute('''
-                        INSERT INTO "Leads" (center_name, decision_maker, email, phone, facility_type, sqf, estimated_annual_value, status, lead_source, traffic_cycle)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                    ''', (data.get('company'), data.get('name'), data.get('email'), data.get('phone'), facility_type, sqf, annual_value, 'New', f'Website Quote Form ({form_version})', frequency))
+                        INSERT INTO "Leads" (center_name, decision_maker, email, phone, facility_type, sqf, estimated_annual_value, status, lead_source, traffic_cycle, notes)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    ''', (data.get('company'), data.get('name'), data.get('email'), data.get('phone'), facility_type, sqf, annual_value, 'New', f'Website Quote Form ({form_version})', frequency, consent_notes))
                     
                     # 2. Institutional Email Alert (HWB-COM-001 Letterhead)
                     request_type = "Quick Registration" if form_version == "v2" else "Full Cleaning Plan"
@@ -553,9 +568,14 @@ def get_quote():
                     
                     # 3. Tier 6 Telemetry Log
                     cur.execute('''
-                        INSERT INTO "SigmaInteractionLog" (agent_name, action, details, category)
+                        INSERT INTO "SigmaInteractionLog" (user_prompt, agent_explanation, tools_used, status)
                         VALUES (%s, %s, %s, %s)
-                    ''', ('George', 'Lead Ingestion', f"Captured {form_version} lead from {data.get('company')}", 'SALES'))
+                    ''', (
+                        'Lead Ingestion Webhook',
+                        f"Captured {form_version} lead from {data.get('company')}",
+                        '["web_quote_form"]',
+                        'SUCCESS'
+                    ))
 
                 conn.commit()
             finally:
@@ -861,7 +881,18 @@ def scope_builder():
     return redirect(url_for('admin_operations', view='scope'))
 
 @app.route('/robots.txt')
-def robots_txt(): return send_from_directory('static', 'robots.txt')
+def robots_txt():
+    host = request.host.lower()
+    if 'hwbcleaning.com' not in host:
+        return "User-agent: *\nDisallow: /\n", 200, {'Content-Type': 'text/plain'}
+    return send_from_directory('static', 'robots.txt')
+
+@app.after_request
+def protect_staging_indexing(response):
+    host = request.host.lower()
+    if 'hwbcleaning.com' not in host:
+        response.headers['X-Robots-Tag'] = 'noindex, nofollow'
+    return response
 
 @app.route('/sitemap.xml')
 def sitemap_xml(): return send_from_directory('static', 'sitemap.xml')

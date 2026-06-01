@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HEX DEAL FINDER | Tactical HUD v2.32</title>
+    <!-- SigmaFidelity™ High-Fidelity Tactical Stack -->
+    <script src="https://unpkg.com/deck.gl@latest/dist.min.js"></script>
+    <script src="https://unpkg.com/maplibre-gl@3.x/dist/maplibre-gl.js"></script>
+    <link href="https://unpkg.com/maplibre-gl@3.x/dist/maplibre-gl.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --hex-obsidian: #020617; --hex-charcoal: #0f172a; --hex-cyan: #06b6d4;
+            --hex-emerald: #10b981; --hex-amber: #f59e0b; --hex-crimson: #ef4444;
+            --hex-violet: #8b5cf6; --hex-border: rgba(30, 41, 59, 0.5); 
+            --hex-glass: rgba(15, 23, 42, 0.85); --hex-text: #f8fafc; --hex-text-muted: #94a3b8;
+        }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: var(--hex-obsidian); font-family: 'Inter', sans-serif; color: var(--hex-text); }
+        
+        #hud-container { display: grid; grid-template-areas: "top top top" "nav map sticks" "nav console console"; grid-template-columns: 70px 1fr 380px; grid-template-rows: 60px 1fr 220px; height: 100vh; width: 100vw; }
+        
+        #top-bar { grid-area: top; background: var(--hex-charcoal); border-bottom: 1px solid var(--hex-border); display: flex; align-items: center; padding: 0 24px; justify-content: space-between; z-index: 150; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+        .logo-area { display: flex; align-items: center; gap: 12px; }
+        .logo-text { font-weight: 800; font-size: 20px; letter-spacing: 2px; color: var(--hex-text); }
+        .logo-accent { color: var(--hex-cyan); }
+        .live-pulse { width: 8px; height: 8px; background: var(--hex-emerald); border-radius: 50%; box-shadow: 0 0 10px var(--hex-emerald); animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
+
+        .search-container { flex-grow: 1; max-width: 600px; margin: 0 40px; position: relative; }
+        .top-search { width: 100%; background: #000; border: 1px solid var(--hex-border); border-radius: 4px; padding: 10px 16px 10px 40px; color: white; font-family: 'Inter'; font-size: 13px; transition: all 0.3s; }
+        .top-search:focus { border-color: var(--hex-cyan); outline: none; box-shadow: 0 0 15px rgba(6,182,212,0.2); }
+        .search-icon { position: absolute; left: 14px; top: 12px; color: var(--hex-text-muted); font-size: 14px; }
+
+        .top-actions { display: flex; align-items: center; gap: 20px; }
+        .project-label { font-size: 10px; font-weight: 800; color: var(--hex-text-muted); text-transform: uppercase; }
+        .project-select { background: rgba(30,41,59,0.5); border: 1px solid var(--hex-border); color: white; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; }
+
+        #hex-nav { grid-area: nav; background: var(--hex-charcoal); border-right: 1px solid var(--hex-border); display: flex; flex-direction: column; align-items: center; padding-top: 20px; gap: 24px; z-index: 100; }
+        .nav-icon { width: 42px; height: 42px; border-radius: 8px; background: rgba(30, 41, 59, 0.8); border: 1px solid var(--hex-border); color: var(--hex-text-muted); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; cursor: pointer; transition: all 0.3s; }
+        .nav-icon:hover, .nav-icon.active { background: var(--hex-cyan); color: white; box-shadow: 0 0 15px rgba(6, 182, 212, 0.5); }
+
+        #map-container { grid-area: map; position: relative; background: #000; overflow: hidden; border-bottom: 1px solid var(--hex-border); }
+        #map-view { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.8; }
+        #deck-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        
+        #stick-ledger { grid-area: sticks; background: var(--hex-charcoal); border-left: 1px solid var(--hex-border); padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; z-index: 100; }
+        .tactical-card { background: var(--hex-glass); border: 1px solid var(--hex-border); border-radius: 4px; padding: 16px; position: relative; }
+        .card-header { font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--hex-cyan); margin-bottom: 12px; letter-spacing: 1.5px; display: flex; justify-content: space-between; }
+        
+        .alpha-slider { width: 100%; accent-color: var(--hex-cyan); height: 4px; }
+        .label-val { font-size: 10px; color: var(--hex-text-muted); text-transform: uppercase; }
+
+        .roller-container { display: flex; gap: 2px; background: #000; padding: 12px; border-radius: 4px; justify-content: center; font-family: 'JetBrains Mono'; font-size: 28px; font-weight: 800; height: 36px; overflow: hidden; border: 1px solid var(--hex-cyan); box-shadow: inset 0 0 10px rgba(6, 182, 212, 0.3); }
+        .roller-digit { display: flex; flex-direction: column; transition: transform 0.4s cubic-bezier(0.45, 0.05, 0.55, 0.95); }
+        .roller-num { height: 36px; line-height: 36px; text-align: center; width: 22px; color: var(--hex-cyan); text-shadow: 0 0 8px rgba(6, 182, 212, 0.5); }
+        .roller-unit { font-size: 12px; color: var(--hex-text-muted); margin-top: auto; margin-left: 8px; margin-bottom: 4px; font-weight: 800; }
+
+        .layer-rack { display: flex; flex-direction: column; gap: 10px; }
+        .layer-item { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
+        .layer-label { font-size: 11px; font-weight: 600; color: var(--hex-text-muted); text-transform: uppercase; }
+        
+        .simple-toggle { position: relative; display: inline-block; width: 34px; height: 18px; }
+        .simple-toggle input { opacity: 0; width: 0; height: 0; }
+        .slider-round { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #334155; transition: .2s; border-radius: 18px; }
+        .slider-round:before { position: absolute; content: ""; height: 12px; width: 12px; left: 3px; bottom: 3px; background-color: white; transition: .2s; border-radius: 50%; }
+        input:checked + .slider-round { background-color: var(--hex-cyan); box-shadow: 0 0 8px var(--hex-cyan); }
+        input:checked + .slider-round:before { transform: translateX(16px); }
+
+        .hud-label { position: absolute; top: 24px; left: 24px; z-index: 40; background: var(--hex-glass); backdrop-filter: blur(8px); padding: 10px 20px; border-radius: 4px; border-left: 4px solid var(--hex-cyan); font-weight: 800; font-size: 13px; pointer-events: none; }
+        .sector-tag { font-size: 10px; color: var(--hex-cyan); font-weight: 800; margin-top: 4px; display: block; }
+        #floating-card { position: absolute; z-index: 200; pointer-events: none; width: 240px; background: var(--hex-glass); backdrop-filter: blur(12px); border: 1px solid var(--hex-cyan); border-radius: 4px; padding: 12px; display: none; transform: translate(-50%, -120%); box-shadow: 0 0 20px rgba(0,0,0,0.6); }
+
+        .sigma-btn-amber { background: rgba(245, 158, 11, 0.1); border: 1px solid var(--hex-amber); color: var(--hex-amber); padding: 12px; border-radius: 4px; font-size: 10px; font-weight: 800; width: 100%; cursor: pointer; text-transform: uppercase; transition: all 0.3s; margin-bottom: 8px;}
+        .sigma-btn-amber:hover { background: var(--hex-amber); color: #000; box-shadow: 0 0 15px rgba(245, 158, 11, 0.6); }
+
+        #george-console { grid-area: console; background: #020617; border-top: 1px solid var(--hex-border); display: grid; grid-template-columns: 1fr 400px; padding: 0; z-index: 100; }
+        .terminal-feed { padding: 16px 24px; overflow-y: auto; font-family: 'Inter', sans-serif; font-size: 12px; line-height: 1.6; color: var(--hex-emerald); }
+        .alpha-insight-panel { background: rgba(6, 182, 212, 0.05); border-left: 1px solid var(--hex-border); padding: 20px; overflow-y: auto;}
+    </style>
+</head>
+<body>
+
+<div id="hud-container">
+    <header id="top-bar">
+        <div class="logo-area">
+            <div class="live-pulse"></div>
+            <div class="logo-text">HEX<span class="logo-accent">GROWTH</span></div>
+        </div>
+        
+        <div class="search-container">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="top-search" placeholder="10405 E Northwest Hwy..." id="geo-search">
+        </div>
+
+        <div class="top-actions">
+            <div style="text-align: right;">
+                <div class="project-label">Active Project</div>
+                <select class="project-select">
+                    <option>DALLAS NORTHLAKE AUDIT</option>
+                </select>
+            </div>
+            <div class="nav-icon" style="width: 32px; height: 32px; border-radius: 50%;">US</div>
+        </div>
+    </header>
+
+    <nav id="hex-nav">
+        <div class="nav-icon active">MAP</div>
+        <div class="nav-icon">DATA</div>
+        <div class="nav-icon">TOOLS</div>
+        <div style="flex-grow: 1;"></div>
+        <div class="nav-icon" onclick="location.reload()">REDO</div>
+    </nav>
+
+    <div id="map-container">
+        <div id="map-view"></div>
+        <canvas id="deck-canvas"></canvas>
+        <div id="floating-card">
+            <div class="card-header"><span id="float-id" style="color: var(--hex-violet);">LAND LOCKED</span></div>
+            <div style="font-size: 16px; font-weight: 800; color: var(--hex-text); margin-bottom: 4px;" id="float-title">Selected Lot</div>
+            <div id="float-details" style="font-size: 11px;"></div>
+            <div class="data-monitor-row" style="margin-top:8px; border-top: 1px solid rgba(255,255,255,0.1); padding-top:8px;"><span class="data-label">DEAL SCORE</span><span class="data-value" id="float-score" style="color: var(--hex-amber); font-size: 14px;">---</span></div>
+        </div>
+        <div class="hud-label">
+            <span class="neon-glow-cyan">HEX DEAL FINDER v2.32</span>
+            <span class="sector-tag" id="view-mode">BIG PICTURE: TEXAS</span>
+        </div>
+    </div>
+
+    <aside id="stick-ledger">
+        <div class="tactical-card">
+            <div class="card-header"><span>How High Are We?</span><span>HEIGHT</span></div>
+            <div class="roller-container" id="roller">
+                <div class="roller-digit" id="d1"></div><div class="roller-digit" id="d2"></div><div class="roller-digit" id="d3"></div><div class="roller-digit" id="d4"></div><div class="roller-digit" id="d5"></div><div class="roller-digit" id="d6"></div><div class="roller-digit" id="d7"></div>
+                <div class="roller-unit">FT</div>
+            </div>
+            <div style="margin-top: 16px;">
+                <input type="range" class="alpha-slider" id="alt-master" min="50" max="1500000" step="10" value="512000" oninput="updateAltitude(this.value)">
+                <div style="display:flex; justify-content: space-between; margin-top: 8px;">
+                    <span class="label-val">GROUND</span>
+                    <span class="label-val">SKY</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="tactical-card">
+            <div class="card-header"><span>Map Layers</span><span>SELECT</span></div>
+            <div class="layer-rack">
+                <div class="layer-item"><span class="layer-label">1. City Planning</span><label class="simple-toggle"><input type="checkbox" id="layer-city" onchange="renderLayers()"><span class="slider-round"></span></label></div>
+                <div class="layer-item"><span class="layer-label">2. Roads & Traffic</span><label class="simple-toggle"><input type="checkbox" id="layer-roads" onchange="renderLayers()"><span class="slider-round"></span></label></div>
+                <div class="layer-item"><span class="layer-label">3. Power & Water</span><label class="simple-toggle"><input type="checkbox" id="layer-power" onchange="renderLayers()"><span class="slider-round"></span></label></div>
+                <div class="layer-item"><span class="layer-label">4. Land & Dirt Info</span><label class="simple-toggle"><input type="checkbox" id="layer-land" onchange="renderLayers()"><span class="slider-round"></span></label></div>
+                <div class="layer-item"><span class="layer-label">5. Safety & Crime</span><label class="simple-toggle"><input type="checkbox" id="layer-safety" onchange="renderLayers()"><span class="slider-round"></span></label></div>
+                <div class="layer-item"><span class="layer-label">6. Neighborhood Mood</span><label class="simple-toggle"><input type="checkbox" id="layer-mood" onchange="renderLayers()"><span class="slider-round"></span></label></div>
+                <div class="layer-item"><span class="layer-label">7. Money & Profit</span><label class="simple-toggle"><input type="checkbox" id="layer-money" onchange="renderLayers()"><span class="slider-round"></span></label></div>
+            </div>
+        </div>
+
+        <div class="tactical-card">
+            <div class="card-header"><span>Live Intelligence</span></div>
+            <button class="sigma-btn-amber" onclick="executeNWHwySim()" id="sim-btn">AUDIT: 10405 E NORTHWEST HWY</button>
+        </div>
+    </aside>
+
+    <footer id="george-console">
+        <div class="terminal-feed" id="miner-feed">
+[GUIDE] Hi! I'm George. Ready to scan 10405 E Northwest Hwy.
+        </div>
+        <div class="alpha-insight-panel" id="insight-panel">
+            <div class="card-header" style="color: var(--hex-violet);"><span>Final Answer</span></div>
+            <div id="alpha-summary" style="font-size: 12px;">Waiting for site ingestion.</div>
+        </div>
+    </footer>
+</div>
+
+<script>
+    const { Deck, GeoJsonLayer, ScatterplotLayer, PolygonLayer } = deck;
+
+    let altitude = 512000;
+    let currentViewState = { longitude: -96.79, latitude: 32.77, zoom: 10, pitch: 45, bearing: 0, minZoom: 0, maxZoom: 22 };
+
+    function generateHexagon(center, radius) {
+        const coords = [];
+        for (let i = 0; i < 6; i++) {
+            const angle = (i * 60) * Math.PI / 180;
+            coords.push([center[0] + radius * Math.cos(angle), center[1] + radius * Math.sin(angle) * 1.2]);
+        }
+        coords.push(coords[0]); return coords;
+    }
+
+    const map = new maplibregl.Map({
+        container: 'map-view',
+        style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+        center: [currentViewState.longitude, currentViewState.latitude], 
+        zoom: currentViewState.zoom, pitch: currentViewState.pitch, interactive: false
+    });
+
+    const deckgl = new Deck({
+        canvas: 'deck-canvas',
+        viewState: currentViewState,
+        controller: true,
+        onViewStateChange: ({viewState}) => {
+            deckgl.setProps({ viewState: viewState });
+            currentViewState = viewState;
+            const calculatedAlt = Math.max(50, Math.round(125 * Math.pow(2, 18 - viewState.zoom)));
+            syncUI(calculatedAlt, viewState.zoom);
+            map.jumpTo({ center: [viewState.longitude, viewState.latitude], zoom: viewState.zoom, bearing: viewState.bearing || 0, pitch: viewState.pitch || 0 });
+        }
+    });
+
+    const MOCK_GEO = { "10405": { center: [-96.6963, 32.8637], zoom: 17, name: "NORTHLAKE BUILDING" } };
+
+    document.getElementById('geo-search').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') handleSearch(e.target.value.toLowerCase().trim());
+    });
+
+    function handleSearch(query) {
+        logToConsole(`[GUIDE] Searching for: "${query}"...`);
+        if (query.includes("10405")) {
+            const target = MOCK_GEO["10405"];
+            currentViewState = { ...currentViewState, longitude: target.center[0], latitude: target.center[1], zoom: target.zoom, transitionDuration: 3000 };
+            deckgl.setProps({ viewState: currentViewState });
+            map.flyTo({ center: target.center, zoom: target.zoom, duration: 3000 });
+            syncUI(Math.round(125 * Math.pow(2, 18 - target.zoom)), target.zoom);
+        } else { logToConsole(`[ERROR] I can't find that spot yet.`); }
+    }
+
+    function renderLayers() {
+        const layers = [];
+        const active = {
+            city: document.getElementById('layer-city').checked,
+            roads: document.getElementById('layer-roads').checked,
+            land: document.getElementById('layer-land').checked,
+            mood: document.getElementById('layer-mood').checked
+        };
+        const site = [-96.6963, 32.8637];
+        if (active.roads) {
+            layers.push(new PolygonLayer({
+                id: 'roads-hex',
+                data: [{ polygon: generateHexagon(site, 0.005) }],
+                getPolygon: d => d.polygon, getFillColor: [245, 158, 11, 150], extruded: true, getElevation: 5
+            }));
+        }
+        if (active.land || active.city) {
+            layers.push(new PolygonLayer({
+                id: 'target-site',
+                data: [{ polygon: generateHexagon(site, 0.001), title: 'Northlake Building', score: '9.2' }],
+                getPolygon: d => d.polygon, getFillColor: [139, 92, 246, 200], getLineColor: [255, 255, 255], stroked: true, pickable: true, extruded: true, getElevation: 30,
+                onClick: ({object, x, y}) => showFloat(object, x, y, "STATUS: Approved Club<br>MOOD: Very Positive<br>DEAL: Landmark Status")
+            }));
+        }
+        deckgl.setProps({ layers: layers });
+    }
+
+    async function executeNWHwySim() {
+        document.getElementById('sim-btn').disabled = true;
+        logToConsole("[GUIDE] Real-time scan of 10405 E Northwest Hwy (Northlake Building)...");
+        logToConsole("[GUIDE] CITY BRAIN: Found Case #Z234-178. Recommended for Approval (May 21, 2026)!");
+        document.getElementById('layer-city').checked = true;
+        document.getElementById('layer-roads').checked = true;
+        renderLayers();
+        
+        currentViewState = { ...currentViewState, longitude: -96.6963, latitude: 32.8637, zoom: 14, pitch: 45, transitionDuration: 2500 };
+        deckgl.setProps({ viewState: currentViewState });
+        map.flyTo({ center: [-96.6963, 32.8637], zoom: 14, pitch: 45, duration: 2500 });
+        await new Promise(r => setTimeout(r, 3000));
+
+        logToConsole("[GUIDE] NEIGHBORHOOD MOOD: Facebook clusters are POSITIVE. People love the family club idea.");
+        document.getElementById('layer-mood').checked = true;
+        document.getElementById('layer-land').checked = true;
+        renderLayers();
+        
+        currentViewState = { ...currentViewState, zoom: 18, pitch: 65, bearing: -20, transitionDuration: 3000 };
+        deckgl.setProps({ viewState: currentViewState });
+        map.flyTo({ center: [-96.6963, 32.8637], zoom: 18, pitch: 65, duration: 3000 });
+        
+        setTimeout(() => {
+            document.getElementById('alpha-summary').innerHTML = `
+                <b style="color: var(--hex-emerald); font-size: 14px;">SITE AUDIT: SUCCESS (9.2 / 10)</b><br><br>
+                <b>The Story:</b> Landmark medical building being turned into the <b>East Side Country Club</b>.<br><br>
+                <b>Mood:</b> No NIMBY friction. Neighbors are happy to see the building saved.
+            `;
+            logToConsole("[GUIDE] Audit complete! This is a 'Hardened Alpha' deal.");
+        }, 3500);
+    }
+
+    function showFloat(obj, x, y, details) {
+        const float = document.getElementById('floating-card');
+        float.style.display = 'block'; float.style.left = x + 'px'; float.style.top = y + 'px';
+        document.getElementById('float-title').innerText = obj.title;
+        document.getElementById('float-score').innerText = obj.score + " / 10";
+        document.getElementById('float-details').innerHTML = details;
+    }
+
+    function syncUI(alt, zoom) {
+        altitude = alt;
+        document.getElementById('alt-master').value = alt;
+        const viewMode = document.getElementById('view-mode');
+        if (alt > 400000) viewMode.innerText = "BIG PICTURE: TEXAS";
+        else if (alt > 50000) viewMode.innerText = "REGIONAL: DALLAS CORRIDOR";
+        else viewMode.innerText = "ZOOMED IN: YOUR SITE";
+        const s = Math.max(0, alt).toString().padStart(7, '0');
+        for(let i=0; i<7; i++) {
+            const digit = parseInt(s[i]);
+            const roller = document.getElementById(`d${i+1}`);
+            if (roller) roller.style.transform = `translateY(${-digit * 36}px)`;
+        }
+        document.getElementById('floating-card').style.display = 'none';
+    }
+
+    function logToConsole(msg) {
+        const feed = document.getElementById('miner-feed');
+        feed.innerHTML += `\n<span style="color: white; opacity: 0.3;">[${new Date().toLocaleTimeString([], {hour12:false})}]</span> ${msg}`;
+        feed.scrollTop = feed.scrollHeight;
+    }
+
+    function initRoller() {
+        const digits = ['d1','d2','d3','d4','d5','d6','d7'];
+        digits.forEach(id => {
+            const el = document.getElementById(id);
+            for(let i=0; i<=9; i++) {
+                const n = document.createElement('div'); n.className = 'roller-num'; n.innerText = i;
+                el.appendChild(n);
+            }
+        });
+        updateAltitude(512000);
+    }
+
+    function updateAltitude(val) {
+        const targetZoom = 18 - Math.log2(parseInt(val) / 125);
+        deckgl.setProps({ viewState: { ...currentViewState, zoom: targetZoom } });
+        map.setZoom(targetZoom);
+        syncUI(parseInt(val), targetZoom);
+    }
+
+    initRoller();
+    renderLayers();
+</script>
+</body>
+</html>
