@@ -67,6 +67,5 @@ jobs:
         with:
            # Target Azure App Service name corrected from babysop-landing
           app-name: 'hwb-babysop-landing'
-          slot-name: 'Production'
           # CEO ACTION REQUIRED: Ensure AZUREAPPSERVICE_PUBLISHPROFILE is set in GitHub Secrets
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_BABYSOP }}
