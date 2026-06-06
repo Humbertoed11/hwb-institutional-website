@@ -174,6 +174,13 @@ def logout() -> Response:
 def hexgrowth_hud() -> str:
     return render_template('hud.html')
 
+@app.route('/hud/terminal')
+@app.route('/hexgrowth/hud/terminal')
+@login_required
+def hexgrowth_hud_terminal() -> str:
+    return render_template('hud_terminal.html')
+
+
 @app.route('/projects')
 @login_required
 def projects_portal() -> str:

@@ -1,0 +1,1989 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HEXGROWTH TERMINAL | Hex-Terminal</title>
+    <!-- SigmaFidelity™ High-Fidelity Tactical Stack -->
+    <script src="https://unpkg.com/deck.gl@latest/dist.min.js"></script>
+    <script src="https://unpkg.com/maplibre-gl@3.x/dist/maplibre-gl.js"></script>
+    <link href="https://unpkg.com/maplibre-gl@3.x/dist/maplibre-gl.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --hex-obsidian: #020617; --hex-charcoal: #0b0f19; --hex-panel: #111827;
+            --hex-cyan: #06b6d4; --hex-emerald: #10b981; --hex-amber: #f59e0b;
+            --hex-crimson: #ef4444; --hex-violet: #8b5cf6; --hex-border: rgba(30, 41, 59, 0.6); 
+            --hex-glass: rgba(11, 15, 25, 0.9); --hex-text: #f8fafc; --hex-text-muted: #94a3b8;
+        }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: var(--hex-obsidian); font-family: 'Inter', sans-serif; color: var(--hex-text); }
+        
+        #hud-container { 
+            display: grid; 
+            grid-template-areas: "top top top" "deal map sticks" "deal console sticks"; 
+            grid-template-columns: 420px 1fr 380px; 
+            grid-template-rows: 60px 1fr 180px; 
+            height: 100vh; 
+            width: 100vw; 
+        }
+        
+        #top-bar { grid-area: top; background: var(--hex-charcoal); border-bottom: 1px solid var(--hex-border); display: flex; align-items: center; padding: 0 24px; justify-content: space-between; z-index: 150; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+        
+        /* Left Column: Deal Manager */
+        #deal-manager { 
+            grid-area: deal; 
+            background: var(--hex-charcoal); 
+            border-right: 1px solid var(--hex-border); 
+            display: flex; 
+            flex-direction: column; 
+            z-index: 100;
+            overflow: hidden;
+        }
+        .deal-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--hex-border);
+            background: rgba(17, 24, 39, 0.5);
+        }
+        .deal-tab {
+            flex: 1;
+            padding: 12px 6px;
+            font-size: 10px;
+            font-weight: 800;
+            text-align: center;
+            text-transform: uppercase;
+            cursor: pointer;
+            color: var(--hex-text-muted);
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .deal-tab.active {
+            color: var(--hex-cyan);
+            border-bottom-color: var(--hex-cyan);
+            background: var(--hex-charcoal);
+        }
+        .tab-content {
+            flex-grow: 1;
+            padding: 16px;
+            overflow-y: auto;
+            display: none;
+        }
+        .tab-content.active {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* Center Column: Map & Terminal */
+        #map-container { grid-area: map; position: relative; background: #000; overflow: hidden; border-bottom: 1px solid var(--hex-border); }
+        #map-view { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.8; }
+        #deck-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        
+        #george-console { grid-area: console; background: var(--hex-charcoal); display: flex; flex-direction: column; border-top: 1px solid var(--hex-border); z-index: 100; overflow: hidden; }
+        .console-header {
+            background: rgba(17, 24, 39, 0.8);
+            border-bottom: 1px solid var(--hex-border);
+            padding: 6px 16px;
+            font-size: 10px;
+            font-weight: 800;
+            color: var(--hex-emerald);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .terminal-feed { flex-grow: 1; padding: 12px 16px; overflow-y: auto; font-family: 'JetBrains Mono', monospace; font-size: 11px; line-height: 1.5; color: var(--hex-emerald); background: #020617; }
+        
+        /* Right Column: Ticker & Lobe Weights */
+        #stick-ledger { grid-area: sticks; background: var(--hex-charcoal); border-left: 1px solid var(--hex-border); padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; z-index: 100; }
+
+        /* Unified CSS Cards & Layouts */
+        .tactical-card { background: var(--hex-glass); border: 1px solid var(--hex-border); border-radius: 4px; padding: 14px; position: relative; }
+        .card-header { font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--hex-cyan); margin-bottom: 10px; letter-spacing: 1px; display: flex; justify-content: space-between; }
+        
+        .alpha-slider { width: 100%; accent-color: var(--hex-cyan); height: 4px; cursor: pointer; }
+        .label-val { font-size: 10px; color: var(--hex-text-muted); text-transform: uppercase; }
+
+        .roller-container { display: flex; gap: 2px; background: #000; padding: 8px 12px; border-radius: 4px; justify-content: center; font-family: 'JetBrains Mono'; font-size: 24px; font-weight: 800; height: 32px; overflow: hidden; border: 1px solid var(--hex-cyan); box-shadow: inset 0 0 10px rgba(6, 182, 212, 0.3); margin-bottom: 8px; }
+        .roller-digit { display: flex; flex-direction: column; transition: transform 0.4s cubic-bezier(0.45, 0.05, 0.55, 0.95); }
+        .roller-num { height: 32px; line-height: 32px; text-align: center; width: 18px; color: var(--hex-cyan); text-shadow: 0 0 8px rgba(6, 182, 212, 0.5); }
+        .roller-unit { font-size: 11px; color: var(--hex-text-muted); margin-top: auto; margin-left: 6px; margin-bottom: 2px; font-weight: 800; }
+
+        .layer-rack { display: flex; flex-direction: column; gap: 8px; }
+        .layer-item { display: flex; align-items: center; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
+        .layer-label { font-size: 10px; font-weight: 600; color: var(--hex-text-muted); text-transform: uppercase; }
+        
+        .simple-toggle { position: relative; display: inline-block; width: 30px; height: 16px; }
+        
+        /* Interactive Command Chips style */
+        .command-chip {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid var(--hex-border);
+            color: #f8fafc;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 9px;
+            font-family: 'JetBrains Mono', monospace;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            margin: 2px 0;
+            display: inline-block;
+            text-align: left;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .command-chip:hover {
+            background: var(--hex-cyan);
+            color: #020617;
+            border-color: var(--hex-cyan);
+            transform: translateY(-1px);
+            box-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+        }
+        .simple-toggle input { opacity: 0; width: 0; height: 0; }
+        .slider-round { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #334155; transition: .2s; border-radius: 16px; }
+        .slider-round:before { position: absolute; content: ""; height: 10px; width: 10px; left: 3px; bottom: 3px; background-color: white; transition: .2s; border-radius: 50%; }
+        input:checked + .slider-round { background-color: var(--hex-cyan); box-shadow: 0 0 8px var(--hex-cyan); }
+        input:checked + .slider-round:before { transform: translateX(14px); }
+
+        .hud-label { position: absolute; top: 20px; left: 20px; z-index: 40; background: var(--hex-glass); backdrop-filter: blur(8px); padding: 8px 16px; border-radius: 4px; border-left: 4px solid var(--hex-cyan); font-weight: 800; font-size: 12px; pointer-events: none; }
+        .sector-tag { font-size: 9px; color: var(--hex-cyan); font-weight: 800; margin-top: 2px; display: block; }
+        #floating-card { position: absolute; z-index: 500; pointer-events: auto; width: 260px; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(16px); border: 1px solid var(--hex-cyan); border-radius: 4px; padding: 12px; display: none; transform: translate(-50%, -105%); box-shadow: 0 15px 35px rgba(0,0,0,0.8); }
+
+        /* Hex-Terminal Style Ticker */
+        .ticker-container {
+            height: 120px;
+            overflow-y: auto;
+            border: 1px solid var(--hex-border);
+            border-radius: 4px;
+            background: #020617;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+        }
+        .ticker-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 6px;
+            border-radius: 2px;
+            background: rgba(255, 255, 255, 0.02);
+            border-left: 3px solid var(--hex-cyan);
+        }
+        .ticker-row.alert { border-left-color: var(--hex-crimson); color: #fda4af; }
+        .ticker-row.success { border-left-color: var(--hex-emerald); color: #a7f3d0; }
+
+        /* Kanban deal flow */
+        .kanban-board {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .kanban-col {
+            background: rgba(17, 24, 30, 0.7);
+            border: 1px solid var(--hex-border);
+            border-radius: 4px;
+            padding: 10px;
+        }
+        .kanban-col-title {
+            font-size: 10px;
+            font-weight: 800;
+            color: var(--hex-cyan);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--hex-border);
+            padding-bottom: 4px;
+        }
+        .kanban-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .kanban-card {
+            background: var(--hex-panel);
+            border: 1px solid var(--hex-border);
+            border-radius: 4px;
+            padding: 10px;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .kanban-card:hover {
+            border-color: var(--hex-cyan);
+        }
+        .kanban-card-title {
+            font-size: 11px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .kanban-card-meta {
+            font-size: 9px;
+            color: var(--hex-text-muted);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* Pro-Forma Calculator styles */
+        .pf-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .pf-label {
+            font-size: 10px;
+            font-weight: 800;
+            color: var(--hex-text-muted);
+            text-transform: uppercase;
+        }
+        .pf-input {
+            background: #020617;
+            border: 1px solid var(--hex-border);
+            border-radius: 4px;
+            color: #fff;
+            padding: 8px;
+            font-size: 12px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .pf-input:focus {
+            border-color: var(--hex-cyan);
+            outline: none;
+        }
+
+        /* Spotlight Command Terminal style */
+        #spotlight-terminal {
+            position: fixed;
+            top: 20%;
+            left: 50%;
+            transform: translate(-50%, -20%);
+            width: 550px;
+            z-index: 9999;
+            background: var(--hex-charcoal);
+            border: 2px solid var(--hex-cyan);
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            display: none;
+        }
+        #terminal-input {
+            width: 100%;
+            background: #020617;
+            border: 1px solid var(--hex-border);
+            border-radius: 4px;
+            color: #fff;
+            padding: 10px 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            box-sizing: border-box;
+        }
+        #terminal-input:focus {
+            border-color: var(--hex-cyan);
+            outline: none;
+        }
+        .terminal-tip {
+            font-size: 10px;
+            color: var(--hex-text-muted);
+            margin-top: 8px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Floating Map Legend styles */
+        #map-legend-panel {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            z-index: 250;
+            width: 250px;
+            background: var(--hex-glass);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--hex-border);
+            border-radius: 4px;
+            padding: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+            transition: all 0.3s ease;
+        }
+        .legend-header {
+            font-size: 10px;
+            font-weight: 800;
+            color: var(--hex-cyan);
+            display: flex;
+            justify-content: space-between;
+            cursor: pointer;
+            user-select: none;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: 6px;
+            margin-bottom: 6px;
+        }
+        .legend-section-title {
+            font-size: 8px;
+            font-weight: 800;
+            color: var(--hex-text-muted);
+            text-transform: uppercase;
+            margin-top: 8px;
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
+        }
+        .legend-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 9px;
+            color: #f8fafc;
+            margin-bottom: 4px;
+        }
+        .legend-color-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+            display: inline-block;
+            flex-shrink: 0;
+        }
+        .legend-row-muted {
+            opacity: 0.35;
+            transition: opacity 0.3s ease;
+        }
+        .legend-row-active {
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+        .legend-interactive-row {
+            cursor: pointer;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        .legend-interactive-row:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+        }
+        .legend-status {
+            margin-left: auto;
+            font-size: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+<div id="hud-container">
+    {% set header_type = 'HUD' %}
+    {% set active_hud = 'terminal' %}
+    {% include "components/brand_header.html" %}
+
+    <!-- Left Column: Deal Manager -->
+    <div id="deal-manager">
+        <div class="deal-tabs">
+            <div class="deal-tab active" onclick="switchDealTab('pipeline')">Deal Pipeline</div>
+            <div class="deal-tab" onclick="switchDealTab('comparison')">Deal Comparison</div>
+            <div class="deal-tab" onclick="switchDealTab('proforma')">Pro-Forma</div>
+            <div class="deal-tab" onclick="switchDealTab('reviews')">Review List</div>
+        </div>
+        
+        <!-- Pipeline Tab Content -->
+        <div id="tab-pipeline" class="tab-content active">
+            <div class="kanban-board">
+                <div class="kanban-col">
+                    <div class="kanban-col-title">Feasibility Assessment</div>
+                    <div class="kanban-cards">
+                        <div class="kanban-card" onclick="flyToSite('victory')">
+                            <div class="kanban-card-title">Victory Park Relocation</div>
+                            <div class="kanban-card-meta">
+                                <span>Lobe: Pulse (L6)</span>
+                                <span style="color: var(--hex-crimson);">Score: 2.4</span>
+                            </div>
+                        </div>
+                        <div class="kanban-card" onclick="flyToSite('vernon')">
+                            <div class="kanban-card-title">Vernon Extraction Hub</div>
+                            <div class="kanban-card-meta">
+                                <span>Lobe: Extraction (L4)</span>
+                                <span style="color: var(--hex-cyan);">Score: 8.2</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="kanban-col">
+                    <div class="kanban-col-title">Under Contract</div>
+                    <div class="kanban-cards">
+                        <div class="kanban-card" onclick="flyToSite('valley')">
+                            <div class="kanban-card-title">Valley View Arena Site</div>
+                            <div class="kanban-card-meta">
+                                <span>Lobe: Infrastructure</span>
+                                <span style="color: var(--hex-emerald);">Score: 8.8</span>
+                            </div>
+                        </div>
+                        <div class="kanban-card" onclick="flyToSite('bowie')">
+                            <div class="kanban-card-title">Bowie Logistics Junction</div>
+                            <div class="kanban-card-meta">
+                                <span>Lobe: Logistics (L2)</span>
+                                <span style="color: var(--hex-emerald);">Score: 8.4</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="kanban-col">
+                    <div class="kanban-col-title">Closed / Underway</div>
+                    <div class="kanban-cards">
+                        <div class="kanban-card" onclick="flyToSite('decatur')">
+                            <div class="kanban-card-title">Decatur Data Center</div>
+                            <div class="kanban-card-meta">
+                                <span>Lobe: Utility (L3)</span>
+                                <span style="color: var(--hex-cyan);">Score: 7.9</span>
+                            </div>
+                        </div>
+                        <div class="kanban-card" onclick="flyToSite('wichita')">
+                            <div class="kanban-card-title">Wichita Falls Wind Farm</div>
+                            <div class="kanban-card-meta">
+                                <span>Lobe: Power (L3)</span>
+                                <span style="color: var(--hex-emerald);">Score: 8.5</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comparison Tab Content -->
+        <div id="tab-comparison" class="tab-content">
+            <div class="tactical-card hud-draggable" style="padding: 10px;">
+                <div class="card-header" style="margin-bottom: 8px;">Deal Spreadsheet</div>
+                <table style="width: 100%; border-collapse: collapse; font-size: 10px; font-family: 'JetBrains Mono', monospace; text-align: left;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid var(--hex-border); color: var(--hex-cyan);">
+                            <th style="padding: 4px 0;">Deal Name</th>
+                            <th>Cost</th>
+                            <th>Target IRR</th>
+                            <th>Cap Rate</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.03); cursor: pointer;" onclick="flyToSite('victory')">
+                            <td style="padding: 8px 0; font-weight: 700;">Victory Park</td>
+                            <td>$45.0M</td>
+                            <td>12.5%</td>
+                            <td>4.8%</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.03); cursor: pointer;" onclick="flyToSite('valley')">
+                            <td style="padding: 8px 0; font-weight: 700;">Valley View</td>
+                            <td>$12.4M</td>
+                            <td>21.2%</td>
+                            <td>6.5%</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.03); cursor: pointer;" onclick="flyToSite('decatur')">
+                            <td style="padding: 8px 0; font-weight: 700;">Decatur DC</td>
+                            <td>$8.9M</td>
+                            <td>18.4%</td>
+                            <td>7.2%</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.03); cursor: pointer;" onclick="flyToSite('wichita')">
+                            <td style="padding: 8px 0; font-weight: 700;">Wichita Wind</td>
+                            <td>$14.2M</td>
+                            <td>19.8%</td>
+                            <td>6.8%</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.03); cursor: pointer;" onclick="flyToSite('vernon')">
+                            <td style="padding: 8px 0; font-weight: 700;">Vernon Hub</td>
+                            <td>$6.5M</td>
+                            <td>22.4%</td>
+                            <td>7.5%</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.03); cursor: pointer;" onclick="flyToSite('bowie')">
+                            <td style="padding: 8px 0; font-weight: 700;">Bowie Logistics</td>
+                            <td>$9.8M</td>
+                            <td>17.5%</td>
+                            <td>6.2%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Proforma Tab Content -->
+        <div id="tab-proforma" class="tab-content">
+            <div class="tactical-card hud-draggable">
+                <div class="card-header">Lobe Calculator</div>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <div class="pf-input-group">
+                        <div class="pf-label">Land Cost ($)</div>
+                        <input type="number" id="pf-land-cost" class="pf-input" value="12400000" oninput="calculateYield()">
+                    </div>
+                    <div class="pf-input-group">
+                        <div class="pf-label">CapEx ($)</div>
+                        <input type="number" id="pf-capex" class="pf-input" value="28500000" oninput="calculateYield()">
+                    </div>
+                    <div class="pf-input-group">
+                        <div class="pf-label">Construction Loan %</div>
+                        <input type="number" id="pf-loan-pct" class="pf-input" value="6.5" step="0.1" oninput="calculateYield()">
+                    </div>
+                    <hr style="border: 0; border-top: 1px solid var(--hex-border); margin: 8px 0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span class="pf-label" style="color: var(--hex-cyan);">Yield On Cost</span>
+                        <span id="pf-yield-val" style="font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 800; color: var(--hex-emerald);">7.8%</span>
+                    </div>
+                </div>
+            </div>
+        <!-- Reviews Tab Content -->
+        <div id="tab-reviews" class="tab-content">
+            <div class="tactical-card" style="padding: 10px;">
+                <div class="card-header" style="margin-bottom: 8px;">Target Lots Review List</div>
+                <div id="target-review-list-terminal" style="font-size: 10px; max-height: 400px; overflow-y: auto; font-family: 'JetBrains Mono', monospace; color: var(--hex-text);">
+                    No lots under review. Click a target lot on the map and click "SUBMIT FOR REVIEW" in the floating card.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Center Column: Map -->
+    <div id="map-container">
+        <div id="map-view"></div>
+        <canvas id="deck-canvas"></canvas>
+        <div class="hud-label">
+            HEX DEAL TERMINAL <span id="hud-sector" style="color: var(--hex-cyan);">DALLAS REGION</span>
+            <span class="sector-tag">Mode: Keyboard Command Enabled (Press Ctrl+K)</span>
+        </div>
+        <div id="floating-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--hex-border); padding-bottom: 6px; margin-bottom: 8px;">
+                <span id="popup-title" style="color: var(--hex-cyan); font-weight: 800; font-size: 10px; letter-spacing: 0.5px; font-family: 'JetBrains Mono', monospace;"></span>
+                <span onclick="closeHardPopup()" style="color: var(--hex-text-muted); cursor: pointer; font-size: 10px; font-weight: bold; padding: 2px 5px; border-radius: 2px; background: rgba(255,255,255,0.05); font-family: 'JetBrains Mono', monospace;">[X]</span>
+            </div>
+            <div id="popup-content" style="font-size: 9px; line-height: 1.4; color: #e2e8f0; margin-bottom: 8px; font-family: 'JetBrains Mono', monospace;"></div>
+            <div id="popup-action" style="display: flex; justify-content: flex-end;">
+                <button onclick="closeHardPopup()" style="height: 24px; padding: 0 10px; background: rgba(6, 182, 212, 0.15); border: 1px solid var(--hex-cyan); border-radius: 3px; color: var(--hex-cyan); font-size: 8px; font-weight: 600; cursor: pointer; font-family: 'JetBrains Mono', monospace;">ACKNOWLEDGE</button>
+            </div>
+        </div>
+
+        <!-- Floating Map Legend Widget -->
+        <div id="map-legend-panel" class="hud-draggable">
+            <div class="legend-header" onclick="toggleLegend()">
+                <span>MAP LEGEND</span>
+                <span id="legend-toggle-icon">[-]</span>
+            </div>
+            <div id="legend-body">
+                <div class="legend-section-title" style="margin-top: 0;">Altitude Beacons</div>
+                <div class="legend-row" id="legend-row-sky-beacons" onmouseenter="showLegendDetail('sky-beacons')" onmouseleave="clearLegendDetail()">
+                    <span class="legend-color-indicator" style="background: var(--hex-cyan); box-shadow: 0 0 6px var(--hex-cyan);"></span>
+                    <span>Macro Metro Hubs (Cyan)</span>
+                    <span class="legend-status" id="status-sky-beacons">[-]</span>
+                </div>
+                <div class="legend-row" id="legend-row-cloud-beacons" onmouseenter="showLegendDetail('cloud-beacons')" onmouseleave="clearLegendDetail()">
+                    <span class="legend-color-indicator" style="background: var(--hex-emerald); box-shadow: 0 0 6px var(--hex-emerald);"></span>
+                    <span>Target Corridors (Green)</span>
+                    <span class="legend-status" id="status-cloud-beacons">[-]</span>
+                </div>
+
+                <div class="legend-section-title">Feasibility Hexes</div>
+                <div class="legend-row" id="legend-row-feasibility-high" onmouseenter="showLegendDetail('feasibility-high')" onmouseleave="clearLegendDetail()">
+                    <span class="legend-color-indicator" style="background: #10b981; border: 1px solid #fff;"></span>
+                    <span>High Feasibility (> 7.0)</span>
+                    <span class="legend-status" id="status-feasibility-high">[-]</span>
+                </div>
+                <div class="legend-row" id="legend-row-feasibility-low" onmouseenter="showLegendDetail('feasibility-low')" onmouseleave="clearLegendDetail()">
+                    <span class="legend-color-indicator" style="background: #ef4444; border: 1px solid #fff;"></span>
+                    <span>High Risk Site (≤ 7.0)</span>
+                    <span class="legend-status" id="status-feasibility-low">[-]</span>
+                </div>
+
+                <div class="legend-section-title">Scouting Network (Pulse)</div>
+                <div class="legend-row" id="legend-row-scouting-node" onmouseenter="showLegendDetail('scouting-node')" onmouseleave="clearLegendDetail()">
+                    <span class="legend-color-indicator" style="background: var(--hex-cyan); border-radius: 50%;"></span>
+                    <span>Municipal GIS Server Node</span>
+                    <span class="legend-status" id="status-scouting-node">[-]</span>
+                </div>
+                <div class="legend-row" id="legend-row-scouting-stream" onmouseenter="showLegendDetail('scouting-stream')" onmouseleave="clearLegendDetail()">
+                    <span class="legend-color-indicator" style="height: 2px; width: 12px; background: #10b981;"></span>
+                    <span>"Bird on the Wire" Stream</span>
+                    <span class="legend-status" id="status-scouting-stream">[-]</span>
+                </div>
+
+                <div class="legend-section-title">Active Layer Overlays</div>
+                <div class="legend-row legend-interactive-row" id="legend-row-layer-city" onclick="toggleLayerFromLegend('layer-city')" onmouseenter="showLegendDetail('layer-city')" onmouseleave="clearLegendDetail()">
+                    <span class="legend-color-indicator" style="background: rgba(139, 92, 246, 0.4); border: 1px solid rgb(139, 92, 246);"></span>
+                    <span>L1 City Rules / TIF Zone</span>
+                    <span class="legend-status" id="status-layer-city">[-]</span>
+                </div>
+                <div class="legend-row legend-interactive-row" id="legend-row-layer-roads" onclick="toggleLayerFromLegend('layer-roads')" onmouseenter="showLegendDetail('layer-roads')" onmouseleave="clearLegendDetail()">
+                    <span class="legend-color-indicator" style="background: rgba(245, 158, 11, 0.4); border: 1px solid rgb(245, 158, 11);"></span>
+                    <span>L2 Roads (TxDOT Traffic Grid)</span>
+                    <span class="legend-status" id="status-layer-roads">[-]</span>
+                </div>
+                <div class="legend-row legend-interactive-row" id="legend-row-layer-power" onclick="toggleLayerFromLegend('layer-power')" onmouseenter="showLegendDetail('layer-power')" onmouseleave="clearLegendDetail()">
+                    <span class="legend-color-indicator" style="height: 2px; width: 12px; background: #06b6d4;"></span>
+                    <span>L3 Power (Substation Lines)</span>
+                    <span class="legend-status" id="status-layer-power">[-]</span>
+                </div>
+                <div class="legend-row legend-interactive-row" id="legend-row-layer-mood" onclick="toggleLayerFromLegend('layer-mood')" onmouseenter="showLegendDetail('layer-mood')" onmouseleave="clearLegendDetail()">
+                    <span class="legend-color-indicator" style="background: rgba(239, 68, 68, 0.4); border: 1px solid rgb(239, 68, 68);"></span>
+                    <span>L6 Sentiment (NIMBY Zone)</span>
+                    <span class="legend-status" id="status-layer-mood">[-]</span>
+                </div>
+            </div>
+            <!-- Intel Details Box -->
+            <div id="legend-details-box" style="margin-top: 8px; font-size: 8px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 6px; color: var(--hex-text-muted); min-height: 36px; line-height: 1.3;">
+                Hover over an element to view intelligence brief.
+            </div>
+        </div>
+    </div>
+
+    <!-- Console Terminal -->
+    <div id="george-console">
+        <div class="console-header">
+            <span>[SYS TERMINAL CORE] - GEORGE BYTES INFERENCE LINE</span>
+            <span style="color: var(--hex-cyan);">Uptime: 100%</span>
+        </div>
+        <div class="terminal-feed" id="console-feed"></div>
+    </div>
+
+    <!-- Right Column: Weights & Metrics -->
+    <div id="stick-ledger">
+        <!-- Telemetry Score Card -->
+        <div class="tactical-card hud-draggable">
+            <div class="card-header">Target Hex Score</div>
+            <div class="roller-container">
+                <div class="roller-digit" id="roller-1"><div class="roller-num">0</div><div class="roller-num">1</div><div class="roller-num">2</div><div class="roller-num">3</div><div class="roller-num">4</div><div class="roller-num">5</div><div class="roller-num">6</div><div class="roller-num">7</div><div class="roller-num">8</div><div class="roller-num">9</div></div>
+                <div class="roller-digit" style="transform: translateY(0);"><div class="roller-num">.</div></div>
+                <div class="roller-digit" id="roller-2"><div class="roller-num">0</div><div class="roller-num">1</div><div class="roller-num">2</div><div class="roller-num">3</div><div class="roller-num">4</div><div class="roller-num">5</div><div class="roller-num">6</div><div class="roller-num">7</div><div class="roller-num">8</div><div class="roller-num">9</div></div>
+                <div class="roller-unit">Alpha</div>
+            </div>
+            <div class="label-val" style="text-align: center; margin-top: 4px;" id="selected-hex-address">H3 Address: None Selected</div>
+        </div>
+
+        <!-- Keyboard Shortcuts & Suggestions Card -->
+        <div class="tactical-card hud-draggable">
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <span>Terminal Guide</span>
+                <span style="font-size: 8px; background: var(--hex-cyan); color: #020617; padding: 2px 6px; border-radius: 9999px; font-weight: 800; text-transform: uppercase;">Ctrl+K</span>
+            </div>
+            <div style="font-size: 10px; color: var(--hex-text-muted); margin-bottom: 10px; line-height: 1.4;">
+                Press <code style="color: var(--hex-cyan); font-weight: 700; background: rgba(6,182,212,0.1); padding: 1px 4px; border-radius: 3px;">Ctrl + K</code> or <code style="color: var(--hex-cyan); font-weight: 700; background: rgba(6,182,212,0.1); padding: 1px 4px; border-radius: 3px;">Cmd + K</code> to open the command console. Click suggestions to execute instantly:
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+                <button class="command-chip" onclick="triggerCommand('/go dallas')" title="Fly to Downtown Dallas Victory Park relos corridor">📍 /go dallas (Dallas Corridor)</button>
+                <button class="command-chip" onclick="triggerCommand('/go decatur')" title="Fly to Decatur data center growth corridor">📍 /go decatur (Decatur Artery)</button>
+                <button class="command-chip" onclick="triggerCommand('/go valley')" title="Fly to Valley View Arena development site">📍 /go valley (Valley View Site)</button>
+                <button class="command-chip" onclick="triggerCommand('/go 32.789 -96.807')" title="Fly to custom lat/lng coordinates and create hexagon">🎯 /go 32.789 -96.807 (Custom site)</button>
+                <button class="command-chip" onclick="triggerCommand('/lobe 6')" title="Switch blend weights to prioritize L6 Pulse (Sentiment) Lobe">🧠 /lobe 6 (Prioritize L6 Sentiment)</button>
+                <button class="command-chip" onclick="triggerCommand('/search Moonshot')" title="Search developer holdings profiles index">🔍 /search Moonshot (Find Competitor)</button>
+                <button class="command-chip" onclick="triggerCommand('/scout')" title="Ping municipal scraping servers and verify connection status">📡 /scout (Municipal API Ping)</button>
+            </div>
+        </div>
+
+        <!-- Tessellation Controls Card -->
+        <div class="tactical-card hud-draggable">
+            <div class="card-header">Tessellation & Grid Settings</div>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <!-- Grid Opaqueness/Opacity -->
+                <div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                        <span class="label-val">Hex Opacity</span>
+                        <span class="label-val" id="val-hex-opacity">55%</span>
+                    </div>
+                    <input type="range" class="alpha-slider" id="tess-opacity" min="0" max="100" value="55" oninput="updateGridSettings()">
+                </div>
+                <!-- Grid Dimensions (Size) -->
+                <div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                        <span class="label-val">Hex Radius Size</span>
+                        <span class="label-val" id="val-hex-size">0.0035</span>
+                    </div>
+                    <input type="range" class="alpha-slider" id="tess-size" min="15" max="80" value="35" oninput="updateGridSettings()">
+                </div>
+                <!-- Grid Layout (Resolution/Extent) -->
+                <div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                        <span class="label-val">Grid Extent (NxN)</span>
+                        <span class="label-val" id="val-hex-extent">8 x 8</span>
+                    </div>
+                    <input type="range" class="alpha-slider" id="tess-extent" min="4" max="16" value="8" oninput="updateGridSettings()">
+                </div>
+                <!-- Grid Dimensionality (Flat to 3D) -->
+                <div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                        <span class="label-val">Grid Dimensionality</span>
+                        <span class="label-val" id="val-hex-height">Flat (2D)</span>
+                    </div>
+                    <input type="range" class="alpha-slider" id="tess-height" min="0" max="100" value="0" oninput="updateGridSettings()">
+                </div>
+            </div>
+        </div>
+
+        <!-- Lobe Weights -->
+        <div class="tactical-card hud-draggable">
+            <div class="card-header">Lobe Feasibility Blending</div>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                        <span class="label-val">L1 City (Zoning)</span>
+                        <span class="label-val" id="val-w1">15%</span>
+                    </div>
+                    <input type="range" class="alpha-slider" id="weight-w1" min="0" max="100" value="15" oninput="updateWeights('w1')">
+                </div>
+                <div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                        <span class="label-val">L2 Roads (TxDOT)</span>
+                        <span class="label-val" id="val-w2">15%</span>
+                    </div>
+                    <input type="range" class="alpha-slider" id="weight-w2" min="0" max="100" value="15" oninput="updateWeights('w2')">
+                </div>
+                <div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                        <span class="label-val">L3 Grid (Power)</span>
+                        <span class="label-val" id="val-w3">20%</span>
+                    </div>
+                    <input type="range" class="alpha-slider" id="weight-w3" min="0" max="100" value="20" oninput="updateWeights('w3')">
+                </div>
+                <div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                        <span class="label-val">L6 Sentiment (Pulse)</span>
+                        <span class="label-val" id="val-w4">25%</span>
+                    </div>
+                    <input type="range" class="alpha-slider" id="weight-w4" min="0" max="100" value="25" oninput="updateWeights('w4')">
+                </div>
+            </div>
+        </div>
+
+        <!-- Map Layer Controls -->
+        <div class="tactical-card hud-draggable">
+            <div class="card-header">Layers HUD</div>
+            <div class="layer-rack">
+                <div class="layer-item">
+                    <span class="layer-label">L1 City Reinvestments</span>
+                    <label class="simple-toggle"><input type="checkbox" id="layer-city" checked onchange="renderLayers()"><span class="slider-round"></span></label>
+                </div>
+                <div class="layer-item">
+                    <span class="layer-label">L2 Infrastructure (TxDOT)</span>
+                    <label class="simple-toggle"><input type="checkbox" id="layer-roads" checked onchange="renderLayers()"><span class="slider-round"></span></label>
+                </div>
+                <div class="layer-item">
+                    <span class="layer-label">L3 Utility Substation</span>
+                    <label class="simple-toggle"><input type="checkbox" id="layer-power" checked onchange="renderLayers()"><span class="slider-round"></span></label>
+                </div>
+                <div class="layer-item">
+                    <span class="layer-label">L6 Pulse Decline Opportunities</span>
+                    <label class="simple-toggle"><input type="checkbox" id="layer-mood" checked onchange="renderLayers()"><span class="slider-round"></span></label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Real-time Activity Ticker -->
+        <div class="tactical-card hud-draggable">
+            <div class="card-header">Live Market Ticker</div>
+            <div class="ticker-container" id="ticker-feed">
+                <div class="ticker-row success" style="cursor: pointer;" onclick="selectTickerItem('[TX] CAD Deed buy: Valley View Corridor - LLC')" title="Click to view Pulse Brain data stream"><span>[TX] CAD Deed buy: Valley View Corridor - LLC</span><span>$12.4M</span></div>
+                <div class="ticker-row alert" style="cursor: pointer;" onclick="selectTickerItem('[PULSE] Anchor flight warning: Victory Park AAC')" title="Click to view Pulse Brain data stream"><span>[PULSE] Anchor flight warning: Victory Park AAC</span><span>-5.8 pt</span></div>
+                <div class="ticker-row" style="cursor: pointer;" onclick="selectTickerItem('[ZONING] Plano-11 density variance filed')" title="Click to view Pulse Brain data stream"><span>[ZONING] Plano-11 density variance filed</span><span>Active</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Spotlight Command Terminal modal -->
+<div id="spotlight-terminal">
+    <input type="text" id="terminal-input" placeholder="Type /go, /lobe, or /search...">
+    <div class="terminal-tip">
+        Commands: <code>/go [decatur|dallas]</code>, <code>/lobe [1-7]</code>, <code>/search [LLC|Developer]</code>, <code>/scout</code>
+    </div>
+</div>
+
+<script>
+    {% set ns = namespace(active_proj=None) %}
+    {% for p in global_projects %}
+        {% if session.get('active_project') == (p.name | lower) %}
+            {% set ns.active_proj = p %}
+        {% endif %}
+    {% endfor %}
+    {% if not ns.active_proj and global_projects %}
+        {% set ns.active_proj = global_projects[0] %}
+    {% endif %}
+    let activeProjectCoords = {
+        name: "{{ ns.active_proj.name if ns.active_proj else 'DALLAS CORRIDOR AUDIT' }}",
+        longitude: {{ ns.active_proj.longitude if ns.active_proj else -96.8088 }},
+        latitude: {{ ns.active_proj.latitude if ns.active_proj else 32.7876 }},
+        zoom: {{ ns.active_proj.zoom if ns.active_proj else 15 }}
+    };
+
+    // Tab switching
+    function switchDealTab(tabName) {
+        document.querySelectorAll('.deal-tab').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+        
+        event.currentTarget.classList.add('active');
+        document.getElementById('tab-' + tabName).classList.add('active');
+        logToConsole(`[SYS] Switch Deal Panel to tab: ${tabName}`);
+    }
+
+    // Weight Calculation logic
+    function updateWeights(weightKey) {
+        const slider = document.getElementById('weight-' + weightKey);
+        const label = document.getElementById('val-' + weightKey);
+        label.textContent = slider.value + '%';
+        logToConsole(`[SYS] Recalculating Feasibility blend weights: ${weightKey} set to ${slider.value}%`);
+        
+        // Sim dynamic hex score recalculation
+        const w1 = parseInt(document.getElementById('weight-w1').value) / 100;
+        const w2 = parseInt(document.getElementById('weight-w2').value) / 100;
+        const w3 = parseInt(document.getElementById('weight-w3').value) / 100;
+        const w4 = parseInt(document.getElementById('weight-w4').value) / 100;
+        
+        const baseScore = 7.5;
+        const newScore = Math.min(10.0, Math.max(0.0, baseScore + (w1 * 0.2 + w2 * 0.4 + w3 * 0.8 + w4 * -0.5) * 2.0));
+        updateRoller(newScore);
+    }
+
+    function calculateYield() {
+        const land = parseFloat(document.getElementById('pf-land-cost').value) || 0;
+        const capex = parseFloat(document.getElementById('pf-capex').value) || 0;
+        const loan = parseFloat(document.getElementById('pf-loan-pct').value) || 0;
+        
+        const total = land + capex;
+        const yoc = total > 0 ? ((3200000 - (loan * 100000)) / total) * 100 : 0;
+        document.getElementById('pf-yield-val').textContent = yoc.toFixed(1) + '%';
+        logToConsole(`[CALC] Yield on Cost computed: ${yoc.toFixed(2)}% on total cap of $${(total/1000000).toFixed(2)}M`);
+    }
+
+    // Dynamic digit roller
+    function updateRoller(val) {
+        const str = val.toFixed(1);
+        const d1 = parseInt(str.charAt(0));
+        const d2 = parseInt(str.charAt(2));
+        
+        document.getElementById('roller-1').style.transform = `translateY(-${d1 * 32}px)`;
+        document.getElementById('roller-2').style.transform = `translateY(-${d2 * 32}px)`;
+    }
+
+    // Terminal Logger
+    function logToConsole(msg) {
+        const feed = document.getElementById('console-feed');
+        if (!feed) return;
+        const time = new Date().toLocaleTimeString();
+        feed.innerHTML += `<div><span style="color: #64748b;">[${time}]</span> ${msg}</div>`;
+        feed.scrollTop = feed.scrollHeight;
+    }
+
+    // Spotlight search listener
+    document.addEventListener('keydown', function(event) {
+        if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
+            event.preventDefault();
+            const term = document.getElementById('spotlight-terminal');
+            if (term.style.display === 'block') {
+                term.style.display = 'none';
+            } else {
+                term.style.display = 'block';
+                const inp = document.getElementById('terminal-input');
+                inp.value = '';
+                inp.focus();
+            }
+        }
+    });
+
+    document.getElementById('terminal-input').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            const cmd = e.target.value.trim();
+            executeCommand(cmd);
+            document.getElementById('spotlight-terminal').style.display = 'none';
+        }
+    });
+
+    function triggerCommand(cmd) {
+        logToConsole(`[SYS] Suggested command triggered: ${cmd}`);
+        const modal = document.getElementById('spotlight-terminal');
+        modal.style.display = 'block';
+        const input = document.getElementById('terminal-input');
+        input.value = cmd;
+        input.focus();
+        
+        setTimeout(() => {
+            executeCommand(cmd);
+            modal.style.display = 'none';
+        }, 500);
+    }
+
+    function executeCommand(cmd) {
+        logToConsole(`[TERM] Executed command: ${cmd}`);
+        const args = cmd.split(' ');
+        const root = args[0].toLowerCase();
+        
+        if (root === '/go') {
+            if (args[1] === 'decatur') {
+                flyToSite('decatur');
+            } else if (args[1] === 'dallas' || args[1] === 'victory') {
+                flyToSite('victory');
+            } else if (args[1] === 'valley') {
+                flyToSite('valley');
+            } else if (args.length >= 3) {
+                const lat = parseFloat(args[1]);
+                const lng = parseFloat(args[2]);
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    flyToCoords(lat, lng);
+                } else {
+                    logToConsole(`[TERM ERROR] Coordinate parse error. Usage: "/go [decatur|dallas|valley]" or "/go [lat] [lng]"`);
+                }
+            } else {
+                logToConsole(`[TERM ERROR] Target not recognized. Try "/go decatur", "/go dallas", "/go valley", or "/go [lat] [lng]".`);
+            }
+        } else if (root === '/lobe') {
+            const lobe = parseInt(args[1]);
+            if (lobe >= 1 && lobe <= 7) {
+                logToConsole(`[TERM] Swapped to Lobe ${lobe} analysis view.`);
+                updateWeights('w' + (lobe % 4 + 1));
+            } else {
+                logToConsole(`[TERM ERROR] Invalid Lobe ID. Valid range: 1 to 7.`);
+            }
+        } else if (root === '/search') {
+            const dev = args.slice(1).join(' ');
+            logToConsole(`[TERM] Searching competitor profile database for: "${dev}"...`);
+            setTimeout(() => {
+                logToConsole(`[TERM RESULT] 3 matching parcels held by Moonshot Developers LLC.`);
+            }, 800);
+        } else if (root === '/scout') {
+            logToConsole(`[TERM] Sending scout verification ping to REST APIs...`);
+            fetch('/api/v1/pulse/scout-summary')
+                .then(r => r.json())
+                .then(d => {
+                    logToConsole(`[TERM RESULT] Municipal scouting endpoints pinged: 10 connections active.`);
+                });
+        } else {
+            logToConsole(`[TERM ERROR] Command not recognized.`);
+        }
+    }
+
+    function flyToCoords(lat, lng) {
+        const score = parseFloat((5.0 + Math.random() * 5.0).toFixed(1));
+        const newSite = {
+            polygon: generateHexagon([lng, lat], 0.0012),
+            score: score,
+            title: `Custom Search site (${lat.toFixed(4)}, ${lng.toFixed(4)})`
+        };
+        userAddedSites.push(newSite);
+        
+        currentViewState = { ...currentViewState, longitude: lng, latitude: lat, zoom: 15, pitch: 45, transitionDuration: 3000 };
+        activeProjectCoords.longitude = lng;
+        activeProjectCoords.latitude = lat;
+        activeProjectCoords.zoom = 15;
+        deckgl.setProps({ viewState: currentViewState });
+        map.flyTo({ center: [lng, lat], zoom: 15, duration: 3000 });
+        syncUI(Math.round(125 * Math.pow(2, 18 - 15)), 15);
+        
+        updateRoller(score);
+        document.getElementById('selected-hex-address').textContent = "H3 Address: 8b62c" + Math.floor(Math.random() * 1000000000).toString(16);
+        logToConsole(`[NAV] Flying to coordinates: ${lat}, ${lng}`);
+        logToConsole(`[MAP] Generated new hex parcel at: ${lat.toFixed(4)}, ${lng.toFixed(4)} (Score: ${score})`);
+        
+        setTimeout(renderLayers, 3100);
+    }
+
+    // Dynamic feed ticker updater from live database
+    async function updateTicker() {
+        const ticker = document.getElementById('ticker-feed');
+        if (!ticker) return;
+        try {
+            const response = await fetch('/api/v1/pulse/transactions');
+            const result = await response.json();
+            if (result.status === 'success' && result.data) {
+                ticker.innerHTML = '';
+                result.data.forEach(item => {
+                    const row = document.createElement('div');
+                    row.className = 'ticker-row ' + (item.type === 'normal' ? '' : item.type);
+                    row.style.cursor = 'pointer';
+                    row.title = 'Click to trace data stream in Pulse Brain';
+                    row.innerHTML = `<span>${item.text}</span><span>Live</span>`;
+                    row.onclick = () => selectTickerItem(item.text);
+                    ticker.appendChild(row);
+                });
+            }
+        } catch (err) {
+            console.error("Error updating ticker:", err);
+        }
+    }
+
+    function selectTickerItem(text) {
+        logToConsole(`[TICKER SELECT] Selected alert: "${text}"`);
+        
+        let targetArea = 'victory';
+        if (text.toLowerCase().includes('valley view') || text.toLowerCase().includes('valley')) {
+            targetArea = 'valley';
+        } else if (text.toLowerCase().includes('decatur') || text.toLowerCase().includes('wise')) {
+            targetArea = 'decatur';
+        } else if (text.toLowerCase().includes('plano')) {
+            targetArea = 'plano';
+        }
+        
+        // Fly to site coordinates
+        flyToSite(targetArea);
+        
+        // Fetch and show the "bird on the wire" municipal scouting connections for this area
+        logToConsole(`[PULSE] Lobe 6 (Pulse Brain) targeting: ${targetArea.toUpperCase()}`);
+        logToConsole(`[PULSE] Connecting pipelines for 'bird on the wire' streams...`);
+        
+        // Query the scouting database registry to pull actual scout targets
+        fetch('/api/v1/pulse/scout-summary')
+            .then(r => r.json())
+            .then(res => {
+                const connections = res.status === 'success' ? res.data : [];
+                // Filter connections related to the target area
+                const matched = connections.filter(c => {
+                    const name = c.municipality.toLowerCase() + " " + c.notes.toLowerCase();
+                    if (targetArea === 'victory' || targetArea === 'dallas') {
+                        return name.includes('plano') || name.includes('collin') || name.includes('dallas');
+                    } else if (targetArea === 'valley') {
+                        return name.includes('plano') || name.includes('collin');
+                    } else if (targetArea === 'decatur') {
+                        return name.includes('wise') || name.includes('decatur');
+                    }
+                    return true;
+                });
+                
+                // Print connection states in console
+                matched.forEach(c => {
+                    logToConsole(`[PULSE CONNECT] Pipeline: ${c.municipality} (${c.type}) -> Status: ${c.status} (Latency: ${c.latency_ms || 120}ms)`);
+                });
+                
+                logToConsole(`[PULSE] Bird on the wire data collection established for ${targetArea.toUpperCase()} region.`);
+                
+                // Trigger layers redraw to update connection lines
+                renderLayers();
+            });
+    }
+
+    // Poll the ticker every 10 seconds
+    updateTicker();
+    setInterval(updateTicker, 10000);
+
+    // Initial setups
+    window.onload = () => {
+        logToConsole("[SYS] Hex-Terminal real estate terminal v3.1 loaded.");
+        logToConsole("[SYS] Database cores: Postgres 13 + PostGIS active.");
+        logToConsole("[SYS] Press CMD+K or Ctrl+K to open search terminal command line.");
+        updateRoller(8.2);
+        calculateYield();
+        loadBeacons();
+        loadReviewLots();
+        
+        // Auto start tracking active project
+        const name = activeProjectCoords.name.toLowerCase();
+        if (name.includes('dallas')) {
+            setTimeout(() => flyToSite('victory'), 1000);
+        } else if (name.includes('decatur')) {
+            setTimeout(() => flyToSite('decatur'), 1000);
+        } else if (name.includes('valley view')) {
+            setTimeout(() => flyToSite('valley'), 1000);
+        } else {
+            // General custom project flight
+            setTimeout(() => {
+                currentViewState = { ...currentViewState, longitude: activeProjectCoords.longitude, latitude: activeProjectCoords.latitude, zoom: activeProjectCoords.zoom, pitch: 45, transitionDuration: 3000 };
+                deckgl.setProps({ viewState: currentViewState });
+                map.flyTo({ center: [activeProjectCoords.longitude, activeProjectCoords.latitude], zoom: activeProjectCoords.zoom, duration: 3000 });
+                syncUI(Math.round(125 * Math.pow(2, 18 - activeProjectCoords.zoom)), activeProjectCoords.zoom);
+                logToConsole(`[NAV] Flying to dynamic project: ${activeProjectCoords.name}`);
+                setTimeout(renderLayers, 3100);
+            }, 1000);
+        }
+    }
+</script>
+
+<!-- Deck.gl + MapLibre GL integration (derived from standard HUD to ensure 100% rendering parity) -->
+<script>
+    let startLng = activeProjectCoords.longitude;
+    let startLat = activeProjectCoords.latitude;
+    
+    // Restore coordinates of the previous project if stored in localStorage to achieve cross-area flight panning
+    const prevCoordsStr = localStorage.getItem('prev_project_coords');
+    if (prevCoordsStr) {
+        try {
+            const prevCoords = JSON.parse(prevCoordsStr);
+            if (prevCoords && typeof prevCoords.longitude === 'number' && typeof prevCoords.latitude === 'number') {
+                if (Math.abs(prevCoords.longitude - activeProjectCoords.longitude) > 0.0001 ||
+                    Math.abs(prevCoords.latitude - activeProjectCoords.latitude) > 0.0001) {
+                    startLng = prevCoords.longitude;
+                    startLat = prevCoords.latitude;
+                }
+            }
+        } catch (e) {
+            console.error("Error parsing prev_project_coords", e);
+        }
+        localStorage.removeItem('prev_project_coords');
+    }
+
+    let currentViewState = { 
+        longitude: startLng, 
+        latitude: startLat, 
+        zoom: 8.0, // Start at Macro Survey altitude
+        pitch: 45 
+    };
+    let altitude = 16000;
+    let pulseScale = 1.0;
+    let userAddedSites = [];
+    let temporaryHexagons = [];
+    let activeScoutingTarget = null;
+
+    setInterval(() => {
+        pulseScale = 1.0 + 0.15 * Math.sin(Date.now() / 400);
+        if (typeof renderLayers === 'function') {
+            renderLayers();
+        }
+    }, 100);
+
+    // Tessellation controls backing variables (Manipulate dimensionalities & opaqueness)
+    let gridOpacity = 140; // out of 255 (defaults to 55%)
+    let gridHexSize = 0.0035; // default radius size
+    let gridExtent = 8; // default 8x8 extent
+    let gridHeight = 0; // default 0 (Flat 2D)
+
+    function updateGridSettings() {
+        const opacityVal = parseInt(document.getElementById('tess-opacity').value);
+        gridOpacity = Math.round(opacityVal * 2.55);
+        document.getElementById('val-hex-opacity').textContent = opacityVal + '%';
+
+        const sizeInput = parseInt(document.getElementById('tess-size').value);
+        gridHexSize = sizeInput / 10000;
+        document.getElementById('val-hex-size').textContent = gridHexSize.toFixed(4);
+
+        const extentVal = parseInt(document.getElementById('tess-extent').value);
+        gridExtent = extentVal;
+        document.getElementById('val-hex-extent').textContent = extentVal + ' x ' + extentVal;
+
+        const heightVal = parseInt(document.getElementById('tess-height').value);
+        gridHeight = heightVal;
+        if (heightVal === 0) {
+            document.getElementById('val-hex-height').textContent = 'Flat (2D)';
+        } else {
+            document.getElementById('val-hex-height').textContent = '3D (Scale: ' + heightVal + ')';
+        }
+
+        // Trigger direct deck.gl re-render
+        renderLayers();
+    }
+
+    const deckgl = new deck.Deck({
+        canvas: 'deck-canvas',
+        viewState: currentViewState,
+        controller: true,
+        onViewStateChange: ({viewState}) => {
+            deckgl.setProps({ viewState: viewState });
+            currentViewState = viewState;
+            map.jumpTo({ center: [viewState.longitude, viewState.latitude], zoom: viewState.zoom, bearing: viewState.bearing || 0, pitch: viewState.pitch || 0 });
+            const zoomAlt = Math.round(125 * Math.pow(2, 18 - viewState.zoom));
+            syncUI(zoomAlt, viewState.zoom);
+            closeHardPopup();
+            renderLayers();
+        },
+        layers: []
+    });
+
+    const map = new maplibregl.Map({
+        container: 'map-view',
+        style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+        center: [currentViewState.longitude, currentViewState.latitude],
+        zoom: currentViewState.zoom,
+        pitch: 45,
+        interactive: false
+    });
+
+    function generateHexagon(center, radius) {
+        const coords = [];
+        for (let i = 0; i < 6; i++) {
+            const angle = (i * 60) * Math.PI / 180;
+            coords.push([center[0] + radius * Math.cos(angle), center[1] + radius * Math.sin(angle) * 1.2]);
+        }
+        coords.push(coords[0]);
+        return coords;
+    }
+
+    // 🔬 DYNAMIC HEXAGONAL TESSELLATION GENERATOR (H3 RES 11 MOCK)
+    function generateTessellation(center, rows, cols, hexSize) {
+        const hexagons = [];
+        const dx = hexSize * 1.5;
+        const dy = hexSize * Math.sqrt(3);
+        const startX = center[0] - (cols * dx) / 2;
+        const startY = center[1] - (rows * dy) / 2;
+        
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                const x = startX + c * dx;
+                const y = startY + r * dy + ((c % 2 === 0) ? 0 : dy / 2);
+                
+                const hexCoords = [];
+                for (let i = 0; i < 6; i++) {
+                    const angle = (i * 60) * Math.PI / 180;
+                    hexCoords.push([
+                        x + hexSize * Math.cos(angle),
+                        y + hexSize * Math.sin(angle) * 1.2
+                    ]);
+                }
+                hexCoords.push(hexCoords[0]);
+                
+                // Deterministic scoring based on coordinates
+                const dist = Math.sqrt(Math.pow(r - rows/2, 2) + Math.pow(c - cols/2, 2));
+                const score = dist < 2.0 ? 8.5 : dist < 4.0 ? 7.2 : 3.8;
+                
+                hexagons.push({
+                    polygon: hexCoords,
+                    score: score,
+                    title: `Tessellation Unit H3-${r}-${c}`,
+                    details: `Zoning: Multi-Family Res | Egress score: ${(9.0 - dist).toFixed(1)}/10.0`
+                });
+            }
+        }
+        return hexagons;
+    }
+
+    // 🔬 DYNAMIC GLOWING HIGHWAY GENERATOR
+    function generateHighways(center) {
+        const roads = [];
+        const length = 0.04; // degree span
+        
+        // Main Interstate Highway 45 (glowing purple/orange artery)
+        roads.push({
+            from: [center[0] - length, center[1] - length * 0.3], 
+            to: [center[0] + length, center[1] + length * 0.3], 
+            name: "I-45 Highway Corridor", 
+            traffic: "145,000 AADT",
+            status: "Optimal Flow"
+        });
+        
+        // Secondary Artery Road (glowing cross corridor)
+        roads.push({
+            from: [center[0] - length * 0.4, center[1] + length], 
+            to: [center[0] + length * 0.4, center[1] - length], 
+            name: "State Highway 3 Loop", 
+            traffic: "88,000 AADT",
+            status: "Slight Peak Lag"
+        });
+        
+        // Expressway Connector
+        roads.push({
+            from: [center[0] - length, center[1] + length * 0.5], 
+            to: [center[0] + length, center[1] - length * 0.5], 
+            name: "NASA Bypass Parkway", 
+            traffic: "64,000 AADT",
+            status: "Optimal Flow"
+        });
+        
+        return roads;
+    }
+
+    // 🔬 DYNAMIC 3D VERTICAL PILLAR GENERATOR
+    function generatePillar(center) {
+        const hexPolygon = generateHexagon(center, 0.001); // surgical central footprint
+        return [{
+            polygon: hexPolygon,
+            elevation: 250, // high vertical tower
+            name: "Subject Site Analysis Pillar",
+            details: "3D Light Artery: ACTIVE | Res 11 center target"
+        }];
+    }
+    
+    // Roller UI elements
+    function syncUI(alt, zoom) {
+        altitude = alt;
+        document.getElementById('hud-sector').textContent = zoom > 12 ? "SURGICAL VIEW" : "MACRO SURVEY";
+    }
+
+    // Mock beacon data (fallback)
+    let skyBeacons = [
+        { name: "Dallas Metro Hub", latitude: 32.7767, longitude: -96.7970, score: 8.8, description: "City Lobe: Principal metropolitan convergence center." },
+        { name: "Fort Worth Corridor", latitude: 32.7555, longitude: -97.3308, score: 8.5, description: "TxDOT Lobe: Fort Worth highway and freight loop corridor." },
+        { name: "Denton-Wise Border", latitude: 33.2148, longitude: -97.1331, score: 7.9, description: "Finance Lobe: Wise County aggregate industrial node." }
+    ];
+    
+    let cloudBeacons = [
+        { name: "Victory Park Relocation Corridor", latitude: 32.7876, longitude: -96.8088, score: 8.9, description: "TxDOT Lobe: Commercial Retail Corridor." },
+        { name: "Valley View Feasibility Corridor", latitude: 32.9264, longitude: -96.7972, score: 8.8, description: "City Lobe: Reinvestment Zone / TIF Zone." },
+        { name: "Decatur Growth Sub-Artery", latitude: 33.2343, longitude: -97.5861, score: 7.9, description: "City Lobe: Wise County ETJ commercial expansion zone." }
+    ];
+
+    async function loadBeacons() {
+        try {
+            const response = await fetch('/api/v1/beacons');
+            const result = await response.json();
+            if (result.status === 'success') {
+                skyBeacons = result.data.filter(b => b.tier === 'sky');
+                cloudBeacons = result.data.filter(b => b.tier === 'clouds');
+                logToConsole(`[SYS] Dynamic Beacons loaded: ${skyBeacons.length} Sky, ${cloudBeacons.length} Clouds.`);
+                renderLayers();
+            } else {
+                console.error("Failed to load beacons:", result);
+            }
+        } catch (err) {
+            console.error("Error fetching beacons:", err);
+        }
+    }
+
+    const scoutingConnections = {
+        victory: [
+            { name: "Dallas County GIS Portal", from: [-96.7970, 32.7767], to: [-96.8088, 32.7876], status: "Active" },
+            { name: "Tarrant County GIS System", from: [-97.3308, 32.7555], to: [-96.8088, 32.7876], status: "Active" },
+            { name: "Plano GIS Server Pipeline", from: [-96.6989, 33.0198], to: [-96.8088, 32.7876], status: "Active" }
+        ],
+        valley: [
+            { name: "Plano GIS Server Pipeline", from: [-96.6989, 33.0198], to: [-96.7972, 32.9264], status: "Active" },
+            { name: "Collin County GIS Portal", from: [-96.6398, 33.1972], to: [-96.7972, 32.9264], status: "Active" },
+            { name: "Dallas County GIS Portal", from: [-96.7970, 32.7767], to: [-96.7972, 32.9264], status: "Active" }
+        ],
+        decatur: [
+            { name: "Wise County GIS Server", from: [-97.5861, 33.2343], to: [-97.5861, 33.2343], status: "Active" },
+            { name: "Denton County GIS System", from: [-97.1331, 33.2148], to: [-97.5861, 33.2343], status: "Active" },
+            { name: "Wise Appraisal District Link", from: [-97.5900, 33.2300], to: [-97.5861, 33.2343], status: "Active" }
+        ],
+        wichita: [
+            { name: "Wichita Falls GIS Portal", from: [-98.4934, 33.9137], to: [-98.4800, 33.9300], status: "Active" },
+            { name: "Clay County GIS Link", from: [-98.2000, 33.8000], to: [-98.4800, 33.9300], status: "Active" },
+            { name: "ERCOT West Grid Node", from: [-98.6000, 34.0000], to: [-98.4800, 33.9300], status: "Active" }
+        ],
+        vernon: [
+            { name: "Wilbarger Appraisal District", from: [-99.2651, 34.1545], to: [-99.2500, 34.1700], status: "Active" },
+            { name: "TxDOT Wichita Falls Division", from: [-98.5000, 33.9000], to: [-99.2500, 34.1700], status: "Active" },
+            { name: "Atmos Pipeline Sensor Grid", from: [-99.1000, 34.2000], to: [-99.2500, 34.1700], status: "Active" }
+        ],
+        bowie: [
+            { name: "Montague County GIS Portal", from: [-97.8481, 33.5594], to: [-97.8300, 33.5450], status: "Active" },
+            { name: "Wise Appraisal District Link", from: [-97.5861, 33.2343], to: [-97.8300, 33.5450], status: "Active" },
+            { name: "Zayo Fiber Segment monitor", from: [-97.7000, 33.4000], to: [-97.8300, 33.5450], status: "Active" }
+        ]
+    };
+
+    // Flying logic
+    function flyToSite(siteKey) {
+        let lng, lat, zoom;
+        activeScoutingTarget = siteKey;
+        if (siteKey === 'victory') {
+            lng = -96.8088; lat = 32.7876; zoom = 15;
+            document.getElementById('selected-hex-address').textContent = "H3 Address: 8b62c4a754b2fff";
+            updateRoller(2.4);
+            logToConsole("[NAV] Flying to Downtown Dallas Victory Park relos corridor...");
+        } else if (siteKey === 'valley') {
+            lng = -96.7972; lat = 32.9264; zoom = 15;
+            document.getElementById('selected-hex-address').textContent = "H3 Address: 8b62c4a754a0fff";
+            updateRoller(8.8);
+            logToConsole("[NAV] Flying to Valley View Arena development site...");
+        } else if (siteKey === 'decatur') {
+            lng = -97.5861; lat = 33.2343; zoom = 15;
+            document.getElementById('selected-hex-address').textContent = "H3 Address: 8b62c4a75402fff";
+            updateRoller(7.9);
+            logToConsole("[NAV] Flying to Decatur data center growth corridor...");
+        } else if (siteKey === 'plano') {
+            lng = -96.6963; lat = 32.8637; zoom = 15;
+            document.getElementById('selected-hex-address').textContent = "H3 Address: 8b62c4314ab2fff";
+            updateRoller(8.2);
+            logToConsole("[NAV] Flying to Plano target corridor...");
+        } else if (siteKey === 'wichita') {
+            lng = -98.4800; lat = 33.9300; zoom = 15;
+            document.getElementById('selected-hex-address').textContent = "H3 Address: 8b62c41234b2fff";
+            updateRoller(8.5);
+            logToConsole("[NAV] Flying to Wichita Falls wind farm spur...");
+        } else if (siteKey === 'vernon') {
+            lng = -99.2500; lat = 34.1700; zoom = 15;
+            document.getElementById('selected-hex-address').textContent = "H3 Address: 8b62c45678a0fff";
+            updateRoller(8.2);
+            logToConsole("[NAV] Flying to Vernon gas compressor facility...");
+        } else if (siteKey === 'bowie') {
+            lng = -97.8300; lat = 33.5450; zoom = 15;
+            document.getElementById('selected-hex-address').textContent = "H3 Address: 8b62c49012cdfff";
+            updateRoller(8.4);
+            logToConsole("[NAV] Flying to Bowie fiber vault junction...");
+        }
+        
+        currentViewState = { ...currentViewState, longitude: lng, latitude: lat, zoom: zoom, pitch: 45, transitionDuration: 3000 };
+        activeProjectCoords.longitude = lng;
+        activeProjectCoords.latitude = lat;
+        activeProjectCoords.zoom = zoom;
+        deckgl.setProps({ viewState: currentViewState });
+        map.flyTo({ center: [lng, lat], zoom: zoom, duration: 3000 });
+        syncUI(Math.round(125 * Math.pow(2, 18 - zoom)), zoom);
+        setTimeout(renderLayers, 3100);
+    }
+
+    function getTifZones(lng, lat) {
+        const base = [
+            {polygon: [[-96.81, 32.935], [-96.78, 32.935], [-96.78, 32.915], [-96.81, 32.915], [-96.81, 32.935]], name: "Valley View TIF Zone", rate: "1.25%", rules: "Commercial Redevelopment Incentives"},
+            {polygon: [[-97.595, 33.24], [-97.575, 33.24], [-97.575, 33.225], [-97.595, 33.225], [-97.595, 33.24]], name: "Decatur Airport TIF Corridor", rate: "0.95%", rules: "Industrial Logistics Incentives"},
+            {polygon: [[-96.82, 32.795], [-96.80, 32.795], [-96.80, 32.780], [-96.82, 32.780], [-96.82, 32.795]], name: "Victory Park Multi-Use TIF", rate: "1.50%", rules: "High-Density Zoning Tax Rebates"}
+        ];
+        if (Math.abs(lat - 33.9300) < 0.2) {
+            base.push({
+                polygon: [[lng - 0.015, lat + 0.01], [lng + 0.015, lat + 0.01], [lng + 0.015, lat - 0.01], [lng - 0.015, lat - 0.01], [lng - 0.015, lat + 0.01]],
+                name: "Wichita Falls Wind Enterprise Zone", rate: "1.10%", rules: "Renewable Energy Tax Abatements"
+            });
+        } else if (Math.abs(lat - 34.1700) < 0.2) {
+            base.push({
+                polygon: [[lng - 0.015, lat + 0.01], [lng + 0.015, lat + 0.01], [lng + 0.015, lat - 0.01], [lng - 0.015, lat - 0.01], [lng - 0.015, lat + 0.01]],
+                name: "Vernon Industrial Extraction District", rate: "0.85%", rules: "Natural Resource Processing Credits"
+            });
+        } else if (Math.abs(lat - 33.5450) < 0.2) {
+            base.push({
+                polygon: [[lng - 0.015, lat + 0.01], [lng + 0.015, lat + 0.01], [lng + 0.015, lat - 0.01], [lng - 0.015, lat - 0.01], [lng - 0.015, lat + 0.01]],
+                name: "Bowie Logistics & Fiber TIF Spur", rate: "1.30%", rules: "Infrastructure Connectivity Subsidies"
+            });
+        }
+        return base;
+    }
+
+    function getPowerLines(lng, lat) {
+        const base = [
+            {from: [-96.82, 32.926], to: [-96.76, 32.926], name: "Line P-11: Valley View Trunk", voltage: "138 kV", load: "78% Capacity"},
+            {from: [-97.60, 33.234], to: [-97.56, 33.234], name: "Line D-02: Decatur Artery Line", voltage: "345 kV", load: "42% Capacity"},
+            {from: [-96.83, 32.787], to: [-96.79, 32.787], name: "Line V-05: AAC Substation Link", voltage: "138 kV", load: "92% Capacity (Near Max)"}
+        ];
+        if (Math.abs(lat - 33.9300) < 0.2) {
+            base.push({from: [lng - 0.03, lat], to: [lng + 0.03, lat], name: "Line WF-90: Wind Spur Trunk", voltage: "345 kV", load: "30% Capacity"});
+        } else if (Math.abs(lat - 34.1700) < 0.2) {
+            base.push({from: [lng - 0.03, lat], to: [lng + 0.03, lat], name: "Line VR-04: Compressor Grid link", voltage: "138 kV", load: "55% Capacity"});
+        } else if (Math.abs(lat - 33.5450) < 0.2) {
+            base.push({from: [lng - 0.03, lat], to: [lng + 0.03, lat], name: "Line BW-12: Freight Spur line", voltage: "138 kV", load: "60% Capacity"});
+        }
+        return base;
+    }
+
+    function getNimbyZones(lng, lat) {
+        const base = [
+            {polygon: [[-96.81, 32.92], [-96.797, 32.92], [-96.797, 32.91], [-96.81, 32.91], [-96.81, 32.92]], name: "Valley View Residential Buffer", risk: "HIGH NIMBY RISK", notes: "Historical zoning appeals active"},
+            {polygon: [[-97.60, 33.23], [-97.595, 33.23], [-97.595, 33.22], [-97.60, 33.22], [-97.60, 33.23]], name: "Decatur Rural Perimeter", risk: "LOW NIMBY RISK", notes: "Unincorporated county buffers"},
+            {polygon: [[-96.815, 32.79], [-96.805, 32.79], [-96.805, 32.78], [-96.815, 32.78], [-96.815, 32.79]], name: "AAC Sports Arena Buffer", risk: "MEDIUM NIMBY RISK", notes: "Noise variance litigation risk"}
+        ];
+        if (Math.abs(lat - 33.9300) < 0.2) {
+            base.push({polygon: [[lng - 0.01, lat + 0.015], [lng + 0.01, lat + 0.015], [lng + 0.01, lat - 0.005], [lng - 0.01, lat - 0.005], [lng - 0.01, lat + 0.015]], name: "Wichita Falls Residential Buffer", risk: "LOW NIMBY RISK", notes: "Low density rural perimeter"});
+        } else if (Math.abs(lat - 34.1700) < 0.2) {
+            base.push({polygon: [[lng - 0.01, lat + 0.015], [lng + 0.01, lat + 0.015], [lng + 0.01, lat - 0.005], [lng - 0.01, lat - 0.005], [lng - 0.01, lat + 0.015]], name: "Vernon Farm Buffer", risk: "LOW NIMBY RISK", notes: "Unincorporated agricultural land"});
+        } else if (Math.abs(lat - 33.5450) < 0.2) {
+            base.push({polygon: [[lng - 0.01, lat + 0.015], [lng + 0.01, lat + 0.015], [lng + 0.01, lat - 0.005], [lng - 0.01, lat - 0.005], [lng - 0.01, lat + 0.015]], name: "Bowie Commercial Perimeter", risk: "LOW NIMBY RISK", notes: "Industrial park zoning zone"});
+        }
+        return base;
+    }
+
+    function getTargetSites(lng, lat) {
+        const base = [
+            { polygon: generateHexagon([-96.6963, 32.8637], 0.001), title: '10405 E Northwest Hwy', score: 8.9, details: "CITY: Business (Retail)<br>DIRT: Solid Clay<br>RIGHTS: All Intact" },
+            { polygon: generateHexagon([-96.7972, 32.9264], 0.0012), title: 'Valley View Arena Site', score: 8.8, details: "CITY: TIF / Reinvestment Zone<br>POWER: Substation Required<br>PULSE: Strong Neighborhood NIMBY" },
+            { polygon: generateHexagon([-97.5861, 33.2343], 0.0011), title: 'Decatur Growth Path Site', score: 7.9, details: "CITY: Wise County ETJ commercial<br>POWER: Wise Electric Coop feed<br>VALUATION: Rural Arbitrage potential" }
+        ];
+        if (Math.abs(lat - 33.9300) < 0.2) {
+            base.push({ polygon: generateHexagon([lng, lat], 0.0011), title: 'Wichita Falls Wind Farm Site', score: 8.5, details: "POWER: 150MW Wind Spur Interconnect<br>DIRT: Red Dirt clay mix<br>RIGHTS: Wind Rights Secured" });
+        } else if (Math.abs(lat - 34.1700) < 0.2) {
+            base.push({ polygon: generateHexagon([lng, lat], 0.0011), title: 'Vernon Compressor Hub Site', score: 8.2, details: "CITY: Industrial Extraction Zone<br>VALUATION: Helium pipeline easement<br>RIGHTS: Mineral rights intact" });
+        } else if (Math.abs(lat - 33.5450) < 0.2) {
+            base.push({ polygon: generateHexagon([lng, lat], 0.0011), title: 'Bowie Logistics Junction Site', score: 8.4, details: "PULSE: Zayo Carrier splice vault<br>POWER: 480V 3-phase line adjacent<br>DIRT: Solid clay soil base" });
+        }
+        return base;
+    }
+
+    function renderLayers() {
+        const layers = [];
+        
+        // Add Beacons layer based on altitude
+        if (altitude > 100000) {
+            layers.push(new deck.ScatterplotLayer({
+                id: 'sky-beacons',
+                data: skyBeacons,
+                getPosition: d => [d.longitude, d.latitude],
+                getRadius: 10000 * pulseScale,
+                getFillColor: [6, 182, 212, 120],
+                pickable: true,
+                onClick: ({object, x, y}) => showHardPopup(object, 'beacon', x, y)
+            }));
+        } else if (altitude > 25000) {
+            layers.push(new deck.ScatterplotLayer({
+                id: 'cloud-beacons',
+                data: cloudBeacons,
+                getPosition: d => [d.longitude, d.latitude],
+                getRadius: 3000 * pulseScale,
+                getFillColor: [16, 185, 129, 150],
+                pickable: true,
+                onClick: ({object, x, y}) => showHardPopup(object, 'beacon', x, y)
+            }));
+        } else {
+            // Detailed Ground layers
+            
+            // 1. City Rules (TIF Zone)
+            if (document.getElementById('layer-city').checked) {
+                layers.push(new deck.PolygonLayer({
+                    id: 'tif-zones',
+                    data: getTifZones(activeProjectCoords.longitude, activeProjectCoords.latitude),
+                    getPolygon: d => d.polygon,
+                    getFillColor: [139, 92, 246, 30], // semi-transparent purple
+                    getLineColor: [139, 92, 246, 120],
+                    stroked: true,
+                    extruded: false,
+                    pickable: true,
+                    onClick: ({object, x, y}) => showHardPopup(object, 'tif', x, y)
+                }));
+            }
+
+            // 2. Roads & Traffic (Highways & Tessellation)
+            if (document.getElementById('layer-roads').checked) {
+                // Generate glowing highways around active project center
+                const activeHighways = generateHighways([activeProjectCoords.longitude, activeProjectCoords.latitude]);
+                
+                // Wide glowing background road line
+                layers.push(new deck.LineLayer({
+                    id: 'highways-glow',
+                    data: activeHighways,
+                    getSourcePosition: d => d.from,
+                    getTargetPosition: d => d.to,
+                    getColor: [139, 92, 246, 180], // glowing violet line
+                    getWidth: 6,
+                    pickable: false
+                }));
+                
+                // Bright white inner core line
+                layers.push(new deck.LineLayer({
+                    id: 'highways-core',
+                    data: activeHighways,
+                    getSourcePosition: d => d.from,
+                    getTargetPosition: d => d.to,
+                    getColor: [255, 255, 255, 240], // bright white core
+                    getWidth: 2.5,
+                    pickable: true,
+                    onClick: ({object, x, y}) => showHardPopup({name: object.name, details: `Flow: ${object.status} | Traffic: ${object.traffic}`}, 'road', x, y)
+                }));
+
+                // Generate H3 Resolution 11 Hexagonal Tessellation
+                const tessellationGrid = generateTessellation([activeProjectCoords.longitude, activeProjectCoords.latitude], gridExtent, gridExtent, gridHexSize);
+                layers.push(new deck.PolygonLayer({
+                    id: 'hex-tessellation',
+                    data: tessellationGrid,
+                    getPolygon: d => d.polygon,
+                    getFillColor: d => d.score > 8 ? [139, 92, 246, gridOpacity] : d.score > 7 ? [245, 158, 11, gridOpacity] : [245, 158, 11, Math.round(gridOpacity * 0.43)], // glowing violet or amber
+                    getLineColor: [255, 255, 255, Math.round(gridOpacity * 0.43)],
+                    getLineWidth: 1.5,
+                    stroked: true,
+                    extruded: gridHeight > 0,
+                    getElevation: d => d.score * gridHeight * 2,
+                    wireframe: true,
+                    pickable: true,
+                    onClick: ({object, x, y}) => {
+                        if (object) {
+                            logToConsole(`[TRACT] Hexagon Unit: score ${object.score.toFixed(1)}/10.0. Details: ${object.details}`);
+                            updateRoller(object.score);
+                            showHardPopup({name: object.title, longitude: object.polygon[0][0], latitude: object.polygon[0][1], score: object.score}, 'beacon', x, y);
+                        }
+                    }
+                }));
+            }
+
+            // 3. Power Grid (Lines)
+            if (document.getElementById('layer-power').checked) {
+                layers.push(new deck.LineLayer({
+                    id: 'power-lines',
+                    data: getPowerLines(activeProjectCoords.longitude, activeProjectCoords.latitude),
+                    getSourcePosition: d => d.from,
+                    getTargetPosition: d => d.to,
+                    getColor: [6, 182, 212], // cyan
+                    getWidth: 4,
+                    pickable: true,
+                    onClick: ({object, x, y}) => showHardPopup(object, 'power', x, y)
+                }));
+            }
+
+            // 6. Neighborhood Mood (NIMBY Red Zone)
+            if (document.getElementById('layer-mood').checked) {
+                layers.push(new deck.PolygonLayer({
+                    id: 'nimby-zones',
+                    data: getNimbyZones(activeProjectCoords.longitude, activeProjectCoords.latitude),
+                    getPolygon: d => d.polygon,
+                    getFillColor: [239, 68, 68, 60], // red
+                    getLineColor: [239, 68, 68],
+                    stroked: true,
+                    extruded: false,
+                    pickable: true,
+                    onClick: ({object, x, y}) => showHardPopup(object, 'nimby', x, y)
+                }));
+            }
+
+            // 7. Target Site Selection (Interactive purple polygon)
+            layers.push(new deck.PolygonLayer({
+                id: 'target-site',
+                data: getTargetSites(activeProjectCoords.longitude, activeProjectCoords.latitude),
+                getPolygon: d => d.polygon,
+                getFillColor: [139, 92, 246, 200], // violet
+                getLineColor: [255, 255, 255],
+                stroked: true,
+                pickable: true,
+                extruded: true,
+                getElevation: 30,
+                onClick: ({object, x, y}) => showHardPopup({name: object.title, details: object.details, score: object.score, longitude: activeProjectCoords.longitude, latitude: activeProjectCoords.latitude}, 'beacon', x, y)
+            }));
+
+            // 8. Temporary Review Sites (Green highlight)
+            layers.push(new deck.PolygonLayer({
+                id: 'temporary-review-sites',
+                data: temporaryHexagons,
+                getPolygon: d => d.polygon,
+                getFillColor: [16, 185, 129, 200], // emerald green
+                getLineColor: [255, 255, 255],
+                stroked: true,
+                pickable: true,
+                extruded: true,
+                getElevation: 35,
+                onClick: ({object, x, y}) => showHardPopup({name: object.title, details: object.details, score: object.score, longitude: object.longitude, latitude: object.latitude}, 'beacon', x, y)
+            }));
+
+            // Bird on the Wire: Pulse Brain Scouting connections
+            if (activeScoutingTarget && scoutingConnections[activeScoutingTarget]) {
+                const links = scoutingConnections[activeScoutingTarget];
+                
+                // Draw connection lines representing data ingestion pipes
+                layers.push(new deck.LineLayer({
+                    id: 'pulse-scout-lines',
+                    data: links,
+                    getSourcePosition: d => d.from,
+                    getTargetPosition: d => d.to,
+                    getColor: [16, 185, 129, 220], // emerald green data line
+                    getWidth: 3,
+                    pickable: false
+                }));
+
+                // Draw source nodes
+                layers.push(new deck.ScatterplotLayer({
+                    id: 'pulse-scout-nodes',
+                    data: links,
+                    getPosition: d => d.from,
+                    getRadius: 250 * pulseScale,
+                    getFillColor: [6, 182, 212, 230], // glowing cyan nodes
+                    getLineColor: [255, 255, 255, 200],
+                    stroked: true,
+                    pickable: true,
+                    onClick: ({object, x, y}) => {
+                        if (object) {
+                            logToConsole(`[PULSE DATASTREAM] Source: ${object.name} - Pipe ACTIVE.`);
+                            showHardPopup(object, 'scout', x, y);
+                        }
+                    }
+                }));
+            }
+
+            // 3D Vertical Light Pillar
+            layers.push(new deck.PolygonLayer({
+                id: 'project-3d-pillar',
+                data: generatePillar([activeProjectCoords.longitude, activeProjectCoords.latitude]),
+                getPolygon: d => d.polygon,
+                getFillColor: [6, 182, 212, 190], // glowing cyan pillar
+                getLineColor: [255, 255, 255, 250], // bright white border
+                getLineWidth: 2,
+                stroked: true,
+                extruded: true,
+                getElevation: d => d.elevation,
+                wireframe: true,
+                pickable: true,
+                onClick: ({object, x, y}) => showHardPopup({name: object.name, details: object.details}, 'road', x, y)
+            }));
+        }
+        
+        deckgl.setProps({ layers });
+        updateLegendState();
+    }
+
+    // Telemetry Popup details
+    function showHardPopup(object, type, x, y) {
+        if (!object) return;
+        
+        const card = document.getElementById('floating-card');
+        const titleEl = document.getElementById('popup-title');
+        const contentEl = document.getElementById('popup-content');
+        
+        if (!card || !titleEl || !contentEl) return;
+        
+        card.style.display = 'block';
+        card.style.left = x + 'px';
+        card.style.top = (y - 10) + 'px';
+        
+        let title = '';
+        let content = '';
+        
+        switch(type) {
+            case 'beacon':
+                title = `[BEACON: ${object.name}]`;
+                content = `
+                    <strong>Layer:</strong> Altitude Beacons<br/>
+                    <strong>Coordinates:</strong> [${object.longitude.toFixed(4)}, ${object.latitude.toFixed(4)}]<br/>
+                    <strong>Altitude Tier:</strong> ${altitude > 100000 ? 'Sky (Metro Hub)' : 'Clouds (Corridors)'}<br/>
+                    <strong>Pulse Score:</strong> ${(object.score || 8.0).toFixed(1)} / 10.0<br/>
+                    <strong>Details:</strong> ${object.description || 'No direct telemetry logged.'}<br/>
+                    <button class="sigma-btn-amber" style="margin-top: 8px; width: 100%; height: 26px; font-size: 10px;" onclick="submitTerminalLot('${object.name.replace(/'/g, "\\'")}', ${object.latitude}, ${object.longitude}, ${object.score || 8.0}, '${(object.description || object.details || '').replace(/'/g, "\\'")}')">Submit for Review</button>
+                `;
+                break;
+            case 'tif':
+                title = `[L1 CITY TIF: ${object.name}]`;
+                content = `
+                    <strong>Lobe:</strong> City Brain (Zoning & Spending)<br/>
+                    <strong>TIF Rate:</strong> ${object.rate}<br/>
+                    <strong>Rules:</strong> ${object.rules}<br/>
+                    <strong>Risk Impact:</strong> Low Zoning Delay Risk
+                `;
+                break;
+            case 'road':
+                title = `[L2 TxDOT: ${object.name}]`;
+                content = `
+                    <strong>Lobe:</strong> TxDOT Traffic Grid (Highway)<br/>
+                    <strong>Volume:</strong> ${object.traffic}<br/>
+                    <strong>Congestion:</strong> ${object.level}<br/>
+                    <strong>Calculated Delay:</strong> Minimal freight impact
+                `;
+                break;
+            case 'power':
+                title = `[L3 GRID LINE: ${object.name}]`;
+                content = `
+                    <strong>Lobe:</strong> Power Brain (Load Spine)<br/>
+                    <strong>Voltage:</strong> ${object.voltage}<br/>
+                    <strong>Capacity:</strong> ${object.load}<br/>
+                    <strong>Infrastructure Risk:</strong> Normal grid load lag
+                `;
+                break;
+            case 'nimby':
+                title = `[L6 SENTIMENT: ${object.name}]`;
+                content = `
+                    <strong>Lobe:</strong> Pulse Brain (Risk Area)<br/>
+                    <strong>Level:</strong> <span style="color: #ef4444; font-weight: bold;">${object.risk}</span><br/>
+                    <strong>Historical Notes:</strong> ${object.notes}<br/>
+                    <strong>Zoning Variance Delay:</strong> Elevated risk
+                `;
+                break;
+            case 'scout':
+                title = `[PULSE NODE: ${object.name}]`;
+                content = `
+                    <strong>Lobe:</strong> Pulse Scouting Network<br/>
+                    <strong>Ingestion Source:</strong> ${object.name}<br/>
+                    <strong>Data Type:</strong> Municipal GIS Database<br/>
+                    <strong>Link Status:</strong> <span style="color: #10b981; font-weight: bold;">CONNECTED (${object.status || 'Active'})</span>
+                `;
+                break;
+            case 'parcel':
+                title = `[PARCEL: ${object.title}]`;
+                content = `
+                    <strong>Feasibility Core Score:</strong> ${object.score.toFixed(1)}<br/>
+                    <strong>Zoning Suitability:</strong> ${object.score > 7 ? 'Optimal Development Target' : 'High Risk Area'}<br/>
+                    <strong>Soil Contamination:</strong> Clean<br/>
+                    <strong>Variance Requirement:</strong> Low
+                `;
+                break;
+            default:
+                title = '[TELEMETRY DATA OBJECT]';
+                content = `Raw JSON: <pre style="font-size: 8px; margin: 4px 0; overflow-x: auto;">${JSON.stringify(object, null, 2)}</pre>`;
+        }
+        
+        titleEl.textContent = title;
+        contentEl.innerHTML = content;
+        
+        logToConsole(`[HUD INTERACTION] Opened telemetry card for: ${title}`);
+    }
+    
+    function closeHardPopup() {
+        const card = document.getElementById('floating-card');
+        if (card) {
+            card.style.display = 'none';
+        }
+    }
+
+    // Dynamic Legend panel functions
+    function toggleLegend() {
+        if (window.HEX_HUD_Dock && Date.now() - window.HEX_HUD_Dock.lastDragTime < 200) {
+            return; // drag just finished, ignore toggle
+        }
+        const body = document.getElementById('legend-body');
+        const details = document.getElementById('legend-details-box');
+        const icon = document.getElementById('legend-toggle-icon');
+        if (body.style.display === 'none') {
+            body.style.display = 'block';
+            details.style.display = 'block';
+            icon.textContent = '[-]';
+        } else {
+            body.style.display = 'none';
+            details.style.display = 'none';
+            icon.textContent = '[+]';
+        }
+    }
+
+    function toggleLayerFromLegend(layerId) {
+        const checkbox = document.getElementById(layerId);
+        if (checkbox) {
+            checkbox.checked = !checkbox.checked;
+            renderLayers();
+            updateLegendState();
+            logToConsole(`[LEGEND] Interactive toggle: ${layerId.replace('layer-', '').toUpperCase()} layer visibility changed.`);
+        }
+    }
+
+    const legendIntel = {
+        'sky-beacons': 'City Brain & Finance Brain™ macro-nodes representing aggregate zoning variance capacity and municipal debt corridors. High altitude visualization of target cities.',
+        'cloud-beacons': 'TxDOT highway egress routes and municipal water/sewage trunk lines with less than 24-month expected saturation. Target development corridors.',
+        'feasibility-high': 'Feasibility core scoring based on integrated 7-lobe neural matrix. Green indicates >7.0 score (optimal soil quality, compatible zoning, low NIMBY sentiment, high power buffer).',
+        'feasibility-low': 'Site constraints detected. Red indicates ≤7.0 score (potential environmental contamination, zoning restrictions, NIMBY litigation risk, or grid load capacity limits).',
+        'scouting-node': 'Pulse Brain scraping nodes. Represents real-time connection to municipal GIS database servers harvesting zoning record updates.',
+        'scouting-stream': 'Scouting data pipeline representing active municipal data scraping streams back to HEXGROWTH\'s central PostGIS spine.',
+        'layer-city': 'City Brain: Overlay depicting Tax Increment Financing (TIF) boundaries and municipal rezoning buffers. Click to toggle.',
+        'layer-roads': 'TxDOT Brain: Calculated average daily traffic counts (AADT) and intersection delay coordinates. Click to toggle.',
+        'layer-power': 'Power Brain: High-voltage transmission corridors and distribution sub-stations showing load lag metrics. Click to toggle.',
+        'layer-mood': 'Pulse Brain: Area boundary of elevated local opposition, historical zoning variance denials, and community sentiment risk. Click to toggle.'
+    };
+
+    function showLegendDetail(type) {
+        const detailsBox = document.getElementById('legend-details-box');
+        if (detailsBox && legendIntel[type]) {
+            detailsBox.innerHTML = `<span style="color: var(--hex-cyan); font-weight: 600;">INTEL BRIEF:</span> <span style="color: #f8fafc;">${legendIntel[type]}</span>`;
+        }
+    }
+
+    function clearLegendDetail() {
+        const detailsBox = document.getElementById('legend-details-box');
+        if (detailsBox) {
+            detailsBox.innerHTML = 'Hover over an element to view intelligence brief.';
+        }
+    }
+
+    function updateLegendState() {
+        // 1. Sky Beacons
+        const skyActive = (altitude > 100000);
+        updateRowStatus('sky-beacons', skyActive, skyActive ? 'ACTIVE' : 'INACTIVE (Zoom Out)');
+        
+        // 2. Cloud Beacons
+        const cloudActive = (altitude > 25000 && altitude <= 100000);
+        updateRowStatus('cloud-beacons', cloudActive, cloudActive ? 'ACTIVE' : (altitude > 100000 ? 'INACTIVE (Zoom In)' : 'INACTIVE (Zoom Out)'));
+        
+        // Ground visible
+        const groundVisible = (altitude <= 25000);
+        
+        // 3. Feasibility High / Low
+        updateRowStatus('feasibility-high', groundVisible, groundVisible ? 'ACTIVE' : 'INACTIVE (Zoom In)');
+        updateRowStatus('feasibility-low', groundVisible, groundVisible ? 'ACTIVE' : 'INACTIVE (Zoom In)');
+        
+        // 4. Scouting Node / Stream (Pulse Brain)
+        const pulseActive = groundVisible && activeScoutingTarget;
+        updateRowStatus('scouting-node', pulseActive, pulseActive ? 'ACTIVE' : (groundVisible ? 'INACTIVE (Select Ticker)' : 'INACTIVE (Zoom In)'));
+        updateRowStatus('scouting-stream', pulseActive, pulseActive ? 'ACTIVE' : (groundVisible ? 'INACTIVE (Select Ticker)' : 'INACTIVE (Zoom In)'));
+        
+        // 5. Active Layer Overlays
+        const cityChecked = document.getElementById('layer-city').checked;
+        const roadsChecked = document.getElementById('layer-roads').checked;
+        const powerChecked = document.getElementById('layer-power').checked;
+        const moodChecked = document.getElementById('layer-mood').checked;
+        
+        updateRowStatus('layer-city', groundVisible && cityChecked, groundVisible ? (cityChecked ? 'ACTIVE' : 'MUTED') : 'INACTIVE (Zoom In)');
+        updateRowStatus('layer-roads', groundVisible && roadsChecked, groundVisible ? (roadsChecked ? 'ACTIVE' : 'MUTED') : 'INACTIVE (Zoom In)');
+        updateRowStatus('layer-power', groundVisible && powerChecked, groundVisible ? (powerChecked ? 'ACTIVE' : 'MUTED') : 'INACTIVE (Zoom In)');
+        updateRowStatus('layer-mood', groundVisible && moodChecked, groundVisible ? (moodChecked ? 'ACTIVE' : 'MUTED') : 'INACTIVE (Zoom In)');
+    }
+    
+    function updateRowStatus(id, isActive, text) {
+        const row = document.getElementById('legend-row-' + id);
+        const statusEl = document.getElementById('status-' + id);
+        if (row && statusEl) {
+            statusEl.textContent = `[${text}]`;
+            if (isActive) {
+                row.classList.remove('legend-row-muted');
+                row.classList.add('legend-row-active');
+                if (text === 'ACTIVE') {
+                    statusEl.style.color = '#10b981'; // var(--hex-emerald)
+                } else {
+                    statusEl.style.color = '#06b6d4'; // var(--hex-cyan)
+                }
+            } else {
+                row.classList.remove('legend-row-active');
+                row.classList.add('legend-row-muted');
+                statusEl.style.color = 'var(--hex-text-muted)';
+            }
+        }
+    }
+
+    async function submitTerminalLot(name, lat, lng, score, details) {
+        const payload = {
+            name: name,
+            latitude: lat,
+            longitude: lng,
+            score: parseFloat(score),
+            details: details
+        };
+        
+        try {
+            const response = await fetch('/api/v1/review-lots', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const result = await response.json();
+            if (result.status === 'success') {
+                logToConsole(`[SYS] Terminal Lot "${name}" submitted for review.`);
+                temporaryHexagons.push({
+                    polygon: generateHexagon([lng, lat], 0.0012),
+                    title: name + " (Pending Review)",
+                    score: parseFloat(score),
+                    details: details,
+                    latitude: lat,
+                    longitude: lng
+                });
+                renderLayers();
+                document.getElementById('floating-card').style.display = 'none';
+                loadReviewLots();
+            } else {
+                console.error("Failed to submit terminal lot:", result);
+            }
+        } catch (err) {
+            console.error("Error submitting terminal lot:", err);
+        }
+    }
+
+    async function loadReviewLots() {
+        try {
+            const response = await fetch('/api/v1/review-lots');
+            const result = await response.json();
+            if (result.status === 'success' && result.data) {
+                const listEl = document.getElementById('target-review-list-terminal');
+                if (listEl) {
+                    if (result.data.length === 0) {
+                        listEl.innerHTML = 'No lots under review. Click a target lot on the map and click "SUBMIT FOR REVIEW" in the floating card.';
+                    } else {
+                        let html = '<table style="width: 100%; border-collapse: collapse; font-size: 10px;">';
+                        html += '<thead><tr style="border-bottom: 1px solid var(--hex-border); color: var(--hex-cyan);"><th style="padding: 4px 0; text-align: left;">Name</th><th>Score</th><th>Status</th><th>Action</th></tr></thead><tbody>';
+                        result.data.forEach(lot => {
+                            html += `
+                                <tr style="border-bottom: 1px solid rgba(255,255,255,0.03);">
+                                    <td style="padding: 6px 0; font-weight: bold; color: var(--hex-cyan); cursor: pointer;" onclick="panToTerminalCoords(${lot.longitude}, ${lot.latitude})">${lot.name}</td>
+                                    <td>${lot.score.toFixed(1)}</td>
+                                    <td style="color: var(--hex-amber);">${lot.status}</td>
+                                    <td><span style="color: var(--hex-crimson); cursor: pointer; font-weight: bold;" onclick="deleteReviewLot(${lot.id})">[DEL]</span></td>
+                                </tr>
+                            `;
+                        });
+                        html += '</tbody></table>';
+                        listEl.innerHTML = html;
+                    }
+                }
+                
+                temporaryHexagons = result.data.map(lot => ({
+                    polygon: generateHexagon([lot.longitude, lot.latitude], 0.0012),
+                    title: lot.name + " (Pending Review)",
+                    score: lot.score,
+                    details: lot.details,
+                    longitude: lot.longitude,
+                    latitude: lot.latitude
+                }));
+                renderLayers();
+            }
+        } catch (err) {
+            console.error("Error loading review lots:", err);
+        }
+    }
+
+    async function deleteReviewLot(id) {
+        try {
+            const response = await fetch(`/api/v1/review-lots/${id}`, { method: 'DELETE' });
+            const result = await response.json();
+            if (result.status === 'success') {
+                logToConsole("[SYS] Lot review record deleted.");
+                loadReviewLots();
+            }
+        } catch (err) {
+            console.error("Error deleting lot review:", err);
+        }
+    }
+
+    function panToTerminalCoords(lng, lat) {
+        currentViewState = { ...currentViewState, longitude: lng, latitude: lat, zoom: 17, pitch: 45, transitionDuration: 2500 };
+        activeProjectCoords.longitude = lng;
+        activeProjectCoords.latitude = lat;
+        activeProjectCoords.zoom = 17;
+        deckgl.setProps({ viewState: currentViewState });
+        map.flyTo({ center: [lng, lat], zoom: 17, duration: 2500 });
+        syncUI(Math.round(125 * Math.pow(2, 1)), 17);
+        setTimeout(renderLayers, 2600);
+    }
+</script>
+<script src="{{ url_for('static', filename='js/hud-dock.js') }}"></script>
+</body>
+</html>
