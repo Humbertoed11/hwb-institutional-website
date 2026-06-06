@@ -521,6 +521,7 @@
                     </div>
                 </div>
             </div>
+        </div>
         <!-- Reviews Tab Content -->
         <div id="tab-reviews" class="tab-content">
             <div class="tactical-card" style="padding: 10px;">
@@ -622,6 +623,7 @@
             </div>
         </div>
     </div>
+</div>
 
     <!-- Console Terminal -->
     <div id="george-console">
@@ -958,8 +960,8 @@
         activeProjectCoords.longitude = lng;
         activeProjectCoords.latitude = lat;
         activeProjectCoords.zoom = 15;
-        deckgl.setProps({ viewState: currentViewState });
-        map.flyTo({ center: [lng, lat], zoom: 15, duration: 3000 });
+        if (deckgl) deckgl.setProps({ viewState: currentViewState });
+        if (map) map.flyTo({ center: [lng, lat], zoom: 15, duration: 3000 });
         syncUI(Math.round(125 * Math.pow(2, 18 - 15)), 15);
         
         updateRoller(score);
@@ -1069,8 +1071,8 @@
             // General custom project flight
             setTimeout(() => {
                 currentViewState = { ...currentViewState, longitude: activeProjectCoords.longitude, latitude: activeProjectCoords.latitude, zoom: activeProjectCoords.zoom, pitch: 45, transitionDuration: 3000 };
-                deckgl.setProps({ viewState: currentViewState });
-                map.flyTo({ center: [activeProjectCoords.longitude, activeProjectCoords.latitude], zoom: activeProjectCoords.zoom, duration: 3000 });
+                if (deckgl) deckgl.setProps({ viewState: currentViewState });
+                if (map) map.flyTo({ center: [activeProjectCoords.longitude, activeProjectCoords.latitude], zoom: activeProjectCoords.zoom, duration: 3000 });
                 syncUI(Math.round(125 * Math.pow(2, 18 - activeProjectCoords.zoom)), activeProjectCoords.zoom);
                 logToConsole(`[NAV] Flying to dynamic project: ${activeProjectCoords.name}`);
                 setTimeout(renderLayers, 3100);
@@ -1152,14 +1154,17 @@
         renderLayers();
     }
 
-    let map;
+    var map;
+    var deckgl;
 
-    const deckgl = new deck.Deck({
+    deckgl = new deck.Deck({
         canvas: 'deck-canvas',
         viewState: currentViewState,
         controller: true,
         onViewStateChange: ({viewState}) => {
-            deckgl.setProps({ viewState: viewState });
+            if (deckgl) {
+                deckgl.setProps({ viewState: viewState });
+            }
             currentViewState = viewState;
             if (map) {
                 map.jumpTo({ center: [viewState.longitude, viewState.latitude], zoom: viewState.zoom, bearing: viewState.bearing || 0, pitch: viewState.pitch || 0 });
@@ -1389,8 +1394,8 @@
         activeProjectCoords.longitude = lng;
         activeProjectCoords.latitude = lat;
         activeProjectCoords.zoom = zoom;
-        deckgl.setProps({ viewState: currentViewState });
-        map.flyTo({ center: [lng, lat], zoom: zoom, duration: 3000 });
+        if (deckgl) deckgl.setProps({ viewState: currentViewState });
+        if (map) map.flyTo({ center: [lng, lat], zoom: zoom, duration: 3000 });
         syncUI(Math.round(125 * Math.pow(2, 18 - zoom)), zoom);
         setTimeout(renderLayers, 3100);
     }
@@ -1670,7 +1675,9 @@
             }));
         }
         
-        deckgl.setProps({ layers });
+        if (deckgl) {
+            deckgl.setProps({ layers });
+        }
         updateLegendState();
     }
 
@@ -1982,8 +1989,8 @@
         activeProjectCoords.longitude = lng;
         activeProjectCoords.latitude = lat;
         activeProjectCoords.zoom = 17;
-        deckgl.setProps({ viewState: currentViewState });
-        map.flyTo({ center: [lng, lat], zoom: 17, duration: 2500 });
+        if (deckgl) deckgl.setProps({ viewState: currentViewState });
+        if (map) map.flyTo({ center: [lng, lat], zoom: 17, duration: 2500 });
         syncUI(Math.round(125 * Math.pow(2, 1)), 17);
         setTimeout(renderLayers, 2600);
     }
