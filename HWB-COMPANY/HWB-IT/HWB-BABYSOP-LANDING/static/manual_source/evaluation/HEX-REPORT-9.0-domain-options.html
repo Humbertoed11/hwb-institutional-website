@@ -1,0 +1,81 @@
+<!-- 
+    HEXGROWTH Institutional QMS Document
+    Standard: HEX-QMS-1.0 v1.0
+    Document ID: HEX-REPORT-9.0
+-->
+<div class="sop-card">
+    <!-- DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HEX-REPORT-9.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #10b981;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Author</span><span class="meta-val">George Bytes (Lead Auditor)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <h1>HEXGROWTH: <strong>Domain & URL Naming Options (06/03/2026)</strong></h1>
+        <p>This report outlines the proposed web address (URL) options for referencing the <strong>HEXGROWTH</strong> platform under the existing company domain name <strong>babysop.com</strong>. This allows the team to share the proof of concept (POC) with investors safely and professionally.</p>
+
+        <hr>
+
+        <h2>1.0 System Context</h2>
+        <p>The web application is currently running as <code>hex-babysop-landing</code> on Microsoft Azure. The domain name <code>babysop.com</code> is already verified and mapped to this application. Below are three methods for adding the hexgrowth name into the web address structure.</p>
+
+        <hr>
+
+        <h2>2.0 Naming Options</h2>
+        
+        <ul>
+            <li><strong>Option A: Subdomain Routing (Most Professional)</strong>
+                <br><em>Example:</em> <code>http://hexgrowth.babysop.com</code> or <code>http://hex.babysop.com</code>
+                <br><em>How it works:</em> This creates a separate web address prefix. It shows investors that HEXGROWTH is a distinct business division.
+                <br><em>Technical Setup:</em> A DNS CNAME record must be added at the domain registrar to point <code>hexgrowth.babysop.com</code> to <code>hex-babysop-landing.azurewebsites.net</code>, followed by adding the custom domain inside the Azure portal.
+            </li>
+            
+            <li><strong>Option B: Subdirectory Routing (Easiest to Deploy)</strong>
+                <br><em>Example:</em> <code>http://babysop.com/hexgrowth</code> or <code>http://babysop.com/hex</code>
+                <br><em>How it works:</em> This places the map tool in a sub-folder under the main website. It requires no DNS changes.
+                <br><em>Technical Setup:</em> A route handler must be registered in the application code <a href="file:///home/humbertoed/hexgrowth/app/main_app.py">main_app.py</a> (e.g., mapping <code>@app.route('/hexgrowth')</code> to the HUD template).
+            </li>
+            
+            <li><strong>Option C: Standalone Domain (Premium Branding)</strong>
+                <br><em>Example:</em> <code>http://hexgrowth.com</code> or <code>http://hexgrowth.app</code>
+                <br><em>How it works:</em> A separate domain is purchased specifically for the product. This offers the cleanest branding but has a small extra cost.
+                <br><em>Technical Setup:</em> Buy the domain from a registrar and bind it as a custom domain to the Azure web application.
+            </li>
+        </ul>
+
+        <hr>
+
+        <h2>3.0 Reference Rules</h2>
+        <p>All public URL paths must follow the lowercase naming standard specified in <a href="file:///home/humbertoed/hexgrowth/HEX-QMS/HEX-SOP-1.0-naming-convention.html">HEX-SOP-1.0-NAMING</a>. Standard folder paths (like <code>/manual/</code> or <code>/hud/</code>) must be lowercase and use hyphens for separation.</p>
+        
+        <hr />
+        <h2>Document Revision History</h2>
+        <table class="sigma-data-grid">
+            <thead>
+                <tr>
+                    <th>Revision</th>
+                    <th>Date</th>
+                    <th>Description of Change</th>
+                    <th>Author / Approved By</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><b>1.0.0</b></td>
+                    <td>06/03/2026</td>
+                    <td>Standardized clinical formatting and aligned with ISO 9001 document controls.</td>
+                    <td>George Bytes / Humberto Dominguez (Chairman)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 3. DOCUMENT CONTROL FOOTER -->
+    <div class="sop-card-footer">
+        <div>Classification: Institutional ISO 9001 QMS Record</div>
+        <div>Effective Date: 06/03/2026</div>
+        <div>Review Cycle: Annual (Rev 1.0.0)</div>
+    </div>
+</div>

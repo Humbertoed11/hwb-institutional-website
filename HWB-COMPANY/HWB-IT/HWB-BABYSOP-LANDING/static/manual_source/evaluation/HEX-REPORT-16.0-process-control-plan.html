@@ -1,0 +1,122 @@
+<!-- 
+    HEXGROWTH Institutional QMS Document
+    Standard: HEX-QMS-1.0 v1.0
+    Document ID: HEX-REPORT-16.0
+-->
+<div class="sop-card">
+    <!-- DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HEX-REPORT-16.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #10b981;">● APPROVED (PROCESS CONTROL PLAN)</span></div>
+        <div class="meta-unit"><span class="meta-label">Author</span><span class="meta-val">George Bytes (mbB)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <h1>SIX SIGMA CONTROL PHASE: <strong>Process Control Plan & Value Stream Map</strong></h1>
+        <p><strong>Purpose:</strong> Outlines the operational controls, testing methods, and monitoring frequency to ensure the HexGrowth spatial intelligence engine remains in statistical control. This prevents process drift and validates system reliability.</p>
+
+        <hr />
+
+        <h2>1.0 Value Stream Mapping & Process Flow</h2>
+        <p>The platform follows a four-step data value chain. Each step must meet its defined quality boundary before passing information to the next phase:</p>
+        <ol style="line-height: 2;">
+            <li><b>Data Ingestion (Layer 2):</b> Scrapers query municipal, state, and utility APIs → Outputs structured GeoJSON/CSV payloads.</li>
+            <li><b>Spatial Mapping (Layer 1):</b> The engine assigns raw coordinates to H3 hexagons (Resolution 11) → Indexes cells into PostgreSQL/PostGIS.</li>
+            <li><b>Consensus Engine (Neural Lobe):</b> The system runs zoning, infrastructure, and financial ballots → Calculates weighted HexScores.</li>
+            <li><b>Visual HUD Dashboard (Layer 3):</b> Serving spatial records via the API spine → Renders color-coded hexagons dynamically on Deck.gl.</li>
+        </ol>
+
+        <hr />
+
+        <h2>2.0 Process Control Matrix</h2>
+        <p>The matrix below defines the operational parameters, target criteria, sampling schedules, and corrective actions required to monitor system stability:</p>
+
+        <table class="sigma-data-grid">
+            <thead>
+                <tr>
+                    <th>Process Step</th>
+                    <th>Control Parameter</th>
+                    <th>Target / Specification</th>
+                    <th>Measurement Method</th>
+                    <th>Frequency</th>
+                    <th>Corrective Action on Exceedance</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><b>H3 Generation</b></td>
+                    <td>Parcels indexed in database.</td>
+                    <td>122,193 Resolution-11 rows loaded.</td>
+                    <td>SQL table count query.</td>
+                    <td>After sync actions.</td>
+                    <td>Restore database from Peter's hourly binary backup.</td>
+                </tr>
+                <tr>
+                    <td><b>Zoning Ingestion</b></td>
+                    <td>Scraper execution time.</td>
+                    <td>Less than 3 minutes compile time.</td>
+                    <td>In-app performance timer logs.</td>
+                    <td>Daily run cycle.</td>
+                    <td>Abort run, log issue in registry, and revert to last valid cache.</td>
+                </tr>
+                <tr>
+                    <td><b>Consensus Scoring</b></td>
+                    <td>HexScore index boundaries.</td>
+                    <td>Value must fall between 0.0 and 10.0.</td>
+                    <td>PostgreSQL schema range constraints.</td>
+                    <td>On database update.</td>
+                    <td>Reject scoring ballot, rollback transaction, and notify architect.</td>
+                </tr>
+                <tr>
+                    <td><b>HUD Loading</b></td>
+                    <td>Map viewport render lag.</td>
+                    <td>Spatial API response under 100ms.</td>
+                    <td>SQL execution telemetry logging.</td>
+                    <td>Continuous.</td>
+                    <td>Shift query resolution level down (e.g., from Res-11 to Res-09).</td>
+                </tr>
+                <tr>
+                    <td><b>User Security</b></td>
+                    <td>Active user session lifespan.</td>
+                    <td>Auto-logout after 15 minutes of inactivity.</td>
+                    <td>Client-side timer and server cookie checks.</td>
+                    <td>Continuous.</td>
+                    <td>Clear browser cookies and redirect request to `/login`.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="callout callout-note">
+            <strong>Control Action Guidance:</strong> When a process parameter exceeds its limit, the operator must trigger the corrective action loop within 15 minutes to preserve data continuity.
+        </div>
+        
+        <hr />
+        <h2>Document Revision History</h2>
+        <table class="sigma-data-grid">
+            <thead>
+                <tr>
+                    <th>Revision</th>
+                    <th>Date</th>
+                    <th>Description of Change</th>
+                    <th>Author / Approved By</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><b>1.0.0</b></td>
+                    <td>06/03/2026</td>
+                    <td>Standardized clinical formatting and aligned with ISO 9001 document controls.</td>
+                    <td>George Bytes / Humberto Dominguez (Chairman)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 3. DOCUMENT CONTROL FOOTER -->
+    <div class="sop-card-footer">
+        <div>Classification: Institutional ISO 9001 QMS Record</div>
+        <div>Effective Date: 06/03/2026</div>
+        <div>Review Cycle: Annual (Rev 1.0.0)</div>
+    </div>
+</div>

@@ -1,0 +1,321 @@
+[
+    {
+        "id": "HEX-REPORT-12.0",
+        "title": "DMAIC Six Sigma Valuation Charter",
+        "file": "evaluation/HEX-REPORT-12.0-dmaic-charter.html",
+        "department": "01 Executive Governance"
+    },
+    {
+        "id": "HEX-REPORT-13.0",
+        "title": "Six Sigma Black Belt Project Ledger",
+        "file": "evaluation/HEX-REPORT-13.0-black-belt-ledger.html",
+        "department": "01 Executive Governance"
+    },
+    {
+        "id": "HEX-REPORT-17.0",
+        "title": "Strategic Roadmap & Hex-Terminal Standards",
+        "file": "leadership/HEX-REPORT-17.0-executive-directives.html",
+        "department": "01 Executive Governance"
+    },
+    {
+        "id": "HEX-REPORT-2.0",
+        "title": "Master Specification Comparison",
+        "file": "evaluation/HEX-REPORT-2.0-master-comparison.html",
+        "department": "01 Executive Governance"
+    },
+    {
+        "id": "HEX-REPORT-3.0",
+        "title": "Strategy Comparison",
+        "file": "evaluation/HEX-REPORT-3.0-strategy-comparison.html",
+        "department": "01 Executive Governance"
+    },
+    {
+        "id": "HEX-SOP-0.1",
+        "title": "Business Birth Certificate",
+        "file": "context/HEX-SOP-0.1-birth.html",
+        "department": "01 Executive Governance"
+    },
+    {
+        "id": "HEX-SOP-0.2",
+        "title": "Master Execution Roadmap",
+        "file": "context/HEX-SOP-0.2-roadmap.html",
+        "department": "01 Executive Governance"
+    },
+    {
+        "id": "HEX-SOP-1.0",
+        "title": "Naming & Architecture",
+        "file": "leadership/HEX-SOP-1.0-naming-convention.html",
+        "department": "01 Executive Governance"
+    },
+    {
+        "id": "HEX-SOP-1.1",
+        "title": "Organizational Roles & Chart",
+        "file": "leadership/HEX-SOP-1.1-org-chart.html",
+        "department": "02 HR (Human Resources)"
+    },
+    {
+        "id": "HEX-LOBE-1.0",
+        "title": "City Brain (Municipal)",
+        "file": "operations/lobes/HEX-LOBE-1.0-city.html",
+        "department": "03 Operations"
+    },
+    {
+        "id": "HEX-LOBE-2.0",
+        "title": "TxDOT Brain (Infrastructure)",
+        "file": "operations/lobes/HEX-LOBE-2.0-txdot.html",
+        "department": "03 Operations"
+    },
+    {
+        "id": "HEX-LOBE-3.0",
+        "title": "Power Brain (Utility)",
+        "file": "operations/lobes/HEX-LOBE-3.0-power.html",
+        "department": "03 Operations"
+    },
+    {
+        "id": "HEX-LOBE-4.0",
+        "title": "Legal/Env Brain (Risk)",
+        "file": "operations/lobes/HEX-LOBE-4.0-legal.html",
+        "department": "03 Operations"
+    },
+    {
+        "id": "HEX-LOBE-5.0",
+        "title": "Ranger Brain (Ground Truth)",
+        "file": "operations/lobes/HEX-LOBE-5.0-ranger.html",
+        "department": "03 Operations"
+    },
+    {
+        "id": "HEX-LOBE-6.0",
+        "title": "Pulse Brain (Culture)",
+        "file": "operations/lobes/HEX-LOBE-6.0-pulse.html",
+        "department": "03 Operations"
+    },
+    {
+        "id": "HEX-LOBE-7.0",
+        "title": "Finance Brain (Market)",
+        "file": "operations/lobes/HEX-LOBE-7.0-finance.html",
+        "department": "03 Operations"
+    },
+    {
+        "id": "HEX-REPORT-19.0",
+        "title": "100 Economic & Real Estate Inferences",
+        "file": "HEX-REPORT-19.0-economic-inferences.html",
+        "department": "03 Operations"
+    },
+    {
+        "id": "HEX-REPORT-20.0",
+        "title": "100 Anomalies for Geospatial Intelligence",
+        "file": "evaluation/HEX-REPORT-20.0-100-anomalies-ledger.html",
+        "department": "03 Operations"
+    },
+    {
+        "id": "HEX-REPORT-21.0",
+        "title": "8-Lobe Neural Mapping & Development Plan",
+        "file": "HEX-REPORT-21.0-neural-mapping.html",
+        "department": "03 Operations"
+    },
+    {
+        "id": "HEX-REPORT-22.0",
+        "title": "Infrastructure Migration Expenditures",
+        "file": "evaluation/HEX-REPORT-22.0-infrastructure-expenditures.html",
+        "department": "03 Operations"
+    },
+    {
+        "id": "HEX-REPORT-23.0",
+        "title": "Cross-Lobe Duplication Audit",
+        "file": "HEX-REPORT-23.0-brain-duplication-audit.html",
+        "department": "03 Operations"
+    },
+    {
+        "id": "HEX-REPORT-5.0",
+        "title": "Lobe Expansion Functions",
+        "file": "evaluation/HEX-REPORT-5.0-lobe-functions.html",
+        "department": "03 Operations"
+    },
+    {
+        "id": "HEX-SOP-10.0",
+        "title": "Alpha Brain (Lobe 10)",
+        "file": "HEX-SOP-10.0-alpha-brain.html",
+        "department": "03 Operations"
+    },
+    {
+        "id": "HEX-SOP-11.0",
+        "title": "Scout Brain (Lobe 11)",
+        "file": "HEX-SOP-11.0-scout-brain.html",
+        "department": "03 Operations"
+    },
+    {
+        "id": "HEX-SOP-2.0",
+        "title": "Universal H3 Grid",
+        "file": "planning/HEX-SOP-2.0-universal-grid.html",
+        "department": "03 Operations"
+    },
+    {
+        "id": "HEX-SOP-3.0",
+        "title": "The Miner (Layer 2)",
+        "file": "operations/HEX-SOP-3.0-the-miner.html",
+        "department": "03 Operations"
+    },
+    {
+        "id": "HEX-SOP-4.0",
+        "title": "Heads-Up Display Master Manual",
+        "file": "HEX-SOP-4.0-master-hud-manual.html",
+        "department": "03 Operations"
+    },
+    {
+        "id": "HEX-SOP-5.0",
+        "title": "Neural Voting & HexScore",
+        "file": "HEX-SOP-5.0-neural-voting.html",
+        "department": "03 Operations"
+    },
+    {
+        "id": "HEX-SOP-5.1",
+        "title": "Inference Brain (Lobe 8)",
+        "file": "HEX-SOP-5.1-inference-brain.html",
+        "department": "03 Operations"
+    },
+    {
+        "id": "HEX-SOP-6.0",
+        "title": "Multi-Brain\u2122 Consensus",
+        "file": "operations/HEX-SOP-6.0-consensus.html",
+        "department": "03 Operations"
+    },
+    {
+        "id": "HEX-SOP-6.1",
+        "title": "Daily Inference & Continuous Learning Protocol",
+        "file": "HEX-SOP-6.1-inference-daily-learning.html",
+        "department": "03 Operations"
+    },
+    {
+        "id": "HEX-SOP-8.0",
+        "title": "Neural Migration",
+        "file": "operations/HEX-SOP-8.0-neural-migration.html",
+        "department": "03 Operations"
+    },
+    {
+        "id": "HEX-SOP-8.1",
+        "title": "Backend Database & Memory Master Manual",
+        "file": "operations/HEX-SOP-8.1-master-backend-database-manual.html",
+        "department": "03 Operations"
+    },
+    {
+        "id": "HEX-SOP-8.2",
+        "title": "Reporting Architecture",
+        "file": "operations/HEX-SOP-8.2-reporting-architecture.html",
+        "department": "03 Operations"
+    },
+
+    {
+        "id": "HEX-SOP-8.4",
+        "title": "Pulse Brain Plan & Competitor Radar",
+        "file": "operations/HEX-SOP-8.4-pulse-neural-plan.html",
+        "department": "03 Operations"
+    },
+
+    {
+        "id": "HEX-SOP-8.6",
+        "title": "Frontend Portal & Viewport Master Manual",
+        "file": "operations/HEX-SOP-8.6-master-frontend-portal-manual.html",
+        "department": "03 Operations"
+    },
+    {
+        "id": "HEX-SOP-9.0",
+        "title": "Accountability Brain (Lobe 9)",
+        "file": "HEX-SOP-9.0-accountability-brain.html",
+        "department": "03 Operations"
+    },
+    {
+        "id": "HEX-SOP-9.1",
+        "title": "Cross-Lobe Learning & Adaptation",
+        "file": "HEX-SOP-9.1-cross-learning.html",
+        "department": "03 Operations"
+    },
+
+
+    {
+        "id": "HEX-IP-9.0",
+        "title": "Separation Implementation Plan",
+        "file": "planning/HEX-IP-9.0-SEPARATION.html",
+        "department": "04 Purchasing"
+    },
+    {
+        "id": "HEX-REPORT-18.0",
+        "title": "Samsung U.S. Headquarters Relocation Opportunity",
+        "file": "evaluation/HEX-REPORT-18.0-samsung-hq-relocation.html",
+        "department": "05 Marketing & Sales"
+    },
+    {
+        "id": "HEX-REPORT-4.0",
+        "title": "Master Reference Specification",
+        "file": "evaluation/HEX-REPORT-4.0-master-reference.html",
+        "department": "05 Marketing & Sales"
+    },
+    {
+        "id": "HEX-REPORT-6.0",
+        "title": "Mavericks Relocation Opportunity",
+        "file": "evaluation/HEX-REPORT-6.0-mavericks-relocation.html",
+        "department": "05 Marketing & Sales"
+    },
+    {
+        "id": "HEX-REPORT-7.0",
+        "title": "HUD Customization Options",
+        "file": "evaluation/HEX-REPORT-7.0-hud-customization.html",
+        "department": "05 Marketing & Sales"
+    },
+    {
+        "id": "HEX-REPORT-9.0",
+        "title": "Domain Name Options",
+        "file": "evaluation/HEX-REPORT-9.0-domain-options.html",
+        "department": "05 Marketing & Sales"
+    },
+    {
+        "id": "HEX-REPORT-1.0",
+        "title": "Token Saving Strategy Status",
+        "file": "evaluation/HEX-REPORT-1.0-token-saving.html",
+        "department": "06 IT (Information Technology)"
+    },
+
+    {
+        "id": "HEX-REPORT-14.0",
+        "title": "ISO 9001 Readiness Gap Analysis",
+        "file": "evaluation/HEX-REPORT-14.0-iso-readiness-gap-analysis.html",
+        "department": "06 IT (Information Technology)"
+    },
+    {
+        "id": "HEX-REPORT-15.0",
+        "title": "FMEA Ledger",
+        "file": "evaluation/HEX-REPORT-15.0-fmea-ledger.html",
+        "department": "06 IT (Information Technology)"
+    },
+    {
+        "id": "HEX-REPORT-16.0",
+        "title": "Process Control Plan & Value Stream Map",
+        "file": "evaluation/HEX-REPORT-16.0-process-control-plan.html",
+        "department": "06 IT (Information Technology)"
+    },
+
+    {
+        "id": "HEX-SOP-7.5",
+        "title": "ISO 9001 Compliance Tracker",
+        "file": "planning/HEX-SOP-7.5-iso-compliance-tracker.html",
+        "department": "06 IT (Information Technology)"
+    },
+
+    {
+        "id": "HEX-REPORT-8.0",
+        "title": "Path B Cost Projections",
+        "file": "evaluation/HEX-REPORT-8.0-cost-projection.html",
+        "department": "08 Accounting"
+    },
+    {
+        "id": "HEX-IP-9.1",
+        "title": "Legal Separation Implementation Plan",
+        "file": "legal/HEX-IP-9.1-legal-compliance.html",
+        "department": "09 Legal & Compliance"
+    },
+    {
+        "id": "HEX-SOP-7.1",
+        "title": "Data Privacy & Portfolio Security",
+        "file": "legal/HEX-SOP-7.1-privacy-policy.html",
+        "department": "09 Legal & Compliance"
+    }
+]

@@ -1,0 +1,624 @@
+{% extends "sop_base.html" %}
+
+{% block title %}HEXGROWTH Design System | Institutional Web Standards{% endblock %}
+
+{% block content %}
+<style>
+    /* CSS Utility Classes for the Design System Demo */
+    .ds-section {
+        margin-bottom: 3rem;
+        border-bottom: 1px solid #e2e8f0;
+        padding-bottom: 2rem;
+    }
+    .ds-section:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+    .ds-section-title {
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin-top: 0;
+        margin-bottom: 1.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .ds-section-title::before {
+        content: '';
+        display: inline-block;
+        width: 4px;
+        height: 18px;
+        background: #2563eb;
+        border-radius: 2px;
+    }
+    .ds-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .ds-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        padding: 1.5rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    }
+    
+    /* 1.0 Form Input & Typography Constraints */
+    .sigma-form-group {
+        margin-bottom: 1.25rem;
+    }
+    .sigma-form-label {
+        display: block;
+        font-size: 0.75rem;
+        font-weight: 500; /* label font-weight exactly 500 */
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 4px; /* tight 4px vertical proximity */
+    }
+    .sigma-form-input {
+        width: 100%;
+        box-sizing: border-box;
+        height: 38px;
+        padding: 0 12px;
+        font-size: 0.85rem;
+        border-radius: 6px; /* border-radius strictly capped at 6px */
+        border: 1px solid #cbd5e1;
+        background: #ffffff;
+        color: #0f172a;
+        outline: none;
+        transition: all 0.2s ease;
+    }
+    .sigma-form-input:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    /* 2.0 Button & Interactive Element Rigidity */
+    .sigma-btn-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        align-items: center;
+    }
+    .sigma-btn-32 {
+        height: 32px;
+        padding: 0 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        border-radius: 6px;
+        border: 1px solid #cbd5e1;
+        background: #ffffff;
+        color: #334155;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        transition: all 0.2s;
+    }
+    .sigma-btn-32:hover {
+        background: #f8fafc;
+        border-color: #94a3b8;
+    }
+    .sigma-btn-36 {
+        height: 36px;
+        padding: 0 16px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        border-radius: 6px;
+        border: 1px solid #2563eb;
+        background: #2563eb;
+        color: #ffffff;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s;
+    }
+    .sigma-btn-36:hover {
+        background: #1d4ed8;
+        border-color: #1d4ed8;
+    }
+    .sigma-btn-40 {
+        height: 40px;
+        padding: 0 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        border-radius: 6px;
+        border: 1px solid #cbd5e1;
+        background: #0f172a;
+        color: #ffffff;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s;
+    }
+    .sigma-btn-40:hover {
+        background: #1e293b;
+    }
+
+    /* 3.0 Material Depth & Color Hierarchy */
+    .color-swatch {
+        display: flex;
+        flex-direction: column;
+        border-radius: 6px;
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+    }
+    .color-preview {
+        height: 80px;
+        width: 100%;
+    }
+    .color-info {
+        padding: 0.75rem;
+        background: #ffffff;
+    }
+    .color-name {
+        font-size: 0.8rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin: 0 0 2px 0;
+        text-transform: uppercase;
+    }
+    .color-hex {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.75rem;
+        color: #64748b;
+    }
+
+    /* 4.0 Information Density & Velocity */
+    .sigma-data-grid {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+        font-size: 0.85rem;
+    }
+    .sigma-data-grid th {
+        background: #f8fafc;
+        border-bottom: 2px solid #e2e8f0;
+        padding: 8px 12px;
+        font-weight: 700;
+        color: #475569;
+        text-transform: uppercase;
+        font-size: 0.7rem;
+        letter-spacing: 0.05em;
+    }
+    .sigma-data-grid td {
+        padding: 8px 12px;
+        border-bottom: 1px solid #e2e8f0;
+        color: #334155;
+    }
+    .sigma-data-grid tr:hover td {
+        background: #f1f5f9;
+    }
+
+    /* Muted Pastel Status Badges */
+    .status-badge {
+        font-size: 0.7rem;
+        font-weight: 800;
+        padding: 2px 8px;
+        border-radius: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        display: inline-block;
+    }
+    .status-cyan {
+        background: rgba(6, 182, 212, 0.1);
+        border: 1px solid #06b6d4;
+        color: #0891b2;
+    }
+    .status-emerald {
+        background: rgba(16, 185, 129, 0.1);
+        border: 1px solid #10b981;
+        color: #059669;
+    }
+    .status-amber {
+        background: rgba(245, 158, 11, 0.1);
+        border: 1px solid #f59e0b;
+        color: #d97706;
+    }
+    .status-crimson {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid #ef4444;
+        color: #dc2626;
+    }
+    .status-violet {
+        background: rgba(139, 92, 246, 0.1);
+        border: 1px solid #8b5cf6;
+        color: #7c3aed;
+    }
+
+    /* Tab Racks */
+    .sigma-tab-rack-demo {
+        display: flex;
+        gap: 0.25rem;
+        border-bottom: 1px solid #e2e8f0;
+        padding-bottom: 0px;
+        margin-bottom: 1rem;
+    }
+    .sigma-tab-demo {
+        background: none;
+        border: none;
+        padding: 0.75rem 1.25rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #64748b;
+        cursor: pointer;
+        border-bottom: 3px solid transparent;
+        transition: all 0.2s;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    .sigma-tab-demo.active {
+        color: #2563eb;
+        border-bottom-color: #2563eb; /* 3px active indicator accent */
+    }
+</style>
+
+<div class="sop-card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 1.5rem;">
+        <div>
+            <h1 style="font-size: 2.25rem; font-weight: 900; color: #0f172a; margin: 0 0 0.5rem 0; letter-spacing: -0.03em;">HEXGROWTH Design System</h1>
+            <p style="font-size: 0.95rem; color: #64748b; margin: 0;">Operational Front-End Style Guide & Technical Specifications</p>
+        </div>
+        <span class="status-badge status-cyan" style="font-size: 0.8rem; padding: 6px 12px;">v1.0.0 ACTIVE</span>
+    </div>
+
+    <!-- PLAYGROUND SECTION -->
+    <div class="ds-section">
+        <h2 class="ds-section-title">1.0 Interactive Elements & Inputs</h2>
+        
+        <div class="ds-grid">
+            <!-- Typography Cards -->
+            <div class="ds-card">
+                <h3 style="font-size: 1.1rem; font-weight: 700; color: #0f172a; margin-top: 0; margin-bottom: 1rem;">Header Scale Constraints</h3>
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <div>
+                        <span style="font-size: 0.65rem; color: #94a3b8; font-weight: 800; display: block; text-transform: uppercase;">Modal/Card Header Max Scale (1.5rem)</span>
+                        <h4 style="font-size: 1.5rem; font-weight: 600; color: #0f172a; margin: 4px 0 0 0;">Visual Title Semi-Bold</h4>
+                    </div>
+                    <div>
+                        <span style="font-size: 0.65rem; color: #94a3b8; font-weight: 800; display: block; text-transform: uppercase;">Standard Header 2 (1.25rem)</span>
+                        <h5 style="font-size: 1.25rem; font-weight: 600; color: #1e293b; margin: 4px 0 0 0;">Sub-Section Header</h5>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Fields Demo -->
+            <div class="ds-card">
+                <h3 style="font-size: 1.1rem; font-weight: 700; color: #0f172a; margin-top: 0; margin-bottom: 1rem;">Enterprise Form Fields</h3>
+                <div class="sigma-form-group">
+                    <label class="sigma-form-label" for="demo-field">Unitized Address Field</label>
+                    <input class="sigma-form-input" type="text" id="demo-field" value="10405 E Northwest Hwy" placeholder="Enter parcel details...">
+                </div>
+                <span style="font-size: 0.7rem; color: #64748b;">Labels sit at a tight <b>4px vertical proximity</b> with a weight of <b>500</b>.</span>
+            </div>
+
+            <!-- Buttons Demo -->
+            <div class="ds-card">
+                <h3 style="font-size: 1.1rem; font-weight: 700; color: #0f172a; margin-top: 0; margin-bottom: 1rem;">Button Height & Compressions</h3>
+                <div class="sigma-btn-group">
+                    <div>
+                        <span style="font-size: 0.65rem; color: #94a3b8; display: block; margin-bottom: 4px;">32px (Utility Button)</span>
+                        <button class="sigma-btn-32">
+                            <svg style="width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 2;" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
+                            Select
+                        </button>
+                    </div>
+                    <div>
+                        <span style="font-size: 0.65rem; color: #94a3b8; display: block; margin-bottom: 4px;">36px (Primary Control)</span>
+                        <button class="sigma-btn-36">
+                            <svg style="width: 14px; height: 14px; fill: currentColor;" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                            Deploy
+                        </button>
+                    </div>
+                    <div>
+                        <span style="font-size: 0.65rem; color: #94a3b8; display: block; margin-bottom: 4px;">40px (Console Control)</span>
+                        <button class="sigma-btn-40">
+                            <svg style="width: 16px; height: 16px; fill: currentColor;" viewBox="0 0 24 24"><path d="M13 3h-2v10h2V3zm4.83 2.17l-1.42 1.42C17.99 7.86 19 9.81 19 12c0 3.87-3.13 7-7 7s-7-3.13-7-7c0-2.19 1.01-4.14 2.58-5.42L6.17 5.17C4.23 6.82 3 9.26 3 12c0 4.97 4.03 9 9 9s9-4.03 9-9c0-2.74-1.23-5.18-3.17-6.83z"/></svg>
+                            Terminate
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- COLOR SCHEME SECTION -->
+    <div class="ds-section">
+        <h2 class="ds-section-title">2.0 Color Palette & Material Depth</h2>
+        
+        <h3 style="font-size: 0.95rem; font-weight: 800; color: #475569; text-transform: uppercase; margin-bottom: 1rem; letter-spacing: 0.05em;">HUD Tactical Dark Mode Canvas</h3>
+        <div class="ds-grid" style="margin-bottom: 2rem;">
+            <!-- Base Canvas -->
+            <div class="color-swatch">
+                <div class="color-preview" style="background: #020617;"></div>
+                <div class="color-info">
+                    <p class="color-name">Base Canvas</p>
+                    <span class="color-hex">#020617</span>
+                </div>
+            </div>
+            <!-- Mid Ground -->
+            <div class="color-swatch">
+                <div class="color-preview" style="background: #0f172a;"></div>
+                <div class="color-info">
+                    <p class="color-name">Mid Ground</p>
+                    <span class="color-hex">#0f172a</span>
+                </div>
+            </div>
+            <!-- Elevated Controls -->
+            <div class="color-swatch">
+                <div class="color-preview" style="background: #000000; border: 1px solid #1e293b;"></div>
+                <div class="color-info">
+                    <p class="color-name">Elevated Controls</p>
+                    <span class="color-hex">#000000</span>
+                </div>
+            </div>
+            <!-- Floating Context -->
+            <div class="color-swatch">
+                <div class="color-preview" style="background: #1e293b;"></div>
+                <div class="color-info">
+                    <p class="color-name">Floating Context</p>
+                    <span class="color-hex">#1e293b</span>
+                </div>
+            </div>
+        </div>
+
+        <h3 style="font-size: 0.95rem; font-weight: 800; color: #475569; text-transform: uppercase; margin-bottom: 1rem; letter-spacing: 0.05em;">Brand Indicator Palette</h3>
+        <div class="ds-grid">
+            <div class="color-swatch">
+                <div class="color-preview" style="background: #06b6d4;"></div>
+                <div class="color-info">
+                    <p class="color-name">Tactical Cyan</p>
+                    <span class="color-hex">#06b6d4</span>
+                </div>
+            </div>
+            <div class="color-swatch">
+                <div class="color-preview" style="background: #10b981;"></div>
+                <div class="color-info">
+                    <p class="color-name">Live Emerald</p>
+                    <span class="color-hex">#10b981</span>
+                </div>
+            </div>
+            <div class="color-swatch">
+                <div class="color-preview" style="background: #f59e0b;"></div>
+                <div class="color-info">
+                    <p class="color-name">Warning Amber</p>
+                    <span class="color-hex">#f59e0b</span>
+                </div>
+            </div>
+            <div class="color-swatch">
+                <div class="color-preview" style="background: #ef4444;"></div>
+                <div class="color-info">
+                    <p class="color-name">Danger Crimson</p>
+                    <span class="color-hex">#ef4444</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DENSITY & LAYOUTS -->
+    <div class="ds-section">
+        <h2 class="ds-section-title">3.0 Information Density & Layout Modules</h2>
+        
+        <div class="ds-grid" style="grid-template-columns: 2fr 1fr;">
+            <!-- Data Table Card -->
+            <div class="ds-card">
+                <h3 style="font-size: 1.1rem; font-weight: 700; color: #0f172a; margin-top: 0; margin-bottom: 1rem;">Tight-Grid Table (.sigma-data-grid)</h3>
+                <table class="sigma-data-grid">
+                    <thead>
+                        <tr>
+                            <th>Unit ID</th>
+                            <th>Resolution</th>
+                            <th>Alpha Score</th>
+                            <th>Lobe Category</th>
+                            <th>Status Badge</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;">8b62c1251a94fff</span></td>
+                            <td>Res 11</td>
+                            <td><b>8.9</b></td>
+                            <td>City Planning</td>
+                            <td><span class="status-badge status-emerald">UPDATED</span></td>
+                        </tr>
+                        <tr>
+                            <td><span style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;">8b62c1251ab6fff</span></td>
+                            <td>Res 11</td>
+                            <td><b>7.4</b></td>
+                            <td>TxDOT Spine</td>
+                            <td><span class="status-badge status-amber">PENDING</span></td>
+                        </tr>
+                        <tr>
+                            <td><span style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;">8b62c1251ad1fff</span></td>
+                            <td>Res 11</td>
+                            <td><b>4.2</b></td>
+                            <td>ONCOR Grid</td>
+                            <td><span class="status-badge status-crimson">DRAG DETECTED</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Tab Rack & Status Badge list -->
+            <div class="ds-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <h3 style="font-size: 1.1rem; font-weight: 700; color: #0f172a; margin-top: 0; margin-bottom: 1rem;">Tab Rack & Status Indicators</h3>
+                    
+                    <div class="sigma-tab-rack-demo">
+                        <button class="sigma-tab-demo active" onclick="selectDemoTab(this)">Lobe 1</button>
+                        <button class="sigma-tab-demo" onclick="selectDemoTab(this)">Lobe 2</button>
+                        <button class="sigma-tab-demo" onclick="selectDemoTab(this)">Lobe 3</button>
+                    </div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem;">
+                    <div><span class="status-badge status-cyan">Cyan Status</span> <span style="font-size: 0.75rem; color: #64748b; margin-left: 8px;">10% Fill, 1px Solid Border</span></div>
+                    <div><span class="status-badge status-emerald">Emerald Status</span> <span style="font-size: 0.75rem; color: #64748b; margin-left: 8px;">Active operational state</span></div>
+                    <div><span class="status-badge status-violet">Violet Status</span> <span style="font-size: 0.75rem; color: #64748b; margin-left: 8px;">Consensus trigger</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- COMPONENT REGISTRY (TOP-DOWN) -->
+    <div class="ds-section">
+        <h2 class="ds-section-title">4.0 Component Directory (Top-Down Architecture)</h2>
+        <p style="font-size: 0.9rem; color: #64748b; margin-top: -1rem; margin-bottom: 1.5rem;">Use the standard names below when referencing sections or requesting modifications to layout components.</p>
+        
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <!-- 1. Utility Bar -->
+            <div class="ds-card" style="border-left: 4px solid #2563eb;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <h3 style="font-size: 1rem; font-weight: 800; color: #0f172a; margin: 0;">1. Utility Bar (Brand Header)</h3>
+                    <span style="font-size: 0.7rem; font-weight: 700; color: #475569; background: #f1f5f9; padding: 2px 8px; border-radius: 4px; font-family: monospace;">brand_header.html</span>
+                </div>
+                <p style="font-size: 0.85rem; color: #334155; margin: 0 0 0.5rem 0; line-height: 1.5;">
+                    The top horizontal command bar (60px height). Holds the active pulse brand logo, a centered search bar (HUD mode) or navigation links (QMS mode), the active project selector dropdown, user identity role tag, and the active session logout button.
+                </p>
+                <div style="font-size: 0.75rem; color: #64748b;">
+                    <b>Parent Files:</b> <a href="file:///home/humbertoed/hexgrowth/app/templates/components/brand_header.html">brand_header.html</a>, included in <a href="file:///home/humbertoed/hexgrowth/app/templates/hud.html">hud.html</a> and <a href="file:///home/humbertoed/hexgrowth/app/templates/components/mega_bar.html">mega_bar.html</a>.
+                </div>
+            </div>
+
+            <!-- 2. Navigation Sidebar -->
+            <div class="ds-card" style="border-left: 4px solid #475569;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <h3 style="font-size: 1rem; font-weight: 800; color: #0f172a; margin: 0;">2. Navigation Sidebar (HUD Nav & QMS Sidebar)</h3>
+                    <span style="font-size: 0.7rem; font-weight: 700; color: #475569; background: #f1f5f9; padding: 2px 8px; border-radius: 4px; font-family: monospace;">sop_base.html & hud.html</span>
+                </div>
+                <p style="font-size: 0.85rem; color: #334155; margin: 0 0 0.5rem 0; line-height: 1.5;">
+                    Dual navigation models: 
+                    <br>• <i>HUD Navigation Bar:</i> 70px icon-only vertical strip on the left containing links to toggle Map, Data panels, Tools, and the QMS Manual.
+                    <br>• <i>QMS Sidebar Navigation:</i> 320px list panel on the left containing the live SOP search engine, the dynamic pinned active queue, recently viewed history files, master index link, and department accordions.
+                </p>
+                <div style="font-size: 0.75rem; color: #64748b;">
+                    <b>Parent Files:</b> <a href="file:///home/humbertoed/hexgrowth/app/templates/sop_base.html">sop_base.html</a> (QMS) & <a href="file:///home/humbertoed/hexgrowth/app/templates/hud.html">hud.html</a> (HUD `#hex-nav`).
+                </div>
+            </div>
+
+            <!-- 3. Map Viewport -->
+            <div class="ds-card" style="border-left: 4px solid #06b6d4;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <h3 style="font-size: 1rem; font-weight: 800; color: #0f172a; margin: 0;">3. Geospatial Map Viewport (Deck.gl Canvas)</h3>
+                    <span style="font-size: 0.7rem; font-weight: 700; color: #475569; background: #f1f5f9; padding: 2px 8px; border-radius: 4px; font-family: monospace;">hud.html (#map-view)</span>
+                </div>
+                <p style="font-size: 0.85rem; color: #334155; margin: 0 0 0.5rem 0; line-height: 1.5;">
+                    The core geographical display of the HUD. Combines a MapLibre GL dark-matter base canvas with a layer of Deck.gl. Implements active zoom layers, Resolution-11 grid cells, interactive hover tooltips, and clickable parcel targets.
+                </p>
+                <div style="font-size: 0.75rem; color: #64748b;">
+                    <b>Parent Files:</b> <a href="file:///home/humbertoed/hexgrowth/app/templates/hud.html">hud.html</a> (controls nested inside `#map-container`).
+                </div>
+            </div>
+
+            <!-- 4. Stick Ledger -->
+            <div class="ds-card" style="border-left: 4px solid #f59e0b;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <h3 style="font-size: 1rem; font-weight: 800; color: #0f172a; margin: 0;">4. Tactical Control Panel (Stick Ledger Drawer)</h3>
+                    <span style="font-size: 0.7rem; font-weight: 700; color: #475569; background: #f1f5f9; padding: 2px 8px; border-radius: 4px; font-family: monospace;">hud.html (#stick-ledger)</span>
+                </div>
+                <p style="font-size: 0.85rem; color: #334155; margin: 0 0 0.5rem 0; line-height: 1.5;">
+                    A 380px vertical control deck on the right side of the HUD. Contains the rolling mechanical altitude odometer digits (height display), the altitude slider range control, map layer checkboxes, and live database ingestion audit simulators.
+                </p>
+                <div style="font-size: 0.75rem; color: #64748b;">
+                    <b>Parent Files:</b> <a href="file:///home/humbertoed/hexgrowth/app/templates/hud.html">hud.html</a> (Right-side control board drawer).
+                </div>
+            </div>
+
+            <!-- 5. George Console -->
+            <div class="ds-card" style="border-left: 4px solid #10b981;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <h3 style="font-size: 1rem; font-weight: 800; color: #0f172a; margin: 0;">5. George Console (Terminal & Insight Panel)</h3>
+                    <span style="font-size: 0.7rem; font-weight: 700; color: #475569; background: #f1f5f9; padding: 2px 8px; border-radius: 4px; font-family: monospace;">hud.html (#george-console)</span>
+                </div>
+                <p style="font-size: 0.85rem; color: #334155; margin: 0 0 0.5rem 0; line-height: 1.5;">
+                    The horizontal console panel docked at the bottom of the HUD dashboard. It is split into two boxes:
+                    <br>• <i>Terminal Log (Left):</i> Streams operational process logs from the autonomous agent.
+                    <br>• <i>Alpha Insight Panel (Right):</i> Displays final evaluation summary text, zoning details, and Nimby risk highlights.
+                </p>
+                <div style="font-size: 0.75rem; color: #64748b;">
+                    <b>Parent Files:</b> <a href="file:///home/humbertoed/hexgrowth/app/templates/hud.html">hud.html</a> (Bottom console footer).
+                </div>
+            </div>
+
+            <!-- 6. Document Viewport -->
+            <div class="ds-card" style="border-left: 4px solid #8b5cf6;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <h3 style="font-size: 1rem; font-weight: 800; color: #0f172a; margin: 0;">6. Document Viewport (QMS Content Area)</h3>
+                    <span style="font-size: 0.7rem; font-weight: 700; color: #475569; background: #f1f5f9; padding: 2px 8px; border-radius: 4px; font-family: monospace;">qms_shell.html (#sop-injection-point)</span>
+                </div>
+                <p style="font-size: 0.85rem; color: #334155; margin: 0 0 0.5rem 0; line-height: 1.5;">
+                    The primary documentation reader card. Feeds the HTML/Markdown files served from the database or files. Incorporates user pin triggers (Pin to Active Queue) at the top and back/next links at the bottom for chronological reading flow.
+                </p>
+                <div style="font-size: 0.75rem; color: #64748b;">
+                    <b>Parent Files:</b> <a href="file:///home/humbertoed/hexgrowth/app/templates/qms_shell.html">qms_shell.html</a>, extends <a href="file:///home/humbertoed/hexgrowth/app/templates/sop_base.html">sop_base.html</a>.
+                </div>
+            </div>
+    </div>
+
+    <!-- QMS DOCUMENT STANDARDS -->
+    <div class="ds-section">
+        <h2 class="ds-section-title">5.0 QMS Document Formats (Uniform Structure)</h2>
+        <p style="font-size: 0.9rem; color: #64748b; margin-top: -1rem; margin-bottom: 1.5rem;">All departmental manuals and implementation plans must follow a single snippet card structure to prevent CSS leakage and layout degradation:</p>
+        
+        <div class="ds-card" style="background: #f8fafc; border: 1px dashed #cbd5e1; margin-bottom: 1.5rem;">
+            <h3 style="font-size: 1rem; font-weight: 800; color: #0f172a; margin-top: 0; margin-bottom: 0.75rem;">Indestructible QMS Template Format</h3>
+            <p style="font-size: 0.85rem; color: #334155; margin-bottom: 1rem;">
+                Standalone HTML boilerplates (such as <code>&lt;!DOCTYPE html&gt;</code>, <code>&lt;html&gt;</code>, <code>&lt;head&gt;</code>, <code>&lt;style&gt;</code>, or <code>&lt;body&gt;</code> tags) are strictly prohibited. Documents must consist of a clean HTML block wrapping the content:
+            </p>
+            <pre style="background: #ffffff; border: 1px solid #cbd5e1; padding: 1rem; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: #0f172a; overflow-x: auto; margin: 0;"><code>&lt;!-- QMS Document ID: HEX-SOP-X.X --&gt;
+&lt;div class="sop-card"&gt;
+    &lt;!-- 1. DOCUMENT CONTROL META --&gt;
+    &lt;div class="sop-meta"&gt;
+        &lt;div class="meta-unit"&gt;&lt;span class="meta-label"&gt;Document ID&lt;/span&gt;&lt;span class="meta-val"&gt;HEX-SOP-X.X&lt;/span&gt;&lt;/div&gt;
+        &lt;div class="meta-unit"&gt;&lt;span class="meta-label"&gt;Version&lt;/span&gt;&lt;span class="meta-val"&gt;1.0.0&lt;/span&gt;&lt;/div&gt;
+        &lt;div class="meta-unit"&gt;&lt;span class="meta-label"&gt;Status&lt;/span&gt;&lt;span class="meta-val" style="color: #16a34a;"&gt;● ACTIVE&lt;/span&gt;&lt;/div&gt;
+        &lt;div class="meta-unit"&gt;&lt;span class="meta-label"&gt;Author&lt;/span&gt;&lt;span class="meta-val"&gt;George Bytes&lt;/span&gt;&lt;/div&gt;
+    &lt;/div&gt;
+
+    &lt;!-- 2. DOCUMENT BODY --&gt;
+    &lt;div class="sop-content-body"&gt;
+        &lt;h1&gt;Standard Operating Procedure: &lt;strong&gt;Title&lt;/strong&gt;&lt;/h1&gt;
+        &lt;p&gt;Document text goes here...&lt;/p&gt;
+    &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+        </div>
+    </div>
+
+    <!-- TECHNICAL LEDGER SPECIFICATION -->
+    <div class="ds-section" style="background: #fafbfe; border: 1px solid #dbeafe; border-radius: 6px; padding: 2rem; margin-top: 2rem;">
+        <h2 style="font-size: 1.25rem; font-weight: 800; color: #1e3a8a; margin-top: 0; margin-bottom: 1rem; text-transform: uppercase; display: flex; align-items: center; gap: 0.5rem;">
+            <svg style="width: 20px; height: 20px; fill: currentColor;" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+            Technical Ledger: front-end coding conventions
+        </h2>
+        <div style="font-size: 0.9rem; color: #1e293b; line-height: 1.6;">
+            <p>Every frontend component must comply strictly with the following constraints derived from <b>HEX-SOP-4.2-ENTERPRISE-UI-STANDARD</b>:</p>
+            <ul style="padding-left: 1.25rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                <li><b>Typographic Restraint:</b> Labels sit at precisely <b>4px</b> vertical proximity, font-weight set to <b>500</b>. Modals and titles are capped at <b>1.5rem (Semi-Bold)</b>.</li>
+                <li><b>Vertical Compression:</b> All button controls must be compressed to a height between <b>32px and 40px</b>. Larger button sizes are banned.</li>
+                <li><b>Border-Radius Hardening:</b> Set a rigid cap of exactly <b>6px</b> for inputs, buttons, and control sheets. Modal cards or main canvas sheets are capped at <b>1.25rem (20px)</b>.</li>
+                <li><b>Color Hierarchy:</b> The user interface relies on structural material depth offsets using <code>#020617</code>, <code>#0f172a</code>, <code>#000000</code>, and <code>#1e293b</code>. High contrast colors are reserved for live pulses or status indicators.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Tab toggle controller
+    function selectDemoTab(btn) {
+        const rack = btn.parentElement;
+        rack.querySelectorAll('.sigma-tab-demo').forEach(t => {
+            t.classList.remove('active');
+        });
+        btn.classList.add('active');
+    }
+</script>
+{% endblock %}

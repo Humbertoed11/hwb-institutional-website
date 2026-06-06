@@ -1,0 +1,339 @@
+<!-- 
+    HEXGROWTH Institutional QMS Document
+    Standard: HEX-QMS-1.0 v1.0
+    Document ID: HEX-REPORT-14.0
+-->
+<div class="sop-card">
+    <!-- DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HEX-REPORT-14.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #10b981;">● APPROVED (ISO 9001 GAP ANALYSIS)</span></div>
+        <div class="meta-unit"><span class="meta-label">Author</span><span class="meta-val">George Bytes (Lead Auditor)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <h1>ISO 9001 READINESS AUDIT: <strong>Compliance Matrix & 12-Month Action Plan</strong></h1>
+        <p><strong>Purpose:</strong> Establishes the official gap analysis and compliance road map for HexGrowth. This document reviews how the platform satisfies each clause of the ISO 9001:2015 standard and defines the operational path to achieve full certification in 12 months.</p>
+
+        <hr />
+
+        <h2>1.0 Institutional Compliance Matrix (Clause 4 to Clause 10)</h2>
+        <p>The table below maps the ISO 9001:2015 requirements to the active HexGrowth files, code modules, and databases. It details the compliance status and the actions needed to clear future audits.</p>
+
+        <table class="sigma-data-grid">
+            <thead>
+                <tr>
+                    <th>ISO 9001 Clause</th>
+                    <th>Standard Requirement</th>
+                    <th>HexGrowth Compliance Asset</th>
+                    <th>Audit Verification Method</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><b>4.0 Context of Organization</b></td>
+                    <td>Define business goals, scope, and interested parties.</td>
+                    <td>
+                        <a href="file:///home/humbertoed/hexgrowth/HEX-QMS/context/HEX-SOP-0.1-birth.html">HEX-SOP-0.1</a> (Birth Certificate)<br />
+                        <a href="file:///home/humbertoed/hexgrowth/HEX-QMS/context/HEX-SOP-0.2-roadmap.html">HEX-SOP-0.2</a> (Roadmap)
+                    </td>
+                    <td>Verify defined boundary for HexGrowth spatial processing engine.</td>
+                    <td><span style="color: #10b981; font-weight: 800;">● COMPLIANT</span></td>
+                </tr>
+                <tr>
+                    <td><b>5.0 Leadership</b></td>
+                    <td>Define executive roles, quality policy, and commitments.</td>
+                    <td>
+                        <a href="file:///home/humbertoed/hexgrowth/docs/EXECUTIVE-NOTES.md">docs/EXECUTIVE-NOTES.md</a><br />
+                        Section 1.1 Governance Standards
+                    </td>
+                    <td>Verify role definitions for CEO, VP of Finance, and Lead Architect.</td>
+                    <td><span style="color: #10b981; font-weight: 800;">● COMPLIANT</span></td>
+                </tr>
+                <tr>
+                    <td><b>6.0 Planning</b></td>
+                    <td>Identify operational risks and set quality targets.</td>
+                    <td>
+                        <a href="file:///home/humbertoed/hexgrowth/docs/PROBLEMS-TO-SOLVE.md">docs/PROBLEMS-TO-SOLVE.md</a><br />
+                        <a href="file:///home/humbertoed/hexgrowth/HEX-QMS/planning/HEX-IP-9.0-SEPARATION.html">HEX-IP-9.0</a> (Separation Plan)
+                    </td>
+                    <td>Verify live issues registry and the infrastructure separation plan.</td>
+                    <td><span style="color: #f59e0b; font-weight: 800;">▲ IN PROGRESS</span></td>
+                </tr>
+                <tr>
+                    <td><b>7.0 Support</b></td>
+                    <td>Document control, backups, and secure resources.</td>
+                    <td>
+                        <a href="file:///home/humbertoed/hexgrowth/HEX-QMS/planning/HEX-SOP-7.5-iso-compliance-tracker.html">HEX-SOP-7.5</a> (Document Control SOP)<br />
+                        Peter's Recovery Directives (Section 5.3)
+                    </td>
+                    <td>Verify hourly binary db snapshot scripts and template index files.</td>
+                    <td><span style="color: #10b981; font-weight: 800;">● COMPLIANT</span></td>
+                </tr>
+                <tr>
+                    <td><b>8.0 Operation</b></td>
+                    <td>Manage grid ingestion, design rules, and customer data.</td>
+                    <td>
+                        <a href="file:///home/humbertoed/hexgrowth/HEX-QMS/planning/HEX-SOP-2.0-universal-grid.html">HEX-SOP-2.0</a> (Universal Grid)<br />
+                        <a href="file:///home/humbertoed/hexgrowth/HEX-QMS/operations/HEX-SOP-6.0-consensus.html">HEX-SOP-6.0</a> (Consensus Engine)
+                    </td>
+                    <td>Verify spatial data query accuracy using standard H3 grid zoom parameters.</td>
+                    <td><span style="color: #10b981; font-weight: 800;">● COMPLIANT</span></td>
+                </tr>
+                <tr>
+                    <td><b>9.0 Performance Evaluation</b></td>
+                    <td>Conduct internal audits and check system performance.</td>
+                    <td>
+                        <a href="file:///home/humbertoed/hexgrowth/HEX-QMS/evaluation/HEX-REPORT-13.0-black-belt-ledger.html">HEX-REPORT-13.0</a> (Black Belt Ledger)<br />
+                        In-app performance logging
+                    </td>
+                    <td>Verify internal audit logs and session watchdog automatic logouts.</td>
+                    <td><span style="color: #10b981; font-weight: 800;">● COMPLIANT</span></td>
+                </tr>
+                <tr>
+                    <td><b>10.0 Improvement</b></td>
+                    <td>Handle corrective actions and continual system upgrades.</td>
+                    <td>
+                        <a href="file:///home/humbertoed/hexgrowth/HEX-QMS/evaluation/HEX-REPORT-12.0-dmaic-charter.html">HEX-REPORT-12.0</a> (DMAIC Valuation Charter)<br />
+                        Bug tracking and fixing workflow
+                    </td>
+                    <td>Verify five-whys investigations and automated code sync tests.</td>
+                    <td><span style="color: #10b981; font-weight: 800;">● COMPLIANT</span></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <hr />
+
+        <h2>2.0 12-Month Audit Readiness Roadmap & Calendar</h2>
+        <p>To ensure total readiness for the registration audit, the following activities must be performed over the next 12 months. The Lead Architect holds overall accountability for execution.</p>
+
+        <table class="sigma-data-grid">
+            <thead>
+                <tr>
+                    <th>Timeframe</th>
+                    <th>Focus Phase</th>
+                    <th>Key Activities & Deliverables</th>
+                    <th>Target Output & Evidence</th>
+                    <th>Owner</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><b>Months 1 - 2</b></td>
+                    <td>Gap Resolution</td>
+                    <td>Resolve pending database isolation and provisioning files. Migrate shared hosting out of legacy parent namespaces.</td>
+                    <td>Dedicated Azure Resource Group and PostgreSQL server database instance.</td>
+                    <td>Peter / George</td>
+                </tr>
+                <tr>
+                    <td><b>Months 3 - 4</b></td>
+                    <td>Process Hardening</td>
+                    <td>Finalize geocoding API integration for "Global Mode". Lock down the everyday language standard across HUD dashboard menus.</td>
+                    <td>Functional search bar accepting address strings. Global HUD navigation operational.</td>
+                    <td>Silas / Lauri</td>
+                </tr>
+                <tr>
+                    <td><b>Months 5 - 6</b></td>
+                    <td>First Internal Audit</td>
+                    <td>Execute the first official internal audit using Six Sigma questionnaires. Verify spatial accuracy for the first 122,193 grid rows.</td>
+                    <td>Completed Audit Ledger update. Performance report logged in database.</td>
+                    <td>George Bytes</td>
+                </tr>
+                <tr>
+                    <td><b>Months 7 - 8</b></td>
+                    <td>Management Review</td>
+                    <td>Present the audit results and system metrics to the CEO. Review financial projections and SaaS subscription pricing matrices.</td>
+                    <td>Signed Management Review Minutes. Updated executive directives.</td>
+                    <td>Humberto / Maria</td>
+                </tr>
+                <tr>
+                    <td><b>Months 9 - 10</b></td>
+                    <td>Pre-Audit Simulation</td>
+                    <td>Conduct a complete simulated audit with an external consultant. Run failover tests on the database recovery scripts.</td>
+                    <td>Consultant feedback report. Verified backup restore log.</td>
+                    <td>George / Peter</td>
+                </tr>
+                <tr>
+                    <td><b>Months 11 - 12</b></td>
+                    <td>Certification Audit</td>
+                    <td>Coordinate with the external registrars to perform Stage 1 and Stage 2 certification audits.</td>
+                    <td>ISO 9001 Certificate issued. Zero major nonconformities logged.</td>
+                    <td>George Bytes</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="callout callout-note">
+            <strong>Audit Prep Reminder:</strong> Document control is the foundation of audit success. All modifications to the QMS files must be processed through the sync tool (<code>scripts/hex_sync.py</code>). Direct edits to the database table are prohibited to preserve the audit trail.
+        </div>
+
+        <hr />
+
+        <h2>3.0 Dynamic Audit Readiness Dashboard</h2>
+        <p>Use this interactive tool to track current compliance progress in real-time. Check the items as they are verified to see the live readiness percentage and status rating.</p>
+
+        <!-- Dynamic Tool Structure -->
+        <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 2rem; margin: 2rem 0;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 1rem;">
+                <div>
+                    <span style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: #64748b;">Readiness Rating</span>
+                    <div id="compliance-badge" style="display: inline-block; padding: 0.4rem 1rem; border-radius: 4px; font-size: 0.8rem; font-weight: 800; margin-top: 0.25rem;">INSUFFICIENT DATA</div>
+                </div>
+                <div style="text-align: right;">
+                    <span style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: #64748b;">Current Score</span>
+                    <div id="compliance-percentage" style="font-size: 2rem; font-weight: 900; color: #0f172a; line-height: 1;">0%</div>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div style="width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; margin-bottom: 2rem;">
+                <div id="compliance-progress-bar" style="width: 0%; height: 100%; background: #2563eb; transition: width 0.4s ease;"></div>
+            </div>
+
+            <!-- Interactive Questions -->
+            <form id="readiness-checker-form" class="sigma-form-container" style="display: flex; flex-direction: column; gap: 1rem;">
+                <div style="display: flex; align-items: flex-start; gap: 0.75rem; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.75rem;">
+                    <input type="checkbox" id="chk-clause-4" class="readiness-checkbox" style="margin-top: 0.25rem; cursor: pointer;" checked />
+                    <label for="chk-clause-4" style="font-size: 0.85rem; color: #334155; cursor: pointer;">
+                        <strong>Clause 4.0: Scope & Scope Map Complete</strong> - Birth certificate (<a href="file:///home/humbertoed/hexgrowth/HEX-QMS/context/HEX-SOP-0.1-birth.html">HEX-SOP-0.1</a>) defines clear boundaries.
+                    </label>
+                </div>
+                <div style="display: flex; align-items: flex-start; gap: 0.75rem; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.75rem;">
+                    <input type="checkbox" id="chk-clause-5" class="readiness-checkbox" style="margin-top: 0.25rem; cursor: pointer;" checked />
+                    <label for="chk-clause-5" style="font-size: 0.85rem; color: #334155; cursor: pointer;">
+                        <strong>Clause 5.0: Role Matrix Locked</strong> - System architect, backups, and finance tasks mapped to specific owners.
+                    </label>
+                </div>
+                <div style="display: flex; align-items: flex-start; gap: 0.75rem; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.75rem;">
+                    <input type="checkbox" id="chk-clause-6" class="readiness-checkbox" style="margin-top: 0.25rem; cursor: pointer;" />
+                    <label for="chk-clause-6" style="font-size: 0.85rem; color: #334155; cursor: pointer;">
+                        <strong>Clause 6.0: Cloud Separation Executed</strong> - Subscriptions, databases, and custom domains split out from shared directories.
+                    </label>
+                </div>
+                <div style="display: flex; align-items: flex-start; gap: 0.75rem; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.75rem;">
+                    <input type="checkbox" id="chk-clause-7" class="readiness-checkbox" style="margin-top: 0.25rem; cursor: pointer;" checked />
+                    <label for="chk-clause-7" style="font-size: 0.85rem; color: #334155; cursor: pointer;">
+                        <strong>Clause 7.0: Document Control Standard Active</strong> - The sync script enforces uniform formats across directories.
+                    </label>
+                </div>
+                <div style="display: flex; align-items: flex-start; gap: 0.75rem; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.75rem;">
+                    <input type="checkbox" id="chk-clause-8" class="readiness-checkbox" style="margin-top: 0.25rem; cursor: pointer;" checked />
+                    <label for="chk-clause-8" style="font-size: 0.85rem; color: #334155; cursor: pointer;">
+                        <strong>Clause 8.0: Grid Precision Verified</strong> - Database loaded with 122,193 Resolution-11 parcel coordinates.
+                    </label>
+                </div>
+                <div style="display: flex; align-items: flex-start; gap: 0.75rem; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.75rem;">
+                    <input type="checkbox" id="chk-clause-9" class="readiness-checkbox" style="margin-top: 0.25rem; cursor: pointer;" checked />
+                    <label for="chk-clause-9" style="font-size: 0.85rem; color: #334155; cursor: pointer;">
+                        <strong>Clause 9.0: Six Sigma Auditing Scheduled</strong> - Semi-annual audits mapped and ledger configured.
+                    </label>
+                </div>
+                <div style="display: flex; align-items: flex-start; gap: 0.75rem; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.75rem;">
+                    <input type="checkbox" id="chk-clause-10" class="readiness-checkbox" style="margin-top: 0.25rem; cursor: pointer;" checked />
+                    <label for="chk-clause-10" style="font-size: 0.85rem; color: #334155; cursor: pointer;">
+                        <strong>Clause 10.0: Corrective Action Loop Operational</strong> - Bugs logged in friction registry and resolved through code patches.
+                    </label>
+                </div>
+            </form>
+
+            <!-- Actions Panel -->
+            <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+                <button type="button" id="btn-reset-checker" style="height: 36px; padding: 0 1.25rem; border-radius: 6px; border: 1px solid #cbd5e1; background: #ffffff; color: #334155; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                    Reset Checker
+                </button>
+                <button type="button" id="btn-maximize-checker" style="height: 36px; padding: 0 1.25rem; border-radius: 6px; border: 1px solid #2563eb; background: #2563eb; color: #ffffff; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                    Mark All Complete
+                </button>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const checkboxes = document.querySelectorAll('.readiness-checkbox');
+                const scoreText = document.getElementById('compliance-percentage');
+                const progressBar = document.getElementById('compliance-progress-bar');
+                const badge = document.getElementById('compliance-badge');
+                const btnReset = document.getElementById('btn-reset-checker');
+                const btnMax = document.getElementById('btn-maximize-checker');
+
+                function updateScore() {
+                    const total = checkboxes.length;
+                    let checkedCount = 0;
+                    checkboxes.forEach(cb => {
+                        if (cb.checked) checkedCount++;
+                    });
+
+                    const percentage = Math.round((checkedCount / total) * 100);
+                    scoreText.textContent = percentage + '%';
+                    progressBar.style.width = percentage + '%';
+
+                    if (percentage < 50) {
+                        badge.textContent = 'CRITICAL DEFICIT';
+                        badge.style.background = '#fef2f2';
+                        badge.style.color = '#dc2626';
+                    } else if (percentage < 100) {
+                        badge.textContent = 'PROGRESSIVE ACTION';
+                        badge.style.background = '#fff7ed';
+                        badge.style.color = '#d97706';
+                    } else {
+                        badge.textContent = 'AUDIT READY';
+                        badge.style.background = '#dcfce7';
+                        badge.style.color = '#166534';
+                    }
+                }
+
+                checkboxes.forEach(cb => {
+                    cb.addEventListener('change', updateScore);
+                });
+
+                if (btnReset) {
+                    btnReset.addEventListener('click', () => {
+                        checkboxes.forEach(cb => cb.checked = false);
+                        updateScore();
+                    });
+                }
+
+                if (btnMax) {
+                    btnMax.addEventListener('click', () => {
+                        checkboxes.forEach(cb => cb.checked = true);
+                        updateScore();
+                    });
+                }
+
+                // Initial calculation
+                updateScore();
+            });
+        </script>
+        
+        <hr />
+        <h2>Document Revision History</h2>
+        <table class="sigma-data-grid">
+            <thead>
+                <tr>
+                    <th>Revision</th>
+                    <th>Date</th>
+                    <th>Description of Change</th>
+                    <th>Author / Approved By</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><b>1.0.0</b></td>
+                    <td>06/03/2026</td>
+                    <td>Standardized clinical formatting and aligned with ISO 9001 document controls.</td>
+                    <td>George Bytes / Humberto Dominguez (Chairman)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 3. DOCUMENT CONTROL FOOTER -->
+    <div class="sop-card-footer">
+        <div>Classification: Institutional ISO 9001 QMS Record</div>
+        <div>Effective Date: 06/03/2026</div>
+        <div>Review Cycle: Annual (Rev 1.0.0)</div>
+    </div>
+</div>

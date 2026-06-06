@@ -1,0 +1,64 @@
+<!-- 
+    HEXGROWTH Institutional QMS Document
+    Standard: HEX-QMS-1.0 v1.0
+    Document ID: HEX-REPORT-2.0
+-->
+<div class="sop-card">
+    <!-- DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HEX-REPORT-2.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #10b981;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Author</span><span class="meta-val">George Bytes (Lead Auditor)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <h1>HEXGROWTH: <strong>Master Specification Comparison (06/03/2026)</strong></h1>
+        <p>A comparative analysis of the active local HEXGROWTH codebase against the specifications outlined in the master reference document.</p>
+
+        <h2>1.0 Product Vision & Status</h2>
+        <p>The local application is currently in the prototype stage, focused on a local grid in Plano, Texas. The master document specifies a nationwide parcel intelligence system with live data feeds and automated report generators.</p>
+
+        <h2>2.0 Architectural Gaps</h2>
+        <ul>
+            <li><strong>Backend API:</strong> The current system uses Flask. Production specification requires a migration to FastAPI.</li>
+            <li><strong>Frontend UI:</strong> The current system uses simple template files. Production specification requires a Next.js framework.</li>
+            <li><strong>Caching:</strong> The current system has no query caching. Production specification requires a Redis layer.</li>
+        </ul>
+
+        <h2>3.0 Ingestion & Scoring Gaps</h2>
+        <ul>
+            <li><strong>Parcel Grid:</strong> The current grid uses calculated H3 hexagons. The master spec requires 160 million real-world parcels via the Regrid API.</li>
+            <li><strong>Infrastructure Scoring:</strong> Current scores are procedurally calculated based on Plano highway coordinates. The master spec requires live feeds for electric substations, sewer lines, and fiber cables.</li>
+            <li><strong>Entitlement & Risks:</strong> No voting data ingestion or flood hazard layers have been connected.</li>
+        </ul>
+        
+        <hr />
+        <h2>Document Revision History</h2>
+        <table class="sigma-data-grid">
+            <thead>
+                <tr>
+                    <th>Revision</th>
+                    <th>Date</th>
+                    <th>Description of Change</th>
+                    <th>Author / Approved By</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><b>1.0.0</b></td>
+                    <td>06/03/2026</td>
+                    <td>Standardized clinical formatting and aligned with ISO 9001 document controls.</td>
+                    <td>George Bytes / Humberto Dominguez (Chairman)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 3. DOCUMENT CONTROL FOOTER -->
+    <div class="sop-card-footer">
+        <div>Classification: Institutional ISO 9001 QMS Record</div>
+        <div>Effective Date: 06/03/2026</div>
+        <div>Review Cycle: Annual (Rev 1.0.0)</div>
+    </div>
+</div>

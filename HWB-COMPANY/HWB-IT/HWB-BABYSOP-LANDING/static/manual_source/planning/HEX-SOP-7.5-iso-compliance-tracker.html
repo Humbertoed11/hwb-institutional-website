@@ -1,0 +1,121 @@
+<!-- 
+    HEXGROWTH Institutional QMS Document
+    Standard: HEX-QMS-1.0 v1.0
+    Document ID: HEX-SOP-7.5
+-->
+<div class="sop-card">
+    <!-- DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HEX-SOP-7.5</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #10b981;">● APPROVED (ISO 9001 COMPLIANCE TRACKER)</span></div>
+        <div class="meta-unit"><span class="meta-label">Author</span><span class="meta-val">George Bytes (Lead Auditor)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <h1>STANDARD OPERATING PROCEDURE: <strong>ISO 9001 Compliance Tracker & Document Control Standard</strong></h1>
+        <p><strong>Purpose:</strong> Establishes the operational framework to satisfy ISO 9001:2015 requirements for a formal certification audit within 12 months. This SOP defines document control, internal audits, corrective actions, and management reviews.</p>
+
+        <hr />
+
+        <h2>1.0 Documented Information Control (ISO Clause 7.5)</h2>
+        <p>To ensure consistency and tracebility, all project files must comply with these guidelines:</p>
+        <ul>
+            <li><b>Unique Identification:</b> Every QMS document must possess a unique ID (e.g., <code>HEX-SOP-X.X</code> or <code>HEX-REPORT-X.X</code>).</li>
+            <li><b>Version Control:</b> Updates require incrementing the version number (e.g., from 1.0.0 to 1.1.0) and logging changes in the revision section.</li>
+            <li><b>Standard Template:</b> Documents must use the uniform snippet format (wrapped inside a <code>sop-card</code> container with a <code>sop-meta</code> header card). Standalone HTML wrappers are prohibited.</li>
+            <li><b>Authoritative Record:</b> The PostgreSQL database table <code>HEX_ManualIndex</code> serves as the active system of record, synchronized from offline disk templates via <code>scripts/hex_sync.py</code>.</li>
+        </ul>
+
+        <hr />
+
+        <h2>2.0 Risk Planning & Objectives (ISO Clauses 6.1 & 6.2)</h2>
+        
+        <h3>2.1 Risk Registry & Mitigation</h3>
+        <p>System bugs and operational risks must be logged immediately in <a href="file:///home/humbertoed/hexgrowth/docs/PROBLEMS-TO-SOLVE.md">docs/PROBLEMS-TO-SOLVE.md</a>. The log tracks:</p>
+        <ul>
+            <li><b>Friction Identification:</b> Specific description of the defect or issue.</li>
+            <li><b>Impact Level:</b> Rated as Low, Medium, High, or Critical.</li>
+            <li><b>Lobe Category:</b> The specific software system affected.</li>
+            <li><b>Resolution Status:</b> Must be marked as PENDING, ACTIVE, or RESOLVED.</li>
+        </ul>
+
+        <h3>2.2 Quality Objectives</h3>
+        <p>The platform is evaluated against these quality objectives:</p>
+        <table class="sigma-data-grid">
+            <thead>
+                <tr>
+                    <th>ISO Requirement</th>
+                    <th>HexGrowth Quality Target</th>
+                    <th>Verification Tool</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><b>Clause 8.5 (Production)</b></td>
+                    <td>99.999% spatial accuracy for utility and zoning layers</td>
+                    <td>Spatial bounding-box queries</td>
+                </tr>
+                <tr>
+                    <td><b>Clause 8.2 (Customer Needs)</b></td>
+                    <td>Parcel feasibility report compilation under 3 minutes</td>
+                    <td>In-app performance logging</td>
+                </tr>
+                <tr>
+                    <td><b>Clause 7.1.3 (Infrastructure)</b></td>
+                    <td>15-minute inactive user session auto-logout</td>
+                    <td>Inactivity watchdogs</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <hr />
+
+        <h2>3.0 Internal Audits & Performance Evaluation (ISO Clause 9.2)</h2>
+        <p>The Systems Architect (George Bytes) will perform regular internal audits to maintain audit readiness:</p>
+        <ul>
+            <li><b>Audit Frequency:</b> Internal audits will be performed semi-annually (every 6 months).</li>
+            <li><b>Audit Methodology:</b> DMAIC Six Sigma questionnaires will be used to audit backend scaling, map rendering, and API security. Results must be compiled in the <a href="file:///home/humbertoed/hexgrowth/HEX-QMS/evaluation/HEX-REPORT-13.0-black-belt-ledger.html">Six Sigma Black Belt Project Ledger</a>.</li>
+        </ul>
+
+        <hr />
+
+        <h2>4.0 Corrective Actions & Nonconformities (ISO Clause 10.2)</h2>
+        <p>When a system nonconformity is discovered, the following corrective action process must be triggered:</p>
+        <ol>
+            <li><b>Log:</b> Identify the issue and register it in <code>docs/PROBLEMS-TO-SOLVE.md</code>.</li>
+            <li><b>Contain:</b> Deploy temporary blocks or security patches.</li>
+            <li><b>Analyze:</b> Conduct a root cause analysis using 5-Whys or FMEA techniques.</li>
+            <li><b>Implement:</b> Update code and local templates, then execute <code>scripts/hex_sync.py</code> to sync changes to PostgreSQL.</li>
+            <li><b>Verify:</b> Assert correct page rendering and API execution using automated command-line tests.</li>
+        </ol>
+        
+        <hr />
+        <h2>Document Revision History</h2>
+        <table class="sigma-data-grid">
+            <thead>
+                <tr>
+                    <th>Revision</th>
+                    <th>Date</th>
+                    <th>Description of Change</th>
+                    <th>Author / Approved By</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><b>1.0.0</b></td>
+                    <td>06/03/2026</td>
+                    <td>Standardized clinical formatting and aligned with ISO 9001 document controls.</td>
+                    <td>George Bytes / Humberto Dominguez (Chairman)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 3. DOCUMENT CONTROL FOOTER -->
+    <div class="sop-card-footer">
+        <div>Classification: Institutional ISO 9001 QMS Record</div>
+        <div>Effective Date: 06/03/2026</div>
+        <div>Review Cycle: Annual (Rev 1.0.0)</div>
+    </div>
+</div>

@@ -1,0 +1,93 @@
+<!-- 
+    HEXGROWTH Institutional SOP: Cross-Lobe Learning & Adaptive Tuning (Lobe 9.1)
+    Standard: HEX-QMS-1.0
+    Document ID: HEX-SOP-9.1-LEARN
+-->
+<div class="sop-card">
+    <!-- DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HEX-SOP-9.1-LEARN</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #10b981;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Author</span><span class="meta-val">George Bytes (Lead Architect)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <h1>Standard Operating Procedure: <strong>Cross-Lobe Learning & Economic Adaptation</strong></h1>
+        
+        <h2>1.0 Purpose</h2>
+        <p>To define the systems and procedures that allow the eleven neural lobes to share information with each other and adjust their settings automatically as economic conditions (such as interest rates, land values, and permit delays) change. This makes sure our land underwriting decisions stay accurate without needing manual updates.</p>
+
+        <h2>2.0 Shared Parameter Exchange (Cognitive Bridge)</h2>
+        <p>Instead of keeping data locked inside individual lobes, the system uses a shared parameter table in the database called <code>HEX_CognitiveBridge</code>. This acts as a communication line between the brains. When one brain learns about a change in the real world, it writes the update to this table so all other brains can read it and react immediately.</p>
+        
+        <pre><code class="language-sql">
+CREATE TABLE "HEX_CognitiveBridge" (
+    id SERIAL PRIMARY KEY,
+    parameter_name VARCHAR(150) UNIQUE NOT NULL,
+    parameter_value NUMERIC(15, 4) NOT NULL,
+    source_lobe VARCHAR(100) NOT NULL,
+    description TEXT,
+    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+        </code></pre>
+
+        <p>The core parameters monitored by the bridge include:</p>
+        <ul>
+            <li><strong>interest_rate (Lobe 7 Finance):</strong> The current borrowing cost for land development. If this rises, the required return on investment (IRR) increases.</li>
+            <li><strong>cap_rate_baseline (Lobe 7 Finance):</strong> The baseline market rate of return for commercial properties in target counties.</li>
+            <li><strong>permit_latency_days (Lobe 1 City):</strong> The average time it takes for local governments to approve permits. Longer delays increase carrying costs.</li>
+            <li><strong>egress_speed_mph (Lobe 2 TxDOT):</strong> Average traffic speeds. Slower speeds trigger higher transit friction ratings.</li>
+            <li><strong>sentiment_index (Lobe 6 Pulse):</strong> Public opinion score. If local opposition is high, planning delay risks are adjusted upward.</li>
+        </ul>
+
+        <h2>3.0 Dynamic Weight Optimization (Error Feedback Loop)</h2>
+        <p>To keep our predictions aligned with actual market prices, Lobe 9 (Accountability Brain) runs an automated feedback loop every day. It compares the underwritten value calculated by the system with the actual asking prices or sales values of recently acquired properties recorded in the <code>HEX_MarketValue</code> table.</p>
+        
+        <p>The optimization loop follows these steps:</p>
+        <ol>
+            <li><strong>Calculate Forecast Error:</strong> For every property comparison (comp), the system calculates the difference: <code>Error = Estimated Value - Actual Sales Price</code>.</li>
+            <li><strong>Identify Lobe Contribution:</strong> The system looks at the individual scores contributed by each of the brains (zoning, transit, power, etc.) for that specific property.</li>
+            <li><strong>Adjust Weights:</strong> 
+                <ul>
+                    <li>If the system overvalued the property (Error > 0), the brains that gave it high scores have their influence weights reduced slightly.</li>
+                    <li>If the system undervalued the property (Error < 0), the brains that scored it high have their influence weights increased.</li>
+                </ul>
+            </li>
+            <li><strong>Normalize & Restrict:</strong> Weights are adjusted to stay within safe boundaries (between 2% and 40% per lobe) to prevent any single brain from overriding the others. Finally, all weights are scaled to sum to exactly 1.0.</li>
+            <li><strong>Update System State:</strong> The updated weights are saved directly to <code>HEX_SystemState</code> and used for the next day's calculations.</li>
+        </ol>
+
+        <h2>4.0 Automated Sync Schedule</h2>
+        <p>The learning and optimization cycle runs automatically every 24 hours via <code>HEX-DAILY-ACCOUNTABILITY-SYNC.py</code>. The results, including the Mean Squared Error (MSE) of our predictions and the new lobe weights, are logged in the <code>HEX_Telemetry</code> table for audit review.</p>
+
+        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 3rem 0;" />
+        
+        <h2>Document Revision History</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Revision</th>
+                    <th>Date</th>
+                    <th>Description of Change</th>
+                    <th>Author / Approved By</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>1.0.0</strong></td>
+                    <td>06/05/2026</td>
+                    <td>Codified cross-lobe learning and error-feedback optimization rules.</td>
+                    <td>George Bytes (Lead Architect) / Humberto Dominguez (CEO)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- DOCUMENT CONTROL FOOTER -->
+    <div class="sop-card-footer">
+        <div>Classification: Institutional ISO 9001 QMS Record</div>
+        <div>Effective Date: 06/05/2026</div>
+        <div>Review Cycle: Annual (Rev 1.0.0)</div>
+    </div>
+</div>

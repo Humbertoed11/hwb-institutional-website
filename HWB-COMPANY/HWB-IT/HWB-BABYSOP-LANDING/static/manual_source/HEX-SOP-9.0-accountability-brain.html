@@ -1,0 +1,84 @@
+<!-- 
+    HEXGROWTH Institutional SOP: Accountability Brain (Lobe 9)
+    Standard: HEX-QMS-1.0
+    Document ID: HEX-SOP-9.0-ACCOUNTABILITY
+-->
+<div class="sop-card">
+    <!-- DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HEX-SOP-9.0-ACCOUNTABILITY</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #10b981;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Author</span><span class="meta-val">George Bytes (Lead Architect)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <h1>Standard Operating Procedure: <strong>Accountability Brain (Lobe 9)</strong></h1>
+        
+        <h2>1.0 Purpose</h2>
+        <p>To define the architectural standard and database schema for <strong>Lobe 9: Accountability Brain</strong>. Lobe 9 acts as a self-auditing metacognitive loop, ensuring the accuracy, freshness, and compliance of data processed across the other ten neural lobes of the HEXGROWTH decision engine.</p>
+
+        <h2>2.0 Database Schema & Registry</h2>
+        <p>Audit rules, execution logs, and system reliability metrics are persisted in the PostgreSQL database under the public schema:</p>
+
+        <pre><code class="language-sql">
+CREATE TABLE "HEX_AccountabilityBrain" (
+    id SERIAL PRIMARY KEY,
+    responsibility_id VARCHAR(50) UNIQUE NOT NULL,
+    lobe VARCHAR(50) NOT NULL,
+    category VARCHAR(100) NOT NULL,
+    description TEXT NOT NULL,
+    verification_method TEXT NOT NULL,
+    target_frequency VARCHAR(50) NOT NULL,
+    last_run TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status VARCHAR(20) DEFAULT 'PENDING'
+);
+        </code></pre>
+
+        <h2>3.0 100 Core Accountability Responsibilities</h2>
+        <p>The brain enforces exactly 100 operational responsibilities divided across the system lobes to maintain data accountability:</p>
+        <ul>
+            <li><strong>L1 City Brain (11 rules):</strong> Zoning shapefile validations, planning board crawler status, and height limit/setback rules.</li>
+            <li><strong>L2 TxDOT Brain (11 rules):</strong> Travel time calibrations, shipping lanes capacity, and bridge weight limits.</li>
+            <li><strong>L3 Power Brain (11 rules):</strong> Substation load checking, fiber utility proximity mapping, and easement footprint audits.</li>
+            <li><strong>L4 Legal/Env Brain (11 rules):</strong> Title ownership disputes search, flood plain maps parity, and geotech clay calculations.</li>
+            <li><strong>L5 Ranger Brain (11 rules):</strong> Field override logs audits, mobile photo uploads resolution validation, and wildfire hazard mapping.</li>
+            <li><strong>L6 Pulse Brain (11 rules):</strong> Local forum scrapers health checks, community NIMBY opposition radars, and news topic indices.</li>
+            <li><strong>L7 Finance Brain (11 rules):</strong> Loan-to-Value formula assertions, interest rate API checks, and cash flow yield metrics.</li>
+            <li><strong>L8 Inference Brain (12 rules):</strong> Anomaly logs reviews, sync loop execution timers, and scoring parameter weights validation.</li>
+            <li><strong>L9 Accountability Brain (11 rules):</strong> Model drift checks, database backup validations, and master index QMS sync integrity.</li>
+        </ul>
+
+        <h2>4.0 Daily Learning Sync Loop</h2>
+        <p>The daily cron script <code>HEX-DAILY-ACCOUNTABILITY-SYNC.py</code> checks all 100 responsibilities, updates their database statuses, and logs a normalized <strong>System Reliability Score</strong> in the telemetry registry. This loop ensures that the engine automatically optimizes weights and identifies data gaps (e.g., flagging when required appraisal records contain zero rows).</p>
+
+        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 3rem 0;" />
+        
+        <h2>Document Revision History</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Revision</th>
+                    <th>Date</th>
+                    <th>Description of Change</th>
+                    <th>Author / Approved By</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>1.0.0</strong></td>
+                    <td>06/05/2026</td>
+                    <td>Initial release and codification of Lobe 9 database structures.</td>
+                    <td>George Bytes (Lead Architect) / Humberto Dominguez (CEO)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- DOCUMENT CONTROL FOOTER -->
+    <div class="sop-card-footer">
+        <div>Classification: Institutional ISO 9001 QMS Record</div>
+        <div>Effective Date: 06/05/2026</div>
+        <div>Review Cycle: Annual (Rev 1.0.0)</div>
+    </div>
+</div>

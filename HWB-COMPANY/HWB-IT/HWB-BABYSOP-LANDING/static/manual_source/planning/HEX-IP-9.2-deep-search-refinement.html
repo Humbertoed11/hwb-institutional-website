@@ -1,0 +1,123 @@
+<!-- 
+    HEXGROWTH Institutional QMS Document
+    Standard: HEX-QMS-1.0 v1.0
+    Document ID: HEX-IP-9.2
+-->
+<div class="sop-card">
+    <!-- DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HEX-IP-9.2</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #2563eb;">● PROPOSED</span></div>
+        <div class="meta-unit"><span class="meta-label">Author</span><span class="meta-val">George Bytes (Lead Architect)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <h1>HEXGROWTH Deep Search Implementation Plan</h1>
+        <p>This document details the next step after a user saves a target lot to the review list. Once a lot is saved, the system needs to run a deep search. This search gathers county land papers, city rules, and soil reports for the area to determine if the lot is safe and ready for development.</p>
+
+        <div class="callout callout-note">
+            <div class="callout-title">ℹ️ PLAN OBJECTIVE</div>
+            <p>The goal is to automate the extraction and analysis of local public records using Lobe 11 (Scout Brain) and Lobe 8 (Inference Brain). This removes the need for manual record searches and speeds up land reviews.</p>
+        </div>
+
+        <hr />
+
+        <h2>1.0 Deep Search Process Workflow</h2>
+        <p>When the user clicks the deep search button for a saved lot, the system goes through these steps:</p>
+        <ol>
+            <li><b>User Action:</b> The user clicks "Start Deep Search" on the lot review card in the sidebar.</li>
+            <li><b>Job Creation:</b> The frontend calls the server endpoint <code>/api/v1/deep-search/initiate</code>, which adds a job record with a status of "Running" and returns a job tracking ID.</li>
+            <li><b>Asynchronous Extraction (Lobe 11):</b> The server starts a background worker task that targets county database systems and land record portals.</li>
+            <li><b>Logical Analysis (Lobe 8):</b> Once files are collected, the text is scanned for zoning, owner rules, and environmental issues.</li>
+            <li><b>Results Save:</b> The worker writes findings to the database and updates the job status to "Completed".</li>
+            <li><b>User Notification:</b> The map view and sidebar update to show the search results are ready for inspection.</li>
+        </ol>
+
+        <h2>2.0 Lobe Allocation & Duties</h2>
+        
+        <h3>2.1 Lobe 11 (Scout Brain) - Record Gathering</h3>
+        <p>Lobe 11 connects directly to external county clerk websites, public GIS map layers, and environmental registries. It is responsible for:</p>
+        <ul>
+            <li><b>File Downloads:</b> Finding and downloading PDF files of deeds, land transfers, and zoning rules matching the lot coordinates.</li>
+            <li><b>API Probes:</b> Pinging city planning databases to retrieve utility capacity sheets and sewer line layouts.</li>
+            <li><b>Data Cleanup:</b> Removing unneeded formatting and turning PDF/HTML contents into clean, readable text.</li>
+        </ul>
+
+        <h3>2.2 Lobe 8 (Inference Brain) - Rule Verification</h3>
+        <p>Lobe 8 receives the clean text from Lobe 11 and performs logic checks to assess site viability:</p>
+        <ul>
+            <li><b>Zoning Rules:</b> Checking if the local codes allow the planned building height, lot coverage, and noise levels.</li>
+            <li><b>Owner Agreements:</b> Reading property deeds to ensure there are no active covenants that block construction or specify land usage limits.</li>
+            <li><b>Soil & Water Risks:</b> Checking public logs for historical spill records, soil instability, or high water tables nearby.</li>
+            <li><b>Score Calculation:</b> Generating a final feasibility rating (0 to 100) based on identified risks.</li>
+        </ul>
+
+        <h2>3.0 Database Schema Extensions</h2>
+        <p>Two new tables are required to track deep search actions and store the final extraction reports:</p>
+
+        <pre><code class="language-sql">
+-- Tracks active and historic deep search requests
+CREATE TABLE "HEX_DeepSearchJobs" (
+    id SERIAL PRIMARY KEY,
+    lot_id INTEGER REFERENCES "HEX_TargetLotReviews"(id) ON DELETE CASCADE,
+    job_status VARCHAR(50) DEFAULT 'Pending', -- Pending, Running, Completed, Failed
+    error_message TEXT,
+    started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    completed_at TIMESTAMP
+);
+
+-- Stores analyzed results and risk factors
+CREATE TABLE "HEX_DeepSearchResults" (
+    id SERIAL PRIMARY KEY,
+    job_id INTEGER REFERENCES "HEX_DeepSearchJobs"(id) ON DELETE CASCADE,
+    lot_id INTEGER REFERENCES "HEX_TargetLotReviews"(id) ON DELETE CASCADE,
+    zoning_classification VARCHAR(100),
+    allowable_height_ft INTEGER,
+    soil_risk_level VARCHAR(50), -- Low, Medium, High
+    easements_found TEXT,
+    owner_restrictions TEXT,
+    feasibility_score INTEGER,
+    report_summary TEXT,
+    scouted_documents JSONB, -- Array of document links and metadata
+    analyzed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+        </code></pre>
+
+        <h2>4.0 UI & UX Integration</h2>
+        <p>The user interface must be upgraded to support and display the deep search results:</p>
+        <ul>
+            <li><b>Sidebar Status Indicator:</b> The review list will show a rotating loading circle next to lots undergoing active search. The background of the lot list item will flash gently during processing.</li>
+            <li><b>Interactive Report Card:</b> Clicking a lot with a completed search opens a details card showing the feasibility score, a text summary of finding logs, and links to download original documents.</li>
+            <li><b>Map Overlay Layers:</b> Completing a search unlocks toggle switches on the map HUD to display the lot's sewer lines, water mains, and zoning boundary outlines.</li>
+        </ul>
+
+        <hr />
+        <h2>Document Revision History</h2>
+        <table class="sigma-data-grid">
+            <thead>
+                <tr>
+                    <th>Revision</th>
+                    <th>Date</th>
+                    <th>Description of Change</th>
+                    <th>Author / Approved By</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><b>1.0.0</b></td>
+                    <td>06/05/2026</td>
+                    <td>Created the deep search integration workflow plan.</td>
+                    <td>George Bytes (Lead Architect) / Humberto Dominguez (CEO)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- DOCUMENT CONTROL FOOTER -->
+    <div class="sop-card-footer">
+        <div>Classification: Institutional ISO 9001 QMS Record</div>
+        <div>Effective Date: 06/05/2026</div>
+        <div>Review Cycle: Annual (Rev 1.0.0)</div>
+    </div>
+</div>

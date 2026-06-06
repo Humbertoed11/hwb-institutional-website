@@ -1,0 +1,118 @@
+<!-- 
+    HEXGROWTH Institutional QMS Document
+    Standard: HEX-QMS-1.0
+    Document ID: HEX-SOP-8.1
+    Version: 1.2.0
+-->
+<div class="sop-card">
+    <!-- DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HEX-SOP-8.1</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.2.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #10b981;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Author</span><span class="meta-val">George Bytes (Lead Architect)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <h1>Master Operating Procedure: <strong>Backend Database &amp; Memory Architecture</strong></h1>
+        <p><strong>Scope:</strong> Establishes global parameters, naming policies, container setups, security timing gates, and background synchronization engines for the HEXGROWTH Monolithic SQL Brain (Layers 0, 1, and 2).</p>
+
+        <hr />
+
+        <h2>1.0 Database Naming & Casing Standards</h2>
+        <p>To ensure total query safety and code readability, all backend database objects must follow these rules:</p>
+        <ul>
+            <li><strong>Table Prefix:</strong> All tables must explicitly start with the prefix <code>HEX_</code> (e.g., <code>HEX_KB_Library</code>). No exceptions are allowed.</li>
+            <li><strong>Casing:</strong> Use PascalCase for table names and snake_case for column identifiers (e.g., <code>last_updated</code>).</li>
+            <li><strong>Keys & Links:</strong> Primary keys default to <code>id SERIAL</code>. Foreign keys must link using explicit cascading deletes (<code>ON DELETE CASCADE</code>) to prevent orphan references.</li>
+            <li><strong>Data Integrity:</strong> No synthetic or placeholder data is allowed. All scores, records, and geometry fields must originate from verified spatial, legal, or transactional endpoints.</li>
+        </ul>
+
+        <hr />
+
+        <h2>2.0 Isolated Container Architecture (Attached Backing Services)</h2>
+        <p>Adhering to Twelve-Factor app principles, the SQL database is isolated into its own virtual host space:</p>
+        <ul>
+            <li><strong>Backing Service Container:</strong> <code>hex_postgis_db</code> (running PostgreSQL 13 and PostGIS 3.1).</li>
+            <li><strong>Persistent Volume:</strong> <code>hex_data</code> (protects transactional databases from container restarts).</li>
+            <li><strong>Isolated Bridge Network:</strong> The database exposes no public ports to the host system. It communicates only with the web container (<code>hex_web_app</code>) inside a private virtual bridge (<code>hex-net</code>) using the link: <code>postgresql://hexadmin:hexpassword@hex_postgis_db:5432/hex_dev_db</code>.</li>
+        </ul>
+
+        <hr />
+
+        <h2>3.0 The 3-Core Memory System & 7-Lobe Neural Map</h2>
+        
+        <h3>3.1 Core Database Layers</h3>
+        <p>The backend structures memory and system states across three primary SQL tables:</p>
+        <ol>
+            <li><strong>Knowledge Library (<code>HEX_KB_Library</code>):</strong> Stores QMS manuals, SOPs, and compliance documents as plain text alongside their 1536-dimension SHA-256 semantic vector embeddings.</li>
+            <li><strong>Active State (<code>HEX_SystemState</code>):</strong> Tracks currently active project IDs, active lobes, map coordinates, and user configurations to maintain session state across reloads.</li>
+            <li><strong>Execution Registry (<code>HEX_Telemetry</code>):</strong> Low-level logs monitoring API query durations, miner schedules, and synchronizer execution results.</li>
+        </ol>
+
+        <h3>3.2 Operational Lobes & Scoring Range</h3>
+        <p>Geospatial spatial layers are evaluated through seven domain brains that translate municipal, transport, utility, and environmental records into normalized scores (0.0 to 10.0):</p>
+        <ul>
+            <li><strong>City Brain (Lobe 1):</strong> Processes municipal code, permits, variance delays, and zoning boundaries.</li>
+            <li><strong>TxDOT Brain (Lobe 2):</strong> Analyzes highway traffic counts, capacities, and egress bottlenecks.</li>
+            <li><strong>Power Brain (Lobe 3):</strong> Monitors utility grid substations, capacities, and lag times.</li>
+            <li><strong>Legal/Env Brain (Lobe 4):</strong> Tracks ALTA land ownership chains, easement records, and soil geotech checks.</li>
+            <li><strong>Ranger Brain (Lobe 5):</strong> Integrates field verification audits and physical security variables.</li>
+            <li><strong>Pulse Brain (Lobe 6):</strong> Crawls social feeds and news ticker sentiment logs to assess community friction.</li>
+            <li><strong>Finance Brain™ (Lobe 7):</strong> Computes time-cost of capital, baseline cap rates, and pro-forma ROI values.</li>
+        </ul>
+
+        <hr />
+
+        <h2>4.0 Synchronization Engine & Backing Services</h2>
+        
+        <h3>4.1 Ingestion Engine (<code>hex_sync.py</code>)</h3>
+        <p>On startup and index triggers, the synchronization engine maps HTML directories, updates relative URLs, and copies session metadata. It parses the flat files from <code>HEX-QMS/</code> and writes them dynamically to the <code>HEX_ManualIndex</code> table, allowing the Flask web app to serve QMS documentation from SQL tables instead of executing slow file-system lookups.</p>
+
+        <h3>4.2 Persistence Protocol (<code>HEX-PERSISTENCE-PROTOCOL.py</code>)</h3>
+        <p>A background worker that scans document folders, hashes the text contents to generate deterministic mock embeddings, and registers the files inside the <code>HEX_KB_Library</code> semantic vector database.</p>
+
+        <h3>4.3 Exception Capture & Ticker Sync</h3>
+        <ul>
+            <li><strong>Uncaught Exception Middleware:</strong> Traps uncaught server errors and tracebacks, writing them as pending records into the <code>HEX_KnowledgeScars</code> database table to prevent bug regression.</li>
+            <li><strong>Chat Console Ingestion (<code>HEX-SYNC-TRANSCRIPT.py</code>):</strong> Periodically parses terminal activity transcripts and commits them to the <code>HEX_InteractionCore</code> table.</li>
+        </ul>
+
+        <hr />
+
+        <h2>5.0 Session Security & Timeout Rules (Hybrid Model)</h2>
+        <p>To satisfy corporate data security policies, user sessions are automatically timed out after 15 minutes (900 seconds) of inactivity using a two-layer security watch:</p>
+        <ol>
+            <li><strong>Server-Side Flask Enforcer:</strong> Sets <code>PERMANENT_SESSION_LIFETIME = timedelta(minutes=15)</code> with cookie lifetime updates (<code>session.permanent = True</code>) processed on each valid request intercept.</li>
+            <li><strong>Client-Side JS watchdog:</strong> Monitors mouse and key interaction events on the client canvas, executing an immediate redirection to the <code>/logout</code> endpoint if no user input occurs for 900 seconds.</li>
+        </ol>
+
+        <hr />
+        <h2>Document Revision History</h2>
+        <table class="sigma-data-grid">
+            <thead>
+                <tr>
+                    <th>Revision</th>
+                    <th>Date</th>
+                    <th>Description of Change</th>
+                    <th>Author / Approved By</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><b>1.2.0</b></td>
+                    <td>06/05/2026</td>
+                    <td>Consolidated SOP-8.1, SOP-8.3, SOP-8.5, IP-8.0, and REPORT-10.0 into a unified Master Backend Database &amp; Memory Manual. Approved by CEO.</td>
+                    <td>George Bytes / Humberto Dominguez (Chairman)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- DOCUMENT CONTROL FOOTER -->
+    <div class="sop-card-footer">
+        <div>Classification: Institutional ISO 9001 QMS Record</div>
+        <div>Effective Date: 06/05/2026</div>
+        <div>Review Cycle: Annual (Rev 1.2.0)</div>
+    </div>
+</div>

@@ -1,0 +1,60 @@
+<!-- 
+    HEXGROWTH Institutional QMS Document
+    Standard: HEX-QMS-1.0 v1.0
+    Document ID: HEX-REPORT-1.0
+-->
+<div class="sop-card">
+    <!-- DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HEX-REPORT-1.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #10b981;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Author</span><span class="meta-val">George Bytes (Lead Auditor)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <h1>Token Saving Strategy: <strong>Status Report (06/03/2026)</strong></h1>
+        <p>This report documents compliance with the token saving strategy (<strong>Anti-Token-Burn Protocol</strong>) to reduce computational waste.</p>
+
+        <h2>1.0 Strategy Overview</h2>
+        <p>The primary objective is to restrict file access, use database lookups instead of long text files, check code errors locally, and use small file updates to keep the search space clean and fast.</p>
+
+        <h2>2.0 Status of the Six Pillars</h2>
+        <ul>
+            <li><strong>1. Database-First Document Search (FULLY OPERATIONAL):</strong> Documents are fetched dynamically from the database index. No raw files are loaded into context.</li>
+            <li><strong>2. Local Error Checking (OPERATIONAL):</strong> Systems are checked using local command line compiles before asking for AI suggestions.</li>
+            <li><strong>3. Capped File Viewing (ENFORCED):</strong> File views are limited to 20-50 lines to prevent prompt swelling.</li>
+            <li><strong>4. Selective Prompt Loading (OPERATIONAL):</strong> Instructions are filtered to load only task-relevant modules.</li>
+            <li><strong>5. Small Code Updates (ENFORCED):</strong> Multi-replace diff update tools are used to avoid rewriting entire files.</li>
+            <li><strong>6. Automated Error & Fix Lookup (FULLY OPERATIONAL):</strong> Known errors are resolved using the local database registry of issues.</li>
+        </ul>
+        
+        <hr />
+        <h2>Document Revision History</h2>
+        <table class="sigma-data-grid">
+            <thead>
+                <tr>
+                    <th>Revision</th>
+                    <th>Date</th>
+                    <th>Description of Change</th>
+                    <th>Author / Approved By</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><b>1.0.0</b></td>
+                    <td>06/03/2026</td>
+                    <td>Standardized clinical formatting and aligned with ISO 9001 document controls.</td>
+                    <td>George Bytes / Humberto Dominguez (Chairman)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 3. DOCUMENT CONTROL FOOTER -->
+    <div class="sop-card-footer">
+        <div>Classification: Institutional ISO 9001 QMS Record</div>
+        <div>Effective Date: 06/03/2026</div>
+        <div>Review Cycle: Annual (Rev 1.0.0)</div>
+    </div>
+</div>

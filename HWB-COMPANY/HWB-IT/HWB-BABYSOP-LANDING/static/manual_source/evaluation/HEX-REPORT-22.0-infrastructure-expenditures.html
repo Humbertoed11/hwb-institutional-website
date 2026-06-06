@@ -1,0 +1,191 @@
+<!-- 
+    HEXGROWTH Institutional QMS Document
+    Standard: HEX-QMS-1.0 v1.0
+    Document ID: HEX-REPORT-22.0-INFRASTRUCTURE-EXPENDITURES
+-->
+<div class="sop-card">
+    <!-- DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HEX-REPORT-22.0-INFRASTRUCTURE-EXPENDITURES</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #10b981;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Author</span><span class="meta-val">Maria Bolanos (VP of Finance)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <h1>HEXGROWTH: <strong>Infrastructure Migration Expenditures (Maria Bolanos Sign-Off)</strong></h1>
+        <p>This report outlines the projected expenditures, operational budgets (OPEX), and initial capital allocations (CAPEX) required to establish a separate, isolated Microsoft Azure tenant, purchase a standalone domain, and secure high-tier intelligence subscriptions for the <strong>HEXGROWTH</strong> platform, separating it entirely from legacy parent assets.</p>
+
+        <hr />
+
+        <h2>1.0 Initial Capital Expenditures (CAPEX)</h2>
+        <p>Initial capital requirements cover the registration of a standalone product domain name to establish distinct institutional branding:</p>
+        <table border="1" cellpadding="5" style="border-collapse: collapse; width: 100%; font-size: 12px; margin-bottom: 1.5rem;">
+            <thead>
+                <tr style="background-color: #f1f5f9; color: #020617; font-weight: 700;">
+                    <th>Asset Item</th>
+                    <th>Acquisition Path</th>
+                    <th>Annual Cost (Est.)</th>
+                    <th>Required Approvals</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="font-weight: 700;">hexgrowth.com</td>
+                    <td>Azure Domain Registration / GoDaddy</td>
+                    <td>$15.00 / year</td>
+                    <td>Maria Bolanos (VP Finance)</td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 700;">WHOIS Privacy Protection</td>
+                    <td>Included by Registrar</td>
+                    <td>$0.00 / year</td>
+                    <td>Automatic</td>
+                </tr>
+                <tr style="font-weight: bold; background-color: #f8fafc; color: #020617;">
+                    <td>Total Initial CAPEX Allocation</td>
+                    <td>-</td>
+                    <td>$15.00</td>
+                    <td>-</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <hr />
+
+        <h2>2.0 Monthly Operating Expenditures (OPEX)</h2>
+        <p>Operating costs are divided into development/testing environments and production deployments to ensure optimal cost containment while maintaining performance parity. Global intelligence API subscriptions are added as required shared assets:</p>
+        
+        <h3>2.1 Development & Testing Environment (Pay-As-You-Go)</h3>
+        <p>Required to validate container builds, run database sync models, and perform pre-flight audits outside the active production pipeline:</p>
+        <table border="1" cellpadding="5" style="border-collapse: collapse; width: 100%; font-size: 12px; margin-bottom: 1.5rem;">
+            <thead>
+                <tr style="background-color: #f1f5f9; color: #020617; font-weight: 700;">
+                    <th>Azure Service Resource / API</th>
+                    <th>Tier Configuration</th>
+                    <th>Monthly Cost (Est.)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="font-weight: 700;">Azure Database for PostgreSQL</td>
+                    <td>Flexible Server (Dev/Test B1ms: 1 vCPU, 2GB RAM, 32GB Storage)</td>
+                    <td>$15.00 / month</td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 700;">Azure App Service (Web App)</td>
+                    <td>Linux Web App for Containers (B1 Tier: 1 vCPU, 1.75GB RAM)</td>
+                    <td>$13.00 / month</td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 700;">Azure Container Registry (ACR)</td>
+                    <td>Basic Tier (10GB Storage Capacity limit)</td>
+                    <td>$5.00 / month</td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 700; color: #06b6d4;">Antigravity Google AI Ultra</td>
+                    <td>Enterprise API Suite / High-Tier Reasoning Model</td>
+                    <td>$250.00 / month</td>
+                </tr>
+                <tr style="font-weight: bold; background-color: #f8fafc; color: #020617;">
+                    <td>Subtotal Dev/Test Monthly OPEX</td>
+                    <td>-</td>
+                    <td>$283.00 / month</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>2.2 Production & Client Delivery Environment</h3>
+        <p>The standard baseline configuration to host the HUD viewport, compiled client feasibility reports, and active PostGIS databases:</p>
+        <table border="1" cellpadding="5" style="border-collapse: collapse; width: 100%; font-size: 12px; margin-bottom: 1.5rem;">
+            <thead>
+                <tr style="background-color: #f1f5f9; color: #020617; font-weight: 700;">
+                    <th>Azure Service Resource / API</th>
+                    <th>Tier Configuration</th>
+                    <th>Monthly Cost (Est.)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="font-weight: 700;">Azure Database for PostgreSQL</td>
+                    <td>Flexible Server (Prod Standard D2ds_v4: 2 vCPUs, 8GB RAM, 128GB Storage)</td>
+                    <td>$120.00 / month</td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 700;">Azure App Service (Web App)</td>
+                    <td>Linux Web App for Containers (S1 Tier: 1 vCPU, 3.5GB RAM)</td>
+                    <td>$73.00 / month</td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 700;">Azure Container Registry (ACR)</td>
+                    <td>Basic Tier (10GB Storage Capacity limit)</td>
+                    <td>$5.00 / month</td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 700;">Azure Monitor & Log Analytics</td>
+                    <td>Basic Telemetry Ingestion (up to 5GB monthly)</td>
+                    <td>$15.00 / month</td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 700;">SSL/TLS Security Certificates</td>
+                    <td>App Service Managed Certificates (Standard SSL Bindings)</td>
+                    <td>$0.00 / month</td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 700; color: #06b6d4;">Antigravity Google AI Ultra</td>
+                    <td>Enterprise API Suite / High-Tier Reasoning Model</td>
+                    <td>$250.00 / month</td>
+                </tr>
+                <tr style="font-weight: bold; background-color: #f8fafc; color: #020617;">
+                    <td>Subtotal Production Monthly OPEX</td>
+                    <td>-</td>
+                    <td>$463.00 / month</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <hr />
+
+        <h2>3.0 Financial Verdict & Allocation Approval</h2>
+        <p>The VP of Finance, Maria Bolanos, issues the following directives for deployment budget execution:</p>
+        <ol>
+            <li><strong>Domain Acquisition:</strong> Authorizes the immediate payment of <strong>$15.00</strong> to purchase <code>hexgrowth.com</code> to lock down the product name.</li>
+            <li><strong>Tenant & AI Subscription Allocation:</strong> Approves setting up a separate Azure Pay-As-You-Go account. The initial sandbox stage must utilize the Dev/Test tier combined with the active Antigravity Google AI Ultra subscription, restricting recurring costs to **$283.00/month** until the investor demo is completed.</li>
+            <li><strong>Scale-Up Authorization:</strong> Migration to the production setup (**$463.00/month**) is deferred until the proof of concept is approved by the CEO, Humberto Dominguez, and SaaS subscriptions are ready to compile active market reports.</li>
+        </ol>
+
+        <hr />
+        <h2>Document Revision History</h2>
+        <table class="sigma-data-grid" border="1" cellpadding="5" style="border-collapse: collapse; width: 100%;">
+            <thead>
+                <tr style="background-color: #f1f5f9; color: #020617; font-weight: 700;">
+                    <th>Revision</th>
+                    <th>Date</th>
+                    <th>Description of Change</th>
+                    <th>Author / Approved By</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><b>1.0.0</b></td>
+                    <td>06/05/2026</td>
+                    <td>Compiled deployment budget projections for standalone Azure tenant and domain mapping.</td>
+                    <td>Maria Bolanos / Humberto Dominguez (CEO)</td>
+                </tr>
+                <tr>
+                    <td><b>1.1.0</b></td>
+                    <td>06/05/2026</td>
+                    <td>Added Antigravity Google AI Ultra reasoning model subscription fees.</td>
+                    <td>Maria Bolanos / Humberto Dominguez (CEO)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- DOCUMENT CONTROL FOOTER -->
+    <div class="sop-card-footer" style="margin-top: 2rem; font-size: 10px; color: var(--hex-text-muted); border-top: 1px solid var(--hex-border); padding-top: 1rem; display: flex; justify-content: space-between;">
+        <div>Classification: Institutional ISO 9001 QMS Record</div>
+        <div>Effective Date: 06/05/2026</div>
+        <div>Review Cycle: Annual (Rev 1.0.0)</div>
+    </div>
+</div>

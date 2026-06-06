@@ -1,0 +1,1326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HEXGROWTH | Backoffice Control Panel</title>
+    <!-- SigmaFidelity™ High-Fidelity Tactical Stack -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --hex-obsidian: #020617;
+            --hex-charcoal: #0f172a;
+            --hex-panel: #1e293b;
+            --hex-cyan: #06b6d4;
+            --hex-emerald: #10b981;
+            --hex-amber: #f59e0b;
+            --hex-crimson: #ef4444;
+            --hex-violet: #8b5cf6;
+            --hex-border: rgba(30, 41, 59, 0.7);
+            --hex-glass: rgba(15, 23, 42, 0.9);
+            --hex-text: #f8fafc;
+            --hex-text-muted: #94a3b8;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--hex-obsidian);
+            color: var(--hex-text);
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            box-sizing: border-box;
+        }
+
+        /* scrollbar standard */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; border: 1px solid var(--hex-border); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--hex-cyan); }
+
+        .portal-layout {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .portal-content {
+            flex-grow: 1;
+            padding: 2.5rem;
+            max-width: 1500px;
+            margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box;
+            display: grid;
+            grid-template-columns: 450px 1fr;
+            gap: 2.5rem;
+        }
+
+        @media (max-width: 1200px) {
+            .portal-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* 🔬 FORM CONTAINERS & CARDS */
+        .sigma-form-container {
+            background: var(--hex-glass);
+            border: 1px solid var(--hex-border);
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            height: fit-content;
+            position: sticky;
+            top: 85px;
+        }
+
+        .form-title {
+            font-size: 14px;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: var(--hex-cyan);
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            letter-spacing: 1.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid var(--hex-border);
+            padding-bottom: 8px;
+        }
+
+        .sigma-form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .sigma-form-label {
+            display: block;
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--hex-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 6px;
+        }
+
+        .sigma-form-input {
+            width: 100%;
+            box-sizing: border-box;
+            height: 38px;
+            padding: 0 12px;
+            font-size: 12px;
+            border-radius: 6px;
+            border: 1px solid var(--hex-border);
+            background: #020617;
+            color: #fff;
+            outline: none;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .sigma-form-input:focus {
+            border-color: var(--hex-cyan);
+            box-shadow: 0 0 10px rgba(6, 182, 212, 0.2);
+        }
+
+        .asymmetric-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .sigma-btn-cyan {
+            width: 100%;
+            height: 38px;
+            background: rgba(6, 182, 212, 0.1);
+            border: 1px solid var(--hex-cyan);
+            color: var(--hex-cyan);
+            font-weight: 800;
+            font-size: 11px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .sigma-btn-cyan:hover {
+            background: var(--hex-cyan);
+            color: #000;
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
+        }
+
+        .sigma-btn-emerald {
+            width: 100%;
+            height: 38px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--hex-emerald);
+            color: var(--hex-emerald);
+            font-weight: 800;
+            font-size: 11px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .sigma-btn-emerald:hover {
+            background: var(--hex-emerald);
+            color: #fff;
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+        }
+
+        .sigma-btn-crimson {
+            height: 32px;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--hex-crimson);
+            color: var(--hex-crimson);
+            font-weight: 800;
+            font-size: 10px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            padding: 0 10px;
+        }
+
+        .sigma-btn-crimson:hover {
+            background: var(--hex-crimson);
+            color: #fff;
+        }
+
+        .sigma-btn-small {
+            height: 32px;
+            background: rgba(6, 182, 212, 0.1);
+            border: 1px solid var(--hex-cyan);
+            color: var(--hex-cyan);
+            font-weight: 800;
+            font-size: 10px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            padding: 0 10px;
+        }
+
+        .sigma-btn-small:hover {
+            background: var(--hex-cyan);
+            color: #000;
+        }
+
+        /* 🚀 MAIN CONTENT MODULES */
+        .admin-main {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .section-header {
+            font-size: 16px;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: #fff;
+            letter-spacing: 2px;
+            border-left: 3px solid var(--hex-cyan);
+            padding-left: 12px;
+            margin: 0;
+        }
+
+        .brains-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .brain-card {
+            background: var(--hex-glass);
+            border: 1px solid var(--hex-border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .brain-card:hover {
+            border-color: rgba(6, 182, 212, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .brain-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .brain-title {
+            font-size: 14px;
+            font-weight: 800;
+            color: #fff;
+            margin: 0;
+        }
+
+        .brain-index {
+            font-size: 10px;
+            font-weight: 800;
+            color: var(--hex-text-muted);
+            background: rgba(255,255,255,0.05);
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid var(--hex-border);
+        }
+
+        .brain-details {
+            font-size: 12px;
+            color: var(--hex-text-muted);
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
+        }
+
+        .brain-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid var(--hex-border);
+            padding-top: 1rem;
+        }
+
+        .weight-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--hex-cyan);
+        }
+
+        /* 🎛️ TOGGLE SWITCHES */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .switch input { 
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #334155;
+            transition: .3s;
+            border-radius: 24px;
+            border: 1px solid var(--hex-border);
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 3px;
+            bottom: 3px;
+            background-color: #f8fafc;
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--hex-emerald);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
+        /* 📋 DATA GRID TABLES */
+        .data-table-container {
+            background: var(--hex-glass);
+            border: 1px solid var(--hex-border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            overflow-x: auto;
+        }
+
+        .sigma-data-grid {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            text-align: left;
+        }
+
+        .sigma-data-grid th {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--hex-text-muted);
+            letter-spacing: 1px;
+            padding: 12px 16px;
+            border-bottom: 2px solid var(--hex-border);
+        }
+
+        .sigma-data-grid td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--hex-border);
+            color: #e2e8f0;
+        }
+
+        .sigma-data-grid tr:hover td {
+            background: rgba(255,255,255,0.02);
+        }
+
+        .status-pill {
+            display: inline-block;
+            font-size: 9px;
+            font-weight: 800;
+            padding: 2px 8px;
+            border-radius: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-active { background: rgba(16, 185, 129, 0.1); color: var(--hex-emerald); border: 1px solid var(--hex-emerald); }
+        .status-inactive { background: rgba(239, 68, 68, 0.1); color: var(--hex-crimson); border: 1px solid var(--hex-crimson); }
+        .status-offline { background: rgba(245, 158, 11, 0.1); color: var(--hex-amber); border: 1px solid var(--hex-amber); }
+        .status-pending { background: rgba(139, 92, 246, 0.1); color: var(--hex-violet); border: 1px solid var(--hex-violet); }
+
+        /* 📑 TABS SYSTEM */
+        .tab-menu {
+            display: flex;
+            gap: 1rem;
+            border-bottom: 1px solid var(--hex-border);
+            margin-bottom: 1rem;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--hex-text-muted);
+            font-weight: 700;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 10px 16px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            color: var(--hex-cyan);
+            border-bottom-color: var(--hex-cyan);
+        }
+
+        .tab-pane {
+            display: none;
+        }
+
+        .tab-pane.active {
+            display: block;
+        }
+
+        .toast-notify {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #0f172a;
+            border: 1px solid var(--hex-cyan);
+            color: #fff;
+            padding: 1rem 1.5rem;
+            border-radius: 6px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            font-size: 12px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 10000;
+            transform: translateY(150%);
+            transition: transform 0.3s ease;
+        }
+
+        .toast-notify.show {
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+
+<div class="portal-layout">
+    {% set header_type = 'ADMIN CONTROL' %}
+    {% set active_nav = 'admin' %}
+    {% include "components/brand_header.html" %}
+
+    <main class="portal-content">
+        <!-- 🔬 LEFT COLUMN: PARAMETERS EDITOR & AUDIT TRIGGERS -->
+        <aside class="sigma-form-container">
+            <h2 class="form-title">
+                <svg style="width:16px;height:16px;fill:currentColor" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+                Cognitive Bridge Settings
+            </h2>
+            
+            <form id="bridge-parameters-form" onsubmit="event.preventDefault(); saveBridgeParameters();">
+                <div class="sigma-form-group">
+                    <label class="sigma-form-label" for="interest_rate">Federal Interest Rate (Baseline)</label>
+                    <input type="number" id="interest_rate" class="sigma-form-input" step="0.0001" min="0" max="1" value="{{ bridge.interest_rate }}" required>
+                </div>
+
+                <div class="sigma-form-group">
+                    <label class="sigma-form-label" for="cap_rate_baseline">Market Cap Rate (Baseline)</label>
+                    <input type="number" id="cap_rate_baseline" class="sigma-form-input" step="0.0001" min="0" max="1" value="{{ bridge.cap_rate_baseline }}" required>
+                </div>
+
+                <div class="sigma-form-group">
+                    <label class="sigma-form-label" for="permit_latency_days">Zoning Permit Latency (Days)</label>
+                    <input type="number" id="permit_latency_days" class="sigma-form-input" step="0.1" min="0" value="{{ bridge.permit_latency_days }}" required>
+                </div>
+
+                <div class="sigma-form-group">
+                    <label class="sigma-form-label" for="egress_speed_mph">Average Transit Egress Speed (MPH)</label>
+                    <input type="number" id="egress_speed_mph" class="sigma-form-input" step="0.1" min="0" value="{{ bridge.egress_speed_mph }}" required>
+                </div>
+
+                <div class="sigma-form-group">
+                    <label class="sigma-form-label" for="construction_cost_index">Construction Cost Index Multiplier</label>
+                    <input type="number" id="construction_cost_index" class="sigma-form-input" step="0.01" min="0.5" max="3" value="{{ bridge.construction_cost_index }}" required>
+                </div>
+
+                <div style="margin-top: 1.5rem; display: flex; flex-direction: column; gap: 10px;">
+                    <button type="submit" class="sigma-btn-cyan">
+                        💾 Save Parameters
+                    </button>
+                    <button type="button" class="sigma-btn-emerald" onclick="runAccountabilityAudits()">
+                        🔄 Run System Audits & Weight Tuning
+                    </button>
+                </div>
+            </form>
+        </aside>
+
+        <!-- 🚀 RIGHT COLUMN: dependency graph, brain cards, scout & accountability lists -->
+        <div class="admin-main">
+            <!-- 🔬 INTERACTIVE DEPENDENCY GRAPH (Option 3) -->
+            <div class="data-table-container" style="padding: 2rem;">
+                <h2 class="form-title" style="margin-bottom: 1.5rem;">
+                    <svg style="width:16px;height:16px;fill:currentColor" viewBox="0 0 24 24"><path d="M19 15v4H5v-4h14m1-2H4c-1.1 0-2 .9-2 2v6c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2v-6c0-1.1-.9-2-2-2M12 2C6.5 2 2 6.5 2 12c0 3.58 1.9 6.7 4.75 8.43l1.39-1.48C5.8 17.5 4 14.96 4 12c0-4.41 3.59-8 8-8s8 3.59 8 8c0 2.96-1.8 5.5-4.14 6.95l1.39 1.48C20.1 18.7 22 15.58 22 12c0-5.5-4.5-10-10-10z"/></svg>
+                    Interactive System Dependency Map
+                </h2>
+                <div class="mermaid" style="display:flex;justify-content:center;background:rgba(2,6,23,0.4);border-radius:6px;padding:1rem;border:1px solid var(--hex-border);">
+                graph TD
+                    subgraph Ingestion [L11 Gatekeeper]
+                        L11["L11 Scout Brain<br>({{ statuses.L11_SCOUT }})"]
+                    end
+                    
+                    subgraph Core [Operational Core L1-L7]
+                        L1["L1 City Brain<br>({{ statuses.L1_ZONING }})"]
+                        L2["L2 TxDOT Brain<br>({{ statuses.L2_TRANSIT }})"]
+                        L3["L3 Power Brain<br>({{ statuses.L3_POWER }})"]
+                        L4["L4 Legal/Env<br>({{ statuses.L4_LEGAL }})"]
+                        L5["L5 Ranger Brain<br>({{ statuses.L5_RANGER }})"]
+                        L6["L6 Pulse Brain<br>({{ statuses.L6_PULSE }})"]
+                        L7["L7 Finance Brain<br>({{ statuses.L7_FINANCE }})"]
+                    end
+                    
+                    L11 -.-> L1
+                    L11 -.-> L2
+                    L11 -.-> L3
+                    L11 -.-> L4
+                    L11 -.-> L5
+                    L11 -.-> L6
+                    L11 -.-> L7
+                    
+                    L1 --> CORE{L8 Inference}
+                    L2 --> CORE
+                    L3 --> CORE
+                    L4 --> CORE
+                    L5 --> CORE
+                    L6 --> CORE
+                    L7 --> CORE
+                    
+                    CORE --> L9[L9 Accountability]
+                    L9 -.->|Tuned Weights| CORE
+                    CORE --> L10[L10 Alpha Reports]
+                    
+                    style L11 fill:{% if statuses.L11_SCOUT == 'ACTIVE' %}#0284c7,stroke:#fff{% else %}#1e293b,stroke:#475569,stroke-dasharray: 5 5{% endif %},color:{% if statuses.L11_SCOUT == 'ACTIVE' %}#fff{% else %}#64748b{% endif %}
+                    style L1 fill:{% if statuses.L1_ZONING == 'ACTIVE' %}#1e293b,stroke:#06b6d4{% else %}#1e293b,stroke:#475569,stroke-dasharray: 5 5{% endif %},color:{% if statuses.L1_ZONING == 'ACTIVE' %}#fff{% else %}#64748b{% endif %}
+                    style L2 fill:{% if statuses.L2_TRANSIT == 'ACTIVE' %}#1e293b,stroke:#f59e0b{% else %}#1e293b,stroke:#475569,stroke-dasharray: 5 5{% endif %},color:{% if statuses.L2_TRANSIT == 'ACTIVE' %}#fff{% else %}#64748b{% endif %}
+                    style L3 fill:{% if statuses.L3_POWER == 'ACTIVE' %}#1e293b,stroke:#10b981{% else %}#1e293b,stroke:#475569,stroke-dasharray: 5 5{% endif %},color:{% if statuses.L3_POWER == 'ACTIVE' %}#fff{% else %}#64748b{% endif %}
+                    style L4 fill:{% if statuses.L4_LEGAL == 'ACTIVE' %}#1e293b,stroke:#8b5cf6{% else %}#1e293b,stroke:#475569,stroke-dasharray: 5 5{% endif %},color:{% if statuses.L4_LEGAL == 'ACTIVE' %}#fff{% else %}#64748b{% endif %}
+                    style L5 fill:{% if statuses.L5_RANGER == 'ACTIVE' %}#1e293b,stroke:#ef4444{% else %}#1e293b,stroke:#475569,stroke-dasharray: 5 5{% endif %},color:{% if statuses.L5_RANGER == 'ACTIVE' %}#fff{% else %}#64748b{% endif %}
+                    style L6 fill:{% if statuses.L6_PULSE == 'ACTIVE' %}#1e293b,stroke:#ec4899{% else %}#1e293b,stroke:#475569,stroke-dasharray: 5 5{% endif %},color:{% if statuses.L6_PULSE == 'ACTIVE' %}#fff{% else %}#64748b{% endif %}
+                    style L7 fill:{% if statuses.L7_FINANCE == 'ACTIVE' %}#1e293b,stroke:#06b6d4{% else %}#1e293b,stroke:#475569,stroke-dasharray: 5 5{% endif %},color:{% if statuses.L7_FINANCE == 'ACTIVE' %}#fff{% else %}#64748b{% endif %}
+                    style CORE fill:#1e1b4b,stroke:#6366f1,stroke-width:2px,color:#fff
+                    style L9 fill:{% if statuses.L9_ACCOUNTABILITY == 'ACTIVE' %}#022c22,stroke:#10b981{% else %}#1e293b,stroke:#475569,stroke-dasharray: 5 5{% endif %},color:{% if statuses.L9_ACCOUNTABILITY == 'ACTIVE' %}#fff{% else %}#64748b{% endif %}
+                    style L10 fill:{% if statuses.L10_ALPHA == 'ACTIVE' %}#311042,stroke:#d946ef{% else %}#1e293b,stroke:#475569,stroke-dasharray: 5 5{% endif %},color:{% if statuses.L10_ALPHA == 'ACTIVE' %}#fff{% else %}#64748b{% endif %}
+                </div>
+            </div>
+
+            <!-- 🔬 CARD MODULES: 11 BRAINS TOGGLES -->
+            <h3 class="section-header">11-Lobe Activity Matrix</h3>
+            
+            <div class="brains-grid">
+                <!-- L1 -->
+                <div class="brain-card">
+                    <div class="brain-header">
+                        <h4 class="brain-title">L1 City Brain</h4>
+                        <span class="brain-index">Lobe 1</span>
+                    </div>
+                    <p class="brain-details">Monitors zoning density parameters, permit approvals, and municipal updates.</p>
+                    <div class="brain-footer">
+                        <span class="weight-badge">{{ weights.L1_ZONING or "0.1500 (Baseline)" }}</span>
+                        <label class="switch">
+                            <input type="checkbox" id="toggle-L1_ZONING" onclick="toggleBrainActivity('L1_ZONING')" {% if statuses.L1_ZONING == 'ACTIVE' %}checked{% endif %}>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- L2 -->
+                <div class="brain-card">
+                    <div class="brain-header">
+                        <h4 class="brain-title">L2 TxDOT Brain</h4>
+                        <span class="brain-index">Lobe 2</span>
+                    </div>
+                    <p class="brain-details">Underwrites logistics, road frontage transit speeds, and highway egress links.</p>
+                    <div class="brain-footer">
+                        <span class="weight-badge">{{ weights.L2_TRANSIT or "0.1000 (Baseline)" }}</span>
+                        <label class="switch">
+                            <input type="checkbox" id="toggle-L2_TRANSIT" onclick="toggleBrainActivity('L2_TRANSIT')" {% if statuses.L2_TRANSIT == 'ACTIVE' %}checked{% endif %}>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- L3 -->
+                <div class="brain-card">
+                    <div class="brain-header">
+                        <h4 class="brain-title">L3 Power Brain</h4>
+                        <span class="brain-index">Lobe 3</span>
+                    </div>
+                    <p class="brain-details">Tracks utility high-voltage line locations and substation capacity load limits.</p>
+                    <div class="brain-footer">
+                        <span class="weight-badge">{{ weights.L3_POWER or "0.1500 (Baseline)" }}</span>
+                        <label class="switch">
+                            <input type="checkbox" id="toggle-L3_POWER" onclick="toggleBrainActivity('L3_POWER')" {% if statuses.L3_POWER == 'ACTIVE' %}checked{% endif %}>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- L4 -->
+                <div class="brain-card">
+                    <div class="brain-header">
+                        <h4 class="brain-title">L4 Legal/Env Brain</h4>
+                        <span class="brain-index">Lobe 4</span>
+                    </div>
+                    <p class="brain-details">Audits flood plain parameters, easement claims, and clay geotech foundations.</p>
+                    <div class="brain-footer">
+                        <span class="weight-badge">{{ weights.L4_LEGAL or "0.1500 (Baseline)" }}</span>
+                        <label class="switch">
+                            <input type="checkbox" id="toggle-L4_LEGAL" onclick="toggleBrainActivity('L4_LEGAL')" {% if statuses.L4_LEGAL == 'ACTIVE' %}checked{% endif %}>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- L5 -->
+                <div class="brain-card">
+                    <div class="brain-header">
+                        <h4 class="brain-title">L5 Ranger Brain</h4>
+                        <span class="brain-index">Lobe 5</span>
+                    </div>
+                    <p class="brain-details">Ingests camera data and climate hazard alerts to represent ground truth.</p>
+                    <div class="brain-footer">
+                        <span class="weight-badge">{{ weights.L5_RANGER or "0.1000 (Baseline)" }}</span>
+                        <label class="switch">
+                            <input type="checkbox" id="toggle-L5_RANGER" onclick="toggleBrainActivity('L5_RANGER')" {% if statuses.L5_RANGER == 'ACTIVE' %}checked{% endif %}>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- L6 -->
+                <div class="brain-card">
+                    <div class="brain-header">
+                        <h4 class="brain-title">L6 Pulse Brain</h4>
+                        <span class="brain-index">Lobe 6</span>
+                    </div>
+                    <p class="brain-details">Tracks public media announcements and local forum posts for submarket updates.</p>
+                    <div class="brain-footer">
+                        <span class="weight-badge">{{ weights.L6_PULSE or "0.0500 (Baseline)" }}</span>
+                        <label class="switch">
+                            <input type="checkbox" id="toggle-L6_PULSE" onclick="toggleBrainActivity('L6_PULSE')" {% if statuses.L6_PULSE == 'ACTIVE' %}checked{% endif %}>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- L7 -->
+                <div class="brain-card">
+                    <div class="brain-header">
+                        <h4 class="brain-title">L7 Finance Brain</h4>
+                        <span class="brain-index">Lobe 7</span>
+                    </div>
+                    <p class="brain-details">Calculates leverage parameters, debt coverage ratios, and cash yield values.</p>
+                    <div class="brain-footer">
+                        <span class="weight-badge">{{ weights.L7_FINANCE or "0.2000 (Baseline)" }}</span>
+                        <label class="switch">
+                            <input type="checkbox" id="toggle-L7_FINANCE" onclick="toggleBrainActivity('L7_FINANCE')" {% if statuses.L7_FINANCE == 'ACTIVE' %}checked{% endif %}>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- L8 -->
+                <div class="brain-card">
+                    <div class="brain-header">
+                        <h4 class="brain-title">L8 Inference Brain</h4>
+                        <span class="brain-index">Lobe 8</span>
+                    </div>
+                    <p class="brain-details">Coordinates core signals L1-L7 to compile final predictions and opportunities.</p>
+                    <div class="brain-footer">
+                        <span class="weight-badge">{{ weights.L8_INFERENCE or "0.1000 (Baseline)" }}</span>
+                        <label class="switch">
+                            <input type="checkbox" id="toggle-L8_INFERENCE" onclick="toggleBrainActivity('L8_INFERENCE')" {% if statuses.L8_INFERENCE == 'ACTIVE' %}checked{% endif %}>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- L9 -->
+                <div class="brain-card">
+                    <div class="brain-header">
+                        <h4 class="brain-title">L9 Accountability</h4>
+                        <span class="brain-index">Lobe 9</span>
+                    </div>
+                    <p class="brain-details">Enforces 100 system rules and dynamically tunes weights against actual comps.</p>
+                    <div class="brain-footer">
+                        <span class="weight-badge">Audit Controller</span>
+                        <label class="switch">
+                            <input type="checkbox" id="toggle-L9_ACCOUNTABILITY" onclick="toggleBrainActivity('L9_ACCOUNTABILITY')" {% if statuses.L9_ACCOUNTABILITY == 'ACTIVE' %}checked{% endif %}>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- L10 -->
+                <div class="brain-card">
+                    <div class="brain-header">
+                        <h4 class="brain-title">L10 Alpha Brain</h4>
+                        <span class="brain-index">Lobe 10</span>
+                    </div>
+                    <p class="brain-details">Compiles custom printable feasibility reports based on JBREC standards.</p>
+                    <div class="brain-footer">
+                        <span class="weight-badge">Report Compiler</span>
+                        <label class="switch">
+                            <input type="checkbox" id="toggle-L10_ALPHA" onclick="toggleBrainActivity('L10_ALPHA')" {% if statuses.L10_ALPHA == 'ACTIVE' %}checked{% endif %}>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- L11 -->
+                <div class="brain-card">
+                    <div class="brain-header">
+                        <h4 class="brain-title">L11 Scout Brain</h4>
+                        <span class="brain-index">Lobe 11</span>
+                    </div>
+                    <p class="brain-details">Discovers, tests, and sanitizes incoming public GIS/endpoint connections.</p>
+                    <div class="brain-footer">
+                        <span class="weight-badge">Ingestion Gate</span>
+                        <label class="switch">
+                            <input type="checkbox" id="toggle-L11_SCOUT" onclick="toggleBrainActivity('L11_SCOUT')" {% if statuses.L11_SCOUT == 'ACTIVE' %}checked{% endif %}>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 🔬 TABS AREA: INGESTION ENDPOINTS & AUDIT RULES -->
+            <div class="data-table-container">
+                <div class="tab-menu">
+                    <button class="tab-btn active" onclick="switchTab('scout-tab')">L11 Scout Ingestion Gateway</button>
+                    <button class="tab-btn" onclick="switchTab('accountability-tab')">L9 Accountability Rules</button>
+                    <button class="tab-btn" onclick="switchTab('reports-tab')">L10 Alpha Reports</button>
+                </div>
+
+                <!-- SCOUT TAB -->
+                <div id="scout-tab" class="tab-pane active">
+                    <div style="display: grid; grid-template-columns: 1fr 350px; gap: 1.5rem; margin-top: 1rem;">
+                        <div>
+                            <table class="sigma-data-grid">
+                                <thead>
+                                    <tr>
+                                        <th>Municipality</th>
+                                        <th>Department</th>
+                                        <th>Endpoint Details</th>
+                                        <th>Status</th>
+                                        <th>Latency</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for source in scout_sources %}
+                                    <tr id="scout-row-{{ source.id }}">
+                                        <td style="font-weight: 700;">{{ source.municipality_name }}</td>
+                                        <td>{{ source.department_name }}</td>
+                                        <td style="font-family: 'JetBrains Mono', monospace; font-size: 11px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                            {{ source.endpoint_or_contact }}
+                                        </td>
+                                        <td>
+                                            <span id="scout-badge-{{ source.id }}" class="status-pill {% if source.scouting_status == 'Active' %}status-active{% elif source.scouting_status == 'Verified Contact' %}status-active{% else %}status-offline{% endif %}">
+                                                {{ source.scouting_status }}
+                                            </span>
+                                        </td>
+                                        <td style="font-family: 'JetBrains Mono', monospace;">
+                                            {{ source.latency_ms or '-' }} {% if source.latency_ms %}ms{% endif %}
+                                        </td>
+                                        <td>
+                                            <div style="display: flex; gap: 6px;">
+                                                <button class="sigma-btn-small" onclick="testEndpoint('{{ source.id }}')">Ping</button>
+                                                <button class="sigma-btn-crimson" onclick="deleteEndpoint('{{ source.id }}')">Delete</button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- ADD ENDPOINT FORM -->
+                        <div class="sigma-form-container" style="position:static; padding:1.5rem; width:100%; box-sizing:border-box;">
+                            <h3 class="form-title" style="font-size:12px; margin-bottom:1rem;">⚡ Add Connection Target</h3>
+                            <form id="add-scout-form" onsubmit="event.preventDefault(); addScoutEndpoint();">
+                                <div class="sigma-form-group">
+                                    <label class="sigma-form-label">Municipality / County</label>
+                                    <input type="text" id="scout-muni" class="sigma-form-input" placeholder="e.g. Wise County" required>
+                                </div>
+                                <div class="sigma-form-group">
+                                    <label class="sigma-form-label">Department</label>
+                                    <input type="text" id="scout-dept" class="sigma-form-input" placeholder="e.g. Planning & GIS" required>
+                                </div>
+                                <div class="sigma-form-group">
+                                    <label class="sigma-form-label">Connection Type</label>
+                                    <select id="scout-type" class="sigma-form-input" style="height:38px;">
+                                        <option value="ArcGIS REST Service">ArcGIS REST Service</option>
+                                        <option value="Municipal GIS portal">Municipal GIS portal</option>
+                                        <option value="Contact Directory">Contact Directory</option>
+                                    </select>
+                                </div>
+                                <div class="sigma-form-group">
+                                    <label class="sigma-form-label">URL / Contact Info</label>
+                                    <input type="text" id="scout-endpoint" class="sigma-form-input" placeholder="http://..." required>
+                                </div>
+                                <button type="submit" class="sigma-btn-cyan" style="height:34px; font-size:10px;">
+                                    Create Target
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ACCOUNTABILITY TAB -->
+                <div id="accountability-tab" class="tab-pane">
+                    <div style="display: grid; grid-template-columns: 1fr 350px; gap: 1.5rem; margin-top: 1rem;">
+                        <div>
+                            <table class="sigma-data-grid">
+                                <thead>
+                                    <tr>
+                                        <th>Rule ID</th>
+                                        <th>System Lobe</th>
+                                        <th>Category & Core Responsibility</th>
+                                        <th>Check Target</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for rule in accountability_rules %}
+                                    <tr id="rule-row-{{ rule.id }}">
+                                        <td style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--hex-cyan);">{{ rule.responsibility_id }}</td>
+                                        <td style="font-weight: 600;">{{ rule.lobe }}</td>
+                                        <td>
+                                            <div style="font-weight: 700; color: #fff; margin-bottom: 2px;">{{ rule.category }}</div>
+                                            <div style="font-size: 11px; color: var(--hex-text-muted);">{{ rule.description }}</div>
+                                        </td>
+                                        <td style="font-size:11px;">{{ rule.verification_method }}</td>
+                                        <td>
+                                            <span class="status-pill {% if rule.status == 'PASSED' %}status-active{% else %}status-pending{% endif %}">
+                                                {{ rule.status }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <button class="sigma-btn-crimson" onclick="deleteAccountabilityRule('{{ rule.id }}')">Delete</button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- ADD ACCOUNTABILITY RULE FORM -->
+                        <div class="sigma-form-container" style="position:static; padding:1.5rem; width:100%; box-sizing:border-box;">
+                            <h3 class="form-title" style="font-size:12px; margin-bottom:1rem;">⚡ Add Auditor Rule</h3>
+                            <form id="add-rule-form" onsubmit="event.preventDefault(); addAccountabilityRule();">
+                                <div class="sigma-form-group">
+                                    <label class="sigma-form-label">Rule Identifier (ID)</label>
+                                    <input type="text" id="rule-resp-id" class="sigma-form-input" placeholder="e.g. ACC-101" required>
+                                </div>
+                                <div class="sigma-form-group">
+                                    <label class="sigma-form-label">Target Brain Lobe</label>
+                                    <select id="rule-lobe" class="sigma-form-input" style="height:38px;">
+                                        <option value="L1 City Brain">L1 City Brain</option>
+                                        <option value="L2 TxDOT Brain">L2 TxDOT Brain</option>
+                                        <option value="L3 Power Brain">L3 Power Brain</option>
+                                        <option value="L4 Legal/Env Brain">L4 Legal/Env Brain</option>
+                                        <option value="L5 Ranger Brain">L5 Ranger Brain</option>
+                                        <option value="L6 Pulse Brain">L6 Pulse Brain</option>
+                                        <option value="L7 Finance Brain">L7 Finance Brain</option>
+                                        <option value="L8 Inference Brain">L8 Inference Brain</option>
+                                        <option value="L9 Accountability Brain">L9 Accountability Brain</option>
+                                    </select>
+                                </div>
+                                <div class="sigma-form-group">
+                                    <label class="sigma-form-label">Category</label>
+                                    <input type="text" id="rule-category" class="sigma-form-input" placeholder="e.g. Shapefile Parity" required>
+                                </div>
+                                <div class="sigma-form-group">
+                                    <label class="sigma-form-label">Description</label>
+                                    <input type="text" id="rule-desc" class="sigma-form-input" placeholder="What does this rule verify?" required>
+                                </div>
+                                <div class="sigma-form-group">
+                                    <label class="sigma-form-label">Verification Target</label>
+                                    <input type="text" id="rule-method" class="sigma-form-input" placeholder="e.g. Row count assertions" required>
+                                </div>
+                                <button type="submit" class="sigma-btn-cyan" style="height:34px; font-size:10px;">
+                                    Create Rule
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- REPORTS TAB -->
+                <div id="reports-tab" class="tab-pane">
+                    <div style="margin-top: 1rem;">
+                        <table class="sigma-data-grid">
+                            <thead>
+                                <tr>
+                                    <th>Project ID</th>
+                                    <th>Project Name & Details</th>
+                                    <th>Primary Lobe</th>
+                                    <th>Target IRR (%)</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for project in projects %}
+                                <tr>
+                                    <td style="font-family: 'JetBrains Mono', monospace;">{{ project.id }}</td>
+                                    <td>
+                                        <div style="font-weight: 700; color: #fff; margin-bottom: 2px;">{{ project.name }}</div>
+                                        <div style="font-size: 11px; color: var(--hex-text-muted);">
+                                            Region: {{ project.region or '-' }} | Status: {{ project.status or '-' }} | Budget: ${{ "{:,.2f}".format(project.budget) if project.budget else '$0.00' }}
+                                        </div>
+                                    </td>
+                                    <td>{{ project.primary_lobe or 'L8 INFERENCE' }}</td>
+                                    <td style="font-weight: 700; color: var(--hex-gold);">{{ project.target_irr }}%</td>
+                                    <td>
+                                        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                                            <button class="sigma-btn-small" onclick="editProject('{{ project.id }}', '{{ project.name | replace("'", "\\'") }}', '{{ project.region }}', '{{ project.status }}', '{{ project.description | replace("'", "\\'") }}', '{{ project.budget }}', '{{ project.target_irr }}', '{{ project.primary_lobe }}')">Edit</button>
+                                            <button class="sigma-btn-small" style="background: rgba(239, 68, 68, 0.15); border-color: #ef4444; color: #ef4444;" onclick="deleteProject('{{ project.id }}')">Delete</button>
+                                            <a href="/reports/{{ project.id }}" target="_blank" class="sigma-btn-small" 
+                                               style="background: rgba(6, 182, 212, 0.15); border-color: var(--hex-cyan); color: var(--hex-cyan); text-decoration: none; display: inline-flex; align-items: center; justify-content: center; height: 26px; box-sizing: border-box; padding: 0 8px;">
+                                                Compile Report
+                                            </a>
+                                            <a href="/reports/max/{{ project.id }}" target="_blank" class="sigma-btn-small" 
+                                               style="background: rgba(168, 85, 247, 0.15); border-color: #a855f7; color: #a855f7; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; height: 26px; box-sizing: border-box; padding: 0 8px;">
+                                                Compile Max Report
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+
+                        <!-- ADD / MODIFY PROJECT TARGET FORM -->
+                        <div class="sigma-form-container" style="position:static; padding:1.5rem; width:100%; box-sizing:border-box; margin-top: 2rem;">
+                            <h3 id="proj-form-title" class="form-title" style="font-size:12px; margin-bottom:1rem;">⚡ Add Client Specific Target</h3>
+                            <form id="project-target-form" onsubmit="event.preventDefault(); submitProjectTarget();" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                                <input type="hidden" id="proj-edit-id" value="">
+                                
+                                <div class="sigma-form-group">
+                                    <label class="sigma-form-label">Project Name</label>
+                                    <input type="text" id="proj-edit-name" class="sigma-form-input" placeholder="e.g. WEBSTER SOUTH BAY" required>
+                                </div>
+                                <div class="sigma-form-group">
+                                    <label class="sigma-form-label">Region / Focus</label>
+                                    <select id="proj-edit-region" class="sigma-form-input" style="height:38px;">
+                                        <option value="Webster">Webster</option>
+                                        <option value="Dallas">Dallas</option>
+                                        <option value="Decatur">Decatur</option>
+                                        <option value="Valley View">Valley View</option>
+                                        <option value="Houston">Houston</option>
+                                        <option value="Austin">Austin</option>
+                                    </select>
+                                </div>
+                                <div class="sigma-form-group">
+                                    <label class="sigma-form-label">Development Status</label>
+                                    <select id="proj-edit-status" class="sigma-form-input" style="height:38px;">
+                                        <option value="Feasibility Assessment">Feasibility Assessment</option>
+                                        <option value="Under Contract">Under Contract</option>
+                                        <option value="Closed / Underway">Closed / Underway</option>
+                                    </select>
+                                </div>
+                                <div class="sigma-form-group">
+                                    <label class="sigma-form-label">Primary Lobe Feed</label>
+                                    <select id="proj-edit-lobe" class="sigma-form-input" style="height:38px;">
+                                        <option value="L8 INFERENCE">L8 INFERENCE</option>
+                                        <option value="L1 City (Zoning)">L1 City (Zoning)</option>
+                                        <option value="L2 Roads (TxDOT)">L2 Roads (TxDOT)</option>
+                                        <option value="L3 Grid (Power)">L3 Grid (Power)</option>
+                                        <option value="L4 Legal (Env)">L4 Legal (Env)</option>
+                                        <option value="L5 Ranger (Security)">L5 Ranger (Security)</option>
+                                        <option value="L6 Sentiment (Pulse)">L6 Sentiment (Pulse)</option>
+                                        <option value="L7 Finance (Arbitrage)">L7 Finance (Arbitrage)</option>
+                                    </select>
+                                </div>
+                                <div class="sigma-form-group">
+                                    <label class="sigma-form-label">Target IRR (%)</label>
+                                    <input type="number" step="0.1" id="proj-edit-irr" class="sigma-form-input" placeholder="e.g. 15.5" required>
+                                </div>
+                                <div class="sigma-form-group">
+                                    <label class="sigma-form-label">Target Budget ($)</label>
+                                    <input type="number" step="1000" id="proj-edit-budget" class="sigma-form-input" placeholder="e.g. 25000000" required>
+                                </div>
+                                <div class="sigma-form-group" style="grid-column: span 2;">
+                                    <label class="sigma-form-label">Description / Scope Details</label>
+                                    <input type="text" id="proj-edit-desc" class="sigma-form-input" placeholder="Enter study boundaries or client details...">
+                                </div>
+                                <div style="grid-column: span 2; display: flex; align-items: center; gap: 10px; margin-top: 1rem;">
+                                    <button type="submit" id="proj-submit-btn" class="sigma-btn-cyan" style="height:34px; font-size:10px;">
+                                        Create Target
+                                    </button>
+                                    <button type="button" id="proj-cancel-btn" class="sigma-btn-small" style="display:none; height:34px;" onclick="cancelProjectEdit()">
+                                        Cancel Edit
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- TOAST NOTIFICATION CONTAINER -->
+<div id="toast" class="toast-notify">
+    <span id="toast-text">System Settings Saved.</span>
+</div>
+
+<!-- DEPENDENCY SCRIPTS -->
+<script src="{{ url_for('static', filename='js/mermaid.min.js') }}"></script>
+<script>
+    mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'loose' });
+
+    function showToast(message) {
+        const toast = document.getElementById('toast');
+        document.getElementById('toast-text').innerText = message;
+        toast.classList.add('show');
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
+    }
+
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
+        
+        event.target.classList.add('active');
+        document.getElementById(tabId).classList.add('active');
+    }
+
+    // 🔬 DYNAMIC COGNITIVE BRIDGE SAVING
+    function saveBridgeParameters() {
+        const data = {
+            interest_rate: document.getElementById('interest_rate').value,
+            cap_rate_baseline: document.getElementById('cap_rate_baseline').value,
+            permit_latency_days: document.getElementById('permit_latency_days').value,
+            egress_speed_mph: document.getElementById('egress_speed_mph').value,
+            construction_cost_index: document.getElementById('construction_cost_index').value
+        };
+
+        fetch('/api/v1/admin/update-bridge', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                showToast("Cognitive Bridge settings saved successfully.");
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                showToast("Error saving parameters: " + data.message);
+            }
+        })
+        .catch(err => showToast("Connection failed."));
+    }
+
+    // 🔬 TOGGLE BRAIN LOBES (ON / OFF)
+    function toggleBrainActivity(lobeName) {
+        const checkbox = document.getElementById('toggle-' + lobeName);
+        const status = checkbox.checked ? 'ACTIVE' : 'INACTIVE';
+
+        fetch('/api/v1/admin/toggle-brain', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lobe: lobeName, status: status })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                showToast(`${lobeName.replace('_', ' ')} status updated to ${status}.`);
+                // Reload after a delay to rebuild the Mermaid graph dynamically
+                setTimeout(() => window.location.reload(), 1200);
+            } else {
+                checkbox.checked = !checkbox.checked; // Revert checkbox
+                showToast("Error updating brain status: " + data.message);
+            }
+        })
+        .catch(err => {
+            checkbox.checked = !checkbox.checked;
+            showToast("Connection failed.");
+        });
+    }
+
+    // 🔬 RUN AUDITS CYCLE
+    function runAccountabilityAudits() {
+        showToast("Initiating system accountability audits and weight tuning...");
+        fetch('/api/v1/admin/accountability/run', { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                showToast("Audits complete. Lobe weights optimized successfully.");
+                setTimeout(() => window.location.reload(), 1500);
+            } else {
+                showToast("Audit run failed: " + data.message);
+            }
+        })
+        .catch(err => showToast("Connection failed."));
+    }
+
+    // 🔬 L11 CRAWLER ENDPOINT CONTROLLERS
+    function testEndpoint(sourceId) {
+        showToast("Pinging link connection...");
+        fetch('/api/v1/pulse/test-link', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ source_id: sourceId })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                showToast(`Ping completed: ${data.data.status} (${data.data.latency_ms || 0} ms)`);
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                showToast("Ping failed: " + data.message);
+            }
+        })
+        .catch(err => showToast("Connection failed."));
+    }
+
+    function deleteEndpoint(sourceId) {
+        if (!confirm("Are you sure you want to delete this ingestion target?")) return;
+        fetch('/api/v1/admin/scout/delete/' + sourceId, { method: 'DELETE' })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                document.getElementById('scout-row-' + sourceId).remove();
+                showToast("Ingestion target deleted successfully.");
+            } else {
+                showToast("Delete failed: " + data.message);
+            }
+        })
+        .catch(err => showToast("Connection failed."));
+    }
+
+    function addScoutEndpoint() {
+        const data = {
+            municipality_name: document.getElementById('scout-muni').value,
+            department_name: document.getElementById('scout-dept').value,
+            source_type: document.getElementById('scout-type').value,
+            endpoint_or_contact: document.getElementById('scout-endpoint').value
+        };
+
+        fetch('/api/v1/admin/scout/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                showToast("Ingestion target added successfully.");
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                showToast("Add failed: " + data.message);
+            }
+        })
+        .catch(err => showToast("Connection failed."));
+    }
+
+    // 🔬 L9 RULE CONTROLLERS
+    function deleteAccountabilityRule(ruleId) {
+        if (!confirm("Are you sure you want to delete this accountability rule?")) return;
+        fetch('/api/v1/admin/accountability/delete/' + ruleId, { method: 'DELETE' })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                document.getElementById('rule-row-' + ruleId).remove();
+                showToast("Accountability rule deleted successfully.");
+            } else {
+                showToast("Delete failed: " + data.message);
+            }
+        })
+        .catch(err => showToast("Connection failed."));
+    }
+
+    function addAccountabilityRule() {
+        const data = {
+            responsibility_id: document.getElementById('rule-resp-id').value,
+            lobe: document.getElementById('rule-lobe').value,
+            category: document.getElementById('rule-category').value,
+            description: document.getElementById('rule-desc').value,
+            verification_method: document.getElementById('rule-method').value
+        };
+
+        fetch('/api/v1/admin/accountability/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                showToast("Accountability rule added successfully.");
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                showToast("Add failed: " + data.message);
+            }
+        })
+        .catch(err => showToast("Connection failed."));
+    }
+
+    // 🔬 CLIENT SPECIFIC TARGETS CONTROLLERS (L10 REPORTS)
+    function editProject(id, name, region, status, description, budget, targetIrr, primaryLobe) {
+        document.getElementById('proj-edit-id').value = id;
+        document.getElementById('proj-edit-name').value = name;
+        document.getElementById('proj-edit-region').value = region;
+        document.getElementById('proj-edit-status').value = status;
+        document.getElementById('proj-edit-desc').value = description;
+        document.getElementById('proj-edit-budget').value = budget;
+        document.getElementById('proj-edit-irr').value = targetIrr;
+        document.getElementById('proj-edit-lobe').value = primaryLobe;
+        
+        document.getElementById('proj-form-title').innerText = "⚡ Edit Client Specific Target (ID: " + id + ")";
+        document.getElementById('proj-submit-btn').innerText = "Update Target";
+        document.getElementById('proj-cancel-btn').style.display = "inline-block";
+        
+        // Scroll to form
+        document.getElementById('proj-form-title').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function cancelProjectEdit() {
+        document.getElementById('proj-edit-id').value = "";
+        document.getElementById('proj-edit-name').value = "";
+        document.getElementById('proj-edit-region').value = "Webster";
+        document.getElementById('proj-edit-status').value = "Feasibility Assessment";
+        document.getElementById('proj-edit-desc').value = "";
+        document.getElementById('proj-edit-budget').value = "";
+        document.getElementById('proj-edit-irr').value = "";
+        document.getElementById('proj-edit-lobe').value = "L8 INFERENCE";
+        
+        document.getElementById('proj-form-title').innerText = "⚡ Add Client Specific Target";
+        document.getElementById('proj-submit-btn').innerText = "Create Target";
+        document.getElementById('proj-cancel-btn').style.display = "none";
+    }
+
+    function deleteProject(projectId) {
+        if (!confirm("Are you sure you want to delete this client target and all associated report links?")) {
+            return;
+        }
+        fetch('/api/v1/projects/' + projectId, {
+            method: 'DELETE'
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                showToast("Client target deleted successfully.");
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                showToast("Delete failed: " + data.message);
+            }
+        })
+        .catch(err => showToast("Connection failed."));
+    }
+
+    function submitProjectTarget() {
+        const id = document.getElementById('proj-edit-id').value;
+        const data = {
+            name: document.getElementById('proj-edit-name').value,
+            region: document.getElementById('proj-edit-region').value,
+            status: document.getElementById('proj-edit-status').value,
+            description: document.getElementById('proj-edit-desc').value,
+            budget: parseFloat(document.getElementById('proj-edit-budget').value || 0),
+            target_irr: parseFloat(document.getElementById('proj-edit-irr').value || 0),
+            primary_lobe: document.getElementById('proj-edit-lobe').value
+        };
+
+        const url = id ? '/api/v1/projects/' + id : '/api/v1/projects';
+        const method = id ? 'PUT' : 'POST';
+
+        fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                showToast(id ? "Client target updated successfully." : "Client target added successfully.");
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                showToast("Submission failed: " + data.message);
+            }
+        })
+        .catch(err => showToast("Connection failed."));
+    }
+</script>
+
+</body>
+</html>

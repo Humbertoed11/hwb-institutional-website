@@ -1,0 +1,98 @@
+<!-- 
+    HEXGROWTH Institutional Report: Cross-Lobe Duplication & High-Inference Audit
+    Standard: HEX-QMS-1.0
+    Document ID: HEX-REPORT-23.0-AUDIT
+-->
+<div class="sop-card">
+    <!-- DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HEX-REPORT-23.0-AUDIT</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #2563eb;">● PROPOSED</span></div>
+        <div class="meta-unit"><span class="meta-label">Author</span><span class="meta-val">George Bytes (Systems Architect)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <h1>Institutional Report: <strong>Cross-Lobe Duplication & High-Inference Audit</strong></h1>
+        
+        <p>This report documents the results of an audit across the eleven neural lobes and supporting database schemas of HEXGROWTH. It identifies duplicate database tables, redundant document indexing, and conflicts in scoring scripts that must be fixed to ensure high-inference reasoning and data accuracy.</p>
+
+        <div class="callout callout-note">
+            <div class="callout-title">ℹ️ AUDIT FOCUS</div>
+            <p>To keep our land decisions accurate, we must ensure each brain lobe has a single, clear job. Having duplicate tables or conflicting data scripts leads to mixed results and wasted server storage.</p>
+        </div>
+
+        <hr />
+
+        <h2>1.0 Identified System Duplications</h2>
+        <p>The system audit revealed three major areas of duplicate data storage and logic conflicts:</p>
+
+        <h3>1.1 Database State Duplication: SystemCore vs. SystemState</h3>
+        <p>The system maintains two separate tables to store session states and active variables: <code>HEX_SystemCore</code> and <code>HEX_SystemState</code>. When the sync script runs, it writes the exact same recovery data into both tables. This means we are storing the same parameters twice on every session reload.</p>
+        <ul>
+            <li><b>Affected Script:</b> <a href="file:///home/humbertoed/hexgrowth/scripts/hex_sync.py">hex_sync.py</a> (writes to both tables).</li>
+            <li><b>Risk:</b> Having two tables for state data increases the risk of data drift if one table is updated and the other is not.</li>
+        </ul>
+
+        <h3>1.2 Document Index Duplication: ManualIndex vs. KB_Library</h3>
+        <p>The system stores QMS manuals twice in the database. The <code>HEX_ManualIndex</code> table is populated using the master index file to show manuals on the HUD. The <code>HEX_KB_Library</code> table is populated by a separate script that scans folders and generates word vectors for search.</p>
+        <ul>
+            <li><b>Affected Scripts:</b> <a href="file:///home/humbertoed/hexgrowth/scripts/hex_sync.py">hex_sync.py</a> (populates ManualIndex) and <a href="file:///home/humbertoed/hexgrowth/scripts/HEX-PERSISTENCE-PROTOCOL.py">HEX-PERSISTENCE-PROTOCOL.py</a> (populates KB_Library).</li>
+            <li><b>Risk:</b> Both tables store the same HTML manual contents, leading to wasted space and potential mismatches when manuals are updated.</li>
+        </ul>
+
+        <h3>1.3 Scoring Script Conflict: Real-World vs. Procedural TxDOT Miners</h3>
+        <p>There are two scripts that calculate infrastructure scores for Lobe 2 (TxDOT Brain): <code>HEX-MINER-TXDOT.py</code> and <code>HEX-MINER-TXDOT-PROCEDURAL.py</code>. Both scripts write their scores to the same table (<code>HEX_Lobe_Infrastructure</code>) and overwrite each other's data on conflict.</p>
+        <ul>
+            <li><b>Affected Scripts:</b> <a href="file:///home/humbertoed/hexgrowth/scripts/HEX-MINER-TXDOT.py">HEX-MINER-TXDOT.py</a> (real API data) and <a href="file:///home/humbertoed/hexgrowth/scripts/HEX-MINER-TXDOT-PROCEDURAL.py">HEX-MINER-TXDOT-PROCEDURAL.py</a> (procedural distance-based scores).</li>
+            <li><b>Risk:</b> If both scripts run, they fight over the scores in the database, causing unstable ratings on the HUD.</li>
+        </ul>
+
+        <hr />
+
+        <h2>2.0 High-Inference Consolidation Plan</h2>
+        <p>To fix these issues and prepare the system for advanced cross-lobe reasoning, the following consolidation steps are proposed:</p>
+
+        <h3>2.1 Consolidating Database State</h3>
+        <p>The system will retire the legacy <code>HEX_SystemCore</code> table. All session load and save routines will be updated to target the new Tier 6 <code>HEX_SystemState</code> table exclusively. This establishes a single source of truth for all session variables.</p>
+
+        <h3>2.2 Unifying the Knowledge Index</h3>
+        <p>The system will merge the <code>HEX_ManualIndex</code> and <code>HEX_KB_Library</code> tables. We will add the mock/vector embedding columns to the index table, or configure the HUD endpoints to query <code>HEX_KB_Library</code> directly. The file-scanner script will become the primary way to sync and update all manuals in the system.</p>
+
+        <h3>2.3 Establishing Lobe 11 (Scout Brain) as Ingestion Gatekeeper</h3>
+        <p>To prevent duplicate API calls and scoring fights, all external scraping routines will be moved under Lobe 11 (Scout Brain). Lobe 2 (TxDOT) will no longer query external services directly. Instead:</p>
+        <ol>
+            <li>Lobe 11 dispatches a worker to collect real-world traffic data and writes it to a staging table.</li>
+            <li>Lobe 2 reads from the staging table to calculate scores.</li>
+            <li>If testing requires procedural values, a setting in <code>HEX_SystemState</code> will decide whether to use real API results or distance-based mock scores, rather than running conflicting scripts.</li>
+        </ol>
+
+        <hr />
+        <h2>Document Revision History</h2>
+        <table class="sigma-data-grid">
+            <thead>
+                <tr>
+                    <th>Revision</th>
+                    <th>Date</th>
+                    <th>Description of Change</th>
+                    <th>Author / Approved By</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><b>1.0.0</b></td>
+                    <td>06/06/2026</td>
+                    <td>Conducted audit of all brains and schemas for duplicate work.</td>
+                    <td>George Bytes (Systems Architect) / Humberto Dominguez (CEO)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- DOCUMENT CONTROL FOOTER -->
+    <div class="sop-card-footer">
+        <div>Classification: Institutional ISO 9001 QMS Record</div>
+        <div>Effective Date: 06/06/2026</div>
+        <div>Review Cycle: Annual (Rev 1.0.0)</div>
+    </div>
+</div>

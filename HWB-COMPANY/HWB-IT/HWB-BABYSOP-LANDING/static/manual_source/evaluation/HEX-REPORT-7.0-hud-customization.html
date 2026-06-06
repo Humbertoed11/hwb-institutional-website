@@ -1,0 +1,68 @@
+<!-- 
+    HEXGROWTH Institutional QMS Document
+    Standard: HEX-QMS-1.0 v1.0
+    Document ID: HEX-REPORT-7.0
+-->
+<div class="sop-card">
+    <!-- DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HEX-REPORT-7.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #10b981;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Author</span><span class="meta-val">George Bytes (Lead Auditor)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <h1>HEXGROWTH: <strong>HUD Customization Architecture (06/03/2026)</strong></h1>
+        <p>This report documents the architectural guidelines for delivering custom HUD layout profiles to developers based on their specific land use criteria.</p>
+
+        <hr>
+
+        <h2>1.0 Options for Customization</h2>
+        
+        <ul>
+            <li><strong>Option 1: Custom Layer Toggles (User-Controlled Layout):</strong> The client can turn map layers (like electric grids, flood zones, or school district boundaries) on or off from their sidebar to adjust visual clutter.
+                <br><em>Reference:</em> <a href="file:///home/humbertoed/hexgrowth/app/templates/hud.html">hud.html</a>
+            </li>
+            
+            <li><strong>Option 2: Custom Lobe Weighting (Algorithm Tuning):</strong> The client can adjust how much individual data lobes influence the consolidated property score. For example, setting the Power Lobe to 80% and the School District Lobe to 0% for industrial warehouse users.
+            </li>
+            
+            <li><strong>Option 3: Asset Class Presets (One-Click Profiles):</strong> Built-in profiles tailored to specific real estate sectors:
+                <ul>
+                    <li><strong>Retail Profile:</strong> Highlights daily traffic count, highway exits, and neighborhood demographics.</li>
+                    <li><strong>Industrial Profile:</strong> Highlights nearby transmission lines, power stations, and highway freight corridors.</li>
+                    <li><strong>Housing Profile:</strong> Highlights school ratings, wetlands, and zoning setbacks.</li>
+                </ul>
+            </li>
+        </ul>
+        
+        <hr />
+        <h2>Document Revision History</h2>
+        <table class="sigma-data-grid">
+            <thead>
+                <tr>
+                    <th>Revision</th>
+                    <th>Date</th>
+                    <th>Description of Change</th>
+                    <th>Author / Approved By</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><b>1.0.0</b></td>
+                    <td>06/03/2026</td>
+                    <td>Standardized clinical formatting and aligned with ISO 9001 document controls.</td>
+                    <td>George Bytes / Humberto Dominguez (Chairman)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 3. DOCUMENT CONTROL FOOTER -->
+    <div class="sop-card-footer">
+        <div>Classification: Institutional ISO 9001 QMS Record</div>
+        <div>Effective Date: 06/03/2026</div>
+        <div>Review Cycle: Annual (Rev 1.0.0)</div>
+    </div>
+</div>

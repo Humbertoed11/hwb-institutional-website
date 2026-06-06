@@ -1,0 +1,88 @@
+<!-- 
+    HEXGROWTH Institutional QMS Document
+    Standard: HEX-QMS-1.0 v1.0
+    Document ID: HEX-REPORT-17.0
+-->
+<div class="sop-card">
+    <!-- DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HEX-REPORT-17.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.1.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #10b981;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Author</span><span class="meta-val">George Bytes (Lead Auditor)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <h1>Executive Directive: <strong>Strategic Roadmap & Hex-Terminal Standards</strong></h1>
+
+        <h2>1.0 Purpose</h2>
+        <p>This executive directive establishes high-level mandates, strategic roadmaps, and UI/UX design parameters approved by the CEO. It outlines the transition plan to elevate HEXGROWTH to a high-speed, keyboard-first real estate terminal.</p>
+
+        <h2>2.0 Pending Upgrades & Roadmap</h2>
+        <h3>2.1 Global Search Mode</h3>
+        <ul>
+            <li><strong>Objective:</strong> Upgrade the search interface from "Simulation Mode" to "Global Mode".</li>
+            <li><strong>Requirements:</strong>
+                <ul>
+                    <li>Support for any street address in Texas (and globally).</li>
+                    <li>Support for city-level and zip-code-level navigation.</li>
+                    <li>Integration with a live geocoding API (e.g. OpenStreetMap / Nominatim or Mapbox).</li>
+                </ul>
+            </li>
+            <li><strong>Status:</strong> APPROVED (Waiting for Implementation Sprint).</li>
+        </ul>
+
+        <h2>3.0 Architectural Decisions</h2>
+        <h3>3.1 The Geometric Mandate</h3>
+        <p><strong>Decision:</strong> ONLY HEXAGONS are to be used for all map layers and data representations. This ensures a regular tessellation across the 2D plane, reinforcing the "Honeycomb" and "Hardened Vault" aesthetic (Reference: HUD v2.28+).</p>
+
+        <h3>3.2 Language Standard</h3>
+        <p><strong>Decision:</strong> Use "Everyday Words" suitable for a 20-year-old reading level. To ensure the terminal is intuitive and ready for mass-market sales, remove technical jargon (e.g. "Lobes", "Neural Sync") from the primary UI viewports.</p>
+
+        <h3>3.3 Pre-Execution Impact Study Mandate</h3>
+        <p><strong>Decision:</strong> To prevent runtime failures and site downtime, an impact study must be completed and approved by the CEO before executing any major code modifications. This mandate applies to changes affecting security setups, database tables, or third-party web service connections. Every impact study must check environment parity (local testing vs. production HTTPS), identify system dependency risks, and define a clear rollback path.</p>
+
+        <h2>4.0 Hex-Terminal Standards (Brainstorming)</h2>
+        <p>The following specifications outline the keyboard-driven terminal upgrades:</p>
+        <ol>
+            <li><strong>Keyboard-First Interface (CMD+K / Ctrl+K):</strong> An instant command console allowing users to pan coordinates via <code>/go [H3-Address]</code>, swap active map scores via <code>/lobe [1-7]</code>, and highlights developer holdings via <code>/search [Developer-Name]</code>.</li>
+            <li><strong>Live Transaction Ticker:</strong> A scrolling sidebar widget on the HUD displaying latest transactional records from <code>HEX_DeveloperIntent</code> and opportunity logs in real-time.</li>
+            <li><strong>Multi-Lobe Valuation Solver:</strong> A comparison matrix overlay on the HUD that calculates value arbitrage across selected cell blocks based on user-defined weights.</li>
+            <li><strong>Optimized Spatial Fetching:</strong> Pre-compilation and caching of PostGIS geometry layers to reduce client grid rendering latency to under 100ms.</li>
+        </ol>
+
+        <hr />
+        <h2>Document Revision History</h2>
+        <table class="sigma-data-grid">
+            <thead>
+                <tr>
+                    <th>Revision</th>
+                    <th>Date</th>
+                    <th>Description of Change</th>
+                    <th>Author / Approved By</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><b>1.0.0</b></td>
+                    <td>06/04/2026</td>
+                    <td>Initial compilation of executive strategic directives and Hex-Terminal brainstorming.</td>
+                    <td>George Bytes / Humberto Dominguez (Chairman)</td>
+                </tr>
+                <tr>
+                    <td><b>1.1.0</b></td>
+                    <td>06/06/2026</td>
+                    <td>Added Section 3.3 establishing the Pre-Execution Impact Study Mandate.</td>
+                    <td>George Bytes / Humberto Dominguez (Chairman)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- DOCUMENT CONTROL FOOTER -->
+    <div class="sop-card-footer">
+        <div>Classification: Institutional ISO 9001 QMS Record</div>
+        <div>Effective Date: 06/06/2026</div>
+        <div>Review Cycle: Annual (Rev 1.1.0)</div>
+    </div>
+</div>

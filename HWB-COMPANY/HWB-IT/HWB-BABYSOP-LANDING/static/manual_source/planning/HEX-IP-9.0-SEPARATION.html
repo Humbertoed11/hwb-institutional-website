@@ -1,0 +1,155 @@
+<!-- 
+    HEXGROWTH Institutional QMS Document
+    Standard: HEX-QMS-1.0 v1.0
+    Document ID: HEX-IP-9.0
+-->
+<div class="sop-card">
+    <!-- DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HEX-IP-9.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #10b981;">● PROPOSED</span></div>
+        <div class="meta-unit"><span class="meta-label">Author</span><span class="meta-val">George Bytes (Lead Auditor)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <h1>HEXGROWTH Azure Separation Plan</h1>
+    <p>This implementation plan outlines the architectural steps necessary to achieve complete separation of <strong>HEXGROWTH</strong> assets from legacy parent entities inside the Microsoft Azure Cloud. This ends the sharing of database servers, container registries, web app hosting plans, and DNS records to secure institutional boundaries for independent investor pitches.</p>
+
+    <!-- Standard callout-caution/danger/note classes -->
+    <div class="callout callout-danger">
+        <div class="callout-title">⚠️ STRATEGIC MANDATE</div>
+        <p>Moving from shared resources (Path B) to total isolation will terminate the $0/month hosting cost arrangement. Provisioning dedicated services will introduce active hosting and database server charges to HEXGROWTH. CEO approval is required prior to resource creation.</p>
+    </div>
+
+    <hr />
+
+    <h2>Required Actions</h2>
+
+    <h3>1. Azure Directory & Subscription Separation</h3>
+    <ul>
+        <li><b>Current State:</b> HexGrowth runs within legacy parent active subscription (<code>d778faac-02a4-4d74-9881-199994f2bd98</code>).</li>
+        <li><b>Target Action:</b> Establish a dedicated Azure Subscription (e.g., <code>HEXGROWTH-Production-Subscription</code>) or a separate Microsoft Entra ID Tenant to isolate billing, access, and directories.</li>
+        <li><b>Resource Group:</b> Provision a dedicated Resource Group <code>HEXGROWTH-Production-RG</code>.</li>
+    </ul>
+
+    <h3>2. Database Server Separation</h3>
+    <ul>
+        <li><b>Current State:</b> HexGrowth shares the active database instance (<code>sigmajan-server.postgres.database.azure.com</code>).</li>
+        <li><b>Target Action:</b> Provision a dedicated <b>Azure Database for PostgreSQL Flexible Server</b> (e.g., <code>hexgrowth-db-server.postgres.database.azure.com</code>) with PostGIS extension.</li>
+        <li><b>Migration Step:</b> Perform a spatial pg_dump from the active container and restore it to the isolated production database.</li>
+    </ul>
+
+    <h3>3. Private Registry & Deployment Isolation</h3>
+    <ul>
+        <li><b>Current State:</b> Deployments pull images from legacy parent private registry (<code>legacy-parent-registry.azurecr.io</code>).</li>
+        <li><b>Target Action:</b> Provision a dedicated <b>Azure Container Registry (ACR)</b> (e.g., <code>hexgrowthprodacr.azurecr.io</code>).</li>
+        <li><b>CI/CD Update:</b> Update GitHub Action secrets and workflow targets to push builds exclusively to the new registry.</li>
+    </ul>
+
+    <h3>4. Web Application hosting</h3>
+    <ul>
+        <li><b>Current State:</b> HexGrowth shares the App Service Plan and runtime container with BabySOP.</li>
+        <li><b>Target Action:</b> Provision a dedicated Linux App Service Plan (e.g., <code>hexgrowth-linux-asp</code>) and run a separate Azure Web App for Containers instance (e.g., <code>hexgrowth-web-app</code>).</li>
+    </ul>
+
+    <h3>5. Custom Domain & DNS Configuration</h3>
+    <ul>
+        <li><b>Current State:</b> Subdirectory routing via <code>babysop.com/hexgrowth</code>.</li>
+        <li><b>Target Action:</b> Transition completely to a dedicated domain (e.g., <code>hexgrowth.com</code> or <code>hexgrowth.app</code>). Bind this custom domain to the new App Service with SSL certificates.</li>
+    </ul>
+
+    <h3>6. Codebase Separation</h3>
+    <ul>
+        <li><b>Current State:</b> Intermingled directory references under <code>babysop/clients/</code>.</li>
+        <li><b>Target Action:</b> Completely separate the git repositories. Detach the codebase into a dedicated repository: <code>github.com/hexgrowth/hexgrowth-core</code>.</li>
+    </ul>
+
+    <h3>7. 1-Year Financial &amp; Scalability Projection</h3>
+    <p>To support high-velocity, database-first development and scale automatically as investor and user counts expand, the following cost projections have been calculated for the independent hosting infrastructure over a 12-month period:</p>
+    
+    <!-- Using tight-grid table class (.sigma-data-grid) -->
+    <table class="sigma-data-grid">
+        <thead>
+            <tr>
+                <th>Resource Type</th>
+                <th>Development Tier (Months 1–6)</th>
+                <th>Scalable Production Tier (Months 7–12)</th>
+                <th>Scale Purpose</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Azure Database (PostgreSQL)</strong></td>
+                <td>$15 / mo<br><small>(B1ms, 1 vCPU, 2GB RAM)</small></td>
+                <td>$120 / mo<br><small>(GP-D2s v5, 2 vCPUs, 8GB RAM, High IOPS)</small></td>
+                <td>Ensures zero-jitter database-first spatial query parsing.</td>
+            </tr>
+            <tr>
+                <td><strong>Azure Web App Hosting</strong></td>
+                <td>$13 / mo<br><small>(Basic B1 Plan)</small></td>
+                <td>$85 / mo<br><small>(Premium P1v3 with Auto-Scale)</small></td>
+                <td>Supports multi-lobe query loads and concurrent user audits.</td>
+            </tr>
+            <tr>
+                <td><strong>Azure Container Registry</strong></td>
+                <td>$20 / mo<br><small>(Standard Tier)</small></td>
+                <td>$20 / mo<br><small>(Standard Tier)</small></td>
+                <td>Handles isolated Docker image builds and ACR deployments.</td>
+            </tr>
+            <tr>
+                <td><strong>Data Feeds &amp; APIs</strong></td>
+                <td>$0 / mo<br><small>(Hybrid Mock Grid / Capped)</small></td>
+                <td>$1,550 / mo<br><small>(Regrid + Zoneomics + ATTOM + Maps)</small></td>
+                <td>Provides real-world property boundaries and zoning metrics.</td>
+            </tr>
+            <tr>
+                <td><strong>Security, CDN &amp; Bandwidth</strong></td>
+                <td>$5 / mo<br><small>(Key Vault + Basic SSL)</small></td>
+                <td>$15 / mo<br><small>(Key Vault + Cloudflare CDN)</small></td>
+                <td>Minimizes latency and protects sensitive investor dashboards.</td>
+            </tr>
+            <tr style="font-weight: bold; background-color: #f8fafc;">
+                <td>Monthly Operations Cost</td>
+                <td>$53 / mo</td>
+                <td>$1,790 / mo</td>
+                <td>Operating Phase Totals</td>
+            </tr>
+            <tr style="font-weight: bold; color: #ef4444; background-color: #fef2f2;">
+                <td>1-Year Phase Totals</td>
+                <td>$318 <small>(6 Months)</small></td>
+                <td>$10,740 <small>(6 Months)</small></td>
+                <td>Cumulative 1-Year Cost: $11,058</td>
+            </tr>
+        </tbody>
+    </table>
+        
+        <hr />
+        <h2>Document Revision History</h2>
+        <table class="sigma-data-grid">
+            <thead>
+                <tr>
+                    <th>Revision</th>
+                    <th>Date</th>
+                    <th>Description of Change</th>
+                    <th>Author / Approved By</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><b>1.0.0</b></td>
+                    <td>06/03/2026</td>
+                    <td>Standardized clinical formatting and aligned with ISO 9001 document controls.</td>
+                    <td>George Bytes / Humberto Dominguez (Chairman)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 3. DOCUMENT CONTROL FOOTER -->
+    <div class="sop-card-footer">
+        <div>Classification: Institutional ISO 9001 QMS Record</div>
+        <div>Effective Date: 06/03/2026</div>
+        <div>Review Cycle: Annual (Rev 1.0.0)</div>
+    </div>
+</div>

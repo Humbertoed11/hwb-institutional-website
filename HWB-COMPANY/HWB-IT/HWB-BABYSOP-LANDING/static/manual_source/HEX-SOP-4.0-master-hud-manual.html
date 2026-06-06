@@ -1,0 +1,142 @@
+<!-- 
+    HEXGROWTH Institutional QMS Document
+    Standard: HEX-QMS-1.0
+    Document ID: HEX-SOP-4.0
+    Version: 1.2.0
+-->
+<div class="sop-card">
+    <!-- DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HEX-SOP-4.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.2.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #10b981;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Author</span><span class="meta-val">George Bytes (Lead Auditor)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <h1>Master Operating Procedure: <strong>Heads-Up Display (Layer 3) Specification</strong></h1>
+        <p><strong>Scope:</strong> Establishes global constraints and layout specifications to implement a Salesforce-tier, keyboard-first visual interface for the HEXGROWTH HUD viewports.</p>
+
+        <hr />
+
+        <h2>1.0 Purpose & Adaptive Semantic Zoom</h2>
+        <p>To define visualization standards across all grid rendering resolutions:</p>
+        <ul>
+            <li><strong>Level 1 (Regional Zoom):</strong> Rendered as high-level density heatmaps.</li>
+            <li><strong>Level 2 (District Zoom):</strong> Renders individual hexagonal tessellation boundaries.</li>
+            <li><strong>Level 3 (Parcel Zoom):</strong> Renders targeted parcel outlines, active connection paths, and sidebars.</li>
+        </ul>
+
+        <hr />
+
+        <h2>2.0 Layout Structure & Interface Overlays</h2>
+        <p>The Master HUD layout is split into four primary interactive layers:</p>
+        <ol>
+            <li><strong>Visual Engine (Center Canvas):</strong> Displays MapLibre GL background tiles overlaid with the dynamic H3 Resolution 11 hexagonal honeycomb, pulsing radar flags, and active highway egress lines.</li>
+            <li><strong>The Stick Ledger (Right Sidebar):</strong> Offers real-time title data, property boundaries, and adjacent development alarm systems.</li>
+            <li><strong>George Bytes Console (Bottom panel):</strong> Displays live web crawler operations, system telemetry logs, and a dynamic PDF/HTML opportunity report compiler.</li>
+            <li><strong>Tactical Overlays:</strong> Provides a vertical Alpha metric meter, a scrolling hazard ticker, and the interactive legend panel.</li>
+        </ol>
+
+        <hr />
+
+        <h2>3.0 Visual Vocabulary & Color Code Mappings</h2>
+        <p>Standardized threshold highlights for opportunity scores:</p>
+        <ul>
+            <li><strong>Emerald Green (8.0 to 10.0):</strong> Prime feasibility location (strong development potential).</li>
+            <li><strong>Amber Yellow (4.0 to 7.9):</strong> Moderate feasibility location (potential zoning/utility friction).</li>
+            <li><strong>Crimson Red (0.0 to 3.9):</strong> Low feasibility location (development blockages/high hazard risk).</li>
+        </ul>
+        <p>All status badges must use <strong>10% opacity color fills</strong> with a solid <strong>1px outer border</strong> of the same color. High-saturation, solid-color status badges are prohibited.</p>
+
+        <hr />
+
+        <h2>4.0 Design System & Material Grid Constraints</h2>
+        
+        <h3>4.1 Interface Depth & Color Mappings</h3>
+        <table border="1" cellpadding="5" style="border-collapse: collapse; width: 100%; border-color: rgba(255,255,255,0.05); font-size: 0.9rem;">
+            <thead>
+                <tr style="background-color: #0f172a; color: white;">
+                    <th>Layer Level</th>
+                    <th>Hex Code</th>
+                    <th>Application</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Base Canvas</strong></td>
+                    <td><code>#020617</code></td>
+                    <td>Lowest page backdrop.</td>
+                </tr>
+                <tr>
+                    <td><strong>Mid Ground</strong></td>
+                    <td><code>#0f172a</code></td>
+                    <td>Sidebar widgets, control dashboard backings, and list views.</td>
+                </tr>
+                <tr>
+                    <td><strong>Elevated Controls</strong></td>
+                    <td><code>#000000</code></td>
+                    <td>Command input bars and active data listings.</td>
+                </tr>
+                <tr>
+                    <td><strong>Floating Context</strong></td>
+                    <td><code>#1e293b</code></td>
+                    <td>Floating tooltip windows, legends, and popups.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>4.2 Typography & Input Standards</h3>
+        <ul>
+            <li><strong>Label Placement:</strong> Inputs must sit at a tight <strong>4px vertical proximity</strong> to their corresponding label to form a single unit.</li>
+            <li><strong>Font-Weight:</strong> Standardize label font-weight to exactly <strong>500</strong>. Header elements are capped at <strong>1.5rem (Semi-Bold)</strong>.</li>
+            <li><strong>No Icons in Labels:</strong> Icons within input labels are strictly prohibited. Icons are reserved for navigation bars and state alerts.</li>
+        </ul>
+
+        <h3>4.3 Interactive Element Rigidity</h3>
+        <ul>
+            <li><strong>Button Dimensions:</strong> Standardize button height to exactly <strong>32px to 40px</strong> to maximize screen density.</li>
+            <li><strong>Corners:</strong> Button and input border-radius is capped at exactly <strong>6px</strong>. Master layout cards are capped at <strong>1.25rem (20px)</strong>.</li>
+            <li><strong>SVG Controls:</strong> Use vector SVGs for close actions and icons. Raw HTML entities are prohibited.</li>
+            <li><strong>Tab Rack Layout:</strong> Tab switching must use a tight horizontal layout class (<code>.sigma-tab-rack</code>) with a 3px active indicator accent.</li>
+        </ul>
+
+        <hr />
+
+        <h2>5.0 Keyboard Command Shortcuts</h2>
+        <p>To maximize speed, the interface is built for keyboard-first commands (CMD+K / Ctrl+K):</p>
+        <ul>
+            <li><code>/go [H3-Address]</code>: Fly the map view to specific coordinates.</li>
+            <li><code>/lobe [1-7]</code>: Instantly toggle specific map data scores.</li>
+            <li><code>/search [Developer-Name]</code>: Highlight target holdings on the grid.</li>
+        </ul>
+
+        <hr />
+        <h2>Document Revision History</h2>
+        <table class="sigma-data-grid">
+            <thead>
+                <tr>
+                    <th>Revision</th>
+                    <th>Date</th>
+                    <th>Description of Change</th>
+                    <th>Author / Approved By</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><b>1.2.0</b></td>
+                    <td>06/05/2026</td>
+                    <td>Consolidated SOP-4.0, SOP-4.1, and SOP-4.2 into a unified Heads-Up Display Master Manual. Approved by CEO.</td>
+                    <td>George Bytes / Humberto Dominguez (Chairman)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- DOCUMENT CONTROL FOOTER -->
+    <div class="sop-card-footer">
+        <div>Classification: Institutional ISO 9001 QMS Record</div>
+        <div>Effective Date: 06/05/2026</div>
+        <div>Review Cycle: Annual (Rev 1.2.0)</div>
+    </div>
+</div>

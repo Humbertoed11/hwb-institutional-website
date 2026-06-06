@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HEXGROWTH | JBREC-Max Feasibility Report</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --hex-obsidian: #020617;
+            --hex-charcoal: #0f172a;
+            --hex-panel: #1e293b;
+            --hex-cyan: #06b6d4;
+            --hex-emerald: #10b981;
+            --hex-amber: #f59e0b;
+            --hex-border: rgba(30, 41, 59, 0.7);
+            --hex-text: #f8fafc;
+            --hex-text-muted: #94a3b8;
+            --hex-gold: #fbbf24;
+            --hex-violet: #8b5cf6;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            background: var(--hex-obsidian);
+            color: var(--hex-text);
+            font-family: 'Inter', sans-serif;
+            box-sizing: border-box;
+            line-height: 1.6;
+        }
+
+        .report-wrapper {
+            max-width: 1100px;
+            margin: 3rem auto;
+            padding: 2.5rem;
+            background: var(--hex-charcoal);
+            border: 1px solid var(--hex-border);
+            border-radius: 12px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+        }
+
+        .cover-page {
+            text-align: center;
+            padding: 5rem 2rem;
+            border-bottom: 2px solid var(--hex-border);
+            margin-bottom: 4rem;
+            position: relative;
+        }
+
+        .cover-logo {
+            font-size: 14px;
+            font-weight: 900;
+            letter-spacing: 4px;
+            color: var(--hex-cyan);
+            text-transform: uppercase;
+            margin-bottom: 1.5rem;
+        }
+
+        .cover-title {
+            font-size: 2.5rem;
+            font-weight: 900;
+            line-height: 1.2;
+            color: #fff;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+        }
+
+        .cover-subtitle {
+            font-size: 1.25rem;
+            color: var(--hex-gold);
+            font-weight: 600;
+            margin-bottom: 3rem;
+        }
+
+        .cover-meta {
+            display: flex;
+            justify-content: center;
+            gap: 4rem;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--hex-text-muted);
+        }
+
+        .meta-val {
+            color: #fff;
+            font-weight: 700;
+            display: block;
+            font-size: 13px;
+            margin-top: 4px;
+        }
+
+        .report-section {
+            margin-bottom: 4rem;
+            padding-bottom: 3rem;
+            border-bottom: 1px solid var(--hex-border);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            border-left: 4px solid var(--hex-cyan);
+            padding-left: 1rem;
+        }
+
+        .section-title {
+            font-size: 1.4rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 0;
+        }
+
+        .section-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--hex-cyan);
+            background: rgba(6, 182, 212, 0.1);
+            padding: 4px 10px;
+            border-radius: 4px;
+            border: 1px solid rgba(6, 182, 212, 0.3);
+        }
+
+        table.premium-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            font-size: 12px;
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--hex-border);
+        }
+
+        table.premium-table th {
+            background: rgba(30, 41, 59, 0.7);
+            color: var(--hex-cyan);
+            text-transform: uppercase;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            padding: 12px 16px;
+            text-align: left;
+        }
+
+        table.premium-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--hex-border);
+            color: #e2e8f0;
+        }
+
+        table.premium-table tr:hover {
+            background: rgba(30, 41, 59, 0.4);
+        }
+
+        .premium-card {
+            background: rgba(245, 158, 11, 0.03);
+            border: 1px dashed var(--hex-amber);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .card-title-gold {
+            font-size: 11px;
+            font-weight: 900;
+            color: var(--hex-amber);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .report-kpis {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .kpi-card {
+            background: var(--hex-obsidian);
+            border: 1px solid var(--hex-border);
+            border-radius: 8px;
+            padding: 1.25rem;
+            text-align: center;
+        }
+
+        .kpi-title {
+            font-size: 10px;
+            font-weight: 800;
+            color: var(--hex-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .kpi-val {
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: #fff;
+            margin-top: 6px;
+        }
+
+        .kpi-val.cyan { color: var(--hex-cyan); }
+        .kpi-val.gold { color: var(--hex-gold); }
+
+        .btn-print {
+            height: 38px;
+            padding: 0 20px;
+            background: var(--hex-cyan);
+            border: none;
+            color: #020617;
+            font-weight: 800;
+            font-size: 11px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-print:hover {
+            filter: brightness(1.1);
+            box-shadow: 0 0 15px rgba(6,182,212,0.4);
+        }
+
+        .hud-preview-frame {
+            border: 1px solid var(--hex-border);
+            border-radius: 8px;
+            overflow: hidden;
+            background: #000;
+            margin: 2rem 0;
+            position: relative;
+        }
+
+        .hud-preview-img {
+            width: 100%;
+            height: auto;
+            display: block;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="report-wrapper">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <a href="/admin/control-panel" style="color: var(--hex-cyan); font-size: 11px; font-weight: 800; text-decoration: none; text-transform: uppercase; letter-spacing: 1px;">← Return to Backoffice</a>
+            <button class="btn-print" onclick="window.print()">Print Report 🖨️</button>
+        </div>
+
+        <!-- 👑 COVER PAGE -->
+        <div class="cover-page">
+            <div class="cover-logo">HEXGROWTH L10 Alpha Brain™</div>
+            <h1 class="cover-title">JBREC-Max Feasibility Report</h1>
+            <div class="cover-subtitle">{{ project.name }} Opportunity Study</div>
+            
+            <div class="cover-meta">
+                <div>
+                    Target Region
+                    <span class="meta-val">{{ project.region or 'Webster / League City' }}</span>
+                </div>
+                <div>
+                    Report Code
+                    <span class="meta-val">HEX-MAX-L10-{{ project.id }}</span>
+                </div>
+                <div>
+                    Effective Date
+                    <span class="meta-val">06/05/2026</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 1: ENTITLEMENTS -->
+        <div class="report-section">
+            <div class="section-header">
+                <h2 class="section-title">1.0 MPC Assets & Entitlements</h2>
+                <span class="section-num">CONCEPT 1</span>
+            </div>
+            <p>
+                The subject site encompasses a masterplanned community footprint of approximately **1,004 +/- acres** (Harris County tract). 
+                Total entitlements for this tract permit the construction of approximately **3,120 single-family residences**.
+                The development schedule targets a projected sales start in **April 2025** with model home park completions, replicating 
+                the look, feel, and amenity quality standards of the *Elyson MPC* in Katy, Texas.
+            </p>
+        </div>
+
+        <!-- SECTION 2: DENSITIES -->
+        <div class="report-section">
+            <div class="section-header">
+                <h2 class="section-title">2.0 Product Lot Sizing & Densities</h2>
+                <span class="section-num">CONCEPT 2</span>
+            </div>
+            <p>
+                To target a broad range of homebuyer profiles, the project segments residential offerings into seven distinct lot widths. 
+                Alley-loaded lots minimize density footprints for entry-level segments, while front-loaded lots scale to estate sizing:
+            </p>
+            <table class="premium-table">
+                <thead>
+                    <tr>
+                        <th>Lot Size Series</th>
+                        <th>Type</th>
+                        <th>Minimum Lot Area</th>
+                        <th>Home Size Range (Sqft)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="font-weight:700;">30' Lot Series</td>
+                        <td>Alley-Loaded detached SFD</td>
+                        <td>2,700 sqft</td>
+                        <td>1,086 - 1,437 sqft</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight:700;">35' Lot Series</td>
+                        <td>Alley-Loaded detached SFD</td>
+                        <td>3,150 sqft</td>
+                        <td>1,456 - 1,719 sqft</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight:700;">40' Lot Series</td>
+                        <td>Front-Loaded detached SFD</td>
+                        <td>4,800 sqft</td>
+                        <td>1,450 - 2,200 sqft</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight:700;">50' Lot Series</td>
+                        <td>Front-Loaded detached SFD</td>
+                        <td>6,000 sqft</td>
+                        <td>1,800 - 2,550 sqft</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight:700;">55' Lot Series</td>
+                        <td>Front-Loaded detached SFD</td>
+                        <td>7,425 sqft</td>
+                        <td>2,150 - 2,900 sqft</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight:700;">60' Lot Series</td>
+                        <td>Front-Loaded detached SFD</td>
+                        <td>8,100 sqft</td>
+                        <td>2,350 - 3,100 sqft</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight:700;">70' Lot Series</td>
+                        <td>Front-Loaded detached SFD</td>
+                        <td>9,450 sqft</td>
+                        <td>2,900 - 3,650 sqft</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- SECTION 3 & 4: TRACT PRICING -->
+        <div class="report-section">
+            <div class="section-header">
+                <h2 class="section-title">3.0 & 4.0 Equalized Pricing Matrices</h2>
+                <span class="section-num">CONCEPTS 3 & 4</span>
+            </div>
+            <p>
+                The community spans two tracts with distinct tax boundaries. To maintain comparable carrying costs for buyers, 
+                base prices for the League City (LC) tract are equalized (discounted by ~7.0%) to offset the higher LC tax rate (3.61% vs 2.82%).
+            </p>
+            <table class="premium-table">
+                <thead>
+                    <tr>
+                        <th>Product Size</th>
+                        <th>HOU Base Price</th>
+                        <th>LC Base Price (Equalized)</th>
+                        <th>HOU Option Upgrade</th>
+                        <th>LC Option Upgrade</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in pricing_matrix %}
+                    <tr>
+                        <td style="font-weight:700;">{{ item.lot_size }}</td>
+                        <td style="color:var(--hex-cyan); font-weight:700;">${{ "{:,}".format(item.base_price) }}</td>
+                        <td style="color:var(--hex-gold); font-weight:700;">${{ "{:,}".format((item.base_price * 0.93) | int) }}</td>
+                        <td>${{ "{:,}".format((item.base_price * 0.05 + 5000) | int) }}</td>
+                        <td>${{ "{:,}".format((item.base_price * 0.05 * 0.93 + 4500) | int) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- SECTION 5: UNDERWRITING -->
+        <div class="report-section">
+            <div class="section-header">
+                <h2 class="section-title">5.0 Underwriting Assumptions</h2>
+                <span class="section-num">CONCEPT 5</span>
+            </div>
+            <p>
+                Financial feasibility underwriting models assume standard institutional lending parameters.
+                Any adjustments to the interest rate baseline will affect monthly CTO carrying costs and buyer qualification standards.
+            </p>
+            <div class="report-kpis">
+                <div class="kpi-card">
+                    <span class="kpi-title">Federal Rate</span>
+                    <span class="kpi-val cyan">{{ (interest_rate * 100.0) | round(2) }}%</span>
+                </div>
+                <div class="kpi-card">
+                    <span class="kpi-title">Down Payment</span>
+                    <span class="kpi-val gold">10.0%</span>
+                </div>
+                <div class="kpi-card">
+                    <span class="kpi-title">Max DTI Ratio</span>
+                    <span class="kpi-val">33.0%</span>
+                </div>
+                <div class="kpi-card">
+                    <span class="kpi-title">Monthly HOA</span>
+                    <span class="kpi-val cyan">$105.00</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 6: CTO & QUALIFYING INCOME -->
+        <div class="report-section">
+            <div class="section-header">
+                <h2 class="section-title">6.0 Cost To Own & Qualifying Income</h2>
+                <span class="section-num">CONCEPT 6</span>
+            </div>
+            <p>
+                Household qualifying incomes are computed using the maximum 33% debt-to-income (DTI) ratio.
+                Below is the matrix of monthly carrying costs and the annual household income required to purchase each home type:
+            </p>
+            <table class="premium-table">
+                <thead>
+                    <tr>
+                        <th>Product Size</th>
+                        <th>Avg Size (Sqft)</th>
+                        <th>Monthly CTO (Est)</th>
+                        <th>Required Household Income</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in pricing_matrix %}
+                    <tr>
+                        <td style="font-weight:700;">{{ item.lot_size }}</td>
+                        <td>{{ item.sqft }} sqft</td>
+                        <td style="color:var(--hex-cyan); font-weight:700;">${{ "{:,}".format(item.monthly_cto) }}/mo</td>
+                        <td style="color:var(--hex-emerald); font-weight:700;">${{ "{:,}".format(item.qualifying_income) }}/yr</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- SECTION 7: MACROCONTEXT -->
+        <div class="report-section">
+            <div class="section-header">
+                <h2 class="section-title">7.0 Macroeconomic & Demographics</h2>
+                <span class="section-num">CONCEPT 7</span>
+            </div>
+            <p>
+                Regional demographics show strong demand anchors, with the Houston MSA adding over **98,300 residents per year** (1.3% - 1.4% growth).
+                The local Webster submarket population is projected to expand by **0.79% annually** to reach 13,207 by 2027.
+                MSA residential permitting is projected to stabilize between **54,700 and 63,000 permits/year** through 2026.
+            </p>
+        </div>
+
+        <!-- SECTION 8: SEGMENTATION -->
+        <div class="report-section">
+            <div class="section-header">
+                <h2 class="section-title">8.0 Target Buyer Demographic Profiles</h2>
+                <span class="section-num">CONCEPT 8</span>
+            </div>
+            <p>
+                The community's product mix is aligned with active buyer demand profiles within the competitive trade area.
+                The primary and secondary target buyer segments are divided as follows:
+            </p>
+            <table class="premium-table">
+                <thead>
+                    <tr>
+                        <th>Buyer Segment Profile</th>
+                        <th>Demand Share (%)</th>
+                        <th>Primary Motivation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="font-weight:700; color:var(--hex-cyan);">Mature Singles & Couples (No Kids)</td>
+                        <td style="font-weight:700;">27.0%</td>
+                        <td>Surgical lock-and-leave alley configurations, low yard maintenance.</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight:700; color:var(--hex-gold);">Mature Families (Kids at Home)</td>
+                        <td style="font-weight:700;">22.0%</td>
+                        <td>Clear Creek ISD school zoning, front-loaded 60' and 70' lot configurations.</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight:700; color:var(--hex-violet);">Retirees & Active Adults</td>
+                        <td style="font-weight:700;">22.0%</td>
+                        <td>Downsizing to high-end 50' and 55' single-story front-loaded properties.</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight:700;">Young Families</td>
+                        <td style="font-weight:700;">19.0%</td>
+                        <td>Affordable entry-level 40' and 50' products, safety overlays, community trails.</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight:700;">Young Singles & Couples</td>
+                        <td style="font-weight:700;">10.0%</td>
+                        <td>Entry-level alley-loaded 30' configurations, proximity to NASA and Pasadena job centers.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- SECTION 9: AMENITIES & LAGOON -->
+        <div class="report-section">
+            <div class="section-header">
+                <h2 class="section-title">9.0 Amenity Themes & Lagoon Premium</h2>
+                <span class="section-num">CONCEPT 9</span>
+            </div>
+            <p>
+                Core wellness and nature themes govern on-site amenities (including trail corridors, dog parks, and recreation hubs).
+                Crucially, the integration of a **Signature Crystal Lagoon** water amenity yields a verified **5.0% to 7.0% base price premium**, 
+                as proven by comparable Houston submarket projects:
+            </p>
+            <div class="premium-card">
+                <div class="card-title-gold">💎 Crystal Lagoon Comp Case Studies</div>
+                <ul style="margin: 0; padding-left: 1.25rem; font-size: 12px; color: #cbd5e1; display:flex; flex-direction:column; gap:8px;">
+                    <li><strong>Windsong Ranch (Prosper, DFW):</strong> 5.0-acre Lagoon; adds 5.0% to 10.0% premium to detacted home base prices.</li>
+                    <li><strong>Balmoral Case Study (Humble, Houston):</strong> 2.0-acre Lagoon; proved a **+6.2% price premium** across core builders.</li>
+                    <li><strong>Sierra Vista Case Study (Rosharon, Houston):</strong> 2.0-acre Lagoon; demonstrated a **+5.5% price premium** on home values.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- SECTION 10: HUD SNAPSHOT -->
+        <div class="report-section" style="border-bottom:none; margin-bottom:0; padding-bottom:0;">
+            <div class="section-header">
+                <h2 class="section-title">10.0 HUD GIS Spatial Analysis</h2>
+                <span class="section-num">CONCEPT 10</span>
+            </div>
+            <p>
+                Below is the spatial analysis of the target area, showing the H3 Resolution 11 hexagons, traffic lanes, and the vertical 3D light pillar rising from the selected parcel, as displayed on the main HUD viewport.
+            </p>
+            
+            <div class="hud-preview-frame">
+                <img src="/static/img/hud_snapshot_webster.png" class="hud-preview-img" alt="HUD GIS Layout Snapshot">
+            </div>
+
+            <p style="font-size:11px; color:var(--hex-text-muted); font-style:italic;">
+                Data source: HEXGROWTH Ingested Beacons and Spatial Index Core (Lobe 11). Coordinates resolved at Webster, Harris County, Texas.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

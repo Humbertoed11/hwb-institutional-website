@@ -1,0 +1,103 @@
+<!-- 
+    HEXGROWTH Institutional QMS Document
+    Standard: HEX-QMS-1.0
+    Document ID: HEX-SOP-8.6
+    Version: 1.2.0
+-->
+<div class="sop-card">
+    <!-- DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HEX-SOP-8.6</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.2.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #10b981;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Author</span><span class="meta-val">George Bytes (Lead Architect)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <h1>Master Operating Procedure: <strong>Frontend Portal &amp; Viewport Specifications</strong></h1>
+        <p><strong>Scope:</strong> Establishes global constraints and layout specifications for the project management hub, header branding systems, viewport switchers, and administrator dashboard layouts (Layer 3 visual portals).</p>
+
+        <hr />
+
+        <h2>1.0 Purpose & Architecture Overview</h2>
+        <p>This document details the operational structures and interface layout grids for the client-facing portals:</p>
+        <ul>
+            <li><strong>Workspace Portal (<code>/projects</code>):</strong> A project management dashboard allowing developers to add and edit target project sites, review active KPIs, delete database records, and select viewport views.</li>
+            <li><strong>Viewport Switcher:</strong> A dropdown selector in headers that allows developers to toggle between standard map views and tactical console layouts.</li>
+            <li><strong>Backoffice Control Panel (<code>/admin/control-panel</code>):</strong> A system administration panel for VPs and auditors to override baseline rates, toggle operational brain lobes, ping ingestion targets, and verify system dependencies.</li>
+        </ul>
+
+        <hr />
+
+        <h2>2.0 Layout Structure & Header Standardization</h2>
+        <p>To secure vertical space for geospatial scanning, the system standardizes navigation headers on <strong>Option A: The Shared Component Model</strong> (60px height):</p>
+        <ul>
+            <li><strong>HUD Configuration:</strong> Renders a 60px height header with a centered geographic search input field, logo, active project picker dropdown, and session detail clusters.</li>
+            <li><strong>QMS Document Shell Configuration:</strong> Renders a 60px height header, replacing the search input with QMS directory navigation links while keeping the branding and session components identical.</li>
+            <li><strong>Double-Layer Headers:</strong> Double-layer navigation bars (110px height, such as <code>mega_bar.html</code>) are prohibited on HUD viewports to prevent layout clutter and canvas scaling errors.</li>
+        </ul>
+
+        <hr />
+
+        <h2>3.0 Workspace Project Ingestion & Switcher Logic</h2>
+        <h3>3.1 Project Form Ingestion</h3>
+        <p>New workspace projects are committed via the outlined form inside the Workspace Portal. Form inputs must sit at a tight 4px vertical proximity to labels. Upon submission, the client calls: <code>POST /api/v1/projects</code>. The backend saves target coordinates, budgets, target internal rate of return (IRR), and focal diagnostic lobes to the <code>HEX_Projects</code> database table. The viewport cache is re-compiled upon page reload.</p>
+        
+        <h3>3.2 Viewport Switcher</h3>
+        <p>Users can select one of two viewport designs to launch on an active project:</p>
+        <ol>
+            <li><strong>Standard HUD:</strong> Focuses on graphical visual assets, pulsing beacons, map layers, and simulation sequences.</li>
+            <li><strong>Hex-Terminal:</strong> Renders a dense, keyboard-driven dashboard with a pro-forma calculator, real-time transaction feeds, and console commands.</li>
+        </ol>
+
+        <hr />
+
+        <h2>4.0 Backoffice Control Panel Specifications</h2>
+        <p>The admin portal allows direct control over operational features using standard design guidelines:</p>
+        <ul>
+            <li><strong>Parameter Settings:</strong> Updates baseline variables (such as interest rates, cap rates, permit latency days, and transit speed targets) stored in the database.</li>
+            <li><strong>Lobe Activity Grid:</strong> Displays active cards for the 11 operational brains, detailing active weights and toggles to enable/disable each lobe.</li>
+            <li><strong>Interactive Dependency Flowchart:</strong> SVG/Mermaid flowchart displaying the system's live logic flows. Disabled lobes are automatically dimmed and drawn with dashed outlines to warn of broken dependencies.</li>
+            <li><strong>Ingestion and Audit Management:</strong> Includes tabs to add/remove ArcGIS GIS endpoints (with a built-in ping latency checker) and edit the 100 system audit checks.</li>
+        </ul>
+
+        <h3>4.1 Lobe 10 Report Compiler Overrides</h3>
+        <p>To output JBREC-compliant valuation and feasibility report packages, the backoffice administrator interface exposes specific controls over the Lobe 10 generation pipeline:</p>
+        <ul>
+            <li><strong>Economic Assumption Overrides:</strong> Real-time editing of variables (Interest Rate, Cap Rate Baseline, and Construction Cost Index) which dynamically calculate monthly costs and qualifying incomes.</li>
+            <li><strong>Project Target Values:</strong> Direct controls to edit project boundaries, target IRR percentage anchors, and lot size layouts in the <code>HEX_Projects</code> registry.</li>
+            <li><strong>Lot Sizing & Multiplier Profiles:</strong> Tables to manage lot dimensions and their base pricing multipliers (ranging from 0.70 to 1.40).</li>
+            <li><strong>Amenity Premium Variables:</strong> Toggle switches and percentage value additions for premium community features (e.g., crystal lagoons, trail parks) to calculate value premiums.</li>
+            <li><strong>Active Lobe Weight Verification:</strong> A summary showing the active system weights used during compiling to ensure total audit traceability.</li>
+            <li><strong>Customizable Markdown Editor:</strong> An inline text editor to write, save, and insert the executive summary directly into the client's report package.</li>
+        </ul>
+
+        <hr />
+        <h2>Document Revision History</h2>
+        <table class="sigma-data-grid">
+            <thead>
+                <tr>
+                    <th>Revision</th>
+                    <th>Date</th>
+                    <th>Description of Change</th>
+                    <th>Author / Approved By</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><b>1.2.0</b></td>
+                    <td>06/05/2026</td>
+                    <td>Consolidated SOP-8.6, SOP-9.2, and REPORT-11.0 into a unified Master Frontend Portal &amp; UI Manual. Approved by CEO.</td>
+                    <td>George Bytes / Humberto Dominguez (Chairman)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- DOCUMENT CONTROL FOOTER -->
+    <div class="sop-card-footer">
+        <div>Classification: Institutional ISO 9001 QMS Record</div>
+        <div>Effective Date: 06/05/2026</div>
+        <div>Review Cycle: Annual (Rev 1.2.0)</div>
+    </div>
+</div>

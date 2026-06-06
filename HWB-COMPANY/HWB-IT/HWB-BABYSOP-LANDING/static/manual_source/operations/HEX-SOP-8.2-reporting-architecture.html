@@ -1,0 +1,64 @@
+<!-- 
+    HEXGROWTH Institutional QMS Document
+    Standard: HEX-QMS-1.0 v1.0
+    Document ID: HEX-SOP-8.2
+-->
+<div class="sop-card">
+    <!-- DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HEX-SOP-8.2</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #10b981;">● ACTIVE</span></div>
+        <div class="meta-unit"><span class="meta-label">Author</span><span class="meta-val">George Bytes (Lead Auditor)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <h1>Standard Operating Procedure: <strong>Reporting Architecture</strong></h1>
+
+        <h2>1.0 Purpose</h2>
+        <p>To define the flow of diagnostic data, QMS audits, and real estate market valuations into the Terminal HUD.</p>
+
+        <h2>2.0 Data Flow</h2>
+        <ol>
+            <li><strong>Lobe Update:</strong> External miners write normalized Alpha scores to the Postgres DB tables.</li>
+            <li><strong>JSON Assembly:</strong> The Flask backend server dynamically loads table entries and compiles GeoJSON parameters.</li>
+            <li><strong>Viewport Rendering:</strong> The React/Deck.gl HUD maps the compiled indicators as visual indicators.</li>
+        </ol>
+
+        <h2>3.0 Formatting Standards</h2>
+        <p>Reports and document logs displayed within the HUD viewport must avoid plain red or blue styles, utilizing HSL palettes, smooth dark gradients, and clean borders (minimum depth effects).</p>
+        
+        <div class="callout callout-logic">
+            <strong>System Synchronization</strong>
+            <p>Any updates to files inside the QMS manual folder must automatically sync using the Persistence Protocol to reflect in the HUD Index search.</p>
+        </div>
+        
+        <hr />
+        <h2>Document Revision History</h2>
+        <table class="sigma-data-grid">
+            <thead>
+                <tr>
+                    <th>Revision</th>
+                    <th>Date</th>
+                    <th>Description of Change</th>
+                    <th>Author / Approved By</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><b>1.0.0</b></td>
+                    <td>06/04/2026</td>
+                    <td>Initial release of Reporting Architecture standard.</td>
+                    <td>George Bytes / Humberto Dominguez (Chairman)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- DOCUMENT CONTROL FOOTER -->
+    <div class="sop-card-footer">
+        <div>Classification: Institutional ISO 9001 QMS Record</div>
+        <div>Effective Date: 06/04/2026</div>
+        <div>Review Cycle: Annual (Rev 1.0.0)</div>
+    </div>
+</div>

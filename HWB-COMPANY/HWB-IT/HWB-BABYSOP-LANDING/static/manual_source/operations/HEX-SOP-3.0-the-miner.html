@@ -1,0 +1,77 @@
+<!-- 
+    HEXGROWTH Institutional QMS Document
+    Standard: HEX-QMS-1.0 v1.0
+    Document ID: HEX-SOP-3.0
+-->
+<div class="sop-card">
+    <!-- DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HEX-SOP-3.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #10b981;">● ACTIVE</span></div>
+        <div class="meta-unit"><span class="meta-label">Author</span><span class="meta-val">George Bytes (Lead Auditor)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <h1>Standard Operating Procedure: <strong>The Miner (Layer 2)</strong></h1>
+
+        <h2>1.0 Purpose</h2>
+        <p>To define the operational standards for the <strong>HEXGROWTH Miner</strong>. The Miner is a set of autonomous Python workers responsible for the 24/7 extraction, cleaning, and ingestion of raw data from external APIs and municipal records into the PostGIS Spine.</p>
+
+        <h2>2.0 The Extraction Cycle</h2>
+        <ol>
+            <li><strong>Wake-up:</strong> Triggered by a cron-job or Azure Function.</li>
+            <li><strong>Fetch:</strong> Query external sources (FEMA, TxDOT, NASDAQ, etc.).</li>
+            <li><strong>Map:</strong> Use the <code>h3</code> library to assign data to specific Resolution 11 hexagons.</li>
+            <li><strong>Refine:</strong> Convert raw values (e.g., "12,000 cars/day") into normalized Alpha Scores (0-10).</li>
+            <li><strong>Ingest:</strong> <code>UPSERT</code> the refined data into the corresponding Lobe table in Postgres.</li>
+        </ol>
+
+        <h2>3.0 Data Normalization (The Alpha Scale)</h2>
+        <p>To ensure the 7 Brains can "vote" equally, all data must be refined to a 0.0 to 10.0 scale:</p>
+        <ul>
+            <li><strong>10.0:</strong> Optimal Opportunity / Zero Risk.</li>
+            <li><strong>5.0:</strong> Neutral / Average.</li>
+            <li><strong>0.0:</strong> Extreme Risk / Fatal Defect (No-Go).</li>
+        </ul>
+
+        <h2>4.0 Integrity Mandates</h2>
+        <ul>
+            <li><strong>No Stale Data:</strong> Every ingested record must have a <code>source_timestamp</code>.</li>
+            <li><strong>Clinical Cleanup:</strong> Null or malformed API responses must be logged to <code>HEX_KnowledgeScars</code> and ignored.</li>
+        </ul>
+
+        <div class="callout callout-logic">
+            <strong>The Minimization Mandate</strong>
+            <p>The Miner must be 100% autonomous. Human intervention is only permitted for the <strong>Ranger Brain</strong> (Field Overrides).</p>
+        </div>
+        
+        <hr />
+        <h2>Document Revision History</h2>
+        <table class="sigma-data-grid">
+            <thead>
+                <tr>
+                    <th>Revision</th>
+                    <th>Date</th>
+                    <th>Description of Change</th>
+                    <th>Author / Approved By</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><b>1.0.0</b></td>
+                    <td>06/03/2026</td>
+                    <td>Standardized clinical formatting and aligned with ISO 9001 document controls.</td>
+                    <td>George Bytes / Humberto Dominguez (Chairman)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 3. DOCUMENT CONTROL FOOTER -->
+    <div class="sop-card-footer">
+        <div>Classification: Institutional ISO 9001 QMS Record</div>
+        <div>Effective Date: 06/03/2026</div>
+        <div>Review Cycle: Annual (Rev 1.0.0)</div>
+    </div>
+</div>

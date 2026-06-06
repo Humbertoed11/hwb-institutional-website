@@ -1,0 +1,143 @@
+<!-- 
+    HEXGROWTH Institutional QMS Document
+    Standard: HEX-QMS-1.0 v1.0
+    Document ID: HEX-SOP-6.0
+-->
+<div class="sop-card">
+    <!-- DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HEX-SOP-6.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.1.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #10b981;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Author</span><span class="meta-val">George Bytes (Lead Auditor)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <h1>Standard Operating Procedure: <strong>Multi-Brain™ Consensus (11-Lobe System)</strong></h1>
+
+        <h2>1.0 Purpose</h2>
+        <p>To define the monolithic logic for how the 11 specialized <strong>Neural Lobes</strong> interact to produce the <strong>Global HexScore</strong> and compile report outputs. This system ensures that all decisions are based on a clinical consensus of macroeconomic, municipal, infrastructure, and field-validated data, protected by dynamic error-feedback loops and data-integrity filters.</p>
+
+        <h2>2.0 The Neural Sieve (Visual Logic)</h2>
+        <div class='mermaid'>
+        graph TD
+            subgraph L11_Gate [Lobe 11: Scout Brain]
+                EXT[External APIs & Web Feeds] --> L11[Scout Ingestion Gate]
+            end
+
+            subgraph Lobes [Neural Lobes L1-L7]
+                L1["L1 City Brain"]
+                L2["L2 TxDOT Brain"]
+                L3["L3 Power Brain"]
+                L4["L4 Legal/Env Brain"]
+                L5["L5 Ranger Brain"]
+                L6["L6 Pulse Brain"]
+                L7["L7 Finance Brain"]
+            end
+
+            L11 -->|Muni Data| L1
+            L11 -->|Traffic/AADT| L2
+            L11 -->|Grid/Utility| L3
+            L11 -->|Flood/TCEQ| L4
+            L11 -->|Field Imagery| L5
+            L11 -->|Sentiment/News| L6
+            L11 -->|Capex/Rates| L7
+
+            L1 -->|Rules| CORE{L8 Inference Brain}
+            L2 -->|Roads| CORE
+            L3 -->|Guts| CORE
+            L4 -->|Veto?| CORE
+            L5 -->|Ground Truth| CORE
+            L6 -->|Culture| CORE
+            L7 -->|Capital Signal| CORE
+
+            CORE -->|Consensus Score| L9[L9 Accountability Brain]
+            L9 -->|Dynamic Weight Adjustments| CORE
+            CORE --> OUTPUT["Global HexScore (0-100)"]
+            OUTPUT --> L10[L10 Alpha Report Brain]
+
+            style L11 fill:#f1f5f9,stroke:#0284c7,stroke-width:2px
+            style CORE fill:#f1f5f9,stroke:#2563eb,stroke-width:4px
+            style L9 fill:#fef3c7,stroke:#d97706,stroke-width:2px
+            style L10 fill:#ecfdf5,stroke:#059669,stroke-width:2px
+            style OUTPUT fill:#10b981,color:#fff,stroke:#059669,stroke-width:2px
+            style L4 fill:#fee2e2,stroke:#dc2626
+            style L5 fill:#fef3c7,stroke:#d97706
+        </div>
+
+        <h2>3.0 The Voting Mechanism</h2>
+        <p>The <strong>Neural Core</strong> processes votes through a weighted sum calculation. Each operational lobe provides an Alpha Score (0.0 - 10.0), which is multiplied by its active weight. While initial baseline weights are defined below, <strong>Lobe 9 (Accountability Brain)</strong> dynamically tunes these parameters daily to minimize forecasting error.</p>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Lobe</th>
+                    <th>Baseline Weight</th>
+                    <th>Primary Indicator</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>L1 City Brain</td><td>20%</td><td>Zoning Velocity & TIF Zones</td></tr>
+                <tr><td>L2 TxDOT Brain</td><td>15%</td><td>Road Frontage & Traffic Friction</td></tr>
+                <tr><td>L3 Power Brain</td><td>20%</td><td>Substation Capacity & Fiber Links</td></tr>
+                <tr><td>L4 Legal/Env Brain</td><td>15%</td><td>Flood Plain & Geotech Soil Sync</td></tr>
+                <tr><td>L5 Ranger Brain</td><td>10%</td><td>Field Audit & Climate Hazard</td></tr>
+                <tr><td>L6 Pulse Brain</td><td>10%</td><td>Social Sentiment & Talent Clusters</td></tr>
+                <tr><td>L7 Finance Brain</td><td>10%</td><td>CAPEX & Market Liquidity</td></tr>
+            </tbody>
+        </table>
+
+        <h2>4.0 The Institutional Veto Rule</h2>
+        <p>In accordance with <strong>Poka-Yoke</strong> principles, the <strong>Legal/Env Brain</strong> and <strong>Ranger Brain</strong> hold special jurisdictional authority:</p>
+        <ul>
+            <li><strong>Hard Veto:</strong> If Legal/Env detects a Level-5 Flood Zone or acute contamination, the HexScore is forced to <strong>0.0</strong> regardless of other scores.</li>
+            <li><strong>Reality Override:</strong> The <strong>Ranger Brain</strong> (Field Audit) possesses the authority to manually adjust any other lobe's score based on physical 'Ground Truth' verification.</li>
+        </ul>
+
+        <h2>5.0 Ingestion and Output Loops</h2>
+        <ul>
+            <li><strong>L11 Scout Gatekeeper:</strong> Prevents system contamination by verifying county endpoint latency and matching schema templates before routing to the operational lobes.</li>
+            <li><strong>L9 Metacognitive Tuning:</strong> Audits consensus outputs daily against market comparables and updates active weights in <code>HEX_SystemState</code>.</li>
+            <li><strong>L10 Report Output:</strong> Reads the completed consensus data and dynamic parameters to generate the final Customizable Market Reports.</li>
+        </ul>
+
+        <div class='callout callout-logic'>
+            <strong>Industrial Stability</strong>
+            <p>The Multi-Brain Consensus ensures that HEXGROWTH never 'over-indexes' on a single signal. We require clinical validation from the ground up to the global cap-table.</p>
+        </div>
+        
+        <hr />
+        <h2>Document Revision History</h2>
+        <table class="sigma-data-grid">
+            <thead>
+                <tr>
+                    <th>Revision</th>
+                    <th>Date</th>
+                    <th>Description of Change</th>
+                    <th>Author / Approved By</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><b>1.1.0</b></td>
+                    <td>06/05/2026</td>
+                    <td>Integrated Lobe 9, Lobe 10, and Lobe 11 into the consensus routing, fixed the Ranger Brain table typo, and updated the Mermaid flow.</td>
+                    <td>George Bytes / Humberto Dominguez (Chairman)</td>
+                </tr>
+                <tr>
+                    <td><b>1.0.0</b></td>
+                    <td>06/03/2026</td>
+                    <td>Standardized clinical formatting and aligned with ISO 9001 document controls.</td>
+                    <td>George Bytes / Humberto Dominguez (Chairman)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 3. DOCUMENT CONTROL FOOTER -->
+    <div class="sop-card-footer">
+        <div>Classification: Institutional ISO 9001 QMS Record</div>
+        <div>Effective Date: 06/05/2026</div>
+        <div>Review Cycle: Annual (Rev 1.1.0)</div>
+    </div>
+</div>

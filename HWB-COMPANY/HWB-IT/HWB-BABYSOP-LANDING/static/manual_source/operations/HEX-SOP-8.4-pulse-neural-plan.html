@@ -1,0 +1,193 @@
+<!-- 
+    HEXGROWTH Institutional QMS Document
+    Standard: HEX-QMS-1.0 v1.0
+    Document ID: HEX-SOP-8.4
+-->
+<div class="sop-card">
+    <!-- DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HEX-SOP-8.4</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #10b981;">● ACTIVE</span></div>
+        <div class="meta-unit"><span class="meta-label">Author</span><span class="meta-val">George Bytes (Lead Auditor)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <h1>Standard Operating Procedure: <strong>Pulse Brain Neural Plan & Competitor Radar</strong></h1>
+
+        <h2>1.0 Purpose</h2>
+        <p>This QMS document establishes the structural design, data schema, API routing, and HUD viewport specifications for the <strong>HEXGROWTH Pulse Brain</strong> (Lobe 6). The Pulse Brain serves as the primary system radar for hyper-local sentiment shifts, commercial/retail flight indicators, and competitor developer activities.</p>
+
+        <h2>2.0 Architectural Objectives</h2>
+        <ul>
+            <li><strong>Automate Risk Mapping:</strong> Identify negative municipal shifts (such as anchor tenant flight and sports franchise relocations) before public valuations adjust.</li>
+            <li><strong>Competitor Intelligence Registry:</strong> Profile local development companies, tracking their acquisitions, planning filings, and buying criteria.</li>
+            <li><strong>Telemetry Verification:</strong> Maintain active link testing (status and latency checks) for municipal and social sources.</li>
+        </ul>
+
+        <h2>3.0 Database Core Expansion (Tier 6)</h2>
+        <p>The following tables are initialized within the Monolithic SQL Brain to persist Pulse metrics:</p>
+        <pre><code class="language-sql">
+-- 1. Scouting & Interface Uptime Registry
+CREATE TABLE IF NOT EXISTS "HEX_Scout_Registry" (
+    id SERIAL PRIMARY KEY,
+    municipality_name VARCHAR(150) NOT NULL,
+    department_name VARCHAR(150) NOT NULL,
+    source_type VARCHAR(100) NOT NULL,
+    endpoint_or_contact TEXT UNIQUE NOT NULL,
+    scouting_status VARCHAR(50) DEFAULT 'Identified',
+    latency_ms INTEGER,
+    scouted_notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_scouted TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 2. Competitor Developer Profiles
+CREATE TABLE IF NOT EXISTS "HEX_DeveloperProfiles" (
+    id SERIAL PRIMARY KEY,
+    company_name VARCHAR(255) UNIQUE NOT NULL,
+    estimated_aum NUMERIC(15, 2),
+    target_asset_class VARCHAR(100),
+    acquisition_criteria JSONB,
+    contact_info JSONB,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 3. Competitor Intent & Purchases Log
+CREATE TABLE IF NOT EXISTS "HEX_DeveloperIntent" (
+    id SERIAL PRIMARY KEY,
+    company_id INTEGER REFERENCES "HEX_DeveloperProfiles"(id) ON DELETE CASCADE,
+    intent_type VARCHAR(50) NOT NULL, -- 'Planning', 'Purchasing', 'Seeking'
+    target_parcel_id VARCHAR(100),
+    description TEXT NOT NULL,
+    estimated_value NUMERIC(15, 2),
+    source_url TEXT,
+    recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 4. Social Sentiment & Decline Opportunities
+CREATE TABLE IF NOT EXISTS "HEX_PulseOpportunities" (
+    id SERIAL PRIMARY KEY,
+    h3_address VARCHAR(15),
+    platform VARCHAR(50) NOT NULL,
+    post_url TEXT UNIQUE NOT NULL,
+    post_content TEXT,
+    sentiment_score NUMERIC(3, 2) NOT NULL, -- 0.0 (High Risk) to 10.0 (High Opportunity)
+    extracted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+        </code></pre>
+
+        <h2>4.0 Pulse Brain HUD Component Model</h2>
+        <p>The backend HUD dashboard exposes a centralized interface for monitoring feed status, testing links, and reviewing result counts:</p>
+        <table class="sigma-data-grid">
+            <thead>
+                <tr>
+                    <th>Source Endpoint</th>
+                    <th>Category</th>
+                    <th>Last Scanned</th>
+                    <th>Result Count</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><b>Plano GIS REST Server</b></td>
+                    <td>Municipal Data</td>
+                    <td>2 mins ago</td>
+                    <td>1,530 records</td>
+                    <td><span style="color: #10b981;">[ACTIVE] (142ms)</span></td>
+                </tr>
+                <tr>
+                    <td><b>Denton County GIS REST Server</b></td>
+                    <td>Municipal Data</td>
+                    <td>5 mins ago</td>
+                    <td>1,120 records</td>
+                    <td><span style="color: #10b981;">[ACTIVE] (185ms)</span></td>
+                </tr>
+                <tr>
+                    <td><b>Dallas County GIS REST Server</b></td>
+                    <td>Municipal Data</td>
+                    <td>10 mins ago</td>
+                    <td>3,890 records</td>
+                    <td><span style="color: #10b981;">[ACTIVE] (155ms)</span></td>
+                </tr>
+                <tr>
+                    <td><b>Tarrant County GIS REST Server</b></td>
+                    <td>Municipal Data</td>
+                    <td>1 hour ago</td>
+                    <td>2,450 records</td>
+                    <td><span style="color: #ef4444;">[OFFLINE] (---)</span></td>
+                </tr>
+                <tr>
+                    <td><b>Nextdoor (East Plano Forum)</b></td>
+                    <td>Social Sentiment</td>
+                    <td>12 mins ago</td>
+                    <td>45 posts</td>
+                    <td><span style="color: #10b981;">[ACTIVE] (310ms)</span></td>
+                </tr>
+                <tr>
+                    <td><b>Reddit /r/commercialrealestate</b></td>
+                    <td>Social Sentiment</td>
+                    <td>15 mins ago</td>
+                    <td>12 opportunities</td>
+                    <td><span style="color: #10b981;">[ACTIVE] (188ms)</span></td>
+                </tr>
+                <tr>
+                    <td><b>X (Dallas Municipal News Feed)</b></td>
+                    <td>Social Sentiment</td>
+                    <td>30 mins ago</td>
+                    <td>98 updates</td>
+                    <td><span style="color: #f59e0b;">[RATE LIMITED]</span></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>5.0 Example Report Output Display</h2>
+        <div class="callout callout-logic">
+            <strong>📝 REPORT ID: HEX-PULSE-REPORT-2026-101</strong>
+            <ul>
+                <li><strong>Target Location:</strong> Downtown Dallas / Victory Park Corridor (H3 Cell Address: <code>8b62c4a754b2fff</code>)</li>
+                <li><strong>Intelligence Focus:</strong> Commercial Anchor Flight and Stadium Relocation Risk</li>
+                <li><strong>Lobe Score Shift:</strong> <span style="color: #ef4444;"><strong>Pulse Score reduced from 8.2 to 2.4 (Severe Risk)</strong></span></li>
+            </ul>
+            <hr />
+            <strong>🚨 Detected Risk Signals:</strong>
+            <ol>
+                <li><strong>Anchor Relocation Intent:</strong> Proposal submitted for tax incentives regarding a new multi-use sports arena in North Dallas. Indicating potential relocation of the Mavericks basketball and Stars hockey operations out of the American Airlines Center.</li>
+                <li><strong>Retail/Corporate Flight:</strong> Major department store corporate office announcing a layoff of 210 employees at the downtown Dallas headquarters, with intent to vacate 3 floors of commercial office space.</li>
+                <li><strong>Sentiment Analysis:</strong> Hyper-local sentiment shows a 78% increase in negative posts regarding downtown commercial occupancy rates, safety concerns, and street traffic declines.</li>
+            </ol>
+            <hr />
+            <strong>📈 Competitor Development Action Map:</strong>
+            <p><em>Crescent Real Estate Holdings</em> and <em>Hillwood Development</em> have filed zoning feasibility inquiries in the North Dallas/Valley View corridors, mirroring the projected flight path of downtown commercial tenants.</p>
+        </div>
+
+        <hr />
+        <h2>Document Revision History</h2>
+        <table class="sigma-data-grid">
+            <thead>
+                <tr>
+                    <th>Revision</th>
+                    <th>Date</th>
+                    <th>Description of Change</th>
+                    <th>Author / Approved By</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><b>1.0.0</b></td>
+                    <td>06/04/2026</td>
+                    <td>Initial release of Pulse Brain Plan SOP compiling the staging plan.</td>
+                    <td>George Bytes / Humberto Dominguez (Chairman)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- DOCUMENT CONTROL FOOTER -->
+    <div class="sop-card-footer">
+        <div>Classification: Institutional ISO 9001 QMS Record</div>
+        <div>Effective Date: 06/04/2026</div>
+        <div>Review Cycle: Annual (Rev 1.0.0)</div>
+    </div>
+</div>

@@ -1,0 +1,88 @@
+<!-- 
+    HEXGROWTH Institutional SOP: Alpha Brain (Lobe 10) - Market Reports
+    Standard: HEX-QMS-1.0
+    Document ID: HEX-SOP-10.0-ALPHA
+-->
+<div class="sop-card">
+    <!-- DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HEX-SOP-10.0-ALPHA</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #10b981;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Author</span><span class="meta-val">George Bytes (Lead Architect)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <h1>Standard Operating Procedure: <strong>Alpha Brain™ (Lobe 10) - Customizable Market Reports</strong></h1>
+        
+        <h2>1.0 Purpose</h2>
+        <p>To define the standards, logic, and database pipelines for <strong>Lobe 10: Alpha Brain™</strong>. Lobe 10 functions as the report compiler and client delivery interface of the HEXGROWTH engine, translating multi-lobe intelligence feeds into high-value, customizable market feasibility reports that clients can print or purchase.</p>
+
+        <h2>2.0 Industry Benchmark: John Burns (JBREC) Analysis</h2>
+        <p>The layout and logic of Lobe 10 reports are modeled after the industry-leading market demand studies compiled by John Burns Research and Consulting (JBREC), specifically the <em>Brookfield Baybrook Market Report (07/13/2023)</em>. To deliver top-dollar value, our reports replicate the following critical JBREC components:</p>
+        <ul>
+            <li><strong>Introduction & Background Assumptions:</strong> Explicitly stating the baseline physical appeal, builder expectations, and delivery timelines.</li>
+            <li><strong>Demographic Demand Modeling:</strong> Breaking down target homebuyer segments (e.g., Mature Singles/Couples, Mature Families, Retirees) and identifying their purchase patterns.</li>
+            <li><strong>Product Lot Sizing Matrix:</strong> Segmenting residential offerings by lot size (30' alley-loaded, 40', 50', 60', and 70' front-loaded) to minimize overlap.</li>
+            <li><strong>Cost To Own (CTO) Underwriting:</strong> Calculating exact principal, interest, tax, and HOA costs to own each home type monthly.</li>
+            <li><strong>Income to Qualify:</strong> Back-calculating the annual household income required to qualify for each home size at a maximum 33% debt-to-income (DTI) ratio.</li>
+            <li><strong>Amenity Premium Derivation:</strong> Evaluating the precise percentage value-add (e.g., +6.2% premium for a Crystal Lagoon) using local case studies (Windsong Ranch, Balmoral, Sierra Vista).</li>
+        </ul>
+
+        <h2>3.0 Report Generation Pipeline</h2>
+        <p>The customizable report compiles data dynamically by linking multiple backend components:</p>
+        <ol>
+            <li><strong>Macro Parameters:</strong> The compiler reads current fed rates, cap rates, permit latency, and construction cost indexes from the <code>HEX_CognitiveBridge</code> table.</li>
+            <li><strong>Dynamic Pricing Calculations:</strong> Base prices for each product line are scaled automatically using the project's target IRR. Principal and interest are computed using the live interest rate spread (Bridge Interest + 1.5% spread).</li>
+            <li><strong>Data Integrity Validation:</strong> The report appends the active session weights from <code>HEX_SystemState</code> (tuned by Lobe 9's error feedback loop), giving the client proof of verified data accuracy.</li>
+        </ol>
+
+        <h2>4.0 Codebase Integration</h2>
+        <p>Lobe 10's reporting engine is driven by the following components:</p>
+        <ul>
+            <li><strong>CLI Compiler:</strong> <code>scripts/HEX-REPORT-GENERATOR.py</code> generates offline markdown reports to the data directory.</li>
+            <li><strong>Web Viewport:</strong> Flask route <code>/reports/&lt;project_id&gt;</code> renders the premium printable HTML layout in the browser.</li>
+            <li><strong>User Interface Link:</strong> The project management dashboard (<code>projects.html</code>) includes direct "Compiled Report" buttons on active project cards.</li>
+        </ul>
+
+        <h2>5.0 Deployed JBREC Feasibility Parameters</h2>
+        <p>The following empirical metrics from the Brookfield Baybrook market report are hardcoded into Lobe 10's rendering engine and stored in the database cores for cross-lobe logical synthesis:</p>
+        <ul>
+            <li><strong>Density Benchmark:</strong> 3,120 units across 1,004 +/- acres (targeting 3.1 units/acre density).</li>
+            <li><strong>Tax Rate Equalization Offset:</strong> Houston tract tax baseline of 2.82% vs. League City tract tax baseline of 3.61% resolved via a <strong>7.0% discount factor</strong> applied to League City base prices to equalize Monthly CTO.</li>
+            <li><strong>Product Sizing Matrix:</strong> 30' Alley-loaded detached (1,272 avg sqft), 35' Alley (1,614 avg sqft), 40' Front (1,825 avg sqft), 50' Front (2,175 avg sqft), 55' Front (2,525 avg sqft), 60' Front (2,725 avg sqft), and 70' Front (3,275 avg sqft).</li>
+            <li><strong>Lagoon Value Premiums:</strong> Balmoral (+6.2%), Sierra Vista (+5.5%), and Windsong Ranch (+5.0% to +10.0%).</li>
+            <li><strong>Combined Absorption Pace:</strong> 38.4 units/month, projecting a 134-month complete sell-out schedule.</li>
+            <li><strong>Target Buyer Segmentation:</strong> Mature Singles/Couples (27.0%), Mature Families (22.0%), Active Adults/Retirees (22.0%), Young Families (19.0%), and Young Singles/Couples (10.0%).</li>
+        </ul>
+
+        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 3rem 0;" />
+        
+        <h2>Document Revision History</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Revision</th>
+                    <th>Date</th>
+                    <th>Description of Change</th>
+                    <th>Author / Approved By</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>1.0.0</strong></td>
+                    <td>06/05/2026</td>
+                    <td>Initial release of Lobe 10 reporting standards and JBREC benchmark integration.</td>
+                    <td>George Bytes (Lead Architect) / Humberto Dominguez (CEO)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- DOCUMENT CONTROL FOOTER -->
+    <div class="sop-card-footer">
+        <div>Classification: Institutional ISO 9001 QMS Record</div>
+        <div>Effective Date: 06/05/2026</div>
+        <div>Review Cycle: Annual (Rev 1.0.0)</div>
+    </div>
+</div>

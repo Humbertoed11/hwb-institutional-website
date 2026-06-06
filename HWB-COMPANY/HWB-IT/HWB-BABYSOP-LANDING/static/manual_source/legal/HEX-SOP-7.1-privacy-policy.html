@@ -1,0 +1,74 @@
+<!-- 
+    HEXGROWTH Institutional QMS Document
+    Standard: HEX-QMS-1.0 v1.0
+    Document ID: HEX-SOP-7.1
+-->
+<div class="sop-card">
+    <!-- DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HEX-SOP-7.1</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #10b981;">● APPROVED (PRIVACY POLICY)</span></div>
+        <div class="meta-unit"><span class="meta-label">Author</span><span class="meta-val">George Bytes (Lead Auditor)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <h1>Standard Operating Procedure: <strong>Data Privacy & Portfolio Security (ISO 8.2)</strong></h1>
+        <p><strong>Purpose:</strong> Establishes the standard data privacy controls for protecting user profile information, search logs, and developer portfolios from unauthorized access or corporate espionage.</p>
+
+        <hr />
+
+        <h2>1.0 Password & Session Encryption</h2>
+        <p>To protect access credentials, the platform enforces the following cryptographic standards:</p>
+        <ul>
+            <li><b>Password Hashing:</b> Passwords must be hashed using PBKDF2 with a SHA256 fallback wrapper inside the database. Cleartext storage is prohibited.</li>
+            <li><b>Session Validation:</b> Active user sessions are encrypted using the application server secret key (<code>SECRET_KEY</code>) and saved inside secure, HTTP-only cookie wrappers.</li>
+        </ul>
+
+        <h2>2.0 Portfolio Data Isolation</h2>
+        <p>Developer search histories, parcel watchlists, and score scenarios are sensitive intellectual assets. They must be stored in database tables with row-level constraints:</p>
+        <ul>
+            <li><b>Access Isolation:</b> Spatial query requests are restricted to the logged-in user account. The API router must validate that the requested portfolio matches the active session ID.</li>
+            <li><b>Logging Restraint:</b> Spatial bounding box lookups are cached locally to optimize speed, but logs containing exact street addresses or zoom coordinates must be cleared after 24 hours.</li>
+        </ul>
+
+        <h2>3.0 Regulatory Compliance (GDPR/CCPA)</h2>
+        <p>While serving commercial real estate developers, the platform aligns with key data protection frameworks:</p>
+        <ul>
+            <li><b>Data Deletion:</b> Users hold the right to request permanent deletion of their search logs and saved scenarios. Database commands must execute a hard delete of matching user records.</li>
+            <li><b>Audit Logs:</b> Any access to database tables containing search histories by administrators must log the action, timestamp, and purpose.</li>
+        </ul>
+
+        <div class="callout callout-note">
+            <strong>Security Warning:</strong> Any attempt to bypass the login gate or query tables directly without an active session token will trigger an automated IP ban.
+        </div>
+        
+        <hr />
+        <h2>Document Revision History</h2>
+        <table class="sigma-data-grid">
+            <thead>
+                <tr>
+                    <th>Revision</th>
+                    <th>Date</th>
+                    <th>Description of Change</th>
+                    <th>Author / Approved By</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><b>1.0.0</b></td>
+                    <td>06/03/2026</td>
+                    <td>Standardized clinical formatting and aligned with ISO 9001 document controls.</td>
+                    <td>George Bytes / Humberto Dominguez (Chairman)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 3. DOCUMENT CONTROL FOOTER -->
+    <div class="sop-card-footer">
+        <div>Classification: Institutional ISO 9001 QMS Record</div>
+        <div>Effective Date: 06/03/2026</div>
+        <div>Review Cycle: Annual (Rev 1.0.0)</div>
+    </div>
+</div>

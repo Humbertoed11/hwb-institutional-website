@@ -1,0 +1,148 @@
+<!-- 
+    HEXGROWTH Institutional QMS Document
+    Standard: HEX-QMS-1.0 v1.0
+    Document ID: HEX-REPORT-4.0
+-->
+<div class="sop-card">
+    <!-- DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HEX-REPORT-4.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #10b981;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Author</span><span class="meta-val">George Bytes (Lead Auditor)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <h1>PARCEL INTELLIGENCE PLATFORM: <strong>Complete Product Specification & Master Reference</strong></h1>
+        <p>This document is the single source of truth for the entire platform — product vision, data sources, revenue model, cost structure, competitive positioning, and engineering build plan.</p>
+
+        <hr>
+
+        <h2>1.0 Product Vision & What We Are Building</h2>
+        <h3>The Problem We Solve</h3>
+        <p>Real estate developers, private equity firms, local governments, and site selectors currently pay $20,000–$80,000 per market study and wait 3–8 weeks for a consultant to tell them if a site or market is viable. That process is slow, expensive, geographically limited, and produces a static PDF that starts going stale the day it is delivered. Our platform eliminates that process by letting developers click any parcel in the US, select an asset class, and generate an AI feasibility report in minutes.</p>
+        
+        <h3>The One-Line Pitch</h3>
+        <p><em>The Hex-Terminal for land and real estate development — every parcel in the US, every data layer that matters, instant AI-generated market intelligence at a price developers can afford.</em></p>
+
+        <h3>The Four Moats</h3>
+        <ul>
+            <li><strong>1. Infrastructure intelligence at parcel level:</strong> Water capacity, electric grid proximity, fiber presence, and sewer access scored from federal datasets.</li>
+            <li><strong>2. Entitlement Score Engine:</strong> A 1–10 developer-friendliness score per jurisdiction built from 3+ years of planning commission vote data sourced from Legistar API.</li>
+            <li><strong>3. Federal funding as a value signal:</strong> Infrastructure funding awards (IIJA, IRA, CHIPS, EDA) surfaced via USASpending API.</li>
+            <li><strong>4. Always-current living intelligence:</strong> Continuous data updates, comps tracking, and real-time alerts.</li>
+        </ul>
+
+        <hr>
+
+        <h2>2.0 Complete Feature Set</h2>
+        <ul>
+            <li><strong>2A — Core Map & Parcel Intelligence:</strong> Interactive parcel map (160M US parcels via Regrid), zoning overlays (Zoneomics), satellite imagery, and drive-time calculations.</li>
+            <li><strong>2B — Infrastructure Capacity Scoring:</strong> Substation names, distance, transmission line proximity, water system types, sewer service areas, fiber technology tiers, and natural gas pipelines.</li>
+            <li><strong>2C — Entitlement Risk Intelligence:</strong> Jurisdiction Entitlement Scores (1–10), approval timeline benchmarks, by-right vs discretionary flags, state preemption law flags, community opposition scores, and lot yield calculations.</li>
+            <li><strong>2D — Market Intelligence & Demographics:</strong> Population growth, median HH income trend, BLS job growth, rent trends (Zillow ZORI, HUD FMR), and comparable sales.</li>
+            <li><strong>2E — Climate, Risk & Environmental:</strong> FEMA flood zones, wetlands (FWS NWI), wildfire risks, brownfield proximity, and USGS topography.</li>
+            <li><strong>2F — Policy, Funding & Opportunity:</strong> Opportunity Zone designations, federal funding flows (USASpending API), and school district boundaries.</li>
+            <li><strong>2G — Pro Forma Calculator:</strong> Hard cost estimates (RSMeans), lumber/steel inflation adjustments, rent comp auto-population, FRED API mortgage rates, and IRR calculations.</li>
+            <li><strong>2H — Report Generation:</strong> On-demand AI market study report in minutes with asset class templates.</li>
+            <li><strong>2I — Subscription & Alerts:</strong> Watchlists for up to 500+ parcels, smart zoning alerts, and scenario comparison dashboards.</li>
+        </ul>
+
+        <hr>
+
+        <h2>3.0 Revenue Model & Pricing</h2>
+        <table border="1" cellpadding="5" style="border-collapse: collapse; width: 100%;">
+            <thead>
+                <tr style="background-color: #f1f5f9;">
+                    <th>Revenue Stream</th>
+                    <th>Pricing</th>
+                    <th>Target Buyer</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>On-demand AI reports</td>
+                    <td>$500 lite / $2,500 standard / $5,000 premium</td>
+                    <td>Developers, brokers, PE firms</td>
+                </tr>
+                <tr>
+                    <td>Bulk report packages</td>
+                    <td>$3k for 10-pack to $60k for 500-pack</td>
+                    <td>REITs, PE firms, site selectors</td>
+                </tr>
+                <tr>
+                    <td>API access (per-call)</td>
+                    <td>$0.10–$5.00/call</td>
+                    <td>PropTech startups, lenders</td>
+                </tr>
+                <tr>
+                    <td>Explorer subscription</td>
+                    <td>$149/mo (2 reports, 1 seat)</td>
+                    <td>Solo brokers, individual developers</td>
+                </tr>
+                <tr>
+                    <td>Analyst subscription</td>
+                    <td>$499/mo (8 reports, 3 seats)</td>
+                    <td>Active developers, analysts</td>
+                </tr>
+                <tr>
+                    <td>Professional subscription</td>
+                    <td>$1,499/mo (25 reports, 10 seats)</td>
+                    <td>PE firms, corporate real estate teams</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <hr>
+
+        <h2>4.0 Technology Stack & Architecture</h2>
+        <ul>
+            <li><strong>Backend API:</strong> Node.js or Python (FastAPI) on AWS EC2 t3.medium.</li>
+            <li><strong>Geospatial Database:</strong> PostGIS (PostgreSQL) on AWS RDS.</li>
+            <li><strong>Caching:</strong> Redis (AWS ElastiCache).</li>
+            <li><strong>Object Storage:</strong> AWS S3 (PDF reports, GIS shapefiles).</li>
+            <li><strong>Map Server:</strong> Self-hosted PMTiles/MBTiles on Cloudflare CDN.</li>
+            <li><strong>Frontend:</strong> Next.js on Vercel Pro.</li>
+            <li><strong>AI:</strong> Gemini 2.0 Flash for report synthesis.</li>
+        </ul>
+
+        <hr>
+
+        <h2>5.0 Engineering Backlog (Top 5 Tasks)</h2>
+        <ol>
+            <li><strong>Task 1 (Day 1):</strong> Ingest HIFLD electric substations and transmission lines into PostGIS.</li>
+            <li><strong>Task 2 (Day 1):</strong> Set up FEMA NFHL flood zone REST API call per parcel.</li>
+            <li><strong>Task 3 (Day 1):</strong> Ingest FWS Wetlands and Opportunity Zone tracts.</li>
+            <li><strong>Task 4 (Day 1):</strong> Ingest TIGER/Line road maps and calculate highway proximity scores.</li>
+            <li><strong>Task 5 (Week 1):</strong> Connect Census ACS API for demographic data retrieval.</li>
+        </ol>
+        
+        <hr />
+        <h2>Document Revision History</h2>
+        <table class="sigma-data-grid">
+            <thead>
+                <tr>
+                    <th>Revision</th>
+                    <th>Date</th>
+                    <th>Description of Change</th>
+                    <th>Author / Approved By</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><b>1.0.0</b></td>
+                    <td>06/03/2026</td>
+                    <td>Standardized clinical formatting and aligned with ISO 9001 document controls.</td>
+                    <td>George Bytes / Humberto Dominguez (Chairman)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 3. DOCUMENT CONTROL FOOTER -->
+    <div class="sop-card-footer">
+        <div>Classification: Institutional ISO 9001 QMS Record</div>
+        <div>Effective Date: 06/03/2026</div>
+        <div>Review Cycle: Annual (Rev 1.0.0)</div>
+    </div>
+</div>

@@ -2,6 +2,8 @@ import os
 import json
 import random
 import time
+import re
+import hashlib
 from datetime import datetime, timedelta
 from functools import wraps
 from flask import Flask, render_template, request, jsonify, Response, session, flash, redirect, url_for
@@ -30,6 +32,136 @@ def make_session_permanent():
 
 # Database configuration
 DB_URL = os.environ.get("DATABASE_URL", "postgresql://hexadmin:hexpassword@hex_postgis_db:5432/hex_dev_db")
+
+QMS_STATIC_DIR = os.path.join(app.root_path, 'static', 'manual')
+INDEX_FILE = os.path.join(app.root_path, 'qms_index.json')
+
+def calculate_local_embedding(text):
+    # Generates a deterministic mock 1536-dimension embedding based on text hash
+    embedding = [0.0] * 1536
+    hasher = hashlib.sha256(text.encode('utf-8'))
+    digest = hasher.digest()
+    for i in range(1536):
+        byte_index = (i * 7) % len(digest)
+        val = (digest[byte_index] / 127.5) - 1.0
+        embedding[i] = round(val, 6)
+    return embedding
+
+CATEGORY_MAPPING = {
+    "context": "01 Executive Governance",
+    "leadership": "01 Executive Governance",
+    "operations": "03 Operations",
+    "operations/lobes": "Neural Core",
+    "planning": "04 Purchasing",
+    "evaluation": "06 IT (Information Technology)",
+    "legal": "09 Legal & Compliance"
+}
+
+def auto_sync_qms():
+    source_dir = os.path.join(app.root_path, 'static', 'manual_source')
+    if not os.path.exists(source_dir):
+        source_dir = os.path.join(os.path.dirname(app.root_path), 'HEX-QMS')
+        if not os.path.exists(source_dir):
+            return
+
+    # Load master index to map rel_path or doc_id to the department configured in qms_index.json
+    index_mapping = {}
+    if os.path.exists(INDEX_FILE):
+        try:
+            with open(INDEX_FILE, 'r', encoding='utf-8') as f:
+                index_data = json.load(f)
+                for item in index_data:
+                    file_path_in_index = item.get('file')
+                    if file_path_in_index:
+                        index_mapping[file_path_in_index] = {
+                            'category': item.get('department'),
+                            'id': item.get('id'),
+                            'title': item.get('title')
+                        }
+        except Exception as e:
+            print(f"[AUTO-SYNC] Error loading qms_index.json: {e}")
+
+    try:
+        conn = psycopg2.connect(DB_URL)
+        with conn.cursor() as cur:
+            found_doc_ids = []
+            for root, dirs, files in os.walk(source_dir):
+                for file in files:
+                    if not file.endswith('.html'):
+                        continue
+                    
+                    full_path = os.path.join(root, file)
+                    rel_path = os.path.relpath(full_path, source_dir)
+
+                    with open(full_path, 'r', encoding='utf-8') as f:
+                        content = f.read()
+
+                    if rel_path in index_mapping:
+                        doc_id = index_mapping[rel_path]['id']
+                        title = index_mapping[rel_path]['title']
+                        category = index_mapping[rel_path]['category']
+                    else:
+                        doc_id_match = re.search(r'(HEX-[A-Z0-9.-]+)', file)
+                        doc_id = doc_id_match.group(1) if doc_id_match else file.replace('.html', '')
+                        doc_id = doc_id.rstrip('.-')
+
+                        title_match = re.search(r'<h1>(.*?)</h1>', content, re.IGNORECASE)
+                        if not title_match:
+                            title_match = re.search(r'<title>(.*?)</title>', content, re.IGNORECASE)
+                        title = title_match.group(1).strip() if title_match else doc_id.replace('-', ' ').title()
+                        title = re.sub(r'<[^>]*>', '', title)
+
+                        folder = os.path.dirname(rel_path)
+                        category = CATEGORY_MAPPING.get(folder, folder.title() or "General")
+
+                    found_doc_ids.append(doc_id)
+
+                    embedding = calculate_local_embedding(content)
+                    cur.execute("""
+                        INSERT INTO "HEX_KB_Library" (doc_id, title, category, content, url_slug, embedding, last_updated)
+                        VALUES (%s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP)
+                        ON CONFLICT (doc_id) DO UPDATE 
+                        SET title = EXCLUDED.title,
+                            category = EXCLUDED.category,
+                            content = EXCLUDED.content,
+                            url_slug = EXCLUDED.url_slug,
+                            embedding = EXCLUDED.embedding,
+                            last_updated = CASE 
+                                WHEN "HEX_KB_Library".content IS DISTINCT FROM EXCLUDED.content 
+                                  OR "HEX_KB_Library".title IS DISTINCT FROM EXCLUDED.title
+                                  OR "HEX_KB_Library".category IS DISTINCT FROM EXCLUDED.category
+                                  OR "HEX_KB_Library".url_slug IS DISTINCT FROM EXCLUDED.url_slug
+                                THEN CURRENT_TIMESTAMP 
+                                ELSE "HEX_KB_Library".last_updated 
+                            END;
+                    """, (doc_id, title, category, content, rel_path, embedding))
+
+            if found_doc_ids:
+                cur.execute('DELETE FROM "HEX_KB_Library" WHERE doc_id NOT IN %s', (tuple(found_doc_ids),))
+
+            conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"[AUTO-SYNC] Error during QMS auto-sync: {e}")
+
+def load_sops():
+    auto_sync_qms()
+    sops = []
+    try:
+        conn = psycopg2.connect(DB_URL)
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("""
+                SELECT doc_id as id, title, url_slug as file, category as department,
+                       TO_CHAR(last_updated, 'MM/DD/YYYY') as date,
+                       CASE WHEN last_updated >= NOW() - INTERVAL '24 hours' THEN 'UPDATED' ELSE 'OUTDATED' END as compliance,
+                       '1.0.0' as version
+                FROM "HEX_KB_Library"
+            """)
+            sops = cur.fetchall()
+        conn.close()
+    except Exception as e:
+        print(f"Error loading QMS library: {e}")
+    return sops
 
 # --- HEXGROWTH Project Management Hub Table Initialization ---
 def init_projects_table():
@@ -567,6 +699,539 @@ def run_migration():
         return jsonify({"status": "success", "message": "Database tables and grid data successfully migrated to Azure!"})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/reports/<int:project_id>')
+@login_required
+def generate_market_report(project_id):
+    try:
+        conn = psycopg2.connect(DB_URL)
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            # 1. Fetch project
+            cur.execute('SELECT * FROM "HEX_Projects" WHERE id = %s', (project_id,))
+            project = cur.fetchone()
+            if not project:
+                conn.close()
+                abort(404)
+                
+            # 2. Fetch parameters from Cognitive Bridge
+            cur.execute('SELECT parameter_name, parameter_value FROM "HEX_CognitiveBridge"')
+            bridge_rows = cur.fetchall()
+            bridge_params = {row['parameter_name']: float(row['parameter_value']) for row in bridge_rows}
+            
+            # 3. Fetch weights from SystemState
+            session_id = "2026-06-04-INTELLIGENT-LEGEND-COMPLETED"
+            cur.execute('SELECT state_data FROM "HEX_SystemState" WHERE session_id = %s', (session_id,))
+            state_row = cur.fetchone()
+            active_weights = {}
+            if state_row:
+                state_data = state_row['state_data']
+                if isinstance(state_data, str):
+                    state_data = json.loads(state_data)
+                params = state_data.get("parameters", {})
+                for k, v in params.items():
+                    if k.startswith("Weight: "):
+                        lobe_name = k.replace("Weight: ", "").replace("_weight", "").upper()
+                        active_weights[lobe_name] = v
+            
+            # Fallback weights if table doesn't have them
+            if not active_weights:
+                active_weights = {
+                    "L1_ZONING": "0.1500 (Baseline)",
+                    "L2_TRANSIT": "0.1000 (Baseline)",
+                    "L3_POWER": "0.1500 (Baseline)",
+                    "L4_LEGAL": "0.1500 (Baseline)",
+                    "L5_RANGER": "0.1000 (Baseline)",
+                    "L6_PULSE": "0.0500 (Baseline)",
+                    "L7_FINANCE": "0.2000 (Baseline)",
+                    "L8_INFERENCE": "0.1000 (Baseline)"
+                }
+                
+        conn.close()
+        
+        # Get parameters with defaults
+        interest_rate = bridge_params.get("interest_rate", 0.055)
+        cap_rate_baseline = bridge_params.get("cap_rate_baseline", 0.0725)
+        permit_latency_days = bridge_params.get("permit_latency_days", 120.0)
+        egress_speed_mph = bridge_params.get("egress_speed_mph", 45.0)
+        construction_cost_index = bridge_params.get("construction_cost_index", 1.15)
+        
+        # 4. Generate Recommended Pricing Matrix
+        target_irr = float(project['target_irr']) if project['target_irr'] else 15.0
+        B = 400000.0 * (1.0 + (target_irr - 15.0) / 100.0)
+        
+        lot_configurations = [
+            {"lot_size": "30' Alley", "detail": "Alley loaded detached SFD", "sqft": 1272, "mult": 0.70, "absorption": "4.0", "options": 15000},
+            {"lot_size": "40' Front", "detail": "Front loaded detached SFD", "sqft": 1825, "mult": 0.85, "absorption": "3.5", "options": 20000},
+            {"lot_size": "50' Front", "detail": "Front loaded detached SFD", "sqft": 2175, "mult": 1.00, "absorption": "3.0", "options": 35000},
+            {"lot_size": "60' Front", "detail": "Front loaded detached SFD", "sqft": 2725, "mult": 1.20, "absorption": "2.0", "options": 50000},
+            {"lot_size": "70' Front", "detail": "Front loaded detached SFD", "sqft": 3275, "mult": 1.40, "absorption": "1.5", "options": 70000}
+        ]
+        
+        r = interest_rate + 0.015
+        monthly_rate = r / 12.0
+        n_payments = 360
+        pi_factor = (monthly_rate * (1 + monthly_rate)**n_payments) / (((1 + monthly_rate)**n_payments) - 1)
+        
+        pricing_matrix = []
+        for config in lot_configurations:
+            base_price = int(B * config["mult"])
+            pi = base_price * 0.90 * pi_factor
+            taxes = (base_price * 0.0282) / 12.0
+            hoa = 105.0
+            monthly_cto = int(pi + taxes + hoa)
+            qualifying_income = int((monthly_cto / 0.33) * 12.0)
+            
+            pricing_matrix.append({
+                "lot_size": config["lot_size"],
+                "detail": config["detail"],
+                "sqft": config["sqft"],
+                "base_price": base_price,
+                "monthly_cto": monthly_cto,
+                "qualifying_income": qualifying_income,
+                "absorption": config["absorption"]
+            })
+            
+        return render_template('market_report.html', 
+                               project=project,
+                               interest_rate=interest_rate,
+                               cap_rate_baseline=cap_rate_baseline,
+                               permit_latency_days=permit_latency_days,
+                               egress_speed_mph=egress_speed_mph,
+                               construction_cost_index=construction_cost_index,
+                               pricing_matrix=pricing_matrix,
+                               active_weights=active_weights)
+    except Exception as e:
+        import traceback
+        print(f"Error compiling report: {e}")
+        traceback.print_exc()
+        abort(500)
+
+
+@app.route('/reports/max/<int:project_id>')
+@login_required
+def generate_market_report_max(project_id):
+    try:
+        conn = psycopg2.connect(DB_URL)
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            # 1. Fetch project
+            cur.execute('SELECT * FROM "HEX_Projects" WHERE id = %s', (project_id,))
+            project = cur.fetchone()
+            if not project:
+                conn.close()
+                abort(404)
+                
+            # 2. Fetch parameters from Cognitive Bridge
+            cur.execute('SELECT parameter_name, parameter_value FROM "HEX_CognitiveBridge"')
+            bridge_rows = cur.fetchall()
+            bridge_params = {row['parameter_name']: float(row['parameter_value']) for row in bridge_rows}
+            
+            # 3. Fetch weights from SystemState
+            session_id = "2026-06-04-INTELLIGENT-LEGEND-COMPLETED"
+            cur.execute('SELECT state_data FROM "HEX_SystemState" WHERE session_id = %s', (session_id,))
+            state_row = cur.fetchone()
+            active_weights = {}
+            if state_row:
+                state_data = state_row['state_data']
+                if isinstance(state_data, str):
+                    state_data = json.loads(state_data)
+                params = state_data.get("parameters", {})
+                for k, v in params.items():
+                    if k.startswith("Weight: "):
+                        lobe_name = k.replace("Weight: ", "").replace("_weight", "").upper()
+                        active_weights[lobe_name] = v
+            
+            if not active_weights:
+                active_weights = {
+                    "L1_ZONING": "0.1500 (Baseline)",
+                    "L2_TRANSIT": "0.1000 (Baseline)",
+                    "L3_POWER": "0.1500 (Baseline)",
+                    "L4_LEGAL": "0.1500 (Baseline)",
+                    "L5_RANGER": "0.1000 (Baseline)",
+                    "L6_PULSE": "0.0500 (Baseline)",
+                    "L7_FINANCE": "0.2000 (Baseline)",
+                    "L8_INFERENCE": "0.1000 (Baseline)"
+                }
+                
+        conn.close()
+        
+        interest_rate = bridge_params.get("interest_rate", 0.055)
+        cap_rate_baseline = bridge_params.get("cap_rate_baseline", 0.0725)
+        permit_latency_days = bridge_params.get("permit_latency_days", 120.0)
+        egress_speed_mph = bridge_params.get("egress_speed_mph", 45.0)
+        construction_cost_index = bridge_params.get("construction_cost_index", 1.15)
+        
+        target_irr = float(project['target_irr']) if project['target_irr'] else 15.0
+        B = 400000.0 * (1.0 + (target_irr - 15.0) / 100.0)
+        
+        lot_configurations = [
+            {"lot_size": "30' Alley", "detail": "Alley loaded detached SFD", "sqft": 1272, "mult": 0.70, "absorption": "4.0"},
+            {"lot_size": "35' Alley", "detail": "Alley loaded detached SFD", "sqft": 1614, "mult": 0.78, "absorption": "4.0"},
+            {"lot_size": "40' Front", "detail": "Front loaded detached SFD", "sqft": 1825, "mult": 0.85, "absorption": "3.0"},
+            {"lot_size": "50' Front", "detail": "Front loaded detached SFD", "sqft": 2175, "mult": 1.00, "absorption": "3.0"},
+            {"lot_size": "55' Front", "detail": "Front loaded detached SFD", "sqft": 2525, "mult": 1.08, "absorption": "2.5"},
+            {"lot_size": "60' Front", "detail": "Front loaded detached SFD", "sqft": 2725, "mult": 1.20, "absorption": "2.0"},
+            {"lot_size": "70' Front", "detail": "Front loaded detached SFD", "sqft": 3275, "mult": 1.40, "absorption": "1.5"}
+        ]
+        
+        r = interest_rate + 0.015
+        monthly_rate = r / 12.0
+        n_payments = 360
+        pi_factor = (monthly_rate * (1 + monthly_rate)**n_payments) / (((1 + monthly_rate)**n_payments) - 1)
+        
+        pricing_matrix = []
+        for config in lot_configurations:
+            base_price = int(B * config["mult"])
+            pi = base_price * 0.90 * pi_factor
+            taxes = (base_price * 0.0282) / 12.0
+            hoa = 105.0
+            monthly_cto = int(pi + taxes + hoa)
+            qualifying_income = int((monthly_cto / 0.33) * 12.0)
+            
+            pricing_matrix.append({
+                "lot_size": config["lot_size"],
+                "detail": config["detail"],
+                "sqft": config["sqft"],
+                "base_price": base_price,
+                "monthly_cto": monthly_cto,
+                "qualifying_income": qualifying_income,
+                "absorption": config["absorption"]
+            })
+            
+        return render_template('market_report_max.html', 
+                               project=project,
+                               interest_rate=interest_rate,
+                               cap_rate_baseline=cap_rate_baseline,
+                               permit_latency_days=permit_latency_days,
+                               egress_speed_mph=egress_speed_mph,
+                               construction_cost_index=construction_cost_index,
+                               pricing_matrix=pricing_matrix,
+                               active_weights=active_weights)
+    except Exception as e:
+        import traceback
+        print(f"Error compiling max report: {e}")
+        traceback.print_exc()
+        abort(500)
+
+
+# --- Backoffice Control Panel & Admin APIs ---
+def get_system_parameters():
+    conn = psycopg2.connect(DB_URL)
+    weights = {}
+    statuses = {}
+    bridge = {}
+    session_id = "2026-06-04-INTELLIGENT-LEGEND-COMPLETED"
+    
+    with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        # Load weights and status from HEX_SystemState
+        cur.execute('SELECT state_data FROM "HEX_SystemState" WHERE session_id = %s', (session_id,))
+        row = cur.fetchone()
+        if row:
+            state_data = row['state_data']
+            if isinstance(state_data, str):
+                state_data = json.loads(state_data)
+            params = state_data.get("parameters", {})
+            for k, v in params.items():
+                if k.startswith("Weight: "):
+                    lobe = k.replace("Weight: ", "").replace("_weight", "").upper()
+                    weights[lobe] = v
+                elif k.startswith("Status: "):
+                    lobe = k.replace("Status: ", "").upper()
+                    statuses[lobe] = v
+                    
+        # Load parameters from HEX_CognitiveBridge
+        cur.execute('SELECT parameter_name, parameter_value FROM "HEX_CognitiveBridge"')
+        bridge_rows = cur.fetchall()
+        for r in bridge_rows:
+            bridge[r['parameter_name']] = float(r['parameter_value'])
+            
+    conn.close()
+    
+    # Fill default statuses if missing
+    default_lobes = ["L1_ZONING", "L2_TRANSIT", "L3_POWER", "L4_LEGAL", "L5_RANGER", "L6_PULSE", "L7_FINANCE", "L8_INFERENCE", "L9_ACCOUNTABILITY", "L10_ALPHA", "L11_SCOUT"]
+    for lobe in default_lobes:
+        if lobe not in statuses:
+            statuses[lobe] = "ACTIVE"
+            
+    return weights, statuses, bridge
+
+@app.route('/admin/control-panel')
+@login_required
+def admin_control_panel():
+    weights, statuses, bridge = get_system_parameters()
+    
+    # Fetch Scout Registry
+    scout_sources = []
+    try:
+        conn = psycopg2.connect(DB_URL)
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("""
+                SELECT id, municipality_name, department_name, source_type, 
+                       endpoint_or_contact, scouting_status, latency_ms, 
+                       TO_CHAR(last_scouted, 'YYYY-MM-DD HH24:MI:SS') as last_scouted
+                FROM "HEX_Scout_Registry"
+                ORDER BY municipality_name, department_name
+            """)
+            scout_sources = cur.fetchall()
+        conn.close()
+    except Exception as e:
+        print(f"Error loading scout registry: {e}")
+        
+    # Fetch Accountability Responsibilities
+    accountability_rules = []
+    try:
+        conn = psycopg2.connect(DB_URL)
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("""
+                SELECT id, responsibility_id, lobe, category, description, 
+                       verification_method, target_frequency, status,
+                       TO_CHAR(last_run, 'YYYY-MM-DD HH24:MI:SS') as last_run
+                FROM "HEX_AccountabilityBrain"
+                ORDER BY responsibility_id
+            """)
+            accountability_rules = cur.fetchall()
+        conn.close()
+    except Exception as e:
+        print(f"Error loading accountability brain: {e}")
+
+    # Fetch Active Projects
+    projects = []
+    try:
+        conn = psycopg2.connect(DB_URL)
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("""
+                SELECT id, name, region, status, target_irr, primary_lobe, budget, description
+                FROM "HEX_Projects"
+                ORDER BY id
+            """)
+            projects = cur.fetchall()
+        conn.close()
+    except Exception as e:
+        print(f"Error loading projects: {e}")
+        
+    sops_by_dept = load_sops()
+    return render_template('admin_control_panel.html',
+                           weights=weights,
+                           statuses=statuses,
+                           bridge=bridge,
+                           scout_sources=scout_sources,
+                           accountability_rules=accountability_rules,
+                           projects=projects,
+                           sops_by_dept=sops_by_dept)
+
+@app.route('/api/v1/admin/toggle-brain', methods=['POST'])
+@login_required
+def toggle_brain():
+    data = request.get_json() or {}
+    lobe = data.get('lobe')
+    status = data.get('status', 'ACTIVE')
+    if not lobe:
+        return jsonify({"status": "error", "message": "Missing lobe name"}), 400
+        
+    session_id = "2026-06-04-INTELLIGENT-LEGEND-COMPLETED"
+    try:
+        conn = psycopg2.connect(DB_URL)
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute('SELECT state_data FROM "HEX_SystemState" WHERE session_id = %s', (session_id,))
+            row = cur.fetchone()
+            if row:
+                state_data = row['state_data']
+                if isinstance(state_data, str):
+                    state_data = json.loads(state_data)
+                if "parameters" not in state_data:
+                    state_data["parameters"] = {}
+                    
+                state_data["parameters"][f"Status: {lobe.upper()}"] = status.upper()
+                
+                cur.execute("""
+                    UPDATE "HEX_SystemState"
+                    SET state_data = %s, updated_at = CURRENT_TIMESTAMP
+                    WHERE session_id = %s
+                """, (json.dumps(state_data), session_id))
+                conn.commit()
+        conn.close()
+        return jsonify({"status": "success", "lobe": lobe, "state": status})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/v1/admin/update-bridge', methods=['POST'])
+@login_required
+def update_bridge():
+    data = request.get_json() or {}
+    try:
+        conn = psycopg2.connect(DB_URL)
+        with conn.cursor() as cur:
+            for param, val in data.items():
+                cur.execute("""
+                    UPDATE "HEX_CognitiveBridge"
+                    SET parameter_value = %s, last_updated = CURRENT_TIMESTAMP
+                    WHERE parameter_name = %s
+                """, (float(val), param))
+            conn.commit()
+        conn.close()
+        return jsonify({"status": "success", "message": "Parameters updated successfully"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route('/api/v1/admin/update-irr', methods=['POST'])
+@login_required
+def update_project_irr():
+    data = request.get_json() or {}
+    project_id = data.get('project_id')
+    target_irr = data.get('target_irr')
+    if not project_id or target_irr is None:
+        return jsonify({"status": "error", "message": "Missing project_id or target_irr"}), 400
+        
+    try:
+        conn = psycopg2.connect(DB_URL)
+        with conn.cursor() as cur:
+            cur.execute("""
+                UPDATE "HEX_Projects"
+                SET target_irr = %s
+                WHERE id = %s
+            """, (float(target_irr), int(project_id)))
+            conn.commit()
+        conn.close()
+        return jsonify({"status": "success", "message": f"Project {project_id} IRR updated to {target_irr}%"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/v1/admin/scout/add', methods=['POST'])
+@login_required
+def add_scout_source():
+    data = request.get_json() or {}
+    muni = data.get('municipality_name')
+    dept = data.get('department_name')
+    stype = data.get('source_type')
+    endpoint = data.get('endpoint_or_contact')
+    notes = data.get('scouted_notes', '')
+    
+    if not all([muni, dept, stype, endpoint]):
+        return jsonify({"status": "error", "message": "Missing required fields"}), 400
+        
+    try:
+        conn = psycopg2.connect(DB_URL)
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("""
+                INSERT INTO "HEX_Scout_Registry" (municipality_name, department_name, source_type, endpoint_or_contact, scouted_notes, scouting_status)
+                VALUES (%s, %s, %s, %s, %s, 'Identified')
+                RETURNING id, municipality_name, department_name, source_type, endpoint_or_contact, scouting_status
+            """, (muni, dept, stype, endpoint, notes))
+            source = cur.fetchone()
+            conn.commit()
+        conn.close()
+        return jsonify({"status": "success", "data": source})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/v1/admin/scout/delete/<int:source_id>', methods=['DELETE'])
+@login_required
+def delete_scout_source(source_id):
+    try:
+        conn = psycopg2.connect(DB_URL)
+        with conn.cursor() as cur:
+            cur.execute('DELETE FROM "HEX_Scout_Registry" WHERE id = %s', (source_id,))
+            conn.commit()
+        conn.close()
+        return jsonify({"status": "success", "message": "Scout source deleted"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/v1/admin/scout/toggle/<int:source_id>', methods=['POST'])
+@login_required
+def toggle_scout_source(source_id):
+    data = request.get_json() or {}
+    status = data.get('status', 'Identified')
+    try:
+        conn = psycopg2.connect(DB_URL)
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("""
+                UPDATE "HEX_Scout_Registry"
+                SET scouting_status = %s, last_scouted = CURRENT_TIMESTAMP
+                WHERE id = %s
+                RETURNING id, scouting_status as status
+            """, (status, source_id))
+            source = cur.fetchone()
+            conn.commit()
+        conn.close()
+        return jsonify({"status": "success", "data": source})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/v1/admin/accountability/add', methods=['POST'])
+@login_required
+def add_accountability_rule():
+    data = request.get_json() or {}
+    resp_id = data.get('responsibility_id')
+    lobe = data.get('lobe')
+    category = data.get('category')
+    desc = data.get('description')
+    method = data.get('verification_method', 'Manual Inspection')
+    freq = data.get('target_frequency', 'Daily')
+    
+    if not all([resp_id, lobe, category, desc]):
+        return jsonify({"status": "error", "message": "Missing required fields"}), 400
+        
+    try:
+        conn = psycopg2.connect(DB_URL)
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("""
+                INSERT INTO "HEX_AccountabilityBrain" (responsibility_id, lobe, category, description, verification_method, target_frequency, status)
+                VALUES (%s, %s, %s, %s, %s, %s, 'PENDING')
+                RETURNING id, responsibility_id, lobe, category, status
+            """, (resp_id, lobe, category, desc, method, freq))
+            rule = cur.fetchone()
+            conn.commit()
+        conn.close()
+        return jsonify({"status": "success", "data": rule})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/v1/admin/accountability/delete/<int:rule_id>', methods=['DELETE'])
+@login_required
+def delete_accountability_rule(rule_id):
+    try:
+        conn = psycopg2.connect(DB_URL)
+        with conn.cursor() as cur:
+            cur.execute('DELETE FROM "HEX_AccountabilityBrain" WHERE id = %s', (rule_id,))
+            conn.commit()
+        conn.close()
+        return jsonify({"status": "success", "message": "Accountability rule deleted"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/v1/admin/accountability/toggle/<int:rule_id>', methods=['POST'])
+@login_required
+def toggle_accountability_rule(rule_id):
+    data = request.get_json() or {}
+    status = data.get('status', 'PENDING')
+    try:
+        conn = psycopg2.connect(DB_URL)
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("""
+                UPDATE "HEX_AccountabilityBrain"
+                SET status = %s, last_run = CURRENT_TIMESTAMP
+                WHERE id = %s
+                RETURNING id, status
+            """, (status, rule_id))
+            rule = cur.fetchone()
+            conn.commit()
+        conn.close()
+        return jsonify({"status": "success", "data": rule})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/v1/admin/accountability/run', methods=['POST'])
+@login_required
+def trigger_accountability_run():
+    try:
+        import subprocess
+        script_path = os.path.join(app.root_path, 'scripts', 'HEX-DAILY-ACCOUNTABILITY-SYNC.py')
+        subprocess.run(["python3", script_path], check=False)
+        return jsonify({"status": "success", "message": "Daily accountability sync completed."})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 
 if __name__ == '__main__':
     # Bind to 0.0.0.0 for container/Azure deployment compatibility

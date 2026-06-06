@@ -1,0 +1,154 @@
+<!-- 
+    HEXGROWTH Institutional QMS Document
+    Standard: HEX-QMS-1.0 v1.0
+    Document ID: HEX-REPORT-12.0
+-->
+<div class="sop-card">
+    <!-- DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HEX-REPORT-12.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #10b981;">● APPROVED (MASTER BLACK BELT SIGN-OFF)</span></div>
+        <div class="meta-unit"><span class="meta-label">Author</span><span class="meta-val">George Bytes (Lead Auditor)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <h1>HEXGROWTH ENTERPRISE CHARTER: <strong>DMAIC Six Sigma Product Valuation & Hardening Specification</strong></h1>
+        <p><strong>Scope:</strong> Establishes the formal Six Sigma project charter and operational control roadmap to validate the HEXGROWTH Geospatial Platform for a $150,000,000 enterprise transaction. This document maps product quality to financial valuation.</p>
+
+        <hr />
+
+        <h2>1.0 Define Phase (D): Problem, Goal, and Scope</h2>
+        
+        <h3>1.1 Problem Statement</h3>
+        <p>Traditional real estate feasibility studies require manual, fragmented research, costing $20,000–$80,000 per study with delivery times ranging from 3 to 8 weeks. This long delay restricts investment speed, creates transaction risk, and uses static data that degrades immediately upon delivery.</p>
+
+        <h3>1.2 Goal Statement</h3>
+        <p>Relentlessly compress the feasibility and parcel intelligence analysis loop from 3 weeks to <b>under 3 minutes</b>. Achieve <b>99.999% data parity (Six Sigma level)</b> across 160 million parcels, establishing a proprietary geospatial moat that supports a platform valuation of <b>$150,000,000</b> based on institutional SaaS recurring revenue projections.</p>
+
+        <h3>1.3 SIPOC Process Map</h3>
+        <table class="sigma-data-grid">
+            <thead>
+                <tr>
+                    <th>Suppliers</th>
+                    <th>Inputs</th>
+                    <th>Process (Core Engine)</th>
+                    <th>Outputs</th>
+                    <th>Customers</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Regrid, Zoneomics, ONCOR, FEMA, TxDOT, USGS</td>
+                    <td>Parcel shapes, zoning boundaries, utility corridors, highway counts, slope data</td>
+                    <td>1. Extract: Miner processes raw feeds.<br>2. Tessellate: Assign to H3 Resolution-11 cells.<br>3. Vote: 7 brains evaluate parcel attributes.<br>4. Score: Generate unified alpha ratings.</td>
+                    <td>Live HUD map, AI feasibility reports, watchlist alert triggers</td>
+                    <td>Real Estate Developers, REITs, Private Equity Firms, Municipal Planners</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <hr />
+
+        <h2>2.0 Measure Phase (M): Key Performance Indicators & CTQs</h2>
+        
+        <h3>2.1 Critical-to-Quality (CTQ) Parameters</h3>
+        <p>These metrics represent the boundaries that the software must satisfy to maintain enterprise reliability:</p>
+        <table class="sigma-data-grid">
+            <thead>
+                <tr>
+                    <th>CTQ Parameter</th>
+                    <th>Performance Threshold</th>
+                    <th>Measurement System</th>
+                    <th>Valuation Impact</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><b>Time-to-Execution</b></td>
+                    <td>&lt; 180 seconds per parcel audit</td>
+                    <td>In-app execution timer logs</td>
+                    <td>Reduces developer analysis cost by 95%</td>
+                </tr>
+                <tr>
+                    <td><b>Geospatial Query Speed</b></td>
+                    <td>&lt; 100ms response for Res-11 grid data</td>
+                    <td>PostgreSQL EXPLAIN ANALYZE telemetry</td>
+                    <td>Enables smooth, real-time map panning</td>
+                </tr>
+                <tr>
+                    <td><b>System Availability</b></td>
+                    <td>99.99% uptime (High Availability)</td>
+                    <td>Azure Monitor ping alerts</td>
+                    <td>Minimizes operational disruptions</td>
+                </tr>
+                <tr>
+                    <td><b>Session Security</b></td>
+                    <td>15-minute strict inactivity logout</td>
+                    <td>Client-side activity listener & Flask token decay</td>
+                    <td>Protects sensitive client portfolios</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <hr />
+
+        <h2>3.0 Analyze Phase (A): Performance Gaps & System Bottlenecks</h2>
+        
+        <h3>3.1 Database Scale Overhead</h3>
+        <p>Scanning millions of raw spatial records during viewport zoom operations created server lag. To solve this, the engineering team implemented <b>hierarchical grid indexing</b> across resolution tiers (Res-07 for macro viewports, Res-09 for regional corridor zoom, and Res-11 for surgical site scans). This eliminates flat-file calculations and compresses queries down to the PostGIS layer.</p>
+
+        <h3>3.2 Style Collision Gaps</h3>
+        <p>Earlier iterations allowed custom CSS formats inside individual department documents, causing styling leakage that broke the QMS clinical theme. Converting files to uniform snippet cards removes template collisions and ensures visual consistency across the entire web portal.</p>
+
+        <hr />
+
+        <h2>4.0 Improve Phase (I): Hardening & Separation Implementation</h2>
+        
+        <h3>4.1 Architectural Separation</h3>
+        <p>To prepare the platform for acquisition, all shared resources are being migrated out of legacy parent namespaces into isolated subscriptions. This includes dedicated PostgreSQL Flexible Servers, private Azure Container Registries (ACR), and distinct custom domains, establishing clean intellectual property lines.</p>
+
+        <h3>4.2 Live Simulation Integration</h3>
+        <p>Tactical viewport simulation modules have been integrated into the HUD dashboard, allowing users to run instant property evaluations on local high-profile parcels (such as 10405 E Northwest Hwy and Valley View Arena site) to verify neural brain logic in real time.</p>
+
+        <hr />
+
+        <h2>5.0 Control Phase (C): Statistical Process Control & Safeguards</h2>
+        
+        <h3>5.1 Failure Safeguards (Poka-Yoke)</h3>
+        <p>The platform implements strict mechanisms to prevent human error and protect data state integrity:</p>
+        <ul>
+            <li><b>Peter Sentinel Recovery System:</b> Auto-generates incremental local checkpoints and hourly database snapshots to ensure rapid recovery.</li>
+            <li><b>Automated Syncer:</b> Disables manual file-based SQL ingestion, routing all updates through the controlled sync engine (<code>scripts/hex_sync.py</code>).</li>
+            <li><b>Security Cluster Watchdog:</b> Enforces cookie expiration resets on user requests, logging out inactive users immediately at 15 minutes of silence.</li>
+        </ul>
+        
+        <hr />
+        <h2>Document Revision History</h2>
+        <table class="sigma-data-grid">
+            <thead>
+                <tr>
+                    <th>Revision</th>
+                    <th>Date</th>
+                    <th>Description of Change</th>
+                    <th>Author / Approved By</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><b>1.0.0</b></td>
+                    <td>06/03/2026</td>
+                    <td>Standardized clinical formatting and aligned with ISO 9001 document controls.</td>
+                    <td>George Bytes / Humberto Dominguez (Chairman)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 3. DOCUMENT CONTROL FOOTER -->
+    <div class="sop-card-footer">
+        <div>Classification: Institutional ISO 9001 QMS Record</div>
+        <div>Effective Date: 06/03/2026</div>
+        <div>Review Cycle: Annual (Rev 1.0.0)</div>
+    </div>
+</div>

@@ -1,0 +1,64 @@
+<!-- 
+    HEXGROWTH Institutional QMS Document
+    Standard: HEX-QMS-1.0 v1.0
+    Document ID: HEX-SOP-8.0
+-->
+<div class="sop-card">
+    <!-- DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HEX-SOP-8.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #10b981;">● ACTIVE</span></div>
+        <div class="meta-unit"><span class="meta-label">Author</span><span class="meta-val">George Bytes (Lead Auditor)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <h1>Standard Operating Procedure: <strong>Neural Migration</strong></h1>
+
+        <h2>1.0 Purpose</h2>
+        <p>To define the procedures for updating and migrating database schemas across the HEXGROWTH multi-lobe infrastructure without causing service interruption or data loss.</p>
+
+        <h2>2.0 Schema Invalidation Rules</h2>
+        <ol>
+            <li><strong>Audit Before Migration:</strong> Run standard diagnostics to verify connection string parameters and write-permissions before making schema changes.</li>
+            <li><strong>Backward Compatibility:</strong> Never drop or rename columns currently queried by active production components. Use additions or non-breaking mutations.</li>
+            <li><strong>Dynamic Fallbacks:</strong> If PostgreSQL extensions (such as <code>pgvector</code>) are missing, fallback logic must be programmatically defined (e.g. converting <code>vector(1536)</code> to <code>DOUBLE PRECISION[]</code>).</li>
+        </ol>
+
+        <h2>3.0 Execution Protocol</h2>
+        <p>All database migrations must execute through isolated setup scripts (such as <code>HEX-SCHEMA-INIT-CORES.py</code>) rather than manual console queries to ensure repeatability and tracking.</p>
+        
+        <div class="callout callout-logic">
+            <strong>The Minimization Mandate</strong>
+            <p>Schema changes must occur during low-traffic slots (02:00 - 04:00 UTC) and must log their initial and final states to <code>HEX_Telemetry</code>.</p>
+        </div>
+        
+        <hr />
+        <h2>Document Revision History</h2>
+        <table class="sigma-data-grid">
+            <thead>
+                <tr>
+                    <th>Revision</th>
+                    <th>Date</th>
+                    <th>Description of Change</th>
+                    <th>Author / Approved By</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><b>1.0.0</b></td>
+                    <td>06/04/2026</td>
+                    <td>Initial release of Neural Migration SOP under SQL Brain standards.</td>
+                    <td>George Bytes / Humberto Dominguez (Chairman)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- DOCUMENT CONTROL FOOTER -->
+    <div class="sop-card-footer">
+        <div>Classification: Institutional ISO 9001 QMS Record</div>
+        <div>Effective Date: 06/04/2026</div>
+        <div>Review Cycle: Annual (Rev 1.0.0)</div>
+    </div>
+</div>

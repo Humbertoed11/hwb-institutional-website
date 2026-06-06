@@ -1,0 +1,79 @@
+<!-- 
+    HEXGROWTH Shared Header Layout (Option A Model)
+    Configurable parameters:
+    - header_type: 'HUD' or 'QMS' or 'PORTAL'
+    - active_nav: 'manual' or 'hud' or 'projects'
+-->
+<header id="top-bar" class="main-header" style="background: #0f172a; border-bottom: 1px solid rgba(255,255,255,0.1); padding: 0 2rem; color: #fff; display: flex; justify-content: space-between; align-items: center; height: 60px; box-sizing: border-box; width: 100%; z-index: 150;">
+    <!-- Brand Logo Section -->
+    <div class="logo-area" style="display: flex; align-items: center; gap: 12px; min-width: 200px;">
+        <div class="live-pulse" style="width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 10px #10b981; animation: pulse 2s infinite;"></div>
+        <div class="logo-text" style="font-weight: 800; font-size: 18px; letter-spacing: 1.5px;">HEX<span class="logo-accent" style="color: #06b6d4;">GROWTH</span> <span style="font-weight: 400; font-size: 11px; text-transform: uppercase; color: #94a3b8; margin-left: 8px;">{{ header_type }}</span></div>
+    </div>
+    
+    <!-- Variable Center Section -->
+    <div class="header-center" style="flex-grow: 1; display: flex; justify-content: center; max-width: 600px; padding: 0 20px;">
+        {% if header_type == 'HUD' %}
+            <div class="search-container" style="position: relative; width: 100%;">
+                <span class="search-icon" style="position: absolute; left: 14px; top: 10px; color: #94a3b8; font-size: 14px;">🔍</span>
+                <input type="text" class="top-search" placeholder="10405 E Northwest Hwy..." id="geo-search" style="width: 100%; box-sizing: border-box; background: #000; border: 1px solid rgba(30, 41, 59, 0.5); border-radius: 4px; padding: 8px 16px 8px 40px; color: white; font-family: inherit; font-size: 13px; transition: all 0.3s;">
+            </div>
+        {% else %}
+            <nav class="header-nav" style="display: flex; gap: 2rem;">
+                <a href="/projects" style="color: #fff; text-decoration: none; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid {% if active_nav == 'projects' %}#06b6d4{% else %}transparent{% endif %}; padding-bottom: 4px;">Projects</a>
+                <a href="/manual" style="color: #fff; text-decoration: none; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid {% if active_nav == 'manual' %}#06b6d4{% else %}transparent{% endif %}; padding-bottom: 4px;">Manual</a>
+                <a href="/hud" style="color: #fff; text-decoration: none; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid {% if active_nav == 'hud' %}#06b6d4{% else %}transparent{% endif %}; padding-bottom: 4px;">HUD</a>
+                <a href="/admin/control-panel" style="color: #fff; text-decoration: none; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid {% if active_nav == 'admin' %}#06b6d4{% else %}transparent{% endif %}; padding-bottom: 4px;">Admin</a>
+            </nav>
+        {% endif %}
+    </div>
+
+    <!-- Unified Actions & Security Cluster -->
+    <div class="top-actions" style="display: flex; gap: 20px; align-items: center; min-width: 320px; justify-content: flex-end;">
+        <!-- HUD Select Mode Section -->
+        {% if header_type == 'HUD' %}
+        <div style="text-align: right;">
+            <div class="project-label" style="font-size: 9px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">HUD View</div>
+            <select id="hud-mode-selector" class="project-select" onchange="window.location.href=this.value" style="background: rgba(30,41,59,0.5); border: 1px solid rgba(30,41,59,0.5); color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; outline: none;">
+                <option value="/projects">WORKSPACE HUB</option>
+                <option value="/hud" {% if active_hud == 'standard' %}selected{% endif %}>STANDARD HUD</option>
+                <option value="/hud/terminal" {% if active_hud == 'terminal' %}selected{% endif %}>HEX-TERMINAL</option>
+                <option value="/admin/control-panel">ADMIN PANEL</option>
+            </select>
+        </div>
+        {% endif %}
+
+        <!-- Active Project Section -->
+        <div style="text-align: right;">
+            <div class="project-label" style="font-size: 9px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">Active Project</div>
+            <select id="project-selector" class="project-select" onchange="changeActiveProject(this.value)" style="background: rgba(30,41,59,0.5); border: 1px solid rgba(30,41,59,0.5); color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; outline: none;">
+                {% for p in global_projects %}
+                <option value="{{ p.name | lower }}" {% if session.get('active_project') == (p.name | lower) %}selected{% endif %}>{{ p.name }}</option>
+                {% endfor %}
+            </select>
+            <script>
+                function changeActiveProject(projName) {
+                    if (typeof activeProjectCoords !== 'undefined') {
+                        localStorage.setItem('prev_project_coords', JSON.stringify({
+                            longitude: activeProjectCoords.longitude,
+                            latitude: activeProjectCoords.latitude
+                        }));
+                    }
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('project', projName);
+                    window.location.href = url.toString();
+                }
+            </script>
+        </div>
+        
+        <!-- Security & Session Control Cluster -->
+        <div style="display: flex; gap: 12px; align-items: center; border-left: 1px solid rgba(30, 41, 59, 0.5); padding-left: 20px;">
+            <div style="text-align: right;">
+                <div class="project-label" style="font-size: 9px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">Identity</div>
+                <div style="font-size: 11px; font-weight: 700; color: #06b6d4; text-transform: uppercase;">{{ session.get('username', 'Anonymous') }} [{{ session.get('role', 'User') }}]</div>
+            </div>
+            <button class="sigma-btn-amber" style="width: auto; height: 32px; padding: 0 12px; margin: 0; background: rgba(245, 158, 11, 0.1); border: 1px solid #f59e0b; color: #f59e0b; font-size: 10px; font-weight: 800; border-radius: 4px; cursor: pointer; text-transform: uppercase; transition: all 0.3s; letter-spacing: 0.5px;" onclick="window.location.href='/logout'">LOGOUT</button>
+        </div>
+    </div>
+</header>
+

@@ -1,0 +1,135 @@
+<!-- 
+    HEXGROWTH Institutional QMS Document
+    Standard: HEX-QMS-1.0 v1.0
+    Document ID: HEX-REPORT-15.0
+-->
+<div class="sop-card">
+    <!-- DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HEX-REPORT-15.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #10b981;">● APPROVED (FMEA LEDGER)</span></div>
+        <div class="meta-unit"><span class="meta-label">Author</span><span class="meta-val">George Bytes (mbB)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <h1>SIX SIGMA QUALITY ASSURANCE: <strong>Failure Mode and Effects Analysis (FMEA) Ledger</strong></h1>
+        <p><strong>Purpose:</strong> Identifies potential failure modes within the HexGrowth system, evaluates their severity and frequency, and defines automated controls to prevent quality defects. This ensures the technical core remains stable for acquisition validation.</p>
+
+        <hr />
+
+        <h2>1.0 System FMEA Rating Matrix</h2>
+        <p>The table below lists the potential technical defects, scores their Severity (S), Likelihood of Occurrence (O), and Probability of Detection (D) on a scale of 1 to 10, calculates the Risk Priority Number (RPN = S × O × D), and outlines standard mitigations.</p>
+
+        <table class="sigma-data-grid">
+            <thead>
+                <tr>
+                    <th>Process Layer</th>
+                    <th>Potential Failure Mode</th>
+                    <th>Potential Effect of Failure</th>
+                    <th>S</th>
+                    <th>Potential Root Cause</th>
+                    <th>O</th>
+                    <th>Current System Controls</th>
+                    <th>D</th>
+                    <th>RPN</th>
+                    <th>Mitigation Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><b>Layer 2 (Miner)</b></td>
+                    <td>Municipal zoning scraper fails to parse target site.</td>
+                    <td>Stale zoning scores and municipal data gap on the HUD.</td>
+                    <td><b>6</b></td>
+                    <td>Target city website changes layout or access rules.</td>
+                    <td><b>5</b></td>
+                    <td>Scraper logs error codes and returns last valid data.</td>
+                    <td><b>4</b></td>
+                    <td><b>120</b></td>
+                    <td>Standardize JSON responses and build automated retry alerts.</td>
+                </tr>
+                <tr>
+                    <td><b>Layer 1 (Spine)</b></td>
+                    <td>Database spatial boundary lookup lag.</td>
+                    <td>HUD map loading freezes or displays high latency.</td>
+                    <td><b>8</b></td>
+                    <td>Large shapefile processing without spatial indexing.</td>
+                    <td><b>4</b></td>
+                    <td>Server-side bounding box queries and H3 zoom levels.</td>
+                    <td><b>3</b></td>
+                    <td><b>96</b></td>
+                    <td>Index all Res-11 parcel table columns and cache macro queries.</td>
+                </tr>
+                <tr>
+                    <td><b>Layer 3 (Terminal)</b></td>
+                    <td>User inactivity watchdog fails to log out.</td>
+                    <td>Security vulnerability; session remains active on screen.</td>
+                    <td><b>9</b></td>
+                    <td>Client-side browser script blocked or crashed.</td>
+                    <td><b>3</b></td>
+                    <td>Flask session lifetime cookie check at server level.</td>
+                    <td><b>3</b></td>
+                    <td><b>81</b></td>
+                    <td>Implement parallel server-side session timeout checks.</td>
+                </tr>
+                <tr>
+                    <td><b>Layer 1 (Spine)</b></td>
+                    <td>Database storage runaway or memory leak.</td>
+                    <td>PostGIS database crash; complete application blackout.</td>
+                    <td><b>10</b></td>
+                    <td>Large spatial query load without connection limits.</td>
+                    <td><b>2</b></td>
+                    <td>Peter's Sentinel script running disk checks.</td>
+                    <td><b>3</b></td>
+                    <td><b>60</b></td>
+                    <td>Set strict database connection pool limits.</td>
+                </tr>
+                <tr>
+                    <td><b>Layer 2 (Miner)</b></td>
+                    <td>Utility grid ingestion data parsing gap.</td>
+                    <td>Lobe 3 (Power Brain) displays incorrect capacity scores.</td>
+                    <td><b>7</b></td>
+                    <td>Missing columns in source electric transmission feeds.</td>
+                    <td><b>3</b></td>
+                    <td>Data input validator checks formatting during ingestion.</td>
+                    <td><b>2</b></td>
+                    <td><b>42</b></td>
+                    <td>Enforce strict table schemas with fallback defaults.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="callout callout-caution">
+            <strong>RPN Threshold Rule:</strong> Any failure mode with an RPN score exceeding <b>80</b> must have an active corrective action logged in the friction registry and verified by the Lead Architect.
+        </div>
+        
+        <hr />
+        <h2>Document Revision History</h2>
+        <table class="sigma-data-grid">
+            <thead>
+                <tr>
+                    <th>Revision</th>
+                    <th>Date</th>
+                    <th>Description of Change</th>
+                    <th>Author / Approved By</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><b>1.0.0</b></td>
+                    <td>06/03/2026</td>
+                    <td>Standardized clinical formatting and aligned with ISO 9001 document controls.</td>
+                    <td>George Bytes / Humberto Dominguez (Chairman)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 3. DOCUMENT CONTROL FOOTER -->
+    <div class="sop-card-footer">
+        <div>Classification: Institutional ISO 9001 QMS Record</div>
+        <div>Effective Date: 06/03/2026</div>
+        <div>Review Cycle: Annual (Rev 1.0.0)</div>
+    </div>
+</div>

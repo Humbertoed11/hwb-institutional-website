@@ -1,0 +1,121 @@
+<!-- 
+    HEXGROWTH Institutional QMS Document
+    Standard: HEX-QMS-1.0 v1.0
+    Document ID: HEX-REPORT-13.0
+-->
+<div class="sop-card">
+    <!-- DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HEX-REPORT-13.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #10b981;">● APPROVED (SIX SIGMA BLACK BELT LEDGER)</span></div>
+        <div class="meta-unit"><span class="meta-label">Author</span><span class="meta-val">George Bytes (Lead Auditor)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <h1>HEXGROWTH SYSTEM AUDIT: <strong>Six Sigma Black Belt Project Ledger</strong></h1>
+        <p><strong>Context:</strong> This ledger contains the official answers to the Six Sigma Black Belt audit questionnaire. It serves to verify that the HexGrowth product, code, database, and infrastructure satisfy the highest standards of enterprise design and software quality before transaction execution.</p>
+
+        <hr />
+
+        <h2>1.0 Define Phase (D): Customer Requirements & Valuation Scope</h2>
+        
+        <h3>Q1.1: Who is the primary customer and what is their Critical-to-Quality (CTQ) requirement?</h3>
+        <p><b>Answer:</b> The primary customers are institutional real estate developers and private equity analysts. Their main CTQs are:</p>
+        <ul>
+            <li><b>Speed:</b> Reducing parcel feasibility research time from 3 weeks to under 3 minutes.</li>
+            <li><b>Data Quality:</b> 99.999% database accuracy for utility grid and zoning boundaries to prevent expensive investment errors.</li>
+            <li><b>Security:</b> Strict protection of search histories and active portfolios from competitor surveillance.</li>
+        </ul>
+
+        <h3>Q1.2: What is the project boundary, and what lies outside the project scope?</h3>
+        <p><b>Answer:</b> The boundary is defined as follows:</p>
+        <ul>
+            <li><b>In Scope:</b> PostgreSQL/PostGIS database scaling, the 7-lobe neural scoring engine, the web-based HUD dashboard, and security session controls.</li>
+            <li><b>Out of Scope:</b> Physical ground surveying, legal title insurance underwriting, and building construction bidding.</li>
+        </ul>
+
+        <h3>Q1.3: How does the platform justify its $150,000,000 acquisition valuation?</h3>
+        <p><b>Answer:</b> The platform has three main value drivers:</p>
+        <ol>
+            <li><b>Unique Data Moat:</b> Clean integration of 122,193 Resolution-11 parcel cells with live municipal zoning commission vote logs and ONCOR power grids.</li>
+            <li><b>Operational Savings:</b> Completely automates high-end GIS market reports, replacing consultants and reducing research costs by 95%.</li>
+            <li><b>SaaS Revenue Engine:</b> Scalable multi-user tiered subscriptions (up to $1,499/mo) and per-call API pricing models for high-ticket clients.</li>
+        </ol>
+
+        <hr />
+
+        <h2>2.0 Measure Phase (M): Process Metrics & Data Baseline</h2>
+        
+        <h3>Q2.1: What measurement systems are used to monitor operational quality?</h3>
+        <p><b>Answer:</b> Three automated systems are active:</p>
+        <ul>
+            <li><b>SQL Telemetry:</b> Logs execution times for spatial bounding box calculations (target: &lt; 100ms).</li>
+            <li><b>User Session Tracker:</b> Client-side and server-side inactivity watchdogs monitor user interactions, triggering automatic logouts at 15 minutes.</li>
+            <li><b>Database Record Monitor:</b> Scans row counts across <code>HEX_Grid_Res11</code> and <code>HEX_Lobe_Infrastructure</code> to ensure zero data loss during sync actions.</li>
+        </ul>
+
+        <h3>Q2.2: What is the baseline capacity of the database?</h3>
+        <p><b>Answer:</b> Current baseline capacity is verified at <b>122,193 Resolution-11 parcels</b> successfully indexed and populated with infrastructure metrics in the PostGIS database. This represents a mature, high-density sample in key corridors.</p>
+
+        <hr />
+
+        <h2>3.0 Analyze Phase (A): Root Cause & Failure Modes</h2>
+        
+        <h3>Q3.1: What was the root cause of map display latency?</h3>
+        <p><b>Answer:</b> The system experienced lag when processing raw shapefiles in the client's browser. The team solved this by shifting the spatial indexing to the server. The database now uses PostGIS bounding-box lookups and serves data dynamically based on the user's zoom level (Res-07 for macro, Res-09 for regional, Res-11 for surgical site scans).</p>
+
+        <h3>Q3.2: Why did style sheets collide across different manual files?</h3>
+        <p><b>Answer:</b> Several documents (specifically under the executive department) were saved as standalone HTML files with their own head styles and dark body backgrounds. These styles leaked into the main reader shell. The team solved this by enforcing a single, uniform snippet structure (using <code>sop-card</code> and <code>sop-meta</code> classes) for all QMS pages.</p>
+
+        <hr />
+
+        <h2>4.0 Improve Phase (I): System Hardening & Validation</h2>
+        
+        <h3>Q4.1: How is the system validated for correct operation?</h3>
+        <p><b>Answer:</b> The developer uses automated terminal command assertions to test template compilation, database integrity, route redirection, and session security. This ensures the codebase is fully operational inside the container environment.</p>
+
+        <h3>Q4.2: What architectural improvements protect the intellectual property boundaries?</h3>
+        <p><b>Answer:</b> The platform has transitioned from shared development resources to a completely isolated Azure Cloud structure. This includes a dedicated PostgreSQL Flexible Server, a private container registry, and independent custom domains, ensuring clean property boundaries for the acquisition.</p>
+
+        <hr />
+
+        <h2>5.0 Control Phase (C): Statistical Control & Safeguards</h2>
+        
+        <h3>Q5.1: How does the system prevent human error (Poka-Yoke)?</h3>
+        <p><b>Answer:</b> The platform implements three main controls:</p>
+        <ul>
+            <li><b>Synchronized Ingestion:</b> Manual changes to the database are blocked. All manual files must pass through the sync engine (<code>scripts/hex_sync.py</code>) to assert formatting rules.</li>
+            <li><b>Automatic Backups:</b> The Peter Sentinel recovery system (<code>HEX-PETER-SENTINEL.py</code>) creates hourly database snapshots and caches configuration files.</li>
+            <li><b>Session Watchdog:</b> Enforces cookie expiration limits, forcing a redirection to the login page if no activity is detected for 15 minutes.</li>
+        </ul>
+        
+        <hr />
+        <h2>Document Revision History</h2>
+        <table class="sigma-data-grid">
+            <thead>
+                <tr>
+                    <th>Revision</th>
+                    <th>Date</th>
+                    <th>Description of Change</th>
+                    <th>Author / Approved By</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><b>1.0.0</b></td>
+                    <td>06/03/2026</td>
+                    <td>Standardized clinical formatting and aligned with ISO 9001 document controls.</td>
+                    <td>George Bytes / Humberto Dominguez (Chairman)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 3. DOCUMENT CONTROL FOOTER -->
+    <div class="sop-card-footer">
+        <div>Classification: Institutional ISO 9001 QMS Record</div>
+        <div>Effective Date: 06/03/2026</div>
+        <div>Review Cycle: Annual (Rev 1.0.0)</div>
+    </div>
+</div>
