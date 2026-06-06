@@ -1152,6 +1152,8 @@
         renderLayers();
     }
 
+    let map;
+
     const deckgl = new deck.Deck({
         canvas: 'deck-canvas',
         viewState: currentViewState,
@@ -1159,7 +1161,9 @@
         onViewStateChange: ({viewState}) => {
             deckgl.setProps({ viewState: viewState });
             currentViewState = viewState;
-            map.jumpTo({ center: [viewState.longitude, viewState.latitude], zoom: viewState.zoom, bearing: viewState.bearing || 0, pitch: viewState.pitch || 0 });
+            if (map) {
+                map.jumpTo({ center: [viewState.longitude, viewState.latitude], zoom: viewState.zoom, bearing: viewState.bearing || 0, pitch: viewState.pitch || 0 });
+            }
             const zoomAlt = Math.round(125 * Math.pow(2, 18 - viewState.zoom));
             syncUI(zoomAlt, viewState.zoom);
             closeHardPopup();
@@ -1168,7 +1172,7 @@
         layers: []
     });
 
-    const map = new maplibregl.Map({
+    map = new maplibregl.Map({
         container: 'map-view',
         style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
         center: [currentViewState.longitude, currentViewState.latitude],
