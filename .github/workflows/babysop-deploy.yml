@@ -65,8 +65,8 @@ jobs:
         uses: azure/webapps-deploy@v3
         id: deploy-to-webapp
         with:
-          # CEO ACTION REQUIRED: Replace 'babysop-landing' with the actual Azure App Name
-          app-name: 'babysop-landing'
+           # Target Azure App Service name corrected from babysop-landing
+          app-name: 'hwb-babysop-landing'
           slot-name: 'Production'
           # CEO ACTION REQUIRED: Ensure AZUREAPPSERVICE_PUBLISHPROFILE is set in GitHub Secrets
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_BABYSOP }}
