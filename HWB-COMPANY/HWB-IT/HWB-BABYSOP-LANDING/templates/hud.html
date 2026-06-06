@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HEX DEAL FINDER | Tactical HUD v2.31</title>
+    <!-- SigmaFidelity™ High-Fidelity Tactical Stack -->
+    <script src="https://unpkg.com/deck.gl@latest/dist.min.js"></script>
+    <script src="https://unpkg.com/maplibre-gl@3.x/dist/maplibre-gl.js"></script>
+    <link href="https://unpkg.com/maplibre-gl@3.x/dist/maplibre-gl.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --hex-obsidian: #020617; --hex-charcoal: #0f172a; --hex-cyan: #06b6d4;
+            --hex-emerald: #10b981; --hex-amber: #f59e0b; --hex-crimson: #ef4444;
+            --hex-violet: #8b5cf6; --hex-border: rgba(30, 41, 59, 0.5); 
+            --hex-glass: rgba(15, 23, 42, 0.85); --hex-text: #f8fafc; --hex-text-muted: #94a3b8;
+        }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: var(--hex-obsidian); font-family: 'Inter', sans-serif; color: var(--hex-text); }
+        
+        #hud-container { display: grid; grid-template-areas: "top top top" "nav map sticks" "nav console console"; grid-template-columns: 70px 1fr 380px; grid-template-rows: 60px 1fr 220px; height: 100vh; width: 100vw; }
+        
+        #top-bar { grid-area: top; background: var(--hex-charcoal); border-bottom: 1px solid var(--hex-border); display: flex; align-items: center; padding: 0 24px; justify-content: space-between; z-index: 150; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+        .logo-area { display: flex; align-items: center; gap: 12px; }
+        .logo-text { font-weight: 800; font-size: 20px; letter-spacing: 2px; color: var(--hex-text); }
+        .logo-accent { color: var(--hex-cyan); }
+        .live-pulse { width: 8px; height: 8px; background: var(--hex-emerald); border-radius: 50%; box-shadow: 0 0 10px var(--hex-emerald); animation: pulse 2s infinite; }
+
+        .search-container { flex-grow: 1; max-width: 600px; margin: 0 40px; position: relative; }
+        .top-search { width: 100%; background: #000; border: 1px solid var(--hex-border); border-radius: 4px; padding: 10px 16px 10px 40px; color: white; font-family: 'Inter'; font-size: 13px; transition: all 0.3s; }
+        .top-search:focus { border-color: var(--hex-cyan); outline: none; box-shadow: 0 0 15px rgba(6,182,212,0.2); }
+        .search-icon { position: absolute; left: 14px; top: 12px; color: var(--hex-text-muted); font-size: 14px; }
+
+        .top-actions { display: flex; align-items: center; gap: 20px; }
+        .project-label { font-size: 10px; font-weight: 800; color: var(--hex-text-muted); text-transform: uppercase; }
+        .project-select { background: rgba(30,41,59,0.5); border: 1px solid var(--hex-border); color: white; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; }
+
+        #hex-nav { grid-area: nav; background: var(--hex-charcoal); border-right: 1px solid var(--hex-border); display: flex; flex-direction: column; align-items: center; padding-top: 20px; gap: 24px; z-index: 100; }
+        .nav-icon { width: 42px; height: 42px; border-radius: 8px; background: rgba(30, 41, 59, 0.8); border: 1px solid var(--hex-border); color: var(--hex-text-muted); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; cursor: pointer; transition: all 0.3s; }
+        .nav-icon:hover, .nav-icon.active { background: var(--hex-cyan); color: white; box-shadow: 0 0 15px rgba(6, 182, 212, 0.5); }
+
+        #map-container { grid-area: map; position: relative; background: #000; overflow: hidden; border-bottom: 1px solid var(--hex-border); }
+        #map-view { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.8; }
+        #deck-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        
+        #stick-ledger { grid-area: sticks; background: var(--hex-charcoal); border-left: 1px solid var(--hex-border); padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; z-index: 100; }
+        .tactical-card { background: var(--hex-glass); border: 1px solid var(--hex-border); border-radius: 4px; padding: 16px; position: relative; }
+        .card-header { font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--hex-cyan); margin-bottom: 12px; letter-spacing: 1.5px; display: flex; justify-content: space-between; }
+        
+        .alpha-slider { width: 100%; accent-color: var(--hex-cyan); height: 4px; }
+        .label-val { font-size: 10px; color: var(--hex-text-muted); text-transform: uppercase; }
+
+        .roller-container { display: flex; gap: 2px; background: #000; padding: 12px; border-radius: 4px; justify-content: center; font-family: 'JetBrains Mono'; font-size: 28px; font-weight: 800; height: 36px; overflow: hidden; border: 1px solid var(--hex-cyan); box-shadow: inset 0 0 10px rgba(6, 182, 212, 0.3); }
+        .roller-digit { display: flex; flex-direction: column; transition: transform 0.4s cubic-bezier(0.45, 0.05, 0.55, 0.95); }
+        .roller-num { height: 36px; line-height: 36px; text-align: center; width: 22px; color: var(--hex-cyan); text-shadow: 0 0 8px rgba(6, 182, 212, 0.5); }
+        .roller-unit { font-size: 12px; color: var(--hex-text-muted); margin-top: auto; margin-left: 8px; margin-bottom: 4px; font-weight: 800; }
+
+        .layer-rack { display: flex; flex-direction: column; gap: 10px; }
+        .layer-item { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
+        .layer-label { font-size: 11px; font-weight: 600; color: var(--hex-text-muted); text-transform: uppercase; }
+        
+        .simple-toggle { position: relative; display: inline-block; width: 34px; height: 18px; }
+        .simple-toggle input { opacity: 0; width: 0; height: 0; }
+        .slider-round { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #334155; transition: .2s; border-radius: 18px; }
+        .slider-round:before { position: absolute; content: ""; height: 12px; width: 12px; left: 3px; bottom: 3px; background-color: white; transition: .2s; border-radius: 50%; }
+        input:checked + .slider-round { background-color: var(--hex-cyan); box-shadow: 0 0 8px var(--hex-cyan); }
+        input:checked + .slider-round:before { transform: translateX(16px); }
+
+        .hud-label { position: absolute; top: 24px; left: 24px; z-index: 40; background: var(--hex-glass); backdrop-filter: blur(8px); padding: 10px 20px; border-radius: 4px; border-left: 4px solid var(--hex-cyan); font-weight: 800; font-size: 13px; pointer-events: none; }
+        .sector-tag { font-size: 10px; color: var(--hex-cyan); font-weight: 800; margin-top: 4px; display: block; }
+        #floating-card { position: absolute; z-index: 200; pointer-events: none; width: 240px; background: var(--hex-glass); backdrop-filter: blur(12px); border: 1px solid var(--hex-cyan); border-radius: 4px; padding: 12px; display: none; transform: translate(-50%, -120%); box-shadow: 0 0 20px rgba(0,0,0,0.6); }
+
+        .sigma-btn-amber { background: rgba(245, 158, 11, 0.1); border: 1px solid var(--hex-amber); color: var(--hex-amber); padding: 12px; border-radius: 4px; font-size: 10px; font-weight: 800; width: 100%; cursor: pointer; text-transform: uppercase; transition: all 0.3s; margin-bottom: 8px;}
+        .sigma-btn-amber:hover { background: var(--hex-amber); color: #000; box-shadow: 0 0 15px rgba(245, 158, 11, 0.6); }
+
+        #george-console { grid-area: console; background: #020617; border-top: 1px solid var(--hex-border); display: grid; grid-template-columns: 1fr 400px; padding: 0; z-index: 100; }
+        .terminal-feed { padding: 16px 24px; overflow-y: auto; font-family: 'Inter', sans-serif; font-size: 12px; line-height: 1.6; color: var(--hex-emerald); }
+        .alpha-insight-panel { background: rgba(6, 182, 212, 0.05); border-left: 1px solid var(--hex-border); padding: 20px; overflow-y: auto;}
+    </style>
+</head>
+<body>
+
+<div id="hud-container">
+    {% set header_type = 'HUD' %}
+    {% set active_hud = 'standard' %}
+    {% include "components/brand_header.html" %}
+
+    <nav id="hex-nav">
+        <div class="nav-icon active">MAP</div>
+        <div class="nav-icon">DATA</div>
+        <div class="nav-icon">TOOLS</div>
+        <div class="nav-icon" onclick="window.location.href='/manual'">QMS</div>
+        <div style="flex-grow: 1;"></div>
+        <div class="nav-icon" onclick="location.reload()">REDO</div>
+        <div class="nav-icon" onclick="window.location.href='/logout'" style="margin-top: 8px; border-color: rgba(239, 68, 68, 0.4); color: var(--hex-crimson);">EXIT</div>
+    </nav>
+
+    <div id="map-container">
+        <div id="map-view"></div>
+        <canvas id="deck-canvas"></canvas>
+        <div id="floating-card" style="pointer-events: auto;">
+            <div class="card-header"><span id="float-id" style="color: var(--hex-violet);">LAND LOCKED</span></div>
+            <div style="font-size: 16px; font-weight: 800; color: var(--hex-text); margin-bottom: 4px;" id="float-title">Selected Lot</div>
+            <div id="float-details" style="font-size: 11px;"></div>
+            <div class="data-monitor-row" style="margin-top:8px; border-top: 1px solid rgba(255,255,255,0.1); padding-top:8px; margin-bottom: 8px;"><span class="data-label">DEAL SCORE</span><span class="data-value" id="float-score" style="color: var(--hex-amber); font-size: 14px;">---</span></div>
+            <button id="float-submit-btn" style="width: 100%; height: 26px; background: var(--hex-cyan); border: 1px solid var(--hex-cyan); color: black; font-weight: 800; font-size: 10px; cursor: pointer; border-radius: 3px;" onclick="submitSelectedLot()">Submit for Review</button>
+        </div>
+        <div class="hud-label">
+            <span class="neon-glow-cyan">HEX DEAL FINDER v2.31</span>
+            <span class="sector-tag" id="view-mode">BIG PICTURE: TEXAS</span>
+        </div>
+    </div>
+
+    <aside id="stick-ledger">
+        <div class="tactical-card hud-draggable">
+            <div class="card-header"><span>How High Are We?</span><span>HEIGHT</span></div>
+            <div class="roller-container" id="roller">
+                <div class="roller-digit" id="d1"></div><div class="roller-digit" id="d2"></div><div class="roller-digit" id="d3"></div><div class="roller-digit" id="d4"></div><div class="roller-digit" id="d5"></div><div class="roller-digit" id="d6"></div><div class="roller-digit" id="d7"></div>
+                <div class="roller-unit">FT</div>
+            </div>
+            <div style="margin-top: 16px;">
+                <input type="range" class="alpha-slider" id="alt-master" min="50" max="1500000" step="10" value="512000" oninput="updateAltitude(this.value)">
+                <div style="display:flex; justify-content: space-between; margin-top: 8px;">
+                    <span class="label-val">GROUND</span>
+                    <span class="label-val">SKY</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="tactical-card hud-draggable">
+            <div class="card-header"><span>Map Layers</span><span>SELECT</span></div>
+            <div class="layer-rack">
+                <div class="layer-item"><span class="layer-label">1. City Planning</span><label class="simple-toggle"><input type="checkbox" id="layer-city" onchange="renderLayers()"><span class="slider-round"></span></label></div>
+                <div class="layer-item"><span class="layer-label">2. Roads & Traffic</span><label class="simple-toggle"><input type="checkbox" id="layer-roads" onchange="renderLayers()"><span class="slider-round"></span></label></div>
+                <div class="layer-item"><span class="layer-label">3. Power & Water</span><label class="simple-toggle"><input type="checkbox" id="layer-power" onchange="renderLayers()"><span class="slider-round"></span></label></div>
+                <div class="layer-item"><span class="layer-label">4. Land & Dirt Info</span><label class="simple-toggle"><input type="checkbox" id="layer-land" onchange="renderLayers()"><span class="slider-round"></span></label></div>
+                <div class="layer-item"><span class="layer-label">5. Safety & Crime</span><label class="simple-toggle"><input type="checkbox" id="layer-safety" onchange="renderLayers()"><span class="slider-round"></span></label></div>
+                <div class="layer-item"><span class="layer-label">6. Neighborhood Mood</span><label class="simple-toggle"><input type="checkbox" id="layer-mood" onchange="renderLayers()"><span class="slider-round"></span></label></div>
+                <div class="layer-item"><span class="layer-label">7. Money & Profit</span><label class="simple-toggle"><input type="checkbox" id="layer-money" onchange="renderLayers()"><span class="slider-round"></span></label></div>
+            </div>
+        </div>
+
+        <div class="tactical-card hud-draggable">
+            <div class="card-header"><span>Live Intelligence</span></div>
+            <button class="sigma-btn-amber" onclick="executeNWHwySim()" id="sim-btn">AUDIT: 10405 E NORTHWEST HWY</button>
+            <button class="sigma-btn-amber" onclick="executeMavSim()" id="mav-btn" style="background: rgba(139, 92, 246, 0.1); border-color: var(--hex-violet); color: var(--hex-violet); margin-top: 8px;">AUDIT: VALLEY VIEW ARENA</button>
+        </div>
+
+        <div class="tactical-card hud-draggable" style="margin-top: 12px;">
+            <div class="card-header"><span>Targets for Review</span></div>
+            <div id="target-review-list" style="font-size: 10px; max-height: 120px; overflow-y: auto; color: var(--hex-text); opacity: 0.85; padding-top: 4px;">
+                No lots under review. Click a target site and select "Submit for Review".
+            </div>
+        </div>
+    </aside>
+
+    <footer id="george-console">
+        <div class="terminal-feed" id="miner-feed">
+[GUIDE] Hi! I'm George. We are ready to scan Northwest Hwy in Dallas.
+[GUIDE] Press the button on the right to start the 7-brain analysis.
+        </div>
+        <div class="alpha-insight-panel" id="insight-panel">
+            <div class="card-header" style="color: var(--hex-violet);"><span>Final Answer</span></div>
+            <div id="alpha-summary" style="font-size: 12px;">Waiting for site ingestion.</div>
+        </div>
+    </footer>
+</div>
+
+<script>
+    {% set ns = namespace(active_proj=None) %}
+    {% for p in global_projects %}
+        {% if session.get('active_project') == (p.name | lower) %}
+            {% set ns.active_proj = p %}
+        {% endif %}
+    {% endfor %}
+    {% if not ns.active_proj and global_projects %}
+        {% set ns.active_proj = global_projects[0] %}
+    {% endif %}
+    const activeProjectCoords = {
+        name: "{{ ns.active_proj.name if ns.active_proj else 'DALLAS CORRIDOR AUDIT' }}",
+        longitude: {{ ns.active_proj.longitude if ns.active_proj else -96.8088 }},
+        latitude: {{ ns.active_proj.latitude if ns.active_proj else 32.7876 }},
+        zoom: {{ ns.active_proj.zoom if ns.active_proj else 15 }}
+    };
+
+    const { Deck, GeoJsonLayer, ScatterplotLayer, PolygonLayer, LineLayer } = deck;
+
+    let altitude = 512000;
+    let currentViewState = { 
+        longitude: activeProjectCoords.longitude, 
+        latitude: activeProjectCoords.latitude, 
+        zoom: activeProjectCoords.zoom, 
+        pitch: 45, 
+        bearing: 0, 
+        minZoom: 0, 
+        maxZoom: 22 
+    };
+    let skyBeacons = [];
+    let cloudBeacons = [];
+    let pulseScale = 1.0;
+    let userAddedSites = [];
+    let temporaryHexagons = [];
+
+
+    function generateHexagon(center, radius) {
+        const coords = [];
+        for (let i = 0; i < 6; i++) {
+            const angle = (i * 60) * Math.PI / 180;
+            coords.push([center[0] + radius * Math.cos(angle), center[1] + radius * Math.sin(angle) * 1.2]);
+        }
+        coords.push(coords[0]);
+        return coords;
+    }
+
+    const map = new maplibregl.Map({
+        container: 'map-view',
+        style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+        center: [currentViewState.longitude, currentViewState.latitude], 
+        zoom: currentViewState.zoom, pitch: currentViewState.pitch, interactive: false
+    });
+
+    const deckgl = new Deck({
+        canvas: 'deck-canvas',
+        viewState: currentViewState,
+        controller: true,
+        onViewStateChange: ({viewState}) => {
+            deckgl.setProps({ viewState: viewState });
+            currentViewState = viewState;
+            const calculatedAlt = Math.max(50, Math.round(125 * Math.pow(2, 18 - viewState.zoom)));
+            syncUI(calculatedAlt, viewState.zoom);
+            map.jumpTo({ center: [viewState.longitude, viewState.latitude], zoom: viewState.zoom, bearing: viewState.bearing || 0, pitch: viewState.pitch || 0 });
+            renderLayers();
+        }
+    });
+
+    const MOCK_GEO = {
+        "10405": { center: [-96.6963, 32.8637], zoom: 17, name: "10405 E NORTHWEST HWY" },
+        "northwest hwy": { center: [-96.6963, 32.8637], zoom: 15, name: "NORTHWEST HWY CORRIDOR" },
+        "valley view": { center: [-96.7972, 32.9264], zoom: 15, name: "VALLEY VIEW AREA" },
+        "mavericks": { center: [-96.7972, 32.9264], zoom: 15, name: "VALLEY VIEW AREA" },
+        "dallas": { center: [-96.79, 32.77], zoom: 11, name: "DALLAS, TX" }
+    };
+
+    document.getElementById('geo-search').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            const query = e.target.value.toLowerCase().trim();
+            handleSearch(query);
+        }
+    });
+
+    function handleSearch(query) {
+        logToConsole(`[GUIDE] Searching for: "${query}"...`);
+        let target = null;
+        for (let key in MOCK_GEO) { if (query.includes(key)) { target = MOCK_GEO[key]; break; } }
+        if (target) {
+            logToConsole(`[GUIDE] Found it! Flying to ${target.name}.`);
+            currentViewState = { ...currentViewState, longitude: target.center[0], latitude: target.center[1], zoom: target.zoom, transitionDuration: 3000 };
+            deckgl.setProps({ viewState: currentViewState });
+            map.flyTo({ center: target.center, zoom: target.zoom, duration: 3000 });
+            const newAlt = Math.round(125 * Math.pow(2, 18 - target.zoom));
+            syncUI(newAlt, target.zoom);
+        } else {
+            const newSiteName = query.toUpperCase();
+            logToConsole(`[GUIDE] Site "${newSiteName}" not found. Ingesting custom location...`);
+            
+            // Generate simulated coordinates in region
+            const lat = 32.77 + (Math.random() - 0.5) * 0.12;
+            const lng = -96.79 + (Math.random() - 0.5) * 0.12;
+            
+            // Register in MOCK_GEO so search works for it later
+            MOCK_GEO[query] = { center: [lng, lat], zoom: 17, name: newSiteName };
+            
+            // Push to userAddedSites
+            userAddedSites.push({
+                polygon: generateHexagon([lng, lat], 0.001),
+                title: newSiteName,
+                score: (7.0 + Math.random() * 2.5).toFixed(1),
+                details: `CITY: Ingested Zone<br>DIRT: Simulated soil structure<br>RIGHTS: Under evaluation`
+            });
+            
+            logToConsole(`[GUIDE] Custom site registered! Flying to custom target...`);
+            
+            // Update viewstate and fly
+            currentViewState = { ...currentViewState, longitude: lng, latitude: lat, zoom: 17, pitch: 45, transitionDuration: 3000 };
+            deckgl.setProps({ viewState: currentViewState });
+            map.flyTo({ center: [lng, lat], zoom: 17, duration: 3000 });
+            
+            const newAlt = Math.round(125 * Math.pow(2, 1));
+            syncUI(newAlt, 17);
+            
+            // Enable profit/money layer to display the hexagon
+            document.getElementById('layer-money').checked = true;
+            
+            setTimeout(() => {
+                renderLayers();
+                logToConsole(`[GUIDE] Custom site "${newSiteName}" ingested. Select the purple hexagon to view audit data.`);
+            }, 3100);
+        }
+    }
+
+    function getTifZones(lng, lat) {
+        const base = [
+            {polygon: [[-96.81, 32.935], [-96.78, 32.935], [-96.78, 32.915], [-96.81, 32.915], [-96.81, 32.935]]},
+            {polygon: [[-97.595, 33.24], [-97.575, 33.24], [-97.575, 33.225], [-97.595, 33.225], [-97.595, 33.24]]}
+        ];
+        if (Math.abs(lat - 33.9300) < 0.2) {
+            base.push({polygon: [[lng - 0.015, lat + 0.01], [lng + 0.015, lat + 0.01], [lng + 0.015, lat - 0.01], [lng - 0.015, lat - 0.01], [lng - 0.015, lat + 0.01]]});
+        } else if (Math.abs(lat - 34.1700) < 0.2) {
+            base.push({polygon: [[lng - 0.015, lat + 0.01], [lng + 0.015, lat + 0.01], [lng + 0.015, lat - 0.01], [lng - 0.015, lat - 0.01], [lng - 0.015, lat + 0.01]]});
+        } else if (Math.abs(lat - 33.5450) < 0.2) {
+            base.push({polygon: [[lng - 0.015, lat + 0.01], [lng + 0.015, lat + 0.01], [lng + 0.015, lat - 0.01], [lng - 0.015, lat - 0.01], [lng - 0.015, lat + 0.01]]});
+        }
+        return base;
+    }
+
+    function getHwyMesh(lng, lat) {
+        const base = [
+            { polygon: generateHexagon([-96.6963, 32.8637], 0.005) },
+            { polygon: generateHexagon([-96.7972, 32.9264], 0.006) },
+            { polygon: generateHexagon([-97.5861, 33.2343], 0.0055) }
+        ];
+        if (Math.abs(lat - 33.9300) < 0.2 || Math.abs(lat - 34.1700) < 0.2 || Math.abs(lat - 33.5450) < 0.2) {
+            base.push({ polygon: generateHexagon([lng, lat], 0.005) });
+        }
+        return base;
+    }
+
+    function getPowerLines(lng, lat) {
+        const base = [
+            {from: [-96.82, 32.926], to: [-96.76, 32.926]},
+            {from: [-97.60, 33.234], to: [-97.56, 33.234]}
+        ];
+        if (Math.abs(lat - 33.9300) < 0.2 || Math.abs(lat - 34.1700) < 0.2 || Math.abs(lat - 33.5450) < 0.2) {
+            base.push({from: [lng - 0.02, lat], to: [lng + 0.02, lat]});
+        }
+        return base;
+    }
+
+    function getFloodZones(lng, lat) {
+        const base = [
+            {polygon: [[-96.785, 32.93], [-96.78, 32.93], [-96.78, 32.92], [-96.785, 32.92], [-96.785, 32.93]]},
+            {polygon: [[-97.59, 33.24], [-97.58, 33.24], [-97.58, 33.23], [-97.59, 33.23], [-97.59, 33.24]]}
+        ];
+        if (Math.abs(lat - 33.9300) < 0.2 || Math.abs(lat - 34.1700) < 0.2 || Math.abs(lat - 33.5450) < 0.2) {
+            base.push({polygon: [[lng - 0.015, lat + 0.015], [lng - 0.005, lat + 0.015], [lng - 0.005, lat + 0.005], [lng - 0.015, lat + 0.005], [lng - 0.015, lat + 0.015]]});
+        }
+        return base;
+    }
+
+    function getNimbyZones(lng, lat) {
+        const base = [
+            {polygon: [[-96.81, 32.92], [-96.797, 32.92], [-96.797, 32.91], [-96.81, 32.91], [-96.81, 32.92]]},
+            {polygon: [[-97.60, 33.23], [-97.595, 33.23], [-97.595, 33.22], [-97.60, 33.22], [-97.60, 33.23]]}
+        ];
+        if (Math.abs(lat - 33.9300) < 0.2 || Math.abs(lat - 34.1700) < 0.2 || Math.abs(lat - 33.5450) < 0.2) {
+            base.push({polygon: [[lng - 0.01, lat + 0.015], [lng + 0.01, lat + 0.015], [lng + 0.01, lat - 0.005], [lng - 0.01, lat - 0.005], [lng - 0.01, lat + 0.015]]});
+        }
+        return base;
+    }
+
+    function getTargetSites(lng, lat) {
+        const base = [
+            { polygon: generateHexagon([-96.6963, 32.8637], 0.001), title: '10405 E Northwest Hwy', score: '8.9', details: "CITY: Business (Retail)<br>DIRT: Solid Clay<br>RIGHTS: All Intact" },
+            { polygon: generateHexagon([-96.7972, 32.9264], 0.0012), title: 'Valley View Arena Site', score: '8.8', details: "CITY: TIF / Reinvestment Zone<br>POWER: Substation Required<br>PULSE: Strong Neighborhood NIMBY" },
+            { polygon: generateHexagon([-97.5861, 33.2343], 0.0011), title: 'Decatur Growth Path Site', score: '7.9', details: "CITY: Wise County ETJ commercial<br>POWER: Wise Electric Coop feed<br>VALUATION: Rural Arbitrage potential" }
+        ];
+        if (Math.abs(lat - 33.9300) < 0.2) {
+            base.push({ polygon: generateHexagon([lng, lat], 0.0011), title: 'Wichita Falls Wind Farm Site', score: '8.5', details: "POWER: 150MW Wind Spur Interconnect<br>DIRT: Red Dirt clay mix<br>RIGHTS: Wind Rights Secured" });
+        } else if (Math.abs(lat - 34.1700) < 0.2) {
+            base.push({ polygon: generateHexagon([lng, lat], 0.0011), title: 'Vernon Compressor Hub Site', score: '8.2', details: "CITY: Industrial Extraction Zone<br>VALUATION: Helium pipeline easement<br>RIGHTS: Mineral rights intact" });
+        } else if (Math.abs(lat - 33.5450) < 0.2) {
+            base.push({ polygon: generateHexagon([lng, lat], 0.0011), title: 'Bowie Logistics Junction Site', score: '8.4', details: "PULSE: Zayo Carrier splice vault<br>POWER: 480V 3-phase line adjacent<br>DIRT: Solid clay soil base" });
+        }
+        return base;
+    }
+
+    function renderLayers() {
+        const layers = [];
+        
+        if (altitude > 400000) {
+            // Sky Tier
+            layers.push(new ScatterplotLayer({
+                id: 'sky-beacons-layer',
+                data: skyBeacons,
+                getPosition: d => [d.longitude, d.latitude],
+                getRadius: 12000 * pulseScale, // Large radius for metroplex hubs
+                getFillColor: [6, 182, 212, 100 + 100 * (pulseScale - 0.75) / 0.5], // Dynamic opacity
+                getLineColor: [255, 255, 255, 255],
+                lineWidthMinPixels: 2,
+                pickable: true,
+                onClick: ({object}) => {
+                    if (object) {
+                        logToConsole(`[GUIDE] Navigating to ${object.name}...`);
+                        let targetZoom = 11;
+                        let lat = object.latitude;
+                        let lng = object.longitude;
+                        currentViewState = { ...currentViewState, longitude: lng, latitude: lat, zoom: targetZoom, transitionDuration: 3000 };
+                        deckgl.setProps({ viewState: currentViewState });
+                        map.flyTo({ center: [lng, lat], zoom: targetZoom, duration: 3000 });
+                        const newAlt = Math.round(125 * Math.pow(2, 18 - targetZoom));
+                        syncUI(newAlt, targetZoom);
+                        setTimeout(() => { renderLayers(); }, 3100);
+                    }
+                }
+            }));
+        } else if (altitude > 50000) {
+            // Clouds Tier
+            layers.push(new ScatterplotLayer({
+                id: 'clouds-beacons-layer',
+                data: cloudBeacons,
+                getPosition: d => [d.longitude, d.latitude],
+                getRadius: 2000 * pulseScale, // Medium radius for corridors
+                getFillColor: [16, 185, 129, 120 + 80 * (pulseScale - 0.75) / 0.5], // Dynamic opacity
+                getLineColor: [255, 255, 255, 255],
+                lineWidthMinPixels: 1.5,
+                pickable: true,
+                onClick: ({object}) => {
+                    if (object) {
+                        logToConsole(`[GUIDE] Corridor selected: ${object.name}. Executing simulation...`);
+                        if (object.name.includes("Northwest")) {
+                            executeNWHwySim();
+                        } else if (object.name.includes("Valley")) {
+                            executeMavSim();
+                        } else if (object.name.includes("Decatur")) {
+                            executeDecaturSim();
+                        } else {
+                            executeGenericBeaconSim(object);
+                        }
+                    }
+                }
+            }));
+        } else {
+            // Ground Tier - fall back to detailed layers
+            const active = {
+                city: document.getElementById('layer-city').checked,
+                roads: document.getElementById('layer-roads').checked,
+                power: document.getElementById('layer-power').checked,
+                land: document.getElementById('layer-land').checked,
+                mood: document.getElementById('layer-mood').checked,
+                money: document.getElementById('layer-money').checked
+            };
+            // 1. City Rules (TIF Zone)
+            if (active.city) {
+                layers.push(new PolygonLayer({
+                    id: 'tif-zones',
+                    data: getTifZones(currentViewState.longitude, currentViewState.latitude),
+                    getPolygon: d => d.polygon,
+                    getFillColor: [139, 92, 246, 30], // semi-transparent purple
+                    getLineColor: [139, 92, 246, 120],
+                    stroked: true,
+                    extruded: false
+                }));
+            }
+
+            // 2. Roads & Traffic (Hexagons)
+            if (active.roads) {
+                layers.push(new PolygonLayer({
+                    id: 'nw-hwy-mesh',
+                    data: getHwyMesh(currentViewState.longitude, currentViewState.latitude),
+                    getPolygon: d => d.polygon, getFillColor: [245, 158, 11, 120], extruded: true, getElevation: 5
+                }));
+            }
+
+            // 3. Power Grid (Lines)
+            if (active.power) {
+                layers.push(new LineLayer({
+                    id: 'power-lines',
+                    data: getPowerLines(currentViewState.longitude, currentViewState.latitude),
+                    getSourcePosition: d => d.from,
+                    getTargetPosition: d => d.to,
+                    getColor: [6, 182, 212], // cyan
+                    getWidth: 4
+                }));
+            }
+
+            // 4. Land & Dirt Info (Wetlands / Floods)
+            if (active.land) {
+                layers.push(new PolygonLayer({
+                    id: 'flood-zones',
+                    data: getFloodZones(currentViewState.longitude, currentViewState.latitude),
+                    getPolygon: d => d.polygon,
+                    getFillColor: [59, 130, 246, 80], // blue
+                    getLineColor: [59, 130, 246],
+                    stroked: true,
+                    extruded: false
+                }));
+            }
+
+            // 5. Neighborhood Mood (NIMBY Red Zone)
+            if (active.mood) {
+                layers.push(new PolygonLayer({
+                    id: 'nimby-zones',
+                    data: getNimbyZones(currentViewState.longitude, currentViewState.latitude),
+                    getPolygon: d => d.polygon,
+                    getFillColor: [239, 68, 68, 60], // red
+                    getLineColor: [239, 68, 68],
+                    stroked: true,
+                    extruded: false
+                }));
+            }
+
+            // 6. Target Site Selection (Interactive purple polygon)
+            if (active.money) {
+                layers.push(new PolygonLayer({
+                    id: 'target-site',
+                    data: getTargetSites(currentViewState.longitude, currentViewState.latitude).concat(userAddedSites),
+                    getPolygon: d => d.polygon, getFillColor: [139, 92, 246, 200], getLineColor: [255, 255, 255], stroked: true, pickable: true, extruded: true, getElevation: 30,
+                    onClick: ({object, x, y}) => showFloat(object, x, y, object.details)
+                }));
+            }
+
+            // 7. Temporary Review Sites (Green highlight)
+            layers.push(new PolygonLayer({
+                id: 'temporary-review-sites',
+                data: temporaryHexagons,
+                getPolygon: d => d.polygon,
+                getFillColor: [16, 185, 129, 200], // emerald green
+                getLineColor: [255, 255, 255],
+                stroked: true,
+                pickable: true,
+                extruded: true,
+                getElevation: 35,
+                onClick: ({object, x, y}) => showFloat(object, x, y, object.details)
+            }));
+        }
+        deckgl.setProps({ layers: layers });
+    }
+
+    async function executeNWHwySim() {
+        document.getElementById('sim-btn').disabled = true;
+        logToConsole("[GUIDE] Starting the audit for 10405 E Northwest Hwy...");
+        document.getElementById('layer-city').checked = true;
+        document.getElementById('layer-roads').checked = true;
+        renderLayers();
+        currentViewState = { ...currentViewState, longitude: -96.6963, latitude: 32.8637, zoom: 14, pitch: 45, transitionDuration: 2500 };
+        deckgl.setProps({ viewState: currentViewState });
+        map.flyTo({ center: [-96.6963, 32.8637], zoom: 14, pitch: 45, duration: 2500 });
+        await new Promise(r => setTimeout(r, 3000));
+        logToConsole("[GUIDE] Analyzing the land quality and profit potential...");
+        document.getElementById('layer-land').checked = true;
+        document.getElementById('layer-money').checked = true;
+        renderLayers();
+        currentViewState = { ...currentViewState, zoom: 18, pitch: 65, bearing: -20, transitionDuration: 3000 };
+        deckgl.setProps({ viewState: currentViewState });
+        map.flyTo({ center: [-96.6963, 32.8637], zoom: 18, pitch: 65, bearing: -20, duration: 3000 });
+        setTimeout(() => {
+            document.getElementById('alpha-summary').innerHTML = `<b style="color: var(--hex-cyan); font-size: 14px;">SITE AUDIT: 8.9 / 10</b><br><br><b>Verdict:</b> Strong commercial spot. Direct access to a main highway.<br><br><b>Inside Info:</b> The city is planning more retail nearby. All your land rights are clear and yours.`;
+            logToConsole("[GUIDE] Audit complete! Click the purple hexagon to see the specifics.");
+        }, 3500);
+    }
+
+    async function executeMavSim() {
+        document.getElementById('mav-btn').disabled = true;
+        logToConsole("[GUIDE] Starting the audit for Valley View Arena Site...");
+        document.getElementById('layer-city').checked = true;
+        renderLayers();
+        currentViewState = { ...currentViewState, longitude: -96.7972, latitude: 32.9264, zoom: 14, pitch: 45, transitionDuration: 2500 };
+        deckgl.setProps({ viewState: currentViewState });
+        map.flyTo({ center: [-96.7972, 32.9264], zoom: 14, pitch: 45, duration: 2500 });
+        await new Promise(r => setTimeout(r, 2500));
+
+        logToConsole("[LOBE 1 - CITY] Zoning: Inside Dallas International District special zone. Tax Increment Financing (TIF) active. Sewer lines funded (+3.5 Alpha).");
+        document.getElementById('layer-roads').checked = true;
+        renderLayers();
+        await new Promise(r => setTimeout(r, 2000));
+
+        logToConsole("[LOBE 2 - TxDOT] Roads: Traffic count on I-635 is 280,000 daily vehicles. Exit ramp capacity is high (+2.8 Infrastructure score).");
+        document.getElementById('layer-power').checked = true;
+        renderLayers();
+        await new Promise(r => setTimeout(r, 2000));
+
+        logToConsole("[LOBE 3 - POWER] Utility: ONCOR Coit Road substation located 1.1 miles away (138kV class). Warning: New 20MW substation build-out required.");
+        document.getElementById('layer-land').checked = true;
+        renderLayers();
+        await new Promise(r => setTimeout(r, 2000));
+
+        logToConsole("[LOBE 4 - LEGAL/ENV] Risk: 92% minimal flood risk (Zone X); 8% flood fringe (Zone AE). Warning: Soil cleanup required for old mall operations.");
+        document.getElementById('layer-mood').checked = true;
+        renderLayers();
+        await new Promise(r => setTimeout(r, 2000));
+
+        logToConsole("[LOBE 6 - PULSE] Sentiment: News logs indicate strong neighborhood (Preston Hollow) NIMBY opposition regarding noise (-1.5 Drag).");
+        document.getElementById('layer-money').checked = true;
+        renderLayers();
+        currentViewState = { ...currentViewState, zoom: 17, pitch: 65, bearing: -20, transitionDuration: 2500 };
+        deckgl.setProps({ viewState: currentViewState });
+        map.flyTo({ center: [-96.7972, 32.9264], zoom: 17, pitch: 65, bearing: -20, duration: 2500 });
+        await new Promise(r => setTimeout(r, 2500));
+
+        logToConsole("[LOBE 7 - FINANCE] Valuation: Speculative land rush triggered. Sands Corp sets comp land value at $120/SF (+4.0 Alpha).");
+        setTimeout(() => {
+            document.getElementById('alpha-summary').innerHTML = `<b style="color: var(--hex-violet); font-size: 14px;">SITE AUDIT: 8.8 / 10</b><br><br><b>Verdict:</b> High-potential stadium project. Strong city backing and highway traffic counts.<br><br><b>Risk:</b> High neighborhood opposition (NIMBY) from Preston Hollow residents.`;
+            logToConsole("[GUIDE] Audit complete! Click the purple target hexagon to see the specifics.");
+        }, 500);
+    }
+
+    async function executeDecaturSim() {
+        logToConsole("[GUIDE] Starting the audit for Decatur Growth Path...");
+        document.getElementById('layer-city').checked = true;
+        document.getElementById('layer-roads').checked = true;
+        renderLayers();
+        currentViewState = { ...currentViewState, longitude: -97.5861, latitude: 33.2343, zoom: 14, pitch: 45, transitionDuration: 2500 };
+        deckgl.setProps({ viewState: currentViewState });
+        map.flyTo({ center: [-97.5861, 33.2343], zoom: 14, pitch: 45, duration: 2500 });
+        await new Promise(r => setTimeout(r, 2500));
+
+        logToConsole("[LOBE 1 - CITY] Zoning: Wise County ETJ commercial expansion zone. Rapid regional transition verified (+3.5 Alpha).");
+        document.getElementById('layer-power').checked = true;
+        renderLayers();
+        await new Promise(r => setTimeout(r, 2000));
+
+        logToConsole("[LOBE 2 - TxDOT] Infrastructure: Proximity to US-287 and US-380 intersection. Expansion projects approved.");
+        document.getElementById('layer-land').checked = true;
+        renderLayers();
+        await new Promise(r => setTimeout(r, 2000));
+
+        logToConsole("[LOBE 4 - LEGAL/ENV] Risk: Outside 100-year flood zone (Zone X 100%). Zero soil contamination risks logged.");
+        document.getElementById('layer-money').checked = true;
+        renderLayers();
+        currentViewState = { ...currentViewState, zoom: 18, pitch: 65, bearing: -20, transitionDuration: 3000 };
+        deckgl.setProps({ viewState: currentViewState });
+        map.flyTo({ center: [-97.5861, 33.2343], zoom: 18, pitch: 65, bearing: -20, duration: 3000 });
+        await new Promise(r => setTimeout(r, 3000));
+
+        logToConsole("[LOBE 7 - FINANCE] Valuation: High arbitrage potential. Wise County commercial value trending upward (+4.0 Alpha).");
+        setTimeout(() => {
+            document.getElementById('alpha-summary').innerHTML = `<b style="color: var(--hex-cyan); font-size: 14px;">SITE AUDIT: 7.9 / 10</b><br><br><b>Verdict:</b> Strong commercial expansion potential. Low land price per square foot.<br><br><b>Risk:</b> High reliance on timing of US-287 highway expansions.`;
+            logToConsole("[GUIDE] Audit complete! Click the purple target hexagon to see the specifics.");
+        }, 500);
+    }
+
+    async function executeGenericBeaconSim(object) {
+        logToConsole(`[GUIDE] Starting the audit for ${object.name}...`);
+        
+        // Turn on relevant layers for visual effect
+        document.getElementById('layer-city').checked = true;
+        document.getElementById('layer-roads').checked = true;
+        renderLayers();
+        
+        currentViewState = { ...currentViewState, longitude: object.longitude, latitude: object.latitude, zoom: 14, pitch: 45, transitionDuration: 2500 };
+        deckgl.setProps({ viewState: currentViewState });
+        map.flyTo({ center: [object.longitude, object.latitude], zoom: 14, pitch: 45, duration: 2500 });
+        await new Promise(r => setTimeout(r, 2500));
+        
+        logToConsole(`[SYS] Spatial audit initialized. Score: ${(object.score || 8.0).toFixed(1)}/10.0.`);
+        if (object.description) {
+            logToConsole(`[INFERENCE] Clues: ${object.description}`);
+        }
+        
+        setTimeout(() => {
+            document.getElementById('alpha-summary').innerHTML = `
+                <b style="color: var(--hex-cyan); font-size: 14px;">SITE AUDIT: ${(object.score || 8.0).toFixed(1)} / 10</b><br><br>
+                <b>Beacon:</b> ${object.name}<br><br>
+                <b>Coordinates:</b> [${object.longitude.toFixed(4)}, ${object.latitude.toFixed(4)}]<br><br>
+                <b>Audit Details:</b> ${object.description || 'No direct telemetry logged.'}
+            `;
+            logToConsole("[GUIDE] Audit complete! Telemetry successfully updated in the sidebar.");
+        }, 500);
+    }
+
+    let selectedObjectForReview = null;
+    function showFloat(obj, x, y, details) {
+        selectedObjectForReview = obj;
+        const float = document.getElementById('floating-card');
+        float.style.display = 'block'; float.style.left = x + 'px'; float.style.top = y + 'px';
+        document.getElementById('float-title').innerText = obj.title || obj.name;
+        document.getElementById('float-score').innerText = (obj.score || 8.0) + " / 10";
+        document.getElementById('float-details').innerHTML = details || obj.description || '';
+    }
+
+    async function submitSelectedLot() {
+        if (!selectedObjectForReview) return;
+        const obj = selectedObjectForReview;
+        
+        let lng = currentViewState.longitude;
+        let lat = currentViewState.latitude;
+        if (obj.polygon && obj.polygon.length > 0) {
+            lng = obj.polygon[0][0];
+            lat = obj.polygon[0][1];
+        } else if (obj.longitude !== undefined && obj.latitude !== undefined) {
+            lng = obj.longitude;
+            lat = obj.latitude;
+        }
+        
+        const payload = {
+            name: obj.title || obj.name || "Selected Lot",
+            latitude: lat,
+            longitude: lng,
+            score: parseFloat(obj.score || 8.0),
+            details: obj.details || obj.description || ""
+        };
+        
+        try {
+            const response = await fetch('/api/v1/review-lots', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const result = await response.json();
+            if (result.status === 'success') {
+                logToConsole(`[SYS] Lot "${payload.name}" successfully submitted for review.`);
+                temporaryHexagons.push({
+                    polygon: generateHexagon([lng, lat], 0.0012),
+                    title: payload.name + " (Pending Review)",
+                    score: payload.score,
+                    details: payload.details,
+                    longitude: lng,
+                    latitude: lat
+                });
+                renderLayers();
+                document.getElementById('floating-card').style.display = 'none';
+                loadReviewLots();
+            } else {
+                console.error("Failed to submit lot:", result);
+            }
+        } catch (err) {
+            console.error("Error submitting lot for review:", err);
+        }
+    }
+
+    async function loadReviewLots() {
+        try {
+            const response = await fetch('/api/v1/review-lots');
+            const result = await response.json();
+            if (result.status === 'success' && result.data) {
+                const listEl = document.getElementById('target-review-list');
+                if (listEl) {
+                    if (result.data.length === 0) {
+                        listEl.innerHTML = 'No lots under review. Click a target site and select "Submit for Review".';
+                    } else {
+                        let html = '<ul style="list-style: none; padding: 0; margin: 0;">';
+                        result.data.forEach(lot => {
+                            html += `
+                                <li style="border-bottom: 1px solid rgba(255,255,255,0.05); padding: 4px 0; display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="cursor: pointer; font-weight: bold; color: var(--hex-cyan);" onclick="panToCoords(${lot.longitude}, ${lot.latitude})">${lot.name} (${parseFloat(lot.score).toFixed(1)})</span>
+                                    <span style="color: var(--hex-crimson); cursor: pointer; font-weight: bold; font-size: 10px; margin-left: 6px;" onclick="deleteReviewLot(${lot.id})">[DEL]</span>
+                                </li>
+                            `;
+                        });
+                        html += '</ul>';
+                        listEl.innerHTML = html;
+                    }
+                }
+                
+                temporaryHexagons = result.data.map(lot => ({
+                    polygon: generateHexagon([lot.longitude, lot.latitude], 0.0012),
+                    title: lot.name + " (Pending Review)",
+                    score: lot.score,
+                    details: lot.details,
+                    longitude: lot.longitude,
+                    latitude: lot.latitude
+                }));
+                renderLayers();
+            }
+        } catch (err) {
+            console.error("Error loading review lots:", err);
+        }
+    }
+
+    async function deleteReviewLot(id) {
+        try {
+            const response = await fetch(`/api/v1/review-lots/${id}`, { method: 'DELETE' });
+            const result = await response.json();
+            if (result.status === 'success') {
+                logToConsole("[SYS] Lot review record deleted.");
+                loadReviewLots();
+            }
+        } catch (err) {
+            console.error("Error deleting lot review:", err);
+        }
+    }
+
+    function panToCoords(lng, lat) {
+        currentViewState = { ...currentViewState, longitude: lng, latitude: lat, zoom: 17, pitch: 45, transitionDuration: 2500 };
+        deckgl.setProps({ viewState: currentViewState });
+        map.flyTo({ center: [lng, lat], zoom: 17, duration: 2500 });
+        const newAlt = Math.round(125 * Math.pow(2, 1));
+        syncUI(newAlt, 17);
+        setTimeout(renderLayers, 2600);
+    }
+
+    function syncUI(alt, zoom) {
+        altitude = alt;
+        document.getElementById('alt-master').value = alt;
+        const viewMode = document.getElementById('view-mode');
+        if (alt > 400000) viewMode.innerText = "BIG PICTURE: TEXAS";
+        else if (alt > 50000) viewMode.innerText = "REGIONAL: DALLAS CORRIDOR";
+        else viewMode.innerText = "ZOOMED IN: YOUR SITE";
+        const s = Math.max(0, alt).toString().padStart(7, '0');
+        for(let i=0; i<7; i++) {
+            const digit = parseInt(s[i]);
+            const roller = document.getElementById(`d${i+1}`);
+            if (roller) roller.style.transform = `translateY(${-digit * 36}px)`;
+        }
+        document.getElementById('floating-card').style.display = 'none';
+    }
+
+    function logToConsole(msg) {
+        const feed = document.getElementById('miner-feed');
+        feed.innerHTML += `\n<span style="color: white; opacity: 0.3;">[${new Date().toLocaleTimeString([], {hour12:false})}]</span> ${msg}`;
+        feed.scrollTop = feed.scrollHeight;
+    }
+
+    function initRoller() {
+        const digits = ['d1','d2','d3','d4','d5','d6','d7'];
+        digits.forEach(id => {
+            const el = document.getElementById(id);
+            for(let i=0; i<=9; i++) {
+                const n = document.createElement('div'); n.className = 'roller-num'; n.innerText = i;
+                el.appendChild(n);
+            }
+        });
+        updateAltitude(512000);
+    }
+
+    function updateAltitude(val) {
+        const targetZoom = 18 - Math.log2(parseInt(val) / 125);
+        deckgl.setProps({ viewState: { ...currentViewState, zoom: targetZoom } });
+        map.setZoom(targetZoom);
+        syncUI(parseInt(val), targetZoom);
+        renderLayers();
+    }
+
+    // --- Client-Side Inactivity Watcher (15-Minute Auto-Logout) ---
+    let idleTime = 0;
+    const idleLimit = 900; // 15 minutes in seconds
+
+    const resetIdleTimer = () => {
+        idleTime = 0;
+    };
+
+    // Listen to standard activity events
+    const activityEvents = ['mousemove', 'keypress', 'click', 'scroll', 'touchstart'];
+    activityEvents.forEach(evt => {
+        document.addEventListener(evt, resetIdleTimer, true);
+    });
+
+    // Check timer increment every second
+    setInterval(() => {
+        idleTime++;
+        if (idleTime >= idleLimit) {
+            console.log("[SECURITY] Inactivity limit reached. Logging out...");
+            window.location.href = '/logout';
+        }
+    }, 1000);
+
+    // Inject list of all projects
+    const projectsData = {{ global_projects | tojson }};
+
+    async function loadBeacons() {
+        try {
+            const response = await fetch('/api/v1/beacons');
+            const result = await response.json();
+            if (result.status === 'success' && result.data) {
+                skyBeacons = result.data.filter(b => b.tier === 'sky');
+                cloudBeacons = result.data.filter(b => b.tier === 'clouds');
+                logToConsole(`[GUIDE] Loaded opportunity beacons: ${skyBeacons.length} Sky tier, ${cloudBeacons.length} Clouds tier.`);
+                renderLayers();
+            } else {
+                console.error("Failed to load beacons:", result);
+            }
+        } catch (err) {
+            console.error("Error fetching beacons:", err);
+        }
+    }
+
+    function animate() {
+        // Oscillation between 0.75 and 1.25 over a 2-second period
+        pulseScale = 1.0 + 0.25 * Math.sin(Date.now() / 300);
+        renderLayers();
+        requestAnimationFrame(animate);
+    }
+
+    initRoller();
+    loadBeacons();
+    loadReviewLots();
+    animate();
+
+    // Auto-run simulation on load based on active project
+    setTimeout(() => {
+        const activeName = activeProjectCoords.name.toLowerCase();
+        if (activeName.includes('dallas')) {
+            executeNWHwySim();
+        } else if (activeName.includes('decatur')) {
+            executeDecaturSim();
+        } else if (activeName.includes('valley view')) {
+            executeMavSim();
+        }
+    }, 1500);
+</script>
+<script src="{{ url_for('static', filename='js/hud-dock.js') }}"></script>
+</body>
+</html>
