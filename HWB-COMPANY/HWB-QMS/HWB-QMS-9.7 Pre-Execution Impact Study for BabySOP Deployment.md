@@ -3,7 +3,7 @@
 | **Document Title** | **Pre-Execution Impact Study for BabySOP Deployment** |
 | **Document ID** | HWB-QMS-9.7 |
 | **Version** | 1.0 |
-| **Status** | DRAFT |
+| **Status** | APPROVED |
 | **Author** | George (Systems Architect) |
 | **Approved By** | Humberto Dominguez, CEO |
 | **Date** | 2026-06-06 |
