@@ -20,8 +20,8 @@
         
         #hud-container { 
             display: grid; 
-            grid-template-areas: "top top top" "deal map sticks" "deal console sticks"; 
-            grid-template-columns: 420px 1fr 380px; 
+            grid-template-areas: "top top" "deal map" "deal console"; 
+            grid-template-columns: 420px 1fr; 
             grid-template-rows: 60px 1fr 180px; 
             height: 100vh; 
             width: 100vw; 
@@ -62,7 +62,8 @@
             background: var(--hex-charcoal);
         }
         .tab-content {
-            flex-grow: 1;
+            flex: 1 1 0%;
+            min-height: 0;
             padding: 16px;
             overflow-y: auto;
             display: none;
@@ -93,8 +94,8 @@
         }
         .terminal-feed { flex-grow: 1; padding: 12px 16px; overflow-y: auto; font-family: 'JetBrains Mono', monospace; font-size: 11px; line-height: 1.5; color: var(--hex-emerald); background: #020617; }
         
-        /* Right Column: Ticker & Lobe Weights */
-        #stick-ledger { grid-area: sticks; background: var(--hex-charcoal); border-left: 1px solid var(--hex-border); padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; z-index: 100; }
+        /* Left Column Controls Section */
+        #stick-ledger { background: rgba(17, 24, 39, 0.4); border-top: 1px solid var(--hex-border); padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; z-index: 100; flex: 0 0 420px; min-height: 0; }
 
         /* Unified CSS Cards & Layouts */
         .tactical-card { background: var(--hex-glass); border: 1px solid var(--hex-border); border-radius: 4px; padding: 14px; position: relative; }
@@ -531,6 +532,148 @@
                 </div>
             </div>
         </div>
+
+        <!-- Left Column Controls Section -->
+        <div id="stick-ledger">
+            <!-- Telemetry Score Card -->
+            <div class="tactical-card hud-draggable">
+                <div class="card-header">Target Hex Score</div>
+                <div class="roller-container">
+                    <div class="roller-digit" id="roller-1"><div class="roller-num">0</div><div class="roller-num">1</div><div class="roller-num">2</div><div class="roller-num">3</div><div class="roller-num">4</div><div class="roller-num">5</div><div class="roller-num">6</div><div class="roller-num">7</div><div class="roller-num">8</div><div class="roller-num">9</div></div>
+                    <div class="roller-digit" style="transform: translateY(0);"><div class="roller-num">.</div></div>
+                    <div class="roller-digit" id="roller-2"><div class="roller-num">0</div><div class="roller-num">1</div><div class="roller-num">2</div><div class="roller-num">3</div><div class="roller-num">4</div><div class="roller-num">5</div><div class="roller-num">6</div><div class="roller-num">7</div><div class="roller-num">8</div><div class="roller-num">9</div></div>
+                    <div class="roller-unit">Alpha</div>
+                </div>
+                <div class="label-val" style="text-align: center; margin-top: 4px;" id="selected-hex-address">H3 Address: None Selected</div>
+            </div>
+
+            <!-- Keyboard Shortcuts & Suggestions Card -->
+            <div class="tactical-card hud-draggable">
+                <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>Terminal Guide</span>
+                    <span style="font-size: 8px; background: var(--hex-cyan); color: #020617; padding: 2px 6px; border-radius: 9999px; font-weight: 800; text-transform: uppercase;">Ctrl+K</span>
+                </div>
+                <div style="font-size: 10px; color: var(--hex-text-muted); margin-bottom: 10px; line-height: 1.4;">
+                    Press <code style="color: var(--hex-cyan); font-weight: 700; background: rgba(6,182,212,0.1); padding: 1px 4px; border-radius: 3px;">Ctrl + K</code> or <code style="color: var(--hex-cyan); font-weight: 700; background: rgba(6,182,212,0.1); padding: 1px 4px; border-radius: 3px;">Cmd + K</code> to open the command console. Click suggestions to execute instantly:
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <button class="command-chip" onclick="triggerCommand('/go dallas')" title="Fly to Downtown Dallas Victory Park relos corridor">📍 /go dallas (Dallas Corridor)</button>
+                    <button class="command-chip" onclick="triggerCommand('/go decatur')" title="Fly to Decatur data center growth corridor">📍 /go decatur (Decatur Artery)</button>
+                    <button class="command-chip" onclick="triggerCommand('/go valley')" title="Fly to Valley View Arena development site">📍 /go valley (Valley View Site)</button>
+                    <button class="command-chip" onclick="triggerCommand('/go 32.789 -96.807')" title="Fly to custom lat/lng coordinates and create hexagon">🎯 /go 32.789 -96.807 (Custom site)</button>
+                    <button class="command-chip" onclick="triggerCommand('/lobe 6')" title="Switch blend weights to prioritize L6 Pulse (Sentiment) Lobe">🧠 /lobe 6 (Prioritize L6 Sentiment)</button>
+                    <button class="command-chip" onclick="triggerCommand('/search Moonshot')" title="Search developer holdings profiles index">🔍 /search Moonshot (Find Competitor)</button>
+                    <button class="command-chip" onclick="triggerCommand('/scout')" title="Ping municipal scraping servers and verify connection status">📡 /scout (Municipal API Ping)</button>
+                </div>
+            </div>
+
+            <!-- Tessellation Controls Card -->
+            <div class="tactical-card hud-draggable">
+                <div class="card-header">Tessellation & Grid Settings</div>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <!-- Grid Opaqueness/Opacity -->
+                    <div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span class="label-val">Hex Opacity</span>
+                            <span class="label-val" id="val-hex-opacity">55%</span>
+                        </div>
+                        <input type="range" class="alpha-slider" id="tess-opacity" min="0" max="100" value="55" oninput="updateGridSettings()">
+                    </div>
+                    <!-- Grid Dimensions (Size) -->
+                    <div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span class="label-val">Hex Radius Size</span>
+                            <span class="label-val" id="val-hex-size">0.0035</span>
+                        </div>
+                        <input type="range" class="alpha-slider" id="tess-size" min="15" max="80" value="35" oninput="updateGridSettings()">
+                    </div>
+                    <!-- Grid Layout (Resolution/Extent) -->
+                    <div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span class="label-val">Grid Extent (NxN)</span>
+                            <span class="label-val" id="val-hex-extent">8 x 8</span>
+                        </div>
+                        <input type="range" class="alpha-slider" id="tess-extent" min="4" max="16" value="8" oninput="updateGridSettings()">
+                    </div>
+                    <!-- Grid Dimensionality (Flat to 3D) -->
+                    <div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span class="label-val">Grid Dimensionality</span>
+                            <span class="label-val" id="val-hex-height">Flat (2D)</span>
+                        </div>
+                        <input type="range" class="alpha-slider" id="tess-height" min="0" max="100" value="0" oninput="updateGridSettings()">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lobe Weights -->
+            <div class="tactical-card hud-draggable">
+                <div class="card-header">Lobe Feasibility Blending</div>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span class="label-val">L1 City (Zoning)</span>
+                            <span class="label-val" id="val-w1">15%</span>
+                        </div>
+                        <input type="range" class="alpha-slider" id="weight-w1" min="0" max="100" value="15" oninput="updateWeights('w1')">
+                    </div>
+                    <div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span class="label-val">L2 Roads (TxDOT)</span>
+                            <span class="label-val" id="val-w2">15%</span>
+                        </div>
+                        <input type="range" class="alpha-slider" id="weight-w2" min="0" max="100" value="15" oninput="updateWeights('w2')">
+                    </div>
+                    <div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span class="label-val">L3 Grid (Power)</span>
+                            <span class="label-val" id="val-w3">20%</span>
+                        </div>
+                        <input type="range" class="alpha-slider" id="weight-w3" min="0" max="100" value="20" oninput="updateWeights('w3')">
+                    </div>
+                    <div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span class="label-val">L6 Sentiment (Pulse)</span>
+                            <span class="label-val" id="val-w4">25%</span>
+                        </div>
+                        <input type="range" class="alpha-slider" id="weight-w4" min="0" max="100" value="25" oninput="updateWeights('w4')">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Map Layer Controls -->
+            <div class="tactical-card hud-draggable">
+                <div class="card-header">Layers HUD</div>
+                <div class="layer-rack">
+                    <div class="layer-item">
+                        <span class="layer-label">L1 City Reinvestments</span>
+                        <label class="simple-toggle"><input type="checkbox" id="layer-city" checked onchange="renderLayers()"><span class="slider-round"></span></label>
+                    </div>
+                    <div class="layer-item">
+                        <span class="layer-label">L2 Infrastructure (TxDOT)</span>
+                        <label class="simple-toggle"><input type="checkbox" id="layer-roads" checked onchange="renderLayers()"><span class="slider-round"></span></label>
+                    </div>
+                    <div class="layer-item">
+                        <span class="layer-label">L3 Utility Substation</span>
+                        <label class="simple-toggle"><input type="checkbox" id="layer-power" checked onchange="renderLayers()"><span class="slider-round"></span></label>
+                    </div>
+                    <div class="layer-item">
+                        <span class="layer-label">L6 Pulse Decline Opportunities</span>
+                        <label class="simple-toggle"><input type="checkbox" id="layer-mood" checked onchange="renderLayers()"><span class="slider-round"></span></label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Real-time Activity Ticker -->
+            <div class="tactical-card hud-draggable">
+                <div class="card-header">Live Market Ticker</div>
+                <div class="ticker-container" id="ticker-feed">
+                    <div class="ticker-row success" style="cursor: pointer;" onclick="selectTickerItem('[TX] CAD Deed buy: Valley View Corridor - LLC')" title="Click to view Pulse Brain data stream"><span>[TX] CAD Deed buy: Valley View Corridor - LLC</span><span>$12.4M</span></div>
+                    <div class="ticker-row alert" style="cursor: pointer;" onclick="selectTickerItem('[PULSE] Anchor flight warning: Victory Park AAC')" title="Click to view Pulse Brain data stream"><span>[PULSE] Anchor flight warning: Victory Park AAC</span><span>-5.8 pt</span></div>
+                    <div class="ticker-row" style="cursor: pointer;" onclick="selectTickerItem('[ZONING] Plano-11 density variance filed')" title="Click to view Pulse Brain data stream"><span>[ZONING] Plano-11 density variance filed</span><span>Active</span></div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Center Column: Map -->
@@ -623,7 +766,6 @@
             </div>
         </div>
     </div>
-</div>
 
     <!-- Console Terminal -->
     <div id="george-console">
@@ -632,148 +774,6 @@
             <span style="color: var(--hex-cyan);">Uptime: 100%</span>
         </div>
         <div class="terminal-feed" id="console-feed"></div>
-    </div>
-
-    <!-- Right Column: Weights & Metrics -->
-    <div id="stick-ledger">
-        <!-- Telemetry Score Card -->
-        <div class="tactical-card hud-draggable">
-            <div class="card-header">Target Hex Score</div>
-            <div class="roller-container">
-                <div class="roller-digit" id="roller-1"><div class="roller-num">0</div><div class="roller-num">1</div><div class="roller-num">2</div><div class="roller-num">3</div><div class="roller-num">4</div><div class="roller-num">5</div><div class="roller-num">6</div><div class="roller-num">7</div><div class="roller-num">8</div><div class="roller-num">9</div></div>
-                <div class="roller-digit" style="transform: translateY(0);"><div class="roller-num">.</div></div>
-                <div class="roller-digit" id="roller-2"><div class="roller-num">0</div><div class="roller-num">1</div><div class="roller-num">2</div><div class="roller-num">3</div><div class="roller-num">4</div><div class="roller-num">5</div><div class="roller-num">6</div><div class="roller-num">7</div><div class="roller-num">8</div><div class="roller-num">9</div></div>
-                <div class="roller-unit">Alpha</div>
-            </div>
-            <div class="label-val" style="text-align: center; margin-top: 4px;" id="selected-hex-address">H3 Address: None Selected</div>
-        </div>
-
-        <!-- Keyboard Shortcuts & Suggestions Card -->
-        <div class="tactical-card hud-draggable">
-            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
-                <span>Terminal Guide</span>
-                <span style="font-size: 8px; background: var(--hex-cyan); color: #020617; padding: 2px 6px; border-radius: 9999px; font-weight: 800; text-transform: uppercase;">Ctrl+K</span>
-            </div>
-            <div style="font-size: 10px; color: var(--hex-text-muted); margin-bottom: 10px; line-height: 1.4;">
-                Press <code style="color: var(--hex-cyan); font-weight: 700; background: rgba(6,182,212,0.1); padding: 1px 4px; border-radius: 3px;">Ctrl + K</code> or <code style="color: var(--hex-cyan); font-weight: 700; background: rgba(6,182,212,0.1); padding: 1px 4px; border-radius: 3px;">Cmd + K</code> to open the command console. Click suggestions to execute instantly:
-            </div>
-            <div style="display: flex; flex-direction: column; gap: 4px;">
-                <button class="command-chip" onclick="triggerCommand('/go dallas')" title="Fly to Downtown Dallas Victory Park relos corridor">📍 /go dallas (Dallas Corridor)</button>
-                <button class="command-chip" onclick="triggerCommand('/go decatur')" title="Fly to Decatur data center growth corridor">📍 /go decatur (Decatur Artery)</button>
-                <button class="command-chip" onclick="triggerCommand('/go valley')" title="Fly to Valley View Arena development site">📍 /go valley (Valley View Site)</button>
-                <button class="command-chip" onclick="triggerCommand('/go 32.789 -96.807')" title="Fly to custom lat/lng coordinates and create hexagon">🎯 /go 32.789 -96.807 (Custom site)</button>
-                <button class="command-chip" onclick="triggerCommand('/lobe 6')" title="Switch blend weights to prioritize L6 Pulse (Sentiment) Lobe">🧠 /lobe 6 (Prioritize L6 Sentiment)</button>
-                <button class="command-chip" onclick="triggerCommand('/search Moonshot')" title="Search developer holdings profiles index">🔍 /search Moonshot (Find Competitor)</button>
-                <button class="command-chip" onclick="triggerCommand('/scout')" title="Ping municipal scraping servers and verify connection status">📡 /scout (Municipal API Ping)</button>
-            </div>
-        </div>
-
-        <!-- Tessellation Controls Card -->
-        <div class="tactical-card hud-draggable">
-            <div class="card-header">Tessellation & Grid Settings</div>
-            <div style="display: flex; flex-direction: column; gap: 12px;">
-                <!-- Grid Opaqueness/Opacity -->
-                <div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                        <span class="label-val">Hex Opacity</span>
-                        <span class="label-val" id="val-hex-opacity">55%</span>
-                    </div>
-                    <input type="range" class="alpha-slider" id="tess-opacity" min="0" max="100" value="55" oninput="updateGridSettings()">
-                </div>
-                <!-- Grid Dimensions (Size) -->
-                <div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                        <span class="label-val">Hex Radius Size</span>
-                        <span class="label-val" id="val-hex-size">0.0035</span>
-                    </div>
-                    <input type="range" class="alpha-slider" id="tess-size" min="15" max="80" value="35" oninput="updateGridSettings()">
-                </div>
-                <!-- Grid Layout (Resolution/Extent) -->
-                <div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                        <span class="label-val">Grid Extent (NxN)</span>
-                        <span class="label-val" id="val-hex-extent">8 x 8</span>
-                    </div>
-                    <input type="range" class="alpha-slider" id="tess-extent" min="4" max="16" value="8" oninput="updateGridSettings()">
-                </div>
-                <!-- Grid Dimensionality (Flat to 3D) -->
-                <div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                        <span class="label-val">Grid Dimensionality</span>
-                        <span class="label-val" id="val-hex-height">Flat (2D)</span>
-                    </div>
-                    <input type="range" class="alpha-slider" id="tess-height" min="0" max="100" value="0" oninput="updateGridSettings()">
-                </div>
-            </div>
-        </div>
-
-        <!-- Lobe Weights -->
-        <div class="tactical-card hud-draggable">
-            <div class="card-header">Lobe Feasibility Blending</div>
-            <div style="display: flex; flex-direction: column; gap: 10px;">
-                <div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                        <span class="label-val">L1 City (Zoning)</span>
-                        <span class="label-val" id="val-w1">15%</span>
-                    </div>
-                    <input type="range" class="alpha-slider" id="weight-w1" min="0" max="100" value="15" oninput="updateWeights('w1')">
-                </div>
-                <div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                        <span class="label-val">L2 Roads (TxDOT)</span>
-                        <span class="label-val" id="val-w2">15%</span>
-                    </div>
-                    <input type="range" class="alpha-slider" id="weight-w2" min="0" max="100" value="15" oninput="updateWeights('w2')">
-                </div>
-                <div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                        <span class="label-val">L3 Grid (Power)</span>
-                        <span class="label-val" id="val-w3">20%</span>
-                    </div>
-                    <input type="range" class="alpha-slider" id="weight-w3" min="0" max="100" value="20" oninput="updateWeights('w3')">
-                </div>
-                <div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                        <span class="label-val">L6 Sentiment (Pulse)</span>
-                        <span class="label-val" id="val-w4">25%</span>
-                    </div>
-                    <input type="range" class="alpha-slider" id="weight-w4" min="0" max="100" value="25" oninput="updateWeights('w4')">
-                </div>
-            </div>
-        </div>
-
-        <!-- Map Layer Controls -->
-        <div class="tactical-card hud-draggable">
-            <div class="card-header">Layers HUD</div>
-            <div class="layer-rack">
-                <div class="layer-item">
-                    <span class="layer-label">L1 City Reinvestments</span>
-                    <label class="simple-toggle"><input type="checkbox" id="layer-city" checked onchange="renderLayers()"><span class="slider-round"></span></label>
-                </div>
-                <div class="layer-item">
-                    <span class="layer-label">L2 Infrastructure (TxDOT)</span>
-                    <label class="simple-toggle"><input type="checkbox" id="layer-roads" checked onchange="renderLayers()"><span class="slider-round"></span></label>
-                </div>
-                <div class="layer-item">
-                    <span class="layer-label">L3 Utility Substation</span>
-                    <label class="simple-toggle"><input type="checkbox" id="layer-power" checked onchange="renderLayers()"><span class="slider-round"></span></label>
-                </div>
-                <div class="layer-item">
-                    <span class="layer-label">L6 Pulse Decline Opportunities</span>
-                    <label class="simple-toggle"><input type="checkbox" id="layer-mood" checked onchange="renderLayers()"><span class="slider-round"></span></label>
-                </div>
-            </div>
-        </div>
-
-        <!-- Real-time Activity Ticker -->
-        <div class="tactical-card hud-draggable">
-            <div class="card-header">Live Market Ticker</div>
-            <div class="ticker-container" id="ticker-feed">
-                <div class="ticker-row success" style="cursor: pointer;" onclick="selectTickerItem('[TX] CAD Deed buy: Valley View Corridor - LLC')" title="Click to view Pulse Brain data stream"><span>[TX] CAD Deed buy: Valley View Corridor - LLC</span><span>$12.4M</span></div>
-                <div class="ticker-row alert" style="cursor: pointer;" onclick="selectTickerItem('[PULSE] Anchor flight warning: Victory Park AAC')" title="Click to view Pulse Brain data stream"><span>[PULSE] Anchor flight warning: Victory Park AAC</span><span>-5.8 pt</span></div>
-                <div class="ticker-row" style="cursor: pointer;" onclick="selectTickerItem('[ZONING] Plano-11 density variance filed')" title="Click to view Pulse Brain data stream"><span>[ZONING] Plano-11 density variance filed</span><span>Active</span></div>
-            </div>
-        </div>
     </div>
 </div>
 
