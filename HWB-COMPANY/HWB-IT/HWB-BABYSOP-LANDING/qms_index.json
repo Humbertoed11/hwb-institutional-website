@@ -48,10 +48,28 @@
         "department": "01 Executive Governance"
     },
     {
+        "id": "HEX-SOP-1.2",
+        "title": "System Architecture SOP",
+        "file": "leadership/HEX-SOP-1.2-system-architecture.html",
+        "department": "01 Executive Governance"
+    },
+    {
         "id": "HEX-SOP-1.1",
         "title": "Organizational Roles & Chart",
         "file": "leadership/HEX-SOP-1.1-org-chart.html",
         "department": "02 HR (Human Resources)"
+    },
+    {
+        "id": "HEX-IP-26.1",
+        "title": "Implementation Plan: Spatial & Neural Stack Optimization",
+        "file": "planning/HEX-IP-26.1-stack-optimization.html",
+        "department": "03 Operations"
+    },
+    {
+        "id": "HEX-IP-9.2",
+        "title": "HEXGROWTH Deep Search Implementation Plan",
+        "file": "planning/HEX-IP-9.2-deep-search-refinement.html",
+        "department": "03 Operations"
     },
     {
         "id": "HEX-LOBE-1.0",
@@ -126,6 +144,72 @@
         "department": "03 Operations"
     },
     {
+        "id": "HEX-REPORT-25.0",
+        "title": "Benchmark Evaluation against SkillsBench and ClawsBench",
+        "file": "HEX-REPORT-25.0-benchmark-comparison.html",
+        "department": "03 Operations"
+    },
+    {
+        "id": "HEX-REPORT-26.0",
+        "title": "Competitor Intelligence & Product Expansion Report: Analysis of Brokerage AI Velocity",
+        "file": "HEX-REPORT-26.0-competitor-analysis.html",
+        "department": "03 Operations"
+    },
+    {
+        "id": "HEX-REPORT-27.0",
+        "title": "Spatial Data Science & Statistical Integration Plan",
+        "file": "HEX-REPORT-27.0-spatial-data-science.html",
+        "department": "03 Operations"
+    },
+    {
+        "id": "HEX-REPORT-28.0",
+        "title": "Predictive Land Valuation Models Plan",
+        "file": "HEX-REPORT-28.0-predictive-valuation-models.html",
+        "department": "03 Operations"
+    },
+    {
+        "id": "HEX-REPORT-29.0",
+        "title": "HUD Mouse Click Interaction Rectification",
+        "file": "HEX-REPORT-29.0-hud-interaction-rectification.html",
+        "department": "03 Operations"
+    },
+    {
+        "id": "HEX-REPORT-30.0",
+        "title": "HUD Views Operator Guide",
+        "file": "HEX-REPORT-30.0-hud-views-manual.html",
+        "department": "03 Operations"
+    },
+    {
+        "id": "HEX-REPORT-31.0",
+        "title": "Client Developer Assessment Report",
+        "file": "HEX-REPORT-31.0-client-developer-assessment.html",
+        "department": "03 Operations"
+    },
+    {
+        "id": "HEX-REPORT-32.0",
+        "title": "10 Client Simulation Scenarios",
+        "file": "HEX-REPORT-32.0-client-simulation-scenarios.html",
+        "department": "03 Operations"
+    },
+    {
+        "id": "HEX-REPORT-33.0",
+        "title": "JBREC-Brookfield Baybrook/Midline MPC: Opportunity Analysis & Reverse Engineering Report",
+        "file": "planning/HEX-REPORT-33.0-brookfield-baybrook-midline-analysis.html",
+        "department": "03 Operations"
+    },
+    {
+        "id": "HEX-REPORT-34.0",
+        "title": "Institutional Normalization & Real Estate Alignment: Global Implementation Plan",
+        "file": "planning/HEX-REPORT-34.0-normalization-and-real-estate-alignment.html",
+        "department": "03 Operations"
+    },
+    {
+        "id": "HEX-REPORT-35.0",
+        "title": "Texas Real Estate Research Center: Market Intelligence Ingestion & Mapping",
+        "file": "planning/HEX-REPORT-35.0-texas-real-estate-research-center-integration.html",
+        "department": "03 Operations"
+    },
+    {
         "id": "HEX-REPORT-5.0",
         "title": "Lobe Expansion Functions",
         "file": "evaluation/HEX-REPORT-5.0-lobe-functions.html",
@@ -156,9 +240,45 @@
         "department": "03 Operations"
     },
     {
+        "id": "HEX-SOP-3.1",
+        "title": "Python Codebase Standards SOP",
+        "file": "operations/HEX-SOP-3.1-python-standards.html",
+        "department": "03 Operations"
+    },
+    {
+        "id": "HEX-SOP-3.2",
+        "title": "Vocabulary and Technical Translation Database SOP",
+        "file": "operations/HEX-SOP-3.2-vocabulary-database.html",
+        "department": "03 Operations"
+    },
+    {
+        "id": "HEX-SOP-3.3",
+        "title": "Exploratory Data Analysis and Grid Standards SOP",
+        "file": "operations/HEX-SOP-3.3-data-exploration-standards.html",
+        "department": "03 Operations"
+    },
+    {
         "id": "HEX-SOP-4.0",
         "title": "Heads-Up Display Master Manual",
         "file": "HEX-SOP-4.0-master-hud-manual.html",
+        "department": "03 Operations"
+    },
+    {
+        "id": "HEX-SOP-4.1",
+        "title": "Standard Operating Procedure: H3 Spatial Indexing System Analysis",
+        "file": "HEX-SOP-4.1-h3-index-analysis.html",
+        "department": "03 Operations"
+    },
+    {
+        "id": "HEX-SOP-4.3",
+        "title": "Master Operating Procedure: Opportunity & Alarm Beacons",
+        "file": "HEX-SOP-4.3-beacon-client-manual.html",
+        "department": "03 Operations"
+    },
+    {
+        "id": "HEX-SOP-4.4",
+        "title": "HUD Timeline & Lobe Growth Simulation User Manual",
+        "file": "HEX-SOP-4.4-timeline-simulation-manual.html",
         "department": "03 Operations"
     },
     {
@@ -203,14 +323,18 @@
         "file": "operations/HEX-SOP-8.2-reporting-architecture.html",
         "department": "03 Operations"
     },
-
+    {
+        "id": "HEX-SOP-8.3",
+        "title": "Memory Architecture and Core Brain Models SOP",
+        "file": "operations/HEX-SOP-8.3-memory-architecture.html",
+        "department": "03 Operations"
+    },
     {
         "id": "HEX-SOP-8.4",
         "title": "Pulse Brain Plan & Competitor Radar",
         "file": "operations/HEX-SOP-8.4-pulse-neural-plan.html",
         "department": "03 Operations"
     },
-
     {
         "id": "HEX-SOP-8.6",
         "title": "Frontend Portal & Viewport Master Manual",
@@ -229,8 +353,6 @@
         "file": "HEX-SOP-9.1-cross-learning.html",
         "department": "03 Operations"
     },
-
-
     {
         "id": "HEX-IP-9.0",
         "title": "Separation Implementation Plan",
@@ -273,7 +395,6 @@
         "file": "evaluation/HEX-REPORT-1.0-token-saving.html",
         "department": "06 IT (Information Technology)"
     },
-
     {
         "id": "HEX-REPORT-14.0",
         "title": "ISO 9001 Readiness Gap Analysis",
@@ -292,14 +413,42 @@
         "file": "evaluation/HEX-REPORT-16.0-process-control-plan.html",
         "department": "06 IT (Information Technology)"
     },
-
+    {
+        "id": "HEX-SOP-2.1",
+        "title": "DevOps & Twelve Factor Standards SOP",
+        "file": "planning/HEX-SOP-2.1-devops-standards.html",
+        "department": "06 IT (Information Technology)"
+    },
+    {
+        "id": "HEX-SOP-2.2",
+        "title": "Docker Operations & Audit SOP",
+        "file": "planning/HEX-SOP-2.2-docker-operations.html",
+        "department": "06 IT (Information Technology)"
+    },
+    {
+        "id": "HEX-SOP-4.2",
+        "title": "Standard Operating Procedure: QGIS AI Integration & MCP Orchestration",
+        "file": "HEX-SOP-4.2-qgis-ai-integration.html",
+        "department": "06 IT (Information Technology)"
+    },
     {
         "id": "HEX-SOP-7.5",
         "title": "ISO 9001 Compliance Tracker",
         "file": "planning/HEX-SOP-7.5-iso-compliance-tracker.html",
         "department": "06 IT (Information Technology)"
     },
-
+    {
+        "id": "HWB QMS 11.5",
+        "title": "Standard Operating Procedure: Preflight Risk Audit and Foresight SOP",
+        "file": "planning/hwb-qms-11.5_pre-flight_risk_audit_&_foresight_sop.html",
+        "department": "06 IT (Information Technology)"
+    },
+    {
+        "id": "HWB-QMS-9.6",
+        "title": "Standard Operating Procedure / Report: HexGrowth Web App Deployment Audit and Publishing Strategy",
+        "file": "planning/hwb-qms-9.6_hexgrowth_web_app_deployment_audit_and_publishing_strategy.html",
+        "department": "06 IT (Information Technology)"
+    },
     {
         "id": "HEX-REPORT-8.0",
         "title": "Path B Cost Projections",
@@ -317,5 +466,17 @@
         "title": "Data Privacy & Portfolio Security",
         "file": "legal/HEX-SOP-7.1-privacy-policy.html",
         "department": "09 Legal & Compliance"
+    },
+    {
+        "id": "HWB-QMS-7.2",
+        "title": "HWB-QMS-7.2: SigmaFidelity\u2122 Web & UI Standardization SOP",
+        "file": "legal/hwb-qms-7.2_backoffice_ui_standardization_sop.html",
+        "department": "09 Legal & Compliance"
+    },
+    {
+        "id": "HEX-REPORT-24.0",
+        "title": "Telegram Ingest Incident Report",
+        "file": "evaluation/HEX-REPORT-24.0-telegram-ingest-incident.html",
+        "department": "10 Improvement"
     }
 ]

@@ -1,0 +1,95 @@
+
+<div class="sop-card">
+    <!-- 0.0 DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-9.8</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">8.5.6 (Control of Changes)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <table>
+<thead>
+<tr>
+<th style="text-align: left;"><strong>Document Control</strong></th>
+<th style="text-align: left;"></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Document Title</strong></td>
+<td style="text-align: left;"><strong>Pre-Execution Impact Study for BabySOP Terminal Integration</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Document ID</strong></td>
+<td style="text-align: left;">HWB-QMS-9.8</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Version</strong></td>
+<td style="text-align: left;">1.0</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Status</strong></td>
+<td style="text-align: left;">APPROVED</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Author</strong></td>
+<td style="text-align: left;">George (Systems Architect)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Approved By</strong></td>
+<td style="text-align: left;">Humberto Dominguez, CEO</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Date</strong></td>
+<td style="text-align: left;">2026-06-06</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>ISO 9001 Clause</strong></td>
+<td style="text-align: left;">8.5.6 (Control of Changes)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1 id="standard-operating-procedure-report-pre-execution-impact-study-for-babysop-terminal-integration">Standard Operating Procedure / Report: <strong>Pre-Execution Impact Study for BabySOP Terminal Integration</strong></h1>
+<h2 id="10-purpose">1.0 Purpose</h2>
+<p>This document conducts a pre-execution impact study for integrating the hex-terminal view viewport page into the BabySOP production environment (<code>www.babysop.com/hud/terminal</code>). This ensures the projects portal and dropdown options resolve successfully instead of returning 404 errors.</p>
+<h2 id="20-scope">2.0 Scope</h2>
+<p>This study applies to:
+1. The route mapping: <code>HWB-COMPANY/HWB-IT/HWB-BABYSOP-LANDING/app.py</code>.
+2. The template: <code>HWB-COMPANY/HWB-IT/HWB-BABYSOP-LANDING/templates/hud_terminal.html</code>.
+3. The static file: <code>HWB-COMPANY/HWB-IT/HWB-BABYSOP-LANDING/static/js/hud-dock.js</code>.</p>
+<hr />
+<h2 id="30-pre-execution-impact-study">3.0 Pre-Execution Impact Study</h2>
+<h3 id="31-context-dependency-analysis">3.1 Context &amp; Dependency Analysis</h3>
+<ul>
+<li><strong>Asset Dependencies</strong>:<ul>
+<li>The <code>hud_terminal.html</code> template uses global projects contexts. Since <code>global_projects</code> is already injected in <code>app.py</code> via a template context processor, there are no missing variables.</li>
+<li>The template requires the static asset <code>js/hud-dock.js</code> which is now copied into the destination folder.</li>
+</ul>
+</li>
+<li><strong>Environment Parity</strong>:<ul>
+<li>This is a static template and path routing change. There are no direct environment variable changes or database schema modifications required.</li>
+</ul>
+</li>
+</ul>
+<h3 id="32-rollback-path">3.2 Rollback Path</h3>
+<p>In the event of a deployment failure:
+1.  <strong>Immediate Revert</strong>: Revert the git commit and push the previous master branch state to GitHub.
+2.  <strong>Azure CLI Rollback</strong>: Re-run <code>az webapp deployment source config-zip</code> with the last backed up package file.</p>
+<hr />
+<h2 id="40-verification-checklist">4.0 Verification Checklist</h2>
+<ul>
+<li>[ ] Does <code>hud_terminal.html</code> load successfully?</li>
+<li>[ ] Does <code>hud-dock.js</code> resolve on the client browser with status code 200?</li>
+<li>[ ] Are the project dropdown selection parameters mapped correctly?</li>
+</ul>
+    </div>
+
+    <div class="sop-card-footer">
+        <span>&copy; 2026 HWB Cleaning Services LLC</span>
+        <span>Controlled Document | HWB-QMS-9.8</span>
+        <span>Page <span class="page-number"></span></span>
+    </div>
+</div>

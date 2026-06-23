@@ -36,10 +36,15 @@ class Config:
     LI_CLIENT_SECRET = os.getenv("LINKEDIN_CLIENT_SECRET")
     LI_REDIRECT_URI = os.getenv("LINKEDIN_REDIRECT_URI")
 
+    # Session Cookie Configuration (HWB-QMS-9.7 Compliance)
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
+
 class DevelopmentConfig(Config):
     """Local Development Configuration."""
     DEBUG = True
     ENV = 'development'
+    SESSION_COOKIE_SECURE = False
 
 class ProductionConfig(Config):
     """Azure Production Configuration."""
@@ -47,6 +52,8 @@ class ProductionConfig(Config):
     ENV = 'production'
     # Ensure Azure enforces HTTPS
     PREFERRED_URL_SCHEME = 'https'
+    SESSION_COOKIE_SECURE = True
+
 
 # Dynamic Environment Selection
 def get_config():

@@ -1,8 +1,27 @@
 {% extends "sop_base.html" %}
+{% set hide_toc = true %}
 
 {% block title %}Institutional Manual Index | HEXGROWTH QMS{% endblock %}
 
 {% block content %}
+<style>
+    /* 🖨️ Print standards to ensure a clean physical/PDF manual index (ISO 9001 compliance) */
+    @media print {
+        /* Hide dynamic web components that do not belong on a static printout */
+        .sigma-tab-rack,
+        .daily-updates-panel,
+        .isc-btn {
+            display: none !important;
+        }
+        
+        /* Force all department groups to render in full layout, overriding active JavaScript tab state */
+        .qms-index-group {
+            display: block !important;
+            page-break-inside: avoid;
+            margin-bottom: 2.5rem !important;
+        }
+    }
+</style>
 <div class="sop-card">
     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem; margin-bottom: 2rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 1.5rem;">
         <div style="flex: 1; min-width: 280px;">

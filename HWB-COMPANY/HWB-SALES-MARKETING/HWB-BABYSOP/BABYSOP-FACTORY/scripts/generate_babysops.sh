@@ -23,9 +23,8 @@ do
     # Replace placeholder with current task
     PROMPT=$(sed "s/{{TASK}}/$TASK/g" "$PROMPT_FILE")
     
-    # Process through Gemini CLI
-    # Note: Using printf to handle potential special characters in PROMPT
-    printf "%s" "$PROMPT" | gemini > "$OUTPUT_DIR/babysop_${TASK// /_}.txt"
+    # Process through Antigravity CLI (Mandated Migration from legacy Gemini CLI)
+    agy --print "$PROMPT" --dangerously-skip-permissions > "$OUTPUT_DIR/babysop_${TASK// /_}.txt"
     
     echo "SUCCESS: Saved to $OUTPUT_DIR/babysop_${TASK// /_}.txt"
     

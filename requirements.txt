@@ -8,3 +8,4 @@ flask-login
 gunicorn
 msal
 Flask-Compress==1.17
+pypdf

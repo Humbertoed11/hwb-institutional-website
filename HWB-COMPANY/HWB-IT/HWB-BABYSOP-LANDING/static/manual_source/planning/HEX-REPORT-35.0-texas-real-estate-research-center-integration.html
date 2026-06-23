@@ -1,0 +1,96 @@
+<!-- 
+    HEXGROWTH Texas Real Estate Research Center Ingestion Plan
+    Standard: HEX-QMS-1.1
+    Document ID: HEX-REPORT-35.0-TRERC-INTEGRATION
+-->
+<div class="sop-card">
+    <!-- DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HEX-REPORT-35.0-TRERC-INTEGRATION</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Author</span><span class="meta-val">George Bytes (Systems Architect)</span></div>
+        <div class="meta-unit"><span class="meta-label">Date</span><span class="meta-val">06/08/2026</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <h1>Texas Real Estate Research Center: <strong>Market Intelligence Ingestion & Mapping</strong></h1>
+        
+        <p>This document records the strategic integration of data feeds, economic indexes, and market publications from the Texas Real Estate Research Center (TAMU TRERC) into HexGrowth's geospatial intelligence platform. It defines how regional land pricing, construction forecasts, and development metrics are indexed to increase system reasoning intelligence.</p>
+
+        <div class="callout callout-note">
+            <div class="callout-title">ℹ️ INTELLIGENCE OBJECTIVE</div>
+            <p>To ingestion-map TRERC's research findings to standard real estate lobes, establishing a deterministic baseline for statewide commercial and rural land evaluations.</p>
+        </div>
+
+        <hr />
+
+        <h2>1.0 TRERC Core Data Streams</h2>
+        <p>The following TAMU TRERC research divisions provide data feeds for spatial modeling:</p>
+        <ul>
+            <li><b>Texas Housing Insight (Monthly):</b> Aggregates home sales, median home prices, building permits, construction starts, and monthly inventory counts by Metropolitan Statistical Area (MSA) and county.</li>
+            <li><b>Outlook for the Texas Economy (Monthly):</b> Measures job growth, employment rates, local population flows, consumer spending indices, and inflation rates.</li>
+            <li><b>Texas Rural Land Markets (Quarterly):</b> Analyzes acreage transfers, median price per acre, sales volume, and land market health across the seven rural land regions of Texas.</li>
+            <li><b>Commercial Real Estate Roundup (Quarterly):</b> Audits office space utilization, retail mall adaptions, industrial manufacturing corridors, and warehouse demand indicators.</li>
+        </ul>
+
+        <hr />
+
+        <h2>2.0 Ingestion Mapping to HexGrowth Decision Lobes</h2>
+        <p>Data from TRERC is indexed into the PostGIS database and mapped directly to active feasibility lobes to optimize opportunity scoring:</p>
+        <table class="sigma-data-grid">
+            <thead>
+                <tr>
+                    <th>Lobe Index</th>
+                    <th>Normalized Lobe Category</th>
+                    <th>TRERC Data Points Ingested</th>
+                    <th>Intelligence Contribution</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>L1</td>
+                    <td>Zoning & Municipal Entitlements</td>
+                    <td>Housing starts, residential building permits, MSA construction trends.</td>
+                    <td>Forecasts local zoning variance approvals and subdivision growth limits.</td>
+                </tr>
+            2.0: Ingestion Mapping to HexGrowth Decision Lobes
+                <tr>
+                    <td>L2</td>
+                    <td>Access, Egress & Traffic Capacity</td>
+                    <td>Industrial manufacturing corridor volume, logistics shipping indexes.</td>
+                    <td>Identifies potential traffic congestions and identifies logistics egress demands.</td>
+                </tr>
+                <tr>
+                    <td>L3</td>
+                    <td>Utilities & Infrastructure Capacity</td>
+                    <td>Manufacturing facility power usage studies, server datacenter layouts.</td>
+                    <td>Determines local substation load margins and utility connection lead times.</td>
+                </tr>
+                <tr>
+                    <td>L4</td>
+                    <td>Environmental & Geotech Due Diligence</td>
+                    <td>Rural land transaction records, conservation easement reports.</td>
+                    <td>Assesses geotechnical risks and checks mineral/water rights histories.</td>
+                </tr>
+                <tr>
+                    <td>L6</td>
+                    <td>Market Sentiment & Public Feedback</td>
+                    <td>Quarterly housing sentiment articles, commercial real estate outlooks.</td>
+                    <td>Feeds NIMBY index models with local sentiment and public hearing delays.</td>
+                </tr>
+                <tr>
+                    <td>L7</td>
+                    <td>Underwriting & Financial Feasibility</td>
+                    <td>Quarterly price per acre land comps, MSA housing affordability index.</td>
+                    <td>Underwrites capitalization rates, land valuation benchmarks, and comps.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <hr />
+
+        <h2>3.0 Persistence & Knowledge Indexing</h2>
+        <p>The ingestion process utilizes the system's persistence protocol (<code>scripts/HEX-PERSISTENCE-PROTOCOL.py</code>) to automatically scan the documentation repositories. Extracted data points are indexed inside the database table <code>HEX_KB_Library</code> (Neural Core) for use by the abductive and inductive inference loop during project site audits.</p>
+    </div>
+</div>

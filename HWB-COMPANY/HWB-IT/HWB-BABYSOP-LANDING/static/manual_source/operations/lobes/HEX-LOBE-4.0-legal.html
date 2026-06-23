@@ -7,7 +7,7 @@
     <!-- DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HEX-LOBE-4.0</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.1</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.2</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #10b981;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Author</span><span class="meta-val">George Bytes (Lead Auditor)</span></div>
     </div>
@@ -30,10 +30,16 @@
         <ul>
             <li><strong>FEMA NFHL:</strong> National Flood Hazard Layer (1% and 0.2% zones).</li>
             <li><strong>TCEQ PST:</strong> Petroleum Storage Tank contamination records.</li>
+            <li><strong>Mineral Estate Registry:</strong> County deeds and leases registering active mineral rights and oil/gas wells.</li>
+            <li><strong>Texas Property Code:</strong> Residential landlord statutory compliance standards (smoke alarms, security deposits, utility cutoffs).</li>
         </ul>
 
         <h2>2.0 Alpha Voting Logic</h2>
-        <p>This is a <strong>Subtractive Lobe</strong>. It primarily votes to REDUCE scores based on contamination or flood risk.</p>
+        <p>This is a <strong>Subtractive Lobe</strong>. It primarily votes to REDUCE scores based on contamination, flood risk, or outstanding legal/property liabilities:</p>
+        <ul>
+            <li><strong>Mineral Rights Dominance Penalty:</strong> If a parcel sits on a dominant mineral estate without an active Surface Use Agreement, a subtractive penalty of <strong>0.50</strong> is applied to account for potential drilling encroachment.</li>
+            <li><strong>Property Code Defect Penalty:</strong> Parcels with active litigation or historical violations regarding landlord statutory obligations (e.g., failed smoke alarm inspections, security deposit disputes, or illegal utility cutoffs) receive a penalty of up to <strong>0.30</strong> depending on severity.</li>
+        </ul>
         
         <hr />
         <h2>Document Revision History</h2>
@@ -48,6 +54,12 @@
             </thead>
             <tbody>
                 <tr>
+                    <td><b>1.0.2</b></td>
+                    <td>06/08/2026</td>
+                    <td>Integrated Texas Property Code regulations and mineral estate dominance rules from TAMU TRERC.</td>
+                    <td>George Bytes / Humberto Dominguez (CEO)</td>
+                </tr>
+                <tr>
                     <td><b>1.0.1</b></td>
                     <td>06/03/2026</td>
                     <td>Standardized clinical formatting and aligned with ISO 9001 document controls.</td>
@@ -60,7 +72,7 @@
     <!-- 3. DOCUMENT CONTROL FOOTER -->
     <div class="sop-card-footer">
         <div>Classification: Institutional ISO 9001 QMS Record</div>
-        <div>Effective Date: 06/03/2026</div>
-        <div>Review Cycle: Annual (Rev 1.0.1)</div>
+        <div>Effective Date: 06/08/2026</div>
+        <div>Review Cycle: Annual (Rev 1.0.2)</div>
     </div>
 </div>

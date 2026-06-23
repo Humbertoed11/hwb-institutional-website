@@ -1,0 +1,213 @@
+<!-- 
+    SigmaFidelity™ Institutional SOP
+    Document ID: HWB-QMS-9.6
+-->
+<div class="sop-card">
+    <!-- 0.0 DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-9.6</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● DRAFT</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.1.3 (Infrastructure) & 7.5 (Documented Information)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <table>
+<thead>
+<tr>
+<th style="text-align: left;"><strong>Document Control</strong></th>
+<th style="text-align: left;"></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Document Title</strong></td>
+<td style="text-align: left;"><strong>HexGrowth Web App Deployment Audit and Publishing Strategy</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Document ID</strong></td>
+<td style="text-align: left;">HWB-QMS-9.6</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Version</strong></td>
+<td style="text-align: left;">1.0</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Status</strong></td>
+<td style="text-align: left;">DRAFT</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Author</strong></td>
+<td style="text-align: left;">George (Systems Architect)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Approved By</strong></td>
+<td style="text-align: left;">Humberto Dominguez, CEO</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Date</strong></td>
+<td style="text-align: left;">2026-06-04</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>ISO 9001 Clause</strong></td>
+<td style="text-align: left;">7.1.3 (Infrastructure) &amp; 7.5 (Documented Information)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1>Standard Operating Procedure / Report: <strong>HexGrowth Web App Deployment Audit and Publishing Strategy</strong></h1>
+<h2>1.0 Purpose</h2>
+<p>This report audits the deployment configuration of the <strong>HexGrowth</strong> geospatial intelligence web application. It evaluates hosting scenarios, diagnoses the current production failures on <code>babysop.com</code>, and recommends a secure, stable, and scalable long-term publishing strategy.</p>
+<h2>2.0 Scope</h2>
+<p>This audit covers:
+1. The <strong>HexGrowth</strong> codebase located at <code>/home/humbertoed/hexgrowth/</code>.
+2. The <strong>BabySOP</strong> landing page codebase located at <code>/home/humbertoed/gemini_projects/HWB-COMPANY/HWB-IT/HWB-BABYSOP-LANDING/</code>.
+3. The Azure App Service instances: <code>hwb-babysop-landing</code> and <code>hwb-institutional-website</code>.</p>
+<h2>3.0 Universal Mandates</h2>
+<p>All technical recommendations and actions must comply with the <strong>SigmaFidelity™</strong> institutional guidelines:
+1. <strong>Total Isolation:</strong> Client applications must not share deployment files or override existing cleaning website endpoints (SOP HWB-QMS-11.7).
+2. <strong>Quality Gates:</strong> No code changes may bypass session-based security protocols.
+3. <strong>Poka-Yoke Deployment:</strong> Eliminate packaging errors that break live production websites.</p>
+<hr />
+<h2>4.0 Audit Findings</h2>
+<h3>4.1 Production Failure Diagnosis (<code>www.babysop.com</code> / <code>hwb-babysop-landing</code>)</h3>
+<ul>
+<li><strong>Symptom:</strong> The live BabySOP website (<code>www.babysop.com</code>) was returning a <strong>500 Internal Server Error</strong>.</li>
+<li><strong>Root Cause:</strong> The application log showed <code>jinja2.exceptions.TemplateNotFound: base.html</code>. An audit of the deployed zip package (<code>release.zip</code>) revealed that <code>base.html</code> was completely missing from the template directory on Azure, even though it was present in the local codebase.</li>
+<li><strong>Resolution (In Progress):</strong> A new package (<code>release_new.zip</code>) was compiled locally including all templates (<code>base.html</code>, <code>index.html</code>, and <code>hud.html</code>) and is currently being redeployed to Azure via the CLI.</li>
+</ul>
+<h3>4.2 Codebase Discrepancies (Local vs. Deployed Branch)</h3>
+<p>A comparison between the authoritative HexGrowth codebase (<code>/home/humbertoed/hexgrowth/app</code>) and the BabySOP-embedded route copy (<code>HWB-BABYSOP-LANDING</code>) shows significant gaps:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Feature</th>
+<th style="text-align: left;">Authoritative HexGrowth App (<code>/hexgrowth</code>)</th>
+<th style="text-align: left;">Embedded BabySOP Copy (<code>/HWB-BABYSOP-LANDING</code>)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>User Authentication</strong></td>
+<td style="text-align: left;"><strong>Enabled</strong> (Requires username/password check against <code>HEX_Users</code>)</td>
+<td style="text-align: left;"><strong>Disabled</strong> (Bypasses login completely)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>QMS SOP Manual Viewer</strong></td>
+<td style="text-align: left;"><strong>Active</strong> (Renders all ISO clauses from database)</td>
+<td style="text-align: left;"><strong>Inactive</strong> (Renders "coming soon" placeholder)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Opportunity Beacons</strong></td>
+<td style="text-align: left;"><strong>Active</strong> (Retrieves altitude data from <code>HEX_Beacons</code>)</td>
+<td style="text-align: left;"><strong>Inactive</strong> (No database querying or API endpoint)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Design System Page</strong></td>
+<td style="text-align: left;"><strong>Active</strong> (Interactive design documentation)</td>
+<td style="text-align: left;"><strong>Missing</strong> (No route or templates)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Runtime Container</strong></td>
+<td style="text-align: left;"><strong>Dockerized</strong> (Isolated environment via Dockerfile)</td>
+<td style="text-align: left;"><strong>Zip Package</strong> (Direct Python 3.12 deployment)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>5.0 Evaluation of Deployment Options</h2>
+<h3>Option A: Standalone Subdomain Deployment (Recommended)</h3>
+<p>Deploy the containerized HexGrowth application as a separate Azure Web App Service (e.g., <code>hexgrowth-app</code>) under the <code>HWB-SIGMAJAN-PROD</code> resource group. Map this app to a subdomain like <code>hexgrowth.babysop.com</code>.</p>
+<ul>
+<li><strong>Advantages:</strong><ol>
+<li><strong>Security &amp; Isolation:</strong> Follows <code>HWB-QMS-11.7</code> (Isolated Infrastructure). The application retains its login gates, preventing public access to proprietary geospatial decision engines.</li>
+<li><strong>Environment Parity:</strong> The app runs in its native Docker environment via Azure Web App for Containers, matching the local developer sandbox perfectly.</li>
+<li><strong>Performance Stability:</strong> The heavy MapLibre graphics and database-intensive PostGIS queries are isolated on their own compute resource, preventing server crashes on the public <code>babysop.com</code> landing page.</li>
+</ol>
+</li>
+<li><strong>Disadvantages:</strong><ol>
+<li>Requires configuration of a subdomain DNS record.</li>
+</ol>
+</li>
+</ul>
+<h3>Option B: Subdirectory Routing Integration (Sub-path mapping)</h3>
+<p>Host HexGrowth inside the <code>hwb-babysop-landing</code> app service, routing all requests to <code>www.babysop.com/hexgrowth</code>.</p>
+<ul>
+<li><strong>Advantages:</strong><ol>
+<li>Maintains a single domain entry point without subdomain setup.</li>
+</ol>
+</li>
+<li><strong>Disadvantages:</strong><ol>
+<li><strong>Fragile Architecture:</strong> Any updates to HexGrowth (lobes, miners, templates) require manual code merging and manual copying of files into the <code>HWB-BABYSOP-LANDING</code> folder, violating the prime directive of minimizing manual labor.</li>
+<li><strong>Security Vulnerability:</strong> Security gates must be manually integrated and maintained within the shared app instance.</li>
+<li><strong>Lacks Containerization:</strong> Cannot leverage the Dockerfile structure, creating environmental parity risks between development and production.</li>
+</ol>
+</li>
+</ul>
+<hr />
+<h2>6.0 Recommended Action Plan</h2>
+<pre><code class="language-mermaid">graph TD
+    A[Start: Resolution of 500 Error] --&gt; B[Step 1: Deploy release_new.zip to restore babysop.com]
+    B --&gt; C[Step 2: Confirm Root Site is Operational]
+    C --&gt; D[Step 3: CEO Decision on Domain Strategy]
+    D --&gt;|Option A: Standalone| E[Step 4a: Create Standalone Azure Container Web App]
+    D --&gt;|Option B: Subdirectory| F[Step 4b: Merge Login Gates and QMS templates to babysop-landing]
+</code></pre>
+<h3>Step 1: Restore the Live Landing Page (Immediate Action)</h3>
+<p>Compile and deploy the updated <code>release_new.zip</code> to Azure App Service <code>hwb-babysop-landing</code> to restore root site availability.</p>
+<h3>Step 2: Provision Isolated Infrastructure (Option A Execution)</h3>
+<ol>
+<li>Build the HexGrowth production Docker image from the authoritative folder: <code>/home/humbertoed/hexgrowth/app/Dockerfile</code>.</li>
+<li>Tag and push the image to the private Azure Container Registry: <code>hwbprodacr.azurecr.io/hexgrowth-web:v1.0</code>.</li>
+<li>Provision a new Azure Web App for Containers named <code>hwb-hexgrowth-app</code> within the <code>HWB-SIGMAJAN-PROD</code> resource group.</li>
+<li>Configure the web app to pull from ACR and set up environment variables (including <code>DATABASE_URL</code> pointing to the PostGIS server).</li>
+<li>Configure DNS subdomain <code>hexgrowth.babysop.com</code> pointing to the new app service.</li>
+</ol>
+<hr />
+<h2>7.0 Verification (Zero Defect Check)</h2>
+<p>All future deployments must pass the automated preflight audit prior to packaging and release. Verification is completed by executing:
+<code>python3 scripts/HEX-PRE-FLIGHT-AUDIT.py</code></p>
+<p>This script automatically verifies:
+1. <strong>HTML Tag Balance:</strong> Standardized HTML syntax parser checks all templates for balanced tags.
+2. <strong>Template Parity:</strong> Shared template assets are verified for exact content matching between local and production.
+3. <strong>Path Portability:</strong> Codebase is scanned to verify that all path mappings are environment agnostic.
+4. <strong>Endpoint Routing Smoke Tests:</strong> The active docker container tests endpoints (/hud, /hud/terminal, /projects, /design-system, /admin/control-panel) using simulated session headers.</p>
+<h2>8.0 Revision History</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Version</th>
+<th style="text-align: left;">Date</th>
+<th style="text-align: left;">Author</th>
+<th style="text-align: left;">Change Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1.0</td>
+<td style="text-align: left;">2026-06-04</td>
+<td style="text-align: left;">George</td>
+<td style="text-align: left;">Initial release. Audited deployed files, diagnosed 500 errors, and evaluated Option A vs. Option B.</td>
+</tr>
+<tr>
+<td style="text-align: left;">1.1</td>
+<td style="text-align: left;">2026-06-06</td>
+<td style="text-align: left;">George</td>
+<td style="text-align: left;">Resolved layout distortion, corrected premature hud-container tag closures, synced missing QMS/admin templates, and enabled container entrypoint boot initialization for missing database tables.</td>
+</tr>
+<tr>
+<td style="text-align: left;">1.2</td>
+<td style="text-align: left;">2026-06-06</td>
+<td style="text-align: left;">George</td>
+<td style="text-align: left;">Codified automated preflight audit suite and containerized route smoke tests.</td>
+</tr>
+</tbody>
+</table>
+    </div>
+
+    <div class="sop-card-footer">
+        <span>&copy; 2026 HWB Cleaning Services LLC</span>
+        <span>Controlled Document | HWB-QMS-9.6</span>
+        <span>Page <span class="page-number"></span></span>
+    </div>
+</div>

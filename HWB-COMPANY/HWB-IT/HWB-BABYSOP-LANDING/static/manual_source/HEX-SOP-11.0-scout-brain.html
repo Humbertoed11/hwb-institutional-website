@@ -7,7 +7,7 @@
     <!-- DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HEX-SOP-11.0-SCOUT</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.1</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #10b981;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Author</span><span class="meta-val">George Bytes (Lead Architect)</span></div>
     </div>
@@ -17,7 +17,7 @@
         
         <h2>1.0 Purpose</h2>
         <p>To define the architectural standards and operational responsibilities of <strong>Lobe 11: Scout Brain™</strong>. Lobe 11 acts as the primary gateway and sanitization filter for all external data connections. It actively searches the internet for municipal databases, tests connection speeds, and checks data formats before allowing information to feed the other ten neural lobes.</p>
-
+ 
         <h2>2.0 Core Functions of Lobe 11</h2>
         <p>Lobe 11 isolates external web-scraping and API-probing routines from the core analytical databases. It performs three critical operations:</p>
         <ol>
@@ -25,7 +25,7 @@
             <li><strong>Connect (Probe & Monitor):</strong> Regularly pings registered sources to monitor connection latency and uptime. It flags offline endpoints before they cause system timeouts.</li>
             <li><strong>Collect (Validation & Ingestion):</strong> Extracts raw data, validates the schema (checking coordinate systems, datatypes, and empty fields), and sanitizes inputs. Verified data is then passed to the target lobes (L1-L7).</li>
         </ol>
-
+ 
         <h2>3.0 Database Schema & Registry</h2>
         <p>Scout registries, connection statuses, and pipeline metrics are recorded in the PostgreSQL database under the public schema:</p>
         
@@ -42,7 +42,7 @@ CREATE TABLE "HEX_Scout_Registry" (
     last_scouted TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
         </code></pre>
-
+ 
         <h2>4.0 Pipeline Ingestion Workflow</h2>
         <p>Before supplying data to target lobes, Lobe 11 runs a strict validation sequence:</p>
         <ul>
@@ -50,14 +50,15 @@ CREATE TABLE "HEX_Scout_Registry" (
             <li><strong>Step 2: Schema Match.</strong> Validates that incoming JSON/GeoJSON columns match target databases. For example, verifying municipal shapefiles contain correct coordinates and zoning labels.</li>
             <li><strong>Step 3: Lobe Routing.</strong> Sanitized data is inserted into the respective database core (e.g. routing AADT traffic logs to L2 TxDOT Brain).</li>
         </ul>
-
+ 
         <h2>5.0 Daily Operational Integration</h2>
-        <p>The scout engine is driven by two active background tasks:</p>
+        <p>The scout engine is driven by three active background tasks:</p>
         <ul>
             <li><code>scripts/HEX-PULSE-SCOUT.py</code>: Runs daily to refresh connection statuses for target submarkets (Dallas, Tarrant, Denton, Collin, and Wise Counties). Results are exposed via the <code>/api/v1/pulse/scout-summary</code> API.</li>
             <li><code>scripts/HEX-MINER-L11-TXDOT.py</code>: Queries the TxDOT ArcGIS REST API for raw traffic volume data near coordinates and caches them inside the <code>HEX_TxDOT_Staging</code> table.</li>
+            <li><code>scripts/download_trerc_pdfs.py</code>: Scrapes the Texas Real Estate Research Center (TAMU TRERC) reports and sitemaps to download monthly and quarterly PDF publications into the <code>Research-docs/</code> folder.</li>
         </ul>
-
+ 
         <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 3rem 0;" />
         
         <h2>Document Revision History</h2>
@@ -73,8 +74,8 @@ CREATE TABLE "HEX_Scout_Registry" (
             <tbody>
                 <tr>
                     <td><strong>1.0.1</strong></td>
-                    <td>06/06/2026</td>
-                    <td>Added the TxDOT AADT Harvester script and staging table integration.</td>
+                    <td>06/08/2026</td>
+                    <td>Integrated TAMU TRERC website scraping and PDF harvesting pipelines.</td>
                     <td>George Bytes (Systems Architect) / Humberto Dominguez (CEO)</td>
                 </tr>
                 <tr>
@@ -86,11 +87,11 @@ CREATE TABLE "HEX_Scout_Registry" (
             </tbody>
         </table>
     </div>
-
+ 
     <!-- DOCUMENT CONTROL FOOTER -->
     <div class="sop-card-footer">
         <div>Classification: Institutional ISO 9001 QMS Record</div>
-        <div>Effective Date: 06/05/2026</div>
-        <div>Review Cycle: Annual (Rev 1.0.0)</div>
+        <div>Effective Date: 06/08/2026</div>
+        <div>Review Cycle: Annual (Rev 1.0.1)</div>
     </div>
 </div>

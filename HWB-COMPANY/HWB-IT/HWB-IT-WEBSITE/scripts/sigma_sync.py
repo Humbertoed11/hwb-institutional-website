@@ -113,11 +113,161 @@ def sync_system_state():
     except Exception as e:
         print(f"Error syncing state: {e}")
 
+def parse_problems_to_solve(markdown_content):
+    import re
+    rows = []
+    lines = markdown_content.split("\n")
+    for line in lines:
+        if "|" in line:
+            parts = [p.strip() for p in line.split("|")]
+            if len(parts) >= 6:
+                date_val = parts[1]
+                issue_id = parts[2]
+                desc = parts[3]
+                status = parts[4].replace("**", "")
+                impact = parts[5]
+                if issue_id and issue_id != "Issue ID" and not issue_id.startswith("---") and not issue_id.startswith(":") and not issue_id.startswith("Date"):
+                    rows.append({
+                        "issue_id": issue_id,
+                        "date": date_val,
+                        "description": desc,
+                        "status": status,
+                        "impact": impact
+                    })
+    
+    sections = {}
+    current_id = None
+    current_key = None
+    current_content = []
+    
+    header_pattern = re.compile(r"^##\s+([A-Z]+-[0-9]+):\s*(.*)$")
+    
+    for line in lines:
+        header_match = header_pattern.match(line)
+        if header_match:
+            if current_id and current_key:
+                sections[current_id][current_key] = "\n".join(current_content).strip()
+            current_id = header_match.group(1)
+            sections[current_id] = {
+                "title": header_match.group(2).strip(),
+                "detected": "",
+                "symptoms": "",
+                "root_cause": "",
+                "solution": "",
+                "preventative": ""
+            }
+            current_key = None
+            current_content = []
+            continue
+            
+        if current_id:
+            match_field = re.match(r"^\*\*([^*:]+):\*\*\s*(.*)$", line)
+            if match_field:
+                if current_key:
+                    sections[current_id][current_key] = "\n".join(current_content).strip()
+                field_name = match_field.group(1).lower().replace(" ", "_")
+                current_key = field_name
+                current_content = [match_field.group(2)]
+            else:
+                current_content.append(line)
+                
+    if current_id and current_key:
+        sections[current_id][current_key] = "\n".join(current_content).strip()
+        
+    impact_mapping = {"LOW": 1, "MEDIUM": 2, "HIGH": 3, "CRITICAL": 4}
+    cat_map = {"BUG": "System Integrity", "MIG": "Migration", "SYS": "System Operations"}
+    results = []
+    for row in rows:
+        iid = row["issue_id"]
+        sec = sections.get(iid, {})
+        
+        impact_str = row["impact"].upper()
+        impact_level = impact_mapping.get(impact_str, 2)
+        category = cat_map.get(iid.split("-")[0], "General")
+        
+        results.append({
+            "issue_id": iid,
+            "description": row["description"] + (f" ({sec.get('title')})" if sec.get("title") else ""),
+            "category": category,
+            "status": row["status"],
+            "impact_level": impact_level,
+            "root_cause": sec.get("root_cause", ""),
+            "implemented_fix": sec.get("solution", sec.get("implemented_fix", "")),
+            "preventative_rule": sec.get("preventative", sec.get("preventative_rule", "")),
+            "detected_date": row["date"]
+        })
+    return results
+
+def sync_problems_to_solve():
+    problems_file = "docs/PROBLEMS-TO-SOLVE.md"
+    if not os.path.exists(problems_file): return
+    
+    print("[SYNC] Scanning for new problems to solve...")
+    with open(problems_file, "r", encoding="utf-8") as f:
+        content = f.read()
+        
+    parsed = parse_problems_to_solve(content)
+    
+    try:
+        conn = psycopg2.connect(DB_URL)
+        with conn.cursor() as cur:
+            for item in parsed:
+                iid = item["issue_id"]
+                prefix = f"{iid}:"
+                
+                cur.execute('SELECT id FROM "SigmaKnowledgeScars" WHERE description LIKE %s;', (prefix + '%',))
+                row = cur.fetchone()
+                
+                created_dt = None
+                if item["detected_date"]:
+                    try:
+                        created_dt = datetime.strptime(item["detected_date"], "%m/%d/%Y")
+                    except Exception:
+                        pass
+                
+                resolved_dt = None
+                if item["status"].upper() == "RESOLVED":
+                    resolved_dt = datetime.now()
+                
+                desc_val = f"{prefix} {item['description']}"
+                
+                if row:
+                    db_id = row[0]
+                    print(f"[SYNC] Updating mistake log: {iid}")
+                    cur.execute("""
+                        UPDATE "SigmaKnowledgeScars"
+                        SET description = %s, category = %s, status = %s, impact_level = %s,
+                            root_cause = %s, implemented_fix = %s, preventative_rule = %s,
+                            resolved_at = COALESCE(resolved_at, %s)
+                        WHERE id = %s;
+                    """, (
+                        desc_val, item["category"], item["status"], item["impact_level"],
+                        item["root_cause"], item["implemented_fix"], item["preventative_rule"],
+                        resolved_dt, db_id
+                    ))
+                else:
+                    print(f"[SYNC] Inserting new mistake log: {iid}")
+                    cur.execute("""
+                        INSERT INTO "SigmaKnowledgeScars" (
+                            description, category, status, impact_level, root_cause,
+                            implemented_fix, preventative_rule, created_at, resolved_at
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);
+                    """, (
+                        desc_val, item["category"], item["status"], item["impact_level"],
+                        item["root_cause"], item["implemented_fix"], item["preventative_rule"],
+                        created_dt or datetime.now(), resolved_dt
+                    ))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"Error syncing problems: {e}")
+
 def run_all():
     print("--- SigmaFidelity: Initiating Institutional Persistence Sync ---")
     sync_walkthrough()
     sync_new_sops()
     sync_system_state()
+    sync_problems_to_solve()
     print("--- SUCCESS: All neural cores synchronized. ---")
 
 if __name__ == "__main__":

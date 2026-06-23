@@ -21,14 +21,14 @@
             --qms-border: #e2e8f0;
             --qms-text-main: #0f172a;
             --qms-text-muted: #64748b;
-            --clinical-blue: #eff6ff;
-            --clinical-amber: #fff7ed;
-            --clinical-red: #fef2f2;
+            --business-blue: #eff6ff;
+            --business-amber: #fff7ed;
+            --business-red: #fef2f2;
             --radius-premium: 1.25rem; /* Cap border-radii to exactly 1.25rem (20px) */
             --qms-sidebar-width: 320px;
         }
 
-        body.qms-clinical-shell {
+        body.qms-business-shell {
             background-color: var(--qms-bg);
             background-image: radial-gradient(#cbd5e1 0.75px, transparent 0.75px);
             background-size: 24px 24px;
@@ -91,9 +91,14 @@
             padding: 4rem 5rem;
             margin-top: 60px;
             display: grid;
-            grid-template-columns: 1fr 280px;
+            grid-template-columns: minmax(0, 1fr) 280px;
             gap: 4rem;
             max-width: 1600px;
+            min-width: 0;
+        }
+
+        .qms-main.no-toc {
+            grid-template-columns: minmax(0, 1fr);
         }
 
         /* 📦 ELEVATED DOCUMENT CARDS (Option A - De-bunching) */
@@ -124,7 +129,7 @@
         }
         .sop-nav-id {
             font-weight: 700;
-            color: #60a5fa !important; /* Soft clinical blue */
+            color: #60a5fa !important; /* Soft business blue */
             display: block;
             font-size: 0.7rem;
             text-transform: uppercase;
@@ -298,7 +303,7 @@
         .sop-card tr:last-child td { border-bottom: none; }
         .sop-card tr:hover { background: #fcfcfc; }
 
-        /* Clinical SOP Footer */
+        /* Business SOP Footer */
         .sop-card-footer {
             margin-top: 6rem;
             padding-top: 2rem;
@@ -317,7 +322,7 @@
         h2 { font-size: 1.75rem; font-weight: 800; color: #0f172a; border-bottom: 2px solid #f1f5f9; padding-bottom: 1rem; margin-top: 5rem; margin-bottom: 2rem; letter-spacing: -0.02em; }
         h3 { font-size: 1.25rem; font-weight: 700; color: #334155; margin-top: 3rem; letter-spacing: -0.01em; }
 
-        /* TOC Clinical Command Card Overhaul (Option A) */
+        /* TOC Business Command Card Overhaul (Option A) */
         .qms-toc-container {
             position: sticky;
             top: 194px;
@@ -418,7 +423,7 @@
             .qms-sidebar, .isc-btn, button, .sandbox-label, #preview-overlay, .top-utility-bar, .main-header, .qms-toc-container {
                 display: none !important;
             }
-            body.qms-clinical-shell {
+            body.qms-business-shell {
                 background: white !important;
                 display: block !important;
             }
@@ -455,7 +460,7 @@
             }
         }
         @media (max-width: 1024px) {
-            body.qms-clinical-shell {
+            body.qms-business-shell {
                 display: block !important;
             }
             .qms-sidebar {
@@ -477,7 +482,7 @@
         }
     </style>
 </head>
-<body class="qms-clinical-shell">
+<body class="qms-business-shell">
     <div style="position: fixed; top: 0; left: 0; width: 100%; z-index: 5000;">
         {% include "components/mega_bar.html" %}
     </div>
@@ -497,6 +502,10 @@
             <a href="/manual" class="qms-nav-link {% if not active_file %}active{% endif %}" id="nav-master-index">
                 <svg class="nav-icon" viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12z"/></svg>
                 Master Manual Index
+            </a>
+            <a href="/session-planner" class="qms-nav-link {% if active_file == 'session_planner.html' %}active{% endif %}" id="nav-session-planner">
+                <svg class="nav-icon" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+                Session Planner
             </a>
             <!-- Dynamic Work Queue & Recent Documents (Option A & B Integration) -->
             <div id="qms-work-queue" style="margin: 0.5rem 0 0.5rem 1.5rem; display: flex; flex-direction: column; gap: 0.5rem; border-left: 1px dashed rgba(255,255,255,0.15); padding-left: 0.75rem;">
@@ -557,14 +566,16 @@
         <div id="qms-sidebar-resizer" class="qms-sidebar-resizer"></div>
     </aside>
 
-    <main class="qms-main">
+    <main class="qms-main{% if hide_toc %} no-toc{% endif %}">
         <div class="js-toc-content">
             {% block content %}{% endblock %}
         </div>
+        {% if not hide_toc %}
         <div class="qms-toc-container">
             <span class="toc-label">Document Structure</span>
             <div class="js-toc"></div>
         </div>
+        {% endif %}
     </main>
 
     <!-- Dependencies -->
@@ -731,6 +742,16 @@
             } else {
                 recentContainer.style.display = 'none';
                 recentListDiv.innerHTML = '';
+            }
+
+            // Toggle parent container visibility to prevent empty dashed borders/spacing
+            const workQueueDiv = document.getElementById('qms-work-queue');
+            if (workQueueDiv) {
+                if (pinnedList.length === 0 && filteredRecent.length === 0) {
+                    workQueueDiv.style.display = 'none';
+                } else {
+                    workQueueDiv.style.display = 'flex';
+                }
             }
         };
         

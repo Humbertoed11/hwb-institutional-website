@@ -28,6 +28,7 @@ app = Flask(__name__,
             template_folder=os.path.join(BASE_DIR, 'templates'))
 Compress(app)
 app.config.from_object(sys_config)
+app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(minutes=31)
 
 # --- SigmaFidelity™ Institutional JSON Encoder ---
 class InstitutionalJSONEncoder(json.JSONEncoder):
@@ -109,6 +110,7 @@ class User(UserMixin):
 
 @login_manager.user_loader
 def load_user(user_id):
+    conn = None
     try:
         # Use a short timeout for the user loader to prevent page hangs
         conn = get_db(app.config['DATABASE_URL'])
@@ -117,9 +119,11 @@ def load_user(user_id):
             u = cur.fetchone()
             if u:
                 return User(u['id'], u['username'], u['role'])
-        conn.close()
     except Exception as e:
         print(f"[GUARD] load_user failed: {e}", flush=True)
+    finally:
+        if conn:
+            conn.close()
     return None
 
 @app.errorhandler(500)
@@ -410,6 +414,8 @@ def login():
             conn.close()
         
         if user and check_password_hash(user['password_hash'], p):
+            from flask import session
+            session.permanent = True
             login_user(User(user['id'], user['username'], user['role']))
             return redirect(url_for('admin_operations'))
         flash('Invalid credentials.')
@@ -418,6 +424,13 @@ def login():
 @app.route('/logout', endpoint='logout')
 @login_required
 def logout(): logout_user(); return redirect(url_for('index'))
+
+@app.route('/heartbeat', endpoint='heartbeat')
+@login_required
+def heartbeat():
+    from flask import session
+    session.modified = True
+    return jsonify({"status": "healthy"}), 200
 
 @app.route('/', endpoint='index')
 def index(): return render_template('HWB-WEB Index.html')
@@ -432,15 +445,22 @@ def design_system(): return render_template('institutional_design_system.html')
 @app.route('/manual', endpoint='manual_index')
 def manual_index():
     import json
+    from datetime import datetime
     try:
         with open('qms_index.json', 'r') as f:
             sops = json.load(f)
         sops_by_dept = {}
+        today_date = datetime.now().strftime("%m-%d-%Y")
+        today_sops = []
         for sop in sops:
             dept = sop['dept']
             if dept not in sops_by_dept: sops_by_dept[dept] = []
             sops_by_dept[dept].append(sop)
-        return render_template('qms_manual_index.html', sops_by_dept=sops_by_dept)
+            if sop.get('date') == today_date:
+                today_sops.append(sop)
+        for dept in sops_by_dept:
+            sops_by_dept[dept].sort(key=lambda x: x.get('title', '').lower())
+        return render_template('qms_manual_index.html', sops_by_dept=sops_by_dept, today_sops=today_sops)
     except Exception as e:
         return f"QMS Index Error: {e}"
 
@@ -459,6 +479,8 @@ def view_sop(filename):
                 dept = sop['dept']
                 if dept not in sops_by_dept: sops_by_dept[dept] = []
                 sops_by_dept[dept].append(sop)
+            for dept in sops_by_dept:
+                sops_by_dept[dept].sort(key=lambda x: x.get('title', '').lower())
         except Exception:
             pass
         if response.status_code == 200:
@@ -517,15 +539,39 @@ def get_quote():
             if need == 3: multiplier = 2.5
             annual_value = (sqf * 0.12) * multiplier * 12
             
+            # Bot and Spam Honey-Pot Validation
+            company = data.get('company', '')
+            name = data.get('name', '')
+            email = data.get('email', '')
+            phone = data.get('phone', '')
+            
+            is_spam = False
+            for text in [company, name]:
+                if not text:
+                    continue
+                # Block links, urls, or domain suffixes
+                if any(x in text for x in ["http://", "https://", "graph.org", ".org/", ".net/", ".com/"]):
+                    is_spam = True
+                    break
+                # Block known financial transaction spam keywords
+                if any(x in text.lower() for x in ["us dollars", "usdc", "transfer of", "payment", "get the transfer", "balance", "transaction to you"]):
+                    is_spam = True
+                    break
+            
             data_dict = {
-                'name': data.get('name'),
-                'company': data.get('company'),
-                'email': data.get('email'),
-                'phone': data.get('phone'),
+                'name': name,
+                'company': company,
+                'email': email,
+                'phone': phone,
                 'facility_type': facility_type,
                 'sqft': f"{int(sqf):,}" if sqf > 0 else "Pending Verification",
                 'need_label': need_label
             }
+
+            if is_spam:
+                # Silent blackhole: simulate success page without saving or notifying
+                print(f"[SPAM DETECTED] Honey-pot triggered for lead: {company} / {email}")
+                return render_template('quote_success.html', data=data_dict)
 
             consent_val = data.get('tcpa_consent')
             consent_notes = "TCPA Consent: Granted (Explicit checkbox checked during quote submission)." if consent_val else "TCPA Consent: Not Provided."

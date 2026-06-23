@@ -1,0 +1,132 @@
+<!-- 
+    SigmaFidelity™ Institutional SOP: QMS Manual Web Layout Standard
+    Standard: HWB-QMS-7.5
+    Author: George (Systems Architect)
+-->
+<div class="sop-card">
+    <!-- 0.0 DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-7.5</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5.3 (Documented Information Control)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <table>
+            <thead>
+                <tr>
+                    <th><strong>Document Control</strong></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td><strong>Document Title</strong></td><td><strong>Institutional QMS Web Layout SOP</strong></td></tr>
+                <tr><td><strong>Document ID</strong></td><td>HWB-QMS-7.5</td></tr>
+                <tr><td><strong>Version</strong></td><td>3.0.0</td></tr>
+                <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
+                <tr><td><strong>Author</strong></td><td>George (Architect)</td></tr>
+                <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
+                <tr><td><strong>Date</strong></td><td>05-22-2026</td></tr>
+                <tr><td><strong>ISO 9001 Clause</strong></td><td>7.5.3</td></tr>
+            </tbody>
+        </table>
+
+        <hr />
+
+        <h1>Standard Operating Procedure: <strong>Institutional QMS Web Layout</strong></h1>
+
+        <h2>1.0 Purpose</h2>
+        <p>This document defines the layout rules, interactive components, and visual framework of the HWB Institutional Operating Manual. It outlines how dynamic assets are loaded and displayed to ensure users can navigate standard procedures easily.</p>
+
+        <h2>2.0 Scope</h2>
+        <p>Applies to the web interface templates of the QMS system, specifically the base layout, department-based filter views, and sequential document readers.</p>
+
+        <h2>3.0 The Web Layout Architecture</h2>
+        <p>The manual is built using a microservice framework that separates content compilation from page rendering. The layout acts as an interactive shell that displays standard-compliant documents on demand.</p>
+
+        <div class="callout callout-logic">
+            <strong>Technical Logic</strong>
+            <p>Using a dynamic template instead of individual static files reduces memory load and guarantees visual consistency across all 166+ documents in the library.</p>
+        </div>
+
+        <h3>3.1 Architectural Working Parts Flowchart</h3>
+        <div class="mermaid">
+        graph TD
+            A[qms_index.json] -->|Loads Catalog| B[main_app.py Flask Controller]
+            B -->|Passes Context Variables| C[sop_base.html Base Shell]
+            C -->|Runs Keyword Search Filter| D[Collapsible Accordion Sidebar]
+            C -->|Body Content Block| E[qms_manual_index.html Index View]
+            C -->|Body Content Block| F[qms_shell.html Detail View]
+            E -->|Tab Rack Selection| G[High-Density Grid Cards]
+            F -->|Slide-Fade Animation| H[SOP HTML Fragment Content]
+            F -->|Traverses Sidebar Anchors| I[Smart Next / Previous Buttons]
+            F -->|Toggles Pin Event| J[localStorage Active SOW Queue]
+            J -->|Triggers Redraw| C
+        </div>
+
+        <h2>4.0 Detailed Interface Working Parts</h2>
+
+        <h3>4.1 Global Base Shell (sop_base.html)</h3>
+        <ul>
+            <li><strong>Sidebar Catalog:</strong> Groups manual records by department. Built dynamically from <code>qms_index.json</code> using nested loops.</li>
+            <li><strong>Collapsible Department Accordions:</strong> Smooth height-shifting folders controlled by client-side JavaScript. Activating an SOP automatically expands its parent department.</li>
+            <li><strong>Live Keyword Search:</strong> A client-side filter input that scans titles and document IDs. It hides unmatched folders and expands matching results instantly.</li>
+            <li><strong>Active SOW Queue:</strong> A browser-based manual pinning system (Option A). Allows the operator to bookmark up to 10 key SOP files for active work sessions. Stored in <code>localStorage</code>.</li>
+            <li><strong>Recently Viewed Tracker:</strong> An automatic history list (Option B) that displays the last 3 accessed SOPs for rapid backtracking.</li>
+            <li><strong>Visual Blueprint:</strong> Clinical slate palette background (<code>#f8fafc</code>) with a soft grid overlay. Structural card border-radii are capped strictly at <code>1.25rem</code> (20px).</li>
+        </ul>
+
+        <h3>4.2 Enterprise Card Index (qms_manual_index.html)</h3>
+        <ul>
+            <li><strong>Enterprise Tab Rack:</strong> A row of compressed department tab buttons. Selecting a tab filters the grid below instantly.</li>
+            <li><strong>High-Density Info Cards:</strong> Displays the SOP Title, Document ID, Version, and Release Date. Features soft depth shadows and translations on hover.</li>
+            <li><strong>Compliance Status Badges:</strong> Soft pastel pills indicating baseline checks (Muted Green <code>#e6f4ea</code> for <code>UPDATED</code>, Muted Yellow <code>#fef7e0</code> for <code>OUTDATED</code>).</li>
+        </ul>
+
+        <h3>4.3 Sequential Document Shell (qms_shell.html)</h3>
+        <ul>
+            <li><strong>Fragment Inject Zone:</strong> A central content container that renders HTML snippets from the Compliance Engine inside a smooth slide-fade animation (<code>.sigma-view-fade</code>).</li>
+            <li><strong>Smart Navigation System:</strong> Buttons at the bottom that dynamically read the sidebar to find the Next and Previous SOP links. Displays the exact ID and path for sequential reading.</li>
+            <li><strong>Audit Header Control:</strong> Limits heading elements (<code>h1</code>, <code>h2</code>, <code>h3</code>) inside the inject zone to high-density, Semi-Bold limits (capped strictly to <code>1.5rem</code>).</li>
+        </ul>
+
+        <div class="callout callout-caution">
+            <strong>Caution</strong>
+            <p>Do not introduce custom class styles in individual fragments that bypass the design system. All visuals must inherit standard CSS properties directly from the base shell.</p>
+        </div>
+
+        <h2>5.0 Verification (Zero-Defect Checklist)</h2>
+        <ul>
+            <li>Verify that all interactive accordion menus transition smoothly on click.</li>
+            <li>Confirm that the real-time search input correctly filters both SOP IDs and full titles.</li>
+            <li>Check that printing the document excludes the sidebar and navigation bars, producing a clean paper copy.</li>
+        </ul>
+
+        <h2>6.0 Revision History</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Version</th>
+                    <th>Date</th>
+                    <th>Author</th>
+                    <th>Change Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>3.0.0</td>
+                    <td>05-22-2026</td>
+                    <td>George</td>
+                    <td>Initial Release. Codified working parts, dynamic layouts, and sequential navigators under the 2026 Polish Standard.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="sop-card-footer">
+        <span>&copy; 2026 HWB Cleaning Services LLC</span>
+        <span>Controlled Document | HWB-QMS-7.5</span>
+        <span>Page <span class="page-number"></span></span>
+    </div>
+</div>

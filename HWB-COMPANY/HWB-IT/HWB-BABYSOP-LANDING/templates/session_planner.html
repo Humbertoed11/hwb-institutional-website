@@ -1,0 +1,357 @@
+{% extends "sop_base.html" %}
+{% set hide_toc = true %}
+
+{% block title %}Session Planner | HEXGROWTH QMS{% endblock %}
+
+{% block content %}
+<style>
+    .planner-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    @media (max-width: 1024px) {
+        .planner-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .directive-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .directive-item {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 1.25rem;
+    }
+
+    .directive-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+        font-size: 0.7rem;
+        font-weight: 800;
+        color: #7c3aed;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .directive-body {
+        font-size: 0.85rem;
+        color: #1e293b;
+        font-weight: 500;
+    }
+
+    .script-list {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    @media (max-width: 600px) {
+        .script-list {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .script-group {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 1.25rem;
+    }
+
+    .script-group-title {
+        font-size: 0.75rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        color: #2563eb;
+        margin-bottom: 0.75rem;
+        letter-spacing: 0.05em;
+    }
+
+    .script-link-item {
+        display: block;
+        font-size: 0.8rem;
+        color: #334155;
+        text-decoration: none;
+        margin-bottom: 0.4rem;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+
+    .script-link-item:hover {
+        color: #2563eb;
+        padding-left: 0.25rem;
+    }
+
+    .pdf-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .pdf-item {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 1.25rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .pdf-details {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .pdf-name {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #1e293b;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+
+    .pdf-name:hover {
+        color: #2563eb;
+    }
+
+    .pdf-meta {
+        font-size: 0.7rem;
+        color: #64748b;
+        font-weight: 500;
+    }
+
+    .pdf-btn {
+        background: rgba(37, 99, 235, 0.08);
+        border: 1px solid rgba(37, 99, 235, 0.2);
+        color: #2563eb;
+        padding: 0.4rem 0.8rem;
+        border-radius: 6px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+
+    .pdf-btn:hover {
+        background: #2563eb;
+        color: #ffffff;
+    }
+</style>
+
+<div class="sop-card">
+    <!-- 👑 SYSTEM STATUS HEADER -->
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem; margin-bottom: 2.5rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 1.5rem;">
+        <div style="flex: 1; min-width: 280px;">
+            <h1 style="font-size: 2.25rem; font-weight: 900; color: #0f172a; margin: 0 0 0.5rem 0; letter-spacing: -0.03em; line-height: 1.2;">Session Planner</h1>
+            <p style="font-size: 0.95rem; color: #64748b; margin: 0;">Active Handshake and Workspace Audit Portal</p>
+        </div>
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            <span style="font-size: 0.7rem; font-weight: 800; color: #137333; background: #e6f4ea; padding: 0.25rem 0.6rem; border-radius: 12px; text-transform: uppercase; letter-spacing: 0.05em; border: 1px solid #ceead6;">System: Active</span>
+            <span style="font-size: 0.7rem; font-weight: 800; color: #1a73e8; background: #e8f0fe; padding: 0.25rem 0.6rem; border-radius: 12px; text-transform: uppercase; letter-spacing: 0.05em; border: 1px solid #d2e3fc;">Codebase: 46 Scripts</span>
+        </div>
+    </div>
+
+    <!-- 📦 MAIN PLANNERS -->
+    <div class="planner-grid">
+        <!-- CARD 1: ACTIVE DIRECTIVES -->
+        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+            <h2 style="font-size: 1.1rem; font-weight: 800; color: #0f172a; margin-top: 0; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                <span style="width: 4px; height: 16px; background: #7c3aed; display: inline-block; border-radius: 2px;"></span>
+                Active Directives & Session Notes
+            </h2>
+            <div class="directive-list">
+                <div class="directive-item">
+                    <div class="directive-header">
+                        <span>Directive One</span>
+                        <span>Alignment Request</span>
+                    </div>
+                    <div class="directive-body">
+                        The user requested feedback on mapping plain language expressions to standard development terms for precise instruction delivery.
+                    </div>
+                </div>
+                <div class="directive-item">
+                    <div class="directive-header">
+                        <span>Directive Two</span>
+                        <span>Manual Index Creation</span>
+                    </div>
+                    <div class="directive-body">
+                        The user ordered the creation of a vocabulary reference manual database, its listing inside the master index, and its automated integration.
+                    </div>
+                </div>
+                <div class="directive-item">
+                    <div class="directive-header">
+                        <span>Directive Three</span>
+                        <span>Continuous Learning</span>
+                    </div>
+                    <div class="directive-body">
+                        The user commanded the agent to continuously update the vocabulary database with new terms during each subsequent session.
+                    </div>
+                </div>
+                <div class="directive-item">
+                    <div class="directive-header">
+                        <span>Directive Four</span>
+                        <span>Feasibility Comparison Marketing</span>
+                    </div>
+                    <div class="directive-body">
+                        Format the HexGrowth vs. Traditional Law Firm feasibility report comparison and integrate it as a premium marketing section on the landing page.
+                    </div>
+                </div>
+                <div class="directive-item">
+                    <div class="directive-header">
+                        <span>Directive Five</span>
+                        <span>Additional Developer Databases</span>
+                    </div>
+                    <div class="directive-body">
+                        Ingest ecological, utility, and demographic databases, poll them against Alfred B. Hegar and Northlake properties, and compile the technical registry ledgers.
+                    </div>
+                </div>
+                <div class="directive-item">
+                    <div class="directive-header">
+                        <span>Directive Six</span>
+                        <span>AI Cost Projections Underwriting</span>
+                    </div>
+                    <div class="directive-body">
+                        Utilize the GIS Cost Underwriter subagent to compile the revised partnership cost projection report, contrasting AI agents vs. junior GIS engineering labor across 20 high-growth target cities in Texas.
+                    </div>
+                </div>
+                <div class="directive-item">
+                    <div class="directive-header">
+                        <span>Directive Seven</span>
+                        <span>Competitor Insurance Investigation</span>
+                    </div>
+                    <div class="directive-body">
+                        COMPLETED: Public records audit executed, competitor RFP insurance limits indexed in SQL table <code>HEX_CompetitorInsurance</code>, and target lines ($2.0M E&O / $2.0M Cyber) integrated into the Investor Report (seed pitch).
+                    </div>
+                </div>
+                <div class="directive-item">
+                    <div class="directive-header">
+                        <span>Directive Eight</span>
+                        <span>Municipal RFP Strategy & Automation</span>
+                    </div>
+                    <div class="directive-body">
+                        Target municipal pilot contracts below the $100k bidding threshold to bypass RFPs, and construct the QMS Automated RFP Compiler SOP to accelerate formal bid responses.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CARD 2: VOCABULARY REFERENCE -->
+        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+            <h2 style="font-size: 1.1rem; font-weight: 800; color: #0f172a; margin-top: 0; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                <span style="width: 4px; height: 16px; background: #2563eb; display: inline-block; border-radius: 2px;"></span>
+                Translation Glossary Highlights
+            </h2>
+            <table class="sigma-data-grid" style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                <thead>
+                    <tr>
+                        <th>Plain Language Request</th>
+                        <th>Standard Technical Term</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Make a screen to show maps</td>
+                        <td><b>Geospatial HUD Viewport</b></td>
+                    </tr>
+                    <tr>
+                        <td>Save this information forever</td>
+                        <td><b>Persist Records to DB Cores</b></td>
+                    </tr>
+                    <tr>
+                        <td>Run checks to see if app is broken</td>
+                        <td><b>Execute Pre Flight Smoke Test</b></td>
+                    </tr>
+                    <tr>
+                        <td>Make it run faster</td>
+                        <td><b>Optimize Database Caching</b></td>
+                    </tr>
+                    <tr>
+                        <td>Do it by itself in background</td>
+                        <td><b>Automate via Worker Daemon</b></td>
+                    </tr>
+                </tbody>
+            </table>
+            <p style="font-size: 0.75rem; color: #64748b; margin-top: 1.5rem; font-weight: 500;">
+                Refer to the complete glossary manual in <a href="file:///home/humbertoed/hexgrowth/HEX-QMS/operations/HEX-SOP-3.2-vocabulary-database.html" style="color: #2563eb; text-decoration: none; font-weight: 600;">HEX-SOP-3.2</a> for all mappings.
+            </p>
+        </div>
+    </div>
+
+    <div class="planner-grid">
+        <!-- CARD 3: CODEBASE MAP -->
+        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+            <h2 style="font-size: 1.1rem; font-weight: 800; color: #0f172a; margin-top: 0; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                <span style="width: 4px; height: 16px; background: #2563eb; display: inline-block; border-radius: 2px;"></span>
+                Codebase Infrastructure Map
+            </h2>
+            <div class="script-list">
+                <div class="script-group">
+                    <div class="script-group-title">Web & System Core</div>
+                    <a href="file:///home/humbertoed/hexgrowth/app/main_app.py" class="script-link-item">main_app.py</a>
+                    <a href="file:///home/humbertoed/hexgrowth/update_hud.py" class="script-link-item">update_hud.py</a>
+                </div>
+                <div class="script-group">
+                    <div class="script-group-title">Data Ingestion Miners</div>
+                    <a href="file:///home/humbertoed/hexgrowth/scripts/HEX-MINER-L11-TXDOT.py" class="script-link-item">HEX-MINER-L11-TXDOT.py</a>
+                    <a href="file:///home/humbertoed/hexgrowth/scripts/HEX-PULSE-SCOUT.py" class="script-link-item">HEX-PULSE-SCOUT.py</a>
+                </div>
+                <div class="script-group">
+                    <div class="script-group-title">Inference & Sync</div>
+                    <a href="file:///home/humbertoed/hexgrowth/scripts/HEX-DAILY-INFERENCE-SYNC.py" class="script-link-item">HEX-DAILY-INFERENCE-SYNC.py</a>
+                    <a href="file:///home/humbertoed/hexgrowth/scripts/HEX-PERSISTENCE-PROTOCOL.py" class="script-link-item">HEX-PERSISTENCE-PROTOCOL.py</a>
+                </div>
+                <div class="script-group">
+                    <div class="script-group-title">Safety & Verification</div>
+                    <a href="file:///home/humbertoed/hexgrowth/scripts/HEX-PRE-FLIGHT-AUDIT.py" class="script-link-item">HEX-PRE-FLIGHT-AUDIT.py</a>
+                    <a href="file:///home/humbertoed/hexgrowth/scripts/HEX-ROUTE-SMOKE-TEST.py" class="script-link-item">HEX-ROUTE-SMOKE-TEST.py</a>
+                </div>
+            </div>
+            <p style="font-size: 0.75rem; color: #64748b; margin-top: 1.5rem; font-weight: 500;">
+                Refer to the codebase standards manual in <a href="file:///home/humbertoed/hexgrowth/HEX-QMS/operations/HEX-SOP-3.1-python-standards.html" style="color: #2563eb; text-decoration: none; font-weight: 600;">HEX-SOP-3.1</a> for all forty six scripts.
+            </p>
+        </div>
+
+        <!-- CARD 4: RESEARCH PDF LIBRARY -->
+        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+            <h2 style="font-size: 1.1rem; font-weight: 800; color: #0f172a; margin-top: 0; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                <span style="width: 4px; height: 16px; background: #2563eb; display: inline-block; border-radius: 2px;"></span>
+                Research Library & PDFs
+            </h2>
+            <div class="pdf-list">
+                <div class="pdf-item">
+                    <div class="pdf-details">
+                        <a href="file:///home/humbertoed/hexgrowth/Research-docs/BHCIP_CCEP_Development-Process-Overview_508.pdf" class="pdf-name">BHCIP_CCEP_Development-Process-Overview_508.pdf</a>
+                        <span class="pdf-meta">Added: June 05, 2026 | Size: 480 KB</span>
+                    </div>
+                    <a href="file:///home/humbertoed/hexgrowth/Research-docs/BHCIP_CCEP_Development-Process-Overview_508.pdf" class="pdf-btn">Open File</a>
+                </div>
+                <div class="pdf-item">
+                    <div class="pdf-details">
+                        <a href="file:///home/humbertoed/hexgrowth/Research-docs/JBREC%20-%20Brookfield%20Baybrook%20Market%20Report%207.13.23.pdf" class="pdf-name">JBREC - Brookfield Baybrook Market Report 7.13.23.pdf</a>
+                        <span class="pdf-meta">Added: June 03, 2026 | Size: 22.2 MB</span>
+                    </div>
+                    <a href="file:///home/humbertoed/hexgrowth/Research-docs/JBREC%20-%20Brookfield%20Baybrook%20Market%20Report%207.13.23.pdf" class="pdf-btn">Open File</a>
+                </div>
+                <div class="pdf-item">
+                    <div class="pdf-details">
+                        <a href="file:///home/humbertoed/hexgrowth/Research-docs/hexgrowth-master.pdf" class="pdf-name">hexgrowth-master.pdf</a>
+                        <span class="pdf-meta">Added: June 03, 2026 | Size: 369 KB</span>
+                    </div>
+                    <a href="file:///home/humbertoed/hexgrowth/Research-docs/hexgrowth-master.pdf" class="pdf-btn">Open File</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

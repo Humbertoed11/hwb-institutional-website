@@ -362,6 +362,30 @@
             font-family: 'JetBrains Mono', monospace;
             font-weight: 600;
         }
+        
+        .sigma-data-grid {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            text-align: left;
+        }
+        .sigma-data-grid th {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--hex-text-muted);
+            letter-spacing: 1px;
+            padding: 8px 12px;
+            border-bottom: 2px solid var(--hex-border);
+        }
+        .sigma-data-grid td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--hex-border);
+            color: #e2e8f0;
+        }
+        .sigma-data-grid tr:hover td {
+            background: rgba(255,255,255,0.02);
+        }
     </style>
 </head>
 <body>
@@ -389,14 +413,14 @@
                         <div class="kanban-card" onclick="flyToSite('victory')">
                             <div class="kanban-card-title">Victory Park Relocation</div>
                             <div class="kanban-card-meta">
-                                <span>Lobe: Pulse (L6)</span>
+                                <span>Category: Market Sentiment (L6)</span>
                                 <span style="color: var(--hex-crimson);">Score: 2.4</span>
                             </div>
                         </div>
                         <div class="kanban-card" onclick="flyToSite('vernon')">
                             <div class="kanban-card-title">Vernon Extraction Hub</div>
                             <div class="kanban-card-meta">
-                                <span>Lobe: Extraction (L4)</span>
+                                <span>Category: Environmental/Geotech (L4)</span>
                                 <span style="color: var(--hex-cyan);">Score: 8.2</span>
                             </div>
                         </div>
@@ -408,14 +432,14 @@
                         <div class="kanban-card" onclick="flyToSite('valley')">
                             <div class="kanban-card-title">Valley View Arena Site</div>
                             <div class="kanban-card-meta">
-                                <span>Lobe: Infrastructure</span>
+                                <span>Category: Utilities/Infrastructure (L3)</span>
                                 <span style="color: var(--hex-emerald);">Score: 8.8</span>
                             </div>
                         </div>
                         <div class="kanban-card" onclick="flyToSite('bowie')">
                             <div class="kanban-card-title">Bowie Logistics Junction</div>
                             <div class="kanban-card-meta">
-                                <span>Lobe: Logistics (L2)</span>
+                                <span>Category: Traffic/Accessibility (L2)</span>
                                 <span style="color: var(--hex-emerald);">Score: 8.4</span>
                             </div>
                         </div>
@@ -427,14 +451,14 @@
                         <div class="kanban-card" onclick="flyToSite('decatur')">
                             <div class="kanban-card-title">Decatur Data Center</div>
                             <div class="kanban-card-meta">
-                                <span>Lobe: Utility (L3)</span>
+                                <span>Category: Utilities/Infrastructure (L3)</span>
                                 <span style="color: var(--hex-cyan);">Score: 7.9</span>
                             </div>
                         </div>
                         <div class="kanban-card" onclick="flyToSite('wichita')">
                             <div class="kanban-card-title">Wichita Falls Wind Farm</div>
                             <div class="kanban-card-meta">
-                                <span>Lobe: Power (L3)</span>
+                                <span>Category: Utilities/Infrastructure (L3)</span>
                                 <span style="color: var(--hex-emerald);">Score: 8.5</span>
                             </div>
                         </div>
@@ -447,7 +471,7 @@
         <div id="tab-comparison" class="tab-content">
             <div class="tactical-card hud-draggable" style="padding: 10px;">
                 <div class="card-header" style="margin-bottom: 8px;">Deal Spreadsheet</div>
-                <table style="width: 100%; border-collapse: collapse; font-size: 10px; font-family: 'JetBrains Mono', monospace; text-align: left;">
+                <table class="sigma-data-grid" style="width: 100%; border-collapse: collapse; font-size: 10px; font-family: 'JetBrains Mono', monospace; text-align: left;">
                     <thead>
                         <tr style="border-bottom: 1px solid var(--hex-border); color: var(--hex-cyan);">
                             <th style="padding: 4px 0;">Deal Name</th>
@@ -501,7 +525,7 @@
         <!-- Proforma Tab Content -->
         <div id="tab-proforma" class="tab-content">
             <div class="tactical-card hud-draggable">
-                <div class="card-header">Lobe Calculator</div>
+                <div class="card-header">Underwriting Calculator</div>
                 <div style="display: flex; flex-direction: column; gap: 12px;">
                     <div class="pf-input-group">
                         <div class="pf-label">Land Cost ($)</div>
@@ -561,7 +585,7 @@
                     <button class="command-chip" onclick="triggerCommand('/go decatur')" title="Fly to Decatur data center growth corridor">📍 /go decatur (Decatur Artery)</button>
                     <button class="command-chip" onclick="triggerCommand('/go valley')" title="Fly to Valley View Arena development site">📍 /go valley (Valley View Site)</button>
                     <button class="command-chip" onclick="triggerCommand('/go 32.789 -96.807')" title="Fly to custom lat/lng coordinates and create hexagon">🎯 /go 32.789 -96.807 (Custom site)</button>
-                    <button class="command-chip" onclick="triggerCommand('/lobe 6')" title="Switch blend weights to prioritize L6 Pulse (Sentiment) Lobe">🧠 /lobe 6 (Prioritize L6 Sentiment)</button>
+                    <button class="command-chip" onclick="triggerCommand('/lobe 6')" title="Switch blend weights to prioritize L6 Market Sentiment">🧠 /lobe 6 (Prioritize L6 Sentiment)</button>
                     <button class="command-chip" onclick="triggerCommand('/search Moonshot')" title="Search developer holdings profiles index">🔍 /search Moonshot (Find Competitor)</button>
                     <button class="command-chip" onclick="triggerCommand('/scout')" title="Ping municipal scraping servers and verify connection status">📡 /scout (Municipal API Ping)</button>
                 </div>
@@ -606,34 +630,34 @@
                 </div>
             </div>
 
-            <!-- Lobe Weights -->
+            <!-- Risk Weights -->
             <div class="tactical-card hud-draggable">
-                <div class="card-header">Lobe Feasibility Blending</div>
+                <div class="card-header">Feasibility Index Blending</div>
                 <div style="display: flex; flex-direction: column; gap: 10px;">
                     <div>
                         <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                            <span class="label-val">L1 City (Zoning)</span>
+                            <span class="label-val">L1 Zoning & Entitlements</span>
                             <span class="label-val" id="val-w1">15%</span>
                         </div>
                         <input type="range" class="alpha-slider" id="weight-w1" min="0" max="100" value="15" oninput="updateWeights('w1')">
                     </div>
                     <div>
                         <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                            <span class="label-val">L2 Roads (TxDOT)</span>
+                            <span class="label-val">L2 Access, Egress & Traffic</span>
                             <span class="label-val" id="val-w2">15%</span>
                         </div>
                         <input type="range" class="alpha-slider" id="weight-w2" min="0" max="100" value="15" oninput="updateWeights('w2')">
                     </div>
                     <div>
                         <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                            <span class="label-val">L3 Grid (Power)</span>
+                            <span class="label-val">L3 Utilities & Infrastructure</span>
                             <span class="label-val" id="val-w3">20%</span>
                         </div>
                         <input type="range" class="alpha-slider" id="weight-w3" min="0" max="100" value="20" oninput="updateWeights('w3')">
                     </div>
                     <div>
                         <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                            <span class="label-val">L6 Sentiment (Pulse)</span>
+                            <span class="label-val">L6 Sentiment & Public Feedback</span>
                             <span class="label-val" id="val-w4">25%</span>
                         </div>
                         <input type="range" class="alpha-slider" id="weight-w4" min="0" max="100" value="25" oninput="updateWeights('w4')">
@@ -646,21 +670,123 @@
                 <div class="card-header">Layers HUD</div>
                 <div class="layer-rack">
                     <div class="layer-item">
-                        <span class="layer-label">L1 City Reinvestments</span>
+                        <span class="layer-label">L1 Zoning & Municipal Entitlements</span>
                         <label class="simple-toggle"><input type="checkbox" id="layer-city" checked onchange="renderLayers()"><span class="slider-round"></span></label>
                     </div>
                     <div class="layer-item">
-                        <span class="layer-label">L2 Infrastructure (TxDOT)</span>
+                        <span class="layer-label">L2 Access, Egress & Traffic Capacity</span>
                         <label class="simple-toggle"><input type="checkbox" id="layer-roads" checked onchange="renderLayers()"><span class="slider-round"></span></label>
                     </div>
                     <div class="layer-item">
-                        <span class="layer-label">L3 Utility Substation</span>
+                        <span class="layer-label">L3 Utilities & Infrastructure Capacity</span>
                         <label class="simple-toggle"><input type="checkbox" id="layer-power" checked onchange="renderLayers()"><span class="slider-round"></span></label>
                     </div>
                     <div class="layer-item">
-                        <span class="layer-label">L6 Pulse Decline Opportunities</span>
+                        <span class="layer-label">L4 Environmental & Geotech Due Diligence</span>
+                        <label class="simple-toggle"><input type="checkbox" id="layer-land" checked onchange="renderLayers()"><span class="slider-round"></span></label>
+                    </div>
+                    <div class="layer-item">
+                        <span class="layer-label">L5 Physical Security & Site Hardening</span>
+                        <label class="simple-toggle"><input type="checkbox" id="layer-safety" checked onchange="renderLayers()"><span class="slider-round"></span></label>
+                    </div>
+                    <div class="layer-item">
+                        <span class="layer-label">L6 Market Sentiment & Public Feedback</span>
                         <label class="simple-toggle"><input type="checkbox" id="layer-mood" checked onchange="renderLayers()"><span class="slider-round"></span></label>
                     </div>
+                </div>
+            </div>
+
+            <!-- Spatial Science Controls -->
+            <div class="tactical-card hud-draggable">
+                <div class="card-header">Spatial Science HUD</div>
+                <div class="layer-rack">
+                    <div class="layer-item">
+                        <span class="layer-label">Moran's I Autocorrelation</span>
+                        <label class="simple-toggle"><input type="checkbox" id="layer-moran" onchange="renderLayers()"><span class="slider-round"></span></label>
+                    </div>
+                    <div class="layer-item">
+                        <span class="layer-label">Getis-Ord Gi* Hotspots</span>
+                        <label class="simple-toggle"><input type="checkbox" id="layer-getis" onchange="renderLayers()"><span class="slider-round"></span></label>
+                    </div>
+                    <div class="layer-item">
+                        <span class="layer-label">DBSCAN Spatial Clustering</span>
+                        <label class="simple-toggle"><input type="checkbox" id="layer-dbscan" onchange="renderLayers()"><span class="slider-round"></span></label>
+                    </div>
+                    <div class="layer-item">
+                        <span class="layer-label">KDE Density Surface</span>
+                        <label class="simple-toggle"><input type="checkbox" id="layer-kde" onchange="renderLayers()"><span class="slider-round"></span></label>
+                    </div>
+                    <div class="layer-item">
+                        <span class="layer-label">Voronoi Tessellation</span>
+                        <label class="simple-toggle"><input type="checkbox" id="layer-voronoi" onchange="renderLayers()"><span class="slider-round"></span></label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Predictive Valuation Panel -->
+            <div class="tactical-card hud-draggable">
+                <div class="card-header">Predictive Valuation Engine</div>
+                <div class="layer-rack">
+                    <div class="layer-item" style="flex-direction: column; align-items: flex-start; gap: 4px;">
+                        <span class="layer-label">Select Algorithm Model</span>
+                        <select id="valuation-model-select" style="width: 100%; background: #1f2937; border: 1px solid var(--hex-border); color: white; padding: 4px; font-size: 10px; font-family: 'JetBrains Mono';">
+                            <option value="XGBoost">XGBoost Regressor</option>
+                            <option value="CatBoost">CatBoost Classifier</option>
+                            <option value="LightGBM">LightGBM Forecaster</option>
+                            <option value="RandomForest">Random Forest Ensemble</option>
+                        </select>
+                    </div>
+                    <div class="layer-item" style="flex-direction: column; align-items: flex-start; gap: 4px;">
+                        <span class="layer-label">Select Output Metric</span>
+                        <select id="valuation-output-select" style="width: 100%; background: #1f2937; border: 1px solid var(--hex-border); color: white; padding: 4px; font-size: 10px; font-family: 'JetBrains Mono';">
+                            <option value="current">Current Value ($)</option>
+                            <option value="future">Future Value Projection (5 Yr)</option>
+                            <option value="best_use">Highest & Best Use Case</option>
+                        </select>
+                    </div>
+                    <div style="margin-top: 8px; width: 100%;">
+                        <button class="command-chip" onclick="simulateValuation()" style="background: rgba(6, 182, 212, 0.15); border: 1px solid var(--hex-cyan); color: var(--hex-cyan); text-align: center; height: 28px; font-weight: 800; font-family: 'JetBrains Mono';">RUN MODEL FORECAST</button>
+                    </div>
+                    <div id="valuation-result-panel" style="display: none; margin-top: 8px; padding: 8px; background: rgba(2, 6, 23, 0.8); border: 1px solid var(--hex-border); border-radius: 4px; font-family: 'JetBrains Mono'; font-size: 10px; width: 100%; box-sizing: border-box;">
+                        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 4px; margin-bottom: 4px;">
+                            <span style="color: var(--hex-cyan);">ESTIMATE:</span>
+                            <span id="valuation-estimate-value" style="font-weight: 800; color: white;"></span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: var(--hex-text-muted);">ACCURACY:</span>
+                            <span id="valuation-accuracy-value" style="color: var(--hex-emerald);">94.2% R-Sq</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alarm Beacon Settings -->
+            <div class="tactical-card hud-draggable">
+                <div class="card-header">Alarm Beacon Settings</div>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <div>
+                        <label class="label-val" style="display: block; margin-bottom: 4px;">Alarm Category</label>
+                        <select id="alarm-category-selector" style="width: 100%; background: #020617; border: 1px solid var(--hex-border); border-radius: 4px; color: white; height: 28px; font-family: 'JetBrains Mono'; font-size: 10px; padding: 0 4px;">
+                            <option value="Security Alert">Security Alert</option>
+                            <option value="Traffic Congestion">Traffic Congestion</option>
+                            <option value="Power Grid Failure">Power Grid Failure</option>
+                            <option value="Zoning Delay">Zoning Delay</option>
+                            <option value="Environmental Hazard">Environmental Hazard</option>
+                            <option value="General Alert" selected>General Alert</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="label-val" style="display: block; margin-bottom: 4px;">Alarm Color</label>
+                        <select id="alarm-color-selector" style="width: 100%; background: #020617; border: 1px solid var(--hex-border); border-radius: 4px; color: white; height: 28px; font-family: 'JetBrains Mono'; font-size: 10px; padding: 0 4px;">
+                            <option value="239,68,68" selected>Red (Alert)</option>
+                            <option value="249,115,22">Orange (Warning)</option>
+                            <option value="234,179,8">Yellow (Caution)</option>
+                            <option value="16,185,129">Green (Normal)</option>
+                            <option value="59,130,246">Blue (Info)</option>
+                            <option value="6,182,212">Cyan (Spine)</option>
+                        </select>
+                    </div>
+                    <button class="command-chip" onclick="saveAlarmSettings()" style="background: rgba(6, 182, 212, 0.15); border: 1px solid var(--hex-cyan); color: var(--hex-cyan); text-align: center; height: 28px; font-weight: 800; font-family: 'JetBrains Mono'; margin-top: 4px;">UPDATE ALARM BEACON</button>
                 </div>
             </div>
 
@@ -681,7 +807,7 @@
         <div id="map-view"></div>
         <canvas id="deck-canvas"></canvas>
         <div class="hud-label">
-            HEX DEAL TERMINAL <span id="hud-sector" style="color: var(--hex-cyan);">DALLAS REGION</span>
+            REAL ESTATE DEAL TERMINAL <span id="hud-sector" style="color: var(--hex-cyan);">DALLAS REGION</span>
             <span class="sector-tag">Mode: Keyboard Command Enabled (Press Ctrl+K)</span>
         </div>
         <div id="floating-card">
@@ -690,8 +816,8 @@
                 <span onclick="closeHardPopup()" style="color: var(--hex-text-muted); cursor: pointer; font-size: 10px; font-weight: bold; padding: 2px 5px; border-radius: 2px; background: rgba(255,255,255,0.05); font-family: 'JetBrains Mono', monospace;">[X]</span>
             </div>
             <div id="popup-content" style="font-size: 9px; line-height: 1.4; color: #e2e8f0; margin-bottom: 8px; font-family: 'JetBrains Mono', monospace;"></div>
-            <div id="popup-action" style="display: flex; justify-content: flex-end;">
-                <button onclick="closeHardPopup()" style="height: 24px; padding: 0 10px; background: rgba(6, 182, 212, 0.15); border: 1px solid var(--hex-cyan); border-radius: 3px; color: var(--hex-cyan); font-size: 8px; font-weight: 600; cursor: pointer; font-family: 'JetBrains Mono', monospace;">ACKNOWLEDGE</button>
+            <div style="display: flex; gap: 6px; justify-content: flex-end;">
+                <button onclick="closeHardPopup()" style="height: 28px; padding: 0 12px; background: rgba(6, 182, 212, 0.15); border: 1px solid var(--hex-cyan); border-radius: 3px; color: var(--hex-cyan); font-size: 8px; font-weight: 600; cursor: pointer; font-family: 'JetBrains Mono', monospace;">ACKNOWLEDGE</button>
             </div>
         </div>
 
@@ -741,22 +867,22 @@
                 <div class="legend-section-title">Active Layer Overlays</div>
                 <div class="legend-row legend-interactive-row" id="legend-row-layer-city" onclick="toggleLayerFromLegend('layer-city')" onmouseenter="showLegendDetail('layer-city')" onmouseleave="clearLegendDetail()">
                     <span class="legend-color-indicator" style="background: rgba(139, 92, 246, 0.4); border: 1px solid rgb(139, 92, 246);"></span>
-                    <span>L1 City Rules / TIF Zone</span>
+                    <span>L1 Zoning & Municipal Entitlements</span>
                     <span class="legend-status" id="status-layer-city">[-]</span>
                 </div>
                 <div class="legend-row legend-interactive-row" id="legend-row-layer-roads" onclick="toggleLayerFromLegend('layer-roads')" onmouseenter="showLegendDetail('layer-roads')" onmouseleave="clearLegendDetail()">
                     <span class="legend-color-indicator" style="background: rgba(245, 158, 11, 0.4); border: 1px solid rgb(245, 158, 11);"></span>
-                    <span>L2 Roads (TxDOT Traffic Grid)</span>
+                    <span>L2 Access, Egress & Traffic Capacity</span>
                     <span class="legend-status" id="status-layer-roads">[-]</span>
                 </div>
                 <div class="legend-row legend-interactive-row" id="legend-row-layer-power" onclick="toggleLayerFromLegend('layer-power')" onmouseenter="showLegendDetail('layer-power')" onmouseleave="clearLegendDetail()">
                     <span class="legend-color-indicator" style="height: 2px; width: 12px; background: #06b6d4;"></span>
-                    <span>L3 Power (Substation Lines)</span>
+                    <span>L3 Utilities & Infrastructure Capacity</span>
                     <span class="legend-status" id="status-layer-power">[-]</span>
                 </div>
                 <div class="legend-row legend-interactive-row" id="legend-row-layer-mood" onclick="toggleLayerFromLegend('layer-mood')" onmouseenter="showLegendDetail('layer-mood')" onmouseleave="clearLegendDetail()">
                     <span class="legend-color-indicator" style="background: rgba(239, 68, 68, 0.4); border: 1px solid rgb(239, 68, 68);"></span>
-                    <span>L6 Sentiment (NIMBY Zone)</span>
+                    <span>L6 Market Sentiment & Public Feedback</span>
                     <span class="legend-status" id="status-layer-mood">[-]</span>
                 </div>
             </div>
@@ -769,11 +895,34 @@
 
     <!-- Console Terminal -->
     <div id="george-console">
-        <div class="console-header">
+        <div class="console-header" style="display: flex; justify-content: space-between; align-items: center;">
             <span>[SYS TERMINAL CORE] - GEORGE BYTES INFERENCE LINE</span>
             <span style="color: var(--hex-cyan);">Uptime: 100%</span>
         </div>
-        <div class="terminal-feed" id="console-feed"></div>
+        <div style="display: flex; flex: 1; min-height: 0;">
+            <!-- Left: Terminal Feed Logs -->
+            <div class="terminal-feed" id="console-feed" style="flex: 1; overflow-y: auto;"></div>
+            
+            <!-- Right: Timeline Player Dashboard -->
+            <div id="timeline-player-card" style="width: 420px; background: rgba(0, 0, 0, 0.3); border-left: 1px solid var(--hex-border); padding: 12px; display: flex; flex-direction: column; justify-content: space-between; font-family: 'Inter', sans-serif;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: 800; font-size: 11px; color: var(--hex-cyan);">TIMELINE SIMULATOR</span>
+                    <span id="timeline-day-display" style="font-weight: 800; font-size: 12px; color: var(--hex-violet);">DAY 1 (Month 1)</span>
+                </div>
+                <div style="margin: 8px 0; font-size: 11px; color: var(--hex-text); opacity: 0.85; line-height: 1.4;" id="timeline-event-desc">
+                    Project kickoff. Initial land records and infrastructure parameters loaded.
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                    <button class="sigma-btn-amber" id="btn-play-sim" onclick="toggleSimPlayback()" style="height: 36px; padding: 0 12px; font-size: 10px; font-weight: 600; width: auto; min-width: 60px;">PLAY</button>
+                    <input type="range" id="sim-timeline-slider" min="1" max="120" value="1" oninput="onTimelineSliderInput(this.value)" style="flex: 1; accent-color: var(--hex-violet); height: 4px; cursor: pointer;">
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="font-size: 9px; opacity: 0.6;">Day 1</span>
+                    <button class="sigma-btn-amber" id="btn-compile-report" onclick="compileFinalReport()" disabled style="height: 36px; padding: 0 12px; font-size: 10px; font-weight: 600; margin: 0; background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3); color: #10b981; width: auto;">COMPILE REPORT</button>
+                    <span style="font-size: 9px; opacity: 0.6;" id="timeline-max-day-label">Day 120</span>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -796,11 +945,812 @@
         {% set ns.active_proj = global_projects[0] %}
     {% endif %}
     let activeProjectCoords = {
+        id: {{ ns.active_proj.id if ns.active_proj else 1 }},
         name: "{{ ns.active_proj.name if ns.active_proj else 'DALLAS CORRIDOR AUDIT' }}",
         longitude: {{ ns.active_proj.longitude if ns.active_proj else -96.8088 }},
         latitude: {{ ns.active_proj.latitude if ns.active_proj else 32.7876 }},
         zoom: {{ ns.active_proj.zoom if ns.active_proj else 15 }}
     };
+
+    // Chronological Timeline Data Structure (4-Month Feasibility Study)
+    const successTimeline = [
+        {
+            day: 1,
+            title: "Day 1: Project Kickoff",
+            log: "[TIMELINE] Day 1: Commenced site feasibility analysis. Base geographic parameters loaded.",
+            scores: { L2: 8.5, L4: 7.5, composite: 0.0 },
+            visibleLobes: []
+        },
+        {
+            day: 15,
+            title: "Day 15: Public Backlash",
+            log: "[TIMELINE] Day 15: L6 (Market Sentiment) detects high neighborhood complaints. Local protest organized. NIMBY risk active.",
+            scores: { L2: 8.5, L4: 7.5, L6: 3.5, composite: 7.2 },
+            visibleLobes: ['L2', 'L4', 'L6']
+        },
+        {
+            day: 30,
+            title: "Day 30: Zoning Delay",
+            log: "[TIMELINE] Day 30: L1 (Zoning & Entitlements) flags zoning review delay. City council postpones hearing due to public protests.",
+            scores: { L1: 4.2, L2: 8.5, L4: 7.5, L6: 3.0, composite: 6.5 },
+            visibleLobes: ['L1', 'L2', 'L4', 'L6']
+        },
+        {
+            day: 60,
+            title: "Day 60: Utility Congestion",
+            log: "[TIMELINE] Day 60: L3 (Utilities & Infrastructure) flags local grid capacity lag. Substation upgrades required.",
+            scores: { L1: 4.2, L2: 8.5, L3: 5.0, L4: 7.5, L6: 3.0, composite: 6.0 },
+            visibleLobes: ['L1', 'L2', 'L3', 'L4', 'L6']
+        },
+        {
+            day: 90,
+            title: "Day 90: Security Approval",
+            log: "[TIMELINE] Day 90: L5 (Physical Security & Site Hardening) completes physical threat hardening. Site security design approved.",
+            scores: { L1: 4.2, L2: 8.5, L3: 5.0, L4: 7.5, L5: 9.5, L6: 4.5, composite: 6.5 },
+            visibleLobes: ['L1', 'L2', 'L3', 'L4', 'L5', 'L6']
+        },
+        {
+            day: 120,
+            title: "Day 120: Resolution & TIRZ Grant",
+            log: "[TIMELINE] Day 120: L1 (Zoning & Entitlements) announces TIRZ grant funding approval. Neighborhood disputes settled. Feasibility score restored.",
+            scores: { L1: 9.2, L2: 8.5, L3: 9.0, L4: 7.5, L5: 9.5, L6: 8.0, composite: 8.8 },
+            visibleLobes: ['L1', 'L2', 'L3', 'L4', 'L5', 'L6']
+        }
+    ];
+
+    const lawsuitTimeline = [
+        {
+            day: 1,
+            title: "Day 1: Project Kickoff",
+            log: "[TIMELINE] Day 1: Commenced site feasibility analysis. Base geographic parameters loaded.",
+            scores: { L2: 8.5, L4: 7.5, composite: 0.0 },
+            visibleLobes: []
+        },
+        {
+            day: 15,
+            title: "Day 15: Environmental Scoping",
+            log: "[TIMELINE] Day 15: L4 (Environmental & Geotech) flags wetlands buffer and environmental constraints.",
+            scores: { L2: 8.5, L4: 6.8, L6: 7.5, composite: 7.0 },
+            visibleLobes: ['L2', 'L4', 'L6']
+        },
+        {
+            day: 30,
+            title: "Day 30: Public Scoping Opposition",
+            log: "[TIMELINE] Day 30: Environmental coalition threatens litigation over habitat buffers. L6 drops.",
+            scores: { L1: 7.2, L2: 8.5, L4: 5.5, L6: 4.8, composite: 5.8 },
+            visibleLobes: ['L1', 'L2', 'L4', 'L6']
+        },
+        {
+            day: 60,
+            title: "Day 60: Federal Injunction Filed",
+            log: "[FATAL] Day 60: Lawsuit filed under Clean Water Act. Project halted by federal court order.",
+            scores: { L1: 4.2, L2: 8.5, L3: 5.0, L4: 2.2, L6: 3.0, composite: 2.5 },
+            visibleLobes: ['L1', 'L2', 'L3', 'L4', 'L6']
+        }
+    ];
+
+    const failureTimeline = [
+        {
+            day: 1,
+            title: "Day 1: Project Kickoff",
+            log: "[TIMELINE] Day 1: Commenced site feasibility analysis. Base geographic parameters loaded.",
+            scores: { L2: 8.5, L4: 7.5, composite: 0.0 },
+            visibleLobes: []
+        },
+        {
+            day: 15,
+            title: "Day 15: Public Backlash",
+            log: "[TIMELINE] Day 15: Intense neighborhood opposition active. Petition gathers 1,500 signatures.",
+            scores: { L2: 8.5, L4: 7.5, L6: 4.2, composite: 6.8 },
+            visibleLobes: ['L2', 'L4', 'L6']
+        },
+        {
+            day: 30,
+            title: "Day 30: Hearing Postponed",
+            log: "[TIMELINE] Day 30: City council postpones zoning variance hearing due to public outcries.",
+            scores: { L1: 4.0, L2: 8.5, L4: 7.5, L6: 3.5, composite: 5.5 },
+            visibleLobes: ['L1', 'L2', 'L4', 'L6']
+        },
+        {
+            day: 60,
+            title: "Day 60: Utility Bottleneck",
+            log: "[TIMELINE] Day 60: L3 (Utilities & Infrastructure) flags substation capacity overload. Hookup delayed 18 months.",
+            scores: { L1: 4.0, L2: 8.5, L3: 4.2, L4: 7.5, L6: 3.5, composite: 4.8 },
+            visibleLobes: ['L1', 'L2', 'L3', 'L4', 'L6']
+        },
+        {
+            day: 90,
+            title: "Day 90: Budget Overflow",
+            log: "[TIMELINE] Day 90: L5 (Physical Security & Site Hardening) flags high facility hardening and security costs.",
+            scores: { L1: 4.0, L2: 8.5, L3: 4.2, L4: 7.5, L5: 5.0, L6: 3.5, composite: 4.5 },
+            visibleLobes: ['L1', 'L2', 'L3', 'L4', 'L5', 'L6']
+        },
+        {
+            day: 120,
+            title: "Day 120: Council Zoning Veto",
+            log: "[FATAL] Day 120: City Council votes 11-4 to veto zoning variance. Feasibility Study Rejected.",
+            scores: { L1: 2.2, L2: 8.5, L3: 4.2, L4: 7.5, L5: 5.0, L6: 2.5, composite: 2.2 },
+            visibleLobes: ['L1', 'L2', 'L3', 'L4', 'L5', 'L6']
+        }
+    ];
+
+    const baybrookTimeline = [
+        {
+            day: 1,
+            title: "Day 1: Project Kickoff",
+            log: "[TIMELINE] Day 1: Commenced site feasibility analysis for 1,066-acre Baybrook/Midline MPC. Target: 2,800 SF homes.",
+            scores: { L1: 7.0, L2: 8.0, L3: 5.0, L4: 6.5, L5: 5.0, L6: 5.0, composite: 5.5 },
+            visibleLobes: ['L1', 'L4']
+        },
+        {
+            day: 15,
+            title: "Day 15: Tax Rate Desync",
+            log: "[TIMELINE] Day 15: L1 (Zoning & Entitlements) flags Harris County (2.82%) vs Galveston County (3.61%) tax rate desync. JBREC advises discounting Galveston tract pricing.",
+            scores: { L1: 5.5, L2: 8.0, L3: 5.0, L4: 6.5, L5: 5.0, L6: 5.5, composite: 6.0 },
+            visibleLobes: ['L1', 'L4', 'L6']
+        },
+        {
+            day: 30,
+            title: "Day 30: Clear Creek Scoping",
+            log: "[TIMELINE] Day 30: L4 (Environmental & Geotech) coordinates Clear Creek watershed drainage plans near Challenger 7 Park. Section 404 permit submitted.",
+            scores: { L1: 5.5, L2: 8.0, L3: 5.0, L4: 7.2, L5: 5.0, L6: 6.0, composite: 6.5 },
+            visibleLobes: ['L1', 'L2', 'L4', 'L6']
+        },
+        {
+            day: 60,
+            title: "Day 60: MUD Easements",
+            log: "[TIMELINE] Day 60: L3 (Utilities & Infrastructure) clears MUD creation and wastewater utility hookup permits for Phase 1.",
+            scores: { L1: 7.0, L2: 8.0, L3: 8.5, L4: 7.2, L5: 5.0, L6: 6.0, composite: 7.0 },
+            visibleLobes: ['L1', 'L2', 'L3', 'L4', 'L6']
+        },
+        {
+            day: 90,
+            title: "Day 90: Traffic & Accessibility",
+            log: "[TIMELINE] Day 90: L2 (Access, Egress & Traffic) approves main entry layout along Bay Area Boulevard. Section 508 ADA trail compliance verified.",
+            scores: { L1: 7.0, L2: 9.0, L3: 8.5, L4: 7.2, L5: 8.5, L6: 7.0, composite: 7.8 },
+            visibleLobes: ['L1', 'L2', 'L3', 'L4', 'L5', 'L6']
+        },
+        {
+            day: 120,
+            title: "Day 120: Phase 1 Final Permits",
+            log: "[TIMELINE] Day 120: Model home permits and municipal plat approvals finalized. Grand Opening scheduled for May 2026. Feasibility Approved.",
+            scores: { L1: 9.2, L2: 9.0, L3: 9.0, L4: 8.5, L5: 9.0, L6: 9.0, composite: 8.9 },
+            visibleLobes: ['L1', 'L2', 'L3', 'L4', 'L5', 'L6']
+        }
+    ];
+
+    let simulationTimeline = successTimeline;
+    
+    function selectTimelineForProject() {
+        const nameLower = activeProjectCoords.name.toLowerCase();
+        const id = activeProjectCoords.id || 1;
+        
+        if (nameLower.includes("baybrook") || nameLower.includes("midline")) {
+            simulationTimeline = baybrookTimeline;
+            logToConsole(`[SYS] Loaded BAYBROOK/MIDLINE MPC Opportunity Analysis simulation path for ${activeProjectCoords.name}.`);
+        } else if (nameLower.includes("hegar")) {
+            simulationTimeline = successTimeline;
+            logToConsole(`[SYS] Loaded SUCCESS RESTORATION simulation path for ${activeProjectCoords.name}.`);
+        } else if (nameLower.includes("decatur") || nameLower.includes("wise") || nameLower.includes("la salle") || (id % 3 === 1)) {
+            simulationTimeline = lawsuitTimeline;
+            logToConsole(`[SYS] Loaded LAWSUIT BLOCKAGE simulation path for ${activeProjectCoords.name}.`);
+        } else if (nameLower.includes("valley view") || nameLower.includes("wichita") || nameLower.includes("arena") || (id % 3 === 2)) {
+            simulationTimeline = failureTimeline;
+            logToConsole(`[SYS] Loaded ZONING VETO FAILURE simulation path for ${activeProjectCoords.name}.`);
+        } else {
+            simulationTimeline = successTimeline;
+            logToConsole(`[SYS] Loaded SUCCESS RESTORATION simulation path for ${activeProjectCoords.name}.`);
+        }
+    }
+
+    selectTimelineForProject();
+
+    let currentTimelineIndex = 0;
+    let currentTimelineStep = simulationTimeline[0];
+    let isSimPlaying = false;
+    let simInterval = null;
+
+    function getTimelineStepForDay(day) {
+        let activeStep = simulationTimeline[0];
+        for (let i = 0; i < simulationTimeline.length; i++) {
+            if (simulationTimeline[i].day <= day) {
+                activeStep = simulationTimeline[i];
+            }
+        }
+        return activeStep;
+    }
+
+    function onTimelineSliderInput(dayVal) {
+        const day = parseInt(dayVal);
+        const display = document.getElementById('timeline-day-display');
+        if (display) {
+            display.textContent = `DAY ${day} (Month ${Math.floor((day-1)/30) + 1})`;
+        }
+        
+        const step = getTimelineStepForDay(day);
+        if (step !== currentTimelineStep) {
+            currentTimelineStep = step;
+            const desc = document.getElementById('timeline-event-desc');
+            if (desc) {
+                desc.textContent = step.title + ": " + step.log.replace("[TIMELINE] ", "").replace("[FATAL] ", "");
+            }
+            logToConsole(step.log);
+            
+            // Check if final day has been reached to enable compile button
+            const maxDay = simulationTimeline[simulationTimeline.length - 1].day;
+            const compileBtn = document.getElementById('btn-compile-report');
+            if (compileBtn) {
+                if (simulationTimeline === lawsuitTimeline && day === 60) {
+                    compileBtn.disabled = false;
+                    compileBtn.textContent = "COMPILE LITIGATION REPORT";
+                    compileBtn.style.background = '#ef4444';
+                    compileBtn.style.color = '#fff';
+                    compileBtn.style.border = 'none';
+                    logToConsole("[SYS SUCCESS] Environmental lawsuit compiled. Feasibility study suspended. Compile Litigation Report active.");
+                } else if (simulationTimeline === failureTimeline && day === 120) {
+                    compileBtn.disabled = false;
+                    compileBtn.textContent = "COMPILE REJECTION REPORT";
+                    compileBtn.style.background = '#ef4444';
+                    compileBtn.style.color = '#fff';
+                    compileBtn.style.border = 'none';
+                    logToConsole("[SYS SUCCESS] City Council zoning veto compiled. Compile Feasibility Rejection Report active.");
+                } else if (simulationTimeline === baybrookTimeline && day === 120) {
+                    compileBtn.disabled = false;
+                    compileBtn.textContent = "COMPILE BAYBROOK MPC REPORT";
+                    compileBtn.style.background = '#06b6d4';
+                    compileBtn.style.color = '#fff';
+                    compileBtn.style.border = 'none';
+                    logToConsole("[SYS SUCCESS] JBREC Opportunity Analysis Complete. Baybrook/Midline MPC Report Unlocked.");
+                } else if (day === 120) {
+                    compileBtn.disabled = false;
+                    compileBtn.textContent = "COMPILE FINAL FEASIBILITY REPORT";
+                    compileBtn.style.background = '#10b981';
+                    compileBtn.style.color = '#fff';
+                    compileBtn.style.border = 'none';
+                    logToConsole("[SYS SUCCESS] Feasibility Study Complete. 6/6 Real Estate Assessments Resolved. Final Feasibility Report Unlocked.");
+                } else {
+                    compileBtn.disabled = true;
+                    compileBtn.textContent = "COMPILE REPORT";
+                    compileBtn.style.background = 'rgba(16, 185, 129, 0.1)';
+                    compileBtn.style.color = '#10b981';
+                    compileBtn.style.border = '1px solid rgba(16, 185, 129, 0.3)';
+                }
+            }
+            
+            // Trigger Deck.gl re-render
+            renderLayers();
+        }
+    }
+
+    function toggleSimPlayback() {
+        const btn = document.getElementById('btn-play-sim');
+        const slider = document.getElementById('sim-timeline-slider');
+        if (!btn || !slider) return;
+        
+        const maxDay = simulationTimeline[simulationTimeline.length - 1].day;
+        if (isSimPlaying) {
+            isSimPlaying = false;
+            btn.textContent = "PLAY";
+            clearInterval(simInterval);
+            logToConsole("[SYS] Timeline simulation paused.");
+        } else {
+            isSimPlaying = true;
+            btn.textContent = "PAUSE";
+            logToConsole("[SYS] Starting timeline simulation playback...");
+            
+            // If we are at the end, reset to start
+            if (parseInt(slider.value) >= maxDay) {
+                slider.value = 1;
+                onTimelineSliderInput(1);
+            }
+            
+            simInterval = setInterval(() => {
+                let currentVal = parseInt(slider.value);
+                if (currentVal < maxDay) {
+                    currentVal += 1;
+                    slider.value = currentVal;
+                    onTimelineSliderInput(currentVal);
+                } else {
+                    isSimPlaying = false;
+                    btn.textContent = "PLAY";
+                    clearInterval(simInterval);
+                    logToConsole("[SYS] Simulation complete.");
+                }
+            }, 100);
+        }
+    }
+
+    function compileFinalReport() {
+        logToConsole("[SYS] Opportunity Feasibility Compiler executing Final Feasibility Report compilation...");
+        
+        const reportWindow = window.open("", "_blank");
+        if (!reportWindow) {
+            logToConsole("[ERROR] Popup blocker blocked the report preview. Please allow popups.");
+            return;
+        }
+        
+        let reportHtml = "";
+        
+        const nameLower = activeProjectCoords.name.toLowerCase();
+        if (nameLower.includes("hegar")) {
+            reportHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>HEXGROWTH - Alfred B Hegar Feasibility Report</title>
+            <style>
+                body { background: #020617; color: #f8fafc; font-family: 'Inter', sans-serif; padding: 40px; margin: 0; }
+                .report-card { max-width: 800px; margin: 0 auto; background: #0f172a; border: 1px solid #10b981; padding: 40px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+                h1 { color: #10b981; font-size: 24px; border-bottom: 2px solid #1e293b; padding-bottom: 10px; margin-top: 0; }
+                h2 { color: #06b6d4; font-size: 18px; margin-top: 30px; }
+                table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
+                th, td { border: 1px solid #1e293b; padding: 10px; text-align: left; }
+                th { background: #1e293b; color: #38bdf8; }
+                .status-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+                .badge-green { background: rgba(16, 185, 129, 0.1); border: 1px solid #10b981; color: #10b981; }
+                .footer { margin-top: 40px; font-size: 11px; color: #64748b; border-top: 1px solid #1e293b; padding-top: 20px; display: flex; justify-content: space-between; }
+                
+                @media print {
+                    .no-print { display: none !important; }
+                    body { background: #ffffff !important; color: #000000 !important; padding: 20px !important; margin: 0 !important; }
+                    .report-card { background: #ffffff !important; border: none !important; box-shadow: none !important; padding: 0 !important; max-width: 100% !important; color: #000000 !important; }
+                    h1 { color: #15803d !important; border-bottom: 2px solid #15803d !important; }
+                    h2 { color: #0369a1 !important; border-bottom: 1px solid #cbd5e1 !important; padding-bottom: 5px; }
+                    table { width: 100% !important; border-collapse: collapse !important; }
+                    th { background: #f1f5f9 !important; color: #000000 !important; border: 1px solid #cbd5e1 !important; font-weight: 600 !important; }
+                    td { border: 1px solid #cbd5e1 !important; color: #334155 !important; }
+                    .status-badge { border: 1px solid #cbd5e1 !important; color: #000000 !important; background: #f1f5f9 !important; }
+                    p, td, th { font-family: 'Inter', sans-serif !important; }
+                    strong { color: #000000 !important; }
+                    .footer { border-top: 1px solid #cbd5e1 !important; color: #64748b !important; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="no-print" style="max-width: 800px; margin: 0 auto 20px auto; display: flex; justify-content: space-between; align-items: center; background: #0f172a; padding: 12px 24px; border-radius: 8px; border: 1px solid #1e293b; font-family: 'Inter', sans-serif;">
+                <span style="color: #94a3b8; font-size: 13px;">HEXGROWTH Dynamic Report Engine</span>
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="window.print()" style="background: #10b981; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 12px; display: flex; align-items: center; gap: 6px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                        Print Report
+                    </button>
+                    <button onclick="window.close()" style="background: transparent; color: #94a3b8; border: 1px solid #334155; padding: 8px 16px; border-radius: 4px; font-weight: bold; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 12px;">Close</button>
+                </div>
+            </div>
+            <div class="report-card">
+                <h1>HEXGROWTH FEASIBILITY REPORT: ALFRED B HEGAR</h1>
+                <p><strong>Site under review:</strong> ${activeProjectCoords.name}</p>
+                <p><strong>Coordinates:</strong> [${activeProjectCoords.longitude.toFixed(4)}, ${activeProjectCoords.latitude.toFixed(4)}]</p>
+                <p><strong>Composite Feasibility Score:</strong> <span class="status-badge badge-green">8.5 / 10.0 (OPTIMIZED)</span></p>
+                
+                <h2>1.0 Executive Opportunity Summary</h2>
+                <p style="line-height: 1.6; color: #cbd5e1;"><strong>PROJECT ENTIRELY OPTIMIZED.</strong> A 120-day due diligence cycle has resolved all gating requirements for the Alfred B Hegar tract in Waller County/Harris County line, Texas. The subject is entitled for master-planned community development. Access frontage on Hegar Road with direct connection to US-290. The tract is assessed with a heavy agricultural exemption. Net underwritten value verified.</p>
+                
+                <h2>2.0 Sizing & Pricing Underwriting Model</h2>
+                <table class="sigma-data-grid">
+                    <thead>
+                        <tr>
+                            <th>Lot Size</th>
+                            <th>Product Detail</th>
+                            <th>Avg SqFt</th>
+                            <th>Base Price</th>
+                            <th>Monthly Cost to Own</th>
+                            <th>Income to Qualify</th>
+                            <th>Target Absorption / Mo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>30' Alley</td><td>Alley loaded detached SFD</td><td>1272</td><td>$280,000</td><td>$2,439</td><td>$88,690</td><td>4.0</td></tr>
+                        <tr><td>40' Front</td><td>Front loaded detached SFD</td><td>1825</td><td>$340,000</td><td>$2,939</td><td>$106,872</td><td>3.5</td></tr>
+                        <tr><td>50' Front</td><td>Front loaded detached SFD</td><td>2175</td><td>$400,000</td><td>$3,440</td><td>$125,090</td><td>3.0</td></tr>
+                        <tr><td>60' Front</td><td>Front loaded detached SFD</td><td>2725</td><td>$480,000</td><td>$4,107</td><td>$149,345</td><td>2.0</td></tr>
+                        <tr><td>70' Front</td><td>Front loaded detached SFD</td><td>3275</td><td>$560,000</td><td>$4,774</td><td>$173,600</td><td>1.5</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>3.0 Amenity Premium Analysis</h2>
+                <p style="line-height: 1.6; color: #cbd5e1;">Based on comparative study datasets, premium amenities generate the following cap-rate additives:</p>
+                <ul>
+                    <li><strong>Crystal Lagoon & Beach:</strong> +6.2% base price premium (+$28,450 estimated retail additive).</li>
+                    <li><strong>Smart Grid & Solar Easement:</strong> +4.5% base price premium (+$20,600 estimated retail additive).</li>
+                    <li><strong>Interconnected Trailheads:</strong> +2.8% base price premium (+$12,800 estimated retail additive).</li>
+                </ul>
+                
+                <h2>4.0 Data Reliability & Audit Trail</h2>
+                <p style="line-height: 1.6; color: #cbd5e1;">Lobe 9 (Accountability Brain) verifies the integrity of this report. Lobe weights have been adjusted dynamically to minimize prediction errors:</p>
+                <ul>
+                    <li><b>L1_ZONING:</b> 0.0929 (Dynamically Optimized)</li>
+                    <li><b>L2_TRANSIT:</b> 0.0550 (Dynamically Optimized)</li>
+                    <li><b>L3_POWER:</b> 0.1223 (Dynamically Optimized)</li>
+                    <li><b>L4_LEGAL:</b> 0.1017 (Dynamically Optimized)</li>
+                    <li><b>L5_RANGER:</b> 0.0550 (Dynamically Optimized)</li>
+                    <li><b>L6_PULSE:</b> 0.0550 (Dynamically Optimized)</li>
+                    <li><b>L7_FINANCE:</b> 0.2432 (Dynamically Optimized)</li>
+                    <li><b>L8_INFERENCE:</b> 0.2749 (Dynamically Optimized)</li>
+                </ul>
+                
+                <div class="footer">
+                    <div>Entity: HEXGROWTH Decision Engine</div>
+                    <div>Sign-off: Humberto Dominguez, CEO</div>
+                    <div>Date: 06/08/2026</div>
+                </div>
+            </div>
+        </body>
+        </html>
+            `;
+        } else if (simulationTimeline === baybrookTimeline) {
+            reportHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>HEXGROWTH - Baybrook/Midline MPC Opportunity Analysis</title>
+            <style>
+                body { background: #020617; color: #f8fafc; font-family: 'Inter', sans-serif; padding: 40px; margin: 0; }
+                .report-card { max-width: 800px; margin: 0 auto; background: #0f172a; border: 1px solid #06b6d4; padding: 40px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+                h1 { color: #22d3ee; font-size: 24px; border-bottom: 2px solid #06b6d4; padding-bottom: 10px; margin-top: 0; }
+                h2 { color: #38bdf8; font-size: 18px; margin-top: 30px; }
+                table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px; }
+                th, td { border: 1px solid #1e293b; padding: 10px; text-align: left; }
+                th { background: #1e293b; color: #38bdf8; }
+                .status-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+                .badge-cyan { background: rgba(6, 182, 212, 0.1); border: 1px solid #06b6d4; color: #06b6d4; }
+                .footer { margin-top: 40px; font-size: 11px; color: #64748b; border-top: 1px solid #1e293b; padding-top: 20px; display: flex; justify-content: space-between; }
+                
+                @media print {
+                    .no-print { display: none !important; }
+                    body { background: #ffffff !important; color: #000000 !important; padding: 20px !important; margin: 0 !important; }
+                    .report-card { background: #ffffff !important; border: none !important; box-shadow: none !important; padding: 0 !important; max-width: 100% !important; color: #000000 !important; }
+                    h1 { color: #0369a1 !important; border-bottom: 2px solid #0369a1 !important; }
+                    h2 { color: #0284c7 !important; border-bottom: 1px solid #cbd5e1 !important; padding-bottom: 5px; }
+                    table { width: 100% !important; border-collapse: collapse !important; }
+                    th { background: #f1f5f9 !important; color: #000000 !important; border: 1px solid #cbd5e1 !important; font-weight: 600 !important; }
+                    td { border: 1px solid #cbd5e1 !important; color: #334155 !important; }
+                    .status-badge { border: 1px solid #cbd5e1 !important; color: #000000 !important; background: #f1f5f9 !important; }
+                    p, td, th { font-family: 'Inter', sans-serif !important; }
+                    strong { color: #000000 !important; }
+                    .footer { border-top: 1px solid #cbd5e1 !important; color: #64748b !important; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="no-print" style="max-width: 800px; margin: 0 auto 20px auto; display: flex; justify-content: space-between; align-items: center; background: #0f172a; padding: 12px 24px; border-radius: 8px; border: 1px solid #1e293b; font-family: 'Inter', sans-serif;">
+                <span style="color: #94a3b8; font-size: 13px;">HEXGROWTH Dynamic Report Engine</span>
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="window.print()" style="background: #06b6d4; color: #000; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 12px; display: flex; align-items: center; gap: 6px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                        Print Report
+                    </button>
+                    <button onclick="window.close()" style="background: transparent; color: #94a3b8; border: 1px solid #334155; padding: 8px 16px; border-radius: 4px; font-weight: bold; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 12px;">Close</button>
+                </div>
+            </div>
+            <div class="report-card">
+                <h1>JBREC-BROOKFIELD BAYBROOK/MIDLINE MPC OPPORTUNITY ANALYSIS</h1>
+                <p><strong>Site under review:</strong> ${activeProjectCoords.name}</p>
+                <p><strong>Coordinates:</strong> [${activeProjectCoords.longitude.toFixed(4)}, ${activeProjectCoords.latitude.toFixed(4)}]</p>
+                <p><strong>Composite Feasibility Score:</strong> <span class="status-badge badge-cyan">8.9 / 10.0 (OPTIMIZED FOR PRODUCTION)</span></p>
+                
+                <h2>1.0 Executive Summary</h2>
+                <p style="line-height: 1.6; color: #cbd5e1;"><strong>PROJECT ENTIRELY OPTIMIZED.</strong> A 120-day due diligence cycle has resolved all gating requirements for Brookfield Properties' 1,066-acre master-planned community (Midline) adjacent to Baybrook Mall in Webster, Texas. The subject is entitled for 2,800 to 3,120 homes across seven front- and alley-loaded product lines. Harris County (HOU, 2.82%) and Galveston County (LC, 3.61%) tax differences are successfully mediated by discounting League City base prices to achieve monthly cost parity. Model homes and sales offices are cleared for the May 2026 Grand Opening.</p>
+                
+                <h2>2.0 Entitlement & Diligence Diagnostics Summary</h2>
+                <table class="sigma-data-grid">
+                    <thead>
+                        <tr>
+                            <th>Diligence Category</th>
+                            <th>Score</th>
+                            <th>Findings & Resolution</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><b>L1: Zoning & Municipal Entitlements</b></td><td>9.2 / 10.0</td><td>Dual-jurisdiction annexation and MUD creation cleared by Webster and League City.</td></tr>
+                        <tr><td><b>L2: Access, Egress & Traffic Capacity</b></td><td>9.0 / 10.0</td><td>Access loop along Bay Area Boulevard and connection layout to I-45 approved.</td></tr>
+                        <tr><td><b>L3: Utilities & Infrastructure Capacity</b></td><td>9.0 / 10.0</td><td>Primary MUD substations and sewage treatment capacity cleared for Phase 1.</td></tr>
+                        <tr><td><b>L4: Environmental & Geotech Due Diligence</b></td><td>8.5 / 10.0</td><td>Clear Creek bayou watershed drainage easements and Section 404 permits approved.</td></tr>
+                        <tr><td><b>L5: Physical Security & Site Hardening</b></td><td>9.0 / 10.0</td><td>Perimeter fire buffers and access layout matching Challenger 7 Park approved.</td></tr>
+                        <tr><td><b>L6: Market Sentiment & Public Feedback</b></td><td>9.0 / 10.0</td><td>JBREC product layout (clubhouse, lagoon, pickleball, pet parks) matches target buyer segments.</td></tr>
+                    </tbody>
+                </table>
+                
+                <h2>3.0 Product Segmentation & Pricing Recommendations</h2>
+                <p style="line-height: 1.6; color: #cbd5e1;">JBREC forecasts <strong>384 new home sales/year</strong> (capture rate of 1.0% of Houston MSA). Home base prices range from $273k (30' alley-loaded LC) to $571k (70' front-loaded HOU), matching local demographics (mature singles/couples and retirees). Building permit filings for Phase 1 (271 homes) are fully verified and cleared.</p>
+
+                <h2>4.0 Financial Mitigations & Value Added</h2>
+                <p style="line-height: 1.6; color: #cbd5e1;">By separating initial construction into the lower-tax Harris County tract first and utilizing early utility easements, the developer has avoided approximately <strong>$18.5M</strong> in potential carry costs, interest, and infrastructure delay penalties.</p>
+                
+                <div class="footer">
+                    <div>Entity: Opportunity Feasibility Compiler</div>
+                    <div>Sign-off: Humberto Dominguez, CEO</div>
+                    <div>Date: 06/08/2026</div>
+                </div>
+            </div>
+        </body>
+        </html>
+            `;
+        } else if (simulationTimeline === lawsuitTimeline) {
+            reportHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>HEXGROWTH - Project Litigation Report</title>
+            <style>
+                body { background: #020617; color: #f8fafc; font-family: 'Inter', sans-serif; padding: 40px; margin: 0; }
+                .report-card { max-width: 800px; margin: 0 auto; background: #0f172a; border: 1px solid #ef4444; padding: 40px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+                h1 { color: #f87171; font-size: 24px; border-bottom: 2px solid #ef4444; padding-bottom: 10px; margin-top: 0; }
+                h2 { color: #f59e0b; font-size: 18px; margin-top: 30px; }
+                table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
+                th, td { border: 1px solid #1e293b; padding: 10px; text-align: left; }
+                th { background: #1e293b; color: #f87171; }
+                .status-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+                .badge-red { background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; color: #ef4444; }
+                .footer { margin-top: 40px; font-size: 11px; color: #64748b; border-top: 1px solid #1e293b; padding-top: 20px; display: flex; justify-content: space-between; }
+                
+                @media print {
+                    .no-print { display: none !important; }
+                    body { background: #ffffff !important; color: #000000 !important; padding: 20px !important; margin: 0 !important; }
+                    .report-card { background: #ffffff !important; border: none !important; box-shadow: none !important; padding: 0 !important; max-width: 100% !important; color: #000000 !important; }
+                    h1 { color: #b91c1c !important; border-bottom: 2px solid #b91c1c !important; }
+                    h2 { color: #d97706 !important; border-bottom: 1px solid #cbd5e1 !important; padding-bottom: 5px; }
+                    table { width: 100% !important; border-collapse: collapse !important; }
+                    th { background: #f1f5f9 !important; color: #000000 !important; border: 1px solid #cbd5e1 !important; font-weight: 600 !important; }
+                    td { border: 1px solid #cbd5e1 !important; color: #334155 !important; }
+                    .status-badge { border: 1px solid #cbd5e1 !important; color: #000000 !important; background: #f1f5f9 !important; }
+                    p, td, th { font-family: 'Inter', sans-serif !important; }
+                    strong { color: #000000 !important; }
+                    .footer { border-top: 1px solid #cbd5e1 !important; color: #64748b !important; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="no-print" style="max-width: 800px; margin: 0 auto 20px auto; display: flex; justify-content: space-between; align-items: center; background: #0f172a; padding: 12px 24px; border-radius: 8px; border: 1px solid #1e293b; font-family: 'Inter', sans-serif;">
+                <span style="color: #94a3b8; font-size: 13px;">HEXGROWTH Dynamic Report Engine</span>
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="window.print()" style="background: #f59e0b; color: #000; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 12px; display: flex; align-items: center; gap: 6px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                        Print Report
+                    </button>
+                    <button onclick="window.close()" style="background: transparent; color: #94a3b8; border: 1px solid #334155; padding: 8px 16px; border-radius: 4px; font-weight: bold; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 12px;">Close</button>
+                </div>
+            </div>
+            <div class="report-card">
+                <h1>HEXGROWTH DUE DILIGENCE SUSPENSION & RISK REPORT</h1>
+                <p><strong>Site under review:</strong> ${activeProjectCoords.name}</p>
+                <p><strong>Coordinates:</strong> [${activeProjectCoords.longitude.toFixed(4)}, ${activeProjectCoords.latitude.toFixed(4)}]</p>
+                <p><strong>Composite Feasibility Score:</strong> <span class="status-badge badge-red">2.5 / 10.0 (PROJECT HALTED)</span></p>
+                
+                <h2>1.0 Executive Summary</h2>
+                <p style="line-height: 1.6; color: #cbd5e1;"><strong>CRITICAL BLOCKAGE DETECTED on Day 60.</strong> Feasibility study has been suspended. A local environmental conservation group has filed a federal lawsuit under the Clean Water Act, claiming that site plans infringe on endangered wetland habitats. The district court has granted a temporary injunction, immediately halting all pre-development work. Capital allocation is at high risk; proceeding with land acquisition is advised against due to active legal injunctions.</p>
+                
+                <h2>2.0 Entitlement & Diligence Diagnostics Summary</h2>
+                <table class="sigma-data-grid">
+                    <thead>
+                        <tr>
+                            <th>Diligence Category</th>
+                            <th>Score</th>
+                            <th>Findings & Legal Blockage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><b>L1: Zoning & Municipal Entitlements</b></td><td>4.2 / 10.0</td><td>Variance application frozen due to ongoing federal injunction.</td></tr>
+                        <tr><td><b>L2: Access, Egress & Traffic Capacity</b></td><td>8.5 / 10.0</td><td>Physical site access capacity verified, but highway permits are suspended.</td></tr>
+                        <tr><td><b>L3: Utilities & Infrastructure Capacity</b></td><td>5.0 / 10.0</td><td>Utility capacity survey incomplete due to site access freeze.</td></tr>
+                        <tr><td><b>L4: Environmental & Geotech Due Diligence</b></td><td>2.2 / 10.0</td><td>Wetlands dispute active; Clean Water Act lawsuit filed in federal court.</td></tr>
+                        <tr><td><b>L5: Physical Security & Site Hardening</b></td><td>-- / 10.0</td><td>Ranger safety security audit not completed due to project suspension.</td></tr>
+                        <tr><td><b>L6: Market Sentiment & Public Feedback</b></td><td>3.0 / 10.0</td><td>Highly negative local mood; environmental protests active at site boundary.</td></tr>
+                    </tbody>
+                </table>
+                
+                <h2>3.0 Financial Savings & Mitigations</h2>
+                <p style="line-height: 1.6; color: #cbd5e1;">By suspending capital allocation at this checkpoint, the client has successfully avoided approximately <strong>$14.2M</strong> in site development costs and subsequent litigation fees. Feasibility Engine advises immediate escrow return and search pivot.</p>
+                
+                <div class="footer">
+                    <div>Entity: HEXGROWTH Decision Engine</div>
+                    <div>Sign-off: Humberto Dominguez, CEO</div>
+                    <div>Date: 06/08/2026</div>
+                </div>
+            </div>
+        </body>
+        </html>
+            `;
+        } else if (simulationTimeline === failureTimeline) {
+            reportHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>HEXGROWTH - Project Rejection Report</title>
+            <style>
+                body { background: #020617; color: #f8fafc; font-family: 'Inter', sans-serif; padding: 40px; margin: 0; }
+                .report-card { max-width: 800px; margin: 0 auto; background: #0f172a; border: 1px solid #ef4444; padding: 40px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+                h1 { color: #ef4444; font-size: 24px; border-bottom: 2px solid #ef4444; padding-bottom: 10px; margin-top: 0; }
+                h2 { color: #f59e0b; font-size: 18px; margin-top: 30px; }
+                table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
+                th, td { border: 1px solid #1e293b; padding: 10px; text-align: left; }
+                th { background: #1e293b; color: #ef4444; }
+                .status-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+                .badge-red { background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; color: #ef4444; }
+                .footer { margin-top: 40px; font-size: 11px; color: #64748b; border-top: 1px solid #1e293b; padding-top: 20px; display: flex; justify-content: space-between; }
+                
+                @media print {
+                    .no-print { display: none !important; }
+                    body { background: #ffffff !important; color: #000000 !important; padding: 20px !important; margin: 0 !important; }
+                    .report-card { background: #ffffff !important; border: none !important; box-shadow: none !important; padding: 0 !important; max-width: 100% !important; color: #000000 !important; }
+                    h1 { color: #b91c1c !important; border-bottom: 2px solid #b91c1c !important; }
+                    h2 { color: #d97706 !important; border-bottom: 1px solid #cbd5e1 !important; padding-bottom: 5px; }
+                    table { width: 100% !important; border-collapse: collapse !important; }
+                    th { background: #f1f5f9 !important; color: #000000 !important; border: 1px solid #cbd5e1 !important; font-weight: 600 !important; }
+                    td { border: 1px solid #cbd5e1 !important; color: #334155 !important; }
+                    .status-badge { border: 1px solid #cbd5e1 !important; color: #000000 !important; background: #f1f5f9 !important; }
+                    p, td, th { font-family: 'Inter', sans-serif !important; }
+                    strong { color: #000000 !important; }
+                    .footer { border-top: 1px solid #cbd5e1 !important; color: #64748b !important; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="no-print" style="max-width: 800px; margin: 0 auto 20px auto; display: flex; justify-content: space-between; align-items: center; background: #0f172a; padding: 12px 24px; border-radius: 8px; border: 1px solid #1e293b; font-family: 'Inter', sans-serif;">
+                <span style="color: #94a3b8; font-size: 13px;">HEXGROWTH Dynamic Report Engine</span>
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="window.print()" style="background: #ef4444; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 12px; display: flex; align-items: center; gap: 6px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                        Print Report
+                    </button>
+                    <button onclick="window.close()" style="background: transparent; color: #94a3b8; border: 1px solid #334155; padding: 8px 16px; border-radius: 4px; font-weight: bold; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 12px;">Close</button>
+                </div>
+            </div>
+            <div class="report-card">
+                <h1>HEXGROWTH FEASIBILITY REJECTION REPORT</h1>
+                <p><strong>Site under review:</strong> ${activeProjectCoords.name}</p>
+                <p><strong>Coordinates:</strong> [${activeProjectCoords.longitude.toFixed(4)}, ${activeProjectCoords.latitude.toFixed(4)}]</p>
+                <p><strong>Composite Feasibility Score:</strong> <span class="status-badge badge-red">2.2 / 10.0 (REJECTED)</span></p>
+                
+                <h2>1.0 Executive Summary</h2>
+                <p style="line-height: 1.6; color: #cbd5e1;"><strong>FEASIBILITY STUDY REJECTED.</strong> Due diligence completed on Day 120 has revealed fatal project blockages. The local City Council voted 11-4 to veto the zoning variance request required for the project. Unresolved community protests (Market Sentiment) and massive utility hookup delays (Utilities & Infrastructure) contributed to this veto. The Systems Architect advises that the project is completely unfeasible under current municipal rules. Proceeding with land purchase will lead to total capital lockdown.</p>
+                
+                <h2>2.0 Entitlement & Diligence Diagnostics Summary</h2>
+                <table class="sigma-data-grid">
+                    <thead>
+                        <tr>
+                            <th>Diligence Category</th>
+                            <th>Score</th>
+                            <th>Findings & Failure Resolution</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><b>L1: Zoning & Municipal Entitlements</b></td><td>2.2 / 10.0</td><td>Zoning variance request officially vetoed by City Council.</td></tr>
+                        <tr><td><b>L2: Access, Egress & Traffic Capacity</b></td><td>8.5 / 10.0</td><td>Highway loop access capacity cleared, but useless without zoning.</td></tr>
+                        <tr><td><b>L3: Utilities & Infrastructure Capacity</b></td><td>4.2 / 10.0</td><td>Utility hookup overload; 18-month substation expansion delay.</td></tr>
+                        <tr><td><b>L4: Environmental & Geotech Due Diligence</b></td><td>7.5 / 10.0</td><td>Physical geotech bore samples clear, but zoning precludes development.</td></tr>
+                        <tr><td><b>L5: Physical Security & Site Hardening</b></td><td>5.0 / 10.0</td><td>Ranger safety threat index moderate; high facility hardening costs.</td></tr>
+                        <tr><td><b>L6: Market Sentiment & Public Feedback</b></td><td>2.5 / 10.0</td><td>Critical community backlash; petition signed by 1,500 local residents.</td></tr>
+                    </tbody>
+                </table>
+                
+                <h2>3.0 Financial Savings & Mitigations</h2>
+                <p style="line-height: 1.6; color: #cbd5e1;">By rejecting this deal at this stage, the client has avoided a total loss of approximately <strong>$21.4M</strong> in stranded land cost, planning costs, and grid interconnect fees. This due diligence report confirms the visual indicators shown in the HUD.</p>
+                
+                <div class="footer">
+                    <div>Entity: HEXGROWTH Decision Engine</div>
+                    <div>Sign-off: Humberto Dominguez, CEO</div>
+                    <div>Date: 06/08/2026</div>
+                </div>
+            </div>
+        </body>
+        </html>
+            `;
+        } else {
+            // Success Report
+            reportHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>HEXGROWTH - Custom Feasibility Report</title>
+            <style>
+                body { background: #020617; color: #f8fafc; font-family: 'Inter', sans-serif; padding: 40px; margin: 0; }
+                .report-card { max-width: 800px; margin: 0 auto; background: #0f172a; border: 1px solid #1e293b; padding: 40px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+                h1 { color: #06b6d4; font-size: 24px; border-bottom: 2px solid #1e293b; padding-bottom: 10px; margin-top: 0; }
+                h2 { color: #8b5cf6; font-size: 18px; margin-top: 30px; }
+                table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
+                th, td { border: 1px solid #1e293b; padding: 10px; text-align: left; }
+                th { background: #1e293b; color: #38bdf8; }
+                .status-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+                .badge-green { background: rgba(16, 185, 129, 0.1); border: 1px solid #10b981; color: #10b981; }
+                .footer { margin-top: 40px; font-size: 11px; color: #64748b; border-top: 1px solid #1e293b; padding-top: 20px; display: flex; justify-content: space-between; }
+                
+                @media print {
+                    .no-print { display: none !important; }
+                    body { background: #ffffff !important; color: #000000 !important; padding: 20px !important; margin: 0 !important; }
+                    .report-card { background: #ffffff !important; border: none !important; box-shadow: none !important; padding: 0 !important; max-width: 100% !important; color: #000000 !important; }
+                    h1 { color: #0369a1 !important; border-bottom: 2px solid #0369a1 !important; }
+                    h2 { color: #6d28d9 !important; border-bottom: 1px solid #cbd5e1 !important; padding-bottom: 5px; }
+                    table { width: 100% !important; border-collapse: collapse !important; }
+                    th { background: #f1f5f9 !important; color: #000000 !important; border: 1px solid #cbd5e1 !important; font-weight: 600 !important; }
+                    td { border: 1px solid #cbd5e1 !important; color: #334155 !important; }
+                    .status-badge { border: 1px solid #cbd5e1 !important; color: #000000 !important; background: #f1f5f9 !important; }
+                    p, td, th { font-family: 'Inter', sans-serif !important; }
+                    strong { color: #000000 !important; }
+                    .footer { border-top: 1px solid #cbd5e1 !important; color: #64748b !important; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="no-print" style="max-width: 800px; margin: 0 auto 20px auto; display: flex; justify-content: space-between; align-items: center; background: #0f172a; padding: 12px 24px; border-radius: 8px; border: 1px solid #1e293b; font-family: 'Inter', sans-serif;">
+                <span style="color: #94a3b8; font-size: 13px;">HEXGROWTH Dynamic Report Engine</span>
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="window.print()" style="background: #10b981; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 12px; display: flex; align-items: center; gap: 6px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                        Print Report
+                    </button>
+                    <button onclick="window.close()" style="background: transparent; color: #94a3b8; border: 1px solid #334155; padding: 8px 16px; border-radius: 4px; font-weight: bold; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 12px;">Close</button>
+                </div>
+            </div>
+            <div class="report-card">
+                <h1>HEXGROWTH OPPORTUNITY FEASIBILITY REPORT</h1>
+                <p><strong>Site under review:</strong> ${activeProjectCoords.name}</p>
+                <p><strong>Coordinates:</strong> [${activeProjectCoords.longitude.toFixed(4)}, ${activeProjectCoords.latitude.toFixed(4)}]</p>
+                <p><strong>Composite Feasibility Score:</strong> <span class="status-badge badge-green">8.8 / 10.0 (OPTIMIZED)</span></p>
+                
+                <h2>1.0 Executive Summary</h2>
+                <p style="line-height: 1.6; color: #cbd5e1;">After a 120-day due diligence cycle, all operational categories have ingested and resolved their active risk telemetry. Neighborhood disputes have been successfully mediated, and the City Council has approved the municipal TIRZ infrastructure cost offset grants.</p>
+                
+                <h2>2.0 Entitlement & Diligence Diagnostics Summary</h2>
+                <table class="sigma-data-grid">
+                    <thead>
+                        <tr>
+                            <th>Diligence Category</th>
+                            <th>Score</th>
+                            <th>Findings & Resolution</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><b>L1: Zoning & Municipal Entitlements</b></td><td>9.2 / 10.0</td><td>TIRZ Grant Approved; high-density commercial variance signed off.</td></tr>
+                        <tr><td><b>L2: Access, Egress & Traffic Capacity</b></td><td>8.5 / 10.0</td><td>Highway loop access capacity verified at 145k daily counts.</td></tr>
+                        <tr><td><b>L3: Utilities & Infrastructure Capacity</b></td><td>9.0 / 10.0</td><td>85MW interconnect capacity cleared with adjacent substation.</td></tr>
+                        <tr><td><b>L4: Environmental & Geotech Due Diligence</b></td><td>7.5 / 10.0</td><td>Geotech bore tests confirm soil load capacity. Wetlands easement cleared.</td></tr>
+                        <tr><td><b>L5: Physical Security & Site Hardening</b></td><td>9.5 / 10.0</td><td>Facilities safety audit approved; physical perimeter hardening designed.</td></tr>
+                        <tr><td><b>L6: Market Sentiment & Public Feedback</b></td><td>8.0 / 10.0</td><td>Local neighborhood association opposition resolved; agreement signed.</td></tr>
+                    </tbody>
+                </table>
+                
+                <h2>3.0 Conclusion</h2>
+                <p style="line-height: 1.6; color: #cbd5e1;">The Systems Architect and Lead Analyst (George Bytes) recommend proceeding with the land acquisition phase under current valuation metrics.</p>
+                
+                <div class="footer">
+                    <div>Entity: HEXGROWTH Decision Engine</div>
+                    <div>Sign-off: Humberto Dominguez, CEO</div>
+                    <div>Date: 06/08/2026</div>
+                </div>
+            </div>
+        </body>
+        </html>
+            `;
+        }
+        reportWindow.document.write(reportHtml);
+        reportWindow.document.close();
+        logToConsole("[SYS SUCCESS] Final Feasibility Report compiled and opened in new window.");
+    }
+
+    function resetTimelinePlayer() {
+        selectTimelineForProject(); // Update timeline type based on active project
+        
+        const slider = document.getElementById('sim-timeline-slider');
+        if (slider) {
+            const maxDay = simulationTimeline[simulationTimeline.length - 1].day;
+            slider.max = maxDay;
+            slider.value = 1;
+            
+            const maxLabel = document.getElementById('timeline-max-day-label');
+            if (maxLabel) {
+                maxLabel.textContent = `Day ${maxDay}`;
+            }
+            
+            if (isSimPlaying) {
+                isSimPlaying = false;
+                const btn = document.getElementById('btn-play-sim');
+                if (btn) btn.textContent = "PLAY";
+                clearInterval(simInterval);
+            }
+            onTimelineSliderInput(1);
+        }
+    }
 
     // Tab switching
     function switchDealTab(tabName) {
@@ -924,7 +1874,7 @@
         } else if (root === '/lobe') {
             const lobe = parseInt(args[1]);
             if (lobe >= 1 && lobe <= 7) {
-                logToConsole(`[TERM] Swapped to Lobe ${lobe} analysis view.`);
+                logToConsole(`[TERM] Swapped to Underwriting Category ${lobe} analysis view.`);
                 updateWeights('w' + (lobe % 4 + 1));
             } else {
                 logToConsole(`[TERM ERROR] Invalid Lobe ID. Valid range: 1 to 7.`);
@@ -969,6 +1919,7 @@
         logToConsole(`[NAV] Flying to coordinates: ${lat}, ${lng}`);
         logToConsole(`[MAP] Generated new hex parcel at: ${lat.toFixed(4)}, ${lng.toFixed(4)} (Score: ${score})`);
         
+        resetTimelinePlayer();
         setTimeout(renderLayers, 3100);
     }
 
@@ -985,7 +1936,7 @@
                     const row = document.createElement('div');
                     row.className = 'ticker-row ' + (item.type === 'normal' ? '' : item.type);
                     row.style.cursor = 'pointer';
-                    row.title = 'Click to trace data stream in Pulse Brain';
+                    row.title = 'Click to trace data stream in Market Sentiment & Public Feedback module';
                     row.innerHTML = `<span>${item.text}</span><span>Live</span>`;
                     row.onclick = () => selectTickerItem(item.text);
                     ticker.appendChild(row);
@@ -1006,13 +1957,25 @@
             targetArea = 'decatur';
         } else if (text.toLowerCase().includes('plano')) {
             targetArea = 'plano';
+        } else if (text.toLowerCase().includes('laredo')) {
+            targetArea = 'laredo';
+        } else if (text.toLowerCase().includes('mcallen')) {
+            targetArea = 'mcallen';
+        } else if (text.toLowerCase().includes('brownsville')) {
+            targetArea = 'brownsville';
+        } else if (text.toLowerCase().includes('corpus')) {
+            targetArea = 'corpus';
+        } else if (text.toLowerCase().includes('del rio') || text.toLowerCase().includes('delrio')) {
+            targetArea = 'delrio';
+        } else if (text.toLowerCase().includes('houston')) {
+            targetArea = 'houston';
         }
         
         // Fly to site coordinates
         flyToSite(targetArea);
         
         // Fetch and show the "bird on the wire" municipal scouting connections for this area
-        logToConsole(`[PULSE] Lobe 6 (Pulse Brain) targeting: ${targetArea.toUpperCase()}`);
+        logToConsole(`[PULSE] L6 (Market Sentiment & Public Feedback) targeting: ${targetArea.toUpperCase()}`);
         logToConsole(`[PULSE] Connecting pipelines for 'bird on the wire' streams...`);
         
         // Query the scouting database registry to pull actual scout targets
@@ -1075,6 +2038,7 @@
                 if (map) map.flyTo({ center: [activeProjectCoords.longitude, activeProjectCoords.latitude], zoom: activeProjectCoords.zoom, duration: 3000 });
                 syncUI(Math.round(125 * Math.pow(2, 18 - activeProjectCoords.zoom)), activeProjectCoords.zoom);
                 logToConsole(`[NAV] Flying to dynamic project: ${activeProjectCoords.name}`);
+                resetTimelinePlayer();
                 setTimeout(renderLayers, 3100);
             }, 1000);
         }
@@ -1288,15 +2252,15 @@
 
     // Mock beacon data (fallback)
     let skyBeacons = [
-        { name: "Dallas Metro Hub", latitude: 32.7767, longitude: -96.7970, score: 8.8, description: "City Lobe: Principal metropolitan convergence center." },
-        { name: "Fort Worth Corridor", latitude: 32.7555, longitude: -97.3308, score: 8.5, description: "TxDOT Lobe: Fort Worth highway and freight loop corridor." },
-        { name: "Denton-Wise Border", latitude: 33.2148, longitude: -97.1331, score: 7.9, description: "Finance Lobe: Wise County aggregate industrial node." }
+        { name: "Dallas Metro Hub", latitude: 32.7767, longitude: -96.7970, score: 8.8, description: "Zoning Category: Principal metropolitan convergence center." },
+        { name: "Fort Worth Corridor", latitude: 32.7555, longitude: -97.3308, score: 8.5, description: "Traffic Category: Fort Worth highway and freight loop corridor." },
+        { name: "Denton-Wise Border", latitude: 33.2148, longitude: -97.1331, score: 7.9, description: "Underwriting Category: Wise County aggregate industrial node." }
     ];
     
     let cloudBeacons = [
-        { name: "Victory Park Relocation Corridor", latitude: 32.7876, longitude: -96.8088, score: 8.9, description: "TxDOT Lobe: Commercial Retail Corridor." },
-        { name: "Valley View Feasibility Corridor", latitude: 32.9264, longitude: -96.7972, score: 8.8, description: "City Lobe: Reinvestment Zone / TIF Zone." },
-        { name: "Decatur Growth Sub-Artery", latitude: 33.2343, longitude: -97.5861, score: 7.9, description: "City Lobe: Wise County ETJ commercial expansion zone." }
+        { name: "Victory Park Relocation Corridor", latitude: 32.7876, longitude: -96.8088, score: 8.9, description: "Traffic Category: Commercial Retail Corridor." },
+        { name: "Valley View Feasibility Corridor", latitude: 32.9264, longitude: -96.7972, score: 8.8, description: "Zoning Category: Reinvestment Zone / TIF Zone." },
+        { name: "Decatur Growth Sub-Artery", latitude: 33.2343, longitude: -97.5861, score: 7.9, description: "Zoning Category: Wise County ETJ commercial expansion zone." }
     ];
 
     async function loadBeacons() {
@@ -1313,6 +2277,30 @@
             }
         } catch (err) {
             console.error("Error fetching beacons:", err);
+        }
+    }
+
+    async function saveAlarmSettings() {
+        const category = document.getElementById('alarm-category-selector').value;
+        const color = document.getElementById('alarm-color-selector').value;
+        
+        try {
+            const response = await fetch('/api/v1/beacons/alarm', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ category, color })
+            });
+            const result = await response.json();
+            if (result.status === 'success') {
+                logToConsole(`[SYS] Alarm beacon updated to: ${category} | Color RGB: [${color}]`);
+                loadBeacons();
+            } else {
+                logToConsole(`[ERROR] Failed to save alarm: ${result.message}`);
+            }
+        } catch (err) {
+            logToConsole(`[ERROR] Alarm network request failed: ${err.message}`);
         }
     }
 
@@ -1355,39 +2343,95 @@
         activeScoutingTarget = siteKey;
         if (siteKey === 'victory') {
             lng = -96.8088; lat = 32.7876; zoom = 15;
+            activeProjectCoords.id = 3;
+            activeProjectCoords.name = "DALLAS CORRIDOR AUDIT";
             document.getElementById('selected-hex-address').textContent = "H3 Address: 8b62c4a754b2fff";
             updateRoller(2.4);
             logToConsole("[NAV] Flying to Downtown Dallas Victory Park relos corridor...");
         } else if (siteKey === 'valley') {
             lng = -96.7972; lat = 32.9264; zoom = 15;
+            activeProjectCoords.id = 2;
+            activeProjectCoords.name = "VALLEY VIEW FEASIBILITY";
             document.getElementById('selected-hex-address').textContent = "H3 Address: 8b62c4a754a0fff";
             updateRoller(8.8);
             logToConsole("[NAV] Flying to Valley View Arena development site...");
         } else if (siteKey === 'decatur') {
             lng = -97.5861; lat = 33.2343; zoom = 15;
+            activeProjectCoords.id = 1;
+            activeProjectCoords.name = "DECATUR GROWTH PATH";
             document.getElementById('selected-hex-address').textContent = "H3 Address: 8b62c4a75402fff";
             updateRoller(7.9);
             logToConsole("[NAV] Flying to Decatur data center growth corridor...");
         } else if (siteKey === 'plano') {
             lng = -96.6963; lat = 32.8637; zoom = 15;
+            activeProjectCoords.id = 3;
+            activeProjectCoords.name = "PLANO CORRIDOR AUDIT";
             document.getElementById('selected-hex-address').textContent = "H3 Address: 8b62c4314ab2fff";
             updateRoller(8.2);
             logToConsole("[NAV] Flying to Plano target corridor...");
         } else if (siteKey === 'wichita') {
             lng = -98.4800; lat = 33.9300; zoom = 15;
+            activeProjectCoords.id = 2;
+            activeProjectCoords.name = "WICHITA FALLS WIND FARM";
             document.getElementById('selected-hex-address').textContent = "H3 Address: 8b62c41234b2fff";
             updateRoller(8.5);
             logToConsole("[NAV] Flying to Wichita Falls wind farm spur...");
         } else if (siteKey === 'vernon') {
             lng = -99.2500; lat = 34.1700; zoom = 15;
+            activeProjectCoords.id = 3;
+            activeProjectCoords.name = "VERNON COMPRESSOR HUB";
             document.getElementById('selected-hex-address').textContent = "H3 Address: 8b62c45678a0fff";
             updateRoller(8.2);
             logToConsole("[NAV] Flying to Vernon gas compressor facility...");
         } else if (siteKey === 'bowie') {
             lng = -97.8300; lat = 33.5450; zoom = 15;
+            activeProjectCoords.id = 1;
+            activeProjectCoords.name = "BOWIE LOGISTICS JUNCTION";
             document.getElementById('selected-hex-address').textContent = "H3 Address: 8b62c49012cdfff";
             updateRoller(8.4);
             logToConsole("[NAV] Flying to Bowie fiber vault junction...");
+        } else if (siteKey === 'laredo') {
+            lng = -99.4896; lat = 27.5036; zoom = 12;
+            activeProjectCoords.id = 1;
+            activeProjectCoords.name = "LA SALLE COUNTY RANCH";
+            document.getElementById('selected-hex-address').textContent = "H3 Address: 8b47ab5024b8fff";
+            updateRoller(9.2);
+            logToConsole("[NAV] Flying to South Texas Laredo Ranch Corridor...");
+        } else if (siteKey === 'mcallen') {
+            lng = -98.2301; lat = 26.2034; zoom = 12;
+            activeProjectCoords.id = 3;
+            activeProjectCoords.name = "MCALLEN DEVELOPMENT SITE";
+            document.getElementById('selected-hex-address').textContent = "H3 Address: 8b47ab5024b9fff";
+            updateRoller(8.8);
+            logToConsole("[NAV] Flying to McAllen Development Site...");
+        } else if (siteKey === 'brownsville') {
+            lng = -97.4975; lat = 25.9018; zoom = 12;
+            activeProjectCoords.id = 2;
+            activeProjectCoords.name = "PORT OF BROWNSVILLE INDUSTRIAL";
+            document.getElementById('selected-hex-address').textContent = "H3 Address: 8b47ab5024bafff";
+            updateRoller(9.5);
+            logToConsole("[NAV] Flying to Port of Brownsville Industrial Zone...");
+        } else if (siteKey === 'corpus') {
+            lng = -97.3964; lat = 27.8006; zoom = 12;
+            activeProjectCoords.id = 3;
+            activeProjectCoords.name = "CORPUS CHRISTI LOGISTICS SITE";
+            document.getElementById('selected-hex-address').textContent = "H3 Address: 8b47ab5024bbfff";
+            updateRoller(8.9);
+            logToConsole("[NAV] Flying to Corpus Christi Logistics Site...");
+        } else if (siteKey === 'delrio') {
+            lng = -100.8985; lat = 29.3629; zoom = 12;
+            activeProjectCoords.id = 1;
+            activeProjectCoords.name = "DEL RIO BORDER DEVELOPMENT";
+            document.getElementById('selected-hex-address').textContent = "H3 Address: 8b47ab5024bcfff";
+            updateRoller(9.4);
+            logToConsole("[NAV] Flying to Del Rio Border Development Zone...");
+        } else if (siteKey === 'houston') {
+            lng = -95.3698; lat = 29.7604; zoom = 12;
+            activeProjectCoords.id = 3;
+            activeProjectCoords.name = "SOUTH TEXAS HOUSTON ZONE";
+            document.getElementById('selected-hex-address').textContent = "H3 Address: 8b47ab5024bdfff";
+            updateRoller(9.0);
+            logToConsole("[NAV] Flying to South Texas Houston Development Zone...");
         }
         
         currentViewState = { ...currentViewState, longitude: lng, latitude: lat, zoom: zoom, pitch: 45, transitionDuration: 3000 };
@@ -1397,7 +2441,138 @@
         if (deckgl) deckgl.setProps({ viewState: currentViewState });
         if (map) map.flyTo({ center: [lng, lat], zoom: zoom, duration: 3000 });
         syncUI(Math.round(125 * Math.pow(2, 18 - zoom)), zoom);
+        resetTimelinePlayer();
         setTimeout(renderLayers, 3100);
+    }
+
+    function generateMoranGrid(center) {
+        const grid = [];
+        const hexSize = 0.003;
+        const types = ['High-High', 'Low-Low', 'Not Significant'];
+        for (let i = -3; i <= 3; i++) {
+            for (let j = -3; j <= 3; j++) {
+                const lng = center[0] + i * hexSize * 1.5;
+                const lat = center[1] + j * hexSize * Math.sqrt(3) + ((i % 2 === 0) ? 0 : hexSize * Math.sqrt(3) / 2);
+                const cluster = types[Math.floor(Math.random() * types.length)];
+                grid.push({
+                    h3Index: `8b63260d${Math.floor(Math.random() * 900000 + 100000)}`,
+                    polygon: generateHexagon([lng, lat], hexSize * 0.95),
+                    cluster: cluster,
+                    value: Math.random() * 0.8
+                });
+            }
+        }
+        return grid;
+    }
+
+    function generateGetisGrid(center) {
+        const grid = [];
+        const hexSize = 0.0035;
+        const types = ['Hotspot', 'Coldspot'];
+        for (let i = -3; i <= 3; i++) {
+            for (let j = -3; j <= 3; j++) {
+                const lng = center[0] + i * hexSize * 1.5;
+                const lat = center[1] + j * hexSize * Math.sqrt(3) + ((i % 2 === 0) ? 0 : hexSize * Math.sqrt(3) / 2);
+                const type = types[Math.floor(Math.random() * types.length)];
+                grid.push({
+                    h3Index: `8b63260e${Math.floor(Math.random() * 900000 + 100000)}`,
+                    polygon: generateHexagon([lng, lat], hexSize * 0.95),
+                    type: type,
+                    zScore: Math.random() * 3.5,
+                    confidence: Math.random() > 0.5 ? "99% CI" : "95% CI"
+                });
+            }
+        }
+        return grid;
+    }
+
+    function generateClusteringPoints(center) {
+        const points = [];
+        const count = 30;
+        for (let i = 0; i < count; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const distance = Math.random() * 0.015;
+            const lng = center[0] + distance * Math.cos(angle);
+            const lat = center[1] + distance * Math.sin(angle);
+            points.push({
+                longitude: lng,
+                latitude: lat,
+                clusterId: Math.floor(Math.random() * 3) + 1,
+                neighbors: Math.floor(Math.random() * 8) + 2
+            });
+        }
+        return points;
+    }
+
+    function generateKdeGrid(center) {
+        const grid = [];
+        const gridSize = 0.002;
+        for (let i = -4; i <= 4; i++) {
+            for (let j = -4; j <= 4; j++) {
+                const lng = center[0] + i * gridSize * 1.5;
+                const lat = center[1] + j * gridSize * Math.sqrt(3) + ((i % 2 === 0) ? 0 : gridSize * Math.sqrt(3) / 2);
+                const distance = Math.sqrt(i * i + j * j);
+                const density = Math.max(0, 1 - (distance / 6.0));
+                grid.push({
+                    polygon: generateHexagon([lng, lat], gridSize * 0.95),
+                    density: density
+                });
+            }
+        }
+        return grid;
+    }
+
+    function generateVoronoiPolygons(center) {
+        return [
+            {
+                stationName: "Valley View Substation A", capacity: "250 MW", users: 120,
+                polygon: [[center[0] - 0.015, center[1] + 0.015], [center[0] + 0.005, center[1] + 0.015], [center[0] + 0.005, center[1] - 0.005], [center[0] - 0.015, center[1] - 0.005], [center[0] - 0.015, center[1] + 0.015]]
+            },
+            {
+                stationName: "North Dallas Grid B", capacity: "400 MW", users: 340,
+                polygon: [[center[0] + 0.005, center[1] + 0.015], [center[0] + 0.025, center[1] + 0.015], [center[0] + 0.025, center[1] - 0.005], [center[0] + 0.005, center[1] - 0.005], [center[0] + 0.005, center[1] + 0.015]]
+            },
+            {
+                stationName: "Carrollton Link C", capacity: "150 MW", users: 85,
+                polygon: [[center[0] - 0.015, center[1] - 0.005], [center[0] + 0.025, center[1] - 0.005], [center[0] + 0.025, center[1] - 0.025], [center[0] - 0.015, center[1] - 0.025], [center[0] - 0.015, center[1] - 0.005]]
+            }
+        ];
+    }
+
+    function simulateValuation() {
+        const model = document.getElementById('valuation-model-select').value;
+        const output = document.getElementById('valuation-output-select').value;
+        
+        let valString = "";
+        let logMsg = "";
+        let accStr = "94.2% R-Sq";
+        
+        if (output === 'current') {
+            valString = "$1,480,000";
+            logMsg = `[VALUATION] Current Market Value forecast executed with ${model}. Value: ${valString}.`;
+        } else if (output === 'future') {
+            valString = "$2,850,000";
+            logMsg = `[VALUATION] 5-Year Future Value projection executed with ${model}. Value: ${valString}.`;
+            accStr = "89.5% Confidence";
+        } else {
+            valString = "Multifamily (High Density)";
+            logMsg = `[VALUATION] Highest and Best Use classifier executed with ${model}. Selected: ${valString}.`;
+            accStr = "96.8% Probability";
+        }
+        
+        document.getElementById('valuation-estimate-value').innerText = valString;
+        document.getElementById('valuation-accuracy-value').innerText = accStr;
+        document.getElementById('valuation-result-panel').style.display = 'block';
+        
+        logToConsole(logMsg);
+        
+        // Temporarily highlight map grid cells
+        gridOpacity = 100;
+        setTimeout(() => {
+            gridOpacity = 30;
+            renderLayers();
+        }, 1500);
+        renderLayers();
     }
 
     function getTifZones(lng, lat) {
@@ -1421,6 +2596,14 @@
                 polygon: [[lng - 0.015, lat + 0.01], [lng + 0.015, lat + 0.01], [lng + 0.015, lat - 0.01], [lng - 0.015, lat - 0.01], [lng - 0.015, lat + 0.01]],
                 name: "Bowie Logistics & Fiber TIF Spur", rate: "1.30%", rules: "Infrastructure Connectivity Subsidies"
             });
+        } else {
+            // Dynamically append local TIF zone for active project coordinates
+            base.push({
+                polygon: [[lng - 0.015, lat + 0.01], [lng + 0.015, lat + 0.01], [lng + 0.015, lat - 0.01], [lng - 0.015, lat - 0.01], [lng - 0.015, lat + 0.01]],
+                name: activeProjectCoords.name + " TIF District",
+                rate: "1.20%",
+                rules: "Local tax increment reinvestment and development incentives"
+            });
         }
         return base;
     }
@@ -1437,8 +2620,64 @@
             base.push({from: [lng - 0.03, lat], to: [lng + 0.03, lat], name: "Line VR-04: Compressor Grid link", voltage: "138 kV", load: "55% Capacity"});
         } else if (Math.abs(lat - 33.5450) < 0.2) {
             base.push({from: [lng - 0.03, lat], to: [lng + 0.03, lat], name: "Line BW-12: Freight Spur line", voltage: "138 kV", load: "60% Capacity"});
+        } else {
+            // Dynamically append local power line for active project coordinates
+            base.push({
+                from: [lng - 0.03, lat - 0.005],
+                to: [lng + 0.03, lat + 0.005],
+                name: "Line PL-88: " + activeProjectCoords.name + " Spur",
+                voltage: "345 kV",
+                load: "58% Capacity"
+            });
         }
         return base;
+    }
+
+    function isHexInsideNimby(hexPoly, projectLng, projectLat) {
+        if (!hexPoly || hexPoly.length === 0) return false;
+        let sumLng = 0, sumLat = 0;
+        for (let i = 0; i < hexPoly.length; i++) {
+            sumLng += hexPoly[i][0];
+            sumLat += hexPoly[i][1];
+        }
+        const cLng = sumLng / hexPoly.length;
+        const cLat = sumLat / hexPoly.length;
+
+        if (cLng >= -96.81 && cLng <= -96.797 && cLat >= 32.91 && cLat <= 32.92) return true;
+        if (cLng >= -97.60 && cLng <= -97.595 && cLat >= 33.22 && cLat <= 33.23) return true;
+        if (cLng >= -96.815 && cLng <= -96.805 && cLat >= 32.78 && cLat <= 32.79) return true;
+        
+        if (projectLng && projectLat) {
+            const minLng = projectLng - 0.01;
+            const maxLng = projectLng + 0.01;
+            const minLat = projectLat - 0.005;
+            const maxLat = projectLat + 0.015;
+            if (cLng >= minLng && cLng <= maxLng && cLat >= minLat && cLat <= maxLat) return true;
+        }
+        return false;
+    }
+
+    function isHexInsideTif(hexPoly, projectLng, projectLat) {
+        if (!hexPoly || hexPoly.length === 0) return false;
+        let sumLng = 0, sumLat = 0;
+        for (let i = 0; i < hexPoly.length; i++) {
+            sumLng += hexPoly[i][0];
+            sumLat += hexPoly[i][1];
+        }
+        const cLng = sumLng / hexPoly.length;
+        const cLat = sumLat / hexPoly.length;
+
+        if (cLng >= -96.81 && cLng <= -96.78 && cLat >= 32.915 && cLat <= 32.935) return true;
+        if (cLng >= -97.595 && cLng <= -97.575 && cLat >= 33.225 && cLat <= 33.24) return true;
+        
+        if (projectLng && projectLat) {
+            const minLng = projectLng - 0.015;
+            const maxLng = projectLng + 0.015;
+            const minLat = projectLat - 0.01;
+            const maxLat = projectLat + 0.01;
+            if (cLng >= minLng && cLng <= maxLng && cLat >= minLat && cLat <= maxLat) return true;
+        }
+        return false;
     }
 
     function getNimbyZones(lng, lat) {
@@ -1453,23 +2692,95 @@
             base.push({polygon: [[lng - 0.01, lat + 0.015], [lng + 0.01, lat + 0.015], [lng + 0.01, lat - 0.005], [lng - 0.01, lat - 0.005], [lng - 0.01, lat + 0.015]], name: "Vernon Farm Buffer", risk: "LOW NIMBY RISK", notes: "Unincorporated agricultural land"});
         } else if (Math.abs(lat - 33.5450) < 0.2) {
             base.push({polygon: [[lng - 0.01, lat + 0.015], [lng + 0.01, lat + 0.015], [lng + 0.01, lat - 0.005], [lng - 0.01, lat - 0.005], [lng - 0.01, lat + 0.015]], name: "Bowie Commercial Perimeter", risk: "LOW NIMBY RISK", notes: "Industrial park zoning zone"});
+        } else {
+            // Dynamically append local NIMBY buffer zone for active project coordinates
+            base.push({
+                polygon: [[lng - 0.015, lat - 0.005], [lng - 0.005, lat - 0.005], [lng - 0.005, lat - 0.015], [lng - 0.015, lat - 0.015], [lng - 0.015, lat - 0.005]],
+                name: activeProjectCoords.name + " Buffer Zone",
+                risk: "MEDIUM NIMBY RISK",
+                notes: "Local neighborhood zoning disputes and setback hearings active"
+            });
         }
         return base;
     }
 
     function getTargetSites(lng, lat) {
-        const base = [
-            { polygon: generateHexagon([-96.6963, 32.8637], 0.001), title: '10405 E Northwest Hwy', score: 8.9, details: "CITY: Business (Retail)<br>DIRT: Solid Clay<br>RIGHTS: All Intact" },
-            { polygon: generateHexagon([-96.7972, 32.9264], 0.0012), title: 'Valley View Arena Site', score: 8.8, details: "CITY: TIF / Reinvestment Zone<br>POWER: Substation Required<br>PULSE: Strong Neighborhood NIMBY" },
-            { polygon: generateHexagon([-97.5861, 33.2343], 0.0011), title: 'Decatur Growth Path Site', score: 7.9, details: "CITY: Wise County ETJ commercial<br>POWER: Wise Electric Coop feed<br>VALUATION: Rural Arbitrage potential" }
-        ];
-        if (Math.abs(lat - 33.9300) < 0.2) {
-            base.push({ polygon: generateHexagon([lng, lat], 0.0011), title: 'Wichita Falls Wind Farm Site', score: 8.5, details: "POWER: 150MW Wind Spur Interconnect<br>DIRT: Red Dirt clay mix<br>RIGHTS: Wind Rights Secured" });
+        const base = [];
+        const nameLower = activeProjectCoords.name.toLowerCase();
+        
+        if (nameLower.includes("dallas") || nameLower.includes("northwest")) {
+            base.push({ 
+                polygon: generateHexagon([-96.6963, 32.8637], 0.0011), 
+                title: '10405 E Northwest Hwy', 
+                score: currentTimelineStep.scores.composite, 
+                details: "CITY: Business (Retail)<br>DIRT: Solid Clay<br>RIGHTS: All Intact" 
+            });
+        } else if (nameLower.includes("valley view") || nameLower.includes("arena")) {
+            base.push({ 
+                polygon: generateHexagon([-96.7972, 32.9264], 0.0012), 
+                title: 'Valley View Arena Site', 
+                score: currentTimelineStep.scores.composite, 
+                details: "CITY: TIF / Reinvestment Zone<br>POWER: Substation Required<br>PULSE: Strong Neighborhood NIMBY" 
+            });
+        } else if (nameLower.includes("decatur") || nameLower.includes("wise")) {
+            base.push({ 
+                polygon: generateHexagon([-97.5861, 33.2343], 0.0011), 
+                title: 'Decatur Growth Path Site', 
+                score: currentTimelineStep.scores.composite, 
+                details: "CITY: Wise County ETJ commercial<br>POWER: Wise Electric Coop feed<br>VALUATION: Rural Arbitrage potential" 
+            });
+        } else if (Math.abs(lat - 33.9300) < 0.2) {
+            base.push({ 
+                polygon: generateHexagon([lng, lat], 0.0011), 
+                title: 'Wichita Falls Wind Farm Site', 
+                score: currentTimelineStep.scores.composite, 
+                details: "POWER: 150MW Wind Spur Interconnect<br>DIRT: Red Dirt clay mix<br>RIGHTS: Wind Rights Secured" 
+            });
         } else if (Math.abs(lat - 34.1700) < 0.2) {
-            base.push({ polygon: generateHexagon([lng, lat], 0.0011), title: 'Vernon Compressor Hub Site', score: 8.2, details: "CITY: Industrial Extraction Zone<br>VALUATION: Helium pipeline easement<br>RIGHTS: Mineral rights intact" });
+            base.push({ 
+                polygon: generateHexagon([lng, lat], 0.0011), 
+                title: 'Vernon Compressor Hub Site', 
+                score: currentTimelineStep.scores.composite, 
+                details: "CITY: Industrial Extraction Zone<br>VALUATION: Helium pipeline easement<br>RIGHTS: Mineral rights intact" 
+            });
         } else if (Math.abs(lat - 33.5450) < 0.2) {
-            base.push({ polygon: generateHexagon([lng, lat], 0.0011), title: 'Bowie Logistics Junction Site', score: 8.4, details: "PULSE: Zayo Carrier splice vault<br>POWER: 480V 3-phase line adjacent<br>DIRT: Solid clay soil base" });
+            base.push({ 
+                polygon: generateHexagon([lng, lat], 0.0011), 
+                title: 'Bowie Logistics Junction Site', 
+                score: currentTimelineStep.scores.composite, 
+                details: "PULSE: Zayo Carrier splice vault<br>POWER: 480V 3-phase line adjacent<br>DIRT: Solid clay soil base" 
+            });
+        } else if (Math.abs(lat - 27.5000) < 0.2) {
+            base.push({ 
+                polygon: generateHexagon([lng, lat], 0.0011), 
+                title: 'La Salle County Ranch Site', 
+                score: currentTimelineStep.scores.composite, 
+                details: "CITY: Agricultural / Unincorporated land<br>WATER: Ground water rights active<br>VALUATION: Underwritten package - 12,500 acres across 4 tracts." 
+            });
+        } else {
+            // Dynamically append local target site for active project coordinates
+            base.push({
+                polygon: generateHexagon([lng, lat], 0.0011),
+                title: activeProjectCoords.name + " Target Site",
+                score: currentTimelineStep.scores.composite,
+                details: "CITY: High-Density Zoning Verified<br>POWER: Primary transmission corridor access<br>VALUATION: Dynamic feasibility model active"
+            });
         }
+        
+        base.forEach(site => {
+            let warnings = "";
+            if (currentTimelineStep.scores.L6 && currentTimelineStep.scores.L6 < 7.0) {
+                warnings += `<span style="color:#ef4444;">⚠️ NIMBY WARNING: High neighborhood opposition and community delay risk active.</span><br/>`;
+            }
+            if (currentTimelineStep.scores.L1 && currentTimelineStep.scores.L1 >= 8.0) {
+                warnings += `<span style="color:#a78bfa;">💸 CITY NOTICE: Tax Increment Reinvestment Zone (TIRZ) active. Eligible for municipal development grants.</span><br/>`;
+            }
+            if (warnings) {
+                warnings += "<br/>";
+            }
+            site.details = `<b>Composite Opportunity Score:</b> ${currentTimelineStep.scores.composite.toFixed(1)}/10.0<br><br>` + warnings + site.details;
+        });
+        
         return base;
     }
 
@@ -1483,9 +2794,26 @@
                 data: skyBeacons,
                 getPosition: d => [d.longitude, d.latitude],
                 getRadius: 10000 * pulseScale,
-                getFillColor: [6, 182, 212, 120],
+                getFillColor: d => {
+                    const rgb = d.color ? d.color.split(',').map(Number) : [6, 182, 212];
+                    return [rgb[0], rgb[1], rgb[2], 120];
+                },
                 pickable: true,
                 onClick: ({object, x, y}) => showHardPopup(object, 'beacon', x, y)
+            }));
+            
+            // Render count numbers inside Sky beacons
+            layers.push(new deck.TextLayer({
+                id: 'sky-beacons-text',
+                data: skyBeacons,
+                getPosition: d => [d.longitude, d.latitude],
+                getText: d => d.count ? d.count.toString() : '0',
+                getSize: 14,
+                getColor: [255, 255, 255, 255],
+                getTextAnchor: 'middle',
+                getAlignmentBaseline: 'center',
+                fontFamily: 'Inter, sans-serif',
+                fontWeight: 800
             }));
         } else if (altitude > 25000) {
             layers.push(new deck.ScatterplotLayer({
@@ -1493,121 +2821,186 @@
                 data: cloudBeacons,
                 getPosition: d => [d.longitude, d.latitude],
                 getRadius: 3000 * pulseScale,
-                getFillColor: [16, 185, 129, 150],
+                getFillColor: d => {
+                    const rgb = d.color ? d.color.split(',').map(Number) : [16, 185, 129];
+                    return [rgb[0], rgb[1], rgb[2], 150];
+                },
                 pickable: true,
                 onClick: ({object, x, y}) => showHardPopup(object, 'beacon', x, y)
+            }));
+
+            // Render count numbers inside Cloud beacons
+            layers.push(new deck.TextLayer({
+                id: 'clouds-beacons-text',
+                data: cloudBeacons,
+                getPosition: d => [d.longitude, d.latitude],
+                getText: d => d.count ? d.count.toString() : '0',
+                getSize: 11,
+                getColor: [255, 255, 255, 255],
+                getTextAnchor: 'middle',
+                getAlignmentBaseline: 'center',
+                fontFamily: 'Inter, sans-serif',
+                fontWeight: 800
             }));
         } else {
             // Detailed Ground layers
             
-            // 1. City Rules (TIF Zone)
-            if (document.getElementById('layer-city').checked) {
-                layers.push(new deck.PolygonLayer({
-                    id: 'tif-zones',
-                    data: getTifZones(activeProjectCoords.longitude, activeProjectCoords.latitude),
-                    getPolygon: d => d.polygon,
-                    getFillColor: [139, 92, 246, 30], // semi-transparent purple
-                    getLineColor: [139, 92, 246, 120],
-                    stroked: true,
-                    extruded: false,
-                    pickable: true,
-                    onClick: ({object, x, y}) => showHardPopup(object, 'tif', x, y)
-                }));
-            }
 
-            // 2. Roads & Traffic (Highways & Tessellation)
-            if (document.getElementById('layer-roads').checked) {
-                // Generate glowing highways around active project center
-                const activeHighways = generateHighways([activeProjectCoords.longitude, activeProjectCoords.latitude]);
-                
-                // Wide glowing background road line
-                layers.push(new deck.LineLayer({
-                    id: 'highways-glow',
-                    data: activeHighways,
-                    getSourcePosition: d => d.from,
-                    getTargetPosition: d => d.to,
-                    getColor: [139, 92, 246, 180], // glowing violet line
-                    getWidth: 6,
-                    pickable: false
-                }));
-                
-                // Bright white inner core line
-                layers.push(new deck.LineLayer({
-                    id: 'highways-core',
-                    data: activeHighways,
-                    getSourcePosition: d => d.from,
-                    getTargetPosition: d => d.to,
-                    getColor: [255, 255, 255, 240], // bright white core
-                    getWidth: 2.5,
-                    pickable: true,
-                    onClick: ({object, x, y}) => showHardPopup({name: object.name, details: `Flow: ${object.status} | Traffic: ${object.traffic}`}, 'road', x, y)
-                }));
-
-                // Generate H3 Resolution 11 Hexagonal Tessellation
-                const tessellationGrid = generateTessellation([activeProjectCoords.longitude, activeProjectCoords.latitude], gridExtent, gridExtent, gridHexSize);
-                layers.push(new deck.PolygonLayer({
-                    id: 'hex-tessellation',
-                    data: tessellationGrid,
-                    getPolygon: d => d.polygon,
-                    getFillColor: d => d.score > 8 ? [139, 92, 246, gridOpacity] : d.score > 7 ? [245, 158, 11, gridOpacity] : [245, 158, 11, Math.round(gridOpacity * 0.43)], // glowing violet or amber
-                    getLineColor: [255, 255, 255, Math.round(gridOpacity * 0.43)],
-                    getLineWidth: 1.5,
-                    stroked: true,
-                    extruded: gridHeight > 0,
-                    getElevation: d => d.score * gridHeight * 2,
-                    wireframe: true,
-                    pickable: true,
-                    onClick: ({object, x, y}) => {
-                        if (object) {
-                            logToConsole(`[TRACT] Hexagon Unit: score ${object.score.toFixed(1)}/10.0. Details: ${object.details}`);
-                            updateRoller(object.score);
-                            showHardPopup({name: object.title, longitude: object.polygon[0][0], latitude: object.polygon[0][1], score: object.score}, 'beacon', x, y);
-                        }
+            // Generate H3 Resolution 11 Hexagonal Tessellation (Commented out to show 7-Hex layout only)
+            /*
+            const tessellationGrid = generateTessellation([activeProjectCoords.longitude, activeProjectCoords.latitude], gridExtent, gridExtent, gridHexSize);
+            layers.push(new deck.PolygonLayer({
+                id: 'hex-tessellation',
+                data: tessellationGrid,
+                getPolygon: d => d.polygon,
+                getFillColor: d => {
+                    const isNimby = document.getElementById('layer-mood').checked && isHexInsideNimby(d.polygon, activeProjectCoords.longitude, activeProjectCoords.latitude);
+                    if (isNimby) {
+                        return [239, 68, 68, 70]; // semi-transparent red overlay for NIMBY (toned down)
                     }
-                }));
-            }
+                    const isTif = document.getElementById('layer-city').checked && isHexInsideTif(d.polygon, activeProjectCoords.longitude, activeProjectCoords.latitude);
+                    if (isTif) {
+                        return [139, 92, 246, 60]; // semi-transparent purple overlay for TIF (toned down)
+                    }
+                    return [255, 255, 255, 12]; // neutral, very faint white/gray fill representing raw background grid
+                },
+                getLineColor: d => {
+                    const isNimby = document.getElementById('layer-mood').checked && isHexInsideNimby(d.polygon, activeProjectCoords.longitude, activeProjectCoords.latitude);
+                    if (isNimby) return [239, 68, 68, 180];
+                    const isTif = document.getElementById('layer-city').checked && isHexInsideTif(d.polygon, activeProjectCoords.longitude, activeProjectCoords.latitude);
+                    if (isTif) return [139, 92, 246, 180];
+                    return [255, 255, 255, 30]; // very subtle grid lines
+                },
+                getLineWidth: d => {
+                    const isNimby = document.getElementById('layer-mood').checked && isHexInsideNimby(d.polygon, activeProjectCoords.longitude, activeProjectCoords.latitude);
+                    const isTif = document.getElementById('layer-city').checked && isHexInsideTif(d.polygon, activeProjectCoords.longitude, activeProjectCoords.latitude);
+                    return (isNimby || isTif) ? 2.5 : 1.0;
+                },
+                stroked: true,
+                extruded: false, // Flat background grid mesh
+                getElevation: 0,
+                wireframe: true,
+                pickable: true,
+                onClick: ({object, x, y}) => {
+                    if (object) {
+                        const isNimby = document.getElementById('layer-mood').checked && isHexInsideNimby(object.polygon, activeProjectCoords.longitude, activeProjectCoords.latitude);
+                        const isTif = document.getElementById('layer-city').checked && isHexInsideTif(object.polygon, activeProjectCoords.longitude, activeProjectCoords.latitude);
+                        let detailsText = object.details;
+                        if (isNimby) {
+                            detailsText = `NIMBY WARNING: High neighborhood opposition and community delay risk flagged in this sector. <br><br>` + detailsText;
+                            logToConsole(`[TRACT] NIMBY WARNING: Opposition risk zone active on ${object.title}.`);
+                        }
+                        if (isTif) {
+                            detailsText = `CITY RULE NOTICE: Tax Increment Reinvestment Zone (TIRZ) active. Eligible for municipal development grants and public infrastructure cost offsets. <br><br>` + detailsText;
+                            logToConsole(`[TRACT] TIF ZONE ACTIVE: Local municipal development grants active on ${object.title}.`);
+                        }
+                        if (!isNimby && !isTif) {
+                            logToConsole(`[TRACT] Hexagon Unit: score ${object.score.toFixed(1)}/10.0. Details: ${object.details}`);
+                        }
+                        updateRoller(object.score);
+                        showHardPopup({
+                            name: object.title,
+                            longitude: object.polygon[0][0],
+                            latitude: object.polygon[0][1],
+                            score: object.score,
+                            details: detailsText
+                        }, 'beacon', x, y);
+                    }
+                }
+            }));
+            */
 
-            // 3. Power Grid (Lines)
-            if (document.getElementById('layer-power').checked) {
-                layers.push(new deck.LineLayer({
-                    id: 'power-lines',
-                    data: getPowerLines(activeProjectCoords.longitude, activeProjectCoords.latitude),
-                    getSourcePosition: d => d.from,
-                    getTargetPosition: d => d.to,
-                    getColor: [6, 182, 212], // cyan
-                    getWidth: 4,
-                    pickable: true,
-                    onClick: ({object, x, y}) => showHardPopup(object, 'power', x, y)
-                }));
-            }
+            // Generate the Lobe Activity Ring (6 neighbors) around the active project coordinates
+            const lobeNeighbors = [];
+            const center = [activeProjectCoords.longitude, activeProjectCoords.latitude];
+            const hexSize = gridHexSize || 0.0011;
+            const dy = hexSize * Math.sqrt(3);
+            const dx = hexSize * 1.5;
+            
+            // Define the 6 directions and their corresponding categories
+            const directions = [
+                { id: 'layer-city', lobe: 'L1', name: 'L1: Zoning & Municipal Entitlements', dx: 0, dy: dy * 1.2, details: "City zoning status, land usage rules, and TIRZ municipal development grant details." },
+                { id: 'layer-roads', lobe: 'L2', name: 'L2: Access, Egress & Traffic Capacity', dx: dx, dy: (dy / 2) * 1.2, details: "TxDOT highway artery flow rate, access quality, and traffic load metrics." },
+                { id: 'layer-power', lobe: 'L3', name: 'L3: Utilities & Infrastructure Capacity', dx: dx, dy: -(dy / 2) * 1.2, details: "Electrical grid connectivity, load capacity, and easement lag." },
+                { id: 'layer-land', lobe: 'L4', name: 'L4: Environmental & Geotech Due Diligence', dx: 0, dy: -dy * 1.2, details: "Environmental incident monitoring, wetlands buffers, and soil geotech quality." },
+                { id: 'layer-safety', lobe: 'L5', name: 'L5: Physical Security & Site Hardening', dx: -dx, dy: -(dy / 2) * 1.2, details: "Local safety rating, crime metrics, and facility hardening cost." },
+                { id: 'layer-mood', lobe: 'L6', name: 'L6: Market Sentiment & Public Feedback', dx: -dx, dy: (dy / 2) * 1.2, details: "Social media scanning, neighborhood complaints, and local community protest tracking." }
+            ];
+            
+            directions.forEach((dir) => {
+                const checkbox = document.getElementById(dir.id);
+                if (checkbox && checkbox.checked && currentTimelineStep.visibleLobes.includes(dir.lobe)) {
+                    const neighborCenter = [center[0] + dir.dx, center[1] + dir.dy];
+                    const poly = generateHexagon(neighborCenter, hexSize * 0.95);
+                    const score = currentTimelineStep.scores[dir.lobe];
+                    
+                    let lobeDetails = dir.details;
+                    if (dir.lobe === 'L6') {
+                        lobeDetails = `NIMBY WARNING: High neighborhood opposition and community delay risk active. <br><br>` + lobeDetails;
+                    }
+                    if (dir.lobe === 'L1') {
+                        lobeDetails = `CITY RULE NOTICE: Tax Increment Reinvestment Zone (TIRZ) active. Eligible for municipal development grants. <br><br>` + lobeDetails;
+                    }
 
-            // 6. Neighborhood Mood (NIMBY Red Zone)
-            if (document.getElementById('layer-mood').checked) {
-                layers.push(new deck.PolygonLayer({
-                    id: 'nimby-zones',
-                    data: getNimbyZones(activeProjectCoords.longitude, activeProjectCoords.latitude),
-                    getPolygon: d => d.polygon,
-                    getFillColor: [239, 68, 68, 60], // red
-                    getLineColor: [239, 68, 68],
-                    stroked: true,
-                    extruded: false,
-                    pickable: true,
-                    onClick: ({object, x, y}) => showHardPopup(object, 'nimby', x, y)
-                }));
-            }
+                    lobeNeighbors.push({
+                        polygon: poly,
+                        score: score,
+                        title: dir.name,
+                        details: `<strong>Category:</strong> ${dir.lobe}<br/>` + lobeDetails + `<br/><br/><strong>Score:</strong> ${score.toFixed(1)}/10.0<br/><strong>Status:</strong> ` + (score >= 8.0 ? "Optimized" : score >= 7.0 ? "Moderate Risk" : "Critical Risk Delay"),
+                        lobe: dir.lobe
+                    });
+                }
+            });
 
-            // 7. Target Site Selection (Interactive purple polygon)
+            // Render the active Lobe Activity Ring neighbors in 3D
+            layers.push(new deck.PolygonLayer({
+                id: 'lobe-neighbors',
+                data: lobeNeighbors,
+                getPolygon: d => d.polygon,
+                getFillColor: d => {
+                    const score = d.score;
+                    return score >= 8.0 ? [16, 185, 129, 210] : score >= 7.0 ? [245, 158, 11, 210] : [239, 68, 68, 210];
+                },
+                getLineColor: [255, 255, 255, 150],
+                getLineWidth: 1.5,
+                stroked: true,
+                pickable: true,
+                extruded: true,
+                getElevation: d => d.score * 40,
+                onClick: ({object, x, y}) => showHardPopup({
+                    name: object.title,
+                    score: object.score,
+                    details: object.details,
+                    longitude: object.polygon[0][0],
+                    latitude: object.polygon[0][1]
+                }, 'beacon', x, y)
+            }));
+
+            // 7. Target Site Selection (Interactive dynamic polygon)
             layers.push(new deck.PolygonLayer({
                 id: 'target-site',
                 data: getTargetSites(activeProjectCoords.longitude, activeProjectCoords.latitude),
                 getPolygon: d => d.polygon,
-                getFillColor: [139, 92, 246, 200], // violet
+                getFillColor: d => {
+                    const score = d.score;
+                    if (score === 0.0) {
+                        return [107, 114, 128, 150]; // Slate gray transparent for zero/uninitiated status
+                    }
+                    return score >= 8.0 ? [16, 185, 129, 220] : score >= 7.0 ? [245, 158, 11, 220] : [239, 68, 68, 220];
+                },
                 getLineColor: [255, 255, 255],
+                getLineWidth: 3,
                 stroked: true,
                 pickable: true,
                 extruded: true,
-                getElevation: 30,
-                onClick: ({object, x, y}) => showHardPopup({name: object.title, details: object.details, score: object.score, longitude: activeProjectCoords.longitude, latitude: activeProjectCoords.latitude}, 'beacon', x, y)
+                getElevation: d => d.score * 50,
+                onClick: ({object, x, y}) => showHardPopup({
+                    name: object.title,
+                    details: object.details,
+                    score: object.score,
+                    longitude: activeProjectCoords.longitude,
+                    latitude: activeProjectCoords.latitude
+                }, 'beacon', x, y)
             }));
 
             // 8. Temporary Review Sites (Green highlight)
@@ -1624,7 +3017,82 @@
                 onClick: ({object, x, y}) => showHardPopup({name: object.title, details: object.details, score: object.score, longitude: object.longitude, latitude: object.latitude}, 'beacon', x, y)
             }));
 
-            // Bird on the Wire: Pulse Brain Scouting connections
+            // 9. Spatial Science: Moran's I (Spatial Autocorrelation)
+            if (document.getElementById('layer-moran') && document.getElementById('layer-moran').checked) {
+                layers.push(new deck.PolygonLayer({
+                    id: 'spatial-moran',
+                    data: generateMoranGrid([activeProjectCoords.longitude, activeProjectCoords.latitude]),
+                    getPolygon: d => d.polygon,
+                    getFillColor: d => d.cluster === 'High-High' ? [239, 68, 68, 120] : d.cluster === 'Low-Low' ? [59, 130, 246, 120] : [148, 163, 184, 40],
+                    getLineColor: [255, 255, 255, 100],
+                    getLineWidth: 1.5,
+                    stroked: true,
+                    pickable: true,
+                    onClick: ({object, x, y}) => showHardPopup({name: `Moran's I Cell: ${object.h3Index}`, details: `Type: ${object.cluster} | Value: ${object.value.toFixed(3)}`}, 'beacon', x, y)
+                }));
+            }
+
+            // 10. Spatial Science: Getis-Ord Gi* Hotspots
+            if (document.getElementById('layer-getis') && document.getElementById('layer-getis').checked) {
+                layers.push(new deck.PolygonLayer({
+                    id: 'spatial-getis',
+                    data: generateGetisGrid([activeProjectCoords.longitude, activeProjectCoords.latitude]),
+                    getPolygon: d => d.polygon,
+                    getFillColor: d => d.type === 'Hotspot' ? [220, 38, 38, 150] : [37, 99, 235, 150],
+                    getLineColor: [255, 255, 255, 120],
+                    getLineWidth: 2,
+                    stroked: true,
+                    pickable: true,
+                    onClick: ({object, x, y}) => showHardPopup({name: `Getis-Ord Gi* Cell: ${object.h3Index}`, details: `Confidence: ${object.confidence} | Z-Score: ${object.zScore.toFixed(2)}`}, 'beacon', x, y)
+                }));
+            }
+
+            // 11. Spatial Science: DBSCAN Spatial Clustering
+            if (document.getElementById('layer-dbscan') && document.getElementById('layer-dbscan').checked) {
+                layers.push(new deck.ScatterplotLayer({
+                    id: 'spatial-dbscan',
+                    data: generateClusteringPoints([activeProjectCoords.longitude, activeProjectCoords.latitude]),
+                    getPosition: d => [d.longitude, d.latitude],
+                    getRadius: 80,
+                    getFillColor: d => d.clusterId === 1 ? [16, 185, 129, 200] : d.clusterId === 2 ? [245, 158, 11, 200] : [239, 68, 68, 200],
+                    getLineColor: [255, 255, 255],
+                    stroked: true,
+                    pickable: true,
+                    onClick: ({object, x, y}) => showHardPopup({name: `DBSCAN Cluster Target`, details: `Cluster ID: ${object.clusterId} | Density neighbors: ${object.neighbors}`}, 'beacon', x, y)
+                }));
+            }
+
+            // 12. Spatial Science: Kernel Density Estimation (KDE)
+            if (document.getElementById('layer-kde') && document.getElementById('layer-kde').checked) {
+                layers.push(new deck.PolygonLayer({
+                    id: 'spatial-kde',
+                    data: generateKdeGrid([activeProjectCoords.longitude, activeProjectCoords.latitude]),
+                    getPolygon: d => d.polygon,
+                    getFillColor: d => [6, 182, 212, Math.round(d.density * 180)],
+                    getLineColor: [6, 182, 212, 50],
+                    getLineWidth: 1,
+                    stroked: true,
+                    pickable: true,
+                    onClick: ({object, x, y}) => showHardPopup({name: `KDE Grid Cell`, details: `Infrastructure Access Density: ${(object.density * 100).toFixed(1)}%`}, 'beacon', x, y)
+                }));
+            }
+
+            // 13. Spatial Science: Voronoi Tessellation
+            if (document.getElementById('layer-voronoi') && document.getElementById('layer-voronoi').checked) {
+                layers.push(new deck.PolygonLayer({
+                    id: 'spatial-voronoi',
+                    data: generateVoronoiPolygons([activeProjectCoords.longitude, activeProjectCoords.latitude]),
+                    getPolygon: d => d.polygon,
+                    getFillColor: [245, 158, 11, 20],
+                    getLineColor: [245, 158, 11, 150],
+                    getLineWidth: 2,
+                    stroked: true,
+                    pickable: true,
+                    onClick: ({object, x, y}) => showHardPopup({name: `Voronoi Substation Cell: ${object.stationName}`, details: `Capacity: ${object.capacity} | Service count: ${object.users} properties`}, 'beacon', x, y)
+                }));
+            }
+
+            // Bird on the Wire: Market Sentiment & Public Feedback Scouting connections
             if (activeScoutingTarget && scoutingConnections[activeScoutingTarget]) {
                 const links = scoutingConnections[activeScoutingTarget];
                 
@@ -1703,26 +3171,27 @@
                 title = `[BEACON: ${object.name}]`;
                 content = `
                     <strong>Layer:</strong> Altitude Beacons<br/>
+                    <strong>Category:</strong> ${object.category || 'General'}<br/>
                     <strong>Coordinates:</strong> [${object.longitude.toFixed(4)}, ${object.latitude.toFixed(4)}]<br/>
                     <strong>Altitude Tier:</strong> ${altitude > 100000 ? 'Sky (Metro Hub)' : 'Clouds (Corridors)'}<br/>
                     <strong>Pulse Score:</strong> ${(object.score || 8.0).toFixed(1)} / 10.0<br/>
                     <strong>Details:</strong> ${object.description || 'No direct telemetry logged.'}<br/>
-                    <button class="sigma-btn-amber" style="margin-top: 8px; width: 100%; height: 26px; font-size: 10px;" onclick="submitTerminalLot('${object.name.replace(/'/g, "\\'")}', ${object.latitude}, ${object.longitude}, ${object.score || 8.0}, '${(object.description || object.details || '').replace(/'/g, "\\'")}')">Submit for Review</button>
+                    <button class="sigma-btn-amber" style="margin-top: 8px; width: 100%; height: 28px; font-size: 10px;" onclick="submitTerminalLot('${object.name.replace(/'/g, "\\'")}', ${object.latitude}, ${object.longitude}, ${object.score || 8.0}, '${(object.description || object.details || '').replace(/'/g, "\\'")}')">Submit for Review</button>
                 `;
                 break;
             case 'tif':
                 title = `[L1 CITY TIF: ${object.name}]`;
                 content = `
-                    <strong>Lobe:</strong> City Brain (Zoning & Spending)<br/>
+                    <strong>Category:</strong> Zoning & Municipal Entitlements<br/>
                     <strong>TIF Rate:</strong> ${object.rate}<br/>
                     <strong>Rules:</strong> ${object.rules}<br/>
                     <strong>Risk Impact:</strong> Low Zoning Delay Risk
                 `;
                 break;
             case 'road':
-                title = `[L2 TxDOT: ${object.name}]`;
+                title = `[L2 ACCESS: ${object.name}]`;
                 content = `
-                    <strong>Lobe:</strong> TxDOT Traffic Grid (Highway)<br/>
+                    <strong>Category:</strong> Access, Egress & Traffic Capacity<br/>
                     <strong>Volume:</strong> ${object.traffic}<br/>
                     <strong>Congestion:</strong> ${object.level}<br/>
                     <strong>Calculated Delay:</strong> Minimal freight impact
@@ -1731,7 +3200,7 @@
             case 'power':
                 title = `[L3 GRID LINE: ${object.name}]`;
                 content = `
-                    <strong>Lobe:</strong> Power Brain (Load Spine)<br/>
+                    <strong>Category:</strong> Utilities & Infrastructure Capacity<br/>
                     <strong>Voltage:</strong> ${object.voltage}<br/>
                     <strong>Capacity:</strong> ${object.load}<br/>
                     <strong>Infrastructure Risk:</strong> Normal grid load lag
@@ -1740,7 +3209,7 @@
             case 'nimby':
                 title = `[L6 SENTIMENT: ${object.name}]`;
                 content = `
-                    <strong>Lobe:</strong> Pulse Brain (Risk Area)<br/>
+                    <strong>Category:</strong> Market Sentiment & Public Feedback<br/>
                     <strong>Level:</strong> <span style="color: #ef4444; font-weight: bold;">${object.risk}</span><br/>
                     <strong>Historical Notes:</strong> ${object.notes}<br/>
                     <strong>Zoning Variance Delay:</strong> Elevated risk
@@ -1749,7 +3218,7 @@
             case 'scout':
                 title = `[PULSE NODE: ${object.name}]`;
                 content = `
-                    <strong>Lobe:</strong> Pulse Scouting Network<br/>
+                    <strong>Category:</strong> Market Sentiment & Public Feedback<br/>
                     <strong>Ingestion Source:</strong> ${object.name}<br/>
                     <strong>Data Type:</strong> Municipal GIS Database<br/>
                     <strong>Link Status:</strong> <span style="color: #10b981; font-weight: bold;">CONNECTED (${object.status || 'Active'})</span>
@@ -1812,16 +3281,16 @@
     }
 
     const legendIntel = {
-        'sky-beacons': 'City Brain & Finance Brain™ macro-nodes representing aggregate zoning variance capacity and municipal debt corridors. High altitude visualization of target cities.',
-        'cloud-beacons': 'TxDOT highway egress routes and municipal water/sewage trunk lines with less than 24-month expected saturation. Target development corridors.',
-        'feasibility-high': 'Feasibility core scoring based on integrated 7-lobe neural matrix. Green indicates >7.0 score (optimal soil quality, compatible zoning, low NIMBY sentiment, high power buffer).',
+        'sky-beacons': 'Zoning & Underwriting macro-nodes representing aggregate zoning variance capacity and municipal debt corridors. High altitude visualization of target cities.',
+        'cloud-beacons': 'Traffic access highway egress routes and municipal water/sewage trunk lines with less than 24-month expected saturation. Target development corridors.',
+        'feasibility-high': 'Feasibility core scoring based on integrated real estate indexes. Green indicates >7.0 score (optimal soil quality, compatible zoning, low community opposition, high power buffer).',
         'feasibility-low': 'Site constraints detected. Red indicates ≤7.0 score (potential environmental contamination, zoning restrictions, NIMBY litigation risk, or grid load capacity limits).',
-        'scouting-node': 'Pulse Brain scraping nodes. Represents real-time connection to municipal GIS database servers harvesting zoning record updates.',
+        'scouting-node': 'Market Sentiment & Public Feedback scraping nodes. Represents real-time connection to municipal GIS database servers harvesting zoning record updates.',
         'scouting-stream': 'Scouting data pipeline representing active municipal data scraping streams back to HEXGROWTH\'s central PostGIS spine.',
-        'layer-city': 'City Brain: Overlay depicting Tax Increment Financing (TIF) boundaries and municipal rezoning buffers. Click to toggle.',
-        'layer-roads': 'TxDOT Brain: Calculated average daily traffic counts (AADT) and intersection delay coordinates. Click to toggle.',
-        'layer-power': 'Power Brain: High-voltage transmission corridors and distribution sub-stations showing load lag metrics. Click to toggle.',
-        'layer-mood': 'Pulse Brain: Area boundary of elevated local opposition, historical zoning variance denials, and community sentiment risk. Click to toggle.'
+        'layer-city': 'Zoning & Municipal Entitlements: Overlay depicting Tax Increment Financing (TIF) boundaries and municipal rezoning buffers. Click to toggle.',
+        'layer-roads': 'Access, Egress & Traffic Capacity: Calculated average daily traffic counts (AADT) and intersection delay coordinates. Click to toggle.',
+        'layer-power': 'Utilities & Infrastructure Capacity: High-voltage transmission corridors and distribution sub-stations showing load lag metrics. Click to toggle.',
+        'layer-mood': 'Market Sentiment & Public Feedback: Area boundary of elevated local opposition, historical zoning variance denials, and community sentiment risk. Click to toggle.'
     };
 
     function showLegendDetail(type) {
@@ -1939,7 +3408,7 @@
                     if (result.data.length === 0) {
                         listEl.innerHTML = 'No lots under review. Click a target lot on the map and click "SUBMIT FOR REVIEW" in the floating card.';
                     } else {
-                        let html = '<table style="width: 100%; border-collapse: collapse; font-size: 10px;">';
+                        let html = '<table class="sigma-data-grid" style="width: 100%; border-collapse: collapse; font-size: 10px;">';
                         html += '<thead><tr style="border-bottom: 1px solid var(--hex-border); color: var(--hex-cyan);"><th style="padding: 4px 0; text-align: left;">Name</th><th>Score</th><th>Status</th><th>Action</th></tr></thead><tbody>';
                         result.data.forEach(lot => {
                             html += `

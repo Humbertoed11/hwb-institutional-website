@@ -8,7 +8,8 @@ import os
 AGENTS = [
     ["python", "sigma_orchestrator.py"],
     # ["python", "news_updater.py"],
-    ["python", "watchdog.py"]
+    ["python", "watchdog.py"],
+    ["python", "scripts/telegram_listener.py"]
 ]
 
 def launch_agents():

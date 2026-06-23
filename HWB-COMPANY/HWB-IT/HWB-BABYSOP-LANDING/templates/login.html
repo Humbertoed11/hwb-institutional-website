@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HEXGROWTH | Secure Login</title>
+    <!-- SigmaFidelity™ High-Fidelity Tactical Stack -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --hex-obsidian: #020617; 
+            --hex-charcoal: #0f172a; 
+            --hex-cyan: #06b6d4;
+            --hex-emerald: #10b981; 
+            --hex-amber: #f59e0b; 
+            --hex-crimson: #ef4444;
+            --hex-violet: #8b5cf6; 
+            --hex-border: rgba(30, 41, 59, 0.5); 
+            --hex-glass: rgba(15, 23, 42, 0.85); 
+            --hex-text: #f8fafc; 
+            --hex-text-muted: #94a3b8;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: var(--hex-obsidian);
+            font-family: 'Inter', sans-serif;
+            color: var(--hex-text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Ambient grid pattern background */
+        .grid-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(6, 182, 212, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(6, 182, 212, 0.03) 1px, transparent 1px);
+            background-size: 30px 30px;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .login-card {
+            background: var(--hex-glass);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--hex-border);
+            border-top: 3px solid var(--hex-cyan);
+            border-radius: 6px;
+            width: 380px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 25px rgba(6, 182, 212, 0.15);
+            z-index: 10;
+            position: relative;
+        }
+
+        .card-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo-text {
+            font-weight: 800;
+            font-size: 24px;
+            letter-spacing: 2px;
+            color: var(--hex-text);
+            margin: 0 0 8px 0;
+        }
+
+        .logo-accent {
+            color: var(--hex-cyan);
+        }
+
+        .subtitle {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--hex-text-muted);
+            letter-spacing: 1.5px;
+            margin: 0;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--hex-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+        }
+
+        .form-input {
+            width: 100%;
+            box-sizing: border-box;
+            background: #000;
+            border: 1px solid var(--hex-border);
+            border-radius: 4px;
+            padding: 12px 16px;
+            color: white;
+            font-family: inherit;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+
+        .form-input:focus {
+            border-color: var(--hex-cyan);
+            outline: none;
+            box-shadow: 0 0 10px rgba(6, 182, 212, 0.2);
+        }
+
+        .submit-btn {
+            background: rgba(6, 182, 212, 0.1);
+            border: 1px solid var(--hex-cyan);
+            color: var(--hex-cyan);
+            padding: 12px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 800;
+            width: 100%;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.3s;
+            letter-spacing: 1px;
+            margin-top: 10px;
+        }
+
+        .submit-btn:hover {
+            background: var(--hex-cyan);
+            color: #000;
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.5);
+        }
+
+        .flash-messages {
+            margin-bottom: 20px;
+            font-size: 12px;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--hex-crimson);
+            color: var(--hex-crimson);
+            padding: 10px 14px;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .info-footer {
+            margin-top: 24px;
+            text-align: center;
+            font-size: 10px;
+            color: var(--hex-text-muted);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="grid-bg"></div>
+
+    <div class="login-card">
+        <div class="card-header">
+            <h1 class="logo-text">HEX<span class="logo-accent">GROWTH</span></h1>
+            <p class="subtitle">Geospatial Decision Platform</p>
+        </div>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for message in messages %}
+                        {{ message }}
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST">
+            <div class="form-group">
+                <label class="form-label" for="username">Username</label>
+                <input class="form-input" type="text" id="username" name="username" required autocomplete="username" autofocus>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="password">Password</label>
+                <input class="form-input" type="password" id="password" name="password" required autocomplete="current-password">
+            </div>
+            <button class="submit-btn" type="submit">Authenticate Session</button>
+        </form>
+
+        <div class="info-footer">
+            SECURED ENDPOINT • SYSTEM AUDIT ACTIVE
+        </div>
+    </div>
+
+</body>
+</html>

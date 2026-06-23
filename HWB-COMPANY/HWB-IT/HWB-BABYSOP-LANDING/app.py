@@ -136,8 +136,9 @@ def auto_sync_qms():
                             END;
                     """, (doc_id, title, category, content, rel_path, embedding))
 
-            if found_doc_ids:
-                cur.execute('DELETE FROM "HEX_KB_Library" WHERE doc_id NOT IN %s', (tuple(found_doc_ids),))
+            # Destructive database pruning disabled to preserve document creation timestamps for ISO 9001 compliance.
+            # if found_doc_ids:
+            #     cur.execute('DELETE FROM "HEX_KB_Library" WHERE doc_id NOT IN %s', (tuple(found_doc_ids),))
 
             conn.commit()
         conn.close()
@@ -311,6 +312,12 @@ def hexgrowth_hud() -> str:
 @login_required
 def hexgrowth_hud_terminal() -> str:
     return render_template('hud_terminal.html')
+
+@app.route('/hud/explorer')
+@app.route('/hexgrowth/hud/explorer')
+@login_required
+def hexgrowth_hud_explorer() -> str:
+    return render_template('hud_explorer.html')
 
 
 @app.route('/projects')

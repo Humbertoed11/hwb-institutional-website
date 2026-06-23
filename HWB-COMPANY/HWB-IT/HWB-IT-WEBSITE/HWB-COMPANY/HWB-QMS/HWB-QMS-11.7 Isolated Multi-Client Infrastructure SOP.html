@@ -1,0 +1,111 @@
+<!-- 
+    SigmaFidelity™ Institutional SOP: Isolated Multi-Client Infrastructure
+    Standard: HWB-QMS-1.0 v2.0 (HTML Baseline)
+    Document ID: HWB-QMS-11.7-ISOLATION
+-->
+<div class="sop-card">
+    <!-- 0.0 DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-11.7-ISOLATION</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.1.3 (Infrastructure)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <table>
+            <thead>
+                <tr>
+                    <th><strong>Document Control</strong></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td><strong>Document Title</strong></td><td><strong>Isolated Multi-Client Infrastructure SOP</strong></td></tr>
+                <tr><td><strong>Document ID</strong></td><td>HWB-QMS-11.7-ISOLATION</td></tr>
+                <tr><td><strong>Version</strong></td><td>1.0.0</td></tr>
+                <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
+                <tr><td><strong>Author</strong></td><td>George (Systems Architect)</td></tr>
+                <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
+                <tr><td><strong>Date</strong></td><td>05-22-2026</td></tr>
+                <tr><td><strong>ISO 9001 Clause</strong></td><td>7.1.3</td></tr>
+            </tbody>
+        </table>
+
+        <hr />
+
+        <h1>Standard Operating Procedure: <strong>Isolated Multi-Client Infrastructure</strong></h1>
+
+        <h2>1.0 Purpose</h2>
+        <p>To define the mandatory architecture for scaling the SigmaFidelity™ ecosystem to support non-cleaning clients. This SOP ensures <strong>Total Isolation</strong> between client environments, preventing data leaks and configuration conflicts while maintaining monolithic intelligence standards.</p>
+
+        <h2>2.0 Directory Architecture</h2>
+        <p>All new non-cleaning client projects must be placed in a dedicated root directory outside of the primary <code>gemini_projects</code> workspace.</p>
+        <ul>
+            <li><strong>Root Path:</strong> <code>/home/humbertoed/autonomous-nexus/</code></li>
+            <li><strong>Project Path:</strong> <code>/home/humbertoed/autonomous-nexus/[client-name]/</code></li>
+        </ul>
+
+        <h2>3.0 Docker Isolation Standards</h2>
+        <p>Each client project must utilize a standalone <code>docker-compose.yml</code> file with the following constraints:</p>
+        <ol>
+            <li><strong>Private Network:</strong> A dedicated bridge network (e.g., <code>[client]-net</code>) to isolate internal traffic.</li>
+            <li><strong>Isolated Databases:</strong> A dedicated PostgreSQL or SQLite instance unique to the client. No cross-database sharing is permitted.</li>
+            <li><strong>Unique Container Names:</strong> Containers must be prefixed with the client ID (e.g., <code>clientx_web_app</code>).</li>
+            <li><strong>Isolated Volumes:</strong> Permanent storage must be mapped to local paths within the client directory.</li>
+        </ol>
+
+        <h2>4.0 Neural Brain Isolation</h2>
+        <p>Each client environment must maintain its own <strong>Neural Interaction Core</strong> to ensure institutional memory is client-specific.</p>
+        <ul>
+            <li><strong>Local Mandates:</strong> A unique <code>GEMINI.md</code> in the project root defining client-specific business history and rules.</li>
+            <li><strong>Local SQL Brain:</strong> A client-specific <code>SigmaInteractionCore</code> table for audit traceability.</li>
+        </ul>
+
+        <div class="callout callout-logic">
+            <strong>Security Logic</strong>
+            <p>Total separation means that a failure or vulnerability in one client environment cannot compromise the integrity of the cleaning services factory or other client projects.</p>
+        </div>
+
+        <h2>5.0 Initialization Procedure</h2>
+        <ol>
+            <li><strong>Scaffold Root:</strong> <code>mkdir -p /home/humbertoed/autonomous-nexus/[client]</code>.</li>
+            <li><strong>Bootstrap Docker:</strong> Create <code>docker-compose.yml</code> using the SigmaFidelity standard.</li>
+            <li><strong>Inject Mandates:</strong> Copy the global <code>GEMINI.md</code> and refine the local version for the new client.</li>
+            <li><strong>Deploy:</strong> <code>docker-compose up -d</code>.</li>
+        </ol>
+
+        <h2>6.0 Verification (Zero-Defect Check)</h2>
+        <ul>
+            <li>Are the new client files located outside of <code>gemini_projects</code>?</li>
+            <li>Does the <code>docker ps</code> output show isolated container prefixes?</li>
+            <li>Is the client data stored in a unique database instance?</li>
+        </ul>
+
+        <h2>7.0 Revision History</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Version</th>
+                    <th>Date</th>
+                    <th>Author</th>
+                    <th>Change Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1.0.0</td>
+                    <td>05-22-2026</td>
+                    <td>George</td>
+                    <td>Initial Release. Codified the Isolated Multi-Client Infrastructure standard.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="sop-card-footer">
+        <span>&copy; 2026 HWB Cleaning Services LLC</span>
+        <span>Controlled Document | HWB-QMS-11.7-ISOLATION</span>
+        <span>Page <span class="page-number"></span></span>
+    </div>
+</div>

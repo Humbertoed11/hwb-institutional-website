@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HEXGROWTH | Project Management Hub</title>
+    <!-- SigmaFidelity™ High-Fidelity Tactical Stack -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --hex-obsidian: #020617;
+            --hex-charcoal: #0f172a;
+            --hex-panel: #1e293b;
+            --hex-cyan: #06b6d4;
+            --hex-emerald: #10b981;
+            --hex-amber: #f59e0b;
+            --hex-crimson: #ef4444;
+            --hex-violet: #8b5cf6;
+            --hex-border: rgba(30, 41, 59, 0.7);
+            --hex-glass: rgba(15, 23, 42, 0.9);
+            --hex-text: #f8fafc;
+            --hex-text-muted: #94a3b8;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--hex-obsidian);
+            color: var(--hex-text);
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            box-sizing: border-box;
+        }
+
+        /* 🔬 CUSTOM SCROLLBARS (SigmaFidelity Standard) */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; border: 1px solid var(--hex-border); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--hex-cyan); }
+
+        .portal-layout {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .portal-content {
+            flex-grow: 1;
+            padding: 2.5rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box;
+            display: grid;
+            grid-template-columns: 420px 1fr;
+            gap: 2.5rem;
+        }
+
+        @media (max-width: 1100px) {
+            .portal-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Forms Layout & Outlined container */
+        .sigma-form-container {
+            background: var(--hex-glass);
+            border: 1px solid var(--hex-border);
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            height: fit-content;
+            position: sticky;
+            top: 85px;
+        }
+
+        .form-title {
+            font-size: 14px;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: var(--hex-cyan);
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            letter-spacing: 1.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid var(--hex-border);
+            padding-bottom: 8px;
+        }
+
+        .sigma-form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .sigma-form-label {
+            display: block;
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--hex-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 6px;
+        }
+
+        .sigma-form-input {
+            width: 100%;
+            box-sizing: border-box;
+            height: 38px;
+            padding: 0 12px;
+            font-size: 12px;
+            border-radius: 6px;
+            border: 1px solid var(--hex-border);
+            background: #020617;
+            color: #fff;
+            outline: none;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .sigma-form-input:focus {
+            border-color: var(--hex-cyan);
+            box-shadow: 0 0 10px rgba(6, 182, 212, 0.2);
+        }
+
+        textarea.sigma-form-input {
+            height: 80px;
+            padding: 10px 12px;
+            resize: none;
+        }
+
+        .asymmetric-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        /* Custom buttons system */
+        .sigma-btn-cyan {
+            height: 38px;
+            background: rgba(6, 182, 212, 0.1);
+            border: 1px solid var(--hex-cyan);
+            color: var(--hex-cyan);
+            font-weight: 800;
+            font-size: 11px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            border-radius: 6px;
+            width: 100%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .sigma-btn-cyan:hover {
+            background: var(--hex-cyan);
+            color: #000;
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.5);
+        }
+
+        /* Right grid & Project cards */
+        .workspace-deck {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .deck-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--hex-border);
+            padding-bottom: 12px;
+            margin-bottom: 1rem;
+        }
+
+        .deck-title {
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: 1px;
+        }
+
+        .project-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.25rem;
+        }
+
+        .project-card {
+            background: var(--hex-glass);
+            border: 1px solid var(--hex-border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .project-card:hover {
+            border-color: var(--hex-cyan);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(6, 182, 212, 0.1);
+        }
+
+        .card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .project-name {
+            font-size: 16px;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: 0.5px;
+        }
+
+        .project-meta-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .badge {
+            font-size: 9px;
+            font-weight: 800;
+            text-transform: uppercase;
+            padding: 4px 8px;
+            border-radius: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-region { background: rgba(139, 92, 246, 0.15); border: 1px solid var(--hex-violet); color: #c084fc; }
+        .badge-status { background: rgba(245, 158, 11, 0.15); border: 1px solid var(--hex-amber); color: #fbbf24; }
+        .badge-status.closed { background: rgba(16, 185, 129, 0.15); border: 1px solid var(--hex-emerald); color: #34d399; }
+        .badge-lobe { background: rgba(6, 182, 212, 0.15); border: 1px solid var(--hex-cyan); color: #22d3ee; }
+
+        .project-description {
+            font-size: 12px;
+            line-height: 1.6;
+            color: var(--hex-text-muted);
+            margin: 0;
+        }
+
+        .kpi-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            background: #020617;
+            padding: 10px 14px;
+            border-radius: 6px;
+            border: 1px solid var(--hex-border);
+            text-align: center;
+        }
+
+        .kpi-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .kpi-item:not(:last-child) {
+            border-right: 1px solid var(--hex-border);
+        }
+
+        .kpi-label {
+            font-size: 8px;
+            font-weight: 600;
+            color: var(--hex-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .kpi-value {
+            font-size: 13px;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            color: #fff;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 4px;
+        }
+
+        .sigma-btn-viewport {
+            flex: 1;
+            height: 32px;
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid var(--hex-border);
+            color: #fff;
+            font-weight: 600;
+            font-size: 10px;
+            text-transform: uppercase;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .sigma-btn-viewport:hover {
+            border-color: var(--hex-cyan);
+            background: rgba(6, 182, 212, 0.05);
+            color: var(--hex-cyan);
+        }
+
+        .sigma-btn-viewport.terminal:hover {
+            border-color: var(--hex-emerald);
+            background: rgba(16, 185, 129, 0.05);
+            color: var(--hex-emerald);
+        }
+
+        .sigma-btn-delete {
+            width: 32px;
+            height: 32px;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: var(--hex-crimson);
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .sigma-btn-delete:hover {
+            background: var(--hex-crimson);
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+
+<div class="portal-layout">
+    {% set header_type = 'PORTAL' %}
+    {% set active_nav = 'projects' %}
+    {% include "components/brand_header.html" %}
+
+    <main class="portal-content">
+        <!-- Left: Create Project Form -->
+        <aside class="sigma-form-container">
+            <h2 class="form-title">⚡ Ingest New Target Project</h2>
+            <form id="create-project-form" onsubmit="event.preventDefault(); submitProject();">
+                <div class="sigma-form-group">
+                    <label class="sigma-form-label" for="proj-name">Project Identifier</label>
+                    <input type="text" id="proj-name" class="sigma-form-input" placeholder="e.g. HOUSTON ENERGY CORRIDOR" required>
+                </div>
+
+                <div class="asymmetric-row">
+                    <div class="sigma-form-group">
+                        <label class="sigma-form-label" for="proj-region">Target Region</label>
+                        <select id="proj-region" class="sigma-form-input" style="height: 38px;">
+                            <option value="Dallas">Dallas</option>
+                            <option value="Decatur">Decatur</option>
+                            <option value="Valley View">Valley View</option>
+                            <option value="Houston">Houston</option>
+                            <option value="Austin">Austin</option>
+                        </select>
+                    </div>
+                    <div class="sigma-form-group">
+                        <label class="sigma-form-label" for="proj-status">Lifecycle Status</label>
+                        <select id="proj-status" class="sigma-form-input" style="height: 38px;">
+                            <option value="Feasibility Assessment">Feasibility</option>
+                            <option value="Under Contract">Under Contract</option>
+                            <option value="Closed / Underway">Closed / Active</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="asymmetric-row">
+                    <div class="sigma-form-group">
+                        <label class="sigma-form-label" for="proj-budget">CapEx Underwritten ($)</label>
+                        <input type="number" id="proj-budget" class="sigma-form-input" value="15000000" min="0" step="500000">
+                    </div>
+                    <div class="sigma-form-group">
+                        <label class="sigma-form-label" for="proj-irr">Target IRR (%)</label>
+                        <input type="number" id="proj-irr" class="sigma-form-input" value="15.0" min="0" max="100" step="0.1">
+                    </div>
+                </div>
+
+                <div class="sigma-form-group">
+                    <label class="sigma-form-label" for="proj-lobe">Primary Feasibility Lobe</label>
+                    <select id="proj-lobe" class="sigma-form-input" style="height: 38px;">
+                        <option value="L1 City (Zoning)">L1 City (Zoning)</option>
+                        <option value="L2 Roads (TxDOT)">L2 Roads (TxDOT)</option>
+                        <option value="L3 Grid (Power)">L3 Grid (Power)</option>
+                        <option value="L6 Sentiment (Pulse)">L6 Sentiment (Pulse)</option>
+                    </select>
+                </div>
+
+                <div class="sigma-form-group">
+                    <label class="sigma-form-label" for="proj-desc">Project Overview & Objectives</label>
+                    <textarea id="proj-desc" class="sigma-form-input" placeholder="Ingest coordinates details, easement restrictions..."></textarea>
+                </div>
+
+                <button type="submit" class="sigma-btn-cyan">Manifest Project Instance</button>
+            </form>
+        </aside>
+
+        <!-- Right: Active Project Grid -->
+        <section class="workspace-deck">
+            <div class="deck-header">
+                <h1 class="deck-title">🗂️ Active Geospatial Projects</h1>
+                <span style="font-size: 11px; font-weight: 800; color: var(--hex-cyan); background: rgba(6,182,212,0.1); padding: 4px 10px; border-radius: 4px; border: 1px solid var(--hex-cyan);">{{ projects | length }} INSTANCES ACTIVE</span>
+            </div>
+
+            <div class="project-grid" id="project-list-container">
+                {% for p in projects %}
+                <div class="project-card" id="project-card-{{ p.id }}" onclick="launchViewport('{{ p.name | lower }}', 'standard')">
+                    <div class="card-top">
+                        <div>
+                            <div class="project-name">{{ p.name }}</div>
+                            <div style="font-size: 10px; color: var(--hex-text-muted); margin-top: 4px;">Ingested: {{ p.date_str }}</div>
+                        </div>
+                        <div class="project-meta-badges">
+                            <span class="badge badge-region">{{ p.region }}</span>
+                            <span class="badge badge-status {% if p.status == 'Closed / Underway' %}closed{% endif %}">{{ p.status }}</span>
+                            <span class="badge badge-lobe">{{ p.primary_lobe }}</span>
+                        </div>
+                    </div>
+
+                    <p class="project-description">{{ p.description or 'No overview description supplied for this project instance.' }}</p>
+
+                    <div class="kpi-row">
+                        <div class="kpi-item">
+                            <span class="kpi-label">CAPEX</span>
+                            <span class="kpi-value">${{ (p.budget | float / 1000000.0) | round(1) }}M</span>
+                        </div>
+                        <div class="kpi-item">
+                            <span class="kpi-label">TARGET IRR</span>
+                            <span class="kpi-value">{{ p.target_irr }}%</span>
+                        </div>
+                        <div class="kpi-item">
+                            <span class="kpi-label">COORDS</span>
+                            <span class="kpi-value" style="font-size: 10px;">{{ p.latitude | round(3) }}, {{ p.longitude | round(3) }}</span>
+                        </div>
+                    </div>
+
+                    <div class="card-actions">
+                        <button class="sigma-btn-viewport" onclick="event.stopPropagation(); launchViewport('{{ p.name | lower }}', 'standard')">
+                            🗺️ Standard HUD
+                        </button>
+                        <button class="sigma-btn-viewport terminal" onclick="event.stopPropagation(); launchViewport('{{ p.name | lower }}', 'terminal')">
+                            📊 Hex-Terminal
+                        </button>
+                        <button class="sigma-btn-viewport" style="border-color: var(--hex-amber); color: var(--hex-amber); background: rgba(245,158,11,0.1);" onclick="event.stopPropagation(); window.open('/reports/{{ p.id }}', '_blank')">
+                            📄 Compiled Report
+                        </button>
+                        <button class="sigma-btn-viewport" style="border-color: #a855f7; color: #a855f7; background: rgba(168,85,247,0.1);" onclick="event.stopPropagation(); window.open('/reports/max/{{ p.id }}', '_blank')">
+                            👑 Max Report
+                        </button>
+                        <button class="sigma-btn-delete" onclick="event.stopPropagation(); deleteProject({{ p.id }})" title="Delete project instance">
+                            🗑️
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+    </main>
+</div>
+
+<script>
+    async function submitProject() {
+        const name = document.getElementById('proj-name').value.trim();
+        const region = document.getElementById('proj-region').value;
+        const status = document.getElementById('proj-status').value;
+        const budget = document.getElementById('proj-budget').value;
+        const target_irr = document.getElementById('proj-irr').value;
+        const primary_lobe = document.getElementById('proj-lobe').value;
+        const description = document.getElementById('proj-desc').value.trim();
+
+        try {
+            const response = await fetch('/api/v1/projects', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, region, status, budget, target_irr, primary_lobe, description })
+            });
+            const result = await response.json();
+            if (result.status === 'success') {
+                // Reload to sync state and update dropdown list
+                window.location.reload();
+            } else {
+                alert("Ingestion Failure: " + result.message);
+            }
+        } catch (err) {
+            console.error("Error creating project:", err);
+            alert("Connection error during project creation.");
+        }
+    }
+
+    async function deleteProject(id) {
+        if (!confirm("Are you sure you want to permanently delete this project instance? This action is irreversible.")) return;
+        try {
+            const response = await fetch('/api/v1/projects/' + id, {
+                method: 'DELETE'
+            });
+            const result = await response.json();
+            if (result.status === 'success') {
+                const card = document.getElementById('project-card-' + id);
+                if (card) card.remove();
+                // Optionally reload to update header dropdown list
+                window.location.reload();
+            } else {
+                alert("Deletion Failure: " + result.message);
+            }
+        } catch (err) {
+            console.error("Error deleting project:", err);
+            alert("Connection error during deletion.");
+        }
+    }
+
+    function launchViewport(projectName, style) {
+        if (style === 'terminal') {
+            window.location.href = '/hud/terminal?project=' + encodeURIComponent(projectName);
+        } else {
+            window.location.href = '/hud?project=' + encodeURIComponent(projectName);
+        }
+    }
+</script>
+</body>
+</html>

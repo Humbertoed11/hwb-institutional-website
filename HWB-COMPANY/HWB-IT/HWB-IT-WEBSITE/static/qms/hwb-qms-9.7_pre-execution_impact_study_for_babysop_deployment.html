@@ -1,0 +1,157 @@
+
+<div class="sop-card">
+    <!-- 0.0 DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-9.7</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">8.5.1 (Control of Production & Service Provision)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <table>
+<thead>
+<tr>
+<th style="text-align: left;"><strong>Document Control</strong></th>
+<th style="text-align: left;"></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Document Title</strong></td>
+<td style="text-align: left;"><strong>Pre-Execution Impact Study for BabySOP Deployment</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Document ID</strong></td>
+<td style="text-align: left;">HWB-QMS-9.7</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Version</strong></td>
+<td style="text-align: left;">1.0</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Status</strong></td>
+<td style="text-align: left;">APPROVED</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Author</strong></td>
+<td style="text-align: left;">George (Systems Architect)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Approved By</strong></td>
+<td style="text-align: left;">Humberto Dominguez, CEO</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Date</strong></td>
+<td style="text-align: left;">2026-06-06</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>ISO 9001 Clause</strong></td>
+<td style="text-align: left;">8.5.1 (Control of Production &amp; Service Provision)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1 id="standard-operating-procedure-report-pre-execution-impact-study-for-babysop-deployment">Standard Operating Procedure / Report: <strong>Pre-Execution Impact Study for BabySOP Deployment</strong></h1>
+<h2 id="10-purpose">1.0 Purpose</h2>
+<p>This document conducts a pre-execution impact study for the upcoming deployment of the BabySOP landing page and spatial routing engine to the production slot of <code>www.babysop.com</code>. This audit satisfies the Pre-Execution Impact Study Mandate (Executive Directive HEX-REPORT-17.0 Section 3.3) to ensure zero downtime and prevent configuration regression.</p>
+<h2 id="20-scope">2.0 Scope</h2>
+<p>This study applies to:
+1. The deployment workflow: <code>.github/workflows/babysop-deploy.yml</code> in <code>/home/humbertoed/gemini_projects/</code>.
+2. The BabySOP Flask application: <code>HWB-COMPANY/HWB-IT/HWB-BABYSOP-LANDING/app.py</code>.
+3. The Azure App Service target: <code>hwb-babysop-landing</code> under resource group <code>HWB-SIGMAJAN-PROD</code>.</p>
+<hr />
+<h2 id="30-pre-execution-impact-study">3.0 Pre-Execution Impact Study</h2>
+<h3 id="31-environment-parity-assessment">3.1 Environment Parity Assessment</h3>
+<ul>
+<li><strong>Local Sandbox Configuration</strong>:<ul>
+<li>Runs locally over HTTP without TLS/SSL.</li>
+<li>Session cookies do not require the <code>Secure</code> flag, preventing login verification loops.</li>
+<li>Connection target: <code>postgresql://hexadmin:hexpassword@hex_postgis_db:5432/hex_dev_db</code>.</li>
+</ul>
+</li>
+<li><strong>Production Configuration (<code>www.babysop.com</code>)</strong>:<ul>
+<li>Enforces HTTPS-only traffic.</li>
+<li>Requires <code>SESSION_COOKIE_SECURE=True</code> to prevent credential exposure.</li>
+<li>App Service must bind to the standard dynamic <code>$PORT</code> assigned by Azure.</li>
+<li>Connection target: Managed Azure PostGIS instance defined via Azure App Service configuration.</li>
+</ul>
+</li>
+</ul>
+<h3 id="32-system-dependency-risks">3.2 System Dependency Risks</h3>
+<ol>
+<li><strong>Packaging Directory Pathing</strong>:<ul>
+<li><em>Risk</em>: The existing GitHub Actions workflow <code>babysop-deploy.yml</code> packages the entire <code>gemini_projects</code> repository. Since there is no <code>app.py</code> or <code>Procfile</code> at the root, Azure Web App will fail to resolve the application entry point, resulting in a <strong>500 Internal Server Error</strong>.</li>
+<li><em>Mitigation</em>: Adjust the packaging step to transition (<code>cd</code>) into <code>HWB-COMPANY/HWB-IT/HWB-BABYSOP-LANDING</code> before zip compilation, placing <code>app.py</code> and <code>Procfile</code> at the root of the output <code>release.zip</code>.</li>
+</ul>
+</li>
+<li><strong>Session Cookie Exposure</strong>:<ul>
+<li><em>Risk</em>: If <code>SESSION_COOKIE_SECURE</code> is not conditionally configured based on the environment, session cookies could be transmitted in plaintext or logins could fail on local dev sandboxes.</li>
+<li><em>Mitigation</em>: Implement conditional cookie configuration in <code>app.py</code> mirroring <code>main_app.py</code>.</li>
+</ul>
+</li>
+<li><strong>Database Connection Handshake</strong>:<ul>
+<li><em>Risk</em>: If Azure App Service does not have the <code>DATABASE_URL</code> or <code>SECRET_KEY</code> configured in its application settings, the application will crash during database initialization on startup.</li>
+<li><em>Mitigation</em>: Verify and stage application settings in the Azure Portal before releasing.</li>
+</ul>
+</li>
+</ol>
+<h3 id="33-rollback-path">3.3 Rollback Path</h3>
+<p>In the event of a deployment failure:
+1.  <strong>Immediate Revert</strong>: Revert the <code>git push</code> by pushing the previous working commit SHA to the master branch.
+2.  <strong>Manual Package Deployment</strong>: Redeploy the last validated local package (<code>release_backup_06-04-2026.zip</code>) directly using the Azure CLI:
+    ```bash
+    az webapp deployment source config-zip --resource-group HWB-SIGMAJAN-PROD --name babysop-landing --src HWB-COMPANY/HWB-IT/HWB-BABYSOP-LANDING/release_backup_06-04-2026.zip
+    </div></p>
+<hr />
+<h2 id="40-action-plan">4.0 Action Plan</h2>
+<h3 id="41-step-1-code-level-hardening">4.1 Step 1: Code-Level Hardening</h3>
+<ol>
+<li>Update <code>HWB-COMPANY/HWB-IT/HWB-BABYSOP-LANDING/app.py</code> to conditionally configure <code>SESSION_COOKIE_SECURE</code>, <code>SESSION_COOKIE_HTTPONLY</code>, and <code>SESSION_COOKIE_SAMESITE</code>.</li>
+<li>Import <code>timedelta</code> from <code>datetime</code> to support permanent session lifetime timeouts.</li>
+</ol>
+<h3 id="42-step-2-build-workflow-correction">4.2 Step 2: Build Workflow Correction</h3>
+<p>Modify <code>gemini_projects/.github/workflows/babysop-deploy.yml</code> to:
+1.  Run <code>pip install -r requirements.txt</code> from the <code>HWB-COMPANY/HWB-IT/HWB-BABYSOP-LANDING</code> folder.
+2.  Change packaging directory to zip only files within <code>HWB-COMPANY/HWB-IT/HWB-BABYSOP-LANDING</code> directly into the root of <code>release.zip</code>.</p>
+<h3 id="43-step-3-staging-and-verification">4.3 Step 3: Staging and Verification</h3>
+<ol>
+<li>Verify the local Flask instance running on Port 5100 functions correctly.</li>
+<li>Perform a trial zip compilation locally to verify the structure matches.</li>
+</ol>
+<hr />
+<h2 id="50-verification-checklist">5.0 Verification Checklist</h2>
+<ul>
+<li>[ ] Does <code>unzip -l release.zip</code> confirm <code>app.py</code> and <code>Procfile</code> are at the root level?</li>
+<li>[ ] Does the conditional cookie configuration allow local login without loops?</li>
+<li>[ ] Is <code>DATABASE_URL</code> configured on the production Azure App Service?</li>
+<li>[ ] Is the GitHub secret <code>AZUREAPPSERVICE_PUBLISHPROFILE_BABYSOP</code> verified?</li>
+</ul>
+<hr />
+<h2 id="60-revision-history">6.0 Revision History</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Version</th>
+<th style="text-align: left;">Date</th>
+<th style="text-align: left;">Author</th>
+<th style="text-align: left;">Change Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1.0</td>
+<td style="text-align: left;">2026-06-06</td>
+<td style="text-align: left;">George</td>
+<td style="text-align: left;">Initial release of Pre-Execution Impact Study for BabySOP landing page.</td>
+</tr>
+</tbody>
+</table>
+    </div>
+
+    <div class="sop-card-footer">
+        <span>&copy; 2026 HWB Cleaning Services LLC</span>
+        <span>Controlled Document | HWB-QMS-9.7</span>
+        <span>Page <span class="page-number"></span></span>
+    </div>
+</div>

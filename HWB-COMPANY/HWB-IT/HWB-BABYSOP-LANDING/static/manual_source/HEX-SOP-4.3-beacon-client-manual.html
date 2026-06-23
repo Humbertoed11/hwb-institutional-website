@@ -1,0 +1,112 @@
+<!-- 
+    HEXGROWTH Institutional QMS Document
+    Standard: HEX-QMS-1.0
+    Document ID: HEX-SOP-4.3
+    Version: 1.0.0
+-->
+<div class="sop-card">
+    <!-- DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HEX-SOP-4.3</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #10b981;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Author</span><span class="meta-val">George Bytes (Lead Auditor)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <h1>Master Operating Procedure: <strong>Opportunity & Alarm Beacons</strong></h1>
+        <p><strong>Scope:</strong> Details the technical layout, client control interfaces, and backend endpoints governing three dimensional altitude beacons and the dynamic general alarm beacon.</p>
+
+        <hr />
+
+        <h2>1.0 Beacon Hierarchy & Altitude Tiers</h2>
+        <p>The system visualizes spatial anomalies and development targets using vertical markers mapped to specific elevation layers:</p>
+        <ul>
+            <li><strong>Sky Tier (Altitude > 100,000 feet):</strong> Represents metropolitan hubs (such as DFW Hub or Wise County Hub) that indicate aggregate regional zoning variance capacities and municipal debt.</li>
+            <li><strong>Clouds Tier (Altitude between 25,000 and 100,000 feet):</strong> Represents target corridors and logistics spurs (such as Northwest Highway or Decatur Growth path) optimized for shipping egress.</li>
+            <li><strong>Ground Tier (Altitude &lt;= 25,000 feet):</strong> Renders parcel outlines, PostGIS cell scores, and neighborhood opposition buffers. Beacons are hidden at this zoom level to maintain visibility.</li>
+        </ul>
+
+        <hr />
+
+        <h2>2.0 Dynamic General Alarm Beacon</h2>
+        <p>To alert clients at 70,000 feet (Clouds Tier) to specific regional activities, a dedicated general alarm beacon is positioned in the center of the active mapping grid. Clients can dynamically customize this beacon through the interface:</p>
+
+        <h3>2.1 Color Codes & Category Selections</h3>
+        <p>The client can assign one of the following categories and corresponding colors to the alarm beacon:</p>
+        <table class="sigma-data-grid">
+            <thead>
+                <tr>
+                    <th>Alert Category</th>
+                    <th>Color Choice</th>
+                    <th>RGB Representation</th>
+                    <th>Operational Severity</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><b>Security Alert</b></td>
+                    <td>Red</td>
+                    <td><code>239, 68, 68</code></td>
+                    <td>High: Immediate developer action required</td>
+                </tr>
+                <tr>
+                    <td><b>Environmental Hazard</b></td>
+                    <td>Orange</td>
+                    <td><code>249, 115, 22</code></td>
+                    <td>Medium: Soil or floodplain obstruction</td>
+                </tr>
+                <tr>
+                    <td><b>Zoning Delay</b></td>
+                    <td>Yellow</td>
+                    <td><code>234, 179, 8</code></td>
+                    <td>Medium: Variance application setback</td>
+                </tr>
+                <tr>
+                    <td><b>General Alert</b></td>
+                    <td>Green</td>
+                    <td><code>16, 185, 129</code></td>
+                    <td>Low: Normal system diagnostic flag</td>
+                </tr>
+                <tr>
+                    <td><b>Traffic Congestion</b></td>
+                    <td>Blue</td>
+                    <td><code>59, 130, 246</code></td>
+                    <td>Low: Info level logistics count shift</td>
+                </tr>
+                <tr>
+                    <td><b>Power Grid Failure</b></td>
+                    <td>Cyan</td>
+                    <td><code>6, 182, 212</code></td>
+                    <td>Medium: Utility substation load delay</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <hr />
+
+        <h2>3.0 Client Interface Controls</h2>
+        <p>The customizable options are exposed directly in the sidebar panel:</p>
+        <ol>
+            <li><strong>Category Dropdown:</strong> Elects the alert class to write to the database (Security, Zoning, Traffic, or Power).</li>
+            <li><strong>Color Selector:</strong> Changes the visual RGB tint of the pulsing circle on the Deck.gl map layer.</li>
+            <li><strong>Update Button:</strong> Sends an asynchronous network request to commit the settings and update the map layer in real time.</li>
+        </ol>
+
+        <hr />
+
+        <h2>4.0 API Endpoint Integration</h2>
+        <p>The client controls communicate with PostgreSQL through two primary Flask routes:</p>
+        <ul>
+            <li><code>GET /api/v1/beacons</code>: Returns a list of all active beacons including coordinates, altitude tier, description, color string, and category.</li>
+            <li><code>POST /api/v1/beacons/alarm</code>: Receives a JSON payload containing the chosen category and color, updating the corresponding record in the database.</li>
+        </ul>
+    </div>
+
+    <!-- DOCUMENT CONTROL FOOTER -->
+    <div class="sop-card-footer">
+        <div>Classification: Institutional ISO 9001 QMS Record</div>
+        <div>Effective Date: 06/08/2026</div>
+        <div>Review Cycle: Annual (Rev 1.0.0)</div>
+    </div>
+</div>

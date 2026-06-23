@@ -25,6 +25,42 @@
         </div>
     </div>
 
+    <!-- Today's In-Session Releases Card (Conspicuous High-Density Panel) -->
+    {% if today_sops %}
+    <div class="sigma-form-container" style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #2563eb; border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span style="position: relative; display: flex; height: 8px; width: 8px;">
+                    <span style="animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite; position: absolute; display: inline-block; height: 100%; width: 100%; border-radius: 9999px; background-color: #10b981; opacity: 0.75;"></span>
+                    <span style="position: relative; display: inline-block; border-radius: 9999px; height: 8px; width: 8px; background-color: #10b981;"></span>
+                </span>
+                <h2 style="font-size: 0.95rem; font-weight: 800; color: #0f172a; margin: 0; text-transform: uppercase; letter-spacing: 0.05em;">Today's Active Releases</h2>
+            </div>
+            <span style="font-size: 0.75rem; font-weight: 700; color: #2563eb; background: #eff6ff; padding: 0.15rem 0.5rem; border-radius: 4px; border: 1px solid #dbeafe;">{{ today_sops|length }} UPDATES</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+            {% for sop in today_sops %}
+            <div class="sop-today-row" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.75rem 1rem; display: flex; justify-content: space-between; align-items: center; transition: all 0.15s ease-in-out;" onmouseover="this.style.borderColor='#3b82f6'; this.style.background='#f1f5f9';" onmouseout="this.style.borderColor='#e2e8f0'; this.style.background='#ffffff';">
+                <div style="display: flex; align-items: center; gap: 0.75rem; flex-grow: 1; min-width: 0;">
+                    <span style="font-size: 0.65rem; font-weight: 800; color: #ffffff; background: #2563eb; padding: 0.15rem 0.4rem; border-radius: 3px; white-space: nowrap;">{{ sop.id }}</span>
+                    <span style="font-size: 0.85rem; font-weight: 600; color: #1e293b; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">{{ sop.title.replace('Standard Operating Procedure: ', '') }}</span>
+                </div>
+                <a href="{{ url_for('view_sop', filename=sop.file) }}" style="height: 30px; line-height: 28px; padding: 0 0.85rem; border-radius: 4px; border: 1px solid #2563eb; background: #2563eb; color: #ffffff; font-size: 0.75rem; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 0.25rem; transition: all 0.15s; white-space: nowrap;" onmouseover="this.style.background='#1d4ed8'; this.style.borderColor='#1d4ed8';" onmouseout="this.style.background='#2563eb'; this.style.borderColor='#2563eb';">
+                    View SOP
+                    <svg style="width: 12px; height: 12px; fill: currentColor;" viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    <style>
+        @keyframes ping {
+            0% { transform: scale(1); opacity: 1; }
+            75%, 100% { transform: scale(2); opacity: 0; }
+        }
+    </style>
+    {% endif %}
+
     <!-- Enterprise Tab Rack -->
     <div class="sigma-tab-rack" style="display: flex; gap: 0.25rem; margin-bottom: 2.5rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0px; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none;">
         <button class="sigma-tab active" data-dept="all" style="background: none; border: none; padding: 0.75rem 1.25rem; font-size: 0.85rem; font-weight: 600; color: #2563eb; cursor: pointer; border-bottom: 3px solid #2563eb; transition: all 0.2s; white-space: nowrap;">

@@ -1,0 +1,72 @@
+<!-- 
+    HEXGROWTH Institutional SOP: QGIS AI Integration
+    Standard: HEX-QMS-1.0
+    Document ID: HEX-SOP-4.2-QGIS-INTEGRATION
+-->
+<div class="sop-card">
+    <!-- DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HEX-SOP-4.2-QGIS-INTEGRATION</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #10b981;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Author</span><span class="meta-val">George Bytes (Lead Architect)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <h1>Standard Operating Procedure: <strong>QGIS AI Integration & MCP Orchestration</strong></h1>
+        
+        <h2>1.0 Purpose</h2>
+        <p>To record and formalize research regarding the integration of Large Language Models with QGIS (Geographic Information System) using the Model Context Protocol. This protocol enables autonomous agents to interact directly with QGIS to run mapping operations, load layout layers, and compile spatial reports.</p>
+
+        <h2>2.0 Core Integration Architecture</h2>
+        <p>The system connects AI models to QGIS through two way communication channels:</p>
+        <ul>
+            <li><strong>Model Context Protocol Server:</strong> An MCP server runs locally, exposing QGIS Python API methods as tools that the AI model can execute.</li>
+            <li><strong>JSON RPC Communication:</strong> Commands from the AI agent are translated into JSON RPC calls and sent to the QGIS python console port to execute scripts in the active QGIS session.</li>
+            <li><strong>Dynamic Scripting:</strong> Rather than hard coding every mapping feature, the AI reads the active layer properties, generates custom python logic, and runs it to style map features or execute spatial queries.</li>
+        </ul>
+
+        <h2>3.0 Key Spatial Operations Supported</h2>
+        <ol>
+            <li><strong>Layer Loading and Styling:</strong> Loading shapefiles, raster maps, or GeoJSON layers, and applying color palettes based on criteria like land values or traffic metrics.</li>
+            <li><strong>Geoprocessing Tasks:</strong> Computing buffers, intersections, and hexagonal tessellations dynamically via the processing toolset.</li>
+            <li><strong>Layout Generation:</strong> Generating print layouts and exporting high resolution maps to files.</li>
+        </ol>
+
+        <h2>4.0 Applications to HEXGROWTH</h2>
+        <p>Integrating QGIS automation into the HEXGROWTH workspace allows:</p>
+        <ul>
+            <li><strong>Automated Map Production:</strong> The accountability and reporting brains can automatically trigger QGIS in the background to render submarket maps for developer reports.</li>
+            <li><strong>Visual Auditing:</strong> The scout brain can load new municipal zoning shapefiles into a QGIS canvas to run visual sanity checks before importing them to the PostGIS spine.</li>
+        </ul>
+
+        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 3rem 0;" />
+        
+        <h2>Document Revision History</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Revision</th>
+                    <th>Date</th>
+                    <th>Description of Change</th>
+                    <th>Author / Approved By</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>1.0.0</strong></td>
+                    <td>06/06/2026</td>
+                    <td>Initial compilation of QGIS AI integration research.</td>
+                    <td>George Bytes (Lead Architect) / Humberto Dominguez (CEO)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- DOCUMENT CONTROL FOOTER -->
+    <div class="sop-card-footer">
+        <div>Classification: Institutional ISO 9001 QMS Record</div>
+        <div>Effective Date: 06/06/2026</div>
+        <div>Review Cycle: Annual (Rev 1.0.0)</div>
+    </div>
+</div>

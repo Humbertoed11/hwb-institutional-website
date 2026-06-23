@@ -1,0 +1,1690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HEXGROWTH Geospatial Coverage Explorer</title>
+    <script src="https://unpkg.com/deck.gl@8.9.x/dist.min.js"></script>
+    <script src="https://unpkg.com/maplibre-gl@3.x/dist/maplibre-gl.js"></script>
+    <link href="https://unpkg.com/maplibre-gl@3.x/dist/maplibre-gl.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --hex-obsidian: #020617;
+            --hex-charcoal: #0f172a;
+            --hex-cyan: #06b6d4;
+            --hex-emerald: #10b981;
+            --hex-amber: #f59e0b;
+            --hex-crimson: #ef4444;
+            --hex-violet: #8b5cf6;
+            --hex-border: rgba(30, 41, 59, 0.5); 
+            --hex-glass: rgba(15, 23, 42, 0.85); 
+            --hex-text: #f8fafc; 
+            --hex-text-muted: #94a3b8;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: var(--hex-obsidian);
+            font-family: 'Inter', sans-serif;
+            color: var(--hex-text);
+        }
+
+        #hud-container {
+            display: grid;
+            grid-template-areas: 
+                "top top"
+                "sidebar map";
+            grid-template-columns: 380px 1fr;
+            grid-template-rows: 60px 1fr;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+        }
+
+        #top-bar {
+            grid-area: top;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            grid-area: sidebar;
+            background: var(--hex-charcoal);
+            border-right: 1px solid var(--hex-border);
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 60px);
+            z-index: 100;
+            box-shadow: 4px 0 20px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--hex-border);
+        }
+
+        .sidebar-title {
+            font-size: 13px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--hex-cyan);
+            margin: 0 0 6px 0;
+        }
+
+        .sidebar-desc {
+            font-size: 11px;
+            color: var(--hex-text-muted);
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        .stats-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .stat-card {
+            flex: 1;
+            background: rgba(0,0,0,0.2);
+            border: 1px solid var(--hex-border);
+            border-radius: 4px;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 14px;
+            font-weight: 800;
+            color: var(--hex-cyan);
+        }
+
+        .stat-label {
+            font-size: 8px;
+            color: var(--hex-text-muted);
+            text-transform: uppercase;
+            margin-top: 2px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .view-toggle {
+            display: flex;
+            padding: 16px 20px 0 20px;
+            gap: 8px;
+        }
+
+        .toggle-btn {
+            flex: 1;
+            background: rgba(30, 41, 59, 0.3);
+            border: 1px solid var(--hex-border);
+            color: var(--hex-text-muted);
+            padding: 8px;
+            font-size: 10px;
+            font-weight: 800;
+            border-radius: 4px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.3s;
+        }
+
+        .toggle-btn:hover, .toggle-btn.active {
+            background: var(--hex-cyan);
+            color: #000;
+            border-color: var(--hex-cyan);
+            box-shadow: 0 0 10px rgba(6, 182, 212, 0.3);
+        }
+
+        .sidebar-content {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .view-pane {
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .view-pane.active {
+            display: flex;
+        }
+
+        /* Use Cases List Styles */
+        .vertical-item {
+            background: var(--hex-glass);
+            border: 1px solid var(--hex-border);
+            border-radius: 4px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .vertical-item:hover {
+            border-color: var(--hex-cyan);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .vertical-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .vertical-item-title {
+            font-weight: 800;
+            font-size: 12px;
+            color: var(--hex-text);
+        }
+
+        .vertical-item-badge {
+            background: rgba(6, 182, 212, 0.1);
+            color: var(--hex-cyan);
+            border: 1px solid var(--hex-cyan);
+            font-size: 9px;
+            font-weight: 800;
+            padding: 1px 5px;
+            border-radius: 10px;
+        }
+
+        .vertical-item-desc {
+            font-size: 10px;
+            color: var(--hex-text-muted);
+            line-height: 1.4;
+        }
+
+        /* Data Layers List Styles */
+        .category-accordion {
+            border: 1px solid var(--hex-border);
+            border-radius: 4px;
+            overflow: hidden;
+            background: rgba(0,0,0,0.15);
+        }
+
+        .category-header {
+            padding: 10px 12px;
+            font-size: 10px;
+            font-weight: 800;
+            color: var(--hex-text-muted);
+            background: rgba(15, 23, 42, 0.4);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.3s;
+        }
+
+        .category-header:hover {
+            color: var(--hex-cyan);
+            background: rgba(15, 23, 42, 0.8);
+        }
+
+        .category-accordion.active .category-header {
+            color: var(--hex-cyan);
+            border-bottom: 1px solid var(--hex-border);
+        }
+
+        .category-content {
+            display: none;
+            padding: 6px;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .category-accordion.active .category-content {
+            display: flex;
+        }
+
+        .field-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .field-item:hover {
+            background: rgba(255,255,255,0.02);
+            border-color: rgba(255,255,255,0.05);
+        }
+
+        .field-item.active {
+            background: rgba(139, 92, 246, 0.1);
+            border-color: var(--hex-violet);
+        }
+
+        .field-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .field-name {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--hex-text);
+        }
+
+        .field-desc {
+            font-size: 9px;
+            color: var(--hex-text-muted);
+        }
+
+        .field-coverage-badge {
+            font-size: 10px;
+            font-weight: 800;
+            color: var(--hex-text-muted);
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--hex-border);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .field-item.active .field-coverage-badge {
+            color: var(--hex-violet);
+            border-color: var(--hex-violet);
+            background: rgba(139, 92, 246, 0.2);
+        }
+
+        .selected-bar {
+            background: rgba(139, 92, 246, 0.15);
+            border-top: 1px solid var(--hex-violet);
+            padding: 8px 20px;
+            display: none;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+        }
+
+        .selected-info {
+            font-weight: 600;
+            color: var(--hex-violet);
+        }
+
+        .clear-btn {
+            background: transparent;
+            border: none;
+            color: var(--hex-text-muted);
+            cursor: pointer;
+            font-weight: 800;
+            font-size: 10px;
+            text-transform: uppercase;
+        }
+
+        .clear-btn:hover {
+            color: var(--hex-text);
+        }
+
+        .sidebar-footer {
+            padding: 16px 20px;
+            border-top: 1px solid var(--hex-border);
+            background: rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        /* Use Case Details Panel (Slides in over sidebar) */
+        .usecase-panel {
+            position: absolute;
+            top: 0;
+            left: -380px;
+            width: 380px;
+            height: 100%;
+            background: var(--hex-charcoal);
+            border-right: 1px solid var(--hex-border);
+            z-index: 120;
+            transition: left 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            overflow-y: auto;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+        }
+
+        .usecase-panel.active {
+            left: 0;
+        }
+
+        .panel-back-btn {
+            background: transparent;
+            border: none;
+            color: var(--hex-cyan);
+            font-weight: 800;
+            font-size: 10px;
+            cursor: pointer;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 0;
+        }
+
+        .panel-back-btn:hover {
+            color: var(--hex-text);
+        }
+
+        .panel-header {
+            margin-top: 8px;
+        }
+
+        .panel-title {
+            font-size: 14px;
+            font-weight: 800;
+            color: var(--hex-text);
+            margin: 0 0 6px 0;
+        }
+
+        .panel-desc {
+            font-size: 11px;
+            color: var(--hex-text-muted);
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        .panel-section-title {
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: var(--hex-cyan);
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .panel-field-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0,0,0,0.2);
+            border: 1px solid var(--hex-border);
+            padding: 10px 12px;
+            border-radius: 4px;
+            margin-bottom: 6px;
+        }
+
+        .panel-field-name {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--hex-text);
+        }
+
+        .panel-field-meta {
+            font-size: 9px;
+            color: var(--hex-text-muted);
+            margin-top: 2px;
+        }
+
+        .panel-field-coverage {
+            font-size: 12px;
+            font-weight: 800;
+            color: var(--hex-emerald);
+        }
+
+        /* Map Container & Tooltips */
+        .map-container {
+            grid-area: map;
+            position: relative;
+            background: #000;
+            overflow: hidden;
+        }
+
+        #map-view {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.8;
+        }
+
+        #deck-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .map-legend {
+            position: absolute;
+            bottom: 24px;
+            left: 24px;
+            z-index: 100;
+            background: var(--hex-glass);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--hex-border);
+            border-radius: 4px;
+            padding: 14px;
+            width: 180px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+
+        .legend-title {
+            font-size: 9px;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: var(--hex-cyan);
+            margin-bottom: 10px;
+            letter-spacing: 0.5px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+
+        .legend-divider {
+            height: 1px;
+            background: var(--hex-border);
+            margin: 10px 0;
+        }
+
+        .view-level-toggle {
+            display: flex;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--hex-border);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .level-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--hex-text-muted);
+            padding: 6px;
+            font-size: 9px;
+            font-weight: 800;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.3s;
+        }
+
+        .level-btn.active {
+            background: var(--hex-cyan);
+            color: #000;
+        }
+
+        /* County Detail Panel (Slides in from right) */
+        .detail-panel {
+            position: absolute;
+            top: 0;
+            right: -400px;
+            width: 380px;
+            height: 100%;
+            background: var(--hex-glass);
+            border-left: 1px solid var(--hex-border);
+            backdrop-filter: blur(16px);
+            z-index: 100;
+            transition: right 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            overflow-y: auto;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+        }
+
+        .detail-panel.active {
+            right: 0;
+        }
+
+        .panel-close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: transparent;
+            border: none;
+            color: var(--hex-text-muted);
+            font-size: 20px;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .panel-close-btn:hover {
+            color: var(--hex-text);
+        }
+
+        .detail-county-name {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--hex-text);
+            margin: 0;
+        }
+
+        .detail-county-state {
+            font-size: 10px;
+            font-weight: 800;
+            color: var(--hex-cyan);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 2px;
+        }
+
+        .detail-stats-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .detail-stat {
+            flex: 1;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--hex-border);
+            padding: 10px 8px;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .detail-stat-value {
+            font-size: 15px;
+            font-weight: 800;
+        }
+
+        .detail-stat-label {
+            font-size: 8px;
+            color: var(--hex-text-muted);
+            text-transform: uppercase;
+            margin-top: 3px;
+        }
+
+        .layer-bar-container {
+            margin-bottom: 10px;
+        }
+
+        .layer-bar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .layer-bar-name {
+            color: var(--hex-text);
+        }
+
+        .layer-bar-value {
+            color: var(--hex-cyan);
+        }
+
+        .progress-track {
+            height: 6px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 1s ease-out;
+        }
+
+        /* Tooltip style */
+        #map-tooltip {
+            position: absolute;
+            z-index: 500;
+            background: var(--hex-obsidian);
+            border: 1px solid var(--hex-cyan);
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 10px;
+            pointer-events: none;
+            display: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+            transform: translate(-50%, -110%);
+        }
+
+        .tooltip-title {
+            font-weight: 800;
+            color: var(--hex-text);
+            margin-bottom: 2px;
+        }
+
+        .tooltip-desc {
+            color: var(--hex-cyan);
+            font-weight: 600;
+        }
+
+        /* Welcome Modal */
+        .welcome-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(2, 6, 23, 0.7);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .welcome-modal {
+            background: var(--hex-charcoal);
+            border: 1px solid var(--hex-cyan);
+            box-shadow: 0 0 40px rgba(6, 182, 212, 0.2);
+            border-radius: 6px;
+            padding: 30px;
+            width: 480px;
+            text-align: center;
+            position: relative;
+        }
+
+        .welcome-headline {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--hex-text);
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        .welcome-subhead {
+            font-size: 11px;
+            font-weight: 800;
+            color: var(--hex-cyan);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 16px;
+        }
+
+        .welcome-text {
+            font-size: 12px;
+            color: var(--hex-text-muted);
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+
+        .welcome-cta {
+            background: var(--hex-cyan);
+            color: #000;
+            border: none;
+            padding: 12px 24px;
+            font-weight: 800;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .welcome-cta:hover {
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.5);
+            transform: translateY(-1px);
+        }
+
+        /* Mock Console / Terminal Logging */
+        .terminal-log-overlay {
+            position: absolute;
+            bottom: 24px;
+            right: 24px;
+            width: 380px;
+            max-height: 180px;
+            background: rgba(2, 6, 23, 0.9);
+            border: 1px solid var(--hex-border);
+            border-radius: 4px;
+            padding: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            color: var(--hex-emerald);
+            overflow-y: auto;
+            z-index: 90;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            display: none;
+        }
+
+        /* Spinner */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(2, 6, 23, 0.5);
+            z-index: 800;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid rgba(6, 182, 212, 0.2);
+            border-top: 3px solid var(--hex-cyan);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.9); opacity: 0.8; }
+            50% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(0.9); opacity: 0.8; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="hud-container">
+    {% set header_type = 'HUD' %}
+    {% set active_hud = 'explorer' %}
+    {% include "components/brand_header.html" %}
+
+    <aside class="sidebar">
+        <!-- Sidebar Header Stats -->
+        <div class="sidebar-header">
+            <h2 class="sidebar-title">Feasibility Explorer</h2>
+            <p class="sidebar-desc">Explore the coverage density of HexGrowth's 11-lobe decision engine features across Texas.</p>
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-value">4.8B</div>
+                    <div class="stat-label">H3 Hexagons</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">254</div>
+                    <div class="stat-label">Counties</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">99.8%</div>
+                    <div class="stat-label">Coverage</div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 14px; border-top: 1px solid var(--hex-border); padding-top: 14px;">
+                <div class="project-label" style="font-size: 8px; font-weight: 800; color: var(--hex-cyan); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Method B: Boundary Dropdown</div>
+                <select id="sidebar-boundary-selector" onchange="changeBoundaryLevel(this.value)" style="width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--hex-border); color: white; padding: 6px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; outline: none; font-family: inherit;">
+                    <option value="counties">Counties</option>
+                    <option value="municipalities">Municipalities</option>
+                    <option value="unincorporated">Unincorporated Areas</option>
+                    <option value="districts">Special Districts</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Sidebar Tab View Toggle -->
+        <div class="view-toggle">
+            <button class="toggle-btn active" id="tab-usecases" onclick="switchTab('usecases')">Use Cases</button>
+            <button class="toggle-btn" id="tab-layers" onclick="switchTab('layers')">Data Layers</button>
+        </div>
+
+        <!-- Sidebar Dynamic Content Scroll Area -->
+        <div class="sidebar-content">
+            <!-- Use Cases Tab -->
+            <div class="view-pane active" id="pane-usecases">
+                <!-- Dynamically generated list of usecases -->
+            </div>
+
+            <!-- Data Layers Tab -->
+            <div class="view-pane" id="pane-layers">
+                <!-- Dynamically generated accordion of layers and fields -->
+            </div>
+        </div>
+
+        <!-- Selection Clear Status Bar -->
+        <div class="selected-bar" id="selected-bar">
+            <span class="selected-info" id="selected-info">1 field selected</span>
+            <button class="clear-btn" onclick="clearSelection()">Clear Filter</button>
+        </div>
+
+        <!-- Footer CTAs -->
+        <div class="sidebar-footer">
+            <a class="btn-primary" onclick="simulateEnterpriseContact()">Contact Enterprise Sales</a>
+            <a class="btn-secondary" href="/projects">Return to Workspace Hub</a>
+        </div>
+
+        <!-- Use Case detail panel overlay (slides in over the sidebar) -->
+        <div class="usecase-panel" id="usecase-panel">
+            <button class="panel-back-btn" onclick="closeUseCasePanel()">← Back to Use Cases</button>
+            <div class="panel-header">
+                <h3 class="panel-title" id="usecase-panel-title">Commercial Real Estate</h3>
+                <p class="panel-desc" id="usecase-panel-desc">Zoning, parcel dimensions, comps...</p>
+            </div>
+            <div class="legend-divider"></div>
+            <div class="panel-section-title">Attributes Used in Analysis</div>
+            <div id="usecase-panel-fields">
+                <!-- List of attributes and individual coverage -->
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Map View Area -->
+    <main class="map-container">
+        <!-- Loading overlay -->
+        <div class="loading-overlay" id="loading-overlay">
+            <div class="spinner"></div>
+            <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: var(--hex-cyan);">Ingesting Texas County GeoJSON...</div>
+        </div>
+
+        <!-- Welcome overlay modal -->
+        <div class="welcome-overlay" id="welcome-overlay">
+            <div class="welcome-modal">
+                <h1 class="welcome-headline">100% Texas Spatial Coverage</h1>
+                <div class="welcome-subhead">Decision Engine Feature Explorer</div>
+                <p class="welcome-text">Explore the feature density of HexGrowth's 11-lobe neural processor across all 254 Texas counties. Select a specific real estate use case, browse attribute groups, or click any county to audit data depth.</p>
+                <button class="welcome-cta" onclick="dismissWelcome()">Explore Coverage Data</button>
+            </div>
+        </div>
+
+        <!-- Basemap container -->
+        <div id="map-view"></div>
+
+        <!-- Deck.gl canvas overlay -->
+        <canvas id="deck-canvas"></canvas>
+
+        <!-- Dynamic County details panel (slides in from right) -->
+        <div class="detail-panel" id="detail-panel">
+            <button class="panel-close-btn" onclick="closeDetailPanel()">&times;</button>
+            <div style="margin-top: 10px;">
+                <h3 class="detail-county-name" id="detail-county-name">Dallas County</h3>
+                <div class="detail-county-state">Texas Grid Sector</div>
+            </div>
+            <div class="detail-stats-row">
+                <div class="detail-stat">
+                    <div class="detail-stat-value" id="detail-stat-hex">148,500</div>
+                    <div class="detail-stat-label">H3 Cells</div>
+                </div>
+                <div class="detail-stat">
+                    <div class="detail-stat-value" id="detail-stat-coverage" style="color: var(--hex-emerald);">98%</div>
+                    <div class="detail-stat-label">Density</div>
+                </div>
+            </div>
+            <div class="legend-divider"></div>
+            <div class="panel-section-title">Lobe Coverage Audit</div>
+            <div id="detail-progress-bars" style="display: flex; flex-direction: column; gap: 8px;">
+                <!-- Dynamically populated progress bars -->
+            </div>
+            <div class="legend-divider" style="margin-top: 4px;"></div>
+            <button class="sigma-btn-amber" onclick="simulateScoutDeploy()" style="margin-bottom: 0;">Deploy Autonomous Scout Miner</button>
+            <button class="sigma-btn-amber" onclick="simulateReportDownload()" style="margin-bottom: 0; background: rgba(139, 92, 246, 0.1); border-color: var(--hex-violet); color: var(--hex-violet);">Generate Market Comps Report</button>
+        </div>
+
+        <!-- Proximity Legend -->
+        <div class="map-legend">
+            <div class="legend-title" id="legend-dynamic-title">Average Attribute Coverage</div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #00665e;"></div>
+                <span>80% - 100% (High Density)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #2d8a82;"></div>
+                <span>60% - 80%</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #5aada6;"></div>
+                <span>40% - 60%</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #8ccfc9;"></div>
+                <span>20% - 40%</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #e2f1f0;"></div>
+                <span>0% - 20% (Low Density)</span>
+            </div>
+            <div class="legend-divider"></div>
+            <div class="legend-title">Method A: Boundary Level</div>
+            <div class="view-level-toggle" style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; border: none; background: transparent; margin-bottom: 8px;">
+                <button class="level-btn active" id="btn-lvl-counties" onclick="changeBoundaryLevel('counties')" style="border-radius: 4px; border: 1px solid var(--hex-border); background: rgba(0,0,0,0.3); padding: 6px;">Counties</button>
+                <button class="level-btn" id="btn-lvl-municipalities" onclick="changeBoundaryLevel('municipalities')" style="border-radius: 4px; border: 1px solid var(--hex-border); background: rgba(0,0,0,0.3); padding: 6px;">Municipalities</button>
+                <button class="level-btn" id="btn-lvl-unincorporated" onclick="changeBoundaryLevel('unincorporated')" style="border-radius: 4px; border: 1px solid var(--hex-border); background: rgba(0,0,0,0.3); padding: 6px;">Unincorporated</button>
+                <button class="level-btn" id="btn-lvl-districts" onclick="changeBoundaryLevel('districts')" style="border-radius: 4px; border: 1px solid var(--hex-border); background: rgba(0,0,0,0.3); padding: 6px;">Districts</button>
+            </div>
+            <div class="legend-divider"></div>
+            <div class="legend-title" style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+                <span>Filter Metros Only</span>
+                <label class="simple-toggle" style="transform: scale(0.8);"><input type="checkbox" id="chk-metros" onchange="toggleMetroFilter(this.checked)"><span class="slider-round"></span></label>
+            </div>
+        </div>
+
+        <!-- Terminal log outputs overlay -->
+        <div class="terminal-log-overlay" id="terminal-log">
+            <!-- Simulated logs -->
+        </div>
+
+        <!-- Floating hover tooltip -->
+        <div id="map-tooltip">
+            <div class="tooltip-title" id="tooltip-title">Dallas County</div>
+            <div class="tooltip-desc" id="tooltip-desc">Coverage: 98%</div>
+        </div>
+    </main>
+</div>
+
+<script>
+    // State Tracking
+    let activeTab = 'usecases';
+    let selectedUseCaseId = null;
+    let selectedFieldId = null;
+    let boundaryLevel = 'counties'; // counties, municipalities, unincorporated, districts
+    let filterMetrosOnly = false;
+    let selectedCountyFips = null;
+    let geojsonFeatureMap = {};
+    let countiesGeoJson = null;
+
+    // ViewState definition
+    let currentViewState = {
+        longitude: -99.9018,
+        latitude: 31.9686,
+        zoom: 5.8,
+        pitch: 0,
+        bearing: 0,
+        minZoom: 4,
+        maxZoom: 12
+    };
+
+    function generateMockCirclePolygon(center, radius, segments = 8) {
+        const polygon = [];
+        for (let i = 0; i < segments; i++) {
+            const angle = (i * 360 / segments) * Math.PI / 180;
+            polygon.push([center[0] + radius * Math.cos(angle), center[1] + radius * Math.sin(angle) * 1.2]);
+        }
+        polygon.push(polygon[0]);
+        return polygon;
+    }
+
+    function getMockMunicipalities(lng, lat) {
+        return [
+            { polygon: generateMockCirclePolygon([-96.7970, 32.7767], 0.15), properties: { COUNTY: "City of Dallas", FIPS: "MUN-DAL", TYPE: "Municipality", IS_CITY: true, SQUARE_MIL: 385 } },
+            { polygon: generateMockCirclePolygon([-97.3308, 32.7555], 0.14), properties: { COUNTY: "City of Fort Worth", FIPS: "MUN-FTW", TYPE: "Municipality", IS_CITY: true, SQUARE_MIL: 350 } },
+            { polygon: generateMockCirclePolygon([-95.3698, 29.7604], 0.18), properties: { COUNTY: "City of Houston", FIPS: "MUN-HOU", TYPE: "Municipality", IS_CITY: true, SQUARE_MIL: 640 } },
+            { polygon: generateMockCirclePolygon([-97.7431, 30.2672], 0.12), properties: { COUNTY: "City of Austin", FIPS: "MUN-AUS", TYPE: "Municipality", IS_CITY: true, SQUARE_MIL: 271 } },
+            { polygon: generateMockCirclePolygon([-98.4936, 29.4241], 0.16), properties: { COUNTY: "City of San Antonio", FIPS: "MUN-SAT", TYPE: "Municipality", IS_CITY: true, SQUARE_MIL: 465 } }
+        ];
+    }
+
+    function getMockSpecialDistricts(lng, lat) {
+        return [
+            { polygon: generateMockCirclePolygon([-96.65, 32.85], 0.03), properties: { COUNTY: "Dallas MUD District #1", FIPS: "MUD-DAL1", TYPE: "Special Utility District", SQUARE_MIL: 8 } },
+            { polygon: generateMockCirclePolygon([-96.80, 32.95], 0.035), properties: { COUNTY: "Preston Ridge TIF Zone #12", FIPS: "TIF-PR12", TYPE: "Tax Increment District", SQUARE_MIL: 10 } },
+            { polygon: generateMockCirclePolygon([-97.30, 32.65], 0.025), properties: { COUNTY: "Tarrant County MUD #4", FIPS: "MUD-TAR4", TYPE: "Special Utility District", SQUARE_MIL: 6 } },
+            { polygon: generateMockCirclePolygon([-97.85, 30.30], 0.03), properties: { COUNTY: "Travis County MUD #18", FIPS: "MUD-TRA18", TYPE: "Special Utility District", SQUARE_MIL: 8 } },
+            { polygon: generateMockCirclePolygon([-95.60, 29.60], 0.04), properties: { COUNTY: "Fort Bend MUD District #2", FIPS: "MUD-FB2", TYPE: "Special Utility District", SQUARE_MIL: 12 } }
+        ];
+    }
+
+    // Deterministic coverage generator based on FIPS / county name
+    function getCountyCoverage(fips, name) {
+        if (fips && fips.startsWith("MUN-")) {
+            const munVals = { "MUN-DAL": 0.99, "MUN-FTW": 0.97, "MUN-HOU": 0.98, "MUN-AUS": 0.98, "MUN-SAT": 0.95 };
+            return munVals[fips] || 0.95;
+        }
+        if (fips && (fips.startsWith("MUD-") || fips.startsWith("TIF-"))) {
+            const distVals = { "MUD-DAL1": 0.92, "TIF-PR12": 0.95, "MUD-TAR4": 0.90, "MUD-TRA18": 0.88, "MUD-FB2": 0.91 };
+            return distVals[fips] || 0.90;
+        }
+        const metros = {
+            "48113": 0.98, // Dallas
+            "48201": 0.97, // Harris (Houston)
+            "48439": 0.95, // Tarrant (Fort Worth)
+            "48453": 0.96, // Travis (Austin)
+            "48029": 0.94, // Bexar (San Antonio)
+            "48085": 0.93, // Collin (Plano)
+            "48121": 0.92, // Denton (Denton)
+            "48157": 0.91, // Fort Bend
+            "48339": 0.89, // Montgomery
+            "48141": 0.88, // El Paso
+            "48355": 0.87, // Nueces (Corpus Christi)
+            "48215": 0.86, // Hidalgo (McAllen)
+            "48061": 0.85  // Cameron (Brownsville)
+        };
+        if (metros[fips]) return metros[fips];
+        
+        let hash = 0;
+        for (let i = 0; i < name.length; i++) {
+            hash += name.charCodeAt(i);
+        }
+        return 0.45 + (hash % 40) / 100;
+    }
+
+    function getFieldCoverage(fips, countyName, fieldId) {
+        let base = getCountyCoverage(fips, countyName);
+        let hash = 0;
+        for (let i = 0; i < fieldId.length; i++) {
+            hash += fieldId.charCodeAt(i);
+        }
+        let offset = ((hash % 15) - 7) / 100; // -7% to +7%
+        let finalVal = Math.min(1.0, Math.max(0.0, base + offset));
+        
+        if (fieldId === 'fiber' && fips !== '48113' && fips !== '48201' && fips !== '48439') {
+            finalVal *= 0.4;
+        }
+        if (fieldId === 'nimby' && fips === '48113') {
+            finalVal = 0.99;
+        }
+        return finalVal;
+    }
+
+    function getUseCaseCoverage(fips, countyName, ucId) {
+        const fields = USE_CASES[ucId].keyFields;
+        let sum = 0;
+        fields.forEach(f => {
+            sum += getFieldCoverage(fips, countyName, f.id);
+        });
+        return sum / fields.length;
+    }
+
+    // Color Scales
+    function getFillColorForFeature(feature) {
+        const props = feature.properties;
+        const fips = props.FIPS;
+        const name = props.COUNTY;
+
+        // Apply metro highlights filter
+        if (filterMetrosOnly) {
+            const metrosList = ["48113", "48201", "48439", "48453", "48029", "48085", "48121"];
+            if (!metrosList.includes(fips)) {
+                return [30, 41, 59, 20]; // Fade out non-metros
+            }
+        }
+
+        // Color coding for Unincorporated Areas:
+        if (boundaryLevel === 'unincorporated') {
+            const metrosList = ["48113", "48201", "48439", "48453", "48029", "48085", "48121"];
+            if (metrosList.includes(fips)) {
+                return [30, 41, 59, 30]; // Fade out major city centers
+            }
+        }
+
+        // Color coding for Municipalities / Districts base counties:
+        if (boundaryLevel === 'municipalities' || boundaryLevel === 'districts') {
+            return [15, 23, 42, 60]; // Fade out standard counties to emphasize sub-polygons
+        }
+
+        let coverage = 0.8;
+        if (selectedFieldId) {
+            coverage = getFieldCoverage(fips, name, selectedFieldId);
+        } else if (selectedUseCaseId) {
+            coverage = getUseCaseCoverage(fips, name, selectedUseCaseId);
+        } else {
+            coverage = getCountyCoverage(fips, name);
+        }
+
+        if (coverage >= 0.8) return [0, 102, 94, 180];      // 80-100%
+        if (coverage >= 0.6) return [45, 138, 130, 180];    // 60-80%
+        if (coverage >= 0.4) return [90, 173, 166, 180];    // 40-60%
+        if (coverage >= 0.2) return [140, 207, 201, 180];   // 20-40%
+        return [226, 241, 240, 180];                        // 0-20%
+    }
+
+    // Setup Basemap using MapLibre GL
+    const map = new maplibregl.Map({
+        container: 'map-view',
+        style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+        center: [currentViewState.longitude, currentViewState.latitude],
+        zoom: currentViewState.zoom,
+        pitch: currentViewState.pitch,
+        interactive: false
+    });
+
+    // Setup Deck.gl Instance
+    const deckgl = new deck.Deck({
+        canvas: 'deck-canvas',
+        viewState: currentViewState,
+        controller: true,
+        onViewStateChange: ({viewState}) => {
+            currentViewState = viewState;
+            deckgl.setProps({ viewState: currentViewState });
+            map.jumpTo({
+                center: [viewState.longitude, viewState.latitude],
+                zoom: viewState.zoom,
+                bearing: viewState.bearing || 0,
+                pitch: viewState.pitch || 0
+            });
+        }
+    });
+
+    // Dynamic rendering of GeoJson boundary layer
+    function renderLayers() {
+        const layers = [];
+        if (countiesGeoJson) {
+            layers.push(new deck.GeoJsonLayer({
+                id: 'tx-counties-layer',
+                data: countiesGeoJson,
+                getFillColor: getFillColorForFeature,
+                getLineColor: [30, 41, 59, 150],
+                getLineWidth: 1.5,
+                lineWidthMinPixels: 1,
+                pickable: true,
+                stroked: true,
+                filled: true,
+                onHover: handleHover,
+                onClick: handleFeatureClick,
+                updateTriggers: {
+                    getFillColor: [selectedUseCaseId, selectedFieldId, boundaryLevel, filterMetrosOnly]
+                }
+            }));
+        }
+
+        // Render mock municipal boundaries (Method A/B)
+        if (boundaryLevel === 'municipalities') {
+            layers.push(new deck.PolygonLayer({
+                id: 'municipalities-layer',
+                data: getMockMunicipalities(),
+                getPolygon: d => d.polygon,
+                getFillColor: d => {
+                    const coverage = getCountyCoverage(d.properties.FIPS, d.properties.COUNTY);
+                    if (coverage >= 0.8) return [0, 102, 94, 210];
+                    if (coverage >= 0.6) return [45, 138, 130, 210];
+                    return [90, 173, 166, 210];
+                },
+                getLineColor: [255, 255, 255, 200],
+                getLineWidth: 2,
+                lineWidthMinPixels: 1.5,
+                pickable: true,
+                stroked: true,
+                filled: true,
+                onHover: handleHover,
+                onClick: handleFeatureClick,
+                updateTriggers: {
+                    getFillColor: [selectedUseCaseId, selectedFieldId]
+                }
+            }));
+        }
+
+        // Render mock special districts (Method A/B)
+        if (boundaryLevel === 'districts') {
+            layers.push(new deck.PolygonLayer({
+                id: 'special-districts-layer',
+                data: getMockSpecialDistricts(),
+                getPolygon: d => d.polygon,
+                getFillColor: d => {
+                    const coverage = getCountyCoverage(d.properties.FIPS, d.properties.COUNTY);
+                    if (coverage >= 0.8) return [139, 92, 246, 160];
+                    return [139, 92, 246, 110];
+                },
+                getLineColor: [139, 92, 246, 255],
+                getLineWidth: 2,
+                lineWidthMinPixels: 1.5,
+                pickable: true,
+                stroked: true,
+                filled: true,
+                onHover: handleHover,
+                onClick: handleFeatureClick,
+                updateTriggers: {
+                    getFillColor: [selectedUseCaseId, selectedFieldId]
+                }
+            }));
+        }
+
+        deckgl.setProps({ layers: layers });
+    }
+
+    // Hover tooltip handlers
+    function handleHover(info) {
+        const tooltip = document.getElementById('map-tooltip');
+        if (info.object && info.x && info.y) {
+            const props = info.object.properties;
+            const titleEl = document.getElementById('tooltip-title');
+            const descEl = document.getElementById('tooltip-desc');
+            
+            titleEl.textContent = props.COUNTY + ", TX";
+            
+            let val = 0;
+            if (selectedFieldId) {
+                val = getFieldCoverage(props.FIPS, props.COUNTY, selectedFieldId);
+            } else if (selectedUseCaseId) {
+                val = getUseCaseCoverage(props.FIPS, props.COUNTY, selectedUseCaseId);
+            } else {
+                val = getCountyCoverage(props.FIPS, props.COUNTY);
+            }
+            descEl.textContent = "Coverage Density: " + Math.round(val * 100) + "%";
+            
+            tooltip.style.left = info.x + 'px';
+            tooltip.style.top = info.y + 'px';
+            tooltip.style.display = 'block';
+        } else {
+            tooltip.style.display = 'none';
+        }
+    }
+
+    // Feature Click Handler
+    function handleFeatureClick(info) {
+        if (info.object) {
+            const props = info.object.properties;
+            selectedCountyFips = props.FIPS;
+            openDetailPanel(props);
+            
+            // Pan to the clicked county
+            currentViewState = {
+                ...currentViewState,
+                longitude: info.coordinate[0],
+                latitude: info.coordinate[1],
+                zoom: 7.2,
+                transitionDuration: 1000
+            };
+            deckgl.setProps({ viewState: currentViewState });
+            map.flyTo({ center: info.coordinate, zoom: 7.2, duration: 1000 });
+        }
+    }
+
+    // Switch Boundary Level (Counties, Municipalities, Unincorporated, Districts) - Method A & B Synced
+    function changeBoundaryLevel(level) {
+        boundaryLevel = level;
+        
+        // Synchronize Method B (Sidebar Dropdown)
+        const dropdown = document.getElementById('sidebar-boundary-selector');
+        if (dropdown) dropdown.value = level;
+        
+        // Synchronize Method A (Legend Buttons)
+        const buttons = ['counties', 'municipalities', 'unincorporated', 'districts'];
+        buttons.forEach(btnId => {
+            const el = document.getElementById(`btn-lvl-${btnId}`);
+            if (el) el.classList.toggle('active', btnId === level);
+        });
+
+        // Update dynamic legend title
+        const legendTitle = document.getElementById('legend-dynamic-title');
+        if (legendTitle) {
+            if (level === 'counties') legendTitle.textContent = "Average County Coverage";
+            else if (level === 'municipalities') legendTitle.textContent = "Municipal Coverage Density";
+            else if (level === 'unincorporated') legendTitle.textContent = "Unincorporated Access Rate";
+            else if (level === 'districts') legendTitle.textContent = "Special District Tax Comps";
+        }
+        
+        // Reset selections if changing boundary level
+        selectedFieldId = null;
+        selectedUseCaseId = null;
+        document.querySelectorAll('.field-item').forEach(el => el.classList.remove('active'));
+        document.getElementById('selected-bar').style.display = 'none';
+
+        renderLayers();
+        logToConsole(`[GRID] Boundary level adjusted to: ${level.toUpperCase()}. Swapping GIS meshes.`);
+    }
+
+    // Toggle Metro highlights filter
+    function toggleMetroFilter(checked) {
+        filterMetrosOnly = checked;
+        
+        // Synchronize Metro checkbox
+        const checkbox = document.getElementById('chk-metros');
+        if (checkbox) checkbox.checked = checked;
+
+        if (checked) {
+            currentViewState = {
+                ...currentViewState,
+                longitude: -97.0403,
+                latitude: 32.7807,
+                zoom: 7.0,
+                transitionDuration: 1200
+            };
+            deckgl.setProps({ viewState: currentViewState });
+            map.flyTo({ center: [-97.0403, 32.7807], zoom: 7.0, duration: 1200 });
+            logToConsole(`[GRID] Filtering metro corridors. Dimming regional county shapes.`);
+        } else {
+            currentViewState = {
+                ...currentViewState,
+                longitude: -99.9018,
+                latitude: 31.9686,
+                zoom: 5.8,
+                transitionDuration: 1000
+            };
+            deckgl.setProps({ viewState: currentViewState });
+            map.flyTo({ center: [-99.9018, 31.9686], zoom: 5.8, duration: 1000 });
+            logToConsole(`[GRID] Regional filter deactivated. Restoring statewide boundaries.`);
+        }
+        renderLayers();
+    }
+
+    // Switch Sidebar tabs (Use Cases vs Data Layers)
+    function switchTab(tab) {
+        activeTab = tab;
+        document.getElementById('tab-usecases').classList.toggle('active', tab === 'usecases');
+        document.getElementById('tab-layers').classList.toggle('active', tab === 'layers');
+        
+        document.getElementById('pane-usecases').classList.toggle('active', tab === 'usecases');
+        document.getElementById('pane-layers').classList.toggle('active', tab === 'layers');
+        
+        if (tab === 'usecases') {
+            clearSelection();
+        }
+    }
+
+    // Load GeoJSON data from local static route
+    async function loadGeoJson() {
+        try {
+            const res = await fetch('/static/tx_counties.json');
+            if (res.ok) {
+                const data = await res.json();
+                countiesGeoJson = data;
+                
+                // Map features by county name for search utility
+                data.features.forEach(f => {
+                    const cName = f.properties.COUNTY.toLowerCase().replace(" county", "").trim();
+                    geojsonFeatureMap[cName] = f;
+                });
+
+                document.getElementById('loading-overlay').style.display = 'none';
+                renderLayers();
+            } else {
+                console.error("GeoJSON load response error:", res.statusText);
+            }
+        } catch (err) {
+            console.error("Failed to load local GeoJSON file:", err);
+        }
+    }
+
+    // Header Address Search Integration
+    function setupSearch() {
+        const searchInput = document.getElementById('geo-search');
+        if (searchInput) {
+            searchInput.placeholder = "Search Texas County (e.g. Dallas, Harris)...";
+            searchInput.addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') {
+                    const query = searchInput.value.toLowerCase().replace(" county", "").trim();
+                    const feature = geojsonFeatureMap[query];
+                    if (feature) {
+                        // Find centroid coordinates
+                        let coords = feature.geometry.coordinates[0];
+                        if (feature.geometry.type === 'MultiPolygon') {
+                            coords = feature.geometry.coordinates[0][0];
+                        }
+                        const lng = coords[0][0];
+                        const lat = coords[0][1];
+                        
+                        // Click target simulation
+                        handleFeatureClick({
+                            object: feature,
+                            coordinate: [lng, lat]
+                        });
+                        logToConsole(`[SEARCH] Located county: "${feature.properties.COUNTY}". Panning viewport.`);
+                    } else {
+                        logToConsole(`[SEARCH] County "${searchInput.value}" not resolved inside Texas sector.`);
+                    }
+                }
+            });
+        }
+    }
+
+    // Render left-sidebar lists
+    function renderSidebarContent() {
+        // Render Use Cases Tab
+        const crePane = document.getElementById('pane-usecases');
+        let creHtml = '';
+        for (let key in USE_CASES) {
+            const uc = USE_CASES[key];
+            creHtml += `
+                <div class="vertical-item" onclick="openUseCasePanel('${key}')">
+                    <div class="vertical-item-header">
+                        <span class="vertical-item-title">${uc.title}</span>
+                        <span class="vertical-item-badge">${uc.avgCoverage}</span>
+                    </div>
+                    <p class="vertical-item-desc">${uc.desc.substring(0, 100)}...</p>
+                </div>
+            `;
+        }
+        crePane.innerHTML = creHtml;
+
+        // Render Data Layers Accordion
+        const layerPane = document.getElementById('pane-layers');
+        let layerHtml = '';
+        DATA_LAYERS.forEach(cat => {
+            let fieldsHtml = '';
+            cat.fields.forEach(f => {
+                fieldsHtml += `
+                    <div class="field-item" id="field-${f.id}" onclick="selectField('${f.id}', '${cat.name}')">
+                        <div class="field-info">
+                            <span class="field-name">${f.name}</span>
+                            <span class="field-desc">${f.desc}</span>
+                        </div>
+                        <span class="field-coverage-badge">M: ${f.metro} / R: ${f.rural}</span>
+                    </div>
+                `;
+            });
+
+            layerHtml += `
+                <div class="category-accordion" id="cat-accordion-${cat.id}">
+                    <div class="category-header" onclick="toggleAccordion('${cat.id}')">
+                        <span>${cat.name}</span>
+                        <span id="accordion-icon-${cat.id}">▼</span>
+                    </div>
+                    <div class="category-content" id="cat-content-${cat.id}">
+                        ${fieldsHtml}
+                    </div>
+                </div>
+            `;
+        });
+        layerPane.innerHTML = layerHtml;
+    }
+
+    // Accordion expand/collapse
+    function toggleAccordion(catId) {
+        const accordion = document.getElementById(`cat-accordion-${catId}`);
+        const isActive = accordion.classList.contains('active');
+        
+        // Collapse all others
+        document.querySelectorAll('.category-accordion').forEach(el => {
+            el.classList.remove('active');
+            const iconId = el.id.replace('cat-accordion-', 'accordion-icon-');
+            document.getElementById(iconId).textContent = '▼';
+        });
+
+        if (!isActive) {
+            accordion.classList.add('active');
+            document.getElementById(`accordion-icon-${catId}`).textContent = '▲';
+        }
+    }
+
+    // Toggle Field Filtering
+    function selectField(fieldId, catName) {
+        // Deactivate all field selection active classes
+        document.querySelectorAll('.field-item').forEach(el => el.classList.remove('active'));
+        
+        if (selectedFieldId === fieldId) {
+            // Toggle off
+            selectedFieldId = null;
+            document.getElementById('selected-bar').style.display = 'none';
+            document.getElementById('legend-dynamic-title').textContent = "Average Attribute Coverage";
+        } else {
+            selectedFieldId = fieldId;
+            selectedUseCaseId = null; // override usecases
+            document.getElementById(`field-${fieldId}`).classList.add('active');
+            
+            const fieldObj = DATA_LAYERS.flatMap(c => c.fields).find(f => f.id === fieldId);
+            document.getElementById('selected-info').textContent = `Filtered: ${fieldObj.name}`;
+            document.getElementById('selected-bar').style.display = 'flex';
+            document.getElementById('legend-dynamic-title').textContent = `${fieldObj.name} Coverage`;
+        }
+        renderLayers();
+    }
+
+    // Clear filters
+    function clearSelection() {
+        selectedFieldId = null;
+        selectedUseCaseId = null;
+        document.querySelectorAll('.field-item').forEach(el => el.classList.remove('active'));
+        document.getElementById('selected-bar').style.display = 'none';
+        document.getElementById('legend-dynamic-title').textContent = "Average Attribute Coverage";
+        renderLayers();
+    }
+
+    // Open Use Case Details Slider
+    function openUseCasePanel(ucId) {
+        selectedUseCaseId = ucId;
+        selectedFieldId = null; // override fields
+        document.getElementById('selected-bar').style.display = 'none';
+        
+        const ucObj = USE_CASES[ucId];
+        document.getElementById('usecase-panel-title').textContent = ucObj.title;
+        document.getElementById('usecase-panel-desc').textContent = ucObj.desc;
+        
+        let fieldsHtml = '';
+        ucObj.keyFields.forEach(f => {
+            fieldsHtml += `
+                <div class="panel-field-item">
+                    <div>
+                        <div class="panel-field-name">${f.name}</div>
+                        <div class="panel-field-meta">Layer Category: ${f.layer}</div>
+                    </div>
+                    <div class="panel-field-coverage">${f.coverage}</div>
+                </div>
+            `;
+        });
+        document.getElementById('usecase-panel-fields').innerHTML = fieldsHtml;
+        document.getElementById('usecase-panel').classList.add('active');
+        document.getElementById('legend-dynamic-title').textContent = `${ucObj.title} Average Coverage`;
+        
+        renderLayers();
+    }
+
+    function closeUseCasePanel() {
+        selectedUseCaseId = null;
+        document.getElementById('usecase-panel').classList.remove('active');
+        document.getElementById('legend-dynamic-title').textContent = "Average Attribute Coverage";
+        renderLayers();
+    }
+
+    // Open County Details Panel
+    function openDetailPanel(props) {
+        const name = props.COUNTY;
+        const fips = props.FIPS;
+        
+        document.getElementById('detail-county-name').textContent = name;
+        
+        // Mock cells count based on size
+        const cells = Math.round(props.SQUARE_MIL * 162);
+        document.getElementById('detail-stat-hex').textContent = cells.toLocaleString();
+        
+        const density = Math.round(getCountyCoverage(fips, name) * 100);
+        document.getElementById('detail-stat-coverage').textContent = density + "%";
+        
+        // Populate layer breakdown bars
+        let barsHtml = '';
+        DATA_LAYERS.forEach(cat => {
+            // Get average coverage of fields inside this category for the county
+            let sum = 0;
+            cat.fields.forEach(f => {
+                sum += getFieldCoverage(fips, name, f.id);
+            });
+            const catAvg = Math.round((sum / cat.fields.length) * 100);
+            
+            // Set dynamic color of progress bar based on percentage
+            let barColor = 'var(--hex-emerald)';
+            if (catAvg < 60) barColor = 'var(--hex-crimson)';
+            else if (catAvg < 80) barColor = 'var(--hex-amber)';
+            
+            barsHtml += `
+                <div class="layer-bar-container">
+                    <div class="layer-bar-header">
+                        <span class="layer-bar-name">${cat.name.split(" ")[0]} ${cat.name.split(" ").slice(2).join(" ")}</span>
+                        <span class="layer-bar-value">${catAvg}%</span>
+                    </div>
+                    <div class="progress-track">
+                        <div class="progress-fill" style="width: ${catAvg}%; background: ${barColor};"></div>
+                    </div>
+                </div>
+            `;
+        });
+        document.getElementById('detail-progress-bars').innerHTML = barsHtml;
+        document.getElementById('detail-panel').classList.add('active');
+    }
+
+    function closeDetailPanel() {
+        document.getElementById('detail-panel').classList.remove('active');
+        selectedCountyFips = null;
+    }
+
+    // Welcome Overlay Dismissal
+    function dismissWelcome() {
+        document.getElementById('welcome-overlay').style.display = 'none';
+        logToConsole("[SYS] Geospatial Coverage Explorer initialized. Map sector loaded.");
+    }
+
+    // Log Console Utility
+    function logToConsole(msg) {
+        const consoleEl = document.getElementById('terminal-log');
+        if (consoleEl) {
+            consoleEl.style.display = 'block';
+            const line = document.createElement('div');
+            line.style.marginBottom = '4px';
+            line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            consoleEl.appendChild(line);
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+        }
+    }
+
+    // Mock Simulation Actions
+    function simulateScoutDeploy() {
+        const countyName = document.getElementById('detail-county-name').textContent;
+        logToConsole(`[SCOUT] Spawning background miner thread for ${countyName}...`);
+        setTimeout(() => {
+            logToConsole(`[SCOUT] Connecting to PostGIS databases in ${countyName} grid sector...`);
+        }, 800);
+        setTimeout(() => {
+            logToConsole(`[SCOUT] Ingesting local parcel boundary registries (H3 Resolution 11)...`);
+        }, 1600);
+        setTimeout(() => {
+            logToConsole(`[SCOUT] Successfully imported 45,821 parcels into HEX_TargetLotReviews.`);
+            logToConsole(`[SUCCESS] Autonomous scout deployment completed for ${countyName}.`);
+        }, 2500);
+    }
+
+    function simulateReportDownload() {
+        const countyName = document.getElementById('detail-county-name').textContent;
+        logToConsole(`[REPORTS] Compiling feasibility comps report for ${countyName}...`);
+        setTimeout(() => {
+            logToConsole(`[REPORTS] Assembling Underwriting & Financial Comps charts...`);
+        }, 1000);
+        setTimeout(() => {
+            logToConsole(`[SUCCESS] Report package compiled: "HEX-REPORT-${countyName.toUpperCase().replace(" ", "-")}.pdf".`);
+        }, 2200);
+    }
+
+    function simulateEnterpriseContact() {
+        logToConsole("[CONTACT] Directing request to pending outbox workspace...");
+        setTimeout(() => {
+            logToConsole("[CONTACT] Outbox initialized. Ingesting customer request standard letterhead.");
+            alert("Feasibility scan request staged. Lead details submitted successfully.");
+        }, 600);
+    }
+
+    // Initializer
+    window.onload = () => {
+        loadGeoJson();
+        setupSearch();
+        renderSidebarContent();
+    };
+</script>
+</body>
+</html>

@@ -1,0 +1,131 @@
+
+<div class="sop-card">
+    <!-- 0.0 DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB QMS 11.5</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">6.1</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <table>
+<thead>
+<tr>
+<th style="text-align: left;"><strong>Document Control</strong></th>
+<th style="text-align: left;"></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Document Title</strong></td>
+<td style="text-align: left;"><strong>Preflight Risk Audit and Foresight SOP</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Document ID</strong></td>
+<td style="text-align: left;">HWB QMS 11.5</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Version</strong></td>
+<td style="text-align: left;">1.0</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Status</strong></td>
+<td style="text-align: left;">APPROVED</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Author</strong></td>
+<td style="text-align: left;">George (Systems Architect)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Approved By</strong></td>
+<td style="text-align: left;">Humberto Dominguez, CEO</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Date</strong></td>
+<td style="text-align: left;">2026/06/06</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>ISO 9001 Clause</strong></td>
+<td style="text-align: left;">6.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1 id="standard-operating-procedure-preflight-risk-audit-and-foresight-sop">Standard Operating Procedure: <strong>Preflight Risk Audit and Foresight SOP</strong></h1>
+<h2 id="10-purpose">1.0 Purpose</h2>
+<p>This document establishes the preflight audit and routing smoke testing procedures. These automated processes prevent syntax mismatches, template drift, and incorrect server path configurations from entering the live production environment.</p>
+<h2 id="20-scope">2.0 Scope</h2>
+<p>This procedure applies to all HTML and Jinja templates, routing scripts, and configuration files within the development workspace and the production landing folder.</p>
+<h2 id="30-universal-mandates">3.0 Universal Mandates</h2>
+<p>All code modifications and releases must pass the automated preflight audit suite without exception. No file package may be deployed if any safety check returns a failure status.</p>
+<h2 id="40-prerequisites">4.0 Prerequisites</h2>
+<ul>
+<li>Python 3 runtime environment installed locally.</li>
+<li>Active docker container running the web application.</li>
+<li>Administrative privileges to execute docker commands.</li>
+</ul>
+<h2 id="50-procedure">5.0 Procedure</h2>
+<h3 id="51-static-tag-balance-audit">5.1 Static Tag Balance Audit</h3>
+<ol>
+<li>Execute the HTML tag validator.</li>
+<li>The validator reads each template file and checks that all nested tags are balanced.</li>
+<li>Any mismatched or unclosed tags are flagged with line numbers for immediate correction.</li>
+</ol>
+<h3 id="52-template-parity-audit">5.2 Template Parity Audit</h3>
+<ol>
+<li>Compare local templates with corresponding production templates.</li>
+<li>The verification script alerts the operator of any file size or content mismatch.</li>
+<li>Align the templates to ensure identical layouts across all environments.</li>
+</ol>
+<h3 id="53-path-portability-audit">5.3 Path Portability Audit</h3>
+<ol>
+<li>Scan all source code files for hardcoded paths.</li>
+<li>Ensure all references utilize dynamic path resolvers relative to the application root.</li>
+</ol>
+<h3 id="54-routing-smoke-tests">5.4 Routing Smoke Tests</h3>
+<ol>
+<li>Execute the smoke test script inside the active docker container.</li>
+<li>The script simulates an admin session and sends requests to critical routes.</li>
+<li>Verify that all endpoints respond with a successful status and display expected DOM elements.</li>
+</ol>
+<h2 id="60-verification-zero-defect-check">6.0 Verification (Zero Defect Check)</h2>
+<p>Run the master audit script from the root workspace directory:
+<code>python3 scripts/HEX-PRE-FLIGHT-AUDIT.py</code></p>
+<p>Verify that the terminal output reports a successful status for all checks and returns a zero exit code.</p>
+<h2 id="70-notes-and-cautions">7.0 Notes and Cautions</h2>
+<div class="callout callout-note"><strong>Note</strong>Run this preflight audit before committing changes or building deployment files.</div>
+<div class="callout callout-caution"><strong>Caution</strong>Do not deploy manual code updates without running the smoke test suite first.</div>
+
+<h2 id="80-revision-history">8.0 Revision History</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Version</th>
+<th style="text-align: left;">Date</th>
+<th style="text-align: left;">Author</th>
+<th style="text-align: left;">Change Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1.0</td>
+<td style="text-align: left;">2026/06/06</td>
+<td style="text-align: left;">George</td>
+<td style="text-align: left;">Initial release establishing automated preflight checks.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="90-document-conventions">9.0 Document Conventions</h2>
+<ul>
+<li><strong>Storage:</strong> Save as Markdown in <code>HWB-COMPANY/HWB-QMS/</code>.</li>
+<li><strong>Obsidian Mirroring:</strong> Ensure the document is copied to the Obsidian vault directory.</li>
+</ul>
+    </div>
+
+    <div class="sop-card-footer">
+        <span>&copy; 2026 HWB Cleaning Services LLC</span>
+        <span>Controlled Document | HWB QMS 11.5</span>
+        <span>Page <span class="page-number"></span></span>
+    </div>
+</div>

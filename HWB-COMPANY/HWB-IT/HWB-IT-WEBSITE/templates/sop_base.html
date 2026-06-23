@@ -762,5 +762,91 @@
             });
         }
     </script>
+
+    {% if current_user and current_user.is_authenticated %}
+    <!-- SigmaFidelity™ Inactivity Session Security Timeout Overlay -->
+    <div id="session-timeout-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(4px); z-index: 10000; align-items: center; justify-content: center;">
+        <div style="background: #ffffff; border: 1px solid #cbd5e1; border-top: 4px solid #ef4444; border-radius: 8px; width: 380px; padding: 2rem; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); text-align: center;">
+            <div style="background: #fee2e2; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem auto; color: #ef4444;">
+                <svg style="width: 22px; height: 22px; fill: currentColor;" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+            </div>
+            <h2 style="font-size: 1.25rem; font-weight: 700; color: #0f172a; margin: 0 0 0.5rem 0; letter-spacing: -0.02em;">Session Expiration</h2>
+            <p style="font-size: 0.85rem; color: #64748b; margin: 0 0 1.5rem 0; line-height: 1.5;">You have been inactive for 30 minutes. You will be logged out automatically in <span id="session-countdown" style="font-weight: 800; color: #ef4444;">60</span> seconds.</p>
+            <div style="display: flex; gap: 0.75rem; justify-content: center;">
+                <button id="session-extend-btn" style="height: 36px; padding: 0 1.25rem; border-radius: 6px; border: 1px solid #2563eb; background: #2563eb; color: #ffffff; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.15s;">Keep Working</button>
+                <button id="session-logout-btn" style="height: 36px; padding: 0 1.25rem; border-radius: 6px; border: 1px solid #cbd5e1; background: #ffffff; color: #475569; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.15s;">Logout Now</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // SigmaFidelity™ Inactivity Security Engine
+            const INACTIVITY_LIMIT = 30 * 60 * 1000; // 30 minutes
+            let idleTimer = null;
+            let countdownTimer = null;
+            let countdownSeconds = 60;
+            
+            const modal = document.getElementById('session-timeout-modal');
+            const countdownEl = document.getElementById('session-countdown');
+            const extendBtn = document.getElementById('session-extend-btn');
+            const logoutBtn = document.getElementById('session-logout-btn');
+            
+            function resetIdleTimer() {
+                // Clear any running timers
+                clearTimeout(idleTimer);
+                clearInterval(countdownTimer);
+                
+                // Hide modal and resume active states
+                if (modal.style.display === 'flex') {
+                    modal.style.display = 'none';
+                    // Ping heartbeat endpoint to refresh permanent session cookie in background
+                    fetch('/heartbeat').catch(err => {});
+                }
+                
+                // Set fresh idle timer
+                idleTimer = setTimeout(showWarning, INACTIVITY_LIMIT);
+            }
+            
+            function showWarning() {
+                modal.style.display = 'flex';
+                countdownSeconds = 60;
+                countdownEl.textContent = countdownSeconds;
+                
+                countdownTimer = setInterval(() => {
+                    countdownSeconds--;
+                    countdownEl.textContent = countdownSeconds;
+                    
+                    if (countdownSeconds <= 0) {
+                        clearInterval(countdownTimer);
+                        executeLogout();
+                    }
+                }, 1000);
+            }
+            
+            function executeLogout() {
+                window.location.href = "{{ url_for('logout') }}";
+            }
+            
+            // Listeners for active user events
+            const events = ['mousemove', 'mousedown', 'keypress', 'touchstart', 'scroll'];
+            events.forEach(evt => {
+                window.addEventListener(evt, resetIdleTimer, true);
+            });
+            
+            // Button handlers
+            extendBtn.addEventListener('click', () => {
+                resetIdleTimer();
+            });
+            
+            logoutBtn.addEventListener('click', () => {
+                executeLogout();
+            });
+            
+            // Initialize
+            resetIdleTimer();
+        })();
+    </script>
+    {% endif %}
 </body>
 </html>
