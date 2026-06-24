@@ -1,33 +1,26 @@
-# SigmaFidelity™ High-Fidelity Session Recovery (06/23/2026)
+# SigmaFidelity™ High-Fidelity Session Recovery (06/24/2026)
 
 | **Field** | **Active Technical State** |
 | :--- | :--- |
-| **Current Objective** | Resolved Operations Gate Crash, Session Cookie Loop, Login Credentials Typo, and QMS Manual 404 access failures. |
-| **Microservice** | **HARDENED** (SameSite=Lax cookie policies configured; database connection leakage blocked). |
-| **Memory Tier 6** | **PERSISTENT** (Mistake logs BUG-034 through BUG-038 synced to Postgres SigmaKnowledgeScars). |
-| **New Mandate** | **"Everyday Words" Standard** (20-year-old manager reading level; generic team names). |
-| **Lead Engine** | **RESTORED** (Hdominguez user credentials corrected to password11; admin credentials verified). |
-| **Documentation** | **100% ACCESSIBLE** (Restored missing Obsidian SOP files from trash and corrected qms_index.json mapping). |
-| **Next Step** | Review and execute Corporate Tenant migration (GitHub Org & Azure VNet Setup) on 07/07/2026. |
-| **Session ID** | 2026-06-23-OPERATIONS-RESTORED |
+| **Current Objective** | Finalized full frontend compliance review, resolved routing errors, and completed automated regression testing across all corporate pages. |
+| **Microservice** | **STABLE** (Routes /, /about, /services/*, /compliance, /ehsq, /methodology, /privacy-policy, and /get-quote active and verified). |
+| **Memory Tier 6** | **PERSISTENT** (Walkthrough narrative and system settings synced to Postgres SigmaSystemCore). |
+| **New Mandate** | **"Everyday Words", 3rd Person, & Safety Parity** (Eliminated all first/second person pronouns, building management claims, absolute statements, and PPE mismatches). |
+| **Lead Engine** | **ACTIVE** (All 11 page validation scripts pass successfully with 100% assertions met). |
+| **Documentation** | **100% ACCESSIBLE** (Standardized all template names to prefix-free formats; mapped methodology.html in Flask controller). |
+| **Next Step** | Stand by for next executive directive. |
+| **Session ID** | 2026-06-24-FRONTEND-COMPLIANT |
 
-### 🧠 Critical Learnings for Next Session:
-*   **Cookie Security**: SameSite must be explicitly set to 'Lax' on custom local TLDs (like `mop.test:5000`) over HTTP, otherwise modern browsers reject them.
-*   **Database Leaks**: Always implement `finally: conn.close()` block guards to prevent connection leakage under Flask authentication routes.
-*   **Volume Syncing**: Silently failed bind mounts in Docker container (returning empty directories) can be resolved by running `docker-compose restart compliance`.
-*   **Typo Auditing**: Hashed credentials must be validated against the correct literal strings before user seeding.
-
-### 🏛️ Strategic Two-Week Roadmap (07/07/2026 Review):
-1.  **Corporate Tenant Setup:** Create the GitHub Organization `SigmaFidelity-Corp` and transfer active repositories from `Humbertoed11/`.
-2.  **George Azure Migration:** Deploy George as an Azure Container App connected to Key Vault for centralized orchestration.
-3.  **Local PC Runner Tunneling:** Configure Azure Hybrid Connections to manage local PC development directories and run remote telemetry.
+### 🧠 Critical Learnings for This Session:
+*   **Methodology Endpoint Mapping**: EHSQ links pointing to `url_for('methodology')` require a corresponding Flask endpoint in `main_app.py` returning `methodology.html` to prevent 500 routing build exceptions.
+*   **Flask Test Nesting Guards**: Nesting client contexts (e.g. `with client:` inside `with app.test_client()`) throws exceptions in newer Flask versions. Testing authenticated sessions is cleaner via POST requests to `/login` with credentials.
+*   **Everyday Words Standard**: Words like "facility management" or "surface management" violate QMS mandates. Use clean janitorial terms like "janitorial operations" or "surface care" instead.
 
 ### 🏛️ Physical Truth Audit:
-*   **Active Configurations**: `config.py` (SameSite and Secure cookie parameters updated).
-*   **Restored HTML SOPs**: `static/qms/` (obsidian_android_sync_sop, google_home_obsidian, etc. restored).
-*   **Index File**: `qms_index.json` (corrected filename reference for master setup document).
+*   **Active Templates**: `templates/index.html`, `templates/about.html`, `templates/janitorial.html`, `templates/commercial.html`, `templates/industrial.html`, `templates/construction.html`, `templates/compliance.html`, `templates/ehsq.html`, `templates/methodology.html`, `templates/privacy_policy.html`, `templates/quote_form.html`.
+*   **Routing Controller**: `main_app.py` (rendered templates mapped to standard names).
+*   **Validation Runners**: `scratch/test_*.py` (11 automated page verification scripts).
 *   **Local DB**: `SigmaSystemCore` & `SigmaKnowledgeScars` (Postgres).
 
 ---
 *Note: This file is the official technical handshake for SigmaFidelity™ agents. 100% Alignment verified.*
-

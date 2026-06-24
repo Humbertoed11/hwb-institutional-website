@@ -1,171 +1,145 @@
 {% extends "base.html" %}
 
-{% block title %}HWB Cleaning Services LLC | DFW Metroplex & Statewide Texas Commercial Cleaning{% endblock %}
-
-{% block head %}
- <meta name="description" content="HWB Cleaning provides ISO 9001-compliant Commercial cleaning across the DFW Metroplex and statewide Texas. Experience our quality formula for a professional clean.">
- <meta name="keywords" content="Commercial cleaning DFW Metroplex, Texas building cleaning, office cleaning Plano, Frisco cleaning services, statewide Commercial cleaners">
-{% endblock %}
+{% block title %}HWB Cleaning Services LLC | North Texas Commercial Cleaning Experts{% endblock %}
 
 {% block content %}
-<div class="services-view">
- <!-- Hero Section (Hardened) -->
- <section class="services-hero light-variant" style="background-image: linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.7)), url('{{ url_for('static', filename='img/hero_lobby.png') }}');">
- <div class="content-wrapper" style="max-width: 1000px; text-align: center;">
- <h1>SIGMAFIDELITY 2026 ACTIVE</h1>
- <p style="font-size: 1.15rem; color: var(--hwb-slate); max-width: 750px; margin: 0 auto 2.5rem; line-height: 1.6; font-weight: 500;">Stop managing cleaning issues and start managing your business. We find the gaps in your current setup and provide a reliable plan that actually works in Dallas, Plano, Wylie, Lavon, and Murphy.</p>
- <div class="hero-ctas">
- <a href="#quote-form-home" class="isc-btn isc-btn-primary" style="height: 48px; padding: 0 3rem; font-size: 1rem; border-radius: 6px;">Start a quote <i class="fas fa-arrow-right" style="margin-left: 0.5rem; font-size: 0.8rem;"></i></a>
- </div>
- </div>
- </section>
-
- <!-- Specialized Services (High Density) -->
- <section class="section-white" style="padding: 4rem 0;">
- <div class="section-header" style="margin-bottom: 3rem;">
- <h2 style="font-size: 1.75rem; font-weight: 800;">Our Specialized Cleaning Services</h2>
- <p style="font-size: 1rem; color: var(--hwb-slate);">Specific building cleaning for every North Texas sector.</p>
- </div>
-
- <div class="service-grid" style="gap: 1.5rem;">
- <!-- Janitorial -->
- <a href="{{ url_for('services_janitorial') }}" style="text-decoration: none; color: inherit;">
- <div class="service-card" style="border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
- <div class="card-image" style="background-image: url('{{ url_for('static', filename='img/daycare_busy_active.png') }}'); height: 200px;"></div>
- <div class="card-content" style="padding: 1.5rem;">
- <div class="card-badge" style="border-radius: 4px;">Daily Cleaning</div>
- <h3 style="font-size: 1.1rem; font-weight: 800;">Janitorial Services</h3>
- <p style="font-size: 0.9rem; line-height: 1.5;">Reliable cleaning for schools, daycare centers, and corporate offices.</p>
- </div>
- </div>
- </a>
-
- <!-- Commercial -->
- <a href="{{ url_for('services_commercial') }}" style="text-decoration: none; color: inherit;">
- <div class="service-card" style="border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
- <div class="card-image" style="background-image: url('{{ url_for('static', filename='img/commercial_marble_polishing.png') }}'); height: 200px;"></div>
- <div class="card-content" style="padding: 1.5rem;">
- <div class="card-badge" style="border-radius: 4px;">Specialized</div>
- <h3 style="font-size: 1.1rem; font-weight: 800;">Commercial Cleaning</h3>
- <p style="font-size: 0.9rem; line-height: 1.5;">Floor strip and wax, carpet care, and professional surface polishing.</p>
- </div>
- </div>
- </a>
-
- <!-- Industrial -->
- <a href="{{ url_for('services_industrial') }}" style="text-decoration: none; color: inherit;">
- <div class="service-card" style="border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
- <div class="card-image" style="background-image: url('{{ url_for('static', filename='img/industrial_m20_scrubber.png') }}'); height: 200px;"></div>
- <div class="card-content" style="padding: 1.5rem;">
- <div class="card-badge" style="border-radius: 4px;">Heavy Duty</div>
- <h3 style="font-size: 1.1rem; font-weight: 800;">Industrial Cleaning</h3>
- <p style="font-size: 0.9rem; line-height: 1.5;">High-volume floor cleaning for 24/7 logistics and distribution hubs.</p>
- </div>
- </div>
- </a>
-
- <!-- Construction -->
- <a href="{{ url_for('services_construction') }}" style="text-decoration: none; color: inherit;">
- <div class="service-card" style="border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
- <div class="card-image" style="background-image: url('{{ url_for('static', filename='img/construction_sweeper_servicing_street.png') }}'); height: 200px;"></div>
- <div class="card-content" style="padding: 1.5rem;">
- <div class="card-badge" style="border-radius: 4px;">Post-Build</div>
- <h3 style="font-size: 1.1rem; font-weight: 800;">Construction Cleanup</h3>
- <p style="font-size: 0.9rem; line-height: 1.5;">Detailed 3-step cleanup ensuring your building is inspection-ready.</p>
- </div>
- </div>
- </a>
- </div>
- </section>
-
- <!-- Quote Engine (Hardened Bento Layout) -->
- <section id="quote-form-home" style="padding: 6rem 0; background-color: #f8fafc; background-image: radial-gradient(#e2e8f0 0.5px, transparent 0.5px); background-size: 24px 24px; border-top: 1px solid var(--slate-200);">
- <div class="content-wrapper" style="max-width: 900px;">
- <div class="section-header" style="text-align: center; margin-bottom: 4rem;">
- <h2 style="font-size: 2.5rem; font-weight: 900; letter-spacing: -0.04em; color: var(--hwb-dark); margin-bottom: 1rem;">Start Your Plan</h2>
- <p style="font-size: 1.15rem; color: var(--hwb-slate); font-weight: 500;">Quick registration for professional building care. No complex forms, just results.</p>
- </div>
-
- <div class="isc-card" style="padding: 4rem; border-radius: 20px; box-shadow: 0 20px 50px -12px rgba(0,0,0,0.03), 0 10px 15px -3px rgba(0,0,0,0.01); border: 1px solid var(--slate-200); background: white; position: relative;">
-    <div style="position: absolute; top: 2rem; right: 2rem; font-size: 0.65rem; font-weight: 900; color: var(--hwb-blue); text-transform: uppercase; letter-spacing: 0.1em; background: var(--hwb-blue-glow); padding: 0.25rem 0.75rem; border-radius: 4px;">Simple Registration</div>
-    
-    <form action="{{ url_for('get_quote') }}" method="POST" id="quote-form-main" class="sigma-form-container">
-    <div class="sigma-form-body">
-    <!-- Simple Registration Fields -->
-    <input type="hidden" name="form_version" value="v2">
-    <input type="hidden" name="facility_type" value="Not Specified">
-
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3rem;">
-        <div class="sigma-field">
-            <label style="font-weight: 700; font-size: 0.85rem; color: #1e293b; margin-bottom: 10px; display: block; text-transform: uppercase; letter-spacing: 0.05em;">Company Name</label>
-            <input type="text" name="company" required placeholder="Business Name" class="sigma-input" style="width: 100%; height: 52px; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0 1.25rem; font-size: 1rem; font-weight: 500;">
-        </div>
-        <div class="sigma-field">
-            <label style="font-weight: 700; font-size: 0.85rem; color: #1e293b; margin-bottom: 10px; display: block; text-transform: uppercase; letter-spacing: 0.05em;">Your Name</label>
-            <input type="text" name="name" required placeholder="Full Name" class="sigma-input" style="width: 100%; height: 52px; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0 1.25rem; font-size: 1rem; font-weight: 500;">
-        </div>
-        <div class="sigma-field">
-            <label style="font-weight: 700; font-size: 0.85rem; color: #1e293b; margin-bottom: 10px; display: block; text-transform: uppercase; letter-spacing: 0.05em;">Work Email</label>
-            <input type="email" name="email" required placeholder="name@company.com" class="sigma-input" style="width: 100%; height: 52px; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0 1.25rem; font-size: 1rem; font-weight: 500;">
-        </div>
-        <div class="sigma-field">
-            <label style="font-weight: 700; font-size: 0.85rem; color: #1e293b; margin-bottom: 10px; display: block; text-transform: uppercase; letter-spacing: 0.05em;">Phone Number</label>
-            <input type="tel" name="phone" id="phone_home" required placeholder="(214) 000-0000" class="sigma-input" style="width: 100%; height: 52px; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0 1.25rem; font-size: 1rem; font-weight: 500;">
+<!-- High-Fidelity Hero Section -->
+<section class="services-hero light-variant" style="background-image: linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.7)), url('/static/img/hero_lobby.png');">
+    <div class="content-wrapper" style="max-width: 1000px; text-align: center;">
+        <h1>Reliable Office Cleaning in Dallas & Plano</h1>
+        <p style="font-size: 1.15rem; color: var(--slate-600); max-width: 750px; margin: 0 auto 2.5rem; line-height: 1.6; font-weight: 500;">Focus on business operations rather than cleaning issues. The team identifies gaps in the current setup and provides a reliable plan for facilities in Dallas, Plano, Wylie, Lavon, and Murphy.</p>
+        <div class="hero-ctas">
+            <a href="{{ url_for('get_quote') }}" class="isc-btn isc-btn-primary" style="height: 48px; padding: 0 3rem; font-size: 1rem; border-radius: 6px;">Start a quote <i class="fas fa-arrow-right" style="margin-left: 0.5rem; font-size: 0.8rem;"></i></a>
         </div>
     </div>
+</section>
+
+<!-- Specialized Services (High Density Grid) -->
+<section class="section-white" style="padding: 6rem 0;">
+    <div class="content-wrapper">
+        <div class="section-header" style="margin-bottom: 4rem; text-align: center;">
+            <h2 style="font-size: 2.25rem; font-weight: 900; color: var(--slate-900);">Specialized Cleaning Services</h2>
+            <p style="font-size: 1.1rem; color: var(--slate-500); margin-top: 1rem;">Standardized cleaning operations for every North Texas sector.</p>
+        </div>
+
+        <div class="service-grid">
+            <!-- Janitorial -->
+            <a href="{{ url_for('services_janitorial') }}" class="service-card">
+                <div class="card-image" style="background-image: url('/static/img/daycare_busy_active.png');"></div>
+                <div class="card-content">
+                    <div class="card-badge">Daily Cleaning</div>
+                    <h3>Janitorial Services</h3>
+                    <p>Reliable cleaning for schools, daycare centers, and corporate offices.</p>
+                </div>
+            </a>
+
+            <!-- Commercial -->
+            <a href="{{ url_for('services_commercial') }}" class="service-card">
+                <div class="card-image" style="background-image: url('/static/img/commercial_marble_polishing.png');"></div>
+                <div class="card-content">
+                    <div class="card-badge">Specialized</div>
+                    <h3>Commercial Cleaning</h3>
+                    <p>Floor strip and wax, carpet care, and professional surface polishing.</p>
+                </div>
+            </a>
+
+            <!-- Industrial -->
+            <a href="{{ url_for('services_industrial') }}" class="service-card">
+                <div class="card-image" style="background-image: url('/static/img/industrial_m20_scrubber.png');"></div>
+                <div class="card-content">
+                    <div class="card-badge">Heavy Duty</div>
+                    <h3>Industrial Cleaning</h3>
+                    <p>High-volume floor cleaning for 24/7 logistics and distribution hubs.</p>
+                </div>
+            </a>
+
+            <!-- Construction -->
+            <a href="{{ url_for('services_construction') }}" class="service-card">
+                <div class="card-image" style="background-image: url('/static/img/construction_sweeper_servicing_street.png');"></div>
+                <div class="card-content">
+                    <div class="card-badge">Post-Build</div>
+                    <h3>Construction Cleanup</h3>
+                    <p>Detailed 3-step cleanup to prepare the building for handover.</p>
+                </div>
+            </a>
+        </div>
     </div>
+</section>
 
-    <div class="sigma-form-actions" style="margin-top: 4rem; text-align: center; border-top: 1px solid #f1f5f9; padding-top: 3rem;">
-    <button type="submit" id="submit-quote-btn" class="nav-cta" style="width: 100%; height: 64px; font-weight: 800; font-size: 1.2rem; border-radius: 10px; border: none; cursor: pointer; transition: transform 0.2s;">
-    <span>Check Info & Connect →</span>
-    </button>
-    <p style="margin-top: 1.5rem; font-size: 0.8rem; color: #94a3b8; font-weight: 600;">Safe Connection • 24-Hour Response • Certified Standards</p>
+<!-- Quote Engine (Hardened Bento Layout) -->
+<section id="quote-form-home" style="padding: 8rem 0; background: #f8fafc; border-top: 1px solid var(--slate-200);">
+    <div class="content-wrapper" style="max-width: 800px;">
+        <div class="section-header" style="text-align: center; margin-bottom: 4rem;">
+            <h2 style="font-size: 2.25rem; font-weight: 800; color: var(--hwb-dark);">Request a Free Cleaning Quote</h2>
+            <p style="font-size: 1.1rem; color: var(--hwb-slate); margin-top: 1rem;">Submit contact information to receive a simple cleaning plan.</p>
+        </div>
+
+        <div class="isc-card" style="padding: 3.5rem; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.04); border: 1px solid var(--slate-200); background: white;">
+            <form action="{{ url_for('get_quote') }}" method="POST" id="quote-form-main" class="sigma-form-container">
+                <div class="sigma-form-body">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                        <div class="sigma-field">
+                            <label style="font-weight: 700; margin-bottom: 8px; display: block; font-size: 0.85rem; color: var(--hwb-dark);">Full Name</label>
+                            <input type="text" name="name" required placeholder="Full Name" class="sigma-input" style="width: 100%; height: 48px; border: 1px solid var(--slate-200); border-radius: 6px; padding: 0 1rem;">
+                        </div>
+                        <div class="sigma-field">
+                            <label style="font-weight: 700; margin-bottom: 8px; display: block; font-size: 0.85rem; color: var(--hwb-dark);">Work Email</label>
+                            <input type="email" name="email" required placeholder="email@company.com" class="sigma-input" style="width: 100%; height: 48px; border: 1px solid var(--slate-200); border-radius: 6px; padding: 0 1rem;">
+                        </div>
+                        <div class="sigma-field" style="grid-column: span 2;">
+                            <label style="font-weight: 700; margin-bottom: 8px; display: block; font-size: 0.85rem; color: var(--hwb-dark);">Phone Number</label>
+                            <input type="tel" name="phone" id="phone_home" required placeholder="(214) 000-0000" class="sigma-input" style="width: 100%; height: 48px; border: 1px solid var(--slate-200); border-radius: 6px; padding: 0 1rem;">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sigma-form-actions" style="margin-top: 2.5rem; text-align: center;">
+                    <button type="submit" id="submit-quote-btn" class="isc-btn isc-btn-primary" style="width: 100%; height: 56px; font-weight: 800; font-size: 1.1rem; border-radius: 8px;">
+                        <span>Request Free Quote</span>
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
-    </form>
- </div>
- </div>
- </section>
+</section>
 
- <!-- Formula (Compact Banner) -->
- <section style="padding: 4rem 0; background: var(--hwb-dark); color: white;">
- <div class="content-wrapper" style="text-align: center; max-width: 900px;">
- <h2 style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.2em; color: var(--hwb-blue); margin-bottom: 1.5rem; font-weight: 900;">The HWB Quality Formula</h2>
- <p style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem; line-height: 1.4;">Proper Training + The Right Tools + Respect for Your Space = The SigmaQuality Clean</p>
- <p style="font-size: 1rem; opacity: 0.7; line-height: 1.6;">We believe doing the small things right every single day creates a clean you can actually rely on.</p>
- </div>
- </section>
+<!-- Formula (Dark Mandate Banner) -->
+<section style="padding: 6rem 0; background: var(--hwb-dark); color: white;">
+    <div class="content-wrapper" style="text-align: center; max-width: 900px;">
+        <h2 style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.25em; color: var(--hwb-blue); margin-bottom: 2rem; font-weight: 900;">The HWB Quality Formula</h2>
+        <p style="font-size: 1.75rem; font-weight: 700; margin-bottom: 2rem; line-height: 1.35;">Proper Training + The Right Tools + Respect for Your Space = The SigmaQuality Clean</p>
+        <p style="font-size: 1.1rem; opacity: 0.7; line-height: 1.6; font-weight: 500;">Doing the small things right every single day creates a clean that facilities can rely on.</p>
+    </div>
+</section>
 
- <!-- Final CTA -->
- <section class="cta-section" style="padding: 4rem 0;">
- <div class="executive-cta" style="border-radius: 6px; padding: 3rem;">
- <h2 style="font-size: 1.75rem; font-weight: 800; margin-bottom: 1rem;">Ready for a spotless building?</h2>
- <p style="margin-bottom: 2rem; opacity: 0.9;">View our cleaning standards or start your custom plan today.</p>
- <div style="display: flex; gap: 1rem; justify-content: center;">
- <a href="{{ url_for('get_quote') }}" class="isc-btn isc-btn-primary" style="height: 44px;">Start your plan</a>
- <a href="{{ url_for('compliance') }}" class="isc-btn isc-btn-outline" style="height: 44px; background: rgba(255,255,255,0.1); color: white; border-color: rgba(255,255,255,0.2);">View Standards</a>
- </div>
- </div>
- </section>
-</div>
-{% endblock %}
+<!-- Final Closing CTA -->
+<section class="cta-section" style="padding: 8rem 0;">
+    <div class="executive-cta">
+        <h2>Ready for a clean building?</h2>
+        <p>View cleaning standards or start a custom plan today. The team is ready to deliver professional cleaning services.</p>
+        <div style="display: flex; gap: 1.5rem; justify-content: center;">
+            <a href="{{ url_for('get_quote') }}" class="isc-btn isc-btn-primary" style="height: 52px; padding: 0 3rem; font-weight: 800; border-radius: 50px;">Start a plan</a>
+            <a href="{{ url_for('compliance') }}" class="isc-btn isc-btn-outline" style="height: 52px; padding: 0 3rem; font-weight: 800; border-radius: 50px;">View Standards</a>
+        </div>
+    </div>
+</section>
 
-{% block scripts %}
 <script>
- // Phone Masking
+ // Phone Masking for Home Form
  document.getElementById('phone_home').addEventListener('input', function(e) {
- let x = e.target.value.replace(/\D/g, '').match(/(\d{0,3})(\d{0,3})(\d{0,4})/);
- e.target.value = !x[2] ? x[1] : '(' + x[1] + ')-' + x[2] + (x[3] ? '-' + x[3] : '');
+    let x = e.target.value.replace(/\D/g, '').match(/(\d{0,3})(\d{0,3})(\d{0,4})/);
+    e.target.value = !x[2] ? x[1] : '(' + x[1] + ')-' + x[2] + (x[3] ? '-' + x[3] : '');
  });
 
- // Submit Narrative
+ // Submit Narrative Sync
  const form = document.getElementById('quote-form-main');
  const btn = document.getElementById('submit-quote-btn');
  const span = btn.querySelector('span');
 
  form.onsubmit = function() {
- btn.disabled = true;
- span.innerText = "Saving Information...";
- setTimeout(() => span.innerText = "Syncing Field Ops...", 700);
+    btn.disabled = true;
+    span.innerText = "Processing...";
+    setTimeout(() => span.innerText = "Syncing Field Ops...", 700);
  };
 </script>
 {% endblock %}

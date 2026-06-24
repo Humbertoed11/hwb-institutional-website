@@ -433,10 +433,10 @@ def heartbeat():
     return jsonify({"status": "healthy"}), 200
 
 @app.route('/', endpoint='index')
-def index(): return render_template('HWB-WEB Index.html')
+def index(): return render_template('index.html')
 
 @app.route('/about', endpoint='about')
-def about(): return render_template('HWB-WEB About.html')
+def about(): return render_template('about.html')
 
 @app.route('/design-system', endpoint='design_system')
 @app.route('/design-systems')
@@ -500,13 +500,16 @@ def services_commercial(): return render_template('commercial.html')
 def services_industrial(): return render_template('industrial.html')
 
 @app.route('/services/construction', endpoint='services_construction')
-def services_construction(): return render_template('HWB-WEB Construction.html')
+def services_construction(): return render_template('construction.html')
 
 @app.route('/compliance', endpoint='compliance')
-def compliance(): return render_template('HWB-WEB Compliance.html')
+def compliance(): return render_template('compliance.html')
 
 @app.route('/ehsq', endpoint='ehsq')
-def ehsq(): return render_template('HWB-WEB Ehsq.html')
+def ehsq(): return render_template('ehsq.html')
+
+@app.route('/methodology', endpoint='methodology')
+def methodology(): return render_template('methodology.html')
 
 @app.route('/privacy-policy')
 def privacy_policy(): return render_template('privacy_policy.html')

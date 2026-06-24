@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}3-Step Post-Construction Cleanup | Dallas, Plano & North Texas | HWB Cleaning{% endblock %}
+
+{% block head %}
+ <meta name="description" content="Professional 3-Step Construction Cleanup services in Dallas, Plano, and North Texas. Rapid OSHA-compliant site cleaning from Rough to Final Fluff.">
+ <meta name="keywords" content="Construction cleanup Dallas, post-construction cleaning Plano, final clean North Texas, builder cleaning DFW, construction site porter McKinney">
+{% endblock %}
+
+{% block content %}
+<section class="services-view">
+    <!-- High-Fidelity Construction Hero (Original Graphic Restored) -->
+    <div class="services-hero dark-variant" style="background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('/static/img/construction_rough_clean_ppe.png');">
+        <div class="content-wrapper" style="max-width: 1000px; margin: 0 auto; text-align: center;">
+            <h1>3-Step Neighborhood Cleanup</h1>
+            <p class="subtitle">Detailed 3-step cleanup ensuring new neighborhood infrastructure is inspection-ready. We clean and prepare construction sites, leaving them cleared of heavy dust and debris across the DFW Metroplex.</p>
+            <div class="hero-ctas">
+                <a href="{{ url_for('get_quote') }}" class="isc-btn isc-btn-primary" style="height: 52px; padding: 0 3.5rem; border-radius: 50px; font-weight: 800;">Start a quote <i class="fas fa-arrow-right" style="margin-left: 0.5rem;"></i></a>
+            </div>
+        </div>
+    </div>
+
+    <div class="detailed-services">
+        <div class="content-wrapper">
+            <!-- Strategic Precision Section -->
+            <div class="split-feature image-left" style="display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center; margin-bottom: 8rem;">
+                <div class="sigma-image-frame" style="border-radius: 12px; overflow: hidden; height: 450px;">
+                    <img src="/static/img/construction_sweeper_servicing_street.png" alt="HWB Construction Sweeper Site Cleanup" style="width: 100%; height: 100%; object-fit: cover;">
+                </div>
+                <div class="split-content">
+                    <span style="font-size: 0.75rem; font-weight: 900; color: var(--hwb-blue); text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 1rem; display: block;">OSHA-Compliant Teams</span>
+                    <h2 style="font-size: 2.5rem; font-weight: 800; color: var(--hwb-dark); margin-bottom: 1.5rem; letter-spacing: -0.02em;">Initial Site Cleaning Operations</h2>
+                    <p style="font-size: 1.15rem; color: var(--hwb-slate); margin-bottom: 2rem; line-height: 1.8; font-weight: 500;">Construction cleaning is focused on safety and quality. The OSHA-compliant teams are equipped with proper safety gear and follow strict cleaning protocols to ensure all streets, curbs, and walkways are clean and safe before handover.</p>
+                    <ul class="hwb-checklist" style="list-style: none; padding: 0;">
+                        <li style="margin-bottom: 1rem; font-weight: 600; color: var(--hwb-dark); display: flex; align-items: center; gap: 1rem;"><i class="fas fa-check-circle" style="color: var(--hwb-blue);"></i> Rough Clean: Site and Debris Clearing</li>
+                        <li style="margin-bottom: 1rem; font-weight: 600; color: var(--hwb-dark); display: flex; align-items: center; gap: 1rem;"><i class="fas fa-check-circle" style="color: var(--hwb-blue);"></i> Final Clean: Road and Sidewalk Washing</li>
+                        <li style="margin-bottom: 1rem; font-weight: 600; color: var(--hwb-dark); display: flex; align-items: center; gap: 1rem;"><i class="fas fa-check-circle" style="color: var(--hwb-blue);"></i> Final Sweep: Handover Detailing</li>
+                        <li style="margin-bottom: 1rem; font-weight: 600; color: var(--hwb-dark); display: flex; align-items: center; gap: 1rem;"><i class="fas fa-check-circle" style="color: var(--hwb-blue);"></i> Final Walkthrough and Quality Check</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 8rem;">
+                <div class="section-header" style="text-align: center; margin-bottom: 4rem;">
+                    <h2 style="font-size: 2.25rem; font-weight: 800; color: var(--hwb-dark);">The 3-Phase Cleanup Plan</h2>
+                    <p style="font-size: 1.1rem; color: var(--hwb-slate); margin-top: 1rem;">Phased cleaning services for North Texas developments.</p>
+                </div>
+                
+                <!-- Restored 4-Column Aligned Grid (using 3 cards) -->
+                <div class="service-grid" style="grid-template-columns: repeat(3, 1fr);">
+                    <!-- Card 1: The Rough Clean -->
+                    <div class="service-card">
+                        <div class="card-image" style="background-image: url('/static/img/construction_stage1_new.jpg');"></div>
+                        <div class="card-content">
+                            <div class="card-badge">Phase 01</div>
+                            <h3>Rough Site Sweeping</h3>
+                            <p>Post-grading and utilities setup. We focus on clearing large construction debris, cleaning out concrete curbs and gutters, and sweeping main roadways to protect storm drains and keep the site clear.</p>
+                        </div>
+                    </div>
+
+                    <!-- Card 2: The Final Clean -->
+                    <div class="service-card">
+                        <div class="card-image" style="background-image: url('/static/img/construction_stage2_new.jpg');"></div>
+                        <div class="card-content">
+                            <div class="card-badge">Phase 02</div>
+                            <h3>Road and Curb Washing</h3>
+                            <p>The intensive wash. Complete power washing of completed asphalt streets, concrete sidewalks, driveway entries, and public walkways to remove heavy mud, vehicle tracks, and construction residue.</p>
+                        </div>
+                    </div>
+
+                    <!-- Card 3: The Fluff Clean -->
+                    <div class="service-card">
+                        <div class="card-image" style="background-image: url('/static/img/construction_stage3_new.jpg');"></div>
+                        <div class="card-content">
+                            <div class="card-badge">Phase 03</div>
+                            <h3>Handover Sweep & Detail</h3>
+                            <p>Conducted right before developer handover. We perform a final street sweep, clean public signs and mailboxes, and clear remaining windblown litter to ensure a completely clean neighborhood presentation.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Department Final CTA -->
+    <section class="cta-section">
+        <div class="executive-cta">
+            <h2 style="font-size: 2.75rem;">Start a custom plan today</h2>
+            <p>Our team is ready to deliver high-quality construction cleanup for the site. Request a custom cleanup plan today.</p>
+            <div style="display: flex; gap: 1.5rem; justify-content: center;">
+                <a href="{{ url_for('get_quote') }}" class="isc-btn isc-btn-primary" style="height: 56px; padding: 0 4rem; font-weight: 800; border-radius: 50px; font-size: 1.1rem;">Start a quote <i class="fas fa-arrow-right"></i></a>
+            </div>
+        </div>
+    </section>
+</section>
+{% endblock %}
