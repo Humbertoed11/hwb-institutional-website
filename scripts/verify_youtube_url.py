@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Institutional Paths
-CLIENT_SECRET_FILE = "/mnt/c/Users/humbe/OneDrive - hwbcleaning.com/gemini_projects/HWB-COMPANY/HWB-IT/client_secret_1012258935790-58ds1o5q6t0pn72pu09fvu584jqs4nuh.apps.googleusercontent.com.json"
+CLIENT_SECRET_FILE = "/mnt/c/Users/humbe/OneDrive - hwbcleaning.com/gemini_projects/HWB-COMPANY/HWB-IT/client_secret_711349909963-q8n4726cpjmn7mfodjd7v66hpst3v1ae.apps.googleusercontent.com.json"
 TOKEN_PICKLE_FILE = "scripts/youtube_token.pickle"
 
 # Mandatory Scopes

@@ -2,24 +2,24 @@
 
 | **Field** | **Active Technical State** |
 | :--- | :--- |
-| **Current Objective** | Finalized full frontend compliance review, resolved routing errors, and completed automated regression testing across all corporate pages. |
-| **Microservice** | **STABLE** (Routes /, /about, /services/*, /compliance, /ehsq, /methodology, /privacy-policy, and /get-quote active and verified). |
-| **Memory Tier 6** | **PERSISTENT** (Walkthrough narrative and system settings synced to Postgres SigmaSystemCore). |
-| **New Mandate** | **"Everyday Words", 3rd Person, & Safety Parity** (Eliminated all first/second person pronouns, building management claims, absolute statements, and PPE mismatches). |
-| **Lead Engine** | **ACTIVE** (All 11 page validation scripts pass successfully with 100% assertions met). |
-| **Documentation** | **100% ACCESSIBLE** (Standardized all template names to prefix-free formats; mapped methodology.html in Flask controller). |
-| **Next Step** | Stand by for next executive directive. |
-| **Session ID** | 2026-06-24-FRONTEND-COMPLIANT |
+| **Current Objective** | Ingested Google Maps Platform API key, aligned GCP OAuth credentials, modernized HWB-QMS-9.5 to HTML, and executing push to live. |
+| **Microservice** | **STABLE** (Active branch: feature/locations. Ingested Maps Key active in container environment). |
+| **Memory Tier 6** | **PERSISTENT** (State and mistake logs synced to PostgreSQL database). |
+| **New Mandate** | **"B2B Automated Handshake & Maps Key Ingestion"** (Aligning YouTube credentials and setting Maps API key across environment configurations). |
+| **Lead Engine** | **ACTIVE** (OAuth scripts aligned and local containers verified online). |
+| **Documentation** | **100% ACCESSIBLE** (Modernized HWB-QMS-9.5 to HTML card standard. Synced database core). |
+| **Next Step** | Execute scripts/deploy_live_container.sh and verify live App Service status. |
+| **Session ID** | 2026-06-24-OAUTH-AND-MAPS-DEPLOYED |
 
 ### 🧠 Critical Learnings for This Session:
-*   **Methodology Endpoint Mapping**: EHSQ links pointing to `url_for('methodology')` require a corresponding Flask endpoint in `main_app.py` returning `methodology.html` to prevent 500 routing build exceptions.
-*   **Flask Test Nesting Guards**: Nesting client contexts (e.g. `with client:` inside `with app.test_client()`) throws exceptions in newer Flask versions. Testing authenticated sessions is cleaner via POST requests to `/login` with credentials.
-*   **Everyday Words Standard**: Words like "facility management" or "surface management" violate QMS mandates. Use clean janitorial terms like "janitorial operations" or "surface care" instead.
+*   **Decoupled B2B Geo-Targeting**: Homepages should retain broad regional scopes to avoid local bias and high bounce rates from adjacent cities. Use dedicated city routes (`/locations/<city>`) to rank locally for high-intent keywords.
+*   **3-Card Centering Grid**: Aligning 3 cards to match the standard subpage layouts requires overriding CSS grids with inline style `grid-template-columns: repeat(3, 1fr)`.
+*   **Zero-Dependency Testing**: Writing test scripts using native python `re` (regex matching) instead of `BeautifulSoup` enables immediate verification in any local or containerized environment without library overhead.
 
 ### 🏛️ Physical Truth Audit:
-*   **Active Templates**: `templates/index.html`, `templates/about.html`, `templates/janitorial.html`, `templates/commercial.html`, `templates/industrial.html`, `templates/construction.html`, `templates/compliance.html`, `templates/ehsq.html`, `templates/methodology.html`, `templates/privacy_policy.html`, `templates/quote_form.html`.
-*   **Routing Controller**: `main_app.py` (rendered templates mapped to standard names).
-*   **Validation Runners**: `scratch/test_*.py` (11 automated page verification scripts).
+*   **Active Templates**: `templates/index.html`, `templates/base.html`, `templates/components/mega_bar.html`, `templates/location.html`, `templates/about.html`, `templates/compliance.html`, `templates/ehsq.html`, `templates/methodology.html`.
+*   **Routing Controller**: `main_app.py` (updated with LOCATIONS_DATA metadata and dynamic route mapping).
+*   **Validation Runners**: `scratch/test_locations.py` (runs localized and global navigation test cases).
 *   **Local DB**: `SigmaSystemCore` & `SigmaKnowledgeScars` (Postgres).
 
 ---

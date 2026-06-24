@@ -1,0 +1,140 @@
+<!-- 
+    SigmaFidelity™ Institutional SOP: Cloud Deployment and Infrastructure Log
+    Standard: HWB-QMS-9.5 v6.0.0
+    Document ID: HWB-QMS-9.5
+-->
+<div class="sop-card">
+    <!-- 0.0 DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-9.5</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">6.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.1.3 (Infrastructure) &amp; 7.5 (Documented Info)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <table>
+            <thead>
+                <tr>
+                    <th><strong>Document Control</strong></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td><strong>Document Title</strong></td><td><strong>Cloud Deployment and Infrastructure Log</strong></td></tr>
+                <tr><td><strong>Document ID</strong></td><td>HWB-QMS-9.5</td></tr>
+                <tr><td><strong>Version</strong></td><td>6.0.0</td></tr>
+                <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
+                <tr><td><strong>Author</strong></td><td>George (Systems Architect)</td></tr>
+                <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
+                <tr><td><strong>Date</strong></td><td>06-24-2026</td></tr>
+                <tr><td><strong>ISO 9001 Clause</strong></td><td>7.1.3 &amp; 7.5</td></tr>
+            </tbody>
+        </table>
+
+        <hr />
+
+        <h1>Standard Operating Procedure: <strong>Cloud Deployment and Infrastructure Log</strong></h1>
+
+        <h2>1.0 Purpose</h2>
+        <p>To define and log the containerized deployment architecture, private registry settings, and automated publishing pipeline for the SigmaFidelity™ web platform (<code>hwbcleaning.com</code>) on Microsoft Azure. This ensures absolute environment parity and zero-defect deployments.</p>
+
+        <h2>2.0 Scope</h2>
+        <p>Applies to the core web application (<code>hwb_web_app</code>), the private Azure Container Registry (<code>hwbprodacr</code>), and the target Azure App Service (<code>hwb-institutional-website</code>) under Resource Group <code>HWB-Production-RG</code>.</p>
+
+        <h2>3.0 Cloud &amp; Container Infrastructure Details</h2>
+        <ul>
+            <li><strong>Production App URL</strong>: <a href="https://www.hwbcleaning.com" target="_blank">https://www.hwbcleaning.com</a></li>
+            <li><strong>Azure Subscription ID</strong>: <code>d778faac-02a4-4d74-9881-199994f2bd98</code></li>
+            <li><strong>Azure Resource Group</strong>: <code>HWB-Production-RG</code></li>
+            <li><strong>Container Registry (ACR)</strong>: <code>hwbprodacr.azurecr.io</code> (Private)</li>
+            <li><strong>Image Registry Scope</strong>: <code>hwbprodacr.azurecr.io/sigmafidelity-web:&lt;tag&gt;</code></li>
+            <li><strong>Target Web Port</strong>: <code>5000</code> (Enforced via <code>WEBSITES_PORT=5000</code>)</li>
+        </ul>
+
+        <h2>4.0 Publishing Workflow (Dev to Production)</h2>
+        
+        <h3>4.1 Step 1: Local Hardening &amp; Git Commits</h3>
+        <p>Before launching the deployment pipeline, all code modifications (such as API keys, paths, and configurations) must be staged and committed to git to maintain version tracking:</p>
+        <pre><code>git add .
+git commit -m "DEPLOY: &lt;Release Summary&gt;"</code></pre>
+
+        <h3>4.2 Step 2: Running the Deployment Pipeline</h3>
+        <p>Run the deployment script from the project root directory:</p>
+        <pre><code>bash scripts/deploy_live_container.sh</code></pre>
+        
+        <div class="callout callout-note">
+            <strong>System Process Automation</strong>
+            <p>The deployment script builds the production Docker image, pushes it to the private registry (ACR), and authenticates with the Azure Resource Manager API using MSAL to update the Web App's active image and trigger a service reload.</p>
+        </div>
+
+        <h3>4.3 Step 3: Production Diagnostics Verification</h3>
+        <p>Query Azure's SCM link integrity from the container terminal to verify status:</p>
+        <pre><code>docker exec hwb_web_app python scripts/diagnostic_azure_deploy.py</code></pre>
+        <p>Ensure that the <code>Site Operational State</code> prints <code>Running</code>.</p>
+
+        <h2>5.0 Verification Checklist (Zero-Defect Check)</h2>
+        <ul>
+            <li><strong>Registry Auth</strong>: Does the local Docker client successfully login to <code>hwbprodacr.azurecr.io</code>?</li>
+            <li><strong>Port Binding</strong>: Is <code>WEBSITES_PORT</code> in the App settings confirmed at <code>5000</code>?</li>
+            <li><strong>Database String</strong>: Is the production PostgreSQL Flexible Server URL pointing to the live server (<code>sigmajan-server.postgres.database.azure.com</code>)?</li>
+            <li><strong>Smoke Test</strong>: Does hitting the dynamic <code>/about</code> route on the live URL return <code>200 OK</code> with updated branding?</li>
+        </ul>
+
+        <h2>6.0 Revision History</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Version</th>
+                    <th>Date</th>
+                    <th>Author</th>
+                    <th>Change Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1.0.0</td>
+                    <td>03-20-2026</td>
+                    <td>George</td>
+                    <td>Initial deployment to Azure App Service.</td>
+                </tr>
+                <tr>
+                    <td>2.0.0</td>
+                    <td>04-10-2026</td>
+                    <td>George</td>
+                    <td>Implemented GitHub Actions CI/CD pipeline.</td>
+                </tr>
+                <tr>
+                    <td>3.0.0</td>
+                    <td>04-15-2026</td>
+                    <td>George</td>
+                    <td>Published MOP Incident Management Suite.</td>
+                </tr>
+                <tr>
+                    <td>4.0.0</td>
+                    <td>04-20-2026</td>
+                    <td>George</td>
+                    <td>Phase 4/5 Hardening: Parity and Linguistic Sync.</td>
+                </tr>
+                <tr>
+                    <td>5.0.0</td>
+                    <td>04-27-2026</td>
+                    <td>George</td>
+                    <td>Phase 6: Full Containerization and Private ACR deployment.</td>
+                </tr>
+                <tr>
+                    <td>6.0.0</td>
+                    <td>06-24-2026</td>
+                    <td>George</td>
+                    <td>Modernized to HTML format. Updated ACR registry paths and ARM API verification routines.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="sop-card-footer">
+        <span>&copy; 2026 HWB Cleaning Services LLC</span>
+        <span>Controlled Document | HWB-QMS-9.5</span>
+        <span>Page <span class="page-number"></span></span>
+    </div>
+</div>
