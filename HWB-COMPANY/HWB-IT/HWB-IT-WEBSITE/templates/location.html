@@ -27,7 +27,7 @@
             <p style="font-size: 1.1rem; color: var(--slate-500); margin-top: 1rem;">Standardized cleaning operations for every business sector in {{ data.name }}.</p>
         </div>
 
-        <div class="service-grid">
+        <div class="service-grid" style="grid-template-columns: repeat(3, 1fr);">
             <!-- 1. Janitorial -->
             <a href="{{ url_for('services_janitorial') }}" class="service-card">
                 <div class="card-image" style="background-image: url('/static/img/janitorial_breakroom.png');"></div>
