@@ -70,6 +70,39 @@
                 </div>
             </div>
 
+            <!-- LOCATIONS MENU -->
+            <div class="nav-item">
+                <a href="javascript:void(0)" style="cursor: default;">Locations We Serve</a>
+                <div class="mega-menu">
+                    <div class="mega-menu-grid">
+                        <a href="{{ url_for('location_page', city='dallas') }}" class="mega-option">
+                            <span class="title">Dallas</span>
+                            <span class="desc">Commercial cleaning in Dallas County.</span>
+                        </a>
+                        <a href="{{ url_for('location_page', city='plano') }}" class="mega-option">
+                            <span class="title">Plano</span>
+                            <span class="desc">Janitorial care in Legacy West & Collin County.</span>
+                        </a>
+                        <a href="{{ url_for('location_page', city='fort-worth') }}" class="mega-option">
+                            <span class="title">Fort Worth</span>
+                            <span class="desc">Operations across Tarrant County.</span>
+                        </a>
+                        <a href="{{ url_for('location_page', city='waxahachie') }}" class="mega-option">
+                            <span class="title">Waxahachie</span>
+                            <span class="desc">Commercial services in Ellis County.</span>
+                        </a>
+                        <a href="{{ url_for('location_page', city='frisco') }}" class="mega-option">
+                            <span class="title">Frisco</span>
+                            <span class="desc">Sanitation in the high-growth tollway corridor.</span>
+                        </a>
+                        <a href="{{ url_for('location_page', city='mckinney') }}" class="mega-option">
+                            <span class="title">McKinney</span>
+                            <span class="desc">Standardized procedures in Collin County.</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
             <a href="{{ url_for('about') }}">About Us</a>
 
             {% if current_user.is_authenticated %}
@@ -153,12 +186,18 @@
             <a href="{{ url_for('sigmajan_lab') }}" class="sub-link">The Lab</a>
             <a href="{{ url_for('manual_index') }}" class="sub-link">SOP Manual</a>
             <a href="{{ url_for('logout') }}" class="sub-link" style="color: #ef4444;">Log Out</a>
-        {% else %}
             <div style="font-weight: 900; color: var(--hwb-blue); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: -1rem;">Our Services</div>
             <a href="{{ url_for('services_janitorial') }}" class="sub-link">Janitorial Cleaning</a>
             <a href="{{ url_for('services_commercial') }}" class="sub-link">Commercial deep cleaning</a>
             <a href="{{ url_for('services_industrial') }}" class="sub-link">Industrial & Warehouse</a>
             <a href="{{ url_for('services_construction') }}" class="sub-link">Construction Services</a>
+            <div style="font-weight: 900; color: var(--hwb-blue); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; margin-top: 1rem; margin-bottom: -1rem;">Service Areas</div>
+            <a href="{{ url_for('location_page', city='dallas') }}" class="sub-link">Dallas</a>
+            <a href="{{ url_for('location_page', city='plano') }}" class="sub-link">Plano</a>
+            <a href="{{ url_for('location_page', city='fort-worth') }}" class="sub-link">Fort Worth</a>
+            <a href="{{ url_for('location_page', city='waxahachie') }}" class="sub-link">Waxahachie</a>
+            <a href="{{ url_for('location_page', city='frisco') }}" class="sub-link">Frisco</a>
+            <a href="{{ url_for('location_page', city='mckinney') }}" class="sub-link">McKinney</a>
             <a href="{{ url_for('about') }}">About Us</a>
         {% endif %}
     </div>

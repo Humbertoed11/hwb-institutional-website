@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify, flash, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, jsonify, flash, send_from_directory, abort
 from flask_compress import Compress
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -513,6 +513,59 @@ def methodology(): return render_template('methodology.html')
 
 @app.route('/privacy-policy')
 def privacy_policy(): return render_template('privacy_policy.html')
+
+LOCATIONS_DATA = {
+    'dallas': {
+        'name': 'Dallas',
+        'title': 'Commercial Cleaning & Janitorial Services in Dallas | HWB Cleaning',
+        'h1': 'Commercial Cleaning & Janitorial Services in Dallas',
+        'meta_desc': 'HWB Cleaning Services LLC provides OSHA-compliant commercial cleaning and janitorial services in Dallas, TX. Request a custom quote today.',
+        'desc': 'Focus on business operations rather than cleaning issues. The team identifies gaps in current setups and provides reliable plans for facilities in Dallas and surrounding Dallas County corridors.'
+    },
+    'plano': {
+        'name': 'Plano',
+        'title': 'Commercial Cleaning & Janitorial Services in Plano | HWB Cleaning',
+        'h1': 'Commercial Cleaning & Janitorial Services in Plano',
+        'meta_desc': 'HWB Cleaning Services LLC provides OSHA-compliant commercial cleaning and janitorial services in Plano, TX. Request a custom quote today.',
+        'desc': 'Focus on business operations rather than cleaning issues. The team identifies gaps in current setups and provides reliable plans for facilities in Plano, Legacy West, and Collin County corridors.'
+    },
+    'fort-worth': {
+        'name': 'Fort Worth',
+        'title': 'Commercial Cleaning & Janitorial Services in Fort Worth | HWB Cleaning',
+        'h1': 'Commercial Cleaning & Janitorial Services in Fort Worth',
+        'meta_desc': 'HWB Cleaning Services LLC provides OSHA-compliant commercial cleaning and janitorial services in Fort Worth, TX. Request a custom quote today.',
+        'desc': 'Focus on business operations rather than cleaning issues. The team identifies gaps in current setups and provides reliable plans for facilities in Fort Worth and surrounding Tarrant County corridors.'
+    },
+    'waxahachie': {
+        'name': 'Waxahachie',
+        'title': 'Commercial Cleaning & Janitorial Services in Waxahachie | HWB Cleaning',
+        'h1': 'Commercial Cleaning & Janitorial Services in Waxahachie',
+        'meta_desc': 'HWB Cleaning Services LLC provides OSHA-compliant commercial cleaning and janitorial services in Waxahachie, TX. Request a custom quote today.',
+        'desc': 'Focus on business operations rather than cleaning issues. The team identifies gaps in current setups and provides reliable plans for facilities in Waxahachie and surrounding Ellis County corridors.'
+    },
+    'frisco': {
+        'name': 'Frisco',
+        'title': 'Commercial Cleaning & Janitorial Services in Frisco | HWB Cleaning',
+        'h1': 'Commercial Cleaning & Janitorial Services in Frisco',
+        'meta_desc': 'HWB Cleaning Services LLC provides OSHA-compliant commercial cleaning and janitorial services in Frisco, TX. Request a custom quote today.',
+        'desc': 'Focus on business operations rather than cleaning issues. The team identifies gaps in current setups and provides reliable plans for facilities in Frisco and surrounding Collin County corridors.'
+    },
+    'mckinney': {
+        'name': 'McKinney',
+        'title': 'Commercial Cleaning & Janitorial Services in McKinney | HWB Cleaning',
+        'h1': 'Commercial Cleaning & Janitorial Services in McKinney',
+        'meta_desc': 'HWB Cleaning Services LLC provides OSHA-compliant commercial cleaning and janitorial services in McKinney, TX. Request a custom quote today.',
+        'desc': 'Focus on business operations rather than cleaning issues. The team identifies gaps in current setups and provides reliable plans for facilities in McKinney and surrounding North Texas corridors.'
+    }
+}
+
+@app.route('/locations/<city>', endpoint='location_page')
+def location_page(city):
+    city_lower = city.lower()
+    if city_lower not in LOCATIONS_DATA:
+        abort(404)
+    data = LOCATIONS_DATA[city_lower]
+    return render_template('location.html', data=data)
 
 @app.route('/get-quote', methods=['GET', 'POST'], endpoint='get_quote')
 def get_quote():

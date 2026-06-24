@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}{{ data.title }}{% endblock %}
+
+{% block head %}
+  <meta name="description" content="{{ data.meta_desc }}">
+  <meta name="keywords" content="commercial cleaning {{ data.name | lower }}, janitorial services {{ data.name | lower }}, office cleaning {{ data.name | lower }}, floor care {{ data.name | lower }}">
+{% endblock %}
+
+{% block content %}
+<!-- High-Fidelity Location Hero Section -->
+<section class="services-hero light-variant" style="background-image: linear-gradient(rgba(255,255,255,0.75), rgba(255,255,255,0.75)), url('/static/img/hero_lobby.png');">
+    <div class="content-wrapper" style="max-width: 1000px; text-align: center;">
+        <h1>{{ data.h1 }}</h1>
+        <p style="font-size: 1.15rem; color: var(--slate-600); max-width: 750px; margin: 0 auto 2.5rem; line-height: 1.6; font-weight: 500;">{{ data.desc }}</p>
+        <div class="hero-ctas">
+            <a href="{{ url_for('get_quote') }}" class="isc-btn isc-btn-primary" style="height: 48px; padding: 0 3rem; font-size: 1rem; border-radius: 6px;">Start a quote <i class="fas fa-arrow-right" style="margin-left: 0.5rem; font-size: 0.8rem;"></i></a>
+        </div>
+    </div>
+</section>
+
+<!-- Location Core Services Info -->
+<section class="section-white" style="padding: 6rem 0;">
+    <div class="content-wrapper">
+        <div class="section-header" style="margin-bottom: 4rem; text-align: center;">
+            <h2 style="font-size: 2.25rem; font-weight: 900; color: var(--slate-900);">Specialized Cleaning in {{ data.name }}</h2>
+            <p style="font-size: 1.1rem; color: var(--slate-500); margin-top: 1rem;">Standardized cleaning operations for every business sector in {{ data.name }}.</p>
+        </div>
+
+        <div class="service-grid">
+            <!-- 1. Janitorial Services Card -->
+            <div class="service-card shadow-soft">
+                <div class="sc-header">
+                    <div class="sc-icon">🧹</div>
+                    <h3>Janitorial Services</h3>
+                </div>
+                <p>Daily and nightly office cleaning, porter assistance, and routine sanitation optimized for {{ data.name }} facilities.</p>
+                <a href="{{ url_for('services_janitorial') }}" class="sc-link">Learn More <i class="fas fa-chevron-right"></i></a>
+            </div>
+
+            <!-- 2. Floor & Carpet Care Card -->
+            <div class="service-card shadow-soft">
+                <div class="sc-header">
+                    <div class="sc-icon">✨</div>
+                    <h3>Floor & Surface Care</h3>
+                </div>
+                <p>Deep carpet extraction, vinyl (VCT) floor care, and window washing to keep commercial spaces looking highly professional.</p>
+                <a href="{{ url_for('services_commercial') }}" class="sc-link">Learn More <i class="fas fa-chevron-right"></i></a>
+            </div>
+
+            <!-- 3. Industrial Care Card -->
+            <div class="service-card shadow-soft">
+                <div class="sc-header">
+                    <div class="sc-icon">🏭</div>
+                    <h3>Industrial Cleaning</h3>
+                    <span class="badge badge-safety">OSHA</span>
+                </div>
+                <p>Safety-hardened debris removal and restroom care for high-traffic warehouses and logistics centers in the {{ data.name }} area.</p>
+                <a href="{{ url_for('services_industrial') }}" class="sc-link">Learn More <i class="fas fa-chevron-right"></i></a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Call to Action Section -->
+<section class="section-slate" style="background: var(--slate-900); color: white; padding: 6rem 0; text-align: center;">
+    <div class="content-wrapper">
+        <h2 style="font-size: 2rem; font-weight: 800; color: white;">Ready for a clean facility in {{ data.name }}?</h2>
+        <p style="color: var(--slate-400); max-width: 600px; margin: 1.5rem auto 3rem; font-size: 1.1rem;">Submit contact information to start a plan and receive a custom commercial proposal.</p>
+        <a href="{{ url_for('get_quote') }}" class="isc-btn isc-btn-primary" style="height: 48px; padding: 0 3rem; font-size: 1rem; border-radius: 6px;">Request Quote</a>
+    </div>
+</section>
+{% endblock %}
