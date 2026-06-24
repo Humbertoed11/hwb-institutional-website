@@ -1,13 +1,13 @@
 <!-- 
     SigmaFidelity™ Institutional SOP: About Page 500 Resolution Walkthrough
-    Standard: HWB-QMS-11.9 v2.0
+    Standard: HWB-QMS-11.9 v3.0
     Document ID: HWB-QMS-11.9-DOC
 -->
 <div class="sop-card">
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-11.9-DOC</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.0.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5.3 (Control of Documented Information)</span></div>
     </div>
@@ -23,11 +23,11 @@
             <tbody>
                 <tr><td><strong>Document Title</strong></td><td><strong>About Page 500 Resolution Walkthrough</strong></td></tr>
                 <tr><td><strong>Document ID</strong></td><td>HWB-QMS-11.9-DOC</td></tr>
-                <tr><td><strong>Version</strong></td><td>2.0.0</td></tr>
+                <tr><td><strong>Version</strong></td><td>3.0.0</td></tr>
                 <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
                 <tr><td><strong>Author</strong></td><td>George (Systems Architect)</td></tr>
                 <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
-                <tr><td><strong>Date</strong></td><td>06-01-2026</td></tr>
+                <tr><td><strong>Date</strong></td><td>06-24-2026</td></tr>
                 <tr><td><strong>ISO 9001 Clause</strong></td><td>7.5.3</td></tr>
             </tbody>
         </table>
@@ -82,12 +82,17 @@ docker push hwbprodacr.azurecr.io/sigmafidelity-web:v5.2-458ee34fc74c93a66c41b81
                 </tr>
             </thead>
             <tbody>
-                <tr><td><code>/</code></td><td>HWB-WEB Index.html</td><td>200 OK (VERIFIED)</td></tr>
-                <tr><td><code>/about</code></td><td>HWB-WEB About.html</td><td>200 OK (VERIFIED)</td></tr>
+                <tr><td><code>/</code></td><td>index.html</td><td>200 OK (VERIFIED)</td></tr>
+                <tr><td><code>/about</code></td><td>about.html</td><td>200 OK (VERIFIED)</td></tr>
                 <tr><td><code>/services/janitorial</code></td><td>janitorial.html</td><td>200 OK (VERIFIED)</td></tr>
                 <tr><td><code>/services/commercial</code></td><td>commercial.html</td><td>200 OK (VERIFIED)</td></tr>
-                <tr><td><code>/compliance</code></td><td>HWB-WEB Compliance.html</td><td>200 OK (VERIFIED)</td></tr>
+                <tr><td><code>/services/industrial</code></td><td>industrial.html</td><td>200 OK (VERIFIED)</td></tr>
+                <tr><td><code>/services/construction</code></td><td>construction.html</td><td>200 OK (VERIFIED)</td></tr>
+                <tr><td><code>/compliance</code></td><td>compliance.html</td><td>200 OK (VERIFIED)</td></tr>
+                <tr><td><code>/ehsq</code></td><td>ehsq.html</td><td>200 OK (VERIFIED)</td></tr>
+                <tr><td><code>/methodology</code></td><td>methodology.html</td><td>200 OK (VERIFIED)</td></tr>
                 <tr><td><code>/privacy-policy</code></td><td>privacy_policy.html</td><td>200 OK (VERIFIED)</td></tr>
+                <tr><td><code>/get-quote</code></td><td>quote_form.html</td><td>200 OK (VERIFIED)</td></tr>
             </tbody>
         </table>
 
@@ -102,6 +107,12 @@ docker push hwbprodacr.azurecr.io/sigmafidelity-web:v5.2-458ee34fc74c93a66c41b81
                 </tr>
             </thead>
             <tbody>
+                <tr>
+                    <td>3.0.0</td>
+                    <td>06-24-2026</td>
+                    <td>George</td>
+                    <td>Cleansed all first/second person pronouns and building management terminology from public templates. Standardized template filenames to prefix-free format. Mapped /methodology endpoint and verified 100% test completion. Approved by CEO.</td>
+                </tr>
                 <tr>
                     <td>2.0.0</td>
                     <td>06-01-2026</td>

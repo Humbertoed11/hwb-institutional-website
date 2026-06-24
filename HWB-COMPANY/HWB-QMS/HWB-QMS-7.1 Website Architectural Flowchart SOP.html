@@ -1,0 +1,120 @@
+<!-- 
+    SigmaFidelity™ Institutional SOP: Website Architectural Flowchart Standard
+    Standard: HWB-QMS-7.1
+    Author: George (Systems Architect)
+-->
+<div class="sop-card">
+    <!-- 0.0 DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-7.1</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5.3 (Control of Documented Information)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <table>
+            <thead>
+                <tr>
+                    <th><strong>Document Control</strong></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td><strong>Document Title</strong></td><td><strong>Website Architectural Flowchart SOP</strong></td></tr>
+                <tr><td><strong>Document ID</strong></td><td>HWB-QMS-7.1</td></tr>
+                <tr><td><strong>Version</strong></td><td>3.0.0</td></tr>
+                <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
+                <tr><td><strong>Author</strong></td><td>George (Systems Architect)</td></tr>
+                <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
+                <tr><td><strong>Date</strong></td><td>06-24-2026</td></tr>
+                <tr><td><strong>ISO 9001 Clause</strong></td><td>7.5.3</td></tr>
+            </tbody>
+        </table>
+
+        <hr />
+
+        <h1>Standard Operating Procedure: <strong>Website Architectural Flowchart SOP</strong></h1>
+
+        <h2>1.0 Purpose</h2>
+        <p>To define the visual and logical structure of the HWB Cleaning Services ecosystem. This SOP provides a technical roadmap of how the website interacts with the database, agents, and compliance engine.</p>
+
+        <h2>2.0 Scope</h2>
+        <p>Applies to the Main Web App (Flask), the Compliance Engine (Nginx), and the Traffic Director (Gateway).</p>
+
+        <h2>3.0 Universal Mandates (2026 Baseline)</h2>
+        <p>1. <strong>Physical Truth:</strong> All flowchart nodes must represent real server paths.</p>
+        <p>2. <strong>Logic Proof:</strong> Every path in this diagram must be verifiable at <code>mop.test:5000</code> or <code>mop.test:8000</code>.</p>
+
+        <h2>4.0 System Topology</h2>
+        <p>The HWB infrastructure is decoupled into three primary segments:</p>
+        <ol>
+            <li><strong>Public/CRM Segment:</strong> Handles sales, lead ingestion, and marketing routes (including the prefix-free templates and the newly added methodology route).</li>
+            <li><strong>Compliance Segment:</strong> Dedicated Nginx container for document control, serving QMS documents in HTML format.</li>
+            <li><strong>Database Segment:</strong> PostgreSQL persistence for all transactional records, including system recovery tables.</li>
+        </ol>
+
+        <h2>5.0 The Architectural Flowchart</h2>
+        <div class="mermaid">
+        graph TD
+            A[Visitor/Staff] -->|Port 8000| B[Traffic Director Gateway]
+            B -->|/manual| C[Compliance Engine Nginx]
+            B -->|/admin or /crm| D[Web App Engine Flask]
+            B -->|Marketing Pages: /, /about, /ehsq, /methodology, /services/*, /get-quote| D
+            D -->|SQL| E[PostgreSQL DB]
+            D -->|Logic| F[AI Agent George /core]
+            C -->|Fragments| G[Static HTML SOPs]
+            D -->|Signal| H[Teams/Email Alert]
+        </div>
+
+        <h2>6.0 Verification (Zero-Defect Check)</h2>
+        <ul>
+            <li>The flowchart renders correctly in the HTML manual index.</li>
+            <li>The "Traffic Director" correctly routes <code>/manual</code> to the Nginx host.</li>
+            <li>Database calls are being logged to Tier 6.</li>
+            <li>All public marketing routes render prefix-free templates successfully.</li>
+        </ul>
+
+        <h2>7.0 Notes and Cautions</h2>
+        <div class="callout callout-logic">
+            <strong>LOGIC</strong>
+            <p>Using a separate Compliance Engine prevents OOM crashes on the main app.</p>
+        </div>
+        <div class="callout callout-caution">
+            <strong>CAUTION</strong>
+            <p>Do not change Gateway routing without a Peter Sentinel snapshot.</p>
+        </div>
+
+        <h2>8.0 Revision History</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Version</th>
+                    <th>Date</th>
+                    <th>Author</th>
+                    <th>Change Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>3.0.0</td>
+                    <td>06-24-2026</td>
+                    <td>George</td>
+                    <td>Converted to HTML format. Updated flowchart to document standardized prefix-free templates, the /methodology route, and the get-quote endpoint. Approved by CEO.</td>
+                </tr>
+                <tr>
+                    <td>2.0.0</td>
+                    <td>05-21-2026</td>
+                    <td>George</td>
+                    <td>TOTAL RECONSTRUCTION. Integrated the Microservice topology and Gateway routing.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="sop-card-footer">
+        <span>&copy; 2026 HWB Cleaning Services LLC</span>
+        <span>Controlled Document | HWB-QMS-7.1</span>
+        <span>Page <span class="page-number"></span></span>
+    </div>
+</div>
