@@ -28,36 +28,35 @@
         </div>
 
         <div class="service-grid">
-            <!-- 1. Janitorial Services Card -->
-            <div class="service-card shadow-soft">
-                <div class="sc-header">
-                    <div class="sc-icon">🧹</div>
+            <!-- 1. Janitorial -->
+            <a href="{{ url_for('services_janitorial') }}" class="service-card">
+                <div class="card-image" style="background-image: url('/static/img/janitorial_breakroom.png');"></div>
+                <div class="card-content">
+                    <div class="card-badge">Daily Cleaning</div>
                     <h3>Janitorial Services</h3>
+                    <p>Daily and nightly office cleaning, porter assistance, and routine sanitation optimized for {{ data.name }} facilities.</p>
                 </div>
-                <p>Daily and nightly office cleaning, porter assistance, and routine sanitation optimized for {{ data.name }} facilities.</p>
-                <a href="{{ url_for('services_janitorial') }}" class="sc-link">Learn More <i class="fas fa-chevron-right"></i></a>
-            </div>
+            </a>
 
-            <!-- 2. Floor & Carpet Care Card -->
-            <div class="service-card shadow-soft">
-                <div class="sc-header">
-                    <div class="sc-icon">✨</div>
+            <!-- 2. Commercial -->
+            <a href="{{ url_for('services_commercial') }}" class="service-card">
+                <div class="card-image" style="background-image: url('/static/img/commercial_marble_polishing.png');"></div>
+                <div class="card-content">
+                    <div class="card-badge">Specialized</div>
                     <h3>Floor & Surface Care</h3>
+                    <p>Deep carpet extraction, vinyl (VCT) floor care, and window washing to keep commercial spaces looking highly professional in {{ data.name }}.</p>
                 </div>
-                <p>Deep carpet extraction, vinyl (VCT) floor care, and window washing to keep commercial spaces looking highly professional.</p>
-                <a href="{{ url_for('services_commercial') }}" class="sc-link">Learn More <i class="fas fa-chevron-right"></i></a>
-            </div>
+            </a>
 
-            <!-- 3. Industrial Care Card -->
-            <div class="service-card shadow-soft">
-                <div class="sc-header">
-                    <div class="sc-icon">🏭</div>
+            <!-- 3. Industrial -->
+            <a href="{{ url_for('services_industrial') }}" class="service-card">
+                <div class="card-image" style="background-image: url('/static/img/industrial_m20_scrubber.png');"></div>
+                <div class="card-content">
+                    <div class="card-badge">Heavy Duty</div>
                     <h3>Industrial Cleaning</h3>
-                    <span class="badge badge-safety">OSHA</span>
+                    <p>Safety-hardened debris removal and restroom care for high-traffic warehouses and logistics centers in the {{ data.name }} area.</p>
                 </div>
-                <p>Safety-hardened debris removal and restroom care for high-traffic warehouses and logistics centers in the {{ data.name }} area.</p>
-                <a href="{{ url_for('services_industrial') }}" class="sc-link">Learn More <i class="fas fa-chevron-right"></i></a>
-            </div>
+            </a>
         </div>
     </div>
 </section>
