@@ -4,6 +4,6 @@ requests
 python-dotenv
 gunicorn
 msal
-Flask-Compress==1.17
+Flask-Compress==1.24
 psycopg2-binary
 pypdf

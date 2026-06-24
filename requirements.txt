@@ -7,5 +7,5 @@ flask
 flask-login
 gunicorn
 msal
-Flask-Compress==1.17
+Flask-Compress==1.24
 pypdf
