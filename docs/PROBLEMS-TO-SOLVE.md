@@ -52,7 +52,8 @@ Responsibility: George (Architect)
 **Detected:** 06/23/2026
 **Symptoms:** Logging in as `hdominguez` with correct password `password11` fails with "invalid credentials".
 **Root Cause:** The database user password hash was initialized using the typo string `assword11` from legacy scripts, causing standard logins with the correct spelling `password11` to fail hash verification.
-**Solution:** Updated the password hash for `hdominguez` to match the correct spelling `password11` in both PostgreSQL and SQLite user tables.
+**Recurrence (07/10/2026):** The login failure returned because a database restoration from `pre_consolidation_snapshot_05-22-2026_1405.sql` re-seeded the outdated/corrupted password hashes into the PostgreSQL database.
+**Solution:** Re-ran python commands to generate and set fresh, cryptographically valid hashes for both `admin` (`HWB-Admin-2026!`) and `hdominguez` (`password11`) in both PostgreSQL and SQLite user tables.
 **Preventative:** Standardize user seeding configurations and verify credentials against literal keys before committing password hashes.
 
 ## BUG-037: QMS Manual Document Accessibility Failure

@@ -1,26 +1,25 @@
-# SigmaFidelity™ High-Fidelity Session Recovery (06/24/2026)
+# SigmaFidelity™ High-Fidelity Session Recovery (07/10/2026)
 
 | **Field** | **Active Technical State** |
 | :--- | :--- |
-| **Current Objective** | Ingested Google Maps Platform API key, aligned GCP OAuth credentials, modernized HWB-QMS-9.5 to HTML, and executing push to live. |
-| **Microservice** | **STABLE** (Active branch: feature/locations. Ingested Maps Key active in container environment). |
-| **Memory Tier 6** | **PERSISTENT** (State and mistake logs synced to PostgreSQL database). |
-| **New Mandate** | **"B2B Automated Handshake & Maps Key Ingestion"** (Aligning YouTube credentials and setting Maps API key across environment configurations). |
-| **Lead Engine** | **ACTIVE** (OAuth scripts aligned and local containers verified online). |
-| **Documentation** | **100% ACCESSIBLE** (Modernized HWB-QMS-9.5 to HTML card standard. Synced database core). |
-| **Next Step** | Execute scripts/deploy_live_container.sh and verify live App Service status. |
-| **Session ID** | 2026-06-24-OAUTH-AND-MAPS-DEPLOYED |
+| **Current Objective** | Resolved login credentials mismatch, integrated capacity column choice in backoffice leads operations panel, and verified container boot. |
+| **Microservice** | **STABLE** (Active branch: feature/locations. Containers restarted via socket and serving traffic on port 5000/8000). |
+| **Memory Tier 6** | **PERSISTENT** (State, mistake logs, and walkthrough files synchronized to PostgreSQL). |
+| **New Mandate** | **"Backoffice Capacity Ingestion and Credentials Hardening"** (Ensuring daycare capacity fields are selectable and user credentials are cryptographically valid). |
+| **Lead Engine** | **ACTIVE** (Leads dynamic rendering and sorting by capacity verified). |
+| **Documentation** | **100% ACCESSIBLE** (Updated BUG-036 recurrence logs in docs/PROBLEMS-TO-SOLVE.md. Synced database core). |
+| **Next Step** | Awaiting CEO directives for the next engineering feature or container push. |
+| **Session ID** | 2026-07-10-CAPACITY-AND-AUTH-RESTORED |
 
 ### 🧠 Critical Learnings for This Session:
-*   **Decoupled B2B Geo-Targeting**: Homepages should retain broad regional scopes to avoid local bias and high bounce rates from adjacent cities. Use dedicated city routes (`/locations/<city>`) to rank locally for high-intent keywords.
-*   **3-Card Centering Grid**: Aligning 3 cards to match the standard subpage layouts requires overriding CSS grids with inline style `grid-template-columns: repeat(3, 1fr)`.
-*   **Zero-Dependency Testing**: Writing test scripts using native python `re` (regex matching) instead of `BeautifulSoup` enables immediate verification in any local or containerized environment without library overhead.
+*   **Direct Docker Socket Access**: When WSL client commands fail or interop hangs, querying the `/var/run/docker.sock` Unix socket directly via curl or Python socket API provides a reliable fallback to control and restart containers.
+*   **Database Restore Audits**: Restoring database dumps (such as `.sql` snapshot files) can revert updated password hashes to legacy configurations. Post-restore scripts should verify hash validity.
+*   **Dynamic Column Binding**: Adding selectable table columns requires updating the sorting dictionary map, the Customize View checkboxes, the HTML tables, and the client-side JavaScript list renderers.
 
 ### 🏛️ Physical Truth Audit:
-*   **Active Templates**: `templates/index.html`, `templates/base.html`, `templates/components/mega_bar.html`, `templates/location.html`, `templates/about.html`, `templates/compliance.html`, `templates/ehsq.html`, `templates/methodology.html`.
-*   **Routing Controller**: `main_app.py` (updated with LOCATIONS_DATA metadata and dynamic route mapping).
-*   **Validation Runners**: `scratch/test_locations.py` (runs localized and global navigation test cases).
-*   **Local DB**: `SigmaSystemCore` & `SigmaKnowledgeScars` (Postgres).
+*   **Active Templates**: `templates/backoffice_operations.html`, `templates/crm_edit_lead.html`.
+*   **Routing Controller**: `main_app.py` (updated with `capacity` sort key).
+*   **Local DB**: `SigmaSystemCore`, `SigmaKnowledgeScars`, `Users` (Postgres and SQLite synchronized).
 
 ---
 *Note: This file is the official technical handshake for SigmaFidelity™ agents. 100% Alignment verified.*

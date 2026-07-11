@@ -242,7 +242,7 @@ def admin_operations():
     leads_sort_map = {
         'company': 'center_name', 'industry': 'industry', 'input_date': 'input_date',
         'status': 'status', 'phone': 'phone', 'email': 'email', 'city': 'city',
-        'zipcode': 'zipcode', 'sqf': 'sqf', 'value': 'estimated_annual_value',
+        'zipcode': 'zipcode', 'sqf': 'sqf', 'capacity': 'capacity', 'value': 'estimated_annual_value',
         'priority': 'priority_level', 'facility': 'facility_type', 'contact': 'decision_maker',
         'address': 'address', 'job_title': 'job_title', 'source': 'lead_source',
         'frequency': 'traffic_cycle', 'interest': 'service_interest', 
