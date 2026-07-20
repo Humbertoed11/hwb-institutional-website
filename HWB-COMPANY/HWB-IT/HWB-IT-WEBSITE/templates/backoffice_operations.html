@@ -110,7 +110,7 @@
                         </thead>
                         <tbody>
                             {% for lead in leads %}
-                            <tr class="leads-row">
+                            <tr class="leads-row" onclick="handleRowClick(event, '{{ lead.id }}')" style="cursor: pointer;" data-id="{{ lead.id }}">
                                 {% for col_key in active_cols %}
                                     {% if col_key == 'company' %}
                                     <td class="sticky-1"><div class="sigma-unit-data"><div class="sigma-unit-primary">{{ lead.center_name }}</div><div class="sigma-unit-secondary" style="font-weight: 500;">{{ lead.address }}</div></div></td>
@@ -685,6 +685,12 @@
                 <p id="lead-modal-subtitle" style="font-size: 0.75rem; color: var(--slate-500); margin-top: 0.25rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;"></p>
             </div>
             <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <button type="button" onclick="navigateLeads(-1)" class="isc-btn isc-btn-outline" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" title="Previous Lead">
+                    <i class="fas fa-chevron-left" style="font-size: 0.75rem;"></i>
+                </button>
+                <button type="button" onclick="navigateLeads(1)" class="isc-btn isc-btn-outline" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" title="Next Lead">
+                    <i class="fas fa-chevron-right" style="font-size: 0.75rem;"></i>
+                </button>
                 <button type="button" onclick="toggleEditLead()" class="isc-btn isc-btn-outline" style="height: 32px; font-size: 0.7rem; border-radius: 6px;">
                     <i class="fas fa-edit"></i> Edit
                 </button>
@@ -1366,6 +1372,47 @@
             openModal('modal-lead-command');
         } catch (err) { console.error("Lead Error:", err); showToast("Failed to load Lead.", "error"); }
     }
+
+    function handleRowClick(event, id) {
+        const stopTargets = ['button', 'a', 'i', 'input', 'select', 'textarea'];
+        const tag = event.target.tagName.toLowerCase();
+        if (stopTargets.includes(tag) || event.target.closest('.isc-row-menu')) {
+            return;
+        }
+        openLeadCommand(id, 'overview');
+    }
+
+    function navigateLeads(direction) {
+        const rows = Array.from(document.querySelectorAll('.leads-row'));
+        const ids = rows.map(r => r.getAttribute('data-id'));
+        if (ids.length === 0 || !currentLeadId) return;
+        const idx = ids.indexOf(currentLeadId.toString());
+        if (idx === -1) return;
+        let newIdx = idx + direction;
+        if (newIdx >= 0 && newIdx < ids.length) {
+            let activeMode = 'overview';
+            const activeTab = document.querySelector('#lead-modal-tabs .isc-tab-trigger.active');
+            if (activeTab) {
+                activeMode = activeTab.id.replace('lead-tab-btn-', '');
+            }
+            openLeadCommand(ids[newIdx], activeMode);
+        } else {
+            showToast(direction > 0 ? "Reached the last lead on this page." : "You are on the first lead.", "info");
+        }
+    }
+
+    window.addEventListener('keydown', function(event) {
+        const modal = document.getElementById('modal-lead-command');
+        if (modal && modal.style.display !== 'none') {
+            const activeTag = document.activeElement.tagName.toLowerCase();
+            if (['input', 'textarea', 'select'].includes(activeTag)) return;
+            if (event.key === 'ArrowLeft') {
+                navigateLeads(-1);
+            } else if (event.key === 'ArrowRight') {
+                navigateLeads(1);
+            }
+        }
+    });
 
     async function openAccountCommand(id, mode = 'overview') {
         try {
