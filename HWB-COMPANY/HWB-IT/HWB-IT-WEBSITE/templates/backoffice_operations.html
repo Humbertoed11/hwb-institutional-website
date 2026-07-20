@@ -606,9 +606,9 @@
                         <div class="sigma-field"><label>Phone Number</label><input type="text" id="form-acc-phone" name="phone" class="sigma-input" oninput="maskPhone(event)"></div>
                         <div class="sigma-field"><label>Website</label><input type="url" id="form-acc-website" name="website" placeholder="https://..." class="sigma-input"></div>
                     </div>
-                    <!-- Column 2: Geography & Logistics -->
+                    <!-- Column 2: Location & Schedule -->
                     <div class="sigma-form-group">
-                        <span class="sigma-form-header">Geography & Logistics</span>
+                        <span class="sigma-form-header">Location & Schedule</span>
                         <div class="sigma-field"><label>Building Address</label><input type="text" id="form-acc-address" name="company_address" required class="sigma-input"></div>
                         <div class="sigma-row sigma-row-60-40">
                             <div class="sigma-field"><label>City</label><input type="text" id="form-acc-city" name="city" class="sigma-input"></div>
@@ -623,20 +623,20 @@
                             <div class="sigma-field"><label>Start Time</label><input type="time" id="form-acc-start-time" name="start_time" class="sigma-input"></div>
                         </div>
                     </div>
-                    <!-- Column 3: Business & Fiscal -->
+                    <!-- Column 3: Contract & Value -->
                     <div class="sigma-form-group">
-                        <span class="sigma-form-header">Business & Fiscal</span>
+                        <span class="sigma-form-header">Contract & Value</span>
                         <div class="sigma-row sigma-row-60-40">
                             <div class="sigma-field"><label>Status</label><select id="form-acc-status" name="status" class="sigma-input"><option value="Active">Active</option><option value="On Hold">On Hold</option><option value="Terminated">Terminated</option></select></div>
-                            <div class="sigma-field"><label>Cycle</label><select id="form-acc-traffic" name="traffic_cycle" class="sigma-input"><option value="Slow">Slow</option><option value="High">High</option><option value="24/7">24/7</option></select></div>
+                            <div class="sigma-field"><label>Foot Traffic</label><select id="form-acc-traffic" name="traffic_cycle" class="sigma-input"><option value="Slow">Slow</option><option value="High">High</option><option value="24/7">24/7</option></select></div>
                         </div>
                         <div class="sigma-row sigma-row-60-40">
-                            <div class="sigma-field"><label>Value (Annual)</label><input type="number" step="0.01" id="form-acc-revenue" name="annual_revenue" class="sigma-input"></div>
+                            <div class="sigma-field"><label>Yearly Contract Value</label><input type="number" step="0.01" id="form-acc-revenue" name="annual_revenue" class="sigma-input"></div>
                             <div class="sigma-field"><label>Frequency</label><input type="text" id="form-acc-frequency" name="frequency" class="sigma-input"></div>
                         </div>
                         <div class="sigma-row sigma-row-60-40">
                             <div class="sigma-field"><label>Quote #</label><input type="text" id="form-acc-quote" name="quote_number" class="sigma-input"></div>
-                            <div class="sigma-field"><label>Period</label><input type="text" id="form-acc-period" name="contract_period" placeholder="12 Mo" class="sigma-input"></div>
+                            <div class="sigma-field"><label>Contract Term</label><input type="text" id="form-acc-period" name="contract_period" placeholder="12 Mo" class="sigma-input"></div>
                         </div>
                         <div class="sigma-field"><label>Billing Address</label><input type="text" id="form-acc-billing" name="billing_address" placeholder="If different from site..." class="sigma-input"></div>
                     </div>
@@ -801,9 +801,9 @@
                         <div class="sigma-field"><label>Email Address</label><input type="email" id="edit-lead-email" name="email" class="sigma-input"></div>
                         <div class="sigma-field"><label>Phone Number</label><input type="text" id="edit-lead-phone" name="phone" class="sigma-input" oninput="maskPhone(event)"></div>
                     </div>
-                    <!-- Column 2: Logistics -->
+                    <!-- Column 2: Location & Building -->
                     <div class="sigma-form-group">
-                        <span class="sigma-form-header">Logistics</span>
+                        <span class="sigma-form-header">Location & Building</span>
                         <div class="sigma-field"><label>Building Address</label><input type="text" id="edit-lead-address" name="address" class="sigma-input"></div>
                         <div class="sigma-row sigma-row-60-40">
                             <div class="sigma-field"><label>City</label><input type="text" id="edit-lead-city" name="city" class="sigma-input"></div>
@@ -811,12 +811,12 @@
                         </div>
                         <div class="sigma-field"><label>Zip</label><input type="text" id="edit-lead-zip" name="zipcode" class="sigma-input"></div>
                         <div class="sigma-field"><label>SQF</label><input type="number" id="edit-lead-sqf" name="sqf" class="sigma-input"></div>
-                        <div class="sigma-field"><label>License Capacity</label><input type="number" id="edit-lead-capacity" name="capacity" class="sigma-input"></div>
+                        <div class="sigma-field"><label>Building Capacity</label><input type="number" id="edit-lead-capacity" name="capacity" class="sigma-input"></div>
                         <div class="sigma-field"><label>Industry</label><input type="text" id="edit-lead-industry" name="industry" class="sigma-input"></div>
                     </div>
-                    <!-- Column 3: Strategic -->
+                    <!-- Column 3: Status & Value -->
                     <div class="sigma-form-group">
-                        <span class="sigma-form-header">Strategic</span>
+                        <span class="sigma-form-header">Status & Value</span>
                         <div class="sigma-field">
                             <label>Building Type</label>
                             <select id="edit-lead-building" name="facility_type" class="sigma-input">
@@ -828,7 +828,7 @@
                             </select>
                         </div>
                         <div class="sigma-field">
-                            <label>Traffic Cycle</label>
+                            <label>Foot Traffic Level</label>
                             <select id="edit-lead-traffic" name="traffic_cycle" class="sigma-input">
                                 <option value="Slow">Slow Traffic</option>
                                 <option value="High">High Traffic</option>
@@ -844,13 +844,13 @@
                                 <option value="Lost">Lost</option>
                             </select>
                         </div>
-                        <div class="sigma-field"><label>Value</label><input type="number" step="0.01" id="edit-lead-value" name="estimated_annual_value" class="sigma-input"></div>
+                        <div class="sigma-field"><label>Yearly Contract Value</label><input type="number" step="0.01" id="edit-lead-value" name="estimated_annual_value" class="sigma-input"></div>
                         <div class="sigma-field"><label>Next Action</label><input type="date" id="edit-lead-next" name="next_action_date" class="sigma-input"></div>
                     </div>
                 </div>
                 <div class="sigma-row sigma-row-60-40" style="margin-top: 1.5rem;">
                     <div class="sigma-field">
-                        <label>Source</label>
+                        <label>Lead Source</label>
                         <select id="edit-lead-source" name="lead_source" class="sigma-input">
                             <option value="Google">Google Search</option>
                             <option value="Referral">Referral</option>
@@ -867,7 +867,7 @@
                         </select>
                     </div>
                 </div>
-                <div class="sigma-field" style="margin-top: 1rem;"><label>Service Interest</label><input type="text" id="edit-lead-interest" name="service_interest" class="sigma-input"></div>
+                <div class="sigma-field" style="margin-top: 1rem;"><label>Desired Service</label><input type="text" id="edit-lead-interest" name="service_interest" class="sigma-input"></div>
                 <div class="sigma-field" style="margin-top: 1rem;"><label>Work Notes</label><textarea id="edit-lead-notes" name="notes" class="sigma-input" style="height: 60px; resize: none;"></textarea></div>
                 <div class="sigma-form-actions">
                     <button type="button" onclick="toggleEditLead()" class="isc-btn isc-btn-outline">Cancel</button>
@@ -912,9 +912,9 @@
         </div>
         <form action="{{ url_for('add_account') }}" method="POST" class="sigma-form-container">
             <div class="sigma-form-section">
-                <!-- Column 1: Institutional Identity -->
+                <!-- Column 1: Company Details -->
                 <div class="sigma-form-group">
-                    <span class="sigma-form-header">Identity & Contact</span>
+                    <span class="sigma-form-header">Company & Contact</span>
                     <div class="sigma-field"><label>Company Name</label><input type="text" name="company_name" required placeholder="Legal Entity Name" class="sigma-input"></div>
                     <div class="sigma-row sigma-row-60-40">
                         <div class="sigma-field"><label>Main Manager</label><input type="text" name="contact_person_name" placeholder="Full Name" class="sigma-input"></div>
@@ -933,20 +933,20 @@
                         </div>
                     </div>
                 </div>
-                <!-- Column 2: Financial & Operational -->
+                <!-- Column 2: Contract & Value -->
                 <div class="sigma-form-group">
-                    <span class="sigma-form-header">Financial & Operational</span>
+                    <span class="sigma-form-header">Contract & Value</span>
                     <div class="sigma-row sigma-row-60-40">
                         <div class="sigma-field"><label>Quote Number</label><input type="text" name="quote_number" placeholder="HWB-QT-..." class="sigma-input"></div>
                         <div class="sigma-field"><label>Service Frequency</label><input type="text" name="frequency" placeholder="e.g. 5x/Week" class="sigma-input"></div>
                     </div>
                     <div class="sigma-row sigma-row-60-40">
                         <div class="sigma-field"><label>Building SQF</label><input type="number" name="sqf" placeholder="e.g. 5000" class="sigma-input"></div>
-                        <div class="sigma-field"><label>Annual Revenue</label><input type="number" step="0.01" name="annual_revenue" placeholder="0.00" class="sigma-input"></div>
+                        <div class="sigma-field"><label>Yearly Contract Value</label><input type="number" step="0.01" name="annual_revenue" placeholder="0.00" class="sigma-input"></div>
                     </div>
                     <div class="sigma-row sigma-row-60-40">
                         <div class="sigma-field">
-                            <label>Traffic Cycle</label>
+                            <label>Foot Traffic Level</label>
                             <select name="traffic_cycle" class="sigma-input">
                                 <option value="Slow">Slow Traffic</option>
                                 <option value="High" selected>High Traffic</option>
@@ -995,9 +995,9 @@
                         </div>
                     </div>
                 </div>
-                <!-- Column 2: Building & Sales -->
+                <!-- Column 2: Building Details -->
                 <div class="sigma-form-group">
-                    <span class="sigma-form-header">Building & Sales</span>
+                    <span class="sigma-form-header">Building Details</span>
                     <div class="sigma-row sigma-row-60-40">
                         <div class="sigma-field">
                             <label>Building Type</label>
@@ -1013,7 +1013,7 @@
                     </div>
                     <div class="sigma-row sigma-row-60-40">
                         <div class="sigma-field">
-                            <label>Traffic Cycle</label>
+                            <label>Foot Traffic Level</label>
                             <select name="traffic_cycle" required class="sigma-input">
                                 <option value="Slow">Slow Traffic</option>
                                 <option value="High" selected>High Traffic</option>
@@ -1300,11 +1300,11 @@
                 { label: 'Building Address', val: (lead.address || '--') + ' | ' + (lead.city || '') + ', ' + (lead.state || '') + ' ' + (lead.zipcode || '') },
                 { label: 'Building Type', val: lead.facility_type || '--' },
                 { label: 'Square Footage', val: (lead.sqf || 0).toLocaleString() + ' SQF' },
-                { label: 'License Capacity', val: lead.capacity ? lead.capacity + ' Children' : '--' },
-                { label: 'Traffic Cycle', val: lead.traffic_cycle || '--' },
+                { label: 'Building Capacity', val: lead.capacity ? lead.capacity + ' People' : '--' },
+                { label: 'Foot Traffic', val: lead.traffic_cycle || '--' },
                 { label: 'Lead Status', val: lead.status || 'New' },
                 { label: 'Priority Level', val: lead.priority_level || 'Normal' },
-                { label: 'Expected Value', val: '$' + (lead.estimated_annual_value || 0).toLocaleString() },
+                { label: 'Yearly Value (Estimated)', val: '$' + (lead.estimated_annual_value || 0).toLocaleString() },
                 { label: 'Next Action', val: formatDashboardDate(lead.next_action_date) },
                 { label: 'Lead Source', val: lead.lead_source || '--' },
                 { label: 'Industry', val: lead.industry || '--' },
@@ -1475,13 +1475,13 @@
                 { label: 'Contact Details', val: (acc.phone || '--') + ' | ' + (acc.email || '--') },
                 { label: 'Building Address', val: (acc.company_address || '--') + ' | ' + (acc.city || '') + ', ' + (acc.state || '') + ' ' + (acc.zip || '') },
                 { label: 'Square Footage', val: (acc.sqf || 0).toLocaleString() + ' SQF' },
-                { label: 'Traffic Cycle', val: acc.traffic_cycle || 'High' },
+                { label: 'Foot Traffic', val: acc.traffic_cycle || 'High' },
                 { label: 'Account Status', val: acc.status || 'Active' },
-                { label: 'Estimated Value', val: '$' + (acc.annual_revenue || 0).toLocaleString() },
+                { label: 'Yearly Contract Value', val: '$' + (acc.annual_revenue || 0).toLocaleString() },
                 { label: 'Next Action', val: formatDashboardDate(acc.next_action_date) },
                 { label: 'Quote Number', val: acc.quote_number || '--' },
                 { label: 'Frequency', val: acc.frequency || '--' },
-                { label: 'Contract Period', val: acc.contract_period || '--' },
+                { label: 'Contract Term', val: acc.contract_period || '--' },
                 { label: 'Started', val: (acc.start_date || '--') + ' @ ' + (acc.start_time || '--') },
                 { label: 'Website', val: acc.website || '--' },
                 { label: 'Billing Address', val: acc.billing_address || 'Same as site' }
