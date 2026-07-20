@@ -486,6 +486,28 @@
                 </button>
             </div>
         </div>
+        <!-- Sticky Profile Banner (Preserves Salesperson Rhythm & Flow) -->
+        <div id="account-modal-profile-banner" style="background: var(--slate-50); border: 1px solid var(--slate-100); border-radius: 12px; padding: 1.25rem; margin-bottom: 2rem; display: grid; grid-template-columns: 2fr 1.5fr 1.5fr; gap: 1.5rem; font-size: 0.85rem; line-height: 1.4;">
+            <div>
+                <div style="font-size:0.65rem; font-weight:600; color:var(--slate-500); text-transform:uppercase; margin-bottom:0.15rem;">Company Name</div>
+                <div id="pb-acc-company" style="font-weight:800; font-size:1.05rem; color:var(--slate-900); margin-bottom:0.75rem;">--</div>
+                <div style="font-size:0.65rem; font-weight:600; color:var(--slate-500); text-transform:uppercase; margin-bottom:0.15rem;">Main Manager</div>
+                <div id="pb-acc-manager" style="font-weight:700; color:var(--slate-700);">--</div>
+            </div>
+            <div>
+                <div style="font-size:0.65rem; font-weight:600; color:var(--slate-500); text-transform:uppercase; margin-bottom:0.15rem;">Phone Number</div>
+                <div id="pb-acc-phone" style="font-weight:800; color:var(--brand); font-size:1.05rem; margin-bottom:0.75rem;">--</div>
+                <div style="font-size:0.65rem; font-weight:600; color:var(--slate-500); text-transform:uppercase; margin-bottom:0.15rem;">Email Address</div>
+                <div id="pb-acc-email" style="font-weight:700; color:var(--slate-700);">--</div>
+            </div>
+            <div>
+                <div style="font-size:0.65rem; font-weight:600; color:var(--slate-500); text-transform:uppercase; margin-bottom:0.15rem;">Yearly Value</div>
+                <div id="pb-acc-value" style="font-weight:800; color:var(--slate-900); margin-bottom:0.75rem;">--</div>
+                <div style="font-size:0.65rem; font-weight:600; color:var(--slate-500); text-transform:uppercase; margin-bottom:0.15rem;">Building Address</div>
+                <div id="pb-acc-address" style="font-weight:700; color:var(--slate-700); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px;">--</div>
+            </div>
+        </div>
+
         <div id="account-modal-tabs" style="display: flex; gap: 2rem; border-bottom: 1px solid var(--slate-100); margin-bottom: 2.5rem;">
             <button onclick="iscTab('overview')" class="isc-tab-trigger active" id="tab-btn-overview">Overview</button>
             <button onclick="iscTab('activities')" class="isc-tab-trigger" id="tab-btn-activities">Activities</button>
@@ -700,6 +722,28 @@
                 </button>
             </div>
         </div>
+        <!-- Sticky Profile Banner (Preserves Salesperson Rhythm & Flow) -->
+        <div id="lead-modal-profile-banner" style="background: var(--slate-50); border: 1px solid var(--slate-100); border-radius: 12px; padding: 1.25rem; margin-bottom: 2rem; display: grid; grid-template-columns: 2fr 1.5fr 1.5fr; gap: 1.5rem; font-size: 0.85rem; line-height: 1.4;">
+            <div>
+                <div style="font-size:0.65rem; font-weight:600; color:var(--slate-500); text-transform:uppercase; margin-bottom:0.15rem;">Company Name</div>
+                <div id="pb-lead-company" style="font-weight:800; font-size:1.05rem; color:var(--slate-900); margin-bottom:0.75rem;">--</div>
+                <div style="font-size:0.65rem; font-weight:600; color:var(--slate-500); text-transform:uppercase; margin-bottom:0.15rem;">Main Manager</div>
+                <div id="pb-lead-manager" style="font-weight:700; color:var(--slate-700);">--</div>
+            </div>
+            <div>
+                <div style="font-size:0.65rem; font-weight:600; color:var(--slate-500); text-transform:uppercase; margin-bottom:0.15rem;">Phone Number</div>
+                <div id="pb-lead-phone" style="font-weight:800; color:var(--brand); font-size:1.05rem; margin-bottom:0.75rem;">--</div>
+                <div style="font-size:0.65rem; font-weight:600; color:var(--slate-500); text-transform:uppercase; margin-bottom:0.15rem;">Email Address</div>
+                <div id="pb-lead-email" style="font-weight:700; color:var(--slate-700);">--</div>
+            </div>
+            <div>
+                <div style="font-size:0.65rem; font-weight:600; color:var(--slate-500); text-transform:uppercase; margin-bottom:0.15rem;">Yearly Value</div>
+                <div id="pb-lead-value" style="font-weight:800; color:var(--slate-900); margin-bottom:0.75rem;">--</div>
+                <div style="font-size:0.65rem; font-weight:600; color:var(--slate-500); text-transform:uppercase; margin-bottom:0.15rem;">Building Address</div>
+                <div id="pb-lead-address" style="font-weight:700; color:var(--slate-700); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px;">--</div>
+            </div>
+        </div>
+
         <div id="lead-modal-tabs" style="display: flex; gap: 2rem; border-bottom: 1px solid var(--slate-100); margin-bottom: 2.5rem;">
             <button onclick="iscLeadTab('overview')" class="isc-tab-trigger active" id="lead-tab-btn-overview">Overview</button>
             <button onclick="iscLeadTab('activities')" class="isc-tab-trigger" id="lead-tab-btn-activities">Activities</button>
@@ -1291,7 +1335,15 @@
             const lead = data.lead;
             currentLeadId = id;
             const subtitle = document.getElementById('lead-modal-subtitle');
-            if (subtitle) subtitle.innerText = `${lead.center_name || 'Unnamed'} • LEAD-${id}`;
+            if (subtitle) subtitle.innerText = `LEAD-${id}`;
+            
+            const setElText = (elId, val) => { const el = document.getElementById(elId); if(el) el.innerText = val || '--'; };
+            setElText('pb-lead-company', lead.center_name);
+            setElText('pb-lead-manager', (lead.decision_maker || '') + (lead.job_title ? ' (' + lead.job_title + ')' : ''));
+            setElText('pb-lead-phone', lead.phone);
+            setElText('pb-lead-email', lead.email);
+            setElText('pb-lead-value', lead.estimated_annual_value ? '$' + Number(lead.estimated_annual_value).toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0}) : '$0');
+            setElText('pb-lead-address', `${lead.address || ''}, ${lead.city || ''} ${lead.state || ''}`);
             
             const overview = [
                 { label: 'Company Name', val: lead.center_name || '--' },
@@ -1467,7 +1519,15 @@
             const acc = data.account;
             currentAccountId = id;
             const subtitle = document.getElementById('modal-subtitle');
-            if (subtitle) subtitle.innerText = `${acc.company_name || 'Unnamed'} • ACC-${id}`;
+            if (subtitle) subtitle.innerText = `ACC-${id}`;
+            
+            const setElText = (elId, val) => { const el = document.getElementById(elId); if(el) el.innerText = val || '--'; };
+            setElText('pb-acc-company', acc.company_name);
+            setElText('pb-acc-manager', acc.contact_person_name);
+            setElText('pb-acc-phone', acc.phone);
+            setElText('pb-acc-email', acc.email);
+            setElText('pb-acc-value', acc.annual_revenue ? '$' + Number(acc.annual_revenue).toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0}) : '$0');
+            setElText('pb-acc-address', `${acc.company_address || ''}, ${acc.city || ''} ${acc.state || ''}`);
             
             const overview = [
                 { label: 'Company Name', val: acc.company_name || '--' },
