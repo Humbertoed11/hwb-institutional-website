@@ -1913,7 +1913,29 @@
         const id = rowId || currentLeadId;
         showDecision({ title: 'Delete this Lead?', text: 'This action is permanent.', confirmText: 'Delete Lead', isDestructive: true, icon: 'fa-trash-alt', onConfirm: async () => {
             const res = await fetch(`/api/v1/leads/${id}`, { method: 'DELETE' });
-            if (res.ok) { showToast("Record deleted.", "success"); syncOperationalData(); }
+            if (res.ok) { 
+                showToast("Record deleted.", "success"); 
+                
+                const modal = document.getElementById('modal-lead-command');
+                if (modal && modal.style.display !== 'none') {
+                    const rows = Array.from(document.querySelectorAll('.leads-row'));
+                    const ids = rows.map(r => r.getAttribute('data-id'));
+                    const idx = ids.indexOf(id.toString());
+                    
+                    if (ids.length > 1) {
+                        let nextIdx = (idx + 1 < ids.length) ? (idx + 1) : (idx - 1);
+                        if (nextIdx >= 0 && nextIdx < ids.length) {
+                            openLeadCommand(ids[nextIdx], 'overview');
+                        } else {
+                            closeModal('modal-lead-command');
+                        }
+                    } else {
+                        closeModal('modal-lead-command');
+                    }
+                }
+                
+                syncOperationalData(); 
+            }
         }});
     }
 
@@ -1921,7 +1943,29 @@
         const id = rowId || currentAccountId;
         showDecision({ title: 'Delete this Account?', text: 'This action is permanent.', confirmText: 'Delete Account', isDestructive: true, icon: 'fa-trash-alt', onConfirm: async () => {
             const res = await fetch(`/api/v1/accounts/${id}`, { method: 'DELETE' });
-            if (res.ok) { showToast("Account deleted.", "success"); syncOperationalData(); }
+            if (res.ok) { 
+                showToast("Account deleted.", "success"); 
+                
+                const modal = document.getElementById('modal-account-command');
+                if (modal && modal.style.display !== 'none') {
+                    const rows = Array.from(document.querySelectorAll('.accounts-row'));
+                    const ids = rows.map(r => r.getAttribute('data-id'));
+                    const idx = ids.indexOf(id.toString());
+                    
+                    if (ids.length > 1) {
+                        let nextIdx = (idx + 1 < ids.length) ? (idx + 1) : (idx - 1);
+                        if (nextIdx >= 0 && nextIdx < ids.length) {
+                            openAccountCommand(ids[nextIdx], 'overview');
+                        } else {
+                            closeModal('modal-account-command');
+                        }
+                    } else {
+                        closeModal('modal-account-command');
+                    }
+                }
+                
+                syncOperationalData(); 
+            }
         }});
     }
 
