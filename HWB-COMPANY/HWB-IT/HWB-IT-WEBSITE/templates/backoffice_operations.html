@@ -285,7 +285,7 @@
                         </thead>
                         <tbody>
                             {% for client in clients %}
-                            <tr>
+                            <tr class="accounts-row" onclick="handleAccRowClick(event, '{{ client.customer_id }}')" style="cursor: pointer;" data-id="{{ client.customer_id }}">
                                 {% for col_key in active_cols %}
                                     {% if col_key == 'company' %}
                                     <td class="sticky-1"><div class="sigma-unit-data"><div class="sigma-unit-primary">{{ client.company_name }}</div><div class="sigma-unit-secondary" style="font-weight: 500;">ACC-{{ client.customer_id }}</div></div></td>
@@ -472,6 +472,12 @@
                 <p id="modal-subtitle" style="font-size: 0.75rem; color: var(--slate-500); margin-top: 0.25rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;"></p>
             </div>
             <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <button type="button" onclick="navigateAccounts(-1)" class="isc-btn isc-btn-outline" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" title="Previous Account">
+                    <i class="fas fa-chevron-left" style="font-size: 0.75rem;"></i>
+                </button>
+                <button type="button" onclick="navigateAccounts(1)" class="isc-btn isc-btn-outline" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" title="Next Account">
+                    <i class="fas fa-chevron-right" style="font-size: 0.75rem;"></i>
+                </button>
                 <button type="button" onclick="toggleEditAccount()" class="isc-btn isc-btn-outline" style="height: 32px; font-size: 0.7rem; border-radius: 6px;">
                     <i class="fas fa-edit"></i> Edit
                 </button>
@@ -602,7 +608,7 @@
         </div>
 
         <div id="pane-actions" class="isc-pane" style="display:none;">
-            <div style="display: grid; grid-template-columns: 280px 1fr; gap: 2.5rem; align-items: start;">
+            <div style="display: grid; grid-template-columns: 300px 1fr; gap: 2.5rem; align-items: start;">
                 <div class="isc-card" style="padding: 1.5rem; background: var(--slate-50); border: 1px solid var(--slate-100);">
                     <span class="sigma-form-header" style="margin-bottom: 1.5rem;">Quick Profile Update</span>
                     <div class="sigma-field"><label style="font-size: 0.65rem;">Main Manager</label><input type="text" id="acc-action-manager" class="sigma-input" style="height: 36px; font-size: 0.85rem;"></div>
@@ -610,7 +616,7 @@
                     <div class="sigma-field"><label style="font-size: 0.65rem;">Email Address</label><input type="email" id="acc-action-email" class="sigma-input" style="height: 36px; font-size: 0.85rem;"></div>
                 </div>
                 <div>
-                    <h3 class="form-section-label">Add Note</h3>
+                    <span class="sigma-form-header" style="margin-bottom: 1.5rem;">Add Note</span>
                     <form onsubmit="logActivity(event)" class="sigma-form-container">
                         <input type="hidden" name="parent_id" id="activity-parent-id">
                         <input type="hidden" name="parent_type" value="Account">
@@ -650,9 +656,9 @@
         </div>
 
         <div id="pane-contacts" class="isc-pane" style="display:none;">
-            <div style="display: grid; grid-template-columns: 350px 1fr; gap: 3rem; width: 100%;">
+            <div style="display: grid; grid-template-columns: 300px 1fr; gap: 2.5rem; width: 100%;">
                 <div>
-                    <h3 class="form-section-label" style="margin-bottom: 2rem;">Add New Contact</h3>
+                    <span class="sigma-form-header" style="margin-bottom: 2rem;">Add New Contact</span>
                     <form onsubmit="addAccountContact(event)" class="sigma-form-container">
                         <div class="sigma-field"><label>Full Name</label><input type="text" id="acc-contact-name" required placeholder="John Doe" class="sigma-input"></div>
                         <div class="sigma-field"><label>Role / Title</label><input type="text" id="acc-contact-role" placeholder="Facilities Manager" class="sigma-input"></div>
@@ -662,7 +668,7 @@
                     </form>
                 </div>
                 <div>
-                    <h3 class="form-section-label" style="margin-bottom: 2rem;">Primary Stakeholders</h3>
+                    <span class="sigma-form-header" style="margin-bottom: 2rem;">Primary Stakeholders</span>
                     <div id="list-contacts" style="display: grid; gap: 1.5rem; max-height: 500px; overflow-y: auto;"></div>
                 </div>
             </div>
@@ -1404,15 +1410,54 @@
         }
     }
 
+    function handleAccRowClick(event, id) {
+        const stopTargets = ['button', 'a', 'i', 'input', 'select', 'textarea'];
+        const tag = event.target.tagName.toLowerCase();
+        if (stopTargets.includes(tag) || event.target.closest('.isc-row-menu')) {
+            return;
+        }
+        openAccountCommand(id, 'overview');
+    }
+
+    function navigateAccounts(direction) {
+        const rows = Array.from(document.querySelectorAll('.accounts-row'));
+        const ids = rows.map(r => r.getAttribute('data-id'));
+        if (ids.length === 0 || !currentAccountId) return;
+        const idx = ids.indexOf(currentAccountId.toString());
+        if (idx === -1) return;
+        let newIdx = idx + direction;
+        if (newIdx >= 0 && newIdx < ids.length) {
+            let activeMode = 'overview';
+            const activeTab = document.querySelector('#account-modal-tabs .isc-tab-trigger.active');
+            if (activeTab) {
+                activeMode = activeTab.id.replace('tab-btn-', '');
+            }
+            openAccountCommand(ids[newIdx], activeMode);
+        } else {
+            showToast(direction > 0 ? "Reached the last account on this page." : "You are on the first account.", "info");
+        }
+    }
+
     window.addEventListener('keydown', function(event) {
-        const modal = document.getElementById('modal-lead-command');
-        if (modal && modal.style.display !== 'none') {
-            const activeTag = document.activeElement.tagName.toLowerCase();
-            if (['input', 'textarea', 'select'].includes(activeTag)) return;
+        const activeTag = document.activeElement.tagName.toLowerCase();
+        if (['input', 'textarea', 'select'].includes(activeTag)) return;
+
+        const leadModal = document.getElementById('modal-lead-command');
+        if (leadModal && leadModal.style.display !== 'none') {
             if (event.key === 'ArrowLeft') {
                 navigateLeads(-1);
             } else if (event.key === 'ArrowRight') {
                 navigateLeads(1);
+            }
+            return;
+        }
+
+        const accModal = document.getElementById('modal-account-command');
+        if (accModal && accModal.style.display !== 'none') {
+            if (event.key === 'ArrowLeft') {
+                navigateAccounts(-1);
+            } else if (event.key === 'ArrowRight') {
+                navigateAccounts(1);
             }
         }
     });
@@ -1429,16 +1474,16 @@
             if (subtitle) subtitle.innerText = `${acc.company_name || 'Unnamed'} • ACC-${id}`;
             
             const overview = [
-                { label: 'Company', val: acc.company_name || '--' },
+                { label: 'Company Name', val: acc.company_name || '--' },
                 { label: 'Main Manager', val: acc.contact_person_name || '--' },
-                { label: 'Contact Hub', val: (acc.phone || '--') + ' | ' + (acc.email || '--') },
-                { label: 'Building Hub', val: (acc.company_address || '--') + ' | ' + (acc.city || '') + ', ' + (acc.state || '') + ' ' + (acc.zip || '') },
-                { label: 'SQ Footage', val: (acc.sqf || 0).toLocaleString() + ' SQF' },
+                { label: 'Contact Details', val: (acc.phone || '--') + ' | ' + (acc.email || '--') },
+                { label: 'Building Address', val: (acc.company_address || '--') + ' | ' + (acc.city || '') + ', ' + (acc.state || '') + ' ' + (acc.zip || '') },
+                { label: 'Square Footage', val: (acc.sqf || 0).toLocaleString() + ' SQF' },
                 { label: 'Traffic Cycle', val: acc.traffic_cycle || 'High' },
-                { label: 'Status', val: acc.status || 'Active' },
+                { label: 'Account Status', val: acc.status || 'Active' },
                 { label: 'Estimated Value', val: '$' + (acc.annual_revenue || 0).toLocaleString() },
                 { label: 'Next Action', val: formatDashboardDate(acc.next_action_date) },
-                { label: 'Quote #', val: acc.quote_number || '--' },
+                { label: 'Quote Number', val: acc.quote_number || '--' },
                 { label: 'Frequency', val: acc.frequency || '--' },
                 { label: 'Contract Period', val: acc.contract_period || '--' },
                 { label: 'Started', val: (acc.start_date || '--') + ' @ ' + (acc.start_time || '--') },
@@ -1446,7 +1491,7 @@
                 { label: 'Billing Address', val: acc.billing_address || 'Same as site' }
             ];
             const listOverview = document.getElementById('list-overview');
-            if (listOverview) { listOverview.innerHTML = overview.map(o => `<div class="isc-list-item"><div style="font-size:0.65rem; font-weight:500; color:var(--slate-500); text-transform:uppercase; margin-bottom:0.5rem">${o.label}</div><div style="font-weight:800; color:var(--slate-900); font-size:1.15rem">${o.val}</div></div>`).join(''); }
+            if (listOverview) { listOverview.innerHTML = overview.map(o => `<div class="sigma-read-field"><label style="font-size:0.8rem; font-weight:500; color:var(--slate-600); text-transform:none; margin-bottom:0.25rem;">${o.label}</label><div style="font-weight:600; color:var(--slate-900); font-size:0.9rem;">${o.val}</div></div>`).join(''); }
 
             setVal('form-acc-name', acc.company_name);
             setVal('form-acc-manager', acc.contact_person_name);
@@ -1485,13 +1530,13 @@
 
             const contactList = document.getElementById('list-contacts');
             if (contactList) {
-                contactList.innerHTML = (data.contacts || []).map(c => `<div class="isc-list-item"><div style="font-weight:900; font-size:1.1rem">${c.full_name}</div><div style="font-size:0.75rem; color:var(--brand); font-weight:800; text-transform:uppercase;">${c.role || 'Contact'}</div><div style="height:1px; background:var(--slate-100); margin:1rem 0;"></div><div style="display:flex; gap:1.5rem;"><div style="font-size:0.85rem; color:var(--slate-600);"><i class="fas fa-phone"></i> ${c.phone || '--'}</div><div style="font-size:0.85rem; color:var(--slate-600);"><i class="fas fa-envelope"></i> ${c.email || '--'}</div></div></div>`).join('') || '<p style="text-align:center; padding:2rem; color:var(--slate-400);">No additional contacts.</p>';
+                contactList.innerHTML = (data.contacts || []).map(c => `<div class="isc-list-item" style="padding: 1rem;"><div style="font-weight:600; font-size:0.95rem; color:var(--slate-900);">${c.full_name}</div><div style="font-size:0.7rem; color:var(--brand); font-weight:500; text-transform:uppercase; margin-top:0.2rem; margin-bottom:0.75rem;">${c.role || 'Contact'}</div><div style="display:flex; gap:1.5rem;"><div style="font-size:0.8rem; color:var(--slate-600);"><i class="fas fa-phone" style="margin-right:0.35rem; color:var(--slate-400);"></i> ${c.phone || '--'}</div><div style="font-size:0.8rem; color:var(--slate-600);"><i class="fas fa-envelope" style="margin-right:0.35rem; color:var(--slate-400);"></i> ${c.email || '--'}</div></div></div>`).join('') || '<p style="text-align:center; padding:2rem; color:var(--slate-400);">No additional contacts.</p>';
             }
 
             const typeMap = { 'NOTE': 'Note added', 'PHONE_CALL': 'Phone call', 'CONVERTED': 'Converted to Client' };
             const timeline = document.getElementById('list-timeline');
             if (timeline) {
-                timeline.innerHTML = (data.activities || []).map(a => `<div class="timeline-node" style="padding:1.5rem; background:var(--slate-50); margin-bottom:1rem; border-radius:10px"><div style="font-size:0.7rem; font-weight:900; color:var(--brand)"><i class="fas fa-stream"></i> ${formatDashboardDate(a.timestamp)}</div><div style="font-weight:800; margin:0.5rem 0">${typeMap[a.activity_type] || a.activity_type}</div><div style="font-size:0.9rem">${a.description}</div></div>`).join('') || '<p style="text-align:center; padding:2rem; color:var(--slate-400);">No history.</p>';
+                timeline.innerHTML = (data.activities || []).map(a => `<div class="timeline-node" style="padding:1.5rem; background:var(--slate-50); margin-bottom:1rem; border-radius:10px"><div style="font-size:0.7rem; font-weight:900; color:var(--brand)"><i class="fas fa-stream"></i> ${formatDashboardDate(a.timestamp)}</div><div style="font-weight:600; margin:0.5rem 0">${typeMap[a.activity_type] || a.activity_type}</div><div style="font-size:0.9rem">${a.description}</div></div>`).join('') || '<p style="text-align:center; padding:2rem; color:var(--slate-400);">No history.</p>';
             }
 
             const paneEdit = document.getElementById('pane-edit-account');
