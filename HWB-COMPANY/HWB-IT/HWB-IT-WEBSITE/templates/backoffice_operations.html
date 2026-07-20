@@ -488,8 +488,7 @@
         </div>
         <div id="account-modal-tabs" style="display: flex; gap: 2rem; border-bottom: 1px solid var(--slate-100); margin-bottom: 2.5rem;">
             <button onclick="iscTab('overview')" class="isc-tab-trigger active" id="tab-btn-overview">Overview</button>
-            <button onclick="iscTab('visit')" class="isc-tab-trigger" id="tab-btn-visit">Request Visit</button>
-            <button onclick="iscTab('actions')" class="isc-tab-trigger" id="tab-btn-actions">Actions</button>
+            <button onclick="iscTab('activities')" class="isc-tab-trigger" id="tab-btn-activities">Activities</button>
             <button onclick="iscTab('contacts')" class="isc-tab-trigger" id="tab-btn-contacts">Contacts</button>
             <button onclick="iscTab('timeline')" class="isc-tab-trigger" id="tab-btn-timeline">History</button>
         </div>
@@ -503,11 +502,59 @@
             </div>
         </div>
 
-        <div id="pane-visit" class="isc-pane" style="display:none;">
-            <form onsubmit="saveVisitRequestAcc(event)" class="sigma-form-container">
-                <div class="sigma-form-section">
-                    <div class="sigma-form-group">
-                        <span class="sigma-form-header">Visit Scheduling</span>
+        <div id="pane-activities" class="isc-pane" style="display:none; flex-direction: column;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; align-items: start; width: 100%;">
+                <!-- Left Column: Record Activity -->
+                <div>
+                    <span class="sigma-form-header" style="margin-bottom: 1.5rem;">Record Activity</span>
+                    <form onsubmit="logActivity(event)" class="sigma-form-container">
+                        <input type="hidden" name="parent_id" id="activity-parent-id">
+                        <input type="hidden" name="parent_type" value="Account">
+                        <div class="sigma-form-section">
+                            <div class="sigma-form-group">
+                                <div class="sigma-row sigma-row-60-40">
+                                    <div class="sigma-field">
+                                        <label>Action Type</label>
+                                        <select name="activity_type" id="activity-type" class="sigma-input">
+                                            <option value="Phone Call">Phone Call</option>
+                                            <option value="Email Sent">Email Sent</option>
+                                            <option value="Site Visit">Site Visit</option>
+                                            <option value="Note">Internal Note</option>
+                                        </select>
+                                    </div>
+                                    <div class="sigma-field">
+                                        <label>Timestamp</label>
+                                        <input type="text" value="Recorded Automatically" readonly class="sigma-input" style="color: var(--slate-400); cursor: default;">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="sigma-field" style="margin-top: 1.5rem;">
+                            <label>Details</label>
+                            <textarea name="description" id="activity-desc" required placeholder="Interaction notes..." class="sigma-input" style="height: 120px; resize: none;"></textarea>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2rem;">
+                            <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer; font-size: 0.85rem; font-weight: 500; color: var(--slate-600);">
+                                <input type="checkbox" id="update-next-action-acc" checked style="width: 18px; height: 18px; border-radius: 4px; border: 1px solid var(--slate-300);">
+                                Update next action date automatically
+                            </label>
+                            <button type="submit" class="isc-btn isc-btn-primary" style="padding: 0 3rem;">Save Activity</button>
+                        </div>
+                    </form>
+
+                    <!-- Profile Quick Update Panel -->
+                    <div class="isc-card" style="padding: 1.5rem; background: var(--slate-50); border: 1px solid var(--slate-100); margin-top: 3rem;">
+                        <span class="sigma-form-header" style="margin-bottom: 1.5rem;">Quick Profile Update</span>
+                        <div class="sigma-field"><label style="font-size: 0.65rem;">Main Manager</label><input type="text" id="acc-action-manager" class="sigma-input" style="height: 36px; font-size: 0.85rem;"></div>
+                        <div class="sigma-field"><label style="font-size: 0.65rem;">Phone Number</label><input type="text" id="acc-action-phone" class="sigma-input" style="height: 36px; font-size: 0.85rem;" oninput="maskPhone(event)"></div>
+                        <div class="sigma-field"><label style="font-size: 0.65rem;">Email Address</label><input type="email" id="acc-action-email" class="sigma-input" style="height: 36px; font-size: 0.85rem;"></div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Schedule Next Step -->
+                <div>
+                    <span class="sigma-form-header" style="margin-bottom: 1.5rem;">Schedule Next Step</span>
+                    <form onsubmit="saveVisitRequestAcc(event)" class="sigma-form-container">
                         <div class="sigma-row sigma-row-60-40">
                             <div class="sigma-field"><label>Target Date</label><input type="date" id="visit-date-acc" required class="sigma-input"></div>
                             <div class="sigma-field"><label>Preferred Time</label><input type="time" id="visit-time-acc" class="sigma-input"></div>
@@ -516,10 +563,7 @@
                             <div class="sigma-field"><label>Manager to Meet</label><input type="text" id="visit-manager-acc" class="sigma-input"></div>
                             <div class="sigma-field"><label>Phone</label><input type="text" id="visit-phone-acc" class="sigma-input" oninput="maskPhone(event)"></div>
                         </div>
-                    </div>
-                    <div class="sigma-form-group">
-                        <span class="sigma-form-header">Building Instructions</span>
-                        <div class="sigma-field">
+                        <div class="sigma-field" style="margin-top: 1.5rem;">
                             <label>Google Maps Link</label>
                             <div style="display: flex; gap: 0.5rem;">
                                 <input type="url" id="visit-map-link-acc" class="sigma-input" style="flex-grow: 1;">
@@ -527,14 +571,13 @@
                                 <button type="button" onclick="verifyMapLinkAcc()" class="isc-btn isc-btn-outline" style="height: 44px; width: 44px; padding: 0; border-radius: 12px;"><i class="fas fa-external-link-alt"></i></button>
                             </div>
                         </div>
-                        <div class="sigma-field"><label>Gate Access / Instructions</label><textarea id="visit-instructions-acc" class="sigma-input" style="height: 80px; resize: none;"></textarea></div>
-                    </div>
+                        <div class="sigma-field"><label>Gate Access / Special Instructions</label><textarea id="visit-instructions-acc" class="sigma-input" style="height: 80px; resize: none;"></textarea></div>
+                        <div style="display: flex; justify-content: flex-end; margin-top: 2rem;">
+                            <button type="submit" class="isc-btn isc-btn-primary" style="padding: 0 3rem;">Schedule Next Step</button>
+                        </div>
+                    </form>
                 </div>
-                <div class="sigma-form-actions">
-                    <button type="button" onclick="iscTab('overview')" class="isc-btn isc-btn-outline">Cancel</button>
-                    <button type="submit" class="isc-btn isc-btn-primary" style="padding: 0.85rem 4rem;">Schedule Visit</button>
-                </div>
-            </form>
+            </div>
         </div>
 
         <div id="pane-visit-confirm" class="isc-pane" style="display:none; text-align: center; padding: 4rem 2rem;">
@@ -607,54 +650,6 @@
             </form>
         </div>
 
-        <div id="pane-actions" class="isc-pane" style="display:none;">
-            <div style="display: grid; grid-template-columns: 300px 1fr; gap: 2.5rem; align-items: start;">
-                <div class="isc-card" style="padding: 1.5rem; background: var(--slate-50); border: 1px solid var(--slate-100);">
-                    <span class="sigma-form-header" style="margin-bottom: 1.5rem;">Quick Profile Update</span>
-                    <div class="sigma-field"><label style="font-size: 0.65rem;">Main Manager</label><input type="text" id="acc-action-manager" class="sigma-input" style="height: 36px; font-size: 0.85rem;"></div>
-                    <div class="sigma-field"><label style="font-size: 0.65rem;">Phone Number</label><input type="text" id="acc-action-phone" class="sigma-input" style="height: 36px; font-size: 0.85rem;" oninput="maskPhone(event)"></div>
-                    <div class="sigma-field"><label style="font-size: 0.65rem;">Email Address</label><input type="email" id="acc-action-email" class="sigma-input" style="height: 36px; font-size: 0.85rem;"></div>
-                </div>
-                <div>
-                    <span class="sigma-form-header" style="margin-bottom: 1.5rem;">Add Note</span>
-                    <form onsubmit="logActivity(event)" class="sigma-form-container">
-                        <input type="hidden" name="parent_id" id="activity-parent-id">
-                        <input type="hidden" name="parent_type" value="Account">
-                        <div class="sigma-form-section">
-                            <div class="sigma-form-group">
-                                <div class="sigma-row sigma-row-60-40">
-                                    <div class="sigma-field">
-                                        <label>Action Type</label>
-                                        <select name="activity_type" id="activity-type" class="sigma-input">
-                                            <option value="Phone Call">Phone Call</option>
-                                            <option value="Email Sent">Email Sent</option>
-                                            <option value="Site Visit">Site Visit</option>
-                                            <option value="Note">Internal Note</option>
-                                        </select>
-                                    </div>
-                                    <div class="sigma-field">
-                                        <label>Timestamp</label>
-                                        <input type="text" value="Recorded Automatically" readonly class="sigma-input" style="color: var(--slate-400); cursor: default;">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="sigma-field" style="margin-top: 1.5rem;">
-                            <label>Details</label>
-                            <textarea name="description" id="activity-desc" required placeholder="Detailed notes..." class="sigma-input" style="height: 120px; resize: none;"></textarea>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2rem;">
-                            <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer; font-size: 0.85rem; font-weight: 500; color: var(--slate-600);">
-                                <input type="checkbox" id="update-next-action-acc" checked style="width: 18px; height: 18px; border-radius: 4px; border: 1px solid var(--slate-300);">
-                                Update next action date automatically
-                            </label>
-                            <button type="submit" class="isc-btn isc-btn-primary" style="padding: 0 4rem;">Save Note</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-
         <div id="pane-contacts" class="isc-pane" style="display:none;">
             <div style="display: grid; grid-template-columns: 300px 1fr; gap: 2.5rem; width: 100%;">
                 <div>
@@ -707,8 +702,7 @@
         </div>
         <div id="lead-modal-tabs" style="display: flex; gap: 2rem; border-bottom: 1px solid var(--slate-100); margin-bottom: 2.5rem;">
             <button onclick="iscLeadTab('overview')" class="isc-tab-trigger active" id="lead-tab-btn-overview">Overview</button>
-            <button onclick="iscLeadTab('visit')" class="isc-tab-trigger" id="lead-tab-btn-visit">Request Visit</button>
-            <button onclick="iscLeadTab('actions')" class="isc-tab-trigger" id="lead-tab-btn-actions">Actions</button>
+            <button onclick="iscLeadTab('activities')" class="isc-tab-trigger" id="lead-tab-btn-activities">Activities</button>
             <button onclick="iscLeadTab('contacts')" class="isc-tab-trigger" id="lead-tab-btn-contacts">Contacts</button>
             <button onclick="iscLeadTab('timeline')" class="isc-tab-trigger" id="lead-tab-btn-timeline">History</button>
         </div>
@@ -723,11 +717,39 @@
             </div>
         </div>
 
-        <div id="lead-pane-visit" class="isc-lead-pane" style="display:none;">
-            <form onsubmit="saveVisitRequest(event)" class="sigma-form-container">
-                <div class="sigma-form-section">
-                    <div class="sigma-form-group">
-                        <span class="sigma-form-header">Visit Scheduling</span>
+        <div id="lead-pane-activities" class="isc-lead-pane" style="display:none; flex-direction: column;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; align-items: start; width: 100%;">
+                <!-- Left Column: Record Activity -->
+                <div>
+                    <span class="sigma-form-header" style="margin-bottom: 1.5rem;">Record Activity</span>
+                    <form onsubmit="logLeadActivity(event)" class="sigma-form-container">
+                        <div class="sigma-row sigma-row-60-40" style="margin-bottom: 1.5rem;">
+                            <div class="sigma-field"><label>Action Type</label><select id="lead-activity-type" required class="sigma-input"><option value="Phone Call">Phone Call</option><option value="Email Sent">Email Sent</option><option value="Site Visit">Site Visit</option><option value="Note">Internal Note</option></select></div>
+                            <div class="sigma-field"><label>Result</label><select id="lead-activity-result" class="sigma-input"><option value="">-- No Result --</option><option value="Spoke to them">Spoke to them</option><option value="Left message">Left message</option></select></div>
+                        </div>
+                        <div class="sigma-field"><label>Details</label><textarea id="lead-activity-desc" required class="sigma-input" style="height: 120px; resize: none;" placeholder="Interaction notes..."></textarea></div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2rem;">
+                            <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer; font-size: 0.85rem; font-weight: 500; color: var(--slate-600);">
+                                <input type="checkbox" id="update-next-action" checked style="width: 18px; height: 18px; border-radius: 4px; border: 1px solid var(--slate-300);">
+                                Update next action date automatically
+                            </label>
+                            <button type="submit" class="isc-btn isc-btn-primary" style="padding: 0 3rem;">Save Activity</button>
+                        </div>
+                    </form>
+
+                    <!-- Profile Quick Update Panel -->
+                    <div class="isc-card" style="padding: 1.5rem; background: var(--slate-50); border: 1px solid var(--slate-100); margin-top: 3rem;">
+                        <span class="sigma-form-header" style="margin-bottom: 1.5rem;">Quick Profile Update</span>
+                        <div class="sigma-field"><label style="font-size: 0.65rem;">Main Manager</label><input type="text" id="lead-action-manager" class="sigma-input" style="height: 36px; font-size: 0.85rem;"></div>
+                        <div class="sigma-field"><label style="font-size: 0.65rem;">Phone Number</label><input type="text" id="lead-action-phone" class="sigma-input" style="height: 36px; font-size: 0.85rem;" oninput="maskPhone(event)"></div>
+                        <div class="sigma-field"><label style="font-size: 0.65rem;">Email Address</label><input type="email" id="lead-action-email" class="sigma-input" style="height: 36px; font-size: 0.85rem;"></div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Schedule Next Step -->
+                <div>
+                    <span class="sigma-form-header" style="margin-bottom: 1.5rem;">Schedule Next Step</span>
+                    <form onsubmit="saveVisitRequest(event)" class="sigma-form-container">
                         <div class="sigma-row sigma-row-60-40">
                             <div class="sigma-field"><label>Target Date</label><input type="date" id="visit-date" required class="sigma-input"></div>
                             <div class="sigma-field"><label>Preferred Time</label><input type="time" id="visit-time" class="sigma-input"></div>
@@ -736,10 +758,7 @@
                             <div class="sigma-field"><label>Manager to Meet</label><input type="text" id="visit-manager" placeholder="Full Name" class="sigma-input"></div>
                             <div class="sigma-field"><label>Phone</label><input type="text" id="visit-phone" placeholder="Phone" class="sigma-input" oninput="maskPhone(event)"></div>
                         </div>
-                    </div>
-                    <div class="sigma-form-group">
-                        <span class="sigma-form-header">Building Instructions</span>
-                        <div class="sigma-field">
+                        <div class="sigma-field" style="margin-top: 1.5rem;">
                             <label>Google Maps Link</label>
                             <div style="display: flex; gap: 0.5rem;">
                                 <input type="url" id="visit-map-link" placeholder="https://maps.google.com/..." class="sigma-input" style="flex-grow: 1;">
@@ -747,14 +766,13 @@
                                 <button type="button" onclick="verifyMapLink()" class="isc-btn isc-btn-outline" style="height: 44px; width: 44px; padding: 0; border-radius: 12px;"><i class="fas fa-external-link-alt"></i></button>
                             </div>
                         </div>
-                        <div class="sigma-field"><label>Gate Access / Instructions</label><textarea id="visit-instructions" placeholder="Codes..." class="sigma-input" style="height: 80px; resize: none;"></textarea></div>
-                    </div>
+                        <div class="sigma-field"><label>Gate Access / Special Instructions</label><textarea id="visit-instructions" placeholder="Codes..." class="sigma-input" style="height: 80px; resize: none;"></textarea></div>
+                        <div style="display: flex; justify-content: flex-end; margin-top: 2rem;">
+                            <button type="submit" class="isc-btn isc-btn-primary" style="padding: 0 3rem;">Schedule Next Step</button>
+                        </div>
+                    </form>
                 </div>
-                <div class="sigma-form-actions">
-                    <button type="button" onclick="iscLeadTab('overview')" class="isc-btn isc-btn-outline">Cancel</button>
-                    <button type="submit" class="isc-btn isc-btn-primary" style="padding: 0.85rem 4rem;">Schedule Visit</button>
-                </div>
-            </form>
+            </div>
         </div>
 
         <div id="lead-pane-visit-confirm" class="isc-lead-pane" style="display:none; text-align: center; padding: 4rem 2rem;">
@@ -856,34 +874,6 @@
                     <button type="submit" class="isc-btn isc-btn-primary">Save Lead</button>
                 </div>
             </form>
-        </div>
-
-        <div id="lead-pane-actions" class="isc-lead-pane" style="display:none;">
-            <div style="display: grid; grid-template-columns: 300px 1fr; gap: 2.5rem; align-items: start;">
-                <div class="isc-card" style="padding: 1.5rem; background: var(--slate-50); border: 1px solid var(--slate-100);">
-                    <span class="sigma-form-header" style="margin-bottom: 1.5rem;">Quick Profile Update</span>
-                    <div class="sigma-field"><label style="font-size: 0.65rem;">Main Manager</label><input type="text" id="lead-action-manager" class="sigma-input" style="height: 36px; font-size: 0.85rem;"></div>
-                    <div class="sigma-field"><label style="font-size: 0.65rem;">Phone Number</label><input type="text" id="lead-action-phone" class="sigma-input" style="height: 36px; font-size: 0.85rem;" oninput="maskPhone(event)"></div>
-                    <div class="sigma-field"><label style="font-size: 0.65rem;">Email Address</label><input type="email" id="lead-action-email" class="sigma-input" style="height: 36px; font-size: 0.85rem;"></div>
-                </div>
-                <div>
-                    <span class="sigma-form-header" style="margin-bottom: 1.5rem;">Add Note</span>
-                    <form onsubmit="logLeadActivity(event)">
-                        <div class="sigma-row sigma-row-60-40" style="margin-bottom: 1.5rem;">
-                            <div class="sigma-field"><label>Action Type</label><select id="lead-activity-type" required class="sigma-input"><option value="Phone Call">Phone Call</option><option value="Email Sent">Email Sent</option><option value="Site Visit">Site Visit</option><option value="Note">Internal Note</option></select></div>
-                            <div class="sigma-field"><label>Result</label><select id="lead-activity-result" class="sigma-input"><option value="">-- No Result --</option><option value="Spoke to them">Spoke to them</option><option value="Left message">Left message</option></select></div>
-                        </div>
-                        <div class="sigma-field"><label>Details</label><textarea id="lead-activity-desc" required class="sigma-input" style="height: 120px; resize: none;"></textarea></div>
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2rem;">
-                            <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer; font-size: 0.85rem; font-weight: 500; color: var(--slate-600);">
-                                <input type="checkbox" id="update-next-action" checked style="width: 18px; height: 18px; border-radius: 4px; border: 1px solid var(--slate-300);">
-                                Update next action date automatically
-                            </label>
-                            <button type="submit" class="isc-btn isc-btn-primary" style="padding: 0 3rem;">Save Note</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
         </div>
 
         <div id="lead-pane-contacts" class="isc-lead-pane" style="display:none;">
@@ -1290,6 +1280,9 @@
     const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = val || ''; };
 
     async function openLeadCommand(id, mode = 'overview') {
+        if (mode === 'visit' || mode === 'actions') {
+            mode = 'activities';
+        }
         try {
             const res = await fetch(`/api/v1/leads/${id}`);
             if (!res.ok) throw new Error("Lead fetch failed");
@@ -1371,7 +1364,7 @@
             const tabs = document.getElementById('lead-modal-tabs');
             if (mode === 'edit') {
                 if(paneEdit) paneEdit.style.display = 'flex'; if(paneOverview) paneOverview.style.display = 'none'; if(tabs) tabs.style.display = 'none';
-            } else if (['actions', 'visit', 'contacts', 'timeline', 'visit-confirm'].includes(mode)) {
+            } else if (['activities', 'contacts', 'timeline', 'visit-confirm'].includes(mode)) {
                 if(paneEdit) paneEdit.style.display = 'none'; if(paneOverview) paneOverview.style.display = 'none'; if(tabs) tabs.style.display = 'flex';
                 iscLeadTab(mode);
             } else {
@@ -1463,6 +1456,9 @@
     });
 
     async function openAccountCommand(id, mode = 'overview') {
+        if (mode === 'visit' || mode === 'actions') {
+            mode = 'activities';
+        }
         try {
             const res = await fetch(`/api/v1/accounts/${id}`);
             if (!res.ok) throw new Error("Account fetch failed");
@@ -1544,7 +1540,7 @@
             const tabs = document.getElementById('account-modal-tabs');
             if (mode === 'edit') {
                 if(paneEdit) paneEdit.style.display = 'flex'; if(paneOverview) paneOverview.style.display = 'none'; if(tabs) tabs.style.display = 'none';
-            } else if (['actions', 'contacts', 'timeline', 'visit', 'visit-confirm'].includes(mode)) {
+            } else if (['activities', 'contacts', 'timeline', 'visit-confirm'].includes(mode)) {
                 if(paneEdit) paneEdit.style.display = 'none'; if(paneOverview) paneOverview.style.display = 'none'; if(tabs) tabs.style.display = 'flex';
                 iscTab(mode);
             } else {
