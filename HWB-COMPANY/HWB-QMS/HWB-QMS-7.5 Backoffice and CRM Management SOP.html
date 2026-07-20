@@ -7,7 +7,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-7.5</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.0.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5 (Documented Information)</span></div>
     </div>
@@ -23,11 +23,11 @@
             <tbody>
                 <tr><td><strong>Document Title</strong></td><td><strong>Backoffice and CRM Management SOP</strong></td></tr>
                 <tr><td><strong>Document ID</strong></td><td>HWB-QMS-7.5</td></tr>
-                <tr><td><strong>Version</strong></td><td>2.0.0</td></tr>
+                <tr><td><strong>Version</strong></td><td>3.0.0</td></tr>
                 <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
                 <tr><td><strong>Author</strong></td><td>George (Systems Architect)</td></tr>
                 <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
-                <tr><td><strong>Date</strong></td><td>06-02-2026</td></tr>
+                <tr><td><strong>Date</strong></td><td>07-20-2026</td></tr>
                 <tr><td><strong>ISO 9001 Clause</strong></td><td>7.5</td></tr>
             </tbody>
         </table>
@@ -85,6 +85,50 @@
             <li><strong>Client Conversion:</strong> Find the lead in the marketing dashboard and click the **"Convert ⚡"** button. The system will automatically move the information to the active Client list and create a new history record.</li>
         </ol>
 
+        <h3>3.5 Role-Based Page Access and Record Ownership</h3>
+        <p>To support multi-user operations and protect business data, the system uses roles and ownership assignments:</p>
+        <ul>
+            <li><strong>Executive (Administrator):</strong> Has full access to all admin tools, dashboard, master settings, backups, user creation, and communications.</li>
+            <li><strong>Sales (Representative):</strong> Restricted to CRM and bidding pages. Can manage details popup forms, claim leads, assign representatives to client accounts, and run price calculations. Access is blocked to executive and master consoles.</li>
+            <li><strong>Operator (Logistics & Tech):</strong> Has read-only access to building details and logistics fields, plus access to the technical SOP manuals and prototyping lab. Access is blocked to executive control, master logs, and CRM edit tools.</li>
+        </ul>
+        
+        <p><strong>Page Access Map:</strong></p>
+        <pre style="background: #0f172a; color: #f8fafc; padding: 1.25rem; border-radius: 8px; font-family: monospace; font-size: 0.85rem; line-height: 1.4; overflow-x: auto;">
++---------------------------------------------------------------------------------+
+|                        SigmaFidelity™ Page Access Matrix                        |
++---------------------------------------------------------------------------------+
+[1] EXECUTIVE ROLE (Full Authority)
+    ├── /admin/executive   --> User Control, Financial Target Board, Telemetry
+    ├── /admin/master      --> System Settings, Backups, Server Logs, Releases
+    ├── /admin/operations  --> Portfolio Accounts, Leads List, Global Scheduling
+    ├── /manual            --> Corporate QMS Manuals, Compliance SOPs
+    └── Public Pages       --> Quote Engine, Corporate Home, Locations, Services
+
+[2] SALES ROLE (CRM & B2B Proposals)
+    ├── /admin/operations  --> Claim Leads, Schedule Client Visits, Log Notes
+    ├── /admin/edit-lead   --> Edit Profile Details, Set Valuations, Next Actions
+    ├── /admin/scope-builder-> Bid Calculators, B2B Cleaning Proposals
+    ├── /manual            --> Sales SOPs & B2B Proposals Procedures
+    └── Public Pages       --> Quote Engine, Public Site Pages
+    * ACCESS DENIED *      --> /admin/executive, /admin/master
+
+[3] OPERATOR ROLE (Logistics & Tech Support)
+    ├── /admin/operations  --> Read-Only Portfolio Details & Building Specs
+    ├── /admin/lab         --> System Testing & Operational Lab Tooling
+    ├── /manual            --> Technical SOPs, Safety Standards, Procedures
+    └── Public Pages       --> Services, Calculator, Public Site Pages
+    * ACCESS DENIED *      --> /admin/executive, /admin/master, /admin/edit-lead
++---------------------------------------------------------------------------------+
+        </pre>
+
+        <p><strong>Ownership Assignment and Deletion Shifting:</strong></p>
+        <ul>
+            <li><strong>Leads and Accounts Ownership:</strong> Leads contain an `owner_id` column to identify the salesperson, and Client Accounts contain an `assigned_rep_id` column. When a Lead is promoted/converted to an Account, the assigned owner is automatically mapped to the Account rep column in the database.</li>
+            <li><strong>In-Modal Navigation:</strong> Users can browse through records in the details modal using previous/next chevrons or keyboard Left and Right arrow keys. Keyboard listener turns off automatically if typing inside forms.</li>
+            <li><strong>Smooth Deletion Transitions:</strong> If a record is deleted from inside the Details modal, the system automatically checks if other records are visible. If so, it slides the display to show the next adjacent record. If no other records remain on the page, the modal closes cleanly.</li>
+        </ul>
+
         <h2>4.0 Verification (Zero-Defect Check)</h2>
         <ul>
             <li><strong>Timeout Verification:</strong> Open the dashboard, remain completely still for 30 minutes, and confirm that the session warning modal pops up.</li>
@@ -114,6 +158,12 @@
                     <td>06-02-2026</td>
                     <td>George</td>
                     <td>Modernized to HTML format under everyday words standard. Integrated the 30-minute inactivity timeout and 1-minute warning modal procedures. Approved by CEO.</td>
+                </tr>
+                <tr>
+                    <td>3.0.0</td>
+                    <td>07-20-2026</td>
+                    <td>George</td>
+                    <td>Introduced three system role tiers (Executive, Sales, Operator), established the page access matrix, and integrated lead-to-account ownership assignment and transition rules. Approved by CEO.</td>
                 </tr>
             </tbody>
         </table>
