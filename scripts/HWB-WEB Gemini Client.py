@@ -30,7 +30,8 @@ class AntigravityClient:
                 ["agy", "--print", full_prompt, "--dangerously-skip-permissions"],
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
+                timeout=10
             )
             output = result.stdout.strip()
             
