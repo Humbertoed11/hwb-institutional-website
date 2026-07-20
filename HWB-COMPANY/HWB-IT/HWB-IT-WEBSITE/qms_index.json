@@ -1510,5 +1510,14 @@
         "version": "2.0.0",
         "compliance": "UPDATED",
         "date": "06/01/2026"
+    },
+    {
+        "title": "Building Brains with George: An Operator's Manual for Geospatial Intelligence and Cognitive Systems",
+        "id": "HWB-IT-BOOK-001",
+        "dept": "IT",
+        "file": "building-brains-with-george.html",
+        "version": "1.0.0",
+        "compliance": "UPDATED",
+        "date": "07/20/2026"
     }
 ]

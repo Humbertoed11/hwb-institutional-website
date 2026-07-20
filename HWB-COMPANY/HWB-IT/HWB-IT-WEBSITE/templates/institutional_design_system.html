@@ -112,22 +112,22 @@
 
     <!-- 4.0 BUTTONS -->
     <section style="margin-bottom: 5rem;">
-        <h2 style="font-size: 1.6rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">4.0 Buttons & Interaction</h2>
+        <h2 style="font-size: 1.6rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">4.0 Buttons & Interaction (Phase 3 Standard)</h2>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
             <div class="component-sandbox">
-                <span class="sandbox-label">BLUE PILL</span>
-                <div style="text-align: center; padding: 1rem;"><a href="javascript:void(0)" class="isc-btn isc-btn-primary" style="height: 48px; padding: 0 2rem; border-radius: 50px; font-weight: 800; text-decoration: none;">Start a quote</a></div>
+                <span class="sandbox-label">BLUE COMPRESSED BUTTON</span>
+                <div style="text-align: center; padding: 1rem;"><a href="javascript:void(0)" class="isc-btn isc-btn-primary" style="height: 36px; padding: 0 1.5rem; border-radius: 6px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; background: #2563eb; color: white;">Start a quote</a></div>
                 <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee; font-size: 0.8rem;">
                     <strong>Path:</strong> <code>HWB-IT-WEBSITE/static/HWB-WEB Style.css</code><br>
-                    <strong>Logic:</strong> Links to <code>/get-quote</code>. Triggers lead ingestion.
+                    <strong>Logic:</strong> Links to <code>/get-quote</code>. Height: 32-40px. Radius: 6px.
                 </div>
             </div>
             <div class="component-sandbox">
-                <span class="sandbox-label">OUTLINE PILL</span>
-                <div style="text-align: center; padding: 1rem;"><a href="javascript:void(0)" class="isc-btn isc-btn-outline" style="height: 48px; padding: 0 2rem; border-radius: 50px; font-weight: 800; text-decoration: none; color: #2563eb !important; border: 2px solid #2563eb;">View Standards</a></div>
+                <span class="sandbox-label">OUTLINE COMPRESSED BUTTON</span>
+                <div style="text-align: center; padding: 1rem;"><a href="javascript:void(0)" class="isc-btn isc-btn-outline" style="height: 36px; padding: 0 1.5rem; border-radius: 6px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; color: #2563eb !important; border: 2px solid #2563eb;">View Standards</a></div>
                 <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee; font-size: 0.8rem;">
                     <strong>Path:</strong> <code>HWB-IT-WEBSITE/static/HWB-WEB Style.css</code><br>
-                    <strong>Logic:</strong> Links to <code>/compliance</code>. Safety Path.
+                    <strong>Logic:</strong> Links to <code>/compliance</code>. Height: 32-40px. Radius: 6px.
                 </div>
             </div>
         </div>
@@ -152,11 +152,11 @@
 
     <!-- 4.6 INTERACTION LOG -->
     <section style="margin-bottom: 5rem;">
-        <h2 style="font-size: 1.6rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">4.6 Institutional Interaction Log</h2>
+        <h2 style="font-size: 1.6rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">4.6 Consolidated Interaction Core</h2>
         <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 2rem; border-radius: 12px;">
             <div style="font-size: 0.85rem; line-height: 1.8;">
-                <strong>Database Table:</strong> <code>"SigmaInteractionLog"</code><br>
-                <strong>Logic:</strong> Records every command and AI explanation for absolute auditability.
+                <strong>Database Table:</strong> <code>"SigmaInteractionCore"</code> (PostgreSQL)<br>
+                <strong>Logic:</strong> Records every command and AI explanation for absolute auditability and session recovery.
             </div>
         </div>
     </section>

@@ -77,6 +77,15 @@ class SigmaOrchestrator:
         conn.close()
         print("--- SUCCESS: All Strategic Data & Dashboards Updated ---")
 
+        # Trigger QMS & Book sync daemon (runs scripts/sigma_sync.py)
+        try:
+            import subprocess
+            import sys
+            print("[ORCHESTRATOR] Triggering QMS & Book database sync...")
+            subprocess.run([sys.executable, "scripts/sigma_sync.py"], check=False)
+        except Exception as e:
+            print(f"[ORCHESTRATOR] QMS sync failed: {e}")
+
 if __name__ == "__main__":
     orch = SigmaOrchestrator()
     while True:
