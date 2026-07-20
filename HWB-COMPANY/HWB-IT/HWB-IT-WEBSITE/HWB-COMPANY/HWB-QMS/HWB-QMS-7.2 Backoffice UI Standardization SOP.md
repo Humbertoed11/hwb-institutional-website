@@ -4,7 +4,7 @@
 | :--- | :--- |
 | **Document Title** | **SigmaFidelity™ Web & UI Standardization SOP** |
 | **Document ID** | HWB-QMS-7.2 |
-| **Version** | 4.0 |
+| **Version** | 5.0 |
 | **Status** | Approved |
 | **Author** | George (Systems Architect) |
 | **Approved By** | Humberto Dominguez (CEO) |
@@ -75,6 +75,7 @@ All administrative UIs must avoid "Loud" or "Amateur" scaling.
 | 3.0 | 04/16/2026 | Added SigmaFidelity Institutional Form System and Professional Polish Standard. | George |
 | 3.1 | 04/19/2026 | Implemented Phase 3 Enterprise Hardening, High-Velocity Entry Points, and SigmaFidelity™ Decision Modal. | George |
 | 4.0 | 04/20/2026 | Salesforce-Tier 3-Column Hardening, Phase 3 Weight Hierarchy, and Total Parity Grid System. | George |
+| 5.0 | 07/20/2026 | Codified Phase 4 Typographic weight hierarchy, outer label standards, and split grid unification rules. | George |
 
 
 ## 9. Salesforce-Tier 3-Column Standard (2026)
@@ -85,11 +86,12 @@ To achieve maximum Information Velocity, all complex record modals (Leads/Accoun
     - **Column 3: Business & Strategic**: Status, Value, Priority, Source, Fiscal Terms.
 - **Benefit**: Liquidates vertical scroll friction by keeping all 34+ mission-critical fields "above the fold."
 
-## 10. Institutional Typography Standard (Phase 3)
+## 10. Institutional Typography Standard (Phase 4)
 The system strictly enforces a weight-based hierarchy to ensure clinical data recognition.
-- **900 (Black)**: Reserved for Modal Headers, Metric Counts, and Breadcrumb active states.
-- **500 (Medium)**: Mandated for all Form Labels, Grid Headers, and Secondary Subtext.
-- **800 (Bold)**: Standard for all primary Data Values and Table Cell content.
+- **900 (Black)**: Reserved for main Modal Titles and metric counters.
+- **700 (Bold)**: Reserved for Section Headers and primary page headings.
+- **600 (Semi-Bold)**: Standard for all primary Data Values and Table Cell content.
+- **500 (Medium)**: Mandated for all Form Field Labels, Grid Headers, and secondary descriptions.
 - **Typeface**: The global standard is **'Inter'**.
 
 ## 11. Linguistic Sync (Global Mandate)
@@ -99,3 +101,9 @@ All system components must comply with the "Everyday Words" mandate.
 
 ## 12. Fiscal Alignment
 For storage and repository standards regarding large media assets and build artifacts, see **HWB-QMS-11.1 Fiscal Storage and Repository Standards**.
+
+## 14. Outer Label and Grid Stability Standard
+To prevent layout misalignment and design clipping across modal tab transitions:
+- **Label Position**: All field labels MUST reside outside and directly above the data value or entry box. Labels inside card borders are strictly prohibited.
+- **Label Style**: Enforce Title Case (e.g., "Target Date") and a standard font-size of `0.85rem` or `0.8rem`.
+- **Split Grid Unification**: All views using split column configurations must share a standardized layout width (e.g., `300px 1fr`) and a uniform gap of `2.5rem`. This ensures that field lines and labels align horizontally across tabs, eliminating layout shifts when users toggle views.
