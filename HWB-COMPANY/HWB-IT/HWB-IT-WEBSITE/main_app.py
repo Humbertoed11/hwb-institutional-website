@@ -1131,8 +1131,11 @@ def api_lead_hub(id):
                 # Data cleanup for numeric fields
                 sqf_val = data.get('sqf') if 'sqf' in data else current_lead['sqf']
                 revenue_val = data.get('estimated_annual_value') if 'estimated_annual_value' in data else current_lead['estimated_annual_value']
+                capacity_val = data.get('capacity') if 'capacity' in data else current_lead['capacity']
                 if sqf_val == '' or sqf_val is None: sqf_val = 0
                 if revenue_val == '' or revenue_val is None: revenue_val = 0.0
+                if capacity_val == '' or capacity_val is None: capacity_val = None
+                else: capacity_val = int(capacity_val)
 
                 cur.execute(
 '''
@@ -1141,6 +1144,7 @@ def api_lead_hub(id):
                         address = %s, city = %s, state = %s, zipcode = %s, industry = %s, sqf = %s, 
                         status = %s, estimated_annual_value = %s, next_action_date = %s, notes = %s,
                         facility_type = %s, lead_source = %s, service_interest = %s, priority_level = %s, traffic_cycle = %s,
+                        capacity = %s,
                         updated_at = CURRENT_TIMESTAMP
                     WHERE id = %s
                 ''', (resolve('company_name', current_lead['center_name']), 
@@ -1160,7 +1164,8 @@ def api_lead_hub(id):
                       resolve('lead_source', current_lead['lead_source']), 
                       resolve('service_interest', current_lead['service_interest']), 
                       resolve('priority_level', current_lead['priority_level']), 
-                      resolve('traffic_cycle', current_lead['traffic_cycle']), id))
+                      resolve('traffic_cycle', current_lead['traffic_cycle']), 
+                      capacity_val, id))
                 
                 # --- Institutional Activity Logging ---
                 if 'next_action_date' in data or 'notes' in data:

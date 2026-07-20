@@ -787,6 +787,7 @@
                         </div>
                         <div class="sigma-field"><label>Zip</label><input type="text" id="edit-lead-zip" name="zipcode" class="sigma-input"></div>
                         <div class="sigma-field"><label>SQF</label><input type="number" id="edit-lead-sqf" name="sqf" class="sigma-input"></div>
+                        <div class="sigma-field"><label>License Capacity</label><input type="number" id="edit-lead-capacity" name="capacity" class="sigma-input"></div>
                         <div class="sigma-field"><label>Industry</label><input type="text" id="edit-lead-industry" name="industry" class="sigma-input"></div>
                     </div>
                     <!-- Column 3: Strategic -->
@@ -852,7 +853,7 @@
         </div>
 
         <div id="lead-pane-actions" class="isc-lead-pane" style="display:none;">
-            <div style="display: grid; grid-template-columns: 280px 1fr; gap: 2.5rem; align-items: start;">
+            <div style="display: grid; grid-template-columns: 300px 1fr; gap: 2.5rem; align-items: start;">
                 <div class="isc-card" style="padding: 1.5rem; background: var(--slate-50); border: 1px solid var(--slate-100);">
                     <span class="sigma-form-header" style="margin-bottom: 1.5rem;">Quick Profile Update</span>
                     <div class="sigma-field"><label style="font-size: 0.65rem;">Main Manager</label><input type="text" id="lead-action-manager" class="sigma-input" style="height: 36px; font-size: 0.85rem;"></div>
@@ -860,7 +861,7 @@
                     <div class="sigma-field"><label style="font-size: 0.65rem;">Email Address</label><input type="email" id="lead-action-email" class="sigma-input" style="height: 36px; font-size: 0.85rem;"></div>
                 </div>
                 <div>
-                    <h3 class="form-section-label">Add Note</h3>
+                    <span class="sigma-form-header" style="margin-bottom: 1.5rem;">Add Note</span>
                     <form onsubmit="logLeadActivity(event)">
                         <div class="sigma-row sigma-row-60-40" style="margin-bottom: 1.5rem;">
                             <div class="sigma-field"><label>Action Type</label><select id="lead-activity-type" required class="sigma-input"><option value="Phone Call">Phone Call</option><option value="Email Sent">Email Sent</option><option value="Site Visit">Site Visit</option><option value="Note">Internal Note</option></select></div>
@@ -880,9 +881,9 @@
         </div>
 
         <div id="lead-pane-contacts" class="isc-lead-pane" style="display:none;">
-            <div style="display: grid; grid-template-columns: 350px 1fr; gap: 3rem; width: 100%;">
+            <div style="display: grid; grid-template-columns: 300px 1fr; gap: 2.5rem; width: 100%;">
                 <div>
-                    <h3 class="form-section-label" style="margin-bottom: 2rem;">Add New Contact</h3>
+                    <span class="sigma-form-header" style="margin-bottom: 2rem;">Add New Contact</span>
                     <form onsubmit="addLeadContact(event)" class="sigma-form-container">
                         <div class="sigma-field"><label>Full Name</label><input type="text" id="lead-contact-name" required placeholder="John Doe" class="sigma-input"></div>
                         <div class="sigma-field"><label>Role / Title</label><input type="text" id="lead-contact-role" placeholder="Facilities Manager" class="sigma-input"></div>
@@ -892,7 +893,7 @@
                     </form>
                 </div>
                 <div>
-                    <h3 class="form-section-label" style="margin-bottom: 2rem;">Decision Makers</h3>
+                    <span class="sigma-form-header" style="margin-bottom: 2rem;">Decision Makers</span>
                     <div id="lead-list-contacts" style="display: grid; gap: 1.5rem; max-height: 500px; overflow-y: auto;"></div>
                 </div>
             </div>
@@ -1294,15 +1295,16 @@
             if (subtitle) subtitle.innerText = `${lead.center_name || 'Unnamed'} • LEAD-${id}`;
             
             const overview = [
-                { label: 'Company', val: lead.center_name || '--' },
+                { label: 'Company Name', val: lead.center_name || '--' },
                 { label: 'Main Manager', val: (lead.decision_maker || '--') + (lead.job_title ? ' (' + lead.job_title + ')' : '') },
-                { label: 'Contact Hub', val: (lead.phone || '--') + ' | ' + (lead.email || '--') },
-                { label: 'Building Hub', val: (lead.address || '--') + ' | ' + (lead.city || '') + ', ' + (lead.state || '') + ' ' + (lead.zipcode || '') },
-                { label: 'Type', val: lead.facility_type || '--' },
-                { label: 'SQ Footage', val: (lead.sqf || 0).toLocaleString() + ' SQF' },
-                { label: 'Usage', val: lead.traffic_cycle || '--' },
-                { label: 'Status', val: lead.status || 'New' },
-                { label: 'Priority', val: lead.priority_level || 'Normal' },
+                { label: 'Contact Details', val: (lead.phone || '--') + ' | ' + (lead.email || '--') },
+                { label: 'Building Address', val: (lead.address || '--') + ' | ' + (lead.city || '') + ', ' + (lead.state || '') + ' ' + (lead.zipcode || '') },
+                { label: 'Building Type', val: lead.facility_type || '--' },
+                { label: 'Square Footage', val: (lead.sqf || 0).toLocaleString() + ' SQF' },
+                { label: 'License Capacity', val: lead.capacity ? lead.capacity + ' Children' : '--' },
+                { label: 'Traffic Cycle', val: lead.traffic_cycle || '--' },
+                { label: 'Lead Status', val: lead.status || 'New' },
+                { label: 'Priority Level', val: lead.priority_level || 'Normal' },
                 { label: 'Expected Value', val: '$' + (lead.estimated_annual_value || 0).toLocaleString() },
                 { label: 'Next Action', val: formatDashboardDate(lead.next_action_date) },
                 { label: 'Lead Source', val: lead.lead_source || '--' },
@@ -1310,9 +1312,10 @@
                 { label: 'Service Interest', val: lead.service_interest || '--' }
             ];
             const listOverview = document.getElementById('lead-list-overview');
-            if (listOverview) { listOverview.innerHTML = overview.map(o => `<div class="isc-list-item"><div style="font-size:0.65rem; font-weight:500; color:var(--slate-500); text-transform:uppercase; margin-bottom:0.35rem">${o.label}</div><div style="font-weight:600; color:var(--slate-900); font-size:0.9rem">${o.val}</div></div>`).join(''); }
+            if (listOverview) { listOverview.innerHTML = overview.map(o => `<div class="sigma-read-field"><label style="font-size:0.8rem; font-weight:500; color:var(--slate-600); text-transform:none; margin-bottom:0.25rem;">${o.label}</label><div style="font-weight:600; color:var(--slate-900); font-size:0.9rem;">${o.val}</div></div>`).join(''); }
 
             setVal('edit-lead-company', lead.center_name);
+            setVal('edit-lead-capacity', lead.capacity);
             setVal('edit-lead-dm', lead.decision_maker);
             setVal('edit-lead-job-title', lead.job_title);
             setVal('edit-lead-email', lead.email);
@@ -2110,6 +2113,15 @@
     }
     .fa-spin-hover { transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
     button:hover .fa-spin-hover { transform: rotate(90deg); }
+
+    .sigma-read-field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        padding: 0;
+        background: none;
+        border: none;
+    }
 
     @media (max-width: 768px) {
         .isc-pane, .isc-lead-pane, [style*="grid-template-columns: 1fr 1fr"], [style*="grid-template-columns: 1fr 1.5fr"] {
