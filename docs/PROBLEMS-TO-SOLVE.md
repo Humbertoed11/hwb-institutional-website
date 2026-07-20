@@ -13,6 +13,9 @@ Responsibility: George (Architect)
 | 06/23/2026 | BUG-036 | Invalid credentials on hdominguez login due to typo. | **RESOLVED** | HIGH |
 | 06/23/2026 | BUG-037 | QMS manual document accessibility failure. | **RESOLVED** | HIGH |
 | 06/23/2026 | BUG-038 | Recurrence of Ghost Volume Glitch on QMS templates. | **RESOLVED** | HIGH |
+| 07/20/2026 | BUG-039 | Inconsistent and amateur visual weights in popup forms. | **RESOLVED** | MEDIUM |
+| 07/20/2026 | BUG-040 | Modal delete stays on deleted record instead of sliding or closing. | **RESOLVED** | HIGH |
+
 
 ## BUG-033: Ghost Volume Glitch
 **Detected:** 06/01/2026
@@ -73,6 +76,27 @@ Responsibility: George (Architect)
 **Root Cause:** The bind mount mapping `/usr/share/nginx/html/qms` inside the `hwb_compliance_engine` container was empty, causing Nginx to serve 404 for all files even though they existed on the host.
 **Solution:** Restarted the `compliance` container via `docker-compose restart compliance` to refresh the bind mounts.
 **Preventative:** Check if `/usr/share/nginx/html/qms` inside the compliance container contains files during the master startup sequence, and auto-restart the container if it is empty.
+
+## BUG-039: Inconsistent and amateur visual weights in popup forms
+**Detected:** 07/20/2026
+**Symptoms:** Details popup forms show oversized input boxes and loud, heavy `800`/`900` font weights for data values.
+**Root Cause:**
+1. CSS style class `.sigma-input` used `padding: 0.5rem 0.75rem` (40px height) and `font-weight: 600`.
+2. Javascript dynamic template injected `font-weight: 800` and `font-size: 1.15rem` for read-only data values.
+3. Overview cards used inside-card boundaries (`.isc-list-item`) which clashed with outer-label forms styling.
+**Solution:**
+1. Modified `.sigma-input` to use vertically compressed `0.4rem 0.65rem` padding (32-34px height) and medium `500` weight.
+2. Standardized details values in Javascript template to `font-weight: 600` and `font-size: 0.9rem`.
+3. Converted Overview tab cards to borderless `.sigma-read-field` with Title Case outer labels sitting above values.
+4. Standardized split grid layouts across all tab screens to `300px 1fr` columns with a `2.5rem` gap.
+**Preventative:** Strictly follow the *Outer Label and Grid Stability Standard* codified in version 5.0 of HWB-QMS-7.2.
+
+## BUG-040: Modal delete stays on deleted record
+**Detected:** 07/20/2026
+**Symptoms:** Clicking "Delete Lead" (or "Delete Account") from inside the details modal successfully deletes the record, but leaves the modal open showing the deleted data.
+**Root Cause:** The `deleteLead` and `deleteAccount` callbacks did not close the modal or switch to the adjacent records after the DELETE background query.
+**Solution:** Updated callbacks to check if the modal is open. If so, they scan the table row elements to retrieve the adjacent record's ID and load it instantly. If no records remain on the page, the modal closes.
+**Preventative:** Standardize in-modal deletions to use transition navigation handlers.
 
 
 
