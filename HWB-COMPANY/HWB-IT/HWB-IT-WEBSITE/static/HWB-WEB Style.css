@@ -1841,7 +1841,7 @@ nav a:hover {
 .sigma-form-header {
     font-size: 0.85rem;
     color: var(--hwb-blue);
-    font-weight: 900;
+    font-weight: 700;
     text-transform: uppercase;
     margin-bottom: 1rem;
     letter-spacing: 0.1em;
@@ -1880,13 +1880,13 @@ nav a:hover {
 
 .sigma-input {
     width: 100%;
-    padding: 0.5rem 0.75rem; /* Max 36-40px height */
+    padding: 0.4rem 0.65rem; /* Vertically compressed to 32-34px height */
     border-radius: 6px; /* Sharp grid-lock */
     border: 1px solid var(--slate-300);
     background: #f8fafc; /* Material Depth */
     font-family: inherit;
-    font-weight: 600;
-    font-size: 0.95rem;
+    font-weight: 500; /* Crisp regular-medium weight */
+    font-size: 0.9rem; /* Clean sizing */
     color: var(--slate-900);
     transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1); /* Instant snap */
     outline: none;

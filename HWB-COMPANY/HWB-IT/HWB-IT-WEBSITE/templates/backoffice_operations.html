@@ -1310,7 +1310,7 @@
                 { label: 'Service Interest', val: lead.service_interest || '--' }
             ];
             const listOverview = document.getElementById('lead-list-overview');
-            if (listOverview) { listOverview.innerHTML = overview.map(o => `<div class="isc-list-item"><div style="font-size:0.65rem; font-weight:500; color:var(--slate-500); text-transform:uppercase; margin-bottom:0.5rem">${o.label}</div><div style="font-weight:800; color:var(--slate-900); font-size:1.15rem">${o.val}</div></div>`).join(''); }
+            if (listOverview) { listOverview.innerHTML = overview.map(o => `<div class="isc-list-item"><div style="font-size:0.65rem; font-weight:500; color:var(--slate-500); text-transform:uppercase; margin-bottom:0.35rem">${o.label}</div><div style="font-weight:600; color:var(--slate-900); font-size:0.9rem">${o.val}</div></div>`).join(''); }
 
             setVal('edit-lead-company', lead.center_name);
             setVal('edit-lead-dm', lead.decision_maker);
