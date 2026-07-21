@@ -91,6 +91,44 @@ with app.app_context():
                     status VARCHAR(50)
                 );
             ''')
+
+            # 5. --- SigmaFidelity™ Self-Healing Azure Database Seeder (BUG-044) ---
+            try:
+                cur.execute('SELECT COUNT(*) FROM "Leads";')
+                az_lead_count = cur.fetchone()[0]
+                seed_path = os.path.join(os.path.dirname(__file__), 'scripts', 'seed_data.json')
+                if az_lead_count < 29000 and os.path.exists(seed_path):
+                    print(f"[BOOT] Database Lead Count ({az_lead_count}) < 29,879. Initiating automated seed ingestion...", flush=True)
+                    with open(seed_path, 'r') as sf:
+                        sdata = json.load(sf)
+                        for l in sdata.get('leads', []):
+                            cur.execute('''
+                                INSERT INTO "Leads" (
+                                    id, center_name, lead_source, status, phone, email, address, city, state, zipcode,
+                                    sqf, capacity, estimated_annual_value, priority_level, facility_type, decision_maker,
+                                    job_title, traffic_cycle, service_interest, next_action_date, is_dnc, is_converted, input_date
+                                ) VALUES (
+                                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                                ) ON CONFLICT (id) DO UPDATE SET
+                                    center_name = EXCLUDED.center_name,
+                                    lead_source = EXCLUDED.lead_source,
+                                    status = EXCLUDED.status,
+                                    phone = EXCLUDED.phone,
+                                    email = EXCLUDED.email,
+                                    sqf = EXCLUDED.sqf,
+                                    capacity = EXCLUDED.capacity,
+                                    estimated_annual_value = EXCLUDED.estimated_annual_value,
+                                    is_dnc = EXCLUDED.is_dnc;
+                            ''', (
+                                l.get('id'), l.get('center_name'), l.get('lead_source'), l.get('status'), l.get('phone'), l.get('email'), l.get('address'), l.get('city'), l.get('state'), l.get('zipcode'),
+                                l.get('sqf'), l.get('capacity'), l.get('estimated_annual_value'), l.get('priority_level'), l.get('facility_type'), l.get('decision_maker'),
+                                l.get('job_title'), l.get('traffic_cycle'), l.get('service_interest'), l.get('next_action_date'), l.get('is_dnc', False), l.get('is_converted', False), l.get('input_date')
+                            ))
+                    print("[BOOT] Automated Azure Data Ingestion Completed Successfully!", flush=True)
+            except Exception as se:
+                print(f"[BOOT] Seeder Warning: {se}", flush=True)
+
             conn.commit()
             if "conn" in locals(): conn.close()
             
