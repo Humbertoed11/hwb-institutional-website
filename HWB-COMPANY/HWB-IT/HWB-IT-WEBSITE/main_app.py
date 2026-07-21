@@ -349,7 +349,7 @@ def admin_operations():
                 {lead_where_str}
             '''
             
-            cur.execute(f'{lead_sql_base} ORDER BY {l_sort} {l_dir}, id ASC LIMIT %s OFFSET %s', tuple(lead_params + [per_page, offset]))
+            cur.execute(f'{lead_sql_base} ORDER BY {l_sort} {l_dir} NULLS LAST, id ASC LIMIT %s OFFSET %s', tuple(lead_params + [per_page, offset]))
             leads = cur.fetchall()
             total_pages = (leads_count + per_page - 1) // per_page
 

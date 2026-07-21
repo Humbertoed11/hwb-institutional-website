@@ -8,7 +8,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-9.3</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">8.1.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">8.2.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">9.3 (Disaster Recovery & Safety Snapshots)</span></div>
     </div>
@@ -24,11 +24,11 @@
             <tbody>
                 <tr><td><strong>Document Title</strong></td><td><strong>Disaster Recovery & Shadow Snapshots SOP</strong></td></tr>
                 <tr><td><strong>Document ID</strong></td><td>HWB-QMS-9.3</td></tr>
-                <tr><td><strong>Version</strong></td><td>8.1.0</td></tr>
+                <tr><td><strong>Version</strong></td><td>8.2.0</td></tr>
                 <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
                 <tr><td><strong>Author</strong></td><td>George (Systems Architect)</td></tr>
                 <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
-                <tr><td><strong>Date</strong></td><td>06-01-2026</td></tr>
+                <tr><td><strong>Date</strong></td><td>07-21-2026</td></tr>
                 <tr><td><strong>ISO 9001 Clause</strong></td><td>9.3</td></tr>
             </tbody>
         </table>
@@ -116,6 +116,14 @@ COMMIT;</code></pre>
             <li>Verify visibility by refreshing the <code>/manual</code> page.</li>
         </ol>
 
+        <h3>5.6 Development Environment Isolation & Safe One-Way Database Sync</h3>
+        <p>To ensure that bugs, experiments, or data corruption in local development cannot break or wipe live production database records, our team enforces strict database isolation and one-way synchronization rules:</p>
+        <ol>
+            <li><strong>Environment Isolation Guard:</strong> Local development runs on an isolated local database (<code>hwb_db</code> inside Docker). Live production runs on Azure Cloud PostgreSQL (<code>sigmajan-adb</code>). If a catastrophic crash or data loss occurs in local development, live production is 100% untouched and safe.</li>
+            <li><strong>Safe One-Way UPSERT Rule:</strong> Data updates (such as newly downloaded Texas CCL API leads or updated phone numbers) are pushed to Azure Cloud using a safe <code>UPSERT</code> (<code>INSERT ... ON CONFLICT DO UPDATE</code>) script. The sync script is strictly prohibited from running <code>DELETE</code> or <code>DROP</code> commands on the live Azure database.</li>
+            <li><strong>Azure Point-In-Time Restoration:</strong> Azure PostgreSQL Flexible Server automatically maintains continuous 35-day Point-In-Time backups, allowing 1-click recovery to any exact minute if needed.</li>
+        </ol>
+
         <h2>6.0 Verification (Zero-Defect Check)</h2>
         <p>After a restore operation, the team must verify that the website is fully healthy:</p>
         <ul>
@@ -154,6 +162,12 @@ COMMIT;</code></pre>
                     <td>06-01-2026</td>
                     <td>George</td>
                     <td>Added automated database spam purging, Telegram/Telegra.ph mobile broadcasting recovery, and BUG-033 Ghost Volume troubleshooting procedures. Approved by CEO.</td>
+                </tr>
+                <tr>
+                    <td>8.2.0</td>
+                    <td>07-21-2026</td>
+                    <td>George</td>
+                    <td>Added Section 5.6 defining Development Environment Isolation, Safe One-Way UPSERT Database Syncing, and Azure Point-In-Time Restore protection against catastrophic data loss. Approved by CEO Humberto Dominguez.</td>
                 </tr>
             </tbody>
         </table>

@@ -19,7 +19,7 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem; gap: 2rem;">
                     <div style="display: flex; align-items: baseline; gap: 1.5rem;">
                         <h2 style="font-weight: 900; font-size: 1.75rem; color: var(--slate-900); margin: 0;">Leads</h2>
-                        <span id="count-leads" style="font-size: 0.7rem; font-weight: 900; color: var(--brand); text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap;">Records: {{ leads_count }}</span>
+                        <span id="count-leads" style="font-size: 0.7rem; font-weight: 900; color: var(--brand); text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap;">Records: {{ "{:,}".format(leads_count) if leads_count else '0' }}</span>
                     </div>
                     
                     <div style="display: flex; gap: 1.5rem; align-items: center;" id="leads-normal-controls">

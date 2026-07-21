@@ -128,3 +128,10 @@ Responsibility: George (Architect)
 **Root Cause:** Endpoint handlers passed raw psycopg2 dictionaries `dict(lead)` to `Flask.jsonify()`, which raised an unhandled `TypeError` when encountering `datetime.date`, `datetime.datetime`, or `Decimal` objects.
 **Solution:** Created a unified `serialize_row(row)` helper in `main_app.py` that converts all date/time objects into ISO format strings and Decimal objects into floats prior to JSON serialization.
 **Preventative:** Enforce `serialize_row` across all database REST endpoints returning raw SQL dictionary payloads.
+
+## BUG-044: Dual Database Endpoint Discrepancy (Local Docker DB vs Azure Cloud Postgres)
+**Detected:** 07/21/2026
+**Symptoms:** Local development (`mop.test:5000`) displayed updated lead values ($544M), formatted phone numbers, and new Texas CCL API ingestion records (2,048), while live production (`www.hwbcleaning.com`) displayed legacy/unformatted lead counts and unassigned source fields.
+**Root Cause:** Local development environment (`.env`) connected to the local Docker PostgreSQL container (`hwb_db`), whereas Azure Web App AppSettings connected to Azure Cloud PostgreSQL (`sigmajan-adb`). Bulk data ingestion and value calculation scripts executed locally without syncing to Azure, causing dev-to-prod data drift.
+**Solution:** Documented Environment Isolation Guard in `HWB-QMS-9.3` Section 5.6, created safe one-way `UPSERT` database sync runner, and enforced automated database telemetry checks before publishing.
+**Preventative:** Before verifying live production deployments, run an automated database telemetry check comparing local vs Azure row counts and execute safe `UPSERT` sync daemons to eliminate dev-to-prod data drift.
