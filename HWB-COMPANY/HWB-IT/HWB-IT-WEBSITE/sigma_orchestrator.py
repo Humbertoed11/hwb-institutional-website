@@ -86,6 +86,15 @@ class SigmaOrchestrator:
         except Exception as e:
             print(f"[ORCHESTRATOR] QMS sync failed: {e}")
 
+        # Trigger Daycare Registry Sync Daemon
+        try:
+            import subprocess
+            import sys
+            print("[ORCHESTRATOR] Triggering Daycare Registry sync...")
+            subprocess.run([sys.executable, "scripts/daycare_registry_sync.py"], check=False)
+        except Exception as e:
+            print(f"[ORCHESTRATOR] Daycare sync failed: {e}")
+
 if __name__ == "__main__":
     orch = SigmaOrchestrator()
     while True:

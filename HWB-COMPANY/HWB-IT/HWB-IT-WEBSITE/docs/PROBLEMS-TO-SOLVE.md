@@ -13,6 +13,14 @@ Responsibility: George (Architect)
 | 06/23/2026 | BUG-036 | Invalid credentials on hdominguez login due to typo. | **RESOLVED** | HIGH |
 | 06/23/2026 | BUG-037 | QMS manual document accessibility failure. | **RESOLVED** | HIGH |
 | 06/23/2026 | BUG-038 | Recurrence of Ghost Volume Glitch on QMS templates. | **RESOLVED** | HIGH |
+| 07/20/2026 | BUG-039 | Inconsistent and amateur visual weights in popup forms. | **RESOLVED** | MEDIUM |
+| 07/20/2026 | BUG-040 | Modal delete stays on deleted record instead of sliding or closing. | **RESOLVED** | HIGH |
+| 07/20/2026 | BUG-041 | Docker Desktop socket deletion and Telegram listener HTTP 409 collision. | **RESOLVED** | HIGH |
+| 07/21/2026 | BUG-042 | Unclosed JS try block breaking page-wide script execution in operations template. | **RESOLVED** | HIGH |
+| 07/21/2026 | BUG-043 | Flask jsonify unhandled datetime & decimal serialization failure on API hubs. | **RESOLVED** | HIGH |
+
+
+
 
 ## BUG-033: Ghost Volume Glitch
 **Detected:** 06/01/2026
@@ -52,7 +60,8 @@ Responsibility: George (Architect)
 **Detected:** 06/23/2026
 **Symptoms:** Logging in as `hdominguez` with correct password `password11` fails with "invalid credentials".
 **Root Cause:** The database user password hash was initialized using the typo string `assword11` from legacy scripts, causing standard logins with the correct spelling `password11` to fail hash verification.
-**Solution:** Updated the password hash for `hdominguez` to match the correct spelling `password11` in both PostgreSQL and SQLite user tables.
+**Recurrence (07/10/2026):** The login failure returned because a database restoration from `pre_consolidation_snapshot_05-22-2026_1405.sql` re-seeded the outdated/corrupted password hashes into the PostgreSQL database.
+**Solution:** Re-ran python commands to generate and set fresh, cryptographically valid hashes for both `admin` (`HWB-Admin-2026!`) and `hdominguez` (`password11`) in both PostgreSQL and SQLite user tables.
 **Preventative:** Standardize user seeding configurations and verify credentials against literal keys before committing password hashes.
 
 ## BUG-037: QMS Manual Document Accessibility Failure
@@ -73,7 +82,49 @@ Responsibility: George (Architect)
 **Solution:** Restarted the `compliance` container via `docker-compose restart compliance` to refresh the bind mounts.
 **Preventative:** Check if `/usr/share/nginx/html/qms` inside the compliance container contains files during the master startup sequence, and auto-restart the container if it is empty.
 
+## BUG-039: Inconsistent and amateur visual weights in popup forms
+**Detected:** 07/20/2026
+**Symptoms:** Details popup forms show oversized input boxes and loud, heavy `800`/`900` font weights for data values.
+**Root Cause:**
+1. CSS style class `.sigma-input` used `padding: 0.5rem 0.75rem` (40px height) and `font-weight: 600`.
+2. Javascript dynamic template injected `font-weight: 800` and `font-size: 1.15rem` for read-only data values.
+3. Overview cards used inside-card boundaries (`.isc-list-item`) which clashed with outer-label forms styling.
+**Solution:**
+1. Modified `.sigma-input` to use vertically compressed `0.4rem 0.65rem` padding (32-34px height) and medium `500` weight.
+2. Standardized details values in Javascript template to `font-weight: 600` and `font-size: 0.9rem`.
+3. Converted Overview tab cards to borderless `.sigma-read-field` with Title Case outer labels sitting above values.
+4. Standardized split grid layouts across all tab screens to `300px 1fr` columns with a `2.5rem` gap.
+**Preventative:** Strictly follow the *Outer Label and Grid Stability Standard* codified in version 5.0 of HWB-QMS-7.2.
 
+## BUG-040: Modal delete stays on deleted record
+**Detected:** 07/20/2026
+**Symptoms:** Clicking "Delete Lead" (or "Delete Account") from inside the details modal successfully deletes the record, but leaves the modal open showing the deleted data.
+**Root Cause:** The `deleteLead` and `deleteAccount` callbacks did not close the modal or switch to the adjacent records after the DELETE background query.
+**Solution:** Updated callbacks to check if the modal is open. If so, they scan the table row elements to retrieve the adjacent record's ID and load it instantly. If no records remain on the page, the modal closes.
+**Preventative:** Standardize in-modal deletions to use transition navigation handlers.
 
+## BUG-041: Docker Desktop Socket Deletion and Telegram Listener Collision
+**Detected:** 07/20/2026
+**Symptoms:** `hwb_agent_worker` logs show repeated `[TELEGRAM] getUpdates error: HTTP 409` errors, blocking the containerized Telegram daemon from fetching updates. Additionally, Port 8000 returns a 502 routing error.
+**Root Cause:**
+1. A duplicate container stack was running under the legacy host `snap.docker.dockerd` service, running an older `telegram_listener.py` instance that collided with the new Docker Desktop stack.
+2. The legacy snap container stack bound to Port 8000 on the host, preventing the new gateway from routing web traffic.
+3. Stopping the snap service successfully deleted the duplicate containers, but also deleted the shared `/var/run/docker.sock` socket file.
+**Solution:**
+1. Disabled and stopped the `docker.dockerd` snap service permanently to prevent legacy container auto-restart.
+2. Toggled the WSL integration in the Docker Desktop settings GUI to force the integration daemon to recreate the `/var/run/docker.sock` file and restart all containers cleanly.
+**Preventative:** Ensure Docker Desktop is the sole active container runtime, and verify `/var/run/docker.sock` validity during the pre-flight check.
 
+## BUG-042: Unclosed JS Try Block Breaking Page-Wide Script Execution
+**Detected:** 07/21/2026
+**Symptoms:** Clicking on lead or account rows in `backoffice_operations.html` failed to trigger the details command modal, and JavaScript functions reported as unhandled or inactive.
+**Root Cause:** An incomplete code edit in `updateAccount()` omitted a closing `} catch (err)` block and function closing brace `}`, causing a page-wide JavaScript syntax error that blocked script compilation in modern browsers.
+**Solution:** Added the missing `catch` block and closing brace to `updateAccount()`, and introduced an automated Python bracket-matching syntax validator script (`script_0.js` check).
+**Preventative:** Always run the automated Python bracket-balance check (`validate_js_brackets`) before restarting services or concluding session work.
 
+## BUG-043: Flask jsonify Unhandled Datetime & Decimal Serialization Failure
+**Detected:** 07/21/2026
+**Symptoms:** REST API endpoints `/api/v1/leads/<id>` and `/api/v1/accounts/<id>` returned HTTP 500 Internal Server Error when fetching valid database records.
+**Root Cause:** Endpoint handlers passed raw psycopg2 dictionaries `dict(lead)` to `Flask.jsonify()`, which raised an unhandled `TypeError` when encountering `datetime.date`, `datetime.datetime`, or `Decimal` objects.
+**Solution:** Created a unified `serialize_row(row)` helper in `main_app.py` that converts all date/time objects into ISO format strings and Decimal objects into floats prior to JSON serialization.
+**Preventative:** Enforce `serialize_row` across all database REST endpoints returning raw SQL dictionary payloads.

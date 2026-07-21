@@ -1,82 +1,84 @@
 {% extends "backoffice_base.html" %}
 
-{% block title %}Executive Pulse | SigmaFidelity™ Backoffice{% endblock %}
+{% block title %}Executive Dashboard | Backoffice{% endblock %}
 
 {% block bo_header %}
-    <h1>Executive Pulse</h1>
-    <p style="color: var(--text-secondary); margin-top: 0.5rem;">Institutional gateway for SigmaFidelity™ strategic management and operational tools.</p>
+    <h1>Executive Dashboard</h1>
+    <p style="color: var(--text-secondary); margin-top: 0.5rem;">Manage team accounts, track performance, review emails, and approve social posts.</p>
 {% endblock %}
 
 {% block bo_actions %}
-    <button class="rack-btn active" id="btn-dashboard" onclick="openExecutiveTab('dashboard')">Pulse Dashboard</button>
-    <button class="rack-btn" id="btn-social" onclick="openExecutiveTab('social')">Social Strategy</button>
-    <button class="rack-btn" id="btn-outbox" onclick="openExecutiveTab('outbox')">Email Outbox</button>
-    <button class="rack-btn" id="btn-tools" onclick="openExecutiveTab('tools')">Management Tools</button>
+    <button class="isc-btn isc-btn-outline active" id="btn-dashboard" onclick="openExecutiveTab('dashboard')">Dashboard</button>
+    <button class="isc-btn isc-btn-outline" id="btn-social" onclick="openExecutiveTab('social')">Social Posts</button>
+    <button class="isc-btn isc-btn-outline" id="btn-outbox" onclick="openExecutiveTab('outbox')">Email Outbox</button>
+    <button class="isc-btn isc-btn-outline" id="btn-users" onclick="openExecutiveTab('users')">User Management</button>
+    <button class="isc-btn isc-btn-outline" id="btn-tools" onclick="openExecutiveTab('tools')">Settings & Goals</button>
 {% endblock %}
 
 {% block bo_content %}
-<!-- Institutional Navigation Rack -->
-<div style="display: flex; gap: 1rem; margin-bottom: 3rem; background: white; padding: 1.5rem; border-radius: 12px; border: 1px solid var(--bo-border);">
-    <button class="rack-btn active" id="btn-dashboard" onclick="openExecutiveTab('dashboard')" style="margin-bottom: 0; width: auto;">📊 Pulse Dashboard</button>
-    <button class="rack-btn" id="btn-social" onclick="openExecutiveTab('social')" style="margin-bottom: 0; width: auto;">📱 Social Strategy</button>
-    <button class="rack-btn" id="btn-outbox" onclick="openExecutiveTab('outbox')" style="margin-bottom: 0; width: auto;">✉️ Email Outbox</button>
-    <button class="rack-btn" id="btn-users" onclick="openExecutiveTab('users')" style="margin-bottom: 0; width: auto;">👥 User Admin</button>
-    <button class="rack-btn" id="btn-tools" onclick="openExecutiveTab('tools')" style="margin-bottom: 0; width: auto;">🛠️ Management Tools</button>
+<!-- Main Navigation Tabs -->
+<div style="display: flex; gap: 0.75rem; margin-bottom: 2rem; background: white; padding: 1rem; border-radius: 12px; border: 1px solid var(--slate-200);">
+    <button class="isc-btn isc-btn-outline active" id="tab-btn-dashboard" onclick="openExecutiveTab('dashboard')">📊 Dashboard</button>
+    <button class="isc-btn isc-btn-outline" id="tab-btn-social" onclick="openExecutiveTab('social')">📱 Social Posts</button>
+    <button class="isc-btn isc-btn-outline" id="tab-btn-outbox" onclick="openExecutiveTab('outbox')">✉️ Email Outbox</button>
+    <button class="isc-btn isc-btn-outline" id="tab-btn-users" onclick="openExecutiveTab('users')">👥 User Management</button>
+    <button class="isc-btn isc-btn-outline" id="tab-btn-tools" onclick="openExecutiveTab('tools')">🛠️ Settings & Goals</button>
 </div>
 
+<!-- Dashboard Tab -->
 <div id="dashboard" class="tab-content active">
-    <div class="bo-stats-grid">
-        <div class="bo-card" style="border-top: 4px solid var(--bo-accent);">
-            <h3 style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 1rem;">Total Market Leads</h3>
-            <p style="font-size: 2.5rem; font-weight: 900; color: var(--bo-sidebar);">{{ leads_count }}</p>
+    <div class="bo-stats-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-bottom: 2rem;">
+        <div class="bo-card" style="background: white; border: 1px solid var(--slate-200); border-top: 4px solid var(--brand); padding: 1.5rem; border-radius: 12px;">
+            <h3 style="font-size: 0.8rem; text-transform: uppercase; color: var(--slate-500); margin-bottom: 0.5rem; font-weight: 700;">Total Leads</h3>
+            <p style="font-size: 2rem; font-weight: 900; color: var(--slate-900);">{{ leads_count }}</p>
         </div>
-        <div class="bo-card" style="border-top: 4px solid #10b981;">
-            <h3 style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 1rem;">Est. NVA Waste</h3>
-            <p style="font-size: 2.5rem; font-weight: 900; color: #10b981;">{{ total_waste }}</p>
+        <div class="bo-card" style="background: white; border: 1px solid var(--slate-200); border-top: 4px solid #10b981; padding: 1.5rem; border-radius: 12px;">
+            <h3 style="font-size: 0.8rem; text-transform: uppercase; color: var(--slate-500); margin-bottom: 0.5rem; font-weight: 700;">Est. Potential Savings</h3>
+            <p style="font-size: 2rem; font-weight: 900; color: #10b981;">{{ total_waste }}</p>
         </div>
-        <div class="bo-card" style="border-top: 4px solid {% if uptime.status == 'ACTIVE' %}#10b981{% else %}#ef4444{% endif %};">
-            <h3 style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 1rem;">System Uptime</h3>
-            <p style="font-size: 2.5rem; font-weight: 900; color: {% if uptime.status == 'ACTIVE' %}#10b981{% else %}#ef4444{% endif %};">{{ uptime.status }}</p>
+        <div class="bo-card" style="background: white; border: 1px solid var(--slate-200); border-top: 4px solid {% if uptime.status == 'ACTIVE' %}#10b981{% else %}#ef4444{% endif %}; padding: 1.5rem; border-radius: 12px;">
+            <h3 style="font-size: 0.8rem; text-transform: uppercase; color: var(--slate-500); margin-bottom: 0.5rem; font-weight: 700;">System Status</h3>
+            <p style="font-size: 2rem; font-weight: 900; color: {% if uptime.status == 'ACTIVE' %}#10b981{% else %}#ef4444{% endif %};">{{ uptime.status }}</p>
         </div>
-        <div class="bo-card" style="border-top: 4px solid {% if system_errors > 0 %}#ef4444{% else %}#10b981{% endif %};">
-            <h3 style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 1rem;">System Exceptions</h3>
-            <p style="font-size: 2.5rem; font-weight: 900; color: {% if system_errors > 0 %}#ef4444{% else %}#10b981{% endif %};">{{ system_errors }}</p>
+        <div class="bo-card" style="background: white; border: 1px solid var(--slate-200); border-top: 4px solid {% if system_errors > 0 %}#ef4444{% else %}#10b981{% endif %}; padding: 1.5rem; border-radius: 12px;">
+            <h3 style="font-size: 0.8rem; text-transform: uppercase; color: var(--slate-500); margin-bottom: 0.5rem; font-weight: 700;">System Warnings</h3>
+            <p style="font-size: 2rem; font-weight: 900; color: {% if system_errors > 0 %}#ef4444{% else %}#10b981{% endif %};">{{ system_errors }}</p>
         </div>
     </div>
 
     <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 2rem;">
-        <div class="bo-card">
-            <h2 style="margin-bottom: 2rem; font-weight: 800; font-size: 1.25rem;">SigmaFidelity™ Performance Metrics</h2>
+        <div class="bo-card" style="background: white; border: 1px solid var(--slate-200); padding: 2rem; border-radius: 12px;">
+            <h2 style="margin-bottom: 1.5rem; font-weight: 800; font-size: 1.1rem; color: var(--slate-900);">Quality & Performance Scores</h2>
             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem;">
-                <div style="text-align: center; padding: 1.5rem; background: #f8fafc; border-radius: 8px;">
-                    <div style="font-size: 1.5rem; font-weight: 900; color: var(--bo-accent);">{{ analytics.get('cpk', 'N/A') }}</div>
-                    <div style="font-size: 0.7rem; text-transform: uppercase; margin-top: 0.5rem; font-weight: 700;">Cpk (Capability)</div>
+                <div style="text-align: center; padding: 1.25rem; background: #f8fafc; border-radius: 8px; border: 1px solid var(--slate-100);">
+                    <div style="font-size: 1.5rem; font-weight: 900; color: var(--brand);">{{ analytics.get('cpk', 'N/A') }}</div>
+                    <div style="font-size: 0.75rem; text-transform: uppercase; margin-top: 0.5rem; font-weight: 700; color: var(--slate-600);">Process Score</div>
                 </div>
-                <div style="text-align: center; padding: 1.5rem; background: #f8fafc; border-radius: 8px;">
-                    <div style="font-size: 1.5rem; font-weight: 900; color: var(--bo-accent);">{{ analytics.get('dpmo', 'N/A') }}</div>
-                    <div style="font-size: 0.7rem; text-transform: uppercase; margin-top: 0.5rem; font-weight: 700;">DPMO (Defects)</div>
+                <div style="text-align: center; padding: 1.25rem; background: #f8fafc; border-radius: 8px; border: 1px solid var(--slate-100);">
+                    <div style="font-size: 1.5rem; font-weight: 900; color: var(--brand);">{{ analytics.get('dpmo', 'N/A') }}</div>
+                    <div style="font-size: 0.75rem; text-transform: uppercase; margin-top: 0.5rem; font-weight: 700; color: var(--slate-600);">Error Rate (DPMO)</div>
                 </div>
-                <div style="text-align: center; padding: 1.5rem; background: #f8fafc; border-radius: 8px;">
-                    <div style="font-size: 1.5rem; font-weight: 900; color: var(--bo-accent);">{{ analytics.get('rty', 'N/A') }}</div>
-                    <div style="font-size: 0.7rem; text-transform: uppercase; margin-top: 0.5rem; font-weight: 700;">RTY (Yield)</div>
+                <div style="text-align: center; padding: 1.25rem; background: #f8fafc; border-radius: 8px; border: 1px solid var(--slate-100);">
+                    <div style="font-size: 1.5rem; font-weight: 900; color: var(--brand);">{{ analytics.get('rty', 'N/A') }}</div>
+                    <div style="font-size: 0.75rem; text-transform: uppercase; margin-top: 0.5rem; font-weight: 700; color: var(--slate-600);">Success Rate (Yield)</div>
                 </div>
             </div>
         </div>
 
-        <div class="bo-card">
-            <h2 style="margin-bottom: 2rem; font-weight: 800; font-size: 1.25rem;">Recent Activity</h2>
-            <table class="inventory-table" style="font-size: 0.85rem;">
+        <div class="bo-card" style="background: white; border: 1px solid var(--slate-200); padding: 2rem; border-radius: 12px;">
+            <h2 style="margin-bottom: 1.5rem; font-weight: 800; font-size: 1.1rem; color: var(--slate-900);">Recent Added Leads</h2>
+            <table class="isc-grid" style="width: 100%; font-size: 0.85rem;">
                 <thead>
                     <tr>
-                        <th>Facility</th>
-                        <th>Waste (Est.)</th>
+                        <th style="padding: 0.75rem; text-align: left; background: #f8fafc; border-bottom: 1px solid var(--slate-200);">Facility</th>
+                        <th style="padding: 0.75rem; text-align: right; background: #f8fafc; border-bottom: 1px solid var(--slate-200);">Est. Waste</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for lead in recent_leads %}
                     <tr>
-                        <td><strong>{{ lead.center_name }}</strong></td>
-                        <td style="color: var(--bo-accent); font-weight: 700;">${{ (lead.calculated_waste or 0)|round(2) }}</td>
+                        <td style="padding: 0.75rem; border-bottom: 1px solid var(--slate-100);"><strong>{{ lead.center_name }}</strong></td>
+                        <td style="padding: 0.75rem; border-bottom: 1px solid var(--slate-100); text-align: right; color: var(--brand); font-weight: 700;">${{ (lead.calculated_waste or 0)|round(2) }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -85,30 +87,34 @@
     </div>
 </div>
 
+<!-- Settings & Goals Tab -->
 <div id="tools" class="tab-content" style="display: none;">
-    <div class="bo-card">
-        <h2 style="margin-bottom: 2rem; font-weight: 800; font-size: 1.25rem;">Manage Strategic Metrics (KPIVs)</h2>
+    <div class="bo-card" style="background: white; border: 1px solid var(--slate-200); padding: 2rem; border-radius: 12px;">
+        <h2 style="margin-bottom: 1rem; font-weight: 800; font-size: 1.1rem; color: var(--slate-900);">Performance Goals & Targets</h2>
+        <p style="color: var(--slate-500); margin-bottom: 2rem; font-size: 0.875rem;">Set key metric targets to track company operational performance.</p>
+        
         <form action="{{ url_for('sigma_executive') }}" method="POST" style="display: grid; grid-template-columns: repeat(3, 1fr) auto; gap: 1rem; margin-bottom: 2rem;">
             <input type="hidden" name="action" value="update_kpiv">
-            <input type="text" name="metric_name" placeholder="Metric Name" required style="padding: 0.75rem; border-radius: 4px; border: 1px solid var(--bo-border);">
-            <input type="text" name="value" placeholder="Current Value" required style="padding: 0.75rem; border-radius: 4px; border: 1px solid var(--bo-border);">
-            <input type="text" name="target" placeholder="Target" required style="padding: 0.75rem; border-radius: 4px; border: 1px solid var(--bo-border);">
-            <button type="submit" class="nav-cta" style="border: none; cursor: pointer;">Update</button>
+            <input type="text" name="metric_name" placeholder="Metric Name" required style="padding: 0.6rem 1rem; border-radius: 6px; border: 1px solid var(--slate-200); font-size: 0.875rem; outline: none;">
+            <input type="text" name="value" placeholder="Current Value" required style="padding: 0.6rem 1rem; border-radius: 6px; border: 1px solid var(--slate-200); font-size: 0.875rem; outline: none;">
+            <input type="text" name="target" placeholder="Target Goal" required style="padding: 0.6rem 1rem; border-radius: 6px; border: 1px solid var(--slate-200); font-size: 0.875rem; outline: none;">
+            <button type="submit" class="isc-btn isc-btn-primary">Update Goal</button>
         </form>
-        <table class="inventory-table">
+
+        <table class="isc-grid" style="width: 100%;">
             <thead>
                 <tr>
-                    <th>Metric</th>
-                    <th>Current</th>
-                    <th>Target</th>
+                    <th style="padding: 0.75rem; text-align: left; background: #f8fafc; border-bottom: 1px solid var(--slate-200);">Metric</th>
+                    <th style="padding: 0.75rem; text-align: left; background: #f8fafc; border-bottom: 1px solid var(--slate-200);">Current Value</th>
+                    <th style="padding: 0.75rem; text-align: left; background: #f8fafc; border-bottom: 1px solid var(--slate-200);">Target Goal</th>
                 </tr>
             </thead>
             <tbody>
                 {% for kpiv in kpivs %}
                 <tr>
-                    <td><strong>{{ kpiv.metric_name }}</strong></td>
-                    <td>{{ kpiv.value }}</td>
-                    <td>{{ kpiv.target }}</td>
+                    <td style="padding: 0.75rem; border-bottom: 1px solid var(--slate-100);"><strong>{{ kpiv.metric_name }}</strong></td>
+                    <td style="padding: 0.75rem; border-bottom: 1px solid var(--slate-100);">{{ kpiv.value }}</td>
+                    <td style="padding: 0.75rem; border-bottom: 1px solid var(--slate-100);">{{ kpiv.target }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -116,156 +122,204 @@
     </div>
 </div>
 
+<!-- Social Posts Tab -->
 <div id="social" class="tab-content" style="display: none;">
-    <div class="bo-card">
+    <div class="bo-card" style="background: white; border: 1px solid var(--slate-200); padding: 2rem; border-radius: 12px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
             <div>
-                <h2 style="font-weight: 800; font-size: 1.25rem;">LinkedIn Approval Queue</h2>
-                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.5rem;">Review and verify strategic content before institutional publication.</p>
+                <h2 style="font-weight: 800; font-size: 1.1rem; color: var(--slate-900);">LinkedIn Post Approval</h2>
+                <p style="color: var(--slate-500); font-size: 0.875rem; margin-top: 0.25rem;">Review and approve social media posts before publishing.</p>
             </div>
             <div>
                 {% if linkedin_authorized %}
-                    <span style="padding: 0.5rem 1rem; background: #dcfce7; color: #166534; border-radius: 20px; font-size: 0.75rem; font-weight: 700; border: 1px solid #bbf7d0;">LINKEDIN AUTHORIZED</span>
+                    <span style="padding: 0.4rem 0.8rem; background: #dcfce7; color: #166534; border-radius: 6px; font-size: 0.75rem; font-weight: 700; border: 1px solid #bbf7d0;">Connected to LinkedIn</span>
                 {% else %}
-                    <a href="{{ url_for('linkedin_auth') }}" class="nav-cta" style="text-decoration: none; display: inline-block;">AUTHORIZE LINKEDIN</a>
+                    <a href="{{ url_for('linkedin_auth') }}" class="isc-btn isc-btn-primary" style="text-decoration: none;">Connect LinkedIn</a>
                 {% endif %}
             </div>
         </div>
         
         {% if pending_social %}
-            <div style="display: grid; gap: 2rem;">
+            <div style="display: grid; gap: 1.5rem;">
                 {% for post in pending_social %}
-                <div style="padding: 2rem; border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                        <span style="padding: 0.4rem 0.8rem; background: #dbeafe; color: #1e40af; border-radius: 4px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase;">{{ post.platform }}</span>
-                        <span style="font-size: 0.75rem; color: var(--text-secondary);">Staged: {{ post.created_at }}</span>
+                <div style="padding: 1.5rem; border: 1px solid var(--slate-200); border-radius: 10px; background: #f8fafc;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <span style="padding: 0.25rem 0.6rem; background: #dbeafe; color: #1e40af; border-radius: 4px; font-size: 0.7rem; font-weight: 800;">{{ post.platform }}</span>
+                        <span style="font-size: 0.75rem; color: var(--slate-400);">Created: {{ post.created_at }}</span>
                     </div>
-                    <div style="font-family: 'Roboto', sans-serif; line-height: 1.6; color: var(--text-primary); margin-bottom: 2rem; white-space: pre-wrap;">{{ post.content }}</div>
+                    <div style="font-family: inherit; line-height: 1.6; color: var(--slate-800); margin-bottom: 1.5rem; white-space: pre-wrap;">{{ post.content }}</div>
                     
-                    <div style="display: flex; gap: 1rem;">
+                    <div style="display: flex; gap: 0.75rem;">
                         <form action="{{ url_for('sigma_executive') }}" method="POST">
                             <input type="hidden" name="action" value="approve_social">
                             <input type="hidden" name="post_id" value="{{ post.id }}">
-                            <button type="submit" style="padding: 0.75rem 1.5rem; background: #10b981; color: white; border: none; border-radius: 4px; font-weight: 700; cursor: pointer;">APPROVE & STAGE FOR DISPATCH</button>
+                            <button type="submit" class="isc-btn isc-btn-primary" style="background: #10b981;">Approve & Post</button>
                         </form>
                         <form action="{{ url_for('sigma_executive') }}" method="POST">
                             <input type="hidden" name="action" value="reject_social">
                             <input type="hidden" name="post_id" value="{{ post.id }}">
-                            <button type="submit" style="padding: 0.75rem 1.5rem; background: #ef4444; color: white; border: none; border-radius: 4px; font-weight: 700; cursor: pointer;">REJECT</button>
+                            <button type="submit" class="isc-btn isc-btn-outline" style="color: #ef4444; border-color: #fca5a5;">Reject</button>
                         </form>
                         <form action="{{ url_for('sigma_executive') }}" method="POST">
                             <input type="hidden" name="action" value="delete_social">
                             <input type="hidden" name="post_id" value="{{ post.id }}">
-                            <button type="submit" style="padding: 0.75rem 1.5rem; background: #64748b; color: white; border: none; border-radius: 4px; font-weight: 700; cursor: pointer;">DELETE</button>
+                            <button type="submit" class="isc-btn isc-btn-outline" style="color: var(--slate-500);">Delete</button>
                         </form>
                     </div>
                 </div>
                 {% endfor %}
             </div>
         {% else %}
-            <div style="padding: 4rem; text-align: center; color: var(--text-secondary); border: 2px dashed #e2e8f0; border-radius: 12px;">
-                <p>No posts currently awaiting approval.</p>
+            <div style="padding: 3rem; text-align: center; color: var(--slate-400); border: 2px dashed var(--slate-200); border-radius: 10px;">
+                <p>No social posts currently waiting for approval.</p>
             </div>
         {% endif %}
     </div>
 </div>
 
+<!-- Email Outbox Tab -->
 <div id="outbox" class="tab-content" style="display: none;">
-    <div class="bo-card">
-        <h2 style="margin-bottom: 2rem; font-weight: 800; font-size: 1.25rem;">Institutional Email Outbox</h2>
-        <p style="color: var(--text-secondary); margin-bottom: 2rem; font-size: 0.9rem;">Review and verify institutional communications before transmission via Microsoft Graph.</p>
+    <div class="bo-card" style="background: white; border: 1px solid var(--slate-200); padding: 2rem; border-radius: 12px;">
+        <h2 style="margin-bottom: 0.5rem; font-weight: 800; font-size: 1.1rem; color: var(--slate-900);">Email Approval Outbox</h2>
+        <p style="color: var(--slate-500); margin-bottom: 2rem; font-size: 0.875rem;">Review and approve emails before sending via Microsoft Outlook.</p>
         
         {% if pending_emails %}
-            <div style="display: grid; gap: 2rem;">
+            <div style="display: grid; gap: 1.5rem;">
                 {% for email in pending_emails %}
-                <div style="padding: 2rem; border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                        <span style="padding: 0.4rem 0.8rem; background: #fef3c7; color: #92400e; border-radius: 4px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase;">TO: {{ email.recipient }}</span>
-                        <span style="font-size: 0.75rem; color: var(--text-secondary);">Staged: {{ email.created_at }}</span>
+                <div style="padding: 1.5rem; border: 1px solid var(--slate-200); border-radius: 10px; background: #f8fafc;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <span style="padding: 0.25rem 0.6rem; background: #fef3c7; color: #92400e; border-radius: 4px; font-size: 0.7rem; font-weight: 800;">TO: {{ email.recipient }}</span>
+                        <span style="font-size: 0.75rem; color: var(--slate-400);">Staged: {{ email.created_at }}</span>
                     </div>
-                    <div style="font-weight: 800; margin-bottom: 1rem;">Subject: {{ email.subject }}</div>
-                    <div style="max-height: 200px; overflow-y: auto; background: white; padding: 1rem; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 2rem; font-size: 0.85rem;">
+                    <div style="font-weight: 800; margin-bottom: 0.75rem; color: var(--slate-800);">Subject: {{ email.subject }}</div>
+                    <div style="max-height: 200px; overflow-y: auto; background: white; padding: 1rem; border: 1px solid var(--slate-200); border-radius: 6px; margin-bottom: 1.5rem; font-size: 0.875rem;">
                         {{ email.body | safe }}
                     </div>
                     
-                    <div style="display: flex; gap: 1rem;">
+                    <div style="display: flex; gap: 0.75rem;">
                         <form action="{{ url_for('sigma_executive') }}" method="POST">
                             <input type="hidden" name="action" value="approve_email">
                             <input type="hidden" name="email_id" value="{{ email.id }}">
-                            <button type="submit" style="padding: 0.75rem 1.5rem; background: #10b981; color: white; border: none; border-radius: 4px; font-weight: 700; cursor: pointer;">APPROVE & SEND</button>
+                            <button type="submit" class="isc-btn isc-btn-primary" style="background: #10b981;">Approve & Send</button>
                         </form>
                         <form action="{{ url_for('sigma_executive') }}" method="POST">
                             <input type="hidden" name="action" value="reject_email">
                             <input type="hidden" name="email_id" value="{{ email.id }}">
-                            <button type="submit" style="padding: 0.75rem 1.5rem; background: #ef4444; color: white; border: none; border-radius: 4px; font-weight: 700; cursor: pointer;">REJECT</button>
+                            <button type="submit" class="isc-btn isc-btn-outline" style="color: #ef4444; border-color: #fca5a5;">Reject</button>
                         </form>
                     </div>
                 </div>
                 {% endfor %}
             </div>
         {% else %}
-            <div style="padding: 4rem; text-align: center; color: var(--text-secondary); border: 2px dashed #e2e8f0; border-radius: 12px;">
-                <p>No emails currently awaiting approval.</p>
+            <div style="padding: 3rem; text-align: center; color: var(--slate-400); border: 2px dashed var(--slate-200); border-radius: 10px;">
+                <p>No emails currently waiting for approval.</p>
             </div>
         {% endif %}
     </div>
 </div>
 
+<!-- User Management Tab -->
 <div id="users" class="tab-content" style="display: none;">
-    <div class="bo-card">
-        <h2 style="margin-bottom: 2rem; font-weight: 800; font-size: 1.25rem;">Institutional User Administration</h2>
+    <div class="bo-card" style="background: white; border: 1px solid var(--slate-200); padding: 2rem; border-radius: 12px;">
         
-        <!-- Add New User Form -->
-        <div style="background: #f8fafc; padding: 2rem; border-radius: 12px; border: 1px solid var(--bo-border); margin-bottom: 3rem;">
-            <h3 style="font-size: 0.9rem; text-transform: uppercase; margin-bottom: 1.5rem; color: var(--bo-sidebar);">Register New Institutional User</h3>
-            <form action="{{ url_for('sigma_executive') }}" method="POST" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-                <input type="hidden" name="action" value="add_user">
-                <div class="input-group">
-                    <label style="display: block; font-size: 0.75rem; font-weight: 800; margin-bottom: 0.5rem;">Full Name</label>
-                    <input type="text" name="full_name" required style="width: 100%; padding: 0.75rem; border-radius: 4px; border: 1px solid var(--bo-border);">
-                </div>
-                <div class="input-group">
-                    <label style="display: block; font-size: 0.75rem; font-weight: 800; margin-bottom: 0.5rem;">Email Address</label>
-                    <input type="email" name="user_email" required style="width: 100%; padding: 0.75rem; border-radius: 4px; border: 1px solid var(--bo-border);">
-                </div>
-                <div class="input-group">
-                    <label style="display: block; font-size: 0.75rem; font-weight: 800; margin-bottom: 0.5rem;">User ID (Username)</label>
-                    <input type="text" name="new_username" required style="width: 100%; padding: 0.75rem; border-radius: 4px; border: 1px solid var(--bo-border);">
-                </div>
-                <div class="input-group">
-                    <label style="display: block; font-size: 0.75rem; font-weight: 800; margin-bottom: 0.5rem;">Password</label>
-                    <input type="password" name="new_password" required style="width: 100%; padding: 0.75rem; border-radius: 4px; border: 1px solid var(--bo-border);">
-                </div>
-                <div style="grid-column: span 2;">
-                    <button type="submit" class="nav-cta" style="width: 100%; border: none; cursor: pointer; padding: 1rem;">AUTHORIZE & CREATE USER</button>
-                </div>
-            </form>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <div>
+                <h2 style="font-weight: 800; font-size: 1.1rem; color: var(--slate-900); margin-bottom: 0.25rem;">User Accounts & Access Governance</h2>
+                <p style="color: var(--slate-500); font-size: 0.875rem;">Search team members, manage access roles, edit user credentials, and suspend accounts.</p>
+            </div>
+            <button type="button" onclick="openModal('modal-add-user')" class="isc-btn isc-btn-primary" style="display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fas fa-user-plus"></i> Add New User
+            </button>
         </div>
 
-        <!-- User Roster & Password Management -->
-        <h3 style="font-size: 0.9rem; text-transform: uppercase; margin-bottom: 1.5rem; color: var(--bo-sidebar);">Active Institutional Roster</h3>
-        <table class="inventory-table">
+        <!-- Search & Filter Controls -->
+        <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1.5rem; background: #f8fafc; padding: 1rem; border-radius: 8px; border: 1px solid var(--slate-200);">
+            <div style="flex-grow: 1; position: relative;">
+                <input type="text" id="user_search_input" onkeyup="filterUsersTable()" placeholder="Search users by name, username, or email..." style="width: 100%; height: 38px; padding: 0 1rem; border-radius: 6px; border: 1px solid var(--slate-200); font-size: 0.875rem; outline: none; background: white;">
+            </div>
+            <div>
+                <select id="user_role_filter" onchange="filterUsersTable()" style="height: 38px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-200); font-size: 0.875rem; background: white; font-weight: 600;">
+                    <option value="ALL">All Roles</option>
+                    <option value="Admin">Admin</option>
+                    <option value="Sales">Sales</option>
+                    <option value="Executive">Executive</option>
+                    <option value="Manager">Manager</option>
+                    <option value="Operator">Operator</option>
+                    <option value="Technician">Technician</option>
+                </select>
+            </div>
+            <div>
+                <select id="user_status_filter" onchange="filterUsersTable()" style="height: 38px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-200); font-size: 0.875rem; background: white; font-weight: 600;">
+                    <option value="ALL">All Statuses</option>
+                    <option value="Active">Active Only</option>
+                    <option value="Suspended">Suspended Only</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Active User Roster Table -->
+        <table class="isc-grid" id="table-users" style="width: 100%;">
             <thead>
                 <tr>
-                    <th>Name</th>
-                    <th>User ID</th>
-                    <th>Email</th>
-                    <th>Manage</th>
+                    <th style="padding: 0.75rem; text-align: left; background: #f8fafc; border-bottom: 1px solid var(--slate-200);">User (Name & Email)</th>
+                    <th style="padding: 0.75rem; text-align: left; background: #f8fafc; border-bottom: 1px solid var(--slate-200);">Username</th>
+                    <th style="padding: 0.75rem; text-align: left; background: #f8fafc; border-bottom: 1px solid var(--slate-200);">Role</th>
+                    <th style="padding: 0.75rem; text-align: left; background: #f8fafc; border-bottom: 1px solid var(--slate-200);">Status</th>
+                    <th style="padding: 0.75rem; text-align: left; background: #f8fafc; border-bottom: 1px solid var(--slate-200);">Last Active</th>
+                    <th style="padding: 0.75rem; text-align: right; background: #f8fafc; border-bottom: 1px solid var(--slate-200);">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {% for user in users %}
-                <tr>
-                    <td><strong>{{ user.full_name or 'N/A' }}</strong></td>
-                    <td>{{ user.username }}</td>
-                    <td>{{ user.email or 'N/A' }}</td>
-                    <td>
-                        <form action="{{ url_for('sigma_executive') }}" method="POST" style="display: flex; gap: 0.5rem;">
-                            <input type="hidden" name="action" value="update_password">
-                            <input type="hidden" name="user_id" value="{{ user.id }}">
-                            <input type="password" name="new_password" placeholder="New PW" required style="padding: 0.4rem; border-radius: 4px; border: 1px solid var(--bo-border); font-size: 0.8rem; width: 100px;">
-                            <button type="submit" style="padding: 0.4rem 0.8rem; background: var(--bo-sidebar); color: white; border: none; border-radius: 4px; font-size: 0.7rem; font-weight: 700; cursor: pointer;">UPDATE</button>
-                        </form>
+                <tr class="user-row" data-id="{{ user.id }}" data-fullname="{{ user.full_name or '' }}" data-username="{{ user.username }}" data-email="{{ user.email or '' }}" data-role="{{ user.role or 'Operator' }}" data-status="{{ user.status or 'Active' }}" data-reset="{{ user.force_pwd_reset }}" data-perms="{{ (user.custom_permissions or '')|e }}" data-name="{{ (user.full_name or '')|lower }}">
+                    <td style="padding: 0.75rem; border-bottom: 1px solid var(--slate-100);">
+                        <div class="sigma-unit-data">
+                            <div class="sigma-unit-primary" style="font-weight: 700; color: var(--slate-900);">{{ user.full_name or 'N/A' }}</div>
+                            <div class="sigma-unit-secondary" style="font-size: 0.75rem; color: var(--slate-500);">{{ user.email or '--' }}</div>
+                        </div>
+                    </td>
+                    <td style="padding: 0.75rem; border-bottom: 1px solid var(--slate-100); font-weight: 600; color: var(--slate-700);">{{ user.username }}</td>
+                    <td style="padding: 0.75rem; border-bottom: 1px solid var(--slate-100);">
+                        {% if user.role == 'Admin' %}
+                            <span class="sigma-unit-pill" style="background:#fee2e2; color:#991b1b; padding:0.25rem 0.6rem; border-radius:4px; font-size:0.75rem; font-weight:700;">Admin</span>
+                        {% elif user.role == 'Sales' %}
+                            <span class="sigma-unit-pill" style="background:#dcfce7; color:#166534; padding:0.25rem 0.6rem; border-radius:4px; font-size:0.75rem; font-weight:700;">Sales</span>
+                        {% elif user.role == 'Executive' %}
+                            <span class="sigma-unit-pill" style="background:#e0e7ff; color:#3730a3; padding:0.25rem 0.6rem; border-radius:4px; font-size:0.75rem; font-weight:700;">Executive</span>
+                        {% elif user.role == 'Manager' %}
+                            <span class="sigma-unit-pill" style="background:#fef3c7; color:#92400e; padding:0.25rem 0.6rem; border-radius:4px; font-size:0.75rem; font-weight:700;">Manager</span>
+                        {% elif user.role == 'Technician' %}
+                            <span class="sigma-unit-pill" style="background:#f3e8ff; color:#6b21a8; padding:0.25rem 0.6rem; border-radius:4px; font-size:0.75rem; font-weight:700;">Technician</span>
+                        {% else %}
+                            <span class="sigma-unit-pill" style="background:#f1f5f9; color:#475569; padding:0.25rem 0.6rem; border-radius:4px; font-size:0.75rem; font-weight:700;">{{ user.role or 'Operator' }}</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 0.75rem; border-bottom: 1px solid var(--slate-100);">
+                        {% if user.status == 'Suspended' %}
+                            <span class="sigma-unit-pill" style="background:#fef3c7; color:#b45309; padding:0.2rem 0.5rem; border-radius:4px; font-size:0.7rem; font-weight:700;">Suspended</span>
+                        {% else %}
+                            <span class="sigma-unit-pill" style="background:#dcfce7; color:#15803d; padding:0.2rem 0.5rem; border-radius:4px; font-size:0.7rem; font-weight:700;">Active</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 0.75rem; border-bottom: 1px solid var(--slate-100); font-size: 0.8rem; color: var(--slate-500);">
+                        {{ user.last_login_at or 'Recently' }}
+                    </td>
+                    <td style="padding: 0.75rem; border-bottom: 1px solid var(--slate-100); text-align: right;">
+                        <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                            <button type="button" onclick="openEditUserModalFromRow(this)" class="isc-btn isc-btn-outline" style="height: 32px; padding: 0 0.75rem; font-size: 0.75rem;">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                            {% if current_user.id != user.id %}
+                                <form action="{{ url_for('sigma_executive') }}" method="POST" onsubmit="return confirm('Are you sure you want to delete account {{ user.username }}?');">
+                                    <input type="hidden" name="action" value="delete_user">
+                                    <input type="hidden" name="user_id" value="{{ user.id }}">
+                                    <button type="submit" class="isc-btn isc-btn-outline" style="height: 32px; padding: 0 0.5rem; font-size: 0.75rem; color: #ef4444; border-color: #fca5a5;">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </div>
                     </td>
                 </tr>
                 {% endfor %}
@@ -273,24 +327,362 @@
         </table>
     </div>
 </div>
+
+<!-- Modal: Add New User -->
+<div id="modal-add-user" class="isc-modal-overlay" style="display: none;">
+    <div class="isc-modal" style="max-width: 650px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--slate-900);">Add New User Account</h3>
+            <button type="button" onclick="closeModal('modal-add-user')" style="background: none; border: none; font-size: 1.25rem; color: var(--slate-400); cursor: pointer;">✕</button>
+        </div>
+        
+        <form action="{{ url_for('sigma_executive') }}" method="POST" onsubmit="return validateAddUserForm(event)" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+            <input type="hidden" name="action" value="add_user">
+            
+            <div>
+                <label style="display: block; font-size: 0.75rem; font-weight: 600; color: var(--slate-700); margin-bottom: 0.4rem;">User Role</label>
+                <select name="user_role" required style="width: 100%; height: 38px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-200); background: white; font-weight: 600; font-size: 0.875rem;">
+                    <option value="Operator">Operator (Standard Access)</option>
+                    <option value="Sales">Sales (Leads & Marketing)</option>
+                    <option value="Admin">Admin (Full System Access)</option>
+                    <option value="Executive">Executive (Reports & Dashboard)</option>
+                    <option value="Manager">Manager (Operations & Team Oversight)</option>
+                    <option value="Technician">Technician (Mobile Field App)</option>
+                </select>
+            </div>
+
+            <div>
+                <label style="display: block; font-size: 0.75rem; font-weight: 600; color: var(--slate-700); margin-bottom: 0.4rem;">Full Name</label>
+                <input type="text" name="full_name" required placeholder="e.g. John Doe" style="width: 100%; height: 38px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-200); font-size: 0.875rem; box-sizing: border-box;">
+            </div>
+
+            <div>
+                <label style="display: block; font-size: 0.75rem; font-weight: 600; color: var(--slate-700); margin-bottom: 0.4rem;">Username</label>
+                <input type="text" name="new_username" required placeholder="e.g. jdoe" style="width: 100%; height: 38px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-200); font-size: 0.875rem; box-sizing: border-box;">
+            </div>
+
+            <div>
+                <label style="display: block; font-size: 0.75rem; font-weight: 600; color: var(--slate-700); margin-bottom: 0.4rem;">Email Address</label>
+                <input type="email" name="user_email" required placeholder="e.g. jdoe@hwbcleaning.com" style="width: 100%; height: 38px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-200); font-size: 0.875rem; box-sizing: border-box;">
+            </div>
+
+            <div>
+                <label style="display: block; font-size: 0.75rem; font-weight: 600; color: var(--slate-700); margin-bottom: 0.4rem;">Account Status</label>
+                <select name="status" required style="width: 100%; height: 38px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-200); background: white; font-weight: 600; font-size: 0.875rem;">
+                    <option value="Active">Active</option>
+                    <option value="Suspended">Suspended</option>
+                </select>
+            </div>
+
+            <div style="display: flex; align-items: center; margin-top: 1.25rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 600; color: var(--slate-700); cursor: pointer;">
+                    <input type="checkbox" name="force_pwd_reset" value="true" style="accent-color: var(--brand); width: 16px; height: 16px;">
+                    Require Password Reset on Next Login
+                </label>
+            </div>
+
+            <div>
+                <label style="display: block; font-size: 0.75rem; font-weight: 600; color: var(--slate-700); margin-bottom: 0.4rem;">Password</label>
+                <div style="position: relative;">
+                    <input type="password" id="add_password" name="new_password" required style="width: 100%; height: 38px; padding: 0 2.5rem 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-200); font-size: 0.875rem; box-sizing: border-box;">
+                    <button type="button" onclick="togglePassVisibility('add_password', 'add_eye_1')" style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--slate-400);">
+                        <i id="add_eye_1" class="fas fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div>
+                <label style="display: block; font-size: 0.75rem; font-weight: 600; color: var(--slate-700); margin-bottom: 0.4rem;">Confirm Password</label>
+                <div style="position: relative;">
+                    <input type="password" id="add_confirm_password" required style="width: 100%; height: 38px; padding: 0 2.5rem 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-200); font-size: 0.875rem; box-sizing: border-box;">
+                    <button type="button" onclick="togglePassVisibility('add_confirm_password', 'add_eye_2')" style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--slate-400);">
+                        <i id="add_eye_2" class="fas fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div style="grid-column: span 2; margin-top: 1rem; display: flex; justify-content: flex-end; gap: 0.75rem;">
+                <button type="button" onclick="closeModal('modal-add-user')" class="isc-btn isc-btn-outline">Cancel</button>
+                <button type="submit" class="isc-btn isc-btn-primary">Create User Account</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: Edit User Account -->
+<div id="modal-edit-user" class="isc-modal-overlay" style="display: none;">
+    <div class="isc-modal" style="max-width: 650px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--slate-900);">Edit User Account</h3>
+            <button type="button" onclick="closeModal('modal-edit-user')" style="background: none; border: none; font-size: 1.25rem; color: var(--slate-400); cursor: pointer;">✕</button>
+        </div>
+        
+        <form action="{{ url_for('sigma_executive') }}" method="POST" onsubmit="return validateEditUserForm(event)" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+            <input type="hidden" name="action" value="edit_user">
+            <input type="hidden" id="edit_user_id" name="user_id">
+            
+            <div>
+                <label style="display: block; font-size: 0.75rem; font-weight: 600; color: var(--slate-700); margin-bottom: 0.4rem;">Full Name</label>
+                <input type="text" id="edit_full_name" name="full_name" required style="width: 100%; height: 38px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-200); font-size: 0.875rem; box-sizing: border-box;">
+            </div>
+
+            <div>
+                <label style="display: block; font-size: 0.75rem; font-weight: 600; color: var(--slate-700); margin-bottom: 0.4rem;">Email Address</label>
+                <input type="email" id="edit_user_email" name="user_email" required style="width: 100%; height: 38px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-200); font-size: 0.875rem; box-sizing: border-box;">
+            </div>
+
+            <div>
+                <label style="display: block; font-size: 0.75rem; font-weight: 600; color: var(--slate-700); margin-bottom: 0.4rem;">Username (Fixed)</label>
+                <input type="text" id="edit_username" disabled style="width: 100%; height: 38px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-200); font-size: 0.875rem; background: var(--slate-100); color: var(--slate-500); box-sizing: border-box;">
+            </div>
+
+            <div>
+                <label style="display: block; font-size: 0.75rem; font-weight: 600; color: var(--slate-700); margin-bottom: 0.4rem;">System Role</label>
+                <select id="edit_user_role" name="user_role" onchange="updateModalPermsFromRole(this.value)" required style="width: 100%; height: 38px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-200); background: white; font-weight: 600; font-size: 0.875rem;">
+                    <option value="Operator">Operator (Standard Access)</option>
+                    <option value="Sales">Sales (Leads & Marketing)</option>
+                    <option value="Admin">Admin (Full System Access)</option>
+                    <option value="Executive">Executive (Reports & Dashboard)</option>
+                    <option value="Manager">Manager (Operations & Team Oversight)</option>
+                    <option value="Technician">Technician (Mobile Field App)</option>
+                </select>
+            </div>
+
+            <div>
+                <label style="display: block; font-size: 0.75rem; font-weight: 600; color: var(--slate-700); margin-bottom: 0.4rem;">Account Status</label>
+                <select id="edit_status" name="status" required style="width: 100%; height: 38px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-200); background: white; font-weight: 600; font-size: 0.875rem;">
+                    <option value="Active">Active</option>
+                    <option value="Suspended">Suspended</option>
+                </select>
+            </div>
+
+            <div style="display: flex; align-items: center; margin-top: 1.25rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 600; color: var(--slate-700); cursor: pointer;">
+                    <input type="checkbox" id="edit_force_pwd_reset" name="force_pwd_reset" value="true" style="accent-color: var(--brand); width: 16px; height: 16px;">
+                    Require Password Reset on Next Login
+                </label>
+            </div>
+
+            <!-- Integrated Module Access Rights & Permissions Panel -->
+            <div style="grid-column: span 2; border-top: 1px solid var(--slate-200); padding-top: 1rem; margin-top: 0.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                    <h4 style="font-size: 0.85rem; font-weight: 800; color: var(--slate-900);">Module Access Rights & Permissions</h4>
+                    <span style="font-size: 0.75rem; color: var(--slate-500); font-weight: 600;">Pre-filled by role defaults (customizable)</span>
+                </div>
+                <table class="isc-grid" style="width: 100%; font-size: 0.8rem;">
+                    <thead>
+                        <tr>
+                            <th style="padding: 0.5rem; text-align: left; background: #f8fafc; border-bottom: 1px solid var(--slate-200);">System Module</th>
+                            <th style="padding: 0.5rem; text-align: center; background: #f8fafc; border-bottom: 1px solid var(--slate-200); width: 100px;">View Access</th>
+                            <th style="padding: 0.5rem; text-align: center; background: #f8fafc; border-bottom: 1px solid var(--slate-200); width: 100px;">Edit Access</th>
+                            <th style="padding: 0.5rem; text-align: center; background: #f8fafc; border-bottom: 1px solid var(--slate-200); width: 100px;">Delete Access</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% set module_labels = {'leads': 'Leads & Opportunities', 'accounts': 'Accounts & Clients', 'monitor': 'Work Monitor', 'social': 'Social Posts Approval', 'outbox': 'Email Outbox', 'users': 'User Management', 'tools': 'Settings & Goals'} %}
+                        {% for mod_key, mod_name in module_labels.items() %}
+                        <tr>
+                            <td style="padding: 0.5rem; border-bottom: 1px solid var(--slate-100);"><strong>{{ mod_name }}</strong></td>
+                            <td style="padding: 0.5rem; border-bottom: 1px solid var(--slate-100); text-align: center;">
+                                <input type="checkbox" id="edit_perm_{{ mod_key }}_v" name="perm_{{ mod_key }}_view" value="true" style="accent-color: var(--brand); width: 16px; height: 16px; cursor: pointer;">
+                            </td>
+                            <td style="padding: 0.5rem; border-bottom: 1px solid var(--slate-100); text-align: center;">
+                                <input type="checkbox" id="edit_perm_{{ mod_key }}_e" name="perm_{{ mod_key }}_edit" value="true" style="accent-color: var(--brand); width: 16px; height: 16px; cursor: pointer;">
+                            </td>
+                            <td style="padding: 0.5rem; border-bottom: 1px solid var(--slate-100); text-align: center;">
+                                <input type="checkbox" id="edit_perm_{{ mod_key }}_d" name="perm_{{ mod_key }}_delete" value="true" style="accent-color: var(--brand); width: 16px; height: 16px; cursor: pointer;">
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="grid-column: span 2; border-top: 1px solid var(--slate-100); padding-top: 1rem; margin-top: 0.5rem;">
+                <h4 style="font-size: 0.8rem; font-weight: 700; color: var(--slate-700); margin-bottom: 0.75rem;">Reset Password (Optional)</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+                    <div>
+                        <input type="password" id="edit_password" name="new_password" placeholder="Leave blank to keep existing" style="width: 100%; height: 38px; padding: 0 2.5rem 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-200); font-size: 0.875rem; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <input type="password" id="edit_confirm_password" placeholder="Confirm new password" style="width: 100%; height: 38px; padding: 0 2.5rem 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-200); font-size: 0.875rem; box-sizing: border-box;">
+                    </div>
+                </div>
+            </div>
+
+            <div style="grid-column: span 2; margin-top: 1rem; display: flex; justify-content: flex-end; gap: 0.75rem;">
+                <button type="button" onclick="closeModal('modal-edit-user')" class="isc-btn isc-btn-outline">Cancel</button>
+                <button type="submit" class="isc-btn isc-btn-primary">Save Account Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
+function togglePassVisibility(inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon = document.getElementById(iconId);
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        input.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+}
+
+function validateAddUserForm(event) {
+    const pass = document.getElementById('add_password').value;
+    const confirm = document.getElementById('add_confirm_password').value;
+    if (pass !== confirm) {
+        alert('Password and Confirm Password do not match. Please check and try again.');
+        event.preventDefault();
+        return false;
+    }
+    return true;
+}
+
+function validateEditUserForm(event) {
+    const pass = document.getElementById('edit_password').value;
+    const confirm = document.getElementById('edit_confirm_password').value;
+    if (pass && pass !== confirm) {
+        alert('New Password and Confirm Password do not match. Please check and try again.');
+        event.preventDefault();
+        return false;
+    }
+    return true;
+}
+
+function openEditUserModalFromRow(btn) {
+    const row = btn.closest('tr');
+    if (!row) return;
+    document.getElementById('edit_user_id').value = row.dataset.id || '';
+    document.getElementById('edit_full_name').value = row.dataset.fullname || '';
+    document.getElementById('edit_username').value = row.dataset.username || '';
+    document.getElementById('edit_user_email').value = row.dataset.email || '';
+    document.getElementById('edit_user_role').value = row.dataset.role || 'Operator';
+    document.getElementById('edit_status').value = row.dataset.status || 'Active';
+    document.getElementById('edit_force_pwd_reset').checked = (row.dataset.reset === 'True' || row.dataset.reset === 'true' || row.dataset.reset === '1');
+    document.getElementById('edit_password').value = '';
+    document.getElementById('edit_confirm_password').value = '';
+    openModal('modal-edit-user');
+}
+
+function openEditUserModal(id, fullName, username, email, role, status, forceReset) {
+    document.getElementById('edit_user_id').value = id;
+    document.getElementById('edit_full_name').value = fullName;
+    document.getElementById('edit_username').value = username;
+    document.getElementById('edit_user_email').value = email;
+    document.getElementById('edit_user_role').value = role;
+    document.getElementById('edit_status').value = status;
+    document.getElementById('edit_force_pwd_reset').checked = (forceReset === 'True' || forceReset === 'true' || forceReset === '1');
+    document.getElementById('edit_password').value = '';
+    document.getElementById('edit_confirm_password').value = '';
+    openModal('modal-edit-user');
+}
+
+function filterUsersTable() {
+    const q = document.getElementById('user_search_input').value.toLowerCase();
+    const role = document.getElementById('user_role_filter').value;
+    const status = document.getElementById('user_status_filter').value;
+    
+    document.querySelectorAll('.user-row').forEach(row => {
+        const name = row.dataset.name || '';
+        const username = row.dataset.username || '';
+        const email = row.dataset.email || '';
+        const urole = row.dataset.role || '';
+        const ustatus = row.dataset.status || '';
+        
+        const matchesQ = !q || name.includes(q) || username.includes(q) || email.includes(q);
+        const matchesRole = (role === 'ALL') || (urole === role);
+        const matchesStatus = (status === 'ALL') || (ustatus === status);
+        
+        if (matchesQ && matchesRole && matchesStatus) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
 function openExecutiveTab(tabId) {
     document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
-    document.querySelectorAll('.rack-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.isc-btn-outline').forEach(b => b.classList.remove('active'));
     document.getElementById(tabId).style.display = 'block';
-    document.getElementById('btn-' + tabId).classList.add('active');
+    const activeBtn = document.getElementById('tab-btn-' + tabId);
+    if (activeBtn) activeBtn.classList.add('active');
     window.location.hash = tabId;
 }
 
+const rolePermissionsData = {{ role_permissions | tojson }};
+
+function updateModalPermsFromRole(roleName) {
+    const modules = ['leads', 'accounts', 'monitor', 'social', 'outbox', 'users', 'tools'];
+    modules.forEach(mod => {
+        const perm = rolePermissionsData.find(p => p.role === roleName && p.module === mod);
+        const vCheck = document.getElementById(`edit_perm_${mod}_v`);
+        const eCheck = document.getElementById(`edit_perm_${mod}_e`);
+        const dCheck = document.getElementById(`edit_perm_${mod}_d`);
+        
+        if (vCheck) vCheck.checked = perm ? (perm.can_view === true || perm.can_view === 'true' || perm.can_view === 1) : false;
+        if (eCheck) eCheck.checked = perm ? (perm.can_edit === true || perm.can_edit === 'true' || perm.can_edit === 1) : false;
+        if (dCheck) dCheck.checked = perm ? (perm.can_delete === true || perm.can_delete === 'true' || perm.can_delete === 1) : false;
+    });
+}
+
+function openEditUserModalFromRow(btn) {
+    const row = btn.closest('tr');
+    if (!row) return;
+    const urole = row.dataset.role || 'Operator';
+    document.getElementById('edit_user_id').value = row.dataset.id || '';
+    document.getElementById('edit_full_name').value = row.dataset.fullname || '';
+    document.getElementById('edit_username').value = row.dataset.username || '';
+    document.getElementById('edit_user_email').value = row.dataset.email || '';
+    document.getElementById('edit_user_role').value = urole;
+    document.getElementById('edit_status').value = row.dataset.status || 'Active';
+    document.getElementById('edit_force_pwd_reset').checked = (row.dataset.reset === 'True' || row.dataset.reset === 'true' || row.dataset.reset === '1');
+    document.getElementById('edit_password').value = '';
+    document.getElementById('edit_confirm_password').value = '';
+    
+    let loadedCustom = false;
+    if (row.dataset.perms && row.dataset.perms.trim() !== '') {
+        try {
+            const customPerms = JSON.parse(row.dataset.perms);
+            const modules = ['leads', 'accounts', 'monitor', 'social', 'outbox', 'users', 'tools'];
+            modules.forEach(mod => {
+                if (customPerms[mod]) {
+                    const vCheck = document.getElementById(`edit_perm_${mod}_v`);
+                    const eCheck = document.getElementById(`edit_perm_${mod}_e`);
+                    const dCheck = document.getElementById(`edit_perm_${mod}_d`);
+                    if (vCheck) vCheck.checked = customPerms[mod].view === true;
+                    if (eCheck) eCheck.checked = customPerms[mod].edit === true;
+                    if (dCheck) dCheck.checked = customPerms[mod].delete === true;
+                }
+            });
+            loadedCustom = true;
+        } catch(e) {}
+    }
+    
+    if (!loadedCustom) {
+        updateModalPermsFromRole(urole);
+    }
+    
+    openModal('modal-edit-user');
+}
+
 window.onload = function() {
-    if(window.location.hash) {
+    if (window.location.hash) {
         let tab = window.location.hash.substring(1);
-        if(document.getElementById(tab)) {
+        if (document.getElementById(tab)) {
             openExecutiveTab(tab);
         }
+    }
+    if (typeof rolePermissionsData !== 'undefined' && rolePermissionsData.length > 0) {
+        switchMatrixRole('Sales');
     }
 }
 </script>

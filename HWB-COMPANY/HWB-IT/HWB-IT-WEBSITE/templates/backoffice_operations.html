@@ -22,7 +22,7 @@
                         <span id="count-leads" style="font-size: 0.7rem; font-weight: 900; color: var(--brand); text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap;">Records: {{ leads_count }}</span>
                     </div>
                     
-                    <div style="display: flex; gap: 1.5rem; align-items: center;">
+                    <div style="display: flex; gap: 1.5rem; align-items: center;" id="leads-normal-controls">
                         <!-- Column Manager Dropdown -->
                         <div style="position: relative;">
                             <button type="button" onclick="toggleColumnMenu()" class="isc-btn isc-btn-outline" style="padding: 0.85rem 1.5rem; border-radius: 1rem; border-color: var(--slate-200); color: var(--slate-600); background: var(--white);">
@@ -52,6 +52,7 @@
                                         <label class="sigma-col-label"><input type="checkbox" name="cols" value="activities" {% if 'activities' in active_cols %}checked{% endif %}> Activity</label>
                                         <label class="sigma-col-label"><input type="checkbox" name="cols" value="source" {% if 'source' in active_cols %}checked{% endif %}> Source</label>
                                         <label class="sigma-col-label"><input type="checkbox" name="cols" value="interest" {% if 'interest' in active_cols %}checked{% endif %}> Interest</label>
+                                        <label class="sigma-col-label"><input type="checkbox" name="cols" value="owner" {% if 'owner' in active_cols %}checked{% endif %}> Lead Owner</label>
                                     </div>
                                     <div style="margin-top: 2rem; display: flex; justify-content: space-between; border-top: 1px solid var(--slate-100); padding-top: 1.5rem;">
                                         <button type="button" onclick="resetColumns()" class="sigma-text-btn">Reset Default</button>
@@ -78,11 +79,63 @@
                         </form>
                     </div>
                 </div>
+
+                <!-- Bulk Actions Toolbar (SigmaFidelity Standard) -->
+                <div id="leads-bulk-controls" style="display: none; gap: 1rem; align-items: center; background: #f8fafc; border: 1px solid var(--slate-200); padding: 0.5rem 1.5rem; border-radius: 1rem; height: 50px; margin-bottom: 1.5rem;">
+                    <span id="leads-selected-count" style="font-size: 0.75rem; font-weight: 900; color: var(--slate-700); text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap;">0 selected</span>
+                    <div style="height: 20px; width: 1px; background: var(--slate-200);"></div>
+                    
+                    <!-- Change Status Dropdown -->
+                    <div style="position: relative; display: inline-block;" class="bulk-dropdown-container">
+                        <button type="button" onclick="toggleBulkDropdown('bulk-status-menu')" class="isc-btn isc-btn-outline" style="padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.75rem; height: 36px; display: flex; align-items: center; gap: 0.5rem; font-weight: 700;">
+                            Status <i class="fas fa-chevron-down" style="font-size: 0.65rem;"></i>
+                        </button>
+                        <div id="bulk-status-menu" class="bulk-dropdown-menu" style="display: none; position: absolute; left: 0; top: 110%; background: white; border: 1px solid var(--slate-200); border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 1000; width: 160px; padding: 0.5rem;">
+                            <button type="button" onclick="executeBulkAction('update_status', {status: 'NEW'})" class="isc-dropdown-btn" style="text-align: left; width: 100%;"><i class="fas fa-plus-circle" style="margin-right: 0.5rem;"></i> New</button>
+                            <button type="button" onclick="executeBulkAction('update_status', {status: 'CONTACTED'})" class="isc-dropdown-btn" style="text-align: left; width: 100%;"><i class="fas fa-phone" style="margin-right: 0.5rem;"></i> Contacted</button>
+                            <button type="button" onclick="executeBulkAction('update_status', {status: 'QUALIFIED'})" class="isc-dropdown-btn" style="text-align: left; width: 100%;"><i class="fas fa-check-circle" style="margin-right: 0.5rem;"></i> Qualified</button>
+                            <button type="button" onclick="executeBulkAction('update_status', {status: 'NURTURING'})" class="isc-dropdown-btn" style="text-align: left; width: 100%;"><i class="fas fa-heart" style="margin-right: 0.5rem;"></i> Nurturing</button>
+                            <button type="button" onclick="executeBulkAction('mark_dnc')" class="isc-dropdown-btn" style="text-align: left; width: 100%; color: #dc2626; font-weight: 700;"><i class="fas fa-ban" style="margin-right: 0.5rem;"></i> Do Not Call (DNC)</button>
+                        </div>
+                    </div>
+
+                    <!-- Direct Mark as DNC Button -->
+                    <button type="button" onclick="executeBulkAction('mark_dnc')" class="isc-btn isc-btn-outline" style="padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.75rem; height: 36px; display: flex; align-items: center; gap: 0.5rem; font-weight: 700; color: #dc2626; border-color: #fca5a5;">
+                        <i class="fas fa-ban"></i> Mark as DNC
+                    </button>
+
+                    <!-- Assign Owner Dropdown -->
+                    <div style="position: relative; display: inline-block;" class="bulk-dropdown-container">
+                        <button type="button" onclick="toggleBulkDropdown('bulk-owner-menu')" class="isc-btn isc-btn-outline" style="padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.75rem; height: 36px; display: flex; align-items: center; gap: 0.5rem; font-weight: 700;">
+                            Owner <i class="fas fa-chevron-down" style="font-size: 0.65rem;"></i>
+                        </button>
+                        <div id="bulk-owner-menu" class="bulk-dropdown-menu" style="display: none; position: absolute; left: 0; top: 110%; background: white; border: 1px solid var(--slate-200); border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 1000; width: 200px; padding: 0.5rem;">
+                            <button type="button" onclick="executeBulkAction('assign_owner', {owner_id: 1})" class="isc-dropdown-btn" style="text-align: left; width: 100%;"><i class="fas fa-user" style="margin-right: 0.5rem;"></i> Humberto Dominguez</button>
+                            <button type="button" onclick="executeBulkAction('assign_owner', {owner_id: 2})" class="isc-dropdown-btn" style="text-align: left; width: 100%;"><i class="fas fa-user-cog" style="margin-right: 0.5rem;"></i> Silas Sync</button>
+                            <button type="button" onclick="executeBulkAction('assign_owner', {owner_id: 3})" class="isc-dropdown-btn" style="text-align: left; width: 100%;"><i class="fas fa-user-tie" style="margin-right: 0.5rem;"></i> Lauri Tells</button>
+                        </div>
+                    </div>
+
+                    <!-- Export Button -->
+                    <button type="button" onclick="exportSelectedLeads()" class="isc-btn isc-btn-outline" style="padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.75rem; height: 36px; display: flex; align-items: center; gap: 0.5rem; font-weight: 700;">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+
+                    <div style="flex-grow: 1;"></div>
+
+                    <!-- Delete Selected Button -->
+                    <button type="button" onclick="executeBulkAction('delete')" class="isc-btn" style="padding: 0.5rem 1.25rem; background: #ef4444; color: white; border: none; border-radius: 0.5rem; font-weight: 700; font-size: 0.75rem; height: 36px; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-trash-alt"></i> Delete
+                    </button>
+                </div>
                 
                 <div style="overflow-x: auto; width: 100%; padding-bottom: 1rem;">
                     <table class="isc-grid isc-grid-expansive" id="table-leads">
                         <thead>
                             <tr id="leads-header-row">
+                                <th class="no-drag sticky-cb">
+                                    <input type="checkbox" id="select-all-leads" onchange="toggleSelectAllLeads(this)" style="accent-color: var(--brand); cursor: pointer; width: 16px; height: 16px;">
+                                </th>
                                 {% for col_key in active_cols %}
                                     {% if col_key == 'company' %}
                                     <th data-col="company" onclick="iscSortLeads('company')" class="sticky-1">Company {% if sort_by == 'company' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
@@ -104,6 +157,7 @@
                                     {% elif col_key == 'activities' %}<th data-col="activities" onclick="iscSortLeads('activities')">Activity {% if sort_by == 'activities' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
                                     {% elif col_key == 'source' %}<th data-col="source" onclick="iscSortLeads('source')">Source {% if sort_by == 'source' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
                                     {% elif col_key == 'interest' %}<th data-col="interest" onclick="iscSortLeads('interest')">Interest {% if sort_by == 'interest' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
+                                    {% elif col_key == 'owner' %}<th data-col="owner" onclick="iscSortLeads('owner')">Lead Owner {% if sort_by == 'owner' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
                                     {% endif %}
                                 {% endfor %}
                                 <th style="text-align: right; cursor: default;" class="no-drag">Action</th></tr>
@@ -111,10 +165,20 @@
                         <tbody>
                             {% for lead in leads %}
                             <tr class="leads-row" onclick="handleRowClick(event, '{{ lead.id }}')" style="cursor: pointer;" data-id="{{ lead.id }}">
+                                <td onclick="event.stopPropagation();" class="sticky-cb">
+                                    <input type="checkbox" class="lead-row-select" value="{{ lead.id }}" onchange="handleLeadSelectChange()" style="accent-color: var(--brand); cursor: pointer; width: 16px; height: 16px;">
+                                </td>
                                 {% for col_key in active_cols %}
                                     {% if col_key == 'company' %}
                                     <td class="sticky-1"><div class="sigma-unit-data"><div class="sigma-unit-primary">{{ lead.center_name }}</div><div class="sigma-unit-secondary" style="font-weight: 500;">{{ lead.address }}</div></div></td>
-                                    {% elif col_key == 'status' %}<td class="sticky-2"><span class="sigma-unit-pill" style="background:#f1f5f9; color:#475569">{{ lead.status or 'New' }}</span></td>
+                                    {% elif col_key == 'status' %}
+                                    <td class="sticky-2">
+                                        {% if lead.status == 'Do Not Call (DNC)' or lead.is_dnc %}
+                                            <span class="sigma-unit-pill" style="background:#fee2e2; color:#991b1b; border: 1px solid #fca5a5; font-weight: 800;">🚫 Do Not Call</span>
+                                        {% else %}
+                                            <span class="sigma-unit-pill" style="background:#f1f5f9; color:#475569">{{ lead.status or 'New' }}</span>
+                                        {% endif %}
+                                    </td>
                                     {% elif col_key == 'dm' %}<td class="sticky-3"><div class="sigma-unit-data"><div class="sigma-unit-primary" style="font-size:0.85rem">{{ lead.decision_maker or '--' }}</div><div class="sigma-unit-secondary" style="font-weight: 500;">{{ lead.job_title or 'Owner/Manager' }}</div></div></td>
                                     {% elif col_key == 'building' %}<td>{{ lead.facility_type or '--' }}</td>
                                     {% elif col_key == 'sqf' %}<td style="font-weight:700">{{ "{:,}".format(lead.sqf) if lead.sqf else '--' }}</td>
@@ -132,6 +196,7 @@
                                     {% elif col_key == 'activities' %}<td style="text-align:center; font-weight:800">{{ lead.activity_count or 0 }}</td>
                                     {% elif col_key == 'source' %}<td>{{ lead.lead_source or '--' }}</td>
                                     {% elif col_key == 'interest' %}<td>{{ lead.service_interest or '--' }}</td>
+                                    {% elif col_key == 'owner' %}<td>{% if lead.owner_id == 1 %}Humberto Dominguez{% elif lead.owner_id == 2 %}Silas Sync{% elif lead.owner_id == 3 %}Lauri Tells{% else %}--{% endif %}</td>
                                     {% endif %}
                                 {% endfor %}
                                 <td style="text-align: right;">
@@ -201,7 +266,7 @@
                         <span style="font-size: 0.7rem; color: var(--brand); font-weight: 900; text-transform: uppercase; white-space: nowrap;">Portfolio: ${{ "{:,.0f}".format(portfolio_total) }}</span>
                     </div>
                     
-                    <div style="display: flex; gap: 1.5rem; align-items: center;">
+                    <div style="display: flex; gap: 1.5rem; align-items: center;" id="acc-normal-controls">
                         <!-- Column Manager (Accounts) -->
                         <div style="position: relative;">
                             <button type="button" onclick="toggleColumnMenuAcc()" class="isc-btn isc-btn-outline" style="padding: 0.85rem 1.5rem; border-radius: 1rem; border-color: var(--slate-200); color: var(--slate-600); background: var(--white);">
@@ -256,10 +321,43 @@
                     </div>
                 </div>
 
+                <!-- Bulk Actions Toolbar (Accounts) -->
+                <div id="acc-bulk-controls" style="display: none; gap: 1rem; align-items: center; background: #f8fafc; border: 1px solid var(--slate-200); padding: 0.5rem 1.5rem; border-radius: 1rem; height: 50px; margin-bottom: 1.5rem;">
+                    <span id="acc-selected-count" style="font-size: 0.75rem; font-weight: 900; color: var(--slate-700); text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap;">0 selected</span>
+                    <div style="height: 20px; width: 1px; background: var(--slate-200);"></div>
+                    
+                    <!-- Change Status Dropdown -->
+                    <div style="position: relative; display: inline-block;" class="bulk-dropdown-container">
+                        <button type="button" onclick="toggleBulkDropdown('bulk-acc-status-menu')" class="isc-btn isc-btn-outline" style="padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.75rem; height: 36px; display: flex; align-items: center; gap: 0.5rem; font-weight: 700;">
+                            Status <i class="fas fa-chevron-down" style="font-size: 0.65rem;"></i>
+                        </button>
+                        <div id="bulk-acc-status-menu" class="bulk-dropdown-menu" style="display: none; position: absolute; left: 0; top: 110%; background: white; border: 1px solid var(--slate-200); border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 1000; width: 160px; padding: 0.5rem;">
+                            <button type="button" onclick="executeBulkAccAction('update_status', {status: 'Active'})" class="isc-dropdown-btn" style="text-align: left; width: 100%;"><i class="fas fa-check-circle" style="margin-right: 0.5rem;"></i> Active</button>
+                            <button type="button" onclick="executeBulkAccAction('update_status', {status: 'Suspended'})" class="isc-dropdown-btn" style="text-align: left; width: 100%;"><i class="fas fa-minus-circle" style="margin-right: 0.5rem;"></i> Suspended</button>
+                            <button type="button" onclick="executeBulkAccAction('update_status', {status: 'Cancelled'})" class="isc-dropdown-btn" style="text-align: left; width: 100%;"><i class="fas fa-times-circle" style="margin-right: 0.5rem;"></i> Cancelled</button>
+                        </div>
+                    </div>
+
+                    <!-- Export Button -->
+                    <button type="button" onclick="exportSelectedAccounts()" class="isc-btn isc-btn-outline" style="padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.75rem; height: 36px; display: flex; align-items: center; gap: 0.5rem; font-weight: 700;">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+
+                    <div style="flex-grow: 1;"></div>
+
+                    <!-- Delete Selected Button -->
+                    <button type="button" onclick="executeBulkAccAction('delete')" class="isc-btn" style="padding: 0.5rem 1.25rem; background: #ef4444; color: white; border: none; border-radius: 0.5rem; font-weight: 700; font-size: 0.75rem; height: 36px; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-trash-alt"></i> Delete
+                    </button>
+                </div>
+
                 <div style="overflow-x: auto; width: 100%; padding-bottom: 1rem;">
                     <table class="isc-grid isc-grid-expansive" id="table-accounts">
                         <thead>
                             <tr id="accounts-header-row">
+                                <th class="no-drag sticky-cb">
+                                    <input type="checkbox" id="select-all-accounts" onchange="toggleSelectAllAccounts(this)" style="accent-color: var(--brand); cursor: pointer; width: 16px; height: 16px;">
+                                </th>
                                 {% for col_key in active_cols %}
                                     {% if col_key == 'company' %}
                                     <th data-col="company" onclick="iscSortAcc('company')" class="sticky-1">Company {% if sort_by == 'company' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
@@ -286,6 +384,9 @@
                         <tbody>
                             {% for client in clients %}
                             <tr class="accounts-row" onclick="handleAccRowClick(event, '{{ client.customer_id }}')" style="cursor: pointer;" data-id="{{ client.customer_id }}">
+                                <td onclick="event.stopPropagation();" class="sticky-cb">
+                                    <input type="checkbox" class="acc-row-select" value="{{ client.customer_id }}" onchange="handleAccSelectChange()" style="accent-color: var(--brand); cursor: pointer; width: 16px; height: 16px;">
+                                </td>
                                 {% for col_key in active_cols %}
                                     {% if col_key == 'company' %}
                                     <td class="sticky-1"><div class="sigma-unit-data"><div class="sigma-unit-primary">{{ client.company_name }}</div><div class="sigma-unit-secondary" style="font-weight: 500;">ACC-{{ client.customer_id }}</div></div></td>
@@ -752,11 +853,15 @@
         </div>
                 <div id="lead-pane-overview" class="isc-lead-pane">
             <div id="lead-list-overview" style="display: grid; grid-template-columns: 1fr 1fr 1fr !important; gap: 1.5rem;"></div>
-            <div style="margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--slate-100); text-align: right; position: relative;">
-                <button onclick="toggleLeadMenu()" class="isc-btn isc-btn-outline" id="btn-lead-plan" style="padding: 0.75rem 2rem;">Manage Lead</button>
-                <div id="lead-command-menu" style="display: none; position: absolute; bottom: 110%; right: 0; background: white; border: 1px solid var(--slate-200); border-radius: 0.75rem; box-shadow: 0 10px 25px rgba(0,0,0,0.1); padding: 0.5rem; z-index: 1000; min-width: 180px;">
-                    <button onclick="promoteLead()" class="isc-dropdown-btn" style="width: 100%; text-align: left; padding: 0.75rem 1rem; background: none; border: none; font-weight: 600; color: var(--brand); cursor: pointer; border-radius: 0.4rem; font-size: 0.85rem;">Promote to Account</button>
-                    <button onclick="deleteLead()" class="isc-dropdown-btn" style="width: 100%; text-align: left; padding: 0.75rem 1rem; background: none; border: none; font-weight: 600; color: #ef4444; cursor: pointer; border-radius: 0.4rem; font-size: 0.85rem;">Delete Lead</button>
+            <div style="margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--slate-100); display: flex; justify-content: space-between; align-items: center; position: relative;">
+                <button type="button" onclick="markLeadDNCFromModal()" class="isc-btn isc-btn-outline" style="color: #dc2626; border-color: #fca5a5; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; height: 38px;"><i class="fas fa-ban"></i> Mark as DNC</button>
+                <div style="position: relative;">
+                    <button type="button" onclick="toggleLeadMenu()" class="isc-btn isc-btn-outline" id="btn-lead-plan" style="padding: 0.75rem 2rem;">Manage Lead</button>
+                    <div id="lead-command-menu" style="display: none; position: absolute; bottom: 110%; right: 0; background: white; border: 1px solid var(--slate-200); border-radius: 0.75rem; box-shadow: 0 10px 25px rgba(0,0,0,0.1); padding: 0.5rem; z-index: 1000; min-width: 180px;">
+                        <button type="button" onclick="markLeadDNCFromModal()" class="isc-dropdown-btn" style="width: 100%; text-align: left; padding: 0.75rem 1rem; background: none; border: none; font-weight: 700; color: #dc2626; cursor: pointer; border-radius: 0.4rem; font-size: 0.85rem;"><i class="fas fa-ban" style="margin-right: 0.5rem;"></i> Mark as DNC</button>
+                        <button type="button" onclick="promoteLead()" class="isc-dropdown-btn" style="width: 100%; text-align: left; padding: 0.75rem 1rem; background: none; border: none; font-weight: 600; color: var(--brand); cursor: pointer; border-radius: 0.4rem; font-size: 0.85rem;">Promote to Account</button>
+                        <button type="button" onclick="deleteLead()" class="isc-dropdown-btn" style="width: 100%; text-align: left; padding: 0.75rem 1rem; background: none; border: none; font-weight: 600; color: #ef4444; cursor: pointer; border-radius: 0.4rem; font-size: 0.85rem;">Delete Lead</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -769,7 +874,7 @@
                     <form onsubmit="logLeadActivity(event)" class="sigma-form-container">
                         <div class="sigma-row sigma-row-60-40" style="margin-bottom: 1.5rem;">
                             <div class="sigma-field"><label>Action Type</label><select id="lead-activity-type" required class="sigma-input"><option value="Phone Call">Phone Call</option><option value="Email Sent">Email Sent</option><option value="Site Visit">Site Visit</option><option value="Note">Internal Note</option></select></div>
-                            <div class="sigma-field"><label>Result</label><select id="lead-activity-result" class="sigma-input"><option value="">-- No Result --</option><option value="Spoke to them">Spoke to them</option><option value="Left message">Left message</option></select></div>
+                            <div class="sigma-field"><label>Result</label><select id="lead-activity-result" class="sigma-input"><option value="">-- No Result --</option><option value="Spoke to them">Spoke to them</option><option value="Left message">Left message</option><option value="No Answer / Busy">No Answer / Busy</option><option value="Do Not Call (DNC)">🚫 Do Not Call (DNC)</option></select></div>
                         </div>
                         <div class="sigma-field"><label>Details</label><textarea id="lead-activity-desc" required class="sigma-input" style="height: 120px; resize: none;" placeholder="Interaction notes..."></textarea></div>
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2rem;">
@@ -1230,7 +1335,7 @@
 
     function formatDashboardDate(ts) { 
         if(!ts) return '--/--/----'; 
-        // Force manual string split to avoid browser timezone subtraction
+        ts = String(ts);
         const isISO = ts.includes('T') || ts.includes(' ');
         const datePart = ts.split(ts.includes('T') ? 'T' : ' ')[0];
         const parts = datePart.split('-');
@@ -1327,9 +1432,10 @@
         if (mode === 'visit' || mode === 'actions') {
             mode = 'activities';
         }
+        openModal('modal-lead-command');
         try {
             const res = await fetch(`/api/v1/leads/${id}`);
-            if (!res.ok) throw new Error("Lead fetch failed");
+            if (!res.ok) throw new Error("Lead fetch failed: " + res.status);
             const data = await res.json(); 
             if (!data || !data.lead) throw new Error("Invalid lead data");
             const lead = data.lead;
@@ -1428,9 +1534,7 @@
     }
 
     function handleRowClick(event, id) {
-        const stopTargets = ['button', 'a', 'i', 'input', 'select', 'textarea'];
-        const tag = event.target.tagName.toLowerCase();
-        if (stopTargets.includes(tag) || event.target.closest('.isc-row-menu')) {
+        if (event.target.closest('button, a, input, select, textarea, .isc-row-menu, .bulk-dropdown-container')) {
             return;
         }
         openLeadCommand(id, 'overview');
@@ -1456,9 +1560,7 @@
     }
 
     function handleAccRowClick(event, id) {
-        const stopTargets = ['button', 'a', 'i', 'input', 'select', 'textarea'];
-        const tag = event.target.tagName.toLowerCase();
-        if (stopTargets.includes(tag) || event.target.closest('.isc-row-menu')) {
+        if (event.target.closest('button, a, input, select, textarea, .isc-row-menu, .bulk-dropdown-container')) {
             return;
         }
         openAccountCommand(id, 'overview');
@@ -1511,9 +1613,10 @@
         if (mode === 'visit' || mode === 'actions') {
             mode = 'activities';
         }
+        openModal('modal-account-command');
         try {
             const res = await fetch(`/api/v1/accounts/${id}`);
-            if (!res.ok) throw new Error("Account fetch failed");
+            if (!res.ok) throw new Error("Account fetch failed: " + res.status);
             const data = await res.json();
             if (!data || !data.account) throw new Error("Invalid account data");
             const acc = data.account;
@@ -1653,8 +1756,13 @@
         if (!id) { showToast("Error: No Lead ID", "error"); return; }
 
         const type = document.getElementById('lead-activity-type').value;
-        const desc = document.getElementById('lead-activity-desc').value;
+        const resultVal = document.getElementById('lead-activity-result').value;
+        let desc = document.getElementById('lead-activity-desc').value;
         const autoFollow = document.getElementById('update-next-action').checked;
+
+        if (resultVal) {
+            desc = `[Result: ${resultVal}] ${desc}`;
+        }
 
         showToast("Synchronizing note...", "success");
 
@@ -1669,10 +1777,13 @@
 
             if (res.ok) { 
                 document.getElementById('lead-activity-desc').value = ''; 
-                showToast("Note finalized.", "success"); 
-                // Refresh modal data to show new note in timeline
-                await openLeadCommand(id, 'timeline');
-                syncOperationalData();
+                if (resultVal === 'Do Not Call (DNC)') {
+                    await markLeadDNCFromModal();
+                } else {
+                    showToast("Note finalized.", "success"); 
+                    await openLeadCommand(id, 'timeline');
+                    syncOperationalData();
+                }
             } else {
                 const err = result || {message: "Submission failed"};
                 showToast("System Error: " + (err.message || "Failed to save"), "error");
@@ -1739,9 +1850,27 @@
         }
     }
 
+    function formatPhoneJS(phone) {
+        if (!phone || phone === 'N/A' || phone === 'None' || phone === 'null') return '--';
+        let ext = '';
+        const extMatch = phone.match(/(?:ext\.?|x)\s*(\d+)/i);
+        if (extMatch) ext = ' ext. ' + extMatch[1];
+        
+        let digits = phone.replace(/\D/g, '');
+        if (digits.length === 11 && digits.startsWith('1')) digits = digits.substring(1);
+        
+        if (digits.length >= 10) {
+            return `(${digits.substring(0,3)})-${digits.substring(3,6)}-${digits.substring(6,10)}${ext}`;
+        }
+        return phone;
+    }
+
     function buildLeadRow(lead) {
         if (!lead) return '';
-        let rowHtml = `<tr class="leads-row">`;
+        let rowHtml = `<tr class="leads-row" onclick="handleRowClick(event, '${lead.id}')" style="cursor: pointer;" data-id="${lead.id}">
+            <td onclick="event.stopPropagation();" class="sticky-cb">
+                <input type="checkbox" class="lead-row-select" value="${lead.id}" onchange="handleLeadSelectChange()" style="accent-color: var(--brand); cursor: pointer; width: 16px; height: 16px;">
+            </td>`;
         
         // Dynamically identify active columns from the table header
         const activeCols = Array.from(document.querySelectorAll('#table-leads thead th[data-col]')).map(th => th.dataset.col);
@@ -1750,7 +1879,11 @@
             if (col === 'company') {
                 rowHtml += `<td class="sticky-1"><div class="sigma-unit-data"><div class="sigma-unit-primary">${lead.center_name || 'Unnamed'}</div><div class="sigma-unit-secondary" style="font-weight: 500;">${lead.address || '--'}</div></div></td>`;
             } else if (col === 'status') {
-                rowHtml += `<td class="sticky-2"><span class="sigma-unit-pill" style="background:#f1f5f9; color:#475569">${lead.status || 'New'}</span></td>`;
+                if (lead.status === 'Do Not Call (DNC)' || lead.is_dnc) {
+                    rowHtml += `<td class="sticky-2"><span class="sigma-unit-pill" style="background:#fee2e2; color:#991b1b; border: 1px solid #fca5a5; font-weight: 800;">🚫 Do Not Call</span></td>`;
+                } else {
+                    rowHtml += `<td class="sticky-2"><span class="sigma-unit-pill" style="background:#f1f5f9; color:#475569">${lead.status || 'New'}</span></td>`;
+                }
             } else if (col === 'dm') {
                 rowHtml += `<td class="sticky-3"><div class="sigma-unit-data"><div class="sigma-unit-primary" style="font-size:0.85rem">${lead.decision_maker || '--'}</div><div class="sigma-unit-secondary" style="font-weight: 500;">${lead.job_title || 'Owner/Manager'}</div></div></td>`;
             } else if (col === 'building') {
@@ -1772,7 +1905,7 @@
             } else if (col === 'zip') {
                 rowHtml += `<td>${lead.zipcode || '--'}</td>`;
             } else if (col === 'phone') {
-                rowHtml += `<td><a href="tel:${lead.phone}" style="color:var(--brand); text-decoration:none">${lead.phone || '--'}</a></td>`;
+                rowHtml += `<td><a href="tel:${lead.phone}" style="color:var(--brand); text-decoration:none">${formatPhoneJS(lead.phone)}</a></td>`;
             } else if (col === 'email') {
                 rowHtml += `<td><small>${lead.email || '--'}</small></td>`;
             } else if (col === 'input_date') {
@@ -1785,6 +1918,9 @@
                 rowHtml += `<td>${lead.lead_source || '--'}</td>`;
             } else if (col === 'interest') {
                 rowHtml += `<td>${lead.service_interest || '--'}</td>`;
+            } else if (col === 'owner') {
+                const owners = {1: 'Humberto Dominguez', 2: 'Silas Sync', 3: 'Lauri Tells'};
+                rowHtml += `<td>${owners[lead.owner_id] || '--'}</td>`;
             }
         });
 
@@ -1810,7 +1946,10 @@
 
     function buildAccountRow(client) {
         if (!client) return '';
-        let rowHtml = `<tr>`;
+        let rowHtml = `<tr class="accounts-row" onclick="handleAccRowClick(event, '${client.customer_id}')" style="cursor: pointer;" data-id="${client.customer_id}">
+            <td onclick="event.stopPropagation();" class="sticky-cb">
+                <input type="checkbox" class="acc-row-select" value="${client.customer_id}" onchange="handleAccSelectChange()" style="accent-color: var(--brand); cursor: pointer; width: 16px; height: 16px;">
+            </td>`;
         
         // Dynamically identify active columns from the table header
         const activeCols = Array.from(document.querySelectorAll('#table-accounts thead th[data-col]')).map(th => th.dataset.col);
@@ -1909,6 +2048,35 @@
             showToast("Network Error: Could not reach the server", "error");
         }
     }
+
+    async function markLeadDNCFromModal() {
+        if (!currentLeadId) return;
+        showToast("Updating DNC status...", "success");
+        try {
+            const resp = await fetch('/api/v1/leads/batch-action', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'mark_dnc', lead_ids: [parseInt(currentLeadId)] })
+            });
+            const res = await resp.json();
+            if (res.status === 'success') {
+                showToast('Lead marked as Do Not Call (DNC). Outreach suppressed.', 'success');
+                const menu = document.getElementById('lead-command-menu');
+                if (menu) menu.style.display = 'none';
+                await openLeadCommand(currentLeadId, 'overview');
+                const row = document.querySelector(`.leads-row[data-id="${currentLeadId}"]`);
+                if (row) {
+                    const statusTd = row.querySelector('.sticky-2');
+                    if (statusTd) statusTd.innerHTML = '<span class="sigma-unit-pill" style="background:#fee2e2; color:#991b1b; border: 1px solid #fca5a5; font-weight: 800;">🚫 Do Not Call</span>';
+                }
+            } else {
+                showToast(res.message || 'Failed to mark lead as DNC', 'error');
+            }
+        } catch(err) {
+            showToast('Error marking DNC: ' + err.message, 'error');
+        }
+    }
+
     async function saveLeadUpdate(e) {
         e.preventDefault();
         const id = document.getElementById('edit-lead-id').value || currentLeadId;
@@ -2023,6 +2191,255 @@
                 syncOperationalData(); 
             }
         }});
+    }
+
+    // --- SigmaFidelity™ Bulk Leads Actions ---
+    
+    function toggleSelectAllLeads(masterCheckbox) {
+        const checkboxes = document.querySelectorAll('.lead-row-select');
+        checkboxes.forEach(cb => {
+            cb.checked = masterCheckbox.checked;
+        });
+        handleLeadSelectChange();
+    }
+
+    function handleLeadSelectChange() {
+        const selectedCheckboxes = document.querySelectorAll('.lead-row-select:checked');
+        const selectedCount = selectedCheckboxes.length;
+        
+        const bulkControls = document.getElementById('leads-bulk-controls');
+        const countLabel = document.getElementById('leads-selected-count');
+        const selectAllCheckbox = document.getElementById('select-all-leads');
+        const allCheckboxes = document.querySelectorAll('.lead-row-select');
+        
+        if (selectAllCheckbox && allCheckboxes.length > 0) {
+            selectAllCheckbox.checked = (selectedCount === allCheckboxes.length);
+        }
+        
+        if (selectedCount > 0) {
+            if (bulkControls) bulkControls.style.display = 'flex';
+            if (countLabel) countLabel.innerText = `${selectedCount} selected`;
+        } else {
+            if (bulkControls) bulkControls.style.display = 'none';
+        }
+    }
+
+    function toggleBulkDropdown(menuId) {
+        // Hide other dropdowns
+        document.querySelectorAll('.bulk-dropdown-menu').forEach(menu => {
+            if (menu.id !== menuId) menu.style.display = 'none';
+        });
+        
+        const menu = document.getElementById(menuId);
+        if (menu) {
+            menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+        }
+    }
+
+    // Hide dropdowns when clicking outside
+    document.addEventListener('click', function(event) {
+        if (!event.target.closest('.bulk-dropdown-container')) {
+            document.querySelectorAll('.bulk-dropdown-menu').forEach(menu => {
+                menu.style.display = 'none';
+            });
+        }
+    });
+
+    function getSelectedLeadIds() {
+        return Array.from(document.querySelectorAll('.lead-row-select:checked')).map(cb => parseInt(cb.value));
+    }
+
+    async function executeBulkAction(action, params = {}) {
+        const ids = getSelectedLeadIds();
+        if (ids.length === 0) return;
+        
+        let confirmText = `Are you sure you want to run this batch action on ${ids.length} leads?`;
+        let confirmBtn = "Run Batch Action";
+        let isDestructive = false;
+        
+        if (action === 'delete') {
+            confirmText = `This will permanently delete ${ids.length} leads and all associated activities. This action is irreversible.`;
+            confirmBtn = "Delete Leads";
+            isDestructive = true;
+        }
+        
+        showDecision({
+            title: action === 'delete' ? 'Delete Selected Leads?' : 'Confirm Bulk Action',
+            text: confirmText,
+            confirmText: confirmBtn,
+            isDestructive: isDestructive,
+            icon: action === 'delete' ? 'fa-trash-alt' : 'fa-cog',
+            onConfirm: async () => {
+                showToast("Executing bulk action...", "success");
+                try {
+                    const res = await fetch('/api/v1/leads/batch-action', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify({
+                            action: action,
+                            lead_ids: ids,
+                            params: params
+                        })
+                    });
+                    
+                    const result = await res.json().catch(() => ({status: 'error', message: 'Invalid JSON response'}));
+                    if (res.ok && result.status === 'success') {
+                        showToast(`Successfully processed ${result.affected_count} records.`, "success");
+                        // Reset select all checkbox
+                        const selectAllCheckbox = document.getElementById('select-all-leads');
+                        if (selectAllCheckbox) selectAllCheckbox.checked = false;
+                        
+                        // Sync data
+                        await syncOperationalData();
+                        handleLeadSelectChange();
+                    } else {
+                        showToast("Batch action failed: " + (result.message || "Unknown error"), "error");
+                    }
+                } catch (err) {
+                    console.error("Bulk Action Error:", err);
+                    showToast("Network error executing batch action.", "error");
+                }
+            }
+        });
+    }
+
+    function exportSelectedLeads() {
+        const ids = getSelectedLeadIds();
+        if (ids.length === 0) return;
+        
+        // Construct temporary form to trigger file download via POST
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/api/v1/leads/export-selected';
+        
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'lead_ids';
+        input.value = JSON.stringify(ids);
+        form.appendChild(input);
+        
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+        
+        showToast("Generating lead export...", "success");
+    }
+
+    // --- SigmaFidelity™ Bulk Accounts Actions ---
+    
+    function toggleSelectAllAccounts(masterCheckbox) {
+        const checkboxes = document.querySelectorAll('.acc-row-select');
+        checkboxes.forEach(cb => {
+            cb.checked = masterCheckbox.checked;
+        });
+        handleAccSelectChange();
+    }
+
+    function handleAccSelectChange() {
+        const selectedCheckboxes = document.querySelectorAll('.acc-row-select:checked');
+        const selectedCount = selectedCheckboxes.length;
+        
+        const bulkControls = document.getElementById('acc-bulk-controls');
+        const countLabel = document.getElementById('acc-selected-count');
+        const selectAllCheckbox = document.getElementById('select-all-accounts');
+        const allCheckboxes = document.querySelectorAll('.acc-row-select');
+        
+        if (selectAllCheckbox && allCheckboxes.length > 0) {
+            selectAllCheckbox.checked = (selectedCount === allCheckboxes.length);
+        }
+        
+        if (selectedCount > 0) {
+            if (bulkControls) bulkControls.style.display = 'flex';
+            if (countLabel) countLabel.innerText = `${selectedCount} selected`;
+        } else {
+            if (bulkControls) bulkControls.style.display = 'none';
+        }
+    }
+
+    function getSelectedAccountIds() {
+        return Array.from(document.querySelectorAll('.acc-row-select:checked')).map(cb => parseInt(cb.value));
+    }
+
+    async function executeBulkAccAction(action, params = {}) {
+        const ids = getSelectedAccountIds();
+        if (ids.length === 0) return;
+        
+        let confirmText = `Are you sure you want to run this batch action on ${ids.length} accounts?`;
+        let confirmBtn = "Run Batch Action";
+        let isDestructive = false;
+        
+        if (action === 'delete') {
+            confirmText = `This will permanently delete ${ids.length} accounts and all associated data. This action is irreversible.`;
+            confirmBtn = "Delete Accounts";
+            isDestructive = true;
+        }
+        
+        showDecision({
+            title: action === 'delete' ? 'Delete Selected Accounts?' : 'Confirm Bulk Action',
+            text: confirmText,
+            confirmText: confirmBtn,
+            isDestructive: isDestructive,
+            icon: action === 'delete' ? 'fa-trash-alt' : 'fa-cog',
+            onConfirm: async () => {
+                showToast("Executing bulk action...", "success");
+                try {
+                    const res = await fetch('/api/v1/accounts/batch-action', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify({
+                            action: action,
+                            account_ids: ids,
+                            params: params
+                        })
+                    });
+                    
+                    const result = await res.json().catch(() => ({status: 'error', message: 'Invalid JSON response'}));
+                    if (res.ok && result.status === 'success') {
+                        showToast(`Successfully processed ${result.affected_count} accounts.`, "success");
+                        // Reset select all checkbox
+                        const selectAllCheckbox = document.getElementById('select-all-accounts');
+                        if (selectAllCheckbox) selectAllCheckbox.checked = false;
+                        
+                        // Sync data
+                        await syncOperationalData();
+                        handleAccSelectChange();
+                    } else {
+                        showToast("Batch action failed: " + (result.message || "Unknown error"), "error");
+                    }
+                } catch (err) {
+                    console.error("Bulk Action Error:", err);
+                    showToast("Network error executing batch action.", "error");
+                }
+            }
+        });
+    }
+
+    function exportSelectedAccounts() {
+        const ids = getSelectedAccountIds();
+        if (ids.length === 0) return;
+        
+        // Construct temporary form to trigger file download via POST
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/api/v1/accounts/export-selected';
+        
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'account_ids';
+        input.value = JSON.stringify(ids);
+        form.appendChild(input);
+        
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+        
+        showToast("Generating account export...", "success");
     }
 
     async function saveVisitRequest(e) {
@@ -2205,6 +2622,38 @@
 </script>
 
 <style>
+    /* --- SigmaFidelity™ Sticky Checkbox & Shifted Sticky Columns --- */
+    .isc-grid th.sticky-cb, .isc-grid td.sticky-cb {
+        position: sticky;
+        left: 0;
+        z-index: 35;
+        border-right: 1px solid var(--slate-100);
+        width: 50px;
+        min-width: 50px;
+        max-width: 50px;
+    }
+    .isc-grid td.sticky-cb, .isc-grid td.sticky-1, .isc-grid td.sticky-2, .isc-grid td.sticky-3 {
+        background: var(--white) !important;
+    }
+    .isc-grid th.sticky-cb, .isc-grid th.sticky-1, .isc-grid th.sticky-2, .isc-grid th.sticky-3 {
+        background: #f3f2f2 !important;
+    }
+    .isc-grid th.sticky-1, .isc-grid td.sticky-1 {
+        left: 50px !important;
+    }
+    .isc-grid th.sticky-2, .isc-grid td.sticky-2 {
+        left: 290px !important;
+    }
+    .isc-grid th.sticky-3, .isc-grid td.sticky-3 {
+        left: 410px !important;
+    }
+
+    /* --- Bulk Dropdowns Custom Styling --- */
+    .bulk-dropdown-menu button {
+        text-align: left;
+        width: 100%;
+    }
+
     .isc-view { animation: imaxFloat 0.4s ease-out; }
     .isc-tab-trigger { background: none; border: none; padding: 1.25rem 0; font-weight: 800; font-size: 0.85rem; color: var(--slate-400); cursor: pointer; text-transform: uppercase; border-bottom: 4px solid transparent; transition: all 0.2s; letter-spacing: 0.05em; }
     .isc-tab-trigger.active { color: var(--brand); border-color: var(--brand); }

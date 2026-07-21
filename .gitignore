@@ -10,11 +10,15 @@ HWB-COMPANY/HWB-SALES-MARKETING/HWB-RAW-DATA/ARCHIVE/
 HWB-COMPANY/HWB-OPERATIONS/hwb-mobile-ops/hwb_sigma_field/build/
 trash-out/
 
-# Individual Large Files
+# Individual Large Files & Logs
 *.csv
 *.so
 *.apk
 *.zip
+*.jsonl
+*.sql
+*.log
+transcript*
 
 # Environment
 .env

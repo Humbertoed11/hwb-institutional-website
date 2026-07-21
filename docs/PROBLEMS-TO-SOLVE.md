@@ -15,6 +15,9 @@ Responsibility: George (Architect)
 | 06/23/2026 | BUG-038 | Recurrence of Ghost Volume Glitch on QMS templates. | **RESOLVED** | HIGH |
 | 07/20/2026 | BUG-039 | Inconsistent and amateur visual weights in popup forms. | **RESOLVED** | MEDIUM |
 | 07/20/2026 | BUG-040 | Modal delete stays on deleted record instead of sliding or closing. | **RESOLVED** | HIGH |
+| 07/20/2026 | BUG-041 | Docker Desktop socket deletion and Telegram listener HTTP 409 collision. | **RESOLVED** | HIGH |
+
+
 
 
 ## BUG-033: Ghost Volume Glitch
@@ -97,6 +100,20 @@ Responsibility: George (Architect)
 **Root Cause:** The `deleteLead` and `deleteAccount` callbacks did not close the modal or switch to the adjacent records after the DELETE background query.
 **Solution:** Updated callbacks to check if the modal is open. If so, they scan the table row elements to retrieve the adjacent record's ID and load it instantly. If no records remain on the page, the modal closes.
 **Preventative:** Standardize in-modal deletions to use transition navigation handlers.
+
+## BUG-041: Docker Desktop Socket Deletion and Telegram Listener Collision
+**Detected:** 07/20/2026
+**Symptoms:** `hwb_agent_worker` logs show repeated `[TELEGRAM] getUpdates error: HTTP 409` errors, blocking the containerized Telegram daemon from fetching updates. Additionally, Port 8000 returns a 502 routing error.
+**Root Cause:**
+1. A duplicate container stack was running under the legacy host `snap.docker.dockerd` service, running an older `telegram_listener.py` instance that collided with the new Docker Desktop stack.
+2. The legacy snap container stack bound to Port 8000 on the host, preventing the new gateway from routing web traffic.
+3. Stopping the snap service successfully deleted the duplicate containers, but also deleted the shared `/var/run/docker.sock` socket file.
+**Solution:**
+1. Disabled and stopped the `docker.dockerd` snap service permanently to prevent legacy container auto-restart.
+2. Toggled the WSL integration in the Docker Desktop settings GUI to force the integration daemon to recreate the `/var/run/docker.sock` file and restart all containers cleanly.
+**Preventative:** Ensure Docker Desktop is the sole active container runtime, and verify `/var/run/docker.sock` validity during the pre-flight check.
+
+
 
 
 

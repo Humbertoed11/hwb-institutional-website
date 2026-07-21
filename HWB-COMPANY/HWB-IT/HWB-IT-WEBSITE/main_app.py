@@ -889,11 +889,71 @@ def sigma_executive():
                                      (request.form.get('metric_name'), request.form.get('value'), request.form.get('target')))
                     elif action == 'add_user':
                         phash = generate_password_hash(request.form.get('new_password'))
-                        cur.execute('INSERT INTO "Users" (username, password_hash, full_name, email, role) VALUES (%s, %s, %s, %s, %s)',
-                                     (request.form.get('new_username'), phash, request.form.get('full_name'), request.form.get('user_email'), 'Operator'))
+                        role = request.form.get('user_role', 'Operator')
+                        status = request.form.get('status', 'Active')
+                        force_pwd = True if request.form.get('force_pwd_reset') == 'true' else False
+                        
+                        custom_perms = {}
+                        for module in ['leads', 'accounts', 'monitor', 'social', 'outbox', 'users', 'tools']:
+                            custom_perms[module] = {
+                                'view': True if request.form.get(f'perm_{module}_view') == 'true' else False,
+                                'edit': True if request.form.get(f'perm_{module}_edit') == 'true' else False,
+                                'delete': True if request.form.get(f'perm_{module}_delete') == 'true' else False,
+                            }
+                        perms_json = json.dumps(custom_perms)
+                        
+                        cur.execute('INSERT INTO "Users" (username, password_hash, full_name, email, role, status, force_pwd_reset, custom_permissions) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)',
+                                     (request.form.get('new_username'), phash, request.form.get('full_name'), request.form.get('user_email'), role, status, force_pwd, perms_json))
+                        flash("User account created successfully.")
+                    elif action == 'edit_user':
+                        uid = request.form.get('user_id')
+                        fname = request.form.get('full_name')
+                        uemail = request.form.get('user_email')
+                        urole = request.form.get('user_role', 'Operator')
+                        ustatus = request.form.get('status', 'Active')
+                        force_pwd = True if request.form.get('force_pwd_reset') == 'true' else False
+                        new_pass = request.form.get('new_password')
+                        
+                        custom_perms = {}
+                        for module in ['leads', 'accounts', 'monitor', 'social', 'outbox', 'users', 'tools']:
+                            custom_perms[module] = {
+                                'view': True if request.form.get(f'perm_{module}_view') == 'true' else False,
+                                'edit': True if request.form.get(f'perm_{module}_edit') == 'true' else False,
+                                'delete': True if request.form.get(f'perm_{module}_delete') == 'true' else False,
+                            }
+                        perms_json = json.dumps(custom_perms)
+                        
+                        if new_pass:
+                            phash = generate_password_hash(new_pass)
+                            cur.execute('UPDATE "Users" SET full_name = %s, email = %s, role = %s, status = %s, force_pwd_reset = %s, custom_permissions = %s, password_hash = %s WHERE id = %s',
+                                         (fname, uemail, urole, ustatus, force_pwd, perms_json, phash, uid))
+                        else:
+                            cur.execute('UPDATE "Users" SET full_name = %s, email = %s, role = %s, status = %s, force_pwd_reset = %s, custom_permissions = %s WHERE id = %s',
+                                         (fname, uemail, urole, ustatus, force_pwd, perms_json, uid))
+                        flash("User account updated successfully.")
+                    elif action == 'delete_user':
+                        uid = request.form.get('user_id')
+                        if str(uid) != str(current_user.id):
+                            cur.execute('DELETE FROM "Users" WHERE id = %s', (uid,))
+                            flash("User account deleted successfully.")
+                        else:
+                            flash("Cannot delete currently active account.", "error")
                     elif action == 'update_password':
                         phash = generate_password_hash(request.form.get('new_password'))
                         cur.execute('UPDATE "Users" SET password_hash = %s WHERE id = %s', (phash, request.form.get('user_id')))
+                    elif action == 'update_role_permissions':
+                        perm_role = request.form.get('target_role')
+                        for module in ['leads', 'accounts', 'monitor', 'social', 'outbox', 'users', 'tools']:
+                            can_v = True if request.form.get(f'perm_{module}_view') == 'true' else False
+                            can_e = True if request.form.get(f'perm_{module}_edit') == 'true' else False
+                            can_d = True if request.form.get(f'perm_{module}_delete') == 'true' else False
+                            cur.execute('''
+                                INSERT INTO "RolePermissions" (role, module, can_view, can_edit, can_delete)
+                                VALUES (%s, %s, %s, %s, %s)
+                                ON CONFLICT (role, module) DO UPDATE 
+                                SET can_view = EXCLUDED.can_view, can_edit = EXCLUDED.can_edit, can_delete = EXCLUDED.can_delete;
+                            ''', (perm_role, module, can_v, can_e, can_d))
+                        flash(f"Access rights updated for role: {perm_role}")
                     elif action == 'approve_social':
                         cur.execute('UPDATE "SocialOutbox" SET status = \'APPROVED\' WHERE id = %s', (request.form.get('post_id'),))
                     elif action == 'reject_social':
@@ -935,6 +995,8 @@ def sigma_executive():
             kpivs = cur.fetchall()
             cur.execute('SELECT * FROM "Users"')
             users = cur.fetchall()
+            cur.execute('SELECT * FROM "RolePermissions" ORDER BY role ASC, module ASC')
+            role_permissions = cur.fetchall()
             
             system_errors, total_waste, linkedin_authorized, pending_social, pending_emails = 0, "0.00", False, [], []
             
@@ -958,8 +1020,8 @@ def sigma_executive():
     return render_template('HWB-WEB Sigma Executive.html', 
                          leads_count=leads_count, recent_leads=recent_leads,
                          total_waste=total_waste, uptime=uptime, analytics=analytics,
-                         kpivs=kpivs, users=users, system_errors=system_errors,
-                         linkedin_authorized=linkedin_authorized,
+                         kpivs=kpivs, users=users, role_permissions=role_permissions,
+                         system_errors=system_errors, linkedin_authorized=linkedin_authorized,
                          pending_social=pending_social, pending_emails=pending_emails)
 
 @app.route('/calculator', endpoint='calculator')
@@ -1015,10 +1077,21 @@ def api_account_hub(id):
                 contacts = cur.fetchall()
                 cur.execute('SELECT * FROM "GlobalActivities" WHERE parent_id = %s AND parent_type = %s ORDER BY timestamp DESC', (id, "Account"))
                 activities = cur.fetchall()
+                
+                def serialize_row(row):
+                    if not row: return None
+                    d = dict(row)
+                    for k, v in d.items():
+                        if isinstance(v, (datetime.date, datetime.datetime)):
+                            d[k] = v.isoformat()
+                        elif hasattr(v, '__str__') and 'Decimal' in str(type(v)):
+                            d[k] = float(v)
+                    return d
+
                 return jsonify({
-                    'account': dict(acc) if acc else None,
-                    'contacts': [dict(c) for c in contacts],
-                    'activities': [dict(a) for a in activities]
+                    'account': serialize_row(acc),
+                    'contacts': [serialize_row(c) for c in contacts],
+                    'activities': [serialize_row(a) for a in activities]
                 })
             
             elif request.method == 'PUT':
@@ -1092,6 +1165,80 @@ def api_account_hub(id):
         
         conn.close()
 
+
+@app.route('/api/v1/accounts/batch-action', methods=['POST'])
+@login_required
+def api_batch_account_action():
+    data = request.get_json() or {}
+    action = data.get('action')
+    account_ids = data.get('account_ids', [])
+    params = data.get('params', {})
+
+    if not account_ids:
+        return jsonify({'status': 'error', 'message': 'No account IDs provided'}), 400
+
+    conn = get_db(app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            if action == 'delete':
+                cur.execute('DELETE FROM "Customers" WHERE customer_id = ANY(%s);', (account_ids,))
+                cur.execute('DELETE FROM "Contacts" WHERE account_id = ANY(%s);', (account_ids,))
+            elif action == 'update_status':
+                new_status = params.get('status', 'Active')
+                cur.execute('UPDATE "Customers" SET status = %s WHERE customer_id = ANY(%s);', (new_status, account_ids))
+            else:
+                return jsonify({'status': 'error', 'message': f'Unknown action: {action}'}), 400
+            
+            conn.commit()
+            return jsonify({'status': 'success', 'affected_count': len(account_ids)})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        conn.close()
+
+
+@app.route('/api/v1/accounts/export-selected', methods=['POST'])
+@login_required
+def api_export_selected_accounts():
+    import json
+    import io
+    import csv
+    from flask import Response
+    
+    account_ids_raw = request.form.get('account_ids', '[]')
+    try:
+        account_ids = json.loads(account_ids_raw)
+    except Exception:
+        return "Invalid parameters", 400
+        
+    if not account_ids:
+        return "No accounts selected", 400
+        
+    conn = get_db(app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT customer_id, company_name, contact_person_name, email, phone, company_address, city, state, zip, annual_revenue, sqf, status
+                FROM "Customers" WHERE customer_id = ANY(%s) ORDER BY customer_id ASC;
+            """, (account_ids,))
+            rows = cur.fetchall()
+            
+            output = io.StringIO()
+            writer = csv.writer(output)
+            writer.writerow(['Account ID', 'Company Name', 'Contact Person', 'Email', 'Phone', 'Address', 'City', 'State', 'Zipcode', 'Annual Revenue', 'SQF', 'Status'])
+            
+            for r in rows:
+                writer.writerow([r['customer_id'], r['company_name'], r['contact_person_name'], r['email'], r['phone'], r['company_address'], r['city'], r['state'], r['zip'], r['annual_revenue'], r['sqf'], r['status']])
+                
+            response = Response(output.getvalue(), mimetype='text/csv')
+            response.headers['Content-Disposition'] = f'attachment; filename=hwb_accounts_export_{datetime.now().strftime("%Y%m%d")}.csv'
+            return response
+    except Exception as e:
+        return str(e), 500
+    finally:
+        conn.close()
+ 
 @app.route('/api/v1/leads/<int:id>', methods=['GET', 'PUT', 'DELETE'])
 @login_required
 def api_lead_hub(id):
@@ -1110,10 +1257,20 @@ def api_lead_hub(id):
                 cur.execute(
 'SELECT * FROM "GlobalActivities" WHERE parent_id = %s AND parent_type = %s ORDER BY timestamp DESC', (id, "Lead"))
                 activities = cur.fetchall()
+                def serialize_row(row):
+                    if not row: return None
+                    d = dict(row)
+                    for k, v in d.items():
+                        if isinstance(v, (datetime.date, datetime.datetime)):
+                            d[k] = v.isoformat()
+                        elif hasattr(v, '__str__') and 'Decimal' in str(type(v)):
+                            d[k] = float(v)
+                    return d
+
                 return jsonify({
-                    'lead': dict(lead) if lead else None,
-                    'contacts': [dict(c) for c in contacts],
-                    'activities': [dict(a) for a in activities]
+                    'lead': serialize_row(lead),
+                    'contacts': [serialize_row(c) for c in contacts],
+                    'activities': [serialize_row(a) for a in activities]
                 })
             
             elif request.method == 'PUT':
@@ -1193,6 +1350,86 @@ def api_lead_hub(id):
     finally:
         if "conn" in locals(): conn.close()
         
+
+@app.route('/api/v1/leads/batch-action', methods=['POST'])
+@login_required
+def api_batch_lead_action():
+    data = request.get_json() or {}
+    action = data.get('action')
+    lead_ids = data.get('lead_ids', [])
+    params = data.get('params', {})
+
+    if not lead_ids:
+        return jsonify({'status': 'error', 'message': 'No lead IDs provided'}), 400
+
+    conn = get_db(app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            if action == 'delete':
+                cur.execute('DELETE FROM "Leads" WHERE id = ANY(%s);', (lead_ids,))
+                cur.execute('DELETE FROM "GlobalActivities" WHERE parent_id = ANY(%s) AND parent_type = %s;', (lead_ids, "Lead"))
+            elif action == 'update_status':
+                new_status = params.get('status', 'NEW')
+                is_dnc_flag = True if new_status == 'Do Not Call (DNC)' else False
+                cur.execute('UPDATE "Leads" SET status = %s, is_dnc = %s, updated_at = CURRENT_DATE WHERE id = ANY(%s);', (new_status, is_dnc_flag, lead_ids))
+            elif action == 'mark_dnc':
+                cur.execute('UPDATE "Leads" SET status = %s, is_dnc = TRUE, updated_at = CURRENT_DATE WHERE id = ANY(%s);', ('Do Not Call (DNC)', lead_ids))
+            elif action == 'assign_owner':
+                new_owner_id = params.get('owner_id')
+                cur.execute('UPDATE "Leads" SET owner_id = %s, updated_at = CURRENT_DATE WHERE id = ANY(%s);', (new_owner_id, lead_ids))
+            else:
+                return jsonify({'status': 'error', 'message': f'Unknown action: {action}'}), 400
+            
+            conn.commit()
+            return jsonify({'status': 'success', 'affected_count': len(lead_ids)})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        conn.close()
+
+
+@app.route('/api/v1/leads/export-selected', methods=['POST'])
+@login_required
+def api_export_selected_leads():
+    import json
+    import io
+    import csv
+    from flask import Response
+    
+    lead_ids_raw = request.form.get('lead_ids', '[]')
+    try:
+        lead_ids = json.loads(lead_ids_raw)
+    except Exception:
+        return "Invalid parameters", 400
+        
+    if not lead_ids:
+        return "No leads selected", 400
+        
+    conn = get_db(app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT center_name, phone, address, county, zipcode, director, capacity, city, state, status, lead_source
+                FROM "Leads" WHERE id = ANY(%s) ORDER BY id ASC;
+            """, (lead_ids,))
+            rows = cur.fetchall()
+            
+            output = io.StringIO()
+            writer = csv.writer(output)
+            writer.writerow(['Company Name', 'Phone', 'Address', 'County', 'Zipcode', 'Director', 'Capacity', 'City', 'State', 'Status', 'Source'])
+            
+            for r in rows:
+                writer.writerow([r['center_name'], r['phone'], r['address'], r['county'], r['zipcode'], r['director'], r['capacity'], r['city'], r['state'], r['status'], r['lead_source']])
+                
+            response = Response(output.getvalue(), mimetype='text/csv')
+            response.headers['Content-Disposition'] = f'attachment; filename=hwb_leads_export_{datetime.now().strftime("%Y%m%d")}.csv'
+            return response
+    except Exception as e:
+        return str(e), 500
+    finally:
+        conn.close()
+
 
 @app.route('/api/v1/leads/<int:id>/promote', methods=['POST'])
 @login_required
