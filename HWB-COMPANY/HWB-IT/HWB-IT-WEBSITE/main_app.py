@@ -353,8 +353,7 @@ def admin_operations():
             clients = cur.fetchall()
 
             # 2. FETCH LEADS
-            # --- SigmaFidelity™ Lead Query Hardening (BUG-018) ---
-            lead_where_clauses = ["is_converted = false"]
+            lead_where_clauses = []
             lead_params = []
 
             if active_only:
@@ -372,7 +371,7 @@ def admin_operations():
                 lead_where_clauses.append("(center_name ILIKE %s OR facility_type ILIKE %s OR sqf::text ILIKE %s OR city ILIKE %s OR state ILIKE %s OR zipcode ILIKE %s OR phone ILIKE %s OR email ILIKE %s OR address ILIKE %s)")
                 lead_params.extend([search_pattern] * 9)
 
-            lead_where_str = "WHERE " + " AND ".join(lead_where_clauses)
+            lead_where_str = ("WHERE " + " AND ".join(lead_where_clauses)) if lead_where_clauses else ""
 
             # Count Query
             cur.execute(f'SELECT COUNT(*) FROM "Leads" l {lead_where_str}', tuple(lead_params))
