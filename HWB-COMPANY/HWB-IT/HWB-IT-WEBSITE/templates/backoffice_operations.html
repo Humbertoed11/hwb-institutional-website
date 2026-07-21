@@ -226,7 +226,7 @@
                 <div style="margin-top: 2rem; display: flex; justify-content: space-between; align-items: center; padding-top: 2rem; border-top: 1px solid var(--slate-100);">
                     <div style="font-size: 0.75rem; font-weight: 800; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.05em;">
                         {% if active_view == 'leads' %}
-                        Page {{ page }} of {{ total_pages }} • {{ leads_count }} Total Market Leads
+                        Page {{ page }} of {{ total_pages }} • {{ "{:,}".format(leads_count) if leads_count else '0' }} Total Market Leads
                         {% else %}
                         Active Portfolio View • {{ clients|length }} High-Density Records
                         {% endif %}
@@ -434,7 +434,7 @@
                 <div style="margin-top: 2rem; display: flex; justify-content: space-between; align-items: center; padding-top: 2rem; border-top: 1px solid var(--slate-100);">
                     <div style="font-size: 0.75rem; font-weight: 800; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.05em;">
                         {% if active_view == 'leads' %}
-                        Page {{ page }} of {{ total_pages }} • {{ leads_count }} Total Market Leads
+                        Page {{ page }} of {{ total_pages }} • {{ "{:,}".format(leads_count) if leads_count else '0' }} Total Market Leads
                         {% else %}
                         Active Portfolio View • {{ clients|length }} High-Density Records
                         {% endif %}
