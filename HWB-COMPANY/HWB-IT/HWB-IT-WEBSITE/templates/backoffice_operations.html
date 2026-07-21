@@ -170,7 +170,7 @@
                                 </td>
                                 {% for col_key in active_cols %}
                                     {% if col_key == 'company' %}
-                                    <td class="sticky-1"><div class="sigma-unit-data"><div class="sigma-unit-primary">{{ lead.center_name }}</div><div class="sigma-unit-secondary" style="font-weight: 500;">{{ lead.address }}</div></div></td>
+                                    <td class="sticky-1"><div class="sigma-unit-data"><div class="sigma-unit-primary">{{ lead.center_name }}</div><div class="sigma-unit-secondary" style="font-weight: 500;">{{ lead.address if lead.address and lead.address != 'None' else '--' }}</div></div></td>
                                     {% elif col_key == 'status' %}
                                     <td class="sticky-2">
                                         {% if lead.status == 'Do Not Call (DNC)' or lead.is_dnc %}
