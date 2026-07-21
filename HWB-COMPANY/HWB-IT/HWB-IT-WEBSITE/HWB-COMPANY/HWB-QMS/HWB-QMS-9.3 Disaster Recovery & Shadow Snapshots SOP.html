@@ -121,6 +121,7 @@ COMMIT;</code></pre>
         <ol>
             <li><strong>Environment Isolation Guard:</strong> Local development runs on an isolated local database (<code>hwb_db</code> inside Docker). Live production runs on Azure Cloud PostgreSQL (<code>sigmajan-adb</code>). If a catastrophic crash or data loss occurs in local development, live production is 100% untouched and safe.</li>
             <li><strong>Safe One-Way UPSERT Rule:</strong> Data updates (such as newly downloaded Texas CCL API leads or updated phone numbers) are pushed to Azure Cloud using a safe <code>UPSERT</code> (<code>INSERT ... ON CONFLICT DO UPDATE</code>) script. The sync script is strictly prohibited from running <code>DELETE</code> or <code>DROP</code> commands on the live Azure database.</li>
+            <li><strong>Automated Single-Command Publishing (<code>bash scripts/publish_live.sh</code>):</strong> To prevent dev-to-prod database disconnects, agents and developers must deploy using <code>bash scripts/publish_live.sh</code>. This script automatically exports local dev DB state to <code>scripts/seed_data.json</code>, commits code & SOPs, builds/pushes the Docker image to Azure ACR, restarts Azure Web App, and verifies live database telemetry in a single, atomic operation.</li>
             <li><strong>Azure Point-In-Time Restoration:</strong> Azure PostgreSQL Flexible Server automatically maintains continuous 35-day Point-In-Time backups, allowing 1-click recovery to any exact minute if needed.</li>
         </ol>
 
