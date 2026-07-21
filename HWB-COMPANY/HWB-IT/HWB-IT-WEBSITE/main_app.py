@@ -97,8 +97,8 @@ with app.app_context():
                 cur.execute('SELECT COUNT(*) FROM "Leads";')
                 az_lead_count = cur.fetchone()[0]
                 seed_path = os.path.join(os.path.dirname(__file__), 'scripts', 'seed_data.json')
-                if az_lead_count < 29000 and os.path.exists(seed_path):
-                    print(f"[BOOT] Database Lead Count ({az_lead_count}) < 29,879. Initiating automated seed ingestion...", flush=True)
+                if os.path.exists(seed_path):
+                    print(f"[BOOT] Force-syncing 29,879 leads & values to Azure DB ({az_lead_count} current rows)...", flush=True)
                     with open(seed_path, 'r') as sf:
                         sdata = json.load(sf)
                         for l in sdata.get('leads', []):
