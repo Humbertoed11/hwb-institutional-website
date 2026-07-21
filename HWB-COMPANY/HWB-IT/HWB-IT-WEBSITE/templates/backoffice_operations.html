@@ -191,7 +191,7 @@
                                     {% elif col_key == 'zip' %}<td>{{ lead.zipcode or '--' }}</td>
                                     {% elif col_key == 'phone' %}<td><a href="tel:{{ lead.phone }}" style="color:var(--brand); text-decoration:none">{{ lead.phone or '--' }}</a></td>
                                     {% elif col_key == 'email' %}<td><small>{{ lead.email or '--' }}</small></td>
-                                    {% elif col_key == 'input_date' %}<td>{{ lead.input_date|format_mdy }}</td>
+                                    {% elif col_key == 'input_date' %}<td>{{ lead.input_date|format_mdy or '--' }}</td>
                                     {% elif col_key == 'next_action' %}<td>{{ lead.next_action_date or '--' }}</td>
                                     {% elif col_key == 'activities' %}<td style="text-align:center; font-weight:800">{{ lead.activity_count or 0 }}</td>
                                     {% elif col_key == 'source' %}<td>{{ lead.lead_source or '--' }}</td>
