@@ -529,6 +529,78 @@ def debug_login():
     login_user(User(1, 'admin', 'Admin'))
     return redirect(url_for('admin_operations'))
 
+@app.route('/debug-run-seeder')
+def debug_run_seeder():
+    conn = get_db(app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            seed_path = os.path.join(os.path.dirname(__file__), 'scripts', 'seed_data.json')
+            if not os.path.exists(seed_path):
+                return jsonify({"error": "seed_data.json not found"}), 400
+            with open(seed_path, 'r') as sf:
+                sdata = json.load(sf)
+                
+                inserted_leads = 0
+                for l in sdata.get('leads', []):
+                    try:
+                        cur.execute('''
+                            INSERT INTO "Leads" (
+                                id, center_name, lead_source, status, phone, email, address, city, state, zipcode,
+                                sqf, capacity, estimated_annual_value, priority_level, facility_type, decision_maker,
+                                job_title, traffic_cycle, service_interest, next_action_date, is_dnc, is_converted, input_date
+                            ) VALUES (
+                                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                            ) ON CONFLICT (id) DO UPDATE SET
+                                center_name = EXCLUDED.center_name,
+                                lead_source = EXCLUDED.lead_source,
+                                status = EXCLUDED.status,
+                                phone = EXCLUDED.phone,
+                                email = EXCLUDED.email,
+                                sqf = EXCLUDED.sqf,
+                                capacity = EXCLUDED.capacity,
+                                estimated_annual_value = EXCLUDED.estimated_annual_value,
+                                is_dnc = EXCLUDED.is_dnc,
+                                is_converted = EXCLUDED.is_converted;
+                        ''', (
+                            l.get('id'), l.get('center_name'), l.get('lead_source'), l.get('status'), l.get('phone'), l.get('email'), l.get('address'), l.get('city'), l.get('state'), l.get('zipcode'),
+                            l.get('sqf'), l.get('capacity'), l.get('estimated_annual_value'), l.get('priority_level'), l.get('facility_type'), l.get('decision_maker'),
+                            l.get('job_title'), l.get('traffic_cycle'), l.get('service_interest'), l.get('next_action_date'), l.get('is_dnc', False), l.get('is_converted', False), l.get('input_date')
+                        ))
+                        inserted_leads += 1
+                    except Exception as le:
+                        return jsonify({"error_type": "Leads seeder error", "failed_lead_id": l.get('id'), "error": str(le)}), 500
+                
+                inserted_users = 0
+                for u in sdata.get('users', []):
+                    try:
+                        cur.execute('''
+                            INSERT INTO "Users" (id, username, password_hash, full_name, email, role, status, force_pwd_reset, custom_permissions)
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                            ON CONFLICT (id) DO UPDATE SET
+                                username = EXCLUDED.username,
+                                password_hash = EXCLUDED.password_hash,
+                                full_name = EXCLUDED.full_name,
+                                email = EXCLUDED.email,
+                                role = EXCLUDED.role,
+                                status = EXCLUDED.status,
+                                force_pwd_reset = EXCLUDED.force_pwd_reset,
+                                custom_permissions = EXCLUDED.custom_permissions;
+                        ''', (
+                            u.get('id'), u.get('username'), u.get('password_hash'), u.get('full_name'), u.get('email'), u.get('role'),
+                            u.get('status', 'Active'), u.get('force_pwd_reset', False), u.get('custom_permissions')
+                        ))
+                        inserted_users += 1
+                    except Exception as ue:
+                        return jsonify({"error_type": "Users seeder error", "failed_user_id": u.get('id'), "error": str(ue)}), 500
+                        
+        conn.commit()
+        return jsonify({"status": "seeding success", "leads_count": inserted_leads, "users_count": inserted_users}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
+
 @app.route('/debug-query')
 def debug_query():
     query = request.args.get('q')
