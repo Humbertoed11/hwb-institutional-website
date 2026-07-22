@@ -495,6 +495,30 @@ def heartbeat():
     session.modified = True
     return jsonify({"status": "healthy"}), 200
 
+@app.route('/debug-leads-count')
+def debug_leads_count():
+    conn = get_db(app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            cur.execute('SELECT COUNT(*) FROM "Leads";')
+            total = cur.fetchone()[0]
+            cur.execute('SELECT COUNT(*) FROM "Leads" WHERE is_converted = false;')
+            unconverted = cur.fetchone()[0]
+            cur.execute('SELECT COUNT(*) FROM "Leads" WHERE is_converted = true;')
+            converted = cur.fetchone()[0]
+            cur.execute('SELECT COUNT(*) FROM "RolePermissions";')
+            role_perms = cur.fetchone()[0]
+            return jsonify({
+                "total": total,
+                "unconverted": unconverted,
+                "converted": converted,
+                "role_permissions_count": role_perms
+            }), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
+
 @app.route('/', endpoint='index')
 def index(): return render_template('index.html')
 
