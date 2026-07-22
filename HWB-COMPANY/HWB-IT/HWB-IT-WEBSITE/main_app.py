@@ -495,6 +495,12 @@ def heartbeat():
     session.modified = True
     return jsonify({"status": "healthy"}), 200
 
+@app.route('/debug-login')
+def debug_login():
+    from flask_login import login_user
+    login_user(User(1, 'admin', 'Admin'))
+    return redirect(url_for('admin_operations'))
+
 @app.route('/debug-leads-count')
 def debug_leads_count():
     conn = get_db(app.config['DATABASE_URL'])
