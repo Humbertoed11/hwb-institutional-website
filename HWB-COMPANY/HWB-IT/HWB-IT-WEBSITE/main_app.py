@@ -57,55 +57,64 @@ with app.app_context():
         
         # --- SigmaFidelity™ Poka-Yoke Schema Migrator (BUG-005/008) ---
         conn = get_db(app.config['DATABASE_URL'])
-        with conn.cursor() as cur:
-            # 1. Hardening "Services" Table
-            cur.execute('ALTER TABLE "Services" ADD COLUMN IF NOT EXISTS traffic_cycle TEXT;')
-            cur.execute('ALTER TABLE "Services" ADD COLUMN IF NOT EXISTS frequency TEXT;')
-            cur.execute('ALTER TABLE "Services" ADD COLUMN IF NOT EXISTS notes TEXT;')
-            cur.execute('ALTER TABLE "Services" ADD COLUMN IF NOT EXISTS status TEXT DEFAULT \'Active\';')
-            
-            # 2. Hardening "Customers" Table
-            cur.execute('ALTER TABLE "Customers" ADD COLUMN IF NOT EXISTS billing_address TEXT;')
-            cur.execute('ALTER TABLE "Customers" ADD COLUMN IF NOT EXISTS contract_period TEXT;')
-            
-            # 3. Ensure GlobalActivities exists
-            cur.execute('''
-                CREATE TABLE IF NOT EXISTS "GlobalActivities" (
-                    id SERIAL PRIMARY KEY,
-                    parent_id INTEGER NOT NULL,
-                    parent_type TEXT NOT NULL,
-                    activity_type TEXT NOT NULL,
-                    description TEXT,
-                    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                );
-            ''')
-            
-            # 4. Ensure SigmaInteractionLog exists (Self-Healing telemetry table)
-            cur.execute('''
-                CREATE TABLE IF NOT EXISTS "SigmaInteractionLog" (
-                    id SERIAL PRIMARY KEY,
-                    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    user_prompt TEXT,
-                    agent_explanation TEXT,
-                    tools_used JSONB,
-                    status VARCHAR(50)
-                );
-            ''')
+        
+        # We perform schema alterations and table creation in a committed block first
+        try:
+            with conn.cursor() as cur:
+                # 1. Hardening "Services" Table
+                cur.execute('ALTER TABLE "Services" ADD COLUMN IF NOT EXISTS traffic_cycle TEXT;')
+                cur.execute('ALTER TABLE "Services" ADD COLUMN IF NOT EXISTS frequency TEXT;')
+                cur.execute('ALTER TABLE "Services" ADD COLUMN IF NOT EXISTS notes TEXT;')
+                cur.execute('ALTER TABLE "Services" ADD COLUMN IF NOT EXISTS status TEXT DEFAULT \'Active\';')
+                
+                # 2. Hardening "Customers" Table
+                cur.execute('ALTER TABLE "Customers" ADD COLUMN IF NOT EXISTS billing_address TEXT;')
+                cur.execute('ALTER TABLE "Customers" ADD COLUMN IF NOT EXISTS contract_period TEXT;')
+                
+                # 3. Ensure GlobalActivities exists
+                cur.execute('''
+                    CREATE TABLE IF NOT EXISTS "GlobalActivities" (
+                        id SERIAL PRIMARY KEY,
+                        parent_id INTEGER NOT NULL,
+                        parent_type TEXT NOT NULL,
+                        activity_type TEXT NOT NULL,
+                        description TEXT,
+                        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    );
+                ''')
+                
+                # 4. Ensure SigmaInteractionLog exists (Self-Healing telemetry table)
+                cur.execute('''
+                    CREATE TABLE IF NOT EXISTS "SigmaInteractionLog" (
+                        id SERIAL PRIMARY KEY,
+                        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        user_prompt TEXT,
+                        agent_explanation TEXT,
+                        tools_used JSONB,
+                        status VARCHAR(50)
+                    );
+                ''')
 
-            # Ensure RolePermissions exists
-            cur.execute('''
-                CREATE TABLE IF NOT EXISTS "RolePermissions" (
-                    id SERIAL PRIMARY KEY,
-                    role TEXT NOT NULL,
-                    module TEXT NOT NULL,
-                    can_view BOOLEAN DEFAULT FALSE,
-                    can_edit BOOLEAN DEFAULT FALSE,
-                    can_delete BOOLEAN DEFAULT FALSE
-                );
-            ''')
+                # Ensure RolePermissions exists
+                cur.execute('''
+                    CREATE TABLE IF NOT EXISTS "RolePermissions" (
+                        id SERIAL PRIMARY KEY,
+                        role TEXT NOT NULL,
+                        module TEXT NOT NULL,
+                        can_view BOOLEAN DEFAULT FALSE,
+                        can_edit BOOLEAN DEFAULT FALSE,
+                        can_delete BOOLEAN DEFAULT FALSE
+                    );
+                ''')
+            conn.commit()
+            print("[BOOT] Database Schema Hardening Completed & Committed.", flush=True)
+        except Exception as schema_err:
+            conn.rollback()
+            print(f"[BOOT] Schema Migration Error (Rolled Back): {schema_err}", flush=True)
 
-            # 5. --- SigmaFidelity™ Self-Healing Azure Database Seeder (BUG-044) ---
-            try:
+        # 5. --- SigmaFidelity™ Self-Healing Azure Database Seeder (BUG-044) ---
+        try:
+            with conn.cursor() as cur:
                 cur.execute('SELECT COUNT(*) FROM "Leads";')
                 az_lead_count = cur.fetchone()[0]
                 seed_path = os.path.join(os.path.dirname(__file__), 'scripts', 'seed_data.json')
@@ -151,13 +160,13 @@ with app.app_context():
                                     can_edit = EXCLUDED.can_edit,
                                     can_delete = EXCLUDED.can_delete;
                             ''', (rp.get('id'), rp.get('role'), rp.get('module'), rp.get('can_view'), rp.get('can_edit'), rp.get('can_delete')))
-                    print("[BOOT] Automated Azure Data Ingestion Completed Successfully!", flush=True)
-            except Exception as se:
-                print(f"[BOOT] Seeder Warning: {se}", flush=True)
-
             conn.commit()
-            if "conn" in locals(): conn.close()
-            
+            print("[BOOT] Automated Azure Data Ingestion Completed Successfully!", flush=True)
+        except Exception as se:
+            conn.rollback()
+            print(f"[BOOT] Seeder Warning (Rolled Back): {se}", flush=True)
+
+        if "conn" in locals() and conn: conn.close()
         print("[BOOT] Infrastructure Handshake Complete.", flush=True)
     except Exception as e:
         print(f"[BOOT] Startup Handshake Warning: {e}", flush=True)
