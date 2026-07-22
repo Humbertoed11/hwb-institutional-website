@@ -69,6 +69,19 @@ docker exec hwb_web_app python "diag_dashboard.py"
 echo "Running Cloud & Communication Diagnostics..."
 docker exec hwb_web_app python "scripts/check_azure_connectivity.py"
 docker exec hwb_web_app python "scripts/test_outlook_direct.py"
+
+# 5. Live Azure Production VNet Database Telemetry Audit (BUG-047 Fix)
+echo "--- SigmaFidelity™: Initiating Live Azure VNet Database Telemetry Handshake ---"
+python3 -c "
+import urllib.request, json
+try:
+    with urllib.request.urlopen('https://www.hwbcleaning.com/api/v1/db-audit', timeout=10) as resp:
+        data = json.loads(resp.read().decode('utf-8'))
+        print(f'AZURE PROD DB HOST: {data.get(\"database_host\")}')
+        print(f'AZURE PROD LEADS COUNT: {data.get(\"total_leads_count\")} Total Live Leads')
+except Exception as e:
+    print(f'WARNING: Could not reach Live VNet DB audit endpoint: {e}')
+"
 echo "Diagnostics Complete."
 
 echo "--- Startup Sequence Finished ---"

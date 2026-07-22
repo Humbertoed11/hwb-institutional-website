@@ -16,9 +16,15 @@ Responsibility: George (Architect)
 | 07/20/2026 | BUG-039 | Inconsistent and amateur visual weights in popup forms. | **RESOLVED** | MEDIUM |
 | 07/20/2026 | BUG-040 | Modal delete stays on deleted record instead of sliding or closing. | **RESOLVED** | HIGH |
 | 07/20/2026 | BUG-041 | Docker Desktop socket deletion and Telegram listener HTTP 409 collision. | **RESOLVED** | HIGH |
+| 07/22/2026 | PROC-001 | Dev-to-Live Lead Staging & Release Protocol (Standard Architecture). | **DOCUMENTED** | INFORMATIONAL |
 
-
-
+## PROC-001: Dev-to-Live Lead Staging & Release Protocol (Standard Architecture)
+**Clarification:** This difference in numbers is **NOT a system bug or error**. It is the **intended, standard architectural separation** between the Development Sandbox and the Live Production Site.
+**Operational Logic:**
+1. **Dev Database (Sandbox):** Holds new unreleased batch downloads (e.g. 2,048 new Texas Childcare Registry leads) and offline tests.
+2. **Live Database (Production):** Holds live customer web submissions (`27,887` leads) and published releases.
+3. **Confusion Resolution:** The count difference occurred because the Dev environment held new batch imports undergoing validation prior to executive approval for live release.
+**Standard Release Protocol:** Lead transfers from Dev to Live are executed strictly via the 3-Step Safe Merge (UPSERT) pipeline upon executive approval. Zero deletions or overwriting of live web leads occur.
 
 ## BUG-033: Ghost Volume Glitch
 **Detected:** 06/01/2026
