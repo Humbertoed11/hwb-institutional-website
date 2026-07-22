@@ -36,7 +36,8 @@
                                         <label class="sigma-col-label"><input type="checkbox" checked disabled> Company</label>
                                         <label class="sigma-col-label"><input type="checkbox" name="cols" value="status" {% if 'status' in active_cols %}checked{% endif %}> Status</label>
                                         <label class="sigma-col-label"><input type="checkbox" name="cols" value="dm" {% if 'dm' in active_cols %}checked{% endif %}> Manager</label>
-                                        <label class="sigma-col-label"><input type="checkbox" name="cols" value="building" {% if 'building' in active_cols %}checked{% endif %}> Type</label>
+                                        <label class="sigma-col-label"><input type="checkbox" name="cols" value="facility" {% if 'facility' in active_cols or 'building' in active_cols %}checked{% endif %}> Facility Type</label>
+                                        <label class="sigma-col-label"><input type="checkbox" name="cols" value="industry" {% if 'industry' in active_cols %}checked{% endif %}> Industry</label>
                                         <label class="sigma-col-label"><input type="checkbox" name="cols" value="sqf" {% if 'sqf' in active_cols %}checked{% endif %}> SQF</label>
                                         <label class="sigma-col-label"><input type="checkbox" name="cols" value="capacity" {% if 'capacity' in active_cols %}checked{% endif %}> Capacity</label>
                                         <label class="sigma-col-label"><input type="checkbox" name="cols" value="value" {% if 'value' in active_cols %}checked{% endif %}> Value</label>
@@ -141,7 +142,8 @@
                                     <th data-col="company" onclick="iscSortLeads('company')" class="sticky-1">Company {% if sort_by == 'company' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
                                     {% elif col_key == 'status' %}<th data-col="status" onclick="iscSortLeads('status')" class="sticky-2">Status {% if sort_by == 'status' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
                                     {% elif col_key == 'dm' %}<th data-col="dm" onclick="iscSortLeads('dm')" class="sticky-3">Manager {% if sort_by == 'dm' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
-                                    {% elif col_key == 'building' %}<th data-col="building" onclick="iscSortLeads('building')">Type {% if sort_by == 'building' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
+                                    {% elif col_key == 'building' or col_key == 'facility' %}<th data-col="facility" onclick="iscSortLeads('facility')">Facility Type {% if sort_by == 'facility' or sort_by == 'building' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
+                                    {% elif col_key == 'industry' %}<th data-col="industry" onclick="iscSortLeads('industry')">Industry {% if sort_by == 'industry' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
                                     {% elif col_key == 'sqf' %}<th data-col="sqf" onclick="iscSortLeads('sqf')">SQF {% if sort_by == 'sqf' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
                                     {% elif col_key == 'capacity' %}<th data-col="capacity" onclick="iscSortLeads('capacity')">Capacity {% if sort_by == 'capacity' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
                                     {% elif col_key == 'value' %}<th data-col="value" onclick="iscSortLeads('value')">Value {% if sort_by == 'value' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
@@ -180,7 +182,8 @@
                                         {% endif %}
                                     </td>
                                     {% elif col_key == 'dm' %}<td class="sticky-3"><div class="sigma-unit-data"><div class="sigma-unit-primary" style="font-size:0.85rem">{{ lead.decision_maker or '--' }}</div><div class="sigma-unit-secondary" style="font-weight: 500;">{{ lead.job_title or 'Owner/Manager' }}</div></div></td>
-                                    {% elif col_key == 'building' %}<td>{{ lead.facility_type or '--' }}</td>
+                                    {% elif col_key == 'building' or col_key == 'facility' %}<td>{{ lead.facility_type or '--' }}</td>
+                                    {% elif col_key == 'industry' %}<td>{{ lead.industry or '--' }}</td>
                                     {% elif col_key == 'sqf' %}<td style="font-weight:700">{{ "{:,}".format(lead.sqf) if lead.sqf else '--' }}</td>
                                     {% elif col_key == 'capacity' %}<td>{{ lead.capacity or '--' }}</td>
                                     {% elif col_key == 'value' %}<td style="font-weight:800; color:var(--brand)">${{ "{:,.0f}".format(lead.estimated_annual_value) if lead.estimated_annual_value else '0' }}</td>
@@ -969,11 +972,15 @@
                         <div class="sigma-field">
                             <label>Building Type</label>
                             <select id="edit-lead-building" name="facility_type" class="sigma-input">
-                                <option value="Office">Office</option>
-                                <option value="Medical">Medical</option>
-                                <option value="Warehouse">Warehouse</option>
-                                <option value="Retail">Retail</option>
-                                <option value="Other">Other</option>
+                                <option value="Child Care Center">Child Care Center</option>
+                                <option value="Office">Office Space</option>
+                                <option value="Medical">Medical / Clinical</option>
+                                <option value="Warehouse">Warehouse / Industrial</option>
+                                <option value="Retail">Retail Space</option>
+                                <option value="Church">Church / Sanctuary</option>
+                                <option value="School">School / Educational</option>
+                                <option value="Post-Construction">Post-Construction</option>
+                                <option value="Other">Other Commercial</option>
                             </select>
                         </div>
                         <div class="sigma-field">
@@ -1151,11 +1158,15 @@
                         <div class="sigma-field">
                             <label>Building Type</label>
                             <select name="facility_type" required class="sigma-input">
-                                <option value="Office">Office</option>
-                                <option value="Medical">Medical</option>
-                                <option value="Warehouse">Warehouse</option>
-                                <option value="Retail">Retail</option>
-                                <option value="Other">Other</option>
+                                <option value="Child Care Center">Child Care Center</option>
+                                <option value="Office">Office Space</option>
+                                <option value="Medical">Medical / Clinical</option>
+                                <option value="Warehouse">Warehouse / Industrial</option>
+                                <option value="Retail">Retail Space</option>
+                                <option value="Church">Church / Sanctuary</option>
+                                <option value="School">School / Educational</option>
+                                <option value="Post-Construction">Post-Construction</option>
+                                <option value="Other">Other Commercial</option>
                             </select>
                         </div>
                         <div class="sigma-field"><label>Building SQF</label><input type="number" name="sqf" placeholder="e.g. 5000" class="sigma-input"></div>

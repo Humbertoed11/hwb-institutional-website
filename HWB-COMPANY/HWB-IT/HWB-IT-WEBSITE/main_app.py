@@ -111,7 +111,7 @@ with app.app_context():
                 ''')
                 # 7. --- SigmaFidelity™ VNet Maintenance Cleanup (BUG-046) ---
                 cur.execute('DELETE FROM "GlobalActivities" WHERE parent_id = 44518 AND parent_type = \'Lead\';')
-                cur.execute('DELETE FROM "Leads" WHERE id = 44518 OR center_name ILIKE \'%DFW6%\';')
+                cur.execute('DELETE FROM "Leads" WHERE id = 44518 OR center_name ILIKE \'%DFW6%\' OR center_name ILIKE \'%Test Lead%\' OR lead_source = \'Executive Test System\';')
             conn.commit()
             print("[BOOT] Database Schema Hardening & VNet Maintenance Completed & Committed.", flush=True)
         except Exception as schema_err:
@@ -426,7 +426,7 @@ def admin_operations():
             if search_q and active_view == 'accounts':
                 # --- SigmaFidelity™ Search Selector Logic (BUG-011/BUG-013) ---
                 if search_q.startswith('"') and search_q.endswith('"'):
-                    search_pattern = search_q[1:-1]
+                    search_pattern = f"%{search_q[1:-1]}%"
                 elif '*' in search_q:
                     search_pattern = search_q.replace('*', '%')
                 else:
@@ -452,7 +452,7 @@ def admin_operations():
             if search_q and active_view == 'leads':
                 # --- SigmaFidelity™ Search Selector Logic (BUG-011/BUG-013) ---
                 if search_q.startswith('"') and search_q.endswith('"'):
-                    search_pattern = search_q[1:-1]
+                    search_pattern = f"%{search_q[1:-1]}%"
                 elif '*' in search_q:
                     search_pattern = search_q.replace('*', '%')
                 else:
