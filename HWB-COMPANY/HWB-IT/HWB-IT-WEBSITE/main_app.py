@@ -458,8 +458,8 @@ def admin_operations():
                 else:
                     search_pattern = f'%{search_q}%'
                 
-                lead_where_clauses.append("(center_name ILIKE %s OR facility_type ILIKE %s OR sqf::text ILIKE %s OR city ILIKE %s OR state ILIKE %s OR zipcode ILIKE %s OR phone ILIKE %s OR email ILIKE %s OR address ILIKE %s)")
-                lead_params.extend([search_pattern] * 9)
+                lead_where_clauses.append("(center_name ILIKE %s OR facility_type ILIKE %s OR sqf::text ILIKE %s OR city ILIKE %s OR state ILIKE %s OR zipcode ILIKE %s OR phone ILIKE %s OR email ILIKE %s OR address ILIKE %s OR lead_source ILIKE %s OR decision_maker ILIKE %s OR status ILIKE %s)")
+                lead_params.extend([search_pattern] * 12)
 
             lead_where_str = ("WHERE " + " AND ".join(lead_where_clauses)) if lead_where_clauses else ""
 
