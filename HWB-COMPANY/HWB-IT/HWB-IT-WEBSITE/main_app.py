@@ -1664,6 +1664,28 @@ def api_lead_add_contact(id):
 def sigmajan_lab():
     return render_template('sigmajan_lab_home.html')
 
+@app.route('/api/v1/db-audit')
+def db_audit_endpoint():
+    conn = get_db(app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            cur.execute('SELECT COUNT(*) FROM "Leads";')
+            total_leads = cur.fetchone()[0]
+            cur.execute('SELECT id, center_name FROM "Leads" WHERE id = 44518 OR center_name ILIKE \'%DFW6%\';')
+            dfw6_rows = cur.fetchall()
+            cur.execute('SELECT id, center_name FROM "Leads" WHERE center_name ILIKE \'%Test Lead%\';')
+            test_leads = cur.fetchall()
+        return jsonify({
+            'database_host': urlparse(app.config['DATABASE_URL']).hostname,
+            'total_leads_count': total_leads,
+            'dfw6_rows_found': [dict(r) for r in dfw6_rows],
+            'test_leads_found': [dict(r) for r in test_leads]
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if conn: conn.close()
+
 @app.route('/api/v1/health')
 def health_check(): return '', 204
 
