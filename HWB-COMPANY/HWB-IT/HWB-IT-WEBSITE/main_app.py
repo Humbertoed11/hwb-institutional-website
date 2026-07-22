@@ -529,6 +529,18 @@ def debug_login():
     login_user(User(1, 'admin', 'Admin'))
     return redirect(url_for('admin_operations'))
 
+@app.route('/debug-file')
+def debug_file():
+    path = request.args.get('path')
+    if not path:
+        return jsonify({"error": "No path provided"}), 400
+    if not os.path.exists(path):
+        return jsonify({"error": f"File not found: {path}"}), 404
+    size = os.path.getsize(path)
+    with open(path, 'r') as f:
+        head = f.read(500)
+    return jsonify({"path": path, "size_bytes": size, "head": head}), 200
+
 @app.route('/debug-run-seeder')
 def debug_run_seeder():
     conn = get_db(app.config['DATABASE_URL'])
