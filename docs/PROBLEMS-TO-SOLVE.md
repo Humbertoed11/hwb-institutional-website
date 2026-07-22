@@ -17,6 +17,20 @@ Responsibility: George (Architect)
 | 07/20/2026 | BUG-040 | Modal delete stays on deleted record instead of sliding or closing. | **RESOLVED** | HIGH |
 | 07/20/2026 | BUG-041 | Docker Desktop socket deletion and Telegram listener HTTP 409 collision. | **RESOLVED** | HIGH |
 | 07/22/2026 | PROC-001 | Dev-to-Live Lead Staging & Release Protocol (Standard Architecture). | **DOCUMENTED** | INFORMATIONAL |
+| 07/22/2026 | BUG-047 | Column Pagination Parameter Loss (Reverting to default view on page change). | **RESOLVED** | HIGH |
+| 07/22/2026 | BUG-048 | Custom Column Ordering / Positioning Reset on Page Navigation. | **RESOLVED** | HIGH |
+
+## BUG-047: Column Pagination Parameter Loss
+**Detected:** 07/22/2026
+**Symptoms:** Selecting a custom column view worked on Page 1, but changing to Page 2 or Page 3 caused columns to revert back to default view.
+**Root Cause:** Pagination `Previous` and `Next` HTML links omitted the `cols` URL query parameter.
+**Solution:** Updated pagination links in `backoffice_operations.html` to pass `cols=active_cols_str` and stored active columns in Flask session memory (`session['leads_custom_cols']`).
+
+## BUG-048: Custom Column Positioning Reset
+**Detected:** 07/22/2026
+**Symptoms:** Custom column arrangement / position reverted back to static HTML form order upon page navigation.
+**Root Cause:** Column form inputs gathered values in static HTML DOM order without preserving user-defined positional sequence in session memory.
+**Solution:** Configured `main_app.py` to store and output the exact ordered sequence of custom columns in Flask session memory.
 
 ## PROC-001: Dev-to-Live Lead Staging & Release Protocol (Standard Architecture)
 **Clarification:** This difference in numbers is **NOT a system bug or error**. It is the **intended, standard architectural separation** between the Development Sandbox and the Live Production Site.

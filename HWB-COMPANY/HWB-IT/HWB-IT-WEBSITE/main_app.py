@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify, flash, send_from_directory, abort
+from flask import Flask, render_template, request, redirect, url_for, jsonify, flash, send_from_directory, abort, session
 from flask_compress import Compress
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -363,9 +363,12 @@ def admin_operations():
     default_cols_leads = 'company,status,sqf,value,priority,activities'
     default_cols_accounts = 'company,city,phone,revenue,activities'
     
-    active_cols_str = request.args.get('cols')
-    if not active_cols_str:
-        active_cols_str = default_cols_leads if active_view == 'leads' else default_cols_accounts
+    session_key = 'leads_custom_cols' if active_view == 'leads' else 'accounts_custom_cols'
+    if 'cols' in request.args:
+        active_cols_str = request.args.get('cols')
+        session[session_key] = active_cols_str
+    else:
+        active_cols_str = session.get(session_key) or (default_cols_leads if active_view == 'leads' else default_cols_accounts)
     active_cols = [c.strip() for c in active_cols_str.split(',') if c.strip()]
     
     per_page = 50
@@ -387,6 +390,7 @@ def admin_operations():
         'company': 'company_name', 'city': 'city', 'phone': 'phone',
         'email': 'email', 'revenue': 'annual_revenue', 'status': 'status',
         'address': 'company_address', 'contact': 'contact_person_name',
+        'facility': 'facility_type', 'building': 'facility_type', 'industry': 'industry',
         'zip': 'zip', 'state': 'state', 'quote': 'quote_number',
         'period': 'contract_period', 'frequency': 'frequency',
         'start_date': 'start_date', 'terms': 'payment_terms',
@@ -418,7 +422,8 @@ def admin_operations():
                 SELECT c.*, 
                        (SELECT COUNT(*) FROM "Contacts" WHERE account_id = c.customer_id) as contact_count,
                        (SELECT COUNT(*) FROM "GlobalActivities" WHERE parent_id = c.customer_id AND parent_type = 'Account') as activity_count,
-                       (SELECT MAX(timestamp) FROM "GlobalActivities" WHERE parent_id = c.customer_id AND parent_type = 'Account') as last_contact
+                       (SELECT MAX(timestamp) FROM "GlobalActivities" WHERE parent_id = c.customer_id AND parent_type = 'Account') as last_contact,
+                       (SELECT description FROM "GlobalActivities" WHERE parent_id = c.customer_id AND parent_type = 'Account' ORDER BY timestamp DESC LIMIT 1) as last_note
                 FROM "Customers" c
             '''
             
@@ -476,7 +481,8 @@ def admin_operations():
             lead_sql_base = f'''
                 SELECT l.*, 
                        (SELECT COUNT(*) FROM "GlobalActivities" WHERE parent_id = l.id AND parent_type = 'Lead') as activity_count, 
-                       (SELECT MAX(timestamp) FROM "GlobalActivities" WHERE parent_id = l.id AND parent_type = 'Lead') as last_contact 
+                       (SELECT MAX(timestamp) FROM "GlobalActivities" WHERE parent_id = l.id AND parent_type = 'Lead') as last_contact,
+                       (SELECT description FROM "GlobalActivities" WHERE parent_id = l.id AND parent_type = 'Lead' ORDER BY timestamp DESC LIMIT 1) as last_note
                 FROM "Leads" l 
                 {lead_where_str}
             '''
@@ -1498,9 +1504,64 @@ def api_lead_hub(id):
                 return jsonify({'status': 'success'})
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
+@app.route('/api/v1/activities/<parent_type>/<int:parent_id>', methods=['GET'])
+@login_required
+def get_recent_activities(parent_type, parent_id):
+    conn = get_db(app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            ptype = 'Lead' if parent_type.lower() == 'lead' else 'Account'
+            cur.execute('''
+                SELECT activity_type, description, timestamp 
+                FROM "GlobalActivities" 
+                WHERE parent_id = %s AND (LOWER(parent_type) = LOWER(%s) OR (LOWER(%s) = 'account' AND LOWER(parent_type) = 'client'))
+                ORDER BY timestamp DESC 
+                LIMIT 5
+            ''', (parent_id, ptype, ptype))
+            rows = cur.fetchall()
+            activities = []
+            for r in rows:
+                activities.append({
+                    'type': r['activity_type'] if r['activity_type'] else 'Activity',
+                    'description': r['description'] if r['description'] else 'Touchpoint logged.',
+                    'timestamp': r['timestamp'].strftime('%m/%d/%Y %I:%M %p') if r['timestamp'] else ''
+                })
+            return jsonify({'status': 'success', 'activities': activities})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+@app.route('/api/v1/activities/quick-log', methods=['POST'])
+@login_required
+def api_quick_log_activity():
+    data = request.get_json() or {}
+    parent_id = data.get('parent_id')
+    parent_type = data.get('parent_type', 'Lead')
+    note_text = data.get('note', '').strip()
+    activity_type = data.get('activity_type', 'Phone Call')
+
+    if not parent_id or not note_text:
+        return jsonify({'status': 'error', 'message': 'Missing parent ID or note'}), 400
+
+    conn = get_db(app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            ptype = 'Lead' if parent_type.lower() == 'lead' else 'Account'
+            cur.execute('''
+                INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
+                VALUES (%s, %s, %s, %s)
+            ''', (parent_id, ptype, activity_type, note_text))
+            
+            if ptype == 'Lead':
+                cur.execute('UPDATE "Leads" SET updated_at = CURRENT_TIMESTAMP WHERE id = %s', (parent_id,))
+            else:
+                cur.execute('UPDATE "Customers" SET updated_at = CURRENT_TIMESTAMP WHERE customer_id = %s', (parent_id,))
+                
+            conn.commit()
+            return jsonify({'status': 'success', 'message': 'Touchpoint logged.'})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
     finally:
         if "conn" in locals(): conn.close()
-        
+
 
 @app.route('/api/v1/leads/batch-action', methods=['POST'])
 @login_required

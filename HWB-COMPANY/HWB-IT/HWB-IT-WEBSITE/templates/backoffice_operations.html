@@ -12,6 +12,68 @@
 {% endblock %}
 
 {% block bo_content %}
+<style>
+.sigma-mini-btn {
+    padding: 0.2rem 0.45rem;
+    font-size: 0.68rem;
+    font-weight: 800;
+    border-radius: 0.4rem;
+    border: 1px solid var(--slate-200);
+    background: #ffffff;
+    color: var(--slate-600);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    line-height: 1;
+}
+.sigma-mini-btn:hover {
+    background: var(--brand);
+    color: #ffffff;
+    border-color: var(--brand);
+    transform: translateY(-1px);
+}
+.sigma-inline-date {
+    border: 1px solid var(--slate-200);
+    border-radius: 0.5rem;
+    padding: 0.25rem 0.4rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--slate-800);
+    background: var(--slate-50);
+    outline: none;
+    cursor: pointer;
+}
+.sigma-inline-date:focus {
+    border-color: var(--brand);
+    background: #ffffff;
+}
+.sigma-pill-select {
+    border-radius: 2rem;
+    padding: 0.25rem 0.65rem;
+    font-size: 0.75rem;
+    font-weight: 800;
+    border: 1px solid #cbd5e1;
+    outline: none;
+    cursor: pointer;
+    background-color: #f8fafc;
+}
+.sigma-inline-select {
+    border: 1px solid var(--slate-200);
+    border-radius: 0.5rem;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--slate-800);
+    background: var(--slate-50);
+    outline: none;
+    cursor: pointer;
+    max-width: 160px;
+    transition: all 0.15s ease;
+}
+.sigma-inline-select:focus {
+    border-color: var(--brand);
+    background: #ffffff;
+}
+</style>
     <main>
                 <!-- View: Leads -->
         <div id="view-leads" class="isc-view" style="display: {% if active_view == 'leads' %}block{% else %}none{% endif %};">
@@ -54,6 +116,10 @@
                                         <label class="sigma-col-label"><input type="checkbox" name="cols" value="source" {% if 'source' in active_cols %}checked{% endif %}> Source</label>
                                         <label class="sigma-col-label"><input type="checkbox" name="cols" value="interest" {% if 'interest' in active_cols %}checked{% endif %}> Interest</label>
                                         <label class="sigma-col-label"><input type="checkbox" name="cols" value="owner" {% if 'owner' in active_cols %}checked{% endif %}> Lead Owner</label>
+                                        <label class="sigma-col-label"><input type="checkbox" name="cols" value="quick_log" {% if 'quick_log' in active_cols %}checked{% endif %}> ⚡ Quick Log Call</label>
+                                        <label class="sigma-col-label"><input type="checkbox" name="cols" value="last_note" {% if 'last_note' in active_cols %}checked{% endif %}> 📜 Last Note</label>
+                                        <label class="sigma-col-label"><input type="checkbox" name="cols" value="last_contact" {% if 'last_contact' in active_cols %}checked{% endif %}> ⏱️ Last Contact</label>
+                                        <label class="sigma-col-label"><input type="checkbox" name="cols" value="google_maps" {% if 'google_maps' in active_cols %}checked{% endif %}> 📍 GPS Nav</label>
                                     </div>
                                     <div style="margin-top: 2rem; display: flex; justify-content: space-between; border-top: 1px solid var(--slate-100); padding-top: 1.5rem;">
                                         <button type="button" onclick="resetColumns()" class="sigma-text-btn">Reset Default</button>
@@ -160,6 +226,10 @@
                                     {% elif col_key == 'source' %}<th data-col="source" onclick="iscSortLeads('source')">Source {% if sort_by == 'source' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
                                     {% elif col_key == 'interest' %}<th data-col="interest" onclick="iscSortLeads('interest')">Interest {% if sort_by == 'interest' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
                                     {% elif col_key == 'owner' %}<th data-col="owner" onclick="iscSortLeads('owner')">Lead Owner {% if sort_by == 'owner' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
+                                    {% elif col_key == 'quick_log' %}<th data-col="quick_log">⚡ Quick Log Call</th>
+                                    {% elif col_key == 'last_note' %}<th data-col="last_note">📜 Last Touchpoint Note</th>
+                                    {% elif col_key == 'last_contact' %}<th data-col="last_contact" onclick="iscSortLeads('last_contact')">⏱️ Last Contact {% if sort_by == 'last_contact' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
+                                    {% elif col_key == 'google_maps' %}<th data-col="google_maps">📍 GPS Nav</th>
                                     {% endif %}
                                 {% endfor %}
                                 <th style="text-align: right; cursor: default;" class="no-drag">Action</th></tr>
@@ -174,20 +244,61 @@
                                     {% if col_key == 'company' %}
                                     <td class="sticky-1"><div class="sigma-unit-data"><div class="sigma-unit-primary">{{ lead.center_name }}</div><div class="sigma-unit-secondary" style="font-weight: 500;">{{ lead.address if lead.address and lead.address != 'None' else '--' }}</div></div></td>
                                     {% elif col_key == 'status' %}
-                                    <td class="sticky-2">
-                                        {% if lead.status == 'Do Not Call (DNC)' or lead.is_dnc %}
-                                            <span class="sigma-unit-pill" style="background:#fee2e2; color:#991b1b; border: 1px solid #fca5a5; font-weight: 800;">🚫 Do Not Call</span>
-                                        {% else %}
-                                            <span class="sigma-unit-pill" style="background:#f1f5f9; color:#475569">{{ lead.status or 'New' }}</span>
-                                        {% endif %}
-                                    </td>
+                                     <td class="sticky-2" onclick="event.stopPropagation();">
+                                         <select onchange="quickUpdateLead({{ lead.id }}, 'status', this.value, this)" class="sigma-pill-select" style="{% if lead.status == 'Do Not Call (DNC)' or lead.is_dnc %}background:#fee2e2; color:#991b1b; border-color:#fca5a5;{% elif lead.status == 'Active' %}background:#dcfce7; color:#15803d; border-color:#86efac;{% elif lead.status == 'New' or lead.status == 'NEW' %}background:#e0f2fe; color:#0369a1; border-color:#7dd3fc;{% elif lead.status == 'Contacted' %}background:#f3e8ff; color:#7e22ce; border-color:#d8b4fe;{% elif lead.status == 'Qualified' %}background:#ccfbf1; color:#0f766e; border-color:#5eead4;{% elif lead.status == 'Trained' %}background:#fef3c7; color:#b45309; border-color:#fde047;{% else %}background:#f1f5f9; color:#64748b; border-color:#cbd5e1;{% endif %}">
+                                             <option value="New" {% if lead.status == 'New' or lead.status == 'NEW' %}selected{% endif %}>New</option>
+                                             <option value="Active" {% if lead.status == 'Active' %}selected{% endif %}>Active</option>
+                                             <option value="Contacted" {% if lead.status == 'Contacted' %}selected{% endif %}>Contacted</option>
+                                             <option value="Qualified" {% if lead.status == 'Qualified' %}selected{% endif %}>Qualified</option>
+                                             <option value="Trained" {% if lead.status == 'Trained' %}selected{% endif %}>Trained</option>
+                                             <option value="Do Not Call (DNC)" {% if lead.status == 'Do Not Call (DNC)' or lead.is_dnc %}selected{% endif %}>🚫 DNC</option>
+                                             <option value="Lost" {% if lead.status == 'Lost' %}selected{% endif %}>Lost</option>
+                                         </select>
+                                     </td>
                                     {% elif col_key == 'dm' %}<td class="sticky-3"><div class="sigma-unit-data"><div class="sigma-unit-primary" style="font-size:0.85rem">{{ lead.decision_maker or '--' }}</div><div class="sigma-unit-secondary" style="font-weight: 500;">{{ lead.job_title or 'Owner/Manager' }}</div></div></td>
-                                    {% elif col_key == 'building' or col_key == 'facility' %}<td>{{ lead.facility_type or '--' }}</td>
-                                    {% elif col_key == 'industry' %}<td>{{ lead.industry or '--' }}</td>
+                                    {% elif col_key == 'building' or col_key == 'facility' %}
+                                     <td onclick="event.stopPropagation();">
+                                         <select onchange="quickUpdateLead({{ lead.id }}, 'facility_type', this.value, this)" class="sigma-inline-select">
+                                             <option value="Child Care Center" {% if lead.facility_type == 'Child Care Center' %}selected{% endif %}>Child Care Center</option>
+                                             <option value="Office" {% if lead.facility_type == 'Office' %}selected{% endif %}>Office Space</option>
+                                             <option value="Medical" {% if lead.facility_type == 'Medical' %}selected{% endif %}>Medical / Clinical</option>
+                                             <option value="Warehouse" {% if lead.facility_type == 'Warehouse' %}selected{% endif %}>Warehouse / Industrial</option>
+                                             <option value="Automotive" {% if lead.facility_type == 'Automotive' %}selected{% endif %}>Automotive / Dealership</option>
+                                             <option value="Retail" {% if lead.facility_type == 'Retail' %}selected{% endif %}>Retail Space</option>
+                                             <option value="Church" {% if lead.facility_type == 'Church' %}selected{% endif %}>Church / Sanctuary</option>
+                                             <option value="School" {% if lead.facility_type == 'School' %}selected{% endif %}>School / Educational</option>
+                                             <option value="Post-Construction" {% if lead.facility_type == 'Post-Construction' %}selected{% endif %}>Post-Construction</option>
+                                             <option value="Other" {% if lead.facility_type == 'Other' %}selected{% endif %}>Other Commercial</option>
+                                         </select>
+                                     </td>
+                                    {% elif col_key == 'industry' %}
+                                     <td onclick="event.stopPropagation();">
+                                         <select onchange="quickUpdateLead({{ lead.id }}, 'industry', this.value, this)" class="sigma-inline-select">
+                                             <option value="Child Care" {% if lead.industry == 'Child Care' or not lead.industry %}selected{% endif %}>Child Care</option>
+                                             <option value="Corporate / Office" {% if lead.industry == 'Corporate / Office' or lead.industry == 'Office' %}selected{% endif %}>Corporate / Office</option>
+                                             <option value="Healthcare / Medical" {% if lead.industry == 'Healthcare / Medical' or lead.industry == 'Medical' %}selected{% endif %}>Healthcare / Medical</option>
+                                             <option value="Industrial / Logistics" {% if lead.industry == 'Industrial / Logistics' or lead.industry == 'Industrial' %}selected{% endif %}>Industrial / Logistics</option>
+                                             <option value="Automotive" {% if lead.industry == 'Automotive' %}selected{% endif %}>Automotive</option>
+                                             <option value="Retail & Hospitality" {% if lead.industry == 'Retail & Hospitality' or lead.industry == 'Retail' %}selected{% endif %}>Retail & Hospitality</option>
+                                             <option value="Religious / Nonprofit" {% if lead.industry == 'Religious / Nonprofit' or lead.industry == 'Religious' %}selected{% endif %}>Religious / Nonprofit</option>
+                                             <option value="Education" {% if lead.industry == 'Education' %}selected{% endif %}>Education</option>
+                                             <option value="Construction" {% if lead.industry == 'Construction' %}selected{% endif %}>Construction</option>
+                                             <option value="Commercial Property" {% if lead.industry == 'Commercial Property' %}selected{% endif %}>Commercial Property</option>
+                                         </select>
+                                     </td>
                                     {% elif col_key == 'sqf' %}<td style="font-weight:700">{{ "{:,}".format(lead.sqf) if lead.sqf else '--' }}</td>
                                     {% elif col_key == 'capacity' %}<td>{{ lead.capacity or '--' }}</td>
                                     {% elif col_key == 'value' %}<td style="font-weight:800; color:var(--brand)">${{ "{:,.0f}".format(lead.estimated_annual_value) if lead.estimated_annual_value else '0' }}</td>
-                                    {% elif col_key == 'priority' %}<td><span class="sigma-unit-pill" style="background:#fff7ed; color:#c2410c">{{ lead.priority_level or 'Normal' }}</span></td>
+                                    {% elif col_key == 'priority' %}
+                                     <td onclick="event.stopPropagation();">
+                                         <select onchange="quickUpdateLead({{ lead.id }}, 'priority_level', this.value, this)" class="sigma-pill-select" style="{% if lead.priority_level == 'Needs Call Now' or lead.priority_level == 'CRITICAL' %}background:#fee2e2; color:#991b1b; border-color:#fca5a5;{% elif lead.priority_level == 'High' or lead.priority_level == 'HIGH' %}background:#ffedd5; color:#c2410c; border-color:#fdba74;{% elif lead.priority_level == 'Follow up soon' or lead.priority_level == 'STANDARD' %}background:#fef3c7; color:#b45309; border-color:#fde047;{% else %}background:#f1f5f9; color:#64748b; border-color:#cbd5e1;{% endif %}">
+                                             <option value="Needs Call Now" {% if lead.priority_level == 'Needs Call Now' or lead.priority_level == 'CRITICAL' %}selected{% endif %}>🔥 Needs Call Now</option>
+                                             <option value="High" {% if lead.priority_level == 'High' or lead.priority_level == 'HIGH' %}selected{% endif %}>High</option>
+                                             <option value="Follow up soon" {% if lead.priority_level == 'Follow up soon' or lead.priority_level == 'STANDARD' %}selected{% endif %}>Follow Up Soon</option>
+                                             <option value="Just looking" {% if lead.priority_level == 'Just looking' or lead.priority_level == 'LOW' %}selected{% endif %}>Just Looking</option>
+                                             <option value="Normal" {% if not lead.priority_level or lead.priority_level == 'Normal' %}selected{% endif %}>Normal</option>
+                                         </select>
+                                     </td>
                                     {% elif col_key == 'address' %}<td><small>{{ lead.address or '--' }}</small></td>
                                     {% elif col_key == 'city' %}<td>{{ lead.city or '--' }}</td>
                                     {% elif col_key == 'state' %}<td>{{ lead.state or '--' }}</td>
@@ -195,11 +306,73 @@
                                     {% elif col_key == 'phone' %}<td><a href="tel:{{ lead.phone }}" style="color:var(--brand); text-decoration:none">{{ lead.phone or '--' }}</a></td>
                                     {% elif col_key == 'email' %}<td><small>{{ lead.email or '--' }}</small></td>
                                     {% elif col_key == 'input_date' %}<td>{{ lead.input_date|format_mdy or '--' }}</td>
-                                    {% elif col_key == 'next_action' %}<td>{{ lead.next_action_date or '--' }}</td>
-                                    {% elif col_key == 'activities' %}<td style="text-align:center; font-weight:800">{{ lead.activity_count or 0 }}</td>
-                                    {% elif col_key == 'source' %}<td>{{ lead.lead_source or '--' }}</td>
-                                    {% elif col_key == 'interest' %}<td>{{ lead.service_interest or '--' }}</td>
-                                    {% elif col_key == 'owner' %}<td>{% if lead.owner_id == 1 %}Humberto Dominguez{% elif lead.owner_id == 2 %}Silas Sync{% elif lead.owner_id == 3 %}Lauri Tells{% else %}--{% endif %}</td>
+                                    {% elif col_key == 'next_action' %}
+                                     <td onclick="event.stopPropagation();">
+                                         <div style="display: flex; align-items: center; gap: 0.35rem;">
+                                             <input type="date" value="{{ lead.next_action_date or '' }}" onchange="quickUpdateLead({{ lead.id }}, 'next_action_date', this.value, this)" class="sigma-inline-date" title="Click to pick date">
+                                             <div style="display: flex; gap: 0.2rem;">
+                                                 <button type="button" onclick="quickReschedule({{ lead.id }}, 0, this)" class="sigma-mini-btn" title="Today">Today</button>
+                                                 <button type="button" onclick="quickReschedule({{ lead.id }}, 1, this)" class="sigma-mini-btn" title="Tomorrow">+1d</button>
+                                                 <button type="button" onclick="quickReschedule({{ lead.id }}, 3, this)" class="sigma-mini-btn" title="+3 Days">+3d</button>
+                                                 <button type="button" onclick="quickReschedule({{ lead.id }}, 7, this)" class="sigma-mini-btn" title="+1 Week">+1w</button>
+                                             </div>
+                                         </div>
+                                     </td>
+                                     {% elif col_key == 'activities' %}
+                                     <td style="text-align:center; font-weight:800; cursor:pointer;" onclick="event.stopPropagation();" onmouseenter="showActivityHoverCard({{ lead.id }}, 'Lead', event, this)" onmouseleave="hideActivityHoverCard()">
+                                         <span class="sigma-unit-pill" style="background:#f1f5f9; color:#0f172a; font-weight:800; border:1px solid #cbd5e1;">{{ lead.activity_count or 0 }}</span>
+                                     </td>
+                                     {% elif col_key == 'source' %}
+                                     <td onclick="event.stopPropagation();">
+                                         <select onchange="quickUpdateLead({{ lead.id }}, 'lead_source', this.value, this)" class="sigma-inline-select">
+                                             <option value="Texas CCL API" {% if lead.lead_source == 'Texas CCL API' %}selected{% endif %}>Texas CCL API</option>
+                                             <option value="Texas Childcare Registry" {% if lead.lead_source == 'Texas Childcare Registry' %}selected{% endif %}>Texas Childcare Registry</option>
+                                             <option value="Website Quote Form" {% if lead.lead_source == 'Website Quote Form' %}selected{% endif %}>Website Quote Form</option>
+                                             <option value="Google" {% if lead.lead_source == 'Google' %}selected{% endif %}>Google Search</option>
+                                             <option value="Referral" {% if lead.lead_source == 'Referral' %}selected{% endif %}>Referral</option>
+                                             <option value="Cold Call" {% if lead.lead_source == 'Cold Call' %}selected{% endif %}>Outbound Outreach</option>
+                                             <option value="Flyer" {% if lead.lead_source == 'Flyer' %}selected{% endif %}>Direct Mail / Flyer</option>
+                                             <option value="Direct Lead" {% if lead.lead_source == 'Direct Lead' %}selected{% endif %}>Direct Inquiry</option>
+                                             <option value="Other" {% if lead.lead_source == 'Other' %}selected{% endif %}>Other</option>
+                                         </select>
+                                     </td>
+                                     {% elif col_key == 'interest' %}
+                                     <td onclick="event.stopPropagation();">
+                                         <select onchange="quickUpdateLead({{ lead.id }}, 'service_interest', this.value, this)" class="sigma-inline-select">
+                                             <option value="Janitorial" {% if lead.service_interest == 'Janitorial' or not lead.service_interest %}selected{% endif %}>Janitorial</option>
+                                             <option value="Post-Construction" {% if lead.service_interest == 'Post-Construction' %}selected{% endif %}>Post-Construction</option>
+                                             <option value="Window Cleaning" {% if lead.service_interest == 'Window Cleaning' %}selected{% endif %}>Window Cleaning</option>
+                                             <option value="Floor Care" {% if lead.service_interest == 'Floor Care' %}selected{% endif %}>Floor Care</option>
+                                         </select>
+                                     </td>
+                                     {% elif col_key == 'owner' %}
+                                     <td onclick="event.stopPropagation();">
+                                         <select onchange="quickUpdateLead({{ lead.id }}, 'owner_id', this.value, this)" class="sigma-inline-select">
+                                             <option value="1" {% if lead.owner_id == 1 %}selected{% endif %}>Humberto Dominguez</option>
+                                             <option value="2" {% if lead.owner_id == 2 %}selected{% endif %}>Silas Sync</option>
+                                             <option value="3" {% if lead.owner_id == 3 %}selected{% endif %}>Lauri Tells</option>
+                                             <option value="" {% if not lead.owner_id %}selected{% endif %}>-- Unassigned --</option>
+                                         </select>
+                                     </td>
+                                     {% elif col_key == 'quick_log' %}
+                                     <td onclick="event.stopPropagation();">
+                                         <div style="display: flex; gap: 0.35rem; align-items: center;">
+                                             <input type="text" placeholder="Call note..." onkeydown="if(event.key==='Enter') submitQuickLog({{ lead.id }}, 'Lead', this)" class="sigma-inline-date" style="width: 140px; font-weight: 500;">
+                                             <button type="button" onclick="submitQuickLog({{ lead.id }}, 'Lead', this.previousElementSibling)" class="sigma-mini-btn" title="Log touchpoint"><i class="fas fa-phone-alt" style="color:var(--brand)"></i> Log</button>
+                                         </div>
+                                     </td>
+                                     {% elif col_key == 'last_note' %}
+                                     <td><small style="font-weight:600; color:var(--slate-700); max-width:200px; display:inline-block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="{{ lead.last_note or '--' }}">{{ lead.last_note or '--' }}</small></td>
+                                     {% elif col_key == 'last_contact' %}
+                                     <td><small>{{ lead.last_contact.strftime('%m/%d/%Y') if lead.last_contact else '--' }}</small></td>
+                                     {% elif col_key == 'google_maps' %}
+                                     <td onclick="event.stopPropagation();">
+                                         {% if lead.address and lead.address != 'None' %}
+                                         <a href="https://www.google.com/maps/search/?api=1&query={{ (lead.address + ' ' + (lead.city or '') + ' ' + (lead.state or ''))|urlencode }}" target="_blank" class="sigma-mini-btn" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.25rem;"><i class="fas fa-map-marker-alt" style="color:#ef4444;"></i> GPS Nav</a>
+                                         {% else %}
+                                         <span style="color:var(--slate-400)">--</span>
+                                         {% endif %}
+                                     </td>
                                     {% endif %}
                                 {% endfor %}
                                 <td style="text-align: right;">
@@ -237,12 +410,12 @@
                     <div style="display: flex; gap: 0.75rem;">
                         {% if active_view == 'leads' %}
                             {% if page > 1 %}
-                            <a href="{{ url_for('admin_operations', view='leads', page=page-1, q=search_q, sort=sort_by, dir=sort_dir, active_only=request.args.get('active_only')) }}" class="isc-btn isc-btn-outline" style="height: 36px; padding: 0 1.25rem; font-size: 0.75rem; border-radius: 6px;">
+                            <a href="{{ url_for('admin_operations', view='leads', page=page-1, q=search_q, sort=sort_by, dir=sort_dir, active_only=request.args.get('active_only'), cols=active_cols_str) }}" class="isc-btn isc-btn-outline" style="height: 36px; padding: 0 1.25rem; font-size: 0.75rem; border-radius: 6px;">
                                 <i class="fas fa-chevron-left" style="margin-right: 0.5rem;"></i> Previous
                             </a>
                             {% endif %}
                             {% if page < total_pages %}
-                            <a href="{{ url_for('admin_operations', view='leads', page=page+1, q=search_q, sort=sort_by, dir=sort_dir, active_only=request.args.get('active_only')) }}" class="isc-btn isc-btn-outline" style="height: 36px; padding: 0 1.25rem; font-size: 0.75rem; border-radius: 6px;">
+                            <a href="{{ url_for('admin_operations', view='leads', page=page+1, q=search_q, sort=sort_by, dir=sort_dir, active_only=request.args.get('active_only'), cols=active_cols_str) }}" class="isc-btn isc-btn-outline" style="height: 36px; padding: 0 1.25rem; font-size: 0.75rem; border-radius: 6px;">
                                 Next <i class="fas fa-chevron-right" style="margin-left: 0.5rem;"></i>
                             </a>
                             {% endif %}
@@ -283,6 +456,8 @@
                                         <label class="sigma-col-label"><input type="checkbox" checked disabled> Company</label>
                                         <label class="sigma-col-label"><input type="checkbox" name="cols" value="status" {% if 'status' in active_cols %}checked{% endif %}> Status</label>
                                         <label class="sigma-col-label"><input type="checkbox" name="cols" value="contact" {% if 'contact' in active_cols %}checked{% endif %}> Manager</label>
+                                        <label class="sigma-col-label"><input type="checkbox" name="cols" value="facility" {% if 'facility' in active_cols or 'building' in active_cols %}checked{% endif %}> Facility Type</label>
+                                        <label class="sigma-col-label"><input type="checkbox" name="cols" value="industry" {% if 'industry' in active_cols %}checked{% endif %}> Industry</label>
                                         <label class="sigma-col-label"><input type="checkbox" name="cols" value="address" {% if 'address' in active_cols %}checked{% endif %}> Address</label>
                                         <label class="sigma-col-label"><input type="checkbox" name="cols" value="city" {% if 'city' in active_cols %}checked{% endif %}> City</label>
                                         <label class="sigma-col-label"><input type="checkbox" name="cols" value="state" {% if 'state' in active_cols %}checked{% endif %}> State</label>
@@ -297,6 +472,10 @@
                                         <label class="sigma-col-label"><input type="checkbox" name="cols" value="activities" {% if 'activities' in active_cols %}checked{% endif %}> Activity</label>
                                         <label class="sigma-col-label"><input type="checkbox" name="cols" value="start_date" {% if 'start_date' in active_cols %}checked{% endif %}> Started</label>
                                         <label class="sigma-col-label"><input type="checkbox" name="cols" value="website" {% if 'website' in active_cols %}checked{% endif %}> Website</label>
+                                        <label class="sigma-col-label"><input type="checkbox" name="cols" value="account_health" {% if 'account_health' in active_cols %}checked{% endif %}> 🟢 Client Health</label>
+                                        <label class="sigma-col-label"><input type="checkbox" name="cols" value="quick_log_acc" {% if 'quick_log_acc' in active_cols %}checked{% endif %}> ⚡ Quick Inspection</label>
+                                        <label class="sigma-col-label"><input type="checkbox" name="cols" value="last_note" {% if 'last_note' in active_cols %}checked{% endif %}> 📜 Last Note</label>
+                                        <label class="sigma-col-label"><input type="checkbox" name="cols" value="google_maps" {% if 'google_maps' in active_cols %}checked{% endif %}> 📍 GPS Nav</label>
                                     </div>
                                     <div style="margin-top: 2rem; display: flex; justify-content: space-between; border-top: 1px solid var(--slate-100); padding-top: 1.5rem;">
                                         <button type="button" onclick="resetColumnsAcc()" class="sigma-text-btn">Reset Default</button>
@@ -366,6 +545,8 @@
                                     <th data-col="company" onclick="iscSortAcc('company')" class="sticky-1">Company {% if sort_by == 'company' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
                                     {% elif col_key == 'status' %}<th data-col="status" onclick="iscSortAcc('status')" class="sticky-2">Status {% if sort_by == 'status' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
                                     {% elif col_key == 'contact' %}<th data-col="contact" onclick="iscSortAcc('contact')" class="sticky-3">Manager {% if sort_by == 'contact' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
+                                    {% elif col_key == 'building' or col_key == 'facility' %}<th data-col="facility" onclick="iscSortAcc('facility')">Facility Type {% if sort_by == 'facility' or sort_by == 'building' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
+                                    {% elif col_key == 'industry' %}<th data-col="industry" onclick="iscSortAcc('industry')">Industry {% if sort_by == 'industry' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
                                     {% elif col_key == 'address' %}<th data-col="address" onclick="iscSortAcc('address')">Address {% if sort_by == 'address' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
                                     {% elif col_key == 'city' %}<th data-col="city" onclick="iscSortAcc('city')">City {% if sort_by == 'city' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
                                     {% elif col_key == 'state' %}<th data-col="state" onclick="iscSortAcc('state')">State {% if sort_by == 'state' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
@@ -395,6 +576,8 @@
                                     <td class="sticky-1"><div class="sigma-unit-data"><div class="sigma-unit-primary">{{ client.company_name }}</div><div class="sigma-unit-secondary" style="font-weight: 500;">ACC-{{ client.customer_id }}</div></div></td>
                                     {% elif col_key == 'status' %}<td class="sticky-2"><span class="sigma-unit-pill" style="background:#f1f5f9; color:#475569">{{ client.status or 'Active' }}</span></td>
                                     {% elif col_key == 'contact' %}<td class="sticky-3"><div class="sigma-unit-data"><div class="sigma-unit-primary" style="font-size:0.85rem">{{ client.contact_person_name or '--' }}</div><div class="sigma-unit-secondary" style="font-weight: 500;">Main Manager</div></div></td>
+                                    {% elif col_key == 'building' or col_key == 'facility' %}<td>{{ client.facility_type or '--' }}</td>
+                                    {% elif col_key == 'industry' %}<td>{{ client.industry or '--' }}</td>
                                     {% elif col_key == 'address' %}<td><small style="font-weight:600; color:var(--slate-600)">{{ client.company_address or '--' }}</small></td>
                                     {% elif col_key == 'city' %}<td>{{ client.city or '--' }}</td>
                                     {% elif col_key == 'state' %}<td>{{ client.state or '--' }}</td>
@@ -406,7 +589,10 @@
                                     {% elif col_key == 'cycle' %}<td>{{ client.traffic_cycle or '--' }}</td>
                                     {% elif col_key == 'quote' %}<td>{{ client.quote_number or '--' }}</td>
                                     {% elif col_key == 'frequency' %}<td>{{ client.frequency or '--' }}</td>
-                                    {% elif col_key == 'activities' %}<td style="text-align:center; font-weight:800">{{ client.activity_count or 0 }}</td>
+                                    {% elif col_key == 'activities' %}
+                                     <td style="text-align:center; font-weight:800; cursor:pointer;" onclick="event.stopPropagation();" onmouseenter="showActivityHoverCard({{ client.customer_id }}, 'Account', event, this)" onmouseleave="hideActivityHoverCard()">
+                                         <span class="sigma-unit-pill" style="background:#f1f5f9; color:#0f172a; font-weight:800; border:1px solid #cbd5e1;">{{ client.activity_count or 0 }}</span>
+                                     </td>
                                     {% elif col_key == 'start_date' %}<td>{{ client.start_date or '--' }}</td>
                                     {% elif col_key == 'website' %}<td><small>{{ client.website or '--' }}</small></td>
                                     {% endif %}
@@ -976,6 +1162,7 @@
                                 <option value="Office">Office Space</option>
                                 <option value="Medical">Medical / Clinical</option>
                                 <option value="Warehouse">Warehouse / Industrial</option>
+                                <option value="Automotive">Automotive / Dealership</option>
                                 <option value="Retail">Retail Space</option>
                                 <option value="Church">Church / Sanctuary</option>
                                 <option value="School">School / Educational</option>
@@ -995,8 +1182,11 @@
                             <label>Status</label>
                             <select id="edit-lead-status" name="status" class="sigma-input">
                                 <option value="New">New</option>
+                                <option value="Active">Active</option>
                                 <option value="Contacted">Contacted</option>
+                                <option value="Qualified">Qualified</option>
                                 <option value="Trained">Trained</option>
+                                <option value="Do Not Call (DNC)">🚫 Do Not Call (DNC)</option>
                                 <option value="Lost">Lost</option>
                             </select>
                         </div>
@@ -1008,16 +1198,22 @@
                     <div class="sigma-field">
                         <label>Lead Source</label>
                         <select id="edit-lead-source" name="lead_source" class="sigma-input">
-                            <option value="Google">Google Search</option>
-                            <option value="Referral">Referral</option>
-                            <option value="Flyer">Flyer</option>
-                            <option value="Cold Call">Outreach</option>
+                            <option value="Texas CCL API">Texas CCL API (Active State Feed)</option>
+                            <option value="Texas Childcare Registry">Texas Childcare Registry (Master Import)</option>
+                            <option value="Website Quote Form">Website Quote Form (Inbound Web)</option>
+                            <option value="Google">Google Search / Organic SEO</option>
+                            <option value="Referral">Referral / Word-of-Mouth</option>
+                            <option value="Cold Call">Outbound Outreach</option>
+                            <option value="Flyer">Direct Mail / Flyer</option>
+                            <option value="Direct Lead">Direct Inquiry</option>
+                            <option value="Other">Other Channel</option>
                         </select>
                     </div>
                     <div class="sigma-field">
                         <label>Priority</label>
                         <select id="edit-lead-priority" name="priority_level" class="sigma-input">
                             <option value="Needs Call Now">CRITICAL</option>
+                            <option value="High">HIGH</option>
                             <option value="Follow up soon">STANDARD</option>
                             <option value="Just looking">LOW</option>
                         </select>
@@ -1162,6 +1358,7 @@
                                 <option value="Office">Office Space</option>
                                 <option value="Medical">Medical / Clinical</option>
                                 <option value="Warehouse">Warehouse / Industrial</option>
+                                <option value="Automotive">Automotive / Dealership</option>
                                 <option value="Retail">Retail Space</option>
                                 <option value="Church">Church / Sanctuary</option>
                                 <option value="School">School / Educational</option>
@@ -1191,8 +1388,8 @@
                         </div>
                     </div>
                     <div class="sigma-row sigma-row-60-40">
-                        <div class="sigma-field"><label>How they found us</label><select name="lead_source" class="sigma-input"><option value="Google">Google Search</option><option value="Referral">Referral</option><option value="Flyer">Flyer</option><option value="Cold Call">Outreach</option></select></div>
-                        <div class="sigma-field"><label>Importance</label><select name="priority_level" class="sigma-input"><option value="Needs Call Now">CRITICAL</option><option value="Follow up soon">STANDARD</option><option value="Just looking">LOW</option></select></div>
+                        <div class="sigma-field"><label>How they found us</label><select name="lead_source" class="sigma-input"><option value="Texas CCL API">Texas CCL API (Active State Feed)</option><option value="Texas Childcare Registry">Texas Childcare Registry (Master Import)</option><option value="Website Quote Form">Website Quote Form (Inbound Web)</option><option value="Google">Google Search / Organic SEO</option><option value="Referral">Referral / Word-of-Mouth</option><option value="Cold Call">Outbound Outreach</option><option value="Flyer">Direct Mail / Flyer</option><option value="Direct Lead">Direct Inquiry</option><option value="Other">Other Channel</option></select></div>
+                        <div class="sigma-field"><label>Importance</label><select name="priority_level" class="sigma-input"><option value="Needs Call Now">CRITICAL</option><option value="High">HIGH</option><option value="Follow up soon">STANDARD</option><option value="Just looking">LOW</option></select></div>
                     </div>
                     <div class="sigma-field"><label>Work Notes</label><textarea name="notes" placeholder="Initial company insights..." class="sigma-input" style="height: 100px; resize: none;"></textarea></div>
                 </div>
@@ -1236,11 +1433,183 @@
     </div>
 </div>
 
+<!-- Instant Activity Hover Card Popover (Interactive Scope) -->
+<div id="sigma-hover-card-popover" onmouseenter="keepActivityHoverCard()" onmouseleave="hideActivityHoverCard()" style="display: none; position: fixed; z-index: 99999; background: #0f172a; color: #ffffff; padding: 1.25rem; border-radius: 1rem; width: 340px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); border: 1px solid #334155; pointer-events: auto; transition: opacity 0.15s ease;">
+    <div style="font-size: 0.7rem; font-weight: 900; text-transform: uppercase; color: #94a3b8; margin-bottom: 0.75rem; letter-spacing: 0.05em; display: flex; justify-content: space-between; border-bottom: 1px solid #1e293b; padding-bottom: 0.5rem;">
+        <span><i class="fas fa-history" style="color: var(--brand); margin-right: 0.35rem;"></i> Recent Touchpoints</span>
+        <span style="color: var(--brand); font-weight: 800;">Last 5</span>
+    </div>
+    <div id="hover-card-body" style="display: flex; flex-direction: column; gap: 0.65rem; font-size: 0.8rem;">
+        <!-- Activity items dynamically injected here -->
+    </div>
+    <button id="hover-card-edit-btn" onclick="openHoverTargetModal()" style="margin-top:0.75rem; width:100%; background:var(--brand); border:none; color:white; padding:0.45rem; border-radius:0.6rem; font-size:0.75rem; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-center:center; gap:0.35rem;">
+        <i class="fas fa-edit"></i> Edit / Add Touchpoints
+    </button>
+</div>
+
 <script>
     let currentLeadId = null;
     let currentAccountId = null;
     let currentScope = []; 
-    const library = {{ library|safe }};
+    let currentHoverId = null;
+    let currentHoverType = 'Lead';
+    let hoverTimeout = null;
+    const activityCache = {};
+
+    async function submitQuickLog(id, type, inputElement) {
+        if (!inputElement) return;
+        const note = inputElement.value.trim();
+        if (!note) return;
+        
+        try {
+            const res = await fetch('/api/v1/activities/quick-log', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ parent_id: id, parent_type: type, note: note })
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                inputElement.value = '';
+                inputElement.placeholder = '✓ Logged!';
+                inputElement.style.transition = 'all 0.2s ease';
+                inputElement.style.boxShadow = '0 0 0 3px #86efac';
+                setTimeout(() => {
+                    inputElement.placeholder = 'Call note...';
+                    inputElement.style.boxShadow = 'none';
+                }, 1500);
+            }
+        } catch (err) {
+            console.error("Quick log error:", err);
+        }
+    }
+
+    function keepActivityHoverCard() {
+        if (hoverTimeout) {
+            clearTimeout(hoverTimeout);
+            hoverTimeout = null;
+        }
+    }
+
+    async function showActivityHoverCard(id, type, event, element) {
+        keepActivityHoverCard();
+        currentHoverId = id;
+        currentHoverType = type;
+
+        const popover = document.getElementById('sigma-hover-card-popover');
+        const body = document.getElementById('hover-card-body');
+        if (!popover || !body) return;
+
+        const rect = element.getBoundingClientRect();
+        popover.style.top = Math.min(rect.bottom + 4, window.innerHeight - 340) + 'px';
+        popover.style.left = Math.min(Math.max(10, rect.left - 120), window.innerWidth - 360) + 'px';
+        popover.style.display = 'block';
+        popover.style.opacity = '1';
+
+        const cacheKey = `${type}_${id}`;
+        if (activityCache[cacheKey]) {
+            renderHoverCardItems(activityCache[cacheKey], id, type);
+            return;
+        }
+
+        body.innerHTML = '<div style="color:#94a3b8; font-size:0.75rem;"><i class="fas fa-spinner fa-spin" style="margin-right:0.35rem;"></i> Fetching touchpoints...</div>';
+        try {
+            const res = await fetch(`/api/v1/activities/${type}/${id}`);
+            const data = await res.json();
+            if (data.status === 'success' && data.activities) {
+                activityCache[cacheKey] = data.activities;
+                renderHoverCardItems(data.activities, id, type);
+            } else {
+                body.innerHTML = '<div style="color:#94a3b8; font-size:0.75rem;">No activities logged yet.</div>';
+            }
+        } catch (e) {
+            body.innerHTML = '<div style="color:#f87171; font-size:0.75rem;">Failed to load activities.</div>';
+        }
+    }
+
+    function renderHoverCardItems(items, id, type) {
+        const body = document.getElementById('hover-card-body');
+        if (!items || items.length === 0) {
+            body.innerHTML = '<div style="color:#94a3b8; font-size:0.75rem;">No activities logged yet.</div>';
+            return;
+        }
+        body.innerHTML = items.map(act => {
+            let icon = 'fa-sticky-note';
+            const t = (act.type || '').toUpperCase();
+            if (t.includes('CALL') || t.includes('PHONE')) icon = 'fa-phone-alt';
+            else if (t.includes('EMAIL')) icon = 'fa-envelope';
+            else if (t.includes('VISIT')) icon = 'fa-walking';
+            else if (t.includes('CONVERT')) icon = 'fa-check-circle';
+            
+            return `
+                <div onclick="openHoverTargetModal()" style="border-bottom: 1px solid #1e293b; padding: 0.35rem 0.4rem; border-radius: 0.4rem; cursor: pointer; transition: background 0.15s ease;" onmouseover="this.style.background='#1e293b'" onmouseout="this.style.background='transparent'">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.15rem;">
+                        <span style="font-weight: 800; color: #38bdf8; font-size: 0.75rem;"><i class="fas ${icon}" style="margin-right:0.35rem;"></i>${act.type}</span>
+                        <span style="font-size: 0.65rem; color: #64748b;">${act.timestamp}</span>
+                    </div>
+                    <div style="color: #e2e8f0; font-size: 0.78rem; line-height: 1.3; font-weight: 500;">${act.description}</div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function openHoverTargetModal() {
+        if (!currentHoverId) return;
+        hideActivityHoverCardNow();
+        if (currentHoverType.lower === 'account') {
+            openAccountCommand(currentHoverId, 'activities');
+        } else {
+            openLeadCommand(currentHoverId, 'activities');
+        }
+    }
+
+    function hideActivityHoverCard() {
+        hoverTimeout = setTimeout(() => {
+            hideActivityHoverCardNow();
+        }, 250);
+    }
+
+    function hideActivityHoverCardNow() {
+        const popover = document.getElementById('sigma-hover-card-popover');
+        if (popover) popover.style.display = 'none';
+    }
+    async function quickUpdateLead(leadId, field, value, element) {
+        try {
+            const body = {};
+            body[field] = value;
+            const res = await fetch(`/api/v1/leads/${leadId}`, {
+                method: 'PATCH',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(body)
+            });
+            if (!res.ok) throw new Error("Update failed: " + res.status);
+            
+            if (element) {
+                const origShadow = element.style.boxShadow;
+                element.style.transition = 'all 0.2s ease';
+                element.style.boxShadow = '0 0 0 3px #86efac';
+                setTimeout(() => { element.style.boxShadow = origShadow || 'none'; }, 1000);
+            }
+        } catch (err) {
+            console.error("Quick update error:", err);
+            if (element) {
+                element.style.boxShadow = '0 0 0 3px #fca5a5';
+            }
+        }
+    }
+
+    function quickReschedule(leadId, daysToAdd, btnElement) {
+        const targetDate = new Date();
+        targetDate.setDate(targetDate.getDate() + daysToAdd);
+        const dateStr = targetDate.toISOString().split('T')[0];
+        
+        const row = btnElement.closest('tr');
+        if (row) {
+            const dateInput = row.querySelector('input[type="date"]');
+            if (dateInput) dateInput.value = dateStr;
+        }
+        
+        quickUpdateLead(leadId, 'next_action_date', dateStr, btnElement);
+    }
 
     function toggleColumnMenu() { const m = document.getElementById('col-mgr-menu'); if(m) m.style.display = m.style.display === 'none' ? 'block' : 'none'; }
     function toggleColumnMenuAcc() { const m = document.getElementById('col-mgr-menu-acc'); if(m) m.style.display = m.style.display === 'none' ? 'block' : 'none'; }
