@@ -109,10 +109,15 @@ with app.app_context():
                         can_delete BOOLEAN DEFAULT FALSE
                     );
                 ''')
-                # 7. --- SigmaFidelity™ VNet Maintenance Cleanup (BUG-046) ---
+            # 7. --- SigmaFidelity™ VNet Maintenance Cleanup (BUG-046) ---
+            try:
                 cur.execute('DELETE FROM "GlobalActivities" WHERE parent_id = 44518 AND parent_type = \'Lead\';')
+                cur.execute('DELETE FROM "GlobalActivities" WHERE parent_id IN (SELECT id FROM "Leads" WHERE center_name ILIKE \'%Test Lead%\' OR lead_source = \'Executive Test System\') AND parent_type = \'Lead\';')
                 cur.execute('DELETE FROM "Leads" WHERE id = 44518 OR center_name ILIKE \'%DFW6%\' OR center_name ILIKE \'%Test Lead%\' OR lead_source = \'Executive Test System\';')
-            conn.commit()
+                conn.commit()
+                print("[BOOT] Database VNet Cleanup Executed & Committed.", flush=True)
+            except Exception as clean_err:
+                print(f"[BOOT] VNet Cleanup Notice: {clean_err}", flush=True)
             print("[BOOT] Database Schema Hardening & VNet Maintenance Completed & Committed.", flush=True)
         except Exception as schema_err:
             conn.rollback()
