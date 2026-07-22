@@ -31,12 +31,15 @@ with conn.cursor() as cur:
     accounts = cur.fetchall()
     cur.execute('SELECT * FROM \"RolePermissions\";')
     role_perms = cur.fetchall()
+    cur.execute('SELECT * FROM \"Users\";')
+    users = cur.fetchall()
 
 with open('/app/seed_data.json', 'w') as f:
     json.dump({
         'leads': [serialize_row(l) for l in leads],
         'accounts': [serialize_row(a) for a in accounts],
-        'role_permissions': [serialize_row(rp) for rp in role_perms]
+        'role_permissions': [serialize_row(rp) for rp in role_perms],
+        'users': [serialize_row(u) for u in users]
     }, f)
 "
 docker cp hwb_web_app:/app/seed_data.json HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/scripts/seed_data.json

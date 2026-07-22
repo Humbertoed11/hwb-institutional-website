@@ -160,6 +160,25 @@ with app.app_context():
                                     can_edit = EXCLUDED.can_edit,
                                     can_delete = EXCLUDED.can_delete;
                             ''', (rp.get('id'), rp.get('role'), rp.get('module'), rp.get('can_view'), rp.get('can_edit'), rp.get('can_delete')))
+
+                        # Seed Users Table
+                        for u in sdata.get('users', []):
+                            cur.execute('''
+                                INSERT INTO "Users" (id, username, password_hash, full_name, email, role, status, force_pwd_reset, custom_permissions)
+                                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                                ON CONFLICT (id) DO UPDATE SET
+                                    username = EXCLUDED.username,
+                                    password_hash = EXCLUDED.password_hash,
+                                    full_name = EXCLUDED.full_name,
+                                    email = EXCLUDED.email,
+                                    role = EXCLUDED.role,
+                                    status = EXCLUDED.status,
+                                    force_pwd_reset = EXCLUDED.force_pwd_reset,
+                                    custom_permissions = EXCLUDED.custom_permissions;
+                            ''', (
+                                u.get('id'), u.get('username'), u.get('password_hash'), u.get('full_name'), u.get('email'), u.get('role'),
+                                u.get('status', 'Active'), u.get('force_pwd_reset', False), u.get('custom_permissions')
+                            ))
             conn.commit()
             print("[BOOT] Automated Azure Data Ingestion Completed Successfully!", flush=True)
         except Exception as se:
