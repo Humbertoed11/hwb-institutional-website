@@ -92,6 +92,18 @@ with app.app_context():
                 );
             ''')
 
+            # Ensure RolePermissions exists
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS "RolePermissions" (
+                    id SERIAL PRIMARY KEY,
+                    role TEXT NOT NULL,
+                    module TEXT NOT NULL,
+                    can_view BOOLEAN DEFAULT FALSE,
+                    can_edit BOOLEAN DEFAULT FALSE,
+                    can_delete BOOLEAN DEFAULT FALSE
+                );
+            ''')
+
             # 5. --- SigmaFidelity™ Self-Healing Azure Database Seeder (BUG-044) ---
             try:
                 cur.execute('SELECT COUNT(*) FROM "Leads";')
@@ -119,12 +131,26 @@ with app.app_context():
                                     sqf = EXCLUDED.sqf,
                                     capacity = EXCLUDED.capacity,
                                     estimated_annual_value = EXCLUDED.estimated_annual_value,
-                                    is_dnc = EXCLUDED.is_dnc;
+                                    is_dnc = EXCLUDED.is_dnc,
+                                    is_converted = EXCLUDED.is_converted;
                             ''', (
                                 l.get('id'), l.get('center_name'), l.get('lead_source'), l.get('status'), l.get('phone'), l.get('email'), l.get('address'), l.get('city'), l.get('state'), l.get('zipcode'),
                                 l.get('sqf'), l.get('capacity'), l.get('estimated_annual_value'), l.get('priority_level'), l.get('facility_type'), l.get('decision_maker'),
                                 l.get('job_title'), l.get('traffic_cycle'), l.get('service_interest'), l.get('next_action_date'), l.get('is_dnc', False), l.get('is_converted', False), l.get('input_date')
                             ))
+                        
+                        # Seed RolePermissions Table
+                        for rp in sdata.get('role_permissions', []):
+                            cur.execute('''
+                                INSERT INTO "RolePermissions" (id, role, module, can_view, can_edit, can_delete)
+                                VALUES (%s, %s, %s, %s, %s, %s)
+                                ON CONFLICT (id) DO UPDATE SET
+                                    role = EXCLUDED.role,
+                                    module = EXCLUDED.module,
+                                    can_view = EXCLUDED.can_view,
+                                    can_edit = EXCLUDED.can_edit,
+                                    can_delete = EXCLUDED.can_delete;
+                            ''', (rp.get('id'), rp.get('role'), rp.get('module'), rp.get('can_view'), rp.get('can_edit'), rp.get('can_delete')))
                     print("[BOOT] Automated Azure Data Ingestion Completed Successfully!", flush=True)
             except Exception as se:
                 print(f"[BOOT] Seeder Warning: {se}", flush=True)
