@@ -501,6 +501,24 @@ def debug_login():
     login_user(User(1, 'admin', 'Admin'))
     return redirect(url_for('admin_operations'))
 
+@app.route('/debug-schema')
+def debug_schema():
+    conn = get_db(app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'Leads';")
+            leads_cols = [dict(r) for r in cur.fetchall()]
+            cur.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public';")
+            tables = [r[0] for r in cur.fetchall()]
+            return jsonify({
+                "leads_columns": leads_cols,
+                "tables": tables
+            }), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
+
 @app.route('/debug-leads-count')
 def debug_leads_count():
     conn = get_db(app.config['DATABASE_URL'])
