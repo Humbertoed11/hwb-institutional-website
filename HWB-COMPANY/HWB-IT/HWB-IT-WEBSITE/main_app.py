@@ -529,6 +529,36 @@ def debug_login():
     login_user(User(1, 'admin', 'Admin'))
     return redirect(url_for('admin_operations'))
 
+@app.route('/debug-check-ids')
+def debug_check_ids():
+    conn = get_db(app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            cur.execute('SELECT id FROM "Leads";')
+            db_ids = set(r[0] for r in cur.fetchall())
+            
+            seed_path = os.path.join(os.path.dirname(__file__), 'scripts', 'seed_data.json')
+            with open(seed_path, 'r') as sf:
+                sdata = json.load(sf)
+                seed_ids = set(l['id'] for l in sdata.get('leads', []))
+            
+            common = db_ids.intersection(seed_ids)
+            only_db = db_ids - seed_ids
+            only_seed = seed_ids - db_ids
+            
+            return jsonify({
+                "db_ids_count": len(db_ids),
+                "seed_ids_count": len(seed_ids),
+                "intersection_count": len(common),
+                "only_in_db_count": len(only_db),
+                "only_in_seed_count": len(only_seed),
+                "sample_only_in_seed": list(only_seed)[:5]
+            }), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
+
 @app.route('/debug-file')
 def debug_file():
     path = request.args.get('path')
