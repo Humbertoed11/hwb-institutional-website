@@ -545,6 +545,19 @@ def debug_login():
     login_user(User(1, 'admin', 'Admin'))
     return redirect(url_for('admin_operations'))
 
+@app.route('/debug-leads-count')
+def debug_leads_count():
+    conn = get_db(app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            cur.execute('SELECT COUNT(*) FROM "Leads";')
+            total = cur.fetchone()[0]
+        return jsonify({"total": total}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
+
 @app.route('/', endpoint='index')
 def index(): return render_template('index.html')
 
