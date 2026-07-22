@@ -116,79 +116,92 @@ with app.app_context():
             print(f"[BOOT] Schema Migration Error (Rolled Back): {schema_err}", flush=True)
 
         # 5. --- SigmaFidelity™ Self-Healing Azure Database Seeder (BUG-044) ---
-        try:
-            with conn.cursor() as cur:
-                cur.execute('SELECT COUNT(*) FROM "Leads";')
-                az_lead_count = cur.fetchone()[0]
-                seed_path = os.path.join(os.path.dirname(__file__), 'scripts', 'seed_data.json')
-                if os.path.exists(seed_path):
-                    print(f"[BOOT] Force-syncing 29,879 leads & values to Azure DB ({az_lead_count} current rows)...", flush=True)
-                    with open(seed_path, 'r') as sf:
-                        sdata = json.load(sf)
-                        for l in sdata.get('leads', []):
-                            cur.execute('''
-                                INSERT INTO "Leads" (
-                                    id, center_name, lead_source, status, phone, email, address, city, state, zipcode,
-                                    sqf, capacity, estimated_annual_value, priority_level, facility_type, decision_maker,
-                                    job_title, traffic_cycle, service_interest, next_action_date, is_dnc, is_converted, input_date
-                                ) VALUES (
-                                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
-                                ) ON CONFLICT (id) DO UPDATE SET
-                                    center_name = EXCLUDED.center_name,
-                                    lead_source = EXCLUDED.lead_source,
-                                    status = EXCLUDED.status,
-                                    phone = EXCLUDED.phone,
-                                    email = EXCLUDED.email,
-                                    sqf = EXCLUDED.sqf,
-                                    capacity = EXCLUDED.capacity,
-                                    estimated_annual_value = EXCLUDED.estimated_annual_value,
-                                    is_dnc = EXCLUDED.is_dnc,
-                                    is_converted = EXCLUDED.is_converted;
-                            ''', (
-                                l.get('id'), l.get('center_name'), l.get('lead_source'), l.get('status'), l.get('phone'), l.get('email'), l.get('address'), l.get('city'), l.get('state'), l.get('zipcode'),
-                                l.get('sqf'), l.get('capacity'), l.get('estimated_annual_value'), l.get('priority_level'), l.get('facility_type'), l.get('decision_maker'),
-                                l.get('job_title'), l.get('traffic_cycle'), l.get('service_interest'), l.get('next_action_date'), l.get('is_dnc', False), l.get('is_converted', False), l.get('input_date')
-                            ))
-                        
-                        # Seed RolePermissions Table
-                        for rp in sdata.get('role_permissions', []):
-                            cur.execute('''
-                                INSERT INTO "RolePermissions" (id, role, module, can_view, can_edit, can_delete)
-                                VALUES (%s, %s, %s, %s, %s, %s)
-                                ON CONFLICT (id) DO UPDATE SET
-                                    role = EXCLUDED.role,
-                                    module = EXCLUDED.module,
-                                    can_view = EXCLUDED.can_view,
-                                    can_edit = EXCLUDED.can_edit,
-                                    can_delete = EXCLUDED.can_delete;
-                            ''', (rp.get('id'), rp.get('role'), rp.get('module'), rp.get('can_view'), rp.get('can_edit'), rp.get('can_delete')))
-
-                        # Seed Users Table
-                        for u in sdata.get('users', []):
-                            cur.execute('''
-                                INSERT INTO "Users" (id, username, password_hash, full_name, email, role, status, force_pwd_reset, custom_permissions)
-                                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                                ON CONFLICT (id) DO UPDATE SET
-                                    username = EXCLUDED.username,
-                                    password_hash = EXCLUDED.password_hash,
-                                    full_name = EXCLUDED.full_name,
-                                    email = EXCLUDED.email,
-                                    role = EXCLUDED.role,
-                                    status = EXCLUDED.status,
-                                    force_pwd_reset = EXCLUDED.force_pwd_reset,
-                                    custom_permissions = EXCLUDED.custom_permissions;
-                            ''', (
-                                u.get('id'), u.get('username'), u.get('password_hash'), u.get('full_name'), u.get('email'), u.get('role'),
-                                u.get('status', 'Active'), u.get('force_pwd_reset', False), u.get('custom_permissions')
-                            ))
-            conn.commit()
-            print("[BOOT] Automated Azure Data Ingestion Completed Successfully!", flush=True)
-        except Exception as se:
-            conn.rollback()
-            print(f"[BOOT] Seeder Warning (Rolled Back): {se}", flush=True)
-
         if "conn" in locals() and conn: conn.close()
+        
+        import threading
+        
+        def run_seeder_async(db_url, seed_path):
+            try:
+                print("[BOOT] Async database seeder thread started.", flush=True)
+                conn = get_db(db_url)
+                try:
+                    with conn.cursor() as cur:
+                        cur.execute('SELECT COUNT(*) FROM "Leads";')
+                        az_lead_count = cur.fetchone()[0]
+                        print(f"[BOOT] Async force-syncing 29,879 leads & values to Azure DB ({az_lead_count} current rows)...", flush=True)
+                        with open(seed_path, 'r') as sf:
+                            sdata = json.load(sf)
+                            for l in sdata.get('leads', []):
+                                cur.execute('''
+                                    INSERT INTO "Leads" (
+                                        id, center_name, lead_source, status, phone, email, address, city, state, zipcode,
+                                        sqf, capacity, estimated_annual_value, priority_level, facility_type, decision_maker,
+                                        job_title, traffic_cycle, service_interest, next_action_date, is_dnc, is_converted, input_date
+                                    ) VALUES (
+                                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                                    ) ON CONFLICT (id) DO UPDATE SET
+                                        center_name = EXCLUDED.center_name,
+                                        lead_source = EXCLUDED.lead_source,
+                                        status = EXCLUDED.status,
+                                        phone = EXCLUDED.phone,
+                                        email = EXCLUDED.email,
+                                        sqf = EXCLUDED.sqf,
+                                        capacity = EXCLUDED.capacity,
+                                        estimated_annual_value = EXCLUDED.estimated_annual_value,
+                                        is_dnc = EXCLUDED.is_dnc,
+                                        is_converted = EXCLUDED.is_converted;
+                                ''', (
+                                    l.get('id'), l.get('center_name'), l.get('lead_source'), l.get('status'), l.get('phone'), l.get('email'), l.get('address'), l.get('city'), l.get('state'), l.get('zipcode'),
+                                    l.get('sqf'), l.get('capacity'), l.get('estimated_annual_value'), l.get('priority_level'), l.get('facility_type'), l.get('decision_maker'),
+                                    l.get('job_title'), l.get('traffic_cycle'), l.get('service_interest'), l.get('next_action_date'), l.get('is_dnc', False), l.get('is_converted', False), l.get('input_date')
+                                ))
+                            
+                            # Seed RolePermissions Table
+                            for rp in sdata.get('role_permissions', []):
+                                cur.execute('''
+                                    INSERT INTO "RolePermissions" (id, role, module, can_view, can_edit, can_delete)
+                                    VALUES (%s, %s, %s, %s, %s, %s)
+                                    ON CONFLICT (id) DO UPDATE SET
+                                        role = EXCLUDED.role,
+                                        module = EXCLUDED.module,
+                                        can_view = EXCLUDED.can_view,
+                                        can_edit = EXCLUDED.can_edit,
+                                        can_delete = EXCLUDED.can_delete;
+                                ''', (rp.get('id'), rp.get('role'), rp.get('module'), rp.get('can_view'), rp.get('can_edit'), rp.get('can_delete')))
+                            
+                            # Seed Users Table
+                            for u in sdata.get('users', []):
+                                cur.execute('''
+                                    INSERT INTO "Users" (id, username, password_hash, full_name, email, role, status, force_pwd_reset, custom_permissions)
+                                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                                    ON CONFLICT (id) DO UPDATE SET
+                                        username = EXCLUDED.username,
+                                        password_hash = EXCLUDED.password_hash,
+                                        full_name = EXCLUDED.full_name,
+                                        email = EXCLUDED.email,
+                                        role = EXCLUDED.role,
+                                        status = EXCLUDED.status,
+                                        force_pwd_reset = EXCLUDED.force_pwd_reset,
+                                        custom_permissions = EXCLUDED.custom_permissions;
+                                ''', (
+                                    u.get('id'), u.get('username'), u.get('password_hash'), u.get('full_name'), u.get('email'), u.get('role'),
+                                    u.get('status', 'Active'), u.get('force_pwd_reset', False), u.get('custom_permissions')
+                                ))
+                    conn.commit()
+                    print("[BOOT] Async Automated Azure Data Ingestion Completed Successfully!", flush=True)
+                except Exception as se:
+                    conn.rollback()
+                    print(f"[BOOT] Async Seeder Warning (Rolled Back): {se}", flush=True)
+                finally:
+                    conn.close()
+            except Exception as thread_err:
+                print(f"[BOOT] Async Seeder Thread Error: {thread_err}", flush=True)
+        
+        seed_path = os.path.join(os.path.dirname(__file__), 'scripts', 'seed_data.json')
+        if os.path.exists(seed_path):
+            threading.Thread(target=run_seeder_async, args=(app.config['DATABASE_URL'], seed_path), daemon=True).start()
+            
         print("[BOOT] Infrastructure Handshake Complete.", flush=True)
     except Exception as e:
         print(f"[BOOT] Startup Handshake Warning: {e}", flush=True)
