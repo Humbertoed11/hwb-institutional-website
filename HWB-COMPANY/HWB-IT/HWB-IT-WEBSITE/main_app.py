@@ -109,8 +109,11 @@ with app.app_context():
                         can_delete BOOLEAN DEFAULT FALSE
                     );
                 ''')
+                # 7. --- SigmaFidelity™ VNet Maintenance Cleanup (BUG-046) ---
+                cur.execute('DELETE FROM "GlobalActivities" WHERE parent_id = 44518 AND parent_type = \'Lead\';')
+                cur.execute('DELETE FROM "Leads" WHERE id = 44518 OR center_name ILIKE \'%DFW6%\';')
             conn.commit()
-            print("[BOOT] Database Schema Hardening Completed & Committed.", flush=True)
+            print("[BOOT] Database Schema Hardening & VNet Maintenance Completed & Committed.", flush=True)
         except Exception as schema_err:
             conn.rollback()
             print(f"[BOOT] Schema Migration Error (Rolled Back): {schema_err}", flush=True)
