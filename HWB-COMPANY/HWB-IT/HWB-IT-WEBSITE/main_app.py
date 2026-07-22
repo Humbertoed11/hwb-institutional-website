@@ -71,7 +71,10 @@ with app.app_context():
                 cur.execute('ALTER TABLE "Customers" ADD COLUMN IF NOT EXISTS billing_address TEXT;')
                 cur.execute('ALTER TABLE "Customers" ADD COLUMN IF NOT EXISTS contract_period TEXT;')
                 
-                # 3. Ensure GlobalActivities exists
+                # 3. Hardening "Leads" Table
+                cur.execute('ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS is_dnc BOOLEAN DEFAULT FALSE;')
+                
+                # 4. Ensure GlobalActivities exists
                 cur.execute('''
                     CREATE TABLE IF NOT EXISTS "GlobalActivities" (
                         id SERIAL PRIMARY KEY,
@@ -83,7 +86,7 @@ with app.app_context():
                     );
                 ''')
                 
-                # 4. Ensure SigmaInteractionLog exists (Self-Healing telemetry table)
+                # 5. Ensure SigmaInteractionLog exists (Self-Healing telemetry table)
                 cur.execute('''
                     CREATE TABLE IF NOT EXISTS "SigmaInteractionLog" (
                         id SERIAL PRIMARY KEY,
@@ -95,7 +98,7 @@ with app.app_context():
                     );
                 ''')
 
-                # Ensure RolePermissions exists
+                # 6. Ensure RolePermissions exists
                 cur.execute('''
                     CREATE TABLE IF NOT EXISTS "RolePermissions" (
                         id SERIAL PRIMARY KEY,
