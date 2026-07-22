@@ -510,6 +510,25 @@ def debug_login():
     login_user(User(1, 'admin', 'Admin'))
     return redirect(url_for('admin_operations'))
 
+@app.route('/debug-query')
+def debug_query():
+    query = request.args.get('q')
+    if not query:
+        return jsonify({"error": "No query provided"}), 400
+    conn = get_db(app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            cur.execute(query)
+            try:
+                rows = [dict(r) for r in cur.fetchall()]
+                return jsonify({"rows": rows}), 200
+            except Exception:
+                return jsonify({"status": "Executed successfully (no rows returned)"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
+
 @app.route('/debug-schema')
 def debug_schema():
     conn = get_db(app.config['DATABASE_URL'])
