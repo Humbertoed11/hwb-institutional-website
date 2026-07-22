@@ -1703,6 +1703,66 @@ def db_audit_endpoint():
     finally:
         if conn: conn.close()
 
+@app.route('/api/v1/trigger-lead-sync')
+def trigger_lead_sync_endpoint():
+    from psycopg2.extras import execute_values
+    seed_path = os.path.join(os.path.dirname(__file__), 'scripts', 'seed_data.json')
+    if not os.path.exists(seed_path):
+        return jsonify({'error': 'seed_data.json not found'}), 404
+        
+    conn = get_db(app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            with open(seed_path, 'r') as sf:
+                sdata = json.load(sf)
+                leads = sdata.get('leads', [])
+                
+                values = []
+                for l in leads:
+                    if l.get('id') == 44518 or 'DFW6' in str(l.get('center_name', '')):
+                        continue
+                    values.append((
+                        l.get('id'), l.get('center_name'), l.get('lead_source'), l.get('status'), l.get('phone'), l.get('email'), l.get('address'), l.get('city'), l.get('state'), l.get('zipcode'),
+                        l.get('sqf'), l.get('capacity'), l.get('estimated_annual_value'), l.get('priority_level'), l.get('facility_type'), l.get('decision_maker'),
+                        l.get('job_title'), l.get('traffic_cycle'), l.get('service_interest'), l.get('next_action_date'), l.get('is_dnc', False), l.get('is_converted', False), l.get('input_date')
+                    ))
+                
+                query = '''
+                    INSERT INTO "Leads" (
+                        id, center_name, lead_source, status, phone, email, address, city, state, zipcode,
+                        sqf, capacity, estimated_annual_value, priority_level, facility_type, decision_maker,
+                        job_title, traffic_cycle, service_interest, next_action_date, is_dnc, is_converted, input_date
+                    ) VALUES %s
+                    ON CONFLICT (id) DO UPDATE SET
+                        center_name = EXCLUDED.center_name,
+                        lead_source = EXCLUDED.lead_source,
+                        status = EXCLUDED.status,
+                        phone = EXCLUDED.phone,
+                        email = EXCLUDED.email,
+                        sqf = EXCLUDED.sqf,
+                        capacity = EXCLUDED.capacity,
+                        estimated_annual_value = EXCLUDED.estimated_annual_value,
+                        is_dnc = EXCLUDED.is_dnc,
+                        is_converted = EXCLUDED.is_converted;
+                '''
+                
+                execute_values(cur, query, values, page_size=1000)
+                conn.commit()
+                
+                cur.execute('SELECT COUNT(*) FROM "Leads";')
+                final_count = cur.fetchone()[0]
+                
+        return jsonify({
+            'status': 'SUCCESS',
+            'leads_processed': len(values),
+            'final_db_lead_count': final_count
+        })
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if conn: conn.close()
+
 @app.route('/api/v1/health')
 def health_check(): return '', 204
 
