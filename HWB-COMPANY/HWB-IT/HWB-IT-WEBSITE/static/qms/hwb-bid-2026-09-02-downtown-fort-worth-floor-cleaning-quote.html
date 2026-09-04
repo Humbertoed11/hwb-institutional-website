@@ -1,0 +1,1203 @@
+<style>
+    /* 🖨️ OPTION A: PRINT & PDF ENGINE STANDARDS (ISO 9001 / SIGMAFIDELITY) */
+    @media print {
+        @page {
+            size: letter;
+            margin: 0.5in;
+        }
+        body {
+            background: #ffffff !important;
+            color: #0f172a !important;
+            font-size: 8.5pt !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        .sop-card {
+            box-shadow: none !important;
+            border: none !important;
+            padding: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+        /* Option A: Transfer entire section to next page if it does not fit */
+        .sigma-print-section {
+            break-inside: avoid !important;
+            page-break-inside: avoid !important;
+            margin-bottom: 1.5rem !important;
+            display: block !important;
+        }
+        h1, h2, h3, h4 {
+            break-after: avoid !important;
+            page-break-after: avoid !important;
+        }
+        table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+        }
+        tr {
+            break-inside: avoid !important;
+            page-break-inside: avoid !important;
+        }
+        thead {
+            display: table-header-group !important;
+        }
+        .sop-meta, .sop-card-footer {
+            break-inside: avoid !important;
+            page-break-inside: avoid !important;
+        }
+        .sigma-print-card {
+            break-inside: avoid !important;
+            page-break-inside: avoid !important;
+        }
+    }
+    
+    /* Screen Display Hierarchy */
+    .sigma-print-section {
+        margin-bottom: 2rem;
+    }
+    /* 📅 Operational Gantt Calendar Grid Styling */
+    .gantt-tbl {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.72rem;
+        text-align: center;
+        white-space: nowrap;
+    }
+    .gantt-tbl th, .gantt-tbl td {
+        border: 1px solid #cbd5e1;
+        padding: 4px 3px;
+    }
+    .gantt-tbl thead th {
+        border-color: #334155;
+    }
+    .g-deep {
+        background: #16a34a !important;
+        color: #ffffff !important;
+        font-weight: 800;
+        font-size: 0.65rem;
+    }
+    .g-seal {
+        background: #0284c7 !important;
+        color: #ffffff !important;
+        font-weight: 800;
+        font-size: 0.65rem;
+    }
+    .g-qtr {
+        background: #2563eb !important;
+        color: #ffffff !important;
+        font-weight: 800;
+        font-size: 0.65rem;
+    }
+    .g-stair {
+        background: #b45309 !important;
+        color: #ffffff !important;
+        font-weight: 800;
+        font-size: 0.65rem;
+    }
+    .g-wknd {
+        background: #f1f5f9;
+    }
+</style>
+
+<div class="sop-card">
+    <!-- INSTITUTIONAL PAGE HEADER -->
+    <div style="background: #0f172a; color: #ffffff; padding: 14px 20px; border-radius: 6px 6px 0 0; border-bottom: 3px solid #2563eb; display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <span style="font-size: 1.05rem; font-weight: 800; letter-spacing: 0.5px;">HWB CLEANING SERVICES LLC</span>
+        <span style="font-size: 0.8rem; font-weight: 600; color: #93c5fd; letter-spacing: 0.25px;">DOWNTOWN FORT WORTH COMMERCIAL PORTFOLIO</span>
+    </div>
+
+    <!-- 0.0 DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-BID-2026-FW01</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.7.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #2563eb;">● PENDING REVIEW</span></div>
+        <div class="meta-unit"><span class="meta-label">Department</span><span class="meta-val">SALES &amp; MARKETING</span></div>
+        <div class="meta-unit"><span class="meta-label">Date</span><span class="meta-val">09/03/2026</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <!-- 0.0 DOCUMENT CONTROL & CLIENT PROFILE (PAGE 1 UNIT) -->
+        <div class="sigma-print-section">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="text-align: left;"><strong>Document Control</strong></th>
+                        <th style="text-align: left;"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="text-align: left;"><strong>Document Title</strong></td>
+                        <td style="text-align: left;"><strong>Commercial Proposal: Downtown Fort Worth 11-Building Lobby Floor Care (With 4-Point Photographic Damage Survey)</strong></td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: left;"><strong>Document ID</strong></td>
+                        <td style="text-align: left;">HWB-BID-2026-FW01</td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: left;"><strong>Client / Property</strong></td>
+                        <td style="text-align: left;">Sundance Square &amp; Downtown Fort Worth Commercial Portfolio</td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: left;"><strong>Version</strong></td>
+                        <td style="text-align: left;">3.5.0 (Option A Print Pagination Standard &amp; Section 3.0 Transfer Hardening)</td>
+                    </tr>
+                <tr>
+                    <td style="text-align: left;"><strong>Status</strong></td>
+                    <td style="text-align: left;">PENDING EXECUTIVE REVIEW (Do Not Send)</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;"><strong>Author</strong></td>
+                    <td style="text-align: left;">George (Systems Architect)</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;"><strong>Approved By</strong></td>
+                    <td style="text-align: left;">Humberto Dominguez, CEO</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;"><strong>Date</strong></td>
+                    <td style="text-align: left;">09/02/2026</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;"><strong>ISO 9001 Clause</strong></td>
+                    <td style="text-align: left;">8.2.2 (Review of Requirements Related to Products and Services)</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <hr />
+
+        <h1>Commercial Floor Care Proposal: <strong>Downtown Fort Worth Portfolio</strong></h1>
+
+        <div style="background: #f8fafc; border-left: 4px solid #2563eb; padding: 1rem 1.5rem; margin-bottom: 1.5rem; border-radius: 0 6px 6px 0;">
+            <p style="margin: 0; font-size: 0.9rem; color: #1e293b;">
+                <strong>Client Profile:</strong> Sundance Square &amp; Downtown Commercial Management Office<br>
+                <strong>Central Office:</strong> 425 Houston Street, Suite 250, Fort Worth, TX 76102<br>
+                <strong>Portfolio Scope:</strong> 11 Commercial Ground-Floor Lobbies &bull; <strong>Reconciled 11,153 Cleanable Square Feet</strong><br>
+                <strong>Dispatch Origin:</strong> <strong>Arlington, Texas</strong><br>
+                <strong>Data Governance:</strong> <span style="color: #166534; font-weight: 700;">EMPIRICAL FIELD RECONCILIATION COMPLETED (ISO 9001 Clause 8.2.2 Verified)</span><br>
+                <strong>Operational Crew:</strong> <strong>2 Specialized Floor Technicians</strong><br>
+                <strong>Current Status:</strong> <span style="color: #166534; font-weight: 700;">CALCULATIONS UPDATED FOR CEO DIRECTIVE</span>
+            </p>
+        </div>
+
+        <div style="background: #f0fdf4; border: 1px solid #86efac; border-radius: 6px; padding: 1rem 1.25rem; margin: 1rem 0;">
+            <h4 style="margin: 0 0 0.5rem 0; color: #166534; font-size: 0.95rem;">✅ Empirical Field Reconciliation Completed (ISO 9001 Clause 8.2.2)</h4>
+            <p style="margin: 0; font-size: 0.85rem; color: #14532d; line-height: 1.5;">
+                <strong>Empirical Site Measurement Reconciliation:</strong> Cleanable floor dimensions across all 11 downtown commercial lobbies have been reconciled to certified on-site empirical figures totaling <strong>11,153 Cleanable SF</strong>. Unit rates reflect downtown operational setup requirements, surface splash protection, and dedicated commercial supervision.
+            </p>
+        </div>
+        </div> <!-- End Section 0.0 Unit -->
+
+        <!-- EXECUTIVE SUMMARY: CLIENT NEEDS, GOALS & PROPOSED PLAN -->
+        <div class="sigma-print-section" style="background: #ffffff; border: 1px solid #cbd5e1; border-top: 4px solid #2563eb; border-radius: 6px; padding: 1.5rem; margin: 1.5rem 0 2rem 0;">
+            <h2 style="margin-top: 0; color: #0f172a; font-size: 1.25rem;">Executive Summary: Client Needs, Goals &amp; Proposed Plan</h2>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-top: 1rem;">
+                
+                <!-- Column 1: Client Needs & Current Situation -->
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 1.25rem;">
+                    <h3 style="margin: 0 0 0.5rem 0; color: #1e3a8a; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
+                        🏢 The Client's Current Situation &amp; Needs
+                    </h3>
+                    <p style="font-size: 0.85rem; color: #334155; line-height: 1.5; margin: 0 0 0.75rem 0;">
+                        Sundance Square and downtown property management oversee 11 landmark commercial buildings in Fort Worth. Every business day, hundreds of office tenants, retail customers, and corporate guests walk through these ground-floor lobbies.
+                    </p>
+                    <p style="font-size: 0.85rem; color: #334155; line-height: 1.5; margin: 0;">
+                        Heavy daily foot traffic, tracked-in street grit, and rain have dulled the natural stone, tile, and terrazzo surfaces. Dirt has settled into corners and grout lines, while spills and moving equipment have left scuffs and spots. The management team needs these entrance lobbies to look welcoming, clean, and well-maintained every single morning.
+                    </p>
+                </div>
+
+                <!-- Column 2: Client Goals -->
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 1.25rem;">
+                    <h3 style="margin: 0 0 0.5rem 0; color: #166534; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
+                        🎯 Client Goals &amp; Objectives
+                    </h3>
+                    <ul style="font-size: 0.85rem; color: #334155; line-height: 1.5; margin: 0; padding-left: 1.2rem;">
+                        <li style="margin-bottom: 0.5rem;"><strong>Strip Away the Dirt:</strong> Deep-clean floors down to the bare surface so managers can clearly see the real floor condition and any existing damage.</li>
+                        <li style="margin-bottom: 0.5rem;"><strong>Protect Against Future Stains:</strong> Seal stone and grout to prevent coffee, sodas, and grease from soaking in and ruining floors.</li>
+                        <li style="margin-bottom: 0.5rem;"><strong>Set Up a Reliable Routine:</strong> Establish a predictable cleaning schedule (quarterly or semi-annually) that keeps floors shining and stays within budget.</li>
+                        <li><strong>Zero Tenant Disruption:</strong> Perform all work quietly and safely without interrupting daytime business.</li>
+                    </ul>
+                </div>
+
+            </div>
+
+            <!-- Full-Width Summary: What HWB Proposes -->
+            <div style="margin-top: 1.5rem; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 1.25rem;">
+                <h3 style="margin: 0 0 0.75rem 0; color: #1e40af; font-size: 1rem;">
+                    🤝 What HWB Cleaning Services Proposes
+                </h3>
+                <p style="font-size: 0.85rem; color: #1e293b; line-height: 1.5; margin: 0 0 0.75rem 0;">
+                    HWB Cleaning Services LLC proposes a straightforward, 3-step floor care plan tailored specifically for the 11 downtown lobbies (11,153 total cleanable square feet):
+                </p>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; font-size: 0.82rem; color: #334155;">
+                    <div style="background: #ffffff; padding: 0.75rem; border-radius: 4px; border: 1px solid #cbd5e1;">
+                        <strong style="color: #16a34a; font-size: 0.88rem;">1. Deep Clean Reset (Phase 1)</strong><br>
+                        Heavy rotary scrubbing and extraction to pull out ground-in grime and old build-up, giving managers a clean baseline to review floor condition.
+                    </div>
+                    <div style="background: #ffffff; padding: 0.75rem; border-radius: 4px; border: 1px solid #cbd5e1;">
+                        <strong style="color: #0284c7; font-size: 0.88rem;">2. Stain Protection (Phase 2)</strong><br>
+                        Application of commercial penetrating sealer (BulletProof®) into pores and grout lines to lock out moisture and liquid stains.
+                    </div>
+                    <div style="background: #ffffff; padding: 0.75rem; border-radius: 4px; border: 1px solid #cbd5e1;">
+                        <strong style="color: #2563eb; font-size: 0.88rem;">3. Ongoing Care (Phase 3)</strong><br>
+                        Scheduled quarterly or semi-annual maintenance passes to wash and protect the floors year-round without diamond grinding.
+                    </div>
+                </div>
+
+                <!-- Shift Timing & Flexibility Callout -->
+                <div style="margin-top: 1rem; background: #ffffff; border-left: 4px solid #16a34a; padding: 0.75rem 1rem; border-radius: 0 4px 4px 0; border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;">
+                    <strong style="color: #166534; font-size: 0.85rem;">⏰ 100% Flexible Shift Scheduling:</strong>
+                    <span style="font-size: 0.82rem; color: #334155; line-height: 1.45;">
+                        While standard operations run on dedicated night shifts (post-7:00 PM) dispatched from Arlington, TX to ensure zero daytime disruption, <strong>all shift hours and dates are completely flexible</strong>. If building management prefers earlier evening starts, weekend execution, split-building passes, or adjustments around specific tenant events and security desk schedules, HWB will customize the dispatch timing to match your exact operational requirements at no additional charge.
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 1.0 MAIN LOBBY SCOPE FIRST -->
+        <div class="sigma-print-section">
+            <h2>1.0 Service Roadmap: 3-Phase Commercial Floor Care Plan</h2>
+            <p>HWB Cleaning Services LLC proposes a structured commercial hard-floor cleaning, conditioning, and protection program tailored specifically for the <strong>11 high-profile ground-floor commercial lobbies (11,153 Cleanable Square Feet)</strong> within the Sundance Square and Downtown Fort Worth corridor. All operations are executed by a dedicated crew of <strong>2 Specialized Floor Technicians</strong> on night shifts to guarantee zero disruption to daytime tenants, retail patrons, and executive visitors.</p>
+            <p>Per client specification, the program is engineered in three distinct sequential phases:</p>
+            <ul style="font-size: 0.85rem; color: #334155; line-height: 1.6;">
+                <li><strong>Phase 1 deep clean (expose damage to consider options):</strong> Comprehensive machine rotary scrub, deep cleaning solution, edge hand scraping, and extraction across all 11 lobbies to strip surface dirt down to the bare floor and expose existing wear and damage for mutual review; does not grind stone or remove scratches.</li>
+                <li><strong>Phase 2: Modular Protective Sealer Option:</strong> Application of <strong>LATICRETE® STONETECH® BulletProof®</strong> deep penetrating sealer into stone pores and grout lines immediately following Phase 1. Repels oil and water stains; does not stop acid etch marks on polished marble.</li>
+                <li><strong>Phase 3: Ongoing Recurring Maintenance Choice:</strong> Property management selects between <strong>Track A: Quarterly Maintenance (Every 3 Months)</strong> or <strong>Track B: Semi-Annual Maintenance (Every 6 Months)</strong> for regular machine wash and extraction to keep floors clean without diamond grinding.</li>
+            </ul>
+
+            <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-left: 4px solid #2563eb; border-radius: 4px; padding: 0.75rem 1rem; margin: 1rem 0;">
+                <strong style="color: #1e3a8a;">📐 Commercial Minimum Billing Baseline (600 SQFT):</strong>
+                <span style="color: #1e293b; font-size: 0.85rem;"> All commercial lobby locations are quoted based on measured cleanable square footage, subject to an industry-standard <strong>600 Cleanable Square Feet minimum billing baseline</strong> per facility. This baseline accounts for downtown equipment mobilization, safety transit, fresh water and power hookup, wall perimeter masking, and certified supervisory inspection. Facilities under 600 SF (Virtuoso @ 560 SF, Knights of Pythias @ 414 SF, and Plaza Hotel @ 345 SF) are billed at the standard 600 SF baseline rate across all service phases.</span>
+            </div>
+
+            <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-left: 4px solid #64748b; border-radius: 4px; padding: 0.75rem 1rem; margin: 1rem 0;">
+                <strong style="color: #0f172a;">🛡️ Property Protection &amp; Furniture Handling Protocol:</strong>
+                <span style="color: #334155; font-size: 0.85rem;"> To prevent accidental scuffs, scratches, or property damage to tenant furnishings and historic decor, building management is requested to clear and replace all lobby furniture, accent tables, and artwork prior to and following service. Where moving assistance by HWB crew is requested, it is available and billed on an hourly basis.</span>
+            </div>
+        </div> <!-- End Section 1.0 Unit -->
+
+        <!-- 2.0 PORTFOLIO LOCATION & SCOPE MATRIX -->
+        <div class="sigma-print-section">
+            <h2>2.0 Portfolio Location &amp; Scope Matrix: Initial Reset &amp; Recurring Maintenance</h2>
+            <p>The 11 commercial properties are sorted below in descending order of cleanable square footage (from largest to smallest). Pricing itemizes <strong>Phase 1 deep clean (expose damage to consider options) ($0.80/SF)</strong>, <strong>Track A: Quarterly Care ($0.54/SF)</strong>, and <strong>Track B: Semi-Annual Care ($0.68/SF)</strong>:</p>
+
+        <div style="overflow-x: auto; margin: 1.5rem 0;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                <thead>
+                    <tr style="background: #f1f5f9; border-bottom: 2px solid #cbd5e1;">
+                        <th style="padding: 10px; text-align: left;">#</th>
+                        <th style="padding: 10px; text-align: left;">Building Name</th>
+                        <th style="padding: 10px; text-align: left;">Address</th>
+                        <th style="padding: 10px; text-align: left;">Primary floor system</th>
+                        <th style="padding: 10px; text-align: center;">Cleanable Area (SQFT)</th>
+                        <th style="padding: 10px; text-align: center;">Phase 1 Rate</th>
+                        <th style="padding: 10px; text-align: right;">Phase 1 deep clean<br><span style="font-size: 0.72rem; font-weight: 500;">(expose damage to consider options)</span></th>
+                        <th style="padding: 10px; text-align: center;">Quarterly Rate</th>
+                        <th style="padding: 10px; text-align: right;">Track A: Quarterly</th>
+                        <th style="padding: 10px; text-align: center;">Semi-Annual Rate</th>
+                        <th style="padding: 10px; text-align: right;">Track B: Semi-Annual</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;">1</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;"><strong>Chase Bank Building</strong></td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;">420 Throckmorton St</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;">Polished Terrazzo</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">2,126</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">$0.80</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 700; color: #166534;">$1,700.80</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">$0.54</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">$1,148.04</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">$0.68</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">$1,445.68</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;">2</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;"><strong>The Westbrook</strong></td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;">425 Houston St</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;">Polished Terrazzo</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">1,520</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">$0.80</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 700; color: #166534;">$1,216.00</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">$0.54</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">$820.80</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">$0.68</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">$1,033.60</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;">3</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;"><strong>The Carnegie</strong></td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;">421 W 3rd St</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;">Polished Terrazzo</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">1,175</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">$0.80</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 700; color: #166534;">$940.00</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">$0.54</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">$634.50</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">$0.68</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">$799.00</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;">4</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;"><strong>The Cassidy</strong></td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;">407 Throckmorton St</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;">Polished Terrazzo</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">1,134</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">$0.80</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 700; color: #166534;">$907.20</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">$0.54</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">$612.36</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">$0.68</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">$771.12</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;">5</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;"><strong>Burk Burnett Building</strong></td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;">500 Main St</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;">Ceramic Mosaic Tile</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">1,108</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">$0.80</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 700; color: #166534;">$886.40</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">$0.54</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">$598.32</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">$0.68</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">$753.44</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;">6</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;"><strong>Sanger Lofts</strong></td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;">222 W 4th St</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;">Polished Terrazzo</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">1,071</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">$0.80</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 700; color: #166534;">$856.80</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">$0.54</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">$578.34</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">$0.68</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">$728.28</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;">7</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;"><strong>Petroleum Building</strong></td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;">210 W 6th St</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;">Polished Marble Tile</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">860</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">$0.80</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 700; color: #166534;">$688.00</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">$0.54</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">$464.40</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">$0.68</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">$584.80</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;">8</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;"><strong>The Commerce Building</strong></td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;">420 Commerce St</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;">Terrazzo Tile</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">840</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">$0.80</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 700; color: #166534;">$672.00</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">$0.54</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">$453.60</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">$0.68</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">$571.20</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;">9</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;"><strong>Virtuoso Building</strong></td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;">505 Main St</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;">Polished Marble Tile</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">560 <span style="font-size: 0.7rem; color: #2563eb; font-weight: 700;">(600 Min)*</span></td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">$0.80</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 700; color: #166534;">$480.00</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">$0.54</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 700; color: #2563eb;">$324.00</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">$0.68</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">$408.00</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;">10</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;"><strong>Knights of Pythias Hall</strong></td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;">109–110 E 3rd St</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;">Ceramic Mosaic Tile</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">414 <span style="font-size: 0.7rem; color: #2563eb; font-weight: 700;">(600 Min)*</span></td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">$0.80</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 700; color: #166534;">$480.00</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">$0.54</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 700; color: #2563eb;">$324.00</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">$0.68</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">$408.00</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;">11</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;"><strong>Plaza Hotel Building</strong></td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;">303 Main St</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;">Commercial Quarry Tile</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">345 <span style="font-size: 0.7rem; color: #2563eb; font-weight: 700;">(600 Min)*</span></td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">$0.80</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 700; color: #166534;">$480.00</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">$0.54</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 700; color: #2563eb;">$324.00</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">$0.68</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">$408.00</td>
+                    </tr>
+                    <tr style="background: #f8fafc; font-weight: 800; border-top: 2px solid #64748b;">
+                        <td colspan="4" style="padding: 10px;">GRAND TOTAL SQUARE FOOTAGE (11 Lobbies)</td>
+                        <td style="padding: 10px; text-align: center; color: #2563eb;">11,153 SQFT <span style="font-size: 0.75rem; color: #64748b; font-weight: 600;">(11,634 Billing SF)*</span></td>
+                        <td style="padding: 10px; text-align: center; color: #64748b;">$0.80 avg</td>
+                        <td style="padding: 10px; text-align: right; color: #166534;">$9,307.20 complete</td>
+                        <td style="padding: 10px; text-align: center; color: #64748b;">$0.54 avg</td>
+                        <td style="padding: 10px; text-align: right; color: #2563eb;">$6,282.36 / qtr</td>
+                        <td style="padding: 10px; text-align: center; color: #64748b;">$0.68 avg</td>
+                        <td style="padding: 10px; text-align: right; color: #475569;">$7,911.12 / pass</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p style="font-size: 0.75rem; color: #64748b; margin-top: 0.5rem; font-style: italic;">
+                *Note: Facilities under 600 Cleanable Square Feet (Virtuoso @ 560 SF, Knights of Pythias @ 414 SF, and Plaza Hotel @ 345 SF) are subject to the standard 600 SQFT commercial minimum billing baseline to cover mandatory downtown equipment mobilization, environmental wall protection, water service connection, and certified supervisory inspection.
+            </p>
+        </div>
+        </div> <!-- End Section 2.0 Unit -->
+
+        <!-- 3.0 FREQUENCY OPTIONS -->
+        <div class="sigma-print-section">
+            <h2>3.0 Commercial Program Summary: 3-Phase Investment &amp; Terms</h2>
+            <p>The table below summarizes the three-phase roadmap, including the one-time baseline reset, protective sealing, and recurring maintenance options:</p>
+
+            <div style="overflow-x: auto; margin: 1rem 0;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                    <thead>
+                        <tr style="background: #f1f5f9; border-bottom: 2px solid #cbd5e1;">
+                            <th style="padding: 10px; text-align: left;">Program / Service Phase</th>
+                            <th style="padding: 10px; text-align: left;">Scope of work</th>
+                            <th style="padding: 10px; text-align: center;">Unit Rate</th>
+                            <th style="padding: 10px; text-align: right;">Investment Per Pass</th>
+                            <th style="padding: 10px; text-align: center; min-width: 175px;">Billing Frequency &amp; Program Terms</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="background: #f0fdf4;">
+                            <td style="padding: 10px; border-bottom: 1px solid #cbd5e1;"><strong style="color: #166534;">Phase 1 deep clean (expose damage to consider options)</strong></td>
+                            <td style="padding: 10px; border-bottom: 1px solid #cbd5e1;">Rotary machine scrub, deep cleaning solution, edge hand scraping, and extraction across 11 lobbies (600 SF min baseline). Strips surface dirt down to the bare floor to expose existing damage for mutual review; does not grind stone or remove scratches.</td>
+                            <td style="padding: 10px; border-bottom: 1px solid #cbd5e1; text-align: center;"><strong>$0.80 / SF</strong></td>
+                            <td style="padding: 10px; border-bottom: 1px solid #cbd5e1; text-align: right; font-weight: 700; color: #166534;">$9,307.20 complete</td>
+                            <td style="padding: 10px; border-bottom: 1px solid #cbd5e1; text-align: center; font-weight: 800; color: #166534;">One-Time Baseline Service</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0;"><strong>Phase 2: Modular Sub-Surface Sealer (STONETECH® BulletProof®)</strong></td>
+                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">Deep penetrating sealer applied after cleaning into stone and grout lines (600 SF baseline). Repels water and oil spills; does not create a wax film or shine, and does not stop acid etch marks on polished marble.</td>
+                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center;"><strong>$0.31 / SF</strong></td>
+                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 700;">$3,606.54 complete</td>
+                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center; font-weight: 800; color: #2563eb;">Post-Clean Protection<br><span style="font-size: 0.72rem; color: #64748b; font-weight: 600;">(12–24 Month Lifecycle)</span></td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0;"><strong>Phase 3 (Track A): Quarterly Maintenance (Recommended Program)</strong></td>
+                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">Recurring 90-day maintenance scrub across 8 Terrazzo/Marble lobbies; deep brush scrub and grout extraction across 3 Mosaic/Quarry lobbies (600 SF min). Routine cleaning only; does not include diamond grinding.</td>
+                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center;"><strong>$0.54 / SF</strong></td>
+                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 700;">$6,282.36 / pass</td>
+                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center; font-weight: 800; color: #2563eb;">Every 3 Months<br><span style="font-size: 0.72rem; color: #166534; font-weight: 700;">(4x / Year &bull; Recommended)</span></td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0;"><strong>Phase 3 (Track B): Semi-Annual Deep Restorative Scrub</strong></td>
+                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">Intensive 180-day deep scrub, heavy cleaner dwell time, and machine extraction across 11 lobbies (600 SF min baseline). Removes 6 months of ground-in traffic dirt; does not include diamond grinding.</td>
+                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center;"><strong>$0.68 / SF</strong></td>
+                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 700;">$7,911.12 / pass</td>
+                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center; font-weight: 800; color: #475569;">Every 6 Months<br><span style="font-size: 0.72rem; color: #475569; font-weight: 600;">(2x / Year Semi-Annual)</span></td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0;"><strong>Add-On Option B: Dedicated Marble Staircase Care (500 Main St Only)</strong></td>
+                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">Step machine scrub ($3.00/step), riser wipe-down, brass nosing polish, landing deep clean ($21.00/landing), and sealer at 500 Main St only. Billed strictly by actual step count on site; excludes repairs and other 10 buildings.</td>
+                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center;"><strong>$3.00 / Step &bull; $21.00 / Landing</strong></td>
+                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 700; color: #16a34a;">Unit Rate Only (T&amp;M Count)</td>
+                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center; font-weight: 800; color: #16a34a;">Optional Per Service Pass<br><span style="font-size: 0.72rem; color: #166534; font-weight: 700;">(500 Main St Only)</span></td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0;"><strong>Add-On Option C: Capital Diamond Restoration</strong></td>
+                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">Multi-step diamond grinding and polishing with wall protection across 8 stone lobbies (9,326 Billing SF). The only service that cuts out deep scratches and restores a high-gloss shine; ceramic and quarry tile are exempt.</td>
+                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center;"><strong>$2.65 / SF</strong></td>
+                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 700;">$24,713.90 complete</td>
+                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center; font-weight: 800; color: #1e293b;">As-Needed Capital Project<br><span style="font-size: 0.72rem; color: #9d174d; font-weight: 600;">(8 Stone Lobbies)</span></td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0;"><strong>Add-On Option D: Furniture &amp; Artwork Handling</strong></td>
+                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">Building staff clears and replaces lobby furniture before and after service. Crew moving assistance is available upon written request on an hourly basis; HWB is not responsible for unmoved furniture.</td>
+                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center;"><strong>Available Per Hour</strong></td>
+                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 700;">Hourly T&amp;M (Upon Request)</td>
+                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center; font-weight: 800; color: #64748b;">Client-Managed Default<br><span style="font-size: 0.72rem; color: #64748b; font-weight: 600;">(Hourly Option Upon Request)</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div> <!-- End Section 3.0 Unit -->
+
+        <!-- 4.0 ADDITIONAL CLIENT OPTIONS -->
+        <div class="sigma-print-section">
+            <h2>4.0 Additional Client Options: Sealer Protection, Staircase Detailing, Diamond Restoration &amp; Furniture Handling</h2>
+            <p>The following specialized services may be added to the baseline floor care contract as modular options:</p>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin: 1.5rem 0;">
+                <!-- Option A -->
+                <div class="sigma-print-card" style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 1.25rem;">
+                    <h3 style="margin-top: 0; color: #1e3a8a; font-size: 1rem;">🛡️ Option A: Penetrating Sealer Protection</h3>
+                    <p style="font-size: 0.8rem; color: #334155; line-height: 1.5;">
+                        Application of <strong>LATICRETE® STONETECH® BulletProof®</strong> deep penetrating sealer. Creates an invisible, breathable protective barrier deep inside marble, granite, terrazzo, quarry tile, and grout lines to repel oil, coffee, and liquid stains without making floors slippery.
+                    </p>
+                    <div style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid #bfdbfe; font-size: 0.85rem;">
+                        <strong>Pricing:</strong> $0.31 / SF &bull; <strong>$3,606.54 Full Portfolio (600 SF Baseline)</strong><br>
+                        <strong>Terms:</strong> Post-clean modular protective service (12-24 month lifecycle).
+                    </div>
+                </div>
+
+                <!-- Option B -->
+                <div class="sigma-print-card" style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 1.25rem;">
+                    <h3 style="margin-top: 0; color: #0f172a; font-size: 1rem;">🪜 Option B: Dedicated Marble Staircase Care (500 Main St Only &bull; Unit Rate)</h3>
+                    <p style="font-size: 0.8rem; color: #334155; line-height: 1.5;">
+                        Handheld step scrubbing, riser detailing, brass nosing polish, and STONETECH® BulletProof® sealer on the monumental Italian marble staircase at 500 Main St (Burk Burnett Building). Because the property features multiple elevation transitions across both upper and lower levels (executive mezzanine, lower level, and vault levels going up and down), this option does not include an estimated lump sum total. Instead, service is quoted on a transparent unitized rate of <strong>$3.00 per step</strong> and <strong>$21.00 per landing</strong>, with total billing determined by verified physical count upon mobilization. <em>*Client Specification: Exclusively activated for 500 Main St; all other 10 buildings are excluded per client directive.</em>
+                    </p>
+                    <div style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid #cbd5e1; font-size: 0.85rem;">
+                        <strong>Unitized Pricing:</strong> <strong>$3.00 / Step &bull; $21.00 / Landing</strong> (Total TBD by Actual Physical Count)<br>
+                        <strong>Terms:</strong> Optional recurring add-on (Exclusively for 500 Main St &bull; No estimated total billed).
+                    </div>
+                </div>
+
+                <!-- Option C -->
+                <div class="sigma-print-card" style="background: #fdf2f8; border: 1px solid #fbcfe8; border-radius: 8px; padding: 1.25rem;">
+                    <h3 style="margin-top: 0; color: #9d174d; font-size: 1rem;">💎 Option C: Capital Diamond Restoration (8 Stone Lobbies)</h3>
+                    <p style="font-size: 0.8rem; color: #334155; line-height: 1.5;">
+                        Multi-stage diamond grinding (100–3,000 grit) to smooth out deep equipment gouges, eliminate traffic wear paths, and restore a factory mirror shine across the 8 Terrazzo &amp; Marble lobbies (9,326 Billing SF). <em>*Floor Substrate Note: Ceramic mosaic and quarry tile cannot be ground with diamonds and are exempt to protect the tile surface.</em>
+                    </p>
+                    <div style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid #fbcfe8; font-size: 0.85rem;">
+                        <strong>Pricing:</strong> $2.65 / SF &bull; <strong>$24,713.90 (8 Stone Lobbies Complete)</strong><br>
+                        <strong>Terms:</strong> As-needed capital project (Ceramic Mosaic &amp; Quarry Tile exempt).
+                    </div>
+                </div>
+
+                <!-- Option D -->
+                <div class="sigma-print-card" style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 1.25rem;">
+                    <h3 style="margin-top: 0; color: #475569; font-size: 1rem;">📦 Option D: Furniture &amp; Artwork Handling Protocol</h3>
+                    <p style="font-size: 0.8rem; color: #334155; line-height: 1.5;">
+                        Client property management and tenant staff clear and replace lobby furniture, planters, stanchions, and accent tables prior to and following service. Where specialized moving assistance by HWB crew is requested in advance, it is available on an hourly basis. HWB assumes zero liability for fragile decor, loose tenant wiring, or items not cleared prior to service.
+                    </p>
+                    <div style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid #cbd5e1; font-size: 0.85rem;">
+                        <strong>Pricing:</strong> <strong>Available Per Hour</strong> (T&amp;M Upon Request)<br>
+                        <strong>Terms:</strong> Client-managed default to ensure zero property damage.
+                    </div>
+                </div>
+            </div>
+        </div> <!-- End Section 4.0 Unit -->
+
+        <!-- 5.0 PER-BUILDING OPTIONS PRICING MATRIX (WITH GRAND TOTAL SQUARE FOOTAGE LINE) -->
+        <div class="sigma-print-section">
+            <h2>5.0 Per-Building Additional Options Pricing Matrix</h2>
+        <div style="overflow-x: auto; margin: 1rem 0;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                <thead>
+                    <tr style="background: #f1f5f9; border-bottom: 2px solid #cbd5e1;">
+                        <th style="padding: 8px 10px; text-align: left;">#</th>
+                        <th style="padding: 8px 10px; text-align: left;">Building Name</th>
+                        <th style="padding: 8px 10px; text-align: left;">Address</th>
+                        <th style="padding: 8px 10px; text-align: center;">Cleanable Area (SQFT)</th>
+                        <th style="padding: 8px 10px; text-align: right;">Option A: BulletProof® Sealer ($0.31)</th>
+                        <th style="padding: 8px 10px; text-align: center;">Option B: Stair Care (Unit Rate)*</th>
+                        <th style="padding: 8px 10px; text-align: right;">Option C: Diamond Restoration ($2.65)</th>
+                        <th style="padding: 8px 10px; text-align: center;">Option D: Furniture Handling</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0;">1</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0;"><strong>Chase Bank Building</strong></td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0;">420 Throckmorton St</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">2,126</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">$659.06</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: center; color: #64748b;">N/A (Excluded)*</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">$5,633.90</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: center; color: #64748b;">Available Per Hour</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0;">2</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0;"><strong>The Westbrook</strong></td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0;">425 Houston St</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">1,520</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">$471.20</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: center; color: #64748b;">$0.00 (None)</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">$4,028.00</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: center; color: #64748b;">Available Per Hour</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0;">3</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0;"><strong>The Carnegie</strong></td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0;">421 W 3rd St</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">1,175</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">$364.25</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: center; color: #64748b;">N/A (Excluded)*</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">$3,113.75</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: center; color: #64748b;">Available Per Hour</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0;">4</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0;"><strong>The Cassidy</strong></td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0;">407 Throckmorton St</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">1,134</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">$351.54</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: center; color: #64748b;">$0.00 (None)</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">$3,005.10</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: center; color: #64748b;">Available Per Hour</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0;">5</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0;"><strong>Burk Burnett Building</strong></td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0;">500 Main St</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">1,108</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">$343.48</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: center; font-weight: 700; color: #16a34a;">$3.00/Step + $21.00/Landing <span style="font-size: 0.65rem; color: #166534; display: block; font-weight: 600;">(Count TBD Upon Mobilization)</span></td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: right; color: #64748b; font-style: italic;">N/A (Exempt - Mosaic)*</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: center; color: #64748b;">Available Per Hour</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0;">6</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0;"><strong>Sanger Lofts</strong></td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0;">222 W 4th St</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">1,071</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">$332.01</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: center; color: #64748b;">N/A (Excluded)*</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">$2,838.15</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: center; color: #64748b;">Available Per Hour</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0;">7</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0;"><strong>Petroleum Building</strong></td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0;">210 W 6th St</td>
+                        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">860</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">$266.60</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: center; color: #64748b;">N/A (Excluded)*</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">$2,279.00</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: center; color: #64748b;">Available Per Hour</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0;">8</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0;"><strong>The Commerce Building</strong></td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0;">420 Commerce St</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">840</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">$260.40</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: center; color: #64748b;">$0.00 (None)</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">$2,226.00</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: center; color: #64748b;">Available Per Hour</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0;">9</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0;"><strong>Virtuoso Building</strong></td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0;">505 Main St</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">560 <span style="font-size: 0.7rem; color: #2563eb; font-weight: 700;">(600 Min)*</span></td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">$186.00</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: center; color: #64748b;">$0.00 (None)</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">$1,590.00</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: center; color: #64748b;">Available Per Hour</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0;">10</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0;"><strong>Knights of Pythias Hall</strong></td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0;">109–110 E 3rd St</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">414 <span style="font-size: 0.7rem; color: #2563eb; font-weight: 700;">(600 Min)*</span></td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">$186.00</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: center; color: #64748b;">N/A (Excluded)*</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: right; color: #64748b; font-style: italic;">N/A (Exempt - Mosaic)*</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: center; color: #64748b;">Available Per Hour</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0;">11</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0;"><strong>Plaza Hotel Building</strong></td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0;">303 Main St</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">345 <span style="font-size: 0.7rem; color: #2563eb; font-weight: 700;">(600 Min)*</span></td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">$186.00</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: center; color: #64748b;">N/A (Excluded)*</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: right; color: #64748b; font-style: italic;">N/A (Exempt - Quarry)*</td>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #e2e8f0; text-align: center; color: #64748b;">Available Per Hour</td>
+                    </tr>
+                    <tr style="background: #f8fafc; font-weight: 800; border-top: 2px solid #64748b;">
+                        <td colspan="3" style="padding: 8px 10px;">GRAND TOTAL SQUARE FOOTAGE (Additional Options)</td>
+                        <td style="padding: 8px 10px; text-align: center; color: #2563eb;">11,153 SQFT <span style="font-size: 0.75rem; color: #64748b; font-weight: 600;">(11,634 Billing SF)*</span></td>
+                        <td style="padding: 8px 10px; text-align: right; color: #1e40af;">$3,606.54</td>
+                        <td style="padding: 8px 10px; text-align: center; color: #16a34a; font-weight: 800;">Unit Rate ($3.00/Step + $21.00/Landing) <span style="font-size: 0.7rem; color: #64748b; font-weight: 600; display: block;">(500 Main St Only &bull; Total TBD by Field Count)</span></td>
+                        <td style="padding: 8px 10px; text-align: right; color: #9d174d;">$24,713.90 <span style="font-size: 0.7rem; color: #64748b; font-weight: 600;">(8 Stone Lobbies)*</span></td>
+                        <td style="padding: 8px 10px; text-align: center; color: #0f172a; font-weight: 800;">Available Per Hour (T&amp;M)</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p style="font-size: 0.75rem; color: #64748b; margin-top: 0.5rem; font-style: italic; line-height: 1.5;">
+                *Floor System, Baseline &amp; Staircare Notes: (1) Facilities under 600 Cleanable Square Feet (Virtuoso @ 560 SF, Knights of Pythias @ 414 SF, and Plaza Hotel @ 345 SF) are subject to the standard 600 SQFT commercial minimum billing baseline. (2) Option B (Staircase Care) is quoted strictly as a unit rate of $3.00 per step and $21.00 per landing exclusively for 500 Main St (Burk Burnett Building); no estimated lump sum total is included in advance to allow for exact field verification of all steps and landings across upper and lower levels going up and down. All other 10 buildings are excluded per client directive. (3) Option C (Capital Diamond Restoration) is engineered strictly for natural stone and terrazzo floors across 8 portfolio lobbies (9,326 Billing SF); ceramic mosaic and quarry tile are exempt.
+            </p>
+        </div>
+        </div> <!-- End Section 5.0 Unit -->
+
+        <!-- 6.0 LOBBY FLOOR CONDITION: 4-POINT PHOTO INSPECTION -->
+        <div class="sigma-print-section">
+            <h2>6.0 Lobby Floor Condition: 4-Point Photo Inspection</h2>
+            <p>During our walkthrough of the 11 lobby entrances, our team photographed common floor issues across the properties. The four examples below show the conditions observed and outline the recommended services to clean, protect, and restore each floor:</p>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin: 1.5rem 0;">
+                
+                <!-- Photo 1: Plaza Hotel Building -->
+                <div class="sigma-print-card" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.04); display: flex; flex-direction: column;">
+                    <div style="position: relative; height: 260px; background: #0f172a; overflow: hidden;">
+                        <img src="/static/img/damage/The-Plaza-Hotel-building.jpg" alt="Bleach Stains and Soil on Quarry Tile - Plaza Hotel Building" style="width: 100%; height: 100%; object-fit: cover;" />
+                        <span style="position: absolute; top: 10px; left: 10px; background: rgba(15, 23, 42, 0.85); color: #ffffff; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.5px;">PHOTO 1: PLAZA HOTEL (303 MAIN ST)</span>
+                        <span style="position: absolute; bottom: 10px; right: 10px; background: #991b1b; color: #ffffff; padding: 3px 8px; border-radius: 3px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.5px;">CONDITION: CHEMICAL BLEACH &amp; SOIL DAMAGE</span>
+                    </div>
+                    <div style="padding: 1.25rem; flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+                        <div>
+                            <h4 style="margin: 0 0 0.5rem 0; color: #0f172a; font-size: 0.95rem;">Chemical Bleach Stains &amp; Grout Line Dirt Buildup</h4>
+                            <p style="margin: 0 0 0.75rem 0; font-size: 0.8rem; color: #64748b;"><strong>Primary floor system:</strong> Commercial Quarry Tile</p>
+                            <p style="margin: 0; font-size: 0.8rem; color: #334155; line-height: 1.5;">
+                                <strong>Condition Observed:</strong> A noticeable bleached, white circular spot in the foreground shows where harsh cleaning chemicals or bleach stripped the tile's finish. In the tile just above it, dark grease and oil have soaked into the unsealed tile. Grout lines show heavy dirt and grime buildup along the wood trim.
+                            </p>
+                        </div>
+                        <div style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid #e2e8f0; font-size: 0.8rem; background: #f8fafc; padding: 8px 10px; border-radius: 4px;">
+                            <strong style="color: #1e40af;">Recommended Service:</strong> Deep rotary machine scrub with heavy-duty cleaning solution to pull out embedded dirt (Phase 1), followed by <strong>Option A: LATICRETE® STONETECH® BulletProof®</strong> penetrating sealer to protect the tile and grout against future stains.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Photo 2: Chase Bank Building -->
+                <div class="sigma-print-card" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.04); display: flex; flex-direction: column;">
+                    <div style="position: relative; height: 260px; background: #0f172a; overflow: hidden;">
+                        <img src="/static/img/damage/The-chase-bank-building.jpg" alt="Traffic Wear and Dull Finish on Terrazzo - Chase Bank Building" style="width: 100%; height: 100%; object-fit: cover;" />
+                        <span style="position: absolute; top: 10px; left: 10px; background: rgba(15, 23, 42, 0.85); color: #ffffff; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.5px;">PHOTO 2: CHASE BANK (420 THROCKMORTON)</span>
+                        <span style="position: absolute; bottom: 10px; right: 10px; background: #991b1b; color: #ffffff; padding: 3px 8px; border-radius: 3px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.5px;">CONDITION: TRAFFIC WEAR &amp; LOSS OF SHINE</span>
+                    </div>
+                    <div style="padding: 1.25rem; flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+                        <div>
+                            <h4 style="margin: 0 0 0.5rem 0; color: #0f172a; font-size: 0.95rem;">Heavy Traffic Walkway Wear &amp; Dull Finish</h4>
+                            <p style="margin: 0 0 0.75rem 0; font-size: 0.8rem; color: #64748b;"><strong>Primary floor system:</strong> Polished Terrazzo</p>
+                            <p style="margin: 0; font-size: 0.8rem; color: #334155; line-height: 1.5;">
+                                <strong>Condition Observed:</strong> Clear loss of shine along the main walking path. While the upper right section still reflects light, the center walkway has become dull and cloudy from grit and sand tracked in from outside. This daily foot traffic has worn down the surface polish, allowing dirt to settle into the floor.
+                            </p>
+                        </div>
+                        <div style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid #e2e8f0; font-size: 0.8rem; background: #f8fafc; padding: 8px 10px; border-radius: 4px;">
+                            <strong style="color: #1e40af;">Recommended Service:</strong> Regular machine scrubbing and deep dirt extraction under <strong>Track A: Quarterly Floor Care ($0.54/SF)</strong> to remove gritty soil and keep the terrazzo shining; deep scratches require Option C: Diamond Restoration.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Photo 3: Petroleum Building -->
+                <div class="sigma-print-card" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.04); display: flex; flex-direction: column;">
+                    <div style="position: relative; height: 260px; background: #0f172a; overflow: hidden;">
+                        <img src="/static/img/damage/The-Petrolium-building.jpg" alt="Acid Etch Marks on Marble - Petroleum Building" style="width: 100%; height: 100%; object-fit: cover;" />
+                        <span style="position: absolute; top: 10px; left: 10px; background: rgba(15, 23, 42, 0.85); color: #ffffff; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.5px;">PHOTO 3: PETROLEUM BLDG (210 W 6TH ST)</span>
+                        <span style="position: absolute; bottom: 10px; right: 10px; background: #991b1b; color: #ffffff; padding: 3px 8px; border-radius: 3px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.5px;">CONDITION: ACID ETCH RINGS &amp; DULL SPOTS</span>
+                    </div>
+                    <div style="padding: 1.25rem; flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+                        <div>
+                            <h4 style="margin: 0 0 0.5rem 0; color: #0f172a; font-size: 0.95rem;">Acid Stain Marks &amp; Chemical Etch Rings</h4>
+                            <p style="margin: 0 0 0.75rem 0; font-size: 0.8rem; color: #64748b;"><strong>Primary floor system:</strong> Polished Marble Tile</p>
+                            <p style="margin: 0; font-size: 0.8rem; color: #334155; line-height: 1.5;">
+                                <strong>Condition Observed:</strong> Numerous splash marks and droplet rings scattered across the floor. Acidic liquids (coffee spills, fruit drinks, hand sanitizer drips, or acidic custodial cleaners) ate into the polished marble surface. This leaves dull, chalky white spots that trap dirt and cannot be cleaned off with normal mopping.
+                            </p>
+                        </div>
+                        <div style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid #e2e8f0; font-size: 0.8rem; background: #f8fafc; padding: 8px 10px; border-radius: 4px;">
+                            <strong style="color: #1e40af;">Recommended Service:</strong> Diamond polishing to shave past the damaged surface and restore the mirror shine, followed by <strong>Option A: BulletProof® Penetrating Sealer</strong> to protect against liquid stains.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Photo 4: Virtuoso Building (Historic Schwarz Building) -->
+                <div class="sigma-print-card" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.04); display: flex; flex-direction: column;">
+                    <div style="position: relative; height: 260px; background: #0f172a; overflow: hidden;">
+                        <img src="/static/img/damage/The-Shwarts-building.jpg" alt="Deep Equipment Scratches on Black Marble - Virtuoso Building" style="width: 100%; height: 100%; object-fit: cover;" />
+                        <span style="position: absolute; top: 10px; left: 10px; background: rgba(15, 23, 42, 0.85); color: #ffffff; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.5px;">PHOTO 4: VIRTUOSO BUILDING (505 MAIN ST / HISTORIC SCHWARZ BLDG)</span>
+                        <span style="position: absolute; bottom: 10px; right: 10px; background: #991b1b; color: #ffffff; padding: 3px 8px; border-radius: 3px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.5px;">CONDITION: DEEP GOUGES &amp; EQUIPMENT SCRATCHES</span>
+                    </div>
+                    <div style="padding: 1.25rem; flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+                        <div>
+                            <h4 style="margin: 0 0 0.5rem 0; color: #0f172a; font-size: 0.95rem;">Deep Scratches &amp; Gouges from Moving Equipment</h4>
+                            <p style="margin: 0 0 0.75rem 0; font-size: 0.8rem; color: #64748b;"><strong>Primary floor system:</strong> Polished Marble Tile</p>
+                            <p style="margin: 0; font-size: 0.8rem; color: #334155; line-height: 1.5;">
+                                <strong>Condition Observed:</strong> Heavy white scratch lines caused by dragging metal items (unpadded dollies, furniture legs, freight carts, or maintenance equipment) across the floor. These deep gouges cut into the black marble, ruining the high-gloss appearance.
+                            </p>
+                        </div>
+                        <div style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid #e2e8f0; font-size: 0.8rem; background: #f8fafc; padding: 8px 10px; border-radius: 4px;">
+                            <strong style="color: #1e40af;">Recommended Service:</strong> Requires <strong>Option C: Capital Diamond Restoration ($2.65 / SF)</strong> using coarse diamond grinding to level out deep scratch valleys, followed by fine polishing steps to bring back a mirror-like shine.
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div> <!-- End Section 6.0 Unit -->
+
+        <!-- 7.0 OPERATIONAL DISPATCH GANTT SCHEDULE -->
+        <div class="sigma-print-section">
+            <h2>7.0 Operational Dispatch Gantt Schedule (10 Dedicated Night Shifts)</h2>
+            <p>To eliminate daytime tenant disruption across all 11 downtown commercial lobbies, all floor care operations are scheduled during dedicated nighttime windows (post-7:00 PM) or customized flexible hours per client request. Properties requiring greater than 2.0 on-site production hours are assigned individual dedicated shifts. All dates and hours are 100% adaptable to management preferences:</p>
+
+            <!-- Dispatch Meta Box -->
+            <div style="background: #f8fafc; border-left: 4px solid #2563eb; padding: 1rem 1.5rem; margin: 1rem 0 1.5rem 0; border-radius: 0 6px 6px 0;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0.75rem; font-size: 0.85rem; color: #1e293b;">
+                    <div><strong>Base Dispatch Origin:</strong> Arlington, TX</div>
+                    <div><strong>Project Start Date:</strong> September 01, 2026</div>
+                    <div><strong>Assigned Crew Unit:</strong> 2 Specialized Floor Technicians</div>
+                    <div><strong>Dedicated Mobilization:</strong> 10 Dedicated Night Shifts</div>
+                    <div><strong>Primary Service Target:</strong> Phase 1: Initial Deep Clean</div>
+                    <div><strong>Total Reconciled Area:</strong> 11,153 SQF</div>
+                </div>
+            </div>
+
+            <!-- Visual Service & Option Legend -->
+            <div style="margin: 1rem 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">
+                <span style="font-size: 0.8rem; font-weight: 800; color: #0f172a; padding: 4px 8px; background: #e2e8f0; border-radius: 4px;">LEGEND:</span>
+                <span style="background: #16a34a; color: #ffffff; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 700;">DP: Phase 1 Deep Clean</span>
+                <span style="background: #0284c7; color: #ffffff; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 700;">SL: Modular Sealer (BulletProof®)</span>
+                <span style="background: #2563eb; color: #ffffff; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 700;">QT: Track A Quarterly Care</span>
+                <span style="background: #475569; color: #ffffff; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 700;">Track B: Semi-Annual Deep Scrub</span>
+                <span style="background: #b45309; color: #ffffff; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 700;">ST: Stair Detailing</span>
+                <span style="background: #9d174d; color: #ffffff; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 700;">Option C: Diamond Restoration</span>
+            </div>
+
+            <!-- Responsive Gantt Calendar Grid -->
+            <div style="overflow-x: auto; margin: 1.5rem 0; border: 1px solid #cbd5e1; border-radius: 6px;">
+                <table class="gantt-tbl">
+                    <thead>
+                        <tr style="background: #0f172a; color: #ffffff;">
+                            <th rowspan="3" style="padding: 6px 4px;">#</th>
+                            <th rowspan="3" style="padding: 6px 8px; text-align: left;">Building Name</th>
+                            <th rowspan="3" style="padding: 6px 8px; text-align: left;">Address</th>
+                            <th rowspan="3" style="padding: 6px 6px;">Total SQF</th>
+                            <th rowspan="3" style="padding: 6px 8px; text-align: left;">Shift Allocation</th>
+                            <th rowspan="3" style="padding: 6px 6px;">Crew Hours</th>
+                            <th rowspan="3" style="padding: 6px 8px; text-align: left;">Service Provided</th>
+                            <th colspan="7" style="background: #2563eb; color: #ffffff; padding: 5px; font-size: 0.75rem; font-weight: 700;">Week 1: Aug 31, 2026</th>
+                            <th colspan="7" style="background: #2563eb; color: #ffffff; padding: 5px; font-size: 0.75rem; font-weight: 700;">Week 2: Sep 07, 2026</th>
+                            <th colspan="7" style="background: #2563eb; color: #ffffff; padding: 5px; font-size: 0.75rem; font-weight: 700;">Week 3: Sep 14, 2026</th>
+                            <th colspan="7" style="background: #2563eb; color: #ffffff; padding: 5px; font-size: 0.75rem; font-weight: 700;">Week 4: Sep 21, 2026</th>
+                            <th colspan="7" style="background: #2563eb; color: #ffffff; padding: 5px; font-size: 0.75rem; font-weight: 700;">Week 5: Sep 28, 2026</th>
+                        </tr>
+                        <tr style="background: #1e293b; color: #ffffff; font-weight: 700;">
+                            <th style="padding: 4px 2px;">31</th>
+                            <th style="padding: 4px 2px;">1</th>
+                            <th style="padding: 4px 2px;">2</th>
+                            <th style="padding: 4px 2px;">3</th>
+                            <th style="padding: 4px 2px;">4</th>
+                            <th style="padding: 4px 2px;">5</th>
+                            <th style="padding: 4px 2px;">6</th>
+                            <th style="padding: 4px 2px;">7</th>
+                            <th style="padding: 4px 2px;">8</th>
+                            <th style="padding: 4px 2px;">9</th>
+                            <th style="padding: 4px 2px;">10</th>
+                            <th style="padding: 4px 2px;">11</th>
+                            <th style="padding: 4px 2px;">12</th>
+                            <th style="padding: 4px 2px;">13</th>
+                            <th style="padding: 4px 2px;">14</th>
+                            <th style="padding: 4px 2px;">15</th>
+                            <th style="padding: 4px 2px;">16</th>
+                            <th style="padding: 4px 2px;">17</th>
+                            <th style="padding: 4px 2px;">18</th>
+                            <th style="padding: 4px 2px;">19</th>
+                            <th style="padding: 4px 2px;">20</th>
+                            <th style="padding: 4px 2px;">21</th>
+                            <th style="padding: 4px 2px;">22</th>
+                            <th style="padding: 4px 2px;">23</th>
+                            <th style="padding: 4px 2px;">24</th>
+                            <th style="padding: 4px 2px;">25</th>
+                            <th style="padding: 4px 2px;">26</th>
+                            <th style="padding: 4px 2px;">27</th>
+                            <th style="padding: 4px 2px;">28</th>
+                            <th style="padding: 4px 2px;">29</th>
+                            <th style="padding: 4px 2px;">30</th>
+                            <th style="padding: 4px 2px;">1</th>
+                            <th style="padding: 4px 2px;">2</th>
+                            <th style="padding: 4px 2px;">3</th>
+                            <th style="padding: 4px 2px;">4</th>
+                        </tr>
+                        <tr style="background: #334155; color: #94a3b8; font-weight: 600;">
+                            <th style="padding: 3px 2px; background: #334155; color: #94a3b8; font-size: 0.68rem;">Mo</th>
+                            <th style="padding: 3px 2px; background: #334155; color: #94a3b8; font-size: 0.68rem;">Tu</th>
+                            <th style="padding: 3px 2px; background: #334155; color: #94a3b8; font-size: 0.68rem;">We</th>
+                            <th style="padding: 3px 2px; background: #334155; color: #94a3b8; font-size: 0.68rem;">Th</th>
+                            <th style="padding: 3px 2px; background: #334155; color: #94a3b8; font-size: 0.68rem;">Fr</th>
+                            <th style="padding: 3px 2px; background: #475569; color: #f8fafc; font-size: 0.68rem;">Sa</th>
+                            <th style="padding: 3px 2px; background: #475569; color: #f8fafc; font-size: 0.68rem;">Su</th>
+                            <th style="padding: 3px 2px; background: #334155; color: #94a3b8; font-size: 0.68rem;">Mo</th>
+                            <th style="padding: 3px 2px; background: #334155; color: #94a3b8; font-size: 0.68rem;">Tu</th>
+                            <th style="padding: 3px 2px; background: #334155; color: #94a3b8; font-size: 0.68rem;">We</th>
+                            <th style="padding: 3px 2px; background: #334155; color: #94a3b8; font-size: 0.68rem;">Th</th>
+                            <th style="padding: 3px 2px; background: #334155; color: #94a3b8; font-size: 0.68rem;">Fr</th>
+                            <th style="padding: 3px 2px; background: #475569; color: #f8fafc; font-size: 0.68rem;">Sa</th>
+                            <th style="padding: 3px 2px; background: #475569; color: #f8fafc; font-size: 0.68rem;">Su</th>
+                            <th style="padding: 3px 2px; background: #334155; color: #94a3b8; font-size: 0.68rem;">Mo</th>
+                            <th style="padding: 3px 2px; background: #334155; color: #94a3b8; font-size: 0.68rem;">Tu</th>
+                            <th style="padding: 3px 2px; background: #334155; color: #94a3b8; font-size: 0.68rem;">We</th>
+                            <th style="padding: 3px 2px; background: #334155; color: #94a3b8; font-size: 0.68rem;">Th</th>
+                            <th style="padding: 3px 2px; background: #334155; color: #94a3b8; font-size: 0.68rem;">Fr</th>
+                            <th style="padding: 3px 2px; background: #475569; color: #f8fafc; font-size: 0.68rem;">Sa</th>
+                            <th style="padding: 3px 2px; background: #475569; color: #f8fafc; font-size: 0.68rem;">Su</th>
+                            <th style="padding: 3px 2px; background: #334155; color: #94a3b8; font-size: 0.68rem;">Mo</th>
+                            <th style="padding: 3px 2px; background: #334155; color: #94a3b8; font-size: 0.68rem;">Tu</th>
+                            <th style="padding: 3px 2px; background: #334155; color: #94a3b8; font-size: 0.68rem;">We</th>
+                            <th style="padding: 3px 2px; background: #334155; color: #94a3b8; font-size: 0.68rem;">Th</th>
+                            <th style="padding: 3px 2px; background: #334155; color: #94a3b8; font-size: 0.68rem;">Fr</th>
+                            <th style="padding: 3px 2px; background: #475569; color: #f8fafc; font-size: 0.68rem;">Sa</th>
+                            <th style="padding: 3px 2px; background: #475569; color: #f8fafc; font-size: 0.68rem;">Su</th>
+                            <th style="padding: 3px 2px; background: #334155; color: #94a3b8; font-size: 0.68rem;">Mo</th>
+                            <th style="padding: 3px 2px; background: #334155; color: #94a3b8; font-size: 0.68rem;">Tu</th>
+                            <th style="padding: 3px 2px; background: #334155; color: #94a3b8; font-size: 0.68rem;">We</th>
+                            <th style="padding: 3px 2px; background: #334155; color: #94a3b8; font-size: 0.68rem;">Th</th>
+                            <th style="padding: 3px 2px; background: #334155; color: #94a3b8; font-size: 0.68rem;">Fr</th>
+                            <th style="padding: 3px 2px; background: #475569; color: #f8fafc; font-size: 0.68rem;">Sa</th>
+                            <th style="padding: 3px 2px; background: #475569; color: #f8fafc; font-size: 0.68rem;">Su</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+<tr style="background: #ffffff;"><td>1</td><td style="text-align: left; font-weight: 700; color: #0f172a;">Chase Bank Building</td><td style="text-align: left; color: #475569;">420 Throckmorton St</td><td style="text-align: center; font-weight: 600;">2,126</td><td style="text-align: left; color: #1e293b;">Dedicated Night 1 (3.5h)</td><td style="text-align: center; font-weight: 600;">3.5 hrs</td><td style="text-align: left; color: #166534; font-weight: 600;">Phase 1: Initial Deep Clean</td><td></td><td class="g-deep">DP</td><td></td><td></td><td></td><td class="g-seal">SL</td><td class="g-wknd"></td><td></td><td></td><td></td><td></td><td></td><td class="g-wknd"></td><td class="g-wknd"></td><td></td><td class="g-qtr">QT</td><td></td><td></td><td></td><td class="g-wknd"></td><td class="g-wknd"></td><td></td><td></td><td></td><td></td><td></td><td class="g-wknd"></td><td class="g-wknd"></td><td></td><td></td><td></td><td></td><td></td><td class="g-wknd"></td><td class="g-wknd"></td></tr>
+<tr style="background: #f8fafc;"><td>2</td><td style="text-align: left; font-weight: 700; color: #0f172a;">The Westbrook</td><td style="text-align: left; color: #475569;">425 Houston St</td><td style="text-align: center; font-weight: 600;">1,520</td><td style="text-align: left; color: #1e293b;">Dedicated Night 2 (3.0h)</td><td style="text-align: center; font-weight: 600;">3.0 hrs</td><td style="text-align: left; color: #166534; font-weight: 600;">Phase 1: Initial Deep Clean</td><td></td><td></td><td class="g-deep">DP</td><td></td><td></td><td class="g-seal">SL</td><td class="g-wknd"></td><td></td><td></td><td></td><td></td><td></td><td class="g-wknd"></td><td class="g-wknd"></td><td></td><td></td><td class="g-qtr">QT</td><td></td><td></td><td class="g-wknd"></td><td class="g-wknd"></td><td></td><td></td><td></td><td></td><td></td><td class="g-wknd"></td><td class="g-wknd"></td><td></td><td></td><td></td><td></td><td></td><td class="g-wknd"></td><td class="g-wknd"></td></tr>
+<tr style="background: #ffffff;"><td>3</td><td style="text-align: left; font-weight: 700; color: #0f172a;">The Carnegie</td><td style="text-align: left; color: #475569;">421 W 3rd St</td><td style="text-align: center; font-weight: 600;">1,175</td><td style="text-align: left; color: #1e293b;">Dedicated Night 3 (2.8h)</td><td style="text-align: center; font-weight: 600;">2.8 hrs</td><td style="text-align: left; color: #166534; font-weight: 600;">Phase 1: Initial Deep Clean</td><td></td><td></td><td></td><td class="g-deep">DP</td><td></td><td class="g-seal">SL</td><td class="g-wknd"></td><td></td><td></td><td></td><td></td><td></td><td class="g-wknd"></td><td class="g-wknd"></td><td></td><td></td><td></td><td class="g-qtr">QT</td><td></td><td class="g-wknd"></td><td class="g-wknd"></td><td></td><td></td><td></td><td></td><td></td><td class="g-wknd"></td><td class="g-wknd"></td><td></td><td></td><td></td><td></td><td></td><td class="g-wknd"></td><td class="g-wknd"></td></tr>
+<tr style="background: #f8fafc;"><td>4</td><td style="text-align: left; font-weight: 700; color: #0f172a;">The Cassidy</td><td style="text-align: left; color: #475569;">407 Throckmorton St</td><td style="text-align: center; font-weight: 600;">1,134</td><td style="text-align: left; color: #1e293b;">Dedicated Night 4 (2.6h)</td><td style="text-align: center; font-weight: 600;">2.6 hrs</td><td style="text-align: left; color: #166534; font-weight: 600;">Phase 1: Initial Deep Clean</td><td></td><td></td><td></td><td></td><td class="g-deep">DP</td><td class="g-seal">SL</td><td class="g-wknd"></td><td></td><td></td><td></td><td></td><td></td><td class="g-wknd"></td><td class="g-wknd"></td><td></td><td></td><td></td><td></td><td class="g-qtr">QT</td><td class="g-wknd"></td><td class="g-wknd"></td><td></td><td></td><td></td><td></td><td></td><td class="g-wknd"></td><td class="g-wknd"></td><td></td><td></td><td></td><td></td><td></td><td class="g-wknd"></td><td class="g-wknd"></td></tr>
+<tr style="background: #ffffff;"><td>5</td><td style="text-align: left; font-weight: 700; color: #0f172a;">Burk Burnett Building</td><td style="text-align: left; color: #475569;">500 Main St</td><td style="text-align: center; font-weight: 600;">1,108</td><td style="text-align: left; color: #1e293b;">Dedicated Night 5 (2.6h)</td><td style="text-align: center; font-weight: 600;">2.6 hrs</td><td style="text-align: left; color: #166534; font-weight: 600;">Phase 1: Initial Deep Clean</td><td></td><td></td><td></td><td></td><td></td><td class="g-wknd"></td><td class="g-wknd"></td><td class="g-deep">DP</td><td></td><td></td><td></td><td></td><td class="g-seal">SL</td><td class="g-wknd"></td><td></td><td></td><td></td><td></td><td></td><td class="g-wknd"></td><td class="g-wknd"></td><td class="g-qtr">QT</td><td class="g-stair">ST</td><td></td><td></td><td></td><td class="g-wknd"></td><td class="g-wknd"></td><td></td><td></td><td></td><td></td><td></td><td class="g-wknd"></td><td class="g-wknd"></td></tr>
+<tr style="background: #f8fafc;"><td>6</td><td style="text-align: left; font-weight: 700; color: #0f172a;">Sanger Lofts</td><td style="text-align: left; color: #475569;">222 W 4th St</td><td style="text-align: center; font-weight: 600;">1,071</td><td style="text-align: left; color: #1e293b;">Dedicated Night 6 (2.5h)</td><td style="text-align: center; font-weight: 600;">2.5 hrs</td><td style="text-align: left; color: #166534; font-weight: 600;">Phase 1: Initial Deep Clean</td><td></td><td></td><td></td><td></td><td></td><td class="g-wknd"></td><td class="g-wknd"></td><td></td><td class="g-deep">DP</td><td></td><td></td><td></td><td class="g-seal">SL</td><td class="g-wknd"></td><td></td><td></td><td></td><td></td><td></td><td class="g-wknd"></td><td class="g-wknd"></td><td></td><td class="g-qtr">QT</td><td></td><td></td><td></td><td class="g-wknd"></td><td class="g-wknd"></td><td></td><td></td><td></td><td></td><td></td><td class="g-wknd"></td><td class="g-wknd"></td></tr>
+<tr style="background: #ffffff;"><td>7</td><td style="text-align: left; font-weight: 700; color: #0f172a;">Petroleum Building</td><td style="text-align: left; color: #475569;">210 W 6th St</td><td style="text-align: center; font-weight: 600;">860</td><td style="text-align: left; color: #1e293b;">Dedicated Night 7 (2.2h)</td><td style="text-align: center; font-weight: 600;">2.2 hrs</td><td style="text-align: left; color: #166534; font-weight: 600;">Phase 1: Initial Deep Clean</td><td></td><td></td><td></td><td></td><td></td><td class="g-wknd"></td><td class="g-wknd"></td><td></td><td></td><td class="g-deep">DP</td><td></td><td></td><td class="g-seal">SL</td><td class="g-wknd"></td><td></td><td></td><td></td><td></td><td></td><td class="g-wknd"></td><td class="g-wknd"></td><td></td><td></td><td class="g-qtr">QT</td><td></td><td></td><td class="g-wknd"></td><td class="g-wknd"></td><td></td><td></td><td></td><td></td><td></td><td class="g-wknd"></td><td class="g-wknd"></td></tr>
+<tr style="background: #f8fafc;"><td>8</td><td style="text-align: left; font-weight: 700; color: #0f172a;">The Commerce Building</td><td style="text-align: left; color: #475569;">420 Commerce St</td><td style="text-align: center; font-weight: 600;">840</td><td style="text-align: left; color: #1e293b;">Dedicated Night 8 (2.2h)</td><td style="text-align: center; font-weight: 600;">2.2 hrs</td><td style="text-align: left; color: #166534; font-weight: 600;">Phase 1: Initial Deep Clean</td><td></td><td></td><td></td><td></td><td></td><td class="g-wknd"></td><td class="g-wknd"></td><td></td><td></td><td></td><td class="g-deep">DP</td><td></td><td class="g-seal">SL</td><td class="g-wknd"></td><td></td><td></td><td></td><td></td><td></td><td class="g-wknd"></td><td class="g-wknd"></td><td></td><td></td><td></td><td class="g-qtr">QT</td><td></td><td class="g-wknd"></td><td class="g-wknd"></td><td></td><td></td><td></td><td></td><td></td><td class="g-wknd"></td><td class="g-wknd"></td></tr>
+<tr style="background: #ffffff;"><td>9</td><td style="text-align: left; font-weight: 700; color: #0f172a;">Virtuoso Building</td><td style="text-align: left; color: #475569;">505 Main St</td><td style="text-align: center; font-weight: 600;">560</td><td style="text-align: left; color: #1e293b;">Boutique Night 9 (1.8h)</td><td style="text-align: center; font-weight: 600;">1.8 hrs</td><td style="text-align: left; color: #166534; font-weight: 600;">Phase 1: Initial Deep Clean</td><td></td><td></td><td></td><td></td><td></td><td class="g-wknd"></td><td class="g-wknd"></td><td></td><td></td><td></td><td></td><td class="g-deep">DP</td><td class="g-seal">SL</td><td class="g-wknd"></td><td></td><td></td><td></td><td></td><td></td><td class="g-wknd"></td><td class="g-wknd"></td><td></td><td></td><td></td><td></td><td class="g-qtr">QT</td><td class="g-wknd"></td><td class="g-wknd"></td><td></td><td></td><td></td><td></td><td></td><td class="g-wknd"></td><td class="g-wknd"></td></tr>
+<tr style="background: #f8fafc;"><td>10</td><td style="text-align: left; font-weight: 700; color: #0f172a;">Knights of Pythias Hall</td><td style="text-align: left; color: #475569;">109-110 E 3rd St</td><td style="text-align: center; font-weight: 600;">414</td><td style="text-align: left; color: #1e293b;">Boutique Night 9 (1.6h)</td><td style="text-align: center; font-weight: 600;">1.6 hrs</td><td style="text-align: left; color: #166534; font-weight: 600;">Phase 1: Initial Deep Clean</td><td></td><td></td><td></td><td></td><td></td><td class="g-wknd"></td><td class="g-wknd"></td><td></td><td></td><td></td><td></td><td class="g-deep">DP</td><td class="g-seal">SL</td><td class="g-wknd"></td><td></td><td></td><td></td><td></td><td></td><td class="g-wknd"></td><td class="g-wknd"></td><td></td><td></td><td></td><td></td><td class="g-qtr">QT</td><td class="g-wknd"></td><td class="g-wknd"></td><td></td><td></td><td></td><td></td><td></td><td class="g-wknd"></td><td class="g-wknd"></td></tr>
+<tr style="background: #ffffff;"><td>11</td><td style="text-align: left; font-weight: 700; color: #0f172a;">Plaza Hotel Building</td><td style="text-align: left; color: #475569;">303 Main St</td><td style="text-align: center; font-weight: 600;">345</td><td style="text-align: left; color: #1e293b;">Boutique Night 10 (1.5h)</td><td style="text-align: center; font-weight: 600;">1.5 hrs</td><td style="text-align: left; color: #166534; font-weight: 600;">Phase 1: Initial Deep Clean</td><td></td><td></td><td></td><td></td><td></td><td class="g-wknd"></td><td class="g-wknd"></td><td></td><td></td><td></td><td></td><td></td><td class="g-wknd"></td><td class="g-wknd"></td><td class="g-deep">DP</td><td class="g-seal">SL</td><td></td><td></td><td></td><td class="g-wknd"></td><td class="g-wknd"></td><td></td><td></td><td></td><td></td><td></td><td class="g-wknd"></td><td class="g-wknd"></td><td class="g-qtr">QT</td><td></td><td></td><td></td><td></td><td class="g-wknd"></td><td class="g-wknd"></td></tr>
+                    </tbody>
+                    <tfoot>
+                        <tr style="background: #f1f5f9; font-weight: 800; border-top: 2px solid #94a3b8;">
+                            <td colspan="3" style="padding: 7px 8px; text-align: center; color: #0f172a;">TOTAL PORTFOLIO DISPATCH (Phase 1 Deep Clean)</td>
+                            <td style="padding: 7px 6px; text-align: center; color: #0f172a;">11,153 SQF</td>
+                            <td style="padding: 7px 8px; text-align: center; color: #0f172a;">10 Dedicated Shifts / Pass</td>
+                            <td style="padding: 7px 6px; text-align: center; color: #0f172a;">26.3 hrs total</td>
+                            <td style="padding: 7px 8px; text-align: center; color: #166534;">11 Properties Scheduled</td>
+<td style="background: #e2e8f0;"></td>
+<td style="background: #e2e8f0;"></td>
+<td style="background: #e2e8f0;"></td>
+<td style="background: #e2e8f0;"></td>
+<td style="background: #e2e8f0;"></td>
+<td style="background: #e2e8f0;"></td>
+<td style="background: #e2e8f0;"></td>
+<td style="background: #e2e8f0;"></td>
+<td style="background: #e2e8f0;"></td>
+<td style="background: #e2e8f0;"></td>
+<td style="background: #e2e8f0;"></td>
+<td style="background: #e2e8f0;"></td>
+<td style="background: #e2e8f0;"></td>
+<td style="background: #e2e8f0;"></td>
+<td style="background: #e2e8f0;"></td>
+<td style="background: #e2e8f0;"></td>
+<td style="background: #e2e8f0;"></td>
+<td style="background: #e2e8f0;"></td>
+<td style="background: #e2e8f0;"></td>
+<td style="background: #e2e8f0;"></td>
+<td style="background: #e2e8f0;"></td>
+<td style="background: #e2e8f0;"></td>
+<td style="background: #e2e8f0;"></td>
+<td style="background: #e2e8f0;"></td>
+<td style="background: #e2e8f0;"></td>
+<td style="background: #e2e8f0;"></td>
+<td style="background: #e2e8f0;"></td>
+<td style="background: #e2e8f0;"></td>
+<td style="background: #e2e8f0;"></td>
+<td style="background: #e2e8f0;"></td>
+<td style="background: #e2e8f0;"></td>
+<td style="background: #e2e8f0;"></td>
+<td style="background: #e2e8f0;"></td>
+<td style="background: #e2e8f0;"></td>
+<td style="background: #e2e8f0;"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div> <!-- End Section 7.0 Unit -->
+
+        <!-- 8.0 REVISION HISTORY -->
+        <div class="sigma-print-section">
+            <h2>8.0 Revision History</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="text-align: left;">Version</th>
+                        <th style="text-align: left;">Date</th>
+                        <th style="text-align: left;">Author</th>
+                        <th style="text-align: left;">Change Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="text-align: left;">3.7.0</td>
+                        <td style="text-align: left;">09/03/2026</td>
+                        <td style="text-align: left;">George</td>
+                        <td style="text-align: left;">Added standalone Executive Summary before Section 1.0 outlining client needs, goals, and 3-phase proposed solution using plain everyday words; formalized 100% flexible shift scheduling policy per CEO directive; retitled Section 1.0 to Service Roadmap: 3-Phase Commercial Floor Care Plan.</td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: left;">3.6.0</td>
+                        <td style="text-align: left;">09/03/2026</td>
+                        <td style="text-align: left;">George</td>
+                        <td style="text-align: left;">Added Section 7.0: Operational Dispatch Gantt Schedule (10 Dedicated Night Shifts); integrated 5-week dynamic 35-day dispatch timeline with institutional color-coded service badges (Phase 1 Deep Clean, Modular Sealer, Track A Quarterly, Option B Staircare); updated dispatch origin to Arlington, TX; standardized company title to HWB Cleaning Services LLC; centered all SQF numbers with explicit '11,153 SQF' format.</td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: left;">3.5.0</td>
+                        <td style="text-align: left;">09/03/2026</td>
+                        <td style="text-align: left;">George</td>
+                        <td style="text-align: left;">Engineered Option A print and PDF pagination standards per CEO directive: (1) Added @media print engine rules with page-break-inside: avoid and break-inside: avoid across all sections (.sigma-print-section); (2) Ensured Section 3.0 Commercial Investment Matrix transfers intact to the next page whenever remaining space on the preceding page is insufficient, eliminating severed tables and orphaned headers; (3) Added .sigma-print-card protection to Section 4.0 and Section 6.0 photo audits to prevent card slicing; (4) Added programmatic horizontal page breaks in Excel workbook before Row 24, Row 40, and Row 50 for 100% cross-platform print parity.</td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: left;">3.4.0</td>
+                        <td style="text-align: left;">09/03/2026</td>
+                        <td style="text-align: left;">George</td>
+                        <td style="text-align: left;">De-jargonized proposal terminology per CEO directive to ensure clarity for commercial property managers: (1) Replaced academic 'Forensic Analysis' with practical 'Condition Observed'; (2) Replaced 'Damage Classification' with 'Floor Issue'; (3) Replaced 'Prescribed Remediation' with 'Recommended Service'; (4) Simplified Section 6.0 photo inspection narratives, stripping physics and chemistry jargon ('calcite etch crater rings', 'specular reflectivity depletion', 'crystalline matrix fracture', 'unbuffered alkaline spill', 'fluorochemical impregnator') in favor of plain commercial language; (5) Streamlined Table 3.0 and Section 1.0 scope descriptions.</td>
+                    </tr>
+                <tr>
+                    <td style="text-align: left;">3.3.0</td>
+                    <td style="text-align: left;">09/03/2026</td>
+                    <td style="text-align: left;">George</td>
+                    <td style="text-align: left;">Hardened visual hierarchy and formatting consistency per CEO directive: (1) Unified all 4 damage classification alert labels to single Crimson standard (#991B1B) across photographic survey and Excel workbook, eliminating inconsistent blue styling; (2) Standardized 'Available Per Hour' typography across Table 2, resolving font sizing defect where non-grindable buildings defaulted to 11pt, enforcing consistent 9pt regular across all 11 buildings and 9pt bold in total rows; (3) Unified 'Primary floor system' substrate labels across all photo audit case studies; (4) Eliminated contradictory 'thermal diamond burnishing' language from Photo 2 remediation, aligning 100% with Phase 3 non-diamond specification.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">3.2.0</td>
+                    <td style="text-align: left;">09/03/2026</td>
+                    <td style="text-align: left;">George</td>
+                    <td style="text-align: left;">Applied institutional labels and technical scope hardening per CEO directive: (1) Updated substrate column headers to 'Primary floor system'; (2) Renamed Phase 1 to 'Phase 1 deep clean (expose damage to consider options)'; (3) Renamed Table 3.0 methodology column to 'Scope of work'; (4) Fully eliminated 'diamond refresh' from Phase 3 routine maintenance to eliminate the site prep cost parity trap, redefining Phase 3 as pure non-diamond rotary deep soil extraction while quarantining diamond grinding exclusively to Option C; (5) Refined Table 3.0 scope descriptions to establish crystal-clear deliverables and boundaries.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">3.1.0</td>
+                    <td style="text-align: left;">09/03/2026</td>
+                    <td style="text-align: left;">George</td>
+                    <td style="text-align: left;">Remediated text clipping and truncation in Table 3.0 "Billing Frequency &amp; Program Terms" column across both Excel generator and HTML proposals: expanded column J:K widths to 38 characters, enabled word wrapping with explicit semantic line breaks, increased row height to 42pt, and applied unitized center-aligned hierarchy to ensure zero visual truncation.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">3.0.0</td>
+                    <td style="text-align: left;">09/03/2026</td>
+                    <td style="text-align: left;">George</td>
+                    <td style="text-align: left;">Removed speculative lump sum price total for Option B Staircase Care per CEO directive. Converted Option B exclusively to a transparent unit rate ($3.00/step and $21.00/landing) for 500 Main St (Burk Burnett Building), with total billing determined strictly by verified physical step and landing count going up and down levels upon mobilization. All other 10 buildings remain excluded.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">2.9.0</td>
+                    <td style="text-align: left;">09/03/2026</td>
+                    <td style="text-align: left;">George</td>
+                    <td style="text-align: left;">Adjusted Option B Staircase Care scope per client directive to isolate service exclusively to 500 Main St (Burk Burnett Building). Established transparent unit pricing of $3.00 per step (18 steps = $54.00) and $21.00 per landing (1 landing = $21.00) for a total of +$75.00/pass; formally excluded all other 10 buildings ($0.00) across Excel and proposal suite.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">2.8.0</td>
+                    <td style="text-align: left;">09/03/2026</td>
+                    <td style="text-align: left;">George</td>
+                    <td style="text-align: left;">Conducted forensic material science and empirical scope audit across entire portfolio quote suite per CEO directive: (1) Formally exempted Ceramic Mosaic Tile (Burk Burnett, Knights of Pythias) and Commercial Quarry Tile (Plaza Hotel) from Option C Diamond Restoration due to non-grindable ceramic/clay matrix and severe risk of tile pop/glaze erosion, correcting Option C total to $24,713.90 across the 8 eligible natural stone/terrazzo lobbies (9,326 Billing SF); (2) Substrate-engineered Phase 3 Track A maintenance scope distinguishing rotary diamond polishing (stone) from cylindrical brush deep grout flush (ceramic/quarry); (3) Explicitly aligned Photo 4 title with Building #9 (Virtuoso Building / Historic Schwarz Building).</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">2.7.0</td>
+                    <td style="text-align: left;">09/03/2026</td>
+                    <td style="text-align: left;">George</td>
+                    <td style="text-align: left;">Re-aligned commercial rate schedule per CEO directive: Phase 1 Initial Deep Clean Reset increased to $0.80/SF ($9,307.20 complete) to account for extensive initial edge scraping, tape/paint residue removal, and detail restoration; Track B Semi-Annual Maintenance increased to $0.68/SF ($7,911.12/pass) to reflect full restorative deep-scrubbing labor parity following 180 days of pedestrian soil compaction.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">2.6.0</td>
+                    <td style="text-align: left;">09/03/2026</td>
+                    <td style="text-align: left;">George</td>
+                    <td style="text-align: left;">Established Pathway 1: Standard 600 Cleanable SQFT Commercial Minimum Billing Baseline across the portfolio (Virtuoso @ 560 SF, Knights of Pythias @ 414 SF, Plaza Hotel @ 345 SF billed at 600 SF floor) to guarantee &ge; 30% HWB net operational profit margin and cover mandatory downtown mobilization, equipment setup, wall splash masking, and QA supervisory inspection.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">2.5.0</td>
+                    <td style="text-align: left;">09/03/2026</td>
+                    <td style="text-align: left;">George</td>
+                    <td style="text-align: left;">Added Option D: Furniture &amp; Artwork Handling Protocol across quote suite; designated client-managed default to prevent property damage, with HWB crew moving assistance available per hour upon written request.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">2.4.0</td>
+                    <td style="text-align: left;">09/03/2026</td>
+                    <td style="text-align: left;">George</td>
+                    <td style="text-align: left;">Reconciled all 11 lobbies to certified empirical field measurements (11,153 SF total); re-structured proposal into 3-Phase Commercial Roadmap (Phase 1 Initial Deep Clean Reset @ $0.68/SF, Phase 2 Protective Sealer @ $0.31/SF, Phase 3 Track A Quarterly @ $0.54/SF vs Track B Semi-Annual @ $0.62/SF); incorporated behind-the-scenes downtown setup, wall protection, and supervisory inspection underwriting.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">2.3.0</td>
+                    <td style="text-align: left;">09/03/2026</td>
+                    <td style="text-align: left;">George</td>
+                    <td style="text-align: left;">Added Section 6.0: 4-Point Photographic Floor Damage Forensic Survey &amp; Technical Assessment (Plaza Hotel chemical bleach, Chase Bank wear abrasion, Petroleum Bldg calcite acid etch, Schwarz Bldg equipment gouges).</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">2.2.0</td>
+                    <td style="text-align: left;">09/02/2026</td>
+                    <td style="text-align: left;">George</td>
+                    <td style="text-align: left;">Resolved BUG-052: Designed institutional Section 3.0 column headers (Row 41) on dark slate (#1E293B); expanded row heights to 36pt and enabled wrap_text to eliminate all text clipping in Excel and HTML.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">2.1.0</td>
+                    <td style="text-align: left;">09/02/2026</td>
+                    <td style="text-align: left;">George</td>
+                    <td style="text-align: left;">Updated baseline scope from Twice-Monthly to Monthly ($0.24/SF), Quarterly ($0.32/SF), and Every Six Months ($0.38/SF); added explicit per-SF rate columns and dual Grand Total Square Footage lines.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">2.0.0</td>
+                    <td style="text-align: left;">09/02/2026</td>
+                    <td style="text-align: left;">George</td>
+                    <td style="text-align: left;">Added dedicated Per-SF rate column to determine Twice-Monthly pricing; added explicit Grand Total Square Footage lines to both sections.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">1.9.0</td>
+                    <td style="text-align: left;">09/02/2026</td>
+                    <td style="text-align: left;">George</td>
+                    <td style="text-align: left;">Restored full descriptive 'Primary Floor Substrate' values across all tables; removed architectural stair descriptions to leave pure pricing options in both Excel and HTML.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">1.8.0</td>
+                    <td style="text-align: left;">09/02/2026</td>
+                    <td style="text-align: left;">George</td>
+                    <td style="text-align: left;">Restored Section 1.0 to Main Lobby Floor Scope First per CEO directive; positioned Penetrating Sealer and Staircase Detailing as secondary modular options.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">1.7.0</td>
+                    <td style="text-align: left;">09/02/2026</td>
+                    <td style="text-align: left;">George</td>
+                    <td style="text-align: left;">Added full commercial options for Monthly ($5,184/mo) and Quarterly ($6,912/qtr) cleaning; configured landscape print setup in Excel.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">1.6.0</td>
+                    <td style="text-align: left;">09/02/2026</td>
+                    <td style="text-align: left;">George</td>
+                    <td style="text-align: left;">Audited empirical data integrity. Added explicit ISO 9001 Clause 8.2.2 Non-Empirical Disclosure &amp; On-Site Laser Survey Reconciliation Clause.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">1.5.0</td>
+                    <td style="text-align: left;">09/02/2026</td>
+                    <td style="text-align: left;">George</td>
+                    <td style="text-align: left;">Added detailed audit of 7 buildings with stairs and identified 7 lobbies with multiple stepping levels.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">1.4.0</td>
+                    <td style="text-align: left;">09/02/2026</td>
+                    <td style="text-align: left;">George</td>
+                    <td style="text-align: left;">Added Option 4: Penetrating Sealer Protection (LATICRETE® STONETECH® BulletProof®).</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">1.3.0</td>
+                    <td style="text-align: left;">09/02/2026</td>
+                    <td style="text-align: left;">George</td>
+                    <td style="text-align: left;">Updated dispatch origin to McKinney, TX (124 mi round trip).</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">1.2.0</td>
+                    <td style="text-align: left;">09/02/2026</td>
+                    <td style="text-align: left;">George</td>
+                    <td style="text-align: left;">Added complete per-site cost audit (Labor, Chemical, Equipment, Misc).</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">1.1.0</td>
+                    <td style="text-align: left;">09/02/2026</td>
+                    <td style="text-align: left;">George</td>
+                    <td style="text-align: left;">Updated for independent scheduling: removed bundled density discount.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">1.0.0</td>
+                    <td style="text-align: left;">09/02/2026</td>
+                    <td style="text-align: left;">George</td>
+                    <td style="text-align: left;">Initial Commercial Bid drafted for Sundance Square 11-building portfolio.</td>
+                </tr>
+            </tbody>
+        </table>
+        </div> <!-- End Section 7.0 Unit -->
+    </div>
+
+    <div class="sop-card-footer">
+        <span>&copy; 2026 HWB Cleaning Services LLC</span>
+        <span>Commercial Proposal | HWB-BID-2026-FW01 (v3.7.0)</span>
+        <span>Held for CEO Review</span>
+    </div>
+</div>

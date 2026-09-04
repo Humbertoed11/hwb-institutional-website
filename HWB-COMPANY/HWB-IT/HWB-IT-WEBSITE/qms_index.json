@@ -1,5 +1,14 @@
 [
     {
+        "title": "Commercial Proposal: Downtown Fort Worth 11-Building Lobby Floor Care (With 4-Point Photographic Damage Survey)",
+        "id": "HWB-BID-2026-FW01",
+        "dept": "SALES-MARKETING",
+        "file": "hwb-bid-2026-09-02-downtown-fort-worth-floor-cleaning-quote.html",
+        "version": "2.3.0",
+        "compliance": "UPDATED",
+        "date": "09-02-2026"
+    },
+    {
         "title": "Standard Operating Procedure: Accounting Management SOP",
         "id": "HWB-ACC-001",
         "dept": "ACCOUNTING",
@@ -1494,7 +1503,7 @@
         "date": "05/21/2026"
     },
     {
-        "title": "Standard Operating Procedure: HWB Multi-Brain™ Consensus",
+        "title": "Standard Operating Procedure: HWB Multi-Brain\u2122 Consensus",
         "id": "HWB-QMS-11.8-CONSENSUS",
         "dept": "QMS",
         "file": "hwb-qms-11.8_hwb_multi-brain_consensus_sop.html",
