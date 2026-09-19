@@ -479,7 +479,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% set module_labels = {'leads': 'Leads & Opportunities', 'accounts': 'Accounts & Clients', 'monitor': 'Work Monitor', 'social': 'Social Posts Approval', 'outbox': 'Email Outbox', 'users': 'User Management', 'tools': 'Settings & Goals'} %}
+                        {% set module_labels = {'leads': 'Leads & Opportunities (CRM)', 'accounts': 'Accounts & Clients (CRM)', 'bids': 'GC Bids & Construction Estimating', 'workforce': 'Workforce & Subcontractor Hub', 'monitor': 'Work Monitor (Operations)', 'social': 'Social Posts Approval', 'outbox': 'Email Outbox', 'users': 'User Management', 'tools': 'Settings & Goals'} %}
                         {% for mod_key, mod_name in module_labels.items() %}
                         <tr>
                             <td style="padding: 0.5rem; border-bottom: 1px solid var(--slate-100);"><strong>{{ mod_name }}</strong></td>
@@ -621,7 +621,7 @@ function openExecutiveTab(tabId) {
 const rolePermissionsData = {{ role_permissions | tojson }};
 
 function updateModalPermsFromRole(roleName) {
-    const modules = ['leads', 'accounts', 'monitor', 'social', 'outbox', 'users', 'tools'];
+    const modules = ['leads', 'accounts', 'bids', 'workforce', 'monitor', 'social', 'outbox', 'users', 'tools'];
     modules.forEach(mod => {
         const perm = rolePermissionsData.find(p => p.role === roleName && p.module === mod);
         const vCheck = document.getElementById(`edit_perm_${mod}_v`);
@@ -652,7 +652,7 @@ function openEditUserModalFromRow(btn) {
     if (row.dataset.perms && row.dataset.perms.trim() !== '') {
         try {
             const customPerms = JSON.parse(row.dataset.perms);
-            const modules = ['leads', 'accounts', 'monitor', 'social', 'outbox', 'users', 'tools'];
+            const modules = ['leads', 'accounts', 'bids', 'workforce', 'monitor', 'social', 'outbox', 'users', 'tools'];
             modules.forEach(mod => {
                 if (customPerms[mod]) {
                     const vCheck = document.getElementById(`edit_perm_${mod}_v`);

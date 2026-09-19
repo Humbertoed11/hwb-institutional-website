@@ -311,7 +311,7 @@ def inject_enterprise_nav():
 
     role = getattr(current_user, 'role', '')
     is_exec = role in ['Executive', 'Admin']
-    is_mgmt = role in ['Executive', 'Admin', 'Manager']
+    is_mgmt = role in ['Executive', 'Admin', 'Manager', 'Operator']
     is_sales = (role == 'Sales')
 
     return {
