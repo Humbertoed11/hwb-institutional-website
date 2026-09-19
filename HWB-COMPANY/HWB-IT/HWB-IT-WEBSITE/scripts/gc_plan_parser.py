@@ -223,7 +223,7 @@ def generate_excel_proposal(output_path, project_meta, takeoff_data):
         ("A5", "Location:", "B5", f"{project_meta.get('address', '')}, {project_meta.get('city', '')}, {project_meta.get('state', 'TX')}"),
         ("D5", "Lead Estimator:", "E5", f"{project_meta.get('estimator_name', '')} ({project_meta.get('estimator_phone', '')})"),
         ("A6", "Cleanable SF:", "B6", f"{takeoff_data['total_sqft']:,} SF"),
-        ("D6", "Prequalification:", "E6", "Verified 2026 (COI $2M, W-9, EMR 0.82) -> mop.hwbcleaning.com/prequal"),
+        ("D6", "Prequalification:", "E6", "Verified 2026 (COI $2M, W-9, EMR 0.43) -> mop.hwbcleaning.com/prequal"),
     ]
     for p1, l1, p2, v1 in meta_labels:
         ws[p1] = l1; ws[p1].font = f_bold; ws[p1].fill = fill_slate
@@ -301,7 +301,7 @@ def generate_excel_proposal(output_path, project_meta, takeoff_data):
         "1. INCLUSIONS: 100% floor scrub, millwork detailing, restroom terminal acid sanitization, interior/exterior glass to 25ft, sticker/mortar scraping.",
         "2. EXCLUSIONS: General Contractor shall furnish commercial trash dumpsters on-site with unobstructed access, plus active water and electricity.",
         "3. EXCLUSIONS: Concrete panel staining is explicitly excluded per project addendum (panels painted in lieu of stain). Trade damage post-turnover excluded.",
-        "4. PREQUALIFICATION: Fully compliant $2M Commercial Liability Specimen COI, 2026 W-9, EMR 0.82, and Texas HUB credentials available at https://mop.hwbcleaning.com/prequal."
+        "4. PREQUALIFICATION: Fully compliant $2M Commercial Liability Specimen COI, 2026 W-9, EMR 0.43, and Texas HUB credentials available at https://mop.hwbcleaning.com/prequal."
     ]
     for idx, n in enumerate(notes, 1):
         ws.cell(row=note_row + idx, column=1, value=n).font = f_sub

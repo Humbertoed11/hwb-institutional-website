@@ -31,8 +31,8 @@ To provide a standardized, high-fidelity letterhead for all HWB Cleaning Service
         </div>
         <div style="text-align: right; font-size: 11px; color: #64748b;">
             <b>HWB Cleaning Services LLC</b><br>
-            Institutional Division | Plano, Texas<br>
-            www.hwbcleaning.com
+            3342 FM 1827 Ste 8d, McKinney, TX 75071<br>
+            (214)-586-0257 | www.hwbcleaning.com
         </div>
     </div>
     <div class="hwb-content" style="padding: 40px 0; min-height: 400px; line-height: 1.8;">

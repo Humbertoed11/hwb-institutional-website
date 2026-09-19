@@ -108,6 +108,12 @@ def methodology():
 def privacy_policy():
     return render_template('privacy_policy.html')
 
+@public_bp.route('/capability-statement', endpoint='capability_statement')
+@public_bp.route('/capability')
+def capability_statement():
+    """Official 2026 Single-Sheet Capability Statement view & PDF printout."""
+    return render_template('capability_statement.html')
+
 @public_bp.route('/manual', endpoint='manual_index')
 def manual_index():
     try:

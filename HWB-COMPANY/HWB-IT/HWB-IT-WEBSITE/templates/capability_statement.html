@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Capability Statement 2026 | HWB Cleaning Services LLC</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @media print {
+            @page {
+                size: letter portrait;
+                margin: 0.35in 0.4in;
+            }
+            body {
+                background: #ffffff !important;
+                color: #0f172a !important;
+                font-size: 8.5pt !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                padding: 0 !important;
+            }
+            .no-print { display: none !important; }
+            .sheet-card {
+                box-shadow: none !important;
+                border: none !important;
+                padding: 0 !important;
+                max-width: 100% !important;
+            }
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f1f5f9;
+            color: #1e293b;
+            margin: 0;
+            padding: 24px;
+            font-size: 9pt;
+            line-height: 1.4;
+        }
+
+        .sheet-card {
+            max-width: 850px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+            padding: 32px 36px;
+            border: 1px solid #cbd5e1;
+        }
+
+        /* 🏛️ MASTHEAD */
+        .header-grid {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            align-items: center;
+            border-bottom: 2.5px solid #0f172a;
+            padding-bottom: 14px;
+            margin-bottom: 16px;
+            gap: 16px;
+        }
+        .corp-title {
+            font-size: 19pt;
+            font-weight: 800;
+            color: #0f172a;
+            margin: 0;
+            letter-spacing: -0.02em;
+            line-height: 1.1;
+        }
+        .corp-subtitle {
+            font-size: 9.5pt;
+            font-weight: 700;
+            color: #2563eb;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-top: 4px;
+        }
+        .header-meta {
+            text-align: right;
+            font-size: 8.5pt;
+            color: #334155;
+            line-height: 1.35;
+        }
+        .header-meta strong {
+            color: #0f172a;
+        }
+
+        /* SECTION STYLING */
+        .section-header {
+            background: #0f172a;
+            color: #ffffff;
+            font-size: 8.5pt;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 4px 10px;
+            border-radius: 4px;
+            margin: 12px 0 8px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .about-text {
+            font-size: 8.8pt;
+            color: #334155;
+            line-height: 1.45;
+            margin: 0 0 10px 0;
+            text-align: justify;
+        }
+
+        /* 2-COLUMN SPLIT */
+        .two-col-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        ul.tight-list {
+            margin: 0;
+            padding-left: 18px;
+            font-size: 8.5pt;
+            color: #334155;
+            line-height: 1.45;
+        }
+        ul.tight-list li {
+            margin-bottom: 3px;
+        }
+
+        /* DATA BOXES */
+        .data-panel {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 10px 14px;
+        }
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 8.3pt;
+            padding: 2.5px 0;
+            border-bottom: 1px dashed #e2e8f0;
+        }
+        .data-row:last-child {
+            border-bottom: none;
+        }
+        .data-label {
+            font-weight: 700;
+            color: #475569;
+        }
+        .data-val {
+            font-weight: 600;
+            color: #0f172a;
+            text-align: right;
+        }
+
+        .perf-badge {
+            display: inline-block;
+            background: #eef2ff;
+            color: #3730a3;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 8pt;
+            margin-right: 4px;
+        }
+
+        /* LEADERSHIP BAR */
+        .leadership-box {
+            background: #eff6ff;
+            border-left: 4px solid #2563eb;
+            padding: 10px 14px;
+            border-radius: 0 6px 6px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 14px;
+        }
+        .officer-unit {
+            font-size: 8.5pt;
+        }
+        .officer-unit strong {
+            color: #1e3a8a;
+            font-size: 9.5pt;
+        }
+
+        .btn-print {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #2563eb;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 9pt;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            transition: background 0.2s;
+        }
+        .btn-print:hover {
+            background: #1d4ed8;
+        }
+        .action-bar {
+            max-width: 850px;
+            margin: 0 auto 16px auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .back-link {
+            color: #475569;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 9pt;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .back-link:hover {
+            color: #0f172a;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="action-bar no-print">
+        <a href="/" class="back-link"><i class="fas fa-arrow-left"></i> Return to HWB Website</a>
+        <div style="display: flex; gap: 10px;">
+            <a href="/prequal" class="btn-print" style="background: #0f172a;"><i class="fas fa-shield-alt"></i> Prequal Binder</a>
+            <button onclick="window.print()" class="btn-print"><i class="fas fa-print"></i> Print / Save PDF</button>
+        </div>
+    </div>
+
+    <div class="sheet-card">
+
+        <!-- 🏛️ MASTHEAD -->
+        <div class="header-grid">
+            <div>
+                <h1 class="corp-title">HWB CLEANING SERVICES LLC</h1>
+                <div class="corp-subtitle">Capability Statement 2026 • Commercial & Institutional Services</div>
+            </div>
+            <div class="header-meta">
+                <strong>Headquarters:</strong> 3342 FM 1827 Ste 8d, McKinney, TX 75071<br>
+                <strong>Office Switchboard:</strong> (214)-586-0257<br>
+                <strong>Executive Inquiries:</strong> hdominguez@hwbcleaning.com<br>
+                <strong>Online Portal:</strong> www.hwbcleaning.com
+            </div>
+        </div>
+
+        <!-- ABOUT US -->
+        <div class="section-header">About Us</div>
+        <p class="about-text">
+            It’s not just about cleaning anymore; It is about the human experience that we all depend upon. We know what to do, how to do it and why we are here. HWB is a commercial cleaning company providing complete janitorial and custodial services to clients in the private and public sector. We operate throughout the DFW Metroplex and the entire State of Texas. <strong>Integrity, communication, and attention to detail</strong> are our company values.
+        </p>
+
+        <!-- CORE COMPETENCIES & DIFFERENTIATORS -->
+        <div class="two-col-grid">
+            <div>
+                <div class="section-header">Core Competencies</div>
+                <ul class="tight-list">
+                    <li><strong>Client Satisfaction Driven:</strong> Clinical inspection routines & QA checks</li>
+                    <li><strong>Fast Problem Resolution:</strong> Instant digital escalation & local supervisor action</li>
+                    <li><strong>Year-Round Staff Training:</strong> Structured SOP & OSHA standard alignment</li>
+                    <li><strong>Cost Control:</strong> Transparent itemized production rates & zero billing creep</li>
+                    <li><strong>Green Cleaning Practices:</strong> Eco-friendly plant-based chemical stewardship</li>
+                    <li><strong>Safety Programs:</strong> OSHA-compliant commercial and industrial safety protocols</li>
+                    <li><strong>Technology Driven Supervision:</strong> GPS timestamps & digital task audit</li>
+                    <li><strong>24/7 Operations:</strong> Day porters, night shifts, emergency & weekend crews</li>
+                </ul>
+            </div>
+            <div>
+                <div class="section-header">Differentiators</div>
+                <ul class="tight-list">
+                    <li><strong>Hyper-Local Mobilization:</strong> Crews hired live within 5 to 10 minutes of client facilities, mitigating absentee levels due to inclement weather or transit delays.</li>
+                    <li><strong>Dedicated Account Supervision:</strong> Personal supervisor assigned to each account for single-point operational accountability.</li>
+                    <li><strong>Sustainable Operations:</strong> Use of sustainable products, green processes, and low-decibel HEPA extraction machinery.</li>
+                    <li><strong>Ironclad Reliability:</strong> We do what we say we are going to do. Period.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- PAST PERFORMANCES -->
+        <div class="section-header">Past Performances (Empirical Operational Footprint)</div>
+        <div class="two-col-grid">
+            <ul class="tight-list">
+                <li><span class="perf-badge">6,000,000+ SF</span> Commercial, academic, and industrial space cleaned</li>
+                <li><span class="perf-badge">150,000+ SF</span> Strip and wax commercial floor restoration completed</li>
+                <li><span class="perf-badge">3 Programs</span> Academic facility disinfection & infection-control setups</li>
+            </ul>
+            <ul class="tight-list">
+                <li><span class="perf-badge">2 Programs</span> Client-specific industrial safety department programs created</li>
+                <li><span class="perf-badge">35+ Crews</span> Trained and updated on formal standard operating procedures</li>
+                <li><span class="perf-badge">Statewide</span> Turnkey operations across North Texas & major Texas metros</li>
+            </ul>
+        </div>
+
+        <!-- CORPORATE DATA, CODES & INSURANCE -->
+        <div class="section-header">Corporate Registrations, Codes & Risk Management</div>
+        <div class="two-col-grid">
+            <div class="data-panel">
+                <div class="data-row"><span class="data-label">Texas LLC Charter #:</span><span class="data-val">802920409</span></div>
+                <div class="data-row"><span class="data-label">Federal Tax ID (EIN) #:</span><span class="data-val">82-4377459</span></div>
+                <div class="data-row"><span class="data-label">Texas Sales Tax ID #:</span><span class="data-val">32005785756</span></div>
+                <div class="data-row"><span class="data-label">DUNS Number:</span><span class="data-val">08-283-0635</span></div>
+                <div class="data-row"><span class="data-label">Federal Government CAGE (SAM):</span><span class="data-val">082830635</span></div>
+            </div>
+            <div class="data-panel">
+                <div class="data-row"><span class="data-label">Commercial Insurance Policy #:</span><span class="data-val">GHF000742</span></div>
+                <div class="data-row"><span class="data-label">Current Experience Mod (EMR):</span><span class="data-val" style="color: #16a34a; font-weight: 800;">.43 (Superior Safety)</span></div>
+                <div class="data-row"><span class="data-label">Insurance Broker / Agency:</span><span class="data-val">Insurance Risk Consultants</span></div>
+                <div class="data-row"><span class="data-label">Insurance Agent:</span><span class="data-val">Carlos Aguirre (682) 667-3863</span></div>
+                <div class="data-row"><span class="data-label">Industrial Codes:</span><span class="data-val">NAICS 561720 • SIC 7349-01 • UNSPSC 7611</span></div>
+            </div>
+        </div>
+
+        <!-- EXECUTIVE LEADERSHIP & ATTESTATION -->
+        <div class="leadership-box">
+            <div class="officer-unit">
+                <strong>Mirna Rondinella</strong><br>
+                <span>President</span>
+            </div>
+            <div class="officer-unit" style="text-align: center;">
+                <span style="font-size: 7.5pt; text-transform: uppercase; color: #64748b; font-weight: 700;">Operational Territory</span><br>
+                <strong>DFW Metroplex & Entire State of Texas</strong>
+            </div>
+            <div class="officer-unit" style="text-align: right;">
+                <strong>Humberto Dominguez</strong><br>
+                <span>Chief Executive Officer</span>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>

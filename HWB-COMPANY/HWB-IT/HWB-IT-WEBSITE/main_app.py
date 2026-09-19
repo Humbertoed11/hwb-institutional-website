@@ -22,7 +22,7 @@ from core.services.sanitizer import clean_phone, clean_currency, clean_sqft, cle
 from core.services.search import parse_advanced_search
 from core.services.email_service import transmit_email
 from core.security import roles_required, log_security_violation
-from core.constants import FACILITY_TYPES, LEAD_SOURCES, PRIORITY_LEVELS
+from core.constants import FACILITY_TYPES, LEAD_SOURCES, PRIORITY_LEVELS, CORPORATE_INFO
 from core.utils import format_to_mdy
 from database.schema_engine import apply_system_migrations
 from blueprints import (
@@ -325,6 +325,11 @@ def inject_enterprise_nav():
             'sales_desk_url': url_for('sales_desk') if (is_sales or is_mgmt) else None
         }
     }
+
+@app.context_processor
+def inject_corporate_info():
+    """Injects verified empirical corporate identity across all templates."""
+    return {'corp_info': CORPORATE_INFO}
 
 # --- Standardized Error Handlers ---
 @app.errorhandler(500)
