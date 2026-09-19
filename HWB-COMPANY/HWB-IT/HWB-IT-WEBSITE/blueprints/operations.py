@@ -42,6 +42,8 @@ def admin_operations():
     leads, clients, work_orders, services, activities, system_users = [], [], [], [], [], []
     leads_count, bids_count, total_pages, portfolio_total = 0, 0, 1, 0
     lib = {'area': [], 'task': [], 'item': []}
+    applicants, subcontractors = [], []
+    applicants_count, subcontractors_count = 0, 0
     
     # --- Dynamic Column Architecture ---
     default_cols_leads = 'company,status,sqf,value,priority,activities'
@@ -274,6 +276,29 @@ def admin_operations():
             # 5. ACTIVE SYSTEM USERS
             cur.execute('SELECT id, username, full_name, role FROM "Users" WHERE status = \'Active\' ORDER BY id ASC')
             system_users = cur.fetchall()
+
+            # 6. WORKFORCE & SUBCONTRACTORS
+            applicant_where_clauses = []
+            applicant_params = []
+            if search_q and active_view == 'workforce':
+                applicant_where_clauses.append("(full_name ILIKE %s OR city ILIKE %s OR phone ILIKE %s OR desired_role ILIKE %s)")
+                param_val = f"%{search_q}%"
+                applicant_params.extend([param_val, param_val, param_val, param_val])
+            app_where_str = ("WHERE " + " AND ".join(applicant_where_clauses)) if applicant_where_clauses else ""
+            cur.execute(f'SELECT * FROM "JobApplicants" {app_where_str} ORDER BY created_at DESC', tuple(applicant_params))
+            applicants = cur.fetchall()
+            applicants_count = len(applicants)
+
+            sub_where_clauses = []
+            sub_params = []
+            if search_q and active_view == 'workforce':
+                sub_where_clauses.append("(company_name ILIKE %s OR contact_name ILIKE %s OR city ILIKE %s OR specialties ILIKE %s)")
+                param_val = f"%{search_q}%"
+                sub_params.extend([param_val, param_val, param_val, param_val])
+            sub_where_str = ("WHERE " + " AND ".join(sub_where_clauses)) if sub_where_clauses else ""
+            cur.execute(f'SELECT * FROM "SubcontractorPartners" {sub_where_str} ORDER BY created_at DESC', tuple(sub_params))
+            subcontractors = cur.fetchall()
+            subcontractors_count = len(subcontractors)
     finally:
         if "conn" in locals() and conn: conn.close()
 
@@ -292,11 +317,13 @@ def admin_operations():
                 'leads': [serialize_row(l) for l in leads] if leads else [],
                 'clients': [serialize_row(c) for c in clients] if clients else [],
                 'construction_bids': [serialize_row(b) for b in construction_bids] if construction_bids else [],
+                'applicants': [serialize_row(a) for a in applicants] if applicants else [],
+                'subcontractors': [serialize_row(s) for s in subcontractors] if subcontractors else [],
                 'system_users': [serialize_row(u) for u in system_users] if system_users else [],
                 'facility_types': FACILITY_TYPES,
                 'lead_sources': LEAD_SOURCES,
                 'priority_levels': PRIORITY_LEVELS,
-                'counts': {'leads': leads_count or 0, 'accounts': len(clients) if clients else 0, 'bids': len(construction_bids) if construction_bids else 0},
+                'counts': {'leads': leads_count or 0, 'accounts': len(clients) if clients else 0, 'bids': len(construction_bids) if construction_bids else 0, 'applicants': applicants_count, 'subcontractors': subcontractors_count},
                 'active_view': active_view
             })
         except Exception as e:
@@ -310,6 +337,8 @@ def admin_operations():
                          active_cols_str=active_cols_str, portfolio_total=portfolio_total,
                          clients=clients, work_orders=work_orders, services=services,
                          construction_bids=construction_bids, bids_count=bids_count,
+                         applicants=applicants, applicants_count=applicants_count,
+                         subcontractors=subcontractors, subcontractors_count=subcontractors_count,
                          library=json.dumps(lib), activities=activities, system_users=system_users,
                          facility_types=FACILITY_TYPES, lead_sources=LEAD_SOURCES, priority_levels=PRIORITY_LEVELS)
 

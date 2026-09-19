@@ -338,3 +338,14 @@ def sitemap_xml():
 def favicon():
     return send_from_directory(current_app.static_folder, 'favicon.ico')
 
+@public_bp.route('/work-with-us', methods=['GET'], endpoint='work_with_us')
+def work_with_us():
+    """Public portal for cleaning technician applications and subcontractor intake."""
+    return render_template('work_with_us.html')
+
+@public_bp.route('/careers', methods=['GET'], endpoint='careers')
+def careers():
+    """SEO alias redirect to work-with-us."""
+    return redirect(url_for('public.work_with_us'))
+
+

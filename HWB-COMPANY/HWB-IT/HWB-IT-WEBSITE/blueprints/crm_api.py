@@ -1070,3 +1070,201 @@ def api_dismiss_duplicates():
         return jsonify({'status': 'error', 'message': str(e)}), 500
     finally:
         if conn: conn.close()
+
+
+# ==============================================================================
+# SigmaFidelity™ Workforce & Subcontractor Intake API
+# Standard: HWB-QMS-7.6 On-Demand Labor Architecture & Document Compliance
+# ==============================================================================
+
+@crm_api_bp.route('/api/v1/workforce/apply', methods=['POST'])
+def api_workforce_apply():
+    """Public submission gate for cleaning technician job applicants."""
+    data = request.get_json() or request.form.to_dict() or {}
+    full_name = (data.get('full_name') or '').strip()
+    raw_phone = (data.get('phone') or '').strip()
+
+    if not full_name or not raw_phone:
+        return jsonify({'status': 'error', 'message': 'Full name and phone number are required.'}), 400
+
+    phone = clean_phone(raw_phone) or raw_phone
+    email = clean_email(data.get('email')) or data.get('email')
+    city = clean_city(data.get('city')) or (data.get('city') or '').strip()
+    desired_role = data.get('desired_role') or 'Commercial Cleaning Technician'
+    desired_shift = data.get('desired_shift') or 'Night'
+    experience = data.get('experience_level') or '1-2 Years'
+    has_transport = str(data.get('has_transportation', 'true')).lower() in ('true', '1', 'yes')
+    authorized_us = str(data.get('authorized_to_work_us', 'true')).lower() in ('true', '1', 'yes')
+    language = data.get('preferred_language') or 'English'
+    notes = data.get('notes') or 'Applied via public careers portal.'
+
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            cur.execute('''
+                INSERT INTO "JobApplicants" (
+                    full_name, phone, email, city, state, desired_role, desired_shift,
+                    experience_level, has_transportation, authorized_to_work_us,
+                    preferred_language, status, notes
+                ) VALUES (%s, %s, %s, %s, 'TX', %s, %s, %s, %s, %s, %s, 'New', %s)
+                RETURNING id;
+            ''', (full_name, phone, email, city, desired_role, desired_shift, experience, has_transport, authorized_us, language, notes))
+            new_id = cur.fetchone()[0]
+            conn.commit()
+            return jsonify({'status': 'success', 'applicant_id': new_id, 'message': 'Application received.'}), 201
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/workforce/subcontractor', methods=['POST'])
+def api_workforce_subcontractor():
+    """Public submission gate for 1099 cleaning crew subcontractor registration."""
+    data = request.get_json() or request.form.to_dict() or {}
+    company_name = (data.get('company_name') or '').strip()
+    contact_name = (data.get('contact_name') or '').strip()
+    raw_phone = (data.get('phone') or '').strip()
+
+    if not company_name or not contact_name or not raw_phone:
+        return jsonify({'status': 'error', 'message': 'Company name, contact name, and phone number are required.'}), 400
+
+    phone = clean_phone(raw_phone) or raw_phone
+    email = clean_email(data.get('email')) or data.get('email')
+    city = clean_city(data.get('city')) or (data.get('city') or '').strip()
+    try:
+        crew_size = int(data.get('crew_size', 2))
+    except (ValueError, TypeError):
+        crew_size = 2
+    specialties = data.get('specialties') or 'Post-Construction Cleaning'
+    coi_status = data.get('coi_status') or 'Pending'
+    hourly_rate = data.get('hourly_rate_range') or '$22 - $28/hr'
+    dwc83_signed = str(data.get('dwc83_agreed', 'true')).lower() in ('true', '1', 'yes')
+    notes = data.get('notes') or 'Registered via subcontractor portal.'
+
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            cur.execute('''
+                INSERT INTO "SubcontractorPartners" (
+                    company_name, contact_name, phone, email, city, state,
+                    crew_size, specialties, coi_status, hourly_rate_range,
+                    dwc83_signed, status, notes
+                ) VALUES (%s, %s, %s, %s, %s, 'TX', %s, %s, %s, %s, %s, 'Vetting', %s)
+                RETURNING id;
+            ''', (company_name, contact_name, phone, email, city, crew_size, specialties, coi_status, hourly_rate, dwc83_signed, notes))
+            new_id = cur.fetchone()[0]
+            conn.commit()
+            return jsonify({'status': 'success', 'partner_id': new_id, 'message': 'Subcontractor partner registered.'}), 201
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/workforce/applicants', methods=['GET'])
+@login_required
+def api_get_applicants():
+    """Retrieve applicant records with optional filtering."""
+    status_filter = request.args.get('status')
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            if status_filter:
+                cur.execute('SELECT * FROM "JobApplicants" WHERE status = %s ORDER BY created_at DESC;', (status_filter,))
+            else:
+                cur.execute('SELECT * FROM "JobApplicants" ORDER BY created_at DESC;')
+            rows = [serialize_row(r) for r in cur.fetchall()]
+            return jsonify({'status': 'success', 'count': len(rows), 'applicants': rows})
+    finally:
+        if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/workforce/applicants/<int:id>', methods=['PATCH', 'DELETE'])
+@login_required
+def api_manage_applicant(id):
+    """Update status or notes for an applicant."""
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            if request.method == 'DELETE':
+                cur.execute('DELETE FROM "JobApplicants" WHERE id = %s;', (id,))
+                conn.commit()
+                return jsonify({'status': 'success', 'deleted_id': id})
+
+            data = request.get_json() or {}
+            cur.execute('SELECT * FROM "JobApplicants" WHERE id = %s;', (id,))
+            current_app_row = cur.fetchone()
+            if not current_app_row:
+                return jsonify({'status': 'error', 'message': 'Applicant not found'}), 404
+
+            new_status = data.get('status') if 'status' in data else current_app_row['status']
+            new_notes = data.get('notes') if 'notes' in data else current_app_row['notes']
+            new_city = clean_city(data.get('city')) if 'city' in data else current_app_row['city']
+            new_phone = clean_phone(data.get('phone')) if 'phone' in data else current_app_row['phone']
+
+            cur.execute('''
+                UPDATE "JobApplicants"
+                SET status = %s, notes = %s, city = %s, phone = %s, updated_at = CURRENT_TIMESTAMP
+                WHERE id = %s;
+            ''', (new_status, new_notes, new_city, new_phone, id))
+            conn.commit()
+            return jsonify({'status': 'success', 'id': id})
+    finally:
+        if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/workforce/subcontractors', methods=['GET'])
+@login_required
+def api_get_subcontractors():
+    """Retrieve subcontractor records with optional filtering."""
+    status_filter = request.args.get('status')
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            if status_filter:
+                cur.execute('SELECT * FROM "SubcontractorPartners" WHERE status = %s ORDER BY created_at DESC;', (status_filter,))
+            else:
+                cur.execute('SELECT * FROM "SubcontractorPartners" ORDER BY created_at DESC;')
+            rows = [serialize_row(r) for r in cur.fetchall()]
+            return jsonify({'status': 'success', 'count': len(rows), 'subcontractors': rows})
+    finally:
+        if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/workforce/subcontractors/<int:id>', methods=['PATCH', 'DELETE'])
+@login_required
+def api_manage_subcontractor(id):
+    """Update status, COI status, or rating for a subcontractor."""
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            if request.method == 'DELETE':
+                cur.execute('DELETE FROM "SubcontractorPartners" WHERE id = %s;', (id,))
+                conn.commit()
+                return jsonify({'status': 'success', 'deleted_id': id})
+
+            data = request.get_json() or {}
+            cur.execute('SELECT * FROM "SubcontractorPartners" WHERE id = %s;', (id,))
+            current_sub = cur.fetchone()
+            if not current_sub:
+                return jsonify({'status': 'error', 'message': 'Subcontractor not found'}), 404
+
+            new_status = data.get('status') if 'status' in data else current_sub['status']
+            new_coi_status = data.get('coi_status') if 'coi_status' in data else current_sub['coi_status']
+            new_notes = data.get('notes') if 'notes' in data else current_sub['notes']
+            new_city = clean_city(data.get('city')) if 'city' in data else current_sub['city']
+            new_phone = clean_phone(data.get('phone')) if 'phone' in data else current_sub['phone']
+
+            cur.execute('''
+                UPDATE "SubcontractorPartners"
+                SET status = %s, coi_status = %s, notes = %s, city = %s, phone = %s, updated_at = CURRENT_TIMESTAMP
+                WHERE id = %s;
+            ''', (new_status, new_coi_status, new_notes, new_city, new_phone, id))
+            conn.commit()
+            return jsonify({'status': 'success', 'id': id})
+    finally:
+        if conn: conn.close()
+

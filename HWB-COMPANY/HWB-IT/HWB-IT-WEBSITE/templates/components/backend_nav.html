@@ -294,6 +294,9 @@
             <a href="{{ url_for('admin_operations', view='construction_bids') }}" class="sigma-nav-btn {% if request.endpoint == 'admin_operations' and active_view == 'construction_bids' %}active{% endif %}">
                 <i class="fas fa-hard-hat" style="color: #f59e0b;"></i> GC Bids
             </a>
+            <a href="{{ url_for('admin_operations', view='workforce') }}" class="sigma-nav-btn {% if request.endpoint == 'admin_operations' and active_view == 'workforce' %}active{% endif %}">
+                <i class="fas fa-users" style="color: #10b981;"></i> Workforce
+            </a>
             <a href="{{ url_for('admin_operations', view='monitor') }}" class="sigma-nav-btn {% if request.endpoint == 'admin_operations' and active_view == 'monitor' %}active{% endif %}">
                 <i class="fas fa-chart-line" style="color: #06b6d4;"></i> Monitor
             </a>
@@ -321,6 +324,7 @@
                 <button onclick="openAddForm('account')" class="isc-dropdown-btn"><i class="fas fa-handshake" style="margin-right: 0.5rem; color: #10b981;"></i> New Account</button>
                 {% if current_user.role != 'Sales' %}
                     <button onclick="openAddForm('bid')" class="isc-dropdown-btn" style="color: #b45309; font-weight: 700;"><i class="fas fa-hard-hat" style="margin-right: 0.5rem; color: #f59e0b;"></i> + New GC Bid</button>
+                    <a href="/work-with-us" target="_blank" class="isc-dropdown-btn" style="text-decoration: none; display: flex; align-items: center; color: #059669; font-weight: 700;"><i class="fas fa-user-plus" style="margin-right: 0.5rem; color: #10b981;"></i> Workforce Intake Portal</a>
                     <div style="height: 1px; background: var(--slate-100); margin: 0.35rem 0;"></div>
                     <a href="/manual/hwb-qms-7.6_backend_architecture.html" class="isc-dropdown-btn" style="text-decoration: none; display: block; color: var(--brand); font-weight: 800;"><i class="fas fa-file-code" style="margin-right: 0.5rem;"></i> 7.6 Backend Architecture</a>
                     <a href="/manual/hwb-qms-7.7_backend_web_system.html" class="isc-dropdown-btn" style="text-decoration: none; display: block; color: var(--brand); font-weight: 800;"><i class="fas fa-network-wired" style="margin-right: 0.5rem;"></i> 7.7 Commercial Takeoff</a>

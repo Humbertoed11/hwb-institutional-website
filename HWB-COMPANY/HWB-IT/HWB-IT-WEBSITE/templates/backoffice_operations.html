@@ -2,7 +2,7 @@
 
 {% block title %}Operations Control | SigmaQuality™ Admin Dashboard{% endblock %}
 
-{% block bo_main_class %}{% if active_view in ['leads', 'accounts', 'construction_bids'] %}fluid{% endif %}{% endblock %}
+{% block bo_main_class %}{% if active_view in ['leads', 'accounts', 'construction_bids', 'workforce'] %}fluid{% endif %}{% endblock %}
 
 {% block bo_title %}Operations Control{% endblock %}
 {% block bo_subtitle %}Professional Standardized Control{% endblock %}
@@ -1270,6 +1270,330 @@
                             Next <i class="fas fa-chevron-right" style="margin-left: 0.5rem;"></i>
                         </a>
                         {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- View: Workforce & Subcontractor Network Hub (HWB-QMS-7.6) -->
+        {% if current_user.role != 'Sales' %}
+        <div id="view-workforce" class="isc-view" style="display: {% if active_view == 'workforce' %}block{% else %}none{% endif %};">
+            {% set ns_wf = namespace(bench_ready=0, active_subs=0, total_crews=0, verified_coi=0) %}
+            {% for a in applicants %}
+                {% if a.status in ['Bench Ready', 'Hired'] %}
+                    {% set ns_wf.bench_ready = ns_wf.bench_ready + 1 %}
+                {% endif %}
+            {% endfor %}
+            {% for s in subcontractors %}
+                {% if s.status == 'Active Partner' %}
+                    {% set ns_wf.active_subs = ns_wf.active_subs + 1 %}
+                    {% set ns_wf.total_crews = ns_wf.total_crews + (s.crew_size or 2) %}
+                {% endif %}
+                {% if s.coi_status == 'Verified' %}
+                    {% set ns_wf.verified_coi = ns_wf.verified_coi + 1 %}
+                {% endif %}
+            {% endfor %}
+
+            <!-- Workforce Metrics KPI Ribbon -->
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; margin-bottom: 2rem;">
+                <div class="isc-card" style="padding: 1.25rem; border-left: 4px solid #10b981; background: #ffffff;">
+                    <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--slate-500); letter-spacing: 0.05em;">Direct Technicians (W-2)</div>
+                    <div style="font-size: 1.75rem; font-weight: 900; color: var(--slate-900); margin-top: 0.25rem;">
+                        {{ applicants|length }} <span style="font-size: 0.85rem; font-weight: 700; color: var(--slate-400);">Applicants</span>
+                    </div>
+                    <div style="font-size: 0.72rem; color: #059669; font-weight: 700; margin-top: 0.35rem;">
+                        <i class="fas fa-check-circle"></i> {{ ns_wf.bench_ready }} Bench-Ready & Hired Cleaners
+                    </div>
+                </div>
+                <div class="isc-card" style="padding: 1.25rem; border-left: 4px solid #3b82f6; background: #ffffff;">
+                    <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--slate-500); letter-spacing: 0.05em;">Subcontractor Partners (1099)</div>
+                    <div style="font-size: 1.75rem; font-weight: 900; color: var(--slate-900); margin-top: 0.25rem;">
+                        {{ subcontractors|length }} <span style="font-size: 0.85rem; font-weight: 700; color: var(--slate-400);">Companies</span>
+                    </div>
+                    <div style="font-size: 0.72rem; color: #2563eb; font-weight: 700; margin-top: 0.35rem;">
+                        <i class="fas fa-handshake"></i> {{ ns_wf.active_subs }} Active Vetted Partners
+                    </div>
+                </div>
+                <div class="isc-card" style="padding: 1.25rem; border-left: 4px solid #8b5cf6; background: #ffffff;">
+                    <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--slate-500); letter-spacing: 0.05em;">Total Crew Capacity</div>
+                    <div style="font-size: 1.75rem; font-weight: 900; color: #6d28d9; margin-top: 0.25rem;">
+                        {{ ns_wf.total_crews }} <span style="font-size: 0.85rem; font-weight: 700; color: var(--slate-400);">Laborers</span>
+                    </div>
+                    <div style="font-size: 0.72rem; color: #7c3aed; font-weight: 700; margin-top: 0.35rem;">
+                        <i class="fas fa-users-cog"></i> Post-Con & Specialty Crews
+                    </div>
+                </div>
+                <div class="isc-card" style="padding: 1.25rem; border-left: 4px solid #f59e0b; background: #ffffff;">
+                    <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--slate-500); letter-spacing: 0.05em;">Public Intake Gate</div>
+                    <div style="font-size: 1.15rem; font-weight: 900; color: #b45309; margin-top: 0.35rem;">
+                        <a href="/work-with-us" target="_blank" style="color: #b45309; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem;">
+                            <i class="fas fa-external-link-alt"></i> /work-with-us
+                        </a>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; margin-top: 0.45rem;">
+                        <button type="button" onclick="copyWorkforcePortalLink(this)" class="sigma-mini-btn" style="color: #b45309; border-color: #fde68a; background: #fffbeb;">
+                            <i class="fas fa-copy"></i> Copy Portal Link
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Workforce Master Control Card -->
+            <div class="isc-card fluid-data">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                    <div>
+                        <h2 style="font-weight: 900; font-size: 1.5rem; color: var(--slate-900); display: flex; align-items: center; gap: 0.75rem; margin: 0;">
+                            <i class="fas fa-users" style="color: #10b981;"></i> Workforce & Subcontractor Network
+                        </h2>
+                        <p style="font-size: 0.82rem; color: var(--slate-500); font-weight: 600; margin-top: 0.25rem;">
+                            Manage on-demand commercial cleaners, shift availabilities, and independent 1099 trade partners with COI / DWC-83 legal compliance.
+                        </p>
+                    </div>
+                    <div style="display: flex; gap: 0.75rem; align-items: center;">
+                        <a href="/work-with-us" target="_blank" class="isc-btn isc-btn-outline" style="height: 38px; padding: 0 1rem; font-size: 0.78rem; font-weight: 700; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.5rem; color: #059669; border-color: #a7f3d0; background: #ecfdf5;">
+                            <i class="fas fa-user-plus"></i> Open Public Intake Form
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Subtab Switcher (Technicians W-2 vs Subcontractors 1099) -->
+                <div style="display: flex; gap: 0.5rem; border-bottom: 2px solid var(--slate-200); margin-bottom: 1.5rem;">
+                    <button type="button" id="tab-btn-technicians" onclick="switchWorkforceSubtab('technicians')" class="isc-tab-trigger active" style="padding: 0.75rem 1.25rem; font-size: 0.85rem; border-bottom: 3px solid var(--brand); color: var(--brand); font-weight: 800; background: none; cursor: pointer;">
+                        <i class="fas fa-user-check" style="margin-right: 0.5rem;"></i> Technician Applicants (W-2)
+                        <span style="margin-left: 0.5rem; background: #eff6ff; color: var(--brand); padding: 0.15rem 0.5rem; border-radius: 9999px; font-size: 0.72rem;">{{ applicants|length }}</span>
+                    </button>
+                    <button type="button" id="tab-btn-subcontractors" onclick="switchWorkforceSubtab('subcontractors')" class="isc-tab-trigger" style="padding: 0.75rem 1.25rem; font-size: 0.85rem; border-bottom: 3px solid transparent; color: var(--slate-500); font-weight: 800; background: none; cursor: pointer;">
+                        <i class="fas fa-truck-pickup" style="margin-right: 0.5rem;"></i> Subcontractor Partners (1099)
+                        <span style="margin-left: 0.5rem; background: #f1f5f9; color: var(--slate-600); padding: 0.15rem 0.5rem; border-radius: 9999px; font-size: 0.72rem;">{{ subcontractors|length }}</span>
+                    </button>
+                </div>
+
+                <!-- SUBTAB 1: TECHNICIAN APPLICANTS (W-2) -->
+                <div id="subtab-panel-technicians">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <input type="text" id="filter-applicants-search" onkeyup="filterApplicantsTable()" placeholder="Search applicants by name, city, phone..." style="height: 34px; padding: 0 0.85rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.8rem; width: 280px; font-weight: 600;">
+                            <select id="filter-applicants-status" onchange="filterApplicantsTable()" style="height: 34px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.8rem; font-weight: 700; background: white; color: var(--slate-700);">
+                                <option value="">All Statuses</option>
+                                <option value="New">New</option>
+                                <option value="Phone Screened">Phone Screened</option>
+                                <option value="Bench Ready">Bench Ready</option>
+                                <option value="Hired">Hired</option>
+                                <option value="Archived">Archived</option>
+                            </select>
+                        </div>
+                        <div style="font-size: 0.78rem; font-weight: 700; color: var(--slate-500);">
+                            Showing <span id="applicants-visible-count">{{ applicants|length }}</span> applicants
+                        </div>
+                    </div>
+
+                    <div style="overflow-x: auto; border: 1px solid var(--slate-200); border-radius: 8px;">
+                        <table class="isc-grid" id="table-workforce-applicants" style="width: 100%; border-collapse: collapse; margin: 0;">
+                            <thead>
+                                <tr style="background: #f8fafc;">
+                                    <th style="min-width: 180px; text-align: left; padding: 0.65rem 0.85rem; font-size: 0.75rem; font-weight: 800; color: var(--slate-600); text-transform: uppercase;">Candidate</th>
+                                    <th style="min-width: 140px; text-align: left; padding: 0.65rem 0.85rem; font-size: 0.75rem; font-weight: 800; color: var(--slate-600); text-transform: uppercase;">Phone & Contact</th>
+                                    <th style="min-width: 130px; text-align: left; padding: 0.65rem 0.85rem; font-size: 0.75rem; font-weight: 800; color: var(--slate-600); text-transform: uppercase;">Location</th>
+                                    <th style="min-width: 140px; text-align: left; padding: 0.65rem 0.85rem; font-size: 0.75rem; font-weight: 800; color: var(--slate-600); text-transform: uppercase;">Role & Shift</th>
+                                    <th style="min-width: 130px; text-align: left; padding: 0.65rem 0.85rem; font-size: 0.75rem; font-weight: 800; color: var(--slate-600); text-transform: uppercase;">Experience</th>
+                                    <th style="min-width: 130px; text-align: left; padding: 0.65rem 0.85rem; font-size: 0.75rem; font-weight: 800; color: var(--slate-600); text-transform: uppercase;">Compliance</th>
+                                    <th style="min-width: 150px; text-align: left; padding: 0.65rem 0.85rem; font-size: 0.75rem; font-weight: 800; color: var(--slate-600); text-transform: uppercase;">Pipeline Status</th>
+                                    <th style="min-width: 110px; text-align: left; padding: 0.65rem 0.85rem; font-size: 0.75rem; font-weight: 800; color: var(--slate-600); text-transform: uppercase;">Applied</th>
+                                    <th style="min-width: 100px; text-align: right; padding: 0.65rem 0.85rem; font-size: 0.75rem; font-weight: 800; color: var(--slate-600); text-transform: uppercase;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if applicants %}
+                                    {% for app in applicants %}
+                                    <tr id="applicant-row-{{ app.id }}" class="applicant-data-row" data-status="{{ app.status }}" data-search="{{ (app.full_name ~ ' ' ~ app.city ~ ' ' ~ app.phone ~ ' ' ~ (app.email or ''))|lower }}" style="border-bottom: 1px solid var(--slate-100);">
+                                        <td style="padding: 0.65rem 0.85rem;">
+                                            <div style="font-weight: 800; font-size: 0.85rem; color: var(--slate-900);">{{ app.full_name }}</div>
+                                            <div style="font-size: 0.72rem; color: var(--slate-400); font-weight: 600;">ID #{{ app.id }} • {{ app.preferred_language or 'English' }}</div>
+                                        </td>
+                                        <td style="padding: 0.65rem 0.85rem;">
+                                            <div><a href="tel:{{ app.phone }}" style="color: var(--brand); font-weight: 700; font-size: 0.82rem; text-decoration: none;"><i class="fas fa-phone" style="font-size: 0.7rem; margin-right: 3px;"></i> {{ app.phone }}</a></div>
+                                            {% if app.email %}
+                                            <div style="font-size: 0.72rem; color: var(--slate-500);"><a href="mailto:{{ app.email }}" style="color: inherit; text-decoration: none;">{{ app.email }}</a></div>
+                                            {% endif %}
+                                        </td>
+                                        <td style="padding: 0.65rem 0.85rem;">
+                                            <div style="font-weight: 700; font-size: 0.82rem; color: var(--slate-800);"><i class="fas fa-map-marker-alt" style="color: #ef4444; font-size: 0.72rem; margin-right: 3px;"></i> {{ app.city or 'DFW Area' }}, {{ app.state or 'TX' }}</div>
+                                        </td>
+                                        <td style="padding: 0.65rem 0.85rem;">
+                                            <div style="font-weight: 700; font-size: 0.82rem; color: var(--slate-800);">{{ app.desired_role }}</div>
+                                            <div style="font-size: 0.72rem; color: var(--slate-500); font-weight: 600;"><i class="fas fa-clock" style="font-size: 0.68rem; margin-right: 3px;"></i> {{ app.desired_shift }} Shift</div>
+                                        </td>
+                                        <td style="padding: 0.65rem 0.85rem;">
+                                            <span style="font-size: 0.75rem; font-weight: 700; padding: 0.2rem 0.55rem; border-radius: 4px; background: #f1f5f9; color: var(--slate-700);">
+                                                {{ app.experience_level }}
+                                            </span>
+                                        </td>
+                                        <td style="padding: 0.65rem 0.85rem;">
+                                            <div style="display: flex; flex-direction: column; gap: 0.2rem; font-size: 0.72rem; font-weight: 700;">
+                                                <span style="color: {% if app.has_transportation %}#059669{% else %}#dc2626{% endif %};">
+                                                    <i class="fas {% if app.has_transportation %}fa-car{% else %}fa-times-circle{% endif %}"></i> {{ 'Vehicle ✓' if app.has_transportation else 'No Vehicle' }}
+                                                </span>
+                                                <span style="color: {% if app.authorized_to_work_us %}#059669{% else %}#dc2626{% endif %};">
+                                                    <i class="fas {% if app.authorized_to_work_us %}fa-id-card{% else %}fa-exclamation-triangle{% endif %}"></i> {{ 'US Work Auth ✓' if app.authorized_to_work_us else 'Auth Pending' }}
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td style="padding: 0.65rem 0.85rem;">
+                                            <select onchange="updateApplicantStatus({{ app.id }}, this.value, this)" style="height: 28px; padding: 0 0.5rem; font-size: 0.75rem; font-weight: 800; border-radius: 4px; border: 1px solid var(--slate-300); background: {% if app.status == 'Bench Ready' %}#ecfdf5{% elif app.status == 'Hired' %}#eff6ff{% elif app.status == 'Archived' %}#f8fafc{% else %}#fffbeb{% endif %}; color: {% if app.status == 'Bench Ready' %}#065f46{% elif app.status == 'Hired' %}#1e40af{% elif app.status == 'Archived' %}#64748b{% else %}#92400e{% endif %}; cursor: pointer;">
+                                                <option value="New" {% if app.status == 'New' %}selected{% endif %}>New</option>
+                                                <option value="Phone Screened" {% if app.status == 'Phone Screened' %}selected{% endif %}>Phone Screened</option>
+                                                <option value="Bench Ready" {% if app.status == 'Bench Ready' %}selected{% endif %}>Bench Ready</option>
+                                                <option value="Hired" {% if app.status == 'Hired' %}selected{% endif %}>Hired</option>
+                                                <option value="Archived" {% if app.status == 'Archived' %}selected{% endif %}>Archived</option>
+                                            </select>
+                                        </td>
+                                        <td style="padding: 0.65rem 0.85rem; font-size: 0.75rem; color: var(--slate-500); font-weight: 600;">
+                                            {{ app.created_at.strftime('%m/%d/%Y') if app.created_at else '--' }}
+                                        </td>
+                                        <td style="padding: 0.65rem 0.85rem; text-align: right;">
+                                            <div style="display: inline-flex; gap: 0.35rem;">
+                                                <button type="button" data-notes="{{ app.notes or '' }}" onclick="editApplicantNotes({{ app.id }}, this)" title="Candidate Notes" class="sigma-mini-btn" style="color: var(--brand);">
+                                                    <i class="fas fa-sticky-note"></i>
+                                                </button>
+                                                <button type="button" onclick="deleteApplicantRecord({{ app.id }})" title="Remove Candidate" class="sigma-mini-btn" style="color: #ef4444;">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="9" style="text-align: center; padding: 2.5rem; color: var(--slate-400); font-weight: 600;">
+                                            <i class="fas fa-user-friends" style="font-size: 2rem; margin-bottom: 0.75rem; display: block; opacity: 0.4;"></i>
+                                            No job applicants registered yet. Share the <a href="/work-with-us" target="_blank" style="color: var(--brand); font-weight: 700;">public intake portal</a> to start collecting applicants.
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- SUBTAB 2: SUBCONTRACTOR PARTNERS (1099) -->
+                <div id="subtab-panel-subcontractors" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <input type="text" id="filter-subs-search" onkeyup="filterSubcontractorsTable()" placeholder="Search crews by company, contact, city, trade..." style="height: 34px; padding: 0 0.85rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.8rem; width: 280px; font-weight: 600;">
+                            <select id="filter-subs-status" onchange="filterSubcontractorsTable()" style="height: 34px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.8rem; font-weight: 700; background: white; color: var(--slate-700);">
+                                <option value="">All Partner Statuses</option>
+                                <option value="Vetting">Vetting</option>
+                                <option value="Active Partner">Active Partner</option>
+                                <option value="On Standby">On Standby</option>
+                                <option value="Do Not Use">Do Not Use</option>
+                            </select>
+                            <select id="filter-subs-coi" onchange="filterSubcontractorsTable()" style="height: 34px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.8rem; font-weight: 700; background: white; color: var(--slate-700);">
+                                <option value="">All COI Insurance</option>
+                                <option value="Verified">COI Verified</option>
+                                <option value="Pending">COI Pending</option>
+                                <option value="Expired">COI Expired</option>
+                            </select>
+                        </div>
+                        <div style="font-size: 0.78rem; font-weight: 700; color: var(--slate-500);">
+                            Showing <span id="subs-visible-count">{{ subcontractors|length }}</span> subcontractor partners
+                        </div>
+                    </div>
+
+                    <div style="overflow-x: auto; border: 1px solid var(--slate-200); border-radius: 8px;">
+                        <table class="isc-grid" id="table-workforce-subcontractors" style="width: 100%; border-collapse: collapse; margin: 0;">
+                            <thead>
+                                <tr style="background: #f8fafc;">
+                                    <th style="min-width: 190px; text-align: left; padding: 0.65rem 0.85rem; font-size: 0.75rem; font-weight: 800; color: var(--slate-600); text-transform: uppercase;">Company & Contact</th>
+                                    <th style="min-width: 140px; text-align: left; padding: 0.65rem 0.85rem; font-size: 0.75rem; font-weight: 800; color: var(--slate-600); text-transform: uppercase;">Phone & Contact</th>
+                                    <th style="min-width: 120px; text-align: left; padding: 0.65rem 0.85rem; font-size: 0.75rem; font-weight: 800; color: var(--slate-600); text-transform: uppercase;">Operating Hub</th>
+                                    <th style="min-width: 90px; text-align: center; padding: 0.65rem 0.85rem; font-size: 0.75rem; font-weight: 800; color: var(--slate-600); text-transform: uppercase;">Crew</th>
+                                    <th style="min-width: 160px; text-align: left; padding: 0.65rem 0.85rem; font-size: 0.75rem; font-weight: 800; color: var(--slate-600); text-transform: uppercase;">Trade Specialties</th>
+                                    <th style="min-width: 120px; text-align: left; padding: 0.65rem 0.85rem; font-size: 0.75rem; font-weight: 800; color: var(--slate-600); text-transform: uppercase;">COI Insurance</th>
+                                    <th style="min-width: 110px; text-align: left; padding: 0.65rem 0.85rem; font-size: 0.75rem; font-weight: 800; color: var(--slate-600); text-transform: uppercase;">TX DWC-83</th>
+                                    <th style="min-width: 130px; text-align: left; padding: 0.65rem 0.85rem; font-size: 0.75rem; font-weight: 800; color: var(--slate-600); text-transform: uppercase;">Rate / Hr</th>
+                                    <th style="min-width: 140px; text-align: left; padding: 0.65rem 0.85rem; font-size: 0.75rem; font-weight: 800; color: var(--slate-600); text-transform: uppercase;">Status</th>
+                                    <th style="min-width: 90px; text-align: right; padding: 0.65rem 0.85rem; font-size: 0.75rem; font-weight: 800; color: var(--slate-600); text-transform: uppercase;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if subcontractors %}
+                                    {% for sub in subcontractors %}
+                                    <tr id="subcontractor-row-{{ sub.id }}" class="sub-data-row" data-status="{{ sub.status }}" data-coi="{{ sub.coi_status }}" data-search="{{ (sub.company_name ~ ' ' ~ sub.contact_name ~ ' ' ~ sub.city ~ ' ' ~ (sub.specialties or ''))|lower }}" style="border-bottom: 1px solid var(--slate-100);">
+                                        <td style="padding: 0.65rem 0.85rem;">
+                                            <div style="font-weight: 800; font-size: 0.85rem; color: var(--slate-900);">{{ sub.company_name }}</div>
+                                            <div style="font-size: 0.72rem; color: var(--slate-500); font-weight: 600;"><i class="fas fa-user-tie" style="font-size: 0.68rem; margin-right: 3px;"></i> {{ sub.contact_name }}</div>
+                                        </td>
+                                        <td style="padding: 0.65rem 0.85rem;">
+                                            <div><a href="tel:{{ sub.phone }}" style="color: var(--brand); font-weight: 700; font-size: 0.82rem; text-decoration: none;"><i class="fas fa-phone" style="font-size: 0.7rem; margin-right: 3px;"></i> {{ sub.phone }}</a></div>
+                                            {% if sub.email %}
+                                            <div style="font-size: 0.72rem; color: var(--slate-500);"><a href="mailto:{{ sub.email }}" style="color: inherit; text-decoration: none;">{{ sub.email }}</a></div>
+                                            {% endif %}
+                                        </td>
+                                        <td style="padding: 0.65rem 0.85rem;">
+                                            <div style="font-weight: 700; font-size: 0.82rem; color: var(--slate-800);"><i class="fas fa-map-marker-alt" style="color: #ef4444; font-size: 0.72rem; margin-right: 3px;"></i> {{ sub.city or 'DFW' }}, {{ sub.state or 'TX' }}</div>
+                                        </td>
+                                        <td style="padding: 0.65rem 0.85rem; text-align: center;">
+                                            <span style="display: inline-block; font-size: 0.8rem; font-weight: 800; background: #eff6ff; color: #1e40af; padding: 0.2rem 0.6rem; border-radius: 4px;">
+                                                {{ sub.crew_size or 2 }}
+                                            </span>
+                                        </td>
+                                        <td style="padding: 0.65rem 0.85rem;">
+                                            <div style="font-size: 0.75rem; font-weight: 600; color: var(--slate-700); max-width: 220px; white-space: normal;">
+                                                {{ sub.specialties or 'Commercial Cleaning' }}
+                                            </div>
+                                        </td>
+                                        <td style="padding: 0.65rem 0.85rem;">
+                                            <select onchange="updateSubcontractorField({{ sub.id }}, 'coi_status', this.value, this)" style="height: 28px; padding: 0 0.5rem; font-size: 0.72rem; font-weight: 800; border-radius: 4px; border: 1px solid var(--slate-300); background: {% if sub.coi_status == 'Verified' %}#ecfdf5{% elif sub.coi_status == 'Expired' %}#fee2e2{% else %}#fffbeb{% endif %}; color: {% if sub.coi_status == 'Verified' %}#065f46{% elif sub.coi_status == 'Expired' %}#991b1b{% else %}#92400e{% endif %}; cursor: pointer;">
+                                                <option value="Pending" {% if sub.coi_status == 'Pending' %}selected{% endif %}>Pending COI</option>
+                                                <option value="Verified" {% if sub.coi_status == 'Verified' %}selected{% endif %}>Verified ✓</option>
+                                                <option value="Expired" {% if sub.coi_status == 'Expired' %}selected{% endif %}>Expired</option>
+                                            </select>
+                                        </td>
+                                        <td style="padding: 0.65rem 0.85rem;">
+                                            {% if sub.dwc83_signed %}
+                                                <span style="font-size: 0.72rem; font-weight: 800; color: #059669; background: #ecfdf5; padding: 0.2rem 0.5rem; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.25rem;">
+                                                    <i class="fas fa-file-signature"></i> Signed ✓
+                                                </span>
+                                            {% else %}
+                                                <span style="font-size: 0.72rem; font-weight: 700; color: #d97706; background: #fffbeb; padding: 0.2rem 0.5rem; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.25rem;">
+                                                    <i class="fas fa-clock"></i> Pending
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td style="padding: 0.65rem 0.85rem; font-size: 0.78rem; font-weight: 700; color: var(--slate-700);">
+                                            {{ sub.hourly_rate_range or 'Negotiable' }}
+                                        </td>
+                                        <td style="padding: 0.65rem 0.85rem;">
+                                            <select onchange="updateSubcontractorField({{ sub.id }}, 'status', this.value, this)" style="height: 28px; padding: 0 0.5rem; font-size: 0.72rem; font-weight: 800; border-radius: 4px; border: 1px solid var(--slate-300); background: {% if sub.status == 'Active Partner' %}#ecfdf5{% elif sub.status == 'Do Not Use' %}#fee2e2{% elif sub.status == 'On Standby' %}#f8fafc{% else %}#eff6ff{% endif %}; color: {% if sub.status == 'Active Partner' %}#065f46{% elif sub.status == 'Do Not Use' %}#991b1b{% elif sub.status == 'On Standby' %}#64748b{% else %}#1e40af{% endif %}; cursor: pointer;">
+                                                <option value="Vetting" {% if sub.status == 'Vetting' %}selected{% endif %}>Vetting</option>
+                                                <option value="Active Partner" {% if sub.status == 'Active Partner' %}selected{% endif %}>Active Partner</option>
+                                                <option value="On Standby" {% if sub.status == 'On Standby' %}selected{% endif %}>On Standby</option>
+                                                <option value="Do Not Use" {% if sub.status == 'Do Not Use' %}selected{% endif %}>Do Not Use</option>
+                                            </select>
+                                        </td>
+                                        <td style="padding: 0.65rem 0.85rem; text-align: right;">
+                                            <div style="display: inline-flex; gap: 0.35rem;">
+                                                <button type="button" data-notes="{{ sub.notes or '' }}" onclick="editSubcontractorNotes({{ sub.id }}, this)" title="Partner Notes" class="sigma-mini-btn" style="color: var(--brand);">
+                                                    <i class="fas fa-sticky-note"></i>
+                                                </button>
+                                                <button type="button" onclick="deleteSubcontractorRecord({{ sub.id }})" title="Remove Partner" class="sigma-mini-btn" style="color: #ef4444;">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="10" style="text-align: center; padding: 2.5rem; color: var(--slate-400); font-weight: 600;">
+                                            <i class="fas fa-truck" style="font-size: 2rem; margin-bottom: 0.75rem; display: block; opacity: 0.4;"></i>
+                                            No subcontractor partners registered yet. Have trade crews register via the <a href="/work-with-us" target="_blank" style="color: var(--brand); font-weight: 700;">portal</a>.
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -4928,6 +5252,282 @@
             if (typeof showToast === 'function') {
                 showToast("Network error saving cadence outcome.", "error");
             }
+        }
+    }
+
+    // ==========================================
+    // WORKFORCE & SUBCONTRACTOR NETWORK ENGINE
+    // ==========================================
+    function switchWorkforceSubtab(tab) {
+        const btnTech = document.getElementById('tab-btn-technicians');
+        const btnSubs = document.getElementById('tab-btn-subcontractors');
+        const panelTech = document.getElementById('subtab-panel-technicians');
+        const panelSubs = document.getElementById('subtab-panel-subcontractors');
+        if (!btnTech || !btnSubs || !panelTech || !panelSubs) return;
+
+        if (tab === 'technicians') {
+            btnTech.style.borderBottomColor = 'var(--brand)';
+            btnTech.style.color = 'var(--brand)';
+            btnSubs.style.borderBottomColor = 'transparent';
+            btnSubs.style.color = 'var(--slate-500)';
+            panelTech.style.display = 'block';
+            panelSubs.style.display = 'none';
+        } else {
+            btnSubs.style.borderBottomColor = 'var(--brand)';
+            btnSubs.style.color = 'var(--brand)';
+            btnTech.style.borderBottomColor = 'transparent';
+            btnTech.style.color = 'var(--slate-500)';
+            panelTech.style.display = 'none';
+            panelSubs.style.display = 'block';
+        }
+    }
+
+    function filterApplicantsTable() {
+        const q = (document.getElementById('filter-applicants-search')?.value || '').toLowerCase().trim();
+        const status = document.getElementById('filter-applicants-status')?.value || '';
+        const rows = document.querySelectorAll('#table-workforce-applicants .applicant-data-row');
+        let visibleCount = 0;
+
+        rows.forEach(r => {
+            const rowSearch = r.getAttribute('data-search') || '';
+            const rowStatus = r.getAttribute('data-status') || '';
+            const matchQ = !q || rowSearch.includes(q);
+            const matchStatus = !status || rowStatus === status;
+
+            if (matchQ && matchStatus) {
+                r.style.display = '';
+                visibleCount++;
+            } else {
+                r.style.display = 'none';
+            }
+        });
+        const countSpan = document.getElementById('applicants-visible-count');
+        if (countSpan) countSpan.textContent = visibleCount;
+    }
+
+    function filterSubcontractorsTable() {
+        const q = (document.getElementById('filter-subs-search')?.value || '').toLowerCase().trim();
+        const status = document.getElementById('filter-subs-status')?.value || '';
+        const coi = document.getElementById('filter-subs-coi')?.value || '';
+        const rows = document.querySelectorAll('#table-workforce-subcontractors .sub-data-row');
+        let visibleCount = 0;
+
+        rows.forEach(r => {
+            const rowSearch = r.getAttribute('data-search') || '';
+            const rowStatus = r.getAttribute('data-status') || '';
+            const rowCoi = r.getAttribute('data-coi') || '';
+            const matchQ = !q || rowSearch.includes(q);
+            const matchStatus = !status || rowStatus === status;
+            const matchCoi = !coi || rowCoi === coi;
+
+            if (matchQ && matchStatus && matchCoi) {
+                r.style.display = '';
+                visibleCount++;
+            } else {
+                r.style.display = 'none';
+            }
+        });
+        const countSpan = document.getElementById('subs-visible-count');
+        if (countSpan) countSpan.textContent = visibleCount;
+    }
+
+    async function updateApplicantStatus(id, newStatus, selectElement) {
+        try {
+            const res = await fetch(`/api/v1/workforce/applicants/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: newStatus })
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                const row = document.getElementById(`applicant-row-${id}`);
+                if (row) row.setAttribute('data-status', newStatus);
+                if (selectElement) {
+                    if (newStatus === 'Bench Ready') {
+                        selectElement.style.background = '#ecfdf5';
+                        selectElement.style.color = '#065f46';
+                    } else if (newStatus === 'Hired') {
+                        selectElement.style.background = '#eff6ff';
+                        selectElement.style.color = '#1e40af';
+                    } else if (newStatus === 'Archived') {
+                        selectElement.style.background = '#f8fafc';
+                        selectElement.style.color = '#64748b';
+                    } else {
+                        selectElement.style.background = '#fffbeb';
+                        selectElement.style.color = '#92400e';
+                    }
+                }
+                if (typeof showToast === 'function') showToast(`Candidate #${id} status updated to ${newStatus}`, "success");
+            } else {
+                alert("Failed to update status: " + (data.message || 'Unknown error'));
+            }
+        } catch (err) {
+            console.error("Applicant status update error:", err);
+            alert("Network error updating applicant.");
+        }
+    }
+
+    async function editApplicantNotes(id, btnOrNotes) {
+        const currentNotes = (typeof btnOrNotes === 'string') ? btnOrNotes : (btnOrNotes?.getAttribute('data-notes') || '');
+        const newNotes = prompt("Candidate notes & interview records:", currentNotes);
+        if (newNotes === null) return;
+        try {
+            const res = await fetch(`/api/v1/workforce/applicants/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ notes: newNotes })
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                if (typeof btnOrNotes === 'object' && btnOrNotes) {
+                    btnOrNotes.setAttribute('data-notes', newNotes);
+                }
+                if (typeof showToast === 'function') showToast("Candidate notes saved.", "success");
+            } else {
+                alert("Failed to update notes: " + (data.message || 'Error'));
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    async function deleteApplicantRecord(id) {
+        if (!confirm(`Are you sure you want to delete applicant #${id}? This cannot be undone.`)) return;
+        try {
+            const res = await fetch(`/api/v1/workforce/applicants/${id}`, {
+                method: 'DELETE'
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                const row = document.getElementById(`applicant-row-${id}`);
+                if (row) row.remove();
+                if (typeof showToast === 'function') showToast(`Applicant #${id} deleted.`, "info");
+                filterApplicantsTable();
+            } else {
+                alert("Could not delete: " + (data.message || 'Error'));
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    async function updateSubcontractorField(id, field, value, selectElement) {
+        const payload = {};
+        payload[field] = value;
+        try {
+            const res = await fetch(`/api/v1/workforce/subcontractors/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                const row = document.getElementById(`subcontractor-row-${id}`);
+                if (row) {
+                    if (field === 'status') row.setAttribute('data-status', value);
+                    if (field === 'coi_status') row.setAttribute('data-coi', value);
+                }
+                if (selectElement) {
+                    if (field === 'coi_status') {
+                        if (value === 'Verified') {
+                            selectElement.style.background = '#ecfdf5';
+                            selectElement.style.color = '#065f46';
+                        } else if (value === 'Expired') {
+                            selectElement.style.background = '#fee2e2';
+                            selectElement.style.color = '#991b1b';
+                        } else {
+                            selectElement.style.background = '#fffbeb';
+                            selectElement.style.color = '#92400e';
+                        }
+                    } else if (field === 'status') {
+                        if (value === 'Active Partner') {
+                            selectElement.style.background = '#ecfdf5';
+                            selectElement.style.color = '#065f46';
+                        } else if (value === 'Do Not Use') {
+                            selectElement.style.background = '#fee2e2';
+                            selectElement.style.color = '#991b1b';
+                        } else if (value === 'On Standby') {
+                            selectElement.style.background = '#f8fafc';
+                            selectElement.style.color = '#64748b';
+                        } else {
+                            selectElement.style.background = '#eff6ff';
+                            selectElement.style.color = '#1e40af';
+                        }
+                    }
+                }
+                if (typeof showToast === 'function') showToast(`Subcontractor #${id} updated.`, "success");
+            } else {
+                alert("Failed to update: " + (data.message || 'Error'));
+            }
+        } catch (err) {
+            console.error("Subcontractor update error:", err);
+            alert("Network error updating subcontractor.");
+        }
+    }
+
+    async function editSubcontractorNotes(id, btnOrNotes) {
+        const currentNotes = (typeof btnOrNotes === 'string') ? btnOrNotes : (btnOrNotes?.getAttribute('data-notes') || '');
+        const newNotes = prompt("Partner notes, rate agreements & trade background:", currentNotes);
+        if (newNotes === null) return;
+        try {
+            const res = await fetch(`/api/v1/workforce/subcontractors/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ notes: newNotes })
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                if (typeof btnOrNotes === 'object' && btnOrNotes) {
+                    btnOrNotes.setAttribute('data-notes', newNotes);
+                }
+                if (typeof showToast === 'function') showToast("Partner notes saved.", "success");
+            } else {
+                alert("Failed to update notes: " + (data.message || 'Error'));
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    async function deleteSubcontractorRecord(id) {
+        if (!confirm(`Are you sure you want to remove subcontractor #${id}? This cannot be undone.`)) return;
+        try {
+            const res = await fetch(`/api/v1/workforce/subcontractors/${id}`, {
+                method: 'DELETE'
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                const row = document.getElementById(`subcontractor-row-${id}`);
+                if (row) row.remove();
+                if (typeof showToast === 'function') showToast(`Subcontractor #${id} deleted.`, "info");
+                filterSubcontractorsTable();
+            } else {
+                alert("Could not delete: " + (data.message || 'Error'));
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    function copyWorkforcePortalLink(btn) {
+        const url = window.location.origin + '/work-with-us';
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(url).then(() => {
+                if (btn) {
+                    const origHtml = btn.innerHTML;
+                    btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                    btn.style.background = '#ecfdf5';
+                    btn.style.color = '#065f46';
+                    setTimeout(() => {
+                        btn.innerHTML = origHtml;
+                        btn.style.background = '#fffbeb';
+                        btn.style.color = '#b45309';
+                    }, 2000);
+                }
+                if (typeof showToast === 'function') showToast("Workforce intake URL copied to clipboard!", "success");
+            });
+        } else {
+            prompt("Public Intake Portal Link:", url);
         }
     }
 

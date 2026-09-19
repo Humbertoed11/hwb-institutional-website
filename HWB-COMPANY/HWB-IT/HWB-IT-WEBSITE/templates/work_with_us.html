@@ -1,0 +1,439 @@
+{% extends "base.html" %}
+
+{% block title %}Work With Us & Subcontractor Opportunities | HWB Cleaning Services LLC{% endblock %}
+
+{% block head %}
+<meta name="description" content="Apply for commercial cleaning technician jobs or register your 1099 cleaning crew as a certified subcontractor partner with HWB Cleaning Services LLC in Dallas, Fort Worth, and Plano TX.">
+<meta name="keywords" content="commercial cleaning jobs Dallas, janitorial technician hiring Fort Worth, cleaning subcontractor Plano TX, post-construction cleaning crews DFW">
+{% endblock %}
+
+{% block content %}
+<style>
+.workforce-hero {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: #ffffff;
+    padding: 4.5rem 1.5rem;
+    text-align: center;
+    border-bottom: 3px solid var(--brand);
+}
+.workforce-toggle-bar {
+    display: inline-flex;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 6px;
+    border-radius: 9999px;
+    margin-top: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    gap: 6px;
+}
+.workforce-toggle-btn {
+    padding: 0.65rem 1.5rem;
+    border-radius: 9999px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    background: transparent;
+    color: #94a3b8;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.workforce-toggle-btn.active {
+    background: var(--brand);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+}
+.workforce-panel {
+    display: none;
+    animation: fadeIn 0.25s ease;
+}
+.workforce-panel.active {
+    display: block;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.sigma-badge-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.sigma-doc-notice {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-left: 4px solid var(--brand);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 2rem;
+    font-size: 0.85rem;
+    color: var(--slate-600);
+}
+</style>
+
+<!-- Hero Section -->
+<section class="workforce-hero">
+    <div class="content-wrapper" style="max-width: 850px; margin: 0 auto;">
+        <span class="sigma-badge-pill" style="background: rgba(37, 99, 235, 0.2); color: #60a5fa; border: 1px solid rgba(96, 165, 250, 0.3); margin-bottom: 1rem;">
+            <i class="fas fa-hard-hat"></i> Immediate North Texas Opportunities
+        </span>
+        <h1 style="font-size: 2.6rem; font-weight: 900; line-height: 1.15; margin-bottom: 1rem; letter-spacing: -0.02em;">
+            Work With HWB Cleaning Services
+        </h1>
+        <p style="font-size: 1.1rem; color: #cbd5e1; line-height: 1.6; max-width: 700px; margin: 0 auto; font-weight: 400;">
+            We are actively bidding and expanding large commercial and post-construction projects across Dallas, Fort Worth, Plano, and Arlington. Choose your pathway below to connect directly with our operations team.
+        </p>
+
+        <!-- Track Switcher -->
+        <div class="workforce-toggle-bar">
+            <button type="button" class="workforce-toggle-btn active" id="btn-tab-technician" onclick="switchWorkforceTab('technician')">
+                <i class="fas fa-user-check"></i> Cleaning Technician (W-2)
+            </button>
+            <button type="button" class="workforce-toggle-btn" id="btn-tab-subcontractor" onclick="switchWorkforceTab('subcontractor')">
+                <i class="fas fa-users-cog"></i> Subcontractor Crew (1099)
+            </button>
+        </div>
+    </div>
+</section>
+
+<!-- Content Stage -->
+<section class="section-white" style="padding: 3.5rem 1rem; background: #f8fafc;">
+    <div class="content-wrapper" style="max-width: 860px; margin: 0 auto;">
+        
+        <!-- ================================================================= -->
+        <!-- Track 1: Direct Technician Application (W-2) -->
+        <!-- ================================================================= -->
+        <div id="panel-technician" class="workforce-panel active">
+            <div class="isc-card" style="padding: 2.5rem; border-radius: 12px; border: 1px solid #e2e8f0; background: #ffffff; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);">
+                <div style="margin-bottom: 1.75rem;">
+                    <h2 style="font-size: 1.5rem; font-weight: 900; color: #0f172a; margin-bottom: 0.35rem;">
+                        Commercial Cleaning Technician Application
+                    </h2>
+                    <p style="font-size: 0.9rem; color: #64748b;">
+                        Join our permanent crew for steady evening, night, and weekend shifts across Dallas-Fort Worth. Competitive pay, respectful management, and safety equipment provided.
+                    </p>
+                </div>
+
+                <div class="sigma-doc-notice">
+                    <strong style="color: #0f172a;"><i class="fas fa-info-circle" style="color: var(--brand);"></i> Onboarding Requirements:</strong>
+                    Direct technicians must be legally authorized to work in the United States and be prepared to complete <strong>Form W-4</strong> and <strong>Form I-9</strong> upon job offer.
+                </div>
+
+                <div id="tech-success-message" style="display: none; padding: 2rem; background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; text-align: center; margin-bottom: 2rem;">
+                    <div style="font-size: 2.5rem; color: #16a34a; margin-bottom: 0.5rem;"><i class="fas fa-check-circle"></i></div>
+                    <h3 style="font-size: 1.25rem; font-weight: 800; color: #166534; margin-bottom: 0.5rem;">Application Successfully Submitted!</h3>
+                    <p style="color: #15803d; font-size: 0.9rem; max-width: 500px; margin: 0 auto;">
+                        Thank you for applying to HWB Cleaning Services. Our operations supervisor will reach out via phone or text message within 24–48 hours for a quick 5-minute phone interview.
+                    </p>
+                </div>
+
+                <form id="form-tech-application" onsubmit="submitTechnicianApp(event)">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; margin-bottom: 1.25rem;">
+                        <div>
+                            <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Full Name *</label>
+                            <input type="text" name="full_name" required placeholder="First and Last Name" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Phone Number (Mobile for SMS) *</label>
+                            <input type="tel" name="phone" required placeholder="(214) 555-0123" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; margin-bottom: 1.25rem;">
+                        <div>
+                            <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Email Address</label>
+                            <input type="email" name="email" placeholder="name@email.com" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">City / Location in DFW *</label>
+                            <input type="text" name="city" required placeholder="e.g. Dallas, Fort Worth, Plano, Arlington" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; margin-bottom: 1.25rem;">
+                        <div>
+                            <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Position Desired</label>
+                            <select name="desired_role" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem; background: #fff;">
+                                <option value="Commercial Cleaning Technician">Commercial Cleaning Technician</option>
+                                <option value="Lead Cleaner / Working Supervisor">Lead Cleaner / Working Supervisor</option>
+                                <option value="Floor Care Specialist (Strip & Wax)">Floor Care Specialist (Strip & Wax)</option>
+                                <option value="Post-Construction Cleaner">Post-Construction Cleaner</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Preferred Shift</label>
+                            <select name="desired_shift" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem; background: #fff;">
+                                <option value="Night">Evening / Night (Standard Janitorial)</option>
+                                <option value="Day">Day Porter / Facility Maintenance</option>
+                                <option value="Weekend">Weekends Only</option>
+                                <option value="Flexible">Flexible / Any Shift</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem;">
+                        <div>
+                            <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Commercial Cleaning Experience</label>
+                            <select name="experience_level" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem; background: #fff;">
+                                <option value="Entry">Entry Level (Willing to Learn SigmaStandards)</option>
+                                <option value="1-2 Years">1 - 2 Years Commercial Experience</option>
+                                <option value="3+ Years / Supervisor">3+ Years / Crew Lead Experience</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Language Preference</label>
+                            <select name="preferred_language" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem; background: #fff;">
+                                <option value="Bilingual">Bilingual (English & Spanish)</option>
+                                <option value="Spanish">Español</option>
+                                <option value="English">English</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Poka-Yoke Qualifications -->
+                    <div style="display: flex; gap: 2rem; flex-wrap: wrap; margin-bottom: 1.75rem; padding: 1rem; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 600; color: #334155; cursor: pointer;">
+                            <input type="checkbox" name="has_transportation" value="true" checked style="accent-color: var(--brand); width: 16px; height: 16px;">
+                            I have reliable transportation to get to job sites
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 600; color: #334155; cursor: pointer;">
+                            <input type="checkbox" name="authorized_to_work_us" value="true" required checked style="accent-color: var(--brand); width: 16px; height: 16px;">
+                            I am legally authorized to work in the United States (Form I-9)
+                        </label>
+                    </div>
+
+                    <button type="submit" id="btn-submit-tech" class="isc-btn isc-btn-primary" style="width: 100%; height: 46px; border-radius: 6px; font-size: 0.95rem; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                        <i class="fas fa-paper-plane"></i> Submit 2-Minute Application
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- Track 2: Subcontractor Partner Intake (1099 Crews) -->
+        <!-- ================================================================= -->
+        <div id="panel-subcontractor" class="workforce-panel">
+            <div class="isc-card" style="padding: 2.5rem; border-radius: 12px; border: 1px solid #e2e8f0; background: #ffffff; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);">
+                <div style="margin-bottom: 1.75rem;">
+                    <h2 style="font-size: 1.5rem; font-weight: 900; color: #0f172a; margin-bottom: 0.35rem;">
+                        Subcontractor & Cleaning Crew Partner Network
+                    </h2>
+                    <p style="font-size: 0.9rem; color: #64748b;">
+                        Partner with HWB Cleaning Services LLC on large commercial construction bids, multi-story buildings, and specialized floor/window projects. We handle the client acquisition; your crew delivers high-capacity execution.
+                    </p>
+                </div>
+
+                <div class="sigma-doc-notice">
+                    <strong style="color: #0f172a;"><i class="fas fa-shield-alt" style="color: var(--brand);"></i> Subcontractor Verification Standards:</strong>
+                    Partner crews must provide an <strong>IRS Form W-9</strong> and a valid <strong>Certificate of Insurance (COI)</strong> with minimum $1,000,000 General Liability coverage prior to project dispatch. Texas Form DWC-83 required.
+                </div>
+
+                <div id="sub-success-message" style="display: none; padding: 2rem; background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; text-align: center; margin-bottom: 2rem;">
+                    <div style="font-size: 2.5rem; color: #16a34a; margin-bottom: 0.5rem;"><i class="fas fa-check-circle"></i></div>
+                    <h3 style="font-size: 1.25rem; font-weight: 800; color: #166534; margin-bottom: 0.5rem;">Partner Profile Registered!</h3>
+                    <p style="color: #15803d; font-size: 0.9rem; max-width: 550px; margin: 0 auto;">
+                        Your business entity has been added to our pre-qualified subcontractor bench. Our estimating and operations desk will contact you with Scope of Work details as relevant project bids are awarded.
+                    </p>
+                </div>
+
+                <form id="form-sub-application" onsubmit="submitSubcontractorApp(event)">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; margin-bottom: 1.25rem;">
+                        <div>
+                            <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Business / Company Name *</label>
+                            <input type="text" name="company_name" required placeholder="e.g. Apex Janitorial LLC" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Contact Person & Title *</label>
+                            <input type="text" name="contact_name" required placeholder="e.g. Carlos Gomez, Owner" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; margin-bottom: 1.25rem;">
+                        <div>
+                            <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Business Phone *</label>
+                            <input type="tel" name="phone" required placeholder="(214) 555-0199" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Business Email *</label>
+                            <input type="email" name="email" required placeholder="contact@company.com" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; margin-bottom: 1.25rem;">
+                        <div>
+                            <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Base City *</label>
+                            <input type="text" name="city" required placeholder="e.g. Fort Worth, Dallas, Arlington" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Active Crew Size *</label>
+                            <select name="crew_size" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem; background: #fff;">
+                                <option value="2">2 - 3 Workers (Small Jobs / Office)</option>
+                                <option value="5" selected>4 - 6 Workers (Medium Commercial / Daycares)</option>
+                                <option value="8">7 - 10 Workers (Post-Construction Surge)</option>
+                                <option value="15">10+ Workers (Large Commercial Takeoffs)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 1.25rem;">
+                        <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Specialties & Equipment Owned (Select all that apply) *</label>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.6rem; padding: 0.75rem; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px;">
+                            <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.82rem; color: #334155; cursor: pointer;">
+                                <input type="checkbox" name="specialties" value="Post-Construction Cleaning" checked style="accent-color: var(--brand);">
+                                🏗️ Post-Construction Cleaning
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.82rem; color: #334155; cursor: pointer;">
+                                <input type="checkbox" name="specialties" value="Floor Strip & Wax" checked style="accent-color: var(--brand);">
+                                🧹 Floor Strip & Wax (VCT)
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.82rem; color: #334155; cursor: pointer;">
+                                <input type="checkbox" name="specialties" value="Commercial Carpet Extraction" style="accent-color: var(--brand);">
+                                🧼 Carpet Extraction
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.82rem; color: #334155; cursor: pointer;">
+                                <input type="checkbox" name="specialties" value="Pressure Washing" style="accent-color: var(--brand);">
+                                💦 Commercial Pressure Washing
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.82rem; color: #334155; cursor: pointer;">
+                                <input type="checkbox" name="specialties" value="Window Cleaning" style="accent-color: var(--brand);">
+                                🪟 Exterior / High Window Cleaning
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.82rem; color: #334155; cursor: pointer;">
+                                <input type="checkbox" name="specialties" value="Disinfection / Healthcare" style="accent-color: var(--brand);">
+                                🏥 Healthcare Terminal Cleaning
+                            </label>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem;">
+                        <div>
+                            <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">General Liability Insurance Status *</label>
+                            <select name="coi_status" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem; background: #fff;">
+                                <option value="Verified">Active $1,000,000+ General Liability Policy</option>
+                                <option value="Pending">Policy in Place (Will Send COI)</option>
+                                <option value="Needs Assistance">Need Assistance Setting Up Coverage</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Expected Crew Hourly Rate or Subcontract Target</label>
+                            <input type="text" name="hourly_rate_range" placeholder="e.g. $22 - $26/worker-hour" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
+                        </div>
+                    </div>
+
+                    <div style="padding: 1rem; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 1.75rem;">
+                        <label style="display: flex; align-items: flex-start; gap: 0.6rem; font-size: 0.82rem; font-weight: 600; color: #334155; cursor: pointer;">
+                            <input type="checkbox" name="dwc83_agreed" value="true" required checked style="accent-color: var(--brand); width: 18px; height: 18px; margin-top: 2px;">
+                            <span>
+                                <strong>Texas Independent Contractor Affirmation (Form DWC-83):</strong>
+                                We operate as an independent commercial subcontractor. We maintain our own tools, equipment, and required business registrations, and agree to execute standard project subcontract agreements before dispatch.
+                            </span>
+                        </label>
+                    </div>
+
+                    <button type="submit" id="btn-submit-sub" class="isc-btn isc-btn-primary" style="width: 100%; height: 46px; border-radius: 6px; font-size: 0.95rem; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                        <i class="fas fa-handshake"></i> Register Subcontractor Crew for Project Bids
+                    </button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<script>
+function switchWorkforceTab(tab) {
+    const btnTech = document.getElementById('btn-tab-technician');
+    const btnSub = document.getElementById('btn-tab-subcontractor');
+    const panelTech = document.getElementById('panel-technician');
+    const panelSub = document.getElementById('panel-subcontractor');
+
+    if (tab === 'technician') {
+        btnTech.classList.add('active');
+        btnSub.classList.remove('active');
+        panelTech.classList.add('active');
+        panelSub.classList.remove('active');
+    } else {
+        btnSub.classList.add('active');
+        btnTech.classList.remove('active');
+        panelSub.classList.add('active');
+        panelTech.classList.remove('active');
+    }
+}
+
+async function submitTechnicianApp(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btn-submit-tech');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting Application...';
+
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData.entries());
+
+    try {
+        const res = await fetch('/api/v1/workforce/apply', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+        const result = await res.json();
+        if (res.ok && result.status === 'success') {
+            document.getElementById('form-tech-application').style.display = 'none';
+            document.getElementById('tech-success-message').style.display = 'block';
+            window.scrollTo({top: 200, behavior: 'smooth'});
+        } else {
+            alert(result.message || 'Submission error. Please try again or call (214)-586-0257.');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit 2-Minute Application';
+        }
+    } catch(err) {
+        console.error("Submission error:", err);
+        alert("Network error. Please call our office directly.");
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit 2-Minute Application';
+    }
+}
+
+async function submitSubcontractorApp(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btn-submit-sub');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registering Partner...';
+
+    const formData = new FormData(e.target);
+    // Group multiple specialties checkboxes
+    const specialties = formData.getAll('specialties').join(', ');
+    const data = Object.fromEntries(formData.entries());
+    data.specialties = specialties;
+
+    try {
+        const res = await fetch('/api/v1/workforce/subcontractor', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+        const result = await res.json();
+        if (res.ok && result.status === 'success') {
+            document.getElementById('form-sub-application').style.display = 'none';
+            document.getElementById('sub-success-message').style.display = 'block';
+            window.scrollTo({top: 200, behavior: 'smooth'});
+        } else {
+            alert(result.message || 'Submission error. Please try again or call (214)-586-0257.');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-handshake"></i> Register Subcontractor Crew for Project Bids';
+        }
+    } catch(err) {
+        console.error("Submission error:", err);
+        alert("Network error. Please call our office directly.");
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-handshake"></i> Register Subcontractor Crew for Project Bids';
+    }
+}
+</script>
+{% endblock %}
