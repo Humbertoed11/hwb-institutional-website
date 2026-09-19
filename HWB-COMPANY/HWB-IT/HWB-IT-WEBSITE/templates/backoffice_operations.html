@@ -1419,9 +1419,13 @@
                                     {% for emp in employees %}
                                     <tr id="employee-row-{{ emp.id }}" class="employee-data-row" data-status="{{ emp.employment_status }}" data-search="{{ (emp.first_name ~ ' ' ~ emp.last_name ~ ' ' ~ emp.employee_number ~ ' ' ~ (emp.assigned_facility_name or '') ~ ' ' ~ emp.primary_role ~ ' ' ~ emp.phone)|lower }}" style="border-bottom: 1px solid var(--slate-100);">
                                         <td style="padding: 0.65rem 0.85rem;">
-                                            <div style="font-weight: 800; font-size: 0.85rem; color: var(--slate-900);">{{ emp.first_name }} {{ emp.last_name }}</div>
+                                            <div style="font-weight: 800; font-size: 0.85rem;">
+                                                <a href="javascript:void(0)" onclick="openEmployeeEditModal({{ emp.id }})" style="color: var(--slate-900); text-decoration: none;" onmouseover="this.style.color='var(--brand)'" onmouseout="this.style.color='var(--slate-900)'">
+                                                    {{ emp.first_name }} {{ emp.last_name }} <i class="fas fa-pen" style="font-size: 0.65rem; color: var(--slate-400); margin-left: 3px;"></i>
+                                                </a>
+                                            </div>
                                             <div style="font-size: 0.72rem; color: var(--slate-500); font-weight: 700; display: flex; align-items: center; gap: 0.4rem; margin-top: 2px;">
-                                                <span style="background: #eff6ff; color: var(--brand); padding: 0.1rem 0.35rem; border-radius: 4px; font-weight: 800;">{{ emp.employee_number }}</span>
+                                                <a href="javascript:void(0)" onclick="openEmployeeEditModal({{ emp.id }})" style="background: #eff6ff; color: var(--brand); padding: 0.1rem 0.35rem; border-radius: 4px; font-weight: 800; text-decoration: none;" title="Edit Personnel File">{{ emp.employee_number }}</a>
                                                 <span>Hired: {{ emp.hire_date.strftime('%m/%d/%Y') if emp.hire_date else '--' }}</span>
                                             </div>
                                         </td>
@@ -1630,8 +1634,13 @@
                                 <option value="Expired">COI Expired</option>
                             </select>
                         </div>
-                        <div style="font-size: 0.78rem; font-weight: 700; color: var(--slate-500);">
-                            Showing <span id="subs-visible-count">{{ subcontractors|length }}</span> subcontractor partners
+                        <div style="display: flex; gap: 0.75rem; align-items: center;">
+                            <div style="font-size: 0.78rem; font-weight: 700; color: var(--slate-500);">
+                                Showing <span id="subs-visible-count">{{ subcontractors|length }}</span> subcontractor partners
+                            </div>
+                            <button type="button" onclick="openSubcontractorOnboardModal()" class="isc-btn isc-btn-primary" style="height: 34px; padding: 0 0.85rem; font-size: 0.75rem; font-weight: 800; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.4rem; background: #7c3aed; border-color: #7c3aed;">
+                                <i class="fas fa-handshake"></i> + Onboard 1099 Partner
+                            </button>
                         </div>
                     </div>
 
@@ -1656,7 +1665,11 @@
                                     {% for sub in subcontractors %}
                                     <tr id="subcontractor-row-{{ sub.id }}" class="sub-data-row" data-status="{{ sub.status }}" data-coi="{{ sub.coi_status }}" data-search="{{ (sub.company_name ~ ' ' ~ sub.contact_name ~ ' ' ~ sub.city ~ ' ' ~ (sub.specialties or ''))|lower }}" style="border-bottom: 1px solid var(--slate-100);">
                                         <td style="padding: 0.65rem 0.85rem;">
-                                            <div style="font-weight: 800; font-size: 0.85rem; color: var(--slate-900);">{{ sub.company_name }}</div>
+                                            <div style="font-weight: 800; font-size: 0.85rem;">
+                                                <a href="javascript:void(0)" onclick="openSubcontractorEditModal({{ sub.id }})" style="color: var(--slate-900); text-decoration: none;" onmouseover="this.style.color='#7c3aed'" onmouseout="this.style.color='var(--slate-900)'">
+                                                    {{ sub.company_name }} <i class="fas fa-pen" style="font-size: 0.65rem; color: var(--slate-400); margin-left: 3px;"></i>
+                                                </a>
+                                            </div>
                                             <div style="font-size: 0.72rem; color: var(--slate-500); font-weight: 600;"><i class="fas fa-user-tie" style="font-size: 0.68rem; margin-right: 3px;"></i> {{ sub.contact_name }}</div>
                                         </td>
                                         <td style="padding: 0.65rem 0.85rem;">
@@ -1687,7 +1700,7 @@
                                         </td>
                                         <td style="padding: 0.65rem 0.85rem;">
                                             {% if sub.dwc83_signed %}
-                                                <span style="font-size: 0.72rem; font-weight: 800; color: #059669; background: #ecfdf5; padding: 0.2rem 0.5rem; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.25rem;">
+                                                 <span style="font-size: 0.72rem; font-weight: 800; color: #059669; background: #ecfdf5; padding: 0.2rem 0.5rem; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.25rem;">
                                                     <i class="fas fa-file-signature"></i> Signed ✓
                                                 </span>
                                             {% else %}
@@ -1709,6 +1722,12 @@
                                         </td>
                                         <td style="padding: 0.65rem 0.85rem; text-align: right;">
                                             <div style="display: inline-flex; gap: 0.35rem;">
+                                                <button type="button" onclick="openSubcontractorEditModal({{ sub.id }})" title="Edit Partner Profile" class="sigma-mini-btn" style="color: #7c3aed;">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button type="button" onclick="openSubcontractorDocModal({{ sub.id }})" title="Upload / View COI & W-9 Vault" class="sigma-mini-btn" style="color: #059669;">
+                                                    <i class="fas fa-folder-open"></i>
+                                                </button>
                                                 <button type="button" data-name="{{ sub.company_name }}" data-notes="{{ sub.notes or '' }}" onclick="editSubcontractorNotes({{ sub.id }}, this)" title="Partner Notes" class="sigma-mini-btn" style="color: var(--brand);">
                                                     <i class="fas fa-sticky-note"></i>
                                                 </button>
@@ -2266,6 +2285,351 @@
                     Close
                 </button>
                 <button type="submit" id="btn-submit-upload-doc" class="isc-btn isc-btn-primary" style="height: 38px; padding: 0 1.5rem; font-size: 0.8rem; border-radius: 6px; font-weight: 800; display: inline-flex; align-items: center; gap: 0.5rem; background: #2563eb; border-color: #2563eb;">
+                    <i class="fas fa-lock"></i> Securely Deposit to Vault
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: Onboard Subcontractor Partner (1099) (HWB-QMS-7.6) -->
+<div id="modal-subcontractor-onboard" class="isc-modal-overlay" style="display:none; z-index: 1100;">
+    <div class="isc-modal" style="max-width: 680px; max-height: 90vh; overflow-y: auto; padding: 2.25rem; border-radius: 12px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; border-bottom: 1px solid var(--slate-100); padding-bottom: 1rem;">
+            <div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span style="font-size: 0.7rem; font-weight: 800; background: #ede9fe; color: #6d28d9; padding: 0.2rem 0.6rem; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.05em;">1099 Onboarding Gate</span>
+                </div>
+                <h2 style="font-weight: 900; font-size: 1.35rem; color: var(--slate-900); margin: 0.35rem 0 0 0;">Onboard Subcontractor Trade Partner</h2>
+                <p style="font-size: 0.78rem; color: var(--slate-500); font-weight: 600; margin-top: 0.2rem;">Register commercial contractor, verify COI liability insurance, and assign crew capacity.</p>
+            </div>
+            <button type="button" onclick="closeModal('modal-subcontractor-onboard')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; color: var(--slate-400);">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <form id="form-subcontractor-onboard" onsubmit="saveSubcontractorOnboard(event)">
+            <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div>
+                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Company Legal Name / DBA *</label>
+                    <input type="text" id="sub-onboard-company" required class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;" placeholder="e.g. Apex Commercial Floor Care LLC">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Federal EIN or SSN</label>
+                    <input type="text" id="sub-onboard-ein" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;" placeholder="XX-XXXXXXX">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div>
+                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Primary Trade Contact *</label>
+                    <input type="text" id="sub-onboard-contact" required class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;" placeholder="Owner or Lead Dispatcher">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Mobile Phone *</label>
+                    <input type="tel" id="sub-onboard-phone" required class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;" placeholder="(972) 000-0000">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div>
+                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Email Address</label>
+                    <input type="email" id="sub-onboard-email" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;" placeholder="partner@cleaningcompany.com">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Operating City / State</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="text" id="sub-onboard-city" class="sigma-input" style="flex: 2; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;" placeholder="Dallas">
+                        <input type="text" id="sub-onboard-state" value="TX" class="sigma-input" style="flex: 1; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 700; text-align: center; box-sizing: border-box;">
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div>
+                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Crew Size (Laborers) *</label>
+                    <input type="number" min="1" max="50" id="sub-onboard-crew" required value="2" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 700; box-sizing: border-box;">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Agreed Hourly Rate Range</label>
+                    <input type="text" id="sub-onboard-rate" value="$25 - $35/hr" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 700; box-sizing: border-box;">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Partner Status</label>
+                    <select id="sub-onboard-status" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 700; background: white; box-sizing: border-box;">
+                        <option value="Active Partner" selected>Active Partner</option>
+                        <option value="Vetting">Vetting</option>
+                        <option value="On Standby">On Standby</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Trade Specialties & Capabilities</label>
+                <input type="text" id="sub-onboard-specialties" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;" placeholder="e.g. Commercial Cleaning, Post-Construction Final, Strip & Wax, Window Washing">
+            </div>
+
+            <div style="background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-700); margin-bottom: 0.75rem;">
+                    <i class="fas fa-balance-scale" style="color: #6d28d9; margin-right: 4px;"></i> Texas Contractor Legal & Insurance Checklist
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                    <div>
+                        <label style="display: block; font-size: 0.72rem; font-weight: 700; color: var(--slate-600); margin-bottom: 0.25rem;">COI Status</label>
+                        <select id="sub-onboard-coi-status" class="sigma-input" style="width: 100%; height: 32px; padding: 0 0.5rem; font-size: 0.78rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--slate-300); background: white;">
+                            <option value="Pending" selected>Pending COI</option>
+                            <option value="Verified">Verified ✓</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.72rem; font-weight: 700; color: var(--slate-600); margin-bottom: 0.25rem;">COI Expiration Date</label>
+                        <input type="date" id="sub-onboard-coi-date" class="sigma-input" style="width: 100%; height: 32px; padding: 0 0.5rem; font-size: 0.78rem; border-radius: 4px; border: 1px solid var(--slate-300);">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.72rem; font-weight: 700; color: var(--slate-600); margin-bottom: 0.25rem;">Texas DWC-83 Form</label>
+                        <label style="display: flex; align-items: center; gap: 0.4rem; height: 32px; font-size: 0.78rem; font-weight: 700; color: #065f46; cursor: pointer;">
+                            <input type="checkbox" id="sub-onboard-dwc83" style="width: 16px; height: 16px; accent-color: var(--brand);">
+                            DWC-83 Executed
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Trade Vetting Notes & Capacity Details</label>
+                <textarea id="sub-onboard-notes" class="sigma-input" style="width: 100%; height: 75px; padding: 0.5rem 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; box-sizing: border-box;" placeholder="e.g. Vetted crew of 4 with commercial ride-on scrubbers; available for Frisco / Plano night shifts..."></textarea>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem; border-top: 1px solid var(--slate-100); padding-top: 1.25rem;">
+                <button type="button" onclick="closeModal('modal-subcontractor-onboard')" class="isc-btn isc-btn-outline" style="height: 38px; padding: 0 1.25rem; font-size: 0.8rem; border-radius: 6px;">
+                    Cancel
+                </button>
+                <button type="submit" id="btn-submit-onboard-sub" class="isc-btn isc-btn-primary" style="height: 38px; padding: 0 1.5rem; font-size: 0.8rem; border-radius: 6px; font-weight: 800; display: inline-flex; align-items: center; gap: 0.5rem; background: #7c3aed; border-color: #7c3aed;">
+                    <i class="fas fa-handshake"></i> Complete 1099 Onboarding
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: Edit Subcontractor Partner Profile (1099) (HWB-QMS-7.6) -->
+<div id="modal-subcontractor-edit" class="isc-modal-overlay" style="display:none; z-index: 1100;">
+    <div class="isc-modal" style="max-width: 700px; max-height: 90vh; overflow-y: auto; padding: 2.25rem; border-radius: 12px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; border-bottom: 1px solid var(--slate-100); padding-bottom: 1rem;">
+            <div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span id="edit-sub-badge" style="font-size: 0.7rem; font-weight: 800; background: #ede9fe; color: #6d28d9; padding: 0.2rem 0.6rem; border-radius: 4px; text-transform: uppercase;">Trade Partner Profile</span>
+                    <span id="edit-sub-id-badge" style="font-size: 0.7rem; font-weight: 800; color: #7c3aed;">SUB #0</span>
+                </div>
+                <h2 id="edit-sub-header-name" style="font-weight: 900; font-size: 1.35rem; color: var(--slate-900); margin: 0.35rem 0 0 0;">Edit Subcontractor Partner</h2>
+                <p style="font-size: 0.78rem; color: var(--slate-500); font-weight: 600; margin-top: 0.2rem;">Modify trade rates, crew capacity, insurance policies, and compliance records.</p>
+            </div>
+            <button type="button" onclick="closeModal('modal-subcontractor-edit')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; color: var(--slate-400);">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <form id="form-subcontractor-edit" onsubmit="saveSubcontractorEdit(event)">
+            <input type="hidden" id="edit-sub-id" value="">
+            
+            <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div>
+                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Company Legal Name *</label>
+                    <input type="text" id="edit-sub-company" required class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Partner Status</label>
+                    <select id="edit-sub-status" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 700; background: white; box-sizing: border-box;">
+                        <option value="Active Partner">Active Partner</option>
+                        <option value="Vetting">Vetting</option>
+                        <option value="On Standby">On Standby</option>
+                        <option value="Do Not Use">Do Not Use</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div>
+                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Contact Name *</label>
+                    <input type="text" id="edit-sub-contact" required class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Phone Number *</label>
+                    <input type="tel" id="edit-sub-phone" required class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Email Address</label>
+                    <input type="email" id="edit-sub-email" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div>
+                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">EIN / SSN</label>
+                    <input type="text" id="edit-sub-ein" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">City / Hub</label>
+                    <input type="text" id="edit-sub-city" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Coverage Counties</label>
+                    <input type="text" id="edit-sub-counties" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div>
+                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Crew Size</label>
+                    <input type="number" min="1" max="50" id="edit-sub-crew" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 700; box-sizing: border-box;">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Hourly Rate Range</label>
+                    <input type="text" id="edit-sub-rate" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 700; box-sizing: border-box;">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Partner Rating (1-5★)</label>
+                    <input type="number" step="0.1" min="1.0" max="5.0" id="edit-sub-rating" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 700; box-sizing: border-box;">
+                </div>
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Trade Specialties</label>
+                <input type="text" id="edit-sub-specialties" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
+            </div>
+
+            <div style="background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-700); margin-bottom: 0.75rem;">
+                    <i class="fas fa-file-shield" style="color: #6d28d9; margin-right: 4px;"></i> Compliance & Insurance Verification
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 0.75rem;">
+                    <div>
+                        <label style="display: block; font-size: 0.72rem; font-weight: 700; color: var(--slate-600); margin-bottom: 0.25rem;">COI Status</label>
+                        <select id="edit-sub-coi-status" class="sigma-input" style="width: 100%; height: 32px; padding: 0 0.5rem; font-size: 0.78rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--slate-300); background: white;">
+                            <option value="Pending">Pending</option>
+                            <option value="Verified">Verified ✓</option>
+                            <option value="Expired">Expired</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.72rem; font-weight: 700; color: var(--slate-600); margin-bottom: 0.25rem;">COI Expiration</label>
+                        <input type="date" id="edit-sub-coi-date" class="sigma-input" style="width: 100%; height: 32px; padding: 0 0.5rem; font-size: 0.78rem; border-radius: 4px; border: 1px solid var(--slate-300);">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.72rem; font-weight: 700; color: var(--slate-600); margin-bottom: 0.25rem;">Form W-9</label>
+                        <select id="edit-sub-w9-status" class="sigma-input" style="width: 100%; height: 32px; padding: 0 0.5rem; font-size: 0.78rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--slate-300); background: white;">
+                            <option value="Pending">Pending</option>
+                            <option value="Verified">Verified ✓</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.72rem; font-weight: 700; color: var(--slate-600); margin-bottom: 0.25rem;">Texas DWC-83</label>
+                        <label style="display: flex; align-items: center; gap: 0.35rem; height: 32px; font-size: 0.75rem; font-weight: 700; color: #065f46; cursor: pointer;">
+                            <input type="checkbox" id="edit-sub-dwc83" style="width: 16px; height: 16px; accent-color: var(--brand);">
+                            Signed ✓
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Internal Trade Partner Notes</label>
+                <textarea id="edit-sub-notes" class="sigma-input" style="width: 100%; height: 75px; padding: 0.5rem 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; box-sizing: border-box;"></textarea>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem; border-top: 1px solid var(--slate-100); padding-top: 1.25rem;">
+                <button type="button" onclick="closeModal('modal-subcontractor-edit')" class="isc-btn isc-btn-outline" style="height: 38px; padding: 0 1.25rem; font-size: 0.8rem; border-radius: 6px;">
+                    Cancel
+                </button>
+                <button type="submit" id="btn-submit-edit-sub" class="isc-btn isc-btn-primary" style="height: 38px; padding: 0 1.5rem; font-size: 0.8rem; border-radius: 6px; font-weight: 800; display: inline-flex; align-items: center; gap: 0.5rem; background: #7c3aed; border-color: #7c3aed;">
+                    <i class="fas fa-save"></i> Save Partner Profile
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: Subcontractor Document Vault (COI & W-9) (HWB-QMS-7.6) -->
+<div id="modal-subcontractor-doc-upload" class="isc-modal-overlay" style="display:none; z-index: 1100;">
+    <div class="isc-modal" style="max-width: 650px; max-height: 90vh; overflow-y: auto; padding: 2.25rem; border-radius: 12px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; border-bottom: 1px solid var(--slate-100); padding-bottom: 1rem;">
+            <div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span style="font-size: 0.7rem; font-weight: 800; background: #ede9fe; color: #6d28d9; padding: 0.2rem 0.6rem; border-radius: 4px; text-transform: uppercase;">1099 Compliance Vault</span>
+                    <span id="sub-doc-modal-id" style="font-size: 0.7rem; font-weight: 800; color: #7c3aed;">SUB #0</span>
+                </div>
+                <h2 id="sub-doc-modal-company" style="font-weight: 900; font-size: 1.35rem; color: var(--slate-900); margin: 0.35rem 0 0 0;">Subcontractor Compliance Vault</h2>
+                <p style="font-size: 0.78rem; color: var(--slate-500); font-weight: 600; margin-top: 0.2rem;">Certificate of Insurance (COI) & Form W-9 verification files.</p>
+            </div>
+            <button type="button" onclick="closeModal('modal-subcontractor-doc-upload')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; color: var(--slate-400);">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <!-- Current Documents Card -->
+        <div style="background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
+            <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-700); margin-bottom: 0.75rem;">
+                Current Deposited Files
+            </div>
+            <div id="sub-doc-current-list" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <div id="sub-doc-coi-row" style="display: flex; justify-content: space-between; align-items: center; background: white; padding: 0.6rem 0.75rem; border-radius: 6px; border: 1px solid var(--slate-200);">
+                    <div>
+                        <div style="font-weight: 800; font-size: 0.82rem; color: var(--slate-900);">
+                            <i class="fas fa-shield-alt" style="color: #2563eb; margin-right: 4px;"></i> Certificate of Insurance (COI)
+                            <span id="sub-doc-coi-badge" style="font-size: 0.7rem; padding: 0.15rem 0.4rem; border-radius: 4px; margin-left: 0.4rem; font-weight: 800;"></span>
+                        </div>
+                        <div id="sub-doc-coi-exp-text" style="font-size: 0.72rem; color: var(--slate-500); margin-top: 2px;"></div>
+                    </div>
+                    <div id="sub-doc-coi-action"></div>
+                </div>
+
+                <div id="sub-doc-w9-row" style="display: flex; justify-content: space-between; align-items: center; background: white; padding: 0.6rem 0.75rem; border-radius: 6px; border: 1px solid var(--slate-200);">
+                    <div>
+                        <div style="font-weight: 800; font-size: 0.82rem; color: var(--slate-900);">
+                            <i class="fas fa-file-invoice" style="color: #059669; margin-right: 4px;"></i> Form W-9 (Taxpayer ID)
+                            <span id="sub-doc-w9-badge" style="font-size: 0.7rem; padding: 0.15rem 0.4rem; border-radius: 4px; margin-left: 0.4rem; font-weight: 800;"></span>
+                        </div>
+                        <div id="sub-doc-w9-subtext" style="font-size: 0.72rem; color: var(--slate-500); margin-top: 2px;">TIN Verification for 1099 Remittance</div>
+                    </div>
+                    <div id="sub-doc-w9-action"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upload Document Form -->
+        <form id="form-upload-sub-doc" onsubmit="submitSubcontractorDoc(event)">
+            <input type="hidden" id="upload-sub-doc-id" value="">
+            
+            <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.75rem;">
+                <i class="fas fa-cloud-upload-alt" style="color: #7c3aed; margin-right: 4px;"></i> Deposit / Update Document
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div>
+                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Document Classification *</label>
+                    <select id="upload-sub-doc-type" required class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 700; background: white; box-sizing: border-box;">
+                        <option value="Certificate of Insurance (COI)" selected>Certificate of Insurance (COI)</option>
+                        <option value="Form W-9">Form W-9 (Taxpayer ID)</option>
+                        <option value="Texas DWC-83 Notice">Texas DWC-83 Notice</option>
+                        <option value="Subcontractor Agreement">Master Subcontractor Agreement (MSA)</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Policy Expiration Date</label>
+                    <input type="date" id="upload-sub-doc-expiration" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 700; box-sizing: border-box;">
+                </div>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">File Attachment (PDF, PNG, JPG) *</label>
+                <input type="file" id="upload-sub-doc-file" required accept=".pdf,.png,.jpg,.jpeg" class="sigma-input" style="width: 100%; height: 38px; padding: 4px; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.82rem; box-sizing: border-box;">
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem; border-top: 1px solid var(--slate-100); padding-top: 1.25rem;">
+                <button type="button" onclick="closeModal('modal-subcontractor-doc-upload')" class="isc-btn isc-btn-outline" style="height: 38px; padding: 0 1.25rem; font-size: 0.8rem; border-radius: 6px;">
+                    Close
+                </button>
+                <button type="submit" id="btn-submit-upload-sub-doc" class="isc-btn isc-btn-primary" style="height: 38px; padding: 0 1.5rem; font-size: 0.8rem; border-radius: 6px; font-weight: 800; display: inline-flex; align-items: center; gap: 0.5rem; background: #7c3aed; border-color: #7c3aed;">
                     <i class="fas fa-lock"></i> Securely Deposit to Vault
                 </button>
             </div>
@@ -6535,6 +6899,263 @@
                 }
             }
         });
+    }
+
+    function openSubcontractorOnboardModal() {
+        const form = document.getElementById('form-subcontractor-onboard');
+        if (form) form.reset();
+        openModal('modal-subcontractor-onboard');
+    }
+
+    async function saveSubcontractorOnboard(event) {
+        event.preventDefault();
+        const btn = document.getElementById('btn-submit-onboard-sub');
+        const origHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Onboarding...';
+
+        const payload = {
+            company_name: document.getElementById('sub-onboard-company').value.trim(),
+            ein_or_ssn: document.getElementById('sub-onboard-ein').value.trim(),
+            contact_name: document.getElementById('sub-onboard-contact').value.trim(),
+            phone: document.getElementById('sub-onboard-phone').value.trim(),
+            email: document.getElementById('sub-onboard-email').value.trim(),
+            city: document.getElementById('sub-onboard-city').value.trim(),
+            state: document.getElementById('sub-onboard-state').value.trim() || 'TX',
+            crew_size: parseInt(document.getElementById('sub-onboard-crew').value) || 2,
+            hourly_rate_range: document.getElementById('sub-onboard-rate').value.trim(),
+            status: document.getElementById('sub-onboard-status').value,
+            specialties: document.getElementById('sub-onboard-specialties').value.trim(),
+            coi_status: document.getElementById('sub-onboard-coi-status').value,
+            coi_expiration_date: document.getElementById('sub-onboard-coi-date').value || null,
+            dwc83_signed: document.getElementById('sub-onboard-dwc83').checked,
+            notes: document.getElementById('sub-onboard-notes').value.trim()
+        };
+
+        try {
+            const res = await fetch('/api/v1/workforce/subcontractors', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                closeModal('modal-subcontractor-onboard');
+                showToast(`Trade Partner '${payload.company_name}' successfully onboarded!`, 'success');
+                setTimeout(() => window.location.reload(), 700);
+            } else {
+                alert('Onboarding failed: ' + (data.message || 'Unknown error'));
+            }
+        } catch (err) {
+            console.error('Subcontractor onboard error:', err);
+            alert('Network error while onboarding trade partner.');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = origHtml;
+        }
+    }
+
+    async function openSubcontractorEditModal(subId) {
+        try {
+            const res = await fetch(`/api/v1/workforce/subcontractors/${subId}`);
+            const data = await res.json();
+            if (data.status !== 'success' || !data.subcontractor) {
+                showToast('Failed to load subcontractor partner details.', 'error');
+                return;
+            }
+            const s = data.subcontractor;
+            document.getElementById('edit-sub-id').value = s.id;
+            document.getElementById('edit-sub-id-badge').innerText = `SUB #${s.id}`;
+            document.getElementById('edit-sub-header-name').innerText = s.company_name;
+            document.getElementById('edit-sub-company').value = s.company_name || '';
+            document.getElementById('edit-sub-status').value = s.status || 'Active Partner';
+            document.getElementById('edit-sub-contact').value = s.contact_name || '';
+            document.getElementById('edit-sub-phone').value = s.phone || '';
+            document.getElementById('edit-sub-email').value = s.email || '';
+            document.getElementById('edit-sub-ein').value = s.ein_or_ssn || '';
+            document.getElementById('edit-sub-city').value = s.city || '';
+            document.getElementById('edit-sub-counties').value = s.coverage_counties || 'Dallas, Tarrant, Collin, Denton';
+            document.getElementById('edit-sub-crew').value = s.crew_size || 2;
+            document.getElementById('edit-sub-rate').value = s.hourly_rate_range || '$25 - $35/hr';
+            document.getElementById('edit-sub-rating').value = s.rating || 5.0;
+            document.getElementById('edit-sub-specialties').value = s.specialties || '';
+            document.getElementById('edit-sub-coi-status').value = s.coi_status || 'Pending';
+            document.getElementById('edit-sub-coi-date').value = s.coi_expiration_date ? s.coi_expiration_date.substring(0, 10) : '';
+            document.getElementById('edit-sub-w9-status').value = s.w9_status || 'Pending';
+            document.getElementById('edit-sub-dwc83').checked = !!s.dwc83_signed;
+            document.getElementById('edit-sub-notes').value = s.notes || '';
+
+            openModal('modal-subcontractor-edit');
+        } catch (err) {
+            console.error('Fetch subcontractor error:', err);
+            showToast('Network error loading subcontractor profile.', 'error');
+        }
+    }
+
+    async function saveSubcontractorEdit(event) {
+        event.preventDefault();
+        const id = document.getElementById('edit-sub-id').value;
+        const btn = document.getElementById('btn-submit-edit-sub');
+        const origHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+        const payload = {
+            company_name: document.getElementById('edit-sub-company').value.trim(),
+            status: document.getElementById('edit-sub-status').value,
+            contact_name: document.getElementById('edit-sub-contact').value.trim(),
+            phone: document.getElementById('edit-sub-phone').value.trim(),
+            email: document.getElementById('edit-sub-email').value.trim(),
+            ein_or_ssn: document.getElementById('edit-sub-ein').value.trim(),
+            city: document.getElementById('edit-sub-city').value.trim(),
+            coverage_counties: document.getElementById('edit-sub-counties').value.trim(),
+            crew_size: parseInt(document.getElementById('edit-sub-crew').value) || 2,
+            hourly_rate_range: document.getElementById('edit-sub-rate').value.trim(),
+            rating: parseFloat(document.getElementById('edit-sub-rating').value) || 5.0,
+            specialties: document.getElementById('edit-sub-specialties').value.trim(),
+            coi_status: document.getElementById('edit-sub-coi-status').value,
+            coi_expiration_date: document.getElementById('edit-sub-coi-date').value || null,
+            w9_status: document.getElementById('edit-sub-w9-status').value,
+            dwc83_signed: document.getElementById('edit-sub-dwc83').checked,
+            notes: document.getElementById('edit-sub-notes').value.trim()
+        };
+
+        try {
+            const res = await fetch(`/api/v1/workforce/subcontractors/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                closeModal('modal-subcontractor-edit');
+                showToast('Subcontractor profile updated.', 'success');
+                setTimeout(() => window.location.reload(), 600);
+            } else {
+                alert('Update failed: ' + (data.message || 'Unknown error'));
+            }
+        } catch (err) {
+            console.error('Update sub error:', err);
+            showToast('Network error saving subcontractor.', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = origHtml;
+        }
+    }
+
+    async function openSubcontractorDocModal(subId) {
+        const form = document.getElementById('form-upload-sub-doc');
+        if (form) form.reset();
+        document.getElementById('upload-sub-doc-id').value = subId;
+        document.getElementById('sub-doc-modal-id').innerText = `SUB #${subId}`;
+
+        try {
+            const res = await fetch(`/api/v1/workforce/subcontractors/${subId}`);
+            const data = await res.json();
+            if (data.status === 'success' && data.subcontractor) {
+                const s = data.subcontractor;
+                document.getElementById('sub-doc-modal-company').innerText = s.company_name || `Subcontractor #${subId}`;
+
+                // COI UI
+                const coiBadge = document.getElementById('sub-doc-coi-badge');
+                const coiExpText = document.getElementById('sub-doc-coi-exp-text');
+                const coiAction = document.getElementById('sub-doc-coi-action');
+                
+                const coiStatus = s.coi_status || 'Pending';
+                coiBadge.innerText = coiStatus;
+                if (coiStatus === 'Verified') {
+                    coiBadge.style.background = '#ecfdf5';
+                    coiBadge.style.color = '#065f46';
+                } else if (coiStatus === 'Expired') {
+                    coiBadge.style.background = '#fee2e2';
+                    coiBadge.style.color = '#991b1b';
+                } else {
+                    coiBadge.style.background = '#fffbeb';
+                    coiBadge.style.color = '#92400e';
+                }
+                
+                coiExpText.innerText = s.coi_expiration_date ? `Policy Expiration: ${s.coi_expiration_date.substring(0, 10)}` : 'No expiration date recorded';
+                
+                if (s.coi_file_url && s.coi_file_url !== 'None' && s.coi_file_url !== 'null') {
+                    coiAction.innerHTML = `
+                        <a href="/api/v1/workforce/subcontractors/${subId}/download/coi" target="_blank" class="sigma-mini-btn" style="color: #059669; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; font-weight: 700;">
+                            <i class="fas fa-download"></i> Download COI
+                        </a>
+                    `;
+                } else {
+                    coiAction.innerHTML = `<span style="font-size:0.75rem; color:var(--slate-400); font-weight:600;">No file deposited</span>`;
+                }
+
+                // W-9 UI
+                const w9Badge = document.getElementById('sub-doc-w9-badge');
+                const w9Action = document.getElementById('sub-doc-w9-action');
+                
+                const w9Status = s.w9_status || 'Pending';
+                w9Badge.innerText = w9Status;
+                if (w9Status === 'Verified') {
+                    w9Badge.style.background = '#ecfdf5';
+                    w9Badge.style.color = '#065f46';
+                } else {
+                    w9Badge.style.background = '#fffbeb';
+                    w9Badge.style.color = '#92400e';
+                }
+
+                if (s.w9_file_url && s.w9_file_url !== 'None' && s.w9_file_url !== 'null') {
+                    w9Action.innerHTML = `
+                        <a href="/api/v1/workforce/subcontractors/${subId}/download/w9" target="_blank" class="sigma-mini-btn" style="color: #059669; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; font-weight: 700;">
+                            <i class="fas fa-download"></i> Download W-9
+                        </a>
+                    `;
+                } else {
+                    w9Action.innerHTML = `<span style="font-size:0.75rem; color:var(--slate-400); font-weight:600;">No file deposited</span>`;
+                }
+            }
+        } catch (e) {
+            console.error('Fetch sub docs error:', e);
+        }
+
+        openModal('modal-subcontractor-doc-upload');
+    }
+
+    async function submitSubcontractorDoc(event) {
+        event.preventDefault();
+        const subId = document.getElementById('upload-sub-doc-id').value;
+        const fileInput = document.getElementById('upload-sub-doc-file');
+        if (!fileInput.files.length) {
+            alert('Please select a document file to deposit.');
+            return;
+        }
+
+        const btn = document.getElementById('btn-submit-upload-sub-doc');
+        const origHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Depositing...';
+
+        const formData = new FormData();
+        formData.append('document', fileInput.files[0]);
+        formData.append('document_type', document.getElementById('upload-sub-doc-type').value);
+        formData.append('expiration_date', document.getElementById('upload-sub-doc-expiration').value);
+
+        try {
+            const res = await fetch(`/api/v1/workforce/subcontractors/${subId}/documents`, {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                showToast(data.message || 'Document securely deposited into Vault.', 'success');
+                closeModal('modal-subcontractor-doc-upload');
+                setTimeout(() => window.location.reload(), 600);
+            } else {
+                alert('Upload failed: ' + (data.message || 'Unknown error'));
+            }
+        } catch (err) {
+            console.error('Doc upload error:', err);
+            showToast('Network error uploading document.', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = origHtml;
+        }
     }
 
     function copyWorkforcePortalLink(btn) {

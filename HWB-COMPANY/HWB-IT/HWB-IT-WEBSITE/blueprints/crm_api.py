@@ -1218,14 +1218,65 @@ def api_manage_applicant(id):
         if conn: conn.close()
 
 
-@crm_api_bp.route('/api/v1/workforce/subcontractors', methods=['GET'])
+@crm_api_bp.route('/api/v1/workforce/subcontractors', methods=['GET', 'POST'])
 @login_required
-def api_get_subcontractors():
-    """Retrieve subcontractor records with optional filtering."""
-    status_filter = request.args.get('status')
+def api_get_or_create_subcontractors():
+    """Retrieve subcontractor records with optional filtering, or onboard a new trade partner."""
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
         with conn.cursor() as cur:
+            if request.method == 'POST':
+                data = request.get_json() or {}
+                company_name = (data.get('company_name') or '').strip()
+                contact_name = (data.get('contact_name') or '').strip()
+                phone = clean_phone(data.get('phone') or '')
+                email = (data.get('email') or '').strip()
+
+                if not company_name or not contact_name or not phone:
+                    return jsonify({'status': 'error', 'message': 'Company name, contact name, and phone are mandatory.'}), 400
+
+                ein_or_ssn = (data.get('ein_or_ssn') or '').strip()
+                city = clean_city(data.get('city') or '')
+                state = (data.get('state') or 'TX').strip()
+                coverage_counties = (data.get('coverage_counties') or 'Dallas, Tarrant, Collin, Denton').strip()
+                crew_size = int(data.get('crew_size') or 2)
+                specialties = (data.get('specialties') or 'Commercial Cleaning').strip()
+                hourly_rate_range = (data.get('hourly_rate_range') or '$25 - $35/hr').strip()
+                coi_status = data.get('coi_status', 'Pending')
+                coi_expiration_date = data.get('coi_expiration_date') or None
+                w9_status = data.get('w9_status', 'Pending')
+                dwc83_signed = bool(data.get('dwc83_signed', False))
+                status = data.get('status', 'Active Partner')
+                notes = (data.get('notes') or '').strip()
+
+                cur.execute('''
+                    INSERT INTO "SubcontractorPartners" (
+                        company_name, ein_or_ssn, contact_name, phone, email,
+                        city, state, coverage_counties, crew_size, specialties,
+                        hourly_rate_range, coi_status, coi_expiration_date,
+                        w9_status, dwc83_signed, status, notes
+                    ) VALUES (
+                        %s, %s, %s, %s, %s,
+                        %s, %s, %s, %s, %s,
+                        %s, %s, %s,
+                        %s, %s, %s, %s
+                    ) RETURNING id;
+                ''', (
+                    company_name, ein_or_ssn, contact_name, phone, email,
+                    city, state, coverage_counties, crew_size, specialties,
+                    hourly_rate_range, coi_status, coi_expiration_date,
+                    w9_status, dwc83_signed, status, notes
+                ))
+                new_id = cur.fetchone()['id']
+                conn.commit()
+                return jsonify({
+                    'status': 'success',
+                    'subcontractor_id': new_id,
+                    'message': f"Trade Partner '{company_name}' onboarded successfully."
+                }), 201
+
+            # GET method
+            status_filter = request.args.get('status')
             if status_filter:
                 cur.execute('SELECT * FROM "SubcontractorPartners" WHERE status = %s ORDER BY created_at DESC;', (status_filter,))
             else:
@@ -1236,37 +1287,151 @@ def api_get_subcontractors():
         if conn: conn.close()
 
 
-@crm_api_bp.route('/api/v1/workforce/subcontractors/<int:id>', methods=['PATCH', 'DELETE'])
+@crm_api_bp.route('/api/v1/workforce/subcontractors/<int:id>', methods=['GET', 'PATCH', 'DELETE'])
 @login_required
 def api_manage_subcontractor(id):
-    """Update status, COI status, or rating for a subcontractor."""
+    """View, update, or remove a subcontractor record."""
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
         with conn.cursor() as cur:
-            if request.method == 'DELETE':
+            if request.method == 'GET':
+                cur.execute('SELECT * FROM "SubcontractorPartners" WHERE id = %s;', (id,))
+                sub = cur.fetchone()
+                if not sub:
+                    return jsonify({'status': 'error', 'message': 'Subcontractor not found'}), 404
+                return jsonify({'status': 'success', 'subcontractor': serialize_row(sub)})
+
+            elif request.method == 'DELETE':
                 cur.execute('DELETE FROM "SubcontractorPartners" WHERE id = %s;', (id,))
                 conn.commit()
                 return jsonify({'status': 'success', 'deleted_id': id})
 
-            data = request.get_json() or {}
-            cur.execute('SELECT * FROM "SubcontractorPartners" WHERE id = %s;', (id,))
-            current_sub = cur.fetchone()
-            if not current_sub:
+            elif request.method == 'PATCH':
+                data = request.get_json() or {}
+                cur.execute('SELECT * FROM "SubcontractorPartners" WHERE id = %s;', (id,))
+                current_sub = cur.fetchone()
+                if not current_sub:
+                    return jsonify({'status': 'error', 'message': 'Subcontractor not found'}), 404
+
+                company_name = data.get('company_name', current_sub['company_name'])
+                contact_name = data.get('contact_name', current_sub['contact_name'])
+                phone = clean_phone(data.get('phone', current_sub['phone']))
+                email = data.get('email', current_sub['email'])
+                ein_or_ssn = data.get('ein_or_ssn', current_sub['ein_or_ssn'])
+                city = clean_city(data.get('city', current_sub['city']))
+                state = data.get('state', current_sub['state'])
+                coverage_counties = data.get('coverage_counties', current_sub['coverage_counties'])
+                crew_size = int(data.get('crew_size', current_sub['crew_size'] or 2))
+                specialties = data.get('specialties', current_sub['specialties'])
+                hourly_rate_range = data.get('hourly_rate_range', current_sub['hourly_rate_range'])
+                coi_status = data.get('coi_status', current_sub['coi_status'])
+                coi_expiration_date = data.get('coi_expiration_date') if 'coi_expiration_date' in data else current_sub['coi_expiration_date']
+                w9_status = data.get('w9_status', current_sub['w9_status'])
+                dwc83_signed = bool(data.get('dwc83_signed', current_sub['dwc83_signed']))
+                status = data.get('status', current_sub['status'])
+                notes = data.get('notes', current_sub['notes'])
+                rating = float(data.get('rating', current_sub['rating'] or 5.0))
+
+                cur.execute('''
+                    UPDATE "SubcontractorPartners" SET
+                        company_name = %s, contact_name = %s, phone = %s, email = %s,
+                        ein_or_ssn = %s, city = %s, state = %s, coverage_counties = %s,
+                        crew_size = %s, specialties = %s, hourly_rate_range = %s,
+                        coi_status = %s, coi_expiration_date = %s, w9_status = %s,
+                        dwc83_signed = %s, status = %s, notes = %s, rating = %s,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE id = %s;
+                ''', (
+                    company_name, contact_name, phone, email,
+                    ein_or_ssn, city, state, coverage_counties,
+                    crew_size, specialties, hourly_rate_range,
+                    coi_status, coi_expiration_date, w9_status,
+                    dwc83_signed, status, notes, rating, id
+                ))
+                conn.commit()
+                return jsonify({'status': 'success', 'id': id, 'message': 'Subcontractor profile updated successfully.'})
+    finally:
+        if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/workforce/subcontractors/<int:id>/documents', methods=['POST'])
+@login_required
+def api_upload_subcontractor_document(id):
+    """Securely uploads and deposits COI or W-9 into the HR Vault for a subcontractor."""
+    if 'document' not in request.files:
+        return jsonify({'status': 'error', 'message': 'No document file provided.'}), 400
+
+    file = request.files['document']
+    doc_type = (request.form.get('document_type') or 'COI').strip()
+    coi_expiration = request.form.get('expiration_date') or None
+
+    if file.filename == '':
+        return jsonify({'status': 'error', 'message': 'Empty file selected.'}), 400
+
+    filename = secure_filename(file.filename)
+    safe_name = f"sub_{id}_{doc_type.replace(' ', '_')}_{int(dt_cls.now().timestamp())}_{filename}"
+    file_path = os.path.join(HR_VAULT_DIR, safe_name)
+    file.save(file_path)
+
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            if 'w-9' in doc_type.lower():
+                cur.execute('''
+                    UPDATE "SubcontractorPartners" 
+                    SET w9_file_url = %s, w9_status = 'Verified', updated_at = CURRENT_TIMESTAMP
+                    WHERE id = %s;
+                ''', (safe_name, id))
+            elif 'dwc' in doc_type.lower():
+                cur.execute('''
+                    UPDATE "SubcontractorPartners" 
+                    SET dwc83_signed = TRUE, updated_at = CURRENT_TIMESTAMP
+                    WHERE id = %s;
+                ''', (id,))
+            else:  # COI
+                exp_clause = ", coi_expiration_date = %s" if coi_expiration else ""
+                params = [safe_name]
+                if coi_expiration:
+                    params.append(coi_expiration)
+                params.append(id)
+                cur.execute(f'''
+                    UPDATE "SubcontractorPartners" 
+                    SET coi_file_url = %s, coi_status = 'Verified'{exp_clause}, updated_at = CURRENT_TIMESTAMP
+                    WHERE id = %s;
+                ''', tuple(params))
+
+            conn.commit()
+            return jsonify({
+                'status': 'success',
+                'file_name': filename,
+                'document_type': doc_type,
+                'message': f"{doc_type} securely deposited into Vault."
+            }), 201
+    finally:
+        if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/workforce/subcontractors/<int:id>/download/<doc_type>', methods=['GET'])
+@login_required
+def api_download_subcontractor_document(id, doc_type):
+    """Securely downloads a subcontractor compliance document from the HR Vault."""
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            cur.execute('SELECT company_name, coi_file_url, w9_file_url FROM "SubcontractorPartners" WHERE id = %s;', (id,))
+            sub = cur.fetchone()
+            if not sub:
                 return jsonify({'status': 'error', 'message': 'Subcontractor not found'}), 404
 
-            new_status = data.get('status') if 'status' in data else current_sub['status']
-            new_coi_status = data.get('coi_status') if 'coi_status' in data else current_sub['coi_status']
-            new_notes = data.get('notes') if 'notes' in data else current_sub['notes']
-            new_city = clean_city(data.get('city')) if 'city' in data else current_sub['city']
-            new_phone = clean_phone(data.get('phone')) if 'phone' in data else current_sub['phone']
+            file_key = sub['w9_file_url'] if doc_type.lower() == 'w9' else sub['coi_file_url']
+            if not file_key:
+                return jsonify({'status': 'error', 'message': f'No {doc_type.upper()} file deposited.'}), 404
 
-            cur.execute('''
-                UPDATE "SubcontractorPartners"
-                SET status = %s, coi_status = %s, notes = %s, city = %s, phone = %s, updated_at = CURRENT_TIMESTAMP
-                WHERE id = %s;
-            ''', (new_status, new_coi_status, new_notes, new_city, new_phone, id))
-            conn.commit()
-            return jsonify({'status': 'success', 'id': id})
+            file_path = os.path.join(HR_VAULT_DIR, file_key)
+            if not os.path.exists(file_path):
+                return jsonify({'status': 'error', 'message': 'Document file not found on disk'}), 404
+
+            return send_file(file_path, as_attachment=True, download_name=f"{sub['company_name'].replace(' ', '_')}_{doc_type.upper()}.pdf")
     finally:
         if conn: conn.close()
 
