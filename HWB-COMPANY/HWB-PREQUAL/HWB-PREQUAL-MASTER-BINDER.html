@@ -52,6 +52,21 @@
             padding-bottom: 16px;
             margin-bottom: 24px;
         }
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .header-logo {
+            height: 64px;
+            width: auto;
+            object-fit: contain;
+        }
+        @media print {
+            .header-logo {
+                height: 58px !important;
+            }
+        }
         .company-title {
             font-size: 18pt;
             font-weight: 800;
@@ -173,9 +188,12 @@
 
     <!-- MASTHEAD -->
     <div class="masthead">
-        <div>
-            <h1 class="company-title">HWB CLEANING SERVICES LLC</h1>
-            <div class="company-sub">Commercial Construction Subcontractor Prequalification Vault</div>
+        <div class="header-brand">
+            <img src="../HWB-IT/HWB-IT-WEBSITE/static/img/hwb_commercial_cleaning_logo.png" alt="HWB Cleaning Services LLC" class="header-logo">
+            <div>
+                <h1 class="company-title">HWB CLEANING SERVICES LLC</h1>
+                <div class="company-sub">Commercial Construction Subcontractor Prequalification Vault</div>
+            </div>
         </div>
         <div class="vault-badge">
             ● 2026 PREQUALIFIED<br>

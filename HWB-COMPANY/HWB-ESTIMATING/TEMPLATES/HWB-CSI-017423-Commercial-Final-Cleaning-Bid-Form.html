@@ -62,6 +62,21 @@
             padding-bottom: 14px;
             margin-bottom: 20px;
         }
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .header-logo {
+            height: 60px;
+            width: auto;
+            object-fit: contain;
+        }
+        @media print {
+            .header-logo {
+                height: 54px !important;
+            }
+        }
         .company-title {
             font-size: 16pt;
             font-weight: 800;
@@ -300,9 +315,12 @@
 
     <!-- MASTHEAD -->
     <div class="header-masthead">
-        <div>
-            <h1 class="company-title">HWB CLEANING SERVICES LLC</h1>
-            <div class="company-subtitle">Commercial Construction Division • Arlington, TX</div>
+        <div class="header-brand">
+            <img src="/static/img/hwb_commercial_cleaning_logo.png" alt="HWB Cleaning Services LLC" class="header-logo">
+            <div>
+                <h1 class="company-title">HWB CLEANING SERVICES LLC</h1>
+                <div class="company-subtitle">Commercial Construction Division • McKinney, TX</div>
+            </div>
         </div>
         <div class="division-tag">
             CSI MasterFormat® 01 74 23<br>

@@ -14,8 +14,12 @@ CLIENT_SECRET = os.getenv("GRAPH_API_PROD_SECRET_VALUE")
 TENANT_ID = os.getenv("GRAPH_API_PROD_TENANT_ID")
 SENDER_EMAIL = "humbertoed@hwbcleaning.com"
 
-# Institutional Logo Path (SEO Optimized)
-LOGO_PATH = "/mnt/c/Users/humbe/OneDrive - hwbcleaning.com/gemini_projects/HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/static/hwb-cleaning-services-llc-logo-plano-tx.png"
+# Institutional Logo Path (Canonical Commercial Asset)
+LOGO_PATH = os.path.join(os.path.dirname(__file__), "..", "static", "img", "hwb_commercial_cleaning_logo.png")
+if not os.path.exists(LOGO_PATH):
+    LOGO_PATH = "/app/static/img/hwb_commercial_cleaning_logo.png"
+if not os.path.exists(LOGO_PATH):
+    LOGO_PATH = "/home/humbertoed/gemini_projects/HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/static/img/hwb_commercial_cleaning_logo.png"
 
 AUTHORITY = f"https://login.microsoftonline.com/{TENANT_ID}"
 SCOPE = ["https://graph.microsoft.com/.default"]
@@ -106,8 +110,9 @@ class MicrosoftMarketingEngine:
                     </div>
                     <div class="institutional-title">
                         <b>HWB Cleaning Services LLC</b><br>
-                        Institutional Division | SaaS Ecosystem<br>
-                        Plano, Texas | DFW Metroplex<br>
+                        Corporate Headquarters<br>
+                        3342 FM 1827 Ste 8d, McKinney, TX 75071<br>
+                        Office: (214)-586-0257 | Direct: (214) 799-5935<br>
                         <a href="https://www.hwbcleaning.com" style="color: #004aad; text-decoration: none;">www.hwbcleaning.com</a>
                     </div>
                 </div>

@@ -51,13 +51,28 @@
 
         /* 🏛️ MASTHEAD */
         .header-grid {
-            display: grid;
-            grid-template-columns: 1fr auto;
+            display: flex;
+            justify-content: space-between;
             align-items: center;
             border-bottom: 2.5px solid #0f172a;
             padding-bottom: 14px;
             margin-bottom: 16px;
             gap: 16px;
+        }
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .header-logo {
+            height: 72px;
+            width: auto;
+            object-fit: contain;
+        }
+        @media print {
+            .header-logo {
+                height: 66px !important;
+            }
         }
         .corp-title {
             font-size: 19pt;
@@ -237,9 +252,12 @@
 
         <!-- 🏛️ MASTHEAD -->
         <div class="header-grid">
-            <div>
-                <h1 class="corp-title">HWB CLEANING SERVICES LLC</h1>
-                <div class="corp-subtitle">Capability Statement 2026 • Commercial & Institutional Services</div>
+            <div class="header-brand">
+                <img src="{{ url_for('static', filename='img/hwb_commercial_cleaning_logo.png') }}" alt="HWB Cleaning Services LLC" class="header-logo">
+                <div>
+                    <h1 class="corp-title">HWB CLEANING SERVICES LLC</h1>
+                    <div class="corp-subtitle">Capability Statement 2026 • Commercial & Institutional Services</div>
+                </div>
             </div>
             <div class="header-meta">
                 <strong>Headquarters:</strong> 3342 FM 1827 Ste 8d, McKinney, TX 75071<br>

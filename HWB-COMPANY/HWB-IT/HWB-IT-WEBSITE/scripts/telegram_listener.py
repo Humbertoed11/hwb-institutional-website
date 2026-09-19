@@ -726,20 +726,30 @@ def dispatch_graph_email(record_id):
 
         # Check for brand asset / logo attachments
         attachments = []
-        if any(w in item["subject"].lower() or w in item["body"].lower() for w in ["logo", "brand asset", "branding"]):
+        is_logo_requested = any(w in item["subject"].lower() or w in item["body"].lower() for w in ["logo", "brand asset", "branding"])
+        has_cid_logo = "cid:hwblogo" in item["body"]
+
+        if is_logo_requested or has_cid_logo:
             logo_candidates = [
-                "/app/static/1-hwb-cleaning-services-llc-logo-plano-tx.png",
-                os.path.join(BASE_DIR, "static", "1-hwb-cleaning-services-llc-logo-plano-tx.png")
+                "/app/static/img/hwb_commercial_cleaning_logo.png",
+                "/app/static/hwb_commercial_cleaning_logo.png",
+                os.path.join(BASE_DIR, "static", "img", "hwb_commercial_cleaning_logo.png"),
+                os.path.join(BASE_DIR, "static", "hwb_commercial_cleaning_logo.png"),
+                "/home/humbertoed/gemini_projects/HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/static/img/hwb_commercial_cleaning_logo.png"
             ]
             for lpath in logo_candidates:
                 if os.path.exists(lpath):
                     with open(lpath, "rb") as lf:
-                        attachments.append({
+                        att_dict = {
                             "@odata.type": "#microsoft.graph.fileAttachment",
-                            "name": "1-hwb-cleaning-services-llc-logo-plano-tx.png",
+                            "name": "hwb_commercial_cleaning_logo.png",
                             "contentType": "image/png",
                             "contentBytes": base64.b64encode(lf.read()).decode("utf-8")
-                        })
+                        }
+                        if has_cid_logo:
+                            att_dict["contentId"] = "hwblogo"
+                            att_dict["isInline"] = True
+                        attachments.append(att_dict)
                     break
 
         email_payload = {
