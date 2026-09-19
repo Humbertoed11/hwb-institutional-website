@@ -43,6 +43,28 @@ Responsibility: George (Architect)
 | 09/18/2026 | AI-001 | Cognitive Neural Network Hardening: 1536d Semantic Vectors, Automated Pre-Flight Memory Gate & Async Sync. | **RESOLVED** | HIGH |
 | 09/19/2026 | SEO-001 | Google Analytics GA4 Conversion Blindspot, Duplicate Tag Redundancy & Missing Click-to-Call Telemetry. | **RESOLVED** | HIGH |
 | 09/19/2026 | BUG-066 | Workforce View DOM Nesting Fault, Extraneous Closing Tags & Unhardened JSON Interception Window. | **RESOLVED** | HIGH |
+| 09/19/2026 | BUG-067 | Microsoft Graph API ErrorInvalidRecipients Rejection (HTTP 400) on Telegram Staged Outbox Dispatches. | **RESOLVED** | HIGH |
+
+## BUG-067: Microsoft Graph API ErrorInvalidRecipients Rejection (HTTP 400) on Telegram Staged Outbox Dispatches
+**Detected:** 09/19/2026
+**Status:** **RESOLVED** (09/19/2026)
+**Symptoms:**
+1. Triggering `/dispatch 47` (or tapping inline button `dispatch_47`) in Telegram produced `⚠️ Dispatch Failure for Record #47: Graph HTTP 400: {"error":{"code":"ErrorInvalidRecipients","message":"At least one recipient is not valid., Recipient 'Humberto Dominguez' is not resolved. All recipients must be resolved before a message can be submitted."}}`.
+2. The company logo files requested by Mirna Rondinella on Telegram were not delivered.
+3. PendingOutbox record #47 had recipient set as plain text `"Humberto Dominguez"` instead of a valid RFC 5322 email address.
+**Root Cause:**
+1. The Telegram conversational AI in `scripts/telegram_listener.py` operated under a legacy hardcoded assumption that all incoming messages originated from CEO Humberto Dominguez.
+2. When parsing the intent to draft an email, the AI inserted the person's plain name `"Humberto Dominguez"` into `PendingOutbox.recipient` rather than an email address.
+3. `dispatch_graph_email()` forwarded the raw string directly into Microsoft Graph API `toRecipients` without resolving names against the `Users` database table or verifying email format.
+4. Outbox records lacked multi-part binary attachment support for graphic assets (`.png`, `.jpg`, `.pdf`).
+**Solution:**
+1. Hardened `dispatch_graph_email()` with an auto-resolution engine: if `recipient` lacks an `@` sign, it queries the `Users` table by name, username, or full name to resolve their verified corporate email address.
+2. Added brand asset auto-attachment support in `dispatch_graph_email()` to attach official logos (`1-hwb-cleaning-services-llc-logo-plano-tx.png`) as Base64 file attachments.
+3. Deployed `scripts/dispatch_logo_to_mirna.py`, successfully delivering the official high-resolution logo package to `mrondinella@hwbcleaning.com` via Microsoft Graph API (HTTP 202 Accepted).
+4. Updated Outbox Record #47 in PostgreSQL to status `SENT` with recipient `mrondinella@hwbcleaning.com`.
+**Preventative:**
+1. Mandate dynamic user context resolution (`get_user_for_chat`) across all conversational intent parsers in Telegram.
+2. Enforce strict RFC 5322 email validation before staging any records in `PendingOutbox`.
 
 ## BUG-066: Workforce View DOM Nesting Fault, Extraneous Closing Tags & Unhardened JSON Interception Window
 **Detected:** 09/19/2026

@@ -42,36 +42,53 @@ Responsibility: George (Architect)
 | 09/18/2026 | ARCH-002 | 100% Enterprise Hardening: Threaded Connection Pool, Abuse Rate Limiting, Task Queue, and CI/CD Gate. | **RESOLVED** | HIGH |
 | 09/18/2026 | AI-001 | Cognitive Neural Network Hardening: 1536d Semantic Vectors, Automated Pre-Flight Memory Gate & Async Sync. | **RESOLVED** | HIGH |
 | 09/19/2026 | SEO-001 | Google Analytics GA4 Conversion Blindspot, Duplicate Tag Redundancy & Missing Click-to-Call Telemetry. | **RESOLVED** | HIGH |
-| 09/19/2026 | NOTIF-001 | Website Quote Submissions Trapped in Staged Outbox with Zero Real-Time CEO Alert. | **RESOLVED** | CRITICAL |
-| 09/19/2026 | DEDUP-001 | City Abbreviation Drift ('Ft Worth' vs 'Fort Worth') & Single Commercial Lead Duplicate. | **RESOLVED** | MEDIUM |
+| 09/19/2026 | BUG-066 | Workforce View DOM Nesting Fault, Extraneous Closing Tags & Unhardened JSON Interception Window. | **RESOLVED** | HIGH |
+| 09/19/2026 | BUG-067 | Microsoft Graph API ErrorInvalidRecipients Rejection (HTTP 400) on Telegram Staged Outbox Dispatches. | **RESOLVED** | HIGH |
 
-## DEDUP-001: City Abbreviation Drift ('Ft Worth' vs 'Fort Worth') & Single Commercial Lead Duplicate
-**Executed:** 09/19/2026
+## BUG-067: Microsoft Graph API ErrorInvalidRecipients Rejection (HTTP 400) on Telegram Staged Outbox Dispatches
+**Detected:** 09/19/2026
 **Status:** **RESOLVED** (09/19/2026)
 **Symptoms:**
-1. State registry ingestion tools ingested Lead #73543 (`Childcare Network #261`, Fort Worth) and Lead #45849 (`Childcare Network #261`, Ft Worth) as two separate records because one source wrote "Fort" and the other wrote "Ft".
-2. 16 records in the local development database contained abbreviated city names (`Ft Worth`, `Ft Hancock`, `N Richland Hills`).
+1. Triggering `/dispatch 47` (or tapping inline button `dispatch_47`) in Telegram produced `⚠️ Dispatch Failure for Record #47: Graph HTTP 400: {"error":{"code":"ErrorInvalidRecipients","message":"At least one recipient is not valid., Recipient 'Humberto Dominguez' is not resolved. All recipients must be resolved before a message can be submitted."}}`.
+2. The company logo files requested by Mirna Rondinella on Telegram were not delivered.
+3. PendingOutbox record #47 had recipient set as plain text `"Humberto Dominguez"` instead of a valid RFC 5322 email address.
+**Root Cause:**
+1. The Telegram conversational AI in `scripts/telegram_listener.py` operated under a legacy hardcoded assumption that all incoming messages originated from CEO Humberto Dominguez.
+2. When parsing the intent to draft an email, the AI inserted the person's plain name `"Humberto Dominguez"` into `PendingOutbox.recipient` rather than an email address.
+3. `dispatch_graph_email()` forwarded the raw string directly into Microsoft Graph API `toRecipients` without resolving names against the `Users` database table or verifying email format.
+4. Outbox records lacked multi-part binary attachment support for graphic assets (`.png`, `.jpg`, `.pdf`).
 **Solution:**
-1. Added Poka-Yoke `clean_city(raw_city)` gateway function to `core/services/sanitizer.py` with multi-case regex normalization for Texas municipalities.
-2. Updated `scripts/daycare_registry_sync.py` to automatically normalize incoming city names upon ingestion.
-3. Merged redundant duplicate Lead #73543 into Lead #45849, updated the target record with accurate facility square footage (16,350 sq ft / $23,544 value), and normalized all abbreviated cities in `hwb_postgres_dev`.
-4. Added automated unit test Test 1.9 to `scratch/test_enterprise_upgrades_v2.py` and verified 100% pass rate across the master CI/CD runner (10/10 test batteries passing).
+1. Hardened `dispatch_graph_email()` with an auto-resolution engine: if `recipient` lacks an `@` sign, it queries the `Users` table by name, username, or full name to resolve their verified corporate email address.
+2. Added brand asset auto-attachment support in `dispatch_graph_email()` to attach official logos (`1-hwb-cleaning-services-llc-logo-plano-tx.png`) as Base64 file attachments.
+3. Deployed `scripts/dispatch_logo_to_mirna.py`, successfully delivering the official high-resolution logo package to `mrondinella@hwbcleaning.com` via Microsoft Graph API (HTTP 202 Accepted).
+4. Updated Outbox Record #47 in PostgreSQL to status `SENT` with recipient `mrondinella@hwbcleaning.com`.
+**Preventative:**
+1. Mandate dynamic user context resolution (`get_user_for_chat`) across all conversational intent parsers in Telegram.
+2. Enforce strict RFC 5322 email validation before staging any records in `PendingOutbox`.
 
-## NOTIF-001: Website Quote Submissions Trapped in Staged Outbox with Zero Real-Time CEO Alert
-**Executed:** 09/19/2026
+## BUG-066: Workforce View DOM Nesting Fault, Extraneous Closing Tags & Unhardened JSON Interception Window
+**Detected:** 09/19/2026
 **Status:** **RESOLVED** (09/19/2026)
-**Symptoms:**
-1. Website lead submissions on `/get-quote` generated an email but inserted it into PostgreSQL `"PendingOutbox"` with `status = 'Pending'` and `recipient = 'sales@hwbcleaning.com'`, waiting for manual backoffice approval before ever being sent.
-2. Inbound lead alerts were never delivered to CEO Humberto Dominguez's inbox or mobile device in real time.
-3. Silent failure in `scripts.send_sales_notification.send_teams_alert` due to missing script in active directory.
-4. Microsoft Graph credential environment variable mismatch (`GRAPH_CLIENT_ID` vs `GRAPH_API_PROD_APPLICATION_ID`) and default user mismatch (`humbertoed@` vs `hdominguez@`).
+**Symptoms:** 
+1. Visiting `http://mop.test:5000/admin/operations?view=workforce` caused the layout to render broken or unformatted like a naked "web response window".
+2. Redundant `<main>` at line 120 and extraneous `</main></div>` closing tags at line 1701-1702 of `templates/backoffice_operations.html` closed `.bo-content` and parent `.bo-main` prematurely, throwing page contents and modals outside the container shell.
+3. In `blueprints/operations.py`, unconditioned `request.headers.get('X-Requested-With') == 'XMLHttpRequest'` intercepted requests and dumped raw JSON directly to the browser window.
+4. Clicking the "Candidate Notes" or "Partner Notes" action buttons triggered an unformatted native browser `prompt()` dialog, and deleting candidates used raw `confirm()`, presenting an unstyled web response dialog instead of an institutional modal.
+**Root Cause:**
+1. A nested `<main>` element was opened within `{% block bo_content %}`, conflicting with HTML5 nesting rules and triggering the browser's implicit parent closure.
+2. Two orphan closing tags (`</main>` and `</div>`) caused a -1 div tag balance mismatch, truncating container boundaries.
+3. API serialization condition lacked verification of the client's `Accept` mimetype, causing browser sessions with AJAX headers to receive raw JSON strings.
+4. Candidate and Partner notes relied on legacy browser `window.prompt()` rather than a dedicated SigmaFidelity™ modal dialog.
 **Solution:**
-1. Created `core/services/notification_service.py` supporting dual-channel real-time dispatch:
-   - Microsoft Graph API direct HTML email transmission to `hdominguez@hwbcleaning.com`, `sales@hwbcleaning.com`, and `humbertoed@gmail.com`.
-   - Telegram push notification via `@Georgebytesbot` directly to CEO Humberto Dominguez's mobile device (`chat_id: 8564340073`).
-2. Updated `core/services/email_service.py` to support `GRAPH_API_PROD_*` credentials, fallback to `hdominguez@hwbcleaning.com`, and multi-recipient address formatting.
-3. Updated `blueprints/public.py` to enqueue background notification jobs into `task_queue` (sub-50ms response time for web visitor), mark outbox status as `SENT`, and log telemetry to `SigmaInteractionLog`.
-4. Created automated regression test suite `scratch/test_realtime_lead_notifications.py` and registered it as test battery 10 in `scripts/run_all_tests.py` (10/10 test suites passing 100%).
+1. Purged the redundant `<main>` tag at line 120 and removed the orphan `</main>` and `</div>` tags at lines 1700-1701 of `templates/backoffice_operations.html`, bringing tag balance to an exact 0 delta.
+2. Hardened `admin_operations()` controller in `blueprints/operations.py` to only serialize JSON when `format=json` or when `request.accept_mimetypes.best == 'application/json'`.
+3. Integrated granular User Management permission checks for Bids, Workforce, and Monitor tabs in `templates/components/backend_nav.html`.
+4. Engineered `modal-workforce-notes` with clinical styling, candidate badge, textarea character counter, and asynchronous PATCH synchronization.
+5. Upgraded delete actions to utilize `modal-decision` (`showDecision({...})`) with destructive red branding and audit confirmation.
+**Preventative:**
+1. Enforce automated HTML tag balancing checks on all Jinja2 template edits during pre-flight test suites.
+2. Standardize all administrative routes to guard JSON serialization against HTML browser navigation.
+3. Strictly prohibit `window.prompt()` and `window.confirm()` across all administrative and backoffice modules in accordance with QMS-7.2.
 
 ## SEO-001: Google Analytics GA4 Conversion Blindspot, Duplicate Tag Redundancy & Missing Click-to-Call Telemetry
 **Executed:** 09/19/2026

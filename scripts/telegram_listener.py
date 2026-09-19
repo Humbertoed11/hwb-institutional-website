@@ -700,11 +700,47 @@ def dispatch_graph_email(record_id):
         if not token:
             return False, "Failed to acquire Microsoft Graph token"
 
+        recipient_addr = item["recipient"].strip()
+        if "@" not in recipient_addr:
+            # Auto-resolve employee name from Users table
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute("""
+                    SELECT email, full_name FROM "Users"
+                    WHERE LOWER(full_name) = LOWER(%s)
+                       OR LOWER(username) = LOWER(%s)
+                       OR LOWER(full_name) ILIKE %s
+                    LIMIT 1;
+                """, (recipient_addr, recipient_addr, f"%{recipient_addr}%"))
+                resolved_user = cur.fetchone()
+                if resolved_user and resolved_user.get("email"):
+                    recipient_addr = resolved_user["email"]
+                    print(f"[DISPATCH RESOLVER] Auto-resolved '{item['recipient']}' to '{recipient_addr}'", flush=True)
+                else:
+                    return False, f"Invalid recipient: '{item['recipient']}' is not a valid email address and could not be resolved to a registered user."
+
         endpoint = f"https://graph.microsoft.com/v1.0/users/{USER_EMAIL}/sendMail"
         headers = {
             "Authorization": f"Bearer {token}",
             "Content-Type": "application/json"
         }
+
+        # Check for brand asset / logo attachments
+        attachments = []
+        if any(w in item["subject"].lower() or w in item["body"].lower() for w in ["logo", "brand asset", "branding"]):
+            logo_candidates = [
+                "/app/static/1-hwb-cleaning-services-llc-logo-plano-tx.png",
+                os.path.join(BASE_DIR, "static", "1-hwb-cleaning-services-llc-logo-plano-tx.png")
+            ]
+            for lpath in logo_candidates:
+                if os.path.exists(lpath):
+                    with open(lpath, "rb") as lf:
+                        attachments.append({
+                            "@odata.type": "#microsoft.graph.fileAttachment",
+                            "name": "1-hwb-cleaning-services-llc-logo-plano-tx.png",
+                            "contentType": "image/png",
+                            "contentBytes": base64.b64encode(lf.read()).decode("utf-8")
+                        })
+                    break
 
         email_payload = {
             "message": {
@@ -713,17 +749,20 @@ def dispatch_graph_email(record_id):
                     "contentType": "HTML" if ("<" in item["body"] and ">" in item["body"]) else "Text",
                     "content": item["body"]
                 },
-                "toRecipients": [{"emailAddress": {"address": item["recipient"].strip()}}]
+                "toRecipients": [{"emailAddress": {"address": recipient_addr}}]
             },
             "saveToSentItems": True
         }
 
+        if attachments:
+            email_payload["message"]["attachments"] = attachments
+
         res = session.post(endpoint, headers=headers, json=email_payload, timeout=25)
         if res.status_code in [200, 202]:
             with conn.cursor() as cur:
-                cur.execute("UPDATE \"PendingOutbox\" SET status = 'SENT' WHERE id = %s;", (record_id,))
+                cur.execute("UPDATE \"PendingOutbox\" SET status = 'SENT', recipient = %s WHERE id = %s;", (recipient_addr, record_id))
             conn.commit()
-            return True, f"Dispatched to {item['recipient']}"
+            return True, f"Dispatched to {recipient_addr}"
         return False, f"Graph HTTP {res.status_code}: {res.text[:200]}"
     except Exception as e:
         return False, str(e)
