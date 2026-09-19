@@ -114,6 +114,12 @@ def capability_statement():
     """Official 2026 Single-Sheet Capability Statement view & PDF printout."""
     return render_template('capability_statement.html')
 
+@public_bp.route('/signature', endpoint='signature_vault')
+@public_bp.route('/my-signature')
+def signature_vault():
+    """Official 2026 Executive Email Signature portal for Outlook & mobile clients."""
+    return render_template('executive_signature.html')
+
 @public_bp.route('/manual', endpoint='manual_index')
 def manual_index():
     try:
