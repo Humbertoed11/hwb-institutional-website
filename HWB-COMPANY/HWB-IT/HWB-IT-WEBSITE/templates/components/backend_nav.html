@@ -1,39 +1,329 @@
-<div class="workspace-stage">
-    <div style="display: flex; gap: 1rem; margin-bottom: 4rem; border-bottom: 1px solid var(--slate-100); padding-bottom: 2rem; align-items: center; flex-wrap: wrap;">
-        <!-- Core CRM Views (Universal Sales & Operations) -->
-        <a href="{{ url_for('admin_operations', view='leads') }}" class="isc-btn {% if request.endpoint == 'admin_operations' and active_view == 'leads' %}isc-btn-primary{% else %}isc-btn-outline{% endif %}" style="text-decoration: none;">Leads</a>
-        <a href="{{ url_for('admin_operations', view='accounts') }}" class="isc-btn {% if request.endpoint == 'admin_operations' and active_view == 'accounts' %}isc-btn-primary{% else %}isc-btn-outline{% endif %}" style="text-decoration: none;">Accounts</a>
+<!-- SigmaFidelity™ Enterprise Navigation Ribbon (Salesforce-Tier Dual-Axis Architecture) -->
+<style>
+.sigma-nav-ribbon {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem; /* Compressed from 4rem for 80px above-the-fold gain */
+    border-bottom: 1px solid var(--slate-200);
+    padding-bottom: 0.65rem;
+    align-items: center;
+    flex-wrap: wrap;
+    position: relative;
+    background: transparent;
+}
 
-        <!-- Dedicated Field Sales Cockpit Bridge -->
-        <a href="{{ url_for('sales_desk') }}" class="isc-btn {% if request.endpoint == 'sales_desk' %}isc-btn-primary{% else %}isc-btn-outline{% endif %}" style="text-decoration: none; display: inline-flex; align-items: center; background: #eff6ff; color: #1e3a8a; border-color: #bfdbfe; font-weight: 800;">
-            <i class="fas fa-mobile-alt" style="margin-right: 6px; color: #2563eb;"></i> Field Sales Desk
+/* Split-Button Tab System */
+.sigma-split-tab {
+    position: relative;
+    display: inline-flex;
+    align-items: stretch;
+    border-radius: 6px; /* Salesforce Sharp */
+    border: 1px solid var(--slate-300);
+    background: #ffffff;
+    transition: all 0.15s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    height: 34px;
+}
+.sigma-split-tab:hover {
+    border-color: var(--brand);
+    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.12);
+}
+.sigma-split-tab.active {
+    background: var(--brand);
+    border-color: var(--brand);
+    color: #ffffff;
+}
+.sigma-split-main {
+    padding: 0 0.85rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--slate-700);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    border-right: 1px solid var(--slate-200);
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+    transition: background 0.15s ease;
+}
+.sigma-split-tab.active .sigma-split-main {
+    color: #ffffff;
+    border-right-color: rgba(255, 255, 255, 0.25);
+}
+.sigma-split-main:hover {
+    background: #f8fafc;
+}
+.sigma-split-tab.active .sigma-split-main:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+.sigma-split-chevron {
+    padding: 0 0.55rem;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--slate-500);
+    font-size: 0.65rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+    transition: all 0.15s ease;
+}
+.sigma-split-tab.active .sigma-split-chevron {
+    color: #ffffff;
+}
+.sigma-split-chevron:hover {
+    background: #f1f5f9;
+    color: var(--brand);
+}
+.sigma-split-tab.active .sigma-split-chevron:hover {
+    background: rgba(255, 255, 255, 0.18);
+}
+
+/* SLDS Jump List Flyout Menu */
+.sigma-jump-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    background: #ffffff;
+    border: 1px solid var(--slate-200);
+    border-radius: 8px;
+    box-shadow: 0 14px 30px -4px rgba(15, 23, 42, 0.18), 0 4px 10px -2px rgba(15, 23, 42, 0.08);
+    min-width: 270px;
+    z-index: 2000;
+    display: none;
+    padding: 0.5rem 0;
+    animation: sigmaMenuIn 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes sigmaMenuIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.sigma-jump-header {
+    padding: 0.4rem 1rem;
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--slate-400);
+    border-bottom: 1px solid var(--slate-100);
+    margin-bottom: 0.25rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.sigma-jump-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--slate-700);
+    text-decoration: none;
+    transition: all 0.12s ease;
+    cursor: pointer;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    box-sizing: border-box;
+}
+.sigma-jump-item:hover {
+    background: #f0f7ff;
+    color: var(--brand);
+}
+.sigma-jump-item i {
+    font-size: 0.7rem;
+    color: var(--slate-400);
+    margin-right: 0.6rem;
+}
+.sigma-jump-item:hover i {
+    color: var(--brand);
+}
+.sigma-jump-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    background: var(--slate-100);
+    color: var(--slate-500);
+}
+.sigma-jump-divider {
+    height: 1px;
+    background: var(--slate-100);
+    margin: 0.35rem 0;
+}
+.sigma-jump-action {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: var(--brand);
+    text-decoration: none;
+    cursor: pointer;
+    border: none;
+    background: #f8fafc;
+    width: 100%;
+    text-align: left;
+    transition: background 0.12s ease;
+    box-sizing: border-box;
+}
+.sigma-jump-action:hover {
+    background: #eff6ff;
+}
+
+/* Secondary Navigation Buttons */
+.sigma-nav-btn {
+    height: 34px;
+    padding: 0 0.85rem;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border: 1px solid var(--slate-300);
+    background: #ffffff;
+    color: var(--slate-700);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    transition: all 0.15s ease;
+}
+.sigma-nav-btn:hover {
+    border-color: var(--brand);
+    color: var(--brand);
+    background: #f8fafc;
+    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.1);
+}
+.sigma-nav-btn.active {
+    background: var(--brand);
+    border-color: var(--brand);
+    color: #ffffff !important;
+}
+</style>
+
+<div class="workspace-stage">
+    <div class="sigma-nav-ribbon">
+        <!-- 1. Leads Tab (Salesforce-Tier Split Dropdown) -->
+        <div class="sigma-split-tab {% if request.endpoint == 'admin_operations' and active_view == 'leads' %}active{% endif %}" id="tab-leads-container">
+            <a href="{{ url_for('admin_operations', view='leads') }}" class="sigma-split-main" title="Open Leads Pipeline">
+                <i class="fas fa-building" style="margin-right: 6px; font-size: 0.75rem;"></i> Leads
+            </a>
+            <button type="button" class="sigma-split-chevron" onclick="toggleSigmaJump('menu-jump-leads', event)" title="Recent Leads & Quick Views">
+                <i class="fas fa-chevron-down"></i>
+            </button>
+            <div id="menu-jump-leads" class="sigma-jump-menu">
+                <div class="sigma-jump-header">
+                    <span>Recent Facilities</span>
+                    <i class="fas fa-history"></i>
+                </div>
+                <div id="sigma-recent-leads-list">
+                    <!-- Populated dynamically by record tracker / sensible fallbacks -->
+                    <a href="{{ url_for('admin_operations', view='leads', q='Childcare') }}" class="sigma-jump-item">
+                        <span><i class="fas fa-school"></i> Childcare Network #261</span>
+                        <span class="sigma-jump-badge">16,350 SF</span>
+                    </a>
+                    <a href="{{ url_for('admin_operations', view='leads', q='Apex') }}" class="sigma-jump-item">
+                        <span><i class="fas fa-city"></i> Apex Commercial Towers</span>
+                        <span class="sigma-jump-badge">42,000 SF</span>
+                    </a>
+                    <a href="{{ url_for('admin_operations', view='leads', q='Logistics') }}" class="sigma-jump-item">
+                        <span><i class="fas fa-warehouse"></i> DFW Industrial Center</span>
+                        <span class="sigma-jump-badge">85,000 SF</span>
+                    </a>
+                </div>
+                <div class="sigma-jump-divider"></div>
+                <div class="sigma-jump-header">
+                    <span>Quick Filters</span>
+                    <i class="fas fa-filter"></i>
+                </div>
+                <a href="{{ url_for('admin_operations', view='leads', active_only='true') }}" class="sigma-jump-item">
+                    <span><i class="fas fa-check-circle" style="color: #10b981;"></i> Active Leads Only</span>
+                </a>
+                <a href="{{ url_for('admin_operations', view='leads', m_and_a='true') }}" class="sigma-jump-item">
+                    <span><i class="fas fa-bullseye" style="color: #eab308;"></i> M&A Target Acquisition</span>
+                </a>
+                <a href="{{ url_for('admin_operations', view='leads', duplicates_only='true') }}" class="sigma-jump-item">
+                    <span><i class="fas fa-exclamation-triangle" style="color: #f59e0b;"></i> Duplicates Review</span>
+                </a>
+                <div class="sigma-jump-divider"></div>
+                <button type="button" onclick="openAddForm('lead')" class="sigma-jump-action">
+                    <i class="fas fa-plus-circle" style="margin-right: 0.5rem; font-size: 0.85rem;"></i> + New Lead Entry
+                </button>
+            </div>
+        </div>
+
+        <!-- 2. Accounts Tab (Salesforce-Tier Split Dropdown) -->
+        <div class="sigma-split-tab {% if request.endpoint == 'admin_operations' and active_view == 'accounts' %}active{% endif %}" id="tab-accounts-container">
+            <a href="{{ url_for('admin_operations', view='accounts') }}" class="sigma-split-main" title="Open Client Accounts">
+                <i class="fas fa-handshake" style="margin-right: 6px; font-size: 0.75rem;"></i> Accounts
+            </a>
+            <button type="button" class="sigma-split-chevron" onclick="toggleSigmaJump('menu-jump-accounts', event)" title="Recent Accounts & Quick Actions">
+                <i class="fas fa-chevron-down"></i>
+            </button>
+            <div id="menu-jump-accounts" class="sigma-jump-menu">
+                <div class="sigma-jump-header">
+                    <span>Recent Accounts</span>
+                    <i class="fas fa-history"></i>
+                </div>
+                <a href="{{ url_for('admin_operations', view='accounts') }}" class="sigma-jump-item">
+                    <span><i class="fas fa-briefcase"></i> Active Service Contracts</span>
+                    <span class="sigma-jump-badge">Verified</span>
+                </a>
+                <a href="{{ url_for('admin_operations', view='accounts') }}" class="sigma-jump-item">
+                    <span><i class="fas fa-shield-virus" style="color: #ef4444;"></i> Quality Risk Monitor</span>
+                    <span class="sigma-jump-badge" style="background:#fee2e2; color:#991b1b;">Audit Req</span>
+                </a>
+                <div class="sigma-jump-divider"></div>
+                <button type="button" onclick="openAddForm('account')" class="sigma-jump-action">
+                    <i class="fas fa-plus-circle" style="margin-right: 0.5rem; font-size: 0.85rem;"></i> + New Account Entry
+                </button>
+            </div>
+        </div>
+
+        <!-- 3. Dedicated Field Sales Cockpit Bridge -->
+        <a href="{{ url_for('sales_desk') }}" class="sigma-nav-btn {% if request.endpoint == 'sales_desk' %}active{% endif %}" style="background: #eff6ff; color: #1e3a8a; border-color: #bfdbfe;">
+            <i class="fas fa-mobile-alt" style="color: #2563eb;"></i> Field Sales Desk
         </a>
 
-        <!-- Corporate Management Modules (Hidden for Sales, Active for Management/Operators) -->
+        <!-- 4. Construction Bids & Corporate Management Modules -->
         {% if current_user.role != 'Sales' %}
-            <a href="{{ url_for('admin_operations', view='construction_bids') }}" class="isc-btn {% if request.endpoint == 'admin_operations' and active_view == 'construction_bids' %}isc-btn-primary{% else %}isc-btn-outline{% endif %}" style="text-decoration: none; display: inline-flex; align-items: center;"><i class="fas fa-hard-hat" style="margin-right: 6px; color: #f59e0b;"></i> GC Bids</a>
-            <a href="{{ url_for('admin_operations', view='monitor') }}" class="isc-btn {% if request.endpoint == 'admin_operations' and active_view == 'monitor' %}isc-btn-primary{% else %}isc-btn-outline{% endif %}" style="text-decoration: none;">Work Monitor</a>
+            <a href="{{ url_for('admin_operations', view='construction_bids') }}" class="sigma-nav-btn {% if request.endpoint == 'admin_operations' and active_view == 'construction_bids' %}active{% endif %}">
+                <i class="fas fa-hard-hat" style="color: #f59e0b;"></i> GC Bids
+            </a>
+            <a href="{{ url_for('admin_operations', view='monitor') }}" class="sigma-nav-btn {% if request.endpoint == 'admin_operations' and active_view == 'monitor' %}active{% endif %}">
+                <i class="fas fa-chart-line" style="color: #06b6d4;"></i> Monitor
+            </a>
             {% if current_user.role in ['Executive', 'Admin'] %}
-                <a href="{{ url_for('sigma_executive') }}" class="isc-btn {% if request.endpoint == 'sigma_executive' %}isc-btn-primary{% else %}isc-btn-outline{% endif %}" style="text-decoration: none;"><i class="fas fa-crown" style="margin-right: 8px;"></i> Executive</a>
-                <a href="{{ url_for('sigmajan_lab') }}" class="isc-btn {% if request.endpoint == 'sigmajan_lab' %}isc-btn-primary{% else %}isc-btn-outline{% endif %}" style="text-decoration: none;"><i class="fas fa-flask" style="margin-right: 8px;"></i> Lab</a>
+                <a href="{{ url_for('sigma_executive') }}" class="sigma-nav-btn {% if request.endpoint == 'sigma_executive' %}active{% endif %}">
+                    <i class="fas fa-crown" style="color: #d97706;"></i> Executive
+                </a>
+                <a href="{{ url_for('sigmajan_lab') }}" class="sigma-nav-btn {% if request.endpoint == 'sigmajan_lab' %}active{% endif %}">
+                    <i class="fas fa-flask" style="color: #8b5cf6;"></i> Lab
+                </a>
             {% endif %}
-            <a href="{{ url_for('manual_index') }}" class="isc-btn {% if request.endpoint == 'manual_index' or request.endpoint == 'view_sop' %}isc-btn-primary{% else %}isc-btn-outline{% endif %}" style="text-decoration: none; display: inline-flex; align-items: center;"><i class="fas fa-book" style="margin-right: 8px;"></i> Manual</a>
+            <a href="{{ url_for('manual_index') }}" class="sigma-nav-btn {% if request.endpoint == 'manual_index' or request.endpoint == 'view_sop' %}active{% endif %}">
+                <i class="fas fa-book" style="color: #64748b;"></i> QMS Manual
+            </a>
         {% endif %}
         
+        <!-- 5. Instant Create Action Dropdown -->
         <div style="flex-grow: 1; text-align: right; position: relative;">
-            <button onclick="toggleAddMenu()" class="isc-btn isc-btn-primary" id="btn-add-main">
+            <button onclick="toggleAddMenu()" class="sigma-nav-btn" id="btn-add-main" style="background: var(--brand); color: #ffffff; border-color: var(--brand); font-weight: 800; margin-left: auto;">
                 <i class="fas fa-plus"></i> Add New
-                <i class="fas fa-chevron-down" style="font-size: 0.6rem; transition: transform 0.3s;" id="add-arrow"></i>
+                <i class="fas fa-chevron-down" style="font-size: 0.6rem; transition: transform 0.2s;" id="add-arrow"></i>
             </button>
-            <div id="add-menu" style="display: none; position: absolute; right: 0; top: 110%; background: var(--white); border: 1px solid var(--slate-200); border-radius: 1rem; box-shadow: 0 20px 40px -5px rgba(0,0,0,0.1); padding: 0.75rem; z-index: 1000; min-width: 220px;">
-                <button onclick="openAddForm('lead')" class="isc-dropdown-btn">New Lead</button>
-                <button onclick="openAddForm('account')" class="isc-dropdown-btn">New Account</button>
+            <div id="add-menu" style="display: none; position: absolute; right: 0; top: calc(100% + 6px); background: #ffffff; border: 1px solid var(--slate-200); border-radius: 8px; box-shadow: 0 14px 30px -4px rgba(15,23,42,0.18); padding: 0.5rem; z-index: 2000; min-width: 220px; text-align: left;">
+                <button onclick="openAddForm('lead')" class="isc-dropdown-btn"><i class="fas fa-building" style="margin-right: 0.5rem; color: var(--brand);"></i> New Lead</button>
+                <button onclick="openAddForm('account')" class="isc-dropdown-btn"><i class="fas fa-handshake" style="margin-right: 0.5rem; color: #10b981;"></i> New Account</button>
                 {% if current_user.role != 'Sales' %}
-                    <button onclick="openAddForm('bid')" class="isc-dropdown-btn" style="color: #b45309; font-weight: 700;">+ New GC Bid</button>
-                    <div style="height: 1px; background: var(--slate-100); margin: 0.5rem 0;"></div>
-                    <a href="/manual/hwb-qms-7.6_backend_architecture.html" class="isc-dropdown-btn" style="text-decoration: none; display: block; color: var(--brand); font-weight: 800;">7.6 Backend Architecture</a>
-                    <a href="/manual/hwb-qms-7.7_backend_web_system.html" class="isc-dropdown-btn" style="text-decoration: none; display: block; color: var(--brand); font-weight: 800;">7.7 Backend Sequence</a>
-                    <a href="/manual/hwb-qms-7.9_backend_component_standard.html" class="isc-dropdown-btn" style="text-decoration: none; display: block; color: var(--brand); font-weight: 800;">7.9 Backend Components</a>
+                    <button onclick="openAddForm('bid')" class="isc-dropdown-btn" style="color: #b45309; font-weight: 700;"><i class="fas fa-hard-hat" style="margin-right: 0.5rem; color: #f59e0b;"></i> + New GC Bid</button>
+                    <div style="height: 1px; background: var(--slate-100); margin: 0.35rem 0;"></div>
+                    <a href="/manual/hwb-qms-7.6_backend_architecture.html" class="isc-dropdown-btn" style="text-decoration: none; display: block; color: var(--brand); font-weight: 800;"><i class="fas fa-file-code" style="margin-right: 0.5rem;"></i> 7.6 Backend Architecture</a>
+                    <a href="/manual/hwb-qms-7.7_backend_web_system.html" class="isc-dropdown-btn" style="text-decoration: none; display: block; color: var(--brand); font-weight: 800;"><i class="fas fa-network-wired" style="margin-right: 0.5rem;"></i> 7.7 Commercial Takeoff</a>
                 {% endif %}
             </div>
         </div>
@@ -41,15 +331,44 @@
 </div>
 
 <script>
+    function toggleSigmaJump(menuId, evt) {
+        if (evt) evt.stopPropagation();
+        const targetMenu = document.getElementById(menuId);
+        const isOpen = targetMenu.style.display === 'block';
+        
+        // Close all jump menus first
+        document.querySelectorAll('.sigma-jump-menu').forEach(m => m.style.display = 'none');
+        const addMenu = document.getElementById('add-menu');
+        if (addMenu) addMenu.style.display = 'none';
+
+        if (!isOpen) {
+            targetMenu.style.display = 'block';
+        }
+    }
+
     function toggleAddMenu() {
         const menu = document.getElementById('add-menu');
         const arrow = document.getElementById('add-arrow');
+        // Close jump menus
+        document.querySelectorAll('.sigma-jump-menu').forEach(m => m.style.display = 'none');
+        
         if (menu.style.display === 'none' || menu.style.display === '') {
             menu.style.display = 'block';
-            arrow.style.transform = 'rotate(180deg)';
+            if (arrow) arrow.style.transform = 'rotate(180deg)';
         } else {
             menu.style.display = 'none';
-            arrow.style.transform = 'rotate(0deg)';
+            if (arrow) arrow.style.transform = 'rotate(0deg)';
         }
     }
+
+    // Global listener to close dropdown menus on outside click
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.sigma-split-tab') && !e.target.closest('#btn-add-main') && !e.target.closest('#add-menu')) {
+            document.querySelectorAll('.sigma-jump-menu').forEach(m => m.style.display = 'none');
+            const addMenu = document.getElementById('add-menu');
+            if (addMenu) addMenu.style.display = 'none';
+            const arrow = document.getElementById('add-arrow');
+            if (arrow) arrow.style.transform = 'rotate(0deg)';
+        }
+    });
 </script>

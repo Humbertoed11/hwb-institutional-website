@@ -73,36 +73,79 @@
     border-color: var(--brand);
     background: #ffffff;
 }
+
+/* Salesforce-Tier In-Line Cell Editing */
+.sigma-editable-cell {
+    position: relative;
+    cursor: pointer;
+    transition: background 0.15s ease, box-shadow 0.2s ease;
+}
+.sigma-editable-cell:hover {
+    background: #f0f7ff !important;
+}
+.sigma-cell-pencil {
+    display: none;
+    margin-left: 0.35rem;
+    font-size: 0.65rem;
+    color: var(--brand);
+    cursor: pointer;
+    vertical-align: middle;
+    opacity: 0.7;
+}
+.sigma-editable-cell:hover .sigma-cell-pencil {
+    display: inline-block;
+}
+.sigma-cell-pencil:hover {
+    opacity: 1;
+    transform: scale(1.15);
+}
+.sigma-cell-input {
+    width: 100%;
+    min-width: 80px;
+    height: 28px;
+    padding: 0.15rem 0.4rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    border: 1.5px solid var(--brand);
+    border-radius: 4px;
+    background: #ffffff;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+    box-sizing: border-box;
+}
+.sigma-editable-cell.is-editing {
+    background: #ffffff !important;
+}
 </style>
     <main>
                 <!-- View: Leads -->
         <div id="view-leads" class="isc-view" style="display: {% if active_view == 'leads' %}block{% else %}none{% endif %};">
             <div class="isc-card {% if active_view == 'leads' %}fluid-data{% endif %}">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem; gap: 2rem;">
-                    <div style="display: flex; align-items: baseline; gap: 1.5rem;">
-                        <h2 style="font-weight: 900; font-size: 1.75rem; color: var(--slate-900); margin: 0;">Leads</h2>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; gap: 1.5rem; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: baseline; gap: 1rem;">
+                        <h2 style="font-weight: 900; font-size: 1.5rem; color: var(--slate-900); margin: 0;">Leads</h2>
                         <span id="count-leads" style="font-size: 0.7rem; font-weight: 900; color: var(--brand); text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap;">Records: {{ "{:,}".format(leads_count) if leads_count else '0' }}</span>
                     </div>
                     
-                    <div style="display: flex; gap: 1.5rem; align-items: center;" id="leads-normal-controls">
+                    <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;" id="leads-normal-controls">
                         <!-- Column Manager Dropdown -->
                         <div style="position: relative;">
-                            <button type="button" id="leads-cols-btn" onclick="toggleColumnMenu(event)" class="isc-btn isc-btn-outline" style="padding: 0.85rem 1.5rem; border-radius: 1rem; border-color: var(--slate-200); color: var(--slate-600); background: var(--white);">
-                                <i class="fas fa-columns" style="margin-right: 0.5rem;"></i> Columns
+                            <button type="button" id="leads-cols-btn" onclick="toggleColumnMenu(event)" class="isc-btn isc-btn-outline" style="height: 36px; padding: 0 1rem; border-radius: 6px; border-color: var(--slate-300); color: var(--slate-700); background: var(--white); font-size: 0.8rem; font-weight: 700; display: inline-flex; align-items: center;">
+                                <i class="fas fa-columns" style="margin-right: 0.4rem; font-size: 0.75rem;"></i> Columns
                             </button>
-                            <div id="col-mgr-menu" style="display: none; position: absolute; right: 0; top: 110%; background: var(--white); border: 1px solid var(--slate-200); border-radius: 1.5rem; box-shadow: 0 20px 40px -5px rgba(0,0,0,0.1); padding: 2rem; z-index: 1000; width: 600px;">
+                            <div id="col-mgr-menu" style="display: none; position: absolute; right: 0; top: 110%; background: var(--white); border: 1px solid var(--slate-200); border-radius: 8px; box-shadow: 0 20px 40px -5px rgba(0,0,0,0.15); padding: 1.5rem; z-index: 1000; width: 600px;">
                                 <h4 style="font-size: 0.7rem; font-weight: 900; color: var(--slate-400); text-transform: uppercase; margin-bottom: 1rem; letter-spacing: 0.05em;">Customize Lead View</h4>
                                 
                                 <!-- Salesperson Preset Quick Bar -->
-                                <div style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem; flex-wrap: wrap;">
-                                    <button type="button" onclick="setLeadPreset('cold_call')" style="padding: 0.35rem 0.75rem; border-radius: 0.75rem; border: 1px solid var(--slate-200); background: #f8fafc; font-size: 0.75rem; font-weight: 700; color: var(--slate-700); cursor: pointer;">📞 Cold Call Sprint</button>
-                                    <button type="button" onclick="setLeadPreset('facility')" style="padding: 0.35rem 0.75rem; border-radius: 0.75rem; border: 1px solid var(--slate-200); background: #f8fafc; font-size: 0.75rem; font-weight: 700; color: var(--slate-700); cursor: pointer;">🏢 Facility Audit</button>
-                                    <button type="button" onclick="setLeadPreset('enterprise')" style="padding: 0.35rem 0.75rem; border-radius: 0.75rem; border: 1px solid #bae6fd; background: #f0f9ff; font-size: 0.75rem; font-weight: 700; color: #0284c7; cursor: pointer;">🏛️ Enterprise Umbrella</button>
-                                    <button type="button" onclick="setLeadPreset('m_and_a')" style="padding: 0.35rem 0.75rem; border-radius: 0.75rem; border: 1px solid #fef08a; background: #fefce8; font-size: 0.75rem; font-weight: 700; color: #854d0e; cursor: pointer;">🎯 M&A Target Radar</button>
+                                <div style="display: flex; gap: 0.4rem; margin-bottom: 1.25rem; flex-wrap: wrap;">
+                                    <button type="button" onclick="setLeadPreset('cold_call')" style="padding: 0.3rem 0.65rem; border-radius: 6px; border: 1px solid var(--slate-200); background: #f8fafc; font-size: 0.75rem; font-weight: 700; color: var(--slate-700); cursor: pointer;">📞 Cold Call Sprint</button>
+                                    <button type="button" onclick="setLeadPreset('facility')" style="padding: 0.3rem 0.65rem; border-radius: 6px; border: 1px solid var(--slate-200); background: #f8fafc; font-size: 0.75rem; font-weight: 700; color: var(--slate-700); cursor: pointer;">🏢 Facility Audit</button>
+                                    <button type="button" onclick="setLeadPreset('enterprise')" style="padding: 0.3rem 0.65rem; border-radius: 6px; border: 1px solid #bae6fd; background: #f0f9ff; font-size: 0.75rem; font-weight: 700; color: #0284c7; cursor: pointer;">🏛️ Enterprise Umbrella</button>
+                                    <button type="button" onclick="setLeadPreset('m_and_a')" style="padding: 0.3rem 0.65rem; border-radius: 6px; border: 1px solid #fef08a; background: #fefce8; font-size: 0.75rem; font-weight: 700; color: #854d0e; cursor: pointer;">🎯 M&A Target Radar</button>
                                     {% if current_user.role != 'Sales' %}
-                                    <button type="button" onclick="setLeadPreset('executive')" style="padding: 0.35rem 0.75rem; border-radius: 0.75rem; border: 1px solid var(--slate-200); background: #f8fafc; font-size: 0.75rem; font-weight: 700; color: var(--slate-700); cursor: pointer;">💼 Executive View</button>
+                                    <button type="button" onclick="setLeadPreset('executive')" style="padding: 0.3rem 0.65rem; border-radius: 6px; border: 1px solid var(--slate-200); background: #f8fafc; font-size: 0.75rem; font-weight: 700; color: var(--slate-700); cursor: pointer;">💼 Executive View</button>
                                     {% endif %}
-                                    <button type="button" onclick="setLeadPreset('all')" style="padding: 0.35rem 0.75rem; border-radius: 0.75rem; border: 1px solid var(--slate-200); background: #f8fafc; font-size: 0.75rem; font-weight: 700; color: var(--slate-700); cursor: pointer;">⚡ Select All</button>
+                                    <button type="button" onclick="setLeadPreset('all')" style="padding: 0.3rem 0.65rem; border-radius: 6px; border: 1px solid var(--slate-200); background: #f8fafc; font-size: 0.75rem; font-weight: 700; color: var(--slate-700); cursor: pointer;">⚡ Select All</button>
                                 </div>
 
                                 <form id="col-form" onsubmit="applyColumns(event)">
@@ -138,9 +181,9 @@
                                         <label class="sigma-col-label"><input type="checkbox" name="cols" value="last_contact" {% if 'last_contact' in active_cols %}checked{% endif %}> ⏱️ Last Contact</label>
                                         <label class="sigma-col-label"><input type="checkbox" name="cols" value="google_maps" {% if 'google_maps' in active_cols %}checked{% endif %}> 📍 GPS Nav</label>
                                     </div>
-                                    <div style="margin-top: 2rem; display: flex; justify-content: space-between; border-top: 1px solid var(--slate-100); padding-top: 1.5rem;">
+                                    <div style="margin-top: 1.5rem; display: flex; justify-content: space-between; border-top: 1px solid var(--slate-100); padding-top: 1rem;">
                                         <button type="button" onclick="resetColumns()" class="sigma-text-btn">Reset Default</button>
-                                        <button type="submit" class="isc-btn isc-btn-primary" style="padding: 0.5rem 1rem;">Apply View</button>
+                                        <button type="submit" class="isc-btn isc-btn-primary" style="height: 34px; padding: 0 1rem; border-radius: 6px;">Apply View</button>
                                     </div>
                                 </form>
                             </div>
@@ -152,20 +195,20 @@
                             <input type="hidden" name="dir" value="{{ sort_dir }}">
                             <input type="hidden" name="cols" id="search-cols-input" value="{{ active_cols_str }}">
                             <div style="position: relative;">
-                                <input type="text" name="q" value="{{ search_q }}" placeholder="Search Buildings..." style="padding: 0.85rem 1.5rem; border-radius: 1rem; border: 1px solid var(--slate-200); font-size: 0.875rem; background: var(--slate-50); width: 260px; font-weight: 600; outline: none;">
-                                <button type="button" onclick="openModal('modal-search-help')" style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--slate-400); cursor: pointer; font-size: 0.9rem;">ⓘ</button>
+                                <input type="text" name="q" value="{{ search_q }}" placeholder="Search Buildings..." style="height: 36px; padding: 0 2rem 0 0.85rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.82rem; background: var(--white); width: 220px; font-weight: 600; outline: none;">
+                                <button type="button" onclick="openModal('modal-search-help')" style="position: absolute; right: 0.6rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--slate-400); cursor: pointer; font-size: 0.8rem;">ⓘ</button>
                             </div>
-                            <label style="display: flex; align-items: center; gap: 0.5rem; background: var(--slate-50); border: 1px solid var(--slate-200); padding: 0 1rem; border-radius: 1rem; height: 42px; cursor: pointer; user-select: none;">
-                                <input type="checkbox" name="active_only" value="true" {% if request.args.get('active_only') == 'true' %}checked{% endif %} onchange="document.getElementById('form-search-leads').submit()" style="accent-color: var(--brand); width: 16px; height: 16px;">
-                                <span style="font-size: 0.75rem; font-weight: 800; color: var(--slate-500); text-transform: uppercase;">Active</span>
+                            <label style="display: flex; align-items: center; gap: 0.4rem; background: var(--white); border: 1px solid var(--slate-300); padding: 0 0.75rem; border-radius: 6px; height: 36px; cursor: pointer; user-select: none;">
+                                <input type="checkbox" name="active_only" value="true" {% if request.args.get('active_only') == 'true' %}checked{% endif %} onchange="document.getElementById('form-search-leads').submit()" style="accent-color: var(--brand); width: 14px; height: 14px;">
+                                <span style="font-size: 0.72rem; font-weight: 800; color: var(--slate-600); text-transform: uppercase;">Active</span>
                             </label>
-                            <a href="{{ url_for('admin_operations', view='leads', m_and_a='true', cols='company,m_and_a,ownership,capacity,sqf,dm,value,phone,city,status') if request.args.get('m_and_a') != 'true' else url_for('admin_operations', view='leads') }}" style="display: flex; align-items: center; gap: 0.5rem; background: {% if request.args.get('m_and_a') == 'true' %}#fef9c3{% else %}var(--slate-50){% endif %}; border: 1px solid {% if request.args.get('m_and_a') == 'true' %}#eab308{% else %}var(--slate-200){% endif %}; padding: 0 1rem; border-radius: 1rem; height: 42px; text-decoration: none; user-select: none;" title="Toggle M&A Target Acquisition Radar (Tiers 1 & 2)">
-                                <span style="font-size: 0.75rem; font-weight: 800; color: {% if request.args.get('m_and_a') == 'true' %}#854d0e{% else %}var(--slate-600){% endif %}; text-transform: uppercase;">🎯 M&A Targets</span>
+                            <a href="{{ url_for('admin_operations', view='leads', m_and_a='true', cols='company,m_and_a,ownership,capacity,sqf,dm,value,phone,city,status') if request.args.get('m_and_a') != 'true' else url_for('admin_operations', view='leads') }}" style="display: flex; align-items: center; gap: 0.4rem; background: {% if request.args.get('m_and_a') == 'true' %}#fef9c3{% else %}var(--white){% endif %}; border: 1px solid {% if request.args.get('m_and_a') == 'true' %}#eab308{% else %}var(--slate-300){% endif %}; padding: 0 0.75rem; border-radius: 6px; height: 36px; text-decoration: none; user-select: none;" title="Toggle M&A Target Acquisition Radar (Tiers 1 & 2)">
+                                <span style="font-size: 0.72rem; font-weight: 800; color: {% if request.args.get('m_and_a') == 'true' %}#854d0e{% else %}var(--slate-700){% endif %}; text-transform: uppercase;">🎯 M&A Targets</span>
                             </a>
-                            <a href="{{ url_for('admin_operations', view='leads', duplicates_only='true') if request.args.get('duplicates_only') != 'true' else url_for('admin_operations', view='leads') }}" style="display: flex; align-items: center; gap: 0.5rem; background: {% if request.args.get('duplicates_only') == 'true' %}#fef3c7{% else %}var(--slate-50){% endif %}; border: 1px solid {% if request.args.get('duplicates_only') == 'true' %}#f59e0b{% else %}var(--slate-200){% endif %}; padding: 0 1rem; border-radius: 1rem; height: 42px; text-decoration: none; user-select: none;">
-                                <span style="font-size: 0.75rem; font-weight: 800; color: {% if request.args.get('duplicates_only') == 'true' %}#b45309{% else %}var(--slate-600){% endif %}; text-transform: uppercase;">⚠️ Duplicates ({{ dup_count }})</span>
+                            <a href="{{ url_for('admin_operations', view='leads', duplicates_only='true') if request.args.get('duplicates_only') != 'true' else url_for('admin_operations', view='leads') }}" style="display: flex; align-items: center; gap: 0.4rem; background: {% if request.args.get('duplicates_only') == 'true' %}#fef3c7{% else %}var(--white){% endif %}; border: 1px solid {% if request.args.get('duplicates_only') == 'true' %}#f59e0b{% else %}var(--slate-300){% endif %}; padding: 0 0.75rem; border-radius: 6px; height: 36px; text-decoration: none; user-select: none;">
+                                <span style="font-size: 0.72rem; font-weight: 800; color: {% if request.args.get('duplicates_only') == 'true' %}#b45309{% else %}var(--slate-700){% endif %}; text-transform: uppercase;">⚠️ Dups ({{ dup_count }})</span>
                             </a>
-                            <button type="submit" class="isc-btn isc-btn-primary" style="padding: 0.5rem 1.5rem;">Search</button>
+                            <button type="submit" class="isc-btn isc-btn-primary" style="height: 36px; padding: 0 1.15rem; border-radius: 6px; font-size: 0.8rem; font-weight: 700;">Search</button>
                         </form>
                     </div>
                 </div>
@@ -396,9 +439,27 @@
                                              <option value="Commercial Property" {% if lead.industry == 'Commercial Property' %}selected{% endif %}>Commercial Property</option>
                                          </select>
                                      </td>
-                                    {% elif col_key == 'sqf' %}<td style="font-weight:700">{{ "{:,}".format(lead.sqf) if lead.sqf else '--' }}</td>
-                                    {% elif col_key == 'capacity' %}<td>{{ lead.capacity or '--' }}</td>
-                                    {% elif col_key == 'value' %}<td style="font-weight:800; color:var(--brand)">${{ "{:,.0f}".format(lead.estimated_annual_value) if lead.estimated_annual_value else '0' }}</td>
+                                    {% elif col_key == 'sqf' %}
+                                     <td class="sigma-editable-cell" data-entity="lead" data-id="{{ lead.id }}" data-field="sqf" data-type="int" data-raw="{{ lead.sqf or '' }}" onclick="startCellEdit(event, this)">
+                                         <div class="sigma-cell-content" style="display: flex; align-items: center; justify-content: space-between; gap: 0.25rem;">
+                                             <span class="sigma-cell-val" style="font-weight:700">{{ "{:,}".format(lead.sqf) if lead.sqf else '--' }}</span>
+                                             <i class="fas fa-pencil-alt sigma-cell-pencil" title="Edit SQF"></i>
+                                         </div>
+                                     </td>
+                                    {% elif col_key == 'capacity' %}
+                                     <td class="sigma-editable-cell" data-entity="lead" data-id="{{ lead.id }}" data-field="capacity" data-type="int" data-raw="{{ lead.capacity or '' }}" onclick="startCellEdit(event, this)">
+                                         <div class="sigma-cell-content" style="display: flex; align-items: center; justify-content: space-between; gap: 0.25rem;">
+                                             <span class="sigma-cell-val">{{ lead.capacity or '--' }}</span>
+                                             <i class="fas fa-pencil-alt sigma-cell-pencil" title="Edit Capacity"></i>
+                                         </div>
+                                     </td>
+                                    {% elif col_key == 'value' %}
+                                     <td class="sigma-editable-cell" data-entity="lead" data-id="{{ lead.id }}" data-field="estimated_annual_value" data-type="currency" data-raw="{{ lead.estimated_annual_value or '' }}" onclick="startCellEdit(event, this)">
+                                         <div class="sigma-cell-content" style="display: flex; align-items: center; justify-content: space-between; gap: 0.25rem;">
+                                             <span class="sigma-cell-val" style="font-weight:800; color:var(--brand)">${{ "{:,.0f}".format(lead.estimated_annual_value) if lead.estimated_annual_value else '0' }}</span>
+                                             <i class="fas fa-pencil-alt sigma-cell-pencil" title="Edit Estimated Annual Value"></i>
+                                         </div>
+                                     </td>
                                     {% elif col_key == 'priority' %}
                                      <td onclick="event.stopPropagation();">
                                          <select onchange="quickUpdateLead({{ lead.id }}, 'priority_level', this.value, this)" class="sigma-pill-select" style="{% if lead.priority_level == 'Needs Call Now' or lead.priority_level == 'CRITICAL' %}background:#fee2e2; color:#991b1b; border-color:#fca5a5;{% elif lead.priority_level == 'High' or lead.priority_level == 'HIGH' %}background:#ffedd5; color:#c2410c; border-color:#fdba74;{% elif lead.priority_level == 'Follow up soon' or lead.priority_level == 'STANDARD' %}background:#fef3c7; color:#b45309; border-color:#fde047;{% else %}background:#f1f5f9; color:#64748b; border-color:#cbd5e1;{% endif %}">
@@ -408,10 +469,22 @@
                                          </select>
                                      </td>
                                     {% elif col_key == 'address' %}<td><small>{{ lead.address or '--' }}</small></td>
-                                    {% elif col_key == 'city' %}<td>{{ lead.city or '--' }}</td>
+                                    {% elif col_key == 'city' %}
+                                     <td class="sigma-editable-cell" data-entity="lead" data-id="{{ lead.id }}" data-field="city" data-type="text" data-raw="{{ lead.city or '' }}" onclick="startCellEdit(event, this)">
+                                         <div class="sigma-cell-content" style="display: flex; align-items: center; justify-content: space-between; gap: 0.25rem;">
+                                             <span class="sigma-cell-val">{{ lead.city or '--' }}</span>
+                                             <i class="fas fa-pencil-alt sigma-cell-pencil" title="Edit City"></i>
+                                         </div>
+                                     </td>
                                     {% elif col_key == 'state' %}<td>{{ lead.state or '--' }}</td>
                                     {% elif col_key == 'zip' %}<td>{{ lead.zipcode or '--' }}</td>
-                                    {% elif col_key == 'phone' %}<td><a href="tel:{{ lead.phone }}" style="color:var(--brand); text-decoration:none">{{ lead.phone|format_phone }}</a></td>
+                                    {% elif col_key == 'phone' %}
+                                     <td class="sigma-editable-cell" data-entity="lead" data-id="{{ lead.id }}" data-field="phone" data-type="phone" data-raw="{{ lead.phone or '' }}" onclick="startCellEdit(event, this)">
+                                         <div class="sigma-cell-content" style="display: flex; align-items: center; justify-content: space-between; gap: 0.25rem;">
+                                             <span class="sigma-cell-val"><a href="tel:{{ lead.phone }}" style="color:var(--brand); text-decoration:none">{{ lead.phone|format_phone }}</a></span>
+                                             <i class="fas fa-pencil-alt sigma-cell-pencil" title="Edit Phone"></i>
+                                         </div>
+                                     </td>
                                     {% elif col_key == 'email' %}<td><small>{{ lead.email or '--' }}</small></td>
                                     {% elif col_key == 'input_date' %}<td>{{ lead.input_date|format_mdy or '--' }}</td>
                                     {% elif col_key == 'next_action' %}
@@ -543,35 +616,35 @@
                 <!-- View: All Accounts -->
         <div id="view-accounts" class="isc-view" style="display: {% if active_view == 'accounts' %}block{% else %}none{% endif %};">
             <div class="isc-card {% if active_view == 'accounts' %}fluid-data{% endif %}">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem; gap: 2rem;">
-                    <div style="display: flex; align-items: baseline; gap: 1.5rem;">
-                        <h2 style="font-weight: 900; font-size: 1.75rem; color: var(--slate-900); margin: 0;">Accounts</h2>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; gap: 1.5rem; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: baseline; gap: 1rem;">
+                        <h2 style="font-weight: 900; font-size: 1.5rem; color: var(--slate-900); margin: 0;">Accounts</h2>
                         <span id="count-accounts" style="font-size: 0.7rem; font-weight: 900; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap;">{{ clients|length }} Active Clients</span>
                         <span style="font-size: 0.7rem; color: var(--brand); font-weight: 900; text-transform: uppercase; white-space: nowrap;">Portfolio: ${{ "{:,.0f}".format(portfolio_total) }}</span>
                     </div>
                     
-                    <div style="display: flex; gap: 1.5rem; align-items: center;" id="acc-normal-controls">
+                    <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;" id="acc-normal-controls">
                         <!-- Account View Presets Quick Bar -->
-                        <div style="display: flex; gap: 0.4rem; align-items: center;">
-                            <button type="button" onclick="setAccountPreset('portfolio')" class="isc-btn isc-btn-outline" style="padding: 0.5rem 0.85rem; border-radius: 0.75rem; font-size: 0.75rem; height: 38px; font-weight: 700; color: #0284c7; border-color: #bae6fd; background: #f0f9ff;">
+                        <div style="display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap;">
+                            <button type="button" onclick="setAccountPreset('portfolio')" class="isc-btn isc-btn-outline" style="padding: 0.3rem 0.65rem; border-radius: 6px; font-size: 0.75rem; height: 34px; font-weight: 700; color: #0284c7; border-color: #bae6fd; background: #f0f9ff;">
                                 🏢 Key Accounts
                             </button>
-                            <button type="button" onclick="setAccountPreset('revenue')" class="isc-btn isc-btn-outline" style="padding: 0.5rem 0.85rem; border-radius: 0.75rem; font-size: 0.75rem; height: 38px; font-weight: 700; color: #059669; border-color: #a7f3d0; background: #ecfdf5;">
+                            <button type="button" onclick="setAccountPreset('revenue')" class="isc-btn isc-btn-outline" style="padding: 0.3rem 0.65rem; border-radius: 6px; font-size: 0.75rem; height: 34px; font-weight: 700; color: #059669; border-color: #a7f3d0; background: #ecfdf5;">
                                 💰 Revenue Focus
                             </button>
-                            <button type="button" onclick="setAccountPreset('health')" class="isc-btn isc-btn-outline" style="padding: 0.5rem 0.85rem; border-radius: 0.75rem; font-size: 0.75rem; height: 38px; font-weight: 700; color: #7c3aed; border-color: #ddd6fe; background: #f5f3ff;">
+                            <button type="button" onclick="setAccountPreset('health')" class="isc-btn isc-btn-outline" style="padding: 0.3rem 0.65rem; border-radius: 6px; font-size: 0.75rem; height: 34px; font-weight: 700; color: #7c3aed; border-color: #ddd6fe; background: #f5f3ff;">
                                 🟢 Client Health
                             </button>
-                            <button type="button" onclick="setAccountPreset('all')" class="isc-btn isc-btn-outline" style="padding: 0.5rem 0.85rem; border-radius: 0.75rem; font-size: 0.75rem; height: 38px; font-weight: 700; color: #475569; border-color: #cbd5e1; background: #f8fafc;">
+                            <button type="button" onclick="setAccountPreset('all')" class="isc-btn isc-btn-outline" style="padding: 0.3rem 0.65rem; border-radius: 6px; font-size: 0.75rem; height: 34px; font-weight: 700; color: #475569; border-color: #cbd5e1; background: #f8fafc;">
                                 ⚡ Select All
                             </button>
                         </div>
                         <!-- Column Manager (Accounts) -->
                         <div style="position: relative;">
-                            <button type="button" id="acc-cols-btn" onclick="toggleColumnMenuAcc(event)" class="isc-btn isc-btn-outline" style="padding: 0.85rem 1.5rem; border-radius: 1rem; border-color: var(--slate-200); color: var(--slate-600); background: var(--white);">
-                                <i class="fas fa-columns" style="margin-right: 0.5rem;"></i> Columns
+                            <button type="button" id="acc-cols-btn" onclick="toggleColumnMenuAcc(event)" class="isc-btn isc-btn-outline" style="height: 36px; padding: 0 1rem; border-radius: 6px; border-color: var(--slate-300); color: var(--slate-700); background: var(--white); font-size: 0.8rem; font-weight: 700; display: inline-flex; align-items: center;">
+                                <i class="fas fa-columns" style="margin-right: 0.4rem; font-size: 0.75rem;"></i> Columns
                             </button>
-                            <div id="col-mgr-menu-acc" style="display: none; position: absolute; right: 0; top: 110%; background: var(--white); border: 1px solid var(--slate-200); border-radius: 1.5rem; box-shadow: 0 20px 40px -5px rgba(0,0,0,0.1); padding: 2rem; z-index: 1000; width: 600px;">
+                            <div id="col-mgr-menu-acc" style="display: none; position: absolute; right: 0; top: 110%; background: var(--white); border: 1px solid var(--slate-200); border-radius: 8px; box-shadow: 0 20px 40px -5px rgba(0,0,0,0.15); padding: 1.5rem; z-index: 1000; width: 600px;">
                                 <h4 style="font-size: 0.7rem; font-weight: 900; color: var(--slate-400); text-transform: uppercase; margin-bottom: 1.5rem; letter-spacing: 0.05em;">Customize Account View</h4>
                                 <form id="col-form-acc" onsubmit="applyColumnsAcc(event)">
                                     <input type="hidden" name="cols" value="company">
@@ -603,9 +676,9 @@
                                         <label class="sigma-col-label"><input type="checkbox" name="cols" value="last_note" {% if 'last_note' in active_cols %}checked{% endif %}> 📜 Last Note</label>
                                         <label class="sigma-col-label"><input type="checkbox" name="cols" value="google_maps" {% if 'google_maps' in active_cols %}checked{% endif %}> 📍 GPS Nav</label>
                                     </div>
-                                    <div style="margin-top: 2rem; display: flex; justify-content: space-between; border-top: 1px solid var(--slate-100); padding-top: 1.5rem;">
+                                    <div style="margin-top: 1.5rem; display: flex; justify-content: space-between; border-top: 1px solid var(--slate-100); padding-top: 1rem;">
                                         <button type="button" onclick="resetColumnsAcc()" class="sigma-text-btn">Reset Default</button>
-                                        <button type="submit" class="isc-btn isc-btn-primary" style="padding: 0.5rem 1rem;">Apply View</button>
+                                        <button type="submit" class="isc-btn isc-btn-primary" style="height: 34px; padding: 0 1rem; border-radius: 6px;">Apply View</button>
                                     </div>
                                 </form>
                             </div>
@@ -617,14 +690,14 @@
                             <input type="hidden" name="dir" value="{{ sort_dir }}">
                             <input type="hidden" name="cols" id="acc-cols-input" value="{{ active_cols_str }}">
                             <div style="position: relative;">
-                                <input type="text" name="q" value="{% if active_view == 'accounts' %}{{ search_q }}{% endif %}" placeholder="Find an Account..." style="padding: 0.85rem 1.5rem; border-radius: 1rem; border: 1px solid var(--slate-200); font-size: 0.875rem; background: var(--slate-50); width: 260px; font-weight: 600; outline: none;">
-                                <button type="button" onclick="openModal('modal-search-help')" style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--slate-400); cursor: pointer; font-size: 0.9rem;">ⓘ</button>
+                                <input type="text" name="q" value="{% if active_view == 'accounts' %}{{ search_q }}{% endif %}" placeholder="Find an Account..." style="height: 36px; padding: 0 2rem 0 0.85rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.82rem; background: var(--white); width: 220px; font-weight: 600; outline: none;">
+                                <button type="button" onclick="openModal('modal-search-help')" style="position: absolute; right: 0.6rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--slate-400); cursor: pointer; font-size: 0.8rem;">ⓘ</button>
                             </div>
-                            <label style="display: flex; align-items: center; gap: 0.5rem; background: var(--slate-50); border: 1px solid var(--slate-200); padding: 0 1rem; border-radius: 1rem; height: 42px; cursor: pointer; user-select: none;">
-                                <input type="checkbox" name="active_only" value="true" {% if request.args.get('active_only') == 'true' %}checked{% endif %} onchange="document.getElementById('form-search-acc').submit()" style="accent-color: var(--brand); width: 16px; height: 16px;">
-                                <span style="font-size: 0.75rem; font-weight: 800; color: var(--slate-500); text-transform: uppercase;">Active</span>
+                            <label style="display: flex; align-items: center; gap: 0.4rem; background: var(--white); border: 1px solid var(--slate-300); padding: 0 0.75rem; border-radius: 6px; height: 36px; cursor: pointer; user-select: none;">
+                                <input type="checkbox" name="active_only" value="true" {% if request.args.get('active_only') == 'true' %}checked{% endif %} onchange="document.getElementById('form-search-acc').submit()" style="accent-color: var(--brand); width: 14px; height: 14px;">
+                                <span style="font-size: 0.72rem; font-weight: 800; color: var(--slate-600); text-transform: uppercase;">Active</span>
                             </label>
-                            <button type="submit" class="isc-btn isc-btn-primary" style="padding: 0.5rem 1.5rem;">Search</button>
+                            <button type="submit" class="isc-btn isc-btn-primary" style="height: 36px; padding: 0 1.15rem; border-radius: 6px; font-size: 0.8rem; font-weight: 700;">Search</button>
                         </form>
                     </div>
                 </div>
@@ -726,13 +799,37 @@
                                     {% elif col_key == 'building' or col_key == 'facility' %}<td>{{ client.facility_type or '--' }}</td>
                                     {% elif col_key == 'industry' %}<td>{{ client.industry or '--' }}</td>
                                     {% elif col_key == 'address' %}<td><small style="font-weight:600; color:var(--slate-600)">{{ client.company_address or '--' }}</small></td>
-                                    {% elif col_key == 'city' %}<td>{{ client.city or '--' }}</td>
+                                    {% elif col_key == 'city' %}
+                                     <td class="sigma-editable-cell" data-entity="account" data-id="{{ client.customer_id }}" data-field="city" data-type="text" data-raw="{{ client.city or '' }}" onclick="startCellEdit(event, this)">
+                                         <div class="sigma-cell-content" style="display: flex; align-items: center; justify-content: space-between; gap: 0.25rem;">
+                                             <span class="sigma-cell-val">{{ client.city or '--' }}</span>
+                                             <i class="fas fa-pencil-alt sigma-cell-pencil" title="Edit City"></i>
+                                         </div>
+                                     </td>
                                     {% elif col_key == 'state' %}<td>{{ client.state or '--' }}</td>
                                     {% elif col_key == 'zip' %}<td>{{ client.zip or '--' }}</td>
-                                    {% elif col_key == 'phone' %}<td><a href="tel:{{ client.phone }}" style="color:var(--brand); text-decoration:none">{{ client.phone|format_phone }}</a></td>
+                                    {% elif col_key == 'phone' %}
+                                     <td class="sigma-editable-cell" data-entity="account" data-id="{{ client.customer_id }}" data-field="phone" data-type="phone" data-raw="{{ client.phone or '' }}" onclick="startCellEdit(event, this)">
+                                         <div class="sigma-cell-content" style="display: flex; align-items: center; justify-content: space-between; gap: 0.25rem;">
+                                             <span class="sigma-cell-val"><a href="tel:{{ client.phone }}" style="color:var(--brand); text-decoration:none">{{ client.phone|format_phone }}</a></span>
+                                             <i class="fas fa-pencil-alt sigma-cell-pencil" title="Edit Phone"></i>
+                                         </div>
+                                     </td>
                                     {% elif col_key == 'email' %}<td><small>{{ client.email or '--' }}</small></td>
-                                    {% elif col_key == 'revenue' %}<td style="font-weight:800; color:var(--brand)">${{ "{:,.2f}".format(client.annual_revenue) if client.annual_revenue else '0.00' }}</td>
-                                    {% elif col_key == 'sqf' %}<td>{{ "{:,}".format(client.sqf) if client.sqf else '0' }}</td>
+                                    {% elif col_key == 'revenue' %}
+                                     <td class="sigma-editable-cell" data-entity="account" data-id="{{ client.customer_id }}" data-field="annual_revenue" data-type="currency" data-raw="{{ client.annual_revenue or '' }}" onclick="startCellEdit(event, this)">
+                                         <div class="sigma-cell-content" style="display: flex; align-items: center; justify-content: space-between; gap: 0.25rem;">
+                                             <span class="sigma-cell-val" style="font-weight:800; color:var(--brand)">${{ "{:,.2f}".format(client.annual_revenue) if client.annual_revenue else '0.00' }}</span>
+                                             <i class="fas fa-pencil-alt sigma-cell-pencil" title="Edit Annual Revenue"></i>
+                                         </div>
+                                     </td>
+                                    {% elif col_key == 'sqf' %}
+                                     <td class="sigma-editable-cell" data-entity="account" data-id="{{ client.customer_id }}" data-field="sqf" data-type="int" data-raw="{{ client.sqf or '' }}" onclick="startCellEdit(event, this)">
+                                         <div class="sigma-cell-content" style="display: flex; align-items: center; justify-content: space-between; gap: 0.25rem;">
+                                             <span class="sigma-cell-val">{{ "{:,}".format(client.sqf) if client.sqf else '0' }}</span>
+                                             <i class="fas fa-pencil-alt sigma-cell-pencil" title="Edit SQF"></i>
+                                         </div>
+                                     </td>
                                     {% elif col_key == 'cycle' %}<td>{{ client.traffic_cycle or '--' }}</td>
                                     {% elif col_key == 'quote' %}<td>{{ client.quote_number or '--' }}</td>
                                     {% elif col_key == 'frequency' %}<td>{{ client.frequency or '--' }}</td>
@@ -2545,6 +2642,107 @@
         }
     }
 
+    function startCellEdit(event, td) {
+        if (event) event.stopPropagation();
+        if (td.classList.contains('is-editing')) return;
+
+        // If clicking telephone link, allow phone dialer unless user clicked pencil
+        if (event && event.target && event.target.tagName === 'A' && !event.target.classList.contains('sigma-cell-pencil')) {
+            return;
+        }
+
+        td.classList.add('is-editing');
+        const entity = td.getAttribute('data-entity');
+        const id = td.getAttribute('data-id');
+        const field = td.getAttribute('data-field');
+        const type = td.getAttribute('data-type');
+        const rawVal = td.getAttribute('data-raw') || '';
+
+        const contentDiv = td.querySelector('.sigma-cell-content');
+        if (contentDiv) contentDiv.style.display = 'none';
+
+        const input = document.createElement('input');
+        input.type = (type === 'int') ? 'number' : 'text';
+        input.className = 'sigma-cell-input';
+        input.value = rawVal;
+        
+        td.appendChild(input);
+        input.focus();
+        input.select();
+
+        let committed = false;
+
+        const cleanup = () => {
+            if (input.parentNode === td) {
+                td.removeChild(input);
+            }
+            if (contentDiv) contentDiv.style.display = 'flex';
+            td.classList.remove('is-editing');
+        };
+
+        const commit = async () => {
+            if (committed) return;
+            committed = true;
+            
+            let newVal = input.value.trim();
+            if (newVal === rawVal) {
+                cleanup();
+                return;
+            }
+
+            if (type === 'int') {
+                newVal = newVal.replace(/[^0-9]/g, '');
+            } else if (type === 'currency') {
+                newVal = newVal.replace(/[^0-9.]/g, '');
+            }
+
+            td.setAttribute('data-raw', newVal);
+
+            const valSpan = td.querySelector('.sigma-cell-val');
+            if (valSpan) {
+                if (type === 'int') {
+                    valSpan.textContent = newVal ? Number(newVal).toLocaleString() : '--';
+                } else if (type === 'currency') {
+                    const num = parseFloat(newVal) || 0;
+                    valSpan.textContent = '$' + num.toLocaleString('en-US', {minimumFractionDigits: (entity === 'account' ? 2 : 0), maximumFractionDigits: (entity === 'account' ? 2 : 0)});
+                } else if (type === 'phone') {
+                    const formatted = typeof formatPhoneJS === 'function' ? formatPhoneJS(newVal) : newVal;
+                    valSpan.innerHTML = newVal ? `<a href="tel:${newVal}" style="color:var(--brand); text-decoration:none">${formatted}</a>` : '--';
+                } else {
+                    valSpan.textContent = newVal || '--';
+                }
+            }
+
+            cleanup();
+
+            if (entity === 'lead') {
+                await quickUpdateLead(id, field, newVal, td);
+            } else if (entity === 'account') {
+                await quickUpdateAccount(id, field, newVal, td);
+            }
+        };
+
+        const cancel = () => {
+            if (committed) return;
+            committed = true;
+            cleanup();
+        };
+
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                commit();
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                cancel();
+            }
+        });
+
+        input.addEventListener('blur', () => {
+            commit();
+        });
+    }
+
     function quickReschedule(leadId, daysToAdd, btnElement) {
         const targetDate = new Date();
         targetDate.setDate(targetDate.getDate() + daysToAdd);
@@ -2933,7 +3131,7 @@
     }
 
     function handleRowClick(event, id) {
-        if (event.target.closest('button, a, input, select, textarea, .isc-row-menu, .bulk-dropdown-container')) {
+        if (event.target.closest('button, a, input, select, textarea, .isc-row-menu, .bulk-dropdown-container, .sigma-editable-cell')) {
             return;
         }
         openLeadCommand(id, 'overview');
@@ -2959,7 +3157,7 @@
     }
 
     function handleAccRowClick(event, id) {
-        if (event.target.closest('button, a, input, select, textarea, .isc-row-menu, .bulk-dropdown-container')) {
+        if (event.target.closest('button, a, input, select, textarea, .isc-row-menu, .bulk-dropdown-container, .sigma-editable-cell')) {
             return;
         }
         openAccountCommand(id, 'overview');
@@ -3290,23 +3488,23 @@
             } else if (col === 'building') {
                 rowHtml += `<td>${lead.facility_type || '--'}</td>`;
             } else if (col === 'sqf') {
-                rowHtml += `<td style="font-weight:700">${(lead.sqf || 0).toLocaleString()}</td>`;
+                rowHtml += `<td class="sigma-editable-cell" data-entity="lead" data-id="${lead.id}" data-field="sqf" data-type="int" data-raw="${lead.sqf || ''}" onclick="startCellEdit(event, this)"><div class="sigma-cell-content" style="display:flex;align-items:center;justify-content:space-between;gap:0.25rem;"><span class="sigma-cell-val" style="font-weight:700">${(lead.sqf || 0).toLocaleString()}</span><i class="fas fa-pencil-alt sigma-cell-pencil" title="Edit SQF"></i></div></td>`;
             } else if (col === 'capacity') {
-                rowHtml += `<td>${lead.capacity || '--'}</td>`;
+                rowHtml += `<td class="sigma-editable-cell" data-entity="lead" data-id="${lead.id}" data-field="capacity" data-type="int" data-raw="${lead.capacity || ''}" onclick="startCellEdit(event, this)"><div class="sigma-cell-content" style="display:flex;align-items:center;justify-content:space-between;gap:0.25rem;"><span class="sigma-cell-val">${lead.capacity || '--'}</span><i class="fas fa-pencil-alt sigma-cell-pencil" title="Edit Capacity"></i></div></td>`;
             } else if (col === 'value') {
-                rowHtml += `<td style="font-weight:800; color:var(--brand)">$${(lead.estimated_annual_value || 0).toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}</td>`;
+                rowHtml += `<td class="sigma-editable-cell" data-entity="lead" data-id="${lead.id}" data-field="estimated_annual_value" data-type="currency" data-raw="${lead.estimated_annual_value || ''}" onclick="startCellEdit(event, this)"><div class="sigma-cell-content" style="display:flex;align-items:center;justify-content:space-between;gap:0.25rem;"><span class="sigma-cell-val" style="font-weight:800; color:var(--brand)">$${(lead.estimated_annual_value || 0).toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}</span><i class="fas fa-pencil-alt sigma-cell-pencil" title="Edit Estimated Annual Value"></i></div></td>`;
             } else if (col === 'priority') {
                 rowHtml += `<td><span class="sigma-unit-pill" style="background:#fff7ed; color:#c2410c">${lead.priority_level || 'Normal'}</span></td>`;
             } else if (col === 'address') {
                 rowHtml += `<td><small>${lead.address || '--'}</small></td>`;
             } else if (col === 'city') {
-                rowHtml += `<td>${lead.city || '--'}</td>`;
+                rowHtml += `<td class="sigma-editable-cell" data-entity="lead" data-id="${lead.id}" data-field="city" data-type="text" data-raw="${lead.city || ''}" onclick="startCellEdit(event, this)"><div class="sigma-cell-content" style="display:flex;align-items:center;justify-content:space-between;gap:0.25rem;"><span class="sigma-cell-val">${lead.city || '--'}</span><i class="fas fa-pencil-alt sigma-cell-pencil" title="Edit City"></i></div></td>`;
             } else if (col === 'state') {
                 rowHtml += `<td>${lead.state || '--'}</td>`;
             } else if (col === 'zip') {
                 rowHtml += `<td>${lead.zipcode || '--'}</td>`;
             } else if (col === 'phone') {
-                rowHtml += `<td><a href="tel:${lead.phone}" style="color:var(--brand); text-decoration:none">${formatPhoneJS(lead.phone)}</a></td>`;
+                rowHtml += `<td class="sigma-editable-cell" data-entity="lead" data-id="${lead.id}" data-field="phone" data-type="phone" data-raw="${lead.phone || ''}" onclick="startCellEdit(event, this)"><div class="sigma-cell-content" style="display:flex;align-items:center;justify-content:space-between;gap:0.25rem;"><span class="sigma-cell-val"><a href="tel:${lead.phone}" style="color:var(--brand); text-decoration:none">${formatPhoneJS(lead.phone)}</a></span><i class="fas fa-pencil-alt sigma-cell-pencil" title="Edit Phone"></i></div></td>`;
             } else if (col === 'email') {
                 rowHtml += `<td><small>${lead.email || '--'}</small></td>`;
             } else if (col === 'input_date') {
@@ -3371,19 +3569,19 @@
             } else if (col === 'address') {
                 rowHtml += `<td><small style="font-weight:600; color:var(--slate-600)">${client.company_address || '--'}</small></td>`;
             } else if (col === 'city') {
-                rowHtml += `<td>${client.city || '--'}</td>`;
+                rowHtml += `<td class="sigma-editable-cell" data-entity="account" data-id="${client.customer_id}" data-field="city" data-type="text" data-raw="${client.city || ''}" onclick="startCellEdit(event, this)"><div class="sigma-cell-content" style="display:flex;align-items:center;justify-content:space-between;gap:0.25rem;"><span class="sigma-cell-val">${client.city || '--'}</span><i class="fas fa-pencil-alt sigma-cell-pencil" title="Edit City"></i></div></td>`;
             } else if (col === 'state') {
                 rowHtml += `<td>${client.state || '--'}</td>`;
             } else if (col === 'zip') {
                 rowHtml += `<td>${client.zip || '--'}</td>`;
             } else if (col === 'phone') {
-                rowHtml += `<td><a href="tel:${client.phone}" style="color:var(--brand); text-decoration:none">${formatPhoneJS(client.phone)}</a></td>`;
+                rowHtml += `<td class="sigma-editable-cell" data-entity="account" data-id="${client.customer_id}" data-field="phone" data-type="phone" data-raw="${client.phone || ''}" onclick="startCellEdit(event, this)"><div class="sigma-cell-content" style="display:flex;align-items:center;justify-content:space-between;gap:0.25rem;"><span class="sigma-cell-val"><a href="tel:${client.phone}" style="color:var(--brand); text-decoration:none">${formatPhoneJS(client.phone)}</a></span><i class="fas fa-pencil-alt sigma-cell-pencil" title="Edit Phone"></i></div></td>`;
             } else if (col === 'email') {
                 rowHtml += `<td><small>${client.email || '--'}</small></td>`;
             } else if (col === 'revenue') {
-                rowHtml += `<td style="font-weight:800; color:var(--brand)">$${(client.annual_revenue || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>`;
+                rowHtml += `<td class="sigma-editable-cell" data-entity="account" data-id="${client.customer_id}" data-field="annual_revenue" data-type="currency" data-raw="${client.annual_revenue || ''}" onclick="startCellEdit(event, this)"><div class="sigma-cell-content" style="display:flex;align-items:center;justify-content:space-between;gap:0.25rem;"><span class="sigma-cell-val" style="font-weight:800; color:var(--brand)">$${(client.annual_revenue || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span><i class="fas fa-pencil-alt sigma-cell-pencil" title="Edit Revenue"></i></div></td>`;
             } else if (col === 'sqf') {
-                rowHtml += `<td>${(client.sqf || 0).toLocaleString()}</td>`;
+                rowHtml += `<td class="sigma-editable-cell" data-entity="account" data-id="${client.customer_id}" data-field="sqf" data-type="int" data-raw="${client.sqf || ''}" onclick="startCellEdit(event, this)"><div class="sigma-cell-content" style="display:flex;align-items:center;justify-content:space-between;gap:0.25rem;"><span class="sigma-cell-val">${(client.sqf || 0).toLocaleString()}</span><i class="fas fa-pencil-alt sigma-cell-pencil" title="Edit SQF"></i></div></td>`;
             } else if (col === 'cycle') {
                 rowHtml += `<td>${client.traffic_cycle || '--'}</td>`;
             } else if (col === 'quote') {
