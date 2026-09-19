@@ -112,6 +112,7 @@
             </div>
             <div style="display: flex; gap: 8px;">
                 <button id="btn-tab-humberto" class="tab-btn active" onclick="switchTab('humberto')">CEO Humberto</button>
+                <button id="btn-tab-campaign" class="tab-btn" onclick="switchTab('campaign')">Owner &amp; Operator (Campaign)</button>
                 <button id="btn-tab-mirna" class="tab-btn" onclick="switchTab('mirna')">President Mirna</button>
             </div>
         </div>
@@ -138,6 +139,31 @@
                                 <strong style="color: #0f172a;">HWB Cleaning Services LLC</strong><br>
                                 3342 FM 1827 Ste 8d, McKinney, TX 75071<br>
                                 Office: (214) 586-0257 | Mobile: (972) 800-7808<br>
+                                Email: <a href="mailto:hdominguez@hwbcleaning.com" style="color: #2563eb; text-decoration: none; font-weight: 600;">hdominguez@hwbcleaning.com</a> | 
+                                Web: <a href="https://www.hwbcleaning.com" style="color: #2563eb; text-decoration: none; font-weight: 600;">www.hwbcleaning.com</a>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- CAMPAIGN SIG (OWNER & OPERATOR) -->
+            <div id="sig-campaign" style="display: none;">
+                <table width="560" cellpadding="0" cellspacing="0" border="0" style="width: 560px; max-width: 560px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 13px; color: #1e293b; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; line-height: 1.45;">
+                    <tr>
+                        <td width="150" style="width: 150px; vertical-align: middle; padding-right: 20px; border-right: 2px solid #0f172a;">
+                            <a href="https://www.hwbcleaning.com" target="_blank" style="text-decoration: none;">
+                                <img src="https://www.hwbcleaning.com/static/logo_standard.png" width="135" height="53" alt="HWB Cleaning Services LLC" style="width: 135px; height: 53px; display: block; border: 0; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic;" />
+                            </a>
+                        </td>
+                        <td width="410" style="width: 410px; vertical-align: top; padding-left: 20px;">
+                            <div style="font-size: 16px; font-weight: 700; color: #0f172a; margin: 0 0 2px 0;">Humberto Dominguez</div>
+                            <div style="font-size: 12px; font-weight: 700; color: #2563eb; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 6px 0;">Owner &amp; Operator</div>
+                            <div style="font-size: 12px; color: #475569; line-height: 1.45;">
+                                <strong style="color: #0f172a;">HWB Cleaning Services LLC</strong><br>
+                                3342 FM 1827 Ste 8d, McKinney, TX 75071<br>
+                                Direct / Mobile: <a href="tel:9728007808" style="color: #0f172a; text-decoration: none; font-weight: 600;">(972) 800-7808</a><br>
+                                Office: (214) 586-0257<br>
                                 Email: <a href="mailto:hdominguez@hwbcleaning.com" style="color: #2563eb; text-decoration: none; font-weight: 600;">hdominguez@hwbcleaning.com</a> | 
                                 Web: <a href="https://www.hwbcleaning.com" style="color: #2563eb; text-decoration: none; font-weight: 600;">www.hwbcleaning.com</a>
                             </div>
@@ -198,14 +224,19 @@
     function switchTab(officer) {
         activeOfficer = officer;
         document.getElementById('sig-humberto').style.display = (officer === 'humberto') ? 'block' : 'none';
+        document.getElementById('sig-campaign').style.display = (officer === 'campaign') ? 'block' : 'none';
         document.getElementById('sig-mirna').style.display = (officer === 'mirna') ? 'block' : 'none';
         document.getElementById('btn-tab-humberto').classList.toggle('active', officer === 'humberto');
+        document.getElementById('btn-tab-campaign').classList.toggle('active', officer === 'campaign');
         document.getElementById('btn-tab-mirna').classList.toggle('active', officer === 'mirna');
         document.getElementById('copy-status').style.display = 'none';
     }
 
     async function copySignature() {
-        const targetElement = document.getElementById(activeOfficer === 'humberto' ? 'sig-humberto' : 'sig-mirna');
+        const targetElement = document.getElementById(
+            activeOfficer === 'humberto' ? 'sig-humberto' : 
+            (activeOfficer === 'campaign' ? 'sig-campaign' : 'sig-mirna')
+        );
         const html = targetElement.innerHTML;
         const text = targetElement.innerText;
 

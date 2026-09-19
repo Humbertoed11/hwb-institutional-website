@@ -28,22 +28,25 @@ def get_official_logo_bytes():
                 return f.read()
     return None
 
-def build_executive_signature_html(officer="humberto"):
+def build_executive_signature_html(officer="humberto", title=None, campaign_mode=False):
     """
     Builds the standardized corporate signature block per HWB-COM-001 v2.1.0.
     Uses cid:hwblogo for zero-block rendering in Microsoft Outlook and mobile clients.
     Engineered with explicit HTML attributes (width/height) to prevent Microsoft Word (MSO) engine stretching.
+    Supports campaign_mode=True to render 'Owner & Operator' for outbound daycare/B2B marketing.
     """
     if str(officer).lower().startswith("m"):
         name = "Mirna Rondinella"
-        title = "President"
+        default_title = "President"
         email = "mrondinella@hwbcleaning.com"
         phone_direct = "(214) 586-0257"
     else:
         name = "Humberto Dominguez"
-        title = "Chief Executive Officer"
+        default_title = "Owner & Operator" if campaign_mode else "Chief Executive Officer"
         email = "hdominguez@hwbcleaning.com"
         phone_direct = "(972) 800-7808"
+
+    effective_title = title if title else default_title
 
     return f"""
     <table width="560" cellpadding="0" cellspacing="0" border="0" style="width: 560px; max-width: 560px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 13px; color: #1e293b; margin-top: 24px; border-top: 2px solid #0f172a; padding-top: 16px; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
@@ -53,7 +56,7 @@ def build_executive_signature_html(officer="humberto"):
             </td>
             <td width="410" style="width: 410px; vertical-align: top; padding-left: 20px; line-height: 1.45;">
                 <div style="font-size: 15px; font-weight: 700; color: #0f172a;">{name}</div>
-                <div style="font-size: 12px; font-weight: 600; color: #2563eb; text-transform: uppercase; letter-spacing: 0.04em;">{title}</div>
+                <div style="font-size: 12px; font-weight: 600; color: #2563eb; text-transform: uppercase; letter-spacing: 0.04em;">{effective_title}</div>
                 <div style="margin-top: 6px; font-size: 12px; color: #475569;">
                     <strong style="color: #0f172a;">HWB Cleaning Services LLC</strong><br>
                     3342 FM 1827 Ste 8d, McKinney, TX 75071<br>
@@ -76,6 +79,8 @@ def transmit_email(*args, **kwargs):
     attach_signature = kwargs.get('attach_signature', False)
     extra_attachments = kwargs.get('attachments', []) or []
     officer = kwargs.get('officer', 'humberto')
+    title = kwargs.get('title', None)
+    campaign_mode = kwargs.get('campaign_mode', False)
 
     if len(args) >= 4:
         config, recipient, subject, body_html = args[:4]
@@ -126,7 +131,7 @@ def transmit_email(*args, **kwargs):
             to_recipients = [{"emailAddress": {"address": str(recipient)}}]
             
         if attach_signature:
-            body_html = f"{body_html}<br>{build_executive_signature_html(officer)}"
+            body_html = f"{body_html}<br>{build_executive_signature_html(officer=officer, title=title, campaign_mode=campaign_mode)}"
 
         attachments = list(extra_attachments)
         if "cid:hwblogo" in (body_html or ""):

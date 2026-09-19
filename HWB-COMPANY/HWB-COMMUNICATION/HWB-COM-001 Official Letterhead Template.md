@@ -35,7 +35,7 @@ To provide a standardized, high-fidelity letterhead for all HWB Cleaning Service
         <div style="text-align: right; font-size: 11px; color: #475569; line-height: 1.45;">
             <b>Corporate Headquarters:</b><br>
             3342 FM 1827 Ste 8d, McKinney, TX 75071<br>
-            Switchboard: (214)-586-0257 | Direct: (214) 799-5935<br>
+            Switchboard: (214) 586-0257 | Mobile: (972) 800-7808<br>
             <a href="https://www.hwbcleaning.com" style="color: #2563eb; text-decoration: none;">www.hwbcleaning.com</a>
         </div>
     </div>
