@@ -7,7 +7,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-11.2-REPORT</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.0.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.4 (Communication)</span></div>
     </div>
@@ -23,12 +23,12 @@
             <tbody>
                 <tr><td><strong>Document Title</strong></td><td><strong>Terminal Interaction & Reporting Architecture SOP</strong></td></tr>
                 <tr><td><strong>Document ID</strong></td><td>HWB-QMS-11.2-REPORT</td></tr>
-                <tr><td><strong>Version</strong></td><td>1.0.0</td></tr>
+                <tr><td><strong>Version</strong></td><td>2.0.0</td></tr>
                 <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
                 <tr><td><strong>Author</strong></td><td>George (Systems Architect)</td></tr>
                 <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
-                <tr><td><strong>Date</strong></td><td>05-22-2026</td></tr>
-                <tr><td><strong>ISO 9001 Clause</strong></td><td>7.4</td></tr>
+                <tr><td><strong>Date</strong></td><td>09-18-2026</td></tr>
+                <tr><td><strong>ISO 9001 Clause</strong></td><td>7.4 Communication</td></tr>
             </tbody>
         </table>
 
@@ -37,65 +37,37 @@
         <h1>Standard Operating Procedure: <strong>Terminal Interaction & Reporting Architecture</strong></h1>
 
         <h2>1.0 Purpose</h2>
-        <p>To define the mandatory frameworks for visual organization and data reporting within the Antigravity CLI. This ensures the CEO (Humberto Dominguez) receives high-fidelity information in a consistent, industrial-grade format.</p>
+        <p>To define the mandatory frameworks for visual organization, data reporting, and automated quality verification within the Antigravity CLI. This ensures the CEO (Humberto Dominguez) receives high-fidelity information in a consistent, industrial-grade format.</p>
 
-        <h2>2.0 Interaction Model Hierarchy</h2>
-        <p>The agent MUST select the appropriate model based on task complexity:</p>
-
-        <h3>2.1 The Topic Model (Primary Interface)</h3>
-        <ul>
-            <li><strong>Use Case:</strong> Multi-turn codebase modifications, complex audits, and migration tasks.</li>
-            <li><strong>Visuals:</strong> Stylized terminal boxes generated via <code>update_topic</code>.</li>
-            <li><strong>Requirements:</strong> Must include a 1-sentence "Strategic Intent" and a 5-10 sentence "Summary."</li>
-        </ul>
-
-        <h3>2.2 The Workflow Model (Gemini-Kit)</h3>
-        <ul>
-            <li><strong>Use Case:</strong> Standardized engineering cycles (Feature, Refactor, Review).</li>
-            <li><strong>Mechanism:</strong> <code>kit_run_workflow</code>.</li>
-            <li><strong>Visuals:</strong> Step-by-step cycle tracking (Plan -> Act -> Validate).</li>
-        </ul>
-
-        <h3>2.3 The Orchestration Model (Sub-Agents)</h3>
-        <ul>
-            <li><strong>Use Case:</strong> Batch processing, exhaustive file searches, or specialized "Silo" tasks.</li>
-            <li><strong>Mechanism:</strong> <code>invoke_agent</code> (e.g., Planner, Scout, Coder).</li>
-            <li><strong>Visuals:</strong> Consolidated "Executive Handoff" reports in the terminal.</li>
-        </ul>
-
-        <h3>2.4 The Walkthrough Model (Institutional Capital)</h3>
-        <ul>
-            <li><strong>Use Case:</strong> Final session handovers and architectural state changes.</li>
-            <li><strong>Mechanism:</strong> Generation of <code>walkthrough.md</code> or <code>.html</code> artifacts.</li>
-            <li><strong>Visuals:</strong> Persistent files designed for browser review; linked to the <code>SigmaWalkthroughs</code> database table.</li>
-        </ul>
-
-        <h3>2.5 The Direct Execution Model (Velocity)</h3>
-        <ul>
-            <li><strong>Use Case:</strong> Quick inquiries, single shell commands, or minor text edits.</li>
-            <li><strong>Visuals:</strong> Standard Markdown output; zero administrative boxes.</li>
-        </ul>
-
-        <div class="callout callout-logic">
-            <strong>Technical Logic</strong>
-            <p>Antigravity CLI automatically imports these models as "Interaction Synapses" from our 4-Tier Memory. 100% Alignment is required for all agent responses.</p>
-        </div>
-
-        <h2>3.0 Reporting Standards</h2>
-        <p>Regardless of the model chosen, all reports must adhere to the <strong>High-Impact Protocol</strong>:</p>
+        <h2>2.0 The High-Fidelity Terminal Reporting Architecture</h2>
+        <p>All technical reports, handovers, and session conclusions MUST strictly follow the 4-part structure:</p>
         <ol>
-            <li><strong>Objective:</strong> What is the value focus?</li>
-            <li><strong>Strategy:</strong> How will we achieve speed/scale?</li>
-            <li><strong>Execution:</strong> What specific technical steps are being taken?</li>
-            <li><strong>Assets:</strong> What code or prompts were generated?</li>
-            <li><strong>Scale:</strong> How is this being systemized for the future?</li>
+            <li><strong>🏛️ Executive Summary:</strong> Focused strictly on business value, reduction of manual labor, empirical lead valuation, and speed improvements.</li>
+            <li><strong>🛠️ Technical Implementation:</strong> A concise numbered list of physical files created, modified, or decoupled. Every file and symbol must have a clickable link.</li>
+            <li><strong>📡 Live Status Audit:</strong> A crisp Markdown table reporting live metrics (database lead counts, pipeline value, container status, test pass rates, and latency).</li>
+            <li><strong>🧠 Persistence Handshake:</strong> Verification of database ingestion into PostgreSQL <code>SigmaSystemCore</code> via <code>python3 scripts/sigma_sync.py</code>, and recovery logging in <code>HWB-SESSION-RECOVERY.md</code>.</li>
         </ol>
 
-        <h2>4.0 Verification (Zero-Defect Check)</h2>
+        <h2>3.0 The Master CI/CD Automated Test Battery</h2>
+        <p>Prior to delivering an executive handoff report following any backend change, the agent must run the unified CI/CD regression suite:</p>
+        <pre style="background: #0f172a; color: #f8fafc; padding: 1rem; border-radius: 6px; font-family: monospace;">python scripts/run_all_tests.py</pre>
+        <p>The battery covers 54 automated checks across 7 independent suites:</p>
         <ul>
-            <li>Did the agent use the 3rd person clinical perspective?</li>
-            <li>Is the report authored in "Everyday Words" (20-year-old manager level)?</li>
-            <li>Is the summary high-density and free of conversational fluff?</li>
+            <li>Phone Normalization & Formatting (<code>scratch/test_phone_standardization.py</code>)</li>
+            <li>Advanced Search Query Tokenizer (<code>scratch/test_advanced_search_engine.py</code>)</li>
+            <li>Dynamic Lead Ownership & Rep Attribution (<code>scratch/test_owner_field_dynamic.py</code>)</li>
+            <li>Enterprise RBAC Security Gateway (<code>scratch/test_enterprise_rbac.py</code>)</li>
+            <li>Data Sanitizer & Schema Migrations (<code>scratch/test_enterprise_upgrades_v2.py</code>)</li>
+            <li>Modular Blueprints & Hub Aliasing (<code>scratch/test_enterprise_upgrades_v3.py</code>)</li>
+            <li>100% Hardening: Pool, Rate Limit, Task Queue (<code>scratch/test_enterprise_100_percent.py</code>)</li>
+        </ul>
+
+        <h2>4.0 Language & Governance Standards</h2>
+        <ul>
+            <li><strong>Perspective:</strong> All communications must strictly use the 3rd person perspective (e.g., "Systems Architect George reports...").</li>
+            <li><strong>Vocabulary:</strong> Authored in everyday words suitable for a 20-year-old reader. Avoid generic technical jargon.</li>
+            <li><strong>Zero Fluff:</strong> No pleasantries or conversational filler. Deliver high-density, actionable facts only.</li>
+            <li><strong>Empirical Evidence:</strong> Synthetic, dummy, or estimated data is strictly prohibited. Reports must reflect verified records in PostgreSQL.</li>
         </ul>
 
         <h2>5.0 Revision History</h2>
@@ -106,14 +78,23 @@
                     <th>Date</th>
                     <th>Author</th>
                     <th>Change Description</th>
+                    <th>Approved By</th>
                 </tr>
             </thead>
             <tbody>
+                <tr>
+                    <td>2.0.0</td>
+                    <td>09-18-2026</td>
+                    <td>George</td>
+                    <td>Added Section 2.0 High-Fidelity Terminal Reporting Architecture and Section 3.0 Master CI/CD Test Battery standard.</td>
+                    <td>Humberto Dominguez, CEO</td>
+                </tr>
                 <tr>
                     <td>1.0.0</td>
                     <td>05-22-2026</td>
                     <td>George</td>
                     <td>Initial Release. Transitioned to HTML format baseline.</td>
+                    <td>Humberto Dominguez, CEO</td>
                 </tr>
             </tbody>
         </table>

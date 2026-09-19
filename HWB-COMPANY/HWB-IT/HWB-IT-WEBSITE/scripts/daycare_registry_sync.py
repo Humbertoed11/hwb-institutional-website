@@ -12,9 +12,21 @@ from dotenv import load_dotenv
 load_dotenv()
 
 DB_URL = os.getenv("DATABASE_URL", "postgresql://hwbdev:hwbpassword@db:5432/hwb_dev_db")
-API_ENDPOINT = "https://data.texas.gov/resource/bc5r-88dy.json"
-
 import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'HWB-COMPANY', 'HWB-IT', 'HWB-IT-WEBSITE'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+try:
+    from core.services.sanitizer import clean_phone
+except ImportError:
+    try:
+        from HWB_COMPANY.HWB_IT.HWB_IT_WEBSITE.core.services.sanitizer import clean_phone
+    except ImportError:
+        def clean_phone(p):
+            if not p: return None
+            d = ''.join(c for c in str(p) if c.isdigit())
+            if len(d) == 11 and d.startswith('1'): d = d[1:]
+            if len(d) == 10: return f"({d[:3]})-{d[3:6]}-{d[6:]}"
+            return p
 
 def sync_daycares(force=False):
     print(f"--- SigmaFidelity: Initiating Texas Daycare API Sync ---", flush=True)
@@ -74,7 +86,8 @@ def sync_daycares(force=False):
                 
             process_id = f"texas-ccl-{op_num}"
             center_name = item.get("operation_name", "").strip()
-            phone = item.get("phone_number", "").strip()
+            raw_phone = item.get("phone_number", "").strip()
+            phone = clean_phone(raw_phone) or raw_phone
             address = item.get("address_line") or item.get("location_address", "")
             address = address.strip()
             city = item.get("city", "").strip().upper()
@@ -107,7 +120,8 @@ def sync_daycares(force=False):
                 if db_capacity != capacity:
                     needs_update = True
                     update_fields.append("capacity")
-                if (db_phone or "") != phone:
+                clean_db_phone = clean_phone(db_phone) or (db_phone or "")
+                if clean_db_phone != (phone or ""):
                     needs_update = True
                     update_fields.append("phone")
                 if (db_director or "") != director:

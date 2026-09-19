@@ -1,0 +1,50 @@
+name: SigmaFidelity Enterprise CI/CD Gate
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  enterprise-hardening-gate:
+    name: Zero-Hotfix Enterprise Test Battery
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_USER: hwbdev
+          POSTGRES_PASSWORD: hwbpassword
+          POSTGRES_DB: hwb_dev_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout Code Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install Enterprise Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/requirements.txt
+
+      - name: Execute Master Test Battery (54 Automated Tests)
+        env:
+          DATABASE_URL: postgresql://hwbdev:hwbpassword@localhost:5432/hwb_dev_db
+          CLIENT_DATABASE_URL: postgresql://hwbdev:hwbpassword@localhost:5432/hwb_dev_db
+          SECRET_KEY: enterprise_ci_test_secret_key_2026
+        run: |
+          python scripts/run_all_tests.py

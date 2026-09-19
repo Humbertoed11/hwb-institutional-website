@@ -7,7 +7,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-7.5</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.1.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">4.0.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5 (Documented Information)</span></div>
     </div>
@@ -23,11 +23,11 @@
             <tbody>
                 <tr><td><strong>Document Title</strong></td><td><strong>Backoffice and CRM Management SOP</strong></td></tr>
                 <tr><td><strong>Document ID</strong></td><td>HWB-QMS-7.5</td></tr>
-                <tr><td><strong>Version</strong></td><td>3.1.0</td></tr>
+                <tr><td><strong>Version</strong></td><td>4.0.0</td></tr>
                 <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
-                <tr><td><strong>Author</strong></td><td>George (Systems Architect)</td></tr>
+                <tr><td><strong>Author</strong></td><td>George (Systems Architect) & Silas Sync (VP of CRM)</td></tr>
                 <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
-                <tr><td><strong>Date</strong></td><td>09-11-2026</td></tr>
+                <tr><td><strong>Date</strong></td><td>09-18-2026</td></tr>
                 <tr><td><strong>ISO 9001 Clause</strong></td><td>7.5</td></tr>
             </tbody>
         </table>
@@ -37,156 +37,92 @@
         <h1>Standard Operating Procedure: <strong>Backoffice & CRM Management Suite</strong></h1>
 
         <h2>1.0 Purpose</h2>
-        <p>This document explains how to use and manage the HWB backoffice and client database. It ensures that client information remains accurate, access is kept safe, and automated timeouts protect the system when it is not being used.</p>
+        <p>This document explains how to operate and manage the HWB backoffice and commercial customer database. It ensures that facility information remains accurate, phone numbers are formatted uniformly, field sales assignments are tracked dynamically, and unauthorized data exfiltration is prevented.</p>
 
         <h2>2.0 Scope</h2>
-        <p>This procedure applies to all office employees, support team members, and developers who manage our digital tools and customer database.</p>
+        <p>This procedure applies to all office employees, outside sales representatives, support staff, and automated systems that interact with the customer relationship management (CRM) database.</p>
 
         <h2>3.0 Operational Procedures</h2>
 
         <h3>3.1 System Access and Login</h3>
         <p>To access the administrative tools:</p>
         <ol>
-            <li>Open the web browser and navigate to the `/login` route.</li>
+            <li>Open the web browser and navigate to the <code>/login</code> route.</li>
             <li>Enter your corporate username and password.</li>
-            <li>If the login is successful, you will be redirected to the main operations hub. All failed attempts are sent to a safety page and recorded for review.</li>
+            <li>The login gate enforces a sliding-window rate limit of 10 attempts per minute to stop automated brute-force attacks.</li>
+            <li>Upon successful authentication, users are routed according to their role (Sales reps land directly in <code>/admin/operations?view=leads</code>).</li>
         </ol>
 
         <h3>3.2 Login Timeout and Inactivity Policy</h3>
-        <p>To prevent unauthorized access to sensitive company and client data, a strict inactivity policy is enforced:</p>
+        <p>To prevent unauthorized access to sensitive company and client data, an inactivity policy is enforced:</p>
         <ul>
-            <li><strong>Inactivity Window:</strong> The system continuously checks for user activity (mouse movements, clicks, scrolls, or keystrokes). If no activity is detected for **30 minutes**, an alert is triggered.</li>
-            <li><strong>Countdown Alert:</strong> A conspicuous warning modal overlay appears on the screen with a **1-minute (60 seconds) timer**.</li>
-            <li><strong>Action Choices:</strong>
-                <ul>
-                    <li><strong>Keep Working:</strong> Clicking this button hides the warning, resets the 30-minute idle timer, and sends a quick backend ping (`/heartbeat`) to refresh your session cookie.</li>
-                    <li><strong>Logout Now / Expiration:</strong> Clicking this button or allowing the 60-second timer to hit zero immediately logs you out and redirects the browser to the login screen.</li>
-                </ul>
-            </li>
-            <li><strong>Backend Enforcement:</strong> To prevent any bypass of the frontend timer, a hard **31-minute session lifetime** is enforced in the server configuration. Any request made after 31 minutes of silence is rejected.</li>
+            <li><strong>Inactivity Window:</strong> If no activity is detected for <strong>30 minutes</strong>, an alert overlay appears on the screen with a 60-second countdown timer.</li>
+            <li><strong>Keep Working:</strong> Clicking this button resets the timer and sends a heartbeat ping (<code>/heartbeat</code>) to refresh your session.</li>
+            <li><strong>Backend Enforcement:</strong> The server enforces a hard <strong>31-minute session lifetime</strong>. Requests after 31 minutes of inactivity are rejected.</li>
         </ul>
 
-        <div class="callout callout-note">
-            <strong>Security Standard</strong>
-            <p>Never leave your computer unlocked or unattended while logged in. If you step away from your desk, the system will automatically log you out after 30 minutes to protect our client files.</p>
-        </div>
-
-        <h3>3.3 Managing the Double-Sidebar Layout</h3>
-        <p>The office dashboard uses two sidebars to make work faster and cleaner:</p>
+        <h3>3.3 Standardized Phone Formatting: (###)-###-####</h3>
+        <p>All phone numbers across the entire ecosystem must strictly conform to the <code>(###)-###-####</code> standard:</p>
         <ul>
-            <li><strong>Primary Sidebar (Far Left):</strong> Used to switch between main areas of the website (Pulse, CRM, Assets, Lab).</li>
-            <li><strong>Control Rack (Inner Left):</strong> Used for specific actions inside each department (e.g., "Add Activity," "Filters").</li>
+            <li><strong>Database Storage:</strong> All phone records in <code>Leads</code>, <code>Customers</code>, <code>Contacts</code>, and <code>ConstructionBids</code> are normalized to <code>(###)-###-####</code>.</li>
+            <li><strong>Inbound Sanitization:</strong> Any incoming phone number from web forms, manual creation, or background scraping daemons is cleaned automatically via <code>core/services/sanitizer.py</code>.</li>
+            <li><strong>Live Keystroke Masks:</strong> All modal input fields apply a live JavaScript format mask as the user types, stripping leading '1' and formatting digits into <code>(###)-###-####</code>.</li>
+            <li><strong>Server-Side Filter:</strong> Templates format phone values with Jinja filter <code>| format_phone</code> to guarantee zero unformatted records on screen.</li>
         </ul>
 
-        <h3>3.4 Adding Leads and Client Conversions</h3>
-        <ol>
-            <li><strong>Gathering Data:</strong> The marketing team saves new leads as raw files inside the marketing folder.</li>
-            <li><strong>Ingesting Leads:</strong> Run the `Lead Ingestor` script to transfer the files directly into the PostgreSQL database.</li>
-            <li><strong>Client Conversion:</strong> Find the lead in the marketing dashboard and click the **"Convert ⚡"** button. The system will automatically move the information to the active Client list and create a new history record.</li>
-        </ol>
-
-        <h3>3.5 Role-Based Page Access and Record Ownership</h3>
-        <p>To support multi-user operations and protect business data, the system uses roles and ownership assignments:</p>
+        <h3>3.4 Dynamic Sales Representative Ownership Allocation</h3>
+        <p>Lead and customer account ownership is tied directly to live user accounts in the PostgreSQL <code>Users</code> table:</p>
         <ul>
-            <li><strong>Executive (Administrator):</strong> Has full access to all admin tools, dashboard, master settings, backups, user creation, and communications.</li>
-            <li><strong>Sales (Representative):</strong> Restricted to CRM and bidding pages. Can manage details popup forms, claim leads, assign representatives to client accounts, and run price calculations. Access is blocked to executive and master consoles.</li>
-            <li><strong>Operator (Logistics & Tech):</strong> Has read-only access to building details and logistics fields, plus access to the technical SOP manuals and prototyping lab. Access is blocked to executive control, master logs, and CRM edit tools.</li>
-        </ul>
-        
-        <p><strong>Page Access Map:</strong></p>
-        <pre style="background: #0f172a; color: #f8fafc; padding: 1.25rem; border-radius: 8px; font-family: monospace; font-size: 0.85rem; line-height: 1.4; overflow-x: auto;">
-+---------------------------------------------------------------------------------+
-|                        SigmaFidelity™ Page Access Matrix                        |
-+---------------------------------------------------------------------------------+
-[1] EXECUTIVE ROLE (Full Authority)
-    ├── /admin/executive   --> User Control, Financial Target Board, Telemetry
-    ├── /admin/master      --> System Settings, Backups, Server Logs, Releases
-    ├── /admin/operations  --> Portfolio Accounts, Leads List, Global Scheduling
-    ├── /manual            --> Corporate QMS Manuals, Compliance SOPs
-    └── Public Pages       --> Quote Engine, Corporate Home, Locations, Services
-
-[2] SALES ROLE (CRM & B2B Proposals)
-    ├── /admin/operations  --> Claim Leads, Schedule Client Visits, Log Notes
-    ├── /admin/edit-lead   --> Edit Profile Details, Set Valuations, Next Actions
-    ├── /admin/scope-builder-> Bid Calculators, B2B Cleaning Proposals
-    ├── /manual            --> Sales SOPs & B2B Proposals Procedures
-    └── Public Pages       --> Quote Engine, Public Site Pages
-    * ACCESS DENIED *      --> /admin/executive, /admin/master
-
-[3] OPERATOR ROLE (Logistics & Tech Support)
-    ├── /admin/operations  --> Read-Only Portfolio Details & Building Specs
-    ├── /admin/lab         --> System Testing & Operational Lab Tooling
-    ├── /manual            --> Technical SOPs, Safety Standards, Procedures
-    └── Public Pages       --> Services, Calculator, Public Site Pages
-    * ACCESS DENIED *      --> /admin/executive, /admin/master, /admin/edit-lead
-+---------------------------------------------------------------------------------+
-        </pre>
-
-        <p><strong>Ownership Assignment and Deletion Shifting:</strong></p>
-        <ul>
-            <li><strong>Leads and Accounts Ownership:</strong> Leads contain an `owner_id` column to identify the salesperson, and Client Accounts contain an `assigned_rep_id` column. When a Lead is promoted/converted to an Account, the assigned owner is automatically mapped to the Account rep column in the database.</li>
-            <li><strong>In-Modal Navigation:</strong> Users can browse through records in the details modal using previous/next chevrons or keyboard Left and Right arrow keys. Keyboard listener turns off automatically if typing inside forms.</li>
-            <li><strong>Smooth Deletion Transitions:</strong> If a record is deleted from inside the Details modal, the system automatically checks if other records are visible. If so, it slides the display to show the next adjacent record. If no other records remain on the page, the modal closes cleanly.</li>
+            <li>Hardcoded mock names have been completely eliminated. Dropdown selectors in all modals query active database users dynamically.</li>
+            <li>Sales representatives creating new leads or onboarding accounts automatically have the record attributed to their user account.</li>
+            <li>Executives can reassign single leads or bulk-assign hundreds of leads to any active sales rep using the batch actions bar.</li>
         </ul>
 
-        <h3>3.6 M&A Deal Radar & Commercial Daycare Partitioning</h3>
-        <p>To eliminate phantom sales valuations and uncover high-ticket acquisition targets, the CRM integrates dual-key commercial partitioning:</p>
+        <h3>3.5 Advanced Search Engine & Query Tokenizer</h3>
+        <p>The operations grid uses an industrial search tokenizer (<code>core/services/search.py</code>) supporting targeted query syntax:</p>
         <ul>
-            <li><strong>Commercial Enclosure:</strong> The CRM view defaults to showing only verified commercial centers (<code>is_commercial = TRUE</code>). In-home daycares and non-childcare tax filings are archived with zero estimated value (<code>$0.00</code>).</li>
-            <li><strong>M&A Deal Radar Quick Filter:</strong> Clicking the <strong>"🎯 M&A Targets"</strong> button on the toolbar isolates independent commercial daycares licensed for 150+ children (Tier 1 Mega: 200+ capacity, Tier 2 Regional: 150-199 capacity).</li>
-            <li><strong>Acquisition Columns & Badges:</strong> The table displays stylized badges for <code>Acquisition Tier</code>, <code>Ownership Type</code>, and <code>Owner Verification Status</code>. Users can toggle column visibility via the Columns dropdown.</li>
-            <li><strong>Empirical Verification Tracking:</strong> Leads display their verified state (<code>EMPIRICALLY_VERIFIED</code>, <code>DIRECTOR_CONFIRMED_OWNER_PENDING</code>, or <code>AUDITED_PENDING_PROOF</code>) with direct website citations and regulatory permit links.</li>
+            <li><strong>Field Targeting:</strong> <code>city:Plano</code>, <code>industry:Medical</code>, <code>status:New</code>, <code>rep:Wiley</code>.</li>
+            <li><strong>Numeric Comparisons & Ranges:</strong> <code>sqf:>=10000</code>, <code>sqf:<20000</code>, <code>value:>50000</code>.</li>
+            <li><strong>Negative Exclusions:</strong> <code>-Church</code>, <code>-"School District"</code>.</li>
+            <li><strong>Exact Phrases:</strong> <code>"North Texas"</code>.</li>
+            <li><strong>Wildcards:</strong> <code>Pla*</code>.</li>
+            <li><strong>American Dates:</strong> <code>04/10/2026</code> automatically converts to SQL dates.</li>
+            <li><strong>Phone Search:</strong> Accepts raw digits (<code>2145550198</code>) or formatted text (<code>(214)-555-0198</code>) utilizing functional regex database indexes.</li>
         </ul>
 
-        <h2>4.0 Verification (Zero-Defect Check)</h2>
+        <h3>3.6 Option B Streamlined Navigation & Data Protection</h3>
+        <p>Outside Sales representatives are granted focused access to accelerate selling while protecting intellectual property:</p>
         <ul>
-            <li><strong>Timeout Verification:</strong> Open the dashboard, remain completely still for 30 minutes, and confirm that the session warning modal pops up.</li>
-            <li><strong>Heartbeat Verification:</strong> Click "Keep Working" on the modal and verify that it hides the warning and that the browser sends a successful `/heartbeat` network request.</li>
-            <li><strong>Hard Logout Verification:</strong> Allow the countdown timer to hit zero and confirm that the browser is redirected to the home index page.</li>
+            <li><strong>Scoped Views:</strong> Sales reps access Leads, Accounts, and the Field Sales Desk. High-risk administrative tabs (GC Bids, Work Monitor, Executive) are hidden from their navigation.</li>
+            <li><strong>Data Exfiltration Lockout:</strong> Bulk CSV Export buttons are hidden, and API attempts to call <code>/api/v1/leads/export-selected</code> or <code>/api/v1/accounts/export-selected</code> return HTTP 403 Forbidden.</li>
+            <li><strong>Deletion Lockout:</strong> Record deletion endpoints return HTTP 403 Forbidden for Sales accounts.</li>
+            <li><strong>Audit Logging:</strong> Any unauthorized navigation attempt is automatically logged as a security event in <code>GlobalActivities</code>.</li>
         </ul>
 
-        <h2>5.0 Revision History</h2>
+        <h2>4.0 Revision History</h2>
         <table>
             <thead>
                 <tr>
-                    <th>Version</th>
                     <th>Date</th>
-                    <th>Author</th>
-                    <th>Change Description</th>
+                    <th>Version</th>
+                    <th>Description of Change</th>
+                    <th>Approved By</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
-                    <td>1.0.0</td>
-                    <td>03-05-2026</td>
-                    <td>CRM Specialist</td>
-                    <td>Legacy Markdown version (Outdated/Retired).</td>
+                    <td>09-18-2026</td>
+                    <td>4.0.0</td>
+                    <td>Updated for 100% Enterprise Hardening: Phone standardization to (###)-###-####, dynamic live user ownership, advanced search query tokenizer, and Option B data protection locks.</td>
+                    <td>Humberto Dominguez, CEO</td>
                 </tr>
                 <tr>
-                    <td>2.0.0</td>
-                    <td>06-02-2026</td>
-                    <td>George</td>
-                    <td>Modernized to HTML format under everyday words standard. Integrated the 30-minute inactivity timeout and 1-minute warning modal procedures. Approved by CEO.</td>
-                </tr>
-                <tr>
-                    <td>3.0.0</td>
-                    <td>07-20-2026</td>
-                    <td>George</td>
-                    <td>Introduced three system role tiers (Executive, Sales, Operator), established the page access matrix, and integrated lead-to-account ownership assignment and transition rules. Approved by CEO.</td>
-                </tr>
-                <tr>
-                    <td>3.1.0</td>
                     <td>09-11-2026</td>
-                    <td>George</td>
-                    <td>Integrated Section 3.6 M&A Deal Radar operations, commercial daycare partitioning, toolbar quick filter presets, and empirical owner verification tracking. Approved by CEO.</td>
+                    <td>3.1.0</td>
+                    <td>Added Section 3.5 detailing role-based page access and multi-user ownership matrices.</td>
+                    <td>Humberto Dominguez, CEO</td>
                 </tr>
             </tbody>
         </table>
-    </div>
-
-    <div class="sop-card-footer">
-        <span>&copy; 2026 HWB Cleaning Services LLC</span>
-        <span>Controlled Document | HWB-QMS-7.5</span>
-        <span>Page <span class="page-number"></span></span>
     </div>
 </div>

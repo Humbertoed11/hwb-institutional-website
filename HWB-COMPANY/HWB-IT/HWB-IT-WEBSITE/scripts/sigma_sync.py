@@ -198,18 +198,21 @@ def parse_problems_to_solve(markdown_content):
         })
     return results
 
-import hashlib
-
-def calculate_local_embedding(text):
-    embedding = [0.0] * 1536
-    if not text:
+try:
+    from core.services.embedding import get_embedding as calculate_local_embedding
+except ImportError:
+    import hashlib
+    def calculate_local_embedding(text):
+        embedding = [0.0] * 1536
+        if not text:
+            return embedding
+        sha = hashlib.sha256(text.encode("utf-8")).digest()
+        for i in range(1536):
+            byte_val = sha[i % len(sha)]
+            val = (byte_val - 128) / 128.0
+            embedding[i] = round(val, 6)
         return embedding
-    sha = hashlib.sha256(text.encode("utf-8")).digest()
-    for i in range(1536):
-        byte_val = sha[i % len(sha)]
-        val = (byte_val - 128) / 128.0
-        embedding[i] = round(val, 6)
-    return embedding
+
 
 def sync_problems_to_solve():
     problems_file = "docs/PROBLEMS-TO-SOLVE.md"

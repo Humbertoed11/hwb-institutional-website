@@ -35,7 +35,13 @@ def test_dynamic_lead_owner():
     print("  [PASS] Hardcoded synthetic users (Silas Sync, Lauri Tells) completely eliminated")
 
     # 3. Test Single Lead Quick Update (PATCH /api/v1/leads/<id>)
-    test_lead_id = 74448  # Existing test lead
+    # Dynamically select an active lead from database
+    import psycopg2
+    conn = psycopg2.connect("postgresql://hwbdev:hwbpassword@localhost:5432/hwb_dev_db")
+    with conn.cursor() as cur:
+        cur.execute('SELECT id FROM "Leads" WHERE center_name IS NOT NULL LIMIT 1;')
+        test_lead_id = cur.fetchone()[0]
+    conn.close()
     print(f"\n--- Testing Single Lead PATCH owner_id on Lead #{test_lead_id} ---")
     
     # Assign to Beabe Wiley (id=5)

@@ -71,31 +71,34 @@
  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
  
- {% if config['GA_MEASUREMENT_ID'] %}
- <!-- Google Reports -->
- <script async src="https://www.googletagmanager.com/gtag/js?id={{ config['GA_MEASUREMENT_ID'] }}"></script>
- <script>
- window.dataLayer = window.dataLayer || [];
- function gtag(){dataLayer.push(arguments);}
- gtag('js', new Date());
- gtag('config', "{{ config['GA_MEASUREMENT_ID'] }}");
- </script>
- {% endif %}
+  <!-- Google Search Console Verification -->
+  {% if config.get('GOOGLE_SITE_VERIFICATION') %}
+  <meta name="google-site-verification" content="{{ config['GOOGLE_SITE_VERIFICATION'] }}">
+  {% endif %}
+
+  <!-- Google tag (gtag.js) - GA4 Official Measurement Container -->
+  {% if not current_user.is_authenticated %}
+  {% set ga_id = config.get('GA_MEASUREMENT_ID') or 'G-8BX5Q7THYR' %}
+  <script async src="https://www.googletagmanager.com/gtag/js?id={{ ga_id }}"></script>
+  <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', '{{ ga_id }}');
+  </script>
+  {% else %}
+  <!-- Internal Staff Active: GA4 Tracking Paused to Prevent Traffic Pollution -->
+  <script>
+    console.log('[GA4] Internal staff session active. Tracking paused for data integrity.');
+  </script>
+  {% endif %}
+
   {% block head %}
   <meta name="description" content="Professional commercial cleaning and janitorial services in Dallas, Plano, Frisco, McKinney, and across North Texas. Request a custom quote today.">
   <meta name="keywords" content="commercial cleaning Dallas, janitorial services Plano, office cleaning Frisco, floor care McKinney, North Texas cleaning">
   {% endblock %}
 </head>
 <body class="app-container">
-
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-8BX5Q7THYR"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-8BX5Q7THYR');
-    </script>
 
  {% if request.endpoint != 'login' %}
  {% include "components/mega_bar.html" %}
@@ -196,6 +199,24 @@
     </footer>
  {% endif %}
 
+ <!-- SigmaFidelity™ Analytics: Automated Click-to-Call & Phone Engagement Tracking -->
+ <script>
+   document.addEventListener('DOMContentLoaded', function() {
+     document.querySelectorAll('a[href^="tel:"]').forEach(function(el) {
+       el.addEventListener('click', function() {
+         if (typeof gtag === 'function') {
+           gtag('event', 'click_to_call', {
+             'event_category': 'Contact',
+             'event_label': el.getAttribute('href').replace('tel:', ''),
+             'transport_type': 'beacon'
+           });
+         }
+       });
+     });
+   });
+ </script>
+
  {% block scripts %}{% endblock %}
 </body>
 </html>
+

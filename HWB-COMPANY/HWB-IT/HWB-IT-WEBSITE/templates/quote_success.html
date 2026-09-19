@@ -95,3 +95,21 @@
     </div>
 </section>
 {% endblock %}
+
+{% block scripts %}
+<!-- Google Analytics 4: Official Lead Generation Conversion Event -->
+<script>
+  window.addEventListener('load', function() {
+    if (typeof gtag === 'function') {
+      gtag('event', 'generate_lead', {
+        'event_category': 'Engagement',
+        'event_label': '{{ data.get("company", "Commercial Cleaning") | escape }}',
+        'value': 150.00,
+        'currency': 'USD'
+      });
+      console.log('[GA4] Dispatched generate_lead conversion event.');
+    }
+  });
+</script>
+{% endblock %}
+

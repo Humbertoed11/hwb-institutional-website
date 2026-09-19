@@ -1,5 +1,5 @@
 <!-- 
-    SigmaFidelity™ Institutional SOP (HTML Version 3.0)
+    SigmaFidelity™ Institutional SOP (HTML Version 4.0)
     Standard: HWB-QMS-1.0
     Author: George (Systems Architect)
     Approved By: Humberto Dominguez (CEO)
@@ -8,7 +8,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-7.6</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">4.0.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">8.1 & 8.5.1 (Operational Control)</span></div>
     </div>
@@ -24,7 +24,7 @@
             <tbody>
                 <tr><td><strong>Document Title</strong></td><td><strong>Backend Architecture and Enterprise Standards SOP</strong></td></tr>
                 <tr><td><strong>Document ID</strong></td><td>HWB-QMS-7.6</td></tr>
-                <tr><td><strong>Version</strong></td><td>3.0.0</td></tr>
+                <tr><td><strong>Version</strong></td><td>4.0.0</td></tr>
                 <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
                 <tr><td><strong>Author</strong></td><td>George (Systems Architect)</td></tr>
                 <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
@@ -38,7 +38,7 @@
         <h1>Standard Operating Procedure: <strong>Backend Architecture and Enterprise Standards</strong></h1>
 
         <h2>1.0 Purpose</h2>
-        <p>This procedure establishes the <strong>Zero-Hotfix Enterprise Mandate</strong> across all software systems at HWB Cleaning Services LLC. The purpose is to eliminate quick patches, temporary workarounds, and on-the-fly code. Every engineering change must be designed to enterprise standards, protecting company data and preventing defects from recurring.</p>
+        <p>This procedure establishes the <strong>100% Enterprise Hardening Standard</strong> across all software systems at HWB Cleaning Services LLC. The purpose is to eliminate monolith code, temporary workarounds, and unmanaged database connections. Every engineering change must operate to Fortune 500 standards, protecting company records and guaranteeing continuous system uptime.</p>
 
         <h2>2.0 Scope</h2>
         <p>This standard applies to all software engineers, autonomous AI agents, technical contractors, and administrative systems operating within the HWB ecosystem, including the web application, background workers, databases, and APIs.</p>
@@ -46,11 +46,11 @@
         <h2>3.0 The Zero-Hotfix Enterprise Mandate</h2>
         <div class="callout callout-note">
             <strong>The Institutional Law</strong>
-            <p>From September 18, 2026 onward, only enterprise-level solutions are permitted in the HWB codebase. Ad-hoc hotfixes, local workaround scripts, and quick patches are strictly prohibited.</p>
+            <p>Only enterprise-level solutions are permitted in the HWB codebase. Ad-hoc hotfixes, local workaround scripts, and quick patches are strictly prohibited.</p>
         </div>
         <p>When an issue or security gap is discovered, developers must find the root cause in the architecture and fix the system as a whole, rather than patching a single screen or endpoint.</p>
 
-        <h2>4.0 The 6 Pillars of Enterprise Architecture</h2>
+        <h2>4.0 The 8 Pillars of Enterprise Architecture</h2>
         <table>
             <thead>
                 <tr>
@@ -61,56 +61,87 @@
             </thead>
             <tbody>
                 <tr>
-                    <td><strong>1. Root Cause Engineering</strong></td>
-                    <td>Solve systemic causes, never mask symptoms with local <code>if</code> statements.</td>
-                    <td>Prevents identical bugs from emerging in adjacent modules.</td>
+                    <td><strong>1. Modular Domain Blueprints</strong></td>
+                    <td>Deconstruct monoliths into small domain blueprints. The application core must remain under 400 lines.</td>
+                    <td>Eliminates code collisions and enables safe multi-developer collaboration.</td>
                 </tr>
                 <tr>
-                    <td><strong>2. Centralized Gateway</strong></td>
-                    <td>Enforce access control at the request gatekeeper (<code>@app.before_request</code>).</td>
-                    <td>Fail-safe default: new endpoints are secure by default.</td>
+                    <td><strong>2. Threaded Connection Pooling</strong></td>
+                    <td>All database queries must reuse warm connections from a managed pool (<code>ThreadedConnectionPool</code>).</td>
+                    <td>Reduces database latency from 18ms to ~1ms and prevents socket exhaustion during traffic spikes.</td>
                 </tr>
                 <tr>
-                    <td><strong>3. Declarative Contracts</strong></td>
-                    <td>Use explicit decorators like <code>@roles_required</code> on endpoints.</td>
-                    <td>Code is readable, self-documenting, and impossible to bypass.</td>
+                    <td><strong>3. Abuse Defense & Rate Limiting</strong></td>
+                    <td>Public forms and authentication routes must enforce sliding-window IP rate limits.</td>
+                    <td>Blocks brute-force password guessing and automated web quote spam.</td>
                 </tr>
                 <tr>
-                    <td><strong>4. Defense-in-Depth</strong></td>
-                    <td>Triple protection: Database checks + Backend interceptors + Clean UI rendering.</td>
-                    <td>Even if a user bypasses the UI, backend locks stop unauthorized requests.</td>
+                    <td><strong>4. Inbound Data Sanitization</strong></td>
+                    <td>All inputs (phone, email, currency, sqft, zip) must pass through a standard cleaning gateway before saving.</td>
+                    <td>Guarantees 100% data consistency across CRM records and background scrapers.</td>
                 </tr>
                 <tr>
-                    <td><strong>5. Automated Testing</strong></td>
-                    <td>Mandatory test scripts verifying both authorized and blocked paths.</td>
-                    <td>Proves code works before deployment with zero guesswork.</td>
+                    <td><strong>5. Managed Background Task Queue</strong></td>
+                    <td>Long-running jobs must execute through a thread pool with auto-retries and execution telemetry.</td>
+                    <td>Prevents worker timeouts and ensures failed background tasks are retried cleanly.</td>
                 </tr>
                 <tr>
-                    <td><strong>6. Immutable Audit Trail</strong></td>
-                    <td>Log every access violation to <code>GlobalActivities</code> in PostgreSQL.</td>
-                    <td>Provides full accountability and traceability for ISO audits.</td>
+                    <td><strong>6. Declarative Role Security</strong></td>
+                    <td>Enforce explicit decorators like <code>@roles_required</code> and centralized request quarantines.</td>
+                    <td>Ensures permissions are self-documenting and impossible to bypass.</td>
+                </tr>
+                <tr>
+                    <td><strong>7. Version-Controlled Migrations</strong></td>
+                    <td>All database table alterations must run through an idempotent schema migration engine.</td>
+                    <td>Eliminates raw DDL on server boot and preserves database schema integrity.</td>
+                </tr>
+                <tr>
+                    <td><strong>8. Automated CI/CD Quality Gate</strong></td>
+                    <td>Every commit must pass 100% of the master automated test battery (54 tests) before release.</td>
+                    <td>Proves zero regressions exist before deploying code to live customers.</td>
                 </tr>
             </tbody>
         </table>
 
-        <h2>5.0 Role-Based Access Control (RBAC) Quarantine Standard</h2>
-        <p>User access is partitioned into distinct operational zones based on verified roles:</p>
+        <h2>5.0 Modular Blueprint Architecture</h2>
+        <p>The main application core (<code>main_app.py</code>) functions strictly as a Twelve-Factor application factory, configuration hub, and security gatekeeper (337 lines). All domain logic is divided into 6 modular Blueprints:</p>
         <ul>
-            <li><strong>Executive & Admin:</strong> Global system access, Warchest financial controls, user provisioning, and strategy modules.</li>
-            <li><strong>Manager:</strong> Operations oversight, accounts, and SOP manual. Restriced from user provisioning and financial Warchest.</li>
-            <li><strong>Operator:</strong> Daily cleaning dispatch, work orders, and commercial lead pipeline.</li>
-            <li><strong>Sales:</strong> Strict isolation to the <strong>Field Sales Desk</strong> (<code>/admin/sales-desk</code>), assigned facility queue, 1-tap dialer/maps, and walkthrough quoting. All bulk data exports and executive screens are blocked with HTTP 403.</li>
+            <li><strong>Telemetry Blueprint (<code>blueprints/telemetry.py</code>):</strong> System health, database connection pool metrics, container ping, and live task queue telemetry.</li>
+            <li><strong>Commercial Bids Blueprint (<code>blueprints/bids.py</code>):</strong> Subcontractor prequalification, CSI MasterFormat map, TMA estimator, and construction bid tracking.</li>
+            <li><strong>Authentication Blueprint (<code>blueprints/auth.py</code>):</strong> Login, logout, heartbeat, and session security protected by rate limiting.</li>
+            <li><strong>Public Marketing Blueprint (<code>blueprints/public.py</code>):</strong> Homepage, service brochures, location guides, digital QMS manuals, robots.txt, sitemaps, and quote intake.</li>
+            <li><strong>Operations Blueprint (<code>blueprints/operations.py</code>):</strong> Management hub, Field Sales Desk, lead/account editor, scope builder, chemical master repository, and executive controls.</li>
+            <li><strong>CRM REST API Blueprint (<code>blueprints/crm_api.py</code>):</strong> Structured endpoints for leads, accounts, touchpoints, AI knowledge scar search, and duplicate resolution.</li>
         </ul>
 
-        <h2>6.0 Verification (Zero-Defect Check)</h2>
+        <h2>6.0 Database Connection Pooling & Latency Optimization</h2>
+        <p>To eliminate TCP handshake delays, all PostgreSQL connections are managed by a <code>ThreadedConnectionPool</code> (minimum 2, maximum 20 connections) in <code>core/services/database.py</code>. A transparent proxy (<code>PooledConnection</code>) returns sockets to the pool upon calling <code>conn.close()</code>, cutting query turnaround time from 18.38 ms to <strong>1.26 ms</strong>.</p>
+
+        <h2>7.0 Abuse Defense & Rate Limiting</h2>
+        <p>A thread-safe sliding-window rate limiter (<code>core/services/rate_limiter.py</code>) governs incoming requests by client IP address:</p>
         <ul>
-            <li>All admin routes must declare explicit role requirements using <code>@roles_required</code>.</li>
-            <li>The centralized gatekeeper (<code>@app.before_request</code>) must automatically intercept out-of-bounds requests.</li>
-            <li>Templates must receive permissions through <code>nav_access</code> context engine without scattered manual role checks.</li>
-            <li>Automated test suite (<code>scratch/test_enterprise_rbac.py</code>) must pass with 100% success before any code release.</li>
+            <li><strong>Login Gate:</strong> Limited to 10 attempts per minute per IP to thwart brute-force attacks.</li>
+            <li><strong>Quote Form Gate:</strong> Limited to 15 submissions per minute per IP to block bot flooding.</li>
+            <li><strong>Violation Handling:</strong> Exceeding quota returns an HTTP 429 Too Many Requests response with a standard <code>Retry-After</code> header.</li>
         </ul>
 
-        <h2>7.0 Revision History</h2>
+        <h2>8.0 Managed Background Task Queue</h2>
+        <p>Background jobs (such as GC planroom bid sync and scraper daemons) are managed by <code>core/services/task_queue.py</code>. The queue runs up to 4 worker threads concurrently, provides live status reporting at <code>/api/v1/tasks</code>, and automatically retries failed tasks up to 2 times using linear backoff.</p>
+
+        <h2>9.0 Inbound Data Sanitization Gateway</h2>
+        <p>All user and scraper data must pass through <code>core/services/sanitizer.py</code> before database insertion:</p>
+        <ul>
+            <li><strong>Phone Numbers:</strong> Formatted strictly to <code>(###)-###-####</code>; 11-digit leading '1' stripped; garbage entries rejected.</li>
+            <li><strong>Currency:</strong> Cleaned to standard numeric float values.</li>
+            <li><strong>Square Footage:</strong> Non-numeric characters stripped and cast to clean float values.</li>
+            <li><strong>Zip Codes:</strong> Standardized to 5-digit postal format.</li>
+            <li><strong>Email:</strong> Lowercased, whitespace stripped, and validated for valid email syntax.</li>
+        </ul>
+
+        <h2>10.0 Automated CI/CD Testing & Zero-Regression Battery</h2>
+        <p>All developers and automated agents must execute <code>python scripts/run_all_tests.py</code> before committing code. This master battery tests 54 automated verification points across 7 test suites, achieving a 100% pass rate in approximately 6 seconds.</p>
+
+        <h2>11.0 Revision History</h2>
         <table>
             <thead>
                 <tr>
@@ -123,8 +154,14 @@
             <tbody>
                 <tr>
                     <td>09-18-2026</td>
+                    <td>4.0.0</td>
+                    <td>Codified 100% Enterprise Hardening Standard: Modular Blueprints, Threaded Connection Pooling, Abuse Rate Limiting, Managed Task Queue, and Master CI/CD Test Battery.</td>
+                    <td>Humberto Dominguez, CEO</td>
+                </tr>
+                <tr>
+                    <td>09-18-2026</td>
                     <td>3.0.0</td>
-                    <td>Codified the Zero-Hotfix Enterprise Mandate and Centralized RBAC Gateway Architecture following CEO decree.</td>
+                    <td>Codified the Zero-Hotfix Enterprise Mandate and Centralized RBAC Gateway Architecture.</td>
                     <td>Humberto Dominguez, CEO</td>
                 </tr>
             </tbody>
