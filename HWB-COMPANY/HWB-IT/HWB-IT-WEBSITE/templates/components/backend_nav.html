@@ -293,15 +293,21 @@
 
         <!-- 4. Construction Bids & Corporate Management Modules -->
         {% if current_user.role != 'Sales' %}
+            {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('bids', 'view')) or not current_user.custom_permissions %}
             <a href="{{ url_for('admin_operations', view='construction_bids') }}" class="sigma-nav-btn {% if request.endpoint == 'admin_operations' and active_view == 'construction_bids' %}active{% endif %}">
                 <i class="fas fa-hard-hat" style="color: #f59e0b;"></i> GC Bids
             </a>
+            {% endif %}
+            {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('workforce', 'view')) or not current_user.custom_permissions %}
             <a href="{{ url_for('admin_operations', view='workforce') }}" class="sigma-nav-btn {% if request.endpoint == 'admin_operations' and active_view == 'workforce' %}active{% endif %}">
                 <i class="fas fa-users" style="color: #10b981;"></i> Workforce
             </a>
+            {% endif %}
+            {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('monitor', 'view')) or not current_user.custom_permissions %}
             <a href="{{ url_for('admin_operations', view='monitor') }}" class="sigma-nav-btn {% if request.endpoint == 'admin_operations' and active_view == 'monitor' %}active{% endif %}">
                 <i class="fas fa-chart-line" style="color: #06b6d4;"></i> Monitor
             </a>
+            {% endif %}
             {% if current_user.role in ['Executive', 'Admin'] %}
                 <a href="{{ url_for('sigma_executive') }}" class="sigma-nav-btn {% if request.endpoint == 'sigma_executive' %}active{% endif %}">
                     <i class="fas fa-crown" style="color: #d97706;"></i> Executive

@@ -302,7 +302,7 @@ def admin_operations():
     finally:
         if "conn" in locals() and conn: conn.close()
 
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.args.get('format') == 'json':
+    if request.args.get('format') == 'json' or (request.headers.get('X-Requested-With') == 'XMLHttpRequest' and request.accept_mimetypes.best == 'application/json'):
         try:
             def serialize_row(row):
                 d = dict(row)
