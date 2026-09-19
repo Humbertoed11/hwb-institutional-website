@@ -731,18 +731,18 @@ def dispatch_graph_email(record_id):
 
         if is_logo_requested or has_cid_logo:
             logo_candidates = [
+                "/app/static/logo_standard.png",
+                os.path.join(BASE_DIR, "static", "logo_standard.png"),
+                "/home/humbertoed/gemini_projects/HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/static/logo_standard.png",
                 "/app/static/img/hwb_commercial_cleaning_logo.png",
-                "/app/static/hwb_commercial_cleaning_logo.png",
-                os.path.join(BASE_DIR, "static", "img", "hwb_commercial_cleaning_logo.png"),
-                os.path.join(BASE_DIR, "static", "hwb_commercial_cleaning_logo.png"),
-                "/home/humbertoed/gemini_projects/HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/static/img/hwb_commercial_cleaning_logo.png"
+                os.path.join(BASE_DIR, "static", "img", "hwb_commercial_cleaning_logo.png")
             ]
             for lpath in logo_candidates:
                 if os.path.exists(lpath):
                     with open(lpath, "rb") as lf:
                         att_dict = {
                             "@odata.type": "#microsoft.graph.fileAttachment",
-                            "name": "hwb_commercial_cleaning_logo.png",
+                            "name": "logo_standard.png",
                             "contentType": "image/png",
                             "contentBytes": base64.b64encode(lf.read()).decode("utf-8")
                         }

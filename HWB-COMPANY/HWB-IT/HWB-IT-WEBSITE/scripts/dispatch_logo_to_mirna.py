@@ -23,11 +23,11 @@ TID = os.getenv("GRAPH_API_PROD_TENANT_ID")
 USER_EMAIL = "hdominguez@hwbcleaning.com"
 RECIPIENT_EMAIL = "mrondinella@hwbcleaning.com"
 
-LOGO_PATH = os.path.join(BASE_DIR, "static", "img", "hwb_commercial_cleaning_logo.png")
+LOGO_PATH = os.path.join(BASE_DIR, "static", "logo_standard.png")
 if not os.path.exists(LOGO_PATH):
-    LOGO_PATH = "/app/static/img/hwb_commercial_cleaning_logo.png"
+    LOGO_PATH = "/app/static/logo_standard.png"
 if not os.path.exists(LOGO_PATH):
-    LOGO_PATH = "/home/humbertoed/gemini_projects/HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/static/img/hwb_commercial_cleaning_logo.png"
+    LOGO_PATH = "/home/humbertoed/gemini_projects/HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/static/logo_standard.png"
 
 def get_graph_token():
     authority = f"https://login.microsoftonline.com/{TID}"
@@ -58,11 +58,11 @@ def send_logo_email():
         </div>
         <div style="border-top: 1px solid #f1f5f9; padding-top: 18px; margin-bottom: 20px; color: #334155; font-size: 14px; line-height: 1.6;">
             <p>Hola Mirna,</p>
-            <p>Following your operational request via Telegram, attached is the official high-resolution corporate commercial cleaning logo file for <strong>HWB Cleaning Services LLC</strong> (McKinney / DFW Headquarters).</p>
+            <p>Following your operational request via Telegram, attached is the official high-resolution corporate logo file for <strong>HWB Cleaning Services LLC</strong> (McKinney / DFW Headquarters).</p>
             <div style="background-color: #f8fafc; border-left: 4px solid #0284c7; padding: 14px 18px; border-radius: 4px; margin: 20px 0;">
                 <p style="margin: 0 0 6px 0; font-weight: 600; color: #0f172a;">Attached Asset Details:</p>
                 <ul style="margin: 0; padding-left: 20px; font-size: 13px; color: #475569;">
-                    <li><strong>File:</strong> <code>hwb_commercial_cleaning_logo.png</code></li>
+                    <li><strong>File:</strong> <code>logo_standard.png</code></li>
                     <li><strong>Format:</strong> High-Resolution PNG with Alpha Transparency</li>
                     <li><strong>Standard:</strong> HWB-COM-001 v2.1.0 Brand Identity & Letterhead Standard</li>
                 </ul>
@@ -97,7 +97,7 @@ def send_logo_email():
             "attachments": [
                 {
                     "@odata.type": "#microsoft.graph.fileAttachment",
-                    "name": "hwb_commercial_cleaning_logo.png",
+                    "name": "logo_standard.png",
                     "contentType": "image/png",
                     "contentBytes": logo_b64
                 }

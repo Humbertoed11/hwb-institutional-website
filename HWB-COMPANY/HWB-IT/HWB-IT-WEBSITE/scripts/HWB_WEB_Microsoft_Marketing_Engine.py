@@ -14,12 +14,12 @@ CLIENT_SECRET = os.getenv("GRAPH_API_PROD_SECRET_VALUE")
 TENANT_ID = os.getenv("GRAPH_API_PROD_TENANT_ID")
 SENDER_EMAIL = "humbertoed@hwbcleaning.com"
 
-# Institutional Logo Path (Canonical Commercial Asset)
-LOGO_PATH = os.path.join(os.path.dirname(__file__), "..", "static", "img", "hwb_commercial_cleaning_logo.png")
+# Institutional Logo Path (Official Webpage Asset)
+LOGO_PATH = os.path.join(os.path.dirname(__file__), "..", "static", "logo_standard.png")
 if not os.path.exists(LOGO_PATH):
-    LOGO_PATH = "/app/static/img/hwb_commercial_cleaning_logo.png"
+    LOGO_PATH = "/app/static/logo_standard.png"
 if not os.path.exists(LOGO_PATH):
-    LOGO_PATH = "/home/humbertoed/gemini_projects/HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/static/img/hwb_commercial_cleaning_logo.png"
+    LOGO_PATH = "/home/humbertoed/gemini_projects/HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/static/logo_standard.png"
 
 AUTHORITY = f"https://login.microsoftonline.com/{TENANT_ID}"
 SCOPE = ["https://graph.microsoft.com/.default"]

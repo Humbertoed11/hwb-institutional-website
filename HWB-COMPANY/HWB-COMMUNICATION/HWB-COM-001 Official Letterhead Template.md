@@ -18,7 +18,7 @@ To provide a standardized, high-fidelity letterhead for all HWB Cleaning Service
 
 ## 2.0 Universal Mandates (2026 Baseline)
 1. **Third-Person Perspective:** All correspondence using this letterhead must use the 3rd person standard.
-2. **Physical Truth:** Use canonical server paths for the corporate commercial logo asset (`/static/img/hwb_commercial_cleaning_logo.png`).
+2. **Physical Truth:** Use canonical server paths for the corporate logo asset (`/static/logo_standard.png`).
 3. **Outbox Protocol:** Stage all high-stakes correspondence in the **PendingOutbox** for CEO approval.
 
 ## 3.0 Letterhead Template (HTML)
@@ -26,7 +26,7 @@ To provide a standardized, high-fidelity letterhead for all HWB Cleaning Service
 <div class="hwb-letterhead" style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 40px; border: 1px solid #e2e8f0; border-radius: 8px; max-width: 800px; margin: 0 auto; background: #ffffff;">
     <div class="hwb-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #0f172a; padding-bottom: 20px;">
         <div style="display: flex; align-items: center; gap: 14px;">
-            <img src="/static/img/hwb_commercial_cleaning_logo.png" alt="HWB Cleaning Services LLC" height="65" style="display: block;">
+            <img src="/static/logo_standard.png" alt="HWB Cleaning Services LLC" height="48" style="display: block;">
             <div>
                 <div style="font-weight: 800; font-size: 16px; color: #0f172a; letter-spacing: -0.01em;">HWB CLEANING SERVICES LLC</div>
                 <div style="font-weight: 700; font-size: 11px; color: #2563eb; letter-spacing: 0.05em; text-transform: uppercase;">Institutional Division • SigmaFidelity™</div>

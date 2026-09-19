@@ -11,13 +11,16 @@ import msal
 from flask import current_app
 
 def get_official_logo_bytes():
-    """Locates and returns the official HWB commercial cleaning logo bytes."""
+    """Locates and returns the official HWB logo bytes (the modern brand mark used on the current webpage)."""
     candidates = [
+        "/app/static/logo_standard.png",
+        "/app/static/img/logo_standard_transparent.png",
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "static", "logo_standard.png")),
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "static", "img", "logo_standard_transparent.png")),
+        "/home/humbertoed/gemini_projects/HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/static/logo_standard.png",
+        "/home/humbertoed/gemini_projects/HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/static/img/logo_standard_transparent.png",
         "/app/static/img/hwb_commercial_cleaning_logo.png",
-        "/app/static/hwb_commercial_cleaning_logo.png",
-        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "static", "img", "hwb_commercial_cleaning_logo.png")),
-        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "static", "hwb_commercial_cleaning_logo.png")),
-        "/home/humbertoed/gemini_projects/HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/static/img/hwb_commercial_cleaning_logo.png"
+        "/app/static/hwb_commercial_cleaning_logo.png"
     ]
     for path in candidates:
         if os.path.exists(path):
@@ -133,7 +136,7 @@ def transmit_email(*args, **kwargs):
             if logo_bytes:
                 attachments.append({
                     "@odata.type": "#microsoft.graph.fileAttachment",
-                    "name": "hwb_commercial_cleaning_logo.png",
+                    "name": "logo_official.png",
                     "contentType": "image/png",
                     "contentBytes": base64.b64encode(logo_bytes).decode("utf-8"),
                     "contentId": "hwblogo",
