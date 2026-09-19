@@ -72,8 +72,8 @@ def send_logo_email():
         <div style="border-top: 1px solid #f1f5f9; padding-top: 16px; font-size: 12px; color: #94a3b8; text-align: left;">
             <p style="margin: 0 0 4px 0; font-weight: 600; color: #64748b;">Humberto Dominguez, CEO</p>
             <p style="margin: 0 0 2px 0;">HWB Cleaning Services LLC</p>
-            <p style="margin: 0 0 2px 0;">555 Republic Dr, Suite 200, Plano, TX 75074</p>
-            <p style="margin: 0;"><a href="mailto:hdominguez@hwbcleaning.com" style="color: #0284c7; text-decoration: none;">hdominguez@hwbcleaning.com</a> | (214) 799-5935</p>
+            <p style="margin: 0 0 2px 0;">101 E Park Blvd, Suite 600, Plano, TX 75074</p>
+            <p style="margin: 0;"><a href="mailto:hdominguez@hwbcleaning.com" style="color: #0284c7; text-decoration: none;">hdominguez@hwbcleaning.com</a> | (214) 586-0257</p>
         </div>
     </div>
     """

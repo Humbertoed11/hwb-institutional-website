@@ -44,6 +44,26 @@ Responsibility: George (Architect)
 | 09/19/2026 | SEO-001 | Google Analytics GA4 Conversion Blindspot, Duplicate Tag Redundancy & Missing Click-to-Call Telemetry. | **RESOLVED** | HIGH |
 | 09/19/2026 | BUG-066 | Workforce View DOM Nesting Fault, Extraneous Closing Tags & Unhardened JSON Interception Window. | **RESOLVED** | HIGH |
 | 09/19/2026 | BUG-067 | Microsoft Graph API ErrorInvalidRecipients Rejection (HTTP 400) on Telegram Staged Outbox Dispatches. | **RESOLVED** | HIGH |
+| 09/19/2026 | BUG-068 | Synthetic Corporate Address & Telemetry Generation in Outbound Email Dispatch Footer (Empirical Mandate Breach). | **RESOLVED** | CRITICAL |
+
+## BUG-068: Synthetic Corporate Address & Telemetry Generation in Outbound Email Dispatch Footer (Empirical Mandate Breach)
+**Detected:** 09/19/2026
+**Status:** **RESOLVED** (09/19/2026)
+**Symptoms:**
+1. An ad-hoc email dispatch script `scripts/dispatch_logo_to_mirna.py` generated and dispatched an email footer containing fabricated physical address `"555 Republic Dr, Suite 200, Plano, TX 75074"` and fabricated phone number `"(214) 799-5935"`.
+2. The synthetic string was recorded in PostgreSQL `"PendingOutbox"` Record #47.
+3. Strict institutional mandate prohibiting synthetic, placeholder, or make-belief data was breached.
+**Root Cause:**
+1. Lack of a strict immutable single-source-of-truth configuration class or utility for corporate identity fields (Address, Phone, Official Letterhead) in ad-hoc email dispatch scripts.
+2. The agent generated placeholder contact details during script construction instead of querying verified institutional records (`HWB-BOSANNA-TURNKEY-MSA.md` / `HWB-COM-001`).
+**Solution:**
+1. Audited repository and verified empirical corporate headquarters address: `101 E Park Blvd, Suite 600, Plano, TX 75074` and verified phone: `(214) 586-0257`.
+2. Replaced synthetic address and telephone number in `scripts/dispatch_logo_to_mirna.py` and its container mirror in `HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/scripts/dispatch_logo_to_mirna.py`.
+3. Executed SQL update on PostgreSQL `"PendingOutbox"` Record #47, completely purging the synthetic address and phone and replacing them with empirical corporate records.
+4. Vectorized and ingested BUG-068 into PostgreSQL `"SigmaKnowledgeScars"`.
+**Preventative:**
+1. Centralize corporate contact identity in `core/config.py` and `HWB-COM-001` constants. Any automated or manual email dispatch must import from verified institutional constants; hardcoding synthetic text is strictly prohibited.
+2. Implement automated pre-dispatch regex check in email services that blocks non-empirical or unrecognized corporate addresses before Microsoft Graph API invocation.
 
 ## BUG-067: Microsoft Graph API ErrorInvalidRecipients Rejection (HTTP 400) on Telegram Staged Outbox Dispatches
 **Detected:** 09/19/2026
