@@ -348,16 +348,215 @@ def answer_callback_query(callback_id, text=None):
     except Exception as e:
         print(f"[TELEGRAM] Error answering callback: {e}", flush=True)
 
-def get_main_menu_keyboard():
-    return {
-        "inline_keyboard": [
-            [{"text": "🏫 Collin College Hub", "callback_data": "cmd_collin"}, {"text": "📑 Send Collin Excel", "callback_data": "proposal_17"}],
-            [{"text": "📊 Active GC Bids", "callback_data": "cmd_bids"}, {"text": "📈 System Pulse", "callback_data": "cmd_status"}],
-            [{"text": "📬 Staged Approvals", "callback_data": "cmd_pending"}, {"text": "🎯 Texas CRM Leads", "callback_data": "cmd_leads"}],
-            [{"text": "📐 Scope Configurator", "callback_data": "cmd_scope_menu"}, {"text": "🌅 Morning Brief", "callback_data": "cmd_briefing"}],
-            [{"text": "🔍 Universal Search", "callback_data": "cmd_search_prompt"}, {"text": "🧠 Brain Sync", "callback_data": "cmd_sync"}]
-        ]
-    }
+# --- TELEGRAM BEHAVIORAL TELEMETRY & EXECUTIVE MIRRORING SYSTEM ---
+
+def log_telegram_event(user_id, chat_id, user_handle, user_full_name, user_role, event_type, payload_summary, detected_intent=None, friction_flag=False, latency_ms=0, mirrored=False):
+    """
+    Persists granular interaction telemetry into PostgreSQL 'TelegramEventStream'
+    and updates the active interaction metrics on 'UserBehavioralProfiles'.
+    """
+    try:
+        conn = get_db_connection()
+        with conn.cursor() as cur:
+            cur.execute("""
+                INSERT INTO "TelegramEventStream" (
+                    user_id, chat_id, user_handle, user_full_name, user_role,
+                    event_type, payload_summary, detected_intent, friction_flag,
+                    latency_ms, mirrored_to_ceo, created_at
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP)
+                RETURNING id;
+            """, (
+                user_id, chat_id, user_handle, user_full_name, user_role,
+                event_type, payload_summary[:1000] if payload_summary else "",
+                detected_intent, friction_flag, latency_ms, mirrored
+            ))
+            event_id = cur.fetchone()[0]
+
+            if user_id:
+                cur.execute("""
+                    UPDATE "UserBehavioralProfiles"
+                    SET total_interactions = total_interactions + 1,
+                        last_active_at = CURRENT_TIMESTAMP
+                    WHERE user_id = %s;
+                """, (user_id,))
+            conn.commit()
+        conn.close()
+        return event_id
+    except Exception as e:
+        print(f"[TELEMETRY ERROR] Failed to log Telegram event: {e}", flush=True)
+        return None
+
+def mirror_activity_to_ceo(actor_user, chat_id, from_user, event_type, payload_summary, detected_intent=None, friction_flag=False):
+    """
+    Real-time activity mirroring to CEO Humberto Dominguez (chat_id: 8564340073).
+    Mirrors all user actions, queries, button clicks, voice notes, and uploads
+    performed by any team member or incoming contact.
+    """
+    ceo_chat_id = int(os.getenv("TELEGRAM_CHAT_ID", "8564340073"))
+    
+    # Do not mirror CEO's own direct actions back to his own chat window
+    if str(chat_id) == str(ceo_chat_id):
+        return False
+
+    actor_name = actor_user.get("name") if actor_user else None
+    if not actor_name and from_user:
+        f_name = f"{from_user.get('first_name', '')} {from_user.get('last_name', '')}".strip()
+        actor_name = f_name or from_user.get("username") or f"Contact #{chat_id}"
+    elif not actor_name:
+        actor_name = f"Contact #{chat_id}"
+
+    actor_role = actor_user.get("role", "Unregistered") if actor_user else "External Contact"
+    handle_str = f"@{from_user.get('username')}" if from_user and from_user.get("username") else (f"@{actor_user.get('username')}" if actor_user and actor_user.get("username") else f"ID `{chat_id}`")
+    
+    timestamp = datetime.now().strftime("%I:%M:%S %p CST")
+    
+    alert_icon = "⚠️" if friction_flag else "📡"
+    mirror_msg = (
+        f"{alert_icon} *[TELEGRAM ACTIVITY MIRROR]*\n"
+        f"━━━━━━━━━━━━━━━━━━━━━\n"
+        f"👤 *Actor:* {actor_name} ({actor_role})\n"
+        f"🏷️ *Handle:* {handle_str} | Chat `{chat_id}`\n"
+        f"⚡ *Event:* `{event_type.upper()}`\n"
+        f"🎯 *Intent:* `{detected_intent or 'General'}`\n"
+        f"📝 *Details:* {payload_summary}\n"
+        f"⏰ *Time:* {timestamp}\n"
+        f"━━━━━━━━━━━━━━━━━━━━━\n"
+        f"🧠 _Logged to TelegramEventStream for behavioral profiling._"
+    )
+
+    try:
+        send_telegram_message(ceo_chat_id, mirror_msg)
+        return True
+    except Exception as e:
+        print(f"[MIRROR ERROR] Failed to mirror Telegram activity to CEO: {e}", flush=True)
+        return False
+
+def record_and_mirror_activity(chat_id, from_user, event_type, payload_summary, detected_intent=None, friction_flag=False, latency_ms=0):
+    """
+    Unified entry point to both record to database stream and mirror to CEO.
+    """
+    actor_user = get_user_for_chat(chat_id)
+    user_id = actor_user.get("user_id") if actor_user else None
+    user_handle = from_user.get("username") if from_user else (actor_user.get("username") if actor_user else None)
+    user_full_name = actor_user.get("name") if actor_user else (f"{from_user.get('first_name', '')} {from_user.get('last_name', '')}".strip() if from_user else None)
+    user_role = actor_user.get("role") if actor_user else "Unregistered"
+
+    # Mirror to CEO if not CEO himself
+    mirrored = mirror_activity_to_ceo(actor_user, chat_id, from_user, event_type, payload_summary, detected_intent, friction_flag)
+    
+    # Log to PostgreSQL
+    event_id = log_telegram_event(
+        user_id=user_id,
+        chat_id=chat_id,
+        user_handle=user_handle,
+        user_full_name=user_full_name,
+        user_role=user_role,
+        event_type=event_type,
+        payload_summary=payload_summary,
+        detected_intent=detected_intent,
+        friction_flag=friction_flag,
+        latency_ms=latency_ms,
+        mirrored=mirrored
+    )
+    return event_id
+
+def handle_cmd_mirror(chat_id, arg=""):
+    """Displays real-time mirroring telemetry and team activity feed."""
+    ceo_chat_id = int(os.getenv("TELEGRAM_CHAT_ID", "8564340073"))
+    conn = get_db_connection()
+    stats = {}
+    recent = []
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("""
+                SELECT COUNT(*) as total_events,
+                       COUNT(CASE WHEN mirrored_to_ceo THEN 1 END) as total_mirrored,
+                       COUNT(CASE WHEN created_at >= CURRENT_DATE THEN 1 END) as today_events
+                FROM "TelegramEventStream";
+            """)
+            stats = cur.fetchone() or {}
+            cur.execute("""
+                SELECT user_full_name, user_role, event_type, payload_summary, created_at
+                FROM "TelegramEventStream"
+                WHERE chat_id != %s
+                ORDER BY created_at DESC
+                LIMIT 5;
+            """, (ceo_chat_id,))
+            recent = cur.fetchall()
+        conn.close()
+    except Exception as e:
+        print(f"[MIRROR STATUS ERROR] {e}", flush=True)
+
+    report = (
+        f"📡 *[EXECUTIVE TELEGRAM MIRROR STATUS]*\n"
+        f"━━━━━━━━━━━━━━━━━━━━━\n"
+        f"👑 *Executive Target:* Chat ID `{ceo_chat_id}` (Active & Armed)\n"
+        f"📊 *Stream Telemetry:* {stats.get('total_events', 0)} total events ({stats.get('today_events', 0)} today)\n"
+        f"🪞 *Activity Mirrored to CEO:* {stats.get('total_mirrored', 0)} events\n"
+        f"━━━━━━━━━━━━━━━━━━━━━\n"
+        f"*Recent Mirrored Team Activities:*\n"
+    )
+    if recent:
+        for r in recent:
+            t = r['created_at'].strftime('%I:%M %p') if r.get('created_at') else '--'
+            report += f"• `{t}` *{r.get('user_full_name') or 'User'}* ({r.get('user_role', 'Team')}): {r.get('payload_summary', '')[:50]}\n"
+    else:
+        report += "• _No external user activities logged yet today._\n"
+
+    send_telegram_message(chat_id, report)
+
+def handle_cmd_behavioral_insights(chat_id):
+    """Synthesizes and displays live behavioral profiles for team members."""
+    send_telegram_chat_action(chat_id, "typing")
+    try:
+        from scripts.telegram_behavioral_engine import analyze_all_user_behaviors
+        profiles = analyze_all_user_behaviors()
+        
+        msg = "🧠 *[SIGMAFIDELITY™ USER BEHAVIORAL PROFILES]*\n━━━━━━━━━━━━━━━━━━━━━\n"
+        for p in profiles:
+            msg += f"👤 *{p['full_name']}* (`{p['role']}`)\n"
+            msg += f"📊 *Total Events:* {p['total_events']}\n"
+            msg += f"📝 *Insight:* {p['qualitative_summary']}\n"
+            if p.get('friction_summary') and 'Zero' not in p['friction_summary'] and 'Heuristic' not in p['friction_summary']:
+                msg += f"⚠️ *Friction:* {p['friction_summary']}\n"
+            msg += "─────────────────────\n"
+        
+        send_telegram_message(chat_id, msg)
+    except Exception as e:
+        send_telegram_message(chat_id, f"⚠️ Error generating behavioral insights: {e}")
+
+def get_main_menu_keyboard(chat_id=None):
+    custom_rows = []
+    if chat_id:
+        try:
+            conn = get_db_connection()
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute('SELECT adaptive_preferences FROM "UserBehavioralProfiles" WHERE chat_id = %s;', (chat_id,))
+                prof = cur.fetchone()
+                if prof and prof.get("adaptive_preferences"):
+                    rec_btns = prof["adaptive_preferences"].get("recommended_home_buttons", [])
+                    if rec_btns:
+                        row = []
+                        for b in rec_btns[:4]:
+                            row.append({"text": f"⭐ {b['text']}", "callback_data": b['callback_data']})
+                            if len(row) == 2:
+                                custom_rows.append(row)
+                                row = []
+                        if row:
+                            custom_rows.append(row)
+            conn.close()
+        except Exception:
+            pass
+
+    default_keyboard = [
+        [{"text": "🏫 Collin College Hub", "callback_data": "cmd_collin"}, {"text": "📑 Send Collin Excel", "callback_data": "proposal_17"}],
+        [{"text": "📊 Active GC Bids", "callback_data": "cmd_bids"}, {"text": "📈 System Pulse", "callback_data": "cmd_status"}],
+        [{"text": "📬 Staged Approvals", "callback_data": "cmd_pending"}, {"text": "🎯 Texas CRM Leads", "callback_data": "cmd_leads"}],
+        [{"text": "📐 Scope Configurator", "callback_data": "cmd_scope_menu"}, {"text": "🌅 Morning Brief", "callback_data": "cmd_briefing"}],
+        [{"text": "🧠 Behavioral Insights", "callback_data": "cmd_behavior"}, {"text": "📡 Mirror Status", "callback_data": "cmd_mirror"}],
+        [{"text": "🔍 Universal Search", "callback_data": "cmd_search_prompt"}, {"text": "🧠 Brain Sync", "callback_data": "cmd_sync"}]
+    ]
+    return {"inline_keyboard": custom_rows + default_keyboard}
 
 def clean_html_content(html_text):
     if not html_text:
@@ -666,21 +865,25 @@ def analyze_photo_with_gemini(image_bytes, caption=""):
 
 
 def analyze_text_with_gemini(text, chat_id):
-    """Conversational field intelligence for CEO Humberto Dominguez on Telegram."""
+    """Conversational field intelligence for team members on Telegram."""
     if not GEMINI_API_KEY:
         return "⚠️ GEMINI_API_KEY not configured.", None
 
     send_telegram_chat_action(chat_id, "typing")
 
+    actor_user = get_user_for_chat(chat_id)
+    actor_name = actor_user.get("name", "CEO Humberto Dominguez") if actor_user else "Team Member"
+    actor_role = actor_user.get("role", "Executive") if actor_user else "Team Member"
+
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
     system_prompt = (
         "You are George, Lead Autonomous Systems Architect, Senior Estimator, Senior ISO 9001 Auditor, and Certified Lean Six Sigma Master Black Belt for HWB Cleaning Services LLC.\n"
-        "You are conversing directly in real-time with CEO Humberto Dominguez via Telegram during mobile operations and facility walkthroughs.\n\n"
+        f"You are conversing directly in real-time with {actor_name} ({actor_role}) via Telegram during mobile operations and facility walkthroughs.\n\n"
         f"{COLLIN_COLLEGE_CONTEXT}\n\n"
         "OPERATIONAL RULES:\n"
         "1. Strictly maintain a professional, authoritative tone. Use everyday words, bold headers, bullet points, and emojis suitable for mobile reading.\n"
-        "2. If Humberto asks questions about Collin College, pricing lines 41-48, staffing hours (904 hrs/wk), equipment, square footages, or janitorial math, provide exact, surgically specific figures.\n"
-        "3. If Humberto gives an operational directive, include an optional JSON block at the very start of your response:\n"
+        f"2. Tailor your responses to {actor_name}'s role ({actor_role}). For executives, provide exact financial figures, margins, and operational approvals. For operators, provide clear workflows, candidate details, and task schedules.\n"
+        "3. If the user gives an operational directive, include an optional JSON block at the very start of your response:\n"
         "```json\n"
         "{\n"
         '  "intent": "create_calendar_event" | "draft_email" | "send_proposal" | "conversational",\n'
@@ -691,13 +894,13 @@ def analyze_text_with_gemini(text, chat_id):
         '  "bid_id": 17\n'
         "}\n"
         "```\n"
-        "4. Follow the JSON block with your crisp, high-impact executive response to Humberto."
+        f"4. Follow the JSON block with your crisp, high-impact operational response to {actor_name}."
     )
 
     payload = {
         "contents": [{
             "parts": [
-                {"text": f"{system_prompt}\n\nCEO Humberto Dominguez says:\n\"{text}\""}
+                {"text": f"{system_prompt}\n\n{actor_name} ({actor_role}) says:\n\"{text}\""}
             ]
         }]
     }
@@ -770,6 +973,25 @@ def handle_text_conversation(text, chat_id):
         conn.close()
     except Exception as db_e:
         print(f"[TELEGRAM] Warning logging to sigma_kb: {db_e}", flush=True)
+
+    # Mirror George's reply to the CEO if talking to another team member
+    ceo_chat_id = int(os.getenv("TELEGRAM_CHAT_ID", "8564340073"))
+    if str(chat_id) != str(ceo_chat_id):
+        actor_user = get_user_for_chat(chat_id)
+        actor_name = actor_user.get("name", "Team Member") if actor_user else f"Contact {chat_id}"
+        actor_role = actor_user.get("role", "Operations") if actor_user else "Unregistered"
+        mirror_reply = (
+            f"🤖 *[GEORGE REPLY MIRROR]*\n"
+            f"━━━━━━━━━━━━━━━━━━━━━\n"
+            f"👤 *Replying to:* {actor_name} ({actor_role})\n"
+            f"💬 *Their Query:* \"{text}\"\n"
+            f"🏛️ *George Response:*\n{clean_reply[:500]}\n"
+            f"━━━━━━━━━━━━━━━━━━━━━"
+        )
+        try:
+            send_telegram_message(ceo_chat_id, mirror_reply)
+        except Exception:
+            pass
 
     # Deliver message with interactive buttons
     buttons = [
@@ -2232,16 +2454,33 @@ def process_callback_query(callback_query):
     chat = message.get("chat", {})
     chat_id = chat.get("id")
     data = callback_query.get("data", "")
+    from_user = callback_query.get("from", {})
 
     if not is_chat_authorized(chat_id):
         answer_callback_query(query_id, "Unauthorized")
+        record_and_mirror_activity(chat_id, from_user, "unauthorized_callback", f"Unauthorized button attempt: `{data}`", friction_flag=True)
         return
 
     print(f"[TELEGRAM] Callback received: '{data}' from {chat_id}", flush=True)
 
+    # Real-time Telemetry & Mirroring
+    record_and_mirror_activity(
+        chat_id=chat_id,
+        from_user=from_user,
+        event_type="callback_button",
+        payload_summary=f"Tapped button action: `{data}`",
+        detected_intent=data.split('_')[0] if '_' in data else data
+    )
+
     if data == "cmd_collin":
         answer_callback_query(query_id)
         handle_cmd_collin(chat_id)
+    elif data in ["cmd_behavior", "cmd_insights"]:
+        answer_callback_query(query_id, "Synthesizing behavioral insights...")
+        handle_cmd_behavioral_insights(chat_id)
+    elif data == "cmd_mirror":
+        answer_callback_query(query_id)
+        handle_cmd_mirror(chat_id)
     elif data == "collin_buildings":
         answer_callback_query(query_id)
         handle_collin_buildings(chat_id)
@@ -2358,6 +2597,8 @@ def process_message(message):
     auth_user = get_user_for_chat(chat_id)
     text = message.get("text", "").strip()
 
+    from_user = message.get("from", {})
+
     # Check for Forwarded Messages (Effortless User & Group ID Detection)
     forward_from = message.get("forward_from")
     forward_from_chat = message.get("forward_from_chat")
@@ -2369,6 +2610,7 @@ def process_message(message):
         f_last = forward_from.get("last_name", "")
         f_name = f"{f_first} {f_last}".strip() or "Telegram User"
         f_user_handle = f"@{forward_from.get('username')}" if forward_from.get("username") else "No username"
+        record_and_mirror_activity(chat_id, from_user, "forwarded_message", f"Forwarded user detected: {f_name} ({f_user_handle}, ID {f_id})", detected_intent="user_forward")
         msg = (
             f"🔍 *Detected User from Forwarded Message!*\n"
             f"━━━━━━━━━━━━━━━━━━━━━\n"
@@ -2390,6 +2632,7 @@ def process_message(message):
     if forward_from_chat:
         f_id = forward_from_chat.get("id")
         f_title = forward_from_chat.get("title", "Group")
+        record_and_mirror_activity(chat_id, from_user, "forwarded_group", f"Forwarded group detected: {f_title} (ID {f_id})", detected_intent="group_forward")
         msg = (
             f"🏢 *Detected Group/Channel from Forward!*\n"
             f"━━━━━━━━━━━━━━━━━━━━━\n"
@@ -2402,6 +2645,7 @@ def process_message(message):
         return
 
     if forward_sender_name:
+        record_and_mirror_activity(chat_id, from_user, "forwarded_private", f"Forwarded from private sender: {forward_sender_name}", detected_intent="private_forward")
         msg = (
             f"🔒 *Forwarded Message Received from:* {forward_sender_name}\n"
             f"━━━━━━━━━━━━━━━━━━━━━\n"
@@ -2413,7 +2657,7 @@ def process_message(message):
 
     if not auth_user:
         chat_type = chat.get("type", "private")
-        from_user = message.get("from", {})
+        record_and_mirror_activity(chat_id, from_user, "unregistered_contact", f"Incoming text from unlinked account: \"{text}\"", friction_flag=True, detected_intent="onboarding")
 
         if chat_type in ["group", "supergroup"]:
             chat_title = chat.get("title", "Group")
@@ -2440,6 +2684,7 @@ def process_message(message):
     # Check for Voice Directives (Frontier 3)
     voice = message.get("voice") or message.get("audio")
     if voice:
+        record_and_mirror_activity(chat_id, from_user, "voice_directive", f"Voice directive duration: {voice.get('duration', 0)}s", detected_intent="multimodal_voice")
         handle_voice_message(voice, chat_id)
         return
 
@@ -2447,6 +2692,7 @@ def process_message(message):
     photos = message.get("photo")
     if photos:
         caption = message.get("caption", "")
+        record_and_mirror_activity(chat_id, from_user, "photo_upload", f"Photo uploaded with caption: '{caption}'", detected_intent="computer_vision")
         handle_photo_message(photos, chat_id, caption=caption)
         return
 
@@ -2457,6 +2703,7 @@ def process_message(message):
         file_id = document.get("file_id")
         mime_type = document.get("mime_type", "")
         caption = message.get("caption", "")
+        record_and_mirror_activity(chat_id, from_user, "document_upload", f"Document uploaded: '{file_name}' ({mime_type})", detected_intent="document_ingestion")
         if file_id:
             if any(file_name.lower().endswith(ext) for ext in [".jpg", ".jpeg", ".png", ".heic"]) or "image" in mime_type.lower():
                 handle_photo_message([{"file_id": file_id}], chat_id, caption=caption)
@@ -2471,6 +2718,7 @@ def process_message(message):
     if location:
         lat = location.get("latitude")
         lon = location.get("longitude")
+        record_and_mirror_activity(chat_id, from_user, "location_share", f"GPS Pin shared: lat={lat}, lon={lon}", detected_intent="walkthrough_gps")
         handle_location_message(lat, lon, chat_id)
         return
 
@@ -2481,8 +2729,14 @@ def process_message(message):
         cmd = parts[0].lower()
         arg = parts[1].strip() if len(parts) > 1 else ""
 
+        record_and_mirror_activity(chat_id, from_user, "command", f"Command: {cmd} {arg}".strip(), detected_intent=cmd.replace('/', ''))
+
         if cmd in ["/start", "/help"]:
             handle_cmd_help(chat_id)
+        elif cmd in ["/mirror"]:
+            handle_cmd_mirror(chat_id, arg)
+        elif cmd in ["/insights", "/behavior"]:
+            handle_cmd_behavioral_insights(chat_id)
         elif cmd in ["/collin", "/walkthrough", "/frisco"]:
             handle_cmd_collin(chat_id)
         elif cmd in ["/bldg", "/building", "/locate"]:
@@ -2545,11 +2799,12 @@ def process_message(message):
         elif cmd in ["/users", "/team"]:
             handle_cmd_users(chat_id)
         else:
-            send_telegram_message(chat_id, f"❓ Unknown command: `{cmd}`. Tap an option below or send `/help`.", reply_markup=get_main_menu_keyboard())
+            send_telegram_message(chat_id, f"❓ Unknown command: `{cmd}`. Tap an option below or send `/help`.", reply_markup=get_main_menu_keyboard(chat_id))
         return
 
     # Frontier 7: Full Two-Way Conversational Intelligence with George
     if text:
+        record_and_mirror_activity(chat_id, from_user, "text_chat", f"Query: \"{text}\"", detected_intent="conversational")
         active_bldg = get_active_walkthrough_building()
         if active_bldg and (text.lower().startswith("note:") or text.lower().startswith("log:") or text.lower().startswith("#") or any(w in text.lower() for w in ["facilities", "clean", "glass", "door", "floor", "key", "restroom", "dispenser", "dave"])):
             log_walkthrough_finding(f"{active_bldg['name']} (Code {active_bldg['code']})", text)
