@@ -2323,6 +2323,29 @@ def process_callback_query(callback_query):
         handle_scope_adjust_ui(chat_id, bid_id, message_id=message_id, toggle_clinical=True)
     elif data.startswith("lead_"):
         handle_cmd_lead_detail(chat_id, int(data.replace("lead_", "")), callback_id=query_id)
+    elif data.startswith("link_user_"):
+        parts = data.split("_")
+        if len(parts) >= 4:
+            target_username = parts[2]
+            target_chat_id = parts[3]
+            try:
+                conn = get_db_connection()
+                with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                    cur.execute('UPDATE "Users" SET telegram_chat_id = %s WHERE LOWER(username) = LOWER(%s) RETURNING id, full_name, role;', (str(target_chat_id), target_username))
+                    updated = cur.fetchone()
+                    conn.commit()
+                conn.close()
+                if updated:
+                    answer_callback_query(query_id, "User linked successfully!")
+                    send_telegram_message(chat_id, f"✅ Successfully linked *{updated['full_name']}* ({updated['role']}) to Telegram Chat ID `{target_chat_id}`!\n\nShe is now live and will receive real-time operational notifications.")
+                    try:
+                        send_telegram_message(int(target_chat_id), f"✅ *Account Activated!*\nCEO Humberto Dominguez has connected your Telegram account to HWB Operations Control. Welcome aboard, {updated['full_name']}!")
+                    except Exception:
+                        pass
+                else:
+                    answer_callback_query(query_id, f"User {target_username} not found.")
+            except Exception as e:
+                answer_callback_query(query_id, f"Error: {e}")
     else:
         answer_callback_query(query_id, "Acknowledged")
 
@@ -2335,8 +2358,74 @@ def process_message(message):
     auth_user = get_user_for_chat(chat_id)
     text = message.get("text", "").strip()
 
+    # Check for Forwarded Messages (Effortless User & Group ID Detection)
+    forward_from = message.get("forward_from")
+    forward_from_chat = message.get("forward_from_chat")
+    forward_sender_name = message.get("forward_sender_name")
+
+    if forward_from:
+        f_id = forward_from.get("id")
+        f_first = forward_from.get("first_name", "")
+        f_last = forward_from.get("last_name", "")
+        f_name = f"{f_first} {f_last}".strip() or "Telegram User"
+        f_user_handle = f"@{forward_from.get('username')}" if forward_from.get("username") else "No username"
+        msg = (
+            f"🔍 *Detected User from Forwarded Message!*\n"
+            f"━━━━━━━━━━━━━━━━━━━━━\n"
+            f"👤 *Name:* {f_name}\n"
+            f"🏷️ *Handle:* {f_user_handle}\n"
+            f"🆔 *Telegram Chat ID:* `{f_id}`\n"
+            f"━━━━━━━━━━━━━━━━━━━━━\n"
+            f"Tap below to instantly link this Chat ID:"
+        )
+        markup = {
+            "inline_keyboard": [
+                [{"text": f"✅ Link to Mirna Rondinella", "callback_data": f"link_user_mrondinella_{f_id}"}],
+                [{"text": "👥 View All Users", "callback_data": "cmd_users"}]
+            ]
+        }
+        send_telegram_message(chat_id, msg, reply_markup=markup)
+        return
+
+    if forward_from_chat:
+        f_id = forward_from_chat.get("id")
+        f_title = forward_from_chat.get("title", "Group")
+        msg = (
+            f"🏢 *Detected Group/Channel from Forward!*\n"
+            f"━━━━━━━━━━━━━━━━━━━━━\n"
+            f"🏷️ *Title:* {f_title}\n"
+            f"🆔 *Telegram Chat ID:* `{f_id}`\n"
+            f"━━━━━━━━━━━━━━━━━━━━━\n"
+            f"This group's Telegram ID is `{f_id}`."
+        )
+        send_telegram_message(chat_id, msg)
+        return
+
+    if forward_sender_name:
+        msg = (
+            f"🔒 *Forwarded Message Received from:* {forward_sender_name}\n"
+            f"━━━━━━━━━━━━━━━━━━━━━\n"
+            f"This user has Telegram Forward Privacy enabled, which hides their numerical ID when messages are forwarded.\n\n"
+            f"👉 Solution: Please ask {forward_sender_name} to search for **@Georgebytesbot** directly and tap **Start**!"
+        )
+        send_telegram_message(chat_id, msg)
+        return
+
     if not auth_user:
+        chat_type = chat.get("type", "private")
         from_user = message.get("from", {})
+
+        if chat_type in ["group", "supergroup"]:
+            chat_title = chat.get("title", "Group")
+            msg = (
+                f"👋 *Hello {chat_title}!* I am George, your autonomous operations assistant.\n\n"
+                f"🏢 *Group Chat ID:* `{chat_id}`\n\n"
+                f"To register this group for real-time alerts, CEO Humberto Dominguez can link it using:\n"
+                f"`/linkuser hdominguez {chat_id}`"
+            )
+            send_telegram_message(chat_id, msg)
+            return
+
         if text.startswith("/register"):
             handle_user_registration(chat_id, text, from_user)
             return
