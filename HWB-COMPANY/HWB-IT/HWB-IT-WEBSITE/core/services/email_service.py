@@ -13,14 +13,14 @@ from flask import current_app
 def get_official_logo_bytes():
     """Locates and returns the official HWB logo bytes (the modern brand mark used on the current webpage)."""
     candidates = [
+        "/app/static/img/logo_signature.png",
+        "/app/static/logo_signature.png",
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "static", "img", "logo_signature.png")),
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "static", "logo_signature.png")),
         "/app/static/logo_standard.png",
-        "/app/static/img/logo_standard_transparent.png",
         os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "static", "logo_standard.png")),
-        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "static", "img", "logo_standard_transparent.png")),
-        "/home/humbertoed/gemini_projects/HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/static/logo_standard.png",
-        "/home/humbertoed/gemini_projects/HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/static/img/logo_standard_transparent.png",
-        "/app/static/img/hwb_commercial_cleaning_logo.png",
-        "/app/static/hwb_commercial_cleaning_logo.png"
+        "/home/humbertoed/gemini_projects/HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/static/img/logo_signature.png",
+        "/home/humbertoed/gemini_projects/HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/static/logo_standard.png"
     ]
     for path in candidates:
         if os.path.exists(path):
@@ -32,6 +32,7 @@ def build_executive_signature_html(officer="humberto"):
     """
     Builds the standardized corporate signature block per HWB-COM-001 v2.1.0.
     Uses cid:hwblogo for zero-block rendering in Microsoft Outlook and mobile clients.
+    Engineered with explicit HTML attributes (width/height) to prevent Microsoft Word (MSO) engine stretching.
     """
     if str(officer).lower().startswith("m"):
         name = "Mirna Rondinella"
@@ -45,12 +46,12 @@ def build_executive_signature_html(officer="humberto"):
         phone_direct = "(214) 799-5935"
 
     return f"""
-    <table cellpadding="0" cellspacing="0" border="0" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 13px; color: #1e293b; margin-top: 24px; border-top: 2px solid #0f172a; padding-top: 16px;">
+    <table width="560" cellpadding="0" cellspacing="0" border="0" style="width: 560px; max-width: 560px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 13px; color: #1e293b; margin-top: 24px; border-top: 2px solid #0f172a; padding-top: 16px; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
         <tr>
-            <td style="vertical-align: middle; padding-right: 20px; border-right: 1.5px solid #cbd5e1;">
-                <img src="cid:hwblogo" alt="HWB Cleaning Services LLC" style="width: 125px; height: auto; display: block; border: 0;" />
+            <td width="150" style="width: 150px; vertical-align: middle; padding-right: 20px; border-right: 1.5px solid #cbd5e1;">
+                <img src="cid:hwblogo" width="135" height="53" alt="HWB Cleaning Services LLC" style="width: 135px; height: 53px; display: block; border: 0; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic;" />
             </td>
-            <td style="vertical-align: top; padding-left: 20px; line-height: 1.45;">
+            <td width="410" style="width: 410px; vertical-align: top; padding-left: 20px; line-height: 1.45;">
                 <div style="font-size: 15px; font-weight: 700; color: #0f172a;">{name}</div>
                 <div style="font-size: 12px; font-weight: 600; color: #2563eb; text-transform: uppercase; letter-spacing: 0.04em;">{title}</div>
                 <div style="margin-top: 6px; font-size: 12px; color: #475569;">

@@ -30,6 +30,10 @@ legacy_clone/
 
 # Mandatory Site Assets (Whitelisted)
 !static/hwb-cleaning-services-llc-logo-plano-tx.png
+!static/logo_standard.png
+!static/img/logo_standard_transparent.png
+!static/img/logo_signature.png
+!static/img/logo_signature_transparent.png
 !static/gen_ai_staging/*.png
 !static/gen_ai_staging/*.jpg
 
