@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSI 01 74 23 - Subcontractor Bid Form | HWB Cleaning Services LLC</title>
+    <style>
+        @media print {
+            @page {
+                size: letter portrait;
+                margin: 0.4in;
+            }
+            body {
+                background: #ffffff !important;
+                color: #0f172a !important;
+                font-size: 8.5pt !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .page-break {
+                page-break-before: always !important;
+                break-before: page !important;
+            }
+            .bid-card {
+                box-shadow: none !important;
+                border: none !important;
+                padding: 0 !important;
+                width: 100% !important;
+            }
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f1f5f9;
+            color: #1e293b;
+            margin: 0;
+            padding: 20px;
+            font-size: 9.5pt;
+            line-height: 1.45;
+        }
+
+        .bid-card {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+            padding: 36px 44px;
+            box-sizing: border-box;
+            border: 1px solid #e2e8f0;
+        }
+
+        /* 🏛️ MASTHEAD */
+        .header-masthead {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2.5px solid #0f172a;
+            padding-bottom: 14px;
+            margin-bottom: 20px;
+        }
+        .company-title {
+            font-size: 16pt;
+            font-weight: 800;
+            color: #0f172a;
+            letter-spacing: 0.5px;
+            margin: 0;
+        }
+        .company-subtitle {
+            font-size: 9pt;
+            font-weight: 600;
+            color: #2563eb;
+            margin-top: 2px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+        .division-tag {
+            background: #0f172a;
+            color: #ffffff;
+            padding: 5px 12px;
+            font-size: 8.5pt;
+            font-weight: 700;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            text-align: right;
+        }
+
+        /* 📋 DOCUMENT CONTROL GRID */
+        .meta-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 14px 18px;
+            margin-bottom: 20px;
+        }
+        .meta-item {
+            display: flex;
+            font-size: 9pt;
+        }
+        .meta-label {
+            font-weight: 700;
+            color: #475569;
+            width: 130px;
+            flex-shrink: 0;
+        }
+        .meta-value {
+            font-weight: 500;
+            color: #0f172a;
+        }
+        .meta-value strong {
+            color: #1e3a8a;
+        }
+
+        /* 📌 SECTION HEADERS */
+        .section-header {
+            background: #1e3a8a;
+            color: #ffffff;
+            font-size: 9.5pt;
+            font-weight: 700;
+            padding: 6px 12px;
+            border-radius: 4px;
+            margin: 20px 0 10px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* 📊 TABLES */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 16px;
+            font-size: 9pt;
+        }
+        th, td {
+            border: 1px solid #cbd5e1;
+            padding: 7px 10px;
+            vertical-align: middle;
+        }
+        th {
+            background: #0f172a;
+            color: #ffffff;
+            font-weight: 700;
+            text-align: left;
+            font-size: 8.5pt;
+            text-transform: uppercase;
+        }
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .row-subtle { background: #f8fafc; }
+        .row-total {
+            background: #f1f5f9;
+            font-weight: 800;
+            border-top: 1.5px solid #0f172a;
+            border-bottom: 2.5px double #0f172a;
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 7px;
+            font-size: 7.5pt;
+            font-weight: 700;
+            border-radius: 3px;
+            text-transform: uppercase;
+        }
+        .badge-base { background: #dbeafe; color: #1e40af; }
+        .badge-alt { background: #fef3c7; color: #92400e; }
+
+        /* 🛡️ INCLUSIONS & EXCLUSIONS */
+        .scope-split {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        .scope-box {
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 12px 16px;
+            background: #ffffff;
+        }
+        .scope-box-inc { border-top: 3px solid #16a34a; }
+        .scope-box-exc { border-top: 3px solid #dc2626; }
+        .scope-box h4 {
+            margin: 0 0 8px 0;
+            font-size: 9pt;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .scope-box-inc h4 { color: #15803d; }
+        .scope-box-exc h4 { color: #b91c1c; }
+        .scope-box ul {
+            margin: 0;
+            padding-left: 18px;
+            font-size: 8.5pt;
+            color: #334155;
+        }
+        .scope-box li {
+            margin-bottom: 4px;
+        }
+
+        /* 📜 COMPLIANCE & TERMS */
+        .compliance-banner {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 6px;
+            padding: 10px 14px;
+            font-size: 8.5pt;
+            color: #166534;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .compliance-pills {
+            display: flex;
+            gap: 8px;
+        }
+        .pill {
+            background: #ffffff;
+            border: 1px solid #86efac;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 7.5pt;
+        }
+
+        .terms-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            font-size: 8.5pt;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 20px;
+        }
+        .terms-item strong {
+            display: block;
+            color: #0f172a;
+            font-size: 8.5pt;
+            margin-bottom: 2px;
+        }
+
+        /* ✍️ SIGNATURE BLOCK */
+        .sig-block {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            border-top: 1.5px solid #cbd5e1;
+            padding-top: 18px;
+            margin-top: 24px;
+        }
+        .sig-col {
+            font-size: 8.5pt;
+        }
+        .sig-line {
+            border-bottom: 1px solid #0f172a;
+            height: 32px;
+            margin-bottom: 6px;
+        }
+        .sig-meta {
+            color: #64748b;
+            font-size: 8pt;
+        }
+
+        .prequal-btn-bar {
+            background: #0f172a;
+            color: #ffffff;
+            padding: 12px 18px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+        }
+        .prequal-link {
+            background: #2563eb;
+            color: #ffffff;
+            text-decoration: none;
+            padding: 6px 14px;
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 8.5pt;
+        }
+    </style>
+</head>
+<body>
+
+<div class="bid-card">
+
+    <!-- MASTHEAD -->
+    <div class="header-masthead">
+        <div>
+            <h1 class="company-title">HWB CLEANING SERVICES LLC</h1>
+            <div class="company-subtitle">Commercial Construction Division • Arlington, TX</div>
+        </div>
+        <div class="division-tag">
+            CSI MasterFormat® 01 74 23<br>
+            <span style="font-size: 7.5pt; font-weight: 400; opacity: 0.9;">Final Cleaning Subcontract Bid</span>
+        </div>
+    </div>
+
+    <!-- DOCUMENT CONTROL & PROJECT INFO -->
+    <div class="meta-grid">
+        <div class="meta-item">
+            <span class="meta-label">General Contractor:</span>
+            <span class="meta-value">{{ gc_name | default('[General Contractor Name]') }}</span>
+        </div>
+        <div class="meta-item">
+            <span class="meta-label">Proposal Date:</span>
+            <span class="meta-value">{{ bid_date | default('September 04, 2026') }}</span>
+        </div>
+        <div class="meta-item">
+            <span class="meta-label">Project Name:</span>
+            <span class="meta-value"><strong>{{ project_name | default('[Project Name / Bid Package]') }}</strong></span>
+        </div>
+        <div class="meta-item">
+            <span class="meta-label">Bid Ref / Package ID:</span>
+            <span class="meta-value">{{ bid_ref | default('HWB-GC-2026-001') }}</span>
+        </div>
+        <div class="meta-item">
+            <span class="meta-label">Project Location:</span>
+            <span class="meta-value">{{ project_location | default('[City, State / Site Address]') }}</span>
+        </div>
+        <div class="meta-item">
+            <span class="meta-label">Addenda Acknowledged:</span>
+            <span class="meta-value"><strong>{{ addenda_ack | default('Addenda #1 through #3 (All Current)') }}</strong></span>
+        </div>
+        <div class="meta-item">
+            <span class="meta-label">Estimator / Contact:</span>
+            <span class="meta-value">{{ estimator_name | default('[Lead Estimator Name]') }}</span>
+        </div>
+        <div class="meta-item">
+            <span class="meta-label">Operations Base:</span>
+            <span class="meta-value">Arlington, TX (Dedicated DFW Mobilization)</span>
+        </div>
+    </div>
+
+    <!-- SECTION 1.0: ITEMIZED SCOPE OF WORK & PRICING -->
+    <div class="section-header">
+        <span>1.0 CSI 01 74 23 ITEMIZED SCOPE OF WORK & PRICING BREAKDOWN</span>
+        <span style="font-size: 8pt; font-weight: 500;">Turnover-Ready Subcontract Pricing</span>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 8%;">Item</th>
+                <th style="width: 34%;">Phase / Scope Description</th>
+                <th style="width: 14%;" class="text-center">Area / Unit</th>
+                <th style="width: 14%;" class="text-center">Rate Basis</th>
+                <th style="width: 15%;" class="text-right">Total Investment</th>
+                <th style="width: 15%;" class="text-center">Schedule Tier</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="text-center">1.1</td>
+                <td>
+                    <strong>Phase 2: Master Final Clean (Primary Turnover)</strong><br>
+                    <span style="font-size: 8pt; color: #475569;">Detailed vertical & horizontal wipe-down, sanitization of millwork, frames, door tracks, hardware, baseboards, switch plates, and fixture detailing.</span>
+                </td>
+                <td class="text-center">{{ cleanable_sf | default('18,500') }} SF</td>
+                <td class="text-center">{{ final_rate | default('$0.24 / SF') }}</td>
+                <td class="text-right"><strong>{{ final_total | default('$4,440.00') }}</strong></td>
+                <td class="text-center"><span class="badge badge-base">Base Scope</span></td>
+            </tr>
+            <tr class="row-subtle">
+                <td class="text-center">1.2</td>
+                <td>
+                    <strong>Glazing & Storefront Glass Detailing</strong><br>
+                    <span style="font-size: 8pt; color: #475569;">Complete interior & exterior wash, razor scraping of stickers/tape, paint splatter removal, and frame vacuuming up to 25 ft height.</span>
+                </td>
+                <td class="text-center">{{ glass_panels | default('48 Panels / Both Sides') }}</td>
+                <td class="text-center">{{ glass_rate | default('$18.00 / Panel') }}</td>
+                <td class="text-right"><strong>{{ glass_total | default('$864.00') }}</strong></td>
+                <td class="text-center"><span class="badge badge-base">Base Scope</span></td>
+            </tr>
+            <tr>
+                <td class="text-center">1.3</td>
+                <td>
+                    <strong>Restroom Deep De-Scale & Fixture Detailing</strong><br>
+                    <span style="font-size: 8pt; color: #475569;">Commercial acid descaling, plumbing sticker removal, porcelain polish, tile/grout scrub, stainless partition polish, and mirror detailing.</span>
+                </td>
+                <td class="text-center">{{ fixture_count | default('14 Fixtures') }}</td>
+                <td class="text-center">{{ fixture_rate | default('$35.00 / Fixture') }}</td>
+                <td class="text-right"><strong>{{ fixture_total | default('$490.00') }}</strong></td>
+                <td class="text-center"><span class="badge badge-base">Base Scope</span></td>
+            </tr>
+            <tr class="row-subtle">
+                <td class="text-center">1.4</td>
+                <td>
+                    <strong>Resilient Flooring Machine Scrub & Seal (VCT/LVT)</strong><br>
+                    <span style="font-size: 8pt; color: #475569;">Rotary machine scrub with neutral degreaser, edge extraction, and application of 3 coats commercial high-solids finish (where specified).</span>
+                </td>
+                <td class="text-center">{{ vct_sf | default('3,200') }} SF</td>
+                <td class="text-center">{{ vct_rate | default('$0.28 / SF') }}</td>
+                <td class="text-right"><strong>{{ vct_total | default('$896.00') }}</strong></td>
+                <td class="text-center"><span class="badge badge-base">Base Scope</span></td>
+            </tr>
+            <tr>
+                <td class="text-center">1.5</td>
+                <td>
+                    <strong>Sealed / Polished Concrete Mechanical Auto-Scrub</strong><br>
+                    <span style="font-size: 8pt; color: #475569;">Rotary auto-scrubber with white polishing pad, slurry vacuuming, blade scraping of drywall/paint droppings, and microfiber burnish.</span>
+                </td>
+                <td class="text-center">{{ conc_sf | default('15,300') }} SF</td>
+                <td class="text-center">{{ conc_rate | default('$0.18 / SF') }}</td>
+                <td class="text-right"><strong>{{ conc_total | default('$2,754.00') }}</strong></td>
+                <td class="text-center"><span class="badge badge-base">Base Scope</span></td>
+            </tr>
+            <tr class="row-subtle">
+                <td class="text-center">1.6</td>
+                <td>
+                    <strong>Phase 3: Pre-CO Touch-Up Clean (Fluff-and-Buff)</strong><br>
+                    <span style="font-size: 8pt; color: #475569;">Post-punch list re-walk immediately prior to Owner Certificate of Occupancy walk-through. Detailing trade footprints and airborne settlement.</span>
+                </td>
+                <td class="text-center">{{ cleanable_sf | default('18,500') }} SF</td>
+                <td class="text-center">{{ touch_rate | default('$0.06 / SF') }}</td>
+                <td class="text-right"><strong>{{ touch_total | default('$1,110.00') }}</strong></td>
+                <td class="text-center"><span class="badge badge-alt">Included Alternate</span></td>
+            </tr>
+            <tr class="row-total">
+                <td colspan="4" class="text-center">TOTAL BASE BID SUBCONTRACT INVESTMENT (CSI 01 74 23)</td>
+                <td class="text-right" style="color: #1e3a8a; font-size: 11pt;">{{ grand_total | default('$10,554.00') }}</td>
+                <td class="text-center" style="font-size: 8pt; color: #15803d;">Turnkey Fixed Sum</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- SECTION 2.0: POKA-YOKE SCOPE CLARIFICATIONS -->
+    <div class="section-header">
+        <span>2.0 SCOPE BOUNDARIES: INCLUSIONS & EXCLUSIONS (POKA-YOKE COMPLIANCE)</span>
+        <span style="font-size: 8pt; font-weight: 500;">Zero Scope Ambiguity</span>
+    </div>
+
+    <div class="scope-split">
+        <div class="scope-box scope-box-inc">
+            <h4>✓ Scope Inclusions (By HWB Cleaning Services)</h4>
+            <ul>
+                <li>Removal of all stickers, protective plastic films, tape residue, and silicone smears from glazing, frames, and millwork.</li>
+                <li>Interior and exterior storefront glass up to 25 ft height (ground / ladder / rolling scaffold reach).</li>
+                <li>Vacuuming and wipe-down of all window tracks, sills, and aluminum mullions.</li>
+                <li>Rotary brush scrub and slurry extraction on ceramic, porcelain, and quarry tile grout lines.</li>
+                <li>Acid wash and descaling of all new plumbing porcelain and chrome fixtures.</li>
+                <li>Detailing interior and exterior of all breakroom casework, vanity counters, and shelving.</li>
+                <li>All cleaning chemicals, industrial equipment, HEPA vacuums, rotary scrubbers, and PPE provided by HWB.</li>
+                <li>Trash hauled directly to on-site general contractor dumpster.</li>
+            </ul>
+        </div>
+        <div class="scope-box scope-box-exc">
+            <h4>✕ Scope Exclusions (By General Contractor / Others)</h4>
+            <ul>
+                <li>On-site dumpster / disposal container (to be provided by GC within 100 ft of building perimeter).</li>
+                <li>Continuous operational electrical power and pressurized water on site during cleaning operations.</li>
+                <li>Exterior window cleaning exceeding 2 stories requiring swing-stage or boom lifts (available via add-on quote).</li>
+                <li>Hazardous material abatement (asbestos, lead, biohazard, or mold remediation).</li>
+                <li>Pressure washing of exterior site concrete / parking lots (available as separate mobilization).</li>
+                <li>Repair of pre-existing scratch damage, etching, or gouges caused by prior construction trades.</li>
+                <li>Re-cleaning caused by subsequent trade traffic after HWB punch-list sign-off (billed at $45.00/man-hour T&M).</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- SECTION 3.0: REGULATORY, INSURANCE & SAFETY ATTESTATION -->
+    <div class="compliance-banner">
+        <div>
+            <strong>🛡️ Comprehensive Commercial Insurance & Safety Standing</strong><br>
+            HWB maintains standard tier-1 commercial construction limits with blanket endorsements.
+        </div>
+        <div class="compliance-pills">
+            <span class="pill">$2,000,000 General Liability</span>
+            <span class="pill">$1,000,000 Auto Liability</span>
+            <span class="pill">$1,000,000 Workers' Comp</span>
+            <span class="pill">EMR: 0.82 (Zero Lost Time)</span>
+        </div>
+    </div>
+
+    <!-- SECTION 4.0: SUBCONTRACT & BILLING TERMS -->
+    <div class="terms-grid">
+        <div class="terms-item">
+            <strong>Payment & Retainage Terms:</strong>
+            Standard monthly progress billing (AIA G702/G703). 5%–10% retainage released within 30 days of final clean turnover.
+        </div>
+        <div class="terms-item">
+            <strong>Acceptance & Validity:</strong>
+            This proposal is valid for 60 calendar days. Mobilization requires 5 business days advance notice from Superintendent.
+        </div>
+        <div class="terms-item">
+            <strong>Superintendent Sign-Off:</strong>
+            Work verified via formal punch-walk with Site Superintendent upon completion with signed field acceptance.
+        </div>
+    </div>
+
+    <!-- PREQUALIFICATION VAULT CALLOUT -->
+    <div class="prequal-btn-bar no-print">
+        <div>
+            <strong style="font-size: 9.5pt;">Need our Complete Prequalification Binder?</strong><br>
+            <span style="font-size: 8pt; opacity: 0.85;">Download ACORD 25 COI, 2026 W-9, Written Safety Program (IIPP), and Trade References in 1 click.</span>
+        </div>
+        <div>
+            <a href="/prequal" target="_blank" class="prequal-link">📥 Access 1-Click Prequal Vault</a>
+        </div>
+    </div>
+
+    <!-- SIGNATURE ACCEPTANCE BLOCK -->
+    <div class="sig-block">
+        <div class="sig-col">
+            <strong>SUBMITTED BY: HWB CLEANING SERVICES LLC</strong>
+            <div class="sig-line"></div>
+            <div><strong>Humberto Dominguez, CEO</strong></div>
+            <div class="sig-meta">Phone: (817) 600-6467 | Email: hdominguez@hwbcleaning.com</div>
+            <div class="sig-meta">Operations: Arlington, TX | Office: Fort Worth, TX</div>
+        </div>
+        <div class="sig-col">
+            <strong>ACCEPTED & AUTHORIZED BY: GENERAL CONTRACTOR</strong>
+            <div class="sig-line"></div>
+            <div><strong>Authorized Representative Signature / Date</strong></div>
+            <div class="sig-meta">Printed Name: ___________________________________________</div>
+            <div class="sig-meta">Title: _____________________ PO / Subcontract #: ____________</div>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

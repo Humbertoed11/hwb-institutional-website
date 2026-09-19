@@ -8,7 +8,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-9.3</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">8.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">9.1.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">9.3 (Disaster Recovery & Safety Snapshots)</span></div>
     </div>
@@ -24,11 +24,11 @@
             <tbody>
                 <tr><td><strong>Document Title</strong></td><td><strong>Disaster Recovery & Shadow Snapshots SOP</strong></td></tr>
                 <tr><td><strong>Document ID</strong></td><td>HWB-QMS-9.3</td></tr>
-                <tr><td><strong>Version</strong></td><td>8.0.0</td></tr>
+                <tr><td><strong>Version</strong></td><td>9.1.0</td></tr>
                 <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
                 <tr><td><strong>Author</strong></td><td>George (Systems Architect)</td></tr>
                 <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
-                <tr><td><strong>Date</strong></td><td>05-22-2026</td></tr>
+                <tr><td><strong>Date</strong></td><td>09-11-2026</td></tr>
                 <tr><td><strong>ISO 9001 Clause</strong></td><td>9.3</td></tr>
             </tbody>
         </table>
@@ -85,6 +85,85 @@
             <li>If database files are corrupted or missing, restore them using the latest `.sql` database copy inside our database backup folder.</li>
         </ol>
 
+        <h3>5.3 Live Database Spam Purging Procedure</h3>
+        <p>When live database queues are contaminated with spam entries (e.g., from the <code>@wshu.net</code> bot campaign), execute these steps to clean the records safely:</p>
+        <ol>
+            <li>Establish SCM connectivity to the Azure private network environment using Bearer Token authorization from the Azure CLI.</li>
+            <li>Upload a secure database runner script via Kudu's VFS API.</li>
+            <li>Execute a transaction-level rollback purge of the target records:
+                <pre><code>BEGIN;
+DELETE FROM "Leads" WHERE email LIKE '%@wshu.net';
+DELETE FROM "PendingOutbox" WHERE email LIKE '%@wshu.net';
+COMMIT;</code></pre>
+            </li>
+            <li>Verify that row counts match expectation and that outbox queues are clean.</li>
+        </ol>
+
+        <h3>5.4 Telegram & Telegra.ph Mobile Recovery Channel</h3>
+        <p>To broadcast system walkthroughs and disaster recovery alerts directly to executive mobile devices when standard channels are down:</p>
+        <ol>
+            <li>Verify that <code>TELEGRAM_BOT_TOKEN</code> and <code>TELEGRAM_CHAT_ID</code> are configured within the host <code>.env</code> file.</li>
+            <li>Convert the target markdown log/walkthrough into anonymous block-level HTML and publish it via the Telegra.ph API.</li>
+            <li>Use the Telegram bot client to dispatch the newly generated article link to the CEO's active device:
+                <pre><code>python3 scripts/test_telegraph.py</code></pre>
+            </li>
+        </ol>
+
+        <h3>5.5 Troubleshooting the "Ghost Volume" Glitch (BUG-033)</h3>
+        <p>If the web manual returns a success code but the document content is missing, you are likely experiencing a volume sync lag. Execute the forced engine reset:</p>
+        <ol>
+            <li>Run: <code>docker restart hwb_compliance_engine</code></li>
+            <li>Verify visibility by refreshing the <code>/manual</code> page.</li>
+        </ol>
+
+        <h3>5.6 BuildingConnected Authentication Profile & Token Recovery</h3>
+        <p>To restore automated planroom downloading after a system reboot or session crash:</p>
+        <ol>
+            <li>Check if the encrypted browser session tokens exist at <code>~/.config/hwb_buildingconnected_profile/auth_state.json</code>.</li>
+            <li>If tokens are missing or expired (HTTP 401/403 redirects), execute the desktop interactive login setup:
+                <pre><code>python3 scripts/bc_auth_setup.py</code></pre>
+            </li>
+            <li>Verify authentication by running a dry-run headless download test:
+                <pre><code>python3 scripts/bc_plan_downloader.py --help</code></pre>
+            </li>
+        </ol>
+
+        <h3>5.7 Host Task Runner & Worker Daemon Restoration</h3>
+        <p>If automated background actions from Telegram (such as auto-takeoff or portal submissions) stall in <code>PENDING</code> status:</p>
+        <ol>
+            <li>Check if the host runner is active: <code>ps aux | grep host_task_runner</code>.</li>
+            <li>If stopped, relaunch the daemon in background mode:
+                <pre><code>nohup python3 scripts/host_task_runner.py > logs/host_task_runner.log 2>&1 &</code></pre>
+            </li>
+            <li>Verify container worker health: <code>docker logs --tail 20 hwb_agent_worker</code>. If unresponsive, restart the worker container: <code>docker restart hwb_agent_worker</code>.</li>
+        </ol>
+
+        <h3>5.8 Estimating Proposals & Blueprint Project Archive Recovery</h3>
+        <p>All downloaded drawing packages and computed Excel proposals are stored under <code>HWB-COMPANY/HWB-ESTIMATING/</code>:</p>
+        <ul>
+            <li><strong>Drawing Packages:</strong> Located in <code>HWB-COMPANY/HWB-ESTIMATING/PROJECTS/</code> organized by project slug.</li>
+            <li><strong>Master Proposals:</strong> Located in <code>HWB-COMPANY/HWB-ESTIMATING/PROPOSALS/</code> and mirrored to <code>HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/static/proposals/</code>.</li>
+            <li><strong>Database Traceability:</strong> Every bid record in the PostgreSQL table <code>"ConstructionBids"</code> contains the exact cleanable square footage, base bid valuation, and empirical discrepancy tags.</li>
+        </ul>
+
+        <h3>5.9 M&A Owner Mining Daemon Supervision & Restoration</h3>
+        <p>The autonomous Texas Daycare Owner Mining Daemon (<code>scripts/mine_tier1_2_owners.py</code>) continuously enriches independent Tier 1 and Tier 2 targets with verified executive owners, facility directors, and official websites:</p>
+        <ol>
+            <li><strong>Process Health Check:</strong> Check if the mining daemon is running:
+                <pre><code>ps aux | grep mine_tier1_2_owners</code></pre>
+            </li>
+            <li><strong>Inspecting Audit Telemetry:</strong> Review real-time batch extraction progress:
+                <pre><code>tail -f HWB-COMPANY/HWB-IT/HWB-IT-SYSTEM-LOGS/owner_mining.log</code></pre>
+            </li>
+            <li><strong>Daemon Restart Protocol:</strong> If interrupted or stopped following a server maintenance cycle, restart the continuous runner:
+                <pre><code>python3 scripts/mine_tier1_2_owners.py --batch-size 50 --continuous</code></pre>
+            </li>
+            <li><strong>Database Integrity Audit:</strong> Verify verification statuses in PostgreSQL:
+                <pre><code>SELECT owner_verification_status, count(*) FROM "Leads" WHERE is_commercial = TRUE GROUP BY owner_verification_status;</code></pre>
+                Confirm that targets transition between <code>EMPIRICALLY_VERIFIED</code>, <code>DIRECTOR_CONFIRMED_OWNER_PENDING</code>, and <code>AUDITED_PENDING_PROOF</code>.
+            </li>
+        </ol>
+
         <h2>6.0 Verification (Zero-Defect Check)</h2>
         <p>After a restore operation, the team must verify that the website is fully healthy:</p>
         <ul>
@@ -117,6 +196,24 @@
                     <td>05-22-2026</td>
                     <td>George</td>
                     <td>First modernized HTML release. Fused legacy 9.3, 9.3.1, and 9.3.2 into a single unified standard in Everyday Words. Added Sentinel manual terminal commands. Approved by CEO.</td>
+                </tr>
+                <tr>
+                    <td>8.1.0</td>
+                    <td>06-01-2026</td>
+                    <td>George</td>
+                    <td>Added automated database spam purging, Telegram/Telegra.ph mobile broadcasting recovery, and BUG-033 Ghost Volume troubleshooting procedures. Approved by CEO.</td>
+                </tr>
+                <tr>
+                    <td>9.0.0</td>
+                    <td>09-04-2026</td>
+                    <td>George</td>
+                    <td>Codified BuildingConnected persistent browser authentication profile recovery, host task runner daemon supervision, and HWB-ESTIMATING project proposal archives. Approved by CEO.</td>
+                </tr>
+                <tr>
+                    <td>9.1.0</td>
+                    <td>09-11-2026</td>
+                    <td>George</td>
+                    <td>Added Section 5.9 M&A Owner Mining Daemon Supervision, process monitoring, log inspection, and database verification status audits. Approved by CEO.</td>
                 </tr>
             </tbody>
         </table>

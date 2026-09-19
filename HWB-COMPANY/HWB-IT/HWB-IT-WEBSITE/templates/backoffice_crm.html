@@ -47,7 +47,7 @@
  <td><strong>{{ lead.company_name }}</strong></td>
  <td style="font-size: 0.75rem; color: var(--bo-accent); font-weight: 700;">{{ lead.industry }}</td>
  <td style="font-size: 0.75rem;">{{ lead.contact_person_name }}</td>
- <td style="color: var(--text-secondary);">{{ lead.phone }}</td>
+ <td style="color: var(--text-secondary);">{{ lead.phone|format_phone }}</td>
  <td style="font-size: 0.75rem; color: var(--text-secondary);">{{ lead.address }}</td>
  <td>{{ lead.city }}</td>
  <td>{{ lead.zipcode }}</td>

@@ -1,0 +1,133 @@
+<!-- 
+    SigmaFidelity™ Institutional SOP (HTML Version 3.0)
+    Standard: HWB-QMS-1.0
+    Author: George (Systems Architect)
+    Approved By: Humberto Dominguez (CEO)
+-->
+<div class="sop-card">
+    <!-- 0.0 DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-7.6</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">8.1 & 8.5.1 (Operational Control)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <table>
+            <thead>
+                <tr>
+                    <th><strong>Document Control</strong></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td><strong>Document Title</strong></td><td><strong>Backend Architecture and Enterprise Standards SOP</strong></td></tr>
+                <tr><td><strong>Document ID</strong></td><td>HWB-QMS-7.6</td></tr>
+                <tr><td><strong>Version</strong></td><td>3.0.0</td></tr>
+                <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
+                <tr><td><strong>Author</strong></td><td>George (Systems Architect)</td></tr>
+                <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
+                <tr><td><strong>Date</strong></td><td>09-18-2026</td></tr>
+                <tr><td><strong>ISO 9001 Clause</strong></td><td>8.1 Operational Planning & 8.5.1 Service Provision</td></tr>
+            </tbody>
+        </table>
+
+        <hr />
+
+        <h1>Standard Operating Procedure: <strong>Backend Architecture and Enterprise Standards</strong></h1>
+
+        <h2>1.0 Purpose</h2>
+        <p>This procedure establishes the <strong>Zero-Hotfix Enterprise Mandate</strong> across all software systems at HWB Cleaning Services LLC. The purpose is to eliminate quick patches, temporary workarounds, and on-the-fly code. Every engineering change must be designed to enterprise standards, protecting company data and preventing defects from recurring.</p>
+
+        <h2>2.0 Scope</h2>
+        <p>This standard applies to all software engineers, autonomous AI agents, technical contractors, and administrative systems operating within the HWB ecosystem, including the web application, background workers, databases, and APIs.</p>
+
+        <h2>3.0 The Zero-Hotfix Enterprise Mandate</h2>
+        <div class="callout callout-note">
+            <strong>The Institutional Law</strong>
+            <p>From September 18, 2026 onward, only enterprise-level solutions are permitted in the HWB codebase. Ad-hoc hotfixes, local workaround scripts, and quick patches are strictly prohibited.</p>
+        </div>
+        <p>When an issue or security gap is discovered, developers must find the root cause in the architecture and fix the system as a whole, rather than patching a single screen or endpoint.</p>
+
+        <h2>4.0 The 6 Pillars of Enterprise Architecture</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Pillar</th>
+                    <th>Core Requirement</th>
+                    <th>Industrial Purpose</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>1. Root Cause Engineering</strong></td>
+                    <td>Solve systemic causes, never mask symptoms with local <code>if</code> statements.</td>
+                    <td>Prevents identical bugs from emerging in adjacent modules.</td>
+                </tr>
+                <tr>
+                    <td><strong>2. Centralized Gateway</strong></td>
+                    <td>Enforce access control at the request gatekeeper (<code>@app.before_request</code>).</td>
+                    <td>Fail-safe default: new endpoints are secure by default.</td>
+                </tr>
+                <tr>
+                    <td><strong>3. Declarative Contracts</strong></td>
+                    <td>Use explicit decorators like <code>@roles_required</code> on endpoints.</td>
+                    <td>Code is readable, self-documenting, and impossible to bypass.</td>
+                </tr>
+                <tr>
+                    <td><strong>4. Defense-in-Depth</strong></td>
+                    <td>Triple protection: Database checks + Backend interceptors + Clean UI rendering.</td>
+                    <td>Even if a user bypasses the UI, backend locks stop unauthorized requests.</td>
+                </tr>
+                <tr>
+                    <td><strong>5. Automated Testing</strong></td>
+                    <td>Mandatory test scripts verifying both authorized and blocked paths.</td>
+                    <td>Proves code works before deployment with zero guesswork.</td>
+                </tr>
+                <tr>
+                    <td><strong>6. Immutable Audit Trail</strong></td>
+                    <td>Log every access violation to <code>GlobalActivities</code> in PostgreSQL.</td>
+                    <td>Provides full accountability and traceability for ISO audits.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>5.0 Role-Based Access Control (RBAC) Quarantine Standard</h2>
+        <p>User access is partitioned into distinct operational zones based on verified roles:</p>
+        <ul>
+            <li><strong>Executive & Admin:</strong> Global system access, Warchest financial controls, user provisioning, and strategy modules.</li>
+            <li><strong>Manager:</strong> Operations oversight, accounts, and SOP manual. Restriced from user provisioning and financial Warchest.</li>
+            <li><strong>Operator:</strong> Daily cleaning dispatch, work orders, and commercial lead pipeline.</li>
+            <li><strong>Sales:</strong> Strict isolation to the <strong>Field Sales Desk</strong> (<code>/admin/sales-desk</code>), assigned facility queue, 1-tap dialer/maps, and walkthrough quoting. All bulk data exports and executive screens are blocked with HTTP 403.</li>
+        </ul>
+
+        <h2>6.0 Verification (Zero-Defect Check)</h2>
+        <ul>
+            <li>All admin routes must declare explicit role requirements using <code>@roles_required</code>.</li>
+            <li>The centralized gatekeeper (<code>@app.before_request</code>) must automatically intercept out-of-bounds requests.</li>
+            <li>Templates must receive permissions through <code>nav_access</code> context engine without scattered manual role checks.</li>
+            <li>Automated test suite (<code>scratch/test_enterprise_rbac.py</code>) must pass with 100% success before any code release.</li>
+        </ul>
+
+        <h2>7.0 Revision History</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Version</th>
+                    <th>Description of Change</th>
+                    <th>Approved By</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>09-18-2026</td>
+                    <td>3.0.0</td>
+                    <td>Codified the Zero-Hotfix Enterprise Mandate and Centralized RBAC Gateway Architecture following CEO decree.</td>
+                    <td>Humberto Dominguez, CEO</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

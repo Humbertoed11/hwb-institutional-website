@@ -1,0 +1,666 @@
+import openpyxl
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from openpyxl.worksheet.pagebreak import Break
+import shutil
+
+wb_path = "HWB-COMPANY/HWB-QUOTES/BOSANNA-COLLIN-COLLEGE/COLLIN-COLLEGE-FRISCO-BID-MODEL.xlsx"
+wb = openpyxl.load_workbook(wb_path)
+
+# Colors & Visual Hierarchy
+navy_dark = "0F172A"
+navy_blue = "1E3A8A"
+soft_blue = "DBEAFE"
+light_blue = "EFF6FF"
+gold_amber = "D97706"
+light_amber = "FEF3C7"
+bg_gray = "F8FAFC"
+border_gray = "CBD5E1"
+border_amber = "F59E0B"
+card_border_blue = "3B82F6"
+card_border_emerald = "059669"
+fill_emerald_sub = "ECFDF5"
+font_emerald = Font(name="Calibri", size=9.5, bold=True, color="065F46")
+
+# Typographic Standards
+font_title = Font(name="Calibri", size=14, bold=True, color="FFFFFF")
+font_subtitle = Font(name="Calibri", size=10, bold=True, color="FFFFFF")
+font_sec_hdr = Font(name="Calibri", size=11, bold=True, color="FFFFFF")
+font_tbl_hdr = Font(name="Calibri", size=10, bold=True, color="1E3A8A")
+font_kpi_label = Font(name="Calibri", size=9, bold=True, color="1E3A8A")
+font_kpi_val = Font(name="Calibri", size=13, bold=True, color="0F172A")
+font_kpi_sub = Font(name="Calibri", size=8.5, italic=True, color="475569")
+font_bold = Font(name="Calibri", size=9.5, bold=True, color="0F172A")
+font_regular = Font(name="Calibri", size=9.5, color="1E293B")
+font_italic = Font(name="Calibri", size=9.5, italic=True, color="334155")
+font_alert_text = Font(name="Calibri", size=9.5, bold=True, color="92400E")
+font_sub_item = Font(name="Calibri", size=9.0, italic=True, color="334155")
+
+fill_navy_title = PatternFill(start_color=navy_dark, end_color=navy_dark, fill_type="solid")
+fill_navy_sub = PatternFill(start_color="334155", end_color="334155", fill_type="solid")
+fill_sec_hdr = PatternFill(start_color=navy_blue, end_color=navy_blue, fill_type="solid")
+fill_tbl_hdr = PatternFill(start_color=soft_blue, end_color=soft_blue, fill_type="solid")
+fill_kpi_card = PatternFill(start_color="F1F5F9", end_color="F1F5F9", fill_type="solid")
+fill_kpi_highlight = PatternFill(start_color="E0E7FF", end_color="E0E7FF", fill_type="solid")
+fill_amber_sub = PatternFill(start_color=light_amber, end_color=light_amber, fill_type="solid")
+fill_soft_blue_banner = PatternFill(start_color=light_blue, end_color=light_blue, fill_type="solid")
+fill_sub_item = PatternFill(start_color="F8FAFC", end_color="F8FAFC", fill_type="solid")
+fill_equality_row = PatternFill(start_color="ECFDF5", end_color="ECFDF5", fill_type="solid")
+
+thin_border = Border(
+    left=Side(style="thin", color=border_gray),
+    right=Side(style="thin", color=border_gray),
+    top=Side(style="thin", color=border_gray),
+    bottom=Side(style="thin", color=border_gray)
+)
+
+card_border = Border(
+    left=Side(style="medium", color=card_border_blue),
+    right=Side(style="medium", color=card_border_blue),
+    top=Side(style="medium", color=card_border_blue),
+    bottom=Side(style="medium", color=card_border_blue)
+)
+
+double_bottom_border = Border(
+    left=Side(style="thin", color=border_gray),
+    right=Side(style="thin", color=border_gray),
+    top=Side(style="thin", color=border_gray),
+    bottom=Side(style="double", color=navy_blue)
+)
+
+# -------------------------------------------------------------
+# CREATE OR REPLACE EXECUTIVE_BRIEF SHEET AT INDEX 0
+# -------------------------------------------------------------
+if "Executive_Brief" in wb.sheetnames:
+    wb.remove(wb["Executive_Brief"])
+
+ws = wb.create_sheet("Executive_Brief", 0)
+ws.views.sheetView[0].showGridLines = True
+
+# Title Block
+ws.cell(row=1, column=1, value="HWB CLEANING SERVICES LLC & BOSANNA LLC — EXECUTIVE OPERATIONAL BRIEF")
+ws.merge_cells("A1:H1")
+ws.cell(row=1, column=1).font = font_title
+ws.cell(row=1, column=1).fill = fill_navy_title
+ws.cell(row=1, column=1).alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+ws.row_dimensions[1].height = 30.0
+
+ws.cell(row=2, column=1, value="COLLIN COLLEGE FRISCO CAMPUS (10 BUILDINGS / 478,418 SQ. FT.) — $1.50M DISTRICT CAP TURNKEY HYBRID MODEL")
+ws.merge_cells("A2:H2")
+ws.cell(row=2, column=1).font = font_subtitle
+ws.cell(row=2, column=1).fill = fill_navy_sub
+ws.cell(row=2, column=1).alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+ws.row_dimensions[2].height = 24.0
+
+# Spacer Row 3
+ws.row_dimensions[3].height = 12.0
+ws.merge_cells("A3:H3")
+ws.cell(row=3, column=1, value="")
+
+# Project Metadata Block
+meta = [
+    ("Client / Prime Contractor:", "Bosanna LLC (Attn: Angelica Hudgins)", "School / Project Name:", "Collin College Frisco Campus Custodial Replacement"),
+    ("Approved Purchasing Program:", "Texas TIPS Purchasing Cooperative (#260102 / #260103)", "Target Contract Length:", "3-Year Base Contract + 2 One-Year Extensions"),
+    ("Operating Delivery Model:", "Turnkey Hybrid Model (Bosanna: Labor/Supplies | HWB: Fleet/Ops)", "Statutory W-2 Compliance:", "District T&C § 153 & § 243 (100% Statutory W-2 Mandate)"),
+    ("Total Campus Cleanable Area:", "478,418 Cleanable Sq. Ft. (10 Buildings + Garages)", "Weekly Labor Hours:", "904.0 Hours / Week (22.6 FTEs per District SOW § 134–136)")
+]
+
+for idx, (k1, v1, k2, v2) in enumerate(meta, start=4):
+    ws.cell(row=idx, column=1, value=k1).font = font_bold
+    ws.cell(row=idx, column=1).alignment = Alignment(horizontal="left", vertical="center", indent=1, wrap_text=True)
+    ws.cell(row=idx, column=1).border = thin_border
+    
+    ws.cell(row=idx, column=2, value=v1).font = font_regular
+    ws.cell(row=idx, column=2).alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
+    ws.merge_cells(start_row=idx, start_column=2, end_row=idx, end_column=4)
+    for c in range(2, 5):
+        ws.cell(row=idx, column=c).border = thin_border
+
+    ws.cell(row=idx, column=5, value=k2).font = font_bold
+    ws.cell(row=idx, column=5).alignment = Alignment(horizontal="left", vertical="center", indent=1, wrap_text=True)
+    ws.cell(row=idx, column=5).border = thin_border
+    
+    ws.cell(row=idx, column=6, value=v2).font = font_regular
+    ws.cell(row=idx, column=6).alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
+    ws.merge_cells(start_row=idx, start_column=6, end_row=idx, end_column=8)
+    for c in range(6, 9):
+        ws.cell(row=idx, column=c).border = thin_border
+    ws.row_dimensions[idx].height = 22.0
+
+# Spacer Row 8
+ws.row_dimensions[8].height = 12.0
+ws.merge_cells("A8:H8")
+ws.cell(row=8, column=1, value="")
+
+# -------------------------------------------------------------
+# EXECUTIVE KPI SUMMARY CARDS (ROWS 9 TO 11)
+# -------------------------------------------------------------
+# Showing Side-by-Side: Bosanna Prime Profit vs HWB Only Profit (Equal 50/50 Split)
+kpis = [
+    (1, 2, "COLLIN COLLEGE TIPS PO (CAP)", "$125,000.00 / Mo", "$1,500,000.00 / Yr ($3.135 / Cleanable SF / Yr)", fill_kpi_card),
+    (3, 4, "BOSANNA PRIME PROFIT", "$15,550.10 / Mo", "$186,601.20 / Yr (50.0% Distributable Net Profit)", fill_kpi_highlight),
+    (5, 6, "HWB ONLY PROFIT (NET EBITDA)", "$15,550.10 / Mo", "$186,601.20 / Yr (50.0% Distributable Net Profit)", fill_kpi_highlight),
+    (7, 8, "HWB MANAGEMENT & FLEET FEE", "$22,500.10 / Mo", "$6,950 Fleet Hard Cost + $15,550 Net Profit", fill_kpi_card)
+]
+
+ws.row_dimensions[9].height = 20.0
+ws.row_dimensions[10].height = 32.0
+ws.row_dimensions[11].height = 24.0
+
+for c_start, c_end, label, val, subtext, fill_type in kpis:
+    # Label Row
+    ws.cell(row=9, column=c_start, value=label).font = font_kpi_label
+    ws.merge_cells(start_row=9, start_column=c_start, end_row=9, end_column=c_end)
+    ws.cell(row=9, column=c_start).alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    
+    # Value Row (Big Font)
+    ws.cell(row=10, column=c_start, value=val).font = font_kpi_val
+    ws.merge_cells(start_row=10, start_column=c_start, end_row=10, end_column=c_end)
+    ws.cell(row=10, column=c_start).alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    
+    # Subtext Row
+    ws.cell(row=11, column=c_start, value=subtext).font = font_kpi_sub
+    ws.merge_cells(start_row=11, start_column=c_start, end_row=11, end_column=c_end)
+    ws.cell(row=11, column=c_start).alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    
+    # Borders & Fills
+    for r in range(9, 12):
+        for c in range(c_start, c_end + 1):
+            cl = ws.cell(row=r, column=c)
+            cl.fill = fill_type
+            top_b = Side(style="medium", color=card_border_blue) if r == 9 else Side(style="thin", color=border_gray)
+            bot_b = Side(style="medium", color=card_border_blue) if r == 11 else Side(style="thin", color=border_gray)
+            left_b = Side(style="medium", color=card_border_blue) if c == c_start else Side(style="thin", color=border_gray)
+            right_b = Side(style="medium", color=card_border_blue) if c == c_end else Side(style="thin", color=border_gray)
+            cl.border = Border(top=top_b, bottom=bot_b, left=left_b, right=right_b)
+
+# Sub-Banner Row 12: Profit Equality Callout
+p_eq_text = (
+    "⚖️ 50/50 PROFIT EQUALITY AUDIT: Bosanna Prime Profit ($15,550.10/mo) = HWB Net Profit ($15,550.10/mo) | "
+    "Bosanna Delivered Cost: $109,449.90/mo | District TIPS PO: $125,000.00/mo ($1.50M Cap)"
+)
+ws.cell(row=12, column=1, value=p_eq_text)
+ws.merge_cells("A12:H12")
+ws.cell(row=12, column=1).font = font_alert_text
+ws.cell(row=12, column=1).fill = fill_amber_sub
+ws.cell(row=12, column=1).alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+for c in range(1, 9):
+    ws.cell(row=12, column=c).border = Border(
+        top=Side(style="thin", color=border_amber),
+        bottom=Side(style="thin", color=border_amber),
+        left=Side(style="thin", color=border_amber),
+        right=Side(style="thin", color=border_amber)
+    )
+ws.row_dimensions[12].height = 26.0
+
+# Spacer Row 13
+ws.row_dimensions[13].height = 12.0
+ws.merge_cells("A13:H13")
+ws.cell(row=13, column=1, value="")
+
+# -------------------------------------------------------------
+# SECTION 1.0: FINANCIAL ARCHITECTURE & COST ALLOCATION
+# -------------------------------------------------------------
+ws.cell(row=14, column=1, value="1.0 FINANCIAL ARCHITECTURE & COST ALLOCATION (CALIBRATED TO $1.50M DISTRICT CAP)")
+ws.merge_cells("A14:H14")
+ws.cell(row=14, column=1).font = font_sec_hdr
+ws.cell(row=14, column=1).fill = fill_sec_hdr
+ws.cell(row=14, column=1).alignment = Alignment(horizontal="left", vertical="center", indent=1, wrap_text=True)
+ws.row_dimensions[14].height = 28.0
+
+sec1_desc = (
+    "Calibrated to Collin College's $1,500,000.00 annual budget ceiling ($125,000.00/month), this Turnkey Hybrid Model divides duties cleanly: "
+    "Bosanna pays direct W-2 wages via staffing agency, wholesale supplies, and TIPS fee. HWB furnishes complete on-site supervision, an $80k+ commercial machinery fleet, "
+    "chemical dilution proportioners, and APPA Level 2 QA. HWB and Bosanna split all distributable net profit equally (50/50), delivering $186,601.20/yr to each partner."
+)
+ws.cell(row=15, column=1, value=sec1_desc)
+ws.merge_cells("A15:H15")
+ws.cell(row=15, column=1).font = font_italic
+ws.cell(row=15, column=1).fill = fill_soft_blue_banner
+ws.cell(row=15, column=1).alignment = Alignment(vertical="center", wrap_text=True)
+ws.row_dimensions[15].height = 46.0
+
+tbl1_headers = [
+    (1, "Budget Line Item"),
+    (2, "Paying Entity & Vendor"),
+    (3, "Scope Basis & Description"),
+    (4, "Billing Schedule"),
+    (5, "Monthly Amount ($)"),
+    (6, "Annual Commitment ($)"),
+    (7, "% of Total"),
+    (8, "Operational Governance & Protection")
+]
+for col_idx, h in tbl1_headers:
+    c = ws.cell(row=16, column=col_idx, value=h)
+    c.font = font_tbl_hdr
+    c.fill = fill_tbl_hdr
+    c.border = thin_border
+    c.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+ws.row_dimensions[16].height = 28.0
+
+# Table 1 Data: Featuring HWB Pure Net Operating Profit side-by-side with Bosanna Profit
+tbl1_data = [
+    ("1. Direct W-2 Cleaning Labor", "Bosanna LLC (via Staffing Agency)", "904.0 weekly hours (22.6 FTEs): $16.00/hr Cleaners, $22.00/hr Supervisors (SOW § 134–136)", "Monthly / Weekly Payroll", 78124.80, 937497.60, "=E17/$E$25", "100% compliant with District T&C § 153/243; covers all statutory taxes & workers' comp."),
+    ("2. Restroom Paper & Soap Supplies", "Bosanna LLC (Pollock / Imperial Dade)", "300+ cases/mo: Jumbo roll paper towels, 2-ply bath tissue, soap, liners, dispenser batteries", "Monthly Wholesale Invoice", 7575.00, 90900.00, "=E18/$E$25", "Direct manufacturer wholesale trade pricing; zero intermediate markups to Bosanna."),
+    ("3. TIPS Cooperative Admin Fee (1.0%)", "Bosanna LLC (to Region 8 ESC / TIPS)", "Statutory 1.0% administrative fee assessed by TIPS Cooperative on gross District billing", "Monthly TIPS Remittance", 1250.00, 15000.00, "=E19/$E$25", "Standard interlocal purchasing agreement compliance under TIPS Contracts #260102 / #260103."),
+    ("4. HWB Turnkey Management Fee", "Bosanna LLC (to HWB Cleaning)", "Commercial fleet lease, maintenance, chemical systems, biometric hardware, on-site leadership", "Fixed Monthly Billing", 22500.10, 270001.20, "=E20/$E$25", "Full equipment fleet, daily scheduling, 20-min penalty shield, and APPA Level 2 QA."),
+    ("  ↳ 4a. HWB Machinery Fleet & Ops Hard Costs", "HWB Cleaning Internal Allocation", "Commercial machinery fleet lease ($80k+), repairs, chemical proportioners, biometric clock, insurance", "Internal Operational Cost", 6950.00, 83400.00, "=E21/$E$25", "HWB absorbs 100% of equipment breakdown costs, parts replacement, and repair float at 0 debt to Bosanna."),
+    ("  ↳ 4b. HWB Pure Net Operating Profit (Net EBITDA)", "Retained by HWB Cleaning", "Pure net subcontractor operating margin after deducting all machinery, chemical, and operational costs", "Retained Monthly", 15550.10, 186601.20, "=E22/$E$25", "100% equal side-by-side with Bosanna Prime Profit (True 50/50 partnership net margin)."),
+    ("BOSANNA TOTAL DELIVERED COST", "Bosanna LLC Combined Out-of-Pocket", "Total direct operating cost required to fully execute the Collin College contract (Lines 1 + 2 + 3 + 4)", "Combined Monthly Basis", "=E17+E18+E19+E20", "=F17+F18+F19+F20", "=E23/$E$25", "Total operational baseline to deliver 10 buildings (87.6% of District billing)."),
+    ("5. Bosanna Prime Contractor Profit", "Retained by Bosanna LLC", "Pure net prime margin retained by Bosanna LLC on every monthly District billing cycle", "Retained Monthly", 15550.10, 186601.20, "=E24/$E$25", "Guaranteed six-figure prime profit ($186,601.20/yr) with zero boots on the ground and zero equipment debt."),
+    ("TOTAL BILLED TO COLLIN COLLEGE (DISTRICT CAP)", "Collin College Purchase Order (TIPS)", "Official TIPS Purchase Order billing to Collin County Community College District ($1.50M Cap)", "Monthly District Invoice", "=E23+E24", "=F23+F24", "=E25/$E$25", "TIPS Approved Cooperative Pricing ($3.135 / Cleanable Sq. Ft. / Year). Exactly $1.50M Cap."),
+    ("PROFIT EQUALITY COMPARISON AUDIT", "Bosanna Profit == HWB Profit", "Bosanna Prime Profit ($15,550.10/mo) vs. HWB Subcontractor Profit ($15,550.10/mo) Net Discrepancy", "Monthly Reconciliation", "=E24-E22", "=F24-F22", 0.0, "Zero Profit Discrepancy ($0.00) — 100% Symmetrical 50/50 Distributable Profit Allocation.")
+]
+
+row_heights_t1 = [42.0, 40.0, 38.0, 42.0, 38.0, 38.0, 36.0, 38.0, 38.0, 34.0]
+
+for idx, (r_data, h_val) in enumerate(zip(tbl1_data, row_heights_t1), start=17):
+    ws.row_dimensions[idx].height = h_val
+    for c_idx, val in enumerate(r_data, start=1):
+        cell = ws.cell(row=idx, column=c_idx, value=val)
+        cell.border = thin_border
+        cell.font = font_regular
+        
+        # Sub-item styling
+        if r_data[0].startswith("  ↳"):
+            cell.font = font_sub_item
+            cell.fill = fill_sub_item
+            
+        if c_idx in [1, 2]:
+            cell.alignment = Alignment(horizontal="left", vertical="center", indent=1, wrap_text=True)
+            if r_data[0] in ["BOSANNA TOTAL DELIVERED COST", "TOTAL BILLED TO COLLIN COLLEGE (DISTRICT CAP)", "PROFIT EQUALITY COMPARISON AUDIT"]:
+                cell.font = font_bold
+            elif r_data[0].startswith("  ↳"):
+                cell.font = font_sub_item
+        elif c_idx in [3, 4]:
+            cell.alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
+            if r_data[0] in ["BOSANNA TOTAL DELIVERED COST", "TOTAL BILLED TO COLLIN COLLEGE (DISTRICT CAP)", "PROFIT EQUALITY COMPARISON AUDIT"]:
+                cell.font = font_bold
+        elif c_idx in [5, 6]:
+            cell.alignment = Alignment(horizontal="right", vertical="center", wrap_text=True)
+            cell.number_format = "$#,##0.00"
+            if r_data[0] in ["BOSANNA TOTAL DELIVERED COST", "TOTAL BILLED TO COLLIN COLLEGE (DISTRICT CAP)", "PROFIT EQUALITY COMPARISON AUDIT"]:
+                cell.font = font_bold
+            elif r_data[0] == "5. Bosanna Prime Contractor Profit" or "4b." in r_data[0]:
+                cell.font = font_bold
+        elif c_idx == 7:
+            cell.alignment = Alignment(horizontal="right", vertical="center", wrap_text=True)
+            cell.number_format = "0.0%"
+            if r_data[0] in ["BOSANNA TOTAL DELIVERED COST", "TOTAL BILLED TO COLLIN COLLEGE (DISTRICT CAP)", "PROFIT EQUALITY COMPARISON AUDIT"]:
+                cell.font = font_bold
+        elif c_idx == 8:
+            cell.alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
+
+    if r_data[0] == "BOSANNA TOTAL DELIVERED COST":
+        for c in range(1, 9):
+            ws.cell(row=idx, column=c).fill = fill_tbl_hdr
+    elif r_data[0] == "TOTAL BILLED TO COLLIN COLLEGE (DISTRICT CAP)":
+        for c in range(1, 9):
+            ws.cell(row=idx, column=c).fill = fill_kpi_highlight
+            ws.cell(row=idx, column=c).border = double_bottom_border
+    elif r_data[0] == "PROFIT EQUALITY COMPARISON AUDIT":
+        for c in range(1, 9):
+            ws.cell(row=idx, column=c).fill = fill_equality_row
+            ws.cell(row=idx, column=c).font = font_emerald
+
+# Banner Row 27
+b1_text = (
+    "⚡ CASH RISK ELIMINATED & 50/50 PROFIT EQUALITY: Passing W-2 payroll and supplies to Bosanna cuts HWB's cash-float risk by 94%. "
+    "In return, Bosanna locks in $186,601.20 in annual prime profit with zero equipment debt. HWB earns an identical $186,601.20 net profit "
+    "after covering $6,950.00/mo in hard fleet and chemical infrastructure expenses."
+)
+ws.cell(row=27, column=1, value=b1_text)
+ws.merge_cells("A27:H27")
+ws.cell(row=27, column=1).font = font_alert_text
+ws.cell(row=27, column=1).fill = fill_amber_sub
+ws.cell(row=27, column=1).alignment = Alignment(vertical="center", indent=1, wrap_text=True)
+for c in range(1, 9):
+    ws.cell(row=27, column=c).border = Border(
+        top=Side(style="thin", color=border_amber),
+        bottom=Side(style="thin", color=border_amber),
+        left=Side(style="thin", color=border_amber),
+        right=Side(style="thin", color=border_amber)
+    )
+ws.row_dimensions[27].height = 46.0
+
+# Spacer Row 28
+ws.row_dimensions[28].height = 14.0
+ws.merge_cells("A28:H28")
+ws.cell(row=28, column=1, value="")
+
+# -------------------------------------------------------------
+# SECTION 2.0: OPERATIONAL RESPONSIBILITY MATRIX
+# -------------------------------------------------------------
+ws.cell(row=29, column=1, value="2.0 OPERATIONAL RESPONSIBILITY MATRIX (THE DIVISION OF LABOR)")
+ws.merge_cells("A29:H29")
+ws.cell(row=29, column=1).font = font_sec_hdr
+ws.cell(row=29, column=1).fill = fill_sec_hdr
+ws.cell(row=29, column=1).alignment = Alignment(horizontal="left", vertical="center", indent=1, wrap_text=True)
+ws.row_dimensions[29].height = 28.0
+
+sec2_desc = (
+    "Clear operational boundaries eliminate finger-pointing and guarantee flawless campus execution. Bosanna handles the prime contract, "
+    "staffing agency agreement, and supply trade billing from the back office. HWB Cleaning Services LLC provides the complete physical "
+    "operating machine: heavy machinery, daily shift supervision, chemical proportioning, and rapid emergency dispatch."
+)
+ws.cell(row=30, column=1, value=sec2_desc)
+ws.merge_cells("A30:H30")
+ws.cell(row=30, column=1).font = font_italic
+ws.cell(row=30, column=1).fill = fill_soft_blue_banner
+ws.cell(row=30, column=1).alignment = Alignment(vertical="center", wrap_text=True)
+ws.row_dimensions[30].height = 44.0
+
+tbl2_headers = [
+    (1, "Operational Function"),
+    (2, "Primary Lead"),
+    (3, "Supporting Partner"),
+    (4, "Contract Section"),
+    (5, "Execution Protocol & Delivery Standard"),
+    (6, ""),  # Merge with Col 5
+    (7, "Proof & Deliverable"),
+    (8, "Risk Mitigation & Value to Bosanna")
+]
+for col_idx, h in tbl2_headers:
+    if col_idx != 6:
+        c = ws.cell(row=31, column=col_idx, value=h)
+        c.font = font_tbl_hdr
+        c.fill = fill_tbl_hdr
+        c.border = thin_border
+        c.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+ws.merge_cells("E31:F31")
+ws.cell(row=31, column=6).border = thin_border
+ws.row_dimensions[31].height = 28.0
+
+tbl2_data = [
+    ("District TIPS Contract & Invoicing", "Bosanna LLC", "HWB Cleaning", "TIPS #260102 / #260103", "Submits monthly certified pay applications to Collin College Business Office", "Monthly District Invoice", "Bosanna holds direct prime relationship with District and collects top-line profit."),
+    ("W-2 Employment & Payroll Taxes", "Staffing Agency / Bosanna", "HWB Cleaning", "T&C § 153 & § 243", "Processes bi-weekly payroll, FICA, SUTA, FUTA for 22.6 FTEs (904.0 weekly hours per SOW § 134–136)", "W-2 Payroll Reports", "100% compliant with District 'No Subcontractors' clause; eliminates classification audits."),
+    ("Workers' Compensation (Code 9014)", "Staffing Agency", "Bosanna LLC", "Texas Labor Code", "Full statutory workers' compensation policy covering all physical labor on campus", "Certificate of Insurance", "Shields Bosanna and HWB from all slip, fall, lifting, and workplace injury liabilities."),
+    ("Restroom Supply Invoices (Line 42)", "Bosanna LLC", "HWB Cleaning", "T&C § Restroom Supplies", "Direct institutional trade billing with Pollock Orora / Imperial Dade ($7,575/mo)", "Wholesale Paid Invoice", "Secures lowest wholesale cost without intermediate markup; HWB verifies all counts."),
+    ("$80,000+ Commercial Fleet Lease", "HWB Cleaning", "Bosanna LLC", "SOW § 182–205", "Deploys ride-on auto-scrubber, walk-behinds, burnishers, and HEPA backpack vacuums", "Equipment Inventory Log", "Bosanna takes on zero equipment debt, zero capital outlay, and zero rental expenses."),
+    ("Fleet Maintenance & Parts Service", "HWB Cleaning", "—", "SOW § Equipment Fleet", "Regular preventive service, squeegee replacements, pad drivers, and battery service", "Maintenance Service Logs", "HWB absorbs 100% of equipment breakdown costs, parts replacement, and repair float."),
+    ("Closed-Loop Chemical Systems", "HWB Cleaning", "—", "SOW § 142", "Installs automatic chemical dilution dispensers in closets across all 10 buildings", "OSHA SDS Compliance Binder", "Eliminates chemical waste, ensures OSHA SDS compliance, and provides floor wax."),
+    ("Daily Shift Scheduling (904.0 Hours)", "HWB Cleaning", "Staffing Agency", "SOW § 161–163", "Maintains 23–25 badged worker roster strictly capped at 32–40 straight hours", "Master Shift Schedule", "Zero overtime charges ($0.00 overtime billed to Bosanna); relief coverage absorbs sick days."),
+    ("On-Site Bilingual Supervision", "HWB Cleaning", "—", "SOW § 128", "Full-time shift supervisor stationed in Building S; conducts daily building walkthroughs", "Daily Supervisor Checklist", "Single point of contact for Collin College Facilities Director; daily key & alarm management."),
+    ("Biometric Fingerprint & Police Log", "HWB Cleaning", "—", "SOW § 202 & T&C", "Cellular biometric time clock in Bldg S synchronized with Collin College Police desk logs", "Signed Police Log & Punches", "Audited proof of 100% hours worked submitted with monthly bills to prevent payment holds."),
+    ("20-Minute Rapid Response Shield", "HWB Cleaning", "—", "T&C § 159", "Immediate dispatch to correct flagged deficiencies within twenty (20) minutes", "Rapid Dispatch Tickets", "Stops Collin College from assessing contractual 2-hour clawbacks and monthly deductions.")
+]
+
+for idx, (func, lead, supp, s_ref, exec_std, proof, val_b) in enumerate(tbl2_data, start=32):
+    ws.row_dimensions[idx].height = 42.0
+    ws.cell(row=idx, column=1, value=func).font = font_bold
+    ws.cell(row=idx, column=1).alignment = Alignment(horizontal="left", vertical="center", indent=1, wrap_text=True)
+    ws.cell(row=idx, column=1).border = thin_border
+
+    ws.cell(row=idx, column=2, value=lead).font = font_regular
+    ws.cell(row=idx, column=2).alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    ws.cell(row=idx, column=2).border = thin_border
+
+    ws.cell(row=idx, column=3, value=supp).font = font_regular
+    ws.cell(row=idx, column=3).alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    ws.cell(row=idx, column=3).border = thin_border
+
+    ws.cell(row=idx, column=4, value=s_ref).font = font_italic
+    ws.cell(row=idx, column=4).alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    ws.cell(row=idx, column=4).border = thin_border
+
+    ws.cell(row=idx, column=5, value=exec_std).font = font_regular
+    ws.cell(row=idx, column=5).alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
+    ws.merge_cells(start_row=idx, start_column=5, end_row=idx, end_column=6)
+    ws.cell(row=idx, column=5).border = thin_border
+    ws.cell(row=idx, column=6).border = thin_border
+
+    ws.cell(row=idx, column=7, value=proof).font = font_regular
+    ws.cell(row=idx, column=7).alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    ws.cell(row=idx, column=7).border = thin_border
+
+    ws.cell(row=idx, column=8, value=val_b).font = font_regular
+    ws.cell(row=idx, column=8).alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
+    ws.cell(row=idx, column=8).border = thin_border
+
+# Banner Row 43
+b2_text = (
+    "🛡️ ON-SITE DEFENSE: By stationing full-time supervision on campus and enforcing the 20-minute rapid-response protocol, "
+    "HWB protects Bosanna's TIPS reputation and guarantees that Collin College receives a spotless APPA Level 2 campus every morning."
+)
+ws.cell(row=43, column=1, value=b2_text)
+ws.merge_cells("A43:H43")
+ws.cell(row=43, column=1).font = font_alert_text
+ws.cell(row=43, column=1).fill = fill_amber_sub
+ws.cell(row=43, column=1).alignment = Alignment(vertical="center", indent=1, wrap_text=True)
+for c in range(1, 9):
+    ws.cell(row=43, column=c).border = Border(
+        top=Side(style="thin", color=border_amber),
+        bottom=Side(style="thin", color=border_amber),
+        left=Side(style="thin", color=border_amber),
+        right=Side(style="thin", color=border_amber)
+    )
+ws.row_dimensions[43].height = 44.0
+
+# Spacer Row 44
+ws.row_dimensions[44].height = 14.0
+ws.merge_cells("A44:H44")
+ws.cell(row=44, column=1, value="")
+
+# -------------------------------------------------------------
+# SECTION 3.0: THE 5 STRATEGIC ADVANTAGES FOR BOSANNA LLC
+# -------------------------------------------------------------
+ws.cell(row=45, column=1, value="3.0 THE 5 STRATEGIC ADVANTAGES FOR BOSANNA LLC (WHY THIS MODEL WINS)")
+ws.merge_cells("A45:H45")
+ws.cell(row=45, column=1).font = font_sec_hdr
+ws.cell(row=45, column=1).fill = fill_sec_hdr
+ws.cell(row=45, column=1).alignment = Alignment(horizontal="left", vertical="center", indent=1, wrap_text=True)
+ws.row_dimensions[45].height = 28.0
+
+sec3_desc = (
+    "The Turnkey Hybrid Model is specifically engineered to maximize Bosanna's net profit while eliminating operational friction. "
+    "Bosanna captures high-margin public sector revenue without having to build a commercial cleaning company from scratch."
+)
+ws.cell(row=46, column=1, value=sec3_desc)
+ws.merge_cells("A46:H46")
+ws.cell(row=46, column=1).font = font_italic
+ws.cell(row=46, column=1).fill = fill_soft_blue_banner
+ws.cell(row=46, column=1).alignment = Alignment(vertical="center", wrap_text=True)
+ws.row_dimensions[46].height = 42.0
+
+tbl3_headers = [
+    (1, "Strategic Advantage"),
+    (2, "Core Benefit to Bosanna"),
+    (3, "Conventional Industry Risk"),
+    (4, ""), # Merge with 3
+    (5, "How This Model Eliminates The Risk"),
+    (6, ""), # Merge with 5
+    (7, "Financial & Operational Impact"),
+    (8, "")  # Merge with 7
+]
+for col_idx, h in tbl3_headers:
+    if col_idx in [1, 2, 3, 5, 7]:
+        c = ws.cell(row=47, column=col_idx, value=h)
+        c.font = font_tbl_hdr
+        c.fill = fill_tbl_hdr
+        c.border = thin_border
+        c.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+ws.merge_cells("C47:D47")
+ws.cell(row=47, column=4).border = thin_border
+ws.merge_cells("E47:F47")
+ws.cell(row=47, column=6).border = thin_border
+ws.merge_cells("G47:H47")
+ws.cell(row=47, column=8).border = thin_border
+ws.row_dimensions[47].height = 28.0
+
+tbl3_data = [
+    ("1. Zero Equipment Debt & Free Capital Fleet", "$80,000+ commercial fleet deployed Day 1", "Requires $75k–$100k cash or $5k/mo rental debt", "HWB furnishes, delivers, and maintains the entire machinery fleet at zero capital cost to Bosanna", "Saves Bosanna $60,000.00/year in equipment lease and maintenance costs."),
+    ("2. Complete W-2 Statutory Legal Shield", "100% compliant with District T&C § 153/243", "Co-employment liabilities and payroll tax audits", "Commercial staffing partner serves as statutory employer of record for all 22.6 FTEs", "Zero payroll tax audits, zero unemployment liabilities, and zero workers' comp claims."),
+    ("3. 20-Minute Rapid-Response Penalty Shield", "Prevents District 2-hour invoice clawbacks", "Unsupervised temp workers cause $500+ deductions", "HWB full-time shift supervisors conduct nightly inspections and correct deficiencies in 20 minutes", "Guarantees 100% full invoice collection from Collin College without clawbacks."),
+    ("4. Dual-Audit Verified Proof of Hours", "Cellular fingerprint punches match police log", "College delays payment due to disputed hours", "Digital biometric punches reconciled daily with Collin College Police desk sign-in logbook", "Provides undeniable audit records that satisfy the College Business Office every month."),
+    ("5. Hands-Off Six-Figure Passive Profit", "Over $186,000.00 annual net margin", "Management burnouts and operational friction", "HWB manages all on-site operations; Bosanna acts as the prime contractor and billing authority", "Generates $186,601.20/year ($933,006.00 over 5 years) in pure prime margin.")
+]
+
+for idx, (adv, ben, risk, elim, imp) in enumerate(tbl3_data, start=48):
+    ws.row_dimensions[idx].height = 48.0
+    ws.cell(row=idx, column=1, value=adv).font = font_bold
+    ws.cell(row=idx, column=1).alignment = Alignment(horizontal="left", vertical="center", indent=1, wrap_text=True)
+    ws.cell(row=idx, column=1).border = thin_border
+
+    ws.cell(row=idx, column=2, value=ben).font = font_regular
+    ws.cell(row=idx, column=2).alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
+    ws.cell(row=idx, column=2).border = thin_border
+
+    ws.cell(row=idx, column=3, value=risk).font = font_italic
+    ws.cell(row=idx, column=3).alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
+    ws.merge_cells(start_row=idx, start_column=3, end_row=idx, end_column=4)
+    ws.cell(row=idx, column=3).border = thin_border
+    ws.cell(row=idx, column=4).border = thin_border
+
+    ws.cell(row=idx, column=5, value=elim).font = font_regular
+    ws.cell(row=idx, column=5).alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
+    ws.merge_cells(start_row=idx, start_column=5, end_row=idx, end_column=6)
+    ws.cell(row=idx, column=5).border = thin_border
+    ws.cell(row=idx, column=6).border = thin_border
+
+    ws.cell(row=idx, column=7, value=imp).font = font_bold
+    ws.cell(row=idx, column=7).alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
+    ws.merge_cells(start_row=idx, start_column=7, end_row=idx, end_column=8)
+    ws.cell(row=idx, column=7).border = thin_border
+    ws.cell(row=idx, column=8).border = thin_border
+
+# Spacer Row 53
+ws.row_dimensions[53].height = 14.0
+ws.merge_cells("A53:H53")
+ws.cell(row=53, column=1, value="")
+
+# -------------------------------------------------------------
+# SECTION 4.0: EXECUTION ROADMAP & ACTION TIMELINE
+# -------------------------------------------------------------
+ws.cell(row=54, column=1, value="4.0 EXECUTION ROADMAP & NEXT STEPS FOR CONTRACT AWARD")
+ws.merge_cells("A54:H54")
+ws.cell(row=54, column=1).font = font_sec_hdr
+ws.cell(row=54, column=1).fill = fill_sec_hdr
+ws.cell(row=54, column=1).alignment = Alignment(horizontal="left", vertical="center", indent=1, wrap_text=True)
+ws.row_dimensions[54].height = 28.0
+
+sec4_desc = "Five simple steps transition this model from proposal to Day 1 operational execution at Collin College Frisco Campus."
+ws.cell(row=55, column=1, value=sec4_desc)
+ws.merge_cells("A55:H55")
+ws.cell(row=55, column=1).font = font_italic
+ws.cell(row=55, column=1).fill = fill_soft_blue_banner
+ws.cell(row=55, column=1).alignment = Alignment(vertical="center", indent=1, wrap_text=True)
+ws.row_dimensions[55].height = 28.0
+
+tbl4_headers = [
+    (1, "Action Step"),
+    (2, "Key Milestone & Task Description"),
+    (3, ""), # Merge with 2
+    (4, "Responsible Party"),
+    (5, "Target Completion"),
+    (6, "Operational Deliverable & Output"),
+    (7, ""), # Merge with 6
+    (8, "")  # Merge with 6
+]
+for col_idx, h in tbl4_headers:
+    if col_idx in [1, 2, 4, 5, 6]:
+        c = ws.cell(row=56, column=col_idx, value=h)
+        c.font = font_tbl_hdr
+        c.fill = fill_tbl_hdr
+        c.border = thin_border
+        c.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+ws.merge_cells("B56:C56")
+ws.cell(row=56, column=3).border = thin_border
+ws.merge_cells("F56:H56")
+ws.cell(row=56, column=7).border = thin_border
+ws.cell(row=56, column=8).border = thin_border
+ws.row_dimensions[56].height = 28.0
+
+tbl4_data = [
+    ("Step 1: Staffing Rate Confirmation", "Confirm loaded hourly bill rates with commercial staffing partner based on HWB's 904.0 weekly hours SOW roster", "Bosanna LLC & Staffing Partner", "Pre-Award / Week 1", "Staffing contract locking $16.00 and $22.00 pay rates (~21.8% load factor)."),
+    ("Step 2: Execute Master Services Agreement", "Execute the Turnkey Master Services Agreement between Bosanna LLC and HWB Cleaning Services LLC", "Bosanna LLC & HWB Cleaning", "Pre-Award / Week 1", "Formal subcontract locking HWB's $22,500.10/month turnkey management and fleet fee."),
+    ("Step 3: Setup Wholesale Trade Accounts", "Establish direct 30-day institutional trade credit with Pollock Orora or Imperial Dade using HWB order guide", "Bosanna LLC & HWB Procurement", "Pre-Award / Week 2", "Approved trade accounts securing $7,575.00/month wholesale pricing for restroom paper and soap."),
+    ("Step 4: Formal TIPS Proposal Submission", "Submit final Collin College Frisco Campus proposal under TIPS Cooperative contracts #260102 / #260103", "Bosanna LLC (Prime Contractor)", "Target District Due Date", "Official Purchase Order proposal for $125,000.00/month ($1,500,000.00/year cap)."),
+    ("Step 5: Day 1 Campus Mobilization", "Stage commercial scrubbers, install chemical dilution dispensers in 10 bldgs, deploy biometric clock in Bldg S", "HWB Operations & Collin College", "Contract Start Date", "Full turnkey Day 1 handover ensuring APPA Level 2 clean from the very first morning.")
+]
+
+for idx, (step, desc, party, due, deliv) in enumerate(tbl4_data, start=57):
+    ws.row_dimensions[idx].height = 42.0
+    ws.cell(row=idx, column=1, value=step).font = font_bold
+    ws.cell(row=idx, column=1).alignment = Alignment(horizontal="left", vertical="center", indent=1, wrap_text=True)
+    ws.cell(row=idx, column=1).border = thin_border
+
+    ws.cell(row=idx, column=2, value=desc).font = font_regular
+    ws.cell(row=idx, column=2).alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
+    ws.merge_cells(start_row=idx, start_column=2, end_row=idx, end_column=3)
+    ws.cell(row=idx, column=2).border = thin_border
+    ws.cell(row=idx, column=3).border = thin_border
+
+    ws.cell(row=idx, column=4, value=party).font = font_bold
+    ws.cell(row=idx, column=4).alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    ws.cell(row=idx, column=4).border = thin_border
+
+    ws.cell(row=idx, column=5, value=due).font = font_italic
+    ws.cell(row=idx, column=5).alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    ws.cell(row=idx, column=5).border = thin_border
+
+    ws.cell(row=idx, column=6, value=deliv).font = font_regular
+    ws.cell(row=idx, column=6).alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
+    ws.merge_cells(start_row=idx, start_column=6, end_row=idx, end_column=8)
+    ws.cell(row=idx, column=6).border = thin_border
+    ws.cell(row=idx, column=7).border = thin_border
+    ws.cell(row=idx, column=8).border = thin_border
+
+# Banner Row 62 (Final Executive Commitment)
+b3_text = (
+    "🤝 EXECUTIVE COMMITMENT: This Turnkey Hybrid Model unites Bosanna's prime contracting strength with HWB's field operations power. "
+    "Together, we deliver a flawless, audit-proof custodial operation for Collin College Frisco Campus while locking in guaranteed profitability for both organizations."
+)
+ws.cell(row=62, column=1, value=b3_text)
+ws.merge_cells("A62:H62")
+ws.cell(row=62, column=1).font = font_alert_text
+ws.cell(row=62, column=1).fill = fill_amber_sub
+ws.cell(row=62, column=1).alignment = Alignment(vertical="center", indent=1, wrap_text=True)
+for c in range(1, 9):
+    ws.cell(row=62, column=c).border = Border(
+        top=Side(style="thin", color=border_amber),
+        bottom=Side(style="thin", color=border_amber),
+        left=Side(style="thin", color=border_amber),
+        right=Side(style="thin", color=border_amber)
+    )
+ws.row_dimensions[62].height = 48.0
+
+# -------------------------------------------------------------
+# COLUMN WIDTHS & PRINT CONFIGURATION
+# -------------------------------------------------------------
+col_widths = {
+    "A": 26.0,
+    "B": 24.0,
+    "C": 36.0,
+    "D": 18.0,
+    "E": 20.0,
+    "F": 22.0,
+    "G": 18.0,
+    "H": 48.0
+}
+for c_let, w in col_widths.items():
+    ws.column_dimensions[c_let].width = w
+
+ws.page_setup.orientation = ws.ORIENTATION_LANDSCAPE
+ws.page_setup.paperSize = ws.PAPERSIZE_LETTER
+ws.sheet_properties.pageSetUpPr.fitToPage = True
+ws.page_setup.fitToWidth = 1
+ws.page_setup.fitToHeight = 0
+
+ws.page_margins.left = 0.25
+ws.page_margins.right = 0.25
+ws.page_margins.top = 0.35
+ws.page_margins.bottom = 0.35
+ws.page_margins.header = 0.15
+ws.page_margins.footer = 0.15
+
+ws.print_options.horizontalCentered = True
+ws.print_area = "A1:H62"
+ws.print_title_rows = "1:8"
+
+# Page breaks for 3 crisp landscape pages
+ws.row_breaks.append(Break(id=28))
+ws.row_breaks.append(Break(id=44))
+
+# Save master workbook and mirror to web static directory
+wb.save(wb_path)
+shutil.copyfile(wb_path, "HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/static/proposals/COLLIN-COLLEGE-FRISCO-BID-MODEL.xlsx")
+print("Executive_Brief worksheet updated with HWB Only Profit side-by-side comparison under $1.50M District Cap!")

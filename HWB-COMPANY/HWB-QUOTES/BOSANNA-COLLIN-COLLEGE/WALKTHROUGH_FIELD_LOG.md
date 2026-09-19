@@ -1,0 +1,1 @@
+/home/humbertoed/gemini_projects/HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/static/proposals/WALKTHROUGH_FIELD_LOG.md

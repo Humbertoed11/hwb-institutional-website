@@ -28,6 +28,141 @@ Responsibility: George (Architect)
 | 09/03/2026 | BUG-055 | Non-Empirical Scope Mismatch: Diamond Restoration Quoted on Ceramic/Quarry & Legacy Gantt Rates. | **RESOLVED** | HIGH |
 | 09/03/2026 | BUG-056 | Excel Monolithic Multi-Column Print Scaling Failure (Microscopic 4.5pt Font & Empty Page Fragmentation). | **RESOLVED** | HIGH |
 | 09/04/2026 | BUG-057 | Excel Document Header Label Truncation & Repeating Print Title Incongruence. | **RESOLVED** | MEDIUM |
+| 09/04/2026 | BUG-058 | Microsoft Graph API Tenant User Mismatch (404 ResourceNotFoundError on Mailbox Polling). | **RESOLVED** | HIGH |
+| 09/09/2026 | BUG-059 | Executive Outbox Case-Sensitive SQL Filter Mismatch (`LIKE 'Pending'` vs UPPER `PENDING`). | **RESOLVED** | HIGH |
+| 09/09/2026 | BUG-060 | DOM Nesting Fault Trapping Modals Inside `display: none` Parent and Unstopped Event Bubbling on Row Action Cog. | **RESOLVED** | HIGH |
+| 09/11/2026 | MIG-003 | Dual-Key Commercial Partitioning & M&A Radar Ingress (Eliminated $395M Phantom Valuation Distortion). | **RESOLVED** | CRITICAL |
+| 09/11/2026 | BUG-061 | Container Boot Seeder Loop Overwrite and Non-Commercial Lead Valuation Desynchronization. | **RESOLVED** | HIGH |
+| 09/11/2026 | BUG-062 | Continuous Owner Mining Daemon Infinite Loop on Unverified Targets & In-Memory Summary Desync. | **RESOLVED** | HIGH |
+| 09/16/2026 | BUG-063 | Excel Executive Brief Worksheet Missing Wrap-Text & Static 28pt Row Heights (Text Bleed & Clipping). | **RESOLVED** | MEDIUM |
+| 09/18/2026 | BUG-064 | Root Navigation Command Hub & Admin Backend Routes Missing Sales Role Authorization Guard. | **RESOLVED** | CRITICAL |
+
+## BUG-064: Root Navigation Command Hub & Admin Backend Routes Missing Sales Role Authorization Guard
+**Detected:** 09/18/2026
+**Status:** **RESOLVED** (09/18/2026)
+**Symptoms:**
+1. After authenticating as a sales representative (`role = 'Sales'`), navigating to the public root URL `http://mop.test:5000/` displays the full "Command Hub" dropdown in the top navigation bar and mobile overlay.
+2. Clicking or directly entering `/admin/operations`, `/admin/executive`, or `/admin/master` exposed the entire commercial operations database, Warchest financial assets, and executive management tools to the sales representative.
+**Root Cause:**
+1. `templates/components/mega_bar.html` checked `{% if current_user.is_authenticated %}` instead of validating whether `current_user.role in ['Executive', 'Admin', 'Manager']`.
+2. Backend routes in `main_app.py` (`admin_operations`, `sigma_executive`, `admin_master`, `sigmajan_lab`) lacked role-based access control decorators or redirection checks, relying solely on `@login_required`.
+**Enterprise Resolution (HWB-QMS-7.6 Zero-Hotfix Standard):**
+1. **Centralized Request Gatekeeper (`@app.before_request`):** Implemented fail-safe default quarantine in `main_app.py`. Authenticated users with `role = 'Sales'` visiting `/` or any non-sales `/admin/` path are automatically redirected to `/admin/sales-desk`. Export attempts on `/api/v1/leads/export*` return `HTTP 403 Forbidden`. Unauthorized probes on `/admin/executive`, `/admin/master`, and `/admin/lab` are blocked.
+2. **Declarative Route Decorator (`@roles_required`):** Deployed declarative role enforcement across all admin endpoints (`admin_operations`, `sigma_executive`, `admin_master`, `sigmajan_lab`, `admin_construction_bids`, and `sales_desk`).
+3. **Unified Navigation Context Processor (`@app.context_processor`):** Implemented `inject_enterprise_nav` supplying verified `nav_access` permissions to all Jinja templates. Hardened `templates/components/mega_bar.html` to render "Command Hub" exclusively for Executive/Manager roles, and render a dedicated "Field Sales Desk" cockpit for Sales roles.
+4. **Institutional Security Telemetry:** Intercepted access violations are automatically logged to PostgreSQL in `GlobalActivities` under `activity_type = 'SECURITY_VIOLATION'`.
+5. **Automated Verification:** Verified via automated test suite `scratch/test_enterprise_rbac.py` with 100% pass rate across Executive, Admin, and Sales roles.
+**Codification:** Codified in `HWB-QMS-7.6 Backend Architecture and Enterprise Standards SOP.html`.
+
+## BUG-063: Excel Executive Brief Worksheet Missing Wrap-Text & Static 28pt Row Heights (Text Bleed & Clipping)
+**Detected:** 09/16/2026
+**Symptoms:**
+1. In the newly generated `Executive_Brief` worksheet inside the Collin College quotation workbook, 125 descriptive text cells overflowed and bled into neighboring empty cells or were clipped abruptly by adjacent table borders.
+2. Fixed 28.0-point row heights vertically cut off multi-sentence contract scope descriptions, responsibility allocations, and callout alert banners.
+**Root Cause:**
+1. The worksheet generation routine omitted `wrap_text=True` and `vertical="center"` on data, header, and metadata cells, causing openpyxl to output non-wrapping text cells by default.
+2. Row heights were set to a static 28.0 pt, which is inadequate for multi-line operational explanations containing 75–95 characters.
+**Solution:**
+1. Enforced mandatory `wrap_text=True` and `vertical="center"` across 100% of data rows, table headers, metadata blocks, and callout banners in `scripts/build_gold_excel.py`.
+2. Expanded row heights dynamically: Table 1 (36.0–42.0 pt), Table 2 (42.0 pt), Table 3 (48.0 pt), Table 4 (42.0 pt), and Alert Banners (44.0–48.0 pt).
+3. Applied `indent=1` left padding on text columns to prevent characters from pressing against cell borders.
+
+## BUG-062: Continuous Owner Mining Daemon Infinite Loop on Unverified Targets & In-Memory Summary Desync
+**Detected:** 09/11/2026
+**Symptoms:**
+1. In continuous mode, the owner mining daemon (`scripts/mine_tier1_2_owners.py`) stalled by repeatedly selecting the same unverified targets on every batch.
+2. Batch summary counters reported 0 websites ingested despite official URLs being successfully committed to PostgreSQL.
+**Root Cause:**
+1. When neither an empirical owner nor a Texas CCL director was found, the lead status remained `PENDING_PROOF`. Because the batch query filtered for `(owner_verification_status IS NULL OR owner_verification_status = 'PENDING_PROOF')`, those unverified targets were continuously re-selected.
+2. The `process_target_lead` function did not update the in-memory `lead` dictionary, causing batch summary comparisons (`if not had_website and t.get('website')`) to evaluate to false.
+**Solution:**
+1. Enforced a 3-state transition model: `EMPIRICALLY_VERIFIED` (owner verified), `DIRECTOR_CONFIRMED_OWNER_PENDING` (licensed director confirmed), and `AUDITED_PENDING_PROOF` (no proof found). This guarantees every target leaves the `PENDING_PROOF` queue and processing advances linearly.
+2. Mutated `lead['website']`, `lead['director']`, and `lead['email']` in-place inside `process_target_lead`.
+3. Hardened regex patterns to capture owner declarations without requiring trailing prepositions (e.g., "Chuck Wall is the owner and oversees...").
+
+## BUG-061: Container Boot Seeder Loop Overwrite and Non-Commercial Lead Valuation Desynchronization
+**Detected:** 09/11/2026
+**Symptoms:**
+1. Upon restarting `hwb_web_app`, the background seeder thread re-executed an un-gated loop over 29,879 rows from `seed_data.json`.
+2. This produced unique constraint collisions (`idx_leads_unique_location`) and executed `ON CONFLICT DO UPDATE SET estimated_annual_value = EXCLUDED.estimated_annual_value`, overwriting the zeroed values of 313 archived non-commercial records and injecting $6.80M in phantom valuation.
+**Root Cause:**
+1. In `main_app.py`, `run_seeder_async` did not inspect `az_lead_count` prior to executing the lead ingestion loop.
+2. Even when the table was fully populated and partitioned (28,687 records), the thread unconditionally iterated through all records in `seed_data.json`.
+**Solution:**
+1. Added pre-execution count check: `if az_lead_count < 1000:` in `main_app.py`, skipping full lead iteration when the table is already hardened and populated.
+2. Executed SQL update to set `estimated_annual_value = 0.0 WHERE is_commercial = FALSE`, restoring 100% financial integrity ($0 non-commercial, $101.14M true commercial pipeline).
+3. Verified clean container restart: seeder logs `Leads table already hardened. Skipping full lead re-seed.` and 0 queries executed.
+
+## MIG-003: Dual-Key Commercial Partitioning & M&A Radar Ingress
+**Executed:** 09/11/2026
+**Symptoms & Challenge:**
+1. The Leads table contained 28,687 records, of which ~18,400 were non-childcare legacy tax records (auto brokers, retail LLCs) with 0 capacity and $21,600 placeholder valuations, creating a $395M phantom valuation distortion.
+2. An additional 360 records were micro in-home daycares (capacity < 30) that were sub-scale for commercial janitorial operations.
+3. Hard deleting these records would cause `daycare_registry_sync.py` to re-ingest them upon the next state registry sync ("Zombie Ingestion").
+4. A strategic M&A opportunity was identified: corporate daycare consolidators and private equity roll-up firms pay scouts to source off-market independent daycares.
+**Solution:**
+1. Implemented dual-key commercial partitioning migration via `scripts/migrate_commercial_partitioning.py`:
+   - Added columns: `is_commercial BOOLEAN`, `commercial_status VARCHAR(50)`, `acquisition_tier VARCHAR(50)`, `ownership_type VARCHAR(50)`.
+   - Archived 18,437 non-childcare records and 360 in-home daycares with `is_commercial = FALSE` and `estimated_annual_value = 0.0`.
+   - Classified 9,890 authentic commercial centers ($101.14M true pipeline) with `is_commercial = TRUE`.
+2. Built the M&A Deal Radar:
+   - Tier 1 - Mega Institutional (200+ capacity): **923 centers** (247,627 capacity).
+   - Tier 2 - Regional Commercial (150-199 capacity): **847 centers** (142,833 capacity).
+   - Combined: **1,770 prime off-market independent acquisition targets** across Texas.
+3. Hardened backend and UI:
+   - Added `is_commercial = TRUE` as default filter in `main_app.py`.
+   - Added `m_and_a=true` query parameter and search indexing on `acquisition_tier` and `ownership_type`.
+   - Integrated `🎯 M&A Targets` toolbar button, `🎯 M&A Target Radar` preset, table badges, and modal fields into `backoffice_operations.html`.
+
+
+
+## BUG-060: DOM Nesting Fault Trapping Modals Inside `display: none` Parent and Unstopped Event Bubbling on Row Action Cog
+**Detected:** 09/09/2026
+**Symptoms:**
+1. On `http://mop.test:5000/admin/operations?view=leads`, clicking the "Cadence" button produces no visible reaction on screen.
+2. Clicking the action wheel (cog icon) on any lead row does not open the dropdown menu or immediately collapses it.
+3. Clicking other modals on the page (Lead Details, Add Bid, Account Command, Add Lead) also failed to render.
+**Root Cause:**
+1. *DOM Nesting Fault:* During insertion of `modal-lead-cadence` in `templates/backoffice_operations.html`, the three closing `</div>` tags (`</div></div></div>`) of `modal-estimator-cadence` were inadvertently omitted. Because `modal-estimator-cadence` had `display: none`, eight subsequent modals (including `modal-lead-cadence`, `modal-add-bid`, `modal-lead-command`, `modal-account-command`) were rendered as DOM descendants of a hidden overlay. In CSS, setting `display: flex` on a child element whose ancestor has `display: none` renders nothing visible.
+2. *Event Propagation Collision:* The table row action cog button on both Leads and Accounts tables lacked `event.stopPropagation()` and did not pass `event` to `toggleRowMenu()`. Clicks bubbled up to `handleRowClick()` and the global `window.addEventListener('click')` listener, which immediately executed `m.style.display = 'none'`, collapsing the dropdown before the user could see it.
+**Solution:**
+1. Re-inserted the three missing `</div>` closing tags for `modal-estimator-cadence`. Verified DOM hierarchy and tag balance across all 10 modals using Node and Python test scripts.
+2. Hardened `toggleRowMenu(id, evt)` to accept the event parameter and stop propagation cleanly via `evt.stopPropagation()` / `window.event.stopPropagation()`.
+3. Updated action buttons in both server-side Jinja templates and client-side dynamic rendering functions (`buildLeadRow`, `buildAccountRow`) with `type="button"` and `onclick="event.stopPropagation(); toggleRowMenu('...', event)"`.
+4. Added live input event handlers (`oninput="renderLeadScriptContent()"`, dynamic `tel:`/`mailto:` links) to the Lead Cadence console.
+5. Restarted `hwb_web_app` and verified HTTP 200 and modal rendering across all backoffice operations views (`leads`, `accounts`, `clients`, `construction`, `bids`, `overview`, `audit`, `calendar`).
+**Preventative:**
+1. Run automated DOM balance checks on all modal containers before deployment.
+2. Enforce explicit `event.stopPropagation()` on all interactive sub-elements within clickable table rows (`tr[onclick]`).
+
+## BUG-059: Executive Outbox Case-Sensitive SQL Filter Mismatch (`LIKE 'Pending'` vs UPPER `PENDING`)
+**Detected:** 09/09/2026
+**Symptoms:**
+1. The Executive Outbox tab at `http://mop.test:5000/admin/executive#outbox` renders "No emails currently waiting for approval" even when outgoing emails exist in the database awaiting CEO authorization.
+2. Specifically, Email ID #46 (Updated commercial proposal for Bosanna LLC / 11 Buildings) is staged with status `PENDING` but was completely hidden from the executive interface.
+**Root Cause:**
+1. In `main_app.py` line 1202 and 1207, the SQL queries executed:
+   `SELECT * FROM "PendingOutbox" WHERE status LIKE 'Pending' ORDER BY created_at DESC LIMIT 5`
+   and
+   `SELECT * FROM "SocialOutbox" WHERE status LIKE 'Pending' ORDER BY created_at DESC LIMIT 5`
+2. In PostgreSQL, `LIKE` is case-sensitive. The database column `status` contains uppercase `'PENDING'`. Because `'PENDING' LIKE 'Pending'` evaluates to `FALSE`, the queries returned 0 rows.
+**Solution:**
+1. Updated `main_app.py` lines 1202 and 1207 to use `UPPER(status) = 'PENDING'` for both `PendingOutbox` and `SocialOutbox`.
+2. Restarted `hwb_web_app` container.
+3. Verified via curl that Email ID #46 renders completely within the `#outbox` tab with "Approve & Send" and "Reject" buttons. The message remains strictly in `PENDING` state until CEO approval.
+
+## BUG-058: Microsoft Graph API Tenant User Mismatch & 404 ResourceNotFoundError on Mailbox Polling
+**Detected:** 09/04/2026
+**Symptoms:**
+1. Automated email opportunity ingestion daemons returned HTTP 404 `ResourceNotFoundError` when attempting to fetch new commercial bid invitations from the Microsoft Graph API.
+2. Ingestion pipeline was unable to read General Contractor invitations to bid (ITBs) from BuildingConnected, Dodge, and ConstructConnect.
+**Root Cause:**
+1. Background scripts queried the endpoint `/users/humbertoed@hwbcleaning.com/messages`, mistakenly assuming the local Linux username alias (`humbertoed`) matched the Microsoft Azure Active Directory User Principal Name (UPN).
+2. The primary UPN registered in Azure Active Directory is `hdominguez@hwbcleaning.com`.
+**Solution:**
+1. Updated all Graph API monitoring scripts, daemons, and background workers (`monitor_email_opportunities.py`, `check_email_opportunities.py`, and `telegram_listener.py`) to explicitly target `hdominguez@hwbcleaning.com`.
+2. Validated OAuth2 client credentials grant flow against the tenant endpoint, successfully fetching all commercial bid invites and staging proposals without error.
+3. Added verification check to prevent querying non-existent UPN aliases.
 
 ## BUG-057: Excel Document Header Label Truncation & Repeating Print Title Incongruence
 **Detected:** 09/04/2026

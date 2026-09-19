@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HWB-SAL-2026-001 | Autonomous Zero-Caller Sales Architecture</title>
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --primary-light: #eff6ff;
+            --secondary: #0f766e;
+            --secondary-light: #f0fdfa;
+            --dark: #0f172a;
+            --gray-bg: #f8fafc;
+            --gray-border: #cbd5e1;
+            --gray-text: #475569;
+            --danger: #b91c1c;
+            --danger-light: #fef2f2;
+            --warning: #b45309;
+            --warning-light: #fffbeb;
+            --success: #15803d;
+            --success-light: #f0fdf4;
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: #f1f5f9;
+            color: var(--dark);
+            line-height: 1.6;
+            padding: 24px;
+        }
+
+        .doc-container {
+            max-width: 1040px;
+            margin: 0 auto;
+            background: #ffffff;
+            border: 1px solid var(--gray-border);
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        .doc-header {
+            background-color: var(--primary);
+            color: #ffffff;
+            padding: 24px 32px;
+            border-bottom: 4px solid #3b82f6;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .badge-warning { background-color: #f59e0b; color: #78350f; }
+        .badge-success { background-color: #10b981; color: #064e3b; }
+        .badge-danger { background-color: #ef4444; color: #ffffff; }
+
+        .doc-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .doc-subtitle {
+            font-size: 0.95rem;
+            color: #bfdbfe;
+        }
+
+        .meta-strip {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            padding: 16px 32px;
+            background-color: var(--primary-light);
+            border-bottom: 1px solid #dbeafe;
+        }
+
+        .meta-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--gray-text);
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .meta-value {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .doc-body {
+            padding: 32px;
+        }
+
+        h2 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-top: 28px;
+            margin-bottom: 14px;
+            padding-bottom: 6px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        h2:first-of-type { margin-top: 0; }
+
+        h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-top: 18px;
+            margin-bottom: 8px;
+        }
+
+        p {
+            font-size: 0.92rem;
+            color: #334155;
+            margin-bottom: 12px;
+        }
+
+        .callout {
+            padding: 16px;
+            border-radius: 6px;
+            margin: 16px 0;
+            font-size: 0.9rem;
+        }
+
+        .callout-blue { background-color: var(--primary-light); border-left: 4px solid var(--primary); color: #1e3a8a; }
+        .callout-red { background-color: var(--danger-light); border-left: 4px solid var(--danger); color: #7f1d1d; }
+        .callout-green { background-color: var(--success-light); border-left: 4px solid var(--success); color: #064e3b; }
+
+        .pillar-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin: 16px 0;
+        }
+
+        .pillar-card {
+            border: 1px solid var(--gray-border);
+            border-radius: 6px;
+            padding: 18px;
+            background: #ffffff;
+        }
+
+        .pillar-card.p1 { border-top: 4px solid #2563eb; }
+        .pillar-card.p2 { border-top: 4px solid #0f766e; }
+        .pillar-card.p3 { border-top: 4px solid #f59e0b; }
+        .pillar-card.p4 { border-top: 4px solid #8b5cf6; }
+
+        .pillar-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .pillar-desc {
+            font-size: 0.88rem;
+            color: var(--gray-text);
+            margin-bottom: 10px;
+        }
+
+        .pillar-list {
+            list-style: none;
+            font-size: 0.85rem;
+        }
+
+        .pillar-list li {
+            padding: 4px 0;
+            border-bottom: 1px dashed #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        table.strat-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 0.88rem;
+        }
+
+        table.strat-table th {
+            background-color: #f1f5f9;
+            color: #334155;
+            font-weight: 700;
+            padding: 10px 14px;
+            border: 1px solid var(--gray-border);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+        }
+
+        table.strat-table td {
+            padding: 10px 14px;
+            border: 1px solid var(--gray-border);
+            color: #334155;
+        }
+
+        table.strat-table tr:nth-child(even) { background-color: #f8fafc; }
+
+        .doc-footer {
+            background-color: var(--gray-bg);
+            padding: 16px 32px;
+            border-top: 1px solid var(--gray-border);
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: var(--gray-text);
+        }
+    </style>
+</head>
+<body>
+
+<div class="doc-container">
+
+    <div class="doc-header">
+        <div class="header-top">
+            <span class="badge badge-success">APPROVED STRATEGY</span>
+            <span style="font-size: 0.8rem; color: #bfdbfe;">HWB-SAL-2026-001</span>
+        </div>
+        <div class="doc-title">Autonomous Zero-Caller Sales Architecture</div>
+        <div class="doc-subtitle">Transitioning HWB from Manual Telemarketing to Asynchronous High-Yield B2B Infiltration</div>
+    </div>
+
+    <div class="meta-strip">
+        <div class="meta-item">
+            <span class="meta-label">Authority</span>
+            <span class="meta-value">Humberto Dominguez, CEO</span>
+        </div>
+        <div class="meta-item">
+            <span class="meta-label">Systems Architect</span>
+            <span class="meta-value">George (mbB, Lead Auditor)</span>
+        </div>
+        <div class="meta-item">
+            <span class="meta-label">Sales & Marketing Lead</span>
+            <span class="meta-value">Lauri Tells (VP Sales)</span>
+        </div>
+        <div class="meta-item">
+            <span class="meta-label">Labor Constraint</span>
+            <span class="meta-value">0 Remote Phone Callers</span>
+        </div>
+    </div>
+
+    <div class="doc-body">
+
+        <!-- 1.0 Objective & Reality Check -->
+        <h2>1.0 Operational Reality & Executive Objective</h2>
+        <p>HWB Cleaning Services LLC operates with <strong>zero remote work-from-home telemarketers or phone callers</strong>. In the commercial janitorial and post-construction cleaning sector, cold telephone calling suffers from massive friction: 98% gatekeeper rejection, high turnover, script degradation, and an amateur brand perception that repels high-value facility directors.</p>
+        
+        <div class="callout callout-green">
+            <strong>THE OPERATIONAL PRIME DIRECTIVE:</strong> Replace manual cold calling with an <strong>Autonomous Asynchronous Sales Engine</strong>. Commercial cleaning decision-makers (Property Managers, General Contractors, School Directors) do not buy over the phone—they award contracts through formal portal solicitations, plan-room takeoffs, and automated compliance-driven email inquiries that book site walkthroughs directly onto the CEO's calendar.
+        </div>
+
+        <!-- 2.0 Strategic Comparison -->
+        <h2>2.0 Traditional Cold Calling vs. Autonomous Zero-Caller Architecture</h2>
+        <table class="strat-table">
+            <thead>
+                <tr>
+                    <th style="width: 25%;">Dimension</th>
+                    <th style="width: 35%;">Legacy Telemarketing (Outdated)</th>
+                    <th style="width: 40%;">SigmaFidelity™ Zero-Caller Architecture</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Labor Cost & Overhead</strong></td>
+                    <td>High ($3,000–$6,000/mo in remote caller wages + software licenses).</td>
+                    <td><strong>$0.00 Phone Labor.</strong> 100% automated backend scripts & Microsoft Graph.</td>
+                </tr>
+                <tr>
+                    <td><strong>Conversion Efficiency</strong></td>
+                    <td>&lt; 0.5% appointment rate; callers burn through leads with robotic pitches.</td>
+                    <td><strong>High-Yield:</strong> Only engages prospects when they solicit bids or click to book a walkthrough.</td>
+                </tr>
+                <tr>
+                    <td><strong>Contract Value Size</strong></td>
+                    <td>Low-ticket small offices ($500–$1,500/mo) prone to immediate churn.</td>
+                    <td><strong>High-Ticket Enterprise ($50k–$275k+):</strong> Municipal RFPs, Tier-1 GCs, large childcares.</td>
+                </tr>
+                <tr>
+                    <td><strong>CEO Time Allocation</strong></td>
+                    <td>Babysitting remote callers, listening to call recordings, managing churn.</td>
+                    <td><strong>Closing Walkthroughs Only:</strong> Humberto walks buildings with pre-qualified buyers.</td>
+                </tr>
+                <tr>
+                    <td><strong>Compliance & Poka-Yoke</strong></td>
+                    <td>Unreliable; callers misquote square footages and make unapproved promises.</td>
+                    <td><strong>Deterministic:</strong> Automated $0.12–$0.22/SF pricing engine; zero unapproved discounts.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- 3.0 The 4-Pillar Zero-Caller Acquisition Machine -->
+        <h2>3.0 The 4-Pillar Zero-Caller Acquisition Engine</h2>
+
+        <div class="pillar-grid">
+
+            <!-- Pillar 1 -->
+            <div class="pillar-card p1">
+                <div class="pillar-title">
+                    <span>PILLAR 1: Institutional RFPs (The Whales)</span>
+                    <span class="badge badge-success">ACTIVE</span>
+                </div>
+                <div class="pillar-desc">Public & Regional Municipal Solicitations requiring certified compliance and locked pricing.</div>
+                <ul class="pillar-list">
+                    <li>✓ <strong>Portals:</strong> NTTA Marketplace, TxDOT, Collin County, Plano ISD, DFW Airport.</li>
+                    <li>✓ <strong>Contract Size:</strong> $100,000 to $500,000+ (Multi-Year Firm-Fixed).</li>
+                    <li>✓ <strong>Cold Calling Needed:</strong> <strong>ZERO.</strong> Bids are submitted electronically.</li>
+                    <li>✓ <strong>HWB Advantage:</strong> Automated gold Excel modeling and locked submission sheets beat mom-and-pop cleaners on compliance.</li>
+                </ul>
+            </div>
+
+            <!-- Pillar 2 -->
+            <div class="pillar-card p2">
+                <div class="pillar-title">
+                    <span>PILLAR 2: General Contractor Takeoffs (CSI 01 74 23)</span>
+                    <span class="badge badge-success">ACTIVE</span>
+                </div>
+                <div class="pillar-desc">Post-Construction final cleaning bids submitted directly into GC plan rooms.</div>
+                <ul class="pillar-list">
+                    <li>✓ <strong>Platforms:</strong> BuildingConnected, Procore, ConstructConnect, CivCast.</li>
+                    <li>✓ <strong>Target Clients:</strong> Austin Commercial, JE Dunn, Balfour Beatty, Turner.</li>
+                    <li>✓ <strong>Cold Calling Needed:</strong> <strong>ZERO.</strong> GCs actively invite qualified subs to bid plans.</li>
+                    <li>✓ <strong>HWB Advantage:</strong> `gc_takeoff_engine.py` generates CSI 01 74 23 proposals in minutes with pre-approved $2M COI.</li>
+                </ul>
+            </div>
+
+            <!-- Pillar 3 -->
+            <div class="pillar-card p3">
+                <div class="pillar-title">
+                    <span>PILLAR 3: Regulatory Email Cadences (Lauri Tells)</span>
+                    <span class="badge badge-warning">AUTOMATED</span>
+                </div>
+                <div class="pillar-desc">Hyper-personalized compliance outreach targeting specific vertical decision-makers.</div>
+                <ul class="pillar-list">
+                    <li>✓ <strong>Target List:</strong> 2,650 Texas Childcare Centers, Medical Clinics, Private Schools.</li>
+                    <li>✓ <strong>Hook:</strong> "Complimentary 10-Point OSHA Sanitation Protocol & Chemical Safety Audit."</li>
+                    <li>✓ <strong>Cold Calling Needed:</strong> <strong>ZERO.</strong> Email contains direct link to CEO calendar.</li>
+                    <li>✓ <strong>Delivery:</strong> Microsoft Graph API (`HWB-WEB Microsoft Marketing Engine.py`).</li>
+                </ul>
+            </div>
+
+            <!-- Pillar 4 -->
+            <div class="pillar-card p4">
+                <div class="pillar-title">
+                    <span>PILLAR 4: Frictionless Inbound Self-Quoting</span>
+                    <span class="badge badge-warning">ENHANCEMENT</span>
+                </div>
+                <div class="pillar-desc">Website lead qualification engine replacing the "CRM Specialist phone call" step.</div>
+                <ul class="pillar-list">
+                    <li>✓ <strong>Mechanism:</strong> Multi-step interactive estimator on `hwbcleaning.com`.</li>
+                    <li>✓ <strong>User Action:</strong> Lead inputs Square Footage + Sector ➔ Receives instant ballpark range.</li>
+                    <li>✓ <strong>Cold Calling Needed:</strong> <strong>ZERO.</strong> Lead is immediately prompted: "Book Walkthrough with CEO."</li>
+                    <li>✓ <strong>Poka-Yoke:</strong> Disqualifies leads outside DFW or below minimum threshold ($500/mo).</li>
+                </ul>
+            </div>
+
+        </div>
+
+        <!-- 4.0 Executive Time Protocol -->
+        <h2>4.0 The Executive High-Impact Funnel (CEO Time Protocol)</h2>
+        <p>By eliminating the requirement for phone callers, CEO Humberto Dominguez focuses 100% of executive energy on the final 10% of the sales cycle: <strong>In-Person Walkthroughs and Contract Closes</strong>.</p>
+
+        <div class="callout callout-blue">
+            <strong>THE AUTOMATED JOURNEY:</strong><br>
+            1. Prospect discovers HWB via BuildingConnected invite, NTTA RFB notice, or Lauri Tells email sequence.<br>
+            2. Prospect reviews HWB credentials (ISO 9001, $2M insurance, OSHA compliance) and requests a walkthrough or bid proposal.<br>
+            3. Silas Sync auto-stages the opportunity in CRM and notifies Humberto via Telegram with calendar confirmation.<br>
+            4. Humberto conducts the walkthrough, inputs square footage into the mobile pricing calculator, and hands the prospect a formal bound proposal within 2 hours.<br>
+            5. Prospect signs electronically. Contract active.
+        </div>
+
+        <!-- 5.0 Immediate Action Items -->
+        <h2>5.0 Immediate Tactical Action Items</h2>
+        <table class="strat-table">
+            <thead>
+                <tr>
+                    <th style="width: 10%;">Item</th>
+                    <th style="width: 30%;">Initiative</th>
+                    <th style="width: 40%;">Tactical Action</th>
+                    <th style="width: 20%;">Lead Responsible</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>1</strong></td>
+                    <td><strong>Retire Telemarketing Scripts</strong></td>
+                    <td>Archive legacy phone calling scripts in QMS-8.0; eliminate "Manual Discovery Call" requirement.</td>
+                    <td>George (Architect)</td>
+                </tr>
+                <tr>
+                    <td><strong>2</strong></td>
+                    <td><strong>BuildingConnected GC Pipeline</strong></td>
+                    <td>Configure `bc_plan_downloader.py` to auto-extract active commercial bid invitations in DFW weekly.</td>
+                    <td>George / Silas Sync</td>
+                </tr>
+                <tr>
+                    <td><strong>3</strong></td>
+                    <td><strong>Childcare Email Cadence</strong></td>
+                    <td>Stage 3-email compliance sequence via Lauri Tells engine to the 2,650 verified Texas daycares.</td>
+                    <td>Lauri Tells / George</td>
+                </tr>
+                <tr>
+                    <td><strong>4</strong></td>
+                    <td><strong>Calendar Booking Integration</strong></td>
+                    <td>Embed direct Microsoft Bookings link (`outlook.office.com/bookwithme`) in all automated outbound emails and quote forms.</td>
+                    <td>Silas Sync</td>
+                </tr>
+                <tr>
+                    <td><strong>5</strong></td>
+                    <td><strong>Municipal Bidding Cadence</strong></td>
+                    <td>Track NTTA 06507 through award; scan Bonfire/CivCast weekly for Collin County, Plano, and Frisco ISD RFPs.</td>
+                    <td>Humberto Dominguez / George</td>
+                </tr>
+            </tbody>
+        </table>
+
+    </div>
+
+    <div class="doc-footer">
+        <div><strong>HWB Cleaning Services LLC</strong> | Sales & Marketing Division</div>
+        <div>HWB-SAL-2026-001 | Approved by Humberto Dominguez, CEO</div>
+    </div>
+
+</div>
+
+</body>
+</html>

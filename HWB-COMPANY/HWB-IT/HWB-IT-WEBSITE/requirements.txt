@@ -7,3 +7,6 @@ msal
 Flask-Compress==1.24
 psycopg2-binary
 pypdf
+beautifulsoup4
+lxml
+fake-useragent

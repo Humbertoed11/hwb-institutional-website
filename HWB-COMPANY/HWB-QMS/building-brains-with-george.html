@@ -7,7 +7,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-IT-BOOK-001</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">5.0.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.1.6 (Organizational Knowledge)</span></div>
     </div>
@@ -23,11 +23,11 @@
             <tbody>
                 <tr><td><strong>Document Title</strong></td><td><strong>Building HWB Cleaning with George: An Operator's Manual for Cleaning Services, Marketing Automation, and Systems Architecture</strong></td></tr>
                 <tr><td><strong>Document ID</strong></td><td>HWB-IT-BOOK-001</td></tr>
-                <tr><td><strong>Version</strong></td><td>3.0.0</td></tr>
+                <tr><td><strong>Version</strong></td><td>5.0.0</td></tr>
                 <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
                 <tr><td><strong>Author</strong></td><td>George Bytes (Lead Systems Architect)</td></tr>
                 <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
-                <tr><td><strong>Date</strong></td><td>07/20/2026</td></tr>
+                <tr><td><strong>Date</strong></td><td>09/12/2026</td></tr>
                 <tr><td><strong>Department</strong></td><td>IT (Information Technology)</td></tr>
             </tbody>
         </table>
@@ -95,6 +95,35 @@
             <li><strong>Sticky Profile Banner:</strong> Placed high-density grid headers at the very top of detail modals, displaying critical phone numbers, email addresses, managers, and contract values. This keeps dialing context permanently on-screen while users type notes.</li>
             <li><strong>Jargon Cleanups:</strong> Replaced complex corporate terminology with everyday words, converting "Annual Revenue" to "Yearly Contract Value", "Traffic Cycle" to "Foot Traffic Level", "License Capacity" to "Building Capacity", and "Period" to "Contract Term".</li>
             <li><strong>Role Access Control:</strong> Mapped clear page access profiles for Executive, Sales, and Operator tiers, locking down the "/admin/executive" and "/admin/master" routes for sales reps.</li>
+        </ul>
+        </p>
+
+        <h2>Chapter 6: Commercial Construction Ingestion & The Empirical Integrity Mandate</h2>
+        <p>In September 2026, HWB Cleaning expanded from recurring commercial janitorial into high-ticket commercial construction cleaning (CSI 01 74 23). This required solving the friction of General Contractor bidding portals like BuildingConnected:
+        <ul>
+            <li><strong>Proofpoint Defense URL Auto-Decoding:</strong> Inbound bid invitations from GCs like MYCON, Weekes, and Source Building Group are wrapped in corporate security redirects. The system employs regex unscramblers to extract clean BuildingConnected opportunity URLs instantly.</li>
+            <li><strong>Persistent Browser State (Zero-Password Automation):</strong> Using Playwright with an isolated Chrome profile, the system logs into BuildingConnected once, capturing encrypted authentication tokens. Automated agents download 80+ MB blueprint packages headlessly without triggering two-factor lockouts.</li>
+            <li><strong>High-Speed Takeoff Parser:</strong> Equipped with PyMuPDF and pdfplumber, the engine parses architectural drawing sets, room finish schedules (CSI 09 65 00 / CSI 09 67 00), and floor plans to calculate square footages and material breakdowns.</li>
+            <li><strong>The Empirical Integrity Mandate [2026-09-04]:</strong> Whenever a blueprint drawing set lacks an explicit room finish schedule, contains contradictory site plan vs interior scopes, or relies on an estimator heuristic, the system prominently tags database records with <code>[DATA DISCREPANCY: Heuristic Estimate - Field Verification Required]</code> and injects an amber alert block directly into generated Excel proposal sheets.</li>
+        </ul>
+        </p>
+
+        <h2>Chapter 7: The Telegram Mobile Operations System (MOS) — The 6 Strategic Frontiers</h2>
+        <p>To eliminate desktop dependencies for CEO Humberto Dominguez, the Telegram bot (@Georgebytesbot) was evolved from a basic alerting script into a complete 6-Frontier Mobile Operations Operating System:
+        <ul>
+            <li><strong>Frontier 1 (Autonomous Planroom Takeoff):</strong> One tap on an inbound RFP alert triggers the headless browser to download drawings, execute the takeoff parser, generate the CSI 01 74 23 proposal spreadsheet, and deliver the .xlsx file directly to Telegram within 90 seconds.</li>
+            <li><strong>Frontier 2 (Interactive Scope Configurator):</strong> Deployed both a Telegram Mini App (HTML5 TMA) at <code>/tma/estimator</code> and in-chat interactive sliders (<code>/scope</code>) to allow real-time square footage and margin recalculations via <code>editMessageText</code>.</li>
+            <li><strong>Frontier 3 (Multimodal Voice AI Directives):</strong> Ingests CEO voice memos in native .ogg format and routes them through Gemini 2.5 Flash Speech AI. The model transcribes instructions and executes actions—such as creating Outlook calendar events via Microsoft Graph API or staging commercial proposals into the Outbox.</li>
+            <li><strong>Frontier 4 (Jobsite Blueprint Computer Vision):</strong> The CEO snaps a photo of an on-site architectural drawing sheet or jobsite condition. Gemini 2.5 Flash Vision extracts dimensions and finishes, auto-generating a candidate bid record in PostgreSQL.</li>
+            <li><strong>Frontier 5 (1-Tap Portal Bid Submitter):</strong> The host task runner executes Playwright to navigate to BuildingConnected, input the lump-sum proposal figure, upload the spreadsheet proposal, and send a verification screenshot to Telegram.</li>
+            <li><strong>Frontier 6 (Autonomous 7:00 AM Executive Briefing):</strong> A daily 7:00 AM CST automated brief delivering active commercial pipeline valuation ($), proposals awaiting sign-off, heuristic discrepancy flags, and Texas CRM leads.</li>
+        </ul>
+        <h2>Chapter 8: Dual-Key Commercial Partitioning & The Autonomous M&A Deal Radar</h2>
+        <p>In September 2026, the company confronted a critical data distortion: the Texas daycare CRM dataset had expanded to 28,687 records, but over 18,400 rows were non-childcare tax registrations or micro in-home daycares carrying placeholder values of $21,600. This created a $395M phantom valuation that obscured the true recurring commercial cleaning pipeline:
+        <ul>
+            <li><strong>Dual-Key Commercial Partitioning:</strong> To solve this without triggering "zombie ingestion" (where deleting rows causes state sync scripts to re-download them), the database introduced dual-key flags (<code>is_commercial</code>, <code>commercial_status</code>, <code>acquisition_tier</code>, <code>ownership_type</code>). The 18,797 sub-scale records were archived with $0.00 valuation, while 9,890 genuine commercial centers were locked at $101.14M true pipeline value.</li>
+            <li><strong>The M&A Deal Radar:</strong> Recognizing that national daycare consolidators and private equity firms actively acquire independent centers, the system cataloged 1,770 prime Texas acquisition targets (Tier 1 Mega: 200+ capacity, Tier 2 Regional: 150-199 capacity). The backoffice operations hub gained a one-click "🎯 M&A Targets" filter and customizable table badges.</li>
+            <li><strong>Autonomous $0.00 Owner Mining Daemon:</strong> An autonomous daemon (<code>scripts/mine_tier1_2_owners.py</code>) crawled all 1,770 targets. By interfacing with the Texas Child Care Regulation Open Data API and parsing official school sitemaps without paid third-party APIs ($0.00 spend), the engine verified 86 equity Founders & Owners with verbatim documentary citations and 1,561 state-licensed Facility Directors.</li>
         </ul>
         </p>
 

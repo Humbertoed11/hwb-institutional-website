@@ -1,0 +1,49 @@
+{
+  "project_name": "MYCON-Hillside-Student-Center",
+  "date": "2026-09-04",
+  "gross_square_footage": 7500,
+  "is_clinical_lab": false,
+  "data_integrity": "DATA DISCREPANCY (HEURISTIC ESTIMATE)",
+  "discrepancy_flag": true,
+  "discrepancy_details": "Drawing set contains Civil Site Plan lot boundary (526,771 SF) without stamped interior room finish schedule. Footprint is a calibrated estimator assumption.",
+  "total_proposal_value": 6000.0,
+  "line_items": [
+    {
+      "phase": "Phase 1",
+      "description": "Rough Construction Clean (Debris removal, rough sweep, pre-paint prep)",
+      "qty": 7500,
+      "unit": "SF",
+      "rate": 0.14,
+      "total": 1050.0
+    },
+    {
+      "phase": "Phase 2",
+      "description": "Final Commercial Clean (Complete interior architectural wipe-down, glass, sills, diffusers, restrooms)",
+      "qty": 7500,
+      "unit": "SF",
+      "rate": 0.28,
+      "total": 2100.0
+    },
+    {
+      "phase": "Phase 3",
+      "description": "Touch-Up & Punch-List Detailing (Immediate pre-owner final walkthrough)",
+      "qty": 7500,
+      "unit": "SF",
+      "rate": 0.1,
+      "total": 750.0
+    },
+    {
+      "phase": "Floor Care",
+      "description": "Specialized Floor Care: Exterior Concrete Paving & Sidewalks Machine Scrub & High-Solids Acrylic Seal",
+      "qty": 7500,
+      "unit": "SF",
+      "rate": 0.28,
+      "total": 2100.0
+    }
+  ],
+  "csi_specifications": {
+    "division_01_cleaning": [],
+    "division_09_finishes": []
+  },
+  "excel_path": "/home/humbertoed/gemini_projects/HWB-COMPANY/HWB-ESTIMATING/PROJECTS/MYCON-Hillside-Student-Center/MYCON-Hillside-Student-Center-TAKEOFF-PROPOSAL.xlsx"
+}

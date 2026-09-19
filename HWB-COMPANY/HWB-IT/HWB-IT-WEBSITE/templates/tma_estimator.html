@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SigmaFidelity™ Scope & Pricing Configurator</title>
+    <!-- Telegram WebApp SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-card: #1e293b;
+            --bg-input: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
+            --amber-alert: #d97706;
+            --success: #16a34a;
+            --border: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            padding: 16px;
+            font-size: 14px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header h1 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-main);
+            letter-spacing: 0.5px;
+        }
+
+        .header p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 14px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+        }
+
+        .label-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #cbd5e1;
+        }
+
+        .val-badge {
+            background: rgba(37, 99, 235, 0.2);
+            color: #60a5fa;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            background: var(--bg-input);
+            border-radius: 3px;
+            outline: none;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        select, input[type="text"] {
+            width: 100%;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            outline: none;
+        }
+
+        .phase-toggle {
+            display: flex;
+            gap: 8px;
+            margin-top: 6px;
+        }
+
+        .phase-chip {
+            flex: 1;
+            text-align: center;
+            padding: 8px 4px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .phase-chip.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #ffffff;
+        }
+
+        .price-summary {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid #1e3a8a;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 10px;
+        }
+
+        .summary-line {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .total-line {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #38bdf8;
+            padding-top: 8px;
+            border-top: 1px solid #1e3a8a;
+            margin-top: 6px;
+        }
+
+        .btn-submit {
+            width: 100%;
+            background: var(--accent);
+            color: #ffffff;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 14px;
+            transition: background 0.15s ease;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        .btn-submit:active {
+            background: var(--accent-hover);
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📐 Takeoff & Scope Configurator</h1>
+        <p>HWB Cleaning Services LLC • SigmaFidelity™ Estimating Node</p>
+    </div>
+
+    <!-- Project Identifier -->
+    <div class="card">
+        <div class="label-row">
+            <span>Project Name / RFP</span>
+        </div>
+        <input type="text" id="projectName" value="Commercial Scope Estimate" placeholder="e.g. UTSW Lab Remodel">
+    </div>
+
+    <!-- Footprint Slider -->
+    <div class="card">
+        <div class="label-row">
+            <span>Cleanable Footprint</span>
+            <span class="val-badge" id="sqftDisplay">15,000 SF</span>
+        </div>
+        <input type="range" id="sqftSlider" min="1000" max="250000" step="500" value="15000" oninput="calculate()">
+    </div>
+
+    <!-- Facility Type & Margin -->
+    <div class="card">
+        <div class="grid-2">
+            <div>
+                <div class="label-row"><span>Classification</span></div>
+                <select id="facilityType" onchange="calculate()">
+                    <option value="standard">Commercial Standard</option>
+                    <option value="clinical">Clinical / Biosafety Lab</option>
+                    <option value="industrial">Industrial Warehouse</option>
+                    <option value="retail">Retail / Showroom</option>
+                </select>
+            </div>
+            <div>
+                <div class="label-row">
+                    <span>Target Margin</span>
+                    <span id="marginDisplay" style="color: #60a5fa;">35%</span>
+                </div>
+                <input type="range" id="marginSlider" min="20" max="50" step="1" value="35" oninput="calculate()">
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Phases -->
+    <div class="card">
+        <div class="label-row"><span>Phases Included (CSI 01 74 23)</span></div>
+        <div class="phase-toggle">
+            <div class="phase-chip active" id="chipP1" onclick="togglePhase('p1')">P1: Rough Clean</div>
+            <div class="phase-chip active" id="chipP2" onclick="togglePhase('p2')">P2: Final Clean</div>
+            <div class="phase-chip active" id="chipP3" onclick="togglePhase('p3')">P3: Owner Punch</div>
+        </div>
+    </div>
+
+    <!-- Real-Time Financial Calculations -->
+    <div class="card price-summary">
+        <div class="summary-line">
+            <span>Phase 1 (Rough Clean):</span>
+            <span id="p1Cost">$0.00</span>
+        </div>
+        <div class="summary-line">
+            <span>Phase 2 (Final Detail Clean):</span>
+            <span id="p2Cost">$0.00</span>
+        </div>
+        <div class="summary-line">
+            <span>Phase 3 (Owner Touch-Up):</span>
+            <span id="p3Cost">$0.00</span>
+        </div>
+        <div class="summary-line">
+            <span>Estimated Production Hours:</span>
+            <span id="prodHours">0 hrs</span>
+        </div>
+        <div class="total-line">
+            <span>Base Bid Valuation:</span>
+            <span id="totalBaseBid">$0.00</span>
+        </div>
+    </div>
+
+    <button class="btn-submit" onclick="submitToTelegram()">💾 Lock Bid & Send to Chat</button>
+
+    <script>
+        let phases = { p1: true, p2: true, p3: true };
+
+        function togglePhase(p) {
+            phases[p] = !phases[p];
+            const chip = document.getElementById(`chip${p.toUpperCase()}`);
+            if (phases[p]) {
+                chip.classList.add('active');
+            } else {
+                chip.classList.remove('active');
+            }
+            calculate();
+        }
+
+        function calculate() {
+            const sqft = parseInt(document.getElementById('sqftSlider').value);
+            const facility = document.getElementById('facilityType').value;
+            const margin = parseInt(document.getElementById('marginSlider').value) / 100;
+
+            document.getElementById('sqftDisplay').innerText = `${sqft.toLocaleString()} SF`;
+            document.getElementById('marginDisplay').innerText = `${Math.round(margin * 100)}%`;
+
+            // Base rate per SF
+            let rateP1 = 0.12;
+            let rateP2 = 0.28;
+            let rateP3 = 0.08;
+
+            if (facility === 'clinical') {
+                rateP1 = 0.18;
+                rateP2 = 0.45;
+                rateP3 = 0.12;
+            } else if (facility === 'industrial') {
+                rateP1 = 0.08;
+                rateP2 = 0.16;
+                rateP3 = 0.04;
+            }
+
+            // Apply margin multiplier
+            const marginMultiplier = 1 / (1 - (margin - 0.30));
+
+            const p1 = phases.p1 ? sqft * rateP1 * marginMultiplier : 0;
+            const p2 = phases.p2 ? sqft * rateP2 * marginMultiplier : 0;
+            const p3 = phases.p3 ? sqft * rateP3 * marginMultiplier : 0;
+            const total = p1 + p2 + p3;
+
+            // Productivity: ~500 SF/hr standard, ~300 SF/hr clinical
+            const prodRate = facility === 'clinical' ? 300 : 500;
+            const hours = Math.round(sqft / prodRate);
+
+            document.getElementById('p1Cost').innerText = `$${p1.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            document.getElementById('p2Cost').innerText = `$${p2.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            document.getElementById('p3Cost').innerText = `$${p3.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            document.getElementById('prodHours').innerText = `${hours} hrs`;
+            document.getElementById('totalBaseBid').innerText = `$${total.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        }
+
+        function submitToTelegram() {
+            const sqft = parseInt(document.getElementById('sqftSlider').value);
+            const facility = document.getElementById('facilityType').value;
+            const margin = document.getElementById('marginSlider').value;
+            const total = document.getElementById('totalBaseBid').innerText;
+            const project = document.getElementById('projectName').value;
+
+            const payload = {
+                action: "custom_takeoff_config",
+                project_name: project,
+                cleanable_sqft: sqft,
+                facility_type: facility,
+                margin_percent: margin,
+                calculated_value: total,
+                phases: phases
+            };
+
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.sendData(JSON.stringify(payload));
+                window.Telegram.WebApp.close();
+            } else {
+                alert(`Takeoff Saved: ${project} - ${sqft.toLocaleString()} SF - ${total}`);
+            }
+        }
+
+        // Initialize calculation on load
+        calculate();
+
+        // Notify Telegram WebApp is ready
+        if (window.Telegram && window.Telegram.WebApp) {
+            window.Telegram.WebApp.ready();
+            window.Telegram.WebApp.expand();
+        }
+    </script>
+</body>
+</html>

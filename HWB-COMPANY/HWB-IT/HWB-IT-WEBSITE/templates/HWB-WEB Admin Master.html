@@ -51,7 +51,7 @@
                 <tr>
                     <td><strong>{{ customer.name }}</strong></td>
                     <td>{{ customer.address }}</td>
-                    <td>{{ customer.phone }}</td>
+                    <td>{{ customer.phone|format_phone }}</td>
                     <td><span class="badge badge-active">Verified</span></td>
                 </tr>
                 {% endfor %}

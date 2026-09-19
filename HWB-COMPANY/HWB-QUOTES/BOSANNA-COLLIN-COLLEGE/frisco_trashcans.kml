@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>Collin College Frisco Campus — Exterior Trashcan Inventory</name>
+    <description>Audited by HWB Cleaning Services LLC | SigmaFidelity™ Geospatial Takeoff</description>
+    <Style id="trashcanPin">
+      <IconStyle>
+        <color>ff0000ff</color>
+        <scale>1.2</scale>
+        <Icon>
+          <href>http://maps.google.com/mapfiles/kml/shapes/recycle.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    <Placemark>
+      <name>Unit #1: Founders Hall</name>
+      <description><![CDATA[<b>Unit:</b> #1<br><b>Nearest Building:</b> Founders Hall (~97 ft)<br><b>Sector:</b> Sector Alpha<br><b>Field Notes:</b> Founders Hall North Portico Dual Can<br><b>Photo:</b> founders_main_entry.jpg]]></description>
+      <styleUrl>#trashcanPin</styleUrl>
+      <Point>
+        <coordinates>-96.793200,33.130450,0</coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>Unit #2: University Hall</name>
+      <description><![CDATA[<b>Unit:</b> #2<br><b>Nearest Building:</b> University Hall (~74 ft)<br><b>Sector:</b> Sector Alpha<br><b>Field Notes:</b> University Hall South Entry Ash Urn<br><b>Photo:</b> university_south_entry.jpg]]></description>
+      <styleUrl>#trashcanPin</styleUrl>
+      <Point>
+        <coordinates>-96.791700,33.130200,0</coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>Unit #3: Heritage Hall</name>
+      <description><![CDATA[<b>Unit:</b> #3<br><b>Nearest Building:</b> Heritage Hall (~58 ft)<br><b>Sector:</b> Sector Bravo<br><b>Field Notes:</b> Heritage Hall Central Quad Bench Can<br><b>Photo:</b> heritage_quad_can.jpg]]></description>
+      <styleUrl>#trashcanPin</styleUrl>
+      <Point>
+        <coordinates>-96.794250,33.131550,0</coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>Unit #4: Library & Resource Center</name>
+      <description><![CDATA[<b>Unit:</b> #4<br><b>Nearest Building:</b> Library & Resource Center (~53 ft)<br><b>Sector:</b> Sector Charlie<br><b>Field Notes:</b> Library Main Entrance Concrete Receptacle<br><b>Photo:</b> library_east_walkway.jpg]]></description>
+      <styleUrl>#trashcanPin</styleUrl>
+      <Point>
+        <coordinates>-96.792750,33.131800,0</coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>Unit #5: Student Center & Cafe</name>
+      <description><![CDATA[<b>Unit:</b> #5<br><b>Nearest Building:</b> Student Center & Cafe (~58 ft)<br><b>Sector:</b> Sector Bravo<br><b>Field Notes:</b> Student Center Outdoor Dining Patio Can<br><b>Photo:</b> student_center_patio.jpg]]></description>
+      <styleUrl>#trashcanPin</styleUrl>
+      <Point>
+        <coordinates>-96.794300,33.132300,0</coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>Unit #6: Alumni Hall & Gym</name>
+      <description><![CDATA[<b>Unit:</b> #6<br><b>Nearest Building:</b> Alumni Hall & Gym (~118 ft)<br><b>Sector:</b> Sector Charlie<br><b>Field Notes:</b> Alumni Hall Athletic Entrance Bin<br><b>Photo:</b> alumni_gym_approach.jpg]]></description>
+      <styleUrl>#trashcanPin</styleUrl>
+      <Point>
+        <coordinates>-96.791500,33.131400,0</coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>Unit #7: Parking Garage</name>
+      <description><![CDATA[<b>Unit:</b> #7<br><b>Nearest Building:</b> Parking Garage (~62 ft)<br><b>Sector:</b> Sector Delta<br><b>Field Notes:</b> Parking Garage Ground Level Vestibule Can<br><b>Photo:</b> garage_level1_elevator.jpg]]></description>
+      <styleUrl>#trashcanPin</styleUrl>
+      <Point>
+        <coordinates>-96.793100,33.133200,0</coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>Unit #8: Parking Lot G</name>
+      <description><![CDATA[<b>Unit:</b> #8<br><b>Nearest Building:</b> Parking Lot G (~36 ft)<br><b>Sector:</b> Exterior West<br><b>Field Notes:</b> Lot G Student Walkway Pole-Mount Can<br><b>Photo:</b> lot_g_perimeter.jpg]]></description>
+      <styleUrl>#trashcanPin</styleUrl>
+      <Point>
+        <coordinates>-96.795150,33.130950,0</coordinates>
+      </Point>
+    </Placemark>
+  </Document>
+</kml>

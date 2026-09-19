@@ -1,0 +1,138 @@
+<!-- 
+    SigmaFidelity™ Institutional SOP
+    Standard: HWB-QMS-1.0 v2.0 (HTML Baseline)
+    Document ID: HWB-QMS-7.8
+    Approved By: Humberto Dominguez, CEO
+-->
+<div class="sop-card">
+    <!-- 0.0 DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-7.8</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5 / 8.1 (Operational Planning & Market Intelligence)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <table>
+            <thead>
+                <tr>
+                    <th><strong>Document Control</strong></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td><strong>Document Title</strong></td><td><strong>M&A Target Deal Radar and Daycare Commercial Partitioning SOP</strong></td></tr>
+                <tr><td><strong>Document ID</strong></td><td>HWB-QMS-7.8</td></tr>
+                <tr><td><strong>Version</strong></td><td>1.0.0</td></tr>
+                <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
+                <tr><td><strong>Author</strong></td><td>George (Systems Architect)</td></tr>
+                <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
+                <tr><td><strong>Date</strong></td><td>09-11-2026</td></tr>
+                <tr><td><strong>ISO 9001 Clause</strong></td><td>7.5 / 8.1</td></tr>
+            </tbody>
+        </table>
+
+        <hr />
+
+        <h1>Standard Operating Procedure: <strong>M&A Target Deal Radar & Daycare Commercial Partitioning</strong></h1>
+
+        <h2>1.0 Purpose</h2>
+        <p>This document explains how our company organizes Texas childcare records, separates large commercial operations from residential facilities, and autonomously verifies facility owners and licensed directors. This information powers two vital revenue streams: high-value commercial janitorial service agreements and off-market business intelligence reports for real estate consolidators and private equity buyers.</p>
+
+        <h2>2.0 Scope</h2>
+        <p>This procedure applies to all Texas childcare leads, database queries, web backoffice tools, automated data collection scripts, and intelligence summaries across the company ecosystem.</p>
+
+        <h2>3.0 Key Definitions (Everyday Words)</h2>
+        <ul>
+            <li><strong>Mega Institutional Center (Tier 1):</strong> A large standalone commercial childcare center with capacity for 200 or more children. These buildings have large square footage and significant monthly janitorial needs.</li>
+            <li><strong>Regional Commercial Center (Tier 2):</strong> A mid-size commercial childcare facility licensed for 150 to 199 children.</li>
+            <li><strong>Archived Non-Commercial:</strong> Small in-home daycares (under 150 capacity) or non-childcare business records. These are retained in our database at zero dollars value to prevent them from being accidentally re-downloaded during state database updates.</li>
+            <li><strong>Independent Commercial:</strong> An authentic commercial center owned by an individual founder, local family, or independent partnership, rather than a corporate conglomerate. These centers represent our primary off-market acquisition targets.</li>
+            <li><strong>Corporate Umbrella Chain:</strong> Centers owned by regional or national brands (such as KinderCare, Primrose, The Goddard School, or Cadence Education).</li>
+            <li><strong>Empirical Integrity:</strong> The strict rule that no names or email addresses can be guessed or made up. Every record must be proven by official state government permits or quotes from the school website.</li>
+        </ul>
+
+        <h2>4.0 Commercial Partitioning & Valuation Architecture</h2>
+        <p>To eliminate misleading sales numbers, our database strictly separates commercial facilities from non-commercial tax filings:</p>
+        <ol>
+            <li><strong>Commercial Status Flag:</strong> All leads carry an <code>is_commercial</code> boolean setting. Backoffice operations and CRM views default to showing only verified commercial centers (<code>is_commercial = TRUE</code>).</li>
+            <li><strong>Zeroed Valuations for Archived Records:</strong> All non-commercial and in-home daycares carry an annual estimated value of exactly <strong>$0.00</strong>. This protects executive reports from artificial valuation spikes.</li>
+            <li><strong>Empirical Value Formula:</strong> Active commercial valuations are calculated from real state-reported capacities multiplied by licensed square footage and established local service wage rates.</li>
+        </ol>
+
+        <div class="callout callout-note">
+            <strong>The Anti-Zombie Rule</strong>
+            <p>Non-commercial leads must never be permanently deleted from the database. Deleting them causes our automated state synchronizer to treat them as new leads and download them again. Marking them as archived non-commercial stops this problem permanently.</p>
+        </div>
+
+        <h2>5.0 The M&A Deal Radar Interface</h2>
+        <p>Office team members and executive analysts can evaluate prime acquisition targets through the backoffice operations hub:</p>
+        <ul>
+            <li><strong>One-Click Filter Preset:</strong> Clicking the <strong>"🎯 M&A Targets"</strong> button on the toolbar immediately isolates independent Tier 1 and Tier 2 targets across Texas.</li>
+            <li><strong>Customizable Table Columns:</strong> Users can display or hide specific acquisition data fields, including <code>Acquisition Tier</code>, <code>Ownership Type</code>, and <code>Owner Verification Status</code>.</li>
+            <li><strong>Visual Data Badges:</strong>
+                <ul>
+                    <li><span style="background: #e0f2fe; color: #0369a1; font-weight: 600; padding: 2px 6px; border-radius: 4px;">Tier 1 - Mega</span> indicates 200+ child capacity.</li>
+                    <li><span style="background: #f0fdf4; color: #15803d; font-weight: 600; padding: 2px 6px; border-radius: 4px;">Tier 2 - Regional</span> indicates 150-199 child capacity.</li>
+                    <li><span style="background: #fef3c7; color: #b45309; font-weight: 600; padding: 2px 6px; border-radius: 4px;">Independent</span> indicates privately owned off-market status.</li>
+                </ul>
+            </li>
+            <li><strong>Executive Contact Records:</strong> Opening any lead details modal displays linked on-site facility directors and verified equity owners in the Contacts directory.</li>
+        </ul>
+
+        <h2>6.0 Autonomous Owner Mining Protocol (Zero-Cost Daemon)</h2>
+        <p>Our autonomous background mining engine (<code>scripts/mine_tier1_2_owners.py</code>) enriches target centers around the clock with zero paid API expenses:</p>
+        <ol>
+            <li><strong>State Regulatory Verification:</strong> The engine queries the Texas Child Care Regulation (CCL) Open Data endpoint using the official state operation number. It ingests the state-licensed facility director, official website, and direct regulatory email address.</li>
+            <li><strong>Website Discovery Fallback:</strong> If no website is on file with the state, the script performs a zero-cost web query using DuckDuckGo to locate the genuine school domain.</li>
+            <li><strong>Sitemap and Deep Page Crawling:</strong> The scraper examines website sitemaps (<code>/sitemap.xml</code>) and crawls key leadership pages (<code>/about-us</code>, <code>/our-story</code>, <code>/leadership</code>, <code>/staff</code>).</li>
+            <li><strong>Block-Level Evidence Extraction:</strong> The parser searches individual text sections for direct ownership declarations (e.g., "Founded in 2004 by...", "Owner and Founder", "President").</li>
+            <li><strong>Documentary Citation Linking:</strong> Whenever an owner is identified, the engine saves the exact website link and verbatim quotation into the database.</li>
+            <li><strong>Verification States:</strong>
+                <ul>
+                    <li><code>EMPIRICALLY_VERIFIED</code>: Confirmed equity founder or owner proven by website quote and URL.</li>
+                    <li><code>DIRECTOR_CONFIRMED_OWNER_PENDING</code>: State-licensed center director confirmed from regulatory permit; owner awaiting documentary proof.</li>
+                    <li><code>AUDITED_PENDING_PROOF</code>: Target audited; no verified online ownership proof located yet.</li>
+                </ul>
+            </li>
+            <li><strong>Telegram Progress Alerts:</strong> After each batch of 50 targets, the daemon sends a real-time progress message to executive mobile devices.</li>
+        </ol>
+
+        <h2>7.0 Verification & Quality Audits</h2>
+        <p>To guarantee zero defects across all business data:</p>
+        <ul>
+            <li><strong>Synthetic Data Prohibition:</strong> Test names, placeholder emails, or estimated people must never be entered into production databases.</li>
+            <li><strong>Live Production Parity:</strong> The local database and the live Azure cloud server (<code>sigmajan-server.postgres.database.azure.com</code>) must maintain matching lead categorizations.</li>
+            <li><strong>Log Monitoring:</strong> Background progress must be reviewed periodically using the system log file:
+                <pre><code>tail -f HWB-COMPANY/HWB-IT/HWB-IT-SYSTEM-LOGS/owner_mining.log</code></pre>
+            </li>
+        </ul>
+
+        <h2>8.0 Revision History</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Version</th>
+                    <th>Date</th>
+                    <th>Author</th>
+                    <th>Change Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1.0.0</td>
+                    <td>09-11-2026</td>
+                    <td>George (Systems Architect)</td>
+                    <td>Initial release. Codified dual-key commercial partitioning, 3-tier acquisition framework, M&A Deal Radar interface, and zero-cost autonomous owner mining engine. Approved by CEO Humberto Dominguez.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="sop-card-footer">
+        <span>&copy; 2026 HWB Cleaning Services LLC</span>
+        <span>Controlled Document | HWB-QMS-7.8</span>
+        <span>Page <span class="page-number"></span></span>
+    </div>
+</div>

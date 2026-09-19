@@ -198,11 +198,24 @@ def parse_problems_to_solve(markdown_content):
         })
     return results
 
+import hashlib
+
+def calculate_local_embedding(text):
+    embedding = [0.0] * 1536
+    if not text:
+        return embedding
+    sha = hashlib.sha256(text.encode("utf-8")).digest()
+    for i in range(1536):
+        byte_val = sha[i % len(sha)]
+        val = (byte_val - 128) / 128.0
+        embedding[i] = round(val, 6)
+    return embedding
+
 def sync_problems_to_solve():
     problems_file = "docs/PROBLEMS-TO-SOLVE.md"
     if not os.path.exists(problems_file): return
     
-    print("[SYNC] Scanning for new problems to solve...")
+    print("[SYNC] Scanning for new problems to solve & generating vector embeddings...")
     with open(problems_file, "r", encoding="utf-8") as f:
         content = f.read()
         
@@ -230,37 +243,116 @@ def sync_problems_to_solve():
                     resolved_dt = datetime.now()
                 
                 desc_val = f"{prefix} {item['description']}"
+                full_text = f"{desc_val} {item.get('root_cause', '')} {item.get('implemented_fix', '')} {item.get('preventative_rule', '')}"
+                embed_vector = calculate_local_embedding(full_text)
                 
                 if row:
                     db_id = row[0]
-                    print(f"[SYNC] Updating mistake log: {iid}")
+                    print(f"[SYNC] Updating mistake log & embedding: {iid}")
                     cur.execute("""
                         UPDATE "SigmaKnowledgeScars"
                         SET description = %s, category = %s, status = %s, impact_level = %s,
                             root_cause = %s, implemented_fix = %s, preventative_rule = %s,
-                            resolved_at = COALESCE(resolved_at, %s)
+                            resolved_at = COALESCE(resolved_at, %s),
+                            embedding = %s,
+                            search_vector = to_tsvector('english', %s)
                         WHERE id = %s;
                     """, (
                         desc_val, item["category"], item["status"], item["impact_level"],
                         item["root_cause"], item["implemented_fix"], item["preventative_rule"],
-                        resolved_dt, db_id
+                        resolved_dt, embed_vector, full_text, db_id
                     ))
                 else:
-                    print(f"[SYNC] Inserting new mistake log: {iid}")
+                    print(f"[SYNC] Inserting new mistake log & embedding: {iid}")
                     cur.execute("""
                         INSERT INTO "SigmaKnowledgeScars" (
                             description, category, status, impact_level, root_cause,
-                            implemented_fix, preventative_rule, created_at, resolved_at
-                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);
+                            implemented_fix, preventative_rule, created_at, resolved_at,
+                            embedding, search_vector
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, to_tsvector('english', %s));
                     """, (
                         desc_val, item["category"], item["status"], item["impact_level"],
                         item["root_cause"], item["implemented_fix"], item["preventative_rule"],
-                        created_dt or datetime.now(), resolved_dt
+                        created_dt or datetime.now(), resolved_dt, embed_vector, full_text
                     ))
         conn.commit()
         conn.close()
     except Exception as e:
         print(f"Error syncing problems: {e}")
+
+def sync_cli_conversations():
+    brain_path = os.path.expanduser("~/.gemini/antigravity-cli/brain/")
+    if not os.path.exists(brain_path):
+        return
+    
+    print("[SYNC] Synchronizing CLI Conversations & Transcript Steps...")
+    try:
+        conn = psycopg2.connect(DB_URL)
+        with conn.cursor() as cur:
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS "CliConversations" (
+                    conversation_id VARCHAR(128) PRIMARY KEY,
+                    total_steps INTEGER DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+
+                CREATE TABLE IF NOT EXISTS "CliSteps" (
+                    id SERIAL PRIMARY KEY,
+                    conversation_id VARCHAR(128) REFERENCES "CliConversations"(conversation_id) ON DELETE CASCADE,
+                    step_index INTEGER,
+                    step_type VARCHAR(64),
+                    role VARCHAR(64),
+                    content TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    CONSTRAINT unique_conv_step UNIQUE (conversation_id, step_index)
+                );
+            """)
+
+            conv_dirs = [d for d in os.listdir(brain_path) if os.path.isdir(os.path.join(brain_path, d))]
+            for conv_id in conv_dirs:
+                log_file = os.path.join(brain_path, conv_id, ".system_generated", "logs", "transcript.jsonl")
+                if not os.path.exists(log_file):
+                    continue
+
+                steps = []
+                with open(log_file, "r", encoding="utf-8") as f:
+                    for line in f:
+                        line = line.strip()
+                        if line:
+                            try:
+                                steps.append(json.loads(line))
+                            except Exception:
+                                pass
+
+                if not steps:
+                    continue
+
+                cur.execute("""
+                    INSERT INTO "CliConversations" (conversation_id, total_steps, updated_at)
+                    VALUES (%s, %s, NOW())
+                    ON CONFLICT (conversation_id) DO UPDATE 
+                    SET total_steps = EXCLUDED.total_steps, updated_at = NOW();
+                """, (conv_id, len(steps)))
+
+                for step in steps:
+                    step_idx = step.get("step_index", 0)
+                    step_type = str(step.get("type", "UNKNOWN"))
+                    role = str(step.get("source", step.get("role", "SYSTEM")))
+                    content_str = str(step.get("content", "")).replace("\x00", "")
+
+                    cur.execute("""
+                        INSERT INTO "CliSteps" (conversation_id, step_index, step_type, role, content)
+                        VALUES (%s, %s, %s, %s, %s)
+                        ON CONFLICT (conversation_id, step_index) DO UPDATE 
+                        SET step_type = EXCLUDED.step_type, role = EXCLUDED.role, content = EXCLUDED.content;
+                    """, (conv_id, step_idx, step_type, role, content_str))
+
+        conn.commit()
+        conn.close()
+        print("[SYNC] CLI Conversations successfully indexed to Postgres.")
+    except Exception as e:
+        print(f"Error syncing CLI conversations: {e}")
 
 def run_all():
     print("--- SigmaFidelity: Initiating Institutional Persistence Sync ---")
@@ -268,6 +360,7 @@ def run_all():
     sync_new_sops()
     sync_system_state()
     sync_problems_to_solve()
+    sync_cli_conversations()
     print("--- SUCCESS: All neural cores synchronized. ---")
 
 if __name__ == "__main__":

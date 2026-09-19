@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HWB Field Sales Desk | Outside Sales Interface</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --primary-light: #eff6ff;
+            --brand-blue: #2563eb;
+            --dark: #0f172a;
+            --slate-50: #f8fafc;
+            --slate-100: #f1f5f9;
+            --slate-200: #e2e8f0;
+            --slate-300: #cbd5e1;
+            --slate-400: #94a3b8;
+            --slate-500: #64748b;
+            --slate-600: #475569;
+            --slate-700: #334155;
+            --slate-800: #1e293b;
+            --slate-900: #0f172a;
+            --success: #16a34a;
+            --success-light: #dcfce7;
+            --success-dark: #15803d;
+            --warning: #d97706;
+            --warning-light: #fef3c7;
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: #f8fafc;
+            color: var(--slate-900);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Top Bar */
+        .top-navbar {
+            background: #ffffff;
+            border-bottom: 1px solid var(--slate-200);
+            height: 60px;
+            padding: 0 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .brand-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-logo-cube {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-weight: 900;
+            font-size: 14px;
+        }
+
+        .desk-title {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: var(--slate-900);
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .status-dot {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            color: var(--success);
+            font-weight: 600;
+            background: var(--success-light);
+            padding: 2px 8px;
+            border-radius: 9999px;
+            margin-left: 10px;
+        }
+
+        .dot {
+            width: 6px;
+            height: 6px;
+            background: var(--success);
+            border-radius: 50%;
+        }
+
+        .user-area {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .user-badge {
+            background: var(--slate-100);
+            border: 1px solid var(--slate-200);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--slate-700);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .user-avatar {
+            width: 22px;
+            height: 22px;
+            background: var(--brand-blue);
+            color: #ffffff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        /* Container */
+        .page-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px 24px;
+        }
+
+        /* KPI Rack */
+        .kpi-rack {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .kpi-card {
+            background: #ffffff;
+            border: 1px solid var(--slate-200);
+            border-radius: 8px;
+            padding: 16px 20px;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+        }
+
+        .kpi-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: var(--slate-500);
+            letter-spacing: 0.03em;
+            margin-bottom: 6px;
+        }
+
+        .kpi-value {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--slate-900);
+        }
+
+        .kpi-sub {
+            font-size: 0.75rem;
+            color: var(--slate-400);
+            margin-top: 4px;
+        }
+
+        /* Main Workspace */
+        .workspace-grid {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 20px;
+            align-items: start;
+        }
+
+        /* Territory Panel */
+        .territory-panel {
+            background: #ffffff;
+            border: 1px solid var(--slate-200);
+            border-radius: 8px;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--slate-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #ffffff;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .panel-title {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--slate-900);
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: var(--slate-100);
+            border: 1px solid var(--slate-200);
+            border-radius: 6px;
+            padding: 4px 10px;
+            width: 260px;
+        }
+
+        .search-box input {
+            border: none;
+            background: transparent;
+            font-size: 0.82rem;
+            outline: none;
+            width: 100%;
+            margin-left: 6px;
+            color: var(--slate-900);
+        }
+
+        .filter-controls {
+            display: flex;
+            gap: 6px;
+        }
+
+        .filter-btn {
+            background: var(--slate-100);
+            border: 1px solid var(--slate-200);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--slate-600);
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .filter-btn.active {
+            background: var(--primary-light);
+            border-color: #bfdbfe;
+            color: var(--brand-blue);
+        }
+
+        /* Table */
+        .leads-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        .leads-table th {
+            background: #f8fafc;
+            color: var(--slate-500);
+            font-weight: 700;
+            text-align: left;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--slate-200);
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .leads-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--slate-100);
+            color: var(--slate-700);
+            vertical-align: middle;
+        }
+
+        .leads-table tr:hover {
+            background: #f8fafc;
+        }
+
+        .leads-table tr.selected {
+            background: var(--primary-light);
+        }
+
+        .company-cell {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .company-name {
+            font-weight: 700;
+            color: var(--slate-900);
+            font-size: 0.88rem;
+        }
+
+        .company-sector {
+            font-size: 0.72rem;
+            color: var(--slate-400);
+            font-weight: 500;
+        }
+
+        .address-cell {
+            font-size: 0.78rem;
+            color: var(--slate-600);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .badge-sqft {
+            background: var(--slate-100);
+            color: var(--slate-700);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 0.72rem;
+            display: inline-block;
+        }
+
+        .btn-action-group {
+            display: flex;
+            gap: 4px;
+        }
+
+        .btn-icon-action {
+            background: #ffffff;
+            border: 1px solid var(--slate-200);
+            padding: 5px 8px;
+            border-radius: 4px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--slate-700);
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.15s;
+        }
+
+        .btn-icon-action:hover {
+            border-color: var(--brand-blue);
+            color: var(--brand-blue);
+            background: var(--primary-light);
+        }
+
+        .btn-convert {
+            background: var(--success);
+            border: 1px solid var(--success-dark);
+            color: #ffffff;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .btn-convert:hover {
+            background: var(--success-dark);
+        }
+
+        /* Walkthrough Calculator Panel */
+        .calculator-panel {
+            background: #ffffff;
+            border: 1px solid var(--slate-200);
+            border-radius: 8px;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+            padding: 18px;
+            position: sticky;
+            top: 80px;
+        }
+
+        .calc-header {
+            border-bottom: 1px solid var(--slate-200);
+            padding-bottom: 10px;
+            margin-bottom: 14px;
+        }
+
+        .calc-title {
+            font-size: 0.9rem;
+            font-weight: 800;
+            color: var(--slate-900);
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .calc-sub {
+            font-size: 0.75rem;
+            color: var(--slate-500);
+        }
+
+        .calc-field {
+            margin-bottom: 12px;
+        }
+
+        .calc-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--slate-600);
+            text-transform: uppercase;
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        .calc-input, .calc-select {
+            width: 100%;
+            height: 36px;
+            padding: 0 10px;
+            border: 1px solid var(--slate-300);
+            border-radius: 6px;
+            font-size: 0.85rem;
+            color: var(--slate-900);
+            font-weight: 600;
+            background: #ffffff;
+        }
+
+        .price-output-box {
+            background: var(--primary-light);
+            border: 1px solid #bfdbfe;
+            border-radius: 6px;
+            padding: 14px;
+            margin-top: 14px;
+            text-align: center;
+        }
+
+        .price-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--brand-blue);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .price-amount {
+            font-size: 1.6rem;
+            font-weight: 900;
+            color: var(--primary);
+            margin: 2px 0;
+        }
+
+        .price-annual {
+            font-size: 0.75rem;
+            color: var(--slate-600);
+            font-weight: 600;
+        }
+
+        .btn-full-submit {
+            width: 100%;
+            height: 38px;
+            background: var(--brand-blue);
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            margin-top: 14px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .btn-full-submit:hover {
+            background: #1d4ed8;
+        }
+
+        /* Modals */
+        .custom-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.6);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-card {
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 24px;
+            max-width: 480px;
+            width: 90%;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-card h3 {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--slate-900);
+            margin-bottom: 8px;
+        }
+
+        .modal-card p {
+            font-size: 0.85rem;
+            color: var(--slate-600);
+            margin-bottom: 14px;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .btn-cancel {
+            background: #ffffff;
+            border: 1px solid var(--slate-300);
+            padding: 6px 14px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--slate-700);
+            cursor: pointer;
+        }
+
+        .btn-confirm {
+            background: var(--success);
+            border: none;
+            padding: 6px 16px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #ffffff;
+            cursor: pointer;
+        }
+
+        @media (max-width: 1024px) {
+            .workspace-grid { grid-template-columns: 1fr; }
+            .calculator-panel { position: static; margin-top: 20px; }
+            .kpi-rack { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Strip -->
+    <header class="top-navbar">
+        <div class="brand-area">
+            <div class="brand-logo-cube">H</div>
+            <div class="desk-title">Field Sales Desk</div>
+            <div class="status-dot"><span class="dot"></span> Live Connected</div>
+        </div>
+        <div class="user-area">
+            <div class="user-badge">
+                <div class="user-avatar">{{ current_user.username[:2]|upper }}</div>
+                <span>{{ current_user.username }} | Outside Sales</span>
+            </div>
+            {% if current_user.role in ['Executive', 'Admin', 'Manager'] %}
+                <a href="{{ url_for('admin_operations') }}" class="btn-icon-action" style="font-size: 0.75rem;"><i class="fas fa-desktop"></i> Backoffice Hub</a>
+            {% endif %}
+            <a href="{{ url_for('logout') }}" class="btn-icon-action" style="color: #ef4444; border-color: #fca5a5;"><i class="fas fa-power-off"></i> Logout</a>
+        </div>
+    </header>
+
+    <!-- Page Body -->
+    <main class="page-container">
+
+        <!-- KPI Rack -->
+        <section class="kpi-rack">
+            <div class="kpi-card">
+                <div class="kpi-label">Assigned Working Queue</div>
+                <div class="kpi-value">{{ assigned_count }}</div>
+                <div class="kpi-sub">Active Assigned Leads</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Walkthroughs Scheduled</div>
+                <div class="kpi-value" style="color: var(--brand-blue);">{{ walkthroughs_count }}</div>
+                <div class="kpi-sub">Site Assessments This Week</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Active Proposals Out</div>
+                <div class="kpi-value">${{ "{:,.1f}".format(proposals_val / 1000.0) }}k</div>
+                <div class="kpi-sub">Awaiting Decision Maker Sign-Off</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Converted Accounts YTD</div>
+                <div class="kpi-value" style="color: var(--success);">${{ "{:,.1f}".format(converted_val / 1000.0) }}k</div>
+                <div class="kpi-sub">Live Contract Revenue Won</div>
+            </div>
+        </section>
+
+        <!-- Main Workspace -->
+        <div class="workspace-grid">
+
+            <!-- Territory Table -->
+            <section class="territory-panel">
+                <div class="panel-header">
+                    <div>
+                        <div class="panel-title">My Target Facilities Queue</div>
+                        <div style="font-size: 0.72rem; color: var(--slate-400);">Displaying {{ leads|length }} assigned opportunities (Export restricted)</div>
+                    </div>
+
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <form method="GET" action="{{ url_for('sales_desk') }}" class="search-box">
+                            <i class="fas fa-search" style="color: var(--slate-400); font-size: 0.75rem;"></i>
+                            <input type="text" name="q" value="{{ search_q }}" placeholder="Search company, address, city...">
+                            {% if status_filter %}<input type="hidden" name="status" value="{{ status_filter }}">{% endif %}
+                        </form>
+
+                        <div class="filter-controls">
+                            <a href="{{ url_for('sales_desk', q=search_q) }}" class="filter-btn {% if not status_filter %}active{% endif %}">All</a>
+                            <a href="{{ url_for('sales_desk', status='walkthrough', q=search_q) }}" class="filter-btn {% if status_filter == 'walkthrough' %}active{% endif %}">Walkthroughs</a>
+                            <a href="{{ url_for('sales_desk', status='quote', q=search_q) }}" class="filter-btn {% if status_filter == 'quote' %}active{% endif %}">Quotes</a>
+                        </div>
+                    </div>
+                </div>
+
+                <table class="leads-table">
+                    <thead>
+                        <tr>
+                            <th>Facility & Sector</th>
+                            <th>Address & Location</th>
+                            <th>Cleanable Area</th>
+                            <th>Decision Maker</th>
+                            <th>Field Actions</th>
+                            <th>Conversion</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for lead in leads %}
+                        <tr id="lead-row-{{ lead.id }}" onclick="selectLeadForCalc('{{ lead.center_name|e }}', {{ lead.sqf or 12000 }}, '{{ lead.city|e }}')">
+                            <td>
+                                <div class="company-cell">
+                                    <span class="company-name">{{ lead.center_name }}</span>
+                                    <span class="company-sector">{{ lead.facility_type or lead.industry or 'Commercial Facility' }}{% if lead.capacity %} | Cap: {{ lead.capacity }}{% endif %}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="address-cell">
+                                    <span>📍 {{ lead.address or '' }}, {{ lead.city or '' }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge-sqft">{{ "{:,}".format(lead.sqf) if lead.sqf else '12,000' }} SF</span>
+                            </td>
+                            <td>
+                                <div style="font-weight: 700;">{{ lead.decision_maker or lead.director or 'Director' }}</div>
+                                <div style="font-size: 0.72rem; color: var(--slate-400);">{{ lead.job_title or 'Facility Lead' }}</div>
+                            </td>
+                            <td>
+                                <div class="btn-action-group" onclick="event.stopPropagation();">
+                                    {% if lead.phone %}
+                                        <a href="tel:{{ lead.phone }}" class="btn-icon-action" title="Call {{ lead.phone|format_phone }}"><i class="fas fa-phone"></i></a>
+                                    {% endif %}
+                                    <a href="https://maps.google.com/?q={{ lead.address|urlencode }}+{{ lead.city|urlencode }}+Texas" target="_blank" class="btn-icon-action" title="Directions"><i class="fas fa-directions"></i></a>
+                                    <button type="button" onclick="openNoteModal({{ lead.id }}, '{{ lead.center_name|e }}')" class="btn-icon-action" title="Log Field Note"><i class="fas fa-sticky-note"></i></button>
+                                </div>
+                            </td>
+                            <td>
+                                <div onclick="event.stopPropagation();">
+                                    <button class="btn-convert" onclick="openConvertModal({{ lead.id }}, '{{ lead.center_name|e }}', {{ lead.sqf or 12000 }}, {{ lead.estimated_annual_value or 24000 }})">
+                                        <i class="fas fa-check-circle"></i> Convert
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 40px; color: var(--slate-400);">
+                                No target facilities found matching your criteria.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Walkthrough Assessment Calculator -->
+            <aside class="calculator-panel">
+                <div class="calc-header">
+                    <div>
+                        <div class="calc-title">Walkthrough Calculator</div>
+                        <div class="calc-sub" id="calc-facility-name">Active: Select a facility</div>
+                    </div>
+                </div>
+
+                <div class="calc-field">
+                    <label class="calc-label">Cleanable Square Footage</label>
+                    <input type="number" id="calc-sqft" class="calc-input" value="12000" oninput="recalculate()">
+                </div>
+
+                <div class="calc-field">
+                    <label class="calc-label">Service Frequency</label>
+                    <select id="calc-freq" class="calc-select" onchange="recalculate()">
+                        <option value="5" selected>5 Nights / Week (Standard)</option>
+                        <option value="6">6 Nights / Week</option>
+                        <option value="7">7 Nights / Week (Medical/24-7)</option>
+                        <option value="3">3 Nights / Week (Light)</option>
+                    </select>
+                </div>
+
+                <div class="calc-field">
+                    <label class="calc-label">Primary Floor Substrate</label>
+                    <select id="calc-floor" class="calc-select" onchange="recalculate()">
+                        <option value="vct" selected>VCT Tile & Commercial Carpet</option>
+                        <option value="rubber">Mondo Athletic Rubber Floor</option>
+                        <option value="terrazzo">Polished Terrazzo / Marble</option>
+                        <option value="concrete">Sealed Commercial Concrete</option>
+                    </select>
+                </div>
+
+                <!-- Price Box -->
+                <div class="price-output-box">
+                    <div class="price-label">Recommended Proposal Rate</div>
+                    <div class="price-amount" id="calc-monthly">$1,680.00<span style="font-size: 0.85rem; font-weight: 600; color: var(--slate-500);">/mo</span></div>
+                    <div class="price-annual" id="calc-annual">Annual Contract: $20,160.00 ($0.140/SF)</div>
+                </div>
+
+                <button class="btn-full-submit" onclick="dispatchProposal()">
+                    <i class="fas fa-file-invoice"></i> Dispatch On-Site Proposal
+                </button>
+            </aside>
+
+        </div>
+
+    </main>
+
+    <!-- Convert Modal -->
+    <div id="convertModal" class="custom-modal">
+        <div class="modal-card">
+            <h3><i class="fas fa-award" style="color: var(--success);"></i> Convert Lead to Live Account?</h3>
+            <p>You are transitioning <strong id="modal-company-name">Facility Name</strong> from prospective lead status to an active Customer Account in the operations portal.</p>
+            <div style="background: var(--slate-100); padding: 12px; border-radius: 6px; font-size: 0.8rem; margin-bottom: 14px;">
+                <div>• Cleanable Area: <strong id="modal-sqft">12,000 SF</strong></div>
+                <div>• Estimated Annual Value: <strong id="modal-value" style="color: var(--success);">$24,000.00</strong></div>
+                <div>• Automated notification will trigger to CEO & Operations Commander.</div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel" onclick="closeModal('convertModal')">Cancel</button>
+                <button type="button" class="btn-confirm" id="btn-confirm-convert" onclick="executeConversion()">Confirm & Convert</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Note Modal -->
+    <div id="noteModal" class="custom-modal">
+        <div class="modal-card">
+            <h3><i class="fas fa-sticky-note" style="color: var(--brand-blue);"></i> Log Field Note</h3>
+            <p>Record touchpoint notes for <strong id="note-company-name">Facility Name</strong>:</p>
+            <textarea id="field-note-text" class="calc-input" style="height: 90px; padding: 8px; resize: none; font-size: 0.85rem;" placeholder="e.g., Met with Director. Scheduled walkthrough for Tuesday 10 AM..."></textarea>
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel" onclick="closeModal('noteModal')">Cancel</button>
+                <button type="button" class="btn-confirm" style="background: var(--brand-blue);" onclick="submitFieldNote()">Save Note</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentLeadId = null;
+
+        function selectLeadForCalc(name, sqft, city) {
+            document.getElementById('calc-facility-name').innerText = `Active: ${name} (${city})`;
+            document.getElementById('calc-sqft').value = sqft || 12000;
+            recalculate();
+        }
+
+        function recalculate() {
+            const sqft = parseFloat(document.getElementById('calc-sqft').value) || 0;
+            const freq = parseInt(document.getElementById('calc-freq').value) || 5;
+            const floor = document.getElementById('calc-floor').value;
+
+            let ratePerSf = 0.14;
+            if (freq === 7) ratePerSf = 0.18;
+            else if (freq === 6) ratePerSf = 0.16;
+            else if (freq === 3) ratePerSf = 0.11;
+
+            if (floor === 'rubber' || floor === 'terrazzo') ratePerSf += 0.015;
+
+            const monthly = sqft * ratePerSf;
+            const annual = monthly * 12;
+
+            document.getElementById('calc-monthly').innerHTML = `$${monthly.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}<span style="font-size: 0.85rem; font-weight: 600; color: #64748b;">/mo</span>`;
+            document.getElementById('calc-annual').innerText = `Annual Contract: $${annual.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} ($${ratePerSf.toFixed(3)}/SF)`;
+        }
+
+        function openConvertModal(leadId, name, sqft, val) {
+            currentLeadId = leadId;
+            document.getElementById('modal-company-name').innerText = name;
+            document.getElementById('modal-sqft').innerText = `${sqft.toLocaleString()} SF`;
+            document.getElementById('modal-value').innerText = `$${val.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+            document.getElementById('convertModal').style.display = 'flex';
+        }
+
+        function openNoteModal(leadId, name) {
+            currentLeadId = leadId;
+            document.getElementById('note-company-name').innerText = name;
+            document.getElementById('field-note-text').value = '';
+            document.getElementById('noteModal').style.display = 'flex';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        async function executeConversion() {
+            if (!currentLeadId) return;
+            const btn = document.getElementById('btn-confirm-convert');
+            btn.disabled = true;
+            btn.innerText = 'Converting...';
+
+            try {
+                const res = await fetch(`/api/v1/leads/${currentLeadId}/promote`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'}
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    closeModal('convertModal');
+                    const row = document.getElementById(`lead-row-${currentLeadId}`);
+                    if (row) {
+                        row.style.background = '#dcfce7';
+                        row.innerHTML = `<td colspan="6" style="text-align: center; color: #166534; font-weight: 700; padding: 16px;">✓ Successfully Converted to Live Account ACC-${data.customer_id}! Handover Dispatched.</td>`;
+                    }
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    alert(`Conversion Error: ${data.message || 'Server error'}`);
+                    btn.disabled = false;
+                    btn.innerText = 'Confirm & Convert';
+                }
+            } catch (err) {
+                alert(`Network Failure: ${err}`);
+                btn.disabled = false;
+                btn.innerText = 'Confirm & Convert';
+            }
+        }
+
+        async function submitFieldNote() {
+            if (!currentLeadId) return;
+            const noteText = document.getElementById('field-note-text').value.trim();
+            if (!noteText) { alert('Please enter a note.'); return; }
+
+            try {
+                const res = await fetch('/api/v1/activities', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        parent_id: currentLeadId,
+                        parent_type: 'Lead',
+                        activity_type: 'FIELD_TOUCH',
+                        description: noteText
+                    })
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    closeModal('noteModal');
+                    alert('Field note logged successfully.');
+                } else {
+                    alert(`Failed to log note: ${data.message}`);
+                }
+            } catch (err) {
+                alert(`Error: ${err}`);
+            }
+        }
+
+        function dispatchProposal() {
+            const sqft = document.getElementById('calc-sqft').value;
+            const monthly = document.getElementById('calc-monthly').innerText;
+            alert(`Proposal generated for ${sqft} SF at ${monthly}. Formal capability binder staged.`);
+        }
+    </script>
+</body>
+</html>

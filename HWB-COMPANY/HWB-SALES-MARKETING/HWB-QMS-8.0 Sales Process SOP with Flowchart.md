@@ -24,38 +24,46 @@ Applies to all HWB staff involved in managing leads, giving quotes, and getting 
 2. **Activity Tracking:** Every change in a lead's status must be recorded.
 3. **Physical Truth:** Use exact file paths for Lead Uploader scripts.
 
-## 4.0 The Sales Sequence
+## 4.0 The Zero-Caller Sales Sequence
 
-### 4.1 How we get leads
-1.  **Option 1 (High Quality):** Captured through specific service pages. Includes size and usage data for an instant $0.12 quote.
-2.  **Option 2 (Simple Contact):** Captured through the Home Page. Includes Company and Contact data only. **Required Follow-up:** A CRM Specialist must contact these leads within 4 business hours to check the building type and size.
+### 4.1 Acquisition Channels (Asynchronous & Inbound Pull)
+1.  **Channel 1 (Institutional RFPs/RFBs):** Public procurement portals (NTTA, TxDOT, Counties, ISDs). Automated bid scraping and locked underwriting. Zero phone calls.
+2.  **Channel 2 (Commercial GC Plan-Rooms - CSI 01 74 23):** Plan invitations via BuildingConnected, Procore, and CivCast. Submits standardized takeoff proposals directly to GC estimators.
+3.  **Channel 3 (Automated Compliance Cadences):** Sector-specific email sequences (Lauri Tells Engine) targeting verified facility decision-makers (Daycares, Medical, Schools) with embedded Microsoft Bookings links.
+4.  **Channel 4 (Frictionless Web Self-Qualification):** Interactive square-foot pricing calculator on `hwbcleaning.com` with instant ballpark range and immediate calendar walkthrough booking.
 
 ### 4.2 Workflow
 ```mermaid
 graph TD
-    A[Start] --> B[Initial Inquiry]
-    B --> C{Which way?}
-    C -- V1: High Quality --> D[Auto-Quote Created]
-    C -- V2: Simple --> E[Manual Discovery Call]
-    D --> F[Site Visit]
-    E --> F
-    F --> G[Prepare Final Proposal]
-    G --> H{Decision?}
-    H -- Accepted --> I[Sign Contract]
-    I --> K[Set Up Account]
+    A["Lead Inflow (Portal / Plan-Room / Web / Email)"] --> B{"Lead Channel?"}
+    B -- Institutional RFP --> C["Architect George Generates Locked Underwriting"]
+    B -- GC Plan-Room --> D["CSI 01 74 23 Takeoff Submitted to Estimator"]
+    B -- Web / Inbound --> E["Auto-Calculated Ballpark + Booking Link"]
+    B -- Email Cadence --> F["Prospect Selects Calendar Slot"]
+    C --> G["Electronic Submittal / Bid Opening"]
+    D --> H["GC Awards Project to Bid Tab"]
+    E --> I["CEO On-Site Walkthrough"]
+    F --> I
+    G --> J["Notice of Award"]
+    H --> K["Execute Subcontract Agreement"]
+    I --> L["On-Site Electronic Quote Closes (>65% Win)"]
+    J --> M["Day 1 Mobilization Handover"]
+    K --> M
+    L --> M
 ```
 
-### 4.2 Procedural Steps
-1.  **Initial Inquiry:** Record all calls, web forms, or emails into the CRM.
-2.  **Qualify Lead:** Check that the client is in our North Texas service area.
-3.  **Schedule Assessment:** For good leads, set up a time to visit the building.
-4.  **Conduct Assessment:** Visit the site and record the exact size and work needed.
-5.  **Prepare Proposal:** Create a formal quote using the HWB $0.12 price engine.
-6.  **Send and Follow-Up:** Send the proposal and check back within 48 hours.
+### 4.3 Procedural Steps
+1.  **Asynchronous Lead Capture:** System ingests portal solicitations, GC plan room invitations, and inbound web forms into PostgreSQL CRM (`crm.db`).
+2.  **Deterministic Qualification:** Algorithm checks physical location within North Texas service area and verifies minimum threshold.
+3.  **Self-Scheduled Walkthrough / Automated Takeoff:** Prospect selects a walkthrough window via Microsoft Bookings, or estimator submits electronic plan takeoff.
+4.  **Conduct Assessment:** CEO Humberto Dominguez conducts in-person walkthrough, verifies cleanable square footage, and inspects flooring substrates.
+5.  **Deliver Proposal:** Submit formal proposal within 2 hours using the SigmaFidelity™ pricing engine.
+6.  **Contract Execution:** Digital sign-off via DocuSign/SignNow; account automatically created in backoffice operations.
 
 ## 5.0 Verification (Zero-Defect Check)
 *   Signed agreement is uploaded to the Account record.
 *   Client data in CRM matches the final service agreement.
+*   Zero manual telephone cold calling performed or required.
 
 ## 6.0 Notes and Cautions
 > **NOTE:** Use "Everyday Words" when explaining technical sanitation to clients.
@@ -64,5 +72,6 @@ graph TD
 ## 7.0 Revision History
 | Version | Date | Author | Change Description |
 | :--- | :--- | :--- | :--- |
+| 2.1.0 | 09/18/2026 | George | ZERO-CALLER PIVOT. Eliminated remote telemarketing and discovery call bottlenecks; formalized 4-Pillar Asynchronous Engine. |
 | 2.0.0 | 05/21/2026 | George | TOTAL MODERNIZATION. Standardized ID to HWB-QMS-8.0 and added Tier 6 mandates. |
 | 1.0 | 2026-02-20 | Gemini | Initial Release. |

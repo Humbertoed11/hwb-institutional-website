@@ -1,60 +1,798 @@
 {% extends "base.html" %}
 
-{% block title %}CSI Department | Clean Scene Investigation{% endblock %}
+{% block title %}Building Quality Inspection Map | HWB Cleaning Services{% endblock %}
 
 {% block content %}
-<section class="csi-view">
-    <div class="hero" style="padding: 4rem 0;">
-        <h1>CSI: Clean Scene Investigation</h1>
-        <p class="subtitle">Our specialized quality audit department utilizes forensic-grade inspection protocols to ensure 100% service fidelity across all facilities.</p>
+<section class="csi-view-container">
+    <style>
+        .csi-view-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2.5rem 20px 4rem 20px;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
+        .csi-hero {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .csi-hero h1 {
+            font-size: 2.25rem;
+            font-weight: 900;
+            color: #0f172a;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .csi-hero p {
+            font-size: 1.05rem;
+            color: #64748b;
+            max-width: 720px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Sector Tab Rack */
+        .csi-sector-rack {
+            display: flex;
+            justify-content: center;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .csi-tab-btn {
+            padding: 0.65rem 1.25rem;
+            font-size: 0.88rem;
+            font-weight: 700;
+            border-radius: 0.5rem;
+            border: 1px solid #cbd5e1;
+            background: #ffffff;
+            color: #475569;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .csi-tab-btn:hover {
+            border-color: #2563eb;
+            color: #2563eb;
+            background: #f8fafc;
+        }
+
+        .csi-tab-btn.active {
+            background: #2563eb;
+            color: #ffffff;
+            border-color: #2563eb;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+        }
+
+        /* Workspace Grid */
+        .csi-workspace {
+            display: grid;
+            grid-template-columns: 1.6fr 1fr;
+            gap: 2rem;
+            align-items: start;
+        }
+
+        @media (max-width: 992px) {
+            .csi-workspace {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Map Canvas */
+        .csi-map-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+            position: relative;
+        }
+
+        .csi-map-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .csi-map-title {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .csi-map-hint {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #2563eb;
+            background: #eff6ff;
+            padding: 0.3rem 0.75rem;
+            border-radius: 2rem;
+        }
+
+        .csi-canvas {
+            position: relative;
+            width: 100%;
+            height: 480px;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            border-radius: 0.75rem;
+            overflow: hidden;
+            border: 2px solid #334155;
+        }
+
+        /* SVG Blueprint Grid Background */
+        .csi-blueprint-bg {
+            position: absolute;
+            inset: 0;
+            opacity: 0.15;
+            background-image: linear-gradient(#38bdf8 1px, transparent 1px), linear-gradient(90deg, #38bdf8 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+
+        /* Room Visual Representations */
+        .csi-room-zone {
+            position: absolute;
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            border-radius: 0.5rem;
+            background: rgba(255, 255, 255, 0.03);
+            display: flex;
+            align-items: flex-start;
+            padding: 0.75rem;
+            color: #94a3b8;
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Hotspot Markers */
+        .csi-pin {
+            position: absolute;
+            cursor: pointer;
+            z-index: 20;
+            transform: translate(-50%, -50%);
+            transition: transform 0.2s ease;
+        }
+
+        .csi-pin:hover {
+            transform: translate(-50%, -50%) scale(1.15);
+        }
+
+        .csi-pin-ring {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .csi-pin-ring.passed {
+            background: #10b981;
+            color: #ffffff;
+            border: 2px solid #ffffff;
+        }
+
+        .csi-pin-ring.attention {
+            background: #ef4444;
+            color: #ffffff;
+            border: 2px solid #ffffff;
+        }
+
+        .csi-pin-pulse {
+            position: absolute;
+            inset: -6px;
+            border-radius: 50%;
+            animation: csiPulse 2s infinite;
+        }
+
+        .csi-pin-ring.passed .csi-pin-pulse {
+            border: 2px solid #10b981;
+        }
+
+        .csi-pin-ring.attention .csi-pin-pulse {
+            border: 2px solid #ef4444;
+        }
+
+        @keyframes csiPulse {
+            0% { transform: scale(0.9); opacity: 0.8; }
+            70% { transform: scale(1.6); opacity: 0; }
+            100% { transform: scale(0.9); opacity: 0; }
+        }
+
+        .csi-pin-label {
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            margin-top: 0.4rem;
+            background: #0f172a;
+            color: #ffffff;
+            padding: 0.2rem 0.6rem;
+            border-radius: 0.35rem;
+            font-size: 0.7rem;
+            font-weight: 800;
+            white-space: nowrap;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            border: 1px solid #334155;
+        }
+
+        /* Detail Panel */
+        .csi-report-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 1rem;
+            padding: 1.75rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+        }
+
+        .csi-report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .csi-status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.3rem 0.75rem;
+            border-radius: 2rem;
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .badge-passed {
+            background: #d1fae5;
+            color: #047857;
+        }
+
+        .badge-attention {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .csi-check-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 1.75rem;
+        }
+
+        .csi-check-item {
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-start;
+            background: #f8fafc;
+            padding: 0.85rem 1rem;
+            border-radius: 0.6rem;
+            border: 1px solid #f1f5f9;
+        }
+
+        .csi-check-icon {
+            font-size: 1rem;
+            margin-top: 0.1rem;
+        }
+
+        .csi-check-icon.passed { color: #10b981; }
+        .csi-check-icon.attention { color: #ef4444; }
+
+        .csi-check-title {
+            font-weight: 800;
+            font-size: 0.88rem;
+            color: #0f172a;
+            margin-bottom: 0.15rem;
+        }
+
+        .csi-check-desc {
+            font-size: 0.78rem;
+            color: #64748b;
+            line-height: 1.4;
+        }
+
+        .csi-meta-box {
+            background: #f1f5f9;
+            border-radius: 0.6rem;
+            padding: 1rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .csi-meta-unit {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .csi-meta-label {
+            font-size: 0.68rem;
+            font-weight: 800;
+            color: #64748b;
+            text-transform: uppercase;
+        }
+
+        .csi-meta-val {
+            font-size: 0.82rem;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .csi-action-btn {
+            width: 100%;
+            padding: 0.85rem;
+            background: #2563eb;
+            color: #ffffff;
+            border: none;
+            border-radius: 0.6rem;
+            font-weight: 800;
+            font-size: 0.88rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: background 0.2s;
+        }
+
+        .csi-action-btn:hover {
+            background: #1d4ed8;
+        }
+    </style>
+
+    <!-- Header Section -->
+    <div class="csi-hero">
+        <h1>Building Quality Inspection Map</h1>
+        <p>Interactive floor plans and real-time room inspection reports. Click any room pin on the map to review cleanliness checks, floor care, and inspection records.</p>
     </div>
 
-    <div class="csi-controls">
-        <button class="scene-btn active" onclick="showScene('office')">Office Sector</button>
-        <button class="scene-btn" onclick="showScene('construction')">Construction Site</button>
-        <button class="scene-btn" onclick="showScene('warehouse')">Industrial Hub</button>
+    <!-- Sector Tabs -->
+    <div class="csi-sector-rack">
+        <button type="button" class="csi-tab-btn active" onclick="switchSector('office', this)">
+            🏢 Office Building
+        </button>
+        <button type="button" class="csi-tab-btn" onclick="switchSector('construction', this)">
+            🏗️ Post-Construction Site
+        </button>
+        <button type="button" class="csi-tab-btn" onclick="switchSector('warehouse', this)">
+            🏭 Warehouse & Industrial Hub
+        </button>
     </div>
 
-    <div id="office" class="scene-content active">
-        <div class="scene-container">
-            <div class="interactive-scene">
-                <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1200&q=80" alt="Office Audit" class="scene-image">
-                <div class="hotspot" style="top: 30%; left: 45%;" onclick="showReport('HWB-CSI-001', 'High-Touch Sanitization Check', 'Verified zero-defect sanitization on desk surfaces using ATP bioluminescence testing.')">
-                    <div class="pulse-marker"></div>
-                    <div class="label">Surface Audit</div>
+    <!-- Main Workspace -->
+    <div class="csi-workspace">
+        
+        <!-- Interactive Canvas Card -->
+        <div class="csi-map-card">
+            <div class="csi-map-header">
+                <div class="csi-map-title">
+                    <i class="fas fa-map-marked-alt" style="color: #2563eb;"></i>
+                    <span id="current-sector-title">Office Building Floor Plan</span>
                 </div>
-                <div class="hotspot" style="top: 70%; left: 20%;" onclick="showReport('HWB-CSI-002', 'HEPA Floor Compliance', 'Verified 100% coverage and HEPA filtration status for textile floor surfaces.')">
-                    <div class="pulse-marker"></div>
-                    <div class="label">Floor Audit</div>
+                <div class="csi-map-hint">
+                    <i class="fas fa-hand-pointer"></i> Click a Pin to Inspect
                 </div>
             </div>
-            <div class="tool-panel" id="officeReport">
-                <div class="panel-placeholder">Select a hotspot to view live audit data...</div>
+
+            <!-- Canvas View: Office -->
+            <div id="sector-office" class="csi-canvas sector-canvas">
+                <div class="csi-blueprint-bg"></div>
+
+                <!-- Room Outlines -->
+                <div class="csi-room-zone" style="top: 8%; left: 6%; width: 42%; height: 40%;">Executive Offices</div>
+                <div class="csi-room-zone" style="top: 8%; left: 52%; width: 42%; height: 40%;">Workstation Floor</div>
+                <div class="csi-room-zone" style="top: 54%; left: 6%; width: 42%; height: 38%;">Breakroom & Kitchen</div>
+                <div class="csi-room-zone" style="top: 54%; left: 52%; width: 42%; height: 38%;">Restroom Suite</div>
+
+                <!-- Interactive Pins -->
+                <div class="csi-pin" style="top: 28%; left: 27%;" onclick="loadInspection('office_exec', 'Executive Office Suite', 'passed')">
+                    <div class="csi-pin-ring passed">
+                        <div class="csi-pin-pulse"></div>
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="csi-pin-label">Executive Suite</div>
+                </div>
+
+                <div class="csi-pin" style="top: 28%; left: 73%;" onclick="loadInspection('office_workstations', 'Main Workstation Floor', 'passed')">
+                    <div class="csi-pin-ring passed">
+                        <div class="csi-pin-pulse"></div>
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="csi-pin-label">Workstations</div>
+                </div>
+
+                <div class="csi-pin" style="top: 73%; left: 27%;" onclick="loadInspection('office_breakroom', 'Breakroom & Kitchen', 'passed')">
+                    <div class="csi-pin-ring passed">
+                        <div class="csi-pin-pulse"></div>
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="csi-pin-label">Breakroom</div>
+                </div>
+
+                <div class="csi-pin" style="top: 73%; left: 73%;" onclick="loadInspection('office_restroom', 'Restroom & Sanitization', 'attention')">
+                    <div class="csi-pin-ring attention">
+                        <div class="csi-pin-pulse"></div>
+                        <i class="fas fa-exclamation"></i>
+                    </div>
+                    <div class="csi-pin-label">Restrooms</div>
+                </div>
             </div>
+
+            <!-- Canvas View: Construction -->
+            <div id="sector-construction" class="csi-canvas sector-canvas" style="display: none;">
+                <div class="csi-blueprint-bg"></div>
+
+                <div class="csi-room-zone" style="top: 8%; left: 6%; width: 88%; height: 38%;">Main Entrance & Lobby</div>
+                <div class="csi-room-zone" style="top: 52%; left: 6%; width: 42%; height: 40%;">Upper Level Units</div>
+                <div class="csi-room-zone" style="top: 52%; left: 52%; width: 42%; height: 40%;">Elevator & Hallways</div>
+
+                <div class="csi-pin" style="top: 27%; left: 50%;" onclick="loadInspection('const_lobby', 'Main Entrance & Lobby', 'passed')">
+                    <div class="csi-pin-ring passed">
+                        <div class="csi-pin-pulse"></div>
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="csi-pin-label">Main Lobby</div>
+                </div>
+
+                <div class="csi-pin" style="top: 72%; left: 27%;" onclick="loadInspection('const_units', 'Upper Level Finished Units', 'passed')">
+                    <div class="csi-pin-ring passed">
+                        <div class="csi-pin-pulse"></div>
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="csi-pin-label">Finished Units</div>
+                </div>
+
+                <div class="csi-pin" style="top: 72%; left: 73%;" onclick="loadInspection('const_hallways', 'Elevator & Common Hallways', 'passed')">
+                    <div class="csi-pin-ring passed">
+                        <div class="csi-pin-pulse"></div>
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="csi-pin-label">Hallways</div>
+                </div>
+            </div>
+
+            <!-- Canvas View: Warehouse -->
+            <div id="sector-warehouse" class="csi-canvas sector-canvas" style="display: none;">
+                <div class="csi-blueprint-bg"></div>
+
+                <div class="csi-room-zone" style="top: 8%; left: 6%; width: 42%; height: 82%;">Loading Dock & Staging</div>
+                <div class="csi-room-zone" style="top: 8%; left: 52%; width: 42%; height: 40%;">Storage Aisles</div>
+                <div class="csi-room-zone" style="top: 52%; left: 52%; width: 42%; height: 38%;">Supervisor Office</div>
+
+                <div class="csi-pin" style="top: 49%; left: 27%;" onclick="loadInspection('wh_dock', 'Loading Dock Floor', 'passed')">
+                    <div class="csi-pin-ring passed">
+                        <div class="csi-pin-pulse"></div>
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="csi-pin-label">Loading Docks</div>
+                </div>
+
+                <div class="csi-pin" style="top: 28%; left: 73%;" onclick="loadInspection('wh_aisles', 'High-Rack Storage Aisles', 'passed')">
+                    <div class="csi-pin-ring passed">
+                        <div class="csi-pin-pulse"></div>
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="csi-pin-label">Storage Aisles</div>
+                </div>
+
+                <div class="csi-pin" style="top: 71%; left: 73%;" onclick="loadInspection('wh_office', 'Warehouse Office', 'passed')">
+                    <div class="csi-pin-ring passed">
+                        <div class="csi-pin-pulse"></div>
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="csi-pin-label">Warehouse Office</div>
+                </div>
+            </div>
+
         </div>
-    </div>
 
-    <!-- Additional scenes follow same pattern -->
+        <!-- Inspection Report Panel -->
+        <div class="csi-report-card" id="inspection-report-box">
+            <div class="csi-report-header">
+                <div>
+                    <div style="font-size: 0.7rem; font-weight: 900; color: #2563eb; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;" id="report-code">ZONE-OFFICE-01</div>
+                    <h2 style="font-size: 1.25rem; font-weight: 900; color: #0f172a; margin: 0;" id="report-room-name">Executive Office Suite</h2>
+                </div>
+                <div id="report-status-badge" class="csi-status-badge badge-passed">
+                    <i class="fas fa-check-circle"></i> Passed Inspection
+                </div>
+            </div>
+
+            <!-- Inspection Checklist -->
+            <div class="csi-check-list" id="report-checklist">
+                <div class="csi-check-item">
+                    <i class="fas fa-check-circle csi-check-icon passed"></i>
+                    <div>
+                        <div class="csi-check-title">Desk & Surface Cleanliness</div>
+                        <div class="csi-check-desc">All executive desks, conference tables, and countertops disinfected and wiped clean.</div>
+                    </div>
+                </div>
+
+                <div class="csi-check-item">
+                    <i class="fas fa-check-circle csi-check-icon passed"></i>
+                    <div>
+                        <div class="csi-check-title">Floor & Carpet Care</div>
+                        <div class="csi-check-desc">High-traffic carpet vacuumed; hard flooring spot-cleaned and free of debris.</div>
+                    </div>
+                </div>
+
+                <div class="csi-check-item">
+                    <i class="fas fa-check-circle csi-check-icon passed"></i>
+                    <div>
+                        <div class="csi-check-title">Trash & Recycling</div>
+                        <div class="csi-check-desc">All waste bins emptied, wiped down, and replaced with fresh liners.</div>
+                    </div>
+                </div>
+
+                <div class="csi-check-item">
+                    <i class="fas fa-check-circle csi-check-icon passed"></i>
+                    <div>
+                        <div class="csi-check-title">High-Touch Area Sanitization</div>
+                        <div class="csi-check-desc">Door handles, light switches, and shared phone handsets thoroughly disinfected.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inspection Metadata -->
+            <div class="csi-meta-box">
+                <div class="csi-meta-unit">
+                    <span class="csi-meta-label">Inspected By</span>
+                    <span class="csi-meta-val" id="report-auditor">Senior Operations Lead</span>
+                </div>
+                <div class="csi-meta-unit">
+                    <span class="csi-meta-label">Last Inspection</span>
+                    <span class="csi-meta-val" id="report-time">Today, 7:30 AM</span>
+                </div>
+                <div class="csi-meta-unit">
+                    <span class="csi-meta-label">Location</span>
+                    <span class="csi-meta-val">Plano Facility, TX</span>
+                </div>
+                <div class="csi-meta-unit">
+                    <span class="csi-meta-label">Quality Score</span>
+                    <span class="csi-meta-val" id="report-score" style="color: #10b981;">100% Passed</span>
+                </div>
+            </div>
+
+            <button type="button" class="csi-action-btn" onclick="alert('Downloading official Quality Inspection Summary PDF report...')">
+                <i class="fas fa-file-download"></i> Download Inspection Summary (PDF)
+            </button>
+        </div>
+
+    </div>
 </section>
 
 <script>
-function showScene(sceneId) {
-    document.querySelectorAll('.scene-content').forEach(s => s.classList.remove('active'));
-    document.querySelectorAll('.scene-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById(sceneId).classList.add('active');
-    event.currentTarget.classList.add('active');
-}
+    // Sector Navigation Switch
+    function switchSector(sectorId, btnEl) {
+        document.querySelectorAll('.sector-canvas').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('.csi-tab-btn').forEach(btn => btn.classList.remove('active'));
 
-function showReport(id, title, desc) {
-    const panel = document.getElementById('officeReport');
-    panel.innerHTML = `
-        <div class="report-content">
-            <span class="tag">AUDIT: ${id}</span>
-            <h3>${title}</h3>
-            <p>${desc}</p>
-            <a href="{{ url_for('ehsq') }}" class="btn-small">View Full Performance Log</a>
-        </div>
-    `;
-}
+        const targetSector = document.getElementById('sector-' + sectorId);
+        if (targetSector) {
+            targetSector.style.display = 'block';
+        }
+        btnEl.classList.add('active');
+
+        const titleMap = {
+            'office': 'Office Building Floor Plan',
+            'construction': 'Post-Construction Site Plan',
+            'warehouse': 'Warehouse & Industrial Layout'
+        };
+        document.getElementById('current-sector-title').innerText = titleMap[sectorId] || 'Building Floor Plan';
+
+        // Load default pin for the sector
+        if (sectorId === 'office') loadInspection('office_exec', 'Executive Office Suite', 'passed');
+        if (sectorId === 'construction') loadInspection('const_lobby', 'Main Entrance & Lobby', 'passed');
+        if (sectorId === 'warehouse') loadInspection('wh_dock', 'Loading Dock Floor', 'passed');
+    }
+
+    // Inspection Data Provider (Everyday Words Standard)
+    const inspectionData = {
+        'office_exec': {
+            code: 'ZONE-OFFICE-01',
+            title: 'Executive Office Suite',
+            status: 'passed',
+            statusText: 'Passed Inspection',
+            auditor: 'Operations Supervisor',
+            time: 'Today, 7:30 AM',
+            score: '100% Passed',
+            items: [
+                { title: 'Desks & Workstations', desc: 'All executive desks, tables, and computer monitors disinfected and dust-free.', passed: true },
+                { title: 'Floor & Carpet Care', desc: 'Carpet vacuumed throughout; edges and under-desk areas cleared.', passed: true },
+                { title: 'Trash & Recycling', desc: 'Waste containers emptied and fresh liners installed.', passed: true },
+                { title: 'High-Touch Areas', desc: 'Door handles, light switches, and phone handsets sanitized.', passed: true }
+            ]
+        },
+        'office_workstations': {
+            code: 'ZONE-OFFICE-02',
+            title: 'Main Workstation Floor',
+            status: 'passed',
+            statusText: 'Passed Inspection',
+            auditor: 'Operations Supervisor',
+            time: 'Today, 7:45 AM',
+            score: '100% Passed',
+            items: [
+                { title: 'Open Office Desks', desc: 'Shared desk banks cleaned and sanitized for daytime staff.', passed: true },
+                { title: 'Walkway Floors', desc: 'High-traffic walkways vacuumed and free of scuffs or trash.', passed: true },
+                { title: 'Waste Management', desc: 'All centralized recycling bins and office trash cans emptied.', passed: true }
+            ]
+        },
+        'office_breakroom': {
+            code: 'ZONE-OFFICE-03',
+            title: 'Breakroom & Kitchen',
+            status: 'passed',
+            statusText: 'Passed Inspection',
+            auditor: 'Quality Specialist',
+            time: 'Today, 7:15 AM',
+            score: '100% Passed',
+            items: [
+                { title: 'Countertops & Sinks', desc: 'Kitchen counters disinfected, sink scrubbed, and paper towels refilled.', passed: true },
+                { title: 'Appliances Exterior', desc: 'Microwave and refrigerator door handles cleaned and sanitized.', passed: true },
+                { title: 'Hard Flooring', desc: 'Tile flooring mopped with food-safe floor cleaner.', passed: true }
+            ]
+        },
+        'office_restroom': {
+            code: 'ZONE-OFFICE-04',
+            title: 'Restroom & Sanitization Suite',
+            status: 'attention',
+            statusText: 'Needs Attention',
+            auditor: 'Shift Inspector',
+            time: 'Today, 8:05 AM',
+            score: 'Attention Flag',
+            items: [
+                { title: 'Fixtures & Mirrors', desc: 'Sinks and faucets disinfected; mirrors spot-cleaned.', passed: true },
+                { title: 'Restroom Floors', desc: 'Tile floors sanitized and disinfected.', passed: true },
+                { title: 'Restock Notice', desc: 'Paper towel dispenser low in East Stall; restock scheduled for 10:00 AM.', passed: false }
+            ]
+        },
+        'const_lobby': {
+            code: 'ZONE-CONST-01',
+            title: 'Main Entrance & Lobby',
+            status: 'passed',
+            statusText: 'Passed Handover',
+            auditor: 'Lead Project Inspector',
+            time: 'Yesterday, 4:00 PM',
+            score: 'Ready for Occupancy',
+            items: [
+                { title: 'Fine Construction Dust', desc: 'All drywall dust and fine particulate removed from walls and trim.', passed: true },
+                { title: 'Entrance Glass & Doors', desc: 'Glass doors polished; protective tape and adhesive stickers removed.', passed: true },
+                { title: 'Lobby Hard Flooring', desc: 'Tile floors machine-scrubbed and polished for client walkthrough.', passed: true }
+            ]
+        },
+        'const_units': {
+            code: 'ZONE-CONST-02',
+            title: 'Upper Level Finished Units',
+            status: 'passed',
+            statusText: 'Passed Handover',
+            auditor: 'Lead Project Inspector',
+            time: 'Yesterday, 3:30 PM',
+            score: 'Ready for Occupancy',
+            items: [
+                { title: 'Cabinets & Fixtures', desc: 'Kitchen and bathroom cabinets wiped inside and out.', passed: true },
+                { title: 'Paint Overspray Check', desc: 'Windows and floor trim checked and cleared of paint specks.', passed: true },
+                { title: 'Trash & Scrap Removal', desc: 'All leftover drywall bits, cardboard, and packaging removed.', passed: true }
+            ]
+        },
+        'const_hallways': {
+            code: 'ZONE-CONST-03',
+            title: 'Elevator & Common Hallways',
+            status: 'passed',
+            statusText: 'Passed Handover',
+            auditor: 'Quality Auditor',
+            time: 'Yesterday, 5:10 PM',
+            score: 'Ready for Occupancy',
+            items: [
+                { title: 'Elevator Cab & Tracks', desc: 'Elevator stainless steel polished and floor tracks vacuumed clean.', passed: true },
+                { title: 'Hallway Lighting & Vents', desc: 'Overhead light fixtures and air returns dusted and clear.', passed: true }
+            ]
+        },
+        'wh_dock': {
+            code: 'ZONE-WH-01',
+            title: 'Loading Dock Floor',
+            status: 'passed',
+            statusText: 'Passed Safety Audit',
+            auditor: 'Industrial Operations Lead',
+            time: 'Today, 6:00 AM',
+            score: '100% Passed',
+            items: [
+                { title: 'Heavy-Duty Floor Care', desc: 'Concrete floors scrubbed; oil spots and forklift tire marks treated.', passed: true },
+                { title: 'Dock Levelers & Doors', desc: 'Debris cleared from door tracks and loading bays.', passed: true },
+                { title: 'Safety Markings', desc: 'Yellow safety lines and emergency walkway zones kept clean and visible.', passed: true }
+            ]
+        },
+        'wh_aisles': {
+            code: 'ZONE-WH-02',
+            title: 'High-Rack Storage Aisles',
+            status: 'passed',
+            statusText: 'Passed Safety Audit',
+            auditor: 'Industrial Operations Lead',
+            time: 'Today, 6:30 AM',
+            score: '100% Passed',
+            items: [
+                { title: 'Overhead Rack Dusting', desc: 'High-reach dusting completed on lower beam levels.', passed: true },
+                { title: 'Aisle Floor Sweep', desc: 'Aisles power-swept and free of pallet wood or shrink wrap.', passed: true }
+            ]
+        },
+        'wh_office': {
+            code: 'ZONE-WH-03',
+            title: 'Warehouse Office',
+            status: 'passed',
+            statusText: 'Passed Inspection',
+            auditor: 'Shift Auditor',
+            time: 'Today, 7:00 AM',
+            score: '100% Passed',
+            items: [
+                { title: 'Desks & Keyboards', desc: 'Shipping desks and computer keyboards disinfected.', passed: true },
+                { title: 'Office Floors', desc: 'Commercial vinyl flooring mopped and sanitized.', passed: true }
+            ]
+        }
+    };
+
+    // Dynamic Inspection Loader
+    function loadInspection(key, fallbackTitle, fallbackStatus) {
+        const data = inspectionData[key] || {
+            code: 'ZONE-GEN-01',
+            title: fallbackTitle,
+            status: fallbackStatus,
+            statusText: fallbackStatus === 'passed' ? 'Passed Inspection' : 'Needs Attention',
+            auditor: 'Operations Lead',
+            time: 'Today',
+            score: '100% Passed',
+            items: [
+                { title: 'Surface Cleanliness', desc: 'Surfaces disinfected and wiped clean.', passed: true },
+                { title: 'Floor Care', desc: 'Floors vacuumed and mopped.', passed: true }
+            ]
+        };
+
+        // Code & Title
+        document.getElementById('report-code').innerText = data.code;
+        document.getElementById('report-room-name').innerText = data.title;
+
+        // Status Badge
+        const badgeEl = document.getElementById('report-status-badge');
+        if (data.status === 'passed') {
+            badgeEl.className = 'csi-status-badge badge-passed';
+            badgeEl.innerHTML = `<i class="fas fa-check-circle"></i> ${data.statusText}`;
+        } else {
+            badgeEl.className = 'csi-status-badge badge-attention';
+            badgeEl.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${data.statusText}`;
+        }
+
+        // Checklist Items
+        const listEl = document.getElementById('report-checklist');
+        listEl.innerHTML = data.items.map(item => `
+            <div class="csi-check-item">
+                <i class="fas ${item.passed ? 'fa-check-circle csi-check-icon passed' : 'fa-exclamation-circle csi-check-icon attention'}"></i>
+                <div>
+                    <div class="csi-check-title">${item.title}</div>
+                    <div class="csi-check-desc">${item.desc}</div>
+                </div>
+            </div>
+        `).join('');
+
+        // Metadata
+        document.getElementById('report-auditor').innerText = data.auditor;
+        document.getElementById('report-time').innerText = data.time;
+        const scoreEl = document.getElementById('report-score');
+        scoreEl.innerText = data.score;
+        scoreEl.style.color = data.status === 'passed' ? '#10b981' : '#ef4444';
+    }
 </script>
 {% endblock %}

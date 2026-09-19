@@ -1,7 +1,27 @@
 <!-- 2026 Official Company Menu (Sigmaquality Standard) -->
 <div class="top-utility-bar" {% if current_user.is_authenticated %}style="background: white; border-bottom: 1px solid var(--slate-200); padding: 0.5rem 40px; width: 100%; box-sizing: border-box;"{% endif %}>
     <div class="{% if current_user.is_authenticated %}utility-fluid-container{% else %}header-container{% endif %}" style="display: flex; justify-content: space-between; align-items: center;">
-        {% if current_user.is_authenticated %}
+        {% if nav_access.is_sales %}
+            <!-- Outside Sales Desk Utility Bar -->
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <img src="{{ url_for('static', filename='logo_standard.png') }}" alt="HWB" style="height: 28px;">
+                <span style="font-weight: 900; color: var(--slate-900); font-size: 0.75rem; text-transform: uppercase; border-left: 2px solid var(--slate-100); padding-left: 1rem; letter-spacing: 0.1em;">
+                    Outside Sales Cockpit
+                </span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 1.5rem;">
+                <a href="{{ url_for('sales_desk') }}" style="font-size: 0.75rem; font-weight: 800; color: #1e3a8a; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                    <i class="fas fa-th-large"></i> My Territory Queue
+                </a>
+                <div style="display: flex; flex-direction: column; text-align: right;">
+                    <span style="font-size: 0.7rem; font-weight: 800; color: var(--brand); text-transform: uppercase;">{{ current_user.username }}</span>
+                    <span style="font-size: 0.65rem; color: var(--slate-400); font-weight: 700;">Outside Sales</span>
+                </div>
+                <a href="{{ url_for('logout') }}" class="isc-btn isc-btn-outline" style="height: 32px; border-color: #fca5a5; color: #ef4444 !important; font-size: 0.7rem; padding: 0 1rem; border-radius: 6px; text-decoration: none; font-weight: 800;">
+                    <i class="fas fa-power-off" style="margin-right: 6px;"></i> Logout
+                </a>
+            </div>
+        {% elif current_user.is_authenticated %}
             <!-- Clinical Admin Header Look -->
             <div style="display: flex; align-items: center; gap: 1rem;">
                 <img src="{{ url_for('static', filename='logo_standard.png') }}" alt="HWB" style="height: 28px;">
@@ -105,8 +125,8 @@
 
             <a href="{{ url_for('about') }}">About Us</a>
 
-            {% if current_user.is_authenticated %}
-            <!-- COMMAND HUB (Authenticated Only) -->
+            {% if nav_access.can_view_command_hub %}
+            <!-- COMMAND HUB (Executive & Management Clearance) -->
             <div class="nav-item">
                 <a href="javascript:void(0)" style="cursor: default; color: var(--hwb-blue); font-weight: 900;">Command Hub <i class="fas fa-shield-alt" style="font-size: 0.7rem; margin-left: 0.25rem;"></i></a>
                 <div class="mega-menu">
@@ -126,10 +146,12 @@
                         <!-- Column 2: Strategy -->
                         <div class="mega-column">
                             <div style="font-size: 0.7rem; font-weight: 900; color: var(--hwb-blue); text-transform: uppercase; margin-bottom: 1.5rem; letter-spacing: 0.1em;">Strategic Control</div>
+                            {% if nav_access.is_executive %}
                             <a href="{{ url_for('sigma_executive') }}" class="mega-option" style="padding: 1rem 0;">
                                 <span class="title">Executive Pulse</span>
                                 <span class="desc">Real-time KPIs and approvals.</span>
                             </a>
+                            {% endif %}
                             <a href="{{ url_for('admin_master') }}" class="mega-option" style="padding: 1rem 0;">
                                 <span class="title">Master Repository</span>
                                 <span class="desc">Inventory, Chemicals, and Assets.</span>
@@ -138,10 +160,16 @@
                         <!-- Column 3: Lab -->
                         <div class="mega-column">
                             <div style="font-size: 0.7rem; font-weight: 900; color: var(--hwb-blue); text-transform: uppercase; margin-bottom: 1.5rem; letter-spacing: 0.1em;">R&D Lab</div>
+                            <a href="{{ url_for('csi_map') }}" class="mega-option" style="padding: 1rem 0;">
+                                <span class="title">Inspection Map</span>
+                                <span class="desc">Interactive floorplan quality map.</span>
+                            </a>
+                            {% if nav_access.is_executive %}
                             <a href="{{ url_for('sigmajan_lab') }}" class="mega-option" style="padding: 1rem 0;">
                                 <span class="title">SigmaJan Lab</span>
                                 <span class="desc">Experimental AI and UI modules.</span>
                             </a>
+                            {% endif %}
                         </div>
                         <!-- Column 4: Compliance -->
                         <div class="mega-column">
@@ -154,6 +182,11 @@
                     </div>
                 </div>
             </div>
+            {% elif nav_access.is_sales %}
+            <!-- Outside Sales Dedicated Access -->
+            <a href="{{ url_for('sales_desk') }}" style="color: #1e3a8a; font-weight: 800; display: inline-flex; align-items: center; gap: 6px; padding: 0.4rem 0.8rem; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; text-decoration: none; font-size: 0.85rem;">
+                <i class="fas fa-briefcase"></i> Field Sales Desk
+            </a>
             {% endif %}
         </nav>
         
@@ -165,9 +198,9 @@
                 </div>
                 <a href="{{ url_for('get_quote') }}" class="nav-cta">Start a quote <i class="fas fa-arrow-right"></i></a>
             {% else %}
-                <!-- Institutional Placeholder for Future Command Tools -->
-                <div style="color: var(--slate-400); font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; padding: 0.5rem 1rem; border: 1px dashed var(--slate-200); border-radius: 6px;">
-                    <i class="fas fa-terminal" style="margin-right: 8px; opacity: 0.5;"></i> Institutional Command Active
+                <!-- Institutional Status -->
+                <div style="color: var(--slate-500); font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; padding: 0.5rem 1rem; border: 1px solid var(--slate-200); border-radius: 6px; background: var(--slate-50);">
+                    <i class="fas fa-shield-alt" style="margin-right: 6px; color: var(--brand);"></i> {{ nav_access.role_name or 'Active' }} Session
                 </div>
             {% endif %}
         </div>
@@ -178,14 +211,21 @@
 <div id="mobile-overlay" class="mobile-overlay">
     <div class="mobile-overlay-links">
         <a href="/">Home</a>
-        {% if current_user.is_authenticated %}
+        {% if nav_access.can_view_command_hub %}
             <div style="font-weight: 900; color: var(--hwb-blue); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: -1rem;">Command Hub</div>
             <a href="{{ url_for('admin_operations', view='leads') }}" class="sub-link">Leads List</a>
             <a href="{{ url_for('admin_operations', view='accounts') }}" class="sub-link">Accounts</a>
+            {% if nav_access.is_executive %}
             <a href="{{ url_for('sigma_executive') }}" class="sub-link">Executive Pulse</a>
             <a href="{{ url_for('sigmajan_lab') }}" class="sub-link">The Lab</a>
+            {% endif %}
             <a href="{{ url_for('manual_index') }}" class="sub-link">SOP Manual</a>
             <a href="{{ url_for('logout') }}" class="sub-link" style="color: #ef4444;">Log Out</a>
+        {% elif nav_access.is_sales %}
+            <div style="font-weight: 900; color: var(--hwb-blue); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: -1rem;">Outside Sales</div>
+            <a href="{{ url_for('sales_desk') }}" class="sub-link" style="font-weight: 800; color: #1e3a8a;"><i class="fas fa-briefcase"></i> Field Sales Desk</a>
+            <a href="{{ url_for('logout') }}" class="sub-link" style="color: #ef4444;">Log Out</a>
+        {% endif %}
             <div style="font-weight: 900; color: var(--hwb-blue); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: -1rem;">Our Services</div>
             <a href="{{ url_for('services_janitorial') }}" class="sub-link">Janitorial Cleaning</a>
             <a href="{{ url_for('services_commercial') }}" class="sub-link">Commercial deep cleaning</a>
@@ -199,7 +239,6 @@
             <a href="{{ url_for('location_page', city='frisco') }}" class="sub-link">Frisco</a>
             <a href="{{ url_for('location_page', city='mckinney') }}" class="sub-link">McKinney</a>
             <a href="{{ url_for('about') }}">About Us</a>
-        {% endif %}
     </div>
     
     <div class="mobile-overlay-footer">

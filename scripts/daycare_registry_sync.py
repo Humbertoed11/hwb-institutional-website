@@ -165,6 +165,14 @@ def sync_daycares(force=False):
         conn.close()
         
         print(f"--- Sync Complete: {new_count} inserted, {updated_count} updated, {skipped_count} skipped in {total_latency:.2f}s ---", flush=True)
+
+        # 4. Autonomous Corporate Umbrella Classification & Propagation
+        try:
+            from autonomous_umbrella_engine import run_engine
+            run_engine()
+        except Exception as u_err:
+            print(f"[UMBRELLA PROPAGATION NOTICE] Auto-classification deferred: {u_err}", flush=True)
+
         return True
         
     except Exception as e:

@@ -1,0 +1,58 @@
+{
+  "project_name": "THE UNIVSERITY OF TEXAS SOUTHWESTERN MEDICAL CENTER WILLIAM P. CLEMENTS JR.",
+  "date": "2026-09-04",
+  "gross_square_footage": 4049,
+  "is_clinical_lab": true,
+  "total_proposal_value": 4737.33,
+  "line_items": [
+    {
+      "phase": "Phase 1",
+      "description": "Rough Construction Clean (Debris removal, rough sweep, pre-paint prep)",
+      "qty": 4049,
+      "unit": "SF",
+      "rate": 0.14,
+      "total": 566.86
+    },
+    {
+      "phase": "Phase 2",
+      "description": "Final Specialized Clean (Cleanroom/Lab disinfection, HEPA vacuum, casework, diffusers, vertical surfaces)",
+      "qty": 4049,
+      "unit": "SF",
+      "rate": 0.55,
+      "total": 2226.95
+    },
+    {
+      "phase": "Phase 3",
+      "description": "Touch-Up & Punch-List Detailing (Immediate pre-owner final walkthrough)",
+      "qty": 4049,
+      "unit": "SF",
+      "rate": 0.1,
+      "total": 404.9
+    },
+    {
+      "phase": "Floor Care",
+      "description": "Specialized Floor Care: Seamless Resinous Epoxy Auto-Scrub & Clinical Disinfection",
+      "qty": 4049,
+      "unit": "SF",
+      "rate": 0.38,
+      "total": 1538.62
+    }
+  ],
+  "csi_specifications": {
+    "division_01_cleaning": [
+      "01 31 00 - 3 q. Progress cleaning. r. Working hours.",
+      "9) Work hours. 10) Progress cleaning. 11) Change Orders. 12) Documentation of information for payment requests.",
+      "for workers performing work on the project site. Training shall include the following: 1. Overview of environmental issues related to the building industry. 2. Overview of environmental issues related to the Project. 3. Review of site specific procedures and management plans:",
+      "16. Final application for payment. 17. Final cleaning. 18. Contractor\u2019s demobilization of site. 19. Maintenance.",
+      "2.  Temporary field offices. 3.  Cleaning during construction. 4.  Access roads and approaches. 5.  Temporary elevator.",
+      "1.  Construction aids. 2.  Temporary fire protection, dust control, erosion and sediment control, water control, noise control, and other necessary temporary controls. 3.  Temporary barriers, barricades, and similar devices as necessary for safety and protection",
+      "heat/ventilation does not constitute acceptance of system or portion of system. 5) Immediately before Substantial Completion, completely clean each permanent unit used, install new filters, and perform service functions required for placing units in use and qualifying for specified warranties.",
+      "Substantial Completion of Project. 3.13 REMOVAL, CLEANING, AND RESTORATION A. Removal: 1. Remove temporary above grade or buried utilities, equipment, facilities, controls, and",
+      "proceed. 2. Remove work tag only after work is done and cleanup completed. 3. Tags issued from Owner\u2019s representative shall be returned the same day to the office from which it was issued, after work and cleanup for the day has been completed.",
+      "3. Tags issued from Owner\u2019s representative shall be returned the same day to the office from which it was issued, after work and cleanup for the day has been completed. D. Spray top of ceiling panels to be removed, and surrounding affected panels, with fine water mist to settle dust prior to removal"
+    ],
+    "division_09_finishes": [],
+    "mandatory_protocols": []
+  },
+  "excel_path": "/home/humbertoed/gemini_projects/HWB-COMPANY/HWB-ESTIMATING/PROJECTS/Source-Building-UTSW-Microbiology/THEUNIVSERITYOFTEXASSOUTHWESTERNMEDICALCENTERWILLIAMPCLEMENTSJR-TAKEOFF-PROPOSAL.xlsx"
+}

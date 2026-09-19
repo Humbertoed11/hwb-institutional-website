@@ -38,10 +38,11 @@ def sync_daycares(force=False):
 
     start_time = time.time()
     
-    # 1. Fetch active Licensed Centers STATEWIDE across all Texas counties (Mandate 2026-07-22)
+    # 1. Fetch active Licensed Centers in DFW counties
+    # Using county in (COLLIN, DALLAS, TARRANT, DENTON)
     params = {
-        "$where": "operation_type = 'Licensed Center' AND operation_status = 'Y'",
-        "$limit": 50000
+        "$where": "county in ('COLLIN', 'DALLAS', 'TARRANT', 'DENTON') AND operation_type = 'Licensed Center' AND operation_status = 'Y'",
+        "$limit": 5000
     }
     
     try:
@@ -122,9 +123,9 @@ def sync_daycares(force=False):
                 if needs_update:
                     cur.execute("""
                         UPDATE "Leads"
-                        SET capacity = %s, phone = %s, director = %s, address = %s, process_id = %s, facility_type = %s, industry = %s, updated_at = %s
+                        SET capacity = %s, phone = %s, director = %s, address = %s, process_id = %s, updated_at = %s
                         WHERE id = %s;
-                    """, (capacity, phone, director, address, process_id, 'Child Care Center', 'Child Care', datetime.now().date(), lead_id))
+                    """, (capacity, phone, director, address, process_id, datetime.now().date(), lead_id))
                     updated_count += 1
                 else:
                     skipped_count += 1
@@ -133,11 +134,11 @@ def sync_daycares(force=False):
                 cur.execute("""
                     INSERT INTO "Leads" (
                         center_name, phone, address, county, zipcode, director, capacity, city, state,
-                        facility_type, industry, input_date, status, is_converted, lead_source, process_id, updated_at
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+                        industry, input_date, status, is_converted, lead_source, process_id, updated_at
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
                 """, (
                     center_name, phone, address, county, zipcode, director, capacity, city, state,
-                    'Child Care Center', 'Child Care', datetime.now().date(), 'NEW', False, 'Texas CCL API', process_id, datetime.now().date()
+                    'Child Care', datetime.now().date(), 'NEW', False, 'Texas CCL API', process_id, datetime.now().date()
                 ))
                 new_count += 1
                 
@@ -164,6 +165,14 @@ def sync_daycares(force=False):
         conn.close()
         
         print(f"--- Sync Complete: {new_count} inserted, {updated_count} updated, {skipped_count} skipped in {total_latency:.2f}s ---", flush=True)
+
+        # 4. Autonomous Corporate Umbrella Classification & Propagation
+        try:
+            from autonomous_umbrella_engine import run_engine
+            run_engine()
+        except Exception as u_err:
+            print(f"[UMBRELLA PROPAGATION NOTICE] Auto-classification deferred: {u_err}", flush=True)
+
         return True
         
     except Exception as e:

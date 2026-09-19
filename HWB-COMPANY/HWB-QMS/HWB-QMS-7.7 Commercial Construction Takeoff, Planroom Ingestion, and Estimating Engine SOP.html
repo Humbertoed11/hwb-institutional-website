@@ -1,0 +1,135 @@
+<!-- 
+    SigmaFidelity™ Institutional SOP
+    Standard: HWB-QMS-1.0 v2.0 (HTML Baseline)
+    Document ID: HWB-QMS-7.7
+-->
+<div class="sop-card">
+    <!-- 0.0 DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-7.7</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">8.1 & 8.2 (Operational Planning & Requirements Review)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <table>
+            <thead>
+                <tr>
+                    <th><strong>Document Control</strong></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td><strong>Document Title</strong></td><td><strong>Commercial Construction Takeoff, Planroom Ingestion, and Estimating Engine SOP</strong></td></tr>
+                <tr><td><strong>Document ID</strong></td><td>HWB-QMS-7.7</td></tr>
+                <tr><td><strong>Version</strong></td><td>1.0.0</td></tr>
+                <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
+                <tr><td><strong>Author</strong></td><td>George (Systems Architect)</td></tr>
+                <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
+                <tr><td><strong>Date</strong></td><td>09-04-2026</td></tr>
+                <tr><td><strong>ISO 9001 Clause</strong></td><td>8.1 & 8.2</td></tr>
+            </tbody>
+        </table>
+
+        <hr />
+
+        <h1>Standard Operating Procedure: <strong>Commercial Construction Takeoff, Planroom Ingestion, and Estimating Engine</strong></h1>
+
+        <h2>1.0 Purpose</h2>
+        <p>This Standard Operating Procedure (SOP) standardizes the automated ingestion, architectural takeoff calculation, discrepancy auditing, and proposal preparation for commercial post-construction cleaning bids under CSI MasterFormat <strong>01 74 23 (Final Cleaning)</strong>. It ensures 100% empirical traceability, protects company margins through calibrated scope multipliers, and enforces strict labeling of data discrepancies.</p>
+
+        <h2>2.0 Scope</h2>
+        <p>This procedure applies to:</p>
+        <ul>
+            <li>All general contractor Invitations to Bid (ITBs) received via Microsoft Graph email or BuildingConnected.</li>
+            <li>Proofpoint URL decoding and automated planroom downloading via Playwright.</li>
+            <li>Architectural blueprint parsing and finish schedule extraction using PyMuPDF (<code>fitz</code>).</li>
+            <li>The commercial bidding calculation engine (CSI 01 74 23 3-phase formulas and TMA variable scopes).</li>
+            <li>The PostgreSQL <code>ConstructionBids</code> database records and Excel proposal generation pipeline.</li>
+        </ul>
+
+        <h2>3.0 Operational Procedure</h2>
+
+        <h3>3.1 Planroom Ingestion & Proofpoint URL Resolution</h3>
+        <p>Commercial invitations to bid frequently arrive wrapped in enterprise email security filters (e.g., Proofpoint URL Defense). The ingestion engine executes the following steps:</p>
+        <ol>
+            <li><strong>Proofpoint Decoding:</strong> Intercept <code>https://urldefense.com/v3/...</code> links in ITB email bodies. Decode hexadecimal and base64 payloads to restore authentic BuildingConnected or Planroom project URLs.</li>
+            <li><strong>Authenticated Planroom Access:</strong> Dispatch headless Playwright tasks with persistent session credentials (stored in <code>~/.config/hwb_buildingconnected_profile/</code>) to access project files, specs, and drawing sets.</li>
+            <li><strong>Standard Project Archiving:</strong> Store downloaded plans in standardized paths under <code>HWB-COMPANY/HWB-ESTIMATING/PROJECTS/[Project_Name]/</code>.</li>
+        </ol>
+
+        <h3>3.2 Vector Blueprint Takeoff & Finish Schedule Extraction</h3>
+        <p>To eliminate manual blueprint measuring and reduce estimation labor to zero:</p>
+        <ul>
+            <li><strong>PyMuPDF Plan Parsing:</strong> Scan PDF vector drawings for architectural sheets (coded <code>A-</code>, <code>AD-</code>, or <code>AS-</code>) containing Room Finish Schedules, Floor Pattern Plans, and Life Safety Area tables.</li>
+            <li><strong>Flooring Finish Classification:</strong> Extract square footage broken down by CSI division:
+                <ul>
+                    <li><strong>CSI 09 65 00:</strong> Resilient Flooring (VCT, LVT, sheet vinyl).</li>
+                    <li><strong>CSI 09 67 00:</strong> Resinous & Polished Concrete / Terrazzo.</li>
+                    <li><strong>CSI 09 30 00:</strong> Ceramic and Porcelain Tile (wet cores, restrooms).</li>
+                    <li><strong>CSI 09 68 00:</strong> Carpet Tile and Broadloom.</li>
+                </ul>
+            </li>
+            <li><strong>Glazing & Exterior Takeoff:</strong> Detect exterior window counts, mullion heights, and interior glass partition square footage.</li>
+        </ul>
+
+        <h3>3.3 CSI 01 74 23 Pricing Engine & Formula Standard</h3>
+        <p>Commercial post-construction proposals must adhere to the standardized 3-phase clean model:</p>
+        <div class="callout callout-note">
+            <strong>Standard Commercial Formula</strong>
+            <p><strong>Base Scope:</strong> Phase 1 (Rough Clean @ $0.10 - $0.18/sqft) + Phase 2 (Final Clean @ $0.20 - $0.32/sqft) + Phase 3 (Touch-Up / Fluff Clean @ $0.06 - $0.10/sqft).</p>
+            <p><strong>Specialty Add-Ons:</strong> Machine Scrubbing ($0.12/sqft), Concrete Sealing ($0.25/sqft), Interior/Exterior Glazing ($2.50/pane), Pressure Washing ($0.15/sqft).</p>
+        </div>
+
+        <h3>3.4 Empirical Integrity & Takeoff Discrepancy Mandate [2026-09-04]</h3>
+        <p>Whenever an architectural blueprint lacks an explicit room finish schedule, contains contradictory civil lot acreage vs. interior scope, or relies on an estimator heuristic:</p>
+        <ul>
+            <li><strong>Database Tagging:</strong> The project record in the <code>ConstructionBids</code> table MUST be appended with the flag:<br />
+                <code>[DATA DISCREPANCY: Heuristic Estimate - Field Verification Required]</code>.</li>
+            <li><strong>Excel Proposal Alert:</strong> Insert a prominent Amber/Gold banner at Row 5 of the generated proposal workbook reading:<br />
+                <em>"ESTIMATOR NOTICE: Data Discrepancy / Calibrated Footprint — Scope derived from calibrated architectural footprint heuristics. Subcontractor field verification recommended prior to contract execution."</em></li>
+            <li><strong>Executive Reporting:</strong> Every technical brief and Telegram notification card must explicitly state the delta between documented and calibrated square footages.</li>
+        </ul>
+
+        <h3>3.5 Automated Proposal Staging & CEO Telegram Dispatch</h3>
+        <ol>
+            <li><strong>Workbook Generation:</strong> Compile proposal workbooks using <code>openpyxl</code> with institutional branding, line-item itemization, payment terms (Net 30/60 pay-when-paid), and insurance certificate references.</li>
+            <li><strong>Pending Outbox Staging:</strong> Stage the proposal email in the <code>PendingOutbox</code> table with general contractor contact metadata.</li>
+            <li><strong>Mobile Dispatch:</strong> Send a 1-tap interactive card to CEO Humberto Dominguez's Telegram bot with instant buttons: <code>Approve & Submit</code>, <code>Adjust Scope</code>, or <code>View Specs</code>.</li>
+        </ol>
+
+        <h2>4.0 Verification (Zero-Defect Check)</h2>
+        <ul>
+            <li><strong>Mathematical Verification:</strong> Sum of rough, final, touch-up, and specialty line items must exactly equal total proposal value without rounding drift.</li>
+            <li><strong>Discrepancy Banner Check:</strong> Any heuristic estimate must possess both the database tag and the amber alert banner in the proposal file.</li>
+            <li><strong>Outbox Holding:</strong> Under no circumstances may a proposal email be sent to a general contractor without explicit CEO Telegram or web approval.</li>
+        </ul>
+
+        <h2>5.0 Revision History</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Version</th>
+                    <th>Date</th>
+                    <th>Author</th>
+                    <th>Change Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1.0.0</td>
+                    <td>09-04-2026</td>
+                    <td>George</td>
+                    <td>Initial Release. Standardized planroom ingestion, PyMuPDF finish schedule extraction, CSI 01 74 23 3-phase pricing engine, and the Empirical Integrity Mandate for architectural takeoffs. Approved by CEO.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="sop-card-footer">
+        <span>&copy; 2026 HWB Cleaning Services LLC</span>
+        <span>Controlled Document | HWB-QMS-7.7</span>
+        <span>Page <span class="page-number"></span></span>
+    </div>
+</div>

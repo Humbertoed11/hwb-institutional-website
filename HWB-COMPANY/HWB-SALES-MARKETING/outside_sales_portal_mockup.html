@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HWB Field Sales Desk | Outside Sales Interface</title>
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --primary-light: #eff6ff;
+            --brand-blue: #2563eb;
+            --dark: #0f172a;
+            --slate-50: #f8fafc;
+            --slate-100: #f1f5f9;
+            --slate-200: #e2e8f0;
+            --slate-300: #cbd5e1;
+            --slate-400: #94a3b8;
+            --slate-500: #64748b;
+            --slate-600: #475569;
+            --slate-700: #334155;
+            --slate-800: #1e293b;
+            --slate-900: #0f172a;
+            --success: #16a34a;
+            --success-light: #dcfce7;
+            --success-dark: #15803d;
+            --warning: #d97706;
+            --warning-light: #fef3c7;
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: #f8fafc;
+            color: var(--slate-900);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Header Bar */
+        .top-navbar {
+            background: #ffffff;
+            border-bottom: 1px solid var(--slate-200);
+            height: 60px;
+            padding: 0 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .brand-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-logo-cube {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-weight: 900;
+            font-size: 14px;
+        }
+
+        .desk-title {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: var(--slate-900);
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .status-dot {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            color: var(--success);
+            font-weight: 600;
+            background: var(--success-light);
+            padding: 2px 8px;
+            border-radius: 9999px;
+            margin-left: 10px;
+        }
+
+        .dot {
+            width: 6px;
+            height: 6px;
+            background: var(--success);
+            border-radius: 50%;
+        }
+
+        .user-area {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .user-badge {
+            background: var(--slate-100);
+            border: 1px solid var(--slate-200);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--slate-700);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .user-avatar {
+            width: 22px;
+            height: 22px;
+            background: var(--brand-blue);
+            color: #ffffff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        /* Container */
+        .page-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px 24px;
+        }
+
+        /* KPI Rack */
+        .kpi-rack {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .kpi-card {
+            background: #ffffff;
+            border: 1px solid var(--slate-200);
+            border-radius: 8px;
+            padding: 16px 20px;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+        }
+
+        .kpi-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: var(--slate-500);
+            letter-spacing: 0.03em;
+            margin-bottom: 6px;
+        }
+
+        .kpi-value {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--slate-900);
+        }
+
+        .kpi-sub {
+            font-size: 0.75rem;
+            color: var(--slate-400);
+            margin-top: 4px;
+        }
+
+        /* Main Workspace: Left Territory Queue, Right Assessment Calculator */
+        .workspace-grid {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 20px;
+            align-items: start;
+        }
+
+        /* Territory Card */
+        .territory-panel {
+            background: #ffffff;
+            border: 1px solid var(--slate-200);
+            border-radius: 8px;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--slate-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #ffffff;
+        }
+
+        .panel-title {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--slate-900);
+        }
+
+        .filter-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .filter-btn {
+            background: var(--slate-100);
+            border: 1px solid var(--slate-200);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--slate-600);
+            cursor: pointer;
+        }
+
+        .filter-btn.active {
+            background: var(--primary-light);
+            border-color: #bfdbfe;
+            color: var(--brand-blue);
+        }
+
+        /* Table */
+        .leads-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        .leads-table th {
+            background: #f8fafc;
+            color: var(--slate-500);
+            font-weight: 700;
+            text-align: left;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--slate-200);
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .leads-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--slate-100);
+            color: var(--slate-700);
+            vertical-align: middle;
+        }
+
+        .leads-table tr:hover {
+            background: #f8fafc;
+        }
+
+        .leads-table tr.selected {
+            background: var(--primary-light);
+        }
+
+        .company-cell {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .company-name {
+            font-weight: 700;
+            color: var(--slate-900);
+            font-size: 0.9rem;
+        }
+
+        .company-sector {
+            font-size: 0.72rem;
+            color: var(--slate-400);
+            font-weight: 500;
+        }
+
+        .address-cell {
+            font-size: 0.8rem;
+            color: var(--slate-600);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .badge-sqft {
+            background: var(--slate-100);
+            color: var(--slate-700);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 0.75rem;
+            display: inline-block;
+        }
+
+        .btn-action-group {
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn-icon-action {
+            background: #ffffff;
+            border: 1px solid var(--slate-200);
+            padding: 6px 10px;
+            border-radius: 5px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--slate-700);
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.15s;
+        }
+
+        .btn-icon-action:hover {
+            border-color: var(--brand-blue);
+            color: var(--brand-blue);
+            background: var(--primary-light);
+        }
+
+        .btn-convert {
+            background: var(--success);
+            border: 1px solid var(--success-dark);
+            color: #ffffff;
+            padding: 6px 12px;
+            border-radius: 5px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .btn-convert:hover {
+            background: var(--success-dark);
+        }
+
+        /* Right Side: Walkthrough Calculator Drawer */
+        .calculator-panel {
+            background: #ffffff;
+            border: 1px solid var(--slate-200);
+            border-radius: 8px;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+            padding: 20px;
+            position: sticky;
+            top: 80px;
+        }
+
+        .calc-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--slate-200);
+            padding-bottom: 12px;
+            margin-bottom: 16px;
+        }
+
+        .calc-title {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: var(--slate-900);
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .calc-sub {
+            font-size: 0.75rem;
+            color: var(--slate-500);
+        }
+
+        .calc-field {
+            margin-bottom: 14px;
+        }
+
+        .calc-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--slate-600);
+            text-transform: uppercase;
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        .calc-input {
+            width: 100%;
+            height: 38px;
+            padding: 0 12px;
+            border: 1px solid var(--slate-300);
+            border-radius: 6px;
+            font-size: 0.9rem;
+            color: var(--slate-900);
+            font-weight: 600;
+        }
+
+        .calc-select {
+            width: 100%;
+            height: 38px;
+            padding: 0 12px;
+            border: 1px solid var(--slate-300);
+            border-radius: 6px;
+            font-size: 0.85rem;
+            color: var(--slate-900);
+            background: #ffffff;
+            font-weight: 600;
+        }
+
+        .price-output-box {
+            background: var(--primary-light);
+            border: 1px solid #bfdbfe;
+            border-radius: 6px;
+            padding: 16px;
+            margin-top: 18px;
+            text-align: center;
+        }
+
+        .price-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--brand-blue);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .price-amount {
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: var(--primary);
+            margin: 4px 0;
+        }
+
+        .price-annual {
+            font-size: 0.78rem;
+            color: var(--slate-600);
+            font-weight: 600;
+        }
+
+        .btn-full-submit {
+            width: 100%;
+            height: 42px;
+            background: var(--brand-blue);
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.88rem;
+            font-weight: 700;
+            margin-top: 16px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .btn-full-submit:hover {
+            background: #1d4ed8;
+        }
+
+        /* Modal Simulation */
+        .convert-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.6);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .convert-card {
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 24px;
+            max-width: 480px;
+            width: 90%;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .convert-card h3 {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--slate-900);
+            margin-bottom: 8px;
+        }
+
+        .convert-card p {
+            font-size: 0.88rem;
+            color: var(--slate-600);
+            margin-bottom: 16px;
+        }
+
+        .convert-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .btn-cancel {
+            background: #ffffff;
+            border: 1px solid var(--slate-300);
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--slate-700);
+            cursor: pointer;
+        }
+
+        .btn-confirm-convert {
+            background: var(--success);
+            border: none;
+            padding: 8px 18px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #ffffff;
+            cursor: pointer;
+        }
+
+        @media (max-width: 1024px) {
+            .workspace-grid {
+                grid-template-columns: 1fr;
+            }
+            .calculator-panel {
+                position: static;
+            }
+            .kpi-rack {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Strip -->
+    <header class="top-navbar">
+        <div class="brand-area">
+            <div class="brand-logo-cube">H</div>
+            <div class="desk-title">Field Sales Desk</div>
+            <div class="status-dot"><span class="dot"></span> Live Connected</div>
+        </div>
+        <div class="user-area">
+            <div class="user-badge">
+                <div class="user-avatar">AR</div>
+                <span>Alex Rivera | Outside Sales (Collin County)</span>
+            </div>
+            <button class="btn-icon-action" style="color: #ef4444; border-color: #fca5a5;">Logout</button>
+        </div>
+    </header>
+
+    <!-- Page Body -->
+    <main class="page-container">
+
+        <!-- KPI Strip -->
+        <section class="kpi-rack">
+            <div class="kpi-card">
+                <div class="kpi-label">Assigned Working Queue</div>
+                <div class="kpi-value">42</div>
+                <div class="kpi-sub">Collin & North Dallas Counties</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Walkthroughs This Week</div>
+                <div class="kpi-value" style="color: var(--brand-blue);">3</div>
+                <div class="kpi-sub">2 in Plano, 1 in Frisco</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Active Proposals Out</div>
+                <div class="kpi-value">$48.2k</div>
+                <div class="kpi-sub">3 Formal Quotes Awaiting Signature</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Converted Accounts YTD</div>
+                <div class="kpi-value" style="color: var(--success);">$124.5k</div>
+                <div class="kpi-sub">5 Live Commercial Contracts</div>
+            </div>
+        </section>
+
+        <!-- Main Workspace -->
+        <div class="workspace-grid">
+
+            <!-- Territory Table -->
+            <section class="territory-panel">
+                <div class="panel-header">
+                    <div>
+                        <div class="panel-title">My Target Facilities Queue</div>
+                        <div style="font-size: 0.75rem; color: var(--slate-400);">Showing 42 assigned commercial accounts (Zero export permission)</div>
+                    </div>
+                    <div class="filter-controls">
+                        <button class="filter-btn active">All (42)</button>
+                        <button class="filter-btn">Walkthroughs (3)</button>
+                        <button class="filter-btn">Quotes Out (5)</button>
+                    </div>
+                </div>
+
+                <table class="leads-table">
+                    <thead>
+                        <tr>
+                            <th>Facility & Sector</th>
+                            <th>Address & Location</th>
+                            <th>Cleanable Area</th>
+                            <th>Decision Maker</th>
+                            <th>Field Actions</th>
+                            <th>Conversion</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="selected">
+                            <td>
+                                <div class="company-cell">
+                                    <span class="company-name">Children's Courtyard - Legacy</span>
+                                    <span class="company-sector">Childcare Center | Capacity 240</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="address-cell">
+                                    <span>📍 6800 Legacy Dr, Plano, TX</span>
+                                </div>
+                            </td>
+                            <td><span class="badge-sqft">14,200 SF</span></td>
+                            <td>
+                                <div><strong>Sarah Jenkins</strong></div>
+                                <div style="font-size: 0.75rem; color: var(--slate-400);">Center Director</div>
+                            </td>
+                            <td>
+                                <div class="btn-action-group">
+                                    <button class="btn-icon-action">📞 Call</button>
+                                    <button class="btn-icon-action">🗺️ Maps</button>
+                                    <button class="btn-icon-action">📝 Note</button>
+                                </div>
+                            </td>
+                            <td>
+                                <button class="btn-convert" onclick="openConvertModal('Children\'s Courtyard - Legacy', 14200, 23856)">Convert</button>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <div class="company-cell">
+                                    <span class="company-name">Preston Ridge Medical Suites</span>
+                                    <span class="company-sector">Healthcare / Clinical Offices</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="address-cell">
+                                    <span>📍 4700 Preston Rd, Frisco, TX</span>
+                                </div>
+                            </td>
+                            <td><span class="badge-sqft">22,500 SF</span></td>
+                            <td>
+                                <div><strong>Mark Vance</strong></div>
+                                <div style="font-size: 0.75rem; color: var(--slate-400);">Practice Administrator</div>
+                            </td>
+                            <td>
+                                <div class="btn-action-group">
+                                    <button class="btn-icon-action">📞 Call</button>
+                                    <button class="btn-icon-action">🗺️ Maps</button>
+                                    <button class="btn-icon-action">📝 Note</button>
+                                </div>
+                            </td>
+                            <td>
+                                <button class="btn-convert" onclick="openConvertModal('Preston Ridge Medical Suites', 22500, 39600)">Convert</button>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <div class="company-cell">
+                                    <span class="company-name">Alpha Graphics Corporate HQ</span>
+                                    <span class="company-sector">Corporate Office / Tech</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="address-cell">
+                                    <span>📍 5400 Tennyson Pkwy, Plano, TX</span>
+                                </div>
+                            </td>
+                            <td><span class="badge-sqft">18,000 SF</span></td>
+                            <td>
+                                <div><strong>David Reynolds</strong></div>
+                                <div style="font-size: 0.75rem; color: var(--slate-400);">Director of Facilities</div>
+                            </td>
+                            <td>
+                                <div class="btn-action-group">
+                                    <button class="btn-icon-action">📞 Call</button>
+                                    <button class="btn-icon-action">🗺️ Maps</button>
+                                    <button class="btn-icon-action">📝 Note</button>
+                                </div>
+                            </td>
+                            <td>
+                                <button class="btn-convert" onclick="openConvertModal('Alpha Graphics Corporate HQ', 18000, 31200)">Convert</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Walkthrough Assessment Calculator -->
+            <aside class="calculator-panel">
+                <div class="calc-header">
+                    <div>
+                        <div class="calc-title">Walkthrough Calculator</div>
+                        <div class="calc-sub">Active Facility: Children's Courtyard</div>
+                    </div>
+                </div>
+
+                <div class="calc-field">
+                    <label class="calc-label">Cleanable Square Footage</label>
+                    <input type="number" id="calc-sqft" class="calc-input" value="14200" oninput="recalculate()">
+                </div>
+
+                <div class="calc-field">
+                    <label class="calc-label">Service Frequency</label>
+                    <select id="calc-freq" class="calc-select" onchange="recalculate()">
+                        <option value="5" selected>5 Nights / Week (Standard)</option>
+                        <option value="6">6 Nights / Week</option>
+                        <option value="7">7 Nights / Week (Medical)</option>
+                        <option value="3">3 Nights / Week (Light)</option>
+                    </select>
+                </div>
+
+                <div class="calc-field">
+                    <label class="calc-label">Primary Floor Substrate</label>
+                    <select class="calc-select">
+                        <option selected>VCT Tile & Commercial Carpet</option>
+                        <option>Mondo Athletic Rubber</option>
+                        <option>Polished Terrazzo / Marble</option>
+                        <option>Sealed Concrete</option>
+                    </select>
+                </div>
+
+                <!-- Price Box -->
+                <div class="price-output-box">
+                    <div class="price-label">Recommended Proposal Rate</div>
+                    <div class="price-amount" id="calc-monthly">$1,988.00<span style="font-size: 0.9rem; font-weight: 600; color: var(--slate-500);">/mo</span></div>
+                    <div class="price-annual" id="calc-annual">Annual Value: $23,856.00 ($0.140/SF)</div>
+                </div>
+
+                <button class="btn-full-submit" onclick="alert('Proposal successfully generated and dispatched to Director Sarah Jenkins with ISO 9001 Capability Binder!')">
+                    📄 Send On-Site Proposal
+                </button>
+            </aside>
+
+        </div>
+
+    </main>
+
+    <!-- Modal for Convert to Account -->
+    <div id="convertModal" class="convert-modal">
+        <div class="convert-card">
+            <h3>Convert Lead to Live Account?</h3>
+            <p>You are moving <strong id="modal-company-name">Children's Courtyard</strong> from prospective lead status to an active Customer Account in the operations portal.</p>
+            <div style="background: var(--slate-100); padding: 12px; border-radius: 6px; font-size: 0.8rem; margin-bottom: 16px;">
+                <div>• Cleanable Area: <strong id="modal-sqft">14,200 SF</strong></div>
+                <div>• Annual Contract Value: <strong id="modal-value" style="color: var(--success);">$23,856.00</strong></div>
+                <div>• Automated notification will trigger to CEO & Operations Commander.</div>
+            </div>
+            <div class="convert-actions">
+                <button class="btn-cancel" onclick="closeConvertModal()">Cancel</button>
+                <button class="btn-confirm-convert" onclick="executeConversion()">Confirm & Convert</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function recalculate() {
+            const sqft = parseFloat(document.getElementById('calc-sqft').value) || 0;
+            const freq = parseInt(document.getElementById('calc-freq').value) || 5;
+            let ratePerSf = 0.14;
+            if (freq === 7) ratePerSf = 0.18;
+            else if (freq === 6) ratePerSf = 0.16;
+            else if (freq === 3) ratePerSf = 0.11;
+
+            const monthly = sqft * ratePerSf;
+            const annual = monthly * 12;
+
+            document.getElementById('calc-monthly').innerHTML = `$${monthly.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}<span style="font-size: 0.9rem; font-weight: 600; color: #64748b;">/mo</span>`;
+            document.getElementById('calc-annual').innerText = `Annual Value: $${annual.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} ($${ratePerSf.toFixed(3)}/SF)`;
+        }
+
+        function openConvertModal(name, sqft, val) {
+            document.getElementById('modal-company-name').innerText = name;
+            document.getElementById('modal-sqft').innerText = `${sqft.toLocaleString()} SF`;
+            document.getElementById('modal-value').innerText = `$${val.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+            document.getElementById('convertModal').style.display = 'flex';
+        }
+
+        function closeConvertModal() {
+            document.getElementById('convertModal').style.display = 'none';
+        }
+
+        function executeConversion() {
+            closeConvertModal();
+            alert('SUCCESS: Lead has been converted into Account ACC-1048! Notification dispatched to CEO Humberto Dominguez.');
+        }
+    </script>
+</body>
+</html>

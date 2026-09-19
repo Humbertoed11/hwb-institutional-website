@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Collin College Frisco Campus — Exterior Trashcan Satellite Map</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    body, html { margin: 0; padding: 0; height: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    #map { width: 100%; height: 100%; }
+    .header-bar {
+      position: absolute; top: 15px; left: 60px; z-index: 1000;
+      background: rgba(15, 23, 42, 0.92); color: white; padding: 12px 20px;
+      border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      border-left: 4px solid #3b82f6; backdrop-filter: blur(8px);
+    }
+    .header-title { font-size: 16px; font-weight: bold; letter-spacing: 0.5px; }
+    .header-sub { font-size: 12px; color: #93c5fd; margin-top: 3px; }
+    .trash-pin {
+      background-color: #ef4444; border: 2px solid white; border-radius: 50%;
+      box-shadow: 0 0 10px rgba(239, 68, 68, 0.8);
+    }
+  </style>
+</head>
+<body>
+  <div class="header-bar">
+    <div class="header-title">🏛️ Collin College Frisco Campus — Exterior Trashcan Inventory</div>
+    <div class="header-sub">HWB SigmaFidelity™ Geospatial Takeoff | Total Plotted Units: 8</div>
+  </div>
+  <div id="map"></div>
+
+  <script>
+    // Initialize Leaflet map centered on Frisco Campus quad
+    var map = L.map('map').setView([33.13155, -96.79277], 17);
+
+    // Google Satellite Hybrid Layer
+    var googleHybrid = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+      maxZoom: 21,
+      attribution: '&copy; Google Maps & Imagery'
+    }).addTo(map);
+
+    // Custom Red Marker Icon with Trash Can Symbol
+    var trashIcon = L.divIcon({
+      className: 'trash-marker',
+      html: '<div style="background-color: #ef4444; color: white; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.5); font-weight: bold;">🗑️</div>',
+      iconSize: [28, 28],
+      iconAnchor: [14, 14],
+      popupAnchor: [0, -14]
+    });
+
+    // Add Markers for each surveyed trash can
+    L.marker([33.130450, -96.793200], {icon: trashIcon}).addTo(map).bindPopup("<div style='font-family: sans-serif; min-width: 220px;'><div style='font-weight: bold; color: #1e3a8a; font-size: 15px; border-bottom: 2px solid #3b82f6; padding-bottom: 4px;'>\ud83d\uddd1\ufe0f Trash Unit #1</div><div style='margin-top: 6px; font-size: 13px;'><b>Nearest Landmark:</b> Founders Hall (~97 ft)</div><div style='font-size: 13px;'><b>Sector:</b> Sector Alpha</div><div style='font-size: 12px; color: #475569; margin-top: 4px;'><b>Notes:</b> Founders Hall North Portico Dual Can</div><div style='font-size: 11px; color: #64748b;'><b>Coordinates:</b> 33.130450, -96.793200</div><div style='margin-top: 10px;'><a href='https://www.google.com/maps/dir/?api=1&destination=33.130450,-96.793200' target='_blank' style='display: inline-block; background: #2563eb; color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: bold;'>\ud83d\udccd Open in Google Maps</a></div></div>");
+    L.marker([33.130200, -96.791700], {icon: trashIcon}).addTo(map).bindPopup("<div style='font-family: sans-serif; min-width: 220px;'><div style='font-weight: bold; color: #1e3a8a; font-size: 15px; border-bottom: 2px solid #3b82f6; padding-bottom: 4px;'>\ud83d\uddd1\ufe0f Trash Unit #2</div><div style='margin-top: 6px; font-size: 13px;'><b>Nearest Landmark:</b> University Hall (~74 ft)</div><div style='font-size: 13px;'><b>Sector:</b> Sector Alpha</div><div style='font-size: 12px; color: #475569; margin-top: 4px;'><b>Notes:</b> University Hall South Entry Ash Urn</div><div style='font-size: 11px; color: #64748b;'><b>Coordinates:</b> 33.130200, -96.791700</div><div style='margin-top: 10px;'><a href='https://www.google.com/maps/dir/?api=1&destination=33.130200,-96.791700' target='_blank' style='display: inline-block; background: #2563eb; color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: bold;'>\ud83d\udccd Open in Google Maps</a></div></div>");
+    L.marker([33.131550, -96.794250], {icon: trashIcon}).addTo(map).bindPopup("<div style='font-family: sans-serif; min-width: 220px;'><div style='font-weight: bold; color: #1e3a8a; font-size: 15px; border-bottom: 2px solid #3b82f6; padding-bottom: 4px;'>\ud83d\uddd1\ufe0f Trash Unit #3</div><div style='margin-top: 6px; font-size: 13px;'><b>Nearest Landmark:</b> Heritage Hall (~58 ft)</div><div style='font-size: 13px;'><b>Sector:</b> Sector Bravo</div><div style='font-size: 12px; color: #475569; margin-top: 4px;'><b>Notes:</b> Heritage Hall Central Quad Bench Can</div><div style='font-size: 11px; color: #64748b;'><b>Coordinates:</b> 33.131550, -96.794250</div><div style='margin-top: 10px;'><a href='https://www.google.com/maps/dir/?api=1&destination=33.131550,-96.794250' target='_blank' style='display: inline-block; background: #2563eb; color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: bold;'>\ud83d\udccd Open in Google Maps</a></div></div>");
+    L.marker([33.131800, -96.792750], {icon: trashIcon}).addTo(map).bindPopup("<div style='font-family: sans-serif; min-width: 220px;'><div style='font-weight: bold; color: #1e3a8a; font-size: 15px; border-bottom: 2px solid #3b82f6; padding-bottom: 4px;'>\ud83d\uddd1\ufe0f Trash Unit #4</div><div style='margin-top: 6px; font-size: 13px;'><b>Nearest Landmark:</b> Library & Resource Center (~53 ft)</div><div style='font-size: 13px;'><b>Sector:</b> Sector Charlie</div><div style='font-size: 12px; color: #475569; margin-top: 4px;'><b>Notes:</b> Library Main Entrance Concrete Receptacle</div><div style='font-size: 11px; color: #64748b;'><b>Coordinates:</b> 33.131800, -96.792750</div><div style='margin-top: 10px;'><a href='https://www.google.com/maps/dir/?api=1&destination=33.131800,-96.792750' target='_blank' style='display: inline-block; background: #2563eb; color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: bold;'>\ud83d\udccd Open in Google Maps</a></div></div>");
+    L.marker([33.132300, -96.794300], {icon: trashIcon}).addTo(map).bindPopup("<div style='font-family: sans-serif; min-width: 220px;'><div style='font-weight: bold; color: #1e3a8a; font-size: 15px; border-bottom: 2px solid #3b82f6; padding-bottom: 4px;'>\ud83d\uddd1\ufe0f Trash Unit #5</div><div style='margin-top: 6px; font-size: 13px;'><b>Nearest Landmark:</b> Student Center & Cafe (~58 ft)</div><div style='font-size: 13px;'><b>Sector:</b> Sector Bravo</div><div style='font-size: 12px; color: #475569; margin-top: 4px;'><b>Notes:</b> Student Center Outdoor Dining Patio Can</div><div style='font-size: 11px; color: #64748b;'><b>Coordinates:</b> 33.132300, -96.794300</div><div style='margin-top: 10px;'><a href='https://www.google.com/maps/dir/?api=1&destination=33.132300,-96.794300' target='_blank' style='display: inline-block; background: #2563eb; color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: bold;'>\ud83d\udccd Open in Google Maps</a></div></div>");
+    L.marker([33.131400, -96.791500], {icon: trashIcon}).addTo(map).bindPopup("<div style='font-family: sans-serif; min-width: 220px;'><div style='font-weight: bold; color: #1e3a8a; font-size: 15px; border-bottom: 2px solid #3b82f6; padding-bottom: 4px;'>\ud83d\uddd1\ufe0f Trash Unit #6</div><div style='margin-top: 6px; font-size: 13px;'><b>Nearest Landmark:</b> Alumni Hall & Gym (~118 ft)</div><div style='font-size: 13px;'><b>Sector:</b> Sector Charlie</div><div style='font-size: 12px; color: #475569; margin-top: 4px;'><b>Notes:</b> Alumni Hall Athletic Entrance Bin</div><div style='font-size: 11px; color: #64748b;'><b>Coordinates:</b> 33.131400, -96.791500</div><div style='margin-top: 10px;'><a href='https://www.google.com/maps/dir/?api=1&destination=33.131400,-96.791500' target='_blank' style='display: inline-block; background: #2563eb; color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: bold;'>\ud83d\udccd Open in Google Maps</a></div></div>");
+    L.marker([33.133200, -96.793100], {icon: trashIcon}).addTo(map).bindPopup("<div style='font-family: sans-serif; min-width: 220px;'><div style='font-weight: bold; color: #1e3a8a; font-size: 15px; border-bottom: 2px solid #3b82f6; padding-bottom: 4px;'>\ud83d\uddd1\ufe0f Trash Unit #7</div><div style='margin-top: 6px; font-size: 13px;'><b>Nearest Landmark:</b> Parking Garage (~62 ft)</div><div style='font-size: 13px;'><b>Sector:</b> Sector Delta</div><div style='font-size: 12px; color: #475569; margin-top: 4px;'><b>Notes:</b> Parking Garage Ground Level Vestibule Can</div><div style='font-size: 11px; color: #64748b;'><b>Coordinates:</b> 33.133200, -96.793100</div><div style='margin-top: 10px;'><a href='https://www.google.com/maps/dir/?api=1&destination=33.133200,-96.793100' target='_blank' style='display: inline-block; background: #2563eb; color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: bold;'>\ud83d\udccd Open in Google Maps</a></div></div>");
+    L.marker([33.130950, -96.795150], {icon: trashIcon}).addTo(map).bindPopup("<div style='font-family: sans-serif; min-width: 220px;'><div style='font-weight: bold; color: #1e3a8a; font-size: 15px; border-bottom: 2px solid #3b82f6; padding-bottom: 4px;'>\ud83d\uddd1\ufe0f Trash Unit #8</div><div style='margin-top: 6px; font-size: 13px;'><b>Nearest Landmark:</b> Parking Lot G (~36 ft)</div><div style='font-size: 13px;'><b>Sector:</b> Exterior West</div><div style='font-size: 12px; color: #475569; margin-top: 4px;'><b>Notes:</b> Lot G Student Walkway Pole-Mount Can</div><div style='font-size: 11px; color: #64748b;'><b>Coordinates:</b> 33.130950, -96.795150</div><div style='margin-top: 10px;'><a href='https://www.google.com/maps/dir/?api=1&destination=33.130950,-96.795150' target='_blank' style='display: inline-block; background: #2563eb; color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: bold;'>\ud83d\udccd Open in Google Maps</a></div></div>");
+  </script>
+</body>
+</html>

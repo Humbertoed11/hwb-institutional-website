@@ -20,5 +20,14 @@ trash-out/
 *.log
 transcript*
 
-# Environment
+# Environment & Auth Profiles
 .env
+~$*.xlsx
+*auth_state.json
+*buildingconnected_profile*
+
+# Local Backups & Large Archives
+backups/
+.backups/
+*.dump
+*.tar.gz

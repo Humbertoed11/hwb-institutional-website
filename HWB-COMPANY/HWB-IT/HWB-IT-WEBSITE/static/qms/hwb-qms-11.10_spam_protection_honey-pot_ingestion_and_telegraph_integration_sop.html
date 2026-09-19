@@ -7,9 +7,9 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-11.10</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.0.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
-        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">8.2 & 8.5 (Service Integrity)</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">8.2 & 8.5 (Service Integrity & Executive Command)</span></div>
     </div>
 
     <div class="sop-content-body">
@@ -21,67 +21,85 @@
                 </tr>
             </thead>
             <tbody>
-                <tr><td><strong>Document Title</strong></td><td><strong>Spam Protection, Honey-pot Ingestion, and Telegraph Integration SOP</strong></td></tr>
+                <tr><td><strong>Document Title</strong></td><td><strong>Mobile Operations System, Telegram Executive Command, and Communication Integrations SOP</strong></td></tr>
                 <tr><td><strong>Document ID</strong></td><td>HWB-QMS-11.10</td></tr>
-                <tr><td><strong>Version</strong></td><td>1.0.0</td></tr>
+                <tr><td><strong>Version</strong></td><td>3.0.0</td></tr>
                 <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
                 <tr><td><strong>Author</strong></td><td>George (Systems Architect)</td></tr>
                 <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
-                <tr><td><strong>Date</strong></td><td>06-01-2026</td></tr>
+                <tr><td><strong>Date</strong></td><td>09-04-2026</td></tr>
                 <tr><td><strong>ISO 9001 Clause</strong></td><td>8.2 & 8.5</td></tr>
             </tbody>
         </table>
 
         <hr />
 
-        <h1>Standard Operating Procedure: <strong>Spam Protection & Communication Integrations</strong></h1>
+        <h1>Standard Operating Procedure: <strong>Mobile Operations System & Telegram Executive Command</strong></h1>
 
         <h2>1.0 Purpose</h2>
-        <p>This Standard Operating Procedure (SOP) defines the operational guidelines for protecting the HWB marketing lead ingestion pipeline from automated bot spam. It also codifies the deployment of the Telegram and Telegra.ph communication bridge to deliver real-time systems reports and walkthroughs directly to executive mobile devices.</p>
+        <p>This Standard Operating Procedure (SOP) defines the operational guidelines for HWB Cleaning Services' Mobile Operations System (MOS v3.0). It establishes how the CEO controls the entire business directly from his phone using Telegram, manages automated commercial construction bidding, prevents marketing form spam, and uses decoupled background tasks to perform heavy web automation.</p>
 
         <h2>2.0 Scope</h2>
-        <p>This procedure applies to the live website ingestion route (<code>/get-quote</code>) in the main web application, the live PostgreSQL database queues (<code>Leads</code> and <code>PendingOutbox</code> tables), and all automated administrative scripts executed within the HWB-SIGMAJAN cloud infrastructure.</p>
+        <p>This procedure applies to:</p>
+        <ul>
+            <li>The Telegram executive listener bot (<code>scripts/telegram_listener.py</code>) running inside the container worker.</li>
+            <li>The host-level decoupled automation worker (<code>scripts/host_task_runner.py</code>) running on Linux host infrastructure.</li>
+            <li>The public quote form honeypot filter on the web application route (<code>/get-quote</code>).</li>
+            <li>The PostgreSQL database queues (<code>task_queue</code>, <code>PendingOutbox</code>, and <code>ConstructionBids</code>).</li>
+            <li>The Telegram WebApp (TMA) Scope Configurator (<code>/tma/estimator</code>).</li>
+        </ul>
 
         <h2>3.0 Procedure</h2>
 
-        <h3>3.1 Live Database Spam Auditing and Clean-up</h3>
-        <p>When the systems administrator identifies a spam campaign in the pipeline (e.g., matching a domain like <code>@wshu.net</code> or containing fraudulent money-transfer URLs):</p>
+        <h3>3.1 Website Form Protection & Honeypot Blackhole</h3>
+        <p>To block fake internet bots and spam submissions from polluting company databases and clogging email servers:</p>
         <ul>
-            <li>Secure Azure Management tokens using Service Principal credentials.</li>
-            <li>Connect to the private-network PostgreSQL database using Kudu's VFS PUT endpoint to upload a secure database runner.</li>
-            <li>Execute a database transaction (<code>BEGIN ... COMMIT</code>) to purge both the fraudulent lead rows and the pending notification emails to protect the outbox queue from distributing spam.</li>
-        </ul>
-
-        <h3>3.2 Honeypot Ingestion (Spam Blackhole Pattern)</h3>
-        <p>To eliminate bot spam without triggering retry loops:</p>
-        <ul>
-            <li>Intercept form submissions in the <code>get_quote()</code> controller before database writes or email alerts occur.</li>
-            <li>Inspect the <code>company</code> and <code>name</code> inputs for spam signatures:
+            <li>Form submissions entering the <code>/get-quote</code> route are inspected before any database insert or email staging occurs.</li>
+            <li>The system checks the submitted company name, contact name, and message for spam indicators:
                 <ul>
-                    <li><strong>Link Signatures:</strong> Presence of <code>http://</code>, <code>https://</code>, <code>graph.org</code>, <code>.org/</code>, <code>.net/</code>, or <code>.com/</code>.</li>
-                    <li><strong>Semantic Signatures:</strong> Presence of typical transaction spam phrases (e.g., <code>us dollars</code>, <code>usdc</code>, <code>transfer of</code>, <code>payment</code>, <code>get the transfer</code>, <code>balance</code>).</li>
+                    <li><strong>Suspicious Web Links:</strong> Inclusion of prefixes such as <code>http://</code>, <code>https://</code>, <code>graph.org</code>, or top-level domains like <code>.org/</code>, <code>.net/</code>, and <code>.com/</code>.</li>
+                    <li><strong>Financial Spam Phrases:</strong> Phrases such as <code>us dollars</code>, <code>usdc</code>, <code>crypto transfer</code>, <code>balance payment</code>, or <code>get the transfer</code>.</li>
                 </ul>
             </li>
-            <li><strong>The Silent Blackhole:</strong> If spam is detected, immediately skip all database inserts and outbox email writes. Return a simulated successful completion page (<code>quote_success.html</code>) to the bot so it stops attempting to submit.</li>
+            <li><strong>The Silent Blackhole Rule:</strong> If spam signatures are identified, the system drops the data silently. It skips database writes and does not notify the outbox. The bot is shown a standard confirmation screen (<code>quote_success.html</code>) so it stops resubmitting.</li>
         </ul>
 
-        <h3>3.3 Telegraph & Telegram Communication Bridge</h3>
-        <p>To establish secure, readable, and highly mobile executive updates:</p>
+        <h3>3.2 The Telegram Mobile Operations System (MOS v3.0) - The 6 Strategic Frontiers</h3>
+        <p>The Telegram bot is an industrial executive remote control for company operations, operating across six key frontiers:</p>
+        <ol>
+            <li><strong>1-Tap Takeoff Calculation & Proposal Approval:</strong>
+                <p>When an Invitation to Bid (ITB) email arrives from general contractors, the system extracts the project details, calculates the estimated square footage, creates a proposal draft, and sends an interactive card to Telegram. The CEO can review the price and tap a single inline button (<code>Approve & Submit</code> or <code>Adjust Scope</code>) to advance the deal.</p>
+            </li>
+            <li><strong>Telegram Mini-App (TMA) Scope Configurator:</strong>
+                <p>By tapping <code>Adjust Scope</code>, an interactive web slider opens inside Telegram (<code>/tma/estimator</code>). The CEO can dynamically toggle scopes (Rough Clean, Final Clean, Touch-Up Clean, Floor Scrubbing, Pressure Washing) and see immediate price adjustments before confirming.</p>
+            </li>
+            <li><strong>Gemini 2.5 Flash Voice Directives:</strong>
+                <p>The CEO can hold the Telegram microphone button and speak natural instructions (e.g., <em>"George, check our outbox, what bids are pending?"</em>). The bot downloads the audio file, streams it to the Gemini speech-to-text and reasoning engine, and responds with immediate status and actions taken.</p>
+            </li>
+            <li><strong>Blueprint Vision & Drawing Sheet Analysis:</strong>
+                <p>The CEO can take a photo of an architectural floor plan or forward a blueprint image into Telegram. The vision engine identifies finish tags (such as VCT, sealed concrete, or ceramic tile), estimates the square footage, and returns an instant post-construction cleaning price breakdown.</p>
+            </li>
+            <li><strong>Decoupled Subcontractor Portal Automation (Host Task Runner):</strong>
+                <p>Portal bidding tasks (such as downloading plans from BuildingConnected or uploading completed bid forms) require browser automation tools like Playwright. To keep Docker containers lightweight, the container deposits a job record into the PostgreSQL <code>task_queue</code> table. A native host runner (<code>scripts/host_task_runner.py</code>) picks up the job, operates the browser, and reports completion back to Telegram.</p>
+            </li>
+            <li><strong>Daily Executive Briefing Daemon:</strong>
+                <p>Every morning at 7:00 AM Central Time, an automated daemon audits pending bids, review approvals, active outbox emails, and server health. It compiles a concise morning brief and delivers it to the CEO's Telegram inbox.</p>
+            </li>
+        </ol>
+
+        <h3>3.3 Telegraph Instant Article Publishing</h3>
+        <p>When large technical audits, walkthroughs, or system performance logs exceed Telegram's message character limits:</p>
         <ul>
-            <li><strong>Telegra.ph Publishing:</strong> Use the anonymous Telegraph API to dynamically register account tokens and compile local HTML walkthroughs into structural JSON node formats. Publish these pages to the public web for instant mobile-optimized readability.</li>
-            <li><strong>Telegram Notifications:</strong> Configure <code>TELEGRAM_BOT_TOKEN</code> and <code>TELEGRAM_CHAT_ID</code> within the local <code>.env</code> file. George will automatically dispatch the newly generated article link directly to the CEO's Telegram app using the <code>sendMessage</code> API.</li>
+            <li>The system publishes the structured report to the Telegra.ph publishing platform using an automated API token.</li>
+            <li>A summary card with an instant-view reading link is delivered to Telegram, providing a distraction-free mobile reading experience.</li>
         </ul>
-
-        <div class="callout callout-note">
-            <strong>Note</strong>
-            <p>Always keep private Telegram credentials and Telegraph account access tokens stored exclusively in the git-ignored <code>.env</code> configurations on the host systems.</p>
-        </div>
 
         <h2>4.0 Verification (Zero-Defect Check)</h2>
         <ul>
-            <li><strong>Honeypot Validation:</strong> Submit a mock lead containing a link in the company name. Confirm that the page returns success but the database row count remains unchanged.</li>
-            <li><strong>Telegraph Validation:</strong> Execute <code>python3 scripts/test_telegraph.py</code>. Confirm that it generates a clean HTTP 200 response and outputs a functional <code>telegra.ph</code> URL.</li>
-            <li><strong>Fidelity Compliance:</strong> Ensure all modified code compiles correctly without errors using <code>python3 -m py_compile</code> prior to production deployment.</li>
+            <li><strong>Telegram Responsiveness:</strong> Send <code>/status</code> to the bot in Telegram. Confirm that it replies with active container health, active bid counts, and database connection status within 3 seconds.</li>
+            <li><strong>Host Runner Heartbeat:</strong> Verify that <code>scripts/host_task_runner.py</code> is actively polling the <code>task_queue</code> table and claims pending jobs without errors.</li>
+            <li><strong>Honeypot Integrity:</strong> Submit a test lead containing an external hyperlink in the company name. Confirm that the application returns HTTP 200 but creates zero records in the <code>Leads</code> table.</li>
+            <li><strong>Discrepancy Tagging:</strong> When estimating bids with heuristic calibrations, confirm that the Telegram notification card explicitly displays the amber alert warning.</li>
         </ul>
 
         <h2>5.0 Revision History</h2>
@@ -96,10 +114,16 @@
             </thead>
             <tbody>
                 <tr>
+                    <td>3.0.0</td>
+                    <td>09-04-2026</td>
+                    <td>George</td>
+                    <td>Upgraded SOP to Mobile Operations System (MOS v3.0). Codified 6 Telegram frontiers, TMA scope configurator, voice parsing, blueprint vision, decoupled task_queue host runner, and daily briefing daemon. Approved by CEO.</td>
+                </tr>
+                <tr>
                     <td>1.0.0</td>
                     <td>06-01-2026</td>
                     <td>George</td>
-                    <td>Initial Release. Codifies spam transaction cleanups, silent quote honeypots, and Telegram mobile integrations.</td>
+                    <td>Initial Release. Codified spam transaction cleanups, silent quote honeypots, and Telegram mobile integrations.</td>
                 </tr>
             </tbody>
         </table>
