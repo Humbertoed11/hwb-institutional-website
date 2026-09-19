@@ -638,7 +638,7 @@ def sigma_executive():
                         force_pwd = True if request.form.get('force_pwd_reset') == 'true' else False
                         
                         custom_perms = {}
-                        for module in ['leads', 'accounts', 'bids', 'workforce', 'monitor', 'social', 'outbox', 'users', 'tools']:
+                        for module in ['leads', 'accounts', 'sales_desk', 'bids', 'workforce', 'monitor', 'qms', 'social', 'outbox', 'users', 'tools']:
                             custom_perms[module] = {
                                 'view': True if request.form.get(f'perm_{module}_view') == 'true' else False,
                                 'edit': True if request.form.get(f'perm_{module}_edit') == 'true' else False,
@@ -659,7 +659,7 @@ def sigma_executive():
                         new_pass = request.form.get('new_password')
                         
                         custom_perms = {}
-                        for module in ['leads', 'accounts', 'bids', 'workforce', 'monitor', 'social', 'outbox', 'users', 'tools']:
+                        for module in ['leads', 'accounts', 'sales_desk', 'bids', 'workforce', 'monitor', 'qms', 'social', 'outbox', 'users', 'tools']:
                             custom_perms[module] = {
                                 'view': True if request.form.get(f'perm_{module}_view') == 'true' else False,
                                 'edit': True if request.form.get(f'perm_{module}_edit') == 'true' else False,
@@ -687,7 +687,7 @@ def sigma_executive():
                         cur.execute('UPDATE "Users" SET password_hash = %s WHERE id = %s', (phash, request.form.get('user_id')))
                     elif action == 'update_role_permissions':
                         perm_role = request.form.get('target_role')
-                        for module in ['leads', 'accounts', 'bids', 'workforce', 'monitor', 'social', 'outbox', 'users', 'tools']:
+                        for module in ['leads', 'accounts', 'sales_desk', 'bids', 'workforce', 'monitor', 'qms', 'social', 'outbox', 'users', 'tools']:
                             can_v = True if request.form.get(f'perm_{module}_view') == 'true' else False
                             can_e = True if request.form.get(f'perm_{module}_edit') == 'true' else False
                             can_d = True if request.form.get(f'perm_{module}_delete') == 'true' else False

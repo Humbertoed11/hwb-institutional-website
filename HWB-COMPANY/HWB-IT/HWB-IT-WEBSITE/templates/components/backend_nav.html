@@ -285,9 +285,11 @@
         </div>
 
         <!-- 3. Dedicated Field Sales Cockpit Bridge -->
+        {% if current_user.role in ['Sales', 'Executive', 'Admin', 'Manager'] or (current_user.has_permission and current_user.has_permission('sales_desk', 'view')) %}
         <a href="{{ url_for('sales_desk') }}" class="sigma-nav-btn {% if request.endpoint == 'sales_desk' %}active{% endif %}" style="background: #eff6ff; color: #1e3a8a; border-color: #bfdbfe;">
             <i class="fas fa-mobile-alt" style="color: #2563eb;"></i> Field Sales Desk
         </a>
+        {% endif %}
 
         <!-- 4. Construction Bids & Corporate Management Modules -->
         {% if current_user.role != 'Sales' %}
@@ -308,9 +310,11 @@
                     <i class="fas fa-flask" style="color: #8b5cf6;"></i> Lab
                 </a>
             {% endif %}
+            {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('qms', 'view')) or not current_user.custom_permissions %}
             <a href="{{ url_for('manual_index') }}" class="sigma-nav-btn {% if request.endpoint == 'manual_index' or request.endpoint == 'view_sop' %}active{% endif %}">
                 <i class="fas fa-book" style="color: #64748b;"></i> QMS Manual
             </a>
+            {% endif %}
         {% endif %}
         
         <!-- 5. Instant Create Action Dropdown -->
