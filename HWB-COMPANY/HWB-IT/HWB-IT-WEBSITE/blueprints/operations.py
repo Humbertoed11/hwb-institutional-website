@@ -299,6 +299,35 @@ def admin_operations():
             cur.execute(f'SELECT * FROM "SubcontractorPartners" {sub_where_str} ORDER BY created_at DESC', tuple(sub_params))
             subcontractors = cur.fetchall()
             subcontractors_count = len(subcontractors)
+
+            # 7. ACTIVE EMPLOYEES & WORKFORCE PERSONNEL (HWB-QMS-7.6)
+            emp_where_clauses = []
+            emp_params = []
+            if search_q and active_view == 'workforce':
+                emp_where_clauses.append("(e.first_name ILIKE %s OR e.last_name ILIKE %s OR e.employee_number ILIKE %s OR e.primary_role ILIKE %s)")
+                param_val = f"%{search_q}%"
+                emp_params.extend([param_val, param_val, param_val, param_val])
+            emp_where_str = ("WHERE " + " AND ".join(emp_where_clauses)) if emp_where_clauses else ""
+            cur.execute(f'''
+                SELECT e.*, c.company_name as assigned_facility_name,
+                       (SELECT COUNT(*) FROM "EmployeeDocuments" d WHERE d.employee_id = e.id) as document_count
+                FROM "Employees" e
+                LEFT JOIN "Customers" c ON e.assigned_customer_id = c.customer_id
+                {emp_where_str}
+                ORDER BY e.created_at DESC;
+            ''', tuple(emp_params))
+            employees_raw = cur.fetchall()
+            employees = []
+            for emp in employees_raw:
+                d = dict(emp)
+                d['pay_rate_hourly'] = float(d['pay_rate_hourly'] or 0.0)
+                d['overtime_rate_hourly'] = float(d['overtime_rate_hourly'] or 0.0)
+                d['weekly_hours_allocated'] = float(d['weekly_hours_allocated'] or 0.0)
+                employees.append(d)
+            employees_count = len(employees)
+            active_employees_count = sum(1 for emp in employees if emp['employment_status'] == 'Active')
+            total_weekly_labor_hours = sum(emp['weekly_hours_allocated'] for emp in employees if emp['employment_status'] == 'Active')
+            total_biweekly_payroll = sum(emp['weekly_hours_allocated'] * 2.0 * emp['pay_rate_hourly'] for emp in employees if emp['employment_status'] == 'Active')
     finally:
         if "conn" in locals() and conn: conn.close()
 
@@ -317,13 +346,14 @@ def admin_operations():
                 'leads': [serialize_row(l) for l in leads] if leads else [],
                 'clients': [serialize_row(c) for c in clients] if clients else [],
                 'construction_bids': [serialize_row(b) for b in construction_bids] if construction_bids else [],
+                'employees': [serialize_row(e) for e in employees] if employees else [],
                 'applicants': [serialize_row(a) for a in applicants] if applicants else [],
                 'subcontractors': [serialize_row(s) for s in subcontractors] if subcontractors else [],
                 'system_users': [serialize_row(u) for u in system_users] if system_users else [],
                 'facility_types': FACILITY_TYPES,
                 'lead_sources': LEAD_SOURCES,
                 'priority_levels': PRIORITY_LEVELS,
-                'counts': {'leads': leads_count or 0, 'accounts': len(clients) if clients else 0, 'bids': len(construction_bids) if construction_bids else 0, 'applicants': applicants_count, 'subcontractors': subcontractors_count},
+                'counts': {'leads': leads_count or 0, 'accounts': len(clients) if clients else 0, 'bids': len(construction_bids) if construction_bids else 0, 'employees': employees_count, 'applicants': applicants_count, 'subcontractors': subcontractors_count},
                 'active_view': active_view
             })
         except Exception as e:
@@ -337,6 +367,8 @@ def admin_operations():
                          active_cols_str=active_cols_str, portfolio_total=portfolio_total,
                          clients=clients, work_orders=work_orders, services=services,
                          construction_bids=construction_bids, bids_count=bids_count,
+                         employees=employees, employees_count=employees_count, active_employees_count=active_employees_count,
+                         total_weekly_labor_hours=total_weekly_labor_hours, total_biweekly_payroll=total_biweekly_payroll,
                          applicants=applicants, applicants_count=applicants_count,
                          subcontractors=subcontractors, subcontractors_count=subcontractors_count,
                          library=json.dumps(lib), activities=activities, system_users=system_users,

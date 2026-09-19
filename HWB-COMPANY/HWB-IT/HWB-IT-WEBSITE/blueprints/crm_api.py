@@ -10,7 +10,9 @@ import csv
 import json
 import hashlib
 import datetime
-from flask import Blueprint, request, jsonify, Response, current_app
+from datetime import datetime as dt_cls
+from flask import Blueprint, request, jsonify, Response, current_app, send_file
+from werkzeug.utils import secure_filename
 from flask_login import login_required, current_user
 from core.services.database import get_db
 from core.services.sanitizer import clean_phone, clean_currency, clean_sqft, clean_zip, clean_email, clean_city
@@ -1265,6 +1267,387 @@ def api_manage_subcontractor(id):
             ''', (new_status, new_coi_status, new_notes, new_city, new_phone, id))
             conn.commit()
             return jsonify({'status': 'success', 'id': id})
+    finally:
+        if conn: conn.close()
+
+
+# =========================================================================
+# SigmaFidelity™ Human Resources & Payroll Management Engine
+# Standard: HWB-QMS-7.6 / ISO 9001:2015 Clause 7.2 (Competence)
+# =========================================================================
+
+HR_VAULT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'vault', 'hr_documents'))
+os.makedirs(HR_VAULT_DIR, exist_ok=True)
+
+
+@crm_api_bp.route('/api/v1/hr/onboard', methods=['POST'])
+@login_required
+def api_hr_onboard_candidate():
+    """
+    Onboards a candidate into the Employees ledger.
+    Can be linked to an existing JobApplicant or created fresh.
+    Auto-generates employee_number (HWB-EMP-####).
+    """
+    data = request.get_json() or {}
+    applicant_id = data.get('applicant_id')
+    first_name = (data.get('first_name') or '').strip()
+    last_name = (data.get('last_name') or '').strip()
+    phone = clean_phone(data.get('phone') or '')
+    email = (data.get('email') or '').strip()
+    
+    if not first_name or not last_name or not phone:
+        return jsonify({'status': 'error', 'message': 'First name, last name, and phone are mandatory.'}), 400
+
+    role = (data.get('primary_role') or 'Commercial Cleaning Technician').strip()
+    employment_type = data.get('employment_type', 'W-2 Full-Time')
+    employment_status = data.get('employment_status', 'Active')
+    hire_date = data.get('hire_date') or dt_cls.now().strftime('%Y-%m-%d')
+    pay_rate = float(data.get('pay_rate_hourly') or 16.00)
+    overtime_rate = float(data.get('overtime_rate_hourly') or (pay_rate * 1.5))
+    pay_frequency = data.get('pay_frequency', 'Bi-Weekly')
+    primary_language = data.get('primary_language', 'Spanish')
+    city = clean_city(data.get('city') or '')
+    state = (data.get('state') or 'TX').strip()
+    emergency_name = (data.get('emergency_contact_name') or '').strip()
+    emergency_phone = clean_phone(data.get('emergency_contact_phone') or '')
+    assigned_customer_id = data.get('assigned_customer_id') or None
+    weekly_hours = float(data.get('weekly_hours_allocated') or 40.00)
+    notes = (data.get('notes') or '').strip()
+
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            cur.execute('SELECT MAX(id) as max_id FROM "Employees";')
+            max_row = cur.fetchone()
+            next_id = (max_row['max_id'] or 0) + 1001
+            emp_number = f"HWB-EMP-{next_id}"
+
+            cur.execute('''
+                INSERT INTO "Employees" (
+                    employee_number, applicant_id, first_name, last_name, phone, email,
+                    hire_date, employment_status, employment_type, primary_role,
+                    pay_rate_hourly, overtime_rate_hourly, pay_frequency, primary_language,
+                    emergency_contact_name, emergency_contact_phone, address_city, address_state,
+                    assigned_customer_id, weekly_hours_allocated, notes
+                ) VALUES (
+                    %s, %s, %s, %s, %s, %s,
+                    %s, %s, %s, %s,
+                    %s, %s, %s, %s,
+                    %s, %s, %s, %s,
+                    %s, %s, %s
+                ) RETURNING id, employee_number;
+            ''', (
+                emp_number, applicant_id, first_name, last_name, phone, email,
+                hire_date, employment_status, employment_type, role,
+                pay_rate, overtime_rate, pay_frequency, primary_language,
+                emergency_name, emergency_phone, city, state,
+                assigned_customer_id, weekly_hours, notes
+            ))
+            new_emp = cur.fetchone()
+
+            if applicant_id:
+                cur.execute('''
+                    UPDATE "JobApplicants" 
+                    SET status = 'Hired', notes = COALESCE(notes, '') || E'\n[ONBOARDED] Hired as ' || %s || E' (' || %s || E')'
+                    WHERE id = %s;
+                ''', (role, emp_number, applicant_id))
+
+            conn.commit()
+            return jsonify({
+                'status': 'success',
+                'employee_id': new_emp['id'],
+                'employee_number': new_emp['employee_number'],
+                'message': f"Employee {first_name} {last_name} ({new_emp['employee_number']}) onboarded successfully."
+            }), 201
+    finally:
+        if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/hr/employees', methods=['GET'])
+@login_required
+def api_get_employees():
+    """Retrieve all employees with optional role, status, or search filters."""
+    status_filter = request.args.get('status')
+    role_filter = request.args.get('role')
+    search_q = (request.args.get('q') or '').strip().lower()
+
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            query = '''
+                SELECT e.*, c.company_name as assigned_facility_name,
+                       (SELECT COUNT(*) FROM "EmployeeDocuments" d WHERE d.employee_id = e.id) as document_count
+                FROM "Employees" e
+                LEFT JOIN "Customers" c ON e.assigned_customer_id = c.customer_id
+                WHERE 1=1
+            '''
+            params = []
+            if status_filter:
+                query += ' AND e.employment_status = %s'
+                params.append(status_filter)
+            if role_filter:
+                query += ' AND e.primary_role = %s'
+                params.append(role_filter)
+            if search_q:
+                query += ' AND (LOWER(e.first_name) LIKE %s OR LOWER(e.last_name) LIKE %s OR LOWER(e.employee_number) LIKE %s OR LOWER(e.phone) LIKE %s)'
+                like_term = f"%{search_q}%"
+                params.extend([like_term, like_term, like_term, like_term])
+
+            query += ' ORDER BY e.created_at DESC;'
+            cur.execute(query, tuple(params))
+            rows = [serialize_row(r) for r in cur.fetchall()]
+            return jsonify({'status': 'success', 'count': len(rows), 'employees': rows})
+    finally:
+        if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/hr/employees/<int:id>', methods=['GET', 'PATCH', 'DELETE'])
+@login_required
+def api_manage_employee(id):
+    """View, update, or terminate an employee record."""
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            if request.method == 'GET':
+                cur.execute('''
+                    SELECT e.*, c.company_name as assigned_facility_name
+                    FROM "Employees" e
+                    LEFT JOIN "Customers" c ON e.assigned_customer_id = c.customer_id
+                    WHERE e.id = %s;
+                ''', (id,))
+                emp = cur.fetchone()
+                if not emp:
+                    return jsonify({'status': 'error', 'message': 'Employee not found'}), 404
+                
+                cur.execute('SELECT * FROM "EmployeeDocuments" WHERE employee_id = %s ORDER BY created_at DESC;', (id,))
+                docs = [serialize_row(d) for d in cur.fetchall()]
+
+                emp_data = serialize_row(emp)
+                emp_data['documents'] = docs
+                return jsonify({'status': 'success', 'employee': emp_data})
+
+            elif request.method == 'DELETE':
+                cur.execute('''
+                    UPDATE "Employees" 
+                    SET employment_status = 'Terminated', termination_date = CURRENT_DATE, updated_at = CURRENT_TIMESTAMP
+                    WHERE id = %s;
+                ''', (id,))
+                conn.commit()
+                return jsonify({'status': 'success', 'message': f'Employee #{id} marked Terminated.'})
+
+            elif request.method == 'PATCH':
+                data = request.get_json() or {}
+                cur.execute('SELECT * FROM "Employees" WHERE id = %s;', (id,))
+                emp = cur.fetchone()
+                if not emp:
+                    return jsonify({'status': 'error', 'message': 'Employee not found'}), 404
+
+                first_name = data.get('first_name', emp['first_name'])
+                last_name = data.get('last_name', emp['last_name'])
+                phone = clean_phone(data.get('phone', emp['phone']))
+                email = data.get('email', emp['email'])
+                primary_role = data.get('primary_role', emp['primary_role'])
+                employment_status = data.get('employment_status', emp['employment_status'])
+                employment_type = data.get('employment_type', emp['employment_type'])
+                pay_rate = float(data.get('pay_rate_hourly', emp['pay_rate_hourly']))
+                overtime_rate = float(data.get('overtime_rate_hourly', emp['overtime_rate_hourly']))
+                primary_language = data.get('primary_language', emp['primary_language'])
+                assigned_customer_id = data.get('assigned_customer_id', emp['assigned_customer_id'])
+                weekly_hours = float(data.get('weekly_hours_allocated', emp['weekly_hours_allocated']))
+                emergency_name = data.get('emergency_contact_name', emp['emergency_contact_name'])
+                emergency_phone = clean_phone(data.get('emergency_contact_phone', emp['emergency_contact_phone']))
+                city = clean_city(data.get('address_city', emp['address_city']))
+                notes = data.get('notes', emp['notes'])
+
+                cur.execute('''
+                    UPDATE "Employees" SET
+                        first_name = %s, last_name = %s, phone = %s, email = %s,
+                        primary_role = %s, employment_status = %s, employment_type = %s,
+                        pay_rate_hourly = %s, overtime_rate_hourly = %s, primary_language = %s,
+                        assigned_customer_id = %s, weekly_hours_allocated = %s,
+                        emergency_contact_name = %s, emergency_contact_phone = %s,
+                        address_city = %s, notes = %s, updated_at = CURRENT_TIMESTAMP
+                    WHERE id = %s;
+                ''', (
+                    first_name, last_name, phone, email,
+                    primary_role, employment_status, employment_type,
+                    pay_rate, overtime_rate, primary_language,
+                    assigned_customer_id, weekly_hours,
+                    emergency_name, emergency_phone,
+                    city, notes, id
+                ))
+                conn.commit()
+                return jsonify({'status': 'success', 'id': id, 'message': 'Employee updated successfully.'})
+    finally:
+        if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/hr/employees/<int:id>/documents', methods=['POST'])
+@login_required
+def api_upload_employee_document(id):
+    """Securely uploads and attaches a compliance document to an employee record."""
+    if 'document' not in request.files:
+        return jsonify({'status': 'error', 'message': 'No document file provided.'}), 400
+    
+    file = request.files['document']
+    doc_type = (request.form.get('document_type') or 'Form I-9').strip()
+    notes = (request.form.get('notes') or '').strip()
+    expiration_date = request.form.get('expiration_date') or None
+
+    if file.filename == '':
+        return jsonify({'status': 'error', 'message': 'Empty file selected.'}), 400
+
+    filename = secure_filename(file.filename)
+    safe_name = f"emp_{id}_{int(dt_cls.now().timestamp())}_{filename}"
+    file_path = os.path.join(HR_VAULT_DIR, safe_name)
+    file.save(file_path)
+    file_size = os.path.getsize(file_path)
+    mime_type = file.mimetype or 'application/octet-stream'
+
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            cur.execute('''
+                INSERT INTO "EmployeeDocuments" (
+                    employee_id, document_type, file_name, file_path, file_size,
+                    mime_type, verification_status, expiration_date, verified_by, notes
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING id;
+            ''', (
+                id, doc_type, filename, safe_name, file_size,
+                mime_type, 'Verified', expiration_date, 'Humberto Dominguez', notes
+            ))
+            doc_id = cur.fetchone()['id']
+            conn.commit()
+            return jsonify({
+                'status': 'success',
+                'document_id': doc_id,
+                'file_name': filename,
+                'message': f"{doc_type} securely deposited into Vault."
+            }), 201
+    finally:
+        if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/hr/documents/<int:doc_id>/download', methods=['GET'])
+@login_required
+def api_download_employee_document(doc_id):
+    """Secure authorized download/view of an employee document from the Vault."""
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            cur.execute('SELECT * FROM "EmployeeDocuments" WHERE id = %s;', (doc_id,))
+            doc = cur.fetchone()
+            if not doc:
+                return jsonify({'status': 'error', 'message': 'Document not found'}), 404
+            
+            full_path = os.path.join(HR_VAULT_DIR, doc['file_path'])
+            if not os.path.exists(full_path):
+                return jsonify({'status': 'error', 'message': 'File missing from Vault storage'}), 404
+            
+            return send_file(full_path, mimetype=doc['mime_type'], as_attachment=False, download_name=doc['file_name'])
+    finally:
+        if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/hr/payroll', methods=['GET'])
+@login_required
+def api_get_payroll_summary():
+    """Generates the current payroll summary across all active personnel."""
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            cur.execute('''
+                SELECT e.id, e.employee_number, e.first_name, e.last_name, e.primary_role,
+                       e.employment_type, e.pay_rate_hourly, e.weekly_hours_allocated,
+                       c.company_name as assigned_facility_name
+                FROM "Employees" e
+                LEFT JOIN "Customers" c ON e.assigned_customer_id = c.customer_id
+                WHERE e.employment_status = 'Active'
+                ORDER BY e.last_name ASC;
+            ''')
+            employees = cur.fetchall()
+            
+            payroll_items = []
+            total_weekly_hours = 0.0
+            total_biweekly_gross = 0.0
+
+            for emp in employees:
+                hours = float(emp['weekly_hours_allocated'] or 0.0)
+                rate = float(emp['pay_rate_hourly'] or 0.0)
+                biweekly_hours = hours * 2.0
+                biweekly_gross = biweekly_hours * rate
+
+                total_weekly_hours += hours
+                total_biweekly_gross += biweekly_gross
+
+                payroll_items.append({
+                    'id': emp['id'],
+                    'employee_number': emp['employee_number'],
+                    'name': f"{emp['first_name']} {emp['last_name']}",
+                    'role': emp['primary_role'],
+                    'facility': emp['assigned_facility_name'] or 'Floater / Unassigned',
+                    'weekly_hours': round(hours, 2),
+                    'hourly_rate': round(rate, 2),
+                    'biweekly_hours': round(biweekly_hours, 2),
+                    'biweekly_gross': round(biweekly_gross, 2)
+                })
+
+            return jsonify({
+                'status': 'success',
+                'count': len(payroll_items),
+                'total_weekly_hours': round(total_weekly_hours, 2),
+                'total_biweekly_gross': round(total_biweekly_gross, 2),
+                'payroll': payroll_items
+            })
+    finally:
+        if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/hr/payroll/export', methods=['GET'])
+@login_required
+def api_export_payroll_csv():
+    """Exports payroll summary as a CSV file formatted for QuickBooks / Gusto / ADP."""
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            cur.execute('''
+                SELECT e.employee_number, e.first_name, e.last_name, e.phone, e.email,
+                       e.primary_role, e.employment_type, e.pay_rate_hourly, e.weekly_hours_allocated,
+                       c.company_name as assigned_facility_name
+                FROM "Employees" e
+                LEFT JOIN "Customers" c ON e.assigned_customer_id = c.customer_id
+                WHERE e.employment_status = 'Active'
+                ORDER BY e.last_name ASC;
+            ''')
+            rows = cur.fetchall()
+
+            output = io.StringIO()
+            writer = csv.writer(output)
+            writer.writerow([
+                'Employee ID', 'First Name', 'Last Name', 'Role', 'Employment Type',
+                'Hourly Rate ($)', 'Weekly Hours', 'Bi-Weekly Hours', 'Gross Pay ($)',
+                'Assigned Facility', 'Phone', 'Email'
+            ])
+
+            for r in rows:
+                hours = float(r['weekly_hours_allocated'] or 0.0)
+                rate = float(r['pay_rate_hourly'] or 0.0)
+                biweekly_hours = hours * 2.0
+                gross_pay = biweekly_hours * rate
+                writer.writerow([
+                    r['employee_number'], r['first_name'], r['last_name'], r['primary_role'],
+                    r['employment_type'], f"{rate:.2f}", f"{hours:.2f}", f"{biweekly_hours:.2f}",
+                    f"{gross_pay:.2f}", r['assigned_facility_name'] or 'Floater', r['phone'], r['email'] or ''
+                ])
+
+            output.seek(0)
+            timestamp = dt_cls.now().strftime('%Y%m%d')
+            return Response(
+                output.getvalue(),
+                mimetype="text/csv",
+                headers={"Content-disposition": f"attachment; filename=HWB_Payroll_Export_{timestamp}.csv"}
+            )
     finally:
         if conn: conn.close()
 

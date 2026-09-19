@@ -42,3 +42,6 @@ HWB-WEB Facebook Banner.JPG
 HWB-WEB Sigma Fidelity Logo.png
 HWB-WEB HWB New Logo 2.png
 templates/.snapshots_pre_salesforce_ui/*.sql
+vault/hr_documents/*
+!vault/hr_documents/.gitignore
+
