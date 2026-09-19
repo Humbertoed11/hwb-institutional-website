@@ -43,7 +43,7 @@ def build_executive_signature_html(officer="humberto"):
         name = "Humberto Dominguez"
         title = "Chief Executive Officer"
         email = "hdominguez@hwbcleaning.com"
-        phone_direct = "(214) 799-5935"
+        phone_direct = "(972) 800-7808"
 
     return f"""
     <table width="560" cellpadding="0" cellspacing="0" border="0" style="width: 560px; max-width: 560px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 13px; color: #1e293b; margin-top: 24px; border-top: 2px solid #0f172a; padding-top: 16px; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
@@ -60,9 +60,6 @@ def build_executive_signature_html(officer="humberto"):
                     Office: (214) 586-0257 | Direct: {phone_direct}<br>
                     Email: <a href="mailto:{email}" style="color: #2563eb; text-decoration: none; font-weight: 500;">{email}</a> | 
                     Web: <a href="https://www.hwbcleaning.com" style="color: #2563eb; text-decoration: none; font-weight: 500;">www.hwbcleaning.com</a>
-                </div>
-                <div style="margin-top: 6px; font-size: 10px; color: #64748b; letter-spacing: 0.02em;">
-                    Texas Charter #802920409 • CAGE (SAM) #082830635 • Commercial EMR: .43 • ISO 9001:2015 Registered
                 </div>
             </td>
         </tr>

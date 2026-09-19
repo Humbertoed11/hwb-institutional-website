@@ -54,7 +54,7 @@ CORPORATE_INFO = {
     "address_full": "3342 FM 1827 Ste 8d, McKinney, TX 75071",
     "office_phone": "214-586-0257",
     "office_phone_formatted": "(214)-586-0257",
-    "ceo_direct_phone": "(214) 799-5935",
+    "ceo_direct_phone": "(972) 800-7808",
     "official_email": "hdominguez@hwbcleaning.com",
     "sales_email": "sales@hwbcleaning.com",
     "website_url": "https://www.hwbcleaning.com",
