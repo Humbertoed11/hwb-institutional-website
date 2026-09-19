@@ -51,17 +51,22 @@ Responsibility: George (Architect)
 1. Visiting `http://mop.test:5000/admin/operations?view=workforce` caused the layout to render broken or unformatted like a naked "web response window".
 2. Redundant `<main>` at line 120 and extraneous `</main></div>` closing tags at line 1701-1702 of `templates/backoffice_operations.html` closed `.bo-content` and parent `.bo-main` prematurely, throwing page contents and modals outside the container shell.
 3. In `blueprints/operations.py`, unconditioned `request.headers.get('X-Requested-With') == 'XMLHttpRequest'` intercepted requests and dumped raw JSON directly to the browser window.
+4. Clicking the "Candidate Notes" or "Partner Notes" action buttons triggered an unformatted native browser `prompt()` dialog, and deleting candidates used raw `confirm()`, presenting an unstyled web response dialog instead of an institutional modal.
 **Root Cause:**
 1. A nested `<main>` element was opened within `{% block bo_content %}`, conflicting with HTML5 nesting rules and triggering the browser's implicit parent closure.
 2. Two orphan closing tags (`</main>` and `</div>`) caused a -1 div tag balance mismatch, truncating container boundaries.
 3. API serialization condition lacked verification of the client's `Accept` mimetype, causing browser sessions with AJAX headers to receive raw JSON strings.
+4. Candidate and Partner notes relied on legacy browser `window.prompt()` rather than a dedicated SigmaFidelity™ modal dialog.
 **Solution:**
 1. Purged the redundant `<main>` tag at line 120 and removed the orphan `</main>` and `</div>` tags at lines 1700-1701 of `templates/backoffice_operations.html`, bringing tag balance to an exact 0 delta.
 2. Hardened `admin_operations()` controller in `blueprints/operations.py` to only serialize JSON when `format=json` or when `request.accept_mimetypes.best == 'application/json'`.
 3. Integrated granular User Management permission checks for Bids, Workforce, and Monitor tabs in `templates/components/backend_nav.html`.
+4. Engineered `modal-workforce-notes` with clinical styling, candidate badge, textarea character counter, and asynchronous PATCH synchronization.
+5. Upgraded delete actions to utilize `modal-decision` (`showDecision({...})`) with destructive red branding and audit confirmation.
 **Preventative:**
 1. Enforce automated HTML tag balancing checks on all Jinja2 template edits during pre-flight test suites.
 2. Standardize all administrative routes to guard JSON serialization against HTML browser navigation.
+3. Strictly prohibit `window.prompt()` and `window.confirm()` across all administrative and backoffice modules in accordance with QMS-7.2.
 
 ## SEO-001: Google Analytics GA4 Conversion Blindspot, Duplicate Tag Redundancy & Missing Click-to-Call Telemetry
 **Executed:** 09/19/2026

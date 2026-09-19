@@ -1452,10 +1452,10 @@
                                         </td>
                                         <td style="padding: 0.65rem 0.85rem; text-align: right;">
                                             <div style="display: inline-flex; gap: 0.35rem;">
-                                                <button type="button" data-notes="{{ app.notes or '' }}" onclick="editApplicantNotes({{ app.id }}, this)" title="Candidate Notes" class="sigma-mini-btn" style="color: var(--brand);">
+                                                <button type="button" data-name="{{ app.full_name }}" data-notes="{{ app.notes or '' }}" onclick="editApplicantNotes({{ app.id }}, this)" title="Candidate Notes" class="sigma-mini-btn" style="color: var(--brand);">
                                                     <i class="fas fa-sticky-note"></i>
                                                 </button>
-                                                <button type="button" onclick="deleteApplicantRecord({{ app.id }})" title="Remove Candidate" class="sigma-mini-btn" style="color: #ef4444;">
+                                                <button type="button" data-name="{{ app.full_name }}" onclick="deleteApplicantRecord({{ app.id }}, this)" title="Remove Candidate" class="sigma-mini-btn" style="color: #ef4444;">
                                                     <i class="fas fa-trash-alt"></i>
                                                 </button>
                                             </div>
@@ -1573,10 +1573,10 @@
                                         </td>
                                         <td style="padding: 0.65rem 0.85rem; text-align: right;">
                                             <div style="display: inline-flex; gap: 0.35rem;">
-                                                <button type="button" data-notes="{{ sub.notes or '' }}" onclick="editSubcontractorNotes({{ sub.id }}, this)" title="Partner Notes" class="sigma-mini-btn" style="color: var(--brand);">
+                                                <button type="button" data-name="{{ sub.company_name }}" data-notes="{{ sub.notes or '' }}" onclick="editSubcontractorNotes({{ sub.id }}, this)" title="Partner Notes" class="sigma-mini-btn" style="color: var(--brand);">
                                                     <i class="fas fa-sticky-note"></i>
                                                 </button>
-                                                <button type="button" onclick="deleteSubcontractorRecord({{ sub.id }})" title="Remove Partner" class="sigma-mini-btn" style="color: #ef4444;">
+                                                <button type="button" data-name="{{ sub.company_name }}" onclick="deleteSubcontractorRecord({{ sub.id }}, this)" title="Remove Partner" class="sigma-mini-btn" style="color: #ef4444;">
                                                     <i class="fas fa-trash-alt"></i>
                                                 </button>
                                             </div>
@@ -1699,6 +1699,50 @@
         </div>
 
 <!-- Modals -->
+<!-- Modal: Workforce Notes & Verification Log (HWB-QMS-7.6) -->
+<div id="modal-workforce-notes" class="isc-modal-overlay" style="display:none; z-index: 1100;">
+    <div class="isc-modal" style="max-width: 580px; padding: 2.25rem; border-radius: 12px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; border-bottom: 1px solid var(--slate-100); padding-bottom: 1rem;">
+            <div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span id="wf-notes-badge" style="font-size: 0.7rem; font-weight: 800; background: #ecfdf5; color: #065f46; padding: 0.2rem 0.6rem; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.05em;">Candidate Record</span>
+                    <span id="wf-notes-id-badge" style="font-size: 0.7rem; font-weight: 700; color: var(--slate-400);">ID #0</span>
+                </div>
+                <h2 id="wf-notes-title" style="font-weight: 900; font-size: 1.35rem; color: var(--slate-900); margin: 0.35rem 0 0 0;">Candidate Operational Notes</h2>
+                <p id="wf-notes-subtitle" style="font-size: 0.78rem; color: var(--slate-500); font-weight: 600; margin-top: 0.2rem;">Internal records, interview outcomes, and field screening assessments.</p>
+            </div>
+            <button type="button" onclick="closeModal('modal-workforce-notes')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; color: var(--slate-400); transition: all 0.15s ease;">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <form id="form-workforce-notes" onsubmit="saveWorkforceNotes(event)">
+            <input type="hidden" id="wf-notes-target-id" value="">
+            <input type="hidden" id="wf-notes-target-type" value="applicant">
+            
+            <div style="margin-bottom: 1.5rem;">
+                <label for="wf-notes-textarea" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.5rem;">
+                    Internal Touchpoint Log & Screening Notes
+                </label>
+                <textarea id="wf-notes-textarea" class="sigma-input" style="width: 100%; height: 160px; resize: vertical; font-size: 0.85rem; line-height: 1.5; padding: 0.75rem; font-family: inherit; box-sizing: border-box; border-radius: 6px; border: 1px solid var(--slate-300);" placeholder="Enter notes from phone screen, clean testing assessment, vehicle verification, or special rate agreements..."></textarea>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.4rem; font-size: 0.72rem; color: var(--slate-400); font-weight: 600;">
+                    <span><i class="fas fa-database" style="color: #10b981; margin-right: 4px;"></i> Persists to PostgreSQL SigmaSystemCore</span>
+                    <span id="wf-notes-char-count">0 characters</span>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem; border-top: 1px solid var(--slate-100); padding-top: 1.25rem;">
+                <button type="button" onclick="closeModal('modal-workforce-notes')" class="isc-btn isc-btn-outline" style="height: 38px; padding: 0 1.25rem; font-size: 0.8rem; border-radius: 6px;">
+                    Cancel
+                </button>
+                <button type="submit" id="btn-save-wf-notes" class="isc-btn isc-btn-primary" style="height: 38px; padding: 0 1.5rem; font-size: 0.8rem; border-radius: 6px; font-weight: 800; display: inline-flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-save"></i> Save Notes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- Modal: Estimator Follow-Up Cadence (HWB-QMS-11.2) -->
 <div id="modal-estimator-cadence" class="isc-modal-overlay" style="display:none;">
     <div class="isc-modal" style="max-width: 860px; max-height: 90vh; overflow-y: auto;">
@@ -5364,48 +5408,56 @@
         }
     }
 
-    async function editApplicantNotes(id, btnOrNotes) {
-        const currentNotes = (typeof btnOrNotes === 'string') ? btnOrNotes : (btnOrNotes?.getAttribute('data-notes') || '');
-        const newNotes = prompt("Candidate notes & interview records:", currentNotes);
-        if (newNotes === null) return;
-        try {
-            const res = await fetch(`/api/v1/workforce/applicants/${id}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ notes: newNotes })
-            });
-            const data = await res.json();
-            if (data.status === 'success') {
-                if (typeof btnOrNotes === 'object' && btnOrNotes) {
-                    btnOrNotes.setAttribute('data-notes', newNotes);
-                }
-                if (typeof showToast === 'function') showToast("Candidate notes saved.", "success");
-            } else {
-                alert("Failed to update notes: " + (data.message || 'Error'));
-            }
-        } catch (e) {
-            console.error(e);
-        }
+    let activeWfNotesButton = null;
+
+    function editApplicantNotes(id, btnElement) {
+        activeWfNotesButton = btnElement;
+        const name = btnElement?.getAttribute('data-name') || `Applicant #${id}`;
+        const notes = btnElement?.getAttribute('data-notes') || '';
+        
+        document.getElementById('wf-notes-target-id').value = id;
+        document.getElementById('wf-notes-target-type').value = 'applicant';
+        document.getElementById('wf-notes-badge').innerText = 'Candidate Record (W-2)';
+        document.getElementById('wf-notes-badge').style.background = '#ecfdf5';
+        document.getElementById('wf-notes-badge').style.color = '#065f46';
+        document.getElementById('wf-notes-id-badge').innerText = `ID #${id}`;
+        document.getElementById('wf-notes-title').innerText = `${name} — Notes`;
+        document.getElementById('wf-notes-subtitle').innerText = 'Internal screening records, interview feedback, availability, and background.';
+        
+        const textarea = document.getElementById('wf-notes-textarea');
+        textarea.value = notes;
+        updateWfNotesCharCount();
+        
+        openModal('modal-workforce-notes');
+        setTimeout(() => textarea.focus(), 100);
     }
 
-    async function deleteApplicantRecord(id) {
-        if (!confirm(`Are you sure you want to delete applicant #${id}? This cannot be undone.`)) return;
-        try {
-            const res = await fetch(`/api/v1/workforce/applicants/${id}`, {
-                method: 'DELETE'
-            });
-            const data = await res.json();
-            if (data.status === 'success') {
-                const row = document.getElementById(`applicant-row-${id}`);
-                if (row) row.remove();
-                if (typeof showToast === 'function') showToast(`Applicant #${id} deleted.`, "info");
-                filterApplicantsTable();
-            } else {
-                alert("Could not delete: " + (data.message || 'Error'));
+    function deleteApplicantRecord(id, btnOrName) {
+        const name = (typeof btnOrName === 'string') ? btnOrName : (btnOrName?.getAttribute('data-name') || 'Candidate');
+        showDecision({
+            title: "Remove Candidate Record?",
+            text: `Permanently delete applicant #${id} (${name})? This operational record cannot be recovered.`,
+            confirmText: "Delete Candidate",
+            isDestructive: true,
+            icon: "fa-trash-alt",
+            onConfirm: async () => {
+                try {
+                    const res = await fetch(`/api/v1/workforce/applicants/${id}`, { method: 'DELETE' });
+                    const data = await res.json();
+                    if (data.status === 'success') {
+                        const row = document.getElementById(`applicant-row-${id}`);
+                        if (row) row.remove();
+                        showToast(`Applicant #${id} removed.`, "info");
+                        filterApplicantsTable();
+                    } else {
+                        showToast("Could not delete: " + (data.message || 'Error'), "error");
+                    }
+                } catch (err) {
+                    console.error(err);
+                    showToast("Network error deleting applicant.", "error");
+                }
             }
-        } catch (err) {
-            console.error(err);
-        }
+        });
     }
 
     async function updateSubcontractorField(id, field, value, selectElement) {
@@ -5462,48 +5514,105 @@
         }
     }
 
-    async function editSubcontractorNotes(id, btnOrNotes) {
-        const currentNotes = (typeof btnOrNotes === 'string') ? btnOrNotes : (btnOrNotes?.getAttribute('data-notes') || '');
-        const newNotes = prompt("Partner notes, rate agreements & trade background:", currentNotes);
-        if (newNotes === null) return;
+    function editSubcontractorNotes(id, btnElement) {
+        activeWfNotesButton = btnElement;
+        const name = btnElement?.getAttribute('data-name') || `Partner #${id}`;
+        const notes = btnElement?.getAttribute('data-notes') || '';
+        
+        document.getElementById('wf-notes-target-id').value = id;
+        document.getElementById('wf-notes-target-type').value = 'subcontractor';
+        document.getElementById('wf-notes-badge').innerText = 'Subcontractor Partner (1099)';
+        document.getElementById('wf-notes-badge').style.background = '#eff6ff';
+        document.getElementById('wf-notes-badge').style.color = '#1e40af';
+        document.getElementById('wf-notes-id-badge').innerText = `ID #${id}`;
+        document.getElementById('wf-notes-title').innerText = `${name} — Trade File`;
+        document.getElementById('wf-notes-subtitle').innerText = 'Rate agreements, crew capabilities, insurance records, and trade background.';
+        
+        const textarea = document.getElementById('wf-notes-textarea');
+        textarea.value = notes;
+        updateWfNotesCharCount();
+        
+        openModal('modal-workforce-notes');
+        setTimeout(() => textarea.focus(), 100);
+    }
+
+    function updateWfNotesCharCount() {
+        const text = document.getElementById('wf-notes-textarea')?.value || '';
+        const counter = document.getElementById('wf-notes-char-count');
+        if (counter) counter.innerText = `${text.length} characters`;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const txt = document.getElementById('wf-notes-textarea');
+        if (txt) txt.addEventListener('input', updateWfNotesCharCount);
+    });
+
+    async function saveWorkforceNotes(event) {
+        event.preventDefault();
+        const id = document.getElementById('wf-notes-target-id').value;
+        const type = document.getElementById('wf-notes-target-type').value;
+        const notes = document.getElementById('wf-notes-textarea').value.trim();
+        const saveBtn = document.getElementById('btn-save-wf-notes');
+        
+        const endpoint = type === 'applicant' 
+            ? `/api/v1/workforce/applicants/${id}` 
+            : `/api/v1/workforce/subcontractors/${id}`;
+            
+        saveBtn.disabled = true;
+        const originalHtml = saveBtn.innerHTML;
+        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+        
         try {
-            const res = await fetch(`/api/v1/workforce/subcontractors/${id}`, {
+            const res = await fetch(endpoint, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ notes: newNotes })
+                body: JSON.stringify({ notes: notes })
             });
             const data = await res.json();
             if (data.status === 'success') {
-                if (typeof btnOrNotes === 'object' && btnOrNotes) {
-                    btnOrNotes.setAttribute('data-notes', newNotes);
+                if (activeWfNotesButton) {
+                    activeWfNotesButton.setAttribute('data-notes', notes);
                 }
-                if (typeof showToast === 'function') showToast("Partner notes saved.", "success");
+                closeModal('modal-workforce-notes');
+                showToast(type === 'applicant' ? 'Candidate notes saved.' : 'Partner notes saved.', 'success');
             } else {
-                alert("Failed to update notes: " + (data.message || 'Error'));
+                showToast('Save failed: ' + (data.message || 'Unknown error'), 'error');
             }
         } catch (e) {
-            console.error(e);
+            console.error("Save notes error:", e);
+            showToast('Network error while saving notes.', 'error');
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = originalHtml;
         }
     }
 
-    async function deleteSubcontractorRecord(id) {
-        if (!confirm(`Are you sure you want to remove subcontractor #${id}? This cannot be undone.`)) return;
-        try {
-            const res = await fetch(`/api/v1/workforce/subcontractors/${id}`, {
-                method: 'DELETE'
-            });
-            const data = await res.json();
-            if (data.status === 'success') {
-                const row = document.getElementById(`subcontractor-row-${id}`);
-                if (row) row.remove();
-                if (typeof showToast === 'function') showToast(`Subcontractor #${id} deleted.`, "info");
-                filterSubcontractorsTable();
-            } else {
-                alert("Could not delete: " + (data.message || 'Error'));
+    function deleteSubcontractorRecord(id, btnOrName) {
+        const name = (typeof btnOrName === 'string') ? btnOrName : (btnOrName?.getAttribute('data-name') || 'Partner');
+        showDecision({
+            title: "Remove Trade Partner?",
+            text: `Permanently remove subcontractor #${id} (${name})? Compliance and COI records will be purged.`,
+            confirmText: "Remove Partner",
+            isDestructive: true,
+            icon: "fa-trash-alt",
+            onConfirm: async () => {
+                try {
+                    const res = await fetch(`/api/v1/workforce/subcontractors/${id}`, { method: 'DELETE' });
+                    const data = await res.json();
+                    if (data.status === 'success') {
+                        const row = document.getElementById(`subcontractor-row-${id}`);
+                        if (row) row.remove();
+                        showToast(`Subcontractor #${id} removed.`, "info");
+                        filterSubcontractorsTable();
+                    } else {
+                        showToast("Could not delete: " + (data.message || 'Error'), "error");
+                    }
+                } catch (err) {
+                    console.error(err);
+                    showToast("Network error removing partner.", "error");
+                }
             }
-        } catch (err) {
-            console.error(err);
-        }
+        });
     }
 
     function copyWorkforcePortalLink(btn) {
@@ -5521,10 +5630,16 @@
                         btn.style.color = '#b45309';
                     }, 2000);
                 }
-                if (typeof showToast === 'function') showToast("Workforce intake URL copied to clipboard!", "success");
+                showToast("Workforce intake portal URL copied to clipboard!", "success");
             });
         } else {
-            prompt("Public Intake Portal Link:", url);
+            const input = document.createElement('input');
+            input.value = url;
+            document.body.appendChild(input);
+            input.select();
+            document.execCommand('copy');
+            document.body.removeChild(input);
+            showToast("Workforce intake URL copied to clipboard!", "success");
         }
     }
 
