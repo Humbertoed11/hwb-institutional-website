@@ -18,7 +18,7 @@ from werkzeug.exceptions import HTTPException
 from config import sys_config
 from core.models.user import User
 from core.services.database import get_db, sync_db_sequences
-from core.services.sanitizer import clean_phone, clean_currency, clean_sqft, clean_zip, clean_email
+from core.services.sanitizer import clean_phone, clean_currency, clean_sqft, clean_zip, clean_email, clean_city
 from core.services.search import parse_advanced_search
 from core.services.email_service import transmit_email
 from core.security import roles_required, log_security_violation
@@ -156,7 +156,13 @@ with app.app_context():
                                                 is_dnc = EXCLUDED.is_dnc,
                                                 is_converted = EXCLUDED.is_converted;
                                         ''', (
-                                            l.get('id'), l.get('center_name'), l.get('lead_source'), l.get('status'), l.get('phone'), l.get('email'), l.get('address'), l.get('city'), l.get('state'), l.get('zipcode'),
+                                            l.get('id'), l.get('center_name'), l.get('lead_source'), l.get('status'),
+                                            clean_phone(l.get('phone')) or l.get('phone'),
+                                            clean_email(l.get('email')) or l.get('email'),
+                                            l.get('address'),
+                                            clean_city(l.get('city')) or l.get('city'),
+                                            l.get('state'),
+                                            clean_zip(l.get('zipcode')) or l.get('zipcode'),
                                             l.get('sqf'), l.get('capacity'), l.get('estimated_annual_value'), l.get('priority_level'), l.get('facility_type'), l.get('decision_maker'),
                                             l.get('job_title'), l.get('traffic_cycle'), l.get('service_interest'), l.get('next_action_date'), l.get('is_dnc', False), l.get('is_converted', False), l.get('input_date')
                                         ))

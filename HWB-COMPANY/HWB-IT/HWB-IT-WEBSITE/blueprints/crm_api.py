@@ -13,7 +13,7 @@ import datetime
 from flask import Blueprint, request, jsonify, Response, current_app
 from flask_login import login_required, current_user
 from core.services.database import get_db
-from core.services.sanitizer import clean_phone, clean_currency, clean_sqft, clean_zip, clean_email
+from core.services.sanitizer import clean_phone, clean_currency, clean_sqft, clean_zip, clean_email, clean_city
 
 crm_api_bp = Blueprint('crm_api', __name__)
 
@@ -110,7 +110,7 @@ def api_account_hub(id):
                       clean_email(resolve('email', current_acc['email'])) or resolve('email', current_acc['email']), 
                       clean_phone(resolve('phone', current_acc['phone'])) or resolve('phone', current_acc['phone']),
                       resolve('company_address', current_acc['company_address']), 
-                      resolve('city', current_acc['city']), 
+                      clean_city(resolve('city', current_acc['city'])) or resolve('city', current_acc['city']), 
                       resolve('state', current_acc['state']), 
                       clean_zip(resolve('zip', current_acc['zip'])) or resolve('zip', current_acc['zip']), 
                       resolve('website', current_acc['website']), 
@@ -322,7 +322,7 @@ def api_lead_hub(id):
                       clean_email(resolve('email', current_lead['email'])) or resolve('email', current_lead['email']), 
                       clean_phone(resolve('phone', current_lead['phone'])) or resolve('phone', current_lead['phone']), 
                       resolve('address', current_lead['address']), 
-                      resolve('city', current_lead['city']), 
+                      clean_city(resolve('city', current_lead['city'])) or resolve('city', current_lead['city']), 
                       resolve('state', current_lead['state']), 
                       clean_zip(resolve('zipcode', current_lead['zipcode'])) or resolve('zipcode', current_lead['zipcode']), 
                       resolve('industry', current_lead['industry']),
@@ -725,8 +725,9 @@ def trigger_lead_sync_endpoint():
                     p_clean = clean_phone(l.get('phone')) or l.get('phone')
                     e_clean = clean_email(l.get('email')) or l.get('email')
                     z_clean = clean_zip(l.get('zipcode')) or l.get('zipcode')
+                    c_clean = clean_city(l.get('city')) or l.get('city')
                     values.append((
-                        l.get('id'), l.get('center_name'), l.get('lead_source'), l.get('status'), p_clean, e_clean, l.get('address'), l.get('city'), l.get('state'), z_clean,
+                        l.get('id'), l.get('center_name'), l.get('lead_source'), l.get('status'), p_clean, e_clean, l.get('address'), c_clean, l.get('state'), z_clean,
                         l.get('sqf'), l.get('capacity'), l.get('estimated_annual_value'), l.get('priority_level'), l.get('facility_type'), l.get('decision_maker'),
                         l.get('job_title'), l.get('traffic_cycle'), l.get('service_interest'), l.get('next_action_date'), l.get('is_dnc', False), l.get('is_converted', False), l.get('input_date')
                     ))

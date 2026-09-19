@@ -134,6 +134,18 @@ def clean_city(raw_city: Optional[str]) -> Optional[str]:
         "w dallas": "West Dallas",
         "s dallas": "South Dallas",
         "n dallas": "North Dallas",
+        "desoto": "DeSoto",
+        "de soto": "DeSoto",
+        "mcgregor": "McGregor",
+        "mc gregor": "McGregor",
+        "mccamey": "McCamey",
+        "mc camey": "McCamey",
+        "mcqueeney": "McQueeney",
+        "mc queeney": "McQueeney",
+        "mckinney": "McKinney",
+        "mcallen": "McAllen",
+        "la porte": "La Porte",
+        "laporte": "La Porte",
     }
 
     if city_lower in known_mappings:
@@ -149,5 +161,9 @@ def clean_city(raw_city: Optional[str]) -> Optional[str]:
 
     # Standard Title Casing while preserving multi-word capitalization
     words = city.split()
-    return " ".join(w.capitalize() for w in words)
+    res = " ".join(w.capitalize() for w in words)
+    res = re.sub(r'\bMc([a-z])', lambda m: 'Mc' + m.group(1).upper(), res)
+    res = re.sub(r"\bO'([a-z])", lambda m: "O'" + m.group(1).upper(), res)
+    res = re.sub(r'-([a-z])', lambda m: '-' + m.group(1).upper(), res)
+    return res
 

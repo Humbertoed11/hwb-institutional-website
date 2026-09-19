@@ -16,7 +16,7 @@ from core.constants import FACILITY_TYPES, LEAD_SOURCES, PRIORITY_LEVELS
 from core.security import roles_required
 from core.services.database import get_db
 from core.services.search import parse_advanced_search
-from core.services.sanitizer import clean_phone, clean_currency, clean_sqft, clean_zip, clean_email
+from core.services.sanitizer import clean_phone, clean_currency, clean_sqft, clean_zip, clean_email, clean_city
 from core.services.email_service import transmit_email
 
 operations_bp = Blueprint('operations', __name__)
@@ -435,7 +435,7 @@ def edit_lead(id):
                     data.get('company_name'), data.get('decision_maker'), data.get('job_title'), 
                     clean_email(data.get('email')) or data.get('email'), 
                     clean_phone(data.get('phone')) or data.get('phone'),
-                    data.get('address'), data.get('city'), data.get('state'), clean_zip(data.get('zipcode')), data.get('industry'), sqf,
+                    data.get('address'), clean_city(data.get('city')) or data.get('city'), data.get('state'), clean_zip(data.get('zipcode')), data.get('industry'), sqf,
                     data.get('status'), annual_value, next_action, data.get('notes'),
                     data.get('facility_type'), data.get('lead_source'), data.get('service_interest'), data.get('priority_level'), traffic, id
                 ))
@@ -487,7 +487,7 @@ def add_manual_lead():
                 data.get('company_name'), data.get('decision_maker'), data.get('job_title'),
                 clean_email(data.get('email')) or data.get('email'), 
                 clean_phone(data.get('phone')) or data.get('phone'), data.get('address'),
-                data.get('city'), data.get('state'), clean_zip(data.get('zipcode')), data.get('industry'),
+                clean_city(data.get('city')) or data.get('city'), data.get('state'), clean_zip(data.get('zipcode')), data.get('industry'),
                 data.get('facility_type'), sqf, traffic, data.get('service_interest'), 
                 data.get('lead_source'), data.get('priority_level'), annual_value,
                 'New', data.get('notes'), datetime.date.today().isoformat(), user_attribution,
@@ -528,7 +528,7 @@ def add_account():
             ''', (data.get('company_name'), data.get('contact_person_name'), 
                   clean_email(data.get('email')) or data.get('email'), 
                   clean_phone(data.get('phone')) or data.get('phone'), 
-                  data.get('company_address'), data.get('city'), data.get('state'), clean_zip(data.get('zip')), 
+                  data.get('company_address'), clean_city(data.get('city')) or data.get('city'), data.get('state'), clean_zip(data.get('zip')), 
                   data.get('website'), sqf, revenue, 
                   data.get('traffic_cycle'), data.get('quote_number'),
                   data.get('frequency'), data.get('notes'), assigned_rep_id))
