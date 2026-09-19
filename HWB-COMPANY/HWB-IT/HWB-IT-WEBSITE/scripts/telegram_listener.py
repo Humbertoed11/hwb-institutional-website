@@ -71,6 +71,210 @@ def get_db_connection():
         fallback_url = DB_URL.replace("@localhost", "@db").replace("@127.0.0.1", "@db")
         return psycopg2.connect(fallback_url)
 
+def get_authorized_chat_map():
+    """
+    Returns a dict mapping chat_id (as str and int) to user info dict:
+    {
+        8564340073: {"user_id": 2, "username": "hdominguez", "name": "Humberto Dominguez", "role": "Executive", "email": "hdominguez@hwbcleaning.com"},
+        ...
+    }
+    """
+    auth_map = {}
+    # 1. Add from .env TELEGRAM_CHAT_ID (supports comma-separated list)
+    env_cids = os.getenv("TELEGRAM_CHAT_ID", "8564340073").split(",")
+    for cid in env_cids:
+        cid = cid.strip()
+        if not cid:
+            continue
+        try:
+            int_cid = int(cid)
+            auth_map[int_cid] = {"username": "ceo", "name": "Humberto Dominguez", "role": "Executive", "email": "hdominguez@hwbcleaning.com"}
+            auth_map[str(int_cid)] = auth_map[int_cid]
+        except ValueError:
+            auth_map[cid] = {"username": "ceo", "name": "Humberto Dominguez", "role": "Executive", "email": "hdominguez@hwbcleaning.com"}
+
+    # 2. Add from PostgreSQL Users table where telegram_chat_id IS NOT NULL and status = 'Active'
+    try:
+        conn = get_db_connection()
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute('SELECT id, username, full_name, email, role, telegram_chat_id FROM "Users" WHERE status = \'Active\' AND telegram_chat_id IS NOT NULL AND telegram_chat_id != \'\';')
+            for u in cur.fetchall():
+                t_id = str(u.get("telegram_chat_id") or "").strip()
+                if t_id:
+                    user_info = {
+                        "user_id": u["id"],
+                        "username": u["username"],
+                        "name": u["full_name"] or u["username"],
+                        "email": u["email"],
+                        "role": u["role"]
+                    }
+                    try:
+                        int_t = int(t_id)
+                        auth_map[int_t] = user_info
+                        auth_map[str(int_t)] = user_info
+                    except ValueError:
+                        auth_map[t_id] = user_info
+        conn.close()
+    except Exception as e:
+        pass
+
+    return auth_map
+
+def is_chat_authorized(chat_id):
+    auth_map = get_authorized_chat_map()
+    return (chat_id in auth_map) or (str(chat_id) in auth_map)
+
+def get_user_for_chat(chat_id):
+    auth_map = get_authorized_chat_map()
+    return auth_map.get(chat_id) or auth_map.get(str(chat_id))
+
+def welcome_unregistered_user(chat_id, from_user):
+    sender_name = from_user.get("first_name", "Team Member")
+    msg = (
+        f"👋 *Welcome to HWB Cleaning Operations*, {sender_name}!\n"
+        f"━━━━━━━━━━━━━━━━━━\n"
+        f"This is the automated Operations Command Center for **HWB Cleaning Services LLC**.\n\n"
+        f"📱 Your Telegram Chat ID is: `{chat_id}`\n\n"
+        f"To link your account, reply:\n"
+        f"`/register mrondinella@hwbcleaning.com` (or your company email)\n\n"
+        f"Or send this Chat ID to CEO Humberto Dominguez to activate your access."
+    )
+    send_telegram_message(chat_id, msg)
+
+def handle_user_registration(chat_id, text, from_user):
+    parts = text.split()
+    if len(parts) < 2:
+        send_telegram_message(
+            chat_id,
+            "⚠️ *Registration Usage:*\n"
+            "Please provide your HWB company email or username:\n"
+            "Example: `/register mrondinella@hwbcleaning.com`"
+        )
+        return
+
+    identifier = parts[1].strip()
+    sender_name = from_user.get("first_name", "Team Member")
+    username_tg = from_user.get("username", "")
+
+    try:
+        conn = get_db_connection()
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute('''
+                SELECT id, username, full_name, email, role, status, telegram_chat_id 
+                FROM "Users" 
+                WHERE LOWER(email) = LOWER(%s) OR LOWER(username) = LOWER(%s);
+            ''', (identifier, identifier))
+            user = cur.fetchone()
+
+            if not user:
+                conn.close()
+                send_telegram_message(
+                    chat_id,
+                    f"❌ *Account Not Found*\n"
+                    f"No active HWB user profile matching `{identifier}` was found.\n"
+                    f"Please check with management for your company email."
+                )
+                return
+
+            if user["status"] != "Active":
+                conn.close()
+                send_telegram_message(
+                    chat_id,
+                    f"⚠️ *Account Inactive*\n"
+                    f"The profile for `{identifier}` is currently inactive."
+                )
+                return
+
+            # Update telegram_chat_id
+            cur.execute('''
+                UPDATE "Users" 
+                SET telegram_chat_id = %s 
+                WHERE id = %s;
+            ''', (str(chat_id), user["id"]))
+            conn.commit()
+            conn.close()
+
+            user_name = user["full_name"] or user["username"]
+            role = user["role"]
+
+            send_telegram_message(
+                chat_id,
+                f"✅ *Welcome {user_name}!*\n"
+                f"━━━━━━━━━━━━━━━━━━\n"
+                f"Your Telegram account has been linked to **HWB Cleaning Operations**.\n\n"
+                f"👤 *Role:* {role}\n"
+                f"🆔 *Chat ID:* `{chat_id}`\n"
+                f"✉️ *Email:* {user['email']}\n"
+                f"━━━━━━━━━━━━━━━━━━\n"
+                f"You are now registered to receive real-time operational notifications and alerts.\n"
+                f"Tap `/help` to view available commands."
+            )
+
+            # Alert CEO
+            try:
+                ceo_chat_id = int(os.getenv("TELEGRAM_CHAT_ID", "8564340073").split(",")[0].strip())
+                if str(ceo_chat_id) != str(chat_id):
+                    send_telegram_message(
+                        ceo_chat_id,
+                        f"🔔 *Team Member Linked to Telegram*\n"
+                        f"━━━━━━━━━━━━━━━━━━\n"
+                        f"👤 *Name:* {user_name}\n"
+                        f"💼 *Role:* {role} ({user['email']})\n"
+                        f"📱 *Telegram Chat ID:* `{chat_id}`\n"
+                        f"✈️ *Telegram User:* @{username_tg or sender_name}\n"
+                        f"━━━━━━━━━━━━━━━━━━\n"
+                        f"User has been authenticated and can now receive operations alerts."
+                    )
+            except Exception:
+                pass
+            print(f"[TELEGRAM] User {user_name} successfully linked to chat_id {chat_id}", flush=True)
+
+    except Exception as e:
+        print(f"[TELEGRAM ERROR] Registration failed: {e}", flush=True)
+        send_telegram_message(chat_id, f"⚠️ Error linking account: {e}")
+
+def handle_cmd_adduser(chat_id, arg):
+    parts = arg.split()
+    if len(parts) < 2:
+        send_telegram_message(chat_id, "⚠️ Usage: `/adduser <username/email> <chat_id>`\nExample: `/adduser mrondinella 123456789`")
+        return
+    identifier, target_chat_id = parts[0], parts[1]
+    try:
+        conn = get_db_connection()
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute('SELECT id, username, full_name, email, role FROM "Users" WHERE LOWER(email) = LOWER(%s) OR LOWER(username) = LOWER(%s);', (identifier, identifier))
+            u = cur.fetchone()
+            if not u:
+                conn.close()
+                send_telegram_message(chat_id, f"❌ User `{identifier}` not found in database.")
+                return
+            cur.execute('UPDATE "Users" SET telegram_chat_id = %s WHERE id = %s;', (str(target_chat_id), u["id"]))
+            conn.commit()
+            conn.close()
+            send_telegram_message(chat_id, f"✅ Linked *{u['full_name'] or u['username']}* ({u['role']}) to Telegram Chat ID `{target_chat_id}`.")
+            try:
+                send_telegram_message(int(target_chat_id), f"✅ *Account Activated!*\nCEO Humberto Dominguez has linked your Telegram account to HWB Operations Control. Welcome!")
+            except Exception:
+                pass
+    except Exception as e:
+        send_telegram_message(chat_id, f"⚠️ Error linking user: {e}")
+
+def handle_cmd_users(chat_id):
+    try:
+        conn = get_db_connection()
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute('SELECT id, username, full_name, role, status, telegram_chat_id FROM "Users" ORDER BY id ASC;')
+            rows = cur.fetchall()
+            conn.close()
+            lines = ["👥 *HWB Operations Team Members:*"]
+            for r in rows:
+                status_icon = "🟢" if r["telegram_chat_id"] else "⚪"
+                cid_display = f"`{r['telegram_chat_id']}`" if r["telegram_chat_id"] else "_Not Linked_"
+                lines.append(f"{status_icon} *{r['full_name'] or r['username']}* ({r['role']})\n   Telegram: {cid_display}")
+            send_telegram_message(chat_id, "\n".join(lines))
+    except Exception as e:
+        send_telegram_message(chat_id, f"⚠️ Error fetching team: {e}")
+
 def send_telegram_message(chat_id, text, reply_markup=None, parse_mode="Markdown"):
     """Dispatches a formatted message with optional inline keyboard buttons."""
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
@@ -2029,7 +2233,7 @@ def process_callback_query(callback_query):
     chat_id = chat.get("id")
     data = callback_query.get("data", "")
 
-    if chat_id != ALLOWED_CHAT_ID:
+    if not is_chat_authorized(chat_id):
         answer_callback_query(query_id, "Unauthorized")
         return
 
@@ -2128,9 +2332,21 @@ def process_message(message):
     chat = message.get("chat", {})
     chat_id = chat.get("id")
 
-    if chat_id != ALLOWED_CHAT_ID:
-        print(f"[TELEGRAM] Unauthorized command from chat_id {chat_id} blocked.", flush=True)
-        return
+    auth_user = get_user_for_chat(chat_id)
+    text = message.get("text", "").strip()
+
+    if not auth_user:
+        from_user = message.get("from", {})
+        if text.startswith("/register"):
+            handle_user_registration(chat_id, text, from_user)
+            return
+        elif text in ["/start", "/id", "/myid", "/help"]:
+            welcome_unregistered_user(chat_id, from_user)
+            return
+        else:
+            print(f"[TELEGRAM] Unregistered message from chat_id {chat_id}, sending onboarding prompt.", flush=True)
+            welcome_unregistered_user(chat_id, from_user)
+            return
 
     # Check for Voice Directives (Frontier 3)
     voice = message.get("voice") or message.get("audio")
@@ -2235,6 +2451,10 @@ def process_message(message):
             handle_cmd_search(chat_id, arg)
         elif cmd in ["/sync"]:
             handle_cmd_sync(chat_id)
+        elif cmd in ["/adduser", "/linkuser"]:
+            handle_cmd_adduser(chat_id, arg)
+        elif cmd in ["/users", "/team"]:
+            handle_cmd_users(chat_id)
         else:
             send_telegram_message(chat_id, f"❓ Unknown command: `{cmd}`. Tap an option below or send `/help`.", reply_markup=get_main_menu_keyboard())
         return

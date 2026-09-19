@@ -10,17 +10,52 @@ from typing import Dict, Any, Tuple
 from core.services.email_service import transmit_email
 from core.services.sanitizer import clean_phone, clean_email
 
+def get_active_telegram_recipients() -> list:
+    """
+    Collects all authorized Telegram Chat IDs from environment and PostgreSQL Users table.
+    Ensures multi-user dispatch to CEO Humberto Dominguez, Mirna Rondinella, and key operations staff.
+    """
+    recipients = set()
+    # 1. Environment variable fallback (supports single or comma-delimited string)
+    env_ids = os.environ.get("TELEGRAM_CHAT_ID", "8564340073")
+    for cid in env_ids.split(","):
+        cid = cid.strip()
+        if cid:
+            recipients.add(cid)
+
+    # 2. Database query for active users with linked Telegram Chat IDs
+    db_url = os.environ.get("DATABASE_URL")
+    if db_url:
+        try:
+            import psycopg2
+            conn = psycopg2.connect(db_url)
+            with conn.cursor() as cur:
+                cur.execute('SELECT telegram_chat_id FROM "Users" WHERE status = \'Active\' AND telegram_chat_id IS NOT NULL AND telegram_chat_id != \'\';')
+                for row in cur.fetchall():
+                    if row[0]:
+                        recipients.add(str(row[0]).strip())
+            conn.close()
+        except Exception as e:
+            print(f"[NOTIFY_DEBUG] DB telegram recipients query skipped: {e}", flush=True)
+
+    return list(recipients)
+
+
 def send_lead_telegram_alert(lead_data: Dict[str, Any]) -> Tuple[bool, str]:
     """
-    Transmits an instant push notification to CEO Humberto Dominguez's
-    mobile device via the Georgebytes Telegram bot gateway.
+    Transmits an instant push notification to authorized team members
+    via the Georgebytes Telegram bot gateway.
     """
     bot_token = os.environ.get("TELEGRAM_BOT_TOKEN")
-    chat_id = os.environ.get("TELEGRAM_CHAT_ID", "8564340073")
+    chat_ids = get_active_telegram_recipients()
 
     if not bot_token:
         print("[NOTIFY_WARN] TELEGRAM_BOT_TOKEN not configured in environment.", flush=True)
         return False, "Missing Bot Token"
+
+    if not chat_ids:
+        print("[NOTIFY_WARN] No active Telegram recipients configured.", flush=True)
+        return False, "No Recipients Configured"
 
     company = lead_data.get("company") or "Unknown Facility"
     name = lead_data.get("name") or "Website Visitor"
@@ -48,25 +83,32 @@ def send_lead_telegram_alert(lead_data: Dict[str, Any]) -> Tuple[bool, str]:
     )
 
     url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
-    payload = {
-        "chat_id": chat_id,
-        "text": message,
-        "parse_mode": "Markdown",
-        "disable_web_page_preview": True
-    }
+    delivered_count = 0
+    last_error = ""
 
-    try:
-        res = requests.post(url, json=payload, timeout=8)
-        if res.status_code == 200:
-            print(f"[NOTIFY] Telegram alert sent to {chat_id} for lead: {company}", flush=True)
-            return True, "Success"
-        err_msg = f"Telegram HTTP {res.status_code}: {res.text}"
-        print(f"[NOTIFY_WARN] {err_msg}", flush=True)
-        return False, err_msg
-    except Exception as e:
-        err_msg = f"Telegram Exception: {e}"
-        print(f"[NOTIFY_WARN] {err_msg}", flush=True)
-        return False, err_msg
+    for target_chat_id in chat_ids:
+        payload = {
+            "chat_id": target_chat_id,
+            "text": message,
+            "parse_mode": "Markdown",
+            "disable_web_page_preview": True
+        }
+
+        try:
+            res = requests.post(url, json=payload, timeout=8)
+            if res.status_code == 200:
+                print(f"[NOTIFY] Telegram alert sent to {target_chat_id} for lead: {company}", flush=True)
+                delivered_count += 1
+            else:
+                last_error = f"Telegram HTTP {res.status_code}: {res.text}"
+                print(f"[NOTIFY_WARN] Failed to send to {target_chat_id}: {last_error}", flush=True)
+        except Exception as e:
+            last_error = f"Telegram Exception: {e}"
+            print(f"[NOTIFY_WARN] Error sending to {target_chat_id}: {last_error}", flush=True)
+
+    if delivered_count > 0:
+        return True, "Success"
+    return False, last_error or "Delivery Failed"
 
 
 def send_lead_email_alert(lead_data: Dict[str, Any]) -> Tuple[bool, str]:
