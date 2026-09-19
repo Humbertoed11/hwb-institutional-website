@@ -45,6 +45,24 @@ Responsibility: George (Architect)
 | 09/19/2026 | BUG-066 | Workforce View DOM Nesting Fault, Extraneous Closing Tags & Unhardened JSON Interception Window. | **RESOLVED** | HIGH |
 | 09/19/2026 | BUG-067 | Microsoft Graph API ErrorInvalidRecipients Rejection (HTTP 400) on Telegram Staged Outbox Dispatches. | **RESOLVED** | HIGH |
 | 09/19/2026 | BUG-068 | Synthetic Corporate Address & Telemetry Generation in Outbound Email Dispatch Footer (Empirical Mandate Breach). | **RESOLVED** | CRITICAL |
+| 09/19/2026 | BUG-069 | Chrome DevTools Protocol Socket Desync in WSL2 Environment Blocking /browser Subagent. | **DOCUMENTED** | MEDIUM |
+
+## BUG-069: Chrome DevTools Protocol Socket Desync in WSL2 Environment Blocking /browser Subagent
+**Detected:** 09/19/2026
+**Status:** **DOCUMENTED** (09/19/2026)
+**Symptoms:**
+1. Subagent `browser` failed to attach to Chrome with error: `Could not connect to Chrome. Check if Chrome is running. Cause: Could not find DevToolsActivePort for chrome at /home/humbertoed/.config/google-chrome/DevToolsActivePort`.
+2. Browser automation tasks targeting local DOM inspection or web UI interactions halted immediately.
+**Root Cause:**
+1. The Linux environment runs inside WSL2 (Ubuntu).
+2. The `/home/humbertoed/.local/bin/google-chrome` binary is a bash script delegating execution to the Windows host binary `/mnt/c/Program Files (x86)/Google/Chrome/Application/chrome.exe`.
+3. The Chrome DevTools Protocol daemon (`chrome-devtools-mcp`) expects native Linux Chrome directory paths (`/home/humbertoed/.config/google-chrome/DevToolsActivePort`), whereas Windows Chrome writes its session active port inside Windows `%LOCALAPPDATA%\Google\Chrome\User Data\`.
+**Solution & Workaround:**
+1. Documented operational boundaries: `/browser` cannot interact with Windows desktop native applications (e.g., desktop Microsoft Outlook `outlook.exe`), nor can it bypass Microsoft 365 MFA authentication on `https://outlook.office.com`.
+2. For desktop Outlook signature automation, direct file manipulation of Windows `%APPDATA%\Microsoft\Signatures\` or 1-click clipboard paste via `/signature` portal provides 100% reliable execution without headless browser dependencies.
+3. For local browser automation, configure a native Linux headless Chromium binary with an isolated user-data directory.
+**Preventative:**
+1. Maintain direct filesystem inspection and API-driven automation for Windows and container workflows, avoiding headless browser dependencies for native desktop application management.
 
 ## BUG-068: Synthetic Corporate Address & Telemetry Generation in Outbound Email Dispatch Footer (Empirical Mandate Breach)
 **Detected:** 09/19/2026
