@@ -505,24 +505,31 @@
         <aside>
             <div class="sidebar-card">
                 <div class="user-setup-box">
+                    {% if magic_token %}
+                    <div style="background: #ede9fe; color: #5b21b6; padding: 6px 10px; border-radius: 6px; font-size: 0.72rem; font-weight: 800; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+                        <i class="fas fa-magic"></i> Assigned Package: {{ assigned_package or 'Active Clearance' }}
+                    </div>
+                    {% endif %}
+                    <input type="hidden" id="magic_token" value="{{ magic_token or '' }}">
+
                     <label>Technician / Student Name</label>
-                    <input type="text" id="student_name" placeholder="Full Legal Name" value="Carlos E. Mendoza" required>
+                    <input type="text" id="student_name" placeholder="Full Legal Name" value="{{ prefill_student or 'Carlos E. Mendoza' }}" required>
                     
                     <label>Email Address</label>
-                    <input type="email" id="student_email" placeholder="student@example.com" value="carlos@hwbcleaning.com">
+                    <input type="email" id="student_email" placeholder="student@example.com" value="{{ prefill_email or 'carlos@hwbcleaning.com' }}">
 
                     <label>Worker Classification</label>
                     <select id="worker_type">
-                        <option value="W2_EMPLOYEE">W-2 Commercial Technician</option>
-                        <option value="1099_SUBCONTRACTOR">1099 Subcontractor Trade Partner</option>
-                        <option value="CLIENT_STAFF">Client Facility Staff</option>
+                        <option value="W2_EMPLOYEE" {% if prefill_worker_type == 'W2_EMPLOYEE' %}selected{% endif %}>W-2 Commercial Technician</option>
+                        <option value="1099_SUBCONTRACTOR" {% if prefill_worker_type == '1099_SUBCONTRACTOR' %}selected{% endif %}>1099 Subcontractor Trade Partner</option>
+                        <option value="CLIENT_STAFF" {% if prefill_worker_type == 'CLIENT_STAFF' %}selected{% endif %}>Client Facility Staff</option>
                     </select>
 
                     <label>Employer / Organization</label>
                     <select id="tenant_slug">
-                        <option value="hwb">HWB Cleaning Services LLC</option>
-                        <option value="collin-college">Collin College Facilities</option>
-                        <option value="bright-horizons">Bright Horizons Academy</option>
+                        <option value="hwb" {% if prefill_tenant_slug == 'hwb' %}selected{% endif %}>HWB Cleaning Services LLC</option>
+                        <option value="collin-college" {% if prefill_tenant_slug == 'collin-college' %}selected{% endif %}>Collin College Facilities</option>
+                        <option value="bright-horizons" {% if prefill_tenant_slug == 'bright-horizons' %}selected{% endif %}>Bright Horizons Academy</option>
                     </select>
                 </div>
 
@@ -748,6 +755,7 @@
                         student_email: studentEmail,
                         worker_type: workerType,
                         tenant_slug: tenantSlug,
+                        magic_token: (document.getElementById('magic_token')?.value || '').trim(),
                         answers: answers
                     })
                 });

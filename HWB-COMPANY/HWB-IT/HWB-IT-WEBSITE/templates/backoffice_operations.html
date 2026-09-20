@@ -1472,6 +1472,9 @@
                                         </td>
                                         <td style="padding: 0.65rem 0.85rem; text-align: right;">
                                             <div style="display: inline-flex; gap: 0.35rem;">
+                                                <button type="button" onclick="openAssignTrainingModal('W2_EMPLOYEE', {{ emp.id }}, '{{ emp.first_name }} {{ emp.last_name }}', '{{ emp.email or '' }}')" title="Assign Certification Package" class="sigma-mini-btn" style="color: #6366f1; background: #ede9fe; border-color: #c7d2fe;">
+                                                    <i class="fas fa-graduation-cap"></i>
+                                                </button>
                                                 <button type="button" onclick="openEmployeeEditModal({{ emp.id }})" title="Edit Employee Profile" class="sigma-mini-btn" style="color: var(--brand);">
                                                     <i class="fas fa-edit"></i>
                                                 </button>
@@ -1726,6 +1729,9 @@
                                         </td>
                                         <td style="padding: 0.65rem 0.85rem; text-align: right;">
                                             <div style="display: inline-flex; gap: 0.35rem;">
+                                                <button type="button" onclick="openAssignTrainingModal('1099_SUBCONTRACTOR', {{ sub.id }}, '{{ sub.contact_name or sub.company_name }}', '{{ sub.email or '' }}')" title="Assign Training / FastPass" class="sigma-mini-btn" style="color: #6366f1; background: #ede9fe; border-color: #c7d2fe;">
+                                                    <i class="fas fa-graduation-cap"></i>
+                                                </button>
                                                 <button type="button" onclick="openSubcontractorEditModal({{ sub.id }})" title="Edit Partner Profile" class="sigma-mini-btn" style="color: #7c3aed;">
                                                     <i class="fas fa-edit"></i>
                                                 </button>
@@ -2729,6 +2735,120 @@
                 </button>
                 <button type="submit" id="btn-save-wf-notes" class="isc-btn isc-btn-primary" style="height: 38px; padding: 0 1.5rem; font-size: 0.8rem; border-radius: 6px; font-weight: 800; display: inline-flex; align-items: center; gap: 0.5rem;">
                     <i class="fas fa-save"></i> Save Notes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: Assign Training Package or Course (SigmaAcademy) -->
+<div id="modal-assign-training" class="isc-modal-overlay" style="display:none; z-index: 1100;">
+    <div class="isc-modal" style="max-width: 600px; padding: 2.25rem; border-radius: 12px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; border-bottom: 1px solid var(--slate-100); padding-bottom: 1rem;">
+            <div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span id="assign-training-type-badge" style="font-size: 0.7rem; font-weight: 800; background: #ede9fe; color: #6d28d9; padding: 0.2rem 0.6rem; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.05em;">SigmaAcademy™</span>
+                    <span id="assign-training-worker-label" style="font-size: 0.7rem; font-weight: 700; color: var(--slate-400);">W-2 Employee</span>
+                </div>
+                <h2 id="assign-training-student-name" style="font-weight: 900; font-size: 1.35rem; color: var(--slate-900); margin: 0.35rem 0 0 0;">Assign Training Package</h2>
+                <p style="font-size: 0.78rem; color: var(--slate-500); font-weight: 600; margin-top: 0.2rem;">Select a role-based bundle or single course to issue an automated magic access link.</p>
+            </div>
+            <button type="button" onclick="closeModal('modal-assign-training')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; color: var(--slate-400); transition: all 0.15s ease;">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <form id="form-assign-training" onsubmit="submitAssignTraining(event)">
+            <input type="hidden" id="assign-target-worker-type" value="W2_EMPLOYEE">
+            <input type="hidden" id="assign-target-id" value="">
+            <input type="hidden" id="assign-target-name" value="">
+            <input type="hidden" id="assign-target-email" value="">
+
+            <div style="margin-bottom: 1.25rem;">
+                <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.5rem;">
+                    Assignment Type
+                </label>
+                <div style="display: flex; gap: 1rem;">
+                    <label style="display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 700; cursor: pointer;">
+                        <input type="radio" name="assignment_mode" value="PACKAGE" checked onchange="toggleAssignmentMode(this.value)">
+                        Role Package (Curriculum Bundle)
+                    </label>
+                    <label style="display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 700; cursor: pointer;">
+                        <input type="radio" name="assignment_mode" value="COURSE" onchange="toggleAssignmentMode(this.value)">
+                        Individual Course
+                    </label>
+                </div>
+            </div>
+
+            <!-- Package Selection -->
+            <div id="box-select-package" style="margin-bottom: 1.25rem;">
+                <label for="assign-select-package" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.5rem;">
+                    Curriculum Package
+                </label>
+                <select id="assign-select-package" class="sigma-input" style="width: 100%; height: 38px; padding: 0 0.75rem; font-size: 0.85rem; font-weight: 600; border-radius: 6px; border: 1px solid var(--slate-300);">
+                    <option value="PKG-CORE-W2">PKG-CORE-W2: Commercial Custodial Baseline Pack (TRN-SAF-01)</option>
+                    <option value="PKG-COLLIN-CAMPUS">PKG-COLLIN-CAMPUS: Higher-Ed Campus Facility Pack (Collin College)</option>
+                    <option value="PKG-COLLIN-LEAD">PKG-COLLIN-LEAD: Campus Shift Supervisor &amp; Lead Pack</option>
+                    <option value="PKG-DAYCARE-SAFE">PKG-DAYCARE-SAFE: Early Childhood Sanitization Pack ($149/mo)</option>
+                    <option value="PKG-1099-FASTPASS">PKG-1099-FASTPASS: Subcontractor Clearance Pass ($49 fee)</option>
+                    <option value="PKG-CONSTR-FINAL">PKG-CONSTR-FINAL: Post-Construction Rough &amp; Final Pack</option>
+                </select>
+            </div>
+
+            <!-- Course Selection (Hidden by default) -->
+            <div id="box-select-course" style="display: none; margin-bottom: 1.25rem;">
+                <label for="assign-select-course" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.5rem;">
+                    Individual Course
+                </label>
+                <select id="assign-select-course" class="sigma-input" style="width: 100%; height: 38px; padding: 0 0.75rem; font-size: 0.85rem; font-weight: 600; border-radius: 6px; border: 1px solid var(--slate-300);">
+                    <option value="TRN-SAF-01">TRN-SAF-01: Safe Work Habits &amp; Ergonomic Injury Prevention</option>
+                </select>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                <div>
+                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.5rem;">
+                        Completion Grace Period
+                    </label>
+                    <select id="assign-due-days" class="sigma-input" style="width: 100%; height: 38px; padding: 0 0.75rem; font-size: 0.85rem; font-weight: 600; border-radius: 6px; border: 1px solid var(--slate-300);">
+                        <option value="7" selected>7 Calendar Days (Standard HWB-QMS 7.2)</option>
+                        <option value="3">3 Days (Expedited Site Clearance)</option>
+                        <option value="14">14 Days (Extended Refresher)</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.5rem;">
+                        Assigned By Authority
+                    </label>
+                    <input type="text" id="assign-authority" value="CEO Humberto Dominguez" class="sigma-input" style="width: 100%; height: 38px; padding: 0 0.75rem; font-size: 0.85rem; font-weight: 600; border-radius: 6px; border: 1px solid var(--slate-300);" readonly>
+                </div>
+            </div>
+
+            <!-- Result Box (Hidden until generated) -->
+            <div id="assign-result-box" style="display: none; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 1.25rem; margin-bottom: 1.5rem;">
+                <div style="font-weight: 800; color: #065f46; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;">
+                    <i class="fas fa-check-circle"></i> Training Package Assigned &amp; Link Ready!
+                </div>
+                <div style="font-size: 0.78rem; color: #047857; margin: 4px 0 10px 0;">
+                    Send this personalized magic link to the candidate via SMS or email:
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="assign-magic-url-input" class="sigma-input" style="flex: 1; height: 34px; padding: 0 0.75rem; font-size: 0.8rem; font-family: monospace; border: 1px solid #6ee7b7; border-radius: 4px; background: #ffffff;" readonly>
+                    <button type="button" onclick="copyAssignMagicLink()" class="isc-btn" style="background: #059669; color: white; border: none; height: 34px; padding: 0 0.85rem; font-size: 0.75rem; font-weight: 800; border-radius: 4px; cursor: pointer;">
+                        <i class="fas fa-copy"></i> Copy
+                    </button>
+                    <a id="assign-magic-open-btn" href="#" target="_blank" class="isc-btn" style="background: #0284c7; color: white; border: none; height: 34px; padding: 0 0.85rem; font-size: 0.75rem; font-weight: 800; border-radius: 4px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                        <i class="fas fa-external-link-alt"></i> Open
+                    </a>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem; border-top: 1px solid var(--slate-100); padding-top: 1.25rem;">
+                <button type="button" onclick="closeModal('modal-assign-training')" class="isc-btn isc-btn-outline" style="height: 38px; padding: 0 1.25rem; font-size: 0.8rem; border-radius: 6px;">
+                    Close
+                </button>
+                <button type="submit" id="btn-submit-assign-training" class="isc-btn isc-btn-primary" style="height: 38px; padding: 0 1.5rem; font-size: 0.8rem; border-radius: 6px; font-weight: 800; display: inline-flex; align-items: center; gap: 0.5rem; background: #6366f1;">
+                    <i class="fas fa-paper-plane"></i> Assign &amp; Generate Link
                 </button>
             </div>
         </form>
@@ -6335,18 +6455,43 @@
                 let html = '';
                 enrollments.forEach(e => {
                     const isPassed = e.status === 'PASSED';
-                    const statusBadge = isPassed 
-                        ? '<span style="background: #ecfdf5; color: #065f46; font-size: 0.72rem; font-weight: 800; padding: 3px 8px; border-radius: 4px;">● PASSED</span>'
-                        : '<span style="background: #fef2f2; color: #991b1b; font-size: 0.72rem; font-weight: 800; padding: 3px 8px; border-radius: 4px;">● FAILED</span>';
+                    const isEnrolled = e.status === 'ENROLLED';
+                    let statusBadge = '';
+                    if (isPassed) {
+                        statusBadge = '<span style="background: #ecfdf5; color: #065f46; font-size: 0.72rem; font-weight: 800; padding: 3px 8px; border-radius: 4px;">● PASSED</span>';
+                    } else if (isEnrolled) {
+                        statusBadge = '<span style="background: #ede9fe; color: #6d28d9; font-size: 0.72rem; font-weight: 800; padding: 3px 8px; border-radius: 4px;">● ASSIGNED</span>';
+                    } else {
+                        statusBadge = '<span style="background: #fef2f2; color: #991b1b; font-size: 0.72rem; font-weight: 800; padding: 3px 8px; border-radius: 4px;">● RETAKE</span>';
+                    }
                     
                     const workerBadge = e.worker_type === 'W2_EMPLOYEE'
                         ? '<span style="color: #2563eb; font-weight: 700; font-size: 0.8rem;">W-2 Personnel</span>'
                         : '<span style="color: #d97706; font-weight: 700; font-size: 0.8rem;">1099 Partner</span>';
 
-                    const expDate = e.expires_at ? e.expires_at.substring(0, 10) : 'N/A';
-                    const qrLink = isPassed 
-                        ? `<a href="/verify/${e.enrollment_uuid}" target="_blank" style="color: #2563eb; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-qrcode"></i> Audit QR</a>`
-                        : '<span style="color: #94a3b8;">--</span>';
+                    let expDate = 'N/A';
+                    if (isPassed && e.expires_at) {
+                        expDate = e.expires_at.substring(0, 10);
+                    } else if (e.due_date) {
+                        expDate = `<span style="color: #6366f1; font-weight: 700;">Due: ${e.due_date.substring(0, 10)}</span>`;
+                    }
+
+                    let actionLink = '';
+                    if (isPassed) {
+                        actionLink = `<a href="/verify/${e.enrollment_uuid}" target="_blank" style="color: #2563eb; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-qrcode"></i> Audit QR</a>`;
+                    } else if (e.magic_token) {
+                        actionLink = `<a href="/academy/learn?token=${e.magic_token}" target="_blank" style="color: #6366f1; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-external-link-alt"></i> Magic Link</a>`;
+                    } else {
+                        actionLink = '<span style="color: #94a3b8;">--</span>';
+                    }
+
+                    const scoreDisplay = (e.quiz_score !== null && e.quiz_score !== undefined)
+                        ? `<span style="font-weight: 800; color: ${isPassed ? '#059669' : '#dc2626'};">${e.quiz_score}%</span>`
+                        : '<span style="color: var(--slate-400); font-style: italic; font-size: 0.75rem;">Pending</span>';
+
+                    const pkgBadge = e.assigned_package_code
+                        ? `<div style="font-size: 0.68rem; font-weight: 800; color: #6d28d9; margin-bottom: 2px;"><i class="fas fa-cubes"></i> ${e.assigned_package_code}</div>`
+                        : '';
 
                     html += `
                         <tr style="border-bottom: 1px solid var(--slate-100);">
@@ -6357,13 +6502,14 @@
                             </td>
                             <td style="padding: 0.65rem 0.85rem;">${workerBadge}</td>
                             <td style="padding: 0.65rem 0.85rem;">
+                                ${pkgBadge}
                                 <div style="font-weight: 700; font-size: 0.82rem; color: var(--slate-800);">${e.course_code}</div>
                                 <div style="font-size: 0.72rem; color: var(--slate-500);">${e.course_title}</div>
                             </td>
-                            <td style="padding: 0.65rem 0.85rem; text-align: center; font-weight: 800; color: ${isPassed ? '#059669' : '#dc2626'};">${e.quiz_score}%</td>
+                            <td style="padding: 0.65rem 0.85rem; text-align: center;">${scoreDisplay}</td>
                             <td style="padding: 0.65rem 0.85rem; text-align: center;">${statusBadge}</td>
                             <td style="padding: 0.65rem 0.85rem; text-align: center; font-size: 0.82rem; color: var(--slate-600);">${expDate}</td>
-                            <td style="padding: 0.65rem 0.85rem; text-align: center;">${qrLink}</td>
+                            <td style="padding: 0.65rem 0.85rem; text-align: center;">${actionLink}</td>
                         </tr>
                     `;
                 });
@@ -6372,6 +6518,146 @@
         } catch (err) {
             tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 2rem; color: #dc2626;">Error loading records: ${err.message}</td></tr>`;
         }
+    }
+
+    function openAssignTrainingModal(workerType, id, name, email) {
+        document.getElementById('assign-target-worker-type').value = workerType || 'W2_EMPLOYEE';
+        document.getElementById('assign-target-id').value = id || '';
+        document.getElementById('assign-target-name').value = name || '';
+        document.getElementById('assign-target-email').value = email || '';
+
+        const labelEl = document.getElementById('assign-training-worker-label');
+        if (labelEl) {
+            labelEl.textContent = (workerType === 'W2_EMPLOYEE') ? 'W-2 Personnel' : '1099 Subcontractor';
+        }
+        const nameEl = document.getElementById('assign-training-student-name');
+        if (nameEl) {
+            nameEl.textContent = `Assign Training: ${name}`;
+        }
+
+        const pkgSelect = document.getElementById('assign-select-package');
+        if (pkgSelect) {
+            if (workerType === '1099_SUBCONTRACTOR') {
+                pkgSelect.value = 'PKG-1099-FASTPASS';
+            } else {
+                pkgSelect.value = 'PKG-CORE-W2';
+            }
+        }
+
+        const packageRadio = document.querySelector('input[name="assignment_mode"][value="PACKAGE"]');
+        if (packageRadio) {
+            packageRadio.checked = true;
+        }
+        toggleAssignmentMode('PACKAGE');
+
+        const resultBox = document.getElementById('assign-result-box');
+        if (resultBox) resultBox.style.display = 'none';
+
+        const submitBtn = document.getElementById('btn-submit-assign-training');
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Assign &amp; Generate Link';
+        }
+
+        openModal('modal-assign-training');
+    }
+
+    function toggleAssignmentMode(mode) {
+        const pkgBox = document.getElementById('box-select-package');
+        const crsBox = document.getElementById('box-select-course');
+        if (mode === 'PACKAGE') {
+            if (pkgBox) pkgBox.style.display = 'block';
+            if (crsBox) crsBox.style.display = 'none';
+        } else {
+            if (pkgBox) pkgBox.style.display = 'none';
+            if (crsBox) crsBox.style.display = 'block';
+        }
+    }
+
+    async function submitAssignTraining(e) {
+        e.preventDefault();
+        const submitBtn = document.getElementById('btn-submit-assign-training');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating Enrollment...';
+        }
+
+        const workerType = document.getElementById('assign-target-worker-type').value;
+        const workerId = document.getElementById('assign-target-id').value;
+        const studentName = document.getElementById('assign-target-name').value;
+        const studentEmail = document.getElementById('assign-target-email').value;
+        const mode = document.querySelector('input[name="assignment_mode"]:checked')?.value || 'PACKAGE';
+        const targetCode = mode === 'PACKAGE'
+            ? document.getElementById('assign-select-package').value
+            : document.getElementById('assign-select-course').value;
+        const dueDays = parseInt(document.getElementById('assign-due-days').value) || 7;
+        const assignedBy = document.getElementById('assign-authority').value || 'CEO Humberto Dominguez';
+
+        const payload = {
+            student_name: studentName,
+            student_email: studentEmail,
+            worker_type: workerType,
+            assignment_type: mode,
+            target_code: targetCode,
+            due_days: dueDays,
+            assigned_by: assignedBy
+        };
+        if (workerType === 'W2_EMPLOYEE') {
+            payload.employee_id = parseInt(workerId) || null;
+        } else {
+            payload.subcontractor_id = parseInt(workerId) || null;
+        }
+
+        try {
+            const res = await fetch('/api/v1/academy/assign', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                const resultBox = document.getElementById('assign-result-box');
+                const magicInput = document.getElementById('assign-magic-url-input');
+                const openBtn = document.getElementById('assign-magic-open-btn');
+                if (resultBox && magicInput && openBtn) {
+                    const fullUrl = window.location.origin + data.magic_url;
+                    magicInput.value = fullUrl;
+                    openBtn.href = data.magic_url;
+                    resultBox.style.display = 'block';
+                }
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-check"></i> Assigned Successfully';
+                }
+                if (typeof loadAcademyEnrollmentsTable === 'function') {
+                    loadAcademyEnrollmentsTable();
+                }
+            } else {
+                alert('Error assigning training: ' + (data.message || 'Unknown error'));
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Assign &amp; Generate Link';
+                }
+            }
+        } catch (err) {
+            alert('Network error: ' + err.message);
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Assign &amp; Generate Link';
+            }
+        }
+    }
+
+    function copyAssignMagicLink() {
+        const input = document.getElementById('assign-magic-url-input');
+        if (!input || !input.value) return;
+        navigator.clipboard.writeText(input.value).then(() => {
+            alert('Magic Training Link copied to clipboard!');
+        }).catch(err => {
+            input.select();
+            document.execCommand('copy');
+            alert('Magic Training Link copied to clipboard!');
+        });
     }
 
     function filterEmployeesTable() {
