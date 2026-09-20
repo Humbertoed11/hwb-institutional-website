@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Credential Verification | SigmaAcademy™</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --brand: #2563eb;
+            --slate-900: #0f172a;
+            --slate-800: #1e293b;
+            --slate-700: #334155;
+            --slate-500: #64748b;
+            --slate-200: #e2e8f0;
+            --slate-100: #f1f5f9;
+            --emerald: #059669;
+            --emerald-light: #ecfdf5;
+            --emerald-border: #a7f3d0;
+            --red: #dc2626;
+            --red-light: #fef2f2;
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f8fafc;
+            color: var(--slate-800);
+            margin: 0;
+            padding: 2rem 1rem;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .verify-card {
+            background: #ffffff;
+            border: 1px solid var(--slate-200);
+            border-radius: 12px;
+            max-width: 620px;
+            width: 100%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+            overflow: hidden;
+        }
+
+        .verify-top-bar {
+            background: #0f172a;
+            color: #ffffff;
+            padding: 1.25rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .brand-hdr {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 800;
+            font-size: 1.05rem;
+            letter-spacing: -0.01em;
+        }
+        .status-pill {
+            font-size: 0.72rem;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .pill-valid {
+            background: var(--emerald-light);
+            color: var(--emerald);
+            border: 1px solid var(--emerald-border);
+        }
+        .pill-expired {
+            background: var(--red-light);
+            color: var(--red);
+            border: 1px solid #fecaca;
+        }
+
+        .verify-content {
+            padding: 2.5rem 2rem;
+        }
+
+        .hero-status {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--slate-200);
+        }
+        .shield-icon {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+        }
+        .shield-valid { color: var(--emerald); }
+        .shield-expired { color: var(--red); }
+        .shield-unknown { color: var(--slate-500); }
+
+        .status-title {
+            font-size: 1.4rem;
+            font-weight: 900;
+            color: var(--slate-900);
+            margin: 0 0 0.5rem 0;
+        }
+        .status-desc {
+            font-size: 0.9rem;
+            color: var(--slate-500);
+            margin: 0;
+        }
+
+        .data-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+        @media (max-width: 480px) {
+            .data-grid { grid-template-columns: 1fr; }
+        }
+        .data-unit {
+            display: flex;
+            flex-direction: column;
+        }
+        .data-label {
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: var(--slate-500);
+            letter-spacing: 0.05em;
+            margin-bottom: 4px;
+        }
+        .data-val {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--slate-900);
+        }
+
+        .course-highlight {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin-bottom: 2rem;
+        }
+        .course-highlight .data-label { color: #1e40af; }
+        .course-highlight .data-val { color: #1e3a8a; font-size: 1.05rem; }
+
+        .audit-footer {
+            border-top: 1px solid var(--slate-200);
+            padding-top: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.75rem;
+            color: var(--slate-500);
+        }
+        .btn-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--brand);
+            color: #ffffff;
+            text-decoration: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            transition: background 0.15s;
+        }
+        .btn-action:hover { background: #1d4ed8; }
+    </style>
+</head>
+<body>
+
+    <div class="verify-card">
+        <div class="verify-top-bar">
+            <div class="brand-hdr">
+                <i class="fas fa-graduation-cap" style="color: #38bdf8;"></i>
+                <span>SigmaAcademy™ Credential Verification</span>
+            </div>
+            {% if found and is_valid %}
+            <span class="status-pill pill-valid">● ACTIVE</span>
+            {% elif found and not is_valid %}
+            <span class="status-pill pill-expired">● EXPIRED</span>
+            {% else %}
+            <span class="status-pill" style="background: #f1f5f9; color: #64748b;">● UNKNOWN</span>
+            {% endif %}
+        </div>
+
+        <div class="verify-content">
+            {% if found %}
+            <div class="hero-status">
+                {% if is_valid %}
+                <div class="shield-icon shield-valid"><i class="fas fa-shield-check"></i></div>
+                <h1 class="status-title">Official Active Credential</h1>
+                <p class="status-desc">Verified authentic record in the HWB PostgreSQL compliance vault.</p>
+                {% else %}
+                <div class="shield-icon shield-expired"><i class="fas fa-shield-exclamation"></i></div>
+                <h1 class="status-title">Credential Expired</h1>
+                <p class="status-desc">This certification requires annual renewal per OSHA and contract guidelines.</p>
+                {% endif %}
+            </div>
+
+            <div class="data-grid">
+                <div class="data-unit">
+                    <span class="data-label">Certified Technician</span>
+                    <span class="data-val">{{ credential.student_name }}</span>
+                </div>
+                <div class="data-unit">
+                    <span class="data-label">Worker Classification</span>
+                    <span class="data-val">
+                        {% if credential.worker_type == 'W2_EMPLOYEE' %}
+                        W-2 Commercial Technician
+                        {% elif credential.worker_type == '1099_SUBCONTRACTOR' %}
+                        1099 Trade Partner
+                        {% else %}
+                        Client Facility Custodian
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="data-unit">
+                    <span class="data-label">Employer / Partner</span>
+                    <span class="data-val">{{ credential.tenant_name }}</span>
+                </div>
+                <div class="data-unit">
+                    <span class="data-label">Assessment Score</span>
+                    <span class="data-val" style="color: var(--emerald);">{{ credential.quiz_score }}% (Passed)</span>
+                </div>
+                <div class="data-unit">
+                    <span class="data-label">Issue Date</span>
+                    <span class="data-val">{{ credential.certified_at[:10] if credential.certified_at else 'N/A' }}</span>
+                </div>
+                <div class="data-unit">
+                    <span class="data-label">Valid Through</span>
+                    <span class="data-val">{{ credential.expires_at[:10] if credential.expires_at else 'N/A' }}</span>
+                </div>
+            </div>
+
+            <div class="course-highlight">
+                <span class="data-label">Curriculum Satisfied</span>
+                <div class="data-val" style="margin-top: 4px;">{{ credential.course_code }}: {{ credential.course_title }}</div>
+                <div style="font-size: 0.8rem; color: #475569; margin-top: 6px;">
+                    <i class="fas fa-certificate" style="color: #2563eb;"></i> Standard: {{ credential.regulatory_standard }}
+                </div>
+            </div>
+
+            <div class="data-grid" style="margin-bottom: 1.5rem;">
+                <div class="data-unit">
+                    <span class="data-label">Practical Demonstration</span>
+                    <span class="data-val">
+                        {% if credential.practical_skills_verified %}
+                        <i class="fas fa-check" style="color: var(--emerald);"></i> Signed Off by Field Lead
+                        {% else %}
+                        Pending Field Practical
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="data-unit">
+                    <span class="data-label">Credential UUID</span>
+                    <span class="data-val" style="font-family: monospace; font-size: 0.82rem;">{{ credential.enrollment_uuid }}</span>
+                </div>
+            </div>
+
+            <div class="audit-footer">
+                <div>
+                    <div><strong>Humberto Dominguez</strong>, CEO</div>
+                    <div>Permanent Approval Authority</div>
+                </div>
+                <a href="/academy" class="btn-action"><i class="fas fa-graduation-cap"></i> SigmaAcademy</a>
+            </div>
+
+            {% else %}
+            <!-- Not Found State -->
+            <div class="hero-status">
+                <div class="shield-icon shield-unknown"><i class="fas fa-times-circle"></i></div>
+                <h1 class="status-title">Credential Not Found</h1>
+                <p class="status-desc">The UUID <code>{{ uuid }}</code> does not match any certified record in our registry.</p>
+            </div>
+            <div style="text-align: center; margin-top: 2rem;">
+                <a href="/academy" class="btn-action"><i class="fas fa-arrow-left"></i> Return to Academy</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+</body>
+</html>

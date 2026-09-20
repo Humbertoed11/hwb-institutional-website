@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ course.title }} | SigmaAcademy™</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --brand: #2563eb;
+            --brand-dark: #1d4ed8;
+            --slate-900: #0f172a;
+            --slate-800: #1e293b;
+            --slate-700: #334155;
+            --slate-500: #64748b;
+            --slate-200: #e2e8f0;
+            --slate-100: #f1f5f9;
+            --slate-50: #f8fafc;
+            --emerald: #059669;
+            --emerald-light: #ecfdf5;
+            --amber: #d97706;
+            --red: #dc2626;
+            --radius: 8px;
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f1f5f9;
+            color: var(--slate-800);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+
+        .header-bar {
+            background: #ffffff;
+            border-bottom: 1px solid var(--slate-200);
+            padding: 0.75rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .back-link {
+            color: var(--slate-500);
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: color 0.15s;
+        }
+        .back-link:hover { color: var(--brand); }
+        .course-title-hdr {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--slate-900);
+            border-left: 2px solid var(--slate-200);
+            padding-left: 14px;
+        }
+        .progress-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 240px;
+        }
+        .progress-bar-bg {
+            flex: 1;
+            height: 8px;
+            background: var(--slate-200);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: var(--brand);
+            width: 14%;
+            transition: width 0.3s ease;
+        }
+        .progress-text {
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: var(--slate-500);
+            width: 36px;
+            text-align: right;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            max-width: 1300px;
+            margin: 2rem auto;
+            gap: 2rem;
+            padding: 0 1.5rem;
+        }
+        @media (max-width: 960px) {
+            .layout { grid-template-columns: 1fr; }
+        }
+
+        /* Sidebar Nav */
+        .sidebar-card {
+            background: #ffffff;
+            border: 1px solid var(--slate-200);
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+            position: sticky;
+            top: 75px;
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+        }
+        .user-setup-box {
+            background: var(--slate-50);
+            border: 1px solid var(--slate-200);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .user-setup-box label {
+            display: block;
+            font-size: 0.72rem;
+            font-weight: 800;
+            color: var(--slate-500);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 4px;
+        }
+        .user-setup-box input, .user-setup-box select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid var(--slate-200);
+            border-radius: 6px;
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+            font-family: inherit;
+        }
+        .user-setup-box input:last-child, .user-setup-box select:last-child {
+            margin-bottom: 0;
+        }
+
+        .module-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .module-nav-item {
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            margin-bottom: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--slate-700);
+            transition: all 0.15s;
+            border-left: 3px solid transparent;
+        }
+        .module-nav-item:hover {
+            background: var(--slate-50);
+            color: var(--slate-900);
+        }
+        .module-nav-item.active {
+            background: #eff6ff;
+            color: var(--brand);
+            font-weight: 800;
+            border-left-color: var(--brand);
+        }
+        .module-nav-item.completed {
+            color: var(--emerald);
+        }
+        .mod-step-badge {
+            font-size: 0.7rem;
+            font-weight: 800;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--slate-200);
+            color: var(--slate-700);
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+        .module-nav-item.active .mod-step-badge {
+            background: var(--brand);
+            color: #ffffff;
+        }
+        .module-nav-item.completed .mod-step-badge {
+            background: var(--emerald);
+            color: #ffffff;
+        }
+
+        /* Content Stage */
+        .content-card {
+            background: #ffffff;
+            border: 1px solid var(--slate-200);
+            border-radius: 10px;
+            padding: 3rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+            min-height: 600px;
+            display: flex;
+            flex-direction: column;
+        }
+        @media (max-width: 768px) {
+            .content-card { padding: 1.5rem; }
+        }
+
+        .step-panel {
+            display: none;
+            flex: 1;
+        }
+        .step-panel.active {
+            display: block;
+        }
+
+        .chapter-tag {
+            background: #dbeafe;
+            color: #1e40af;
+            font-size: 0.75rem;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+        }
+        .chapter-title {
+            font-size: 1.75rem;
+            font-weight: 900;
+            color: var(--slate-900);
+            margin: 0 0 1rem 0;
+            line-height: 1.2;
+        }
+        .chapter-summary {
+            background: #f8fafc;
+            border-left: 4px solid var(--brand);
+            padding: 1rem 1.25rem;
+            border-radius: 0 6px 6px 0;
+            font-size: 0.95rem;
+            color: var(--slate-700);
+            margin-bottom: 2rem;
+            font-weight: 500;
+        }
+        .chapter-body {
+            font-size: 0.95rem;
+            color: var(--slate-800);
+            line-height: 1.7;
+        }
+        .chapter-body h3 {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--slate-900);
+            margin-top: 2rem;
+            margin-bottom: 0.75rem;
+            border-bottom: 1px solid var(--slate-100);
+            padding-bottom: 0.5rem;
+        }
+        .chapter-body h4 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--slate-800);
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .chapter-body ul, .chapter-body ol {
+            padding-left: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .chapter-body li {
+            margin-bottom: 0.5rem;
+        }
+        .chapter-body table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            font-size: 0.9rem;
+        }
+        .chapter-body th {
+            background: #f8fafc;
+            text-align: left;
+            padding: 0.75rem 1rem;
+            border-bottom: 2px solid var(--slate-200);
+            font-weight: 800;
+            color: var(--slate-900);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+        }
+        .chapter-body td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--slate-100);
+        }
+
+        .callout {
+            padding: 1.25rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+            font-size: 0.9rem;
+        }
+        .callout-caution {
+            background: #fffbeb;
+            border-left: 4px solid var(--amber);
+            color: #92400e;
+        }
+        .callout strong { display: block; margin-bottom: 0.25rem; font-weight: 800; }
+
+        .takeaway-box {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--slate-200);
+        }
+        .takeaway-header {
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: var(--slate-500);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.75rem;
+        }
+        .takeaway-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .takeaway-pill {
+            background: #ecfdf5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-controls {
+            margin-top: 3rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--slate-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .btn-ctrl {
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.15s;
+        }
+        .btn-prev {
+            background: #ffffff;
+            border: 1px solid var(--slate-200);
+            color: var(--slate-700);
+        }
+        .btn-prev:hover { background: var(--slate-50); }
+        .btn-next {
+            background: var(--brand);
+            border: none;
+            color: #ffffff;
+        }
+        .btn-next:hover { background: var(--brand-dark); }
+
+        /* Quiz Styles */
+        .quiz-question-box {
+            background: #f8fafc;
+            border: 1px solid var(--slate-200);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .quiz-q-title {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--slate-900);
+            margin: 0 0 1rem 0;
+            display: flex;
+            gap: 8px;
+        }
+        .quiz-option-label {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 0.75rem 1rem;
+            background: #ffffff;
+            border: 1px solid var(--slate-200);
+            border-radius: 6px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-size: 0.9rem;
+            color: var(--slate-800);
+        }
+        .quiz-option-label:hover {
+            border-color: #93c5fd;
+            background: #f0f7ff;
+        }
+        .quiz-option-label input[type="radio"] {
+            margin-top: 3px;
+        }
+
+        /* Certificate Modal / Card */
+        #cert-card-container {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            margin-top: 2rem;
+        }
+        .cert-header {
+            font-size: 1.6rem;
+            font-weight: 900;
+            color: #0f172a;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+        .cert-sub {
+            font-size: 0.8rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+        }
+        .cert-student-name {
+            font-size: 2rem;
+            font-weight: 900;
+            color: #2563eb;
+            margin: 1rem 0;
+            border-bottom: 2px solid #e2e8f0;
+            display: inline-block;
+            padding-bottom: 4px;
+        }
+        .cert-details-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin: 2rem 0;
+            text-align: left;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            padding: 1.25rem;
+            border-radius: 8px;
+        }
+        .cert-meta-label {
+            font-size: 0.7rem;
+            font-weight: 800;
+            color: #64748b;
+            text-transform: uppercase;
+        }
+        .cert-meta-val {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: #0f172a;
+        }
+        .cert-footer-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #e2e8f0;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header class="header-bar">
+        <div class="header-left">
+            <a href="/academy" class="back-link"><i class="fas fa-arrow-left"></i> Catalog</a>
+            <div class="course-title-hdr">{{ course.course_code }}: {{ course.title }}</div>
+        </div>
+        <div class="progress-container">
+            <div class="progress-bar-bg">
+                <div class="progress-fill" id="overall-progress-bar"></div>
+            </div>
+            <div class="progress-text" id="progress-percent">14%</div>
+        </div>
+    </header>
+
+    <div class="layout">
+        <!-- Sidebar Navigation & Student Identity -->
+        <aside>
+            <div class="sidebar-card">
+                <div class="user-setup-box">
+                    <label>Technician / Student Name</label>
+                    <input type="text" id="student_name" placeholder="Full Legal Name" value="Carlos E. Mendoza" required>
+                    
+                    <label>Email Address</label>
+                    <input type="email" id="student_email" placeholder="student@example.com" value="carlos@hwbcleaning.com">
+
+                    <label>Worker Classification</label>
+                    <select id="worker_type">
+                        <option value="W2_EMPLOYEE">W-2 Commercial Technician</option>
+                        <option value="1099_SUBCONTRACTOR">1099 Subcontractor Trade Partner</option>
+                        <option value="CLIENT_STAFF">Client Facility Staff</option>
+                    </select>
+
+                    <label>Employer / Organization</label>
+                    <select id="tenant_slug">
+                        <option value="hwb">HWB Cleaning Services LLC</option>
+                        <option value="collin-college">Collin College Facilities</option>
+                        <option value="bright-horizons">Bright Horizons Academy</option>
+                    </select>
+                </div>
+
+                <ul class="module-list" id="sidebar-module-list">
+                    {% for m in modules %}
+                    <li class="module-nav-item {% if loop.first %}active{% endif %}" onclick="goToStep({{ loop.index0 }})" id="nav-step-{{ loop.index0 }}">
+                        <div style="display: flex; align-items: center;">
+                            <span class="mod-step-badge">{{ loop.index }}</span>
+                            <span>{{ m.title }}</span>
+                        </div>
+                        <i class="fas fa-chevron-right" style="font-size: 0.7rem; color: #cbd5e1;"></i>
+                    </li>
+                    {% endfor %}
+                    <li class="module-nav-item" onclick="goToStep({{ modules|length }})" id="nav-step-{{ modules|length }}">
+                        <div style="display: flex; align-items: center;">
+                            <span class="mod-step-badge"><i class="fas fa-check"></i></span>
+                            <span>Final Competency Quiz</span>
+                        </div>
+                        <i class="fas fa-lock" id="quiz-lock-icon" style="font-size: 0.7rem; color: #cbd5e1;"></i>
+                    </li>
+                </ul>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main>
+            <div class="content-card">
+                <!-- Modules Panels -->
+                {% for m in modules %}
+                <div class="step-panel {% if loop.first %}active{% endif %}" id="panel-step-{{ loop.index0 }}">
+                    <span class="chapter-tag">{{ m.module_code }} &bull; Chapter {{ loop.index }} of {{ modules|length }}</span>
+                    <h1 class="chapter-title">{{ m.title }}</h1>
+                    <div class="chapter-summary">{{ m.summary }}</div>
+
+                    <div class="chapter-body">
+                        {{ m.content_html|safe }}
+                    </div>
+
+                    {% if m.key_takeaways %}
+                    <div class="takeaway-box">
+                        <div class="takeaway-header"><i class="fas fa-check-double"></i> Core Takeaways (Zero-Defect Standards)</div>
+                        <div class="takeaway-pills">
+                            {% for t in m.key_takeaways %}
+                            <span class="takeaway-pill"><i class="fas fa-shield-alt"></i> {{ t }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="nav-controls">
+                        {% if loop.first %}
+                        <div></div>
+                        {% else %}
+                        <button type="button" class="btn-ctrl btn-prev" onclick="goToStep({{ loop.index0 - 1 }})"><i class="fas fa-arrow-left"></i> Previous</button>
+                        {% endif %}
+                        <button type="button" class="btn-ctrl btn-next" onclick="goToStep({{ loop.index }})">Next Chapter <i class="fas fa-arrow-right"></i></button>
+                    </div>
+                </div>
+                {% endfor %}
+
+                <!-- Step 7: Final Assessment Quiz -->
+                <div class="step-panel" id="panel-step-{{ modules|length }}">
+                    <span class="chapter-tag" style="background: #fef3c7; color: #92400e;">Final Evaluation &bull; Passing Score: 80%</span>
+                    <h1 class="chapter-title">Practical Competency Assessment</h1>
+                    <p style="color: var(--slate-600); margin-bottom: 2rem;">Answer all 5 questions based on the modules studied. An 80% passing score is required to issue your digital certificate and on-site QR credential.</p>
+
+                    <form id="quiz-form" onsubmit="submitQuiz(event)">
+                        {% for q in questions %}
+                        <div class="quiz-question-box">
+                            <h4 class="quiz-q-title">
+                                <span>{{ loop.index }}.</span>
+                                <span>{{ q.question_text }}</span>
+                            </h4>
+                            <div class="quiz-options-group">
+                                {% for opt in q.options %}
+                                <label class="quiz-option-label">
+                                    <input type="radio" name="question_{{ q.id }}" value="{{ opt.id }}" required>
+                                    <span><strong>{{ opt.id }}.</strong> {{ opt.text }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endfor %}
+
+                        <div class="nav-controls">
+                            <button type="button" class="btn-ctrl btn-prev" onclick="goToStep({{ modules|length - 1 }})"><i class="fas fa-arrow-left"></i> Back to Review</button>
+                            <button type="submit" class="btn-ctrl btn-next" id="btn-submit-assessment" style="background: var(--emerald);">
+                                <i class="fas fa-award"></i> Submit for Certification
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Feedback Alert (Visible if failed) -->
+                    <div id="quiz-fail-box" style="display: none; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 1.5rem; margin-top: 1.5rem;">
+                        <h4 style="color: var(--red); margin: 0 0 0.5rem 0;"><i class="fas fa-times-circle"></i> Assessment Incomplete (Score Below 80%)</h4>
+                        <p id="fail-msg-text" style="color: #991b1b; margin: 0 0 1rem 0; font-size: 0.9rem;"></p>
+                        <button type="button" onclick="resetQuiz()" class="btn-ctrl btn-prev" style="background: #ffffff; color: var(--red); border-color: #fca5a5;">Review Modules &amp; Try Again</button>
+                    </div>
+
+                    <!-- Digital Certificate Card (Visible on passing score) -->
+                    <div id="cert-card-container">
+                        <div style="color: var(--emerald); font-size: 2.5rem; margin-bottom: 0.5rem;">
+                            <i class="fas fa-certificate"></i>
+                        </div>
+                        <div class="cert-header">CERTIFICATE OF COMPETENCE</div>
+                        <div class="cert-sub">SigmaAcademy™ Institutional Quality System &bull; ISO 9001:2015 Clause 7.2</div>
+
+                        <p style="font-size: 0.9rem; color: #64748b; margin: 0;">This certifies that</p>
+                        <div class="cert-student-name" id="cert-display-name">Carlos E. Mendoza</div>
+                        <p style="font-size: 0.95rem; color: #334155; margin: 0.5rem 0 1.5rem 0;">
+                            has demonstrated technical competence and passed the empirical assessment for:
+                        </p>
+                        <h3 style="margin: 0; color: #0f172a; font-size: 1.25rem;">{{ course.course_code }}: {{ course.title }}</h3>
+
+                        <div class="cert-details-grid">
+                            <div>
+                                <span class="cert-meta-label">Credential UUID</span>
+                                <div class="cert-meta-val" id="cert-uuid-val" style="font-family: monospace; font-size: 0.85rem;">cert-demo-7f8a9b2c3d4e</div>
+                            </div>
+                            <div>
+                                <span class="cert-meta-label">Assessment Score</span>
+                                <div class="cert-meta-val" style="color: var(--emerald);" id="cert-score-val">100% (Zero-Defect)</div>
+                            </div>
+                            <div>
+                                <span class="cert-meta-label">Validity Period</span>
+                                <div class="cert-meta-val">12 Months (Active)</div>
+                            </div>
+                        </div>
+
+                        <div class="cert-footer-row">
+                            <div style="text-align: left;">
+                                <img id="cert-qr-img" src="" alt="QR Verifier" style="width: 100px; height: 100px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 4px; background: #ffffff;">
+                                <div style="font-size: 0.65rem; color: #64748b; margin-top: 4px;">Scan to verify live status</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-weight: 800; color: #0f172a; font-size: 0.9rem;">Humberto Dominguez, CEO</div>
+                                <div style="font-size: 0.75rem; color: #64748b;">Permanent Approval Authority</div>
+                                <div style="font-weight: 700; color: #2563eb; font-size: 0.85rem; margin-top: 4px;">George, Systems Architect</div>
+                                <div style="font-size: 0.75rem; color: #64748b;">Master Black Belt & Senior Auditor</div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 2rem; display: flex; gap: 12px; justify-content: center;">
+                            <a id="cert-public-link" href="#" target="_blank" class="btn-ctrl btn-next" style="text-decoration: none;">
+                                <i class="fas fa-external-link-alt"></i> Open Public Verification Badge
+                            </a>
+                            <button type="button" onclick="window.print()" class="btn-ctrl btn-prev">
+                                <i class="fas fa-print"></i> Print Credential
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const totalSteps = {{ modules|length }} + 1; // Modules + Quiz
+        let currentStep = 0;
+        const courseCode = "{{ course.course_code }}";
+
+        function updateProgress() {
+            const pct = Math.round(((currentStep + 1) / totalSteps) * 100);
+            document.getElementById('overall-progress-bar').style.width = pct + '%';
+            document.getElementById('progress-percent').innerText = pct + '%';
+        }
+
+        function goToStep(stepIdx) {
+            if (stepIdx < 0 || stepIdx >= totalSteps) return;
+
+            // Mark previous steps completed
+            for (let i = 0; i < stepIdx; i++) {
+                const nav = document.getElementById('nav-step-' + i);
+                if (nav) nav.classList.add('completed');
+            }
+
+            // Remove active from all panels
+            for (let i = 0; i < totalSteps; i++) {
+                const panel = document.getElementById('panel-step-' + i);
+                const nav = document.getElementById('nav-step-' + i);
+                if (panel) panel.classList.remove('active');
+                if (nav) nav.classList.remove('active');
+            }
+
+            const targetPanel = document.getElementById('panel-step-' + stepIdx);
+            const targetNav = document.getElementById('nav-step-' + stepIdx);
+            if (targetPanel) targetPanel.classList.add('active');
+            if (targetNav) targetNav.classList.add('active');
+
+            currentStep = stepIdx;
+            updateProgress();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        async function submitQuiz(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn-submit-assessment');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Scoring Assessment...';
+
+            const studentName = document.getElementById('student_name').value.trim();
+            const studentEmail = document.getElementById('student_email').value.trim();
+            const workerType = document.getElementById('worker_type').value;
+            const tenantSlug = document.getElementById('tenant_slug').value;
+
+            // Collect Answers
+            const answers = {};
+            const form = document.getElementById('quiz-form');
+            const formData = new FormData(form);
+            for (let [key, val] of formData.entries()) {
+                if (key.startsWith('question_')) {
+                    const qId = key.replace('question_', '');
+                    answers[qId] = val;
+                }
+            }
+
+            try {
+                const res = await fetch(`/api/v1/academy/courses/${courseCode}/submit-quiz`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        student_name: studentName,
+                        student_email: studentEmail,
+                        worker_type: workerType,
+                        tenant_slug: tenantSlug,
+                        answers: answers
+                    })
+                });
+                const result = await res.json();
+
+                if (result.status === 'PASSED') {
+                    document.getElementById('quiz-form').style.display = 'none';
+                    document.getElementById('quiz-fail-box').style.display = 'none';
+                    
+                    const certBox = document.getElementById('cert-card-container');
+                    certBox.style.display = 'block';
+                    document.getElementById('cert-display-name').innerText = studentName;
+                    document.getElementById('cert-uuid-val').innerText = result.enrollment_uuid;
+                    document.getElementById('cert-score-val').innerText = result.score + '% (Verified Pass)';
+                    
+                    const verifyUrl = window.location.origin + result.verification_url;
+                    document.getElementById('cert-public-link').href = result.verification_url;
+                    document.getElementById('cert-qr-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(verifyUrl)}`;
+                    
+                    // Mark nav item completed
+                    document.getElementById('nav-step-' + (totalSteps - 1)).classList.add('completed');
+                    document.getElementById('quiz-lock-icon').className = 'fas fa-check-circle';
+                    document.getElementById('quiz-lock-icon').style.color = 'var(--emerald)';
+                } else {
+                    document.getElementById('quiz-fail-box').style.display = 'block';
+                    document.getElementById('fail-msg-text').innerText = `You scored ${result.score}% (${result.correct_count} of ${result.total_questions} correct). An 80% passing grade is mandatory for OSHA & ISO 9001 compliance.`;
+                }
+            } catch (err) {
+                alert('Connection error scoring quiz: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-award"></i> Submit for Certification';
+            }
+        }
+
+        function resetQuiz() {
+            goToStep(0);
+            document.getElementById('quiz-fail-box').style.display = 'none';
+            document.getElementById('quiz-form').style.display = 'block';
+        }
+    </script>
+</body>
+</html>

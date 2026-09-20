@@ -11,6 +11,7 @@ from .auth import auth_bp
 from .public import public_bp
 from .operations import operations_bp
 from .crm_api import crm_api_bp
+from .academy import academy_bp
 
 def register_blueprint_hub(app: Flask, bp: Blueprint, **kwargs) -> None:
     """
@@ -34,5 +35,6 @@ __all__ = [
     "public_bp",
     "operations_bp",
     "crm_api_bp",
+    "academy_bp",
     "register_blueprint_hub"
 ]

@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SigmaAcademy™ | B2B Commercial Training & Compliance Portal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --brand: #2563eb;
+            --brand-dark: #1d4ed8;
+            --brand-light: #eff6ff;
+            --slate-900: #0f172a;
+            --slate-800: #1e293b;
+            --slate-700: #334155;
+            --slate-500: #64748b;
+            --slate-200: #e2e8f0;
+            --slate-100: #f1f5f9;
+            --slate-50: #f8fafc;
+            --emerald: #059669;
+            --emerald-light: #ecfdf5;
+            --amber: #d97706;
+            --amber-light: #fffbeb;
+            --radius: 8px;
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--slate-50);
+            color: var(--slate-800);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+
+        .navbar {
+            background: #ffffff;
+            border-bottom: 1px solid var(--slate-200);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--slate-900);
+            font-weight: 800;
+            font-size: 1.15rem;
+        }
+        .nav-tag {
+            background: #dbeafe;
+            color: #1e40af;
+            font-size: 0.7rem;
+            font-weight: 800;
+            padding: 2px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+        .nav-link {
+            color: var(--slate-500);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: color 0.15s;
+        }
+        .nav-link:hover { color: var(--brand); }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 3rem 1.5rem;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            border-radius: 12px;
+            padding: 3.5rem 3rem;
+            color: #ffffff;
+            margin-bottom: 2.5rem;
+            box-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.3);
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 2.5rem;
+            align-items: center;
+        }
+        @media (max-width: 900px) {
+            .hero { grid-template-columns: 1fr; padding: 2.5rem 1.5rem; }
+        }
+        .hero h1 {
+            font-size: 2.25rem;
+            font-weight: 900;
+            margin: 0 0 1rem 0;
+            line-height: 1.2;
+            letter-spacing: -0.02em;
+        }
+        .hero p {
+            font-size: 1.05rem;
+            color: #cbd5e1;
+            margin: 0 0 1.75rem 0;
+            max-width: 600px;
+        }
+        .kpi-strip {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+        .kpi-unit {
+            display: flex;
+            flex-direction: column;
+        }
+        .kpi-val {
+            font-size: 1.75rem;
+            font-weight: 900;
+            color: #38bdf8;
+            line-height: 1.1;
+        }
+        .kpi-lbl {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .verify-card {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(8px);
+            border-radius: 10px;
+            padding: 1.5rem;
+        }
+        .verify-card h3 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1rem;
+            font-weight: 800;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .verify-card p {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            margin: 0 0 1rem 0;
+        }
+        .verify-input-group {
+            display: flex;
+            gap: 8px;
+        }
+        .verify-input {
+            flex: 1;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            padding: 0.6rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-family: inherit;
+        }
+        .verify-input:focus {
+            outline: none;
+            border-color: #38bdf8;
+        }
+        .verify-btn {
+            background: #2563eb;
+            color: #ffffff;
+            border: none;
+            padding: 0 1rem;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .verify-btn:hover { background: #1d4ed8; }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 1.5rem;
+        }
+        .section-header h2 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--slate-900);
+            margin: 0;
+        }
+        .section-header p {
+            font-size: 0.9rem;
+            color: var(--slate-500);
+            margin: 0.25rem 0 0 0;
+        }
+
+        .course-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            gap: 1.75rem;
+            margin-bottom: 3.5rem;
+        }
+        .course-card {
+            background: #ffffff;
+            border: 1px solid var(--slate-200);
+            border-radius: 10px;
+            padding: 1.75rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .course-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+            border-color: #cbd5e1;
+        }
+        .card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+        .course-code-badge {
+            background: #dbeafe;
+            color: #1e40af;
+            font-size: 0.75rem;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 6px;
+            letter-spacing: 0.05em;
+        }
+        .course-cat {
+            font-size: 0.7rem;
+            font-weight: 800;
+            color: var(--slate-500);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .course-title {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--slate-900);
+            margin: 0 0 0.75rem 0;
+            line-height: 1.3;
+        }
+        .course-desc {
+            font-size: 0.88rem;
+            color: var(--slate-700);
+            margin: 0 0 1.25rem 0;
+            flex: 1;
+            line-height: 1.5;
+        }
+        .course-meta-pills {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--slate-100);
+        }
+        .meta-pill {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--slate-500);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .meta-pill i { color: #3b82f6; }
+        .card-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .btn-launch {
+            flex: 1;
+            background: var(--brand);
+            color: #ffffff;
+            text-decoration: none;
+            padding: 0.7rem 1rem;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-align: center;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: background 0.15s;
+        }
+        .btn-launch:hover { background: var(--brand-dark); }
+        .btn-sop {
+            background: var(--slate-100);
+            color: var(--slate-700);
+            text-decoration: none;
+            padding: 0.7rem 1rem;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-align: center;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: background 0.15s;
+        }
+        .btn-sop:hover { background: #e2e8f0; color: var(--slate-900); }
+
+        .b2b-banner {
+            background: #ffffff;
+            border: 1px solid var(--slate-200);
+            border-left: 6px solid var(--emerald);
+            border-radius: 8px;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 2rem;
+            align-items: center;
+        }
+        @media (max-width: 768px) {
+            .b2b-banner { grid-template-columns: 1fr; }
+        }
+        .b2b-banner h3 {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--slate-900);
+            margin: 0 0 0.5rem 0;
+        }
+        .b2b-banner p {
+            font-size: 0.92rem;
+            color: var(--slate-700);
+            margin: 0;
+            max-width: 750px;
+        }
+        .btn-contact {
+            background: var(--slate-900);
+            color: #ffffff;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 700;
+            text-decoration: none;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            transition: background 0.15s;
+        }
+        .btn-contact:hover { background: #1e293b; }
+
+        footer {
+            margin-top: 5rem;
+            border-top: 1px solid var(--slate-200);
+            background: #ffffff;
+            padding: 2rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--slate-500);
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <a href="/academy" class="nav-brand">
+            <i class="fas fa-graduation-cap" style="color: #2563eb; font-size: 1.4rem;"></i>
+            <span>SigmaAcademy™</span>
+            <span class="nav-tag">Compliance Engine</span>
+        </a>
+        <div class="nav-links">
+            <a href="/manual" class="nav-link"><i class="fas fa-book"></i> QMS Manual</a>
+            <a href="/backoffice" class="nav-link"><i class="fas fa-lock"></i> Operations Login</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Hero Ribbon -->
+        <div class="hero">
+            <div>
+                <h1>Certified Commercial Cleaning & Safety Standards</h1>
+                <p>Enterprise training curriculum built for commercial janitorial technicians, day porters, and subcontractor trade partners. Satisfies OSHA 1910, ISO 9001:2015 Clause 7.2, and institutional client contracts.</p>
+                <div class="kpi-strip">
+                    <div class="kpi-unit">
+                        <span class="kpi-val">{{ certified_count }}</span>
+                        <span class="kpi-lbl">Active Credentials</span>
+                    </div>
+                    <div class="kpi-unit">
+                        <span class="kpi-val">100%</span>
+                        <span class="kpi-lbl">Zero-Defect Standard</span>
+                    </div>
+                    <div class="kpi-unit">
+                        <span class="kpi-val">12 Mo</span>
+                        <span class="kpi-lbl">Recertification Cycle</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fast QR/UUID Lookup -->
+            <div class="verify-card">
+                <h3><i class="fas fa-qrcode"></i> Fast Credential Audit</h3>
+                <p>Enter a technician's badge UUID to verify real-time certification status.</p>
+                <form onsubmit="handleVerifySubmit(event)" class="verify-input-group">
+                    <input type="text" id="verify-uuid-input" class="verify-input" placeholder="e.g. cert-demo-7f8a9b2c3d4e" required>
+                    <button type="submit" class="verify-btn"><i class="fas fa-search"></i></button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Course Catalog -->
+        <div class="section-header">
+            <div>
+                <h2>Active Curriculum Registry</h2>
+                <p>Mandatory training modules for field clearance and technical specialization.</p>
+            </div>
+        </div>
+
+        <div class="course-grid">
+            {% for c in courses %}
+            <div class="course-card">
+                <div class="card-top">
+                    <span class="course-code-badge">{{ c.course_code }}</span>
+                    <span class="course-cat">{{ c.category.replace('_', ' ') }}</span>
+                </div>
+                <h3 class="course-title">{{ c.title }}</h3>
+                <p class="course-desc">{{ c.description }}</p>
+                <div class="course-meta-pills">
+                    <span class="meta-pill"><i class="fas fa-layer-group"></i> {{ c.module_count }} Modules</span>
+                    <span class="meta-pill"><i class="fas fa-clock"></i> ~{{ c.estimated_minutes }} Mins</span>
+                    <span class="meta-pill"><i class="fas fa-check-circle"></i> {{ c.question_count }} Questions</span>
+                </div>
+                <div class="card-actions">
+                    <a href="/academy/course/{{ c.course_code }}" class="btn-launch">
+                        <i class="fas fa-play"></i> Start Course
+                    </a>
+                    <a href="/manual/hwb-qms-7.2-trn-001_safe_work_habits_and_ergonomic_injury_prevention_sop.html" class="btn-sop">
+                        <i class="fas fa-file-alt"></i> SOP
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- B2B SaaS Commercial Banner -->
+        <div class="b2b-banner">
+            <div>
+                <h3>Institutional Compliance for Facilities & Subcontractors</h3>
+                <p>Need white-labeled training for your cleaning staff, daycare center, or subcontractor network? SigmaAcademy™ provides automated employee progress tracking, instant QR verification cards, and digital audit logs for Texas HHS and OSHA compliance.</p>
+            </div>
+            <div>
+                <a href="mailto:humberto@hwbcleaning.com?subject=SigmaAcademy%20Institutional%20Inquiry" class="btn-contact">Inquire for Facilities</a>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 HWB Cleaning Services LLC &bull; SigmaAcademy™ LMS &bull; ISO 9001:2015 &amp; ISO 45001:2018 Certified Operations</p>
+    </footer>
+
+    <script>
+        function handleVerifySubmit(e) {
+            e.preventDefault();
+            const val = document.getElementById('verify-uuid-input').value.trim();
+            if (val) {
+                window.location.href = '/verify/' + encodeURIComponent(val);
+            }
+        }
+    </script>
+</body>
+</html>
