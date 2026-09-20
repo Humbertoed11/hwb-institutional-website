@@ -1,5 +1,14 @@
 [
     {
+        "title": "Master Chronicle Book: From Mops to Machines — The Creation of SigmaAcademy™",
+        "id": "HWB-ACADEMY-BOOK-001",
+        "dept": "OPERATIONS",
+        "file": "hwb-qms-book-01_from_mops_to_machines_the_creation_of_sigma_academy.html",
+        "version": "1.0.0",
+        "compliance": "UPDATED",
+        "date": "09-19-2026"
+    },
+    {
         "id": "HEX-REPORT-12.0",
         "title": "DMAIC Six Sigma Valuation Charter",
         "file": "evaluation/HEX-REPORT-12.0-dmaic-charter.html",

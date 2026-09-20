@@ -262,10 +262,52 @@ def sync_problems_to_solve():
     except Exception as e:
         print(f"Error syncing problems: {e}")
 
+def sync_chronicles_book():
+    chronicles_dir = "HWB-COMPANY/HWB-ACADEMY/THE-SIGMA-ACADEMY-CHRONICLES"
+    if not os.path.exists(chronicles_dir):
+        return
+    
+    print("[SYNC] Ingesting SigmaAcademy Master Chronicles into sigma_kb neural memory...")
+    try:
+        conn = psycopg2.connect(DB_URL)
+        with conn.cursor() as cur:
+            for f in sorted(os.listdir(chronicles_dir)):
+                if f.endswith(".md"):
+                    file_path = os.path.join(chronicles_dir, f)
+                    with open(file_path, "r", encoding="utf-8") as file:
+                        content = file.read()
+                    
+                    doc_id = f"CHRONICLES_{f.replace('.md', '')}"
+                    metadata = {
+                        "type": "CHRONICLES_BOOK",
+                        "title": "From Mops to Machines: The Creation of SigmaAcademy™",
+                        "filename": f,
+                        "path": file_path,
+                        "author": "George (Systems Architect & mbB)",
+                        "approved_by": "Humberto Dominguez, CEO",
+                        "ingested_at": datetime.now().isoformat()
+                    }
+                    
+                    cur.execute("""
+                        INSERT INTO sigma_kb (doc_id, content, metadata, search_vector, timestamp)
+                        VALUES (%s, %s, %s, to_tsvector('english', %s), CURRENT_TIMESTAMP)
+                        ON CONFLICT (doc_id) DO UPDATE 
+                        SET content = EXCLUDED.content, 
+                            metadata = EXCLUDED.metadata,
+                            search_vector = to_tsvector('english', EXCLUDED.content),
+                            timestamp = CURRENT_TIMESTAMP;
+                    """, (doc_id, content, Json(metadata), content))
+                    print(f"  -> Ingested Chapter: {doc_id}")
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"Error syncing chronicles book: {e}")
+
 def run_all():
     print("--- SigmaFidelity: Initiating Institutional Persistence Sync ---")
     sync_walkthrough()
     sync_new_sops()
+    sync_chronicles_book()
     sync_system_state()
     sync_problems_to_solve()
     print("--- SUCCESS: All neural cores synchronized. ---")
