@@ -46,6 +46,25 @@ Responsibility: George (Architect)
 | 09/19/2026 | BUG-067 | Microsoft Graph API ErrorInvalidRecipients Rejection (HTTP 400) on Telegram Staged Outbox Dispatches. | **RESOLVED** | HIGH |
 | 09/19/2026 | BUG-068 | Synthetic Corporate Address & Telemetry Generation in Outbound Email Dispatch Footer (Empirical Mandate Breach). | **RESOLVED** | CRITICAL |
 | 09/19/2026 | BUG-069 | Chrome DevTools Protocol Socket Desync in WSL2 Environment Blocking /browser Subagent. | **DOCUMENTED** | MEDIUM |
+| 09/19/2026 | BUG-070 | Gunicorn In-Memory Stale Worker Route Collision & Missing API 401 JSON Handler (HTTP 405/JSON Parse Error on Subcontractor Edit). | **RESOLVED** | HIGH |
+
+## BUG-070: Gunicorn In-Memory Stale Worker Route Collision & Missing API 401 JSON Handler
+**Detected:** 09/19/2026
+**Status:** **RESOLVED** (09/19/2026)
+**Symptoms:**
+1. Clicking the "Edit Partner Profile" button on the Subcontractor Partners roster triggered a toast error: `"Network error loading subcontractor profile"`.
+2. The interactive edit modal (`modal-subcontractor-edit`) failed to open or populate with the contractor's credentials.
+3. Network inspection showed `GET /api/v1/workforce/subcontractors/<id>` returning `HTTP 405 Method Not Allowed` with an HTML body, causing `res.json()` to crash on unexpected token `<`.
+**Root Cause:**
+1. Gunicorn inside the `hwb_web_app` container runs without `--reload` in container mode. Following route enhancements in `blueprints/crm_api.py`, the active Gunicorn worker was still executing the previous route definition (`methods=['PATCH', 'DELETE']` which lacked `GET`).
+2. Flask-Login default behavior redirects unauthenticated AJAX/fetch requests to `/login` via HTTP 302 HTML rather than returning structured JSON (HTTP 401 Unauthorized), which caused unexpected HTML payloads to break client-side JSON parsers.
+**Solution:**
+1. Dispatched `SIGHUP` signal to Gunicorn PID 1 inside `hwb_web_app`, instantly reloading workers with current route definitions (`methods=['GET', 'PATCH', 'DELETE']`).
+2. Implemented `@login_manager.unauthorized_handler` in `main_app.py` returning structured JSON `{"status": "error", "message": "Authentication session expired..."}` (HTTP 401) for all `/api/` endpoints.
+3. Hardened `openSubcontractorEditModal` and `openSubcontractorDocModal` in `templates/backoffice_operations.html` with explicit `!res.ok` status verification and descriptive error notifications.
+**Preventative:**
+1. Mandate sending `SIGHUP` or container restart whenever REST endpoints or Python blueprints are modified in containerized environments.
+2. Maintain strict non-200 HTTP response verification before executing `res.json()` in all frontend asynchronous fetch routines.
 
 ## BUG-069: Chrome DevTools Protocol Socket Desync in WSL2 Environment Blocking /browser Subagent
 **Detected:** 09/19/2026

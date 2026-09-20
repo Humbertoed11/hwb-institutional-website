@@ -84,6 +84,12 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
+@login_manager.unauthorized_handler
+def unauthorized_callback():
+    if request.path.startswith('/api/'):
+        return jsonify({'status': 'error', 'message': 'Authentication session expired. Please reload and log in.'}), 401
+    return redirect(url_for('login', next=request.url))
+
 @login_manager.user_loader
 def load_user(user_id):
     conn = None
