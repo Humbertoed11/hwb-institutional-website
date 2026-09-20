@@ -47,6 +47,20 @@ Responsibility: George (Architect)
 | 09/19/2026 | BUG-068 | Synthetic Corporate Address & Telemetry Generation in Outbound Email Dispatch Footer (Empirical Mandate Breach). | **RESOLVED** | CRITICAL |
 | 09/19/2026 | BUG-069 | Chrome DevTools Protocol Socket Desync in WSL2 Environment Blocking /browser Subagent. | **DOCUMENTED** | MEDIUM |
 | 09/19/2026 | BUG-070 | Gunicorn In-Memory Stale Worker Route Collision & Missing API 401 JSON Handler (HTTP 405/JSON Parse Error on Subcontractor Edit). | **RESOLVED** | HIGH |
+| 09/19/2026 | BUG-071 | Academy Training Assignment Foreign Key Constraint Violation on Unregistered Worker IDs. | **RESOLVED** | HIGH |
+
+## BUG-071: Academy Training Assignment Foreign Key Constraint Violation on Unregistered Worker IDs
+**Detected:** 09/19/2026
+**Status:** **RESOLVED** (09/19/2026)
+**Symptoms:**
+1. Calling `POST /api/v1/academy/assign` with an `employee_id` or `subcontractor_id` that did not yet exist in `Employees` or `SubcontractorPartners` resulted in `psycopg2.errors.ForeignKeyViolation` (HTTP 500 error).
+2. The assignment engine was blocked from issuing magic-link training passes to newly vetted applicants prior to official payroll roster insertion.
+**Root Cause:**
+`AcademyEnrollments` enforces strict foreign key constraints `REFERENCES "Employees"(id)` and `REFERENCES "SubcontractorPartners"(id)`. When assigning training to a prospective applicant or applicant without an existing employee record, the raw ID caused a foreign key collision.
+**Solution:**
+Implemented defensive existence checks in `blueprints/academy.py` prior to record insertion. If the ID is not found in the respective parent table, the optional reference is safely nullified (`employee_id = None`), allowing the enrollment, magic token, and candidate details to generate cleanly without database rejection.
+**Preventative:**
+Always pre-validate optional relational keys against parent tables before executing inserts on polymorphic compliance ledgers.
 
 ## BUG-070: Gunicorn In-Memory Stale Worker Route Collision & Missing API 401 JSON Handler
 **Detected:** 09/19/2026
