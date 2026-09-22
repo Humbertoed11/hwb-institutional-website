@@ -70,7 +70,7 @@ def run_migration(db_url: str):
 
 <p>In operating a licensed childcare center in {city}, maintaining state chemical safety compliance under Texas Health and Human Services (HHS) and OSHA regulations is an ongoing priority. Traditional bleach solutions frequently present strong chemical odors, respiratory irritation among toddlers, and fabric degradation across classroom carpets.</p>
 
-<p><strong>HWB Cleaning Services LLC</strong> provides an ISO 9001:2015 certified, hospital-grade green sanitization protocol engineered specifically for early educational environments. We replace harsh bleach mixtures with EPA List N hospital disinfectants that eliminate 99.99% of viral pathogens (RSV, Norovirus, Influenza) with zero toxic fumes and zero chemical residue.</p>
+<p><strong>HWB Cleaning Services LLC</strong> provides an ISO 9001:2015 compliant, hospital-grade green sanitization protocol engineered specifically for early educational environments. We replace harsh bleach mixtures with EPA List N hospital disinfectants that eliminate 99.99% of viral pathogens (RSV, Norovirus, Influenza) with zero toxic fumes and zero chemical residue.</p>
 
 <p>As the local Owner & Operator, I would be pleased to conduct a <strong>Complimentary 10-Point Sanitation Audit</strong> of {facility_name} at no charge.</p>
 

@@ -491,6 +491,29 @@ def apply_system_migrations(conn: Any, db_url: Optional[str] = None) -> None:
                     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                 );
 
+                -- CampaignRecipients and Marketing Telemetry Column Hardening
+                ALTER TABLE "CampaignRecipients" ADD COLUMN IF NOT EXISTS tracking_token VARCHAR(64) UNIQUE;
+                ALTER TABLE "CampaignRecipients" ADD COLUMN IF NOT EXISTS opened_at TIMESTAMP WITH TIME ZONE;
+                ALTER TABLE "CampaignRecipients" ADD COLUMN IF NOT EXISTS open_count INTEGER DEFAULT 0;
+                ALTER TABLE "CampaignRecipients" ADD COLUMN IF NOT EXISTS clicked_at TIMESTAMP WITH TIME ZONE;
+                ALTER TABLE "CampaignRecipients" ADD COLUMN IF NOT EXISTS click_count INTEGER DEFAULT 0;
+                ALTER TABLE "CampaignRecipients" ADD COLUMN IF NOT EXISTS outbox_id INTEGER;
+                ALTER TABLE "CampaignRecipients" ADD COLUMN IF NOT EXISTS scheduled_send_at TIMESTAMP WITH TIME ZONE;
+                ALTER TABLE "CampaignRecipients" ADD COLUMN IF NOT EXISTS sent_at TIMESTAMP WITH TIME ZONE;
+
+                CREATE INDEX IF NOT EXISTS "idx_camp_recip_token" ON "CampaignRecipients" (tracking_token);
+                CREATE INDEX IF NOT EXISTS "idx_camp_recip_open" ON "CampaignRecipients" (opened_at);
+
+                ALTER TABLE "MarketingCampaigns" ADD COLUMN IF NOT EXISTS email_subject_template TEXT;
+                ALTER TABLE "MarketingCampaigns" ADD COLUMN IF NOT EXISTS email_body_template TEXT;
+
+                ALTER TABLE "PendingOutbox" ADD COLUMN IF NOT EXISTS tracking_token VARCHAR(64);
+                ALTER TABLE "PendingOutbox" ADD COLUMN IF NOT EXISTS campaign_id INTEGER;
+                ALTER TABLE "PendingOutbox" ADD COLUMN IF NOT EXISTS recipient_id INTEGER;
+
+                CREATE INDEX IF NOT EXISTS "idx_pending_outbox_token" ON "PendingOutbox" (tracking_token);
+                CREATE INDEX IF NOT EXISTS "idx_pending_outbox_campaign" ON "PendingOutbox" (campaign_id);
+
                 -- SafetyManuals Table Parity
                 CREATE TABLE IF NOT EXISTS "SafetyManuals" (
                     id SERIAL PRIMARY KEY,
@@ -579,7 +602,8 @@ def apply_system_migrations(conn: Any, db_url: Optional[str] = None) -> None:
                 ("018_institutional_users_and_schema_parity", "scripts.migrate_018_institutional_users_and_schema_parity", "Institutional Users table hardening, credential sync, and leads parity"),
                 ("019_ceo_credentials_and_alias_hardening", "scripts.migrate_019_ceo_credentials_and_alias_hardening", "CEO credentials and identity alias hardening"),
                 ("020_lead_data_integrity_cleansing", "scripts.migrate_020_lead_data_integrity_cleansing", "Lead data integrity, legacy industry/facility cleansing, address repair, and duplicate resolution"),
-                ("021_simplify_job_positions_and_competitive_pay", "scripts.migrate_021_simplify_job_positions_and_competitive_pay", "Simplified job descriptions, everyday words, and calibrated competitive pay")
+                ("021_simplify_job_positions_and_competitive_pay", "scripts.migrate_021_simplify_job_positions_and_competitive_pay", "Simplified job descriptions, everyday words, and calibrated competitive pay"),
+                ("012_marketing_tracking_and_builder", "scripts.migrate_012_marketing_tracking_and_builder", "Telemetry open tracking pixel, tokens, and campaign builder template support")
             ]
 
             for v_tag, mod_path, v_desc in modular_migrations:

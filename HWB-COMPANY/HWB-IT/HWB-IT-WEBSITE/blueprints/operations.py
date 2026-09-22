@@ -279,8 +279,25 @@ def admin_operations():
         except Exception as lead_err:
             conn.rollback()
             current_app.logger.warning(f"[OPERATIONS] Leads fetch warning: {lead_err}")
-            leads = []
-            leads_count = 0
+            try:
+                with conn.cursor() as fb_cur:
+                    fb_sql_base = f'''
+                        SELECT l.*, 
+                               (SELECT COUNT(*) FROM "GlobalActivities" WHERE parent_id = l.id AND parent_type = 'Lead') as activity_count, 
+                               (SELECT MAX(timestamp) FROM "GlobalActivities" WHERE parent_id = l.id AND parent_type = 'Lead') as last_contact,
+                               (SELECT description FROM "GlobalActivities" WHERE parent_id = l.id AND parent_type = 'Lead' ORDER BY timestamp DESC LIMIT 1) as last_note,
+                               NULL as campaign_info
+                        FROM "Leads" l 
+                        {lead_where_str}
+                    '''
+                    fb_cur.execute(f'{fb_sql_base} ORDER BY {l_sort} {l_dir} NULLS LAST, id ASC LIMIT %s OFFSET %s', tuple(lead_params + [per_page, offset]))
+                    leads = fb_cur.fetchall()
+                    total_pages = (leads_count + per_page - 1) // per_page
+            except Exception as fb_err:
+                conn.rollback()
+                current_app.logger.error(f"[OPERATIONS] Leads fallback fatal: {fb_err}")
+                leads = []
+                leads_count = 0
 
         # 3. GLOBAL DISPATCH & MONITORING (SigmaFidelity™ HWB-QMS-11.2)
         try:
@@ -699,21 +716,36 @@ def sales_desk():
             if where_sql:
                 where_sql = 'WHERE ' + where_sql
                 
-            cur.execute(f'''
-                SELECT id, center_name, facility_type, industry, capacity, sqf, 
-                       address, city, zipcode, director, decision_maker, job_title, 
-                       phone, email, status, estimated_annual_value,
-                       (SELECT cr.status || '::' || mc.name || '::' || COALESCE(cr.open_count, 0) || '::' || COALESCE(to_char(cr.opened_at, 'MM/DD HH:MI AM'), '')
-                        FROM "CampaignRecipients" cr
-                        JOIN "MarketingCampaigns" mc ON cr.campaign_id = mc.id
-                        WHERE cr.lead_id = "Leads".id
-                        ORDER BY cr.id DESC LIMIT 1) as campaign_info
-                FROM "Leads"
-                {where_sql}
-                ORDER BY id ASC
-                LIMIT 100
-            ''', tuple(params))
-            leads = cur.fetchall()
+            try:
+                cur.execute(f'''
+                    SELECT id, center_name, facility_type, industry, capacity, sqf, 
+                           address, city, zipcode, director, decision_maker, job_title, 
+                           phone, email, status, estimated_annual_value,
+                           (SELECT cr.status || '::' || mc.name || '::' || COALESCE(cr.open_count, 0) || '::' || COALESCE(to_char(cr.opened_at, 'MM/DD HH:MI AM'), '')
+                            FROM "CampaignRecipients" cr
+                            JOIN "MarketingCampaigns" mc ON cr.campaign_id = mc.id
+                            WHERE cr.lead_id = "Leads".id
+                            ORDER BY cr.id DESC LIMIT 1) as campaign_info
+                    FROM "Leads"
+                    {where_sql}
+                    ORDER BY id ASC
+                    LIMIT 100
+                ''', tuple(params))
+                leads = cur.fetchall()
+            except Exception as sd_err:
+                conn.rollback()
+                current_app.logger.warning(f"[SALES_DESK] Fallback query without campaign info: {sd_err}")
+                cur.execute(f'''
+                    SELECT id, center_name, facility_type, industry, capacity, sqf, 
+                           address, city, zipcode, director, decision_maker, job_title, 
+                           phone, email, status, estimated_annual_value,
+                           NULL as campaign_info
+                    FROM "Leads"
+                    {where_sql}
+                    ORDER BY id ASC
+                    LIMIT 100
+                ''', tuple(params))
+                leads = cur.fetchall()
             
             if is_sales_rep and user_assigned_count > 0:
                 cur.execute('SELECT COUNT(*) FROM "Leads" WHERE is_converted = FALSE AND owner_id = %s', (user_id,))

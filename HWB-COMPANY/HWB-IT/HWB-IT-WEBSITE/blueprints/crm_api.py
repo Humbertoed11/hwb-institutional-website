@@ -3018,7 +3018,7 @@ def api_marketing_generate_drafts(campaign_id):
             subject_tmpl = campaign.get('email_subject_template') or "Avoiding State Licensing & Bleach Hazards: Certified Childcare Sanitation Protocol"
             body_tmpl = campaign.get('email_body_template') or """<p>Dear {director_name},</p>
 <p>Maintaining chemical safety compliance under Texas HHS and OSHA regulations is an ongoing priority at {facility_name}. Traditional bleach solutions frequently present harsh odors and respiratory irritation among children.</p>
-<p><strong>HWB Cleaning Services LLC</strong> provides an ISO 9001:2015 certified, hospital-grade green sanitization protocol engineered specifically for early educational environments across {city}.</p>
+<p><strong>HWB Cleaning Services LLC</strong> provides an ISO 9001:2015 compliant, hospital-grade green sanitization protocol engineered specifically for early educational environments across {city}.</p>
 <p>I would be pleased to conduct a <strong>Complimentary 10-Point Sanitation Audit</strong> of {facility_name} at no charge.</p>
 <p><a href="{booking_link}" style="display: inline-block; background: #2563eb; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 700; margin-top: 10px;">Select a 15-Minute Slot on Humberto's Calendar</a></p>
 <p>Sincerely,</p>"""

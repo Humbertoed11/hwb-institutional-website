@@ -87,7 +87,7 @@ LETTERHEAD_FOOTER = """
     <div style="margin-top: 50px; border-top: 1px solid #eee; padding-top: 20px; text-align: center; font-size: 11px; color: #999;">
         <div style="font-weight: bold; color: #004aad; margin-bottom: 5px;">FIDELITY. SAFETY. RESPECT.</div>
         © 2026 HWB Cleaning Services LLC. All Rights Reserved.<br>
-        ISO 9001:2015 Certified | Operational Excellence Guaranteed.
+        ISO 9001:2015 Compliant | Operational Excellence Guaranteed.
     </div>
 </div>
 """
