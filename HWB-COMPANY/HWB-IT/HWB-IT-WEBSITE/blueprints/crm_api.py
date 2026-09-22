@@ -2964,6 +2964,19 @@ def api_marketing_campaign_create():
                             VALUES (%s, 'Lead', 'Marketing Outreach', %s);
                         ''', (lid, f"Enrolled in marketing campaign: '{name}' ({campaign_code}) - Status: STAGED"))
 
+                        # Option 2 Smart Status Automation: Advance 'New' leads to 'In Campaign' while protecting active sales stages
+                        cur.execute('''
+                            UPDATE "Leads"
+                            SET status = 'In Campaign', updated_at = CURRENT_TIMESTAMP
+                            WHERE id = %s AND (status ILIKE 'new' OR status IS NULL)
+                            RETURNING id;
+                        ''', (lid,))
+                        if cur.fetchone():
+                            cur.execute('''
+                                INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
+                                VALUES (%s, 'Lead', 'Status Change', %s);
+                            ''', (lid, f"Status advanced from 'New' to 'In Campaign' via '{name}' ({campaign_code})"))
+
                 cur.execute('''
                     UPDATE "MarketingCampaigns"
                     SET total_targets = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s),

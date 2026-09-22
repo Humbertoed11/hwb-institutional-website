@@ -193,6 +193,21 @@ def track_email_open(tracking_token):
                             VALUES (%s, 'Lead', 'Email Opened', %s);
                         ''', (lead_id, f"Customer opened marketing email (View #{open_count}) for {facility or 'facility'}"))
 
+                        # Option 2 Smart Status Automation: Promote lead to 'Engaged 🔥' and prioritize for sales team
+                        cur.execute('''
+                            UPDATE "Leads"
+                            SET status = 'Engaged',
+                                priority_level = 'High',
+                                updated_at = CURRENT_TIMESTAMP
+                            WHERE id = %s AND (status IN ('New', 'NEW', 'In Campaign', 'Contacted') OR status IS NULL)
+                            RETURNING id;
+                        ''', (lead_id,))
+                        if cur.fetchone():
+                            cur.execute('''
+                                INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
+                                VALUES (%s, 'Lead', 'Status Change', %s);
+                            ''', (lead_id, f"Lead status promoted to 'Engaged 🔥' (Customer viewed email {open_count}x). Prioritized for sales follow-up."))
+
                 conn.commit()
         except Exception as e:
             if conn:
@@ -241,6 +256,21 @@ def track_email_click(tracking_token):
                             INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
                             VALUES (%s, 'Lead', 'Link Clicked', %s);
                         ''', (c_lead_id, f"Customer clicked walkthrough booking link in marketing email for {c_facility or 'facility'}"))
+
+                        # Option 2 Smart Status Automation: Promote lead to 'Qualified'
+                        cur.execute('''
+                            UPDATE "Leads"
+                            SET status = 'Qualified',
+                                priority_level = 'High',
+                                updated_at = CURRENT_TIMESTAMP
+                            WHERE id = %s AND (status IN ('New', 'NEW', 'In Campaign', 'Contacted', 'Engaged') OR status IS NULL)
+                            RETURNING id;
+                        ''', (c_lead_id,))
+                        if cur.fetchone():
+                            cur.execute('''
+                                INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
+                                VALUES (%s, 'Lead', 'Status Change', %s);
+                            ''', (c_lead_id, "Lead status promoted to 'Qualified' (Customer clicked walkthrough calendar link in marketing email)."))
                 conn.commit()
         except Exception as e:
             if conn:

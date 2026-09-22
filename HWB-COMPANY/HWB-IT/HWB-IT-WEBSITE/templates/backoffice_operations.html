@@ -236,6 +236,8 @@
                         </button>
                         <div id="bulk-status-menu" class="bulk-dropdown-menu" style="display: none; position: absolute; left: 0; top: 110%; background: white; border: 1px solid var(--slate-200); border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 1000; width: 160px; padding: 0.5rem;">
                             <button type="button" onclick="executeBulkAction('update_status', {status: 'NEW'})" class="isc-dropdown-btn" style="text-align: left; width: 100%;"><i class="fas fa-plus-circle" style="margin-right: 0.5rem;"></i> New</button>
+                            <button type="button" onclick="executeBulkAction('update_status', {status: 'In Campaign'})" class="isc-dropdown-btn" style="text-align: left; width: 100%;"><i class="fas fa-bullhorn" style="margin-right: 0.5rem; color: #4f46e5;"></i> In Campaign</button>
+                            <button type="button" onclick="executeBulkAction('update_status', {status: 'Engaged'})" class="isc-dropdown-btn" style="text-align: left; width: 100%;"><i class="fas fa-fire" style="margin-right: 0.5rem; color: #16a34a;"></i> Engaged</button>
                             <button type="button" onclick="executeBulkAction('update_status', {status: 'CONTACTED'})" class="isc-dropdown-btn" style="text-align: left; width: 100%;"><i class="fas fa-phone" style="margin-right: 0.5rem;"></i> Contacted</button>
                             <button type="button" onclick="executeBulkAction('update_status', {status: 'QUALIFIED'})" class="isc-dropdown-btn" style="text-align: left; width: 100%;"><i class="fas fa-check-circle" style="margin-right: 0.5rem;"></i> Qualified</button>
                             <button type="button" onclick="executeBulkAction('update_status', {status: 'NURTURING'})" class="isc-dropdown-btn" style="text-align: left; width: 100%;"><i class="fas fa-heart" style="margin-right: 0.5rem;"></i> Nurturing</button>
@@ -369,17 +371,19 @@
                                         </div>
                                     </td>
                                     {% elif col_key == 'status' %}
-                                     <td class="sticky-2" onclick="event.stopPropagation();">
-                                         <select onchange="quickUpdateLead({{ lead.id }}, 'status', this.value, this)" class="sigma-pill-select" style="{% if lead.status == 'Do Not Call (DNC)' or lead.is_dnc %}background:#fee2e2; color:#991b1b; border-color:#fca5a5;{% elif lead.status == 'Active' %}background:#dcfce7; color:#15803d; border-color:#86efac;{% elif lead.status == 'New' or lead.status == 'NEW' %}background:#e0f2fe; color:#0369a1; border-color:#7dd3fc;{% elif lead.status == 'Contacted' %}background:#f3e8ff; color:#7e22ce; border-color:#d8b4fe;{% elif lead.status == 'Qualified' %}background:#ccfbf1; color:#0f766e; border-color:#5eead4;{% elif lead.status == 'Trained' %}background:#fef3c7; color:#b45309; border-color:#fde047;{% else %}background:#f1f5f9; color:#64748b; border-color:#cbd5e1;{% endif %}">
-                                             <option value="New" {% if lead.status == 'New' or lead.status == 'NEW' %}selected{% endif %}>New</option>
-                                             <option value="Active" {% if lead.status == 'Active' %}selected{% endif %}>Active</option>
-                                             <option value="Contacted" {% if lead.status == 'Contacted' %}selected{% endif %}>Contacted</option>
-                                             <option value="Qualified" {% if lead.status == 'Qualified' %}selected{% endif %}>Qualified</option>
-                                             <option value="Trained" {% if lead.status == 'Trained' %}selected{% endif %}>Trained</option>
-                                             <option value="Do Not Call (DNC)" {% if lead.status == 'Do Not Call (DNC)' or lead.is_dnc %}selected{% endif %}>🚫 DNC</option>
-                                             <option value="Lost" {% if lead.status == 'Lost' %}selected{% endif %}>Lost</option>
-                                         </select>
-                                     </td>
+                                      <td class="sticky-2" onclick="event.stopPropagation();">
+                                          <select onchange="quickUpdateLead({{ lead.id }}, 'status', this.value, this)" class="sigma-pill-select" style="{% if lead.status == 'Do Not Call (DNC)' or lead.is_dnc %}background:#fee2e2; color:#991b1b; border-color:#fca5a5;{% elif lead.status == 'Active' %}background:#dcfce7; color:#15803d; border-color:#86efac;{% elif lead.status == 'In Campaign' %}background:#e0e7ff; color:#3730a3; border-color:#c7d2fe;{% elif lead.status == 'Engaged' %}background:#d1fae5; color:#065f46; border-color:#6ee7b7;{% elif lead.status == 'New' or lead.status == 'NEW' %}background:#e0f2fe; color:#0369a1; border-color:#7dd3fc;{% elif lead.status == 'Contacted' %}background:#f3e8ff; color:#7e22ce; border-color:#d8b4fe;{% elif lead.status == 'Qualified' %}background:#ccfbf1; color:#0f766e; border-color:#5eead4;{% elif lead.status == 'Trained' %}background:#fef3c7; color:#b45309; border-color:#fde047;{% else %}background:#f1f5f9; color:#64748b; border-color:#cbd5e1;{% endif %}">
+                                              <option value="New" {% if lead.status == 'New' or lead.status == 'NEW' %}selected{% endif %}>New</option>
+                                              <option value="In Campaign" {% if lead.status == 'In Campaign' %}selected{% endif %}>In Campaign</option>
+                                              <option value="Engaged" {% if lead.status == 'Engaged' %}selected{% endif %}>Engaged 🔥</option>
+                                              <option value="Active" {% if lead.status == 'Active' %}selected{% endif %}>Active</option>
+                                              <option value="Contacted" {% if lead.status == 'Contacted' %}selected{% endif %}>Contacted</option>
+                                              <option value="Qualified" {% if lead.status == 'Qualified' %}selected{% endif %}>Qualified</option>
+                                              <option value="Trained" {% if lead.status == 'Trained' %}selected{% endif %}>Trained</option>
+                                              <option value="Do Not Call (DNC)" {% if lead.status == 'Do Not Call (DNC)' or lead.is_dnc %}selected{% endif %}>🚫 DNC</option>
+                                              <option value="Lost" {% if lead.status == 'Lost' %}selected{% endif %}>Lost</option>
+                                          </select>
+                                      </td>
                                     {% elif col_key == 'dm' %}<td class="sticky-3"><div class="sigma-unit-data"><div class="sigma-unit-primary" style="font-size:0.85rem">{{ lead.decision_maker or '--' }}</div><div class="sigma-unit-secondary" style="font-weight: 500;">{{ lead.job_title or 'Owner/Manager' }}</div></div></td>
                                     {% elif col_key == 'umbrella' %}
                                      <td onclick="event.stopPropagation();">
@@ -5415,6 +5419,8 @@
                             <label>Status</label>
                             <select id="edit-lead-status" name="status" class="sigma-input">
                                 <option value="New">New</option>
+                                <option value="In Campaign">In Campaign</option>
+                                <option value="Engaged">Engaged 🔥</option>
                                 <option value="Active">Active</option>
                                 <option value="Contacted">Contacted</option>
                                 <option value="Qualified">Qualified</option>
