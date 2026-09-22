@@ -46,6 +46,12 @@ def run_migration(db_url: str):
             print("  ✓ Created performance indexes on WorkOrders.")
 
             # 3. Ensure Gonzalo Bolanos is onboarded into Employees as HWB-EMP-1002 if not already present
+            cur.execute("""
+                INSERT INTO "JobApplicants" (id, full_name, email, phone, desired_role, status)
+                VALUES (9, 'Gonzalo Bolanos', 'gbolanos@gmail.com', '(214)-566-9999', 'Commercial Cleaning Technician', 'Hired')
+                ON CONFLICT (id) DO NOTHING;
+            """)
+
             cur.execute('SELECT id FROM "Employees" WHERE phone = %s OR employee_number = %s;', ('(214)-566-9999', 'HWB-EMP-1002'))
             existing_gonzalo = cur.fetchone()
             if not existing_gonzalo:

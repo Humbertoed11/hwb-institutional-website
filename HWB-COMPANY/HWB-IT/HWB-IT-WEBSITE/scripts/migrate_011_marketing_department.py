@@ -108,13 +108,23 @@ def run_migration(db_url: str):
             campaign_id = cur.fetchone()[0]
             print(f"  -> Seeded Campaign record CMP-2026-DAYCARE-CORE (ID: {campaign_id}).")
 
-            # 4. Pull Top 100 Commercial Daycare Leads in Core North Texas Counties & Populate CampaignRecipients
+            # 4. Ensure Leads table columns exist and pull targets
+            cur.execute('''
+                ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS is_commercial BOOLEAN DEFAULT TRUE;
+                ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS is_dnc BOOLEAN DEFAULT FALSE;
+                ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS is_converted BOOLEAN DEFAULT FALSE;
+                ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS director TEXT;
+                ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS county TEXT;
+                ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS capacity INTEGER;
+                ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS sqf INTEGER;
+            ''')
+
             cur.execute('''
                 SELECT id, center_name, director, email, city, county, capacity, sqf
                 FROM "Leads"
-                WHERE is_commercial = TRUE 
-                  AND is_dnc = FALSE
-                  AND is_converted = FALSE
+                WHERE COALESCE(is_commercial, TRUE) = TRUE 
+                  AND COALESCE(is_dnc, FALSE) = FALSE
+                  AND COALESCE(is_converted, FALSE) = FALSE
                   AND email IS NOT NULL 
                   AND email LIKE '%@%'
                   AND county IN ('Collin', 'Dallas', 'Denton', 'Tarrant')

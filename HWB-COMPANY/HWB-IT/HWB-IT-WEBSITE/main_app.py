@@ -103,7 +103,8 @@ def load_user(user_id):
             cur.execute('SELECT * FROM "Users" WHERE id = %s', (user_id,))
             u = cur.fetchone()
             if u:
-                return User(u['id'], u['username'], u['role'], u.get('full_name'), u.get('custom_permissions'))
+                role = u.get('role') or ('Executive' if u.get('username') in ['admin', 'hdominguez'] else 'Operator')
+                return User(u['id'], u['username'], role, u.get('full_name'), u.get('custom_permissions'))
     except Exception as e:
         print(f"[GUARD] load_user failed: {e}", flush=True)
     finally:

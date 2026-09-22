@@ -9,7 +9,8 @@ venv/
 ENV/
 
 # Database
-database/
+database/*.db
+database/*.sqlite3
 *.db
 *.sqlite3
 

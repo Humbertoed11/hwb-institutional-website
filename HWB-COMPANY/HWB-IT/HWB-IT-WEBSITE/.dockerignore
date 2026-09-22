@@ -1,0 +1,11 @@
+.git
+.venv
+env/
+venv/
+__pycache__/
+*.pyc
+*.db
+*.sqlite3
+templates/.snapshots_pre_salesforce_ui/*.sql
+backup/*.sql
+trash-out/

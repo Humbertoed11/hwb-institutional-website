@@ -25,6 +25,7 @@ def run_migration(db_url: str):
             # 1. Add Lifecycle, Contract, Compliance, and Facility columns to Customers
             cur.execute("""
                 ALTER TABLE "Customers"
+                ADD COLUMN IF NOT EXISTS cleaning_delivery_model VARCHAR(50) DEFAULT 'DIRECT_W2',
                 ADD COLUMN IF NOT EXISTS cleanable_sqft INTEGER DEFAULT 0,
                 ADD COLUMN IF NOT EXISTS monthly_billing_rate NUMERIC(10,2) DEFAULT 0.00,
                 ADD COLUMN IF NOT EXISTS overtime_billing_rate NUMERIC(10,2) DEFAULT 0.00,

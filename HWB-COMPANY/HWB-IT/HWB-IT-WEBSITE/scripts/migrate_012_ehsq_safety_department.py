@@ -11,14 +11,13 @@ import sys
 import psycopg2
 from datetime import datetime, date
 
-DATABASE_URL = os.environ.get('DATABASE_URL')
-if not DATABASE_URL:
-    print("[ERROR] DATABASE_URL not set in environment.")
-    sys.exit(1)
-
-def run_migration():
+def run_migration(db_url: str = None):
     print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] --- Starting Migration 012: Safety & EHSQ Department ---")
-    conn = psycopg2.connect(DATABASE_URL)
+    target_url = db_url or os.environ.get('DATABASE_URL')
+    if not target_url:
+        print("[ERROR] DATABASE_URL not set in environment.")
+        return
+    conn = psycopg2.connect(target_url)
     conn.autocommit = False
     cur = conn.cursor()
 
