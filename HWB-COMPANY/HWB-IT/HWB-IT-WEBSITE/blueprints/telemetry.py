@@ -170,17 +170,29 @@ def track_email_open(tracking_token):
                         status = CASE WHEN status IN ('STAGED', 'AWAITING_APPROVAL', 'SENT') THEN 'OPENED' ELSE status END,
                         updated_at = CURRENT_TIMESTAMP
                     WHERE tracking_token = %s
-                    RETURNING campaign_id;
+                    RETURNING campaign_id, lead_id, open_count, facility_name;
                 ''', (tracking_token,))
                 row = cur.fetchone()
-                if row and row[0]:
-                    camp_id = row[0]
-                    cur.execute('''
-                        UPDATE "MarketingCampaigns"
-                        SET opened_count = (SELECT COUNT(DISTINCT id) FROM "CampaignRecipients" WHERE campaign_id = %s AND COALESCE(open_count, 0) > 0),
-                            updated_at = CURRENT_TIMESTAMP
-                        WHERE id = %s;
-                    ''', (camp_id, camp_id))
+                if row:
+                    camp_id = row['campaign_id'] if isinstance(row, dict) else row[0]
+                    lead_id = row['lead_id'] if isinstance(row, dict) else row[1]
+                    open_count = row['open_count'] if isinstance(row, dict) else row[2]
+                    facility = row['facility_name'] if isinstance(row, dict) else row[3]
+
+                    if camp_id:
+                        cur.execute('''
+                            UPDATE "MarketingCampaigns"
+                            SET opened_count = (SELECT COUNT(DISTINCT id) FROM "CampaignRecipients" WHERE campaign_id = %s AND COALESCE(open_count, 0) > 0),
+                                updated_at = CURRENT_TIMESTAMP
+                            WHERE id = %s;
+                        ''', (camp_id, camp_id))
+
+                    if lead_id:
+                        cur.execute('''
+                            INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
+                            VALUES (%s, 'Lead', 'Email Opened', %s);
+                        ''', (lead_id, f"Customer opened marketing email (View #{open_count}) for {facility or 'facility'}"))
+
                 conn.commit()
         except Exception as e:
             if conn:
@@ -217,8 +229,18 @@ def track_email_click(tracking_token):
                         click_count = COALESCE(click_count, 0) + 1,
                         status = 'ENGAGED',
                         updated_at = CURRENT_TIMESTAMP
-                    WHERE tracking_token = %s;
+                    WHERE tracking_token = %s
+                    RETURNING campaign_id, lead_id, facility_name;
                 ''', (tracking_token,))
+                click_row = cur.fetchone()
+                if click_row:
+                    c_lead_id = click_row['lead_id'] if isinstance(click_row, dict) else click_row[1]
+                    c_facility = click_row['facility_name'] if isinstance(click_row, dict) else click_row[2]
+                    if c_lead_id:
+                        cur.execute('''
+                            INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
+                            VALUES (%s, 'Lead', 'Link Clicked', %s);
+                        ''', (c_lead_id, f"Customer clicked walkthrough booking link in marketing email for {c_facility or 'facility'}"))
                 conn.commit()
         except Exception as e:
             if conn:

@@ -353,11 +353,22 @@ def api_lead_hub(id):
                 contacts = cur.fetchall()
                 cur.execute('SELECT * FROM "GlobalActivities" WHERE parent_id = %s AND parent_type = %s ORDER BY timestamp DESC', (id, "Lead"))
                 activities = cur.fetchall()
+                cur.execute('''
+                    SELECT cr.id as recipient_id, cr.campaign_id, mc.name as campaign_name, mc.campaign_code,
+                           cr.status as campaign_status, cr.current_step, cr.open_count, cr.opened_at,
+                           cr.click_count, cr.clicked_at, cr.recipient_email, mc.sender_persona
+                    FROM "CampaignRecipients" cr
+                    JOIN "MarketingCampaigns" mc ON cr.campaign_id = mc.id
+                    WHERE cr.lead_id = %s
+                    ORDER BY cr.id DESC;
+                ''', (id,))
+                campaigns = cur.fetchall()
 
                 return jsonify({
                     'lead': serialize_row(lead),
                     'contacts': [serialize_row(c) for c in contacts],
-                    'activities': [serialize_row(a) for a in activities]
+                    'activities': [serialize_row(a) for a in activities],
+                    'campaigns': [serialize_row(c) for c in campaigns]
                 })
 
             elif request.method in ['PUT', 'PATCH']:
@@ -2947,6 +2958,12 @@ def api_marketing_campaign_create():
                     ''', (campaign_id, lid, email.strip(), director_name, center, city, county, cap or 0, sqf or 0, token))
                     staged_count += 1
 
+                    if lid:
+                        cur.execute('''
+                            INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
+                            VALUES (%s, 'Lead', 'Marketing Outreach', %s);
+                        ''', (lid, f"Enrolled in marketing campaign: '{name}' ({campaign_code}) - Status: STAGED"))
+
                 cur.execute('''
                     UPDATE "MarketingCampaigns"
                     SET total_targets = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s),
@@ -3167,8 +3184,15 @@ def api_marketing_outbox_batch():
                         cur.execute('''
                             UPDATE "CampaignRecipients"
                             SET status = 'SENT', sent_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
-                            WHERE outbox_id = %s OR tracking_token = %s;
+                            WHERE outbox_id = %s OR tracking_token = %s
+                            RETURNING lead_id, facility_name;
                         ''', (eid, msg.get('tracking_token')))
+                        ret_recip = cur.fetchone()
+                        if ret_recip and ret_recip['lead_id']:
+                            cur.execute('''
+                                INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
+                                VALUES (%s, 'Lead', 'Email Sent', %s);
+                            ''', (ret_recip['lead_id'], f"Marketing outreach email sent to {msg['recipient']}: '{msg['subject']}'"))
                         success_count += 1
                     else:
                         error_count += 1

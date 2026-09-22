@@ -207,6 +207,12 @@
                             <a href="{{ url_for('admin_operations', view='leads', duplicates_only='true') if request.args.get('duplicates_only') != 'true' else url_for('admin_operations', view='leads') }}" style="display: flex; align-items: center; gap: 0.4rem; background: {% if request.args.get('duplicates_only') == 'true' %}#fef3c7{% else %}var(--white){% endif %}; border: 1px solid {% if request.args.get('duplicates_only') == 'true' %}#f59e0b{% else %}var(--slate-300){% endif %}; padding: 0 0.75rem; border-radius: 6px; height: 36px; text-decoration: none; user-select: none;">
                                 <span style="font-size: 0.72rem; font-weight: 800; color: {% if request.args.get('duplicates_only') == 'true' %}#b45309{% else %}var(--slate-700){% endif %}; text-transform: uppercase;">⚠️ Dups ({{ dup_count }})</span>
                             </a>
+                            <a href="{{ url_for('admin_operations', view='leads', campaign_filter='opened') if request.args.get('campaign_filter') != 'opened' else url_for('admin_operations', view='leads') }}" style="display: flex; align-items: center; gap: 0.4rem; background: {% if request.args.get('campaign_filter') == 'opened' %}#dcfce7{% else %}var(--white){% endif %}; border: 1px solid {% if request.args.get('campaign_filter') == 'opened' %}#16a34a{% else %}var(--slate-300){% endif %}; padding: 0 0.75rem; border-radius: 6px; height: 36px; text-decoration: none; user-select: none;" title="Filter leads who opened a marketing email">
+                                <span style="font-size: 0.72rem; font-weight: 800; color: {% if request.args.get('campaign_filter') == 'opened' %}#15803d{% else %}var(--slate-700){% endif %}; text-transform: uppercase;">🔥 Opened Email</span>
+                            </a>
+                            <a href="{{ url_for('admin_operations', view='leads', campaign_filter='in_campaign') if request.args.get('campaign_filter') != 'in_campaign' else url_for('admin_operations', view='leads') }}" style="display: flex; align-items: center; gap: 0.4rem; background: {% if request.args.get('campaign_filter') == 'in_campaign' %}#eff6ff{% else %}var(--white){% endif %}; border: 1px solid {% if request.args.get('campaign_filter') == 'in_campaign' %}#3b82f6{% else %}var(--slate-300){% endif %}; padding: 0 0.75rem; border-radius: 6px; height: 36px; text-decoration: none; user-select: none;" title="Filter leads currently enrolled in a marketing campaign">
+                                <span style="font-size: 0.72rem; font-weight: 800; color: {% if request.args.get('campaign_filter') == 'in_campaign' %}#1d4ed8{% else %}var(--slate-700){% endif %}; text-transform: uppercase;">📬 In Campaign</span>
+                            </a>
                             <button type="submit" class="isc-btn isc-btn-primary" style="height: 36px; padding: 0 1.15rem; border-radius: 6px; font-size: 0.8rem; font-weight: 700;">Search</button>
                         </form>
                     </div>
@@ -334,7 +340,34 @@
                                 </td>
                                 {% for col_key in active_cols %}
                                     {% if col_key == 'company' %}
-                                    <td class="sticky-1"><div class="sigma-unit-data"><div class="sigma-unit-primary">{{ lead.center_name }} {% if lead.is_duplicate %}<span onclick="openCompareModal(event, '{{ lead.duplicate_group_id }}', '{{ lead.id }}')" style="background: #fef3c7; color: #b45309; border: 1px solid #fcd34d; padding: 0.1rem 0.4rem; border-radius: 0.4rem; font-size: 0.65rem; font-weight: 800; cursor: pointer; margin-left: 0.4rem;">⚠️ Twin</span>{% endif %}</div><div class="sigma-unit-secondary" style="font-weight: 500;">{{ lead.address if lead.address and lead.address != 'None' else '--' }}</div></div></td>
+                                    <td class="sticky-1">
+                                        <div class="sigma-unit-data">
+                                            <div class="sigma-unit-primary">{{ lead.center_name }} {% if lead.is_duplicate %}<span onclick="openCompareModal(event, '{{ lead.duplicate_group_id }}', '{{ lead.id }}')" style="background: #fef3c7; color: #b45309; border: 1px solid #fcd34d; padding: 0.1rem 0.4rem; border-radius: 0.4rem; font-size: 0.65rem; font-weight: 800; cursor: pointer; margin-left: 0.4rem;">⚠️ Twin</span>{% endif %}</div>
+                                            <div class="sigma-unit-secondary" style="font-weight: 500;">{{ lead.address if lead.address and lead.address != 'None' else '--' }}</div>
+                                            {% if lead.campaign_info %}
+                                                {% set cparts = lead.campaign_info.split('::') %}
+                                                {% set c_status = cparts[0] %}
+                                                {% set c_name = cparts[1] %}
+                                                {% set c_opens = cparts[2] | int %}
+                                                {% set c_opened_at = cparts[3] if cparts | length > 3 else '' %}
+                                                <div style="margin-top: 4px; display: flex; align-items: center; gap: 4px; flex-wrap: wrap;" onclick="event.stopPropagation();">
+                                                    {% if c_status == 'OPENED' or c_opens > 0 %}
+                                                        <span style="background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; font-size: 0.65rem; font-weight: 800; padding: 1px 6px; border-radius: 4px;" title="Customer opened campaign email {{ c_opened_at }}">
+                                                            👁️ Opened ({{ c_opens }}x) • {{ c_name }}
+                                                        </span>
+                                                    {% elif c_status == 'SENT' %}
+                                                        <span style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-size: 0.65rem; font-weight: 700; padding: 1px 6px; border-radius: 4px;" title="Campaign email delivered">
+                                                            ✉️ Sent • {{ c_name }}
+                                                        </span>
+                                                    {% elif c_status == 'AWAITING_APPROVAL' or c_status == 'STAGED' %}
+                                                        <span style="background: #f8fafc; color: #475569; border: 1px solid #cbd5e1; font-size: 0.65rem; font-weight: 700; padding: 1px 6px; border-radius: 4px;" title="Queued in marketing campaign">
+                                                            📬 In Campaign • {{ c_name }}
+                                                        </span>
+                                                    {% endif %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </td>
                                     {% elif col_key == 'status' %}
                                      <td class="sticky-2" onclick="event.stopPropagation();">
                                          <select onchange="quickUpdateLead({{ lead.id }}, 'status', this.value, this)" class="sigma-pill-select" style="{% if lead.status == 'Do Not Call (DNC)' or lead.is_dnc %}background:#fee2e2; color:#991b1b; border-color:#fca5a5;{% elif lead.status == 'Active' %}background:#dcfce7; color:#15803d; border-color:#86efac;{% elif lead.status == 'New' or lead.status == 'NEW' %}background:#e0f2fe; color:#0369a1; border-color:#7dd3fc;{% elif lead.status == 'Contacted' %}background:#f3e8ff; color:#7e22ce; border-color:#d8b4fe;{% elif lead.status == 'Qualified' %}background:#ccfbf1; color:#0f766e; border-color:#5eead4;{% elif lead.status == 'Trained' %}background:#fef3c7; color:#b45309; border-color:#fde047;{% else %}background:#f1f5f9; color:#64748b; border-color:#cbd5e1;{% endif %}">
@@ -5247,6 +5280,7 @@
             <button onclick="iscLeadTab('timeline')" class="isc-tab-trigger" id="lead-tab-btn-timeline">History</button>
         </div>
                 <div id="lead-pane-overview" class="isc-lead-pane">
+            <div id="lead-campaign-banner" style="display:none; margin-bottom: 1.5rem;"></div>
             <div id="lead-list-overview" style="display: grid; grid-template-columns: 1fr 1fr 1fr !important; gap: 1.5rem;"></div>
             <div style="margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--slate-100); display: flex; justify-content: space-between; align-items: center; position: relative;">
                 <button type="button" onclick="markLeadDNCFromModal()" class="isc-btn isc-btn-outline" style="color: #dc2626; border-color: #fca5a5; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; height: 38px;"><i class="fas fa-ban"></i> Mark as DNC</button>
@@ -6582,6 +6616,33 @@
             setElText('pb-lead-value', lead.estimated_annual_value ? '$' + Number(lead.estimated_annual_value).toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0}) : '$0');
             setElText('pb-lead-address', `${lead.address || ''}, ${lead.city || ''} ${lead.state || ''}`);
             
+            const campBanner = document.getElementById('lead-campaign-banner');
+            if (campBanner) {
+                if (data.campaigns && data.campaigns.length > 0) {
+                    const c = data.campaigns[0];
+                    const isOpened = c.open_count > 0 || c.campaign_status === 'OPENED';
+                    campBanner.style.display = 'block';
+                    campBanner.innerHTML = `
+                        <div style="background: ${isOpened ? '#f0fdf4' : '#f8fafc'}; border: 1px solid ${isOpened ? '#86efac' : '#cbd5e1'}; border-radius: 8px; padding: 1rem 1.25rem; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-size: 0.68rem; font-weight: 800; color: ${isOpened ? '#15803d' : '#475569'}; text-transform: uppercase; letter-spacing: 0.05em;">Marketing Outreach Enrollment</div>
+                                <div style="font-size: 1.05rem; font-weight: 800; color: var(--slate-900); margin-top: 0.2rem;">${c.campaign_name} <span style="font-size: 0.75rem; color: var(--slate-500); font-weight: 600;">(${c.campaign_code})</span></div>
+                                <div style="font-size: 0.8rem; color: var(--slate-600); margin-top: 0.25rem;">Sender: <strong>${c.sender_persona || 'Humberto Dominguez'}</strong> • Recipient: <strong>${c.recipient_email}</strong></div>
+                            </div>
+                            <div style="text-align: right;">
+                                <span style="background: ${isOpened ? '#dcfce7' : '#eff6ff'}; color: ${isOpened ? '#15803d' : '#1d4ed8'}; border: 1px solid ${isOpened ? '#86efac' : '#bfdbfe'}; padding: 4px 10px; border-radius: 6px; font-weight: 800; font-size: 0.78rem;">
+                                    ${isOpened ? `👁️ Opened (${c.open_count}x)` : `📬 ${c.campaign_status}`}
+                                </span>
+                                ${c.opened_at ? `<div style="font-size: 0.72rem; color: #15803d; font-weight: 600; margin-top: 4px;">Last view: ${formatDashboardDate(c.opened_at)}</div>` : ''}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    campBanner.style.display = 'none';
+                    campBanner.innerHTML = '';
+                }
+            }
+
             const overview = [
                 { label: 'Company Name', val: lead.center_name || '--' },
                 { label: 'Main Manager', val: (lead.decision_maker || '--') + (lead.job_title ? ' (' + lead.job_title + ')' : '') },
@@ -6602,6 +6663,15 @@
                 { label: '🏷️ Ownership Classification', val: lead.ownership_type || '--' },
                 { label: 'Lead Owner', val: lead.owner_id ? (SYSTEM_USERS_MAP[lead.owner_id] || ('User #' + lead.owner_id)) : '-- Unassigned --' }
             ];
+
+            if (data.campaigns && data.campaigns.length > 0) {
+                const c = data.campaigns[0];
+                overview.unshift({
+                    label: 'Marketing Campaign',
+                    val: `${c.campaign_name} (${c.campaign_status}${c.open_count > 0 ? ' - Opened ' + c.open_count + 'x' : ''})`
+                });
+            }
+
             const listOverview = document.getElementById('lead-list-overview');
             if (listOverview) { listOverview.innerHTML = overview.map(o => `<div class="sigma-read-field"><label style="font-size:0.8rem; font-weight:500; color:var(--slate-600); text-transform:none; margin-bottom:0.25rem;">${o.label}</label><div style="font-weight:600; color:var(--slate-900); font-size:0.9rem;">${o.val}</div></div>`).join(''); }
 

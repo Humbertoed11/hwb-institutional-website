@@ -38,6 +38,7 @@ def admin_operations():
     active_only = request.args.get('active_only') == 'true'
     sort_by = request.args.get('sort')
     sort_dir = request.args.get('dir', '').upper()
+    campaign_filter = request.args.get('campaign_filter', '').strip()
     
     # Initialization
     leads, clients, work_orders, services, activities, system_users = [], [], [], [], [], []
@@ -232,6 +233,14 @@ def admin_operations():
                 if active_only:
                     lead_where_clauses.append("(SELECT COUNT(*) FROM \"GlobalActivities\" WHERE parent_id = l.id AND parent_type = 'Lead') > 0")
 
+                campaign_filter = request.args.get('campaign_filter', '').strip()
+                if campaign_filter == 'in_campaign' and active_view == 'leads':
+                    lead_where_clauses.append("EXISTS (SELECT 1 FROM \"CampaignRecipients\" cr WHERE cr.lead_id = l.id)")
+                elif campaign_filter == 'opened' and active_view == 'leads':
+                    lead_where_clauses.append("EXISTS (SELECT 1 FROM \"CampaignRecipients\" cr WHERE cr.lead_id = l.id AND COALESCE(cr.open_count, 0) > 0)")
+                elif campaign_filter == 'no_campaign' and active_view == 'leads':
+                    lead_where_clauses.append("NOT EXISTS (SELECT 1 FROM \"CampaignRecipients\" cr WHERE cr.lead_id = l.id)")
+
                 if search_q and active_view == 'leads':
                     s_clauses, s_params = parse_advanced_search(search_q, 'leads')
                     lead_where_clauses.extend(s_clauses)
@@ -254,7 +263,12 @@ def admin_operations():
                     SELECT l.*, 
                            (SELECT COUNT(*) FROM "GlobalActivities" WHERE parent_id = l.id AND parent_type = 'Lead') as activity_count, 
                            (SELECT MAX(timestamp) FROM "GlobalActivities" WHERE parent_id = l.id AND parent_type = 'Lead') as last_contact,
-                           (SELECT description FROM "GlobalActivities" WHERE parent_id = l.id AND parent_type = 'Lead' ORDER BY timestamp DESC LIMIT 1) as last_note
+                           (SELECT description FROM "GlobalActivities" WHERE parent_id = l.id AND parent_type = 'Lead' ORDER BY timestamp DESC LIMIT 1) as last_note,
+                           (SELECT cr.status || '::' || mc.name || '::' || COALESCE(cr.open_count, 0) || '::' || COALESCE(to_char(cr.opened_at, 'MM/DD HH:MI AM'), '')
+                            FROM "CampaignRecipients" cr
+                            JOIN "MarketingCampaigns" mc ON cr.campaign_id = mc.id
+                            WHERE cr.lead_id = l.id
+                            ORDER BY cr.id DESC LIMIT 1) as campaign_info
                     FROM "Leads" l 
                     {lead_where_str}
                 '''
@@ -621,6 +635,7 @@ def admin_operations():
 
     return render_template('backoffice_operations.html', 
                          active_view=active_view, leads=leads, leads_count=leads_count, dup_count=dup_count,
+                         campaign_filter=campaign_filter,
                          page=page, total_pages=total_pages, search_q=search_q,
                          sort_by=sort_by or '', sort_dir=sort_dir, active_cols=active_cols,
                          active_cols_str=active_cols_str, portfolio_total=portfolio_total,
@@ -687,7 +702,12 @@ def sales_desk():
             cur.execute(f'''
                 SELECT id, center_name, facility_type, industry, capacity, sqf, 
                        address, city, zipcode, director, decision_maker, job_title, 
-                       phone, email, status, estimated_annual_value
+                       phone, email, status, estimated_annual_value,
+                       (SELECT cr.status || '::' || mc.name || '::' || COALESCE(cr.open_count, 0) || '::' || COALESCE(to_char(cr.opened_at, 'MM/DD HH:MI AM'), '')
+                        FROM "CampaignRecipients" cr
+                        JOIN "MarketingCampaigns" mc ON cr.campaign_id = mc.id
+                        WHERE cr.lead_id = "Leads".id
+                        ORDER BY cr.id DESC LIMIT 1) as campaign_info
                 FROM "Leads"
                 {where_sql}
                 ORDER BY id ASC

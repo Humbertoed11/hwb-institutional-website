@@ -633,6 +633,25 @@
                                 <div class="company-cell">
                                     <span class="company-name">{{ lead.center_name }}</span>
                                     <span class="company-sector">{{ lead.facility_type or lead.industry or 'Commercial Facility' }}{% if lead.capacity %} | Cap: {{ lead.capacity }}{% endif %}</span>
+                                    {% if lead.campaign_info %}
+                                        {% set cparts = lead.campaign_info.split('::') %}
+                                        {% set c_status = cparts[0] %}
+                                        {% set c_name = cparts[1] %}
+                                        {% set c_opens = cparts[2] | int %}
+                                        {% if c_status == 'OPENED' or c_opens > 0 %}
+                                            <span style="display: inline-block; background: #dcfce7; color: #15803d; border: 1px solid #86efac; border-radius: 4px; padding: 1px 6px; font-size: 0.68rem; font-weight: 800; margin-top: 3px;">
+                                                👁️ Opened ({{ c_opens }}x) • {{ c_name }}
+                                            </span>
+                                        {% elif c_status == 'SENT' %}
+                                            <span style="display: inline-block; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; border-radius: 4px; padding: 1px 6px; font-size: 0.68rem; font-weight: 700; margin-top: 3px;">
+                                                ✉️ Sent • {{ c_name }}
+                                            </span>
+                                        {% elif c_status == 'STAGED' or c_status == 'AWAITING_APPROVAL' %}
+                                            <span style="display: inline-block; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; border-radius: 4px; padding: 1px 6px; font-size: 0.68rem; font-weight: 700; margin-top: 3px;">
+                                                📬 In Campaign • {{ c_name }}
+                                            </span>
+                                        {% endif %}
+                                    {% endif %}
                                 </div>
                             </td>
                             <td>
