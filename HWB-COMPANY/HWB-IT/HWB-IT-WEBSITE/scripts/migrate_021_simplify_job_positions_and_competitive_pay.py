@@ -1,10 +1,8 @@
 """
-Migration 017: SigmaFidelity™ Job Positions & Digital Job Descriptions
-Standard: HWB-QMS-7.2 / ISO 9001:2015 Clause 7.2 (Competence) / HWB-FORM-7.2-001
-Authority: Humberto Dominguez (CEO)
+Migration 021: Simplify Job Positions & Calibrate Competitive Pay
+Standard: Everyday Words Public Recruitment Protocol
+Authority: Humberto Dominguez (CEO) - Approved 09/22/2026
 Architect: George (Systems Architect & mbB)
-Purpose: Establishes the authoritative PostgreSQL JobPositions table and binds digital
-         job descriptions to the ATS Candidate Pool and Employee Master Dossier.
 """
 
 import os
@@ -16,7 +14,7 @@ load_dotenv()
 
 DB_URL = os.getenv("DATABASE_URL", "postgresql://hwbdev:hwbpassword@localhost:5432/hwb_dev_db")
 
-JOB_POSITIONS_DATA = [
+JOB_POSITIONS_UPDATE = [
     {
         "position_code": "HWB-POS-001",
         "title": "Commercial Cleaning Technician",
@@ -144,137 +142,46 @@ JOB_POSITIONS_DATA = [
 ]
 
 
-def run_migration(db_url: str):
+def run_migration(db_url: str = None):
+    target_url = db_url or DB_URL
     print("\n=======================================================")
-    print("  Applying Migration 017: Job Positions & Descriptions")
+    print("  Applying Migration 021: Simplify Job Positions")
     print("=======================================================")
 
-    conn = psycopg2.connect(db_url)
+    conn = psycopg2.connect(target_url)
     try:
         with conn.cursor() as cur:
-            # 1. Create "JobPositions" Table
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS "JobPositions" (
-                    id SERIAL PRIMARY KEY,
-                    position_code VARCHAR(50) UNIQUE NOT NULL,
-                    title VARCHAR(100) NOT NULL,
-                    department VARCHAR(50) NOT NULL,
-                    reports_to VARCHAR(100) NOT NULL,
-                    summary TEXT NOT NULL,
-                    key_responsibilities JSONB NOT NULL,
-                    required_competencies JSONB NOT NULL,
-                    required_experience VARCHAR(100) NOT NULL,
-                    required_certifications JSONB NOT NULL,
-                    physical_demands TEXT NOT NULL,
-                    work_environment TEXT NOT NULL,
-                    hourly_min NUMERIC(8,2) NOT NULL,
-                    hourly_max NUMERIC(8,2) NOT NULL,
-                    standard_weekly_hours NUMERIC(4,1) DEFAULT 40.0,
-                    is_active BOOLEAN DEFAULT TRUE,
-                    sop_template_id VARCHAR(50) DEFAULT 'HWB-FORM-7.2-001',
-                    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-                );
-            """)
-            print("  ✓ Verified/created 'JobPositions' table.")
-
-            # 2. Add columns to "Employees"
-            cur.execute("""
-                ALTER TABLE "Employees"
-                ADD COLUMN IF NOT EXISTS job_position_id INTEGER REFERENCES "JobPositions"(id) ON DELETE SET NULL,
-                ADD COLUMN IF NOT EXISTS job_description_acknowledged_at TIMESTAMP WITH TIME ZONE;
-            """)
-            print("  ✓ Added job_position_id & job_description_acknowledged_at to 'Employees'.")
-
-            # 3. Add columns to "JobApplicants"
-            cur.execute("""
-                ALTER TABLE "JobApplicants"
-                ADD COLUMN IF NOT EXISTS job_position_id INTEGER REFERENCES "JobPositions"(id) ON DELETE SET NULL;
-            """)
-            print("  ✓ Added job_position_id to 'JobApplicants'.")
-
-            # 4. Insert or Update Job Positions
-            for pos in JOB_POSITIONS_DATA:
+            for pos in JOB_POSITIONS_UPDATE:
                 cur.execute("""
-                    INSERT INTO "JobPositions" (
-                        position_code, title, department, reports_to, summary,
-                        key_responsibilities, required_competencies, required_experience,
-                        required_certifications, physical_demands, work_environment,
-                        hourly_min, hourly_max, standard_weekly_hours, is_active,
-                        sop_template_id, updated_at
-                    ) VALUES (
-                        %s, %s, %s, %s, %s,
-                        %s, %s, %s,
-                        %s, %s, %s,
-                        %s, %s, %s, TRUE,
-                        'HWB-FORM-7.2-001', NOW()
-                    )
-                    ON CONFLICT (position_code) DO UPDATE SET
-                        title = EXCLUDED.title,
-                        department = EXCLUDED.department,
-                        reports_to = EXCLUDED.reports_to,
-                        summary = EXCLUDED.summary,
-                        key_responsibilities = EXCLUDED.key_responsibilities,
-                        required_competencies = EXCLUDED.required_competencies,
-                        required_experience = EXCLUDED.required_experience,
-                        required_certifications = EXCLUDED.required_certifications,
-                        physical_demands = EXCLUDED.physical_demands,
-                        work_environment = EXCLUDED.work_environment,
-                        hourly_min = EXCLUDED.hourly_min,
-                        hourly_max = EXCLUDED.hourly_max,
-                        standard_weekly_hours = EXCLUDED.standard_weekly_hours,
-                        updated_at = NOW();
+                    UPDATE "JobPositions"
+                    SET title = %s,
+                        department = %s,
+                        reports_to = %s,
+                        summary = %s,
+                        key_responsibilities = %s,
+                        required_competencies = %s,
+                        required_experience = %s,
+                        required_certifications = %s,
+                        physical_demands = %s,
+                        work_environment = %s,
+                        hourly_min = %s,
+                        hourly_max = %s,
+                        standard_weekly_hours = %s,
+                        updated_at = NOW()
+                    WHERE position_code = %s;
                 """, (
-                    pos["position_code"], pos["title"], pos["department"], pos["reports_to"], pos["summary"],
+                    pos["title"], pos["department"], pos["reports_to"], pos["summary"],
                     json.dumps(pos["key_responsibilities"]), json.dumps(pos["required_competencies"]),
                     pos["required_experience"], json.dumps(pos["required_certifications"]),
                     pos["physical_demands"], pos["work_environment"],
-                    pos["hourly_min"], pos["hourly_max"], pos["standard_weekly_hours"]
+                    pos["hourly_min"], pos["hourly_max"], pos["standard_weekly_hours"],
+                    pos["position_code"]
                 ))
-            print(f"  ✓ Seeded {len(JOB_POSITIONS_DATA)} institutional Job Positions.")
-
-            # 5. Link existing employees based on primary_role
-            cur.execute("""
-                UPDATE "Employees" e
-                SET job_position_id = jp.id,
-                    job_description_acknowledged_at = COALESCE(e.hire_date::timestamp with time zone, NOW())
-                FROM "JobPositions" jp
-                WHERE e.job_position_id IS NULL
-                  AND (
-                      (jp.position_code = 'HWB-POS-003' AND e.primary_role ILIKE '%Supervisor%')
-                      OR (jp.position_code = 'HWB-POS-002' AND e.primary_role ILIKE '%Floor%')
-                      OR (jp.position_code = 'HWB-POS-004' AND (e.primary_role ILIKE '%Cleanroom%' OR e.primary_role ILIKE '%Sanitization%'))
-                      OR (jp.position_code = 'HWB-POS-001' AND jp.position_code NOT IN ('HWB-POS-002', 'HWB-POS-003', 'HWB-POS-004'))
-                  );
-            """)
-            print("  ✓ Linked existing Employees to active Job Positions.")
-
-            # 6. Link existing JobApplicants based on desired_role
-            cur.execute("""
-                UPDATE "JobApplicants" a
-                SET job_position_id = jp.id
-                FROM "JobPositions" jp
-                WHERE a.job_position_id IS NULL
-                  AND (
-                      (jp.position_code = 'HWB-POS-003' AND a.desired_role ILIKE '%Supervisor%')
-                      OR (jp.position_code = 'HWB-POS-002' AND a.desired_role ILIKE '%Floor%')
-                      OR (jp.position_code = 'HWB-POS-004' AND (a.desired_role ILIKE '%Cleanroom%' OR a.desired_role ILIKE '%Sanitization%'))
-                      OR (jp.position_code = 'HWB-POS-001')
-                  );
-            """)
-            print("  ✓ Linked existing JobApplicants to active Job Positions.")
-
             conn.commit()
-            print("=======================================================")
-            print("  Migration 017 Completed Successfully.")
-            print("=======================================================\n")
-    except Exception as e:
-        conn.rollback()
-        print(f"  ❌ Migration 017 Failed: {e}")
-        raise e
+            print(f"  ✓ Successfully updated {len(JOB_POSITIONS_UPDATE)} Job Positions with everyday language and calibrated pay.")
     finally:
         conn.close()
 
 
 if __name__ == "__main__":
-    run_migration(DB_URL)
+    run_migration()

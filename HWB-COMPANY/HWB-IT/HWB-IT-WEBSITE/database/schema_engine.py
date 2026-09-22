@@ -568,7 +568,8 @@ def apply_system_migrations(conn: Any, db_url: Optional[str] = None) -> None:
                 ("017_job_positions_and_descriptions", "scripts.migrate_017_job_positions_and_descriptions", "Job positions catalog, digital job descriptions, and ATS linking"),
                 ("018_institutional_users_and_schema_parity", "scripts.migrate_018_institutional_users_and_schema_parity", "Institutional Users table hardening, credential sync, and leads parity"),
                 ("019_ceo_credentials_and_alias_hardening", "scripts.migrate_019_ceo_credentials_and_alias_hardening", "CEO credentials and identity alias hardening"),
-                ("020_lead_data_integrity_cleansing", "scripts.migrate_020_lead_data_integrity_cleansing", "Lead data integrity, legacy industry/facility cleansing, address repair, and duplicate resolution")
+                ("020_lead_data_integrity_cleansing", "scripts.migrate_020_lead_data_integrity_cleansing", "Lead data integrity, legacy industry/facility cleansing, address repair, and duplicate resolution"),
+                ("021_simplify_job_positions_and_competitive_pay", "scripts.migrate_021_simplify_job_positions_and_competitive_pay", "Simplified job descriptions, everyday words, and calibrated competitive pay")
             ]
 
             for v_tag, mod_path, v_desc in modular_migrations:

@@ -145,20 +145,20 @@
                 </div>
 
                 <div class="sigma-doc-notice">
-                    <strong style="color: #0f172a;"><i class="fas fa-info-circle" style="color: var(--brand);"></i> Onboarding Requirements:</strong>
-                    Direct technicians must be legally authorized to work in the United States and be prepared to complete <strong>Form W-4</strong> and <strong>Form I-9</strong> upon job offer.
+                    <strong style="color: #0f172a;"><i class="fas fa-info-circle" style="color: var(--brand);"></i> Hiring Requirements:</strong>
+                    Direct technicians must be legally authorized to work in the United States and pass a basic background check upon job offer.
                 </div>
 
-                <!-- Available Positions & Digital Job Descriptions (Stage 1 Attraction / ISO 9001 Clause 7.2) -->
+                <!-- Available Positions -->
                 {% if job_positions %}
                 <div style="margin-bottom: 2.25rem;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
                         <div>
-                            <h3 style="font-size: 1.1rem; font-weight: 800; color: #0f172a; margin: 0;">Open Positions & Official Job Descriptions</h3>
-                            <p style="font-size: 0.8rem; color: #64748b; margin: 0.15rem 0 0 0;">Governed under ISO 9001:2015 Clause 7.2 (Competence) and HWB-FORM-7.2-001.</p>
+                            <h3 style="font-size: 1.1rem; font-weight: 800; color: #0f172a; margin: 0;">Open Positions & Job Opportunities</h3>
+                            <p style="font-size: 0.8rem; color: #64748b; margin: 0.15rem 0 0 0;">Steady hours, respectful management, and safe working environments.</p>
                         </div>
                         <span style="font-size: 0.72rem; font-weight: 800; background: #eff6ff; color: var(--brand); padding: 0.25rem 0.65rem; border-radius: 999px; border: 1px solid #bfdbfe;">
-                            <i class="fas fa-check-double"></i> Verified Wage Structure
+                            <i class="fas fa-check-circle"></i> Competitive Pay + Bonuses
                         </span>
                     </div>
 
@@ -167,8 +167,8 @@
                         <div class="isc-card" style="padding: 1.2rem; border-radius: 8px; border: 1px solid #e2e8f0; background: #f8fafc; display: flex; flex-direction: column; justify-content: space-between; transition: all 0.2s;" onmouseover="this.style.borderColor='var(--brand)'; this.style.background='#ffffff';" onmouseout="this.style.borderColor='#e2e8f0'; this.style.background='#f8fafc';">
                             <div>
                                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
-                                    <span style="font-size: 0.68rem; font-weight: 800; background: #f1f5f9; color: #475569; padding: 0.15rem 0.45rem; border-radius: 4px; font-family: monospace;">{{ pos.position_code }}</span>
-                                    <span style="font-size: 0.78rem; font-weight: 800; color: #16a34a; background: #f0fdf4; padding: 0.15rem 0.5rem; border-radius: 4px; border: 1px solid #bbf7d0;">${{ "%.2f"|format(pos.hourly_min) }} - ${{ "%.2f"|format(pos.hourly_max) }}/hr</span>
+                                    <span style="font-size: 0.68rem; font-weight: 800; background: #f1f5f9; color: #475569; padding: 0.15rem 0.45rem; border-radius: 4px;">{{ pos.department }}</span>
+                                    <span style="font-size: 0.78rem; font-weight: 800; color: #16a34a; background: #f0fdf4; padding: 0.15rem 0.5rem; border-radius: 4px; border: 1px solid #bbf7d0;">Competitive Pay</span>
                                 </div>
                                 <h4 style="font-size: 0.95rem; font-weight: 800; color: #0f172a; margin: 0 0 0.35rem 0;">{{ pos.title }}</h4>
                                 <p style="font-size: 0.78rem; color: #64748b; line-height: 1.45; margin: 0 0 0.75rem 0;">{{ pos.summary }}</p>
@@ -236,13 +236,13 @@
                             <select name="desired_role" id="tech-desired-role" onchange="onRoleSelectionChange(this)" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem; background: #fff;">
                                 {% if job_positions %}
                                     {% for pos in job_positions %}
-                                    <option value="{{ pos.title }}" data-pos-id="{{ pos.id }}" data-min="{{ pos.hourly_min }}" data-max="{{ pos.hourly_max }}">{{ pos.title }} (${{ "%.2f"|format(pos.hourly_min) }} - ${{ "%.2f"|format(pos.hourly_max) }}/hr)</option>
+                                    <option value="{{ pos.title }}" data-pos-id="{{ pos.id }}">{{ pos.title }} (Competitive Pay)</option>
                                     {% endfor %}
                                 {% else %}
-                                    <option value="Commercial Cleaning Technician" selected>Commercial Cleaning Technician ($16.00 - $19.00/hr)</option>
-                                    <option value="Floor Care & Heavy Equipment Specialist">Floor Care & Heavy Equipment Specialist ($19.00 - $24.00/hr)</option>
-                                    <option value="Lead Cleaning Site Supervisor">Lead Cleaning Site Supervisor ($22.00 - $28.00/hr)</option>
-                                    <option value="Cleanroom & Sanitization Technician">Cleanroom & Sanitization Technician ($20.00 - $26.00/hr)</option>
+                                    <option value="Commercial Cleaning Technician" selected>Commercial Cleaning Technician (Competitive Pay)</option>
+                                    <option value="Floor Care & Heavy Equipment Specialist">Floor Care & Heavy Equipment Specialist (Competitive Pay)</option>
+                                    <option value="Lead Cleaning Site Supervisor">Lead Cleaning Site Supervisor (Competitive Pay)</option>
+                                    <option value="Cleanroom & Sanitization Technician">Cleanroom & Sanitization Technician (Competitive Pay)</option>
                                 {% endif %}
                             </select>
                         </div>
@@ -261,7 +261,7 @@
                         <div>
                             <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Commercial Cleaning Experience</label>
                             <select name="experience_level" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem; background: #fff;">
-                                <option value="Entry">Entry Level (Willing to Learn SigmaStandards)</option>
+                                <option value="Entry">Entry Level (Paid training provided)</option>
                                 <option value="1-2 Years">1 - 2 Years Commercial Experience</option>
                                 <option value="3+ Years / Supervisor">3+ Years / Crew Lead Experience</option>
                             </select>
@@ -276,7 +276,7 @@
                         </div>
                     </div>
 
-                    <!-- Poka-Yoke Qualifications -->
+                    <!-- Qualifications -->
                     <div style="display: flex; gap: 2rem; flex-wrap: wrap; margin-bottom: 1.75rem; padding: 1rem; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
                         <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 600; color: #334155; cursor: pointer;">
                             <input type="checkbox" name="has_transportation" value="true" checked style="accent-color: var(--brand); width: 16px; height: 16px;">
@@ -284,7 +284,7 @@
                         </label>
                         <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 600; color: #334155; cursor: pointer;">
                             <input type="checkbox" name="authorized_to_work_us" value="true" required checked style="accent-color: var(--brand); width: 16px; height: 16px;">
-                            I am legally authorized to work in the United States (Form I-9)
+                            I am legally authorized to work in the United States
                         </label>
                     </div>
 
@@ -311,7 +311,7 @@
 
                 <div class="sigma-doc-notice">
                     <strong style="color: #0f172a;"><i class="fas fa-shield-alt" style="color: var(--brand);"></i> Subcontractor Verification Standards:</strong>
-                    Partner crews must provide an <strong>IRS Form W-9</strong> and a valid <strong>Certificate of Insurance (COI)</strong> with minimum $1,000,000 General Liability coverage prior to project dispatch. Texas Form DWC-83 required.
+                    Partner crews must provide a completed <strong>W-9 form</strong> and a valid <strong>Certificate of Insurance (COI)</strong> with minimum $1,000,000 General Liability coverage prior to project dispatch.
                 </div>
 
                 <div id="sub-success-message" style="display: none; padding: 2rem; background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; text-align: center; margin-bottom: 2rem;">
@@ -412,7 +412,7 @@
                         </div>
                         <div>
                             <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Expected Crew Hourly Rate or Subcontract Target</label>
-                            <input type="text" name="hourly_rate_range" placeholder="e.g. $22 - $26/worker-hour" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
+                            <input type="text" name="hourly_rate_range" placeholder="e.g. Hourly rate or project target" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
                         </div>
                     </div>
 
@@ -420,8 +420,8 @@
                         <label style="display: flex; align-items: flex-start; gap: 0.6rem; font-size: 0.82rem; font-weight: 600; color: #334155; cursor: pointer;">
                             <input type="checkbox" name="dwc83_agreed" value="true" required checked style="accent-color: var(--brand); width: 18px; height: 18px; margin-top: 2px;">
                             <span>
-                                <strong>Texas Independent Contractor Affirmation (Form DWC-83):</strong>
-                                We operate as an independent commercial subcontractor. We maintain our own tools, equipment, and required business registrations, and agree to execute standard project subcontract agreements before dispatch.
+                                <strong>Independent Subcontractor Agreement:</strong>
+                                We operate as an independent commercial cleaning business. We maintain our own tools, equipment, and business insurance, and agree to standard project subcontract terms before dispatch.
                             </span>
                         </label>
                     </div>
@@ -679,12 +679,14 @@ function viewJobDescription(id) {
         return;
     }
 
-    document.getElementById('pjd-code').innerText = pos.position_code || 'HWB-POS-001';
+    if (document.getElementById('pjd-code')) {
+        document.getElementById('pjd-code').innerText = pos.department || 'Operations';
+    }
     document.getElementById('pjd-title').innerText = pos.title || 'Position Title';
     document.getElementById('pjd-department').innerText = pos.department || 'Operations';
     document.getElementById('pjd-reports-to').innerText = pos.reports_to || 'Site Supervisor';
-    document.getElementById('pjd-pay').innerText = `$${parseFloat(pos.hourly_min).toFixed(2)} – $${parseFloat(pos.hourly_max).toFixed(2)} / hour`;
-    document.getElementById('pjd-hours').innerText = `${pos.standard_weekly_hours || 40} Hours / Week`;
+    document.getElementById('pjd-pay').innerText = 'Competitive Pay + Bonuses';
+    document.getElementById('pjd-hours').innerText = 'Full-Time & Part-Time Shifts';
     document.getElementById('pjd-summary').innerText = pos.summary || '';
 
     // Responsibilities
@@ -739,8 +741,7 @@ function closePublicJobDescModal() {
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 1rem;">
             <div>
                 <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;">
-                    <span style="font-size: 0.7rem; font-weight: 800; background: #f1f5f9; color: #475569; padding: 0.2rem 0.5rem; border-radius: 4px; font-family: monospace;" id="pjd-code">HWB-POS-001</span>
-                    <span style="font-size: 0.7rem; font-weight: 800; background: #ecfdf5; color: #065f46; padding: 0.2rem 0.5rem; border-radius: 4px;">ISO 9001 Clause 7.2 Compliant</span>
+                    <span style="font-size: 0.7rem; font-weight: 800; background: #eff6ff; color: var(--brand); padding: 0.2rem 0.5rem; border-radius: 4px;" id="pjd-code">Active Position</span>
                 </div>
                 <h2 id="pjd-title" style="font-size: 1.4rem; font-weight: 900; color: #0f172a; margin: 0;">Position Title</h2>
                 <div style="font-size: 0.8rem; color: #64748b; font-weight: 600; margin-top: 0.2rem;">
@@ -755,16 +756,16 @@ function closePublicJobDescModal() {
         <div style="margin-bottom: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem 1.25rem;">
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
                 <div>
-                    <span style="display: block; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b;">Approved Pay Range</span>
-                    <span id="pjd-pay" style="font-size: 1.1rem; font-weight: 900; color: #16a34a;">$16.00 – $19.00 / hour</span>
+                    <span style="display: block; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b;">Compensation</span>
+                    <span id="pjd-pay" style="font-size: 1.1rem; font-weight: 900; color: #16a34a;">Competitive Pay</span>
                 </div>
                 <div>
-                    <span style="display: block; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b;">Standard Shift Load</span>
-                    <span id="pjd-hours" style="font-size: 0.95rem; font-weight: 800; color: #0f172a;">40 Hours / Week</span>
+                    <span style="display: block; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b;">Schedule</span>
+                    <span id="pjd-hours" style="font-size: 0.95rem; font-weight: 800; color: #0f172a;">Full-Time & Part-Time Shifts</span>
                 </div>
                 <div>
-                    <span style="display: block; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b;">Document Standard</span>
-                    <span style="font-size: 0.95rem; font-weight: 800; color: #0f172a; font-family: monospace;">HWB-FORM-7.2-001</span>
+                    <span style="display: block; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b;">Pay Frequency</span>
+                    <span style="font-size: 0.95rem; font-weight: 800; color: #0f172a;">Weekly Direct Deposit</span>
                 </div>
             </div>
         </div>
