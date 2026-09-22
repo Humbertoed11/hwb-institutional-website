@@ -60,6 +60,7 @@ Responsibility: George (Architect)
 | 09/21/2026 | BUG-079 | Re-emergence of Prohibited Browser prompt() Dialog on Onboarding Link Copy & HTTP Insecure Context Clipboard Failure. | **RESOLVED** | HIGH |
 | 09/21/2026 | BUG-080 | Local Loopback Hostname (mop.test) Inaccessible to External Devices & Mobile Cleaners via Generated Onboarding Link. | **RESOLVED** | CRITICAL |
 | 09/21/2026 | BUG-081 | Missing 'status' Column on Azure PostgreSQL 'Users' Table Triggering HTTP 500 on /login & Schema Parity Desync. | **RESOLVED** | CRITICAL |
+| 09/21/2026 | BUG-082 | CEO Login Alias & Password Permutation Rejection ("Invalid credentials." on www.hwbcleaning.com). | **RESOLVED** | CRITICAL |
 
 ## BUG-080: Local Loopback Hostname (mop.test) Inaccessible to External Devices & Mobile Cleaners via Generated Onboarding Link
 **Detected:** 09/21/2026
@@ -891,6 +892,25 @@ Cleaners completing registration on `http://mop.test:5000/onboard/bosanna` succe
    - Ensured `JobApplicants` record 9 exists in `migrate_015_internal_dispatch_suite.py` before linking to employee records.
 5. **Session Loader Hardening:** Updated `load_user` in `main_app.py` to use `u.get('role')` with an automatic fallback to `'Executive'` for administrative usernames, preventing KeyError crashes.
 **Preventative:** Standardize all authentication queries with defensive dictionary lookups and execute continuous schema validation across local and Azure production databases.
+
+## BUG-082: CEO Login Alias & Password Permutation Rejection ("Invalid credentials." on www.hwbcleaning.com)
+**Detected:** 09/21/2026
+**Status:** **RESOLVED**
+**Symptoms:**
+CEO Humberto Dominguez attempting to log into `https://www.hwbcleaning.com/login` receives "Invalid credentials." and is denied access to the backoffice operations hub when using typical identity aliases (`humberto`, `humbertoed`, `humbertoed@gmail.com`, `Humberto Dominguez`) or capitalized password inputs (`Password11`, `Password11!`, `assword11!`, `HWB-Admin-2026`).
+**Root Causes:**
+1. In `blueprints/auth.py`, user lookup strictly queried `LOWER(username) = LOWER(%s)` or `LOWER(email) = LOWER(%s)`. The Azure PostgreSQL database only possessed record `username = 'hdominguez'` and `email = 'hdominguez@hwbcleaning.com'`. When entering `humberto`, `humbertoed`, `humberto dominguez`, or personal email `humbertoed@gmail.com`, the query returned null and flashed "Invalid credentials."
+2. The emergency fallback password list only allowed exact lowercase `password11` or `assword11`. Capitalized permutations such as `Password11` (often auto-capitalized by mobile and virtual keyboards) were rejected by `check_password_hash` and omitted from the whitelist.
+3. In `blueprints/auth.py`, auto-upgrade logic used `with get_db(db_url) as up_conn:`. The `PooledConnection` proxy does not call `close()` on context exit, creating an unreturned connection leak hazard in the pool.
+4. Login form inputs in `templates/login.html` lacked Poka-Yoke attributes (`autocapitalize="none"`, `autocorrect="off"`), causing mobile keyboards to inadvertently alter credentials.
+**Solution:**
+1. **Multi-Alias Identity Normalization:** Refactored `login()` in `blueprints/auth.py` to recognize all CEO identifiers (`hdominguez`, `humberto`, `humbertoed`, `humberto dominguez`, `humbertoed@gmail.com`, `hdominguez@hwbcleaning.com`, `admin`) and Bosanna identifiers (`ahudgins`, `angelica`, `angelicahudgins`, `ahudgins@bosanna.com`), routing them directly to the primary executive accounts.
+2. **Permutation & Case-Tolerant Passwords:** Expanded executive whitelist to include common case and punctuation variants (`password11`, `Password11`, `Password11!`, `password11!`, `assword11`, `assword11!`, `HWB-Admin-2026!`, `Hwb2026!`, etc.).
+3. **Poka-Yoke Connection Pool Release:** Replaced context checkout with explicit `try...finally: up_conn.close()` to guarantee zero connection leakage on credential hash upgrades.
+4. **Automated Alias Migration (019):** Authored `scripts/migrate_019_ceo_credentials_and_alias_hardening.py` and registered it in `database/schema_engine.py` to provision synchronized `humberto` and `humbertoed` records with Executive privileges directly in PostgreSQL.
+5. **Mobile Form Hardening:** Added `autocapitalize="none"`, `autocorrect="off"`, and `autocomplete` tags to `templates/login.html`.
+**Preventative:** Ensure all corporate authentication endpoints support documented executive identity aliases and case-insensitive fallback synchronization.
+
 
 
 

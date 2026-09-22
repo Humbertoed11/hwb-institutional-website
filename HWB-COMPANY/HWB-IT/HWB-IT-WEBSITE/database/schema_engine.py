@@ -566,7 +566,8 @@ def apply_system_migrations(conn: Any, db_url: Optional[str] = None) -> None:
                 ("015_internal_dispatch_suite", "scripts.migrate_015_internal_dispatch_suite", "Internal dispatch work orders, shifts, and execution monitor"),
                 ("016_sensitive_pii_vault", "scripts.migrate_016_sensitive_pii_vault", "Sensitive PII AES-256 encrypted vault for SSN/ITIN and banking"),
                 ("017_job_positions_and_descriptions", "scripts.migrate_017_job_positions_and_descriptions", "Job positions catalog, digital job descriptions, and ATS linking"),
-                ("018_institutional_users_and_schema_parity", "scripts.migrate_018_institutional_users_and_schema_parity", "Institutional Users table hardening, credential sync, and leads parity")
+                ("018_institutional_users_and_schema_parity", "scripts.migrate_018_institutional_users_and_schema_parity", "Institutional Users table hardening, credential sync, and leads parity"),
+                ("019_ceo_credentials_and_alias_hardening", "scripts.migrate_019_ceo_credentials_and_alias_hardening", "CEO credentials and identity alias hardening")
             ]
 
             for v_tag, mod_path, v_desc in modular_migrations:
