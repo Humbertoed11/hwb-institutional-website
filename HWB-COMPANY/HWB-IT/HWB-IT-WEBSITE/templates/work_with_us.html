@@ -76,6 +76,29 @@
     font-size: 0.85rem;
     color: var(--slate-600);
 }
+.sigma-input:focus {
+    outline: none !important;
+    border-color: var(--brand) !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18) !important;
+}
+.sigma-input.has-error {
+    border-color: #ef4444 !important;
+    background-color: #fef2f2 !important;
+}
+.workforce-error-box {
+    display: none;
+    padding: 0.85rem 1.15rem;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-left: 4px solid #ef4444;
+    border-radius: 8px;
+    color: #991b1b;
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    align-items: center;
+    gap: 0.6rem;
+}
 </style>
 
 <!-- Hero Section -->
@@ -126,30 +149,80 @@
                     Direct technicians must be legally authorized to work in the United States and be prepared to complete <strong>Form W-4</strong> and <strong>Form I-9</strong> upon job offer.
                 </div>
 
+                <!-- Available Positions & Digital Job Descriptions (Stage 1 Attraction / ISO 9001 Clause 7.2) -->
+                {% if job_positions %}
+                <div style="margin-bottom: 2.25rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+                        <div>
+                            <h3 style="font-size: 1.1rem; font-weight: 800; color: #0f172a; margin: 0;">Open Positions & Official Job Descriptions</h3>
+                            <p style="font-size: 0.8rem; color: #64748b; margin: 0.15rem 0 0 0;">Governed under ISO 9001:2015 Clause 7.2 (Competence) and HWB-FORM-7.2-001.</p>
+                        </div>
+                        <span style="font-size: 0.72rem; font-weight: 800; background: #eff6ff; color: var(--brand); padding: 0.25rem 0.65rem; border-radius: 999px; border: 1px solid #bfdbfe;">
+                            <i class="fas fa-check-double"></i> Verified Wage Structure
+                        </span>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem;">
+                        {% for pos in job_positions %}
+                        <div class="isc-card" style="padding: 1.2rem; border-radius: 8px; border: 1px solid #e2e8f0; background: #f8fafc; display: flex; flex-direction: column; justify-content: space-between; transition: all 0.2s;" onmouseover="this.style.borderColor='var(--brand)'; this.style.background='#ffffff';" onmouseout="this.style.borderColor='#e2e8f0'; this.style.background='#f8fafc';">
+                            <div>
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                                    <span style="font-size: 0.68rem; font-weight: 800; background: #f1f5f9; color: #475569; padding: 0.15rem 0.45rem; border-radius: 4px; font-family: monospace;">{{ pos.position_code }}</span>
+                                    <span style="font-size: 0.78rem; font-weight: 800; color: #16a34a; background: #f0fdf4; padding: 0.15rem 0.5rem; border-radius: 4px; border: 1px solid #bbf7d0;">${{ "%.2f"|format(pos.hourly_min) }} - ${{ "%.2f"|format(pos.hourly_max) }}/hr</span>
+                                </div>
+                                <h4 style="font-size: 0.95rem; font-weight: 800; color: #0f172a; margin: 0 0 0.35rem 0;">{{ pos.title }}</h4>
+                                <p style="font-size: 0.78rem; color: #64748b; line-height: 1.45; margin: 0 0 0.75rem 0;">{{ pos.summary }}</p>
+                            </div>
+                            <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem; border-top: 1px solid #e2e8f0; padding-top: 0.75rem;">
+                                <button type="button" onclick="viewJobDescription({{ pos.id }})" class="isc-btn isc-btn-outline" style="flex: 1; height: 32px; font-size: 0.72rem; font-weight: 700; border-radius: 5px; color: #475569; border-color: #cbd5e1; background: #ffffff; padding: 0 0.5rem;">
+                                    <i class="fas fa-file-alt"></i> Details
+                                </button>
+                                <button type="button" onclick="selectRoleAndApply('{{ pos.title }}', {{ pos.id }})" class="isc-btn isc-btn-primary" style="flex: 1; height: 32px; font-size: 0.72rem; font-weight: 800; border-radius: 5px; padding: 0 0.5rem;">
+                                    <i class="fas fa-arrow-down"></i> Apply
+                                </button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
                 <div id="tech-success-message" style="display: none; padding: 2rem; background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; text-align: center; margin-bottom: 2rem;">
                     <div style="font-size: 2.5rem; color: #16a34a; margin-bottom: 0.5rem;"><i class="fas fa-check-circle"></i></div>
                     <h3 style="font-size: 1.25rem; font-weight: 800; color: #166534; margin-bottom: 0.5rem;">Application Successfully Submitted!</h3>
-                    <p style="color: #15803d; font-size: 0.9rem; max-width: 500px; margin: 0 auto;">
+                    <p style="color: #15803d; font-size: 0.9rem; max-width: 500px; margin: 0 auto; line-height: 1.5;">
                         Thank you for applying to HWB Cleaning Services. Our operations supervisor will reach out via phone or text message within 24–48 hours for a quick 5-minute phone interview.
                     </p>
+                    <div style="margin-top: 1.5rem;">
+                        <button type="button" onclick="resetTechForm()" class="isc-btn isc-btn-outline" style="height: 38px; padding: 0 1.25rem; font-size: 0.85rem; font-weight: 700; border-radius: 6px; border: 1.5px solid #16a34a; color: #166534; background: #ffffff;">
+                            <i class="fas fa-redo"></i> Submit Another Application
+                        </button>
+                    </div>
+                </div>
+
+                <div id="tech-error-box" class="workforce-error-box">
+                    <i class="fas fa-exclamation-circle" style="color: #dc2626; font-size: 1.1rem; flex-shrink: 0;"></i>
+                    <span id="tech-error-text"></span>
                 </div>
 
                 <form id="form-tech-application" onsubmit="submitTechnicianApp(event)">
+                    <input type="hidden" name="job_position_id" id="tech-job-position-id" value="{% if job_positions %}{{ job_positions[0].id }}{% else %}1{% endif %}">
+                    
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; margin-bottom: 1.25rem;">
                         <div>
                             <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Full Name *</label>
-                            <input type="text" name="full_name" required placeholder="First and Last Name" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
+                            <input type="text" name="full_name" required autocomplete="name" placeholder="First and Last Name" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
                         </div>
                         <div>
                             <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Phone Number (Mobile for SMS) *</label>
-                            <input type="tel" name="phone" required placeholder="(214) 555-0123" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
+                            <input type="tel" id="tech-phone" name="phone" required autocomplete="tel" placeholder="(214)-555-0123" maxlength="14" oninput="maskPhone(this)" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
                         </div>
                     </div>
 
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; margin-bottom: 1.25rem;">
                         <div>
                             <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Email Address</label>
-                            <input type="email" name="email" placeholder="name@email.com" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
+                            <input type="email" name="email" autocomplete="email" placeholder="name@email.com" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
                         </div>
                         <div>
                             <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">City / Location in DFW *</label>
@@ -160,11 +233,17 @@
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; margin-bottom: 1.25rem;">
                         <div>
                             <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Position Desired</label>
-                            <select name="desired_role" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem; background: #fff;">
-                                <option value="Commercial Cleaning Technician">Commercial Cleaning Technician</option>
-                                <option value="Lead Cleaner / Working Supervisor">Lead Cleaner / Working Supervisor</option>
-                                <option value="Floor Care Specialist (Strip & Wax)">Floor Care Specialist (Strip & Wax)</option>
-                                <option value="Post-Construction Cleaner">Post-Construction Cleaner</option>
+                            <select name="desired_role" id="tech-desired-role" onchange="onRoleSelectionChange(this)" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem; background: #fff;">
+                                {% if job_positions %}
+                                    {% for pos in job_positions %}
+                                    <option value="{{ pos.title }}" data-pos-id="{{ pos.id }}" data-min="{{ pos.hourly_min }}" data-max="{{ pos.hourly_max }}">{{ pos.title }} (${{ "%.2f"|format(pos.hourly_min) }} - ${{ "%.2f"|format(pos.hourly_max) }}/hr)</option>
+                                    {% endfor %}
+                                {% else %}
+                                    <option value="Commercial Cleaning Technician" selected>Commercial Cleaning Technician ($16.00 - $19.00/hr)</option>
+                                    <option value="Floor Care & Heavy Equipment Specialist">Floor Care & Heavy Equipment Specialist ($19.00 - $24.00/hr)</option>
+                                    <option value="Lead Cleaning Site Supervisor">Lead Cleaning Site Supervisor ($22.00 - $28.00/hr)</option>
+                                    <option value="Cleanroom & Sanitization Technician">Cleanroom & Sanitization Technician ($20.00 - $26.00/hr)</option>
+                                {% endif %}
                             </select>
                         </div>
                         <div>
@@ -238,31 +317,41 @@
                 <div id="sub-success-message" style="display: none; padding: 2rem; background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; text-align: center; margin-bottom: 2rem;">
                     <div style="font-size: 2.5rem; color: #16a34a; margin-bottom: 0.5rem;"><i class="fas fa-check-circle"></i></div>
                     <h3 style="font-size: 1.25rem; font-weight: 800; color: #166534; margin-bottom: 0.5rem;">Partner Profile Registered!</h3>
-                    <p style="color: #15803d; font-size: 0.9rem; max-width: 550px; margin: 0 auto;">
+                    <p style="color: #15803d; font-size: 0.9rem; max-width: 550px; margin: 0 auto; line-height: 1.5;">
                         Your business entity has been added to our pre-qualified subcontractor bench. Our estimating and operations desk will contact you with Scope of Work details as relevant project bids are awarded.
                     </p>
+                    <div style="margin-top: 1.5rem;">
+                        <button type="button" onclick="resetSubForm()" class="isc-btn isc-btn-outline" style="height: 38px; padding: 0 1.25rem; font-size: 0.85rem; font-weight: 700; border-radius: 6px; border: 1.5px solid #16a34a; color: #166534; background: #ffffff;">
+                            <i class="fas fa-redo"></i> Register Another Crew
+                        </button>
+                    </div>
+                </div>
+
+                <div id="sub-error-box" class="workforce-error-box">
+                    <i class="fas fa-exclamation-circle" style="color: #dc2626; font-size: 1.1rem; flex-shrink: 0;"></i>
+                    <span id="sub-error-text"></span>
                 </div>
 
                 <form id="form-sub-application" onsubmit="submitSubcontractorApp(event)">
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; margin-bottom: 1.25rem;">
                         <div>
                             <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Business / Company Name *</label>
-                            <input type="text" name="company_name" required placeholder="e.g. Apex Janitorial LLC" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
+                            <input type="text" name="company_name" required autocomplete="organization" placeholder="e.g. Apex Janitorial LLC" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
                         </div>
                         <div>
                             <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Contact Person & Title *</label>
-                            <input type="text" name="contact_name" required placeholder="e.g. Carlos Gomez, Owner" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
+                            <input type="text" name="contact_name" required autocomplete="name" placeholder="e.g. Carlos Gomez, Owner" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
                         </div>
                     </div>
 
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; margin-bottom: 1.25rem;">
                         <div>
                             <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Business Phone *</label>
-                            <input type="tel" name="phone" required placeholder="(214) 555-0199" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
+                            <input type="tel" id="sub-phone" name="phone" required autocomplete="tel" placeholder="(214)-555-0199" maxlength="14" oninput="maskPhone(this)" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
                         </div>
                         <div>
                             <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Business Email *</label>
-                            <input type="email" name="email" required placeholder="contact@company.com" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
+                            <input type="email" name="email" required autocomplete="email" placeholder="contact@company.com" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
                         </div>
                     </div>
 
@@ -348,6 +437,70 @@
 </section>
 
 <script>
+function maskPhone(input) {
+    if (!input) return;
+    let v = input.value.replace(/\D/g, '');
+    if (v.length === 11 && v.startsWith('1')) v = v.substring(1);
+    if (v.length > 10) v = v.substring(0, 10);
+
+    if (!v) {
+        input.value = '';
+    } else if (v.length <= 3) {
+        input.value = `(${v}`;
+    } else if (v.length <= 6) {
+        input.value = `(${v.substring(0, 3)})-${v.substring(3)}`;
+    } else {
+        input.value = `(${v.substring(0, 3)})-${v.substring(3, 6)}-${v.substring(6, 10)}`;
+    }
+
+    if (input.classList.contains('has-error') && v.length === 10) {
+        input.classList.remove('has-error');
+    }
+}
+
+function showFormError(type, message) {
+    const box = document.getElementById(`${type}-error-box`);
+    const text = document.getElementById(`${type}-error-text`);
+    if (box && text) {
+        text.innerText = message;
+        box.style.display = 'flex';
+        box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+}
+
+function clearFormError(type) {
+    const box = document.getElementById(`${type}-error-box`);
+    if (box) box.style.display = 'none';
+}
+
+function resetTechForm() {
+    const form = document.getElementById('form-tech-application');
+    const success = document.getElementById('tech-success-message');
+    clearFormError('tech');
+    if (form) {
+        form.reset();
+        form.style.display = 'block';
+    }
+    if (success) success.style.display = 'none';
+    const phoneInput = document.getElementById('tech-phone');
+    if (phoneInput) phoneInput.classList.remove('has-error');
+    window.scrollTo({top: 250, behavior: 'smooth'});
+}
+
+function resetSubForm() {
+    const form = document.getElementById('form-sub-application');
+    const success = document.getElementById('sub-success-message');
+    clearFormError('sub');
+    if (form) {
+        form.reset();
+        form.style.display = 'block';
+    }
+    if (success) success.style.display = 'none';
+    const phoneInput = document.getElementById('sub-phone');
+    if (phoneInput) phoneInput.classList.remove('has-error');
+    window.scrollTo({top: 250, behavior: 'smooth'});
+}
+
 function switchWorkforceTab(tab) {
     const btnTech = document.getElementById('btn-tab-technician');
     const btnSub = document.getElementById('btn-tab-subcontractor');
@@ -365,16 +518,37 @@ function switchWorkforceTab(tab) {
         panelSub.classList.add('active');
         panelTech.classList.remove('active');
     }
+
+    try {
+        const url = new URL(window.location);
+        url.searchParams.set('track', tab);
+        window.history.replaceState({}, '', url);
+    } catch(e) {}
 }
 
 async function submitTechnicianApp(e) {
     e.preventDefault();
+    clearFormError('tech');
     const btn = document.getElementById('btn-submit-tech');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting Application...';
+    const origHtml = btn.innerHTML;
 
     const formData = new FormData(e.target);
     const data = Object.fromEntries(formData.entries());
+
+    // Validate 10-digit phone
+    const digits = (data.phone || '').replace(/\D/g, '');
+    if (digits.length !== 10) {
+        showFormError('tech', 'Please enter a complete 10-digit mobile phone number with area code.');
+        const phoneEl = document.getElementById('tech-phone');
+        if (phoneEl) {
+            phoneEl.classList.add('has-error');
+            phoneEl.focus();
+        }
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting Application...';
 
     try {
         const res = await fetch('/api/v1/workforce/apply', {
@@ -386,31 +560,45 @@ async function submitTechnicianApp(e) {
         if (res.ok && result.status === 'success') {
             document.getElementById('form-tech-application').style.display = 'none';
             document.getElementById('tech-success-message').style.display = 'block';
-            window.scrollTo({top: 200, behavior: 'smooth'});
+            window.scrollTo({top: 250, behavior: 'smooth'});
         } else {
-            alert(result.message || 'Submission error. Please try again or call (214)-586-0257.');
+            showFormError('tech', result.message || 'Submission error. Please check your entries or call our office at (214)-586-0257.');
             btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit 2-Minute Application';
+            btn.innerHTML = origHtml;
         }
     } catch(err) {
         console.error("Submission error:", err);
-        alert("Network error. Please call our office directly.");
+        showFormError('tech', "Network error connecting to intake server. Please call our office directly at (214)-586-0257.");
         btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit 2-Minute Application';
+        btn.innerHTML = origHtml;
     }
 }
 
 async function submitSubcontractorApp(e) {
     e.preventDefault();
+    clearFormError('sub');
     const btn = document.getElementById('btn-submit-sub');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registering Partner...';
+    const origHtml = btn.innerHTML;
 
     const formData = new FormData(e.target);
-    // Group multiple specialties checkboxes
     const specialties = formData.getAll('specialties').join(', ');
     const data = Object.fromEntries(formData.entries());
     data.specialties = specialties;
+
+    // Validate 10-digit phone
+    const digits = (data.phone || '').replace(/\D/g, '');
+    if (digits.length !== 10) {
+        showFormError('sub', 'Please enter a complete 10-digit business phone number with area code.');
+        const phoneEl = document.getElementById('sub-phone');
+        if (phoneEl) {
+            phoneEl.classList.add('has-error');
+            phoneEl.focus();
+        }
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registering Partner...';
 
     try {
         const res = await fetch('/api/v1/workforce/subcontractor', {
@@ -422,18 +610,204 @@ async function submitSubcontractorApp(e) {
         if (res.ok && result.status === 'success') {
             document.getElementById('form-sub-application').style.display = 'none';
             document.getElementById('sub-success-message').style.display = 'block';
-            window.scrollTo({top: 200, behavior: 'smooth'});
+            window.scrollTo({top: 250, behavior: 'smooth'});
         } else {
-            alert(result.message || 'Submission error. Please try again or call (214)-586-0257.');
+            showFormError('sub', result.message || 'Registration error. Please check your entries or call our estimating desk at (214)-586-0257.');
             btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-handshake"></i> Register Subcontractor Crew for Project Bids';
+            btn.innerHTML = origHtml;
         }
     } catch(err) {
         console.error("Submission error:", err);
-        alert("Network error. Please call our office directly.");
+        showFormError('sub', "Network error connecting to intake server. Please call our office directly at (214)-586-0257.");
         btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-handshake"></i> Register Subcontractor Crew for Project Bids';
+        btn.innerHTML = origHtml;
     }
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Deep-linking support (?track=subcontractor or ?track=technician)
+    const urlParams = new URLSearchParams(window.location.search);
+    const track = (urlParams.get('track') || urlParams.get('tab') || urlParams.get('type') || '').toLowerCase();
+    if (track === 'subcontractor' || track === '1099' || track === 'partner' || track === 'subs') {
+        switchWorkforceTab('subcontractor');
+    }
+
+    // Attach paste and blur listeners to auto-format
+    ['tech-phone', 'sub-phone'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('paste', () => setTimeout(() => maskPhone(el), 10));
+            el.addEventListener('blur', () => maskPhone(el));
+        }
+    });
+});
+
+window.publicJobPositions = {{ job_positions|tojson|safe if job_positions else '[]' }};
+
+function onRoleSelectionChange(selectEl) {
+    const opt = selectEl.options[selectEl.selectedIndex];
+    const posId = opt.getAttribute('data-pos-id');
+    const inputId = document.getElementById('tech-job-position-id');
+    if (inputId && posId) {
+        inputId.value = posId;
+    }
+}
+
+function selectRoleAndApply(title, id) {
+    closePublicJobDescModal();
+    const select = document.getElementById('tech-desired-role');
+    const input = document.getElementById('tech-job-position-id');
+    if (select) {
+        for (let i = 0; i < select.options.length; i++) {
+            if (select.options[i].value === title || select.options[i].getAttribute('data-pos-id') == id) {
+                select.selectedIndex = i;
+                break;
+            }
+        }
+    }
+    if (input) input.value = id;
+    const form = document.getElementById('form-tech-application');
+    if (form) {
+        form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+function viewJobDescription(id) {
+    const pos = (window.publicJobPositions || []).find(p => p.id === id);
+    if (!pos) {
+        alert('Position details not found.');
+        return;
+    }
+
+    document.getElementById('pjd-code').innerText = pos.position_code || 'HWB-POS-001';
+    document.getElementById('pjd-title').innerText = pos.title || 'Position Title';
+    document.getElementById('pjd-department').innerText = pos.department || 'Operations';
+    document.getElementById('pjd-reports-to').innerText = pos.reports_to || 'Site Supervisor';
+    document.getElementById('pjd-pay').innerText = `$${parseFloat(pos.hourly_min).toFixed(2)} – $${parseFloat(pos.hourly_max).toFixed(2)} / hour`;
+    document.getElementById('pjd-hours').innerText = `${pos.standard_weekly_hours || 40} Hours / Week`;
+    document.getElementById('pjd-summary').innerText = pos.summary || '';
+
+    // Responsibilities
+    const respUl = document.getElementById('pjd-responsibilities');
+    respUl.innerHTML = '';
+    const resps = Array.isArray(pos.key_responsibilities) ? pos.key_responsibilities : (typeof pos.key_responsibilities === 'string' ? JSON.parse(pos.key_responsibilities || '[]') : []);
+    resps.forEach(r => {
+        const li = document.createElement('li');
+        li.innerText = r;
+        respUl.appendChild(li);
+    });
+
+    // Competencies
+    const compUl = document.getElementById('pjd-competencies');
+    compUl.innerHTML = '';
+    const comps = Array.isArray(pos.required_competencies) ? pos.required_competencies : (typeof pos.required_competencies === 'string' ? JSON.parse(pos.required_competencies || '[]') : []);
+    comps.forEach(c => {
+        const li = document.createElement('li');
+        li.innerText = c;
+        compUl.appendChild(li);
+    });
+
+    // Certifications
+    const certUl = document.getElementById('pjd-certifications');
+    certUl.innerHTML = '';
+    const certs = Array.isArray(pos.required_certifications) ? pos.required_certifications : (typeof pos.required_certifications === 'string' ? JSON.parse(pos.required_certifications || '[]') : []);
+    certs.forEach(ct => {
+        const li = document.createElement('li');
+        li.innerText = ct;
+        certUl.appendChild(li);
+    });
+
+    document.getElementById('pjd-physical').innerText = pos.physical_demands || 'Standard cleaning physical requirements.';
+    document.getElementById('pjd-environment').innerText = pos.work_environment || 'Commercial client facilities.';
+
+    const applyBtn = document.getElementById('btn-modal-apply-role');
+    applyBtn.onclick = () => selectRoleAndApply(pos.title, pos.id);
+
+    const modal = document.getElementById('modal-view-public-job-desc');
+    modal.style.display = 'flex';
+}
+
+function closePublicJobDescModal() {
+    const modal = document.getElementById('modal-view-public-job-desc');
+    if (modal) modal.style.display = 'none';
+}
 </script>
+
+<!-- Modal: Digital Job Description Viewer (HWB-FORM-7.2-001) -->
+<div id="modal-view-public-job-desc" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(4px); z-index: 9999; align-items: center; justify-content: center; padding: 1rem;">
+    <div style="background: #ffffff; width: 100%; max-width: 720px; max-height: 90vh; overflow-y: auto; border-radius: 12px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.3); border: 1px solid #e2e8f0; padding: 2.25rem;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 1rem;">
+            <div>
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;">
+                    <span style="font-size: 0.7rem; font-weight: 800; background: #f1f5f9; color: #475569; padding: 0.2rem 0.5rem; border-radius: 4px; font-family: monospace;" id="pjd-code">HWB-POS-001</span>
+                    <span style="font-size: 0.7rem; font-weight: 800; background: #ecfdf5; color: #065f46; padding: 0.2rem 0.5rem; border-radius: 4px;">ISO 9001 Clause 7.2 Compliant</span>
+                </div>
+                <h2 id="pjd-title" style="font-size: 1.4rem; font-weight: 900; color: #0f172a; margin: 0;">Position Title</h2>
+                <div style="font-size: 0.8rem; color: #64748b; font-weight: 600; margin-top: 0.2rem;">
+                    Department: <strong id="pjd-department" style="color: #0f172a;">Operations</strong> &bull; Reports To: <span id="pjd-reports-to">Site Supervisor</span>
+                </div>
+            </div>
+            <button type="button" onclick="closePublicJobDescModal()" style="background: #f8fafc; border: 1px solid #e2e8f0; width: 32px; height: 32px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #64748b;">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div style="margin-bottom: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem 1.25rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                <div>
+                    <span style="display: block; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b;">Approved Pay Range</span>
+                    <span id="pjd-pay" style="font-size: 1.1rem; font-weight: 900; color: #16a34a;">$16.00 – $19.00 / hour</span>
+                </div>
+                <div>
+                    <span style="display: block; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b;">Standard Shift Load</span>
+                    <span id="pjd-hours" style="font-size: 0.95rem; font-weight: 800; color: #0f172a;">40 Hours / Week</span>
+                </div>
+                <div>
+                    <span style="display: block; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b;">Document Standard</span>
+                    <span style="font-size: 0.95rem; font-weight: 800; color: #0f172a; font-family: monospace;">HWB-FORM-7.2-001</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Position Summary -->
+        <div style="margin-bottom: 1.5rem;">
+            <h4 style="font-size: 0.85rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #334155; margin-bottom: 0.4rem;">Summary of Position</h4>
+            <p id="pjd-summary" style="font-size: 0.88rem; color: #475569; line-height: 1.6; margin: 0;"></p>
+        </div>
+
+        <!-- Key Responsibilities -->
+        <div style="margin-bottom: 1.5rem;">
+            <h4 style="font-size: 0.85rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #334155; margin-bottom: 0.4rem;">Key Responsibilities</h4>
+            <ul id="pjd-responsibilities" style="margin: 0; padding-left: 1.25rem; font-size: 0.85rem; color: #475569; line-height: 1.6;"></ul>
+        </div>
+
+        <!-- Required Competencies & Certifications -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+            <div>
+                <h4 style="font-size: 0.85rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #334155; margin-bottom: 0.4rem;">Required Competencies</h4>
+                <ul id="pjd-competencies" style="margin: 0; padding-left: 1.25rem; font-size: 0.82rem; color: #475569; line-height: 1.5;"></ul>
+            </div>
+            <div>
+                <h4 style="font-size: 0.85rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #334155; margin-bottom: 0.4rem;">Required Certifications</h4>
+                <ul id="pjd-certifications" style="margin: 0; padding-left: 1.25rem; font-size: 0.82rem; color: #475569; line-height: 1.5;"></ul>
+            </div>
+        </div>
+
+        <!-- Physical Demands & Work Environment -->
+        <div style="margin-bottom: 1.75rem; background: #f8fafc; border-radius: 8px; padding: 1rem; border: 1px solid #e2e8f0; font-size: 0.82rem; color: #64748b; line-height: 1.5;">
+            <p style="margin: 0 0 0.5rem 0;"><strong style="color: #334155;">Physical Demands:</strong> <span id="pjd-physical"></span></p>
+            <p style="margin: 0;"><strong style="color: #334155;">Work Environment:</strong> <span id="pjd-environment"></span></p>
+        </div>
+
+        <!-- Action Footer -->
+        <div style="display: flex; justify-content: flex-end; gap: 0.75rem; border-top: 1px solid #e2e8f0; padding-top: 1.25rem;">
+            <button type="button" onclick="closePublicJobDescModal()" class="isc-btn isc-btn-outline" style="height: 40px; padding: 0 1.25rem; font-size: 0.85rem; font-weight: 700; border-radius: 6px;">
+                Close
+            </button>
+            <button type="button" id="btn-modal-apply-role" class="isc-btn isc-btn-primary" style="height: 40px; padding: 0 1.5rem; font-size: 0.85rem; font-weight: 800; border-radius: 6px;">
+                <i class="fas fa-check"></i> Apply for this Position
+            </button>
+        </div>
+    </div>
+</div>
 {% endblock %}

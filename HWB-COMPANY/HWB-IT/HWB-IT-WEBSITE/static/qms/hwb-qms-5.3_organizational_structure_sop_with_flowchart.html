@@ -35,7 +35,7 @@
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Author</strong></td>
-<td style="text-align: left;">George (Architect)</td>
+<td style="text-align: left;">George (Systems Architect)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Approved By</strong></td>
@@ -43,7 +43,7 @@
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Date</strong></td>
-<td style="text-align: left;">05/21/2026</td>
+<td style="text-align: left;">09/21/2026</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>ISO 9001 Clause</strong></td>
@@ -61,37 +61,64 @@
 <li><strong>Clear Work Separation:</strong> Keep Sales and Operations strictly separate from Planning and Tech teams.</li>
 <li><strong>Activity Tracking:</strong> Any change in who is in charge must be recorded in the database.</li>
 </ol>
-<h2 id="30-executive-roster">3.0 Executive Roster</h2>
-<h3 id="31-human-leadership">3.1 Human Leadership</h3>
+<h2 id="30-executive-roster">3.0 Executive Roster &amp; Duty Alignment</h2>
+<p>Per Institutional Mandates (Rule 1.1), roles and duties are defined across four specialized operational pillars:</p>
 <ul>
-<li><strong>Humberto Dominguez (CEO):</strong> The only person who can approve company documents and big changes.</li>
+    <li><strong>Humberto Dominguez (Chief Executive Officer):</strong> Permanent approval authority for all project documentation, SOPs, corporate contracts, and strategic budgets. Holds top management representation in ISO 9001 audits.</li>
+    <li><strong>Maria Bolanos (Vice President of Finance):</strong> Sole authority for financial oversight, development costs, and Warchest capital asset protection.</li>
+    <li><strong>George (Systems Architect &amp; Lead ISO Auditor):</strong> PhD in Business, Lean Six Sigma Master Black Belt (mbB), Senior ISO 9001 Auditor, and Senior Software Engineer. Holds sole institutional authority for ISO/QMS compliance, internal audits, and architecture.</li>
+    <li><strong>Silas Sync (Vice President of CRM):</strong> Responsible for relational customer data architecture, backoffice tracking, and enterprise pipeline synchronization.</li>
+    <li><strong>Lauri Tells (Vice President of Sales &amp; Marketing):</strong> Responsible for high-ticket commercial B2B lead generation, marketing campaigns, and client outreach.</li>
+    <li><strong>Peter (Recovery Specialist):</strong> Responsible for data backups, system recovery, Linux kernel stability, and database shadow snapshots.</li>
+    <li><strong>Natalie Navy (Chief Digital Officer):</strong> Responsible for future technology forecasting, AI delegation strategy, and Blue Ocean development.</li>
+    <li><strong>Operations Supervisors &amp; Safety Leads:</strong> On-site operational execution, work order dispatch, chemical SDS control, and facility security badging.</li>
+    <li><strong>Certified Cleaning Technicians:</strong> Facility cleaning, sanitization, PPE compliance, and zero-defect quality execution.</li>
 </ul>
-<h3 id="32-ai-support-team">3.2 AI Support Team</h3>
-<ul>
-<li><strong>George (Lead Developer):</strong> Main tech person. The only one in charge of ISO 9001 rules and system management.</li>
-<li><strong>CRM Specialist:</strong> Specialist for client data, lead lists, and client knowledge.</li>
-<li><strong>Marketing Lead (Lauri Tells):</strong> Automated system for getting big business clients and building brand trust.</li>
-<li><strong>Recovery Specialist (Peter):</strong> Reliable team member for keeping the system safe, making backups, and managing storage.</li>
-<li><strong>Innovation Lead (Natalie Navy):</strong> Specialist for future tech planning and new product ideas.</li>
-</ul>
-<h2 id="40-organizational-chart">4.0 Organizational Chart</h2>
+
+<h2 id="40-organizational-chart">4.0 Organizational Flowchart</h2>
 <div class="mermaid">
-graph TD
-    CEO[Humberto Dominguez CEO] --> ARCH[George Lead Developer]
-    CEO --> FINANCE[VP of Finance]
-    ARCH --> CRM[CRM Specialist]
-    ARCH --> MKT[Marketing Lead]
-    ARCH --> OPS[Operations Manager]
-    ARCH --> REC[Recovery Specialist]
-    OPS --> SUP[Cleaning Supervisor]
-    SUP --> STAFF[Cleaning Staff]
+flowchart TD
+    subgraph EXEC["Executive Leadership"]
+        CEO["<b>Humberto Dominguez</b><br/>Chief Executive Officer<br/><i>Permanent Approval Authority</i>"]
+        FIN["<b>Maria Bolanos</b><br/>VP of Finance<br/><i>Fiscal Oversight &amp; Warchest</i>"]
+    end
+
+    subgraph QMS_TECH["Quality &amp; Systems Architecture"]
+        ARCH["<b>George</b><br/>Systems Architect &amp; Lead Auditor<br/><i>Sole Authority for QMS/ISO</i>"]
+        REC["<b>Peter</b><br/>Recovery Specialist<br/><i>Kernel Integrity &amp; Backups</i>"]
+        CDO["<b>Natalie Navy</b><br/>Chief Digital Officer (CDO)<br/><i>Tech Forecasting &amp; Strategy</i>"]
+    end
+
+    subgraph REVENUE["Revenue &amp; Client Operations"]
+        CRM["<b>Silas Sync</b><br/>VP of CRM<br/><i>Relational Data &amp; Pipelines</i>"]
+        MKT["<b>Lauri Tells</b><br/>VP Sales &amp; Marketing<br/><i>B2B Growth &amp; Campaigns</i>"]
+    end
+
+    subgraph OPERATIONS["Operations &amp; Field Delivery"]
+        OPS["<b>Operations &amp; Field Leads</b><br/><i>Work Orders &amp; SOW Dispatch</i>"]
+        SAFETY["<b>Safety &amp; EHSQ Leads</b><br/><i>JHAs &amp; OSHA Compliance</i>"]
+        CREW["<b>Certified Cleaning Crew</b><br/><i>On-Site Facility Sanitization</i>"]
+    end
+
+    CEO --> ARCH
+    CEO --> FIN
+    CEO --> OPS
+    CEO --> CRM
+    ARCH --> REC
+    ARCH --> CDO
+    CRM --> MKT
+    OPS --> SAFETY
+    OPS --> CREW
+    CRM -.->|Lead Hand-Off| OPS
+    ARCH -.->|QMS Standards| OPS
 </div>
 
 <h2 id="50-verification-error-free-check">5.0 Verification (Error-Free Check)</h2>
 <ul>
-<li>Yearly review of who is in charge during Management Meetings.</li>
-<li>Checking the logs to make sure all AI actions match their specific job.</li>
+    <li>Annual review of executive roster during Annual Management Review meeting.</li>
+    <li>Audit logs verified to ensure system operations match approved duty alignments.</li>
 </ul>
+
 <h2 id="60-revision-history">6.0 Revision History</h2>
 <table>
 <thead>
@@ -104,16 +131,22 @@ graph TD
 </thead>
 <tbody>
 <tr>
+<td style="text-align: left;">1.0</td>
+<td style="text-align: left;">2026-02-20</td>
+<td style="text-align: left;">Gemini</td>
+<td style="text-align: left;">Initial Release.</td>
+</tr>
+<tr>
 <td style="text-align: left;">2.0.0</td>
 <td style="text-align: left;">05/21/2026</td>
 <td style="text-align: left;">George</td>
 <td style="text-align: left;">TOTAL MODERNIZATION. Defined AI Executive VP roles and added 2026 mandates.</td>
 </tr>
 <tr>
-<td style="text-align: left;">1.0</td>
-<td style="text-align: left;">2026-02-20</td>
-<td style="text-align: left;">Gemini</td>
-<td style="text-align: left;">Initial Release.</td>
+<td style="text-align: left;">3.0.0</td>
+<td style="text-align: left;">09/21/2026</td>
+<td style="text-align: left;">George (Systems Architect)</td>
+<td style="text-align: left;">Updated Executive Roster (Maria Bolanos, Silas Sync, Lauri Tells, Peter, Natalie Navy) and modernized Mermaid flowchart to multi-subgraph 2026 architecture. Approved by Humberto Dominguez, CEO.</td>
 </tr>
 </tbody>
 </table>

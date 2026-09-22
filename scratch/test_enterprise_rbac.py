@@ -106,7 +106,7 @@ def run_rbac_test():
     exec_html = r_exec_leads.text
     # Executive sees the full suite
     assert "GC Bids" in exec_html
-    assert "Work Monitor" in exec_html
+    assert ("Dispatch Hub" in exec_html or "Work Monitor" in exec_html)
     assert "/admin/executive" in exec_html
     assert "onclick=\"exportSelectedLeads()\"" in exec_html
     print("  [PASS] Executive has full access to all corporate tabs and Export tools")

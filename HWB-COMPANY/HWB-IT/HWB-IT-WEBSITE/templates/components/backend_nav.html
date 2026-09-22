@@ -277,6 +277,10 @@
                     <span><i class="fas fa-shield-virus" style="color: #ef4444;"></i> Quality Risk Monitor</span>
                     <span class="sigma-jump-badge" style="background:#fee2e2; color:#991b1b;">Audit Req</span>
                 </a>
+                <a href="/portal/bosanna/cockpit" target="_blank" class="sigma-jump-item">
+                    <span><i class="fas fa-landmark" style="color: #063333;"></i> Bosanna Prime Cockpit</span>
+                    <span class="sigma-jump-badge" style="background: #eef7f2; color: #063333; font-weight: 800;">TIPS #260102</span>
+                </a>
                 <div class="sigma-jump-divider"></div>
                 <button type="button" onclick="openAddForm('account')" class="sigma-jump-action">
                     <i class="fas fa-plus-circle" style="margin-right: 0.5rem; font-size: 0.85rem;"></i> + New Account Entry
@@ -298,14 +302,29 @@
                 <i class="fas fa-hard-hat" style="color: #f59e0b;"></i> GC Bids
             </a>
             {% endif %}
+            {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('institutional_bids', 'view')) or not current_user.custom_permissions %}
+            <a href="{{ url_for('admin_operations', view='institutional_bids') }}" class="sigma-nav-btn {% if request.endpoint == 'admin_operations' and active_view == 'institutional_bids' %}active{% endif %}">
+                <i class="fas fa-landmark" style="color: #6366f1;"></i> Institutional Bids
+            </a>
+            {% endif %}
+            {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('marketing', 'view')) or not current_user.custom_permissions %}
+            <a href="{{ url_for('admin_operations', view='marketing') }}" class="sigma-nav-btn {% if request.endpoint == 'admin_operations' and active_view == 'marketing' %}active{% endif %}">
+                <i class="fas fa-bullhorn" style="color: #ec4899;"></i> Marketing
+            </a>
+            {% endif %}
             {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('workforce', 'view')) or not current_user.custom_permissions %}
-            <a href="{{ url_for('admin_operations', view='workforce') }}" class="sigma-nav-btn {% if request.endpoint == 'admin_operations' and active_view == 'workforce' %}active{% endif %}">
-                <i class="fas fa-users" style="color: #10b981;"></i> Workforce
+            <a href="{{ url_for('admin_operations', view='workforce') }}" class="sigma-nav-btn {% if request.endpoint == 'admin_operations' and active_view == 'workforce' %}active{% endif %}" title="Internal W-2 Personnel, Applicants, Academy Training & Payroll">
+                <i class="fas fa-id-card-clip" style="color: #10b981;"></i> Human Resources (HR)
+            </a>
+            {% endif %}
+            {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('safety', 'view')) or not current_user.custom_permissions %}
+            <a href="{{ url_for('admin_operations', view='safety') }}" class="sigma-nav-btn {% if request.endpoint == 'admin_operations' and active_view == 'safety' %}active{% endif %}">
+                <i class="fas fa-shield-alt" style="color: #059669;"></i> Safety &amp; EHSQ
             </a>
             {% endif %}
             {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('monitor', 'view')) or not current_user.custom_permissions %}
-            <a href="{{ url_for('admin_operations', view='monitor') }}" class="sigma-nav-btn {% if request.endpoint == 'admin_operations' and active_view == 'monitor' %}active{% endif %}">
-                <i class="fas fa-chart-line" style="color: #06b6d4;"></i> Monitor
+            <a href="{{ url_for('admin_operations', view='monitor') }}" class="sigma-nav-btn {% if request.endpoint == 'admin_operations' and active_view == 'monitor' %}active{% endif %}" title="Internal Work Order Dispatch & Execution Monitor">
+                <i class="fas fa-clipboard-check" style="color: #06b6d4;"></i> Dispatch Hub
             </a>
             {% endif %}
             {% if current_user.role in ['Executive', 'Admin'] %}
@@ -332,8 +351,13 @@
             <div id="add-menu" style="display: none; position: absolute; right: 0; top: calc(100% + 6px); background: #ffffff; border: 1px solid var(--slate-200); border-radius: 8px; box-shadow: 0 14px 30px -4px rgba(15,23,42,0.18); padding: 0.5rem; z-index: 2000; min-width: 220px; text-align: left;">
                 <button onclick="openAddForm('lead')" class="isc-dropdown-btn"><i class="fas fa-building" style="margin-right: 0.5rem; color: var(--brand);"></i> New Lead</button>
                 <button onclick="openAddForm('account')" class="isc-dropdown-btn"><i class="fas fa-handshake" style="margin-right: 0.5rem; color: #10b981;"></i> New Account</button>
+                <a href="{{ url_for('admin_operations', view='monitor') }}" class="isc-dropdown-btn" style="text-decoration: none; display: flex; align-items: center; color: #0284c7; font-weight: 700;"><i class="fas fa-calendar-check" style="margin-right: 0.5rem; color: #0284c7;"></i> + New Shift Dispatch</a>
                 {% if current_user.role != 'Sales' %}
                     <button onclick="openAddForm('bid')" class="isc-dropdown-btn" style="color: #b45309; font-weight: 700;"><i class="fas fa-hard-hat" style="margin-right: 0.5rem; color: #f59e0b;"></i> + New GC Bid</button>
+                    <button onclick="openAddForm('institutional_bid')" class="isc-dropdown-btn" style="color: #4338ca; font-weight: 700;"><i class="fas fa-landmark" style="margin-right: 0.5rem; color: #6366f1;"></i> + New Institutional Bid</button>
+                    <button onclick="openAddForm('institutional_partner')" class="isc-dropdown-btn" style="color: #064e3b; font-weight: 700;"><i class="fas fa-handshake-angle" style="margin-right: 0.5rem; color: #059669;"></i> + New Model C Partner</button>
+                    <a href="/portal/bosanna/cockpit" target="_blank" class="isc-dropdown-btn" style="text-decoration: none; display: flex; align-items: center; color: #063333; font-weight: 700;"><i class="fas fa-chalkboard-user" style="margin-right: 0.5rem; color: #063333;"></i> Bosanna Prime Cockpit</a>
+                    <a href="/onboard/bosanna" target="_blank" class="isc-dropdown-btn" style="text-decoration: none; display: flex; align-items: center; color: #059669; font-weight: 700;"><i class="fas fa-user-check" style="margin-right: 0.5rem; color: #059669;"></i> Bosanna Cleaner Intake</a>
                     <a href="/work-with-us" target="_blank" class="isc-dropdown-btn" style="text-decoration: none; display: flex; align-items: center; color: #059669; font-weight: 700;"><i class="fas fa-user-plus" style="margin-right: 0.5rem; color: #10b981;"></i> Workforce Intake Portal</a>
                     <div style="height: 1px; background: var(--slate-100); margin: 0.35rem 0;"></div>
                     <a href="/manual/hwb-qms-7.6_backend_architecture.html" class="isc-dropdown-btn" style="text-decoration: none; display: block; color: var(--brand); font-weight: 800;"><i class="fas fa-file-code" style="margin-right: 0.5rem;"></i> 7.6 Backend Architecture</a>

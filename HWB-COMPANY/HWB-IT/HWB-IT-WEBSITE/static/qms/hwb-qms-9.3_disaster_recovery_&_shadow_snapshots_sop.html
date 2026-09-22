@@ -1,122 +1,180 @@
-<!-- 
-    SigmaFidelity™ Institutional SOP Template (HTML Version 3.0)
-    Standard: HWB-QMS-1.0
-    Document: HWB-QMS-9.3 Disaster Recovery & Shadow Snapshots SOP
-    Approved By: Humberto Dominguez, CEO
--->
 <div class="sop-card">
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-9.3</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">8.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.0.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
-        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">9.3 (Disaster Recovery & Safety Snapshots)</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.1.3 (Infrastructure) &amp; ISO 27001 A.12.1</span></div>
     </div>
 
     <div class="sop-content-body">
         <table>
             <thead>
                 <tr>
-                    <th><strong>Document Control</strong></th>
-                    <th></th>
+                    <th style="text-align: left;"><strong>Document Control</strong></th>
+                    <th style="text-align: left;"></th>
                 </tr>
             </thead>
             <tbody>
-                <tr><td><strong>Document Title</strong></td><td><strong>Disaster Recovery & Shadow Snapshots SOP</strong></td></tr>
-                <tr><td><strong>Document ID</strong></td><td>HWB-QMS-9.3</td></tr>
-                <tr><td><strong>Version</strong></td><td>8.0.0</td></tr>
-                <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
-                <tr><td><strong>Author</strong></td><td>George (Systems Architect)</td></tr>
-                <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
-                <tr><td><strong>Date</strong></td><td>05-22-2026</td></tr>
-                <tr><td><strong>ISO 9001 Clause</strong></td><td>9.3</td></tr>
+                <tr>
+                    <td style="text-align: left;"><strong>Document Title</strong></td>
+                    <td style="text-align: left;"><strong>Disaster Recovery and Data Restoration SOP</strong></td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;"><strong>Document ID</strong></td>
+                    <td style="text-align: left;">HWB-QMS-9.3</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;"><strong>Version</strong></td>
+                    <td style="text-align: left;">3.0.0</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;"><strong>Status</strong></td>
+                    <td style="text-align: left;">APPROVED</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;"><strong>Author</strong></td>
+                    <td style="text-align: left;">Peter (Recovery Specialist) &amp; George (Systems Architect)</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;"><strong>Approved By</strong></td>
+                    <td style="text-align: left;">Humberto Dominguez, CEO</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;"><strong>Date</strong></td>
+                    <td style="text-align: left;">09/21/2026</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;"><strong>ISO Standard</strong></td>
+                    <td style="text-align: left;">ISO 9001:2015 Clause 7.1.3 &amp; ISO 27001:2022 A.12.1 (Operational Continuity)</td>
+                </tr>
+            </tbody>
+        </table>
+        <hr />
+
+        <h1>Standard Operating Procedure: <strong>Disaster Recovery and Data Restoration</strong></h1>
+
+        <h2>1.0 Purpose &amp; Continuous Recovery Mandate</h2>
+        <p>This procedure defines the protocol for recovering company operations, databases, application containers, cryptographic keys, and AI agent brains following a hardware failure, data corruption event, or cloud disruption. In strict adherence to our <strong>Continuous Recovery Mandate</strong>, this SOP is updated immediately following any new software installation, container dependency upgrade, or database migration.</p>
+
+        <h2>2.0 Scope</h2>
+        <p>Applies to all Linux, WSL2, Docker containers, PostgreSQL databases, Microsoft 365 integrations, and AI agent state directories across HWB Cleaning Services LLC.</p>
+
+        <h2>3.0 Peter's 6 Institutional Recovery Directives</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Directive</th>
+                    <th>Execution Cadence</th>
+                    <th>Standard &amp; Target</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>1. Binary DB Snapshot</strong></td>
+                    <td>Hourly</td>
+                    <td>Instant recovery for binary PostgreSQL database states via automated pg_dump / WAL shipping.</td>
+                </tr>
+                <tr>
+                    <td><strong>2. Environment Freeze</strong></td>
+                    <td>Daily</td>
+                    <td>Secure encrypted archive of <code>.env</code> configurations, secret salts, and Docker environment variables.</td>
+                </tr>
+                <tr>
+                    <td><strong>3. Ghost Checkpoints</strong></td>
+                    <td>Pre-Restart</td>
+                    <td>Automatic local Git branch checkpoint created before every system restart or container teardown.</td>
+                </tr>
+                <tr>
+                    <td><strong>4. Institutional Mirror</strong></td>
+                    <td>Weekly</td>
+                    <td>Off-site synchronization of the complete SigmaFidelity™ Brain to sovereign physical storage.</td>
+                </tr>
+                <tr>
+                    <td><strong>5. Surge Protector</strong></td>
+                    <td>Every 15 Minutes</td>
+                    <td>Disk-usage watchdog check enforcing a 500MB runaway log threshold to prevent disk exhaustion.</td>
+                </tr>
+                <tr>
+                    <td><strong>6. Vault Guardian</strong></td>
+                    <td>Daily</td>
+                    <td>Incremental backup of all active operational folders and QMS documentation vaults.</td>
+                </tr>
             </tbody>
         </table>
 
+        <h2>4.0 System Dependencies &amp; Cryptographic Vault Configuration</h2>
+        <p>The system infrastructure relies on the following core dependencies (updated September 21, 2026):</p>
+        <ul>
+            <li><strong>Operating System:</strong> Linux / WSL2 Ubuntu 22.04 LTS.</li>
+            <li><strong>Container Runtime:</strong> Docker 26+ running containers: <code>hwb_web_app</code> (Gunicorn Flask, Port 5000), <code>hwb_postgres_dev</code> (PostgreSQL 13, Port 5432), <code>hwb_compliance_engine</code> (Nginx static QMS, Port 80), <code>hwb_traffic_director</code> (Port 8000), and <code>hwb_agent_worker</code>.</li>
+            <li><strong>Python Cryptography Core:</strong> <code>cryptography 48.0.0</code> installed in <code>hwb_web_app</code>. Enables deterministic AES-256 Fernet ciphers for PII vaulting.</li>
+            <li><strong>Environment Secrets:</strong>
+                <ul>
+                    <li><code>SECRET_KEY</code> &amp; <code>PII_ENCRYPTION_KEY</code>: Cryptographic seed keys for database column encryption. Never commit to Git.</li>
+                    <li><code>DATABASE_URL</code>: PostgreSQL connection string formatted as <code>postgresql://postgres:...@localhost:5432/hwb_crm</code>.</li>
+                    <li><code>AZURE_CLIENT_SECRET</code>: Microsoft Graph API OAuth secret. <em>Institutional Alert: Secret rotation required prior to expiration on <strong>03/02/2027</strong>.</em></li>
+                </ul>
+            </li>
+            <li><strong>Database Schema State:</strong> Unified relational schema up to <strong>Migration 016</strong> (<code>scripts/migrate_016_sensitive_pii_vault.py</code>), providing columns <code>ssn_encrypted</code>, <code>ssn_last_four</code>, <code>direct_deposit_account_encrypted</code>, and <code>direct_deposit_account_last_four</code> on <code>"Employees"</code>.</li>
+        </ul>
+
+        <h2>5.0 Step-by-Step Restoration Procedures</h2>
+        <h3 id="51-cold-server-rebuild">5.1 Cold Server Rebuild (Total Catastrophe Recovery)</h3>
+        <ol>
+            <li>Clone primary repository: <code>git clone https://github.com/Humbertoed11/gemini_projects.git</code></li>
+            <li>Restore frozen <code>.env</code> file from the Vault Guardian archive into <code>HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/.env</code>.</li>
+            <li>Execute the master startup sequence: <code>bash scripts/startup_master.sh</code></li>
+            <li>Verify Docker containers are healthy: <code>docker ps</code></li>
+        </ol>
+
+        <h3 id="52-database-recovery">5.2 Database Restoration &amp; Migration Alignment</h3>
+        <ol>
+            <li>Restore the latest binary PostgreSQL backup: <code>docker exec -i hwb_postgres_dev psql -U postgres -d hwb_crm &lt; backup_latest.sql</code></li>
+            <li>Run migration check inside web container: <code>docker exec hwb_web_app python3 scripts/migrate_016_sensitive_pii_vault.py</code></li>
+            <li>Verify lead count via audit endpoint: <code>curl -s http://localhost:5000/api/v1/db-audit</code></li>
+        </ol>
+
+        <h3 id="53-panic-button-reset">5.3 The Panic Button (Working Tree Clean Reset)</h3>
+        <p>If local uncommitted code disrupts container execution: <code>git reset --hard HEAD &amp;&amp; git clean -fd</code> followed by <code>docker restart hwb_web_app</code>.</p>
+
+        <h2>6.0 Verification &amp; Continuity Sign-Off</h2>
+        <ul>
+            <li>Web application responds with HTTP 200 at <code>http://mop.test:5000</code>.</li>
+            <li>PostgreSQL connection pool establishes within 1.0 ms latency.</li>
+            <li>Sensitive PII unmasking endpoint (<code>POST /api/v1/hr/employees/&lt;id&gt;/reveal-ssn</code>) decrypts test records accurately without key errors.</li>
+            <li>SQL Brain synchronization (<code>python3 scripts/sigma_sync.py</code>) completes with 0 errors.</li>
+        </ul>
+
         <hr />
-
-        <h1>Standard Operating Procedure: <strong>Disaster Recovery & Shadow Snapshots</strong></h1>
-
-        <h2>1.0 Purpose</h2>
-        <p>This document explains how to keep our website running and protect our business data if files are broken, deleted by mistake, or if a system crash happens. It provides a simple step-by-step path to backup our code and restore it instantly using safety snapshots.</p>
-
-        <h2>2.0 Scope</h2>
-        <p>This protocol applies to all active website pages, application settings, database structures, and artificial intelligence configurations inside our development workspaces.</p>
-
-        <h2>3.0 Operational Roles</h2>
-        <ul>
-            <li><strong>George (Systems Architect):</strong> In charge of starting emergency rollbacks and confirming that the system is fully healthy.</li>
-            <li><strong>Peter (Recovery Specialist):</strong> In charge of creating regular backups and restoring the files.</li>
-            <li><strong>CEO (Humberto Dominguez):</strong> Final approval authority for any full system rollbacks.</li>
-        </ul>
-
-        <h2>4.0 Safety Snapshot Setup</h2>
-        <p>To prevent loss of work, our system is protected by a background script called <strong>Peter Sentinel</strong>. This script takes a quick picture of our work (a "Shadow Snapshot") and saves it locally. This runs in the background, but we can also start it by hand.</p>
-
-        <div class="callout callout-note">
-            <strong>Important Safety Standard</strong>
-            <p>Every time we begin a complex project, we must run the backup script by hand to create an instant rollback point. This ensures we can easily undo our changes if the new implementation breaks the site.</p>
-        </div>
-
-        <h2>5.0 Step-by-Step Procedures</h2>
-
-        <h3>5.1 Creating a Rollback Point (By Hand)</h3>
-        <p>Before modifying any code, a team member must create a physical rollback point using these simple steps:</p>
-        <ol>
-            <li>Open the terminal in the main project folder.</li>
-            <li>Run our safety backup script using the local virtual environment:
-                <pre><code>.venv_agent/bin/python scripts/peter_sentinel.py</code></pre>
-            </li>
-            <li>Verify that the script outputs a success message listing the protected items. This script automatically saves copies of our main application controller (<code>main_app.py</code>), orchestrator settings, database models, agent logs, and configuration settings (<code>.env</code>).</li>
-            <li>The snapshot will be saved in the safety vault directory:
-                <pre><code>HWB-COMPANY/HWB-IT/HWB-IT-SYSTEM-LOGS/shadow_snapshots/[TIMESTAMP]/</code></pre>
-            </li>
-        </ol>
-
-        <h3>5.2 The Panic Button: Restoring Broken Files</h3>
-        <p>If the website stops working or if files become broken during development, execute the restoration sequence:</p>
-        <ol>
-            <li>Navigate to the safety vault directory to locate your target backup timestamp folder:
-                <pre><code>HWB-COMPANY/HWB-IT/HWB-IT-SYSTEM-LOGS/shadow_snapshots/</code></pre>
-            </li>
-            <li>Copy all backed-up files from the chosen timestamp folder directly back into your active website directory:
-                <pre><code>cp -r HWB-COMPANY/HWB-IT/HWB-IT-SYSTEM-LOGS/shadow_snapshots/[TIMESTAMP]/* HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/</code></pre>
-            </li>
-            <li>If database files are corrupted or missing, restore them using the latest `.sql` database copy inside our database backup folder.</li>
-        </ol>
-
-        <h2>6.0 Verification (Zero-Defect Check)</h2>
-        <p>After a restore operation, the team must verify that the website is fully healthy:</p>
-        <ul>
-            <li>Run a diagnostic script to check for logical errors or missing dependencies:
-                <pre><code>.venv_agent/bin/python diag_dashboard.py</code></pre>
-            </li>
-            <li>Verify that the local website servers start without error and are accessible on ports 5000 and 8000.</li>
-            <li>Open the web manual in a web browser and verify that all dynamic links and standard procedures load correctly.</li>
-        </ul>
-
         <h2>7.0 Revision History</h2>
         <table>
             <thead>
                 <tr>
-                    <th>Version</th>
-                    <th>Date</th>
-                    <th>Author</th>
-                    <th>Change Description</th>
+                    <th style="text-align: left;">Version</th>
+                    <th style="text-align: left;">Date</th>
+                    <th style="text-align: left;">Author</th>
+                    <th style="text-align: left;">Change Description</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
-                    <td>1.0.0 - 7.0.0</td>
-                    <td>02-28-2026 to 04-27-2026</td>
-                    <td>George</td>
-                    <td>Legacy Markdown versions (Retired).</td>
+                    <td style="text-align: left;">3.0.0</td>
+                    <td style="text-align: left;">09/21/2026</td>
+                    <td style="text-align: left;">Peter &amp; George</td>
+                    <td style="text-align: left;">Upgraded per Continuous Recovery Mandate following Migration 016 and cryptography 48.0.0 installation. Codified Peter's 6 Recovery Directives, PII_ENCRYPTION_KEY governance, and Microsoft Graph 03/02/2027 expiration alert. Approved by Humberto Dominguez, CEO.</td>
                 </tr>
                 <tr>
-                    <td>8.0.0</td>
-                    <td>05-22-2026</td>
-                    <td>George</td>
-                    <td>First modernized HTML release. Fused legacy 9.3, 9.3.1, and 9.3.2 into a single unified standard in Everyday Words. Added Sentinel manual terminal commands. Approved by CEO.</td>
+                    <td style="text-align: left;">2.0.0</td>
+                    <td style="text-align: left;">05/21/2026</td>
+                    <td style="text-align: left;">George</td>
+                    <td style="text-align: left;">Modernized to post-May 1st, 2026 baseline. Standardized under Everyday Words.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">1.0.0</td>
+                    <td style="text-align: left;">02/28/2026</td>
+                    <td style="text-align: left;">Gemini</td>
+                    <td style="text-align: left;">Initial Release.</td>
                 </tr>
             </tbody>
         </table>

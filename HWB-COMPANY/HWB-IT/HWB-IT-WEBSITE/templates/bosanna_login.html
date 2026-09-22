@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Executive Login | Bosanna Prime Contractor Cockpit</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bosanna-pine: #063333;
+            --bosanna-mint: #eef7f2;
+            --bosanna-sage: #2a6f5e;
+            --bosanna-gold: #c29b38;
+            --bosanna-dark: #112323;
+            --bosanna-light: #f8faf9;
+            --bosanna-white: #ffffff;
+            --bosanna-border: #e0ebe6;
+            --bosanna-text: #1e293b;
+            --bosanna-muted: #64748b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(180deg, #063333 0%, #0d4444 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: var(--bosanna-text);
+        }
+
+        /* 1.0 TOP BAR & HEADER */
+        .bosanna-header {
+            background: rgba(6, 51, 51, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand-box {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+        }
+
+        .brand-title {
+            font-size: 1.35rem;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+            color: var(--bosanna-white);
+        }
+
+        .tips-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 0.35rem 0.85rem;
+            border-radius: 9999px;
+            color: #d1fae5;
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            list-style: none;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            font-size: 0.88rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: #ffffff;
+        }
+
+        /* 2.0 LOGIN CARD CONTAINER */
+        .login-main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2.5rem 1.5rem;
+        }
+
+        .login-card {
+            background: var(--bosanna-white);
+            width: 100%;
+            max-width: 460px;
+            border-radius: 12px;
+            padding: 2.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+        }
+
+        .login-badge-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 12px;
+            background: var(--bosanna-mint);
+            color: var(--bosanna-sage);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            border: 1px solid var(--bosanna-border);
+        }
+
+        .card-title {
+            text-align: center;
+            font-size: 1.45rem;
+            font-weight: 800;
+            color: var(--bosanna-dark);
+            margin-bottom: 0.35rem;
+        }
+
+        .card-subtitle {
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--bosanna-muted);
+            margin-bottom: 2rem;
+            line-height: 1.4;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 0.4rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.85rem 1rem;
+            border: 1.5px solid var(--bosanna-border);
+            border-radius: 6px;
+            font-size: 0.95rem;
+            color: var(--bosanna-text);
+            background: #fafbfc;
+            transition: all 0.2s ease;
+            outline: none;
+        }
+
+        .form-input:focus {
+            border-color: var(--bosanna-sage);
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(42, 111, 94, 0.15);
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 0.9rem;
+            background: var(--bosanna-pine);
+            color: var(--bosanna-white);
+            border: none;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 12px rgba(6, 51, 51, 0.2);
+            margin-top: 0.5rem;
+        }
+
+        .btn-submit:hover {
+            background: #0d4444;
+            transform: translateY(-1px);
+        }
+
+        .divider-box {
+            display: flex;
+            align-items: center;
+            margin: 1.75rem 0;
+            color: #94a3b8;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .divider-box::before, .divider-box::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid var(--bosanna-border);
+        }
+
+        .divider-box span {
+            padding: 0 0.75rem;
+        }
+
+        .btn-magic {
+            width: 100%;
+            padding: 0.85rem;
+            background: var(--bosanna-mint);
+            color: var(--bosanna-sage);
+            border: 1.5px solid #cbe3d7;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+
+        .btn-magic:hover {
+            background: #d8ede1;
+            color: #174b3f;
+        }
+
+        .alert-error {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .security-badge-row {
+            margin-top: 2rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid var(--bosanna-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            color: var(--bosanna-muted);
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .security-badge-row span {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        /* 3.0 FOOTER */
+        .bosanna-footer {
+            text-align: center;
+            padding: 1.5rem;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.78rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1.0 HEADER -->
+    <header class="bosanna-header">
+        <div class="header-container">
+            <a href="https://bosanna.com/" class="brand-box">
+                <span class="brand-title">BOSANNA LLC</span>
+                <span class="tips-pill">
+                    <i class="fas fa-certificate"></i> TIPS Awarded #260102
+                </span>
+            </a>
+
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="https://bosanna.com/">Home</a></li>
+                    <li><a href="https://bosanna.com/services">Services</a></li>
+                    <li><a href="/onboard/bosanna"><i class="fas fa-id-badge"></i> Technician Onboarding</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- 2.0 LOGIN SECTION -->
+    <main class="login-main">
+        <div class="login-card">
+            <div class="login-badge-header">
+                <div class="card-icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+            </div>
+
+            <h1 class="card-title">Prime Contractor Cockpit</h1>
+            <p class="card-subtitle">Collin College Frisco Campus TIPS #260102 Operations</p>
+
+            {% with messages = get_flashed_messages() %}
+              {% if messages %}
+                <div class="alert-error">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span>{{ messages[0] }}</span>
+                </div>
+              {% endif %}
+            {% endwith %}
+
+            <form method="POST" action="/portal/bosanna/login">
+                <div class="form-group">
+                    <label class="form-label" for="username">Corporate Email / Username</label>
+                    <input type="text" id="username" name="username" class="form-input" placeholder="ahudgins@bosanna.com" value="ahudgins" required autofocus>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="password">Security Password</label>
+                    <input type="password" id="password" name="password" class="form-input" placeholder="••••••••••••" required>
+                </div>
+
+                <button type="submit" class="btn-submit">
+                    <i class="fas fa-sign-in-alt"></i> Log In to Cockpit
+                </button>
+            </form>
+
+            <div class="divider-box">
+                <span>Executive Access</span>
+            </div>
+
+            <a href="/portal/bosanna/magic-login" class="btn-magic">
+                <i class="fas fa-bolt"></i> One-Click Executive Entrance (Angelica Hudgins)
+            </a>
+
+            <div class="security-badge-row">
+                <span><i class="fas fa-lock"></i> 256-Bit Encrypted</span>
+                <span><i class="fas fa-database"></i> Scoped Multi-Tenant</span>
+                <span><i class="fas fa-user-shield"></i> SOC 2 Ready</span>
+            </div>
+        </div>
+    </main>
+
+    <!-- 3.0 FOOTER -->
+    <footer class="bosanna-footer">
+        &copy; 2026 Bosanna LLC. All Rights Reserved. National Cooperative Awarded Vendor TIPS #260102 / #260103.
+    </footer>
+
+</body>
+</html>

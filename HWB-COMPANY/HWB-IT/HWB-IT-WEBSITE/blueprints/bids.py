@@ -194,3 +194,100 @@ def api_bid_edit(bid_id):
         return jsonify({'status': 'error', 'message': str(e)}), 500
     finally:
         if 'conn' in locals() and conn: conn.close()
+
+# --- Institutional & Public Solicitations API (HWB-QMS-11.6) ---
+
+@bids_bp.route('/admin/institutional-bids', endpoint='admin_institutional_bids')
+@login_required
+@roles_required('Executive', 'Admin', 'Manager', 'Estimator')
+def admin_institutional_bids():
+    """Redirect to unified operations institutional_bids view."""
+    return redirect(url_for('admin_operations', view='institutional_bids'))
+
+@bids_bp.route('/api/v1/institutional-bids/create', methods=['POST'])
+@login_required
+def api_inst_bid_create():
+    """API Endpoint to create a new institutional/public solicitation record."""
+    data = request.get_json() or {}
+    solicitation_number = data.get('solicitation_number', '').strip()
+    title = data.get('title', '').strip()
+    agency_name = data.get('agency_name', '').strip()
+    if not solicitation_number or not title or not agency_name:
+        return jsonify({'status': 'error', 'message': 'Solicitation #, Title, and Agency are required'}), 400
+
+    db_url = current_app.config['DATABASE_URL']
+    conn = get_db(db_url)
+    try:
+        with conn.cursor() as cur:
+            cur.execute('''
+                INSERT INTO "InstitutionalBids" (
+                    solicitation_number, title, agency_name, sector, portal_name, portal_doc_id,
+                    procurement_officer, officer_email, officer_phone, contract_term_months,
+                    cleanable_sqft, facilities_count, published_budget, hwb_bid_total,
+                    monthly_base_rate, annual_base_rate, hourly_porter_rate,
+                    status, compliance_status, rfp_url, notes
+                ) VALUES (
+                    %s, %s, %s, %s, %s, %s,
+                    %s, %s, %s, %s,
+                    %s, %s, %s, %s,
+                    %s, %s, %s,
+                    %s, %s, %s, %s
+                ) RETURNING id
+            ''', (
+                solicitation_number, title, agency_name,
+                data.get('sector', 'Public Authority'),
+                data.get('portal_name', ''),
+                data.get('portal_doc_id', ''),
+                data.get('procurement_officer', ''),
+                clean_email(data.get('officer_email')) or data.get('officer_email', ''),
+                clean_phone(data.get('officer_phone')) or data.get('officer_phone', ''),
+                int(data.get('contract_term_months', 24) or 24),
+                float(data.get('cleanable_sqft', 0) or 0),
+                int(data.get('facilities_count', 1) or 1),
+                float(data.get('published_budget', 0) or 0),
+                float(data.get('hwb_bid_total', 0) or 0),
+                float(data.get('monthly_base_rate', 0) or 0),
+                float(data.get('annual_base_rate', 0) or 0),
+                float(data.get('hourly_porter_rate', 0) or 0),
+                data.get('status', 'Active Solicitation'),
+                data.get('compliance_status', 'Pending Review'),
+                data.get('rfp_url', ''),
+                data.get('notes', '')
+            ))
+            new_id = cur.fetchone()[0]
+            conn.commit()
+            return jsonify({'status': 'success', 'message': 'Institutional solicitation created.', 'id': new_id}), 201
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        if 'conn' in locals() and conn: conn.close()
+
+@bids_bp.route('/api/v1/institutional-bids/<int:bid_id>/status', methods=['POST'])
+@login_required
+def api_inst_bid_status(bid_id):
+    """Update institutional bid pipeline or compliance status."""
+    data = request.get_json() or {}
+    new_status = data.get('status')
+    compliance_status = data.get('compliance_status')
+    if not new_status and not compliance_status:
+        return jsonify({'status': 'error', 'message': 'Status parameter required'}), 400
+
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            cur.execute('''
+                UPDATE "InstitutionalBids"
+                SET status = COALESCE(%s, status),
+                    compliance_status = COALESCE(%s, compliance_status),
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = %s
+            ''', (new_status, compliance_status, bid_id))
+            conn.commit()
+            return jsonify({'status': 'success', 'message': 'Institutional status updated.'})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        if 'conn' in locals() and conn: conn.close()
+

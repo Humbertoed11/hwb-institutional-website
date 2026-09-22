@@ -10,3 +10,5 @@ pypdf
 beautifulsoup4
 lxml
 fake-useragent
+cryptography
+openpyxl

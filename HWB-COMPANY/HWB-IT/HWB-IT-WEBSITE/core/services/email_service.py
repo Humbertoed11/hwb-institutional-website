@@ -18,9 +18,7 @@ def get_official_logo_bytes():
         os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "static", "img", "logo_signature.png")),
         os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "static", "logo_signature.png")),
         "/app/static/logo_standard.png",
-        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "static", "logo_standard.png")),
-        "/home/humbertoed/gemini_projects/HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/static/img/logo_signature.png",
-        "/home/humbertoed/gemini_projects/HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/static/logo_standard.png"
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "static", "logo_standard.png"))
     ]
     for path in candidates:
         if os.path.exists(path):

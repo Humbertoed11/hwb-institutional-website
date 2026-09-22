@@ -1,16 +1,16 @@
 <!-- 
-    SigmaFidelity™ Institutional SOP (HTML Version 3.0)
+    SigmaFidelity™ Institutional SOP (HTML Version 3.1)
     Standard: HWB-QMS-1.0
-    Author: George (Systems Architect)
+    Author: George (Systems Architect, mbB, Lead ISO Auditor)
     Approved By: Humberto Dominguez (CEO)
 -->
 <div class="sop-card">
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-7.6</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.1.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
-        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">8.1 & 8.5.1 (Operational Control)</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">8.1 &amp; 8.5.1 (Operational Control) &amp; ISO 27001</span></div>
     </div>
 
     <div class="sop-content-body">
@@ -24,21 +24,21 @@
             <tbody>
                 <tr><td><strong>Document Title</strong></td><td><strong>Backend Architecture and Enterprise Standards SOP</strong></td></tr>
                 <tr><td><strong>Document ID</strong></td><td>HWB-QMS-7.6</td></tr>
-                <tr><td><strong>Version</strong></td><td>3.0.0</td></tr>
+                <tr><td><strong>Version</strong></td><td>3.1.0</td></tr>
                 <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
                 <tr><td><strong>Author</strong></td><td>George (Systems Architect)</td></tr>
                 <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
-                <tr><td><strong>Date</strong></td><td>09-18-2026</td></tr>
-                <tr><td><strong>ISO 9001 Clause</strong></td><td>8.1 Operational Planning & 8.5.1 Service Provision</td></tr>
+                <tr><td><strong>Date</strong></td><td>09/21/2026</td></tr>
+                <tr><td><strong>ISO 9001 Clause</strong></td><td>8.1 Operational Planning &amp; 8.5.1 Service Provision / ISO 27001:2022 ISMS</td></tr>
             </tbody>
         </table>
 
         <hr />
 
-        <h1>Standard Operating Procedure: <strong>Backend Architecture and Enterprise Standards</strong></h1>
+        <h1>Standard Operating Procedure: <strong>Backend Architecture, RBAC Gateway &amp; PII Cryptography</strong></h1>
 
         <h2>1.0 Purpose</h2>
-        <p>This procedure establishes the <strong>Zero-Hotfix Enterprise Mandate</strong> across all software systems at HWB Cleaning Services LLC. The purpose is to eliminate quick patches, temporary workarounds, and on-the-fly code. Every engineering change must be designed to enterprise standards, protecting company data and preventing defects from recurring.</p>
+        <p>This procedure establishes the <strong>Zero-Hotfix Enterprise Mandate</strong> and cryptographic security standards across all software systems at HWB Cleaning Services LLC. The purpose is to eliminate quick patches, temporary workarounds, and on-the-fly code. Every engineering change must be designed to enterprise standards, protecting company data and preventing defects from recurring.</p>
 
         <h2>2.0 Scope</h2>
         <p>This standard applies to all software engineers, autonomous AI agents, technical contractors, and administrative systems operating within the HWB ecosystem, including the web application, background workers, databases, and APIs.</p>
@@ -96,21 +96,33 @@
         <h2>5.0 Role-Based Access Control (RBAC) Quarantine Standard</h2>
         <p>User access is partitioned into distinct operational zones based on verified roles:</p>
         <ul>
-            <li><strong>Executive & Admin:</strong> Global system access, Warchest financial controls, user provisioning, and strategy modules.</li>
-            <li><strong>Manager:</strong> Operations oversight, accounts, and SOP manual. Restriced from user provisioning and financial Warchest.</li>
+            <li><strong>Executive &amp; Admin:</strong> Global system access, Warchest financial controls, user provisioning, and strategy modules.</li>
+            <li><strong>Manager:</strong> Operations oversight, accounts, and SOP manual. Restricted from user provisioning and financial Warchest.</li>
             <li><strong>Operator:</strong> Daily cleaning dispatch, work orders, and commercial lead pipeline.</li>
-            <li><strong>Sales:</strong> Strict isolation to the <strong>Field Sales Desk</strong> (<code>/admin/sales-desk</code>), assigned facility queue, 1-tap dialer/maps, and walkthrough quoting. All bulk data exports and executive screens are blocked with HTTP 403.</li>
+            <li><strong>Sales:</strong> Strict isolation to the <strong>Field Sales Desk</strong> (<code>/admin/sales-desk</code>), assigned facility queue, 1-tap dialer/maps, and walkthrough quoting. All bulk data exports, payroll summaries, and sensitive workforce endpoints are blocked with HTTP 403.</li>
         </ul>
 
-        <h2>6.0 Verification (Zero-Defect Check)</h2>
+        <h2>6.0 Sensitive PII Vault &amp; Cryptographic Architecture (SEC-001)</h2>
+        <p>All sensitive worker identifiers and financial credentials are protected by the SigmaFidelity™ Cryptographic Core (<code>core/security.py</code>):</p>
+        <ol>
+            <li><strong>AES-256 Fernet Cipher:</strong> Social Security Numbers, ITINs, and direct deposit checking/savings accounts are encrypted at the column level before writing to PostgreSQL (<code>ssn_encrypted</code>, <code>direct_deposit_account_encrypted</code>).</li>
+            <li><strong>Deterministic Key Derivation:</strong> The cipher key is derived deterministically via SHA-256 hashing of system environment secrets (<code>PII_ENCRYPTION_KEY</code> / <code>SECRET_KEY</code>), guaranteeing persistence across container restarts without key drift.</li>
+            <li><strong>Zero Plaintext API Exposure:</strong> All general endpoints (<code>GET /api/v1/hr/employees</code> and <code>GET /api/v1/hr/employees/&lt;id&gt;</code>) strip encrypted ciphertext blobs and transmit only masked strings (<code>***-**-####</code> and <code>••••••••####</code>).</li>
+            <li><strong>Audited Timed Reveal Protocol:</strong> Authorized personnel requesting unmasked views must use <code>POST /api/v1/hr/employees/&lt;id&gt;/reveal-ssn</code>. The gateway checks credentials, records an immutable audit log to <code>"GlobalActivities"</code> (stamping user ID, username, and IP address), and returns the decrypted value with a strict 30-second client-side lifetime.</li>
+            <li><strong>Automatic Security Violation Logging:</strong> If unauthorized roles (e.g. Sales) attempt to call sensitive reveal endpoints, the gateway returns HTTP 403 Forbidden and writes an automatic <code>SECURITY_VIOLATION</code> event to the audit ledger.</li>
+        </ol>
+
+        <h2>7.0 Verification (Zero-Defect Check)</h2>
         <ul>
             <li>All admin routes must declare explicit role requirements using <code>@roles_required</code>.</li>
             <li>The centralized gatekeeper (<code>@app.before_request</code>) must automatically intercept out-of-bounds requests.</li>
             <li>Templates must receive permissions through <code>nav_access</code> context engine without scattered manual role checks.</li>
-            <li>Automated test suite (<code>scratch/test_enterprise_rbac.py</code>) must pass with 100% success before any code release.</li>
+            <li>All employee queries must sanitize output dictionaries, ensuring no raw ciphertexts or unmasked bank accounts exist in memory.</li>
+            <li>Automated test suite verifying RBAC quarantine and PII encryption must pass 100% prior to any container deployment.</li>
         </ul>
 
-        <h2>7.0 Revision History</h2>
+        <hr />
+        <h2>8.0 Revision History</h2>
         <table>
             <thead>
                 <tr>
@@ -122,12 +134,30 @@
             </thead>
             <tbody>
                 <tr>
+                    <td>09-21-2026</td>
+                    <td>3.1.0</td>
+                    <td>Added Section 6.0 Sensitive PII Vault and Cryptographic Architecture (SEC-001): AES-256 Fernet encryption, deterministic key derivation, zero-plaintext API serialization, 30s timed reveal, and GlobalActivities audit logging. Approved by Humberto Dominguez, CEO.</td>
+                    <td>Humberto Dominguez, CEO</td>
+                </tr>
+                <tr>
                     <td>09-18-2026</td>
                     <td>3.0.0</td>
                     <td>Codified the Zero-Hotfix Enterprise Mandate and Centralized RBAC Gateway Architecture following CEO decree.</td>
                     <td>Humberto Dominguez, CEO</td>
                 </tr>
+                <tr>
+                    <td>05-21-2026</td>
+                    <td>2.0.0</td>
+                    <td>Modernized to post-May 1st, 2026 baseline. Standardized under Everyday Words.</td>
+                    <td>George (Systems Architect)</td>
+                </tr>
             </tbody>
         </table>
+    </div>
+
+    <div class="sop-card-footer">
+        <span>&copy; 2026 HWB Cleaning Services LLC</span>
+        <span>Controlled Document | HWB-QMS-7.6</span>
+        <span>Page <span class="page-number"></span></span>
     </div>
 </div>

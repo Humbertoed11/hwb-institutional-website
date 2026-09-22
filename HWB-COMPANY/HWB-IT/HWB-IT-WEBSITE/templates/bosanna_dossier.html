@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TIPS #260102 Worker Compliance File | {{ candidate.full_name }} | Collin College Frisco Campus</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bosanna-pine: #063333;
+            --bosanna-sage: #2a6f5e;
+            --bosanna-gold: #c29b38;
+            --bosanna-border: #cbd5e1;
+            --bosanna-text: #0f172a;
+            --bosanna-muted: #64748b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background: #e2e8f0;
+            color: var(--bosanna-text);
+            padding: 2rem 1rem;
+            display: flex;
+            justify-content: center;
+        }
+
+        .dossier-paper {
+            background: #ffffff;
+            width: 100%;
+            max-width: 850px;
+            padding: 3.5rem 4rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            border-radius: 4px;
+            position: relative;
+        }
+
+        /* ACTIONS BAR (SCREEN ONLY) */
+        .no-print-bar {
+            position: sticky;
+            top: 1rem;
+            margin-bottom: 2rem;
+            background: #0f172a;
+            color: #ffffff;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            z-index: 100;
+        }
+
+        .btn-print {
+            background: var(--bosanna-sage);
+            color: #ffffff;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .btn-print:hover {
+            background: #205649;
+        }
+
+        .btn-back {
+            color: #cbd5e1;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .btn-back:hover {
+            color: #ffffff;
+        }
+
+        /* 1.0 INSTITUTIONAL HEADER */
+        .dossier-header {
+            border-bottom: 2.5px solid var(--bosanna-pine);
+            padding-bottom: 1.5rem;
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .header-left h1 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--bosanna-pine);
+            letter-spacing: 0.02em;
+        }
+
+        .header-left h2 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--bosanna-sage);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-top: 0.2rem;
+        }
+
+        .header-left p {
+            font-size: 0.82rem;
+            color: var(--bosanna-muted);
+            margin-top: 0.25rem;
+        }
+
+        .header-right {
+            text-align: right;
+            font-size: 0.8rem;
+        }
+
+        .tips-seal {
+            border: 1.5px solid var(--bosanna-gold);
+            background: #fffbeb;
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            display: inline-block;
+            text-align: right;
+        }
+
+        .tips-seal strong {
+            display: block;
+            color: #92400e;
+            font-size: 0.82rem;
+        }
+
+        .tips-seal span {
+            color: #b45309;
+            font-size: 0.72rem;
+            font-weight: 600;
+        }
+
+        /* 2.0 AUDIT WATERMARK & RECORD STRIP */
+        .audit-strip {
+            background: #f8fafc;
+            border: 1px solid var(--bosanna-border);
+            border-radius: 6px;
+            padding: 0.75rem 1rem;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+            font-size: 0.78rem;
+        }
+
+        .audit-item span {
+            display: block;
+            color: var(--bosanna-muted);
+            text-transform: uppercase;
+            font-size: 0.68rem;
+            font-weight: 600;
+            margin-bottom: 0.15rem;
+        }
+
+        .audit-item strong {
+            color: var(--bosanna-text);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+        }
+
+        /* 3.0 SECTIONS & TABLES */
+        .dossier-section {
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: var(--bosanna-pine);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1.5px solid #e2e8f0;
+            padding-bottom: 0.4rem;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .section-title span {
+            font-size: 0.72rem;
+            color: var(--bosanna-sage);
+            font-weight: 700;
+        }
+
+        .dossier-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem;
+            font-size: 0.85rem;
+        }
+
+        .data-row {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
+        .data-row label {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--bosanna-muted);
+            text-transform: uppercase;
+        }
+
+        .data-row value {
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .data-row mono {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            color: var(--bosanna-pine);
+        }
+
+        /* VERIFICATION TABLE */
+        .verif-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+            margin-top: 0.5rem;
+        }
+
+        .verif-table th {
+            background: #f1f5f9;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--bosanna-border);
+            text-align: left;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            color: #475569;
+        }
+
+        .verif-table td {
+            padding: 0.6rem 0.75rem;
+            border: 1px solid var(--bosanna-border);
+            vertical-align: middle;
+        }
+
+        .check-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            color: #15803d;
+            font-weight: 700;
+            font-size: 0.75rem;
+            background: #f0fdf4;
+            padding: 0.2rem 0.45rem;
+            border-radius: 4px;
+            border: 1px solid #bbf7d0;
+        }
+
+        .contract-spec-card {
+            background: #f8fafc;
+            border: 1.5px solid #cbd5e1;
+            border-left: 4.5px solid var(--bosanna-pine);
+            border-radius: 6px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.25rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.85rem;
+            font-size: 0.82rem;
+        }
+
+        .clause-badge {
+            display: inline-block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--bosanna-pine);
+            background: #eef7f2;
+            border: 1px solid #cce3d8;
+            padding: 0.2rem 0.45rem;
+            border-radius: 4px;
+            margin-top: 0.2rem;
+        }
+
+        .verif-sub {
+            font-size: 0.68rem;
+            color: #64748b;
+            margin-top: 0.15rem;
+        }
+
+        /* 5.0 ATTESTATION BOX */
+        .attestation-box {
+            background: #fdfefe;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 1.25rem;
+            margin-top: 2.5rem;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            color: #334155;
+        }
+
+        .signatures-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-top: 2rem;
+            padding-top: 1rem;
+        }
+
+        .sig-block {
+            width: 45%;
+            border-top: 1.5px solid #64748b;
+            padding-top: 0.5rem;
+        }
+
+        .sig-block strong {
+            display: block;
+            font-size: 0.85rem;
+            color: #0f172a;
+        }
+
+        .sig-block span {
+            font-size: 0.72rem;
+            color: var(--bosanna-muted);
+        }
+
+        .sig-font {
+            font-family: 'Brush Script MT', cursive, sans-serif;
+            font-size: 1.5rem;
+            color: var(--bosanna-pine);
+            line-height: 1;
+            margin-bottom: 0.35rem;
+        }
+
+        /* MODAL STYLES (SCREEN ONLY) */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 1rem;
+        }
+
+        .modal-content {
+            background: #ffffff;
+            border-radius: 12px;
+            max-width: 560px;
+            width: 100%;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+            overflow: hidden;
+            animation: modalFadeUp 0.25s ease-out;
+        }
+
+        @keyframes modalFadeUp {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-header {
+            background: var(--bosanna-pine);
+            color: #ffffff;
+            padding: 1.15rem 1.35rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn-modal-close {
+            background: transparent;
+            border: none;
+            color: #ffffff;
+            font-size: 1.25rem;
+            cursor: pointer;
+            opacity: 0.8;
+            line-height: 1;
+        }
+
+        .btn-modal-close:hover { opacity: 1; }
+
+        .btn-edit {
+            background: #ffffff;
+            color: var(--bosanna-pine);
+            border: 1.5px solid var(--bosanna-pine);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: all 0.2s;
+        }
+
+        .btn-edit:hover {
+            background: #f1f5f9;
+        }
+
+        /* TOAST ALERT */
+        .toast-box {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: #064e3b;
+            color: #ffffff;
+            padding: 0.85rem 1.35rem;
+            border-radius: 8px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+            font-size: 0.88rem;
+            font-weight: 600;
+            display: none;
+            align-items: center;
+            gap: 0.65rem;
+            z-index: 3000;
+            border-left: 4.5px solid #34d399;
+            animation: toastSlideIn 0.25s ease-out;
+        }
+
+        .toast-box.toast-error {
+            background: #450a0a;
+            border-left-color: #ef4444;
+        }
+
+        @keyframes toastSlideIn {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* PRINT STYLES */
+        @media print {
+            body {
+                background: #ffffff;
+                padding: 0;
+            }
+            .no-print, .no-print-bar, .modal-overlay, .toast-box {
+                display: none !important;
+            }
+            .dossier-paper {
+                box-shadow: none;
+                padding: 1rem 1.5rem;
+                max-width: 100%;
+            }
+            .dossier-section, .contract-spec-card, .signatures-row {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div style="width: 100%; max-width: 850px;">
+
+        <!-- SCREEN ONLY CONTROLS -->
+        <div class="no-print-bar">
+            <div>
+                <strong>Official Worker File</strong>
+                <span style="font-size: 0.78rem; opacity: 0.8; margin-left: 0.5rem;">Collin College Frisco Campus Procurement</span>
+            </div>
+            <div style="display: flex; gap: 0.75rem; align-items: center;">
+                <a href="/portal/bosanna/cockpit" class="btn-back"><i class="fas fa-arrow-left"></i> Back to Cockpit</a>
+                <button type="button" class="btn-edit" onclick="openEditWorkerModal()">
+                    <i class="fas fa-pencil-alt" style="color: var(--bosanna-gold);"></i> Edit Worker File
+                </button>
+                <button type="button" class="btn-print" onclick="window.print()">
+                    <i class="fas fa-print"></i> Print / Save PDF
+                </button>
+            </div>
+        </div>
+
+        <!-- 1.0 WORKER FILE DOCUMENT -->
+        <div class="dossier-paper">
+            <div class="dossier-header">
+                <div class="header-left">
+                    <h1>BOSANNA LLC</h1>
+                    <h2>Worker Compliance &amp; Safety File</h2>
+                    <p>Collin County Community College District (Collin College) • Frisco Campus</p>
+                </div>
+                <div class="header-right">
+                    <div class="tips-seal">
+                        <strong>TIPS AWARDED VENDOR</strong>
+                        <span>CONTRACT #260102 / #260103</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AUDIT METADATA -->
+            <div class="audit-strip">
+                <div class="audit-item">
+                    <span>File Reference</span>
+                    <strong>COL-FRIS-{{ candidate.id }}</strong>
+                </div>
+                <div class="audit-item">
+                    <span>Badge ID</span>
+                    <strong>{{ candidate.badge_id }}</strong>
+                </div>
+                <div class="audit-item">
+                    <span>Clearance Tier</span>
+                    <strong style="color: #059669;">Institutional A</strong>
+                </div>
+                <div class="audit-item">
+                    <span>Verification Date</span>
+                    <strong>{{ candidate.created_at }}</strong>
+                </div>
+            </div>
+
+            <!-- 2.0 TECHNICIAN IDENTIFICATION -->
+            <div class="dossier-section">
+                <div class="section-title">
+                    <span>1. Technician Identity &amp; Credentials</span>
+                    <span style="display: inline-flex; align-items: center; gap: 0.75rem;">
+                        <button type="button" class="no-print" style="cursor: pointer; color: var(--bosanna-sage); font-size: 0.78rem; text-transform: none; font-weight: 700; background: none; border: none; padding: 0;" onclick="openEditWorkerModal()" title="Edit Identity and Credentials">
+                            <i class="fas fa-pencil-alt" style="color: var(--bosanna-gold);"></i> Edit Details
+                        </button>
+                        <span>Status: Verified</span>
+                    </span>
+                </div>
+                <div class="dossier-grid">
+                    <div class="data-row">
+                        <label>Legal Full Name</label>
+                        <value id="val-full-name">{{ candidate.full_name }}</value>
+                    </div>
+                    <div class="data-row">
+                        <label>Assigned Campus Facility</label>
+                        <value id="val-facility">{{ candidate.facility }}</value>
+                    </div>
+                    <div class="data-row">
+                        <label>Texas DL / State ID</label>
+                        <mono id="val-state-id">{{ candidate.state_id }}</mono>
+                    </div>
+                    <div class="data-row">
+                        <label>ID Expiration</label>
+                        <value id="val-id-expiration">{{ candidate.id_expiration }}</value>
+                    </div>
+                    <div class="data-row">
+                        <label>Primary Role &amp; Shift</label>
+                        <value id="val-role-shift">{{ candidate.desired_role }} ({{ candidate.desired_shift }})</value>
+                    </div>
+                    <div class="data-row">
+                        <label>Mobile Contact &amp; City</label>
+                        <value id="val-phone-city">{{ candidate.phone }} • {{ candidate.city }}</value>
+                    </div>
+                    <div class="data-row">
+                        <label>U.S. Work Authorization</label>
+                        <value><span class="check-pill"><i class="fas fa-check"></i> Authorized (I-9 Confirmed)</span></value>
+                    </div>
+                    <div class="data-row">
+                        <label>Deployment Status</label>
+                        <value id="val-status">
+                            {% if candidate.status == 'Active On-Site' %}
+                            <span style="color: #059669; font-weight: 700;"><i class="fas fa-check-circle"></i> Active On-Site</span>
+                            {% else %}
+                            <span style="color: #d97706; font-weight: 700;"><i class="fas fa-pause-circle"></i> Bench Ready</span>
+                            {% endif %}
+                        </value>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3.0 BACKGROUND & PUBLIC SAFETY VERIFICATION -->
+            <div class="dossier-section">
+                <div class="section-title">
+                    2. Criminal Background &amp; Public Safety Verification
+                    <span>Status: Clear</span>
+                </div>
+                <table class="verif-table">
+                    <thead>
+                        <tr>
+                            <th>Screening Protocol</th>
+                            <th>Certifying Agency / Standard</th>
+                            <th>Verification Result</th>
+                            <th>Audit Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Texas DPS Fingerprint Clearance</strong></td>
+                            <td>Texas Department of Public Safety (FAST)</td>
+                            <td><span class="check-pill"><i class="fas fa-check"></i> Cleared / No Record</span></td>
+                            <td>{{ candidate.created_at }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>National Sex Offender Registry</strong></td>
+                            <td>Dru Sjodin National Public Sex Offender Database</td>
+                            <td><span class="check-pill"><i class="fas fa-check"></i> Cleared / Zero Match</span></td>
+                            <td>{{ candidate.created_at }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Collin College Safety Tier</strong></td>
+                            <td>Educational Unrestricted Campus Protocol</td>
+                            <td><span class="check-pill"><i class="fas fa-check"></i> Level 2 Approved</span></td>
+                            <td>{{ candidate.created_at }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 4.0 OSHA SAFETY TRAINING & REGULATORY COMPLIANCE -->
+            <div class="dossier-section">
+                <div class="section-title">
+                    3. Occupational Health &amp; Safety Compliance (OSHA)
+                    <span>Score: 100% Verified</span>
+                </div>
+                <table class="verif-table">
+                    <thead>
+                        <tr>
+                            <th>Safety Standard</th>
+                            <th>Regulatory Code</th>
+                            <th>Exam Score</th>
+                            <th>Compliance Level</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Hazard Communication &amp; GHS Labeling</strong></td>
+                            <td>OSHA 29 CFR 1910.1200</td>
+                            <td><strong>{{ candidate.score }}</strong></td>
+                            <td><span class="check-pill"><i class="fas fa-certificate"></i> Certified</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Bloodborne Pathogens Standard</strong></td>
+                            <td>OSHA 29 CFR 1910.1030</td>
+                            <td><strong>{{ candidate.score }}</strong></td>
+                            <td><span class="check-pill"><i class="fas fa-certificate"></i> Certified</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Texas Hazard Communication Act</strong></td>
+                            <td>THCA Health &amp; Safety Code Ch. 502</td>
+                            <td><strong>{{ candidate.score }}</strong></td>
+                            <td><span class="check-pill"><i class="fas fa-certificate"></i> Certified</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Chemical Dilution &amp; SDS Mastery</strong></td>
+                            <td>Institutional Custodial Standards</td>
+                            <td><strong>{{ candidate.score }}</strong></td>
+                            <td><span class="check-pill"><i class="fas fa-certificate"></i> Certified</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>First Aid, Emergency CPR Protocol &amp; Campus AED Locations</strong></td>
+                            <td>Collin College T&amp;C § 140 / 144 &amp; AHA Standard</td>
+                            <td><strong>{{ candidate.score }}</strong></td>
+                            <td><span class="check-pill"><i class="fas fa-certificate"></i> Certified</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Restroom Barrier Tension Poles &amp; Slip/Fall Signage</strong></td>
+                            <td>Collin College T&amp;C § 134 &amp; OSHA 29 CFR 1910.22</td>
+                            <td><strong>{{ candidate.score }}</strong></td>
+                            <td><span class="check-pill"><i class="fas fa-certificate"></i> Certified</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 4.0 ASSIGNED FACILITY CONTRACT-SPECIFIC CERTIFICATIONS & MANDATORY CLASSES -->
+            <div class="dossier-section">
+                <div class="section-title">
+                    4. Assigned Campus Facility Contract Certifications &amp; Statutory Clauses
+                    <span>Status: 100% Contract Compliant</span>
+                </div>
+
+                <!-- FACILITY CONTRACT SPECIFICATION STRIP -->
+                <div class="contract-spec-card">
+                    <div class="data-row">
+                        <label>Assigned Campus Facility</label>
+                        <value style="color: var(--bosanna-pine); font-weight: 700;">{{ facility_contract.facility_name }}</value>
+                    </div>
+                    <div class="data-row">
+                        <label>Governing Contract &amp; Solicitation</label>
+                        <value>{{ facility_contract.governing_contract }}</value>
+                    </div>
+                    <div class="data-row">
+                        <label>Governing Contract Clauses</label>
+                        <value><span class="clause-badge"><i class="fas fa-gavel"></i> {{ facility_contract.contract_clauses }}</span></value>
+                    </div>
+                    <div class="data-row">
+                        <label>Statutory Jurisdiction &amp; Compliance Authority</label>
+                        <value>{{ facility_contract.jurisdiction }} ({{ facility_contract.district_spec }})</value>
+                    </div>
+                </div>
+
+                <!-- MANDATORY FACILITY CERTIFICATIONS & CLASSES TABLE -->
+                <table class="verif-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 30%;">Mandatory Class / Certification</th>
+                            <th style="width: 25%;">Contract Clause &amp; Statutory Citation</th>
+                            <th style="width: 18%;">Standard / Regulatory Code</th>
+                            <th style="width: 12%;">Duration</th>
+                            <th style="width: 15%;">Result &amp; Renewal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in facility_contract.courses %}
+                        <tr>
+                            <td>
+                                <strong>{{ c.course_name }}</strong>
+                            </td>
+                            <td>
+                                <span class="clause-badge">{{ c.clause }}</span>
+                            </td>
+                            <td>
+                                <div style="font-size: 0.75rem; color: #334155;">{{ c.standard_code }}</div>
+                            </td>
+                            <td>
+                                <div style="font-size: 0.75rem; font-weight: 600;">{{ c.hours }}</div>
+                            </td>
+                            <td>
+                                <span class="check-pill">
+                                    <i class="fas fa-check-circle"></i> {{ c.score }}
+                                </span>
+                                <div class="verif-sub">{{ c.renewal }}</div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 5.0 LEGAL CONFIDENTIALITY & ATTESTATION -->
+            <div class="dossier-section">
+                <div class="section-title">
+                    5. Campus Security, Confidentiality &amp; Key Control Non-Disclosure
+                    <span>Status: Executed</span>
+                </div>
+                <div class="attestation-box">
+                    Technician has formally signed and acknowledged the Collin College Campus Safety Protocol (MSA § 8.4), Family Educational Rights and Privacy Act (FERPA 34 CFR Part 99) non-disclosure mandate, and master keycard safeguarding rules (Protocol § 6.1). Validated electronic signature is archived on file.
+                </div>
+            </div>
+
+            <!-- 6.0 INSTITUTIONAL EXECUTIVE ATTESTATION & SIGNATURES -->
+
+            <!-- SIGNATURES -->
+            <div class="signatures-row">
+                <div class="sig-block">
+                    <div class="sig-font">{{ candidate.signature or candidate.full_name }}</div>
+                    <strong>{{ candidate.full_name }}</strong>
+                    <span>Credentialed Cleaning Technician</span>
+                </div>
+
+                <div class="sig-block">
+                    <div class="sig-font">Angelica Hudgins</div>
+                    <strong>Angelica Hudgins</strong>
+                    <span>Managing Principal, Bosanna LLC (TIPS #260102)</span>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- 7.0 EDIT WORKER MODAL (SIGMAFIDELITY™ POKA-YOKE STANDARD) -->
+    <div class="modal-overlay" id="editWorkerModal" style="display: none;">
+        <div class="modal-content" style="max-width: 560px;">
+            <div class="modal-header">
+                <div style="display: flex; align-items: center; gap: 0.6rem;">
+                    <i class="fas fa-pencil-alt" style="color: var(--bosanna-gold); font-size: 1.1rem;"></i>
+                    <h3 style="margin: 0; font-size: 1.05rem; color: #ffffff;">Edit Technician Compliance File</h3>
+                </div>
+                <button type="button" class="btn-modal-close" onclick="closeEditWorkerModal()">&times;</button>
+            </div>
+            <form id="form-edit-worker" onsubmit="saveWorkerFile(event)" style="margin: 0;">
+                <div class="modal-body" style="padding: 1.5rem; text-align: left;">
+                    
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 0.35rem;">
+                            Full Legal Name *
+                        </label>
+                        <input type="text" id="edit_full_name" required value="{{ candidate.full_name }}" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; box-sizing: border-box;">
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
+                        <div>
+                            <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 0.35rem;">
+                                Mobile Phone *
+                            </label>
+                            <input type="tel" id="edit_phone" required maxlength="14" oninput="maskPhone(this)" value="{{ candidate.phone }}" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; box-sizing: border-box;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 0.35rem;">
+                                Email Address
+                            </label>
+                            <input type="email" id="edit_email" value="{{ candidate.email if candidate.email != 'N/A' else '' }}" placeholder="e.g. maria@example.com" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; box-sizing: border-box;">
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
+                        <div>
+                            <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 0.35rem;">
+                                City of Residence
+                            </label>
+                            <input type="text" id="edit_city" value="{{ candidate.city if candidate.city != 'N/A' else '' }}" placeholder="e.g. Frisco, Plano" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; box-sizing: border-box;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 0.35rem;">
+                                Assigned Campus Facility
+                            </label>
+                            <select id="edit_facility" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.82rem; background: #ffffff; box-sizing: border-box;">
+                                <option value="Collin College Frisco Campus" {% if 'Frisco' in candidate.facility %}selected{% endif %}>Collin College Frisco Campus (Preston Ridge)</option>
+                                <option value="Collin College McKinney Campus" {% if 'McKinney' in candidate.facility %}selected{% endif %}>Collin College McKinney Campus (Central Park)</option>
+                                <option value="Collin College Plano Campus" {% if 'Plano' in candidate.facility %}selected{% endif %}>Collin College Plano Campus (Spring Creek)</option>
+                                <option value="Collin College Technical Campus" {% if 'Technical' in candidate.facility %}selected{% endif %}>Collin College Technical Campus (Allen)</option>
+                                <option value="Collin College Wylie Campus" {% if 'Wylie' in candidate.facility %}selected{% endif %}>Collin College Wylie Campus</option>
+                                <option value="Collin College Celina Campus" {% if 'Celina' in candidate.facility %}selected{% endif %}>Collin College Celina Campus</option>
+                                <option value="Collin College Farmersville Campus" {% if 'Farmersville' in candidate.facility %}selected{% endif %}>Collin College Farmersville Campus</option>
+                                <option value="Carrollton Medical Facility & Clinical Network" {% if 'Carrollton' in candidate.facility or 'Medical' in candidate.facility %}selected{% endif %}>Carrollton Medical Facility &amp; Clinical Network</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
+                        <div>
+                            <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 0.35rem;">
+                                Texas DL / State ID Number
+                            </label>
+                            <input type="text" id="edit_state_id" value="{{ candidate.state_id }}" placeholder="e.g. TX-24891024" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; font-family: monospace; box-sizing: border-box;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 0.35rem;">
+                                ID Expiration Date
+                            </label>
+                            <input type="text" id="edit_id_expiration" value="{{ candidate.id_expiration if candidate.id_expiration != 'N/A' else '' }}" placeholder="e.g. 08/2028" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; box-sizing: border-box;">
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.25rem;">
+                        <div>
+                            <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 0.35rem;">
+                                Primary Contract Role
+                            </label>
+                            <select id="edit_desired_role" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.82rem; background: #ffffff; box-sizing: border-box;">
+                                <option value="Commercial Cleaning Technician" {% if candidate.desired_role == 'Commercial Cleaning Technician' %}selected{% endif %}>Commercial Cleaning Technician</option>
+                                <option value="Day Porter" {% if candidate.desired_role == 'Day Porter' %}selected{% endif %}>Day Porter</option>
+                                <option value="Floor Care Specialist" {% if candidate.desired_role == 'Floor Care Specialist' %}selected{% endif %}>Floor Care Specialist</option>
+                                <option value="Custodial Team Lead" {% if candidate.desired_role == 'Custodial Team Lead' %}selected{% endif %}>Custodial Team Lead</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 0.35rem;">
+                                Authorized Shift
+                            </label>
+                            <select id="edit_desired_shift" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.82rem; background: #ffffff; box-sizing: border-box;">
+                                <option value="Evening Janitorial" {% if candidate.desired_shift == 'Evening Janitorial' %}selected{% endif %}>Evening Janitorial (5PM - 10PM)</option>
+                                <option value="Day Porter" {% if candidate.desired_shift == 'Day Porter' %}selected{% endif %}>Day Porter (8AM - 2PM)</option>
+                                <option value="Weekend Custodial" {% if candidate.desired_shift == 'Weekend Custodial' %}selected{% endif %}>Weekend Custodial (Sat/Sun)</option>
+                                <option value="Overnight Deep Clean" {% if candidate.desired_shift == 'Overnight Deep Clean' %}selected{% endif %}>Overnight Deep Clean</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 0.5rem;">
+                        <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 0.35rem;">
+                            Campus Deployment Status
+                        </label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                            <label style="display: flex; align-items: center; gap: 0.4rem; padding: 0.55rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; cursor: pointer; font-size: 0.82rem;">
+                                <input type="radio" name="edit_status" value="Bench Ready" {% if candidate.status != 'Active On-Site' %}checked{% endif %}>
+                                <span><strong style="color: #d97706;">Bench Ready</strong> (Reserve Pool)</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.4rem; padding: 0.55rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; cursor: pointer; font-size: 0.82rem;">
+                                <input type="radio" name="edit_status" value="Active On-Site" {% if candidate.status == 'Active On-Site' %}checked{% endif %}>
+                                <span><strong style="color: #059669;">Active On-Site</strong> (Deployed)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                </div>
+                <div style="background: #f8fafc; padding: 1rem 1.5rem; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 0.6rem;">
+                    <button type="button" onclick="closeEditWorkerModal()" style="background: #ffffff; color: #475569; border: 1.5px solid #cbd5e1; padding: 0.5rem 1rem; border-radius: 6px; font-weight: 700; font-size: 0.82rem; cursor: pointer;">
+                        Cancel
+                    </button>
+                    <button type="submit" id="btnSaveWorker" style="background: #063333; color: #ffffff; border: none; padding: 0.5rem 1.25rem; border-radius: 6px; font-weight: 700; font-size: 0.82rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem;">
+                        <i class="fas fa-save"></i> Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 8.0 LIVE TOAST ALERT (SIGMAFIDELITY™ POKA-YOKE STANDARD) -->
+    <div class="toast-box toast-success" id="toastBox">
+        <i class="fas fa-check-circle" id="toastIcon" style="color: #34d399;"></i>
+        <span id="toastMsg">Changes saved successfully</span>
+    </div>
+
+    <script>
+        function openEditWorkerModal() {
+            const modal = document.getElementById('editWorkerModal');
+            if (modal) modal.style.display = 'flex';
+        }
+
+        function closeEditWorkerModal() {
+            const modal = document.getElementById('editWorkerModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        function maskPhone(input) {
+            let v = input.value.replace(/\D/g, '');
+            if (v.length > 10) v = v.substring(0, 10);
+            let formatted = '';
+            if (v.length > 6) {
+                formatted = '(' + v.substring(0, 3) + ') ' + v.substring(3, 6) + '-' + v.substring(6);
+            } else if (v.length > 3) {
+                formatted = '(' + v.substring(0, 3) + ') ' + v.substring(3);
+            } else if (v.length > 0) {
+                formatted = '(' + v;
+            }
+            input.value = formatted;
+        }
+
+        async function saveWorkerFile(event) {
+            event.preventDefault();
+            const btn = document.getElementById('btnSaveWorker');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+            const statusRadios = document.getElementsByName('edit_status');
+            let selectedStatus = 'Bench Ready';
+            for (const r of statusRadios) {
+                if (r.checked) {
+                    selectedStatus = r.value;
+                    break;
+                }
+            }
+
+            const payload = {
+                full_name: document.getElementById('edit_full_name').value.trim(),
+                phone: document.getElementById('edit_phone').value.trim(),
+                email: document.getElementById('edit_email').value.trim(),
+                city: document.getElementById('edit_city').value.trim(),
+                facility: document.getElementById('edit_facility').value,
+                state_id: document.getElementById('edit_state_id').value.trim(),
+                id_expiration: document.getElementById('edit_id_expiration').value.trim(),
+                desired_role: document.getElementById('edit_desired_role').value,
+                desired_shift: document.getElementById('edit_desired_shift').value,
+                status: selectedStatus
+            };
+
+            try {
+                const res = await fetch('/api/v1/bosanna/candidate/{{ candidate.id }}/update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (res.ok && data.status === 'success') {
+                    showToast(data.message || 'Worker file updated successfully.', 'success');
+                    closeEditWorkerModal();
+                    
+                    // Live update DOM values immediately
+                    if (document.getElementById('val-full-name')) document.getElementById('val-full-name').textContent = payload.full_name;
+                    if (document.getElementById('val-facility')) document.getElementById('val-facility').textContent = payload.facility;
+                    if (document.getElementById('val-state-id')) document.getElementById('val-state-id').textContent = payload.state_id;
+                    if (document.getElementById('val-id-expiration')) document.getElementById('val-id-expiration').textContent = payload.id_expiration;
+                    if (document.getElementById('val-role-shift')) document.getElementById('val-role-shift').textContent = payload.desired_role + ' (' + payload.desired_shift + ')';
+                    if (document.getElementById('val-phone-city')) document.getElementById('val-phone-city').textContent = payload.phone + ' • ' + (payload.city || 'N/A');
+                    if (document.getElementById('val-status')) {
+                        document.getElementById('val-status').innerHTML = payload.status === 'Active On-Site'
+                            ? '<span style="color: #059669; font-weight: 700;"><i class="fas fa-check-circle"></i> Active On-Site</span>'
+                            : '<span style="color: #d97706; font-weight: 700;"><i class="fas fa-pause-circle"></i> Bench Ready</span>';
+                    }
+                    setTimeout(() => { window.location.reload(); }, 1200);
+                } else {
+                    showToast(data.message || 'Error updating worker file.', 'error');
+                }
+            } catch (err) {
+                showToast('Connection error: Unable to update worker file.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toastBox');
+            const toastMsg = document.getElementById('toastMsg');
+            const toastIcon = document.getElementById('toastIcon');
+
+            toast.className = 'toast-box ' + (type === 'error' ? 'toast-error' : 'toast-success');
+            if (type === 'error') {
+                toastIcon.className = 'fas fa-exclamation-circle';
+                toastIcon.style.color = '#f87171';
+            } else {
+                toastIcon.className = 'fas fa-check-circle';
+                toastIcon.style.color = '#34d399';
+            }
+            toastMsg.textContent = msg;
+            toast.style.display = 'flex';
+            clearTimeout(window._toastTimeout);
+            window._toastTimeout = setTimeout(() => { toast.style.display = 'none'; }, 3500);
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('editWorkerModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,100 +1,163 @@
+<!-- 
+    SigmaFidelity™ Institutional SOP (HTML Version 3.1)
+    Standard: HWB-QMS-1.0
+    Author: George (Systems Architect, mbB, Lead ISO Auditor)
+    Approved By: Humberto Dominguez (CEO)
+-->
 <div class="sop-card">
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-7.6</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.1.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
-        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">ISO 9001 (7.1.3)</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">8.1 &amp; 8.5.1 (Operational Control) &amp; ISO 27001</span></div>
     </div>
 
-    <h1 style="font-size: 2.75rem; font-weight: 900; color: #0f172a; margin-bottom: 1rem; letter-spacing: -0.04em;">Backend Architecture & Logic</h1>
-    <p style="font-size: 1.15rem; line-height: 1.6; color: #64748b; margin-bottom: 4rem; max-width: 850px;">This manual documents the <strong>Institutional "Brain"</strong> of HWB. It maps the server logic, database connections, and agentic intelligence that powers our industrial operations.</p>
-
-    <!-- 1.0 PURPOSE -->
-    <section style="margin-bottom: 5rem;">
-        <h2 style="font-size: 1.6rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">1.0 What this is for</h2>
-        <p style="font-size: 1rem; color: #334155; line-height: 1.7;">The backend is where all our data is processed and saved. These rules ensure that our databases, login systems, and AI agents always work together without crashing the server.</p>
-    </section>
-
-    <!-- 2.0 VITAL ORGANS -->
-    <section style="margin-bottom: 5rem;">
-        <h2 style="font-size: 1.6rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">2.0 The Vital Organs (Core Files)</h2>
-        <div style="display: grid; gap: 1.5rem;">
-            <!-- main_app.py -->
-            <div style="background: white; border: 1px solid #e2e8f0; padding: 2rem; border-radius: 12px; display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; align-items: center;">
-                <div style="text-align: center; background: #0f172a; padding: 1.5rem; border-radius: 8px; color: #60a5fa; font-weight: 900;">[ROUTING]</div>
-                <div style="font-size: 0.85rem; line-height: 1.8;">
-                    <strong>Identity:</strong> The System Engine<br>
-                    <strong>Physical Path:</strong> <code>HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/main_app.py</code><br>
-                    <strong>Logic:</strong> Handles all URL requests (Routes), User Login, and Lead Ingestion.
-                </div>
-            </div>
-            <!-- database.py -->
-            <div style="background: white; border: 1px solid #e2e8f0; padding: 2rem; border-radius: 12px; display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; align-items: center;">
-                <div style="text-align: center; background: #0f172a; padding: 1.5rem; border-radius: 8px; color: #10b981; font-weight: 900;">[DATA]</div>
-                <div style="font-size: 0.85rem; line-height: 1.8;">
-                    <strong>Identity:</strong> Persistence Layer<br>
-                    <strong>Physical Path:</strong> <code>core/services/database.py</code><br>
-                    <strong>Logic:</strong> Standardizes the connection to PostgreSQL and SQLite. Ensures "Source of Truth" data integrity.
-                </div>
-            </div>
-            <!-- agents/ -->
-            <div style="background: white; border: 1px solid #e2e8f0; padding: 2rem; border-radius: 12px; display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; align-items: center;">
-                <div style="text-align: center; background: #0f172a; padding: 1.5rem; border-radius: 8px; color: #f59e0b; font-weight: 900;">[INTELLIGENCE]</div>
-                <div style="font-size: 0.85rem; line-height: 1.8;">
-                    <strong>Identity:</strong> Agent Logic<br>
-                    <strong>Physical Path:</strong> <code>core/agents/</code><br>
-                    <strong>Logic:</strong> Houses the personalities and capabilities of George (Architect) and Silas (CRM).
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- 3.0 DATA INTEGRITY -->
-    <section style="margin-bottom: 5rem;">
-        <h2 style="font-size: 1.6rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">3.0 Data Integrity (Tier 6)</h2>
-        <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 2rem; border-radius: 12px;">
-            <p style="margin-bottom: 1rem;">All backend decisions must be logged to the <strong>Operational Telemetry</strong> database.</p>
-            <div style="font-size: 0.85rem; line-height: 1.8;">
-                <strong>Tracking Table:</strong> <code>"SigmaTelemetry"</code><br>
-                <strong>Logging Tool:</strong> <code>scripts/push_telemetry.py</code><br>
-                <strong>Standard:</strong> Log every major route change or database schema update.
-            </div>
-        </div>
-    </section>
-
-    <!-- 4.0 SECURITY -->
-    <section style="margin-bottom: 5rem;">
-        <h2 style="font-size: 1.6rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">4.0 Secret Management</h2>
-        <div style="background: #fef2f2; border: 1px solid #fee2e2; padding: 2rem; border-radius: 12px;">
-            <p style="color: #991b1b; font-weight: 700; margin-bottom: 1rem;">⚠️ MANDATE 0.0 (Credential Protection)</p>
-            <ul style="color: #991b1b; font-size: 0.9rem; line-height: 1.7; padding-left: 1.5rem;">
-                <li>Never commit database passwords or API keys to the repository.</li>
-                <li>All secrets must stay inside the <code>.env</code> file (located at Project Root).</li>
-                <li>Verify <code>.gitignore</code> includes <code>.env</code> before every push.</li>
-            </ul>
-        </div>
-    </section>
-
-    <!-- 5.0 VERIFICATION -->
-    <section style="margin-bottom: 5rem;">
-        <h2 style="font-size: 1.6rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">5.0 Backend Health Check</h2>
-        <p style="margin-bottom: 1.5rem;">To verify the backend is healthy, run these 3 commands:</p>
-        <div style="background: #0f172a; color: #fff; padding: 1.5rem; border-radius: 8px; font-family: monospace; font-size: 0.85rem; line-height: 2;">
-            1. <code>docker logs hwb_web_app --tail 20</code> (Check for Crashes)<br>
-            2. <code>flask routes</code> (Check for Missing Paths)<br>
-            3. <code>psql -c "\dt"</code> (Check for Database Persistence)
-        </div>
-    </section>
-
-    <!-- 6.0 REVISION HISTORY -->
-    <section>
-        <h2 style="font-size: 1.5rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">6.0 Revision History</h2>
-        <table class="sigma-data-grid" style="width: 100%; border-collapse: collapse; background: white;">
-            <thead><tr style="text-align: left; background: #f8fafc;"><th style="padding: 1rem;">Ver</th><th style="padding: 1rem;">Date</th><th style="padding: 1rem;">Author</th><th style="padding: 1rem;">Change Description</th></tr></thead>
-            <tbody style="font-size: 0.85rem;">
-                <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 1rem;">1.0.0</td><td style="padding: 1rem;">05/20/2026</td><td style="padding: 1rem;">George</td><td style="padding: 1rem;">Initial Release. Established Technical Identity Cards for Core Backend Vital Organs.</td></tr>
+    <div class="sop-content-body">
+        <table>
+            <thead>
+                <tr>
+                    <th><strong>Document Control</strong></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td><strong>Document Title</strong></td><td><strong>Backend Architecture and Enterprise Standards SOP</strong></td></tr>
+                <tr><td><strong>Document ID</strong></td><td>HWB-QMS-7.6</td></tr>
+                <tr><td><strong>Version</strong></td><td>3.1.0</td></tr>
+                <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
+                <tr><td><strong>Author</strong></td><td>George (Systems Architect)</td></tr>
+                <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
+                <tr><td><strong>Date</strong></td><td>09/21/2026</td></tr>
+                <tr><td><strong>ISO 9001 Clause</strong></td><td>8.1 Operational Planning &amp; 8.5.1 Service Provision / ISO 27001:2022 ISMS</td></tr>
             </tbody>
         </table>
-    </section>
+
+        <hr />
+
+        <h1>Standard Operating Procedure: <strong>Backend Architecture, RBAC Gateway &amp; PII Cryptography</strong></h1>
+
+        <h2>1.0 Purpose</h2>
+        <p>This procedure establishes the <strong>Zero-Hotfix Enterprise Mandate</strong> and cryptographic security standards across all software systems at HWB Cleaning Services LLC. The purpose is to eliminate quick patches, temporary workarounds, and on-the-fly code. Every engineering change must be designed to enterprise standards, protecting company data and preventing defects from recurring.</p>
+
+        <h2>2.0 Scope</h2>
+        <p>This standard applies to all software engineers, autonomous AI agents, technical contractors, and administrative systems operating within the HWB ecosystem, including the web application, background workers, databases, and APIs.</p>
+
+        <h2>3.0 The Zero-Hotfix Enterprise Mandate</h2>
+        <div class="callout callout-note">
+            <strong>The Institutional Law</strong>
+            <p>From September 18, 2026 onward, only enterprise-level solutions are permitted in the HWB codebase. Ad-hoc hotfixes, local workaround scripts, and quick patches are strictly prohibited.</p>
+        </div>
+        <p>When an issue or security gap is discovered, developers must find the root cause in the architecture and fix the system as a whole, rather than patching a single screen or endpoint.</p>
+
+        <h2>4.0 The 6 Pillars of Enterprise Architecture</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Pillar</th>
+                    <th>Core Requirement</th>
+                    <th>Industrial Purpose</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>1. Root Cause Engineering</strong></td>
+                    <td>Solve systemic causes, never mask symptoms with local <code>if</code> statements.</td>
+                    <td>Prevents identical bugs from emerging in adjacent modules.</td>
+                </tr>
+                <tr>
+                    <td><strong>2. Centralized Gateway</strong></td>
+                    <td>Enforce access control at the request gatekeeper (<code>@app.before_request</code>).</td>
+                    <td>Fail-safe default: new endpoints are secure by default.</td>
+                </tr>
+                <tr>
+                    <td><strong>3. Declarative Contracts</strong></td>
+                    <td>Use explicit decorators like <code>@roles_required</code> on endpoints.</td>
+                    <td>Code is readable, self-documenting, and impossible to bypass.</td>
+                </tr>
+                <tr>
+                    <td><strong>4. Defense-in-Depth</strong></td>
+                    <td>Triple protection: Database checks + Backend interceptors + Clean UI rendering.</td>
+                    <td>Even if a user bypasses the UI, backend locks stop unauthorized requests.</td>
+                </tr>
+                <tr>
+                    <td><strong>5. Automated Testing</strong></td>
+                    <td>Mandatory test scripts verifying both authorized and blocked paths.</td>
+                    <td>Proves code works before deployment with zero guesswork.</td>
+                </tr>
+                <tr>
+                    <td><strong>6. Immutable Audit Trail</strong></td>
+                    <td>Log every access violation to <code>GlobalActivities</code> in PostgreSQL.</td>
+                    <td>Provides full accountability and traceability for ISO audits.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>5.0 Role-Based Access Control (RBAC) Quarantine Standard</h2>
+        <p>User access is partitioned into distinct operational zones based on verified roles:</p>
+        <ul>
+            <li><strong>Executive &amp; Admin:</strong> Global system access, Warchest financial controls, user provisioning, and strategy modules.</li>
+            <li><strong>Manager:</strong> Operations oversight, accounts, and SOP manual. Restricted from user provisioning and financial Warchest.</li>
+            <li><strong>Operator:</strong> Daily cleaning dispatch, work orders, and commercial lead pipeline.</li>
+            <li><strong>Sales:</strong> Strict isolation to the <strong>Field Sales Desk</strong> (<code>/admin/sales-desk</code>), assigned facility queue, 1-tap dialer/maps, and walkthrough quoting. All bulk data exports, payroll summaries, and sensitive workforce endpoints are blocked with HTTP 403.</li>
+        </ul>
+
+        <h2>6.0 Sensitive PII Vault &amp; Cryptographic Architecture (SEC-001)</h2>
+        <p>All sensitive worker identifiers and financial credentials are protected by the SigmaFidelity™ Cryptographic Core (<code>core/security.py</code>):</p>
+        <ol>
+            <li><strong>AES-256 Fernet Cipher:</strong> Social Security Numbers, ITINs, and direct deposit checking/savings accounts are encrypted at the column level before writing to PostgreSQL (<code>ssn_encrypted</code>, <code>direct_deposit_account_encrypted</code>).</li>
+            <li><strong>Deterministic Key Derivation:</strong> The cipher key is derived deterministically via SHA-256 hashing of system environment secrets (<code>PII_ENCRYPTION_KEY</code> / <code>SECRET_KEY</code>), guaranteeing persistence across container restarts without key drift.</li>
+            <li><strong>Zero Plaintext API Exposure:</strong> All general endpoints (<code>GET /api/v1/hr/employees</code> and <code>GET /api/v1/hr/employees/&lt;id&gt;</code>) strip encrypted ciphertext blobs and transmit only masked strings (<code>***-**-####</code> and <code>••••••••####</code>).</li>
+            <li><strong>Audited Timed Reveal Protocol:</strong> Authorized personnel requesting unmasked views must use <code>POST /api/v1/hr/employees/&lt;id&gt;/reveal-ssn</code>. The gateway checks credentials, records an immutable audit log to <code>"GlobalActivities"</code> (stamping user ID, username, and IP address), and returns the decrypted value with a strict 30-second client-side lifetime.</li>
+            <li><strong>Automatic Security Violation Logging:</strong> If unauthorized roles (e.g. Sales) attempt to call sensitive reveal endpoints, the gateway returns HTTP 403 Forbidden and writes an automatic <code>SECURITY_VIOLATION</code> event to the audit ledger.</li>
+        </ol>
+
+        <h2>7.0 Verification (Zero-Defect Check)</h2>
+        <ul>
+            <li>All admin routes must declare explicit role requirements using <code>@roles_required</code>.</li>
+            <li>The centralized gatekeeper (<code>@app.before_request</code>) must automatically intercept out-of-bounds requests.</li>
+            <li>Templates must receive permissions through <code>nav_access</code> context engine without scattered manual role checks.</li>
+            <li>All employee queries must sanitize output dictionaries, ensuring no raw ciphertexts or unmasked bank accounts exist in memory.</li>
+            <li>Automated test suite verifying RBAC quarantine and PII encryption must pass 100% prior to any container deployment.</li>
+        </ul>
+
+        <hr />
+        <h2>8.0 Revision History</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Version</th>
+                    <th>Description of Change</th>
+                    <th>Approved By</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>09-21-2026</td>
+                    <td>3.1.0</td>
+                    <td>Added Section 6.0 Sensitive PII Vault and Cryptographic Architecture (SEC-001): AES-256 Fernet encryption, deterministic key derivation, zero-plaintext API serialization, 30s timed reveal, and GlobalActivities audit logging. Approved by Humberto Dominguez, CEO.</td>
+                    <td>Humberto Dominguez, CEO</td>
+                </tr>
+                <tr>
+                    <td>09-18-2026</td>
+                    <td>3.0.0</td>
+                    <td>Codified the Zero-Hotfix Enterprise Mandate and Centralized RBAC Gateway Architecture following CEO decree.</td>
+                    <td>Humberto Dominguez, CEO</td>
+                </tr>
+                <tr>
+                    <td>05-21-2026</td>
+                    <td>2.0.0</td>
+                    <td>Modernized to post-May 1st, 2026 baseline. Standardized under Everyday Words.</td>
+                    <td>George (Systems Architect)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="sop-card-footer">
+        <span>&copy; 2026 HWB Cleaning Services LLC</span>
+        <span>Controlled Document | HWB-QMS-7.6</span>
+        <span>Page <span class="page-number"></span></span>
+    </div>
 </div>

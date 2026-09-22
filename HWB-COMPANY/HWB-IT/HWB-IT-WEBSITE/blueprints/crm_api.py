@@ -6,6 +6,7 @@ Custodians: George (Systems Architect) & Silas Sync (VP of CRM)
 
 import os
 import io
+import re
 import csv
 import json
 import hashlib
@@ -16,6 +17,14 @@ from werkzeug.utils import secure_filename
 from flask_login import login_required, current_user
 from core.services.database import get_db
 from core.services.sanitizer import clean_phone, clean_currency, clean_sqft, clean_zip, clean_email, clean_city
+from core.security import (
+    encrypt_pii,
+    decrypt_pii,
+    mask_ssn,
+    mask_account,
+    log_sensitive_access,
+    log_security_violation
+)
 
 crm_api_bp = Blueprint('crm_api', __name__)
 
@@ -81,16 +90,57 @@ def api_account_hub(id):
                     val = data.get(key) if key in data else db_val
                     return val if val != "" else None
 
+                def clean_date_val(val):
+                    if val is None or str(val).strip() == '':
+                        return None
+                    return str(val).strip()
+
+                def clean_num(val, default=0.0):
+                    if val in (None, ''):
+                        return default
+                    try:
+                        return float(val)
+                    except (ValueError, TypeError):
+                        return default
+
+                def clean_int(val, default=0):
+                    if val in (None, ''):
+                        return default
+                    try:
+                        return int(val)
+                    except (ValueError, TypeError):
+                        return default
+
                 sqf_val = data.get('sqf') if 'sqf' in data else current_acc['sqf']
                 revenue_val = data.get('annual_revenue') if 'annual_revenue' in data else current_acc['annual_revenue']
-                if sqf_val == '' or sqf_val is None:
-                    sqf_val = 0
-                else:
-                    sqf_val = clean_sqft(sqf_val)
-                if revenue_val == '' or revenue_val is None:
-                    revenue_val = 0.0
-                else:
-                    revenue_val = clean_currency(revenue_val)
+                sqf_val = clean_sqft(sqf_val) if sqf_val not in ('', None) else 0
+                revenue_val = clean_currency(revenue_val) if revenue_val not in ('', None) else 0.0
+
+                cleanable_sqft = clean_int(data.get('cleanable_sqft'), current_acc.get('cleanable_sqft') or 0)
+                monthly_billing_rate = clean_num(data.get('monthly_billing_rate'), current_acc.get('monthly_billing_rate') or 0.0)
+                overtime_billing_rate = clean_num(data.get('overtime_billing_rate'), current_acc.get('overtime_billing_rate') or 0.0)
+                escalation_clause_pct = clean_num(data.get('escalation_clause_pct'), current_acc.get('escalation_clause_pct') or 0.0)
+
+                # Compliance & Dates
+                contract_start_date = clean_date_val(data.get('contract_start_date')) if 'contract_start_date' in data else current_acc.get('contract_start_date')
+                contract_expiration_date = clean_date_val(data.get('contract_expiration_date')) if 'contract_expiration_date' in data else current_acc.get('contract_expiration_date')
+                coi_expiration_date = clean_date_val(data.get('coi_expiration_date')) if 'coi_expiration_date' in data else current_acc.get('coi_expiration_date')
+
+                tax_exempt = bool(data.get('tax_exempt')) if 'tax_exempt' in data else bool(current_acc.get('tax_exempt') or False)
+                tax_exempt_number = resolve('tax_exempt_number', current_acc.get('tax_exempt_number'))
+                additional_insured_verified = bool(data.get('additional_insured_verified')) if 'additional_insured_verified' in data else bool(current_acc.get('additional_insured_verified', True))
+                sb9_fingerprint_required = bool(data.get('sb9_fingerprint_required')) if 'sb9_fingerprint_required' in data else bool(current_acc.get('sb9_fingerprint_required', False))
+
+                coi_liability_limit = resolve('coi_liability_limit', current_acc.get('coi_liability_limit')) or '$1,000,000 / $2,000,000'
+                consumables_agreement = resolve('consumables_agreement', current_acc.get('consumables_agreement')) or 'Contractor Provides All Consumables'
+                closet_access_instructions = resolve('closet_access_instructions', current_acc.get('closet_access_instructions'))
+                service_shift_window = resolve('service_shift_window', current_acc.get('service_shift_window')) or 'Evening Shift (6:00 PM – 11:00 PM)'
+                target_quality_level = resolve('target_quality_level', current_acc.get('target_quality_level')) or 'Level 2: Ordinary Tidiness (APPA Standard)'
+                umbrella_name = resolve('umbrella_name', current_acc.get('umbrella_name'))
+                cleaning_delivery_model = resolve('cleaning_delivery_model', current_acc.get('cleaning_delivery_model')) or 'OUTSOURCED'
+                payment_terms = resolve('payment_terms', current_acc.get('payment_terms')) or 'Net 30'
+                accounts_payable_email = clean_email(resolve('accounts_payable_email', current_acc.get('accounts_payable_email')))
+                accounts_payable_phone = clean_phone(resolve('accounts_payable_phone', current_acc.get('accounts_payable_phone')))
 
                 rep_id_raw = data.get('assigned_rep_id') if 'assigned_rep_id' in data else (data.get('owner_id') if 'owner_id' in data else current_acc.get('assigned_rep_id'))
                 if rep_id_raw == '' or rep_id_raw is None or str(rep_id_raw).lower() in ['none', 'null']:
@@ -101,31 +151,68 @@ def api_account_hub(id):
                     except (ValueError, TypeError):
                         rep_id = None
 
+                # Poka-Yoke Automated Safeguard
+                new_status = resolve('status', current_acc['status']) or 'Active'
+                termination_date = current_acc.get('termination_date')
+                termination_reason = resolve('termination_reason', current_acc.get('termination_reason'))
+
+                work_orders_paused = 0
+                if new_status in ['Terminated', 'Canceled', 'Operational Hold']:
+                    if not termination_date and new_status in ['Terminated', 'Canceled']:
+                        termination_date = datetime.date.today()
+                    # Auto-pause matching active work orders
+                    cur.execute('''
+                        UPDATE "WorkOrders"
+                        SET status = 'Paused', crew_notes = COALESCE(crew_notes, '') || ' [POKA-YOKE: Account status changed to ' || %s || ']'
+                        WHERE customer_id = %s AND status IN ('Active', 'Scheduled', 'In Progress');
+                    ''', (new_status, id))
+                    work_orders_paused = cur.rowcount
+                elif new_status == 'Active':
+                    termination_date = None
+                    termination_reason = None
+
                 cur.execute('''
-                    UPDATE "Customers" SET company_name = %s, contact_person_name = %s, email = %s, phone = %s, 
-                    company_address = %s, city = %s, state = %s, zip = %s, website = %s, sqf = %s, annual_revenue = %s, 
-                    traffic_cycle = %s, quote_number = %s, frequency = %s, notes = %s, status = %s,
-                    contract_period = %s, billing_address = %s, start_date = %s, assigned_rep_id = %s
-                    WHERE customer_id = %s
-                ''', (resolve('company_name', current_acc['company_name']), 
-                      resolve('contact_person_name', current_acc['contact_person_name']), 
-                      clean_email(resolve('email', current_acc['email'])) or resolve('email', current_acc['email']), 
-                      clean_phone(resolve('phone', current_acc['phone'])) or resolve('phone', current_acc['phone']),
-                      resolve('company_address', current_acc['company_address']), 
-                      clean_city(resolve('city', current_acc['city'])) or resolve('city', current_acc['city']), 
-                      resolve('state', current_acc['state']), 
-                      clean_zip(resolve('zip', current_acc['zip'])) or resolve('zip', current_acc['zip']), 
-                      resolve('website', current_acc['website']), 
-                      sqf_val, revenue_val, 
-                      resolve('traffic_cycle', current_acc['traffic_cycle']), 
-                      resolve('quote_number', current_acc['quote_number']),
-                      resolve('frequency', current_acc['frequency']), 
-                      resolve('notes', current_acc['notes']), 
-                      resolve('status', current_acc['status']),
-                      resolve('contract_period', current_acc['contract_period']), 
-                      resolve('billing_address', current_acc['billing_address']), 
-                      resolve('next_action_date', current_acc['start_date']),
-                      rep_id, id))
+                    UPDATE "Customers" SET 
+                        company_name = %s, contact_person_name = %s, email = %s, phone = %s, 
+                        company_address = %s, city = %s, state = %s, zip = %s, website = %s, 
+                        sqf = %s, cleanable_sqft = %s, annual_revenue = %s,
+                        monthly_billing_rate = %s, overtime_billing_rate = %s, payment_terms = %s,
+                        accounts_payable_email = %s, accounts_payable_phone = %s,
+                        tax_exempt = %s, tax_exempt_number = %s,
+                        contract_period = %s, contract_start_date = %s, contract_expiration_date = %s, escalation_clause_pct = %s,
+                        coi_expiration_date = %s, coi_liability_limit = %s, additional_insured_verified = %s,
+                        sb9_fingerprint_required = %s, consumables_agreement = %s, closet_access_instructions = %s,
+                        service_shift_window = %s, frequency = %s, traffic_cycle = %s, quote_number = %s,
+                        target_quality_level = %s, umbrella_name = %s, cleaning_delivery_model = %s,
+                        status = %s, termination_date = %s, termination_reason = %s,
+                        billing_address = %s, start_date = %s, assigned_rep_id = %s, notes = %s
+                    WHERE customer_id = %s;
+                ''', (
+                    resolve('company_name', current_acc['company_name']), 
+                    resolve('contact_person_name', current_acc['contact_person_name']), 
+                    clean_email(resolve('email', current_acc['email'])) or resolve('email', current_acc['email']), 
+                    clean_phone(resolve('phone', current_acc['phone'])) or resolve('phone', current_acc['phone']),
+                    resolve('company_address', current_acc['company_address']), 
+                    clean_city(resolve('city', current_acc['city'])) or resolve('city', current_acc['city']), 
+                    resolve('state', current_acc['state']), 
+                    clean_zip(resolve('zip', current_acc['zip'])) or resolve('zip', current_acc['zip']), 
+                    resolve('website', current_acc['website']), 
+                    sqf_val, cleanable_sqft, revenue_val,
+                    monthly_billing_rate, overtime_billing_rate, payment_terms,
+                    accounts_payable_email, accounts_payable_phone,
+                    tax_exempt, tax_exempt_number,
+                    resolve('contract_period', current_acc['contract_period']),
+                    contract_start_date, contract_expiration_date, escalation_clause_pct,
+                    coi_expiration_date, coi_liability_limit, additional_insured_verified,
+                    sb9_fingerprint_required, consumables_agreement, closet_access_instructions,
+                    service_shift_window, resolve('frequency', current_acc['frequency']),
+                    resolve('traffic_cycle', current_acc['traffic_cycle']), resolve('quote_number', current_acc['quote_number']),
+                    target_quality_level, umbrella_name, cleaning_delivery_model,
+                    new_status, termination_date, termination_reason,
+                    resolve('billing_address', current_acc['billing_address']), 
+                    resolve('next_action_date', current_acc['start_date']),
+                    rep_id, resolve('notes', current_acc['notes']), id
+                ))
 
                 if 'next_action_date' in data or 'notes' in data:
                     activity_type = 'SITE_VISIT' if 'VISIT SCHEDULED' in (data.get('notes') or '') else 'NOTE'
@@ -142,7 +229,13 @@ def api_account_hub(id):
                     ''', (id, 'Account', 'REP_ASSIGNED', f"Assigned sales rep updated to ID {rep_id}"))
 
                 conn.commit()
-                return jsonify({'status': 'success'})
+                return jsonify({
+                    'status': 'success',
+                    'customer_id': id,
+                    'account_status': new_status,
+                    'work_orders_paused': work_orders_paused,
+                    'message': f'Account #{id} ({current_acc["company_name"]}) master dossier updated.'
+                })
 
             elif request.method == 'DELETE':
                 if current_user.role == 'Sales':
@@ -1098,22 +1191,49 @@ def api_workforce_apply():
     has_transport = str(data.get('has_transportation', 'true')).lower() in ('true', '1', 'yes')
     authorized_us = str(data.get('authorized_to_work_us', 'true')).lower() in ('true', '1', 'yes')
     language = data.get('preferred_language') or 'English'
-    notes = data.get('notes') or 'Applied via public careers portal.'
+    status = data.get('status') or 'New'
+    notes = (data.get('notes') or '').strip()
+    raw_pos_id = data.get('job_position_id')
+    job_position_id = None
+    if raw_pos_id:
+        try:
+            job_position_id = int(raw_pos_id)
+        except (ValueError, TypeError):
+            job_position_id = None
 
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
         with conn.cursor() as cur:
+            if not job_position_id:
+                cur.execute('SELECT id FROM "JobPositions" WHERE title ILIKE %s OR position_code = %s LIMIT 1;', (desired_role, desired_role))
+                pos_row = cur.fetchone()
+                if pos_row:
+                    job_position_id = pos_row['id']
+                else:
+                    role_lower = (desired_role or '').lower()
+                    if 'floor' in role_lower:
+                        cur.execute('SELECT id FROM "JobPositions" WHERE position_code = %s LIMIT 1;', ('HWB-POS-002',))
+                    elif any(k in role_lower for k in ['lead', 'custodian', 'supervisor']):
+                        cur.execute('SELECT id FROM "JobPositions" WHERE position_code = %s LIMIT 1;', ('HWB-POS-003',))
+                    elif any(k in role_lower for k in ['cleanroom', 'sanitiz']):
+                        cur.execute('SELECT id FROM "JobPositions" WHERE position_code = %s LIMIT 1;', ('HWB-POS-004',))
+                    else:
+                        cur.execute('SELECT id FROM "JobPositions" WHERE position_code = %s LIMIT 1;', ('HWB-POS-001',))
+                    fallback_row = cur.fetchone()
+                    if fallback_row:
+                        job_position_id = fallback_row['id']
+
             cur.execute('''
                 INSERT INTO "JobApplicants" (
                     full_name, phone, email, city, state, desired_role, desired_shift,
                     experience_level, has_transportation, authorized_to_work_us,
-                    preferred_language, status, notes
-                ) VALUES (%s, %s, %s, %s, 'TX', %s, %s, %s, %s, %s, %s, 'New', %s)
+                    preferred_language, status, notes, job_position_id
+                ) VALUES (%s, %s, %s, %s, 'TX', %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 RETURNING id;
-            ''', (full_name, phone, email, city, desired_role, desired_shift, experience, has_transport, authorized_us, language, notes))
+            ''', (full_name, phone, email, city, desired_role, desired_shift, experience, has_transport, authorized_us, language, status, notes, job_position_id))
             new_id = cur.fetchone()[0]
             conn.commit()
-            return jsonify({'status': 'success', 'applicant_id': new_id, 'message': 'Application received.'}), 201
+            return jsonify({'status': 'success', 'applicant_id': new_id, 'job_position_id': job_position_id, 'message': 'Application received.'}), 201
     except Exception as e:
         conn.rollback()
         return jsonify({'status': 'error', 'message': str(e)}), 500
@@ -1478,10 +1598,23 @@ def api_hr_onboard_candidate():
     assigned_customer_id = data.get('assigned_customer_id') or None
     weekly_hours = float(data.get('weekly_hours_allocated') or 40.00)
     notes = (data.get('notes') or '').strip()
+    raw_pos_id = data.get('job_position_id')
+    job_position_id = None
+    if raw_pos_id:
+        try:
+            job_position_id = int(raw_pos_id)
+        except (ValueError, TypeError):
+            job_position_id = None
 
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
         with conn.cursor() as cur:
+            if not job_position_id:
+                cur.execute('SELECT id, title FROM "JobPositions" WHERE title ILIKE %s OR position_code = %s LIMIT 1;', (role, role))
+                pos_row = cur.fetchone()
+                if pos_row:
+                    job_position_id = pos_row['id']
+
             cur.execute('SELECT MAX(id) as max_id FROM "Employees";')
             max_row = cur.fetchone()
             next_id = (max_row['max_id'] or 0) + 1001
@@ -1493,20 +1626,23 @@ def api_hr_onboard_candidate():
                     hire_date, employment_status, employment_type, primary_role,
                     pay_rate_hourly, overtime_rate_hourly, pay_frequency, primary_language,
                     emergency_contact_name, emergency_contact_phone, address_city, address_state,
-                    assigned_customer_id, weekly_hours_allocated, notes
+                    assigned_customer_id, weekly_hours_allocated, notes,
+                    job_position_id, job_description_acknowledged_at
                 ) VALUES (
                     %s, %s, %s, %s, %s, %s,
                     %s, %s, %s, %s,
                     %s, %s, %s, %s,
                     %s, %s, %s, %s,
-                    %s, %s, %s
+                    %s, %s, %s,
+                    %s, NOW()
                 ) RETURNING id, employee_number;
             ''', (
                 emp_number, applicant_id, first_name, last_name, phone, email,
                 hire_date, employment_status, employment_type, role,
                 pay_rate, overtime_rate, pay_frequency, primary_language,
                 emergency_name, emergency_phone, city, state,
-                assigned_customer_id, weekly_hours, notes
+                assigned_customer_id, weekly_hours, notes,
+                job_position_id
             ))
             new_emp = cur.fetchone()
 
@@ -1541,9 +1677,12 @@ def api_get_employees():
         with conn.cursor() as cur:
             query = '''
                 SELECT e.*, c.company_name as assigned_facility_name,
+                       jp.position_code as job_position_code, jp.title as job_position_title,
+                       jp.hourly_min as job_position_hourly_min, jp.hourly_max as job_position_hourly_max,
                        (SELECT COUNT(*) FROM "EmployeeDocuments" d WHERE d.employee_id = e.id) as document_count
                 FROM "Employees" e
                 LEFT JOIN "Customers" c ON e.assigned_customer_id = c.customer_id
+                LEFT JOIN "JobPositions" jp ON e.job_position_id = jp.id
                 WHERE 1=1
             '''
             params = []
@@ -1560,7 +1699,24 @@ def api_get_employees():
 
             query += ' ORDER BY e.created_at DESC;'
             cur.execute(query, tuple(params))
-            rows = [serialize_row(r) for r in cur.fetchall()]
+            raw_rows = cur.fetchall()
+            rows = []
+            for r in raw_rows:
+                s_row = serialize_row(r)
+                # Security Sanitize: Zero plaintext leaks
+                s_row.pop('ssn_encrypted', None)
+                s_row.pop('direct_deposit_account_encrypted', None)
+                s_row['has_ssn'] = bool(r.get('ssn_last_four'))
+                s_row['ssn_masked'] = mask_ssn(last_four=r.get('ssn_last_four')) if r.get('ssn_last_four') else ''
+                s_row['ssn_last_four'] = r.get('ssn_last_four') or ''
+                if r.get('direct_deposit_account_last_four'):
+                    s_row['direct_deposit_account_masked'] = mask_account(last_four=r.get('direct_deposit_account_last_four'))
+                elif r.get('direct_deposit_account'):
+                    s_row['direct_deposit_account_masked'] = mask_account(raw_acc=r.get('direct_deposit_account'))
+                else:
+                    s_row['direct_deposit_account_masked'] = ''
+                s_row['direct_deposit_account'] = s_row['direct_deposit_account_masked']
+                rows.append(s_row)
             return jsonify({'status': 'success', 'count': len(rows), 'employees': rows})
     finally:
         if conn: conn.close()
@@ -1575,9 +1731,17 @@ def api_manage_employee(id):
         with conn.cursor() as cur:
             if request.method == 'GET':
                 cur.execute('''
-                    SELECT e.*, c.company_name as assigned_facility_name
+                    SELECT e.*, c.company_name as assigned_facility_name,
+                           jp.position_code as job_position_code, jp.title as job_position_title,
+                           jp.department as job_position_department, jp.reports_to as job_position_reports_to,
+                           jp.summary as job_position_summary, jp.key_responsibilities as job_position_responsibilities,
+                           jp.required_competencies as job_position_competencies, jp.required_experience as job_position_experience,
+                           jp.required_certifications as job_position_certifications, jp.physical_demands as job_position_physical_demands,
+                           jp.work_environment as job_position_work_environment, jp.hourly_min as job_position_hourly_min,
+                           jp.hourly_max as job_position_hourly_max, jp.sop_template_id as job_position_sop_id
                     FROM "Employees" e
                     LEFT JOIN "Customers" c ON e.assigned_customer_id = c.customer_id
+                    LEFT JOIN "JobPositions" jp ON e.job_position_id = jp.id
                     WHERE e.id = %s;
                 ''', (id,))
                 emp = cur.fetchone()
@@ -1589,6 +1753,19 @@ def api_manage_employee(id):
 
                 emp_data = serialize_row(emp)
                 emp_data['documents'] = docs
+                # PII Vault Serialization (SOC 2 / ISO 27001)
+                emp_data.pop('ssn_encrypted', None)
+                emp_data.pop('direct_deposit_account_encrypted', None)
+                emp_data['has_ssn'] = bool(emp.get('ssn_last_four'))
+                emp_data['ssn_last_four'] = emp.get('ssn_last_four') or ''
+                emp_data['ssn_masked'] = mask_ssn(last_four=emp.get('ssn_last_four')) if emp.get('ssn_last_four') else ''
+                if emp.get('direct_deposit_account_last_four'):
+                    emp_data['direct_deposit_account_masked'] = mask_account(last_four=emp.get('direct_deposit_account_last_four'))
+                elif emp.get('direct_deposit_account'):
+                    emp_data['direct_deposit_account_masked'] = mask_account(raw_acc=emp.get('direct_deposit_account'))
+                else:
+                    emp_data['direct_deposit_account_masked'] = ''
+                emp_data['direct_deposit_account'] = emp_data['direct_deposit_account_masked']
                 return jsonify({'status': 'success', 'employee': emp_data})
 
             elif request.method == 'DELETE':
@@ -1617,12 +1794,147 @@ def api_manage_employee(id):
                 pay_rate = float(data.get('pay_rate_hourly', emp['pay_rate_hourly']))
                 overtime_rate = float(data.get('overtime_rate_hourly', emp['overtime_rate_hourly']))
                 primary_language = data.get('primary_language', emp['primary_language'])
-                assigned_customer_id = data.get('assigned_customer_id', emp['assigned_customer_id'])
                 weekly_hours = float(data.get('weekly_hours_allocated', emp['weekly_hours_allocated']))
                 emergency_name = data.get('emergency_contact_name', emp['emergency_contact_name'])
                 emergency_phone = clean_phone(data.get('emergency_contact_phone', emp['emergency_contact_phone']))
                 city = clean_city(data.get('address_city', emp['address_city']))
+                street = data.get('address_street', emp.get('address_street'))
+                zip_code = clean_zip(data.get('address_zip', emp.get('address_zip')))
+                pay_frequency = data.get('pay_frequency', emp.get('pay_frequency') or 'Bi-Weekly')
                 notes = data.get('notes', emp['notes'])
+
+                # Assigned facility handle null/empty
+                if 'assigned_customer_id' in data:
+                    raw_cust = data.get('assigned_customer_id')
+                    assigned_customer_id = int(raw_cust) if raw_cust not in (None, '', 0, '0') else None
+                else:
+                    assigned_customer_id = emp.get('assigned_customer_id')
+
+                # Helper date/string cleaners
+                def clean_date_field(val):
+                    if val is None or str(val).strip() == '':
+                        return None
+                    return str(val).strip()
+
+                def clean_str_field(val):
+                    if val is None:
+                        return None
+                    s = str(val).strip()
+                    return s if s else None
+
+                # Lifecycle, W-4, and Compliance Fields
+                w4_filing_status = clean_str_field(data.get('w4_filing_status')) or emp.get('w4_filing_status') or 'Single'
+                w4_step2_multiple_jobs = bool(data.get('w4_step2_multiple_jobs', emp.get('w4_step2_multiple_jobs') or False))
+                try:
+                    w4_step3_dependents = float(data.get('w4_step3_dependents', emp.get('w4_step3_dependents') or 0.0) or 0.0)
+                except (ValueError, TypeError):
+                    w4_step3_dependents = 0.0
+                try:
+                    w4_step4c_extra_withholding = float(data.get('w4_step4c_extra_withholding', emp.get('w4_step4c_extra_withholding') or 0.0) or 0.0)
+                except (ValueError, TypeError):
+                    w4_step4c_extra_withholding = 0.0
+
+                pto_start_date = clean_date_field(data['pto_start_date']) if 'pto_start_date' in data else emp.get('pto_start_date')
+                pto_end_date = clean_date_field(data['pto_end_date']) if 'pto_end_date' in data else emp.get('pto_end_date')
+                termination_reason = clean_str_field(data['termination_reason']) if 'termination_reason' in data else emp.get('termination_reason')
+
+                if 'eligible_for_rehire' in data:
+                    eligible_for_rehire = bool(data['eligible_for_rehire'])
+                else:
+                    eligible_for_rehire = True if emp.get('eligible_for_rehire') is None else bool(emp.get('eligible_for_rehire'))
+
+                state_id_number = clean_str_field(data['state_id_number']) if 'state_id_number' in data else emp.get('state_id_number')
+                state_id_expiration = clean_date_field(data['state_id_expiration']) if 'state_id_expiration' in data else emp.get('state_id_expiration')
+                dps_clearance_date = clean_date_field(data['dps_clearance_date']) if 'dps_clearance_date' in data else emp.get('dps_clearance_date')
+                i9_verification_date = clean_date_field(data['i9_verification_date']) if 'i9_verification_date' in data else emp.get('i9_verification_date')
+                direct_deposit_bank = clean_str_field(data['direct_deposit_bank']) if 'direct_deposit_bank' in data else emp.get('direct_deposit_bank')
+                direct_deposit_routing = clean_str_field(data['direct_deposit_routing']) if 'direct_deposit_routing' in data else emp.get('direct_deposit_routing')
+
+                # PII Vault Handling: Social Security Number / ITIN
+                raw_ssn = None
+                if 'social_security_number' in data:
+                    raw_ssn = clean_str_field(data.get('social_security_number'))
+                elif 'ssn' in data:
+                    raw_ssn = clean_str_field(data.get('ssn'))
+
+                if raw_ssn is not None:
+                    # Check if user entered an unmasked SSN
+                    if raw_ssn and not raw_ssn.startswith('***') and not raw_ssn.startswith('•••'):
+                        digits = re.sub(r'\D', '', raw_ssn)
+                        if len(digits) == 9:
+                            formatted_ssn = f"{digits[:3]}-{digits[3:5]}-{digits[5:]}"
+                            ssn_encrypted = encrypt_pii(formatted_ssn)
+                            ssn_last_four = digits[-4:]
+                        elif len(digits) >= 4:
+                            ssn_encrypted = encrypt_pii(raw_ssn)
+                            ssn_last_four = digits[-4:]
+                        else:
+                            ssn_encrypted = None
+                            ssn_last_four = None
+                    elif raw_ssn == '':
+                        ssn_encrypted = None
+                        ssn_last_four = None
+                    else:
+                        ssn_encrypted = emp.get('ssn_encrypted')
+                        ssn_last_four = emp.get('ssn_last_four')
+                else:
+                    ssn_encrypted = emp.get('ssn_encrypted')
+                    ssn_last_four = emp.get('ssn_last_four')
+
+                # PII Vault Handling: Direct Deposit Account
+                if 'direct_deposit_account' in data:
+                    raw_dda = clean_str_field(data.get('direct_deposit_account'))
+                    if raw_dda and not raw_dda.startswith('••••') and not raw_dda.startswith('****'):
+                        dda_clean = re.sub(r'\s', '', raw_dda)
+                        direct_deposit_account_encrypted = encrypt_pii(dda_clean)
+                        direct_deposit_account_last_four = dda_clean[-4:] if len(dda_clean) >= 4 else dda_clean
+                        direct_deposit_account = mask_account(raw_acc=dda_clean)
+                    elif raw_dda == '':
+                        direct_deposit_account_encrypted = None
+                        direct_deposit_account_last_four = None
+                        direct_deposit_account = None
+                    else:
+                        direct_deposit_account_encrypted = emp.get('direct_deposit_account_encrypted')
+                        direct_deposit_account_last_four = emp.get('direct_deposit_account_last_four')
+                        direct_deposit_account = emp.get('direct_deposit_account')
+                else:
+                    direct_deposit_account_encrypted = emp.get('direct_deposit_account_encrypted')
+                    direct_deposit_account_last_four = emp.get('direct_deposit_account_last_four')
+                    direct_deposit_account = emp.get('direct_deposit_account')
+
+                # Automated Security Lockout Protocol (Poka-Yoke)
+                badge_status = data.get('badge_status', emp.get('badge_status') or 'Active')
+                termination_date = emp.get('termination_date')
+
+                if employment_status in ['Terminated', 'Fired']:
+                    badge_status = 'Revoked'
+                    if not termination_date:
+                        termination_date = datetime.date.today()
+                    # Revoke candidate in JobApplicants table if linked
+                    if emp.get('applicant_id'):
+                        cur.execute('''
+                            UPDATE "JobApplicants" 
+                            SET status = 'Terminated', updated_at = CURRENT_TIMESTAMP 
+                            WHERE id = %s;
+                        ''', (emp['applicant_id'],))
+                elif employment_status in ['On Leave', 'Suspended']:
+                    badge_status = 'Suspended'
+                elif employment_status == 'Active':
+                    badge_status = 'Active'
+
+                raw_job_pos_id = data.get('job_position_id')
+                if raw_job_pos_id is not None:
+                    try:
+                        job_position_id = int(raw_job_pos_id) if raw_job_pos_id else None
+                    except (ValueError, TypeError):
+                        job_position_id = emp.get('job_position_id')
+                else:
+                    job_position_id = emp.get('job_position_id')
+
+                if data.get('job_description_acknowledged'):
+                    job_description_acknowledged_at = dt_cls.now()
+                else:
+                    job_description_acknowledged_at = emp.get('job_description_acknowledged_at')
 
                 cur.execute('''
                     UPDATE "Employees" SET
@@ -1631,7 +1943,21 @@ def api_manage_employee(id):
                         pay_rate_hourly = %s, overtime_rate_hourly = %s, primary_language = %s,
                         assigned_customer_id = %s, weekly_hours_allocated = %s,
                         emergency_contact_name = %s, emergency_contact_phone = %s,
-                        address_city = %s, notes = %s, updated_at = CURRENT_TIMESTAMP
+                        address_street = %s, address_city = %s, address_zip = %s,
+                        pay_frequency = %s, notes = %s,
+                        w4_filing_status = %s, w4_step2_multiple_jobs = %s,
+                        w4_step3_dependents = %s, w4_step4c_extra_withholding = %s,
+                        pto_start_date = %s, pto_end_date = %s,
+                        termination_reason = %s, eligible_for_rehire = %s,
+                        badge_status = %s, termination_date = %s,
+                        state_id_number = %s, state_id_expiration = %s,
+                        dps_clearance_date = %s, i9_verification_date = %s,
+                        direct_deposit_bank = %s, direct_deposit_routing = %s,
+                        direct_deposit_account = %s,
+                        ssn_encrypted = %s, ssn_last_four = %s,
+                        direct_deposit_account_encrypted = %s, direct_deposit_account_last_four = %s,
+                        job_position_id = %s, job_description_acknowledged_at = %s,
+                        updated_at = CURRENT_TIMESTAMP
                     WHERE id = %s;
                 ''', (
                     first_name, last_name, phone, email,
@@ -1639,12 +1965,83 @@ def api_manage_employee(id):
                     pay_rate, overtime_rate, primary_language,
                     assigned_customer_id, weekly_hours,
                     emergency_name, emergency_phone,
-                    city, notes, id
+                    street, city, zip_code,
+                    pay_frequency, notes,
+                    w4_filing_status, w4_step2_multiple_jobs,
+                    w4_step3_dependents, w4_step4c_extra_withholding,
+                    pto_start_date, pto_end_date,
+                    termination_reason, eligible_for_rehire,
+                    badge_status, termination_date,
+                    state_id_number, state_id_expiration,
+                    dps_clearance_date, i9_verification_date,
+                    direct_deposit_bank, direct_deposit_routing,
+                    direct_deposit_account,
+                    ssn_encrypted, ssn_last_four,
+                    direct_deposit_account_encrypted, direct_deposit_account_last_four,
+                    job_position_id, job_description_acknowledged_at,
+                    id
                 ))
                 conn.commit()
-                return jsonify({'status': 'success', 'id': id, 'message': 'Employee updated successfully.'})
+                return jsonify({
+                    'status': 'success',
+                    'id': id,
+                    'badge_status': badge_status,
+                    'has_ssn': bool(ssn_last_four),
+                    'ssn_masked': mask_ssn(last_four=ssn_last_four) if ssn_last_four else '',
+                    'direct_deposit_account_masked': mask_account(last_four=direct_deposit_account_last_four) if direct_deposit_account_last_four else '',
+                    'message': f'Employee #{id} ({first_name} {last_name}) updated successfully.'
+                })
     finally:
         if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/hr/employees/<int:id>/reveal-ssn', methods=['POST'])
+@login_required
+def api_reveal_employee_ssn(id):
+    """
+    Enterprise PII Reveal Protocol (SOC 2 / ISO 27001):
+    Allows authorized administrators to decrypt and view an employee's Social Security Number
+    with mandatory audit logging to GlobalActivities and automatic 30-second client-side remasking.
+    """
+    if current_user.role not in ['Executive', 'Admin', 'Operations']:
+        log_security_violation(current_user.id, current_user.username, current_user.role, request.path, request.method)
+        return jsonify({'status': 'error', 'message': 'Unauthorized to view sensitive identification data.'}), 403
+
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            cur.execute('SELECT id, first_name, last_name, ssn_encrypted, ssn_last_four FROM "Employees" WHERE id = %s;', (id,))
+            emp = cur.fetchone()
+            if not emp:
+                return jsonify({'status': 'error', 'message': 'Employee not found'}), 404
+
+            ssn_encrypted = emp.get('ssn_encrypted')
+            if not ssn_encrypted:
+                return jsonify({'status': 'error', 'message': 'No Social Security Number on file for this employee.'}), 404
+
+            client_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+            log_sensitive_access(
+                user_id=current_user.id,
+                username=current_user.username,
+                employee_id=id,
+                field_name='Social Security Number',
+                ip_address=client_ip
+            )
+
+            decrypted_ssn = decrypt_pii(ssn_encrypted)
+            if not decrypted_ssn:
+                return jsonify({'status': 'error', 'message': 'Cryptographic decryption failed.'}), 500
+
+            return jsonify({
+                'status': 'success',
+                'ssn': decrypted_ssn,
+                'ssn_last_four': emp.get('ssn_last_four'),
+                'remask_seconds': 30,
+                'message': 'Decrypted SSN revealed. View will automatically lock and re-mask in 30 seconds.'
+            })
+    finally:
+        if conn:
+            conn.close()
 
 
 @crm_api_bp.route('/api/v1/hr/employees/<int:id>/documents', methods=['POST'])
@@ -1813,6 +2210,478 @@ def api_export_payroll_csv():
                 mimetype="text/csv",
                 headers={"Content-disposition": f"attachment; filename=HWB_Payroll_Export_{timestamp}.csv"}
             )
+    finally:
+        if conn: conn.close()
+
+# -------------------------------------------------------------------------
+# SigmaFidelity™ Job Positions & Digital Job Descriptions (HWB-FORM-7.2-001)
+# -------------------------------------------------------------------------
+
+@crm_api_bp.route('/api/v1/hr/job-positions', methods=['GET'])
+def api_get_job_positions():
+    """
+    Returns active job positions and specifications.
+    Publicly accessible for the careers portal (/work-with-us) and backoffice hiring workflows.
+    """
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            cur.execute('''
+                SELECT id, position_code, title, department, reports_to, summary,
+                       key_responsibilities, required_competencies, required_experience,
+                       required_certifications, physical_demands, work_environment,
+                       hourly_min, hourly_max, standard_weekly_hours, is_active,
+                       sop_template_id, created_at, updated_at
+                FROM "JobPositions"
+                WHERE is_active = TRUE
+                ORDER BY id ASC;
+            ''')
+            rows = cur.fetchall()
+            return jsonify({
+                'status': 'success',
+                'count': len(rows),
+                'positions': [serialize_row(r) for r in rows]
+            })
+    finally:
+        if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/hr/job-positions/<int:id>', methods=['GET'])
+def api_get_job_position_detail(id):
+    """
+    Returns full digital job description specifications conforming to HWB-FORM-7.2-001.
+    """
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            cur.execute('SELECT * FROM "JobPositions" WHERE id = %s;', (id,))
+            pos = cur.fetchone()
+            if not pos:
+                return jsonify({'status': 'error', 'message': 'Job position not found'}), 404
+            return jsonify({
+                'status': 'success',
+                'position': serialize_row(pos)
+            })
+    finally:
+        if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/hr/employees/<int:id>/acknowledge-job-description', methods=['POST'])
+@login_required
+def api_acknowledge_job_description(id):
+    """
+    Records official employee / supervisor acknowledgement of HWB-FORM-7.2-001 Job Description.
+    Satisfies ISO 9001:2015 Clause 7.2 (Competence) and HWB-QMS-7.2 standards.
+    """
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            cur.execute('''
+                UPDATE "Employees"
+                SET job_description_acknowledged_at = NOW(),
+                    updated_at = NOW()
+                WHERE id = %s
+                RETURNING id, employee_number, first_name, last_name, job_position_id, job_description_acknowledged_at;
+            ''', (id,))
+            emp = cur.fetchone()
+            if not emp:
+                return jsonify({'status': 'error', 'message': 'Employee not found'}), 404
+
+            cur.execute('''
+                INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
+                VALUES (%s, 'Employee', 'Compliance', %s);
+            ''', (id, f"Job Description (HWB-FORM-7.2-001) acknowledged by {current_user.username} for {emp['first_name']} {emp['last_name']} ({emp['employee_number']})."))
+
+            conn.commit()
+            return jsonify({
+                'status': 'success',
+                'message': 'Job Description acknowledged successfully.',
+                'employee': serialize_row(emp)
+            })
+    finally:
+        if conn: conn.close()
+
+
+# -------------------------------------------------------------------------
+# SigmaFidelity™ Work Order Dispatch & Execution Engine (HWB-QMS-11.2)
+# -------------------------------------------------------------------------
+
+@crm_api_bp.route('/api/v1/dispatch/work-orders', methods=['GET'])
+@login_required
+def api_get_dispatch_work_orders():
+    """Returns all work orders with facility, service, technician, and shift metadata."""
+    status_filter = request.args.get('status')
+    customer_id = request.args.get('customer_id')
+    date_filter = request.args.get('date')
+    technician_id = request.args.get('technician_id')
+    search_q = (request.args.get('q') or '').strip().lower()
+
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            query = '''
+                SELECT w.*, 
+                       c.company_name, 
+                       c.company_address as facility_address,
+                       c.city as facility_city,
+                       COALESCE(s.service_requested, w.service_type, 'Routine Nightly Custodial') as service_name,
+                       e.first_name as tech_first_name,
+                       e.last_name as tech_last_name,
+                       e.employee_number as tech_employee_number,
+                       e.phone as tech_phone,
+                       e.dps_clearance_date as tech_dps_clearance,
+                       e.badge_status as tech_badge_status
+                FROM "WorkOrders" w
+                JOIN "Customers" c ON w.customer_id = c.customer_id
+                LEFT JOIN "Services" s ON w.service_id = s.service_id
+                LEFT JOIN "Employees" e ON COALESCE(w.assigned_technician_id, w.crew_lead_id) = e.id
+                WHERE 1=1
+            '''
+            params = []
+            if status_filter:
+                query += ' AND UPPER(w.status) = UPPER(%s)'
+                params.append(status_filter)
+            if customer_id:
+                query += ' AND w.customer_id = %s'
+                params.append(int(customer_id))
+            if date_filter:
+                query += ' AND w.scheduled_date = %s'
+                params.append(date_filter)
+            if technician_id:
+                query += ' AND COALESCE(w.assigned_technician_id, w.crew_lead_id) = %s'
+                params.append(int(technician_id))
+            if search_q:
+                query += ''' AND (
+                    LOWER(c.company_name) LIKE %s OR 
+                    LOWER(COALESCE(w.service_type, '')) LIKE %s OR 
+                    LOWER(COALESCE(e.first_name, '')) LIKE %s OR 
+                    LOWER(COALESCE(e.last_name, '')) LIKE %s OR
+                    LOWER(COALESCE(w.dock_ingress_instructions, '')) LIKE %s
+                )'''
+                l_term = f"%{search_q}%"
+                params.extend([l_term, l_term, l_term, l_term, l_term])
+
+            query += ' ORDER BY w.scheduled_date DESC, w.work_order_id DESC;'
+            cur.execute(query, tuple(params))
+            rows = [serialize_row(r) for r in cur.fetchall()]
+            return jsonify({'status': 'success', 'count': len(rows), 'work_orders': rows})
+    finally:
+        if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/dispatch/work-orders', methods=['POST'])
+@login_required
+def api_create_dispatch_work_order():
+    """Creates a new shift dispatch and assigns a technician."""
+    data = request.get_json() or {}
+    customer_id = data.get('customer_id')
+    if not customer_id:
+        return jsonify({'status': 'error', 'message': 'Customer ID is required.'}), 400
+
+    service_id = data.get('service_id') or None
+    if service_id in ('', '0', 0):
+        service_id = None
+    else:
+        try:
+            service_id = int(service_id)
+        except (ValueError, TypeError):
+            service_id = None
+
+    scheduled_date = data.get('scheduled_date') or dt_cls.now().strftime('%Y-%m-%d')
+    scheduled_time = data.get('scheduled_time') or '18:00'
+    shift_window = data.get('shift_window') or 'Evening Shift (6:00 PM – 11:00 PM)'
+    service_type = data.get('service_type') or 'Routine Nightly Custodial'
+    
+    assigned_tech_id = data.get('assigned_technician_id') or None
+    if assigned_tech_id in ('', '0', 0):
+        assigned_tech_id = None
+    else:
+        try:
+            assigned_tech_id = int(assigned_tech_id)
+        except (ValueError, TypeError):
+            assigned_tech_id = None
+
+    status = data.get('status') or 'Scheduled'
+    client_notes = (data.get('client_notes') or '').strip()
+    crew_notes = (data.get('crew_notes') or '').strip()
+    dock_ingress = (data.get('dock_ingress_instructions') or '').strip()
+    security_code = (data.get('security_access_code') or '').strip()
+
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            cur.execute('''
+                INSERT INTO "WorkOrders" (
+                    customer_id, service_id, scheduled_date, scheduled_time,
+                    shift_window, service_type, assigned_technician_id, crew_lead_id,
+                    status, client_notes, crew_notes, dock_ingress_instructions,
+                    security_access_code
+                ) VALUES (
+                    %s, %s, %s, %s,
+                    %s, %s, %s, %s,
+                    %s, %s, %s, %s,
+                    %s
+                ) RETURNING work_order_id;
+            ''', (
+                int(customer_id), service_id, scheduled_date, scheduled_time,
+                shift_window, service_type, assigned_tech_id, assigned_tech_id,
+                status, client_notes, crew_notes, dock_ingress,
+                security_code
+            ))
+            new_id = cur.fetchone()['work_order_id']
+
+            # Log audit activity
+            cur.execute('''
+                INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
+                VALUES (%s, 'WorkOrder', 'Shift Dispatch Created', %s);
+            ''', (new_id, f"Work Order #{new_id} scheduled for {scheduled_date} ({shift_window})."))
+
+            conn.commit()
+            return jsonify({
+                'status': 'success',
+                'work_order_id': new_id,
+                'message': f"Work Order #{new_id} successfully created and dispatched."
+            }), 201
+    finally:
+        if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/dispatch/work-orders/<int:order_id>', methods=['GET', 'PATCH', 'DELETE'])
+@login_required
+def api_manage_dispatch_work_order(order_id: int):
+    """Retrieves, updates, or cancels a specific dispatch work order."""
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            if request.method == 'GET':
+                cur.execute('''
+                    SELECT w.*, 
+                           c.company_name, 
+                           c.company_address as facility_address,
+                           c.city as facility_city,
+                           COALESCE(s.service_requested, w.service_type, 'Routine Nightly Custodial') as service_name,
+                           e.first_name as tech_first_name,
+                           e.last_name as tech_last_name,
+                           e.employee_number as tech_employee_number,
+                           e.phone as tech_phone,
+                           e.dps_clearance_date as tech_dps_clearance,
+                           e.badge_status as tech_badge_status
+                    FROM "WorkOrders" w
+                    JOIN "Customers" c ON w.customer_id = c.customer_id
+                    LEFT JOIN "Services" s ON w.service_id = s.service_id
+                    LEFT JOIN "Employees" e ON COALESCE(w.assigned_technician_id, w.crew_lead_id) = e.id
+                    WHERE w.work_order_id = %s;
+                ''', (order_id,))
+                order = cur.fetchone()
+                if not order:
+                    return jsonify({'status': 'error', 'message': 'Work order not found.'}), 404
+                return jsonify({'status': 'success', 'work_order': serialize_row(order)})
+
+            elif request.method == 'DELETE':
+                cur.execute('UPDATE "WorkOrders" SET status = \'Canceled\' WHERE work_order_id = %s;', (order_id,))
+                conn.commit()
+                return jsonify({'status': 'success', 'message': f"Work order #{order_id} marked as Canceled."})
+
+            elif request.method == 'PATCH':
+                data = request.get_json() or {}
+                cur.execute('SELECT * FROM "WorkOrders" WHERE work_order_id = %s;', (order_id,))
+                existing = cur.fetchone()
+                if not existing:
+                    return jsonify({'status': 'error', 'message': 'Work order not found.'}), 404
+
+                fields_to_update = []
+                params = []
+
+                if 'assigned_technician_id' in data:
+                    tech_id = data['assigned_technician_id']
+                    val = int(tech_id) if tech_id not in (None, '', 0, '0') else None
+                    fields_to_update.extend(['assigned_technician_id = %s', 'crew_lead_id = %s'])
+                    params.extend([val, val])
+
+                if 'status' in data:
+                    new_st = data['status'].strip()
+                    fields_to_update.append('status = %s')
+                    params.append(new_st)
+                    # Automatic timestamping
+                    if new_st == 'In Progress' and not existing.get('actual_start_time'):
+                        fields_to_update.append('actual_start_time = %s')
+                        params.append(dt_cls.now().isoformat())
+                    elif new_st == 'COMPLETED' and not existing.get('actual_end_time'):
+                        fields_to_update.append('actual_end_time = %s')
+                        params.append(dt_cls.now().isoformat())
+
+                if 'scheduled_date' in data:
+                    fields_to_update.append('scheduled_date = %s')
+                    params.append(data['scheduled_date'])
+
+                if 'scheduled_time' in data:
+                    fields_to_update.append('scheduled_time = %s')
+                    params.append(data['scheduled_time'])
+
+                if 'shift_window' in data:
+                    fields_to_update.append('shift_window = %s')
+                    params.append(data['shift_window'])
+
+                if 'service_type' in data:
+                    fields_to_update.append('service_type = %s')
+                    params.append(data['service_type'])
+
+                if 'dock_ingress_instructions' in data:
+                    fields_to_update.append('dock_ingress_instructions = %s')
+                    params.append(data['dock_ingress_instructions'])
+
+                if 'security_access_code' in data:
+                    fields_to_update.append('security_access_code = %s')
+                    params.append(data['security_access_code'])
+
+                if 'client_notes' in data:
+                    fields_to_update.append('client_notes = %s')
+                    params.append(data['client_notes'])
+
+                if 'crew_notes' in data:
+                    fields_to_update.append('crew_notes = %s')
+                    params.append(data['crew_notes'])
+
+                if 'actual_start_time' in data:
+                    fields_to_update.append('actual_start_time = %s')
+                    params.append(data['actual_start_time'])
+
+                if 'actual_end_time' in data:
+                    fields_to_update.append('actual_end_time = %s')
+                    params.append(data['actual_end_time'])
+
+                if 'quality_score' in data:
+                    val = float(data['quality_score']) if data['quality_score'] is not None else None
+                    fields_to_update.append('quality_score = %s')
+                    params.append(val)
+
+                if 'completion_signature' in data:
+                    fields_to_update.append('completion_signature = %s')
+                    params.append(data['completion_signature'])
+
+                if 'supervisor_signoff' in data:
+                    fields_to_update.append('supervisor_signoff = %s')
+                    params.append(data['supervisor_signoff'])
+
+                if not fields_to_update:
+                    return jsonify({'status': 'noop', 'message': 'No changes provided.'})
+
+                query = f'UPDATE "WorkOrders" SET {", ".join(fields_to_update)} WHERE work_order_id = %s;'
+                params.append(order_id)
+                cur.execute(query, tuple(params))
+
+                cur.execute('''
+                    INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
+                    VALUES (%s, 'WorkOrder', 'Work Order Updated', %s);
+                ''', (order_id, f"Work Order #{order_id} modified via Dispatch Console."))
+
+                conn.commit()
+                return jsonify({'status': 'success', 'message': f"Work Order #{order_id} updated successfully."})
+    finally:
+        if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/dispatch/work-orders/<int:order_id>/assign', methods=['POST'])
+@login_required
+def api_quick_assign_technician(order_id: int):
+    """Assigns an employee directly to a work order and reports DPS FACT compliance status."""
+    data = request.get_json() or {}
+    raw_tech_id = data.get('technician_id')
+    tech_id = int(raw_tech_id) if raw_tech_id not in (None, '', 0, '0') else None
+
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            cur.execute('SELECT * FROM "WorkOrders" WHERE work_order_id = %s;', (order_id,))
+            order = cur.fetchone()
+            if not order:
+                return jsonify({'status': 'error', 'message': 'Work order not found.'}), 404
+
+            tech_info = None
+            if tech_id:
+                cur.execute('SELECT id, first_name, last_name, employee_number, dps_clearance_date, badge_status FROM "Employees" WHERE id = %s;', (tech_id,))
+                tech_info = cur.fetchone()
+                if not tech_info:
+                    return jsonify({'status': 'error', 'message': f"Employee ID #{tech_id} does not exist."}), 404
+
+            cur.execute('''
+                UPDATE "WorkOrders"
+                SET assigned_technician_id = %s, crew_lead_id = %s
+                WHERE work_order_id = %s;
+            ''', (tech_id, tech_id, order_id))
+
+            assignee_desc = f"{tech_info['first_name']} {tech_info['last_name']} ({tech_info['employee_number']})" if tech_info else "Unassigned"
+            cur.execute('''
+                INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
+                VALUES (%s, 'WorkOrder', 'Technician Assigned', %s);
+            ''', (order_id, f"Assigned technician to Work Order #{order_id}: {assignee_desc}."))
+
+            conn.commit()
+            return jsonify({
+                'status': 'success',
+                'work_order_id': order_id,
+                'technician_id': tech_id,
+                'technician_name': f"{tech_info['first_name']} {tech_info['last_name']}" if tech_info else None,
+                'dps_cleared': bool(tech_info and tech_info['dps_clearance_date']),
+                'message': f"Successfully assigned {assignee_desc} to Work Order #{order_id}."
+            })
+    finally:
+        if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/dispatch/work-orders/<int:order_id>/transition', methods=['POST'])
+@login_required
+def api_transition_work_order(order_id: int):
+    """Transitions work order execution status and records automated timestamps."""
+    data = request.get_json() or {}
+    new_status = (data.get('status') or '').strip()
+    valid_statuses = ['Scheduled', 'In Progress', 'Paused', 'COMPLETED', 'Canceled']
+    
+    # Case-insensitive match
+    matched_status = next((s for s in valid_statuses if s.lower() == new_status.lower()), None)
+    if not matched_status:
+        return jsonify({'status': 'error', 'message': f"Invalid status '{new_status}'. Must be one of {valid_statuses}."}), 400
+
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            cur.execute('SELECT * FROM "WorkOrders" WHERE work_order_id = %s;', (order_id,))
+            order = cur.fetchone()
+            if not order:
+                return jsonify({'status': 'error', 'message': 'Work order not found.'}), 404
+
+            now_iso = dt_cls.now().isoformat()
+            if matched_status == 'In Progress' and not order.get('actual_start_time'):
+                cur.execute('''
+                    UPDATE "WorkOrders"
+                    SET status = %s, actual_start_time = %s
+                    WHERE work_order_id = %s;
+                ''', (matched_status, now_iso, order_id))
+            elif matched_status == 'COMPLETED':
+                cur.execute('''
+                    UPDATE "WorkOrders"
+                    SET status = %s, actual_end_time = COALESCE(actual_end_time, %s)
+                    WHERE work_order_id = %s;
+                ''', (matched_status, now_iso, order_id))
+            else:
+                cur.execute('''
+                    UPDATE "WorkOrders"
+                    SET status = %s
+                    WHERE work_order_id = %s;
+                ''', (matched_status, order_id))
+
+            cur.execute('''
+                INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
+                VALUES (%s, 'WorkOrder', 'Status Transition', %s);
+            ''', (order_id, f"Work Order #{order_id} transitioned to '{matched_status}'."))
+
+            conn.commit()
+            return jsonify({
+                'status': 'success',
+                'work_order_id': order_id,
+                'status_applied': matched_status,
+                'message': f"Work Order #{order_id} transitioned to '{matched_status}'."
+            })
     finally:
         if conn: conn.close()
 

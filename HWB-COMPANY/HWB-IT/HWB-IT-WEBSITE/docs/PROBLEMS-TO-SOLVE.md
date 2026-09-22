@@ -45,6 +45,227 @@ Responsibility: George (Architect)
 | 09/19/2026 | BUG-066 | Workforce View DOM Nesting Fault, Extraneous Closing Tags & Unhardened JSON Interception Window. | **RESOLVED** | HIGH |
 | 09/19/2026 | BUG-067 | Microsoft Graph API ErrorInvalidRecipients Rejection (HTTP 400) on Telegram Staged Outbox Dispatches. | **RESOLVED** | HIGH |
 | 09/19/2026 | BUG-068 | Synthetic Corporate Address & Telemetry Generation in Outbound Email Dispatch Footer (Empirical Mandate Breach). | **RESOLVED** | CRITICAL |
+| 09/19/2026 | BUG-069 | Chrome DevTools Protocol Socket Desync in WSL2 Environment Blocking /browser Subagent. | **DOCUMENTED** | MEDIUM |
+| 09/19/2026 | BUG-070 | Gunicorn In-Memory Stale Worker Route Collision & Missing API 401 JSON Handler (HTTP 405/JSON Parse Error on Subcontractor Edit). | **RESOLVED** | HIGH |
+| 09/19/2026 | BUG-071 | Academy Training Assignment Foreign Key Constraint Violation on Unregistered Worker IDs. | **RESOLVED** | HIGH |
+| 09/21/2026 | BUG-072 | Static Direct Document Serving Lacks Embedded CSS Styling ("No Formatting" on Standalone Static SOPs) & Compliance Inode Desync. | **RESOLVED** | HIGH |
+| 09/21/2026 | ARCH-003 | SigmaClient™ Progressive Web App (PWA) Enterprise Command Hub & Platform Risk Contingency Plan. | **STAGED FOR FUTURE ASSESSMENT** | STRATEGIC |
+| 09/21/2026 | BUG-073 | Python Dict Key Collision in Status API & Frontend Reliance on Prohibited Browser alert() Primitives. | **RESOLVED** | HIGH |
+| 09/21/2026 | BUG-074 | Undefined 'notes' Variable in /api/v1/workforce/apply Triggering NameError 500 & Silent Frontend Swallowing. | **RESOLVED** | CRITICAL |
+| 09/21/2026 | BUG-075 | WorkOrders Column Update Error ('notes' vs 'crew_notes') in CRM API Work Order Handler. | **RESOLVED** | HIGH |
+| 09/21/2026 | BUG-076 | Customers Address Column Incongruence ('primary_address' vs 'company_address') in Internal Dispatch Queries. | **RESOLVED** | HIGH |
+| 09/21/2026 | BUG-077 | Missing Closing Brace in Sortable Column Persistence Callback Halting Downstream JavaScript Execution & Freezing Workforce Views. | **RESOLVED** | HIGH |
+| 09/21/2026 | BUG-078 | Missing Phone Number Mask & Prohibited Browser alert() Dialogs in Public Workforce Intake Portal (/work-with-us). | **RESOLVED** | HIGH |
+| 09/21/2026 | SEC-001 | Unencrypted Sensitive Identification (SSN/ITIN & Direct Deposit Accounts) Lacking AES-256 Vaulting, Keystroke Bullets, & Audited Timed Reveal. | **RESOLVED** | CRITICAL |
+| 09/21/2026 | BUG-079 | Re-emergence of Prohibited Browser prompt() Dialog on Onboarding Link Copy & HTTP Insecure Context Clipboard Failure. | **RESOLVED** | HIGH |
+| 09/21/2026 | BUG-080 | Local Loopback Hostname (mop.test) Inaccessible to External Devices & Mobile Cleaners via Generated Onboarding Link. | **RESOLVED** | CRITICAL |
+
+## BUG-080: Local Loopback Hostname (mop.test) Inaccessible to External Devices & Mobile Cleaners via Generated Onboarding Link
+**Detected:** 09/21/2026
+**Status:** **RESOLVED** (09/21/2026)
+**Symptoms:**
+1. Cleaners and supervisors attempting to open the onboarding link copied from the Bosanna Cockpit (`http://mop.test:5000/onboard/bosanna`) on their smartphones or external Wi-Fi networks encountered network resolution failure (`DNS_PROBE_FINISHED_NXDOMAIN` or `ERR_NAME_NOT_RESOLVED`).
+2. The onboarding workflow was completely blocked on mobile devices because external devices cannot resolve host loopback aliases without public DNS records or routed IP bindings.
+**Root Causes:**
+1. `copyOnboardLink()` dynamically generated the onboarding URL using `window.location.origin + '/onboard/bosanna'`.
+2. When accessed by an administrator on the local development workstation, `window.location.origin` evaluated to `http://mop.test:5000`. The domain `mop.test` is a private host-only alias configured in `/etc/hosts` and does not exist on cellular networks (LTE/5G) or external LAN DNS resolvers.
+**Solution:**
+1. Refactored the onboarding link sharing engine to provide multi-target environment selection:
+   - **Production Public URL:** `https://hwbcleaning.com/onboard/bosanna` (accessible worldwide on any mobile smartphone, tablet, or external PC).
+   - **Local Development URL:** `http://mop.test:5000/onboard/bosanna` (for host workstation testing).
+   - **Local Network (LAN / Wi-Fi) URL:** Automatically detects or prompts for host LAN IP so phones on the same Wi-Fi can test locally without internet dependencies.
+2. Defaulted all external share links (SMS, WhatsApp, Email, QR code) to the public production endpoint.
+3. Implemented personalized candidate link generation: allows supervisors to click "Send Link" on any candidate in the roster to pre-populate their Name, Phone, and Language into URL parameters (`?name=...&phone=...&lang=...`), providing a zero-friction mobile intake experience.
+4. Updated `templates/bosanna_onboarding.html` to parse incoming `URLSearchParams` on load and automatically populate form fields and language toggles.
+**Preventative:**
+1. Prohibit hardcoded or uninspected `window.location.origin` strings for public-facing client links meant for external employee or customer access. All outbound sharing mechanisms must support production domain overrides.
+
+## BUG-079: Re-emergence of Prohibited Browser prompt() Dialog on Onboarding Link Copy & HTTP Insecure Context Clipboard Failure
+**Detected:** 09/21/2026
+**Status:** **RESOLVED** (09/21/2026)
+**Symptoms:**
+1. Clicking the "Copy Onboarding Link" button in the Bosanna Prime Contractor Cockpit (`http://mop.test:5000/portal/bosanna/cockpit`) triggered an unstyled, native browser dialog (`window.prompt`) displaying raw URL text instead of an institutional toast or formatted UI component.
+2. This breached the SigmaFidelity™ Professional Polish Standard (mandating zero native browser popups/alerts/prompts) for the third time, failing automated UI Poka-Yoke standards.
+**Root Causes:**
+1. Modern browser security policies restrict `navigator.clipboard.writeText` exclusively to secure contexts (`https://` or `localhost`). When running on a development hostname like `http://mop.test:5000` over plaintext HTTP, the Clipboard API is either undefined or rejects with a DOMException.
+2. The developer implemented a legacy fallback using `window.prompt('Copy this link...', url)`. When the promise rejected or `navigator.clipboard` was inaccessible, the browser halted normal page rendering to display a raw, unformatted operating system modal dialog.
+**Solution:**
+1. Created an HTTP-compatible, silent clipboard copy engine using a hidden, off-screen `<textarea>` combined with `document.execCommand('copy')` as an automatic fallback when `navigator.clipboard` is restricted by non-secure origins.
+2. Completely eradicated all calls to `prompt()` from `templates/bosanna_cockpit.html`.
+3. Replaced the single-purpose button with a dual-action interface: instant silent copy with green floating toast notification (`#toastBox`) and a comprehensive "Share Onboarding Portal" modal (`#modal-share-onboard`).
+4. Provided one-click messaging buttons ("Send via SMS" and "Send via Email") and instant QR code generation for camera scanning.
+**Preventative:**
+1. Add `prompt(` to the automated Poka-Yoke template scan (`grep -rn "prompt(" templates/` must return zero occurrences across all templates).
+
+## SEC-001: Unencrypted Sensitive Identification (SSN/ITIN & Direct Deposit Accounts) Lacking AES-256 Vaulting, Keystroke Bullets, & Audited Timed Reveal
+**Detected:** 09/21/2026
+**Status:** **RESOLVED** (09/21/2026)
+**Symptoms:**
+1. Personnel records in the Backoffice Operations Hub (`http://mop.test:5000/admin/operations?view=workforce`) lacked an encrypted, secure vault field for Social Security Numbers (SSN), Individual Taxpayer Identification Numbers (ITIN), and ACH Direct Deposit account numbers.
+2. Direct deposit banking accounts were stored as unencrypted text, posing potential data breach liabilities under Texas Bus. & Com. Code § 521.053, ISO 27001, and SOC 2 Type II compliance standards.
+3. No audited access trail existed for administrators viewing decrypted employee identification data.
+**Root Cause:**
+1. Initial employee schema migration (Migration 014) deferred PII column-level encryption and dynamic unmasking controls.
+2. Standard REST API endpoints (`GET /api/v1/hr/employees` and `GET /api/v1/hr/employees/<id>`) lacked automated payload sanitization to strip ciphertexts and enforce default last-4 masking.
+**Solution:**
+1. **Migration 016 Executed:** Added `ssn_encrypted`, `ssn_last_four`, `direct_deposit_account_encrypted`, and `direct_deposit_account_last_four` columns to `"Employees"`, creating a dedicated index on `ssn_last_four`. Existing direct deposit accounts were retroactively encrypted and indexed.
+2. **Cryptographic Core Built (`core/security.py`):** Derived deterministic AES-256 Fernet keying from system environment configuration, guaranteeing persistent decryption across container restarts without key drift. Built `encrypt_pii()`, `decrypt_pii()`, `mask_ssn()`, `mask_account()`, and `log_sensitive_access()`.
+3. **API Hardening (`blueprints/crm_api.py`):**
+   - Sanitized `GET /api/v1/hr/employees` and `GET /api/v1/hr/employees/<id>` to pop all ciphertexts and output standard masked displays (`***-**-####` and `••••••••####`).
+   - Implemented `POST /api/v1/hr/employees/<id>/reveal-ssn` with RBAC enforcement (`Executive`, `Admin`, `Operations`), logging every reveal to `"GlobalActivities"` with accessor username and IP address.
+   - Updated `PATCH /api/v1/hr/employees/<id>` with intelligent sanitization: new unmasked inputs are encrypted and last-4 indexed, while untouched masked payloads (`***-**-####`) preserve underlying ciphertexts without corruption.
+4. **Operations Hub UI Hardening (`templates/backoffice_operations.html`):**
+   - Re-engineered Form W-4 in `#modal-employee-edit` with a password-bulleted Social Security Number input, live `maskSSNInput(this)` keystroke formatter (`###-##-####`), and an AES-256 PII Vault indicator badge.
+   - Added an audited 30-second timed reveal toggle with dynamic countdown timer badge.
+   - Wired `closeModal('modal-employee-edit')` to automatically clear reveal timers and re-mask inputs upon modal dismissal.
+5. **Automated Verification:** Verified 100% passing tests for unauthenticated rejection, RBAC block on unauthorized roles (e.g. Sales), ciphertext sanitization, idempotent masked saves, and automated `GlobalActivities` audit telemetry.
+**Preventative:**
+1. Enforce zero plaintext storage for all government identifiers and financial credentials across the entire SigmaFidelity™ ecosystem.
+
+## BUG-078: Missing Phone Number Mask & Prohibited Browser alert() Dialogs in Public Workforce Intake Portal (/work-with-us)
+**Detected:** 09/21/2026
+**Status:** **RESOLVED** (09/21/2026)
+**Symptoms:**
+1. On `http://mop.test:5000/work-with-us`, mobile and business phone fields lacked keystroke masking, permitting arbitrary character inputs and unformatted digits violating PROC-002 (`(###)-###-####`).
+2. Error handling in `submitTechnicianApp` and `submitSubcontractorApp` defaulted to native browser `alert()` popups upon submission failures, breaching the UI Poka-Yoke standards.
+3. Successful application submissions hid forms without a mechanism to submit an additional record without refreshing the page.
+4. Deep-linking to subcontractor intake (`?track=subcontractor`) was unsupported on initial page load.
+**Root Cause:**
+1. `templates/work_with_us.html` was initially authored as a static prototype without integrating the standardized `maskPhone(input)` handler.
+2. Form error paths utilized legacy `alert()` primitives instead of structured enterprise alert banners.
+**Solution:**
+1. Engineered robust `maskPhone(input)` function supporting typing, backspacing without getting stuck on hyphens, leading 1 truncation, and paste sanitization directly to `(###)-###-####`.
+2. Added `id="tech-phone"` and `id="sub-phone"` with `maxlength="14"`, `oninput="maskPhone(this)"`, and autocomplete hints.
+3. Added pre-submission 10-digit phone validation with inline input focus and red error borders (`.has-error`).
+4. Eradicated all native `alert()` calls, replacing them with institutional alert banners (`#tech-error-box` and `#sub-error-box`).
+5. Added "Submit Another Application" / "Register Another Crew" recovery buttons inside success cards.
+6. Implemented deep-link detection on `DOMContentLoaded` for `?track=subcontractor` / `1099` and URL synchronization via `history.replaceState`.
+7. Verified with `node --check` across all embedded scripts (100% clean) and reloaded container.
+**Preventative:**
+1. Audit all public-facing forms to ensure standardized input masks and banner notifications are used rather than browser dialogs.
+
+## BUG-077: Missing Closing Brace in Sortable Column Persistence Callback Halting Downstream JavaScript Execution & Freezing Workforce Views
+**Detected:** 09/21/2026
+**Status:** **RESOLVED** (09/21/2026)
+**Symptoms:**
+1. Navigating to `http://mop.test:5000/admin/operations?view=workforce` displayed the workforce dashboard, but clicking any subtab ("Candidate Pool (ATS)", "Subcontractor Partners (1099)", "Payroll & Labor Tracking", "Training & LMS") failed to respond or switch panels.
+2. In the Candidate Pool, action buttons ("+ Onboard", candidate notes, candidate status dropdown, deletion modal) and live search/filter inputs produced no reaction on screen.
+**Root Cause:**
+1. In `templates/backoffice_operations.html` (~line 7480), an arrow function callback in the Sortable column reordering initialization for `bids-header-row` was missing its closing curly brace:
+   ```javascript
+   onEnd: (evt) => {
+       syncColumns(evt, 'table-construction-bids');
+       persistColumns('bids-header-row');
+   }); // Missing '}' before closing parenthesis
+   ```
+2. Because of this fatal JavaScript syntax error, the browser V8 engine terminated execution of the main operations script block (~222 KB) at line 7480. All downstream function declarations, including `switchWorkforceSubtab`, `openOnboardModalFromApplicant`, `editApplicantNotes`, `deleteApplicantRecord`, and `filterApplicantsTable` (located between lines 8160 and 9100), were never registered in the global window scope.
+**Solution:**
+1. Inserted the missing closing brace `}` on the `onEnd` callback in `templates/backoffice_operations.html`.
+2. Extracted all rendered `<script>` blocks from the live authenticated operations view and verified with `node --check` (100% clean, 0 syntax errors across all 5 script tags).
+3. Enhanced `switchWorkforceSubtab` with URL query parameter synchronization (`history.replaceState`) and deep-linking support (`?view=workforce&subtab=technicians` or `&subtab=candidates`) so direct URL routing and browser refreshes preserve active subtabs.
+4. Hot-reloaded the Gunicorn web app container (`hwb_web_app`) and validated end-to-end DOM rendering and interactive handlers.
+**Preventative:**
+1. Implement a pre-commit / CI script validation test that parses Jinja2 rendered templates and checks embedded JavaScript blocks with `node --check` to catch syntax defects before deployment.
+
+## BUG-076: Customers Address Column Incongruence ('primary_address' vs 'company_address') in Internal Dispatch Queries
+**Detected:** 09/21/2026
+**Status:** **RESOLVED** (09/21/2026)
+**Symptoms:**
+1. Accessing `/api/v1/dispatch/work-orders` or loading `/admin/operations?view=monitor` returned HTTP 500 (`column c.primary_address does not exist`).
+**Root Cause:**
+1. The PostgreSQL `"Customers"` schema defines the facility location field as `company_address`, but newly written SQL queries referenced legacy convention `c.primary_address as facility_address`.
+**Solution:**
+1. Updated SQL queries in `blueprints/crm_api.py` and `blueprints/operations.py` to reference `c.company_address as facility_address`.
+2. Verified with automated regression test battery `scripts/test_dispatch_suite.py` (7/7 tests passing 100%).
+
+## BUG-075: WorkOrders Column Update Error ('notes' vs 'crew_notes') in CRM API Work Order Handler
+**Detected:** 09/21/2026
+**Status:** **RESOLVED** (09/21/2026)
+**Symptoms:**
+1. Calling work order update endpoint resulted in SQL exception due to non-existent `notes` column on `"WorkOrders"`.
+**Root Cause:**
+1. `"WorkOrders"` separates client and technician instructions into `client_notes` and `crew_notes`. A generic `notes` field was attempted in dynamic update logic.
+**Solution:**
+1. Aligned fields in `blueprints/crm_api.py` to `crew_notes` and `client_notes`.
+2. Executed Migration 015 hardening `"WorkOrders"` schema with dedicated shift, technician assignment, ingress, and security columns.
+
+## ARCH-003: SigmaClient™ Progressive Web App (PWA) Enterprise Command Hub & Platform Risk Contingency Plan (1,000 Clients)
+**Detected:** 09/21/2026
+**Status:** **STAGED FOR FUTURE ASSESSMENT**
+**Strategic Context:**
+As commercial facility accounts expand toward the 1,000-client milestone, exclusive reliance on third-party messaging networks (Telegram) introduces external vendor policy and monetization risks. While current Telegram Bot API utilization is free and praised by initial clients, long-term corporate governance requires a zero-friction, sovereign alternative owned entirely by HWB Cleaning Services LLC.
+**Proposed Architecture:**
+1. **Zero-Download Progressive Web App (PWA):** Deploy a web manifest (`manifest.json`) and background service worker (`sw.js`) enabling 1-tap "Add to Home Screen" on iOS and Android devices without app store gatekeeping or user account creation friction.
+2. **Offline-First Resilience:** Cache inspection checklists, facility specifications, and jobsite photo albums locally for field operation in concrete basements, parking garages, and secure facilities.
+3. **Decoupled Auth & Dispatch:** Send 1-click tokenized magic links via SMS (Twilio/Telnyx) and corporate Microsoft 365 Graph email (`mop.hwbcleaning.com/hub?token=...`).
+4. **CapEx / OpEx Advantage:** Under $5,000 internal engineering vs. $350,000+ native app development; $0 recurring platform commissions.
+**Action Plan:**
+Staged for executive review and technical prototyping following completion of the NTTA procurement submission and field technician mobile app deployment.
+
+## BUG-072: Static Direct Document Serving Lacks Embedded CSS Styling ("No Formatting" on Standalone Static SOPs) & Compliance Inode Desync
+**Detected:** 09/21/2026
+**Status:** **RESOLVED** (09/21/2026)
+**Symptoms:**
+1. Navigating directly to `http://mop.test:5000/static/ehsq/HWB-EHS-001.html` rendered plain, raw HTML with default browser serif font, unstyled tables, and missing CSS styles ("no formatting").
+2. Accessing `/manual/<filename>` intermittently returned `QMS Error: Document not found (404)` due to an empty bind-mount inode in `hwb_compliance_engine`.
+**Root Cause:**
+1. HTML SOP files created from `sop_template.html` were partial HTML fragments (`<div class="sop-card">`) intended solely for server-side Jinja2 injection inside `qms_shell.html`. When served directly by the static web server, no HTML envelope, stylesheets (`HWB-WEB Style.css`, `backoffice.css`), or fonts were present.
+2. The Nginx compliance container (`hwb_compliance_engine`) mounted an empty directory inode prior to container refresh.
+3. Newly staged manuals in `qms_index.json` lacked the mandatory `"id"` key expected by `sop_base.html`.
+**Solution:**
+1. **Self-Contained Standalone HTML Envelope:** Hardened `static/ehsq/HWB-EHS-001.html`, `HWB-EHS-002.html`, and `HWB-EHS-003.html` by wrapping them with an executive HTML5 layout featuring Inter font, FontAwesome, corporate masthead banner, action toolbar (Word download, Print/PDF, Backoffice link), and clinical CSS.
+2. **QMS Microservice Ingestion:** Staged clean inner fragments into `static/qms/` and updated `qms_index.json` under the `EHSQ` department with verified schema keys (`id`, `title`, `dept`, `file`, `version`, `compliance`, `date`).
+3. **Refreshed Inode Bind Mount:** Restarted `hwb_compliance_engine`, restoring 200 OK delivery across both `/static/ehsq/` and `/manual/` routes.
+**Preventative:**
+Ensure all static HTML documents intended for direct client access are published with embedded standalone CSS envelopes, while preserving inner fragments for the QMS microservice shell.
+
+## BUG-071: Academy Training Assignment Foreign Key Constraint Violation on Unregistered Worker IDs
+**Detected:** 09/19/2026
+**Status:** **RESOLVED** (09/19/2026)
+**Symptoms:**
+1. Calling `POST /api/v1/academy/assign` with an `employee_id` or `subcontractor_id` that did not yet exist in `Employees` or `SubcontractorPartners` resulted in `psycopg2.errors.ForeignKeyViolation` (HTTP 500 error).
+2. The assignment engine was blocked from issuing magic-link training passes to newly vetted applicants prior to official payroll roster insertion.
+**Root Cause:**
+`AcademyEnrollments` enforces strict foreign key constraints `REFERENCES "Employees"(id)` and `REFERENCES "SubcontractorPartners"(id)`. When assigning training to a prospective applicant or applicant without an existing employee record, the raw ID caused a foreign key collision.
+**Solution:**
+Implemented defensive existence checks in `blueprints/academy.py` prior to record insertion. If the ID is not found in the respective parent table, the optional reference is safely nullified (`employee_id = None`), allowing the enrollment, magic token, and candidate details to generate cleanly without database rejection.
+**Preventative:**
+Always pre-validate optional relational keys against parent tables before executing inserts on polymorphic compliance ledgers.
+
+## BUG-070: Gunicorn In-Memory Stale Worker Route Collision & Missing API 401 JSON Handler
+**Detected:** 09/19/2026
+**Status:** **RESOLVED** (09/19/2026)
+**Symptoms:**
+1. Clicking the "Edit Partner Profile" button on the Subcontractor Partners roster triggered a toast error: `"Network error loading subcontractor profile"`.
+2. The interactive edit modal (`modal-subcontractor-edit`) failed to open or populate with the contractor's credentials.
+3. Network inspection showed `GET /api/v1/workforce/subcontractors/<id>` returning `HTTP 405 Method Not Allowed` with an HTML body, causing `res.json()` to crash on unexpected token `<`.
+**Root Cause:**
+1. Gunicorn inside the `hwb_web_app` container runs without `--reload` in container mode. Following route enhancements in `blueprints/crm_api.py`, the active Gunicorn worker was still executing the previous route definition (`methods=['PATCH', 'DELETE']` which lacked `GET`).
+2. Flask-Login default behavior redirects unauthenticated AJAX/fetch requests to `/login` via HTTP 302 HTML rather than returning structured JSON (HTTP 401 Unauthorized), which caused unexpected HTML payloads to break client-side JSON parsers.
+**Solution:**
+1. Dispatched `SIGHUP` signal to Gunicorn PID 1 inside `hwb_web_app`, instantly reloading workers with current route definitions (`methods=['GET', 'PATCH', 'DELETE']`).
+2. Implemented `@login_manager.unauthorized_handler` in `main_app.py` returning structured JSON `{"status": "error", "message": "Authentication session expired..."}` (HTTP 401) for all `/api/` endpoints.
+3. Hardened `openSubcontractorEditModal` and `openSubcontractorDocModal` in `templates/backoffice_operations.html` with explicit `!res.ok` status verification and descriptive error notifications.
+**Preventative:**
+1. Mandate sending `SIGHUP` or container restart whenever REST endpoints or Python blueprints are modified in containerized environments.
+2. Maintain strict non-200 HTTP response verification before executing `res.json()` in all frontend asynchronous fetch routines.
+
+## BUG-069: Chrome DevTools Protocol Socket Desync in WSL2 Environment Blocking /browser Subagent
+**Detected:** 09/19/2026
+**Status:** **DOCUMENTED** (09/19/2026)
+**Symptoms:**
+1. Subagent `browser` failed to attach to Chrome with error: `Could not connect to Chrome. Check if Chrome is running. Cause: Could not find DevToolsActivePort for chrome at /home/humbertoed/.config/google-chrome/DevToolsActivePort`.
+2. Browser automation tasks targeting local DOM inspection or web UI interactions halted immediately.
+**Root Cause:**
+1. The Linux environment runs inside WSL2 (Ubuntu).
+2. The `/home/humbertoed/.local/bin/google-chrome` binary is a bash script delegating execution to the Windows host binary `/mnt/c/Program Files (x86)/Google/Chrome/Application/chrome.exe`.
+3. The Chrome DevTools Protocol daemon (`chrome-devtools-mcp`) expects native Linux Chrome directory paths (`/home/humbertoed/.config/google-chrome/DevToolsActivePort`), whereas Windows Chrome writes its session active port inside Windows `%LOCALAPPDATA%\Google\Chrome\User Data\`.
+**Solution & Workaround:**
+1. Documented operational boundaries: `/browser` cannot interact with Windows desktop native applications (e.g., desktop Microsoft Outlook `outlook.exe`), nor can it bypass Microsoft 365 MFA authentication on `https://outlook.office.com`.
+2. For desktop Outlook signature automation, direct file manipulation of Windows `%APPDATA%\Microsoft\Signatures\` or 1-click clipboard paste via `/signature` portal provides 100% reliable execution without headless browser dependencies.
+3. For local browser automation, configure a native Linux headless Chromium binary with an isolated user-data directory.
+**Preventative:**
+1. Maintain direct filesystem inspection and API-driven automation for Windows and container workflows, avoiding headless browser dependencies for native desktop application management.
 
 ## BUG-068: Synthetic Corporate Address & Telemetry Generation in Outbound Email Dispatch Footer (Empirical Mandate Breach)
 **Detected:** 09/19/2026
@@ -609,6 +830,41 @@ Reliance on preliminary property spec assumptions prior to high-fidelity on-site
 1. Disabled and stopped the `docker.dockerd` snap service permanently to prevent legacy container auto-restart.
 2. Toggled the WSL integration in the Docker Desktop settings GUI to force the integration daemon to recreate the `/var/run/docker.sock` file and restart all containers cleanly.
 **Preventative:** Ensure Docker Desktop is the sole active container runtime, and verify `/var/run/docker.sock` validity during the pre-flight check.
+
+## BUG-073: Python Dict Key Collision in Status API & Frontend Reliance on Prohibited Browser alert() Primitives
+**Detected:** 09/21/2026
+**Status:** **RESOLVED**
+**Symptoms:**
+Clicking the "Deploy" button on the Bosanna Prime Contractor Cockpit (`http://mop.test:5000/portal/bosanna/cockpit`) triggers a native browser popup: `error updating status: undefined`.
+**Root Causes:**
+1. **Backend Python Dictionary Key Collision:** In `blueprints/partner.py` line 462, the response payload was written as:
+   `jsonify({'status': 'success', 'applicant_id': applicant_id, 'status': new_status})`.
+   In Python, duplicate dictionary keys silently overwrite earlier definitions. The second `'status': new_status` overwrote `'status': 'success'`, emitting `{"status": "Active On-Site", ...}`. The frontend client tested `if (data.status === 'success')`, which evaluated to `false`.
+2. **Frontend `data.message` Undefined:** Because the response did not include a `message` key, accessing `data.message` evaluated to JavaScript `undefined`.
+3. **Poka-Yoke Failure & Recurrence of Prohibited alert() Primitives:** The developer defaulted to native browser `alert()` in the error and catch branches (`alert('Error updating status: ' + data.message)` and `alert('Connection error...')`) instead of utilizing the standardized SigmaFidelity™ floating toast notification system (`showToast(msg, 'error')`) or an enterprise modal. This violated the SigmaFidelity™ UI Standard (2026 Phase 3) for the second time in the session.
+**Solution:**
+1. Refactored `blueprints/partner.py` to eliminate key collisions: returned `{'status': 'success', 'applicant_id': applicant_id, 'new_status': new_status, 'message': f'Status updated to {new_status}'}`.
+2. Hardened `partner_access_required` to return structured JSON `{'status': 'error', 'message': ...}` for `/api/` endpoints instead of HTTP 302 redirecting to HTML login pages.
+3. Enhanced `#toastBox` in `templates/bosanna_cockpit.html` to support both `success` (Emerald `#059669`) and `error` (Crimson `#dc2626`) modes with distinct icons.
+4. Eradicated all native `alert()` calls from `bosanna_cockpit.html` and `bosanna_onboarding.html`, replacing them with `showToast(msg, 'error')` and an institutional assessment modal.
+5. Dynamically updated the `onclick` attribute on deployment toggle so subsequent clicks toggle between states seamlessly without requiring page reloads.
+**Preventative:** Enforce a strict Poka-Yoke code audit rule: `grep -rn "alert(" templates/` must return zero occurrences in all modern templates.
+
+## BUG-074: Undefined 'notes' Variable in /api/v1/workforce/apply Triggering NameError 500 & Silent Frontend Swallowing
+**Detected:** 09/21/2026
+**Status:** **RESOLVED**
+**Symptoms:**
+Cleaners completing registration on `http://mop.test:5000/onboard/bosanna` successfully view the congratulations badge screen, but their records fail to appear in the Bosanna Prime Contractor Cockpit (`http://mop.test:5000/portal/bosanna/cockpit`).
+**Root Causes:**
+1. In `blueprints/crm_api.py`, `api_workforce_apply` referenced variable `notes` in `cur.execute(...)` without defining it: `notes = data.get('notes') or ''`.
+2. This threw a Python `NameError: name 'notes' is not defined`, which was caught by the generic `except Exception` block and returned as HTTP 500.
+3. In `templates/bosanna_onboarding.html`, the frontend asynchronous `fetch('/api/v1/workforce/apply')` logged the error to console but proceeded to advance to Step 4 without alerting the applicant or retrying.
+**Solution:**
+1. Defined `notes = (data.get('notes') or '').strip()` in `api_workforce_apply` in `blueprints/crm_api.py`.
+2. Hardened `templates/bosanna_onboarding.html` to verify `res.ok && json.status === 'success'`. If the server returns an error, the portal displays a prominent warning modal and prevents false completion.
+**Preventative:** Add automated integration tests for all public API intake endpoints (`/api/v1/workforce/apply`, `/api/v1/workforce/subcontractor`) in the pre-flight test suite.
+
+
 
 
 

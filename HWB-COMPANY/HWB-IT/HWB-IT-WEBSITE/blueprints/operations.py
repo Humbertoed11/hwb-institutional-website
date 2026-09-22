@@ -5,9 +5,10 @@ Custodians: George (Systems Architect) & Humberto Dominguez (CEO)
 """
 
 import os
+import re
 import json
 import datetime
-from flask import Blueprint, render_template, request, redirect, url_for, jsonify, flash, session, current_app
+from flask import Blueprint, render_template, request, redirect, url_for, jsonify, flash, session, current_app, abort
 from flask_login import login_required, current_user, login_user
 from werkzeug.security import generate_password_hash
 
@@ -44,6 +45,7 @@ def admin_operations():
     lib = {'area': [], 'task': [], 'item': []}
     applicants, subcontractors = [], []
     applicants_count, subcontractors_count = 0, 0
+    safety_manuals, safety_jhas, safety_incidents = [], [], []
     
     # --- Dynamic Column Architecture ---
     default_cols_leads = 'company,status,sqf,value,priority,activities'
@@ -124,7 +126,14 @@ def admin_operations():
         'activities': '(SELECT COUNT(*) FROM "GlobalActivities" WHERE parent_id = cb.id AND parent_type = \'ConstructionBid\')',
         'last_contact': 'last_contact', 'last_note': 'last_note', 'created': 'cb.created_at'
     }
+    inst_sort_map = {
+        'solicitation': 'ib.solicitation_number', 'agency': 'ib.agency_name', 'title': 'ib.title',
+        'status': 'ib.status', 'due_date': 'ib.bid_due_date', 'sqf': 'ib.cleanable_sqft',
+        'value': 'ib.hwb_bid_total', 'monthly': 'ib.monthly_base_rate', 'pre_bid': 'ib.pre_bid_datetime',
+        'sector': 'ib.sector', 'officer': 'ib.procurement_officer', 'created': 'ib.created_at'
+    }
     
+    ib_sort, ib_dir = 'ib.bid_due_date', 'ASC'
     if active_view == 'leads':
         l_sort = leads_sort_map.get(sort_by, 'input_date')
         l_dir = sort_dir if sort_dir in ['ASC', 'DESC'] else 'DESC'
@@ -140,6 +149,12 @@ def admin_operations():
         b_dir = sort_dir if sort_dir in ['ASC', 'DESC'] else 'ASC'
         l_sort, l_dir = 'input_date', 'DESC'
         a_sort, a_dir = 'company_name', 'ASC'
+    elif active_view == 'institutional_bids':
+        ib_sort = inst_sort_map.get(sort_by, 'ib.bid_due_date')
+        ib_dir = sort_dir if sort_dir in ['ASC', 'DESC'] else 'ASC'
+        l_sort, l_dir = 'input_date', 'DESC'
+        a_sort, a_dir = 'company_name', 'ASC'
+        b_sort, b_dir = 'cb.bid_due_date', 'ASC'
     else:
         l_sort, l_dir = 'input_date', 'DESC'
         a_sort, a_dir = 'company_name', 'ASC'
@@ -227,8 +242,25 @@ def admin_operations():
             leads = cur.fetchall()
             total_pages = (leads_count + per_page - 1) // per_page
 
-            # 3. GLOBAL MONITORING
-            cur.execute('SELECT w.*, c.company_name, s.service_requested FROM "WorkOrders" w JOIN "Customers" c ON w.customer_id = c.customer_id JOIN "Services" s ON w.service_id = s.service_id ORDER BY w.scheduled_date DESC')
+            # 3. GLOBAL DISPATCH & MONITORING (SigmaFidelity™ HWB-QMS-11.2)
+            cur.execute('''
+                SELECT w.*, 
+                       c.company_name, 
+                       c.company_address as facility_address,
+                       c.city as facility_city,
+                       COALESCE(s.service_requested, w.service_type, 'Routine Nightly Custodial') as service_requested,
+                       e.first_name as tech_first_name,
+                       e.last_name as tech_last_name,
+                       e.employee_number as tech_employee_number,
+                       e.phone as tech_phone,
+                       e.dps_clearance_date as tech_dps_clearance,
+                       e.badge_status as tech_badge_status
+                FROM "WorkOrders" w 
+                JOIN "Customers" c ON w.customer_id = c.customer_id 
+                LEFT JOIN "Services" s ON w.service_id = s.service_id 
+                LEFT JOIN "Employees" e ON COALESCE(w.assigned_technician_id, w.crew_lead_id) = e.id
+                ORDER BY w.scheduled_date DESC, w.work_order_id DESC
+            ''')
             work_orders = cur.fetchall()
             
             cur.execute('SELECT s.*, c.company_name FROM "Services" s JOIN "Customers" c ON s.customer_id = c.customer_id')
@@ -273,6 +305,98 @@ def admin_operations():
             ''', tuple(bid_params + [per_page, offset]))
             construction_bids = cur.fetchall()
 
+            # 4b. INSTITUTIONAL BIDS PIPELINE (HWB-QMS-11.6)
+            inst_where_clauses = []
+            inst_params = []
+            if search_q and active_view == 'institutional_bids':
+                inst_where_clauses.append("(ib.solicitation_number ILIKE %s OR ib.title ILIKE %s OR ib.agency_name ILIKE %s OR ib.procurement_officer ILIKE %s OR ib.status ILIKE %s)")
+                param_v = f"%{search_q}%"
+                inst_params.extend([param_v, param_v, param_v, param_v, param_v])
+            inst_where_str = ("WHERE " + " AND ".join(inst_where_clauses)) if inst_where_clauses else ""
+
+            cur.execute(f'SELECT COUNT(*) FROM "InstitutionalBids" ib {inst_where_str}', tuple(inst_params))
+            inst_count_row = cur.fetchone()
+            inst_bids_count = inst_count_row[0] if inst_count_row else 0
+
+            if active_view == 'institutional_bids':
+                total_pages = (inst_bids_count + per_page - 1) // per_page or 1
+
+            inst_nulls_clause = "NULLS LAST" if ib_dir == 'ASC' else "NULLS FIRST"
+            cur.execute(f'''
+                SELECT ib.*,
+                       (SELECT COUNT(*) FROM "GlobalActivities" WHERE parent_id = ib.id AND parent_type = 'InstitutionalBid') as activity_count,
+                       (SELECT MAX(timestamp) FROM "GlobalActivities" WHERE parent_id = ib.id AND parent_type = 'InstitutionalBid') as last_contact
+                FROM "InstitutionalBids" ib
+                {inst_where_str}
+                ORDER BY {ib_sort} {ib_dir} {inst_nulls_clause}, ib.id DESC
+                LIMIT %s OFFSET %s
+            ''', tuple(inst_params + [per_page, offset]))
+            institutional_bids = cur.fetchall()
+
+            # 4d. MARKETING DEPARTMENT & CAMPAIGNS PIPELINE (HWB-QMS-8.0 / HWB-SAL-2026-001)
+            mkt_where_clauses = []
+            mkt_params = []
+            if search_q and active_view == 'marketing':
+                mkt_where_clauses.append("(campaign_code ILIKE %s OR name ILIKE %s OR target_sector ILIKE %s OR status ILIKE %s)")
+                param_m = f"%{search_q}%"
+                mkt_params.extend([param_m, param_m, param_m, param_m])
+            mkt_where_str = ("WHERE " + " AND ".join(mkt_where_clauses)) if mkt_where_clauses else ""
+
+            cur.execute(f'SELECT COUNT(*) FROM "MarketingCampaigns" {mkt_where_str}', tuple(mkt_params))
+            mkt_count_row = cur.fetchone()
+            mkt_campaigns_count = mkt_count_row[0] if mkt_count_row else 0
+
+            cur.execute(f'''
+                SELECT * FROM "MarketingCampaigns"
+                {mkt_where_str}
+                ORDER BY created_at DESC, id DESC
+            ''', tuple(mkt_params))
+            marketing_campaigns = cur.fetchall()
+
+            # Primary campaign recipients
+            active_campaign_id = marketing_campaigns[0]['id'] if marketing_campaigns else None
+            campaign_recipients = []
+            if active_campaign_id:
+                cur.execute('''
+                    SELECT cr.*, l.phone, l.address, l.estimated_annual_value
+                    FROM "CampaignRecipients" cr
+                    LEFT JOIN "Leads" l ON cr.lead_id = l.id
+                    WHERE cr.campaign_id = %s
+                    ORDER BY cr.capacity DESC NULLS LAST, cr.id ASC
+                    LIMIT 100
+                ''', (active_campaign_id,))
+                campaign_recipients = cur.fetchall()
+
+            # PendingOutbox records awaiting CEO approval
+            cur.execute('''
+                SELECT id, recipient, subject, left(body, 350) as body_preview, created_at, status
+                FROM "PendingOutbox"
+                WHERE UPPER(status) = 'PENDING'
+                ORDER BY id DESC
+                LIMIT 50
+            ''')
+            pending_outbox_items = cur.fetchall()
+            cur.execute("SELECT COUNT(*) FROM \"PendingOutbox\" WHERE UPPER(status) = 'PENDING'")
+            pending_outbox_count = cur.fetchone()[0]
+
+            # 4e. SAFETY & EHSQ DEPARTMENT (HWB-QMS-5.5 / HWB-QMS-5.7 / ISO 45001)
+            safety_where_clauses = []
+            safety_params = []
+            if search_q and active_view == 'safety':
+                safety_where_clauses.append("(code ILIKE %s OR title ILIKE %s OR target_sector ILIKE %s OR regulatory_scope ILIKE %s)")
+                param_s = f"%{search_q}%"
+                safety_params.extend([param_s, param_s, param_s, param_s])
+            safety_where_str = ("WHERE " + " AND ".join(safety_where_clauses)) if safety_where_clauses else ""
+
+            cur.execute(f'SELECT * FROM "SafetyManuals" {safety_where_str} ORDER BY id ASC', tuple(safety_params))
+            safety_manuals = cur.fetchall()
+
+            cur.execute('SELECT * FROM "JobHazardAnalyses" ORDER BY inspection_date DESC, id DESC LIMIT 50')
+            safety_jhas = cur.fetchall()
+
+            cur.execute('SELECT * FROM "SafetyIncidents" ORDER BY incident_date DESC, id DESC LIMIT 50')
+            safety_incidents = cur.fetchall()
+
             # 5. ACTIVE SYSTEM USERS
             cur.execute('SELECT id, username, full_name, role FROM "Users" WHERE status = \'Active\' ORDER BY id ASC')
             system_users = cur.fetchall()
@@ -300,6 +424,11 @@ def admin_operations():
             subcontractors = cur.fetchall()
             subcontractors_count = len(subcontractors)
 
+            # 6b. JOB POSITIONS & DESCRIPTIONS (HWB-FORM-7.2-001)
+            cur.execute('SELECT * FROM "JobPositions" WHERE is_active = TRUE ORDER BY id ASC;')
+            job_positions_raw = cur.fetchall()
+            job_positions = [dict(jp) for jp in job_positions_raw]
+
             # 7. ACTIVE EMPLOYEES & WORKFORCE PERSONNEL (HWB-QMS-7.6)
             emp_where_clauses = []
             emp_params = []
@@ -310,9 +439,14 @@ def admin_operations():
             emp_where_str = ("WHERE " + " AND ".join(emp_where_clauses)) if emp_where_clauses else ""
             cur.execute(f'''
                 SELECT e.*, c.company_name as assigned_facility_name,
+                       jp.position_code as job_position_code, jp.title as job_position_title,
+                       jp.reports_to as job_position_reports_to, jp.summary as job_position_summary,
+                       jp.key_responsibilities as job_position_responsibilities,
+                       jp.required_certifications as job_position_certifications,
                        (SELECT COUNT(*) FROM "EmployeeDocuments" d WHERE d.employee_id = e.id) as document_count
                 FROM "Employees" e
                 LEFT JOIN "Customers" c ON e.assigned_customer_id = c.customer_id
+                LEFT JOIN "JobPositions" jp ON e.job_position_id = jp.id
                 {emp_where_str}
                 ORDER BY e.created_at DESC;
             ''', tuple(emp_params))
@@ -323,9 +457,15 @@ def admin_operations():
                 d['pay_rate_hourly'] = float(d['pay_rate_hourly'] or 0.0)
                 d['overtime_rate_hourly'] = float(d['overtime_rate_hourly'] or 0.0)
                 d['weekly_hours_allocated'] = float(d['weekly_hours_allocated'] or 0.0)
+                d.pop('ssn_encrypted', None)
+                d.pop('direct_deposit_account_encrypted', None)
+                d['has_ssn'] = bool(d.get('ssn_last_four'))
+                d['ssn_masked'] = f"***-**-{d['ssn_last_four']}" if d.get('ssn_last_four') else ''
+                d['direct_deposit_account'] = f"••••••••{d['direct_deposit_account_last_four']}" if d.get('direct_deposit_account_last_four') else ''
                 employees.append(d)
             employees_count = len(employees)
             active_employees_count = sum(1 for emp in employees if emp['employment_status'] == 'Active')
+            active_technicians = [emp for emp in employees if emp.get('employment_status') == 'Active']
             total_weekly_labor_hours = sum(emp['weekly_hours_allocated'] for emp in employees if emp['employment_status'] == 'Active')
             total_biweekly_payroll = sum(emp['weekly_hours_allocated'] * 2.0 * emp['pay_rate_hourly'] for emp in employees if emp['employment_status'] == 'Active')
     finally:
@@ -345,15 +485,21 @@ def admin_operations():
             return jsonify({
                 'leads': [serialize_row(l) for l in leads] if leads else [],
                 'clients': [serialize_row(c) for c in clients] if clients else [],
+                'work_orders': [serialize_row(w) for w in work_orders] if work_orders else [],
                 'construction_bids': [serialize_row(b) for b in construction_bids] if construction_bids else [],
+                'institutional_bids': [serialize_row(ib) for ib in institutional_bids] if institutional_bids else [],
+                'marketing_campaigns': [serialize_row(mc) for mc in marketing_campaigns] if marketing_campaigns else [],
+                'campaign_recipients': [serialize_row(cr) for cr in campaign_recipients] if campaign_recipients else [],
+                'pending_outbox': [serialize_row(po) for po in pending_outbox_items] if pending_outbox_items else [],
                 'employees': [serialize_row(e) for e in employees] if employees else [],
+                'active_technicians': [serialize_row(t) for t in active_technicians] if active_technicians else [],
                 'applicants': [serialize_row(a) for a in applicants] if applicants else [],
                 'subcontractors': [serialize_row(s) for s in subcontractors] if subcontractors else [],
                 'system_users': [serialize_row(u) for u in system_users] if system_users else [],
                 'facility_types': FACILITY_TYPES,
                 'lead_sources': LEAD_SOURCES,
                 'priority_levels': PRIORITY_LEVELS,
-                'counts': {'leads': leads_count or 0, 'accounts': len(clients) if clients else 0, 'bids': len(construction_bids) if construction_bids else 0, 'employees': employees_count, 'applicants': applicants_count, 'subcontractors': subcontractors_count},
+                'counts': {'leads': leads_count or 0, 'accounts': len(clients) if clients else 0, 'work_orders': len(work_orders) if work_orders else 0, 'bids': len(construction_bids) if construction_bids else 0, 'institutional_bids': inst_bids_count, 'campaigns': mkt_campaigns_count, 'pending_outbox': pending_outbox_count, 'employees': employees_count, 'applicants': applicants_count, 'subcontractors': subcontractors_count},
                 'active_view': active_view
             })
         except Exception as e:
@@ -366,11 +512,19 @@ def admin_operations():
                          sort_by=sort_by or '', sort_dir=sort_dir, active_cols=active_cols,
                          active_cols_str=active_cols_str, portfolio_total=portfolio_total,
                          clients=clients, work_orders=work_orders, services=services,
+                         active_technicians=active_technicians,
                          construction_bids=construction_bids, bids_count=bids_count,
+                         institutional_bids=institutional_bids, inst_bids_count=inst_bids_count,
+                         marketing_campaigns=marketing_campaigns, mkt_campaigns_count=mkt_campaigns_count,
+                         campaign_recipients=campaign_recipients,
+                         pending_outbox_items=pending_outbox_items, pending_outbox_count=pending_outbox_count,
                          employees=employees, employees_count=employees_count, active_employees_count=active_employees_count,
                          total_weekly_labor_hours=total_weekly_labor_hours, total_biweekly_payroll=total_biweekly_payroll,
                          applicants=applicants, applicants_count=applicants_count,
                          subcontractors=subcontractors, subcontractors_count=subcontractors_count,
+                         safety_manuals=safety_manuals, safety_manuals_count=len(safety_manuals),
+                         safety_jhas=safety_jhas, safety_incidents=safety_incidents,
+                         job_positions=job_positions,
                          library=json.dumps(lib), activities=activities, system_users=system_users,
                          facility_types=FACILITY_TYPES, lead_sources=LEAD_SOURCES, priority_levels=PRIORITY_LEVELS)
 
@@ -613,6 +767,61 @@ def add_account():
         flash(f"Account Onboarding Failed: {e}", "error")
     finally:
         if "conn" in locals() and conn: conn.close()
+    return redirect(url_for('admin_operations', view='accounts'))
+
+
+@operations_bp.route('/admin/add-partner', methods=['POST'], endpoint='add_partner')
+@login_required
+def add_partner():
+    """Provisions a new Model C Institutional Partner with white-label portals, LMS workspace, and recurring schedule."""
+    if current_user.role not in ['Executive', 'Admin']:
+        abort(403)
+    try:
+        from scripts.onboard_institutional_partner import onboard_partner
+        data = request.form
+        company_name = (data.get('company_name') or '').strip()
+        slug = (data.get('slug') or '').strip().lower()
+        contact_name = (data.get('contact_name') or '').strip()
+        contact_email = (data.get('email') or '').strip()
+        contact_phone = (data.get('phone') or '').strip()
+        company_address = (data.get('company_address') or '').strip()
+        city = (data.get('city') or '').strip()
+        state = (data.get('state') or 'TX').strip()
+        zip_code = (data.get('zip') or '').strip()
+        contract_number = (data.get('contract_number') or 'TIPS National Contract').strip()
+        facility_name = (data.get('facility_name') or 'Commercial Higher Education Facility').strip()
+        facility_address = (data.get('facility_address') or f"{city}, {state}").strip()
+        sqf = clean_sqft(data.get('sqf')) or 100000
+        brand_color = (data.get('brand_color') or '#063333').strip()
+        brand_logo_url = (data.get('brand_logo_url') or '').strip()
+
+        if not slug:
+            slug = re.sub(r'[^a-z0-9]+', '-', company_name.lower()).strip('-')
+
+        result = onboard_partner(
+            company_name=company_name,
+            slug=slug,
+            contact_name=contact_name,
+            contact_email=contact_email,
+            contact_phone=contact_phone,
+            company_address=company_address,
+            city=city,
+            state=state,
+            zip_code=zip_code,
+            contract_number=contract_number,
+            facility_name=facility_name,
+            facility_address=facility_address,
+            sqf=sqf,
+            brand_color=brand_color,
+            brand_logo_url=brand_logo_url,
+            db_url=current_app.config['DATABASE_URL']
+        )
+
+        flash(f"Institutional Partner '{company_name}' provisioned successfully! Dedicated portal live at /portal/{slug}/cockpit.", "success")
+    except Exception as e:
+        current_app.logger.error(f"Partner Onboarding Error: {e}")
+        flash(f"Partner Onboarding Failed: {e}", "error")
+
     return redirect(url_for('admin_operations', view='accounts'))
 
 

@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HWB-EHS-001 Master Environmental Health & Safety Manual | HWB Cleaning Services LLC</title>
+    
+    <!-- Institutional Typography & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --brand-navy: #0f294a;
+            --brand-blue: #2563eb;
+            --brand-emerald: #059669;
+            --slate-50: #f8fafc;
+            --slate-100: #f1f5f9;
+            --slate-200: #e2e8f0;
+            --slate-300: #cbd5e1;
+            --slate-500: #64748b;
+            --slate-600: #475569;
+            --slate-700: #334155;
+            --slate-800: #1e293b;
+            --slate-900: #0f172a;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 2.5rem 1rem;
+            background-color: var(--slate-50);
+            background-image: radial-gradient(#cbd5e1 0.75px, transparent 0.75px);
+            background-size: 24px 24px;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: var(--slate-700);
+            line-height: 1.65;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Corporate Masthead Banner */
+        .institutional-header {
+            max-width: 1040px;
+            margin: 0 auto 1.5rem auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #ffffff;
+            padding: 1rem 1.75rem;
+            border-radius: 8px;
+            border: 1px solid var(--slate-200);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+
+        .brand-logo-unit {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+        }
+
+        .brand-logo-unit i {
+            font-size: 1.75rem;
+            color: var(--brand-blue);
+        }
+
+        .brand-name {
+            font-size: 1.05rem;
+            font-weight: 900;
+            color: var(--brand-navy);
+            letter-spacing: -0.02em;
+        }
+
+        .brand-sub {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--slate-500);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 0.65rem;
+            align-items: center;
+        }
+
+        .btn-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            height: 32px;
+            padding: 0 0.85rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            border-radius: 6px;
+            text-decoration: none;
+            transition: all 0.15s ease;
+            cursor: pointer;
+            border: 1px solid var(--slate-300);
+            background: #ffffff;
+            color: var(--slate-700);
+        }
+
+        .btn-action:hover {
+            background: var(--slate-100);
+            border-color: var(--brand-blue);
+            color: var(--brand-blue);
+        }
+
+        .btn-primary {
+            background: var(--brand-navy);
+            color: #ffffff;
+            border-color: var(--brand-navy);
+        }
+
+        .btn-primary:hover {
+            background: var(--brand-blue);
+            border-color: var(--brand-blue);
+            color: #ffffff;
+        }
+
+        /* Document Card Container */
+        .sop-card {
+            max-width: 1040px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 12px;
+            border: 1px solid var(--slate-200);
+            box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.03);
+            padding: 3.5rem 4rem;
+        }
+
+        /* Metadata Header Grid */
+        .sop-meta {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            background: var(--slate-50);
+            border: 1px solid var(--slate-200);
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .meta-unit {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
+        .meta-label {
+            font-size: 0.68rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--slate-500);
+        }
+
+        .meta-val {
+            font-size: 0.88rem;
+            font-weight: 800;
+            color: var(--slate-900);
+        }
+
+        /* Typography */
+        h1 {
+            font-size: 1.75rem;
+            font-weight: 900;
+            color: var(--brand-navy);
+            margin: 1.5rem 0 1rem 0;
+            border-bottom: 2px solid var(--slate-100);
+            padding-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        h2 {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--slate-900);
+            margin: 2rem 0 0.85rem 0;
+            border-bottom: 1px solid var(--slate-100);
+            padding-bottom: 0.4rem;
+        }
+
+        h3 {
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: var(--brand-blue);
+            margin: 1.35rem 0 0.5rem 0;
+        }
+
+        p {
+            margin: 0 0 1rem 0;
+            font-size: 0.92rem;
+            color: var(--slate-700);
+        }
+
+        ul, ol {
+            margin: 0.5rem 0 1.25rem 0;
+            padding-left: 1.75rem;
+        }
+
+        li {
+            margin-bottom: 0.45rem;
+            font-size: 0.92rem;
+            color: var(--slate-700);
+        }
+
+        strong {
+            color: var(--slate-900);
+            font-weight: 700;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid var(--slate-200);
+            margin: 2rem 0;
+        }
+
+        /* Standardized High-Density Tables */
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin: 1.5rem 0 2rem 0;
+            border: 1px solid var(--slate-200);
+            border-radius: 8px;
+            overflow: hidden;
+            font-size: 0.85rem;
+        }
+
+        th {
+            background: var(--slate-100);
+            color: var(--slate-800);
+            font-weight: 800;
+            text-align: left;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--slate-200);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--slate-100);
+            color: var(--slate-700);
+            vertical-align: top;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: #fafcff;
+        }
+
+        /* Industrial Callout Boxes */
+        .callout {
+            border-left: 4px solid var(--brand-blue);
+            background: #eff6ff;
+            border-radius: 0 8px 8px 0;
+            padding: 1rem 1.25rem;
+            margin: 1.5rem 0;
+        }
+
+        .callout strong {
+            display: block;
+            color: var(--brand-blue);
+            font-size: 0.85rem;
+            margin-bottom: 0.35rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .callout p {
+            margin: 0;
+            font-size: 0.88rem;
+            color: var(--slate-800);
+        }
+
+        /* Footer */
+        .sop-card-footer {
+            margin-top: 3.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--slate-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--slate-500);
+        }
+
+        /* Print Optimization */
+        @media print {
+            body {
+                background: none;
+                padding: 0;
+            }
+            .institutional-header {
+                display: none;
+            }
+            .sop-card {
+                border: none;
+                box-shadow: none;
+                padding: 0;
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Executive Quick Header -->
+    <div class="institutional-header">
+        <div class="brand-logo-unit">
+            <i class="fas fa-shield-alt"></i>
+            <div>
+                <div class="brand-name">HWB CLEANING SERVICES LLC</div>
+                <div class="brand-sub">Environmental Health &amp; Safety Division &bull; ISO 45001 Compliant</div>
+            </div>
+        </div>
+        <div class="header-actions">
+            <a href="/static/ehsq/HWB-EHS-001-Master-Safety-Manual.docx" download class="btn-action btn-primary">
+                <i class="fas fa-file-word"></i> Download Word (.docx)
+            </a>
+            <button onclick="window.print()" class="btn-action">
+                <i class="fas fa-print"></i> Print / PDF
+            </button>
+            <a href="/admin/operations?view=safety" class="btn-action">
+                <i class="fas fa-arrow-left"></i> Operations Hub
+            </a>
+        </div>
+    </div>
+
+<!-- 
+    SigmaFidelity™ Institutional SOP Template (HTML Version 3.0)
+    Standard: HWB-QMS-1.0
+    Document: HWB-EHS-001 Master Environmental Health and Safety Manual SOP
+-->
+<div class="sop-card">
+    <!-- 0.0 DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-EHS-001</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">ISO 45001:2018 (5.1 &amp; 8.1) / OSHA 1910 &amp; 1926</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <table>
+            <thead>
+                <tr>
+                    <th><strong>Document Control</strong></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td><strong>Document Title</strong></td><td><strong>Master Environmental Health and Safety Manual SOP</strong></td></tr>
+                <tr><td><strong>Document ID</strong></td><td>HWB-EHS-001</td></tr>
+                <tr><td><strong>Version</strong></td><td>3.0.0</td></tr>
+                <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
+                <tr><td><strong>Author</strong></td><td>George (Systems Architect)</td></tr>
+                <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
+                <tr><td><strong>Date</strong></td><td>09/21/2026</td></tr>
+                <tr><td><strong>Regulatory Scope</strong></td><td>OSHA 29 CFR 1910 (General Industry) &amp; 29 CFR 1926 (Construction)</td></tr>
+            </tbody>
+        </table>
+
+        <hr />
+
+        <h1>Standard Operating Procedure: <strong>Master Environmental Health &amp; Safety (EHS) Manual</strong></h1>
+
+        <h2>1.0 Purpose &amp; Executive Commitment</h2>
+        <p>HWB Cleaning Services LLC is dedicated to providing an accident-free, healthy, and compliant work environment for all employees, subcontractors, clients, and facility occupants. Safety is an uncompromised core value that takes precedence over speed or operational convenience. This Master Manual sets forth company-wide safety rules, management duties, reporting chains, and regulatory compliance standards across all commercial, industrial, post-construction, and public authority operations.</p>
+
+        <h2>2.0 Scope &amp; Modular Architecture</h2>
+        <p>This procedure applies to all personnel working on behalf of HWB Cleaning Services LLC. To address the distinct operational requirements of construction job sites versus occupied public facilities, this Master Manual connects to two specialized operational safety modules:</p>
+        <ul>
+            <li><strong>Module A &mdash; HWB-EHS-002:</strong> Construction Site Safety and Silica Dust Control Plan (OSHA 29 CFR 1926 / Division 01 35 23 for General Contractors).</li>
+            <li><strong>Module B &mdash; HWB-EHS-003:</strong> Institutional Facilities Health and Safety Plan (OSHA 29 CFR 1910 for Public Authorities, NTTA, and Higher Education Campuses).</li>
+        </ul>
+
+        <h2>3.0 Safety Roles and Responsibilities</h2>
+        
+        <h3>3.1 Chief Executive Officer (Humberto Dominguez)</h3>
+        <ul>
+            <li>Holds ultimate authority for corporate safety policies, resource allocation, and annual safety audits.</li>
+            <li>Conducts final review of all major incident investigations and regulatory filings.</li>
+        </ul>
+
+        <h3>3.2 Safety Director &amp; Project Managers</h3>
+        <ul>
+            <li>Enforce daily safety rules across all active customer accounts and jobsites.</li>
+            <li>Review all Job Hazard Analysis (JHA) forms before work begins.</li>
+            <li>Conduct jobsite safety inspections and coordinate required safety training.</li>
+            <li>Ensure that all equipment and chemical inventories meet state and federal safety guidelines.</li>
+        </ul>
+
+        <h3>3.3 Site Supervisors and Crew Foremen</h3>
+        <ul>
+            <li>Perform daily visual safety inspections of all equipment, cords, PPE, and work areas before work starts.</li>
+            <li>Lead weekly Safety Tool Box Talks and maintain documented sign-in sheets.</li>
+            <li>Ensure all team members wear mandatory PPE properly at all times.</li>
+            <li>Correct any unsafe behaviors or physical hazards immediately on the spot.</li>
+        </ul>
+
+        <h3>3.4 Cleaning Technicians &amp; Subcontractors</h3>
+        <ul>
+            <li>Inspect personal safety equipment (PPE) daily and wear it whenever required.</li>
+            <li>Follow all machine safety instructions and chemical dilution directions without deviation.</li>
+            <li>Report every injury, near-miss incident, or unsafe job condition to the supervisor immediately.</li>
+            <li>Refuse to perform any task where safety guards, PPE, or proper training are lacking.</li>
+        </ul>
+
+        <h2>4.0 General Safety Rules and Rules of Conduct</h2>
+        <ol>
+            <li><strong>Horseplay and Unsafe Behavior:</strong> Running, practical jokes, fighting, or careless behavior are strictly banned on all customer properties.</li>
+            <li><strong>Personal Protective Equipment (PPE):</strong> PPE must be clean, inspected, and worn whenever performing tasks that present eye, skin, head, or breathing risks.</li>
+            <li><strong>Housekeeping:</strong> Work areas must remain clean and orderly. Hoses, power cords, and equipment must be positioned to avoid tripping hazards.</li>
+            <li><strong>Machinery Safety:</strong> Never bypass safety guards, emergency shut-off switches, or ground pins on electrical plugs.</li>
+            <li><strong>Lifting Safety:</strong> Use leg muscles and keep the back straight when lifting items. Ask for team lifting help on loads over 50 pounds.</li>
+        </ol>
+
+        <h2>5.0 Hazard Communication Program (OSHA 29 CFR 1910.1200 / GHS)</h2>
+        <p>In full accordance with federal OSHA Hazard Communication regulations and the Texas Hazard Communication Act (THCA), HWB Cleaning Services LLC provides all employees with the right to understand the chemical hazards present in their work environment.</p>
+        
+        <h3>5.1 Safety Data Sheets (SDS)</h3>
+        <ul>
+            <li>An up-to-date Safety Data Sheet (SDS) binder is maintained in every primary janitorial closet, mobile service van, and digitally on the backoffice portal.</li>
+            <li>Crews may only use chemicals that have been approved by management and for which an active SDS is on file.</li>
+            <li>Mixing different chemicals (especially bleach and ammonia-based products) is strictly forbidden due to the risk of toxic gas generation.</li>
+        </ul>
+
+        <h3>5.2 Secondary Container Labeling</h3>
+        <ul>
+            <li>Every spray bottle, secondary jug, or dilution bucket must carry a complete GHS label identifying the product name, manufacturer, and key hazard warning pictograms.</li>
+            <li>Unlabeled chemical bottles will be confiscated and disposed of immediately.</li>
+        </ul>
+
+        <h2>6.0 Injury, Incident, and Near-Miss Reporting</h2>
+        <p>Prompt reporting ensures proper medical care for injured workers and prevents repeat accidents.</p>
+        <ol>
+            <li><strong>Immediate Medical Attention:</strong> For life-threatening emergencies, call 911 immediately. For non-life-threatening injuries, administer first aid and notify the supervisor.</li>
+            <li><strong>Reporting Window:</strong> All injuries, regardless of severity, must be reported to the Site Supervisor and Safety Director within <strong>one (1) hour</strong> of the event.</li>
+            <li><strong>First Report of Injury:</strong> The supervisor must complete the official HWB First Report of Injury Form within <strong>24 hours</strong> of the incident.</li>
+            <li><strong>Incident Investigation:</strong> The Safety Director will lead a root-cause investigation within 48 hours to determine corrective actions and prevent future occurrences.</li>
+        </ol>
+
+        <h2>7.0 Disciplinary Policy for Safety Violations</h2>
+        <p>To protect workers and maintain zero-defect standards, HWB Cleaning Services LLC enforces a progressive 4-step disciplinary policy:</p>
+        <ul>
+            <li><strong>1st Offense:</strong> Documented Verbal Counseling and re-training on the relevant safety standard.</li>
+            <li><strong>2nd Offense:</strong> Written Warning placed in the employee's permanent personnel file, accompanied by a mandatory safety review meeting.</li>
+            <li><strong>3rd Offense:</strong> Final Written Warning and three-day unpaid suspension.</li>
+            <li><strong>4th Offense:</strong> Immediate termination of employment.</li>
+        </ul>
+        <div class="callout callout-note">
+            <strong>Critical Safety Violations</strong>
+            <p>Bypassing machine safety locks, working at heights without required fall protection, failure to report an injury, or arriving to work under the influence of drugs or alcohol results in immediate suspension and potential termination on the first offense.</p>
+        </div>
+
+        <h2>8.0 Drug, Alcohol, and Contraband Policy</h2>
+        <ul>
+            <li>HWB Cleaning Services LLC maintains a zero-tolerance drug- and alcohol-free workplace.</li>
+            <li>The use, possession, sale, or being under the influence of illegal drugs, unauthorized prescription narcotics, or alcohol during work hours or on customer property is strictly prohibited.</li>
+            <li>Employees are subject to pre-employment, post-accident, and reasonable-suspicion drug and alcohol testing.</li>
+            <li><strong>Weapons Prohibition:</strong> Weapons, firearms, knives with blades longer than 3 inches (excluding standard utility tools), and dangerous contraband are strictly forbidden on all company and customer premises.</li>
+        </ul>
+
+        <h2>9.0 OSHA Regulatory Inspection Procedure</h2>
+        <p>When an OSHA compliance officer or local regulatory inspector arrives at an HWB jobsite or customer facility, team members must adhere to the following protocol:</p>
+        <ol>
+            <li><strong>Verification &amp; Courtesy:</strong> Request official agency credentials, be courteous, and record the inspector's name, phone number, and field office.</li>
+            <li><strong>Immediate Management Notification:</strong> Contact the Safety Director and CEO Humberto Dominguez immediately before opening an inspection conference.</li>
+            <li><strong>Accompaniment:</strong> An authorized HWB supervisor must accompany the inspector throughout the entire walk-around. Never allow an inspector to walk the site unescorted.</li>
+            <li><strong>Photographic Mirroring:</strong> If the inspector takes a photograph or notes a specific condition, the HWB supervisor must take corresponding photos from the same angles and document all details.</li>
+            <li><strong>Immediate Hazard Correction:</strong> If an unsafe condition is identified during the walk-around that can be fixed immediately, correct it on the spot while notifying the inspector.</li>
+        </ol>
+
+        <h2>10.0 Emergency Action Plans (EAP)</h2>
+        
+        <h3>10.1 Building Evacuation &amp; Fire</h3>
+        <ul>
+            <li>All crew members must familiarize themselves with posted emergency exit routes upon arriving at any customer facility.</li>
+            <li>When a fire alarm sounds, cease all work immediately, shut off machinery, guide any team members toward the nearest exit, and assemble at the designated outdoor muster area.</li>
+            <li>The supervisor will conduct a head count and report directly to emergency responders.</li>
+        </ul>
+
+        <h3>10.2 Severe Weather &amp; Tornado</h3>
+        <ul>
+            <li>In the event of severe weather or tornado warnings, move quickly to designated interior rooms, lowest-level interior hallways, or windowless restrooms.</li>
+            <li>Remain in the shelter area until an official "all-clear" signal is announced by building management or local authorities.</li>
+        </ul>
+
+        <h3>10.3 Active Threat / Active Shooter (Run, Hide, Fight)</h3>
+        <ul>
+            <li><strong>Run:</strong> If an accessible escape route exists, evacuate the building immediately, leaving belongings behind.</li>
+            <li><strong>Hide:</strong> If escape is impossible, lock and barricade the door, silence mobile phones, turn off lights, and stay out of sight behind solid objects.</li>
+            <li><strong>Fight:</strong> As a last resort when in imminent danger, act aggressively to disrupt or incapacitate the threat using available objects.</li>
+        </ul>
+
+        <h2>11.0 Verification (Zero-Defect Audit Check)</h2>
+        <ul>
+            <li>Verify that all references to outside general contractors and foreign jurisdictions have been 100% removed.</li>
+            <li>Verify that active SDS sheets are present in every janitorial closet and service vehicle.</li>
+            <li>Verify that all team members have completed initial safety orientation and signed training acknowledgments.</li>
+            <li>Ensure that Module A (Construction) and Module B (Institutional) are provided to the appropriate project stakeholders.</li>
+        </ul>
+
+        <h2>12.0 Revision History</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Version</th>
+                    <th>Date</th>
+                    <th>Author</th>
+                    <th>Change Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>3.0.0</td>
+                    <td>09/21/2026</td>
+                    <td>George (Systems Architect)</td>
+                    <td>Modernized Master Safety Manual to HTML v3.0 format. Purged 67 legacy contractor mentions and Canadian WHMIS text. Aligned with OSHA 1910/1926 and ISO 45001 standards. Created modular linkages to Module A (Construction) and Module B (Institutional).</td>
+                </tr>
+                <tr>
+                    <td>2.0.0</td>
+                    <td>01/22/2024</td>
+                    <td>Humberto Dominguez, CEO</td>
+                    <td>Initial client-specific training manual draft for N3 Real Estate.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="sop-card-footer">
+        <span>&copy; 2026 HWB Cleaning Services LLC</span>
+        <span>Controlled Document | HWB-EHS-001</span>
+        <span>Page <span class="page-number"></span></span>
+    </div>
+</div>
+
+
+</body>
+</html>

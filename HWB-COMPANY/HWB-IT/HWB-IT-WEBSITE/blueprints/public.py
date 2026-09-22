@@ -123,7 +123,10 @@ def signature_vault():
 @public_bp.route('/manual', endpoint='manual_index')
 def manual_index():
     try:
-        with open('qms_index.json', 'r') as f:
+        index_path = os.path.join(current_app.root_path, 'qms_index.json')
+        if not os.path.exists(index_path):
+            index_path = 'qms_index.json'
+        with open(index_path, 'r', encoding='utf-8') as f:
             sops = json.load(f)
         sops_by_dept = {}
         today_date = datetime.now().strftime("%m-%d-%Y")
@@ -144,10 +147,30 @@ def manual_index():
 @public_bp.route('/manual/<path:filename>', endpoint='view_sop')
 def view_sop(filename):
     try:
-        response = requests.get(f"http://compliance/qms/{filename}", timeout=5)
+        content = None
+        # 1. Direct local filesystem read (Azure single-container production & high-velocity local access)
+        local_qms_path = os.path.join(current_app.root_path, 'static', 'qms', filename)
+        if os.path.exists(local_qms_path):
+            with open(local_qms_path, 'r', encoding='utf-8', errors='replace') as f:
+                content = f.read()
+        else:
+            # 2. Network microservice fallback (Docker Compose multi-container environment)
+            try:
+                response = requests.get(f"http://compliance/qms/{filename}", timeout=2)
+                if response.status_code == 200:
+                    content = response.text
+            except Exception:
+                pass
+
+        if content is None:
+            return f"QMS Error: Document not found ({filename})", 404
+
         sops_by_dept = {}
         try:
-            with open('qms_index.json', 'r') as f:
+            index_path = os.path.join(current_app.root_path, 'qms_index.json')
+            if not os.path.exists(index_path):
+                index_path = 'qms_index.json'
+            with open(index_path, 'r', encoding='utf-8') as f:
                 sops = json.load(f)
             for sop in sops:
                 dept = sop['dept']
@@ -158,12 +181,10 @@ def view_sop(filename):
                 sops_by_dept[dept].sort(key=lambda x: x.get('title', '').lower())
         except Exception:
             pass
-        if response.status_code == 200:
-            return render_template('qms_shell.html', content=response.text, sops_by_dept=sops_by_dept, active_file=filename)
-        else:
-            return f"QMS Error: Document not found ({response.status_code})"
+
+        return render_template('qms_shell.html', content=content, sops_by_dept=sops_by_dept, active_file=filename)
     except Exception as e:
-        return f"QMS Connectivity Error: {e}"
+        return f"QMS Connectivity Error: {e}", 500
 
 @public_bp.route('/locations/<city>', endpoint='location_page')
 def location_page(city):
@@ -353,11 +374,27 @@ def favicon():
 @public_bp.route('/work-with-us', methods=['GET'], endpoint='work_with_us')
 def work_with_us():
     """Public portal for cleaning technician applications and subcontractor intake."""
-    return render_template('work_with_us.html')
+    job_positions = []
+    try:
+        from core.services.database import get_db
+        conn = get_db(current_app.config['DATABASE_URL'])
+        with conn.cursor() as cur:
+            cur.execute('SELECT * FROM "JobPositions" WHERE is_active = TRUE ORDER BY id ASC;')
+            job_positions = [dict(r) for r in cur.fetchall()]
+        conn.close()
+    except Exception as e:
+        print(f"[WORK-WITH-US] Error loading job positions: {e}", flush=True)
+    return render_template('work_with_us.html', job_positions=job_positions)
 
 @public_bp.route('/careers', methods=['GET'], endpoint='careers')
 def careers():
     """SEO alias redirect to work-with-us."""
     return redirect(url_for('public.work_with_us'))
+
+@public_bp.route('/onboard/bosanna', methods=['GET'], endpoint='bosanna_onboarding')
+@public_bp.route('/portal/bosanna/onboard', methods=['GET'], endpoint='bosanna_onboarding_portal')
+def bosanna_onboarding():
+    """White-labeled Bosanna LLC workforce compliance and technician onboarding portal (Model C)."""
+    return render_template('bosanna_onboarding.html')
 
 

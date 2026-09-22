@@ -33,6 +33,7 @@ from blueprints import (
     operations_bp,
     crm_api_bp,
     academy_bp,
+    partner_bp,
     register_blueprint_hub
 )
 
@@ -56,6 +57,7 @@ register_blueprint_hub(app, public_bp)
 register_blueprint_hub(app, operations_bp)
 register_blueprint_hub(app, crm_api_bp)
 register_blueprint_hub(app, academy_bp)
+register_blueprint_hub(app, partner_bp)
 
 # --- SigmaFidelity™ Institutional JSON Encoder ---
 class InstitutionalJSONEncoder(json.JSONEncoder):
@@ -118,7 +120,7 @@ with app.app_context():
         # Schema Migrations
         conn = get_db(app.config['DATABASE_URL'])
         try:
-            apply_system_migrations(conn)
+            apply_system_migrations(conn, db_url=app.config['DATABASE_URL'])
             print("[BOOT] Database Schema Migrations & Indexes Verified & Committed.", flush=True)
         except Exception as schema_err:
             print(f"[BOOT] Schema Migration Notice: {schema_err}", flush=True)

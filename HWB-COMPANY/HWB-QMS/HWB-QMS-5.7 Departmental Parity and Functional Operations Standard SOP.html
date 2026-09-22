@@ -1,0 +1,125 @@
+<!-- 
+    SigmaFidelity™ Institutional SOP Template (HTML Version 3.0)
+    Standard: HWB-QMS-1.0
+    Document: HWB-QMS-5.7 Departmental Parity and Functional Operations Standard SOP
+-->
+<div class="sop-card">
+    <!-- 0.0 DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-5.7</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.1.3 &amp; 8.1 (Operational Planning and Control)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <table>
+            <thead>
+                <tr>
+                    <th><strong>Document Control</strong></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td><strong>Document Title</strong></td><td><strong>Departmental Parity and Functional Operations Standard SOP</strong></td></tr>
+                <tr><td><strong>Document ID</strong></td><td>HWB-QMS-5.7</td></tr>
+                <tr><td><strong>Version</strong></td><td>2.0.0</td></tr>
+                <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
+                <tr><td><strong>Author</strong></td><td>George (Systems Architect)</td></tr>
+                <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
+                <tr><td><strong>Date</strong></td><td>09/21/2026</td></tr>
+                <tr><td><strong>ISO 9001 Clause</strong></td><td>7.1.3 &amp; 8.1</td></tr>
+            </tbody>
+        </table>
+
+        <hr />
+
+        <h1>Standard Operating Procedure: <strong>Departmental Parity &amp; Operations Expansion Standard</strong></h1>
+
+        <h2>1.0 Purpose</h2>
+        <p>This SOP establishes the mandatory standard for developing and scaling all internal business departments within the SigmaFidelity™ ecosystem. Just as the Human Resources and Marketing departments operate under strict relational models and executive control, any new or existing business operation (such as Finance, Fleet, Procurement, or Customer Care) must be built to the exact same high-density standard to prevent operational drift, eliminate double entry, and guarantee 100% executive control.</p>
+
+        <h2>2.0 Scope</h2>
+        <p>This procedure applies to all software engineers, autonomous agents, and operators designing, modifying, or launching functional business operations in the HWB backoffice and database architecture.</p>
+
+        <h2>3.0 The Four Pillars of Departmental Parity</h2>
+        <p>Every business department developed in the company must incorporate four foundational elements:</p>
+
+        <h3>3.1 Pillar 1: Relational Data Schema &amp; Migration Tracking</h3>
+        <ul>
+            <li>Every department must have dedicated, normalized PostgreSQL database tables with clear primary keys, foreign keys, and indexes.</li>
+            <li>All schema alterations must be deployed via formal migration scripts stored in the <code>scripts/</code> directory and registered in the <code>schema_migrations</code> table.</li>
+            <li>No loose, unindexed, or ad-hoc data storage is permitted.</li>
+        </ul>
+
+        <h3>3.2 Pillar 2: Integrated Backoffice View</h3>
+        <ul>
+            <li>Every department must have a top-level or view-level navigation trigger in the backoffice navigation bar.</li>
+            <li>Every departmental screen must display high-level KPI cards at the top (e.g., active volume, pending review items, monetary pipeline value).</li>
+            <li>Data tables must use the standardized high-density grid (<code>.sigma-table</code> or <code>.sigma-data-grid</code>) with clean sorting, badges, and quick-action buttons.</li>
+            <li>Complex departments must use tabbed sub-views (like HR Active Personnel, ATS Candidates, 1099 Subcontractors, and Payroll) to keep information organized without clutter.</li>
+        </ul>
+
+        <h3>3.3 Pillar 3: Poka-Yoke CEO Approval Gate</h3>
+        <ul>
+            <li>Autonomous agents and automated scripts are strictly prohibited from publishing external communications, transferring funds, or executing contractual commitments without executive review.</li>
+            <li>All outbound messages, vendor purchase orders, or high-value decisions must stage into an executive queue (such as the <code>PendingOutbox</code>) for one-click approval or rejection by CEO Humberto Dominguez.</li>
+        </ul>
+
+        <h3>3.4 Pillar 4: Minimization Mandate &amp; Empirical Integrity</h3>
+        <ul>
+            <li><strong>Zero Synthetic Data:</strong> All department records must stem from verified operational events, government registries, or authentic business contacts. Synthetic placeholders are strictly banned.</li>
+            <li><strong>Relentless Elimination of Repetitive Labor:</strong> Repetitive paperwork, manual follow-ups, and spreadsheet tracking must be eliminated through background daemons and automated notifications.</li>
+            <li><strong>Zero Cold Calling:</strong> Marketing and sales cadences must strictly use high-value inbound and vetted outbound email/letterhead touchpoints. Telephone telemarketing is prohibited.</li>
+        </ul>
+
+        <h2>4.0 Step-by-Step Procedure for Launching a New Department</h2>
+        <ol>
+            <li><strong>Step 1 - Data Modeling:</strong> Design the relational tables in PostgreSQL. Create the migration file (e.g., <code>scripts/migrate_0XX_department_name.py</code>) and record its execution in <code>schema_migrations</code>.</li>
+            <li><strong>Step 2 - Backend Routing:</strong> Add the query logic, permission checks, and action handlers to <code>blueprints/operations.py</code> or a dedicated blueprint.</li>
+            <li><strong>Step 3 - User Interface:</strong> Build the dedicated view container (<code>view-[dept-name]</code>) in <code>templates/backoffice_operations.html</code> adhering to the SigmaFidelity™ Form and UI standards. Add the navigation icon in <code>templates/components/backend_nav.html</code>.</li>
+            <li><strong>Step 4 - Executive Approval Gate:</strong> Connect all external or irreversible actions to the <code>PendingOutbox</code> or dedicated executive approval modal.</li>
+            <li><strong>Step 5 - Testing &amp; Verification:</strong> Execute automated test calls against the endpoint to ensure clean HTTP 200 responses and verify that all metrics render accurately.</li>
+            <li><strong>Step 6 - Institutional Persistence:</strong> Update <code>HWB-SESSION-RECOVERY.md</code> and execute <code>scripts/sigma_sync.py</code> to commit the changes into the long-term institutional memory.</li>
+        </ol>
+
+        <div class="callout callout-note">
+            <strong>Note</strong>
+            <p>This standard applies equally to future departments including Fleet Management, Chemical Safety &amp; Inventory, Accounts Receivable, and Subcontractor Quality Auditing.</p>
+        </div>
+
+        <h2>5.0 Verification (Zero-Defect Check)</h2>
+        <ul>
+            <li>Confirm that the new department's migration is recorded in <code>schema_migrations</code>.</li>
+            <li>Confirm that the backoffice navigation button directs properly to the department view.</li>
+            <li>Confirm that the approval gate prevents unauthorized outbound data release.</li>
+            <li>Verify that all UI components render cleanly on desktop and tablet screens without layout breaks.</li>
+        </ul>
+
+        <h2>6.0 Revision History</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Version</th>
+                    <th>Date</th>
+                    <th>Author</th>
+                    <th>Change Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1.0.0</td>
+                    <td>09/21/2026</td>
+                    <td>George (Systems Architect)</td>
+                    <td>Initial release codifying Departmental Parity across HR, Marketing, and future functional business operations per CEO directive.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="sop-card-footer">
+        <span>&copy; 2026 HWB Cleaning Services LLC</span>
+        <span>Controlled Document | HWB-QMS-5.7</span>
+        <span>Page <span class="page-number"></span></span>
+    </div>
+</div>

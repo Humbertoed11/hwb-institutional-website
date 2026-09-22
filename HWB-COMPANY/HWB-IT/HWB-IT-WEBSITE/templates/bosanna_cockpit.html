@@ -1,0 +1,1644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prime Contractor Cockpit | Bosanna LLC (TIPS #260102)</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bosanna-pine: #063333;
+            --bosanna-mint: #eef7f2;
+            --bosanna-sage: #2a6f5e;
+            --bosanna-gold: #c29b38;
+            --bosanna-dark: #112323;
+            --bosanna-light: #f8faf9;
+            --bosanna-white: #ffffff;
+            --bosanna-border: #e2e8f0;
+            --bosanna-border-card: #e0ebe6;
+            --bosanna-text: #0f172a;
+            --bosanna-muted: #64748b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background: #f1f5f4;
+            color: var(--bosanna-text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 1.0 TOP ENTERPRISE NAVIGATION BAR */
+        .cockpit-header {
+            background: var(--bosanna-pine);
+            color: var(--bosanna-white);
+            padding: 0.85rem 2rem;
+            border-bottom: 3px solid var(--bosanna-gold);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        .header-content {
+            max-width: 1440px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand-section {
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+        }
+
+        .brand-logo-text {
+            font-size: 1.25rem;
+            font-weight: 800;
+            letter-spacing: 0.04em;
+            color: #ffffff;
+            text-decoration: none;
+        }
+
+        .contract-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 0.25rem 0.65rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #d1fae5;
+        }
+
+        .user-controls {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--bosanna-mint);
+            color: var(--bosanna-sage);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .user-info {
+            text-align: right;
+        }
+
+        .user-name {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #ffffff;
+            line-height: 1.2;
+        }
+
+        .user-role {
+            font-size: 0.72rem;
+            color: #a7f3d0;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .btn-logout {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 0.45rem 0.85rem;
+            border-radius: 6px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .btn-logout:hover {
+            background: rgba(239, 68, 68, 0.8);
+            border-color: rgba(239, 68, 68, 0.8);
+            color: #ffffff;
+        }
+
+        /* 2.0 MAIN DASHBOARD CONTAINER */
+        .cockpit-container {
+            max-width: 1440px;
+            margin: 1.5rem auto;
+            padding: 0 2rem;
+            flex: 1;
+            width: 100%;
+        }
+
+        /* 2.1 TITLE & ACTIONS BAR */
+        .view-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .view-title-box h1 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--bosanna-dark);
+            margin-bottom: 0.25rem;
+        }
+
+        .view-title-box p {
+            font-size: 0.88rem;
+            color: var(--bosanna-muted);
+        }
+
+        .view-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .btn-primary-action {
+            background: var(--bosanna-sage);
+            color: #ffffff;
+            border: none;
+            padding: 0.6rem 1.1rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 2px 6px rgba(42, 111, 94, 0.25);
+            transition: all 0.2s;
+        }
+
+        .btn-primary-action:hover {
+            background: #235c4e;
+            transform: translateY(-1px);
+        }
+
+        /* 2.2 INSTITUTIONAL KPI CARDS */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.25rem;
+            margin-bottom: 1.75rem;
+        }
+
+        .kpi-card {
+            background: var(--bosanna-white);
+            border: 1px solid var(--bosanna-border-card);
+            border-radius: 8px;
+            padding: 1.25rem 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .kpi-details .kpi-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--bosanna-muted);
+            margin-bottom: 0.35rem;
+        }
+
+        .kpi-details .kpi-value {
+            font-size: 1.85rem;
+            font-weight: 800;
+            color: var(--bosanna-dark);
+            line-height: 1;
+        }
+
+        .kpi-icon-box {
+            width: 46px;
+            height: 46px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.35rem;
+        }
+
+        .kpi-icon-green { background: #dcfce7; color: #15803d; }
+        .kpi-icon-blue { background: #dbeafe; color: #1d4ed8; }
+        .kpi-icon-amber { background: #fef3c7; color: #b45309; }
+        .kpi-icon-teal { background: #ccfbf1; color: #0f766e; }
+
+        /* 2.3 FILTER & SEARCH TOOLBAR */
+        .toolbar-card {
+            background: var(--bosanna-white);
+            border: 1px solid var(--bosanna-border);
+            border-radius: 8px 8px 0 0;
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            border-bottom: none;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            position: relative;
+            min-width: 280px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 0.55rem 1rem 0.55rem 2.25rem;
+            border: 1px solid var(--bosanna-border);
+            border-radius: 6px;
+            font-size: 0.85rem;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .search-box input:focus {
+            border-color: var(--bosanna-sage);
+            box-shadow: 0 0 0 3px rgba(42, 111, 94, 0.15);
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 0.8rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--bosanna-muted);
+            font-size: 0.85rem;
+        }
+
+        .select-filter {
+            padding: 0.55rem 0.85rem;
+            border: 1px solid var(--bosanna-border);
+            border-radius: 6px;
+            font-size: 0.85rem;
+            color: var(--bosanna-text);
+            background: #ffffff;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .btn-filter-apply {
+            background: #f1f5f9;
+            border: 1px solid var(--bosanna-border);
+            padding: 0.55rem 0.85rem;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #334155;
+            cursor: pointer;
+        }
+
+        .btn-filter-apply:hover {
+            background: #e2e8f0;
+        }
+
+        /* 2.4 HIGH-DENSITY DATA GRID */
+        .table-card {
+            background: var(--bosanna-white);
+            border: 1px solid var(--bosanna-border);
+            border-radius: 0 0 8px 8px;
+            overflow-x: auto;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+            margin-bottom: 2.5rem;
+        }
+
+        .candidate-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.85rem;
+        }
+
+        .candidate-table th {
+            background: #f8fafc;
+            color: #475569;
+            font-weight: 700;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            padding: 0.85rem 1.25rem;
+            border-bottom: 1.5px solid var(--bosanna-border);
+            white-space: nowrap;
+        }
+
+        .candidate-table td {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--bosanna-border);
+            vertical-align: middle;
+        }
+
+        .candidate-table tr:hover {
+            background: #fcfdfd;
+        }
+
+        .badge-cell {
+            font-family: monospace;
+            font-weight: 700;
+            color: var(--bosanna-pine);
+            background: #eef7f2;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            border: 1px solid #cce3d8;
+            display: inline-block;
+        }
+
+        .candidate-name {
+            font-weight: 700;
+            color: var(--bosanna-dark);
+            margin-bottom: 0.15rem;
+        }
+
+        .candidate-sub {
+            font-size: 0.75rem;
+            color: var(--bosanna-muted);
+        }
+
+        .facility-name {
+            font-weight: 600;
+            color: #1e293b;
+            display: block;
+        }
+
+        .shift-tag {
+            font-size: 0.72rem;
+            color: #475569;
+            background: #f1f5f9;
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            display: inline-block;
+            margin-top: 0.2rem;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.25rem 0.65rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .status-bench { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+        .status-active { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+        .status-review { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+
+        .score-pill {
+            background: #ecfdf5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 0.78rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .actions-cell {
+            display: flex;
+            gap: 0.4rem;
+            align-items: center;
+            white-space: nowrap;
+        }
+
+        .btn-table-action {
+            background: #ffffff;
+            border: 1px solid var(--bosanna-border);
+            padding: 0.4rem 0.65rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #334155;
+            cursor: pointer;
+            transition: all 0.15s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .btn-table-action:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+            color: #0f172a;
+        }
+
+        .btn-dossier {
+            background: var(--bosanna-mint);
+            color: var(--bosanna-sage);
+            border-color: #cbe3d7;
+        }
+
+        .btn-dossier:hover {
+            background: #d9eee2;
+            color: #1a4f42;
+        }
+
+        .btn-status-toggle {
+            background: #f0fdf4;
+            color: #166534;
+            border-color: #bbf7d0;
+        }
+
+        .btn-status-toggle:hover {
+            background: #dcfce7;
+        }
+
+        /* 3.0 DIGITAL BADGE MODAL */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(6, 51, 51, 0.8);
+            backdrop-filter: blur(5px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 1rem;
+        }
+
+        .modal-content {
+            background: #ffffff;
+            border-radius: 12px;
+            max-width: 440px;
+            width: 100%;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+            overflow: hidden;
+            animation: modalFadeUp 0.25s ease-out;
+        }
+
+        @keyframes modalFadeUp {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-header {
+            background: var(--bosanna-pine);
+            color: #ffffff;
+            padding: 1.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .btn-modal-close {
+            background: transparent;
+            border: none;
+            color: #ffffff;
+            font-size: 1.2rem;
+            cursor: pointer;
+            opacity: 0.8;
+        }
+
+        .btn-modal-close:hover { opacity: 1; }
+
+        .modal-body {
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .badge-preview-card {
+            background: linear-gradient(135deg, #063333 0%, #114b4b 100%);
+            border-radius: 12px;
+            color: #ffffff;
+            padding: 1.5rem;
+            box-shadow: 0 10px 25px rgba(6, 51, 51, 0.25);
+            text-align: left;
+            position: relative;
+            margin-bottom: 1.25rem;
+        }
+
+        .badge-corp-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+            padding-bottom: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .badge-corp-title {
+            font-weight: 800;
+            font-size: 1rem;
+            letter-spacing: 0.05em;
+        }
+
+        .badge-center-grid {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .badge-photo-box {
+            width: 72px;
+            height: 72px;
+            background: #ffffff;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--bosanna-pine);
+            font-size: 2.25rem;
+            border: 2px solid var(--bosanna-gold);
+            flex-shrink: 0;
+        }
+
+        .badge-tech-name {
+            font-size: 1.15rem;
+            font-weight: 800;
+            line-height: 1.2;
+            color: #ffffff;
+        }
+
+        .badge-tech-role {
+            font-size: 0.8rem;
+            color: #93c5fd;
+            margin-top: 0.2rem;
+        }
+
+        .badge-data-rack {
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 6px;
+            padding: 0.75rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+        }
+
+        .badge-data-item span {
+            display: block;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.65rem;
+            text-transform: uppercase;
+        }
+
+        .badge-data-item strong {
+            color: #ffffff;
+            font-size: 0.8rem;
+        }
+
+        .badge-qr-box {
+            margin-top: 1rem;
+            padding-top: 0.75rem;
+            border-top: 1px dashed rgba(255, 255, 255, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .badge-qr-svg {
+            width: 48px;
+            height: 48px;
+            background: #ffffff;
+            border-radius: 4px;
+            padding: 2px;
+        }
+
+        /* 4.0 TOAST ALERT (SIGMAFIDELITY™ POKA-YOKE STANDARD) */
+        .toast-box {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: #0f172a;
+            color: #ffffff;
+            padding: 0.85rem 1.35rem;
+            border-radius: 8px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+            font-size: 0.88rem;
+            font-weight: 600;
+            display: none;
+            align-items: center;
+            gap: 0.65rem;
+            z-index: 3000;
+            border-left: 4.5px solid #34d399;
+            animation: toastSlideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes toastSlideIn {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .toast-box.toast-error {
+            background: #450a0a;
+            border-left-color: #ef4444;
+            color: #fee2e2;
+        }
+
+        .toast-box.toast-success {
+            background: #064e3b;
+            border-left-color: #34d399;
+            color: #ecfdf5;
+        }
+
+        @media (max-width: 1024px) {
+            .kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .kpi-grid {
+                grid-template-columns: 1fr;
+            }
+            .toolbar-card {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .search-box {
+                min-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1.0 TOP ENTERPRISE NAVIGATION -->
+    <header class="cockpit-header">
+        <div class="header-content">
+            <div class="brand-section">
+                <a href="https://bosanna.com/" class="brand-logo-text">BOSANNA LLC</a>
+                <span class="contract-pill">
+                    <i class="fas fa-landmark"></i> Collin College Frisco | TIPS #260102
+                </span>
+            </div>
+
+            <div class="user-controls">
+                <div class="user-profile">
+                    <div class="user-avatar">AH</div>
+                    <div class="user-info">
+                        <div class="user-name">{{ user.full_name or 'Angelica Hudgins' }}</div>
+                        <div class="user-role">Managing Principal</div>
+                    </div>
+                </div>
+                <a href="/portal/bosanna/logout" class="btn-logout">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- 2.0 MAIN COCKPIT -->
+    <main class="cockpit-container">
+
+        <!-- 2.1 VIEW TITLE -->
+        <div class="view-header">
+            <div class="view-title-box">
+                <h1>Prime Contractor Cockpit</h1>
+                <p>Real-Time Workforce Telemetry, Campus Shift Readiness, and TIPS Institutional Compliance</p>
+            </div>
+            <div class="view-actions" style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+                {% if user.role in ['Executive', 'Admin'] %}
+                <a href="/admin/operations?view=accounts&account_id=4&action=edit" target="_blank" class="btn-secondary-action" style="background: #ffffff; color: var(--bosanna-pine); border: 1.5px solid var(--bosanna-pine); padding: 0.65rem 1.15rem; border-radius: 8px; font-weight: 700; font-size: 0.88rem; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.2s;">
+                    <i class="fas fa-cog" style="color: var(--bosanna-gold);"></i> Company Account File
+                </a>
+                {% endif %}
+                <button type="button" class="btn-secondary-action" onclick="dispatchWeeklyAudit()" style="background: #ffffff; color: var(--bosanna-pine); border: 1.5px solid var(--bosanna-pine); padding: 0.65rem 1.15rem; border-radius: 8px; font-weight: 700; font-size: 0.88rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.2s;">
+                    <i class="fas fa-paper-plane" style="color: var(--bosanna-sage);"></i> Stage Weekly Briefing
+                </button>
+                <button type="button" class="btn-secondary-action" onclick="openShareModal()" style="background: #ffffff; color: var(--bosanna-pine); border: 1.5px solid var(--bosanna-pine); padding: 0.65rem 1.15rem; border-radius: 8px; font-weight: 700; font-size: 0.88rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.2s;">
+                    <i class="fas fa-share-alt" style="color: var(--bosanna-gold);"></i> Share Onboarding Link
+                </button>
+                <a href="/onboard/bosanna" target="_blank" class="btn-primary-action">
+                    <i class="fas fa-user-plus"></i> Onboard New Cleaner
+                </a>
+            </div>
+        </div>
+
+        <!-- 2.2 KPI METRIC RACK -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-details">
+                    <div class="kpi-label">Total Enrolled</div>
+                    <div class="kpi-value">{{ total_enrolled }}</div>
+                </div>
+                <div class="kpi-icon-box kpi-icon-blue">
+                    <i class="fas fa-users"></i>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-details">
+                    <div class="kpi-label">Bench Ready</div>
+                    <div class="kpi-value">{{ bench_ready_count }}</div>
+                </div>
+                <div class="kpi-icon-box kpi-icon-amber">
+                    <i class="fas fa-clipboard-check"></i>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-details">
+                    <div class="kpi-label">Active On Campus</div>
+                    <div class="kpi-value">{{ active_onsite_count }}</div>
+                </div>
+                <div class="kpi-icon-box kpi-icon-green">
+                    <i class="fas fa-building"></i>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-details">
+                    <div class="kpi-label">Safety Compliance</div>
+                    <div class="kpi-value">{{ safety_compliance_rate }}%</div>
+                </div>
+                <div class="kpi-icon-box kpi-icon-teal">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2.3 TOOLBAR & FILTERS -->
+        <form method="GET" action="/portal/bosanna/cockpit" class="toolbar-card">
+            <div class="filter-group">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" name="q" value="{{ search_q }}" placeholder="Search by name, phone, or badge #...">
+                </div>
+
+                <select name="facility" class="select-filter">
+                    <option value="">All Facilities</option>
+                    <option value="Collin College Frisco Campus" {% if facility_filter == 'Collin College Frisco Campus' %}selected{% endif %}>Collin College Frisco Campus</option>
+                    <option value="Plano Technical Center" {% if facility_filter == 'Plano Technical Center' %}selected{% endif %}>Plano Technical Center</option>
+                    <option value="Carrollton Medical" {% if facility_filter == 'Carrollton Medical' %}selected{% endif %}>Carrollton Medical Facility</option>
+                </select>
+
+                <select name="status" class="select-filter">
+                    <option value="">All Statuses</option>
+                    <option value="Bench Ready" {% if status_filter == 'Bench Ready' %}selected{% endif %}>Bench Ready</option>
+                    <option value="Active On-Site" {% if status_filter == 'Active On-Site' %}selected{% endif %}>Active On-Site</option>
+                </select>
+
+                <button type="submit" class="btn-filter-apply">
+                    <i class="fas fa-filter"></i> Apply Filters
+                </button>
+                {% if search_q or facility_filter or status_filter %}
+                <a href="/portal/bosanna/cockpit" class="btn-table-action" style="color: #ef4444;">
+                    <i class="fas fa-times"></i> Reset
+                </a>
+                {% endif %}
+            </div>
+
+            <div style="font-size: 0.8rem; color: var(--bosanna-muted); font-weight: 600;">
+                Showing {{ candidates|length }} Credentialed Technicians
+            </div>
+        </form>
+
+        <!-- 2.4 CANDIDATE ROSTER TABLE -->
+        <div class="table-card">
+            <table class="candidate-table">
+                <thead>
+                    <tr>
+                        <th>Badge #</th>
+                        <th>Technician Details</th>
+                        <th>Facility &amp; Shift</th>
+                        <th>State ID / DL</th>
+                        <th>Safety Score</th>
+                        <th>DPS Background</th>
+                        <th>Deployment Status</th>
+                        <th>Compliance Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in candidates %}
+                    <tr id="row-cand-{{ c.id }}">
+                        <td>
+                            <span class="badge-cell">{{ c.badge_id }}</span>
+                        </td>
+                        <td>
+                            <div class="candidate-name">{{ c.full_name }}</div>
+                            <div class="candidate-sub">{{ c.phone }} • {{ c.desired_role }}</div>
+                        </td>
+                        <td>
+                            <span class="facility-name">{{ c.facility }}</span>
+                            <span class="shift-tag"><i class="far fa-clock"></i> {{ c.desired_shift }}</span>
+                        </td>
+                        <td>
+                            <div style="font-weight: 600; font-family: monospace; font-size: 0.82rem;">{{ c.state_id }}</div>
+                            <div class="candidate-sub">Exp: {{ c.id_expiration }}</div>
+                        </td>
+                        <td>
+                            <span class="score-pill">
+                                <i class="fas fa-check-circle"></i> {{ c.score }}
+                            </span>
+                        </td>
+                        <td>
+                            <span style="display: inline-flex; align-items: center; gap: 0.35rem; color: #166534; font-weight: 600; font-size: 0.78rem;">
+                                <i class="fas fa-fingerprint"></i> DPS Cleared
+                            </span>
+                        </td>
+                        <td>
+                            {% if c.status == 'Active On-Site' %}
+                            <span class="status-pill status-active" id="pill-status-{{ c.id }}">
+                                <i class="fas fa-check"></i> Active On-Site
+                            </span>
+                            {% else %}
+                            <span class="status-pill status-bench" id="pill-status-{{ c.id }}">
+                                <i class="fas fa-pause"></i> Bench Ready
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="actions-cell">
+                                <button type="button" class="btn-table-action" onclick="openBadgeModal('{{ c.full_name }}', '{{ c.badge_id }}', '{{ c.desired_role }}', '{{ c.facility }}', '{{ c.desired_shift }}', '{{ c.state_id }}')">
+                                    <i class="fas fa-id-card"></i> Badge
+                                </button>
+                                <a href="/portal/bosanna/file/{{ c.id }}" target="_blank" class="btn-table-action btn-dossier">
+                                    <i class="fas fa-file-contract"></i> Worker File
+                                </a>
+                                <button type="button" class="btn-table-action"
+                                    data-id="{{ c.id }}"
+                                    data-name="{{ c.full_name }}"
+                                    data-phone="{{ c.phone }}"
+                                    data-email="{{ c.email if c.email != 'N/A' else '' }}"
+                                    data-city="{{ c.city if c.city != 'N/A' else '' }}"
+                                    data-facility="{{ c.facility }}"
+                                    data-state-id="{{ c.state_id }}"
+                                    data-exp="{{ c.id_expiration if c.id_expiration != 'N/A' else '' }}"
+                                    data-role="{{ c.desired_role }}"
+                                    data-shift="{{ c.desired_shift }}"
+                                    data-status="{{ c.status }}"
+                                    onclick="openEditWorkerModalFromBtn(this)" title="Edit Worker File">
+                                    <i class="fas fa-pencil-alt" style="color: var(--bosanna-gold);"></i> Edit
+                                </button>
+                                <button type="button" class="btn-table-action" onclick="openShareModal('{{ c.full_name }}', '{{ c.phone }}', {{ c.id }})" style="color: #059669; border-color: rgba(5, 150, 105, 0.4);" title="Send onboarding link to candidate">
+                                    <i class="fas fa-paper-plane"></i> Send Link
+                                </button>
+                                <button type="button" class="btn-table-action btn-status-toggle" onclick="toggleDeploymentStatus({{ c.id }}, '{{ c.status }}')">
+                                    <i class="fas fa-sync-alt"></i> Deploy
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 3rem; color: var(--bosanna-muted);">
+                            <i class="fas fa-user-slash" style="font-size: 2rem; margin-bottom: 0.5rem; display: block; color: #cbd5e1;"></i>
+                            No technician records located matching the specified filter criteria.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </main>
+
+    <!-- 3.0 DIGITAL BADGE MODAL -->
+    <div class="modal-overlay" id="badgeModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Campus Dock Clearance Badge</h3>
+                <button type="button" class="btn-modal-close" onclick="closeBadgeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="badge-preview-card">
+                    <div class="badge-corp-row">
+                        <span class="badge-corp-title">BOSANNA LLC</span>
+                        <span style="font-size: 0.72rem; color: #d1fae5; font-weight: 700;">TIPS #260102</span>
+                    </div>
+
+                    <div class="badge-center-grid">
+                        <div class="badge-photo-box">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div>
+                            <div class="badge-tech-name" id="modalTechName">Elena Morales</div>
+                            <div class="badge-tech-role" id="modalTechRole">Commercial Cleaning Technician</div>
+                            <div style="font-size: 0.75rem; color: #d1fae5; margin-top: 0.2rem;" id="modalTechFacility">Collin College Frisco Campus</div>
+                        </div>
+                    </div>
+
+                    <div class="badge-data-rack">
+                        <div class="badge-data-item">
+                            <span>Badge ID</span>
+                            <strong id="modalBadgeId">BOS-4921</strong>
+                        </div>
+                        <div class="badge-data-item">
+                            <span>Clearance Tier</span>
+                            <strong style="color: #34d399;">Institutional A</strong>
+                        </div>
+                        <div class="badge-data-item">
+                            <span>State ID / DL</span>
+                            <strong id="modalTechID">TX-24891024</strong>
+                        </div>
+                        <div class="badge-data-item">
+                            <span>Authorized Shift</span>
+                            <strong id="modalTechShift">Evening Janitorial</strong>
+                        </div>
+                    </div>
+
+                    <div class="badge-qr-box">
+                        <div style="font-size: 0.72rem; color: rgba(255,255,255,0.8); line-height: 1.3;">
+                            <strong>COLLIN COLLEGE DOCK SCAN</strong><br>
+                            Valid for 2026 Academic Year
+                        </div>
+                        <svg class="badge-qr-svg" viewBox="0 0 100 100">
+                            <rect width="100" height="100" fill="#ffffff"/>
+                            <rect x="10" y="10" width="25" height="25" fill="#063333"/>
+                            <rect x="15" y="15" width="15" height="15" fill="#ffffff"/>
+                            <rect x="18" y="18" width="9" height="9" fill="#063333"/>
+                            <rect x="65" y="10" width="25" height="25" fill="#063333"/>
+                            <rect x="70" y="15" width="15" height="15" fill="#ffffff"/>
+                            <rect x="73" y="18" width="9" height="9" fill="#063333"/>
+                            <rect x="10" y="65" width="25" height="25" fill="#063333"/>
+                            <rect x="15" y="70" width="15" height="15" fill="#ffffff"/>
+                            <rect x="18" y="73" width="9" height="9" fill="#063333"/>
+                            <rect x="45" y="45" width="10" height="10" fill="#063333"/>
+                            <rect x="60" y="60" width="10" height="10" fill="#063333"/>
+                            <rect x="45" y="20" width="10" height="10" fill="#063333"/>
+                            <rect x="75" y="75" width="15" height="15" fill="#063333"/>
+                        </svg>
+                    </div>
+                </div>
+
+                <button type="button" class="btn-primary-action" style="width: 100%; justify-content: center;" onclick="closeBadgeModal()">
+                    Close Inspection
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3.1 SHARE ONBOARDING MODAL (SIGMAFIDELITY™ POKA-YOKE STANDARD) -->
+    <div class="modal-overlay" id="shareModal" style="display: none;">
+        <div class="modal-content" style="max-width: 520px;">
+            <div class="modal-header">
+                <div style="display: flex; align-items: center; gap: 0.6rem;">
+                    <i class="fas fa-share-alt" style="color: var(--bosanna-gold); font-size: 1.15rem;"></i>
+                    <h3 style="margin: 0; font-size: 1.1rem; color: #ffffff;">Share Onboarding Portal</h3>
+                </div>
+                <button type="button" class="btn-modal-close" onclick="closeShareModal()">&times;</button>
+            </div>
+            <div class="modal-body" style="text-align: left; padding: 1.5rem;">
+                
+                <!-- Target Environment Switcher -->
+                <div style="margin-bottom: 1.25rem;">
+                    <label style="display: block; font-size: 0.78rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">
+                        Target Environment &amp; Network
+                    </label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 0.5rem;">
+                        <button type="button" id="env-btn-prod" class="env-toggle-btn active" onclick="setShareEnv('prod')" style="padding: 0.6rem 0.75rem; border-radius: 8px; border: 1.5px solid #063333; background: #063333; color: #ffffff; font-weight: 700; font-size: 0.8rem; cursor: pointer; text-align: left; display: flex; flex-direction: column; gap: 0.2rem;">
+                            <span style="display: flex; align-items: center; justify-content: space-between;">
+                                <span><i class="fas fa-globe"></i> Production Cloud</span>
+                                <span style="background: #059669; color: #ffffff; font-size: 0.62rem; padding: 0.15rem 0.4rem; border-radius: 4px;">Cleaners (SMS)</span>
+                            </span>
+                            <span style="font-size: 0.68rem; opacity: 0.8; font-weight: 400;">hwbcleaning.com</span>
+                        </button>
+                        <button type="button" id="env-btn-dev" class="env-toggle-btn" onclick="setShareEnv('dev')" style="padding: 0.6rem 0.75rem; border-radius: 8px; border: 1.5px solid #cbd5e1; background: #f8fafc; color: #334155; font-weight: 700; font-size: 0.8rem; cursor: pointer; text-align: left; display: flex; flex-direction: column; gap: 0.2rem;">
+                            <span style="display: flex; align-items: center; justify-content: space-between;">
+                                <span><i class="fas fa-laptop-code"></i> Local Workstation</span>
+                                <span style="background: #64748b; color: #ffffff; font-size: 0.62rem; padding: 0.15rem 0.4rem; border-radius: 4px;">Host Only</span>
+                            </span>
+                            <span id="shareHostLabel" style="font-size: 0.68rem; opacity: 0.8; font-weight: 400;">Current Host</span>
+                        </button>
+                    </div>
+                    <div style="font-size: 0.72rem; color: #64748b; display: flex; align-items: center; gap: 0.35rem;">
+                        <i class="fas fa-info-circle" style="color: #0284c7;"></i>
+                        <span>Production Cloud link works immediately on all mobile smartphones (iOS/Android) over 5G/Wi-Fi.</span>
+                    </div>
+                </div>
+
+                <!-- Personalization (Optional) -->
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.85rem; margin-bottom: 1.25rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <span style="font-size: 0.75rem; font-weight: 700; color: #334155; text-transform: uppercase;">
+                            <i class="fas fa-user-tag" style="color: var(--bosanna-gold);"></i> Candidate Personalization (Optional)
+                        </span>
+                        <span style="font-size: 0.68rem; color: #64748b;">Pre-fills candidate info</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 0.5rem;">
+                        <div>
+                            <label style="display: block; font-size: 0.7rem; color: #64748b; margin-bottom: 0.2rem;">Candidate Name</label>
+                            <input type="text" id="shareCandidateName" placeholder="e.g. Maria Rodriguez" oninput="updateShareUrl()" style="width: 100%; padding: 0.45rem 0.65rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.8rem; box-sizing: border-box;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.7rem; color: #64748b; margin-bottom: 0.2rem;">Mobile Phone (SMS)</label>
+                            <input type="tel" id="shareCandidatePhone" placeholder="(469) 555-0199" oninput="updateShareUrl()" style="width: 100%; padding: 0.45rem 0.65rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.8rem; box-sizing: border-box;">
+                        </div>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.7rem; color: #64748b; margin-bottom: 0.2rem;">Preferred Portal Language</label>
+                        <select id="shareCandidateLang" onchange="updateShareUrl()" style="width: 100%; padding: 0.45rem 0.65rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.8rem; background: #ffffff; box-sizing: border-box;">
+                            <option value="es" selected>Español (Recomendado para contratistas de limpieza)</option>
+                            <option value="en">English (Official TIPS &amp; Collin College Specifications)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Generated URL with Copy Button -->
+                <div style="margin-bottom: 1.25rem;">
+                    <label style="display: block; font-size: 0.78rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.4rem;">
+                        Onboarding URL to Send
+                    </label>
+                    <div style="display: flex; gap: 0.4rem;">
+                        <input type="text" id="shareUrlInput" readonly style="flex: 1; padding: 0.55rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.82rem; font-family: monospace; background: #f8fafc; color: #0f172a;" value="https://hwbcleaning.com/onboard/bosanna">
+                        <button type="button" id="btnCopyGenerated" onclick="copyShareUrl()" style="background: #063333; color: #ffffff; border: none; padding: 0.55rem 1rem; border-radius: 6px; font-weight: 700; font-size: 0.82rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem; white-space: nowrap; transition: background 0.2s;">
+                            <i class="fas fa-copy"></i> <span id="copyBtnText">Copy Link</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Instant Dispatch Actions -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-bottom: 1.25rem;">
+                    <button type="button" onclick="sendShareSMS()" style="background: #059669; color: #ffffff; border: none; padding: 0.65rem 0.85rem; border-radius: 8px; font-weight: 700; font-size: 0.82rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: background 0.2s;">
+                        <i class="fas fa-comment-dots"></i> Text via SMS
+                    </button>
+                    <button type="button" onclick="sendShareEmail()" style="background: #334155; color: #ffffff; border: none; padding: 0.65rem 0.85rem; border-radius: 8px; font-weight: 700; font-size: 0.82rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: background 0.2s;">
+                        <i class="fas fa-envelope"></i> Send via Email
+                    </button>
+                </div>
+
+                <!-- QR Code Box for In-Person or Phone Scanning -->
+                <div style="background: #f1f5f9; border-radius: 8px; padding: 1rem; text-align: center; border: 1px dashed #cbd5e1;">
+                    <div style="font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.5rem;">
+                        <i class="fas fa-qrcode" style="color: var(--bosanna-gold);"></i> Instant Smartphone Camera Scan
+                    </div>
+                    <div style="display: flex; justify-content: center; margin-bottom: 0.5rem;">
+                        <img id="shareQrImg" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https%3A%2F%2Fhwbcleaning.com%2Fonboard%2Fbosanna" alt="QR Code" width="130" height="130" style="background: #ffffff; padding: 6px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.08);">
+                    </div>
+                    <div style="font-size: 0.72rem; color: #64748b;">
+                        Candidate can point their phone camera at this screen to begin onboarding immediately.
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- 3.2 EDIT WORKER MODAL (SIGMAFIDELITY™ POKA-YOKE STANDARD) -->
+    <div class="modal-overlay" id="editWorkerModal" style="display: none;">
+        <div class="modal-content" style="max-width: 560px;">
+            <div class="modal-header">
+                <div style="display: flex; align-items: center; gap: 0.6rem;">
+                    <i class="fas fa-pencil-alt" style="color: var(--bosanna-gold); font-size: 1.1rem;"></i>
+                    <h3 style="margin: 0; font-size: 1.05rem; color: #ffffff;">Edit Technician Compliance File</h3>
+                </div>
+                <button type="button" class="btn-modal-close" onclick="closeEditWorkerModal()">&times;</button>
+            </div>
+            <form id="form-cockpit-edit-worker" onsubmit="saveWorkerFileCockpit(event)" style="margin: 0;">
+                <input type="hidden" id="cockpit_edit_id" value="">
+                <div class="modal-body" style="padding: 1.5rem; text-align: left;">
+                    
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 0.35rem;">
+                            Full Legal Name *
+                        </label>
+                        <input type="text" id="cockpit_edit_full_name" required style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; box-sizing: border-box;">
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
+                        <div>
+                            <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 0.35rem;">
+                                Mobile Phone *
+                            </label>
+                            <input type="tel" id="cockpit_edit_phone" required maxlength="14" oninput="maskPhone(this)" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; box-sizing: border-box;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 0.35rem;">
+                                Email Address
+                            </label>
+                            <input type="email" id="cockpit_edit_email" placeholder="e.g. maria@example.com" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; box-sizing: border-box;">
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
+                        <div>
+                            <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 0.35rem;">
+                                City of Residence
+                            </label>
+                            <input type="text" id="cockpit_edit_city" placeholder="e.g. Frisco, Plano" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; box-sizing: border-box;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 0.35rem;">
+                                Assigned Campus Facility
+                            </label>
+                            <select id="cockpit_edit_facility" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.82rem; background: #ffffff; box-sizing: border-box;">
+                                <option value="Collin College Frisco Campus">Collin College Frisco Campus (Preston Ridge)</option>
+                                <option value="Collin College McKinney Campus">Collin College McKinney Campus (Central Park)</option>
+                                <option value="Collin College Plano Campus">Collin College Plano Campus (Spring Creek)</option>
+                                <option value="Collin College Technical Campus">Collin College Technical Campus (Allen)</option>
+                                <option value="Collin College Wylie Campus">Collin College Wylie Campus</option>
+                                <option value="Collin College Celina Campus">Collin College Celina Campus</option>
+                                <option value="Collin College Farmersville Campus">Collin College Farmersville Campus</option>
+                                <option value="Carrollton Medical Facility & Clinical Network">Carrollton Medical Facility &amp; Clinical Network</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
+                        <div>
+                            <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 0.35rem;">
+                                Texas DL / State ID Number
+                            </label>
+                            <input type="text" id="cockpit_edit_state_id" placeholder="e.g. TX-24891024" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; font-family: monospace; box-sizing: border-box;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 0.35rem;">
+                                ID Expiration Date
+                            </label>
+                            <input type="text" id="cockpit_edit_id_expiration" placeholder="e.g. 08/2028" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; box-sizing: border-box;">
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.25rem;">
+                        <div>
+                            <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 0.35rem;">
+                                Primary Contract Role
+                            </label>
+                            <select id="cockpit_edit_desired_role" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.82rem; background: #ffffff; box-sizing: border-box;">
+                                <option value="Commercial Cleaning Technician">Commercial Cleaning Technician</option>
+                                <option value="Day Porter">Day Porter</option>
+                                <option value="Floor Care Specialist">Floor Care Specialist</option>
+                                <option value="Custodial Team Lead">Custodial Team Lead</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 0.35rem;">
+                                Authorized Shift
+                            </label>
+                            <select id="cockpit_edit_desired_shift" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.82rem; background: #ffffff; box-sizing: border-box;">
+                                <option value="Evening Janitorial">Evening Janitorial (5PM - 10PM)</option>
+                                <option value="Day Porter">Day Porter (8AM - 2PM)</option>
+                                <option value="Weekend Custodial">Weekend Custodial (Sat/Sun)</option>
+                                <option value="Overnight Deep Clean">Overnight Deep Clean</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 0.5rem;">
+                        <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 0.35rem;">
+                            Campus Deployment Status
+                        </label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                            <label style="display: flex; align-items: center; gap: 0.4rem; padding: 0.55rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; cursor: pointer; font-size: 0.82rem;">
+                                <input type="radio" name="cockpit_edit_status" id="cockpit_status_bench" value="Bench Ready">
+                                <span><strong style="color: #d97706;">Bench Ready</strong> (Reserve Pool)</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.4rem; padding: 0.55rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; cursor: pointer; font-size: 0.82rem;">
+                                <input type="radio" name="cockpit_edit_status" id="cockpit_status_active" value="Active On-Site">
+                                <span><strong style="color: #059669;">Active On-Site</strong> (Deployed)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                </div>
+                <div style="background: #f8fafc; padding: 1rem 1.5rem; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 0.6rem;">
+                    <button type="button" onclick="closeEditWorkerModal()" style="background: #ffffff; color: #475569; border: 1.5px solid #cbd5e1; padding: 0.5rem 1rem; border-radius: 6px; font-weight: 700; font-size: 0.82rem; cursor: pointer;">
+                        Cancel
+                    </button>
+                    <button type="submit" id="btnSaveWorkerCockpit" style="background: #063333; color: #ffffff; border: none; padding: 0.5rem 1.25rem; border-radius: 6px; font-weight: 700; font-size: 0.82rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem;">
+                        <i class="fas fa-save"></i> Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 4.0 LIVE TOAST ALERT (SIGMAFIDELITY™ POKA-YOKE STANDARD) -->
+    <div class="toast-box toast-success" id="toastBox">
+        <i class="fas fa-check-circle" id="toastIcon" style="color: #34d399;"></i>
+        <span id="toastMsg">Status updated successfully</span>
+    </div>
+
+    <script>
+        function openBadgeModal(name, badgeId, role, facility, shift, stateId) {
+            document.getElementById('modalTechName').textContent = name;
+            document.getElementById('modalBadgeId').textContent = badgeId;
+            document.getElementById('modalTechRole').textContent = role;
+            document.getElementById('modalTechFacility').textContent = facility;
+            document.getElementById('modalTechShift').textContent = shift;
+            document.getElementById('modalTechID').textContent = stateId;
+            document.getElementById('badgeModal').style.display = 'flex';
+        }
+
+        function closeBadgeModal() {
+            document.getElementById('badgeModal').style.display = 'none';
+        }
+
+        async function toggleDeploymentStatus(applicantId, currentStatus) {
+            const pill = document.getElementById(`pill-status-${applicantId}`);
+            const isCurrentlyActive = pill ? pill.textContent.includes('Active On-Site') : (currentStatus === 'Active On-Site');
+            const newStatus = isCurrentlyActive ? 'Bench Ready' : 'Active On-Site';
+
+            try {
+                const res = await fetch(`/api/v1/bosanna/candidate/${applicantId}/status`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: newStatus })
+                });
+                const data = await res.json();
+                if (res.ok && data.status === 'success') {
+                    if (newStatus === 'Active On-Site') {
+                        pill.className = 'status-pill status-active';
+                        pill.innerHTML = '<i class="fas fa-check"></i> Active On-Site';
+                    } else {
+                        pill.className = 'status-pill status-bench';
+                        pill.innerHTML = '<i class="fas fa-pause"></i> Bench Ready';
+                    }
+                    // Update button onclick so subsequent clicks toggle seamlessly
+                    const row = document.getElementById(`row-cand-${applicantId}`);
+                    if (row) {
+                        const btn = row.querySelector('.btn-status-toggle');
+                        if (btn) {
+                            btn.setAttribute('onclick', `toggleDeploymentStatus(${applicantId}, '${newStatus}')`);
+                        }
+                    }
+                    showToast(data.message || `Candidate deployed as ${newStatus}`, 'success');
+                } else {
+                    showToast(data.message || 'Error updating deployment status.', 'error');
+                }
+            } catch (err) {
+                showToast('Connection error: Unable to reach operations server.', 'error');
+            }
+        }
+
+        async function dispatchWeeklyAudit() {
+            try {
+                showToast('Compiling executive operations briefing...', 'success');
+                const res = await fetch('/api/v1/bosanna/weekly-audit-dispatch', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await res.json();
+                if (res.ok && data.status === 'success') {
+                    showToast(data.message || 'Weekly Briefing staged successfully.', 'success');
+                } else {
+                    showToast(data.message || 'Error staging briefing.', 'error');
+                }
+            } catch (err) {
+                showToast('Connection error: Unable to stage weekly audit.', 'error');
+            }
+        }
+
+        let currentShareEnv = 'prod';
+
+        function setShareEnv(env) {
+            currentShareEnv = env;
+            const btnProd = document.getElementById('env-btn-prod');
+            const btnDev = document.getElementById('env-btn-dev');
+            if (btnProd && btnDev) {
+                if (env === 'prod') {
+                    btnProd.style.background = '#063333';
+                    btnProd.style.borderColor = '#063333';
+                    btnProd.style.color = '#ffffff';
+                    btnDev.style.background = '#f8fafc';
+                    btnDev.style.borderColor = '#cbd5e1';
+                    btnDev.style.color = '#334155';
+                } else {
+                    btnDev.style.background = '#063333';
+                    btnDev.style.borderColor = '#063333';
+                    btnDev.style.color = '#ffffff';
+                    btnProd.style.background = '#f8fafc';
+                    btnProd.style.borderColor = '#cbd5e1';
+                    btnProd.style.color = '#334155';
+                }
+            }
+            updateShareUrl();
+        }
+
+        function updateShareUrl() {
+            const base = (currentShareEnv === 'prod') 
+                ? 'https://hwbcleaning.com/onboard/bosanna' 
+                : (window.location.origin + '/onboard/bosanna');
+            
+            const name = (document.getElementById('shareCandidateName')?.value || '').trim();
+            const phone = (document.getElementById('shareCandidatePhone')?.value || '').trim();
+            const lang = document.getElementById('shareCandidateLang')?.value || 'es';
+            
+            const params = new URLSearchParams();
+            if (name) params.set('name', name);
+            if (phone) params.set('phone', phone);
+            if (lang) params.set('lang', lang);
+
+            const queryString = params.toString();
+            const finalUrl = queryString ? `${base}?${queryString}` : base;
+
+            const urlInput = document.getElementById('shareUrlInput');
+            if (urlInput) urlInput.value = finalUrl;
+
+            const qrImg = document.getElementById('shareQrImg');
+            if (qrImg) {
+                qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(finalUrl)}`;
+            }
+            return finalUrl;
+        }
+
+        function copyShareUrl() {
+            const urlInput = document.getElementById('shareUrlInput');
+            const url = (urlInput ? urlInput.value : '') || updateShareUrl();
+            copyToClipboard(url).then(() => {
+                const btn = document.getElementById('btnCopyGenerated');
+                const btnText = document.getElementById('copyBtnText');
+                if (btn && btnText) {
+                    btn.style.background = '#059669';
+                    btnText.textContent = 'Copied!';
+                    setTimeout(() => {
+                        btn.style.background = '#063333';
+                        btnText.textContent = 'Copy Link';
+                    }, 2500);
+                }
+                showToast('Onboarding link copied! Ready to text to candidate.', 'success');
+            }).catch(err => {
+                showToast('Link ready in field. Please copy manually.', 'error');
+            });
+        }
+
+        function copyToClipboard(text) {
+            if (navigator.clipboard && window.isSecureContext) {
+                return navigator.clipboard.writeText(text);
+            }
+            return new Promise((resolve, reject) => {
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                textArea.style.position = 'fixed';
+                textArea.style.top = '0';
+                textArea.style.left = '0';
+                textArea.style.width = '2em';
+                textArea.style.height = '2em';
+                textArea.style.padding = '0';
+                textArea.style.border = 'none';
+                textArea.style.outline = 'none';
+                textArea.style.boxShadow = 'none';
+                textArea.style.background = 'transparent';
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    const successful = document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    if (successful) resolve(); else reject(new Error('copy command unsuccessful'));
+                } catch (err) {
+                    document.body.removeChild(textArea);
+                    reject(err);
+                }
+            });
+        }
+
+        function openShareModal(name = '', phone = '', id = null) {
+            const modal = document.getElementById('shareModal');
+            if (modal) {
+                const nameInput = document.getElementById('shareCandidateName');
+                const phoneInput = document.getElementById('shareCandidatePhone');
+                if (nameInput) nameInput.value = name || '';
+                if (phoneInput) phoneInput.value = phone || '';
+                currentShareEnv = 'prod';
+                setShareEnv('prod');
+                const finalUrl = updateShareUrl();
+                modal.style.display = 'flex';
+                // Silently copy to clipboard right away as a high-velocity convenience
+                copyToClipboard(finalUrl).then(() => {
+                    showToast('Production onboarding link copied to clipboard!', 'success');
+                }).catch(() => {});
+            }
+        }
+
+        function closeShareModal() {
+            const modal = document.getElementById('shareModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        function copyOnboardLink() {
+            openShareModal();
+        }
+
+        function sendShareSMS() {
+            const url = document.getElementById('shareUrlInput')?.value || updateShareUrl();
+            const name = (document.getElementById('shareCandidateName')?.value || '').trim();
+            const phone = (document.getElementById('shareCandidatePhone')?.value || '').trim().replace(/[^0-9]/g, '');
+            const lang = document.getElementById('shareCandidateLang')?.value || 'es';
+            
+            let message = '';
+            if (lang === 'es') {
+                message = name 
+                    ? `Hola ${name}, por favor completa tu registro de contratista y certificacion de seguridad para Collin College aqui: ${url}`
+                    : `Hola, por favor completa tu registro de contratista y certificacion de seguridad para Collin College aqui: ${url}`;
+            } else {
+                message = name 
+                    ? `Hello ${name}, please complete your contractor registration and safety certification for Collin College here: ${url}`
+                    : `Hello, please complete your contractor registration and safety certification for Collin College here: ${url}`;
+            }
+            
+            const smsUrl = phone ? `sms:${phone}?&body=${encodeURIComponent(message)}` : `sms:?&body=${encodeURIComponent(message)}`;
+            window.open(smsUrl, '_blank');
+        }
+
+        function sendShareEmail() {
+            const url = document.getElementById('shareUrlInput')?.value || updateShareUrl();
+            const name = (document.getElementById('shareCandidateName')?.value || '').trim();
+            const lang = document.getElementById('shareCandidateLang')?.value || 'es';
+            
+            const subject = encodeURIComponent('Bosanna LLC - Collin College Onboarding & Safety Portal');
+            let body = '';
+            if (lang === 'es') {
+                body = encodeURIComponent(`Estimado/a ${name || 'Contratista'},\n\nPor favor complete su verificacion de identidad, protocolo de bioseguridad y certificacion de seguridad para el contrato de Collin College (TIPS #260102) en el siguiente enlace:\n\n${url}\n\nAtentamente,\nBosanna LLC / HWB Operations`);
+            } else {
+                body = encodeURIComponent(`Dear ${name || 'Contractor'},\n\nPlease complete your identity verification, biosafety protocol, and safety certification for Collin College campus operations (TIPS #260102) at the following secure portal:\n\n${url}\n\nSincerely,\nBosanna LLC / HWB Operations`);
+            }
+            window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
+        }
+
+        function openEditWorkerModalFromBtn(btn) {
+            const d = btn.dataset;
+            openEditWorkerModal(d.id, d.name, d.phone, d.email, d.city, d.facility, d.stateId, d.exp, d.role, d.shift, d.status);
+        }
+
+        function openEditWorkerModal(id, fullName, phone, email, city, facility, stateId, idExpiration, desiredRole, desiredShift, status) {
+            document.getElementById('cockpit_edit_id').value = id;
+            document.getElementById('cockpit_edit_full_name').value = fullName || '';
+            document.getElementById('cockpit_edit_phone').value = phone || '';
+            document.getElementById('cockpit_edit_email').value = email || '';
+            document.getElementById('cockpit_edit_city').value = city || '';
+            
+            // Set facility dropdown
+            const facSelect = document.getElementById('cockpit_edit_facility');
+            if (facSelect && facility) {
+                for (let i = 0; i < facSelect.options.length; i++) {
+                    if (facSelect.options[i].value.toLowerCase().includes(facility.toLowerCase()) || 
+                        facility.toLowerCase().includes(facSelect.options[i].value.toLowerCase())) {
+                        facSelect.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+
+            document.getElementById('cockpit_edit_state_id').value = stateId || '';
+            document.getElementById('cockpit_edit_id_expiration').value = (idExpiration && idExpiration !== 'N/A') ? idExpiration : '';
+            
+            // Set role
+            const roleSelect = document.getElementById('cockpit_edit_desired_role');
+            if (roleSelect && desiredRole) {
+                roleSelect.value = desiredRole;
+            }
+
+            // Set shift
+            const shiftSelect = document.getElementById('cockpit_edit_desired_shift');
+            if (shiftSelect && desiredShift) {
+                shiftSelect.value = desiredShift;
+            }
+
+            // Set status
+            if (status === 'Active On-Site') {
+                document.getElementById('cockpit_status_active').checked = true;
+            } else {
+                document.getElementById('cockpit_status_bench').checked = true;
+            }
+
+            const modal = document.getElementById('editWorkerModal');
+            if (modal) modal.style.display = 'flex';
+        }
+
+        function closeEditWorkerModal() {
+            const modal = document.getElementById('editWorkerModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        function maskPhone(input) {
+            let v = input.value.replace(/\D/g, '');
+            if (v.length > 10) v = v.substring(0, 10);
+            let formatted = '';
+            if (v.length > 6) {
+                formatted = '(' + v.substring(0, 3) + ') ' + v.substring(3, 6) + '-' + v.substring(6);
+            } else if (v.length > 3) {
+                formatted = '(' + v.substring(0, 3) + ') ' + v.substring(3);
+            } else if (v.length > 0) {
+                formatted = '(' + v;
+            }
+            input.value = formatted;
+        }
+
+        async function saveWorkerFileCockpit(event) {
+            event.preventDefault();
+            const btn = document.getElementById('btnSaveWorkerCockpit');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+            const applicantId = document.getElementById('cockpit_edit_id').value;
+            const statusRadios = document.getElementsByName('cockpit_edit_status');
+            let selectedStatus = 'Bench Ready';
+            for (const r of statusRadios) {
+                if (r.checked) {
+                    selectedStatus = r.value;
+                    break;
+                }
+            }
+
+            const payload = {
+                full_name: document.getElementById('cockpit_edit_full_name').value.trim(),
+                phone: document.getElementById('cockpit_edit_phone').value.trim(),
+                email: document.getElementById('cockpit_edit_email').value.trim(),
+                city: document.getElementById('cockpit_edit_city').value.trim(),
+                facility: document.getElementById('cockpit_edit_facility').value,
+                state_id: document.getElementById('cockpit_edit_state_id').value.trim(),
+                id_expiration: document.getElementById('cockpit_edit_id_expiration').value.trim(),
+                desired_role: document.getElementById('cockpit_edit_desired_role').value,
+                desired_shift: document.getElementById('cockpit_edit_desired_shift').value,
+                status: selectedStatus
+            };
+
+            try {
+                const res = await fetch(`/api/v1/bosanna/candidate/${applicantId}/update`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (res.ok && data.status === 'success') {
+                    showToast(data.message || 'Worker file updated successfully.', 'success');
+                    closeEditWorkerModal();
+                    setTimeout(() => { window.location.reload(); }, 1000);
+                } else {
+                    showToast(data.message || 'Error updating worker file.', 'error');
+                }
+            } catch (err) {
+                showToast('Connection error: Unable to update worker file.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toastBox');
+            const toastMsg = document.getElementById('toastMsg');
+            const toastIcon = document.getElementById('toastIcon');
+
+            toast.className = 'toast-box ' + (type === 'error' ? 'toast-error' : 'toast-success');
+            if (type === 'error') {
+                toastIcon.className = 'fas fa-exclamation-circle';
+                toastIcon.style.color = '#f87171';
+            } else {
+                toastIcon.className = 'fas fa-check-circle';
+                toastIcon.style.color = '#34d399';
+            }
+            toastMsg.textContent = msg;
+            toast.style.display = 'flex';
+            clearTimeout(window._toastTimeout);
+            window._toastTimeout = setTimeout(() => { toast.style.display = 'none'; }, 3500);
+        }
+
+        window.onclick = function(event) {
+            const badgeModal = document.getElementById('badgeModal');
+            const shareModal = document.getElementById('shareModal');
+            const editModal = document.getElementById('editWorkerModal');
+            if (event.target === badgeModal) badgeModal.style.display = 'none';
+            if (event.target === shareModal) shareModal.style.display = 'none';
+            if (event.target === editModal) editModal.style.display = 'none';
+        }
+        const hostSpan = document.getElementById('shareHostLabel');
+        if (hostSpan) hostSpan.textContent = window.location.host;
+    </script>
+</body>
+</html>

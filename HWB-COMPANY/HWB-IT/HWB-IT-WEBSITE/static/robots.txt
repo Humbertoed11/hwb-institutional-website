@@ -4,5 +4,6 @@ Disallow: /admin/
 Disallow: /login
 Disallow: /compliance
 Disallow: /ehsq
+Disallow: /portal/
 
 Sitemap: https://www.hwbcleaning.com/sitemap.xml

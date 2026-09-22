@@ -118,7 +118,7 @@ def parse_problems_to_solve(markdown_content):
     rows = []
     lines = markdown_content.split("\n")
     for line in lines:
-        if "|" in line:
+        if line.strip().startswith("|") and "|" in line:
             parts = [p.strip() for p in line.split("|")]
             if len(parts) >= 6:
                 date_val = parts[1]

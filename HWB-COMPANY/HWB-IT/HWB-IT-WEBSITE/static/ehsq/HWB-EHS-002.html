@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HWB-EHS-002 Construction Site Safety & Silica Dust Control Plan | HWB Cleaning Services LLC</title>
+    
+    <!-- Institutional Typography & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --brand-navy: #0f294a;
+            --brand-blue: #2563eb;
+            --brand-emerald: #059669;
+            --slate-50: #f8fafc;
+            --slate-100: #f1f5f9;
+            --slate-200: #e2e8f0;
+            --slate-300: #cbd5e1;
+            --slate-500: #64748b;
+            --slate-600: #475569;
+            --slate-700: #334155;
+            --slate-800: #1e293b;
+            --slate-900: #0f172a;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 2.5rem 1rem;
+            background-color: var(--slate-50);
+            background-image: radial-gradient(#cbd5e1 0.75px, transparent 0.75px);
+            background-size: 24px 24px;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: var(--slate-700);
+            line-height: 1.65;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Corporate Masthead Banner */
+        .institutional-header {
+            max-width: 1040px;
+            margin: 0 auto 1.5rem auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #ffffff;
+            padding: 1rem 1.75rem;
+            border-radius: 8px;
+            border: 1px solid var(--slate-200);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+
+        .brand-logo-unit {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+        }
+
+        .brand-logo-unit i {
+            font-size: 1.75rem;
+            color: var(--brand-blue);
+        }
+
+        .brand-name {
+            font-size: 1.05rem;
+            font-weight: 900;
+            color: var(--brand-navy);
+            letter-spacing: -0.02em;
+        }
+
+        .brand-sub {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--slate-500);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 0.65rem;
+            align-items: center;
+        }
+
+        .btn-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            height: 32px;
+            padding: 0 0.85rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            border-radius: 6px;
+            text-decoration: none;
+            transition: all 0.15s ease;
+            cursor: pointer;
+            border: 1px solid var(--slate-300);
+            background: #ffffff;
+            color: var(--slate-700);
+        }
+
+        .btn-action:hover {
+            background: var(--slate-100);
+            border-color: var(--brand-blue);
+            color: var(--brand-blue);
+        }
+
+        .btn-primary {
+            background: var(--brand-navy);
+            color: #ffffff;
+            border-color: var(--brand-navy);
+        }
+
+        .btn-primary:hover {
+            background: var(--brand-blue);
+            border-color: var(--brand-blue);
+            color: #ffffff;
+        }
+
+        /* Document Card Container */
+        .sop-card {
+            max-width: 1040px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 12px;
+            border: 1px solid var(--slate-200);
+            box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.03);
+            padding: 3.5rem 4rem;
+        }
+
+        /* Metadata Header Grid */
+        .sop-meta {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            background: var(--slate-50);
+            border: 1px solid var(--slate-200);
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .meta-unit {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
+        .meta-label {
+            font-size: 0.68rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--slate-500);
+        }
+
+        .meta-val {
+            font-size: 0.88rem;
+            font-weight: 800;
+            color: var(--slate-900);
+        }
+
+        /* Typography */
+        h1 {
+            font-size: 1.75rem;
+            font-weight: 900;
+            color: var(--brand-navy);
+            margin: 1.5rem 0 1rem 0;
+            border-bottom: 2px solid var(--slate-100);
+            padding-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        h2 {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--slate-900);
+            margin: 2rem 0 0.85rem 0;
+            border-bottom: 1px solid var(--slate-100);
+            padding-bottom: 0.4rem;
+        }
+
+        h3 {
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: var(--brand-blue);
+            margin: 1.35rem 0 0.5rem 0;
+        }
+
+        p {
+            margin: 0 0 1rem 0;
+            font-size: 0.92rem;
+            color: var(--slate-700);
+        }
+
+        ul, ol {
+            margin: 0.5rem 0 1.25rem 0;
+            padding-left: 1.75rem;
+        }
+
+        li {
+            margin-bottom: 0.45rem;
+            font-size: 0.92rem;
+            color: var(--slate-700);
+        }
+
+        strong {
+            color: var(--slate-900);
+            font-weight: 700;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid var(--slate-200);
+            margin: 2rem 0;
+        }
+
+        /* Standardized High-Density Tables */
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin: 1.5rem 0 2rem 0;
+            border: 1px solid var(--slate-200);
+            border-radius: 8px;
+            overflow: hidden;
+            font-size: 0.85rem;
+        }
+
+        th {
+            background: var(--slate-100);
+            color: var(--slate-800);
+            font-weight: 800;
+            text-align: left;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--slate-200);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--slate-100);
+            color: var(--slate-700);
+            vertical-align: top;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: #fafcff;
+        }
+
+        /* Industrial Callout Boxes */
+        .callout {
+            border-left: 4px solid var(--brand-blue);
+            background: #eff6ff;
+            border-radius: 0 8px 8px 0;
+            padding: 1rem 1.25rem;
+            margin: 1.5rem 0;
+        }
+
+        .callout strong {
+            display: block;
+            color: var(--brand-blue);
+            font-size: 0.85rem;
+            margin-bottom: 0.35rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .callout p {
+            margin: 0;
+            font-size: 0.88rem;
+            color: var(--slate-800);
+        }
+
+        /* Footer */
+        .sop-card-footer {
+            margin-top: 3.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--slate-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--slate-500);
+        }
+
+        /* Print Optimization */
+        @media print {
+            body {
+                background: none;
+                padding: 0;
+            }
+            .institutional-header {
+                display: none;
+            }
+            .sop-card {
+                border: none;
+                box-shadow: none;
+                padding: 0;
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Executive Quick Header -->
+    <div class="institutional-header">
+        <div class="brand-logo-unit">
+            <i class="fas fa-shield-alt"></i>
+            <div>
+                <div class="brand-name">HWB CLEANING SERVICES LLC</div>
+                <div class="brand-sub">Environmental Health &amp; Safety Division &bull; ISO 45001 Compliant</div>
+            </div>
+        </div>
+        <div class="header-actions">
+            <a href="/static/ehsq/HWB-EHS-002-Construction-Site-Safety-Plan.docx" download class="btn-action btn-primary">
+                <i class="fas fa-file-word"></i> Download Word (.docx)
+            </a>
+            <button onclick="window.print()" class="btn-action">
+                <i class="fas fa-print"></i> Print / PDF
+            </button>
+            <a href="/admin/operations?view=safety" class="btn-action">
+                <i class="fas fa-arrow-left"></i> Operations Hub
+            </a>
+        </div>
+    </div>
+
+<!-- 
+    SigmaFidelity™ Institutional SOP Template (HTML Version 3.0)
+    Standard: HWB-QMS-1.0
+    Document: HWB-EHS-002 Construction Site Safety and Silica Dust Control Plan SOP
+-->
+<div class="sop-card">
+    <!-- 0.0 DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-EHS-002</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">OSHA 29 CFR 1926 / Div 01 35 23 &amp; Div 01 74 00</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <table>
+            <thead>
+                <tr>
+                    <th><strong>Document Control</strong></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td><strong>Document Title</strong></td><td><strong>Construction Site Safety and Silica Dust Control Plan SOP</strong></td></tr>
+                <tr><td><strong>Document ID</strong></td><td>HWB-EHS-002</td></tr>
+                <tr><td><strong>Version</strong></td><td>1.0.0</td></tr>
+                <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
+                <tr><td><strong>Author</strong></td><td>George (Systems Architect)</td></tr>
+                <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
+                <tr><td><strong>Date</strong></td><td>09/21/2026</td></tr>
+                <tr><td><strong>Specification Alignment</strong></td><td>CSI MasterFormat Division 01 35 23 (Project Safety) &amp; 01 74 00 (Cleaning)</td></tr>
+            </tbody>
+        </table>
+
+        <hr />
+
+        <h1>Standard Operating Procedure: <strong>Construction Site Safety &amp; Silica Dust Plan (CSSP)</strong></h1>
+
+        <h2>1.0 Purpose &amp; Construction Scope</h2>
+        <p>This plan establishes mandatory safety standards for HWB Cleaning Services LLC crews performing rough, final, and touch-up post-construction cleaning on active commercial construction sites. This document directly complies with General Contractor safety manuals, owner project requirements, and CSI MasterFormat Division 01 35 23 (*Project Safety Requirements*).</p>
+
+        <h2>2.0 Scope</h2>
+        <p>This procedure applies to all post-construction cleaning technicians, window cleaning specialists, aerial lift operators, and site supervisors operating on new construction, core-and-shell, tenant improvement, and commercial remodel job sites.</p>
+
+        <h2>3.0 Respirable Crystalline Silica Dust Control Program (OSHA 29 CFR 1926.1153)</h2>
+        <p>Post-construction cleaning frequently involves drywall compound, concrete residue, tile dust, and mortar debris that contain respirable crystalline silica. Inhaling silica dust causes irreversible lung damage (silicosis). HWB enforces strict engineering controls to eliminate airborne dust:</p>
+        <ol>
+            <li><strong>Zero Dry Sweeping Mandate:</strong> Dry sweeping with brooms or using compressed air to clear drywall, concrete, or masonry dust is strictly prohibited under any circumstances.</li>
+            <li><strong>HEPA Vacuum Extraction:</strong> All surface dust collection must be conducted using commercial vacuum cleaners equipped with verified HEPA filtration systems certified to 99.97% efficiency at 0.3 microns. Vacuums must feature sealed filter housings to prevent exhaust bypass.</li>
+            <li><strong>Wet Cleaning Methods:</strong> High-dust surfaces, baseboards, door frames, and window sills must be cleaned using damp microfiber cloths or wet-wiping systems to suppress airborne particles.</li>
+            <li><strong>Respiratory Protection:</strong> If engineering controls or general ventilation are insufficient, technicians must wear NIOSH-approved N95 or half-face respirators in accordance with the written HWB Respiratory Protection Program.</li>
+        </ol>
+
+        <h2>4.0 Mobile Elevating Work Platforms (MEWPs) &amp; Scissor Lift Safety</h2>
+        <p>All high-dusting, overhead conduit cleaning, and elevated window washing utilizing scissor lifts or boom lifts must strictly adhere to ANSI/SAIA A92.20 and A92.22 standards, as well as OSHA 29 CFR 1926.453:</p>
+        <ul>
+            <li><strong>Certified Operators Only:</strong> Only technicians who possess an active, documented MEWP Operator Certification card issued or vetted by HWB management are authorized to operate aerial equipment.</li>
+            <li><strong>Pre-Operation Daily Inspection:</strong> Operators must complete a physical walk-around checklist before turning on the machine. Key inspection points include tire integrity, hydraulic fluid leaks, emergency lowering controls, horn, guardrails, and battery charge levels.</li>
+            <li><strong>Fall Protection Mandate:</strong> Operators and occupants in articulating or telescoping boom lifts must wear a full-body harness with an energy-absorbing lanyard connected to the manufacturer-designated anchor point at all times. On scissor lifts, all safety chains or swing-gates must be locked closed before ascending.</li>
+            <li><strong>Ground Barricades &amp; Spotters:</strong> When operating an aerial lift in an active construction corridor, a ground perimeter must be established using safety cones or caution tape. A designated spotter must clear pedestrian traffic and overhead electrical obstructions.</li>
+        </ul>
+
+        <h2>5.0 Glass Scraping, Window Cleaning &amp; Blade Safety</h2>
+        <p>Removing stucco splatter, paint overspray, and stickers from commercial glazing requires specialized razor scrapers that present laceration hazards if mishandled:</p>
+        <ul>
+            <li><strong>Cut-Resistant Gloves:</strong> Technicians must wear cut-resistant gloves rated at minimum <strong>ANSI Cut Level A4</strong> on the non-dominant stabilizing hand during all glass scraping activities.</li>
+            <li><strong>Retractable Safety Scrapers:</strong> Only scrapers equipped with retractable blade guards or protective covers are allowed. Razor blades must be retracted whenever the tool is not in active contact with glass.</li>
+            <li><strong>Puncture-Resistant Sharps Disposal:</strong> Used, dull, or nicked blades must never be tossed loose into trash bags. Blades must be placed directly into a hard-plastic, puncture-resistant "Sharps" container.</li>
+            <li><strong>Glass Protection Protocol:</strong> Technicians must wet the glass surface thoroughly with soapy solution before scraping and maintain a 30-degree blade angle to prevent scratching tempered glass surfaces.</li>
+        </ul>
+
+        <h2>6.0 Industrial Ladder Safety (OSHA 29 CFR 1926.1053)</h2>
+        <ul>
+            <li><strong>Duty Rating:</strong> Only heavy-duty industrial fiberglass ladders rated <strong>Type IA (300 lb capacity)</strong> or <strong>Type IAA (375 lb capacity)</strong> are permitted on construction jobsites. Household aluminum ladders are strictly forbidden.</li>
+            <li><strong>Three-Point Contact:</strong> Technicians must maintain three points of contact (two feet and one hand, or two hands and one foot) at all times while ascending or descending ladders.</li>
+            <li><strong>Top Step Rule:</strong> Never stand, sit, or climb on the top step or bucket shelf of a stepladder.</li>
+            <li><strong>Inspection &amp; Tagging:</strong> Damaged ladders with bent rungs, broken spreaders, or loose rivets must be tagged "OUT OF SERVICE" immediately and removed from the job site.</li>
+        </ul>
+
+        <h2>7.0 Construction PPE Standards</h2>
+        <p>Before stepping foot past the construction entrance gate, every HWB team member must be outfitted in 100% compliant construction PPE:</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>PPE Component</th>
+                    <th>Standard / Specification</th>
+                    <th>Mandatory Requirement</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Hard Hat</strong></td>
+                    <td>ANSI Z89.1 (Type 1, Class E or G)</td>
+                    <td>Worn at all times within active construction zones.</td>
+                </tr>
+                <tr>
+                    <td><strong>Eye Protection</strong></td>
+                    <td>ANSI Z87.1+ (High Impact with Side Shields)</td>
+                    <td>Worn continuously to protect against dust, splashes, and debris.</td>
+                </tr>
+                <tr>
+                    <td><strong>Safety Footwear</strong></td>
+                    <td>ASTM F2413 (Steel or Composite Toe)</td>
+                    <td>Puncture-resistant soles, over-the-ankle work boots.</td>
+                </tr>
+                <tr>
+                    <td><strong>High-Visibility Vest</strong></td>
+                    <td>ANSI/ISEA 107 (Class 2 or Class 3)</td>
+                    <td>Fluorescent yellow/green or orange with reflective striping.</td>
+                </tr>
+                <tr>
+                    <td><strong>Hand Protection</strong></td>
+                    <td>ANSI Cut Level A2 to A4</td>
+                    <td>Worn when handling scrapers, sharp metal studs, and heavy trash.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>8.0 Job Hazard Analysis (JHA) &amp; Daily Safety Briefings</h2>
+        <ul>
+            <li><strong>Daily JHA Completion:</strong> The HWB Site Supervisor must review the site conditions each morning and execute a written Job Hazard Analysis form covering site-specific hazards (e.g., wet trades working overhead, open floor penetrations, scissor lift paths).</li>
+            <li><strong>Tool Box Talks:</strong> The crew must participate in a 5-minute safety talk at the start of each shift, covering one relevant OSHA topic, and sign the daily muster log.</li>
+            <li><strong>General Contractor Integration:</strong> The HWB supervisor will attend all mandatory General Contractor subcontractor coordination meetings and report all clean-up progress to the GC Superintendent.</li>
+        </ul>
+
+        <h2>9.0 Waste Management &amp; Site Cleanliness</h2>
+        <ul>
+            <li>Trash and debris must be collected in heavy-duty rolling bins (tilt trucks) and wheeled to designated construction dumpsters.</li>
+            <li>Trash bags must not be overloaded beyond 40 pounds to prevent back strain and bag ruptures.</li>
+            <li>Exit corridors, electrical panels, and emergency fire exits must remain 100% clear of cleaning carts and debris at all times.</li>
+        </ul>
+
+        <h2>10.0 Verification (Zero-Defect Check)</h2>
+        <ul>
+            <li>Confirm all vacuums have intact, certified HEPA filters before starting interior rough clean.</li>
+            <li>Confirm all aerial lift operators carry active MEWP training cards.</li>
+            <li>Confirm that 100% of technicians on site are wearing hard hats, safety glasses, hi-vis vests, and steel-toe boots.</li>
+            <li>Confirm daily JHA is signed and on file with the GC Superintendent.</li>
+        </ul>
+
+        <h2>11.0 Revision History</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Version</th>
+                    <th>Date</th>
+                    <th>Author</th>
+                    <th>Change Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1.0.0</td>
+                    <td>09/21/2026</td>
+                    <td>George (Systems Architect)</td>
+                    <td>Initial release of specialized Construction Site Safety and Silica Dust Control Plan. Aligned with CSI MasterFormat Division 01 35 23 and OSHA 29 CFR 1926.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="sop-card-footer">
+        <span>&copy; 2026 HWB Cleaning Services LLC</span>
+        <span>Controlled Document | HWB-EHS-002</span>
+        <span>Page <span class="page-number"></span></span>
+    </div>
+</div>
+
+
+</body>
+</html>

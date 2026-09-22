@@ -1,0 +1,2191 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>Technician Onboarding &amp; Compliance Portal | BOSANNA LLC</title>
+    <meta name="description" content="Official workforce onboarding, OSHA safety certification, and security credentialing portal for Bosanna LLC institutional facilities and Collin College campus operations.">
+    <meta name="theme-color" content="#063333">
+
+    <!-- Fonts: Gentium Basic (Headings/Logo) & Source Sans 3 (Body/UI) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Gentium+Basic:ital,wght@0,400;0,700;1,400;1,700&family=Source+Sans+3:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bosanna-teal: #063333;
+            --bosanna-teal-dark: #032121;
+            --bosanna-teal-light: #0d4a4a;
+            --bosanna-gold: #d4af37;
+            --bosanna-gold-dark: #b8972e;
+            --slate-bg: #f8fafc;
+            --slate-card: #ffffff;
+            --slate-border: #cbd5e1;
+            --slate-text: #1e293b;
+            --slate-muted: #64748b;
+            --success-green: #059669;
+            --font-serif: 'Gentium Basic', Georgia, serif;
+            --font-sans: 'Source Sans 3', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            color: var(--slate-text);
+            background-color: var(--slate-bg);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 1.0 BOSANNA EXACT MASTHEAD & NAVIGATION */
+        .bosanna-header {
+            background-color: var(--bosanna-teal);
+            color: #ffffff;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 12px rgba(3, 33, 33, 0.25);
+        }
+
+        .header-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0.85rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .bosanna-brand {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            color: #ffffff;
+            gap: 0.75rem;
+        }
+
+        .bosanna-logo-text {
+            font-family: var(--font-serif);
+            font-size: 1.85rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: #ffffff;
+            line-height: 1;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 1.75rem;
+            list-style: none;
+        }
+
+        .nav-link {
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 0.92rem;
+            font-weight: 400;
+            letter-spacing: 0.02em;
+            transition: color 0.15s ease;
+            position: relative;
+        }
+
+        .nav-link:hover {
+            color: var(--bosanna-gold);
+        }
+
+        .nav-link.active-tab {
+            color: var(--bosanna-gold);
+            font-weight: 700;
+        }
+
+        .nav-badge {
+            background: rgba(212, 175, 55, 0.15);
+            border: 1px solid var(--bosanna-gold);
+            color: var(--bosanna-gold);
+            padding: 0.25rem 0.65rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* 2.0 HERO & TRUST STRIP */
+        .bosanna-hero {
+            background: radial-gradient(circle at 50% 20%, #0d4a4a 0%, #063333 100%);
+            color: #ffffff;
+            padding: 3rem 1.5rem 2.5rem;
+            text-align: center;
+            border-bottom: 3px solid var(--bosanna-gold);
+        }
+
+        .hero-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .tips-badge-row {
+            display: inline-flex;
+            align-items: center;
+            background: #ffffff;
+            padding: 0.4rem 1.25rem;
+            border-radius: 9999px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+            margin-bottom: 1.5rem;
+            gap: 0.75rem;
+        }
+
+        .tips-logo-img {
+            height: 28px;
+            width: auto;
+            object-fit: contain;
+        }
+
+        .tips-badge-text {
+            color: var(--bosanna-teal);
+            font-size: 0.78rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .hero-title {
+            font-family: var(--font-serif);
+            font-size: 2.35rem;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 0.75rem;
+            letter-spacing: 0.02em;
+        }
+
+        .hero-subtitle {
+            font-size: 1.05rem;
+            color: #cbd5e1;
+            max-width: 720px;
+            margin: 0 auto 1.5rem;
+            font-weight: 300;
+            line-height: 1.5;
+        }
+
+        /* Language Toggle */
+        .lang-switch-box {
+            display: inline-flex;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 9999px;
+            padding: 3px;
+            gap: 4px;
+        }
+
+        .lang-btn {
+            background: transparent;
+            border: none;
+            color: #cbd5e1;
+            padding: 0.35rem 0.85rem;
+            font-size: 0.78rem;
+            font-weight: 700;
+            border-radius: 9999px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .lang-btn.active {
+            background: var(--bosanna-gold);
+            color: var(--bosanna-teal);
+            font-weight: 800;
+        }
+
+        /* 3.0 PROGRESS STEPPER BAR */
+        .stepper-container {
+            max-width: 850px;
+            margin: -1.5rem auto 2rem;
+            background: #ffffff;
+            border: 1px solid var(--slate-border);
+            border-radius: 12px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+            padding: 1rem 1.5rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        .stepper-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.5rem;
+            position: relative;
+        }
+
+        .step-item {
+            text-align: center;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .step-number {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            color: var(--slate-muted);
+            font-weight: 800;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 0.35rem;
+            transition: all 0.2s ease;
+        }
+
+        .step-item.active .step-number {
+            background: var(--bosanna-teal);
+            color: #ffffff;
+            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.4);
+        }
+
+        .step-item.completed .step-number {
+            background: var(--success-green);
+            color: #ffffff;
+        }
+
+        .step-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--slate-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .step-item.active .step-label {
+            color: var(--bosanna-teal);
+            font-weight: 800;
+        }
+
+        /* 4.0 MAIN FORM CARDS */
+        .portal-main {
+            max-width: 850px;
+            margin: 0 auto 4rem;
+            padding: 0 1rem;
+            width: 100%;
+        }
+
+        .onboard-card {
+            background: var(--slate-card);
+            border: 1px solid var(--slate-border);
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+            padding: 2.25rem;
+            display: none;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .onboard-card.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card-header-bar {
+            border-bottom: 2px solid var(--slate-border);
+            padding-bottom: 1rem;
+            margin-bottom: 1.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+        }
+
+        .card-title {
+            font-family: var(--font-serif);
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--bosanna-teal);
+        }
+
+        .card-context-pill {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--bosanna-gold-dark);
+            background: #fefce8;
+            border: 1px solid #fef08a;
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+        }
+
+        /* Form Inputs */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group-full {
+            grid-column: span 2;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #334155;
+            margin-bottom: 0.35rem;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            height: 42px;
+            padding: 0 0.85rem;
+            border: 1.5px solid var(--slate-border);
+            border-radius: 6px;
+            font-size: 0.92rem;
+            font-family: var(--font-sans);
+            color: var(--slate-text);
+            background: #ffffff;
+            transition: all 0.15s ease;
+            outline: none;
+        }
+
+        .form-input:focus, .form-select:focus {
+            border-color: var(--bosanna-teal);
+            box-shadow: 0 0 0 3px rgba(6, 51, 51, 0.12);
+        }
+
+        /* Notice Boxes */
+        .compliance-notice {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-left: 4px solid var(--bosanna-teal);
+            border-radius: 6px;
+            padding: 1.15rem;
+            margin-bottom: 1.75rem;
+            font-size: 0.85rem;
+            color: #475569;
+            line-height: 1.5;
+        }
+
+        .compliance-notice strong {
+            color: var(--bosanna-teal);
+        }
+
+        /* Micro Learning Modules */
+        .module-box {
+            background: #f8fafc;
+            border: 1px solid var(--slate-border);
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .module-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.65rem;
+        }
+
+        .module-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 6px;
+            background: var(--bosanna-teal);
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+        }
+
+        .module-title {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--slate-text);
+        }
+
+        .module-desc {
+            font-size: 0.85rem;
+            color: var(--slate-muted);
+            margin-bottom: 0.85rem;
+        }
+
+        /* Quiz Box */
+        .quiz-question {
+            background: #ffffff;
+            border: 1px solid var(--slate-border);
+            border-radius: 6px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .quiz-q-text {
+            font-weight: 700;
+            font-size: 0.88rem;
+            margin-bottom: 0.65rem;
+            color: var(--slate-text);
+        }
+
+        .quiz-option {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.45rem 0.65rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: background 0.1s ease;
+            margin-bottom: 0.25rem;
+        }
+
+        .quiz-option:hover {
+            background: #f1f5f9;
+        }
+
+        /* Digital Security Badge */
+        .badge-preview-card {
+            max-width: 480px;
+            margin: 0 auto 2rem;
+            background: #ffffff;
+            border: 2px solid var(--bosanna-gold);
+            border-radius: 12px;
+            box-shadow: 0 15px 35px -5px rgba(6, 51, 51, 0.2);
+            overflow: hidden;
+            text-align: center;
+        }
+
+        .badge-top-banner {
+            background: var(--bosanna-teal);
+            color: #ffffff;
+            padding: 1.25rem 1rem;
+            position: relative;
+        }
+
+        .badge-top-banner h3 {
+            font-family: var(--font-serif);
+            font-size: 1.35rem;
+            letter-spacing: 0.05em;
+            color: var(--bosanna-gold);
+        }
+
+        .badge-body {
+            padding: 1.5rem;
+        }
+
+        .badge-avatar-ring {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #f1f5f9;
+            border: 3px solid var(--bosanna-teal);
+            margin: 0 auto 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: var(--bosanna-teal);
+        }
+
+        .badge-tech-name {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--slate-text);
+            margin-bottom: 0.25rem;
+        }
+
+        .badge-tech-role {
+            font-size: 0.82rem;
+            color: var(--slate-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 1rem;
+        }
+
+        .badge-qr-box {
+            background: #f8fafc;
+            border: 1px dashed var(--slate-border);
+            border-radius: 8px;
+            padding: 1rem;
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+
+        .badge-qr-img {
+            width: 120px;
+            height: 120px;
+        }
+
+        .badge-meta-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            text-align: left;
+            font-size: 0.78rem;
+            border-top: 1px solid var(--slate-border);
+            padding-top: 0.85rem;
+        }
+
+        .badge-meta-label {
+            color: var(--slate-muted);
+            font-weight: 600;
+        }
+
+        .badge-meta-val {
+            color: var(--slate-text);
+            font-weight: 700;
+        }
+
+        /* Buttons */
+        .btn-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 2rem;
+            gap: 1rem;
+        }
+
+        .btn-primary {
+            background: var(--bosanna-teal);
+            color: #ffffff;
+            border: 1px solid var(--bosanna-teal);
+            height: 44px;
+            padding: 0 1.75rem;
+            font-size: 0.9rem;
+            font-weight: 700;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary:hover {
+            background: var(--bosanna-teal-light);
+            border-color: var(--bosanna-teal-light);
+            box-shadow: 0 4px 12px rgba(6, 51, 51, 0.2);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--slate-muted);
+            border: 1.5px solid var(--slate-border);
+            height: 44px;
+            padding: 0 1.25rem;
+            font-size: 0.9rem;
+            font-weight: 700;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .btn-outline:hover {
+            background: #f1f5f9;
+            color: var(--slate-text);
+        }
+
+        .btn-gold {
+            background: var(--bosanna-gold);
+            color: var(--bosanna-teal);
+            border: 1px solid var(--bosanna-gold);
+            height: 44px;
+            padding: 0 1.75rem;
+            font-size: 0.9rem;
+            font-weight: 800;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .btn-gold:hover {
+            background: var(--bosanna-gold-dark);
+            color: #ffffff;
+        }
+
+        /* 5.0 ENTERPRISE MODAL (PROPER FORMATTED RESPONSE) */
+        .bosanna-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(3, 33, 33, 0.75);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 1rem;
+            animation: modalFadeIn 0.2s ease-out;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .bosanna-modal-card {
+            background: #ffffff;
+            border: 1px solid var(--slate-border);
+            border-radius: 12px;
+            max-width: 580px;
+            width: 100%;
+            box-shadow: 0 25px 50px -12px rgba(3, 33, 33, 0.35);
+            overflow: hidden;
+            animation: modalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes modalSlideUp {
+            from { transform: translateY(20px) scale(0.97); }
+            to { transform: translateY(0) scale(1); }
+        }
+
+        .modal-top-accent {
+            height: 6px;
+            background: linear-gradient(90deg, var(--bosanna-teal) 0%, var(--bosanna-gold) 100%);
+        }
+
+        .modal-body-content {
+            padding: 2.25rem 2rem;
+            text-align: center;
+        }
+
+        .modal-check-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: #ecfdf5;
+            border: 2px solid #a7f3d0;
+            color: var(--success-green);
+            font-size: 1.75rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.25rem;
+        }
+
+        .modal-title {
+            font-family: var(--font-serif);
+            font-size: 1.7rem;
+            color: var(--bosanna-teal);
+            margin-bottom: 0.5rem;
+        }
+
+        .modal-subtitle {
+            font-size: 0.92rem;
+            color: var(--slate-muted);
+            margin-bottom: 1.75rem;
+            line-height: 1.5;
+        }
+
+        .modal-summary-box {
+            background: #f8fafc;
+            border: 1px solid var(--slate-border);
+            border-radius: 8px;
+            padding: 1.15rem;
+            text-align: left;
+            margin-bottom: 1.5rem;
+            font-size: 0.88rem;
+        }
+
+        .modal-summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.35rem 0;
+            border-bottom: 1px dashed var(--slate-border);
+        }
+
+        .modal-summary-row:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .modal-summary-row .m-label {
+            color: var(--slate-muted);
+            font-weight: 600;
+        }
+
+        .modal-summary-row .m-val {
+            color: var(--slate-text);
+            font-weight: 700;
+        }
+
+        .modal-next-steps {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-left: 4px solid var(--bosanna-gold);
+            border-radius: 6px;
+            padding: 1rem 1.25rem;
+            text-align: left;
+            font-size: 0.82rem;
+            color: #475569;
+            margin-bottom: 1.75rem;
+        }
+
+        .modal-next-steps h5 {
+            font-size: 0.85rem;
+            color: var(--bosanna-teal);
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .modal-steps-list {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .modal-steps-list li {
+            margin-bottom: 0.4rem;
+            line-height: 1.45;
+        }
+
+        .modal-btn-row {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        /* 6.0 BOSANNA EXACT FOOTER */
+        .bosanna-footer {
+            background-color: var(--bosanna-teal);
+            color: #ffffff;
+            padding: 3rem 1.5rem 2rem;
+            margin-top: auto;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .footer-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 2.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .footer-brand h4 {
+            font-family: var(--font-serif);
+            font-size: 1.5rem;
+            letter-spacing: 0.05em;
+            color: #ffffff;
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-brand p {
+            font-size: 0.88rem;
+            color: #94a3b8;
+            max-width: 360px;
+            line-height: 1.5;
+        }
+
+        .footer-col h5 {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--bosanna-gold);
+            margin-bottom: 1rem;
+        }
+
+        .footer-col ul {
+            list-style: none;
+        }
+
+        .footer-col ul li {
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-col ul li a {
+            color: #cbd5e1;
+            text-decoration: none;
+            font-size: 0.85rem;
+            transition: color 0.15s ease;
+        }
+
+        .footer-col ul li a:hover {
+            color: #ffffff;
+        }
+
+        .footer-bottom {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            color: #94a3b8;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .form-grid { grid-template-columns: 1fr; }
+            .form-group-full { grid-column: span 1; }
+            .footer-inner { grid-template-columns: 1fr; gap: 1.5rem; }
+            .nav-links { display: none; } /* Mobile navbar simplification */
+            .stepper-grid { gap: 0.25rem; }
+            .step-label { font-size: 0.65rem; }
+        }
+
+        /* 7.0 INSTITUTIONAL PRINT STYLES */
+        @media print {
+            body {
+                background: #ffffff !important;
+                padding: 0 !important;
+                color: #000000 !important;
+            }
+            .bosanna-header,
+            .bosanna-hero,
+            .stepper-container,
+            .card-header-bar,
+            .compliance-notice,
+            .btn-row,
+            .bosanna-footer,
+            .lang-switch-box,
+            #step-card-1,
+            #step-card-2,
+            #step-card-3,
+            .modal-btn-row,
+            div[style*="display: flex; justify-content: center; gap: 1rem;"] {
+                display: none !important;
+            }
+            .portal-main {
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            .onboard-card {
+                border: none !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+                background: transparent !important;
+            }
+            .badge-preview-card {
+                box-shadow: 0 0 0 2px #063333 !important;
+                margin: 2rem auto !important;
+                page-break-inside: avoid !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            .badge-top-banner {
+                background: #063333 !important;
+                color: #ffffff !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            .bosanna-modal-overlay {
+                position: static !important;
+                background: transparent !important;
+                backdrop-filter: none !important;
+                padding: 0 !important;
+            }
+            .bosanna-modal-card {
+                box-shadow: none !important;
+                border: 1px solid #cbd5e1 !important;
+                max-width: 100% !important;
+                margin: 0 auto !important;
+                page-break-inside: avoid !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1.0 BOSANNA EXACT HEADER -->
+    <header class="bosanna-header">
+        <div class="header-inner">
+            <a href="https://bosanna.com/" class="bosanna-brand" title="BOSANNA LLC - Home">
+                <span class="bosanna-logo-text">BOSANNA LLC</span>
+            </a>
+
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="https://bosanna.com/" class="nav-link" id="t-nav-home">Home</a></li>
+                    <li><a href="https://bosanna.com/services" class="nav-link" id="t-nav-services">Services</a></li>
+                    <li><a href="https://bosanna.com/providers" class="nav-link" id="t-nav-providers">Providers</a></li>
+                    <li><a href="https://bosanna.com/careers" class="nav-link" id="t-nav-careers">Careers</a></li>
+                    <li><a href="/onboard/bosanna" class="nav-link active-tab"><span class="nav-badge" id="t-nav-onboard"><i class="fas fa-id-badge"></i> Technician Onboarding</span></a></li>
+                    <li><a href="{% if current_user.is_authenticated %}/portal/bosanna/cockpit{% else %}/portal/bosanna/login{% endif %}" class="nav-link" id="t-nav-cockpit"><i class="fas fa-shield-alt"></i> Executive Cockpit</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- 2.0 HERO SECTION -->
+    <section class="bosanna-hero">
+        <div class="hero-container">
+            <div class="tips-badge-row">
+                <img src="/static/img/bosanna/Awarded-Vendor-Logo.png" alt="TIPS Awarded Vendor Logo" class="tips-logo-img">
+                <span class="tips-badge-text" id="t-tips-badge">TIPS National Cooperative Awarded Vendor #260102 / #260103</span>
+            </div>
+
+            <h1 class="hero-title" id="t-hero-title">Workforce Compliance &amp; Technician Onboarding</h1>
+            <p class="hero-subtitle" id="t-hero-sub">
+                Official Credentialing and Field Readiness Portal for Bosanna LLC Institutional Facilities, Collin College Campus Operations, and Municipal Projects.
+            </p>
+
+            <div class="lang-switch-box">
+                <button type="button" class="lang-btn active" id="btn-lang-en" onclick="setPortalLanguage('en')">English</button>
+                <button type="button" class="lang-btn" id="btn-lang-es" onclick="setPortalLanguage('es')">Español</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3.0 PROGRESS STEPPER -->
+    <div class="stepper-container">
+        <div class="stepper-grid">
+            <div class="step-item active" id="step-indicator-1" onclick="jumpToStep(1)">
+                <div class="step-number">1</div>
+                <div class="step-label" id="t-step-1">Profile &amp; W-4</div>
+            </div>
+            <div class="step-item" id="step-indicator-2" onclick="jumpToStep(2)">
+                <div class="step-number">2</div>
+                <div class="step-label" id="t-step-2">Background &amp; T&amp;C</div>
+            </div>
+            <div class="step-item" id="step-indicator-3" onclick="jumpToStep(3)">
+                <div class="step-number">3</div>
+                <div class="step-label" id="t-step-3">Safety Academy</div>
+            </div>
+            <div class="step-item" id="step-indicator-4" onclick="jumpToStep(4)">
+                <div class="step-number">4</div>
+                <div class="step-label" id="t-step-4">Security Badge</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4.0 MAIN FORM CONTAINERS -->
+    <main class="portal-main">
+
+        <!-- STEP 1: CANDIDATE PROFILE -->
+        <div class="onboard-card active" id="step-card-1">
+            <div class="card-header-bar">
+                <h2 class="card-title" id="t-c1-title">Technician Profile &amp; Assignment</h2>
+                <span class="card-context-pill" id="t-c1-pill">Stage 1 of 4</span>
+            </div>
+
+            <div class="compliance-notice">
+                <i class="fas fa-shield-alt" style="color: var(--bosanna-teal); margin-right: 0.35rem;"></i>
+                <strong id="t-c1-notice-head">Institutional Employment Verification:</strong>
+                <span id="t-c1-notice-body">All personnel operating on Collin College facilities and TIPS contracted properties must complete verified onboarding and identity matching prior to site badge dispatch.</span>
+            </div>
+
+            <form id="form-step-1" onsubmit="handleStep1(event)">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label" id="t-f-fullname">Full Legal Name *</label>
+                        <input type="text" class="form-input" id="full_name" placeholder="e.g. Maria Rodriguez" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" id="t-f-phone">Mobile Phone (SMS Notifications) *</label>
+                        <input type="tel" class="form-input" id="phone" placeholder="(###) ###-####" maxlength="14" oninput="maskPhone(this)" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" id="t-f-email">Email Address *</label>
+                        <input type="email" class="form-input" id="email" placeholder="maria.rodriguez@example.com" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" id="t-f-city">City of Residence *</label>
+                        <input type="text" class="form-input" id="city" placeholder="e.g. Frisco, Plano, McKinney" required>
+                    </div>
+
+                    <!-- Enhanced Driver License & State ID Section -->
+                    <div class="form-group">
+                        <label class="form-label" id="t-f-state-origin">Issuing State (Driver License / ID) *</label>
+                        <select class="form-select" id="id_state">
+                            <option value="TX" selected>Texas (TX)</option>
+                            <option value="OK">Oklahoma (OK)</option>
+                            <option value="LA">Louisiana (LA)</option>
+                            <option value="AR">Arkansas (AR)</option>
+                            <option value="NM">New Mexico (NM)</option>
+                            <option value="OTHER">Other State</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" id="t-f-id">Driver's License or State ID # *</label>
+                        <input type="text" class="form-input" id="state_id" placeholder="e.g. 24891024" style="text-transform: uppercase;" required minlength="7" maxlength="16">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" id="t-f-id-exp">ID Expiration Date *</label>
+                        <input type="month" class="form-input" id="id_expiration" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" id="t-f-role">Desired Role / Classification</label>
+                        <select class="form-select" id="desired_role">
+                            <option value="Commercial Cleaning Technician" data-position-id="1" selected id="opt-role-1">Commercial Cleaning Technician</option>
+                            <option value="Lead Campus Custodian" data-position-id="3" id="opt-role-2">Lead Campus Custodian</option>
+                            <option value="Commercial Floor Care Specialist" data-position-id="2" id="opt-role-3">Commercial Floor Care Specialist</option>
+                            <option value="Day Porter / Facility Attendant" data-position-id="1" id="opt-role-4">Day Porter / Facility Attendant</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" id="t-f-shift">Shift Availability</label>
+                        <select class="form-select" id="desired_shift">
+                            <option value="Night (6:00 PM - 2:30 AM)" selected id="opt-shift-1">Night Shift (6:00 PM - 2:30 AM)</option>
+                            <option value="Day Porter (7:00 AM - 3:30 PM)" id="opt-shift-2">Day Shift (7:00 AM - 3:30 PM)</option>
+                            <option value="Weekend Flexible" id="opt-shift-3">Weekend Flexible</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" id="t-f-facility">Primary Facility Assignment</label>
+                        <select class="form-select" id="target_facility">
+                            <option value="Collin College Frisco Campus" selected id="opt-fac-1">Collin College Frisco Campus (TIPS Prime)</option>
+                            <option value="Sundance Square Commercial Network" id="opt-fac-2">Sundance Square Commercial Network</option>
+                            <option value="TIPS Regional Member Facilities" id="opt-fac-3">TIPS Regional Member Facilities</option>
+                            <option value="DFW Metropolitan Trade Area" id="opt-fac-4">DFW Metropolitan Trade Area</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="btn-row">
+                    <span style="font-size: 0.8rem; color: var(--slate-muted);" id="t-f-mand">* All fields mandatory for district clearance</span>
+                    <button type="submit" class="btn-primary" id="t-btn-step1">Continue to Background Consent ➔</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- STEP 2: BACKGROUND CLEARANCE & COMPLIANCE -->
+        <div class="onboard-card" id="step-card-2">
+            <div class="card-header-bar">
+                <h2 class="card-title" id="t-c2-title">Background Clearance &amp; Statutory Compliance</h2>
+                <span class="card-context-pill" id="t-c2-pill">Stage 2 of 4</span>
+            </div>
+
+            <div class="compliance-notice">
+                <i class="fas fa-balance-scale" style="color: var(--bosanna-teal); margin-right: 0.35rem;"></i>
+                <strong id="t-c2-legal-head">Collin College District T&amp;C Section 153/243 Compliance:</strong>
+                <p style="margin-top: 0.4rem;" id="t-c2-legal-body">
+                    Bosanna LLC maintains strict compliance with Texas statutory educational facility standards. All deployed staff must hold a cleared multi-state criminal history check, zero felony disqualifications, and drug-free certification before access is granted.
+                </p>
+            </div>
+
+            <form id="form-step-2" onsubmit="handleStep2(event)">
+                <div style="margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.85rem;">
+                    <label style="display: flex; gap: 0.75rem; align-items: flex-start; cursor: pointer; font-size: 0.88rem;">
+                        <input type="checkbox" id="chk_bg_consent" required style="margin-top: 0.25rem; width: 18px; height: 18px;">
+                        <span id="t-c2-check-1"><strong>Criminal History Background Consent:</strong> I authorize Bosanna LLC and its verified operational partners to run a background check through Texas DPS and national registries.</span>
+                    </label>
+                    <label style="display: flex; gap: 0.75rem; align-items: flex-start; cursor: pointer; font-size: 0.88rem;">
+                        <input type="checkbox" id="chk_drug_policy" required style="margin-top: 0.25rem; width: 18px; height: 18px;">
+                        <span id="t-c2-check-2"><strong>Drug-Free Campus Policy:</strong> I certify that I comply with the zero-tolerance drug and alcohol policy required for higher education facilities.</span>
+                    </label>
+                    <label style="display: flex; gap: 0.75rem; align-items: flex-start; cursor: pointer; font-size: 0.88rem;">
+                        <input type="checkbox" id="chk_work_auth" required style="margin-top: 0.25rem; width: 18px; height: 18px;" checked>
+                        <span id="t-c2-check-3"><strong>Legal Work Authorization:</strong> I certify that I am legally authorized to work in the United States and can furnish I-9 documents.</span>
+                    </label>
+                    <label style="display: flex; gap: 0.75rem; align-items: flex-start; cursor: pointer; font-size: 0.88rem;">
+                        <input type="checkbox" id="chk_weapons_policy" required style="margin-top: 0.25rem; width: 18px; height: 18px;" checked>
+                        <span id="t-c2-check-4"><strong>Zero-Tolerance Weapons &amp; Substance-Free Campus (T&amp;C §§ 143–151):</strong> I agree to strict prohibition of firearms, weapons, alcohol, drugs, and 100% smoke/vape-free campus rules.</span>
+                    </label>
+                    <label style="display: flex; gap: 0.75rem; align-items: flex-start; cursor: pointer; font-size: 0.88rem;">
+                        <input type="checkbox" id="chk_key_security" required style="margin-top: 0.25rem; width: 18px; height: 18px;" checked>
+                        <span id="t-c2-check-5"><strong>Master Key Custody &amp; Police Desk Sign-In (T&amp;C §§ 145–150 &amp; SOW § 202):</strong> I agree to sign daily at the Collin College Police Desk, never leave keys in doors, lock exterior doors, and acknowledge the $100 lost key penalty.</span>
+                    </label>
+                    <label style="display: flex; gap: 0.75rem; align-items: flex-start; cursor: pointer; font-size: 0.88rem;">
+                        <input type="checkbox" id="chk_ferpa_privacy" required style="margin-top: 0.25rem; width: 18px; height: 18px;" checked>
+                        <span id="t-c2-check-6"><strong>FERPA Student Privacy &amp; Family Ban (RFP § 12.1 &amp; T&amp;C § 152):</strong> I certify that I will never handle or inspect student records and understand that unauthorized family, children, or visitors are strictly prohibited on campus.</span>
+                    </label>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group-full">
+                        <label class="form-label" id="t-f-signature">Electronic Legal Signature (Type Full Legal Name) *</label>
+                        <input type="text" class="form-input" id="legal_signature" placeholder="Type your full legal name as digital signature" required>
+                    </div>
+                </div>
+
+                <div class="btn-row">
+                    <button type="button" class="btn-outline" onclick="jumpToStep(1)" id="t-btn-back-1">⬅ Back to Profile</button>
+                    <button type="submit" class="btn-primary" id="t-btn-step2">Submit Consent &amp; Open Academy ➔</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- STEP 3: SIGMA ACADEMY SAFETY CERTIFICATION -->
+        <div class="onboard-card" id="step-card-3">
+            <div class="card-header-bar">
+                <h2 class="card-title" id="t-c3-title">Sigma Academy™ Safety &amp; Quality Certification</h2>
+                <span class="card-context-pill" id="t-c3-pill">Stage 3 of 4</span>
+            </div>
+
+            <p style="font-size: 0.9rem; color: var(--slate-muted); margin-bottom: 1.5rem;" id="t-c3-sub">
+                Review the mandatory safety standards below and achieve 80%+ on the comprehension check to unlock your digital campus access credential.
+            </p>
+
+            <!-- Module 1 -->
+            <div class="module-box">
+                <div class="module-header">
+                    <div class="module-icon"><i class="fas fa-flask"></i></div>
+                    <div class="module-title" id="t-m1-title">Standard 1: Chemical Safety &amp; HazCom (OSHA 1910.1200)</div>
+                </div>
+                <div class="module-desc" id="t-m1-desc">
+                    Always dilute chemicals according to dispenser specifications. Never mix bleach with ammonia or acid-based bowl cleaners (generates toxic chlorine gas). All secondary spray bottles must carry full GHS product labels.
+                </div>
+            </div>
+
+            <!-- Module 2 -->
+            <div class="module-box">
+                <div class="module-header">
+                    <div class="module-icon"><i class="fas fa-biohazard"></i></div>
+                    <div class="module-title" id="t-m2-title">Standard 2: Bloodborne Pathogens &amp; PPE (OSHA 1910.1030)</div>
+                </div>
+                <div class="module-desc" id="t-m2-desc">
+                    Treat all bodily fluids as potentially infectious. Wear disposable nitrile gloves and eye protection. Dispose of contaminated materials in labeled red biohazard bags. Wash hands immediately after removing gloves.
+                </div>
+            </div>
+
+            <!-- Module 3 -->
+            <div class="module-box">
+                <div class="module-header">
+                    <div class="module-icon"><i class="fas fa-truck-monster"></i></div>
+                    <div class="module-title" id="t-m3-title">Standard 3: Slip-and-Fall Prevention &amp; Equipment Safety</div>
+                </div>
+                <div class="module-desc" id="t-m3-desc">
+                    Deploy bright yellow "Caution: Wet Floor" signs at all corridor entrances before wet mopping or operating floor scrubbers. Signs must remain upright until the surface is 100% dry. Inspect electrical cords for frays daily.
+                </div>
+            </div>
+
+            <!-- Module 4: Collin College First Aid & Emergency CPR Protocol -->
+            <div class="module-box" style="border-left: 4px solid #dc2626;">
+                <div class="module-header">
+                    <div class="module-icon" style="background: #fee2e2; color: #dc2626;"><i class="fas fa-heartbeat"></i></div>
+                    <div class="module-title" id="t-m4-title">Standard 4: Emergency Response, First Aid &amp; CPR/AED Protocol (T&amp;C § 140 / 144)</div>
+                </div>
+                <div class="module-desc" id="t-m4-desc">
+                    In medical emergencies, notify the shift supervisor and call 911 immediately. Know the location of wall-mounted Automated External Defibrillator (AED) units in every campus building. All on-site non-cleaning supervisors maintain active American Red Cross / AHA First Aid &amp; Adult CPR credentials.
+                </div>
+            </div>
+
+            <!-- Module 5: Collin College Restroom Barrier Protection & Safety Signage -->
+            <div class="module-box" style="border-left: 4px solid #d97706;">
+                <div class="module-header">
+                    <div class="module-icon" style="background: #fef3c7; color: #d97706;"><i class="fas fa-ban"></i></div>
+                    <div class="module-title" id="t-m5-title">Standard 5: Restroom Barrier Tension Poles &amp; Safety Signage (T&amp;C § 134 &amp; SOW § 197)</div>
+                </div>
+                <div class="module-desc" id="t-m5-desc">
+                    Always place yellow 'Closed for Cleaning' tension barrier poles across restroom doorways before beginning service. Propping doors open with trash cans is strictly forbidden by Collin College safety rules. Post wet-floor caution cones until completely dry.
+                </div>
+            </div>
+
+            <!-- Quiz Questions -->
+            <form id="form-step-3" onsubmit="handleStep3(event)">
+                <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--bosanna-teal); margin: 1.5rem 0 1rem;" id="t-quiz-head">
+                    <i class="fas fa-clipboard-check"></i> Knowledge Verification Assessment
+                </h3>
+
+                <div class="quiz-question">
+                    <div class="quiz-q-text" id="t-q1-text">1. What is the rule when using chemical spray bottles in commercial facilities?</div>
+                    <label class="quiz-option"><input type="radio" name="q1" value="A" required> <span id="t-q1-oa">Any unmarked bottle is acceptable if you know what is inside.</span></label>
+                    <label class="quiz-option"><input type="radio" name="q1" value="B"> <span id="t-q1-ob">Every secondary container must carry a complete GHS identification label.</span></label>
+                    <label class="quiz-option"><input type="radio" name="q1" value="C"> <span id="t-q1-oc">Bleach and ammonia should be mixed to increase cleaning power.</span></label>
+                </div>
+
+                <div class="quiz-question">
+                    <div class="quiz-q-text" id="t-q2-text">2. What personal protective equipment (PPE) is mandatory when sanitizing biohazard or restroom surfaces?</div>
+                    <label class="quiz-option"><input type="radio" name="q2" value="A" required> <span id="t-q2-oa">Disposable nitrile gloves and eye protection.</span></label>
+                    <label class="quiz-option"><input type="radio" name="q2" value="B"> <span id="t-q2-ob">No gloves are needed if warm water is used.</span></label>
+                    <label class="quiz-option"><input type="radio" name="q2" value="C"> <span id="t-q2-oc">Regular cotton gardening gloves.</span></label>
+                </div>
+
+                <div class="quiz-question">
+                    <div class="quiz-q-text" id="t-q3-text">3. When must "Caution: Wet Floor" cones and signs be deployed?</div>
+                    <label class="quiz-option"><input type="radio" name="q3" value="A" required> <span id="t-q3-oa">Only after someone slips.</span></label>
+                    <label class="quiz-option"><input type="radio" name="q3" value="B"> <span id="t-q3-ob">Before any water, mopping, or auto-scrubbing touches the floor.</span></label>
+                    <label class="quiz-option"><input type="radio" name="q3" value="C"> <span id="t-q3-oc">Only in exterior parking lots.</span></label>
+                </div>
+
+                <div class="quiz-question">
+                    <div class="quiz-q-text" id="t-q4-text">4. Where are Safety Data Sheets (SDS) kept in an institutional facility?</div>
+                    <label class="quiz-option"><input type="radio" name="q4" value="A" required> <span id="t-q4-oa">Kept in the primary custodial closet binder and accessible via digital QR code.</span></label>
+                    <label class="quiz-option"><input type="radio" name="q4" value="B"> <span id="t-q4-ob">At the corporate office only.</span></label>
+                    <label class="quiz-option"><input type="radio" name="q4" value="C"> <span id="t-q4-oc">SDS sheets are not required for commercial cleaning.</span></label>
+                </div>
+
+                <div class="quiz-question">
+                    <div class="quiz-q-text" id="t-q5-text">5. What is the Collin College requirement regarding First Aid, CPR, and campus medical emergencies?</div>
+                    <label class="quiz-option"><input type="radio" name="q5" value="A" required> <span id="t-q5-oa">Handle medical emergencies alone without notifying campus supervisors or police.</span></label>
+                    <label class="quiz-option"><input type="radio" name="q5" value="B"> <span id="t-q5-ob">Notify the on-site supervisor immediately, call 911 for life-threats, know AED stations, and ensure leads hold certified CPR cards.</span></label>
+                    <label class="quiz-option"><input type="radio" name="q5" value="C"> <span id="t-q5-oc">Cleaners are forbidden from seeking emergency first aid on campus.</span></label>
+                </div>
+
+                <div class="btn-row">
+                    <button type="button" class="btn-outline" onclick="jumpToStep(2)" id="t-btn-back-2">⬅ Back</button>
+                    <button type="submit" class="btn-primary" id="btn-submit-quiz">Verify Score &amp; Issue Credential ➔</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- STEP 4: DIGITAL CREDENTIAL & SECURITY BADGE -->
+        <div class="onboard-card" id="step-card-4">
+            <div class="card-header-bar">
+                <h2 class="card-title" style="color: var(--success-green);" id="t-c4-title"><i class="fas fa-check-circle"></i> Onboarding Complete: Certified Technician</h2>
+                <span class="card-context-pill" style="background:#ecfdf5; color:#065f46; border-color:#a7f3d0;" id="t-c4-pill">Verified Active</span>
+            </div>
+
+            <div class="compliance-notice" style="border-left-color: var(--success-green); background: #f0fdf4;">
+                <strong style="color: var(--success-green);" id="t-c4-notice-head">Official Access Credential Issued:</strong>
+                <span id="t-c4-notice-body">Your compliance profile and background authorization have been recorded in the Bosanna operations system. Below is your official digital facility badge.</span>
+            </div>
+
+            <!-- BADGE PREVIEW -->
+            <div class="badge-preview-card" id="credential-card">
+                <div class="badge-top-banner">
+                    <img src="/static/img/bosanna/Awarded-Vendor-Logo.png" alt="TIPS Logo" style="height: 20px; margin-bottom: 0.25rem;">
+                    <h3>BOSANNA LLC</h3>
+                    <div style="font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; color: #ffffff;" id="t-badge-sub">Verified Institutional Operations Partner</div>
+                </div>
+
+                <div class="badge-body">
+                    <div class="badge-avatar-ring">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <div class="badge-tech-name" id="badge-name">Maria Rodriguez</div>
+                    <div class="badge-tech-role" id="badge-role">Commercial Cleaning Technician</div>
+
+                    <div class="badge-qr-box">
+                        <!-- Dynamic SVG QR Code Simulation -->
+                        <svg class="badge-qr-img" viewBox="0 0 100 100">
+                            <rect width="100" height="100" fill="#ffffff"/>
+                            <rect x="10" y="10" width="25" height="25" fill="#063333"/>
+                            <rect x="15" y="15" width="15" height="15" fill="#ffffff"/>
+                            <rect x="18" y="18" width="9" height="9" fill="#063333"/>
+                            
+                            <rect x="65" y="10" width="25" height="25" fill="#063333"/>
+                            <rect x="70" y="15" width="15" height="15" fill="#ffffff"/>
+                            <rect x="73" y="18" width="9" height="9" fill="#063333"/>
+
+                            <rect x="10" y="65" width="25" height="25" fill="#063333"/>
+                            <rect x="15" y="70" width="15" height="15" fill="#ffffff"/>
+                            <rect x="18" y="73" width="9" height="9" fill="#063333"/>
+
+                            <!-- Data blocks -->
+                            <rect x="40" y="15" width="6" height="6" fill="#063333"/>
+                            <rect x="50" y="25" width="6" height="6" fill="#063333"/>
+                            <rect x="42" y="42" width="16" height="16" fill="#d4af37"/>
+                            <rect x="45" y="45" width="10" height="10" fill="#063333"/>
+                            <rect x="65" y="45" width="8" height="8" fill="#063333"/>
+                            <rect x="45" y="65" width="8" height="8" fill="#063333"/>
+                            <rect x="70" y="70" width="15" height="15" fill="#063333"/>
+                        </svg>
+                        <div style="font-size: 0.65rem; color: var(--slate-muted); font-weight: 700; margin-top: 0.25rem;" id="t-badge-scan">SCAN FOR VERIFICATION</div>
+                    </div>
+
+                    <div class="badge-meta-grid">
+                        <div><span class="badge-meta-label" id="t-badge-id-lbl">BADGE ID:</span> <span class="badge-meta-val" id="badge-id">BOS-2026-9184</span></div>
+                        <div><span class="badge-meta-label" id="t-badge-status-lbl">STATUS:</span> <span class="badge-meta-val" style="color: var(--success-green);" id="t-badge-active-val">● ACTIVE</span></div>
+                        <div><span class="badge-meta-label" id="t-badge-clearance-lbl">CLEARANCE:</span> <span class="badge-meta-val" id="badge-clearance">Collin College Frisco</span></div>
+                        <div><span class="badge-meta-label" id="t-badge-hazcom-lbl">OSHA HAZCOM:</span> <span class="badge-meta-val" style="color: var(--success-green);" id="t-badge-hazcom-val">CERTIFIED</span></div>
+                        <div><span class="badge-meta-label" id="t-badge-idnum-lbl">STATE ID:</span> <span class="badge-meta-val" id="badge-state-id">TX-24891024</span></div>
+                        <div><span class="badge-meta-label" id="t-badge-date-lbl">ISSUED:</span> <span class="badge-meta-val" id="badge-issue-date">09/21/2026</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+                <button type="button" class="btn-gold" onclick="window.print()"><i class="fas fa-print"></i> <span id="t-btn-print">Print Official Badge</span></button>
+                <button type="button" class="btn-primary" onclick="openSuccessModal()"><i class="fas fa-check-double"></i> <span id="t-btn-done">Done</span></button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- 5.0 ENTERPRISE MODAL (PROPER FORMATTED RESPONSE) -->
+    <div id="modal-onboard-success" class="bosanna-modal-overlay" style="display: none;">
+        <div class="bosanna-modal-card">
+            <div class="modal-top-accent"></div>
+            <div class="modal-body-content">
+                <div class="modal-check-icon">
+                    <i class="fas fa-check"></i>
+                </div>
+                <h3 class="modal-title" id="t-m-title">Registration Finalized &amp; Dispatched</h3>
+                <p class="modal-subtitle" id="t-m-sub">Your worker file has been safely saved in the Bosanna Operations System.</p>
+                
+                <div class="modal-summary-box">
+                    <div class="modal-summary-row">
+                        <span class="m-label" id="t-m-tech">Technician:</span>
+                        <strong class="m-val" id="modal-tech-name">Maria Rodriguez</strong>
+                    </div>
+                    <div class="modal-summary-row">
+                        <span class="m-label" id="t-m-badge">Badge Credential:</span>
+                        <strong class="m-val" style="color: var(--bosanna-teal);" id="modal-badge-id">BOS-2026-9184</strong>
+                    </div>
+                    <div class="modal-summary-row">
+                        <span class="m-label" id="t-m-facility">Assigned Facility:</span>
+                        <strong class="m-val" id="modal-facility-name">Collin College Frisco Campus</strong>
+                    </div>
+                    <div class="modal-summary-row">
+                        <span class="m-label" id="t-m-status">Compliance Status:</span>
+                        <span class="m-val" style="color: var(--success-green); font-weight: 800;" id="t-m-status-val">● BENCH READY / TIER 1 CLEARED</span>
+                    </div>
+                </div>
+
+                <div class="modal-next-steps">
+                    <h5 id="t-m-next-head"><i class="fas fa-clipboard-list"></i> Next Operational Steps:</h5>
+                    <ul class="modal-steps-list">
+                        <li id="t-m-step-1"><strong>1. Background Verification:</strong> DPS authorization filed under District Contract #260102.</li>
+                        <li id="t-m-step-2"><strong>2. Safety Compliance:</strong> OSHA HazCom and Bloodborne Pathogen passing certificate archived.</li>
+                        <li id="t-m-step-3"><strong>3. Campus Access:</strong> Present your digital badge or printout to the Bosanna Operations Lead at the campus facilities dock for RFID card release.</li>
+                    </ul>
+                </div>
+
+                <div class="modal-btn-row" style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;">
+                    <button type="button" class="btn-gold" onclick="window.print()"><i class="fas fa-print"></i> <span id="t-m-print">Print Worker File</span></button>
+                    <a href="/portal/bosanna/cockpit" class="btn-primary" style="text-decoration: none;" id="t-m-cockpit-link"><i class="fas fa-shield-alt"></i> <span id="t-m-cockpit">Return to Cockpit</span></a>
+                    <button type="button" class="btn-outline" onclick="resetOnboarding()"><i class="fas fa-user-plus"></i> <span id="t-m-another">Onboard Another</span></button>
+                    <button type="button" class="btn-outline" onclick="closeSuccessModal()"><i class="fas fa-times"></i> <span id="t-m-finish">Close</span></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5.1 ASSESSMENT RETRY MODAL (POKA-YOKE COMPLIANCE STANDARD) -->
+    <div id="modal-quiz-error" class="bosanna-modal-overlay" style="display: none;">
+        <div class="bosanna-modal-card">
+            <div class="modal-top-accent" style="background: #ef4444;"></div>
+            <div class="modal-body-content">
+                <div class="modal-check-icon" style="background: #fef2f2; color: #dc2626; border-color: #fecaca;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <h3 class="modal-title" style="color: #991b1b;" id="t-m-err-title">Safety Assessment Incomplete</h3>
+                <p class="modal-subtitle" id="t-m-err-sub">A minimum passing score of 75% is required by Collin College district regulations before campus access credentials can be generated.</p>
+
+                <div class="modal-summary-box" style="background: #fff5f5; border-color: #fed7d7;">
+                    <div class="modal-summary-row">
+                        <span class="m-label" id="t-m-err-score-lbl">Current Score:</span>
+                        <strong class="m-val" style="color: #c53030;" id="modal-quiz-score-val">50%</strong>
+                    </div>
+                    <div class="modal-summary-row">
+                        <span class="m-label" id="t-m-err-req-lbl">Passing Standard:</span>
+                        <strong class="m-val" style="color: #276749;">75% or Higher (OSHA Mandate)</strong>
+                    </div>
+                </div>
+
+                <div class="modal-next-steps">
+                    <h5 id="t-m-err-act-head"><i class="fas fa-redo"></i> Corrective Action:</h5>
+                    <p style="font-size: 0.85rem; color: #4a5568; line-height: 1.4;" id="t-m-err-act-body">
+                        Please review Safety Standards 1, 2, and 3 above and adjust your answers to comply with OSHA chemical dilution, PPE, and slip-and-fall protocols.
+                    </p>
+                </div>
+
+                <div class="modal-btn-row">
+                    <button type="button" class="btn-primary" style="background: #063333; width: 100%; justify-content: center;" onclick="closeQuizErrorModal()">
+                        <i class="fas fa-edit"></i> <span id="t-m-err-btn">Review &amp; Correct Answers</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6.0 BOSANNA EXACT FOOTER -->
+    <footer class="bosanna-footer">
+        <div class="footer-inner">
+            <div class="footer-brand">
+                <h4>BOSANNA LLC</h4>
+                <p id="t-footer-desc">
+                    Your trusted partner for quality building projects and commercial facility solutions. Delivering turnkey janitorial, maintenance, and construction excellence.
+                </p>
+                <div style="margin-top: 1rem;">
+                    <img src="/static/img/bosanna/Awarded-Vendor-Logo.png" alt="TIPS Awarded Vendor" style="height: 24px; filter: brightness(0) invert(1); opacity: 0.8;">
+                </div>
+            </div>
+
+            <div class="footer-col">
+                <h5 id="t-f-col1">Navigation</h5>
+                <ul>
+                    <li><a href="https://bosanna.com/" id="t-f-home">Home</a></li>
+                    <li><a href="https://bosanna.com/services" id="t-f-services">Services</a></li>
+                    <li><a href="https://bosanna.com/providers" id="t-f-providers">Providers</a></li>
+                    <li><a href="https://bosanna.com/careers" id="t-f-careers">Careers</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col">
+                <h5 id="t-f-col2">Institutional Compliance</h5>
+                <ul>
+                    <li><a href="/onboard/bosanna" id="t-f-wfportal">Workforce Portal</a></li>
+                    <li><a href="https://bosanna.com/">TIPS Contract #260102</a></li>
+                    <li><a href="https://bosanna.com/">Collin College Operations</a></li>
+                    <li><a href="https://bosanna.com/">Safety Data Sheets (SDS)</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <div id="t-footer-rights">Copyright &copy; 2018 Bosanna LLC - All Rights Reserved.</div>
+            <div style="display: flex; gap: 1.25rem;">
+                <a href="https://bosanna.com/" style="color: #94a3b8; text-decoration: none;" id="t-footer-priv">Privacy Policy</a>
+                <a href="https://bosanna.com/" style="color: #94a3b8; text-decoration: none;" id="t-footer-terms">Terms of Service</a>
+                <span id="t-footer-powered">Powered by SigmaFidelity™ Institutional Core</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- INTERACTIVE SCRIPT ENGINE -->
+    <script>
+        // State
+        let currentStep = 1;
+        let applicantData = {
+            full_name: '',
+            phone: '',
+            email: '',
+            state_id: '',
+            id_state: 'TX',
+            id_expiration: '',
+            city: '',
+            desired_role: 'Commercial Cleaning Technician',
+            job_position_id: 1,
+            desired_shift: 'Night (6:00 PM - 2:30 AM)',
+            facility: 'Collin College Frisco Campus',
+            signature: '',
+            score: 0,
+            status: 'Bench Ready',
+            organization_id: 'bosanna'
+        };
+
+        // Standardized Institutional Phone Masking: (###) ###-####
+        const phoneInput = document.getElementById('phone');
+        phoneInput.addEventListener('input', function(e) {
+            let x = e.target.value.replace(/\D/g, '').match(/(\d{0,3})(\d{0,3})(\d{0,4})/);
+            e.target.value = !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : '');
+        });
+
+        function jumpToStep(stepNum) {
+            if (stepNum > currentStep) return;
+            showStep(stepNum);
+        }
+
+        function showStep(stepNum) {
+            for (let i = 1; i <= 4; i++) {
+                const card = document.getElementById(`step-card-${i}`);
+                const indicator = document.getElementById(`step-indicator-${i}`);
+                if (card) {
+                    card.classList.toggle('active', i === stepNum);
+                }
+                if (indicator) {
+                    if (i === stepNum) {
+                        indicator.classList.add('active');
+                        indicator.classList.remove('completed');
+                    } else if (i < stepNum) {
+                        indicator.classList.remove('active');
+                        indicator.classList.add('completed');
+                    } else {
+                        indicator.classList.remove('active');
+                        indicator.classList.remove('completed');
+                    }
+                }
+            }
+            window.scrollTo({ top: 150, behavior: 'smooth' });
+        }
+
+        function handleStep1(e) {
+            e.preventDefault();
+            applicantData.full_name = document.getElementById('full_name').value.trim();
+            applicantData.phone = document.getElementById('phone').value.trim();
+            applicantData.email = document.getElementById('email').value.trim();
+            applicantData.city = document.getElementById('city').value.trim();
+            applicantData.id_state = document.getElementById('id_state').value;
+            applicantData.state_id = document.getElementById('state_id').value.trim().toUpperCase();
+            applicantData.id_expiration = document.getElementById('id_expiration').value;
+            applicantData.desired_role = document.getElementById('desired_role').value;
+            const roleEl = document.getElementById('desired_role');
+            applicantData.job_position_id = parseInt(roleEl.options[roleEl.selectedIndex]?.dataset?.positionId || '1', 10);
+            applicantData.desired_shift = document.getElementById('desired_shift').value;
+            applicantData.facility = document.getElementById('target_facility').value;
+
+            // Pre-fill signature placeholder
+            document.getElementById('legal_signature').value = applicantData.full_name;
+
+            currentStep = 2;
+            showStep(2);
+        }
+
+        function handleStep2(e) {
+            e.preventDefault();
+            applicantData.signature = document.getElementById('legal_signature').value.trim();
+            currentStep = 3;
+            showStep(3);
+        }
+
+        async function handleStep3(e) {
+            e.preventDefault();
+            const q1 = document.querySelector('input[name="q1"]:checked')?.value;
+            const q2 = document.querySelector('input[name="q2"]:checked')?.value;
+            const q3 = document.querySelector('input[name="q3"]:checked')?.value;
+            const q4 = document.querySelector('input[name="q4"]:checked')?.value;
+            const q5 = document.querySelector('input[name="q5"]:checked')?.value;
+
+            let score = 0;
+            if (q1 === 'B') score += 20;
+            if (q2 === 'A') score += 20;
+            if (q3 === 'B') score += 20;
+            if (q4 === 'A') score += 20;
+            if (q5 === 'B') score += 20;
+
+            if (score < 80) {
+                document.getElementById('modal-quiz-score-val').textContent = score + '%';
+                document.getElementById('modal-quiz-error').style.display = 'flex';
+                return;
+            }
+
+            // Generate Badge ID & Date
+            const randomCode = Math.floor(1000 + Math.random() * 9000);
+            const badgeId = `BOS-2026-${randomCode}`;
+            const todayStr = new Date().toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
+
+            // Populate Badge
+            document.getElementById('badge-name').textContent = applicantData.full_name;
+            document.getElementById('badge-role').textContent = applicantData.desired_role;
+            document.getElementById('badge-id').textContent = badgeId;
+            document.getElementById('badge-clearance').textContent = applicantData.facility.replace(' (TIPS Prime)', '');
+            document.getElementById('badge-state-id').textContent = `${applicantData.id_state}-${applicantData.state_id}`;
+            document.getElementById('badge-issue-date').textContent = todayStr;
+
+            // Populate Success Modal Fields
+            document.getElementById('modal-tech-name').textContent = applicantData.full_name;
+            document.getElementById('modal-badge-id').textContent = badgeId;
+            document.getElementById('modal-facility-name').textContent = applicantData.facility;
+
+            // Transmit application asynchronously to Backend
+            const submitBtn = document.getElementById('btn-submit-quiz');
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            submitBtn.disabled = true;
+
+            try {
+                const payload = {
+                    full_name: applicantData.full_name,
+                    phone: applicantData.phone,
+                    email: applicantData.email,
+                    city: applicantData.city,
+                    desired_role: applicantData.desired_role,
+                    job_position_id: applicantData.job_position_id,
+                    desired_shift: applicantData.desired_shift,
+                    authorized_to_work_us: true,
+                    has_transportation: true,
+                    preferred_language: document.getElementById('btn-lang-es').classList.contains('active') ? 'Spanish' : 'English',
+                    status: 'Bench Ready',
+                    notes: `[BOSANNA ONBOARDING] Facility: ${applicantData.facility} | Score: ${score}% | ID: ${applicantData.id_state}-${applicantData.state_id} (Exp: ${applicantData.id_expiration}) | Signature: ${applicantData.signature} | Badge ID: ${badgeId} | Prime Contract: TIPS #260102 | Collin College T&C § 130-152 & CPR Verified`
+                };
+
+                const res = await fetch('/api/v1/workforce/apply', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const json = await res.json();
+                if (!res.ok || json.status !== 'success') {
+                    console.error('[ONBOARD_SYNC_FAILURE]', json);
+                    const errMsg = json.message || (document.getElementById('btn-lang-es').classList.contains('active') ? 'Error al guardar los datos de ingreso.' : 'Failed to synchronize onboarding records.');
+                    document.getElementById('t-m-err-title').textContent = document.getElementById('btn-lang-es').classList.contains('active') ? 'Error de Transmisión' : 'Transmission Error';
+                    document.getElementById('t-m-err-sub').textContent = errMsg;
+                    document.getElementById('modal-quiz-score-val').textContent = 'Server Error';
+                    document.getElementById('t-m-err-act-body').textContent = document.getElementById('btn-lang-es').classList.contains('active') ? 'Ocurrió un problema de conexión con el servidor. Por favor intente enviar de nuevo.' : 'A server connection error occurred. Please tap below to retry.';
+                    document.getElementById('modal-quiz-error').style.display = 'flex';
+                    return;
+                }
+                console.log('[ONBOARD_SYNC_SUCCESS]', json);
+            } catch (err) {
+                console.error('[ONBOARD_NETWORK_ERROR]', err);
+                const errMsg = document.getElementById('btn-lang-es').classList.contains('active') ? 'Error de conexión con el servidor de operaciones.' : 'Network connection error. Unable to reach operations server.';
+                document.getElementById('t-m-err-title').textContent = document.getElementById('btn-lang-es').classList.contains('active') ? 'Fallo de Red' : 'Network Failure';
+                document.getElementById('t-m-err-sub').textContent = errMsg;
+                document.getElementById('modal-quiz-score-val').textContent = 'Offline';
+                document.getElementById('modal-quiz-error').style.display = 'flex';
+                return;
+            }
+
+            currentStep = 4;
+            showStep(4);
+        }
+
+        // Formatted Enterprise Modal Controls (Replaces raw alert)
+        function openSuccessModal() {
+            document.getElementById('modal-onboard-success').style.display = 'flex';
+        }
+
+        function closeSuccessModal() {
+            document.getElementById('modal-onboard-success').style.display = 'none';
+        }
+
+        function closeQuizErrorModal() {
+            document.getElementById('modal-quiz-error').style.display = 'none';
+        }
+
+        function resetOnboarding() {
+            closeSuccessModal();
+            document.getElementById('form-step-1').reset();
+            document.getElementById('form-step-2').reset();
+            document.getElementById('form-step-3').reset();
+            applicantData = {
+                full_name: '',
+                phone: '',
+                email: '',
+                state_id: '',
+                id_state: 'TX',
+                id_expiration: '',
+                city: '',
+                desired_role: 'Commercial Cleaning Technician',
+                job_position_id: 1,
+                desired_shift: 'Night (6:00 PM - 2:30 AM)',
+                facility: 'Collin College Frisco Campus',
+                signature: '',
+                score: 0,
+                status: 'Bench Ready',
+                organization_id: 'bosanna'
+            };
+            const submitBtn = document.getElementById('btn-submit-quiz');
+            if (submitBtn) {
+                submitBtn.innerHTML = document.getElementById('btn-lang-es').classList.contains('active') ? 'Verificar Puntuación y Emitir Credencial ➔' : 'Verify Score &amp; Issue Credential ➔';
+                submitBtn.disabled = false;
+            }
+            currentStep = 1;
+            showStep(1);
+        }
+
+        // 100% Comprehensive Bilingual Translation Engine
+        const dict = {
+            en: {
+                navHome: "Home",
+                navServices: "Services",
+                navProviders: "Providers",
+                navCareers: "Careers",
+                navOnboard: "<i class='fas fa-id-badge'></i> Technician Onboarding",
+                navCockpit: "<i class='fas fa-shield-alt'></i> Executive Cockpit",
+                tipsBadge: "TIPS National Cooperative Awarded Vendor #260102 / #260103",
+                heroTitle: "Workforce Compliance & Technician Onboarding",
+                heroSub: "Official Credentialing and Field Readiness Portal for Bosanna LLC Institutional Facilities, Collin College Campus Operations, and Municipal Projects.",
+                step1: "Profile & W-4",
+                step2: "Background & T&C",
+                step3: "Safety Academy",
+                step4: "Security Badge",
+                c1Title: "Technician Profile & Assignment",
+                c1Pill: "Stage 1 of 4",
+                c1NoticeHead: "Institutional Employment Verification:",
+                c1NoticeBody: "All personnel operating on Collin College facilities and TIPS contracted properties must complete verified onboarding and identity matching prior to site badge dispatch.",
+                fFullName: "Full Legal Name *",
+                fPhone: "Mobile Phone (SMS Notifications) *",
+                fEmail: "Email Address *",
+                fCity: "City of Residence *",
+                fStateOrigin: "Issuing State (Driver License / ID) *",
+                fId: "Driver's License or State ID # *",
+                fIdExp: "ID Expiration Date *",
+                fRole: "Desired Role / Classification",
+                fShift: "Shift Availability",
+                fFacility: "Primary Facility Assignment",
+                fMand: "* All fields mandatory for district clearance",
+                btnStep1: "Continue to Background Consent ➔",
+                optRole1: "Commercial Cleaning Technician",
+                optRole2: "Lead Campus Custodian",
+                optRole3: "Commercial Floor Care Specialist",
+                optRole4: "Day Porter / Facility Attendant",
+                optShift1: "Night Shift (6:00 PM - 2:30 AM)",
+                optShift2: "Day Shift (7:00 AM - 3:30 PM)",
+                optShift3: "Weekend Flexible",
+                optFac1: "Collin College Frisco Campus (TIPS Prime)",
+                optFac2: "Sundance Square Commercial Network",
+                optFac3: "TIPS Regional Member Facilities",
+                optFac4: "DFW Metropolitan Trade Area",
+                c2Title: "Background Clearance & Statutory Compliance",
+                c2Pill: "Stage 2 of 4",
+                c2LegalHead: "Collin College District T&C Section 153/243 Compliance:",
+                c2LegalBody: "Bosanna LLC maintains strict compliance with Texas statutory educational facility standards. All deployed staff must hold a cleared multi-state criminal history check, zero felony disqualifications, and drug-free certification before access is granted.",
+                c2Check1: "<strong>Criminal History Background Consent:</strong> I authorize Bosanna LLC and its verified operational partners to run a background check through Texas DPS and national registries.",
+                c2Check2: "<strong>Drug-Free Campus Policy:</strong> I certify that I comply with the zero-tolerance drug and alcohol policy required for higher education facilities.",
+                c2Check3: "<strong>Legal Work Authorization:</strong> I certify that I am legally authorized to work in the United States and can furnish I-9 documents.",
+                c2Check4: "<strong>Zero-Tolerance Weapons &amp; Substance-Free Campus (T&amp;C §§ 143–151):</strong> I agree to strict prohibition of firearms, weapons, alcohol, drugs, and 100% smoke/vape-free campus rules.",
+                c2Check5: "<strong>Master Key Custody &amp; Police Desk Sign-In (T&amp;C §§ 145–150 &amp; SOW § 202):</strong> I agree to sign daily at the Collin College Police Desk, never leave keys in doors, lock exterior doors, and acknowledge the $100 lost key penalty.",
+                c2Check6: "<strong>FERPA Student Privacy &amp; Family Ban (RFP § 12.1 &amp; T&amp;C § 152):</strong> I certify that I will never handle or inspect student records and understand that unauthorized family, children, or visitors are strictly prohibited on campus.",
+                fSignature: "Electronic Legal Signature (Type Full Legal Name) *",
+                btnBack1: "⬅ Back to Profile",
+                btnStep2: "Submit Consent & Open Academy ➔",
+                c3Title: "Sigma Academy™ Safety & Quality Certification",
+                c3Pill: "Stage 3 of 4",
+                c3Sub: "Review the mandatory safety standards below and achieve 80%+ on the comprehension check to unlock your digital campus access credential.",
+                m1Title: "Standard 1: Chemical Safety & HazCom (OSHA 1910.1200)",
+                m1Desc: "Always dilute chemicals according to dispenser specifications. Never mix bleach with ammonia or acid-based bowl cleaners (generates toxic chlorine gas). All secondary spray bottles must carry full GHS product labels.",
+                m2Title: "Standard 2: Bloodborne Pathogens & PPE (OSHA 1910.1030)",
+                m2Desc: "Treat all bodily fluids as potentially infectious. Wear disposable nitrile gloves and eye protection. Dispose of contaminated materials in labeled red biohazard bags. Wash hands immediately after removing gloves.",
+                m3Title: "Standard 3: Slip-and-Fall Prevention & Equipment Safety",
+                m3Desc: "Deploy bright yellow 'Caution: Wet Floor' signs at all corridor entrances before wet mopping or operating floor scrubbers. Signs must remain upright until the surface is 100% dry. Inspect electrical cords for frays daily.",
+                m4Title: "Standard 4: Emergency Response, First Aid & CPR/AED Protocol (T&C § 140 / 144)",
+                m4Desc: "In medical emergencies, notify the shift supervisor and call 911 immediately. Know the location of wall-mounted Automated External Defibrillator (AED) units in every campus building. All on-site non-cleaning supervisors maintain active American Red Cross / AHA First Aid & Adult CPR credentials.",
+                m5Title: "Standard 5: Restroom Barrier Tension Poles & Safety Signage (T&C § 134 & SOW § 197)",
+                m5Desc: "Always place yellow 'Closed for Cleaning' tension barrier poles across restroom doorways before beginning service. Propping doors open with trash cans is strictly forbidden by Collin College safety rules. Post wet-floor caution cones until completely dry.",
+                quizHead: "<i class='fas fa-clipboard-check'></i> Knowledge Verification Assessment",
+                q1Text: "1. What is the rule when using chemical spray bottles in commercial facilities?",
+                q1Oa: "Any unmarked bottle is acceptable if you know what is inside.",
+                q1Ob: "Every secondary container must carry a complete GHS identification label.",
+                q1Oc: "Bleach and ammonia should be mixed to increase cleaning power.",
+                q2Text: "2. What personal protective equipment (PPE) is mandatory when sanitizing biohazard or restroom surfaces?",
+                q2Oa: "Disposable nitrile gloves and eye protection.",
+                q2Ob: "No gloves are needed if warm water is used.",
+                q2Oc: "Regular cotton gardening gloves.",
+                q3Text: "3. When must 'Caution: Wet Floor' cones and signs be deployed?",
+                q3Oa: "Only after someone slips.",
+                q3Ob: "Before any water, mopping, or auto-scrubbing touches the floor.",
+                q3Oc: "Only in exterior parking lots.",
+                q4Text: "4. Where are Safety Data Sheets (SDS) kept in an institutional facility?",
+                q4Oa: "Kept in the primary custodial closet binder and accessible via digital QR code.",
+                q4Ob: "At the corporate office only.",
+                q4Oc: "SDS sheets are not required for commercial cleaning.",
+                q5Text: "5. What is the Collin College requirement regarding First Aid, CPR, and campus medical emergencies?",
+                q5Oa: "Handle medical emergencies alone without notifying campus supervisors or police.",
+                q5Ob: "Notify the on-site supervisor immediately, call 911 for life-threats, know AED stations, and ensure leads hold certified CPR cards.",
+                q5Oc: "Cleaners are forbidden from seeking emergency first aid on campus.",
+                btnBack2: "⬅ Back",
+                btnSubmitQuiz: "Verify Score & Issue Credential ➔",
+                c4Title: "<i class='fas fa-check-circle'></i> Onboarding Complete: Certified Technician",
+                c4Pill: "Verified Active",
+                c4NoticeHead: "Official Access Credential Issued:",
+                c4NoticeBody: "Your compliance profile and background authorization have been recorded in the Bosanna operations system. Below is your official digital facility badge.",
+                badgeSub: "Verified Institutional Operations Partner",
+                badgeScan: "SCAN FOR VERIFICATION",
+                badgeIdLbl: "BADGE ID:",
+                badgeStatusLbl: "STATUS:",
+                badgeActiveVal: "● ACTIVE",
+                badgeClearanceLbl: "CLEARANCE:",
+                badgeHazcomLbl: "OSHA HAZCOM:",
+                badgeHazcomVal: "CERTIFIED",
+                badgeIdnumLbl: "STATE ID:",
+                badgeDateLbl: "ISSUED:",
+                btnPrint: "Print Official Badge",
+                btnDone: "Done",
+                mTitle: "Registration Finalized & Dispatched",
+                mSub: "Your worker file has been safely saved in the Bosanna Operations System.",
+                mTech: "Technician:",
+                mBadge: "Badge Credential:",
+                mFacility: "Assigned Facility:",
+                mStatus: "Compliance Status:",
+                mStatusVal: "● BENCH READY / TIER 1 CLEARED",
+                mNextHead: "<i class='fas fa-clipboard-list'></i> Next Operational Steps:",
+                mStep1: "<strong>1. Background Verification:</strong> DPS authorization filed under District Contract #260102.",
+                mStep2: "<strong>2. Safety Compliance:</strong> OSHA HazCom and Bloodborne Pathogen passing certificate archived.",
+                mStep3: "<strong>3. Campus Access:</strong> Present your digital badge or printout to the Bosanna Operations Lead at the campus facilities dock for RFID card release.",
+                mPrint: "Print Worker File",
+                mCockpit: "Return to Cockpit",
+                mAnother: "Onboard Another",
+                mFinish: "Close",
+                mErrTitle: "Safety Assessment Incomplete",
+                mErrSub: "A minimum passing score of 75% is required by Collin College district regulations before campus access credentials can be generated.",
+                mErrScoreLbl: "Current Score:",
+                mErrReqLbl: "Passing Standard:",
+                mErrActHead: "<i class='fas fa-redo'></i> Corrective Action:",
+                mErrActBody: "Please review Safety Standards 1, 2, and 3 above and adjust your answers to comply with OSHA chemical dilution, PPE, and slip-and-fall protocols.",
+                mErrBtn: "Review & Correct Answers",
+                footerDesc: "Your trusted partner for quality building projects and commercial facility solutions. Delivering turnkey janitorial, maintenance, and construction excellence.",
+                fCol1: "Navigation",
+                fHome: "Home",
+                fServices: "Services",
+                fProviders: "Providers",
+                fCareers: "Careers",
+                fCol2: "Institutional Compliance",
+                fWfportal: "Workforce Portal",
+                footerRights: "Copyright © 2018 Bosanna LLC - All Rights Reserved.",
+                footerPriv: "Privacy Policy",
+                footerTerms: "Terms of Service",
+                footerPowered: "Powered by SigmaFidelity™ Institutional Core"
+            },
+            es: {
+                navHome: "Inicio",
+                navServices: "Servicios",
+                navProviders: "Proveedores",
+                navCareers: "Carreras",
+                navOnboard: "<i class='fas fa-id-badge'></i> Incorporación de Técnicos",
+                navCockpit: "<i class='fas fa-shield-alt'></i> Panel Ejecutivo",
+                tipsBadge: "Proveedor Adjudicado Cooperativa Nacional TIPS #260102 / #260103",
+                heroTitle: "Cumplimiento Laboral e Incorporación de Técnicos",
+                heroSub: "Portal Oficial de Acreditación y Preparación de Campo para Instalaciones Institucionales de Bosanna LLC, Operaciones de Collin College y Proyectos Municipales.",
+                step1: "Perfil y W-4",
+                step2: "Antecedentes y T&C",
+                step3: "Academia de Seguridad",
+                step4: "Insignia de Seguridad",
+                c1Title: "Perfil del Técnico y Asignación de Instalación",
+                c1Pill: "Etapa 1 de 4",
+                c1NoticeHead: "Verificación de Empleo Institucional:",
+                c1NoticeBody: "Todo el personal que opera en instalaciones de Collin College y propiedades contratadas por TIPS debe completar la verificación de identidad antes de recibir su credencial de acceso.",
+                fFullName: "Nombre Legal Completo *",
+                fPhone: "Teléfono Móvil (Notificaciones SMS) *",
+                fEmail: "Correo Electrónico *",
+                fCity: "Ciudad de Residencia *",
+                fStateOrigin: "Estado Emisor (Licencia / ID) *",
+                fId: "Licencia de Conducir o Núm. de ID Estatal *",
+                fIdExp: "Fecha de Vencimiento de ID *",
+                fRole: "Puesto Deseado / Clasificación",
+                fShift: "Disponibilidad de Turno",
+                fFacility: "Instalación Primaria Asignada",
+                fMand: "* Todos los campos son obligatorios para la autorización del distrito",
+                btnStep1: "Continuar a Consentimiento de Antecedentes ➔",
+                optRole1: "Técnico de Limpieza Comercial",
+                optRole2: "Conserje Líder de Campus",
+                optRole3: "Especialista en Cuidado de Pisos Comerciales",
+                optRole4: "Portero de Día / Auxiliar de Instalaciones",
+                optShift1: "Turno Nocturno (6:00 PM - 2:30 AM)",
+                optShift2: "Turno Diurno (7:00 AM - 3:30 PM)",
+                optShift3: "Fin de Semana Flexible",
+                optFac1: "Campus Frisco de Collin College (Contrato TIPS)",
+                optFac2: "Red Comercial de Sundance Square",
+                optFac3: "Instalaciones Regionales Miembros de TIPS",
+                optFac4: "Área Metropolitana de Dallas-Fort Worth",
+                c2Title: "Autorización de Antecedentes y Cumplimiento Legal",
+                c2Pill: "Etapa 2 de 4",
+                c2LegalHead: "Cumplimiento del Distrito Collin College Sección T&C 153/243:",
+                c2LegalBody: "Bosanna LLC cumple estrictamente con los estándares educativos de Texas. Todo el personal asignado debe contar con verificación de antecedentes penales libre de delitos graves y certificación libre de drogas.",
+                c2Check1: "<strong>Consentimiento de Verificación de Antecedentes:</strong> Autorizo a Bosanna LLC y a sus socios operativos verificados a realizar una verificación de antecedentes a través del DPS de Texas y registros nacionales.",
+                c2Check2: "<strong>Política de Campus Libre de Drogas:</strong> Certifico que cumplo con la política de tolerancia cero respecto a drogas y alcohol requerida para instalaciones educativas.",
+                c2Check3: "<strong>Autorización Legal de Trabajo:</strong> Certifico que estoy legalmente autorizado para trabajar en los Estados Unidos y puedo presentar documentos de I-9.",
+                c2Check4: "<strong>Cero Tolerancia de Armas y Sustancias (T&amp;C §§ 143–151):</strong> Acepto la prohibición total de armas de fuego, alcohol, drogas y la regla de campus 100% libre de humo y vapeo.",
+                c2Check5: "<strong>Custodia de Llaves y Registro Policial (T&amp;C §§ 145–150):</strong> Me comprometo a registrarme diariamente en la Policía del campus, no desatender llaves, cerrar puertas exteriores y reconozco la multa de $100 por extravío.",
+                c2Check6: "<strong>Privacidad FERPA y Prohibición de Visitas (RFP § 12.1 y T&amp;C § 152):</strong> Certifico que no revisaré expedientes estudiantiles y entiendo que familiares, niños o visitas no autorizadas están estrictamente prohibidos.",
+                fSignature: "Firma Electrónica Legal (Escriba su Nombre Legal Completo) *",
+                btnBack1: "⬅ Volver al Perfil",
+                btnStep2: "Enviar Consentimiento y Abrir Academia ➔",
+                c3Title: "Certificación de Calidad y Seguridad Sigma Academy™",
+                c3Pill: "Etapa 3 de 4",
+                c3Sub: "Revise los estándares obligatorios de seguridad y obtenga 80%+ en la evaluación para desbloquear su credencial digital de acceso al campus.",
+                m1Title: "Estándar 1: Seguridad Química y HazCom (OSHA 1910.1200)",
+                m1Desc: "Diluya siempre los químicos según las especificaciones del dispensador. Nunca mezcle cloro con amoníaco ni limpiadores ácidos (produce gas de cloro altamente tóxico). Todos los atomizadores secundarios deben llevar etiquetas completas GHS.",
+                m2Title: "Estándar 2: Patógenos Transmitidos por Sangre y EPP (OSHA 1910.1030)",
+                m2Desc: "Trate todos los fluidos corporales como potencialmente infecciosos. Use guantes de nitrilo desechables y protección ocular. Deseche material contaminado en bolsas rojas de riesgo biológico. Lávese las manos inmediatamente al retirarse los guantes.",
+                m3Title: "Estándar 3: Prevención de Caídas y Seguridad de Equipos",
+                m3Desc: "Coloque letreros amarillos de 'Precaución: Piso Mojado' en todas las entradas de pasillos antes de trapear o utilizar fregadoras automáticas de pisos. Deben permanecer hasta que el piso esté completamente seco. Inspeccione cables eléctricos diariamente.",
+                m4Title: "Estándar 4: Respuesta de Emergencia, Primeros Auxilios y RCP (T&C § 140 / 144)",
+                m4Desc: "En emergencias médicas, notifique al supervisor de turno y llame al 911. Ubique los Desfibriladores Externos Automáticos (DEA) en el campus. Todos los supervisores de turno mantienen credenciales activas de Primeros Auxilios y RCP de Cruz Roja / AHA.",
+                m5Title: "Estándar 5: Postes de Barrera en Baños y Señalización de Seguridad (T&C § 134 y SOW § 197)",
+                m5Desc: "Coloque siempre los postes tensores amarillos de 'Cerrado por Limpieza' en los accesos de sanitarios. Prohibido sostener puertas con botes de basura por normas del distrito. Mantenga conos de piso mojado hasta que seque por completo.",
+                quizHead: "<i class='fas fa-clipboard-check'></i> Evaluación de Verificación de Conocimientos",
+                q1Text: "1. ¿Cuál es la regla al usar atomizadores de químicos en instalaciones comerciales?",
+                q1Oa: "Cualquier botella sin etiqueta es aceptable si usted sabe qué contiene.",
+                q1Ob: "Cada contenedor secundario debe portar una etiqueta completa de identificación GHS.",
+                q1Oc: "El cloro y el amoníaco deben mezclarse para aumentar el poder de limpieza.",
+                q2Text: "2. ¿Qué equipo de protección personal (EPP) es obligatorio al limpiar riesgos biológicos o sanitarios?",
+                q2Oa: "Guantes de nitrilo desechables y protección ocular.",
+                q2Ob: "No se necesitan guantes si se utiliza agua tibia.",
+                q2Oc: "Guantes comunes de jardinería de tela.",
+                q3Text: "3. ¿Cuándo deben colocarse los conos y letreros de 'Precaución: Piso Mojado'?",
+                q3Oa: "Solamente después de que alguien se resbale.",
+                q3Ob: "Antes de que el agua, trapeador o fregadora toque el piso.",
+                q3Oc: "Únicamente en estacionamientos exteriores.",
+                q4Text: "4. ¿Dónde se guardan las Hojas de Datos de Seguridad (SDS) en una instalación institucional?",
+                q4Oa: "En la carpeta del cuarto principal de conserjería y accesible mediante código QR digital.",
+                q4Ob: "Únicamente en la oficina corporativa.",
+                q4Oc: "Las hojas SDS no son obligatorias para limpieza comercial.",
+                q5Text: "5. ¿Cuál es el requisito de Collin College sobre Primeros Auxilios, RCP y emergencias en el campus?",
+                q5Oa: "Manejar emergencias solo sin avisar a supervisores del campus ni a la policía.",
+                q5Ob: "Notificar de inmediato al supervisor, llamar al 911, conocer estaciones de DEA y asegurar que los líderes cuenten con tarjeta vigente de RCP.",
+                q5Oc: "El personal de limpieza tiene prohibido solicitar primeros auxilios en el campus.",
+                btnBack2: "⬅ Volver",
+                btnSubmitQuiz: "Verificar Puntuación y Emitir Credencial ➔",
+                c4Title: "<i class='fas fa-check-circle'></i> Incorporación Completada: Técnico Certificado",
+                c4Pill: "Verificado Activo",
+                c4NoticeHead: "Credencial Oficial de Acceso Emitida:",
+                c4NoticeBody: "Su perfil de cumplimiento y autorización de antecedentes han sido registrados en el sistema de operaciones de Bosanna. A continuación se muestra su credencial digital oficial.",
+                badgeSub: "Socio Verificado de Operaciones Institucionales",
+                badgeScan: "ESCANEAR PARA VERIFICACIÓN",
+                badgeIdLbl: "NÚM. DE INSIGNIA:",
+                badgeStatusLbl: "ESTADO:",
+                badgeActiveVal: "● ACTIVO",
+                badgeClearanceLbl: "AUTORIZACIÓN:",
+                badgeHazcomLbl: "OSHA HAZCOM:",
+                badgeHazcomVal: "CERTIFICADO",
+                badgeIdnumLbl: "ID ESTATAL:",
+                badgeDateLbl: "FECHA:",
+                btnPrint: "Imprimir Credencial Oficial",
+                btnDone: "Listo",
+                mTitle: "Registro Finalizado y Transmitido",
+                mSub: "El archivo del trabajador ha sido guardado de manera segura en el sistema de operaciones de Bosanna.",
+                mTech: "Técnico:",
+                mBadge: "Credencial de Insignia:",
+                mFacility: "Instalación Asignada:",
+                mStatus: "Estado de Cumplimiento:",
+                mStatusVal: "● LISTO PARA EL SERVICIO / NIVEL 1 AUTORIZADO",
+                mNextHead: "<i class='fas fa-clipboard-list'></i> Próximos Pasos Operativos:",
+                mStep1: "<strong>1. Verificación de Antecedentes:</strong> Autorización DPS archivada bajo Contrato Distrital #260102.",
+                mStep2: "<strong>2. Cumplimiento de Seguridad:</strong> Certificado de aprobación de OSHA HazCom y Patógenos archivado.",
+                mStep3: "<strong>3. Acceso al Campus:</strong> Presente su insignia digital o impresa al Líder de Operaciones de Bosanna en el muelle de instalaciones del campus para la entrega de su tarjeta RFID física.",
+                mPrint: "Imprimir Archivo",
+                mCockpit: "Volver al Panel",
+                mAnother: "Incorporar Otro",
+                mFinish: "Cerrar",
+                mErrTitle: "Evaluación de Seguridad Incompleta",
+                mErrSub: "Se requiere un puntaje mínimo de aprobación del 75% según las normas del distrito de Collin College para emitir credenciales de acceso.",
+                mErrScoreLbl: "Puntaje Obtenido:",
+                mErrReqLbl: "Estándar Requerido:",
+                mErrActHead: "<i class='fas fa-redo'></i> Acción Correctiva:",
+                mErrActBody: "Por favor revise los Estándares de Seguridad 1, 2 y 3 arriba y ajuste sus respuestas para cumplir con los protocolos de dilución de químicos OSHA, EPP y caídas.",
+                mErrBtn: "Revisar y Corregir Respuestas",
+                footerDesc: "Su socio de confianza para proyectos de construcción de calidad y soluciones para instalaciones comerciales. Entregando excelencia llave en mano en servicios de limpieza, mantenimiento y construcción.",
+                fCol1: "Navegación",
+                fHome: "Inicio",
+                fServices: "Servicios",
+                fProviders: "Proveedores",
+                fCareers: "Carreras",
+                fCol2: "Cumplimiento Institucional",
+                fWfportal: "Portal de Personal",
+                footerRights: "Derechos Reservados © 2018 Bosanna LLC - Todos los Derechos Reservados.",
+                footerPriv: "Política de Privacidad",
+                footerTerms: "Términos de Servicio",
+                footerPowered: "Desarrollado con Tecnología Institucional SigmaFidelity™"
+            }
+        };
+
+        function setPortalLanguage(lang) {
+            document.getElementById('btn-lang-en').classList.toggle('active', lang === 'en');
+            document.getElementById('btn-lang-es').classList.toggle('active', lang === 'es');
+
+            const t = dict[lang];
+
+            // Header Nav
+            document.getElementById('t-nav-home').textContent = t.navHome;
+            document.getElementById('t-nav-services').textContent = t.navServices;
+            document.getElementById('t-nav-providers').textContent = t.navProviders;
+            document.getElementById('t-nav-careers').textContent = t.navCareers;
+            document.getElementById('t-nav-onboard').innerHTML = t.navOnboard;
+            document.getElementById('t-nav-cockpit').innerHTML = t.navCockpit;
+
+            // Hero
+            document.getElementById('t-tips-badge').textContent = t.tipsBadge;
+            document.getElementById('t-hero-title').textContent = t.heroTitle;
+            document.getElementById('t-hero-sub').textContent = t.heroSub;
+
+            // Stepper
+            document.getElementById('t-step-1').textContent = t.step1;
+            document.getElementById('t-step-2').textContent = t.step2;
+            document.getElementById('t-step-3').textContent = t.step3;
+            document.getElementById('t-step-4').textContent = t.step4;
+
+            // Step 1
+            document.getElementById('t-c1-title').textContent = t.c1Title;
+            document.getElementById('t-c1-pill').textContent = t.c1Pill;
+            document.getElementById('t-c1-notice-head').textContent = t.c1NoticeHead;
+            document.getElementById('t-c1-notice-body').textContent = t.c1NoticeBody;
+            document.getElementById('t-f-fullname').textContent = t.fFullName;
+            document.getElementById('t-f-phone').textContent = t.fPhone;
+            document.getElementById('t-f-email').textContent = t.fEmail;
+            document.getElementById('t-f-city').textContent = t.fCity;
+            document.getElementById('t-f-state-origin').textContent = t.fStateOrigin;
+            document.getElementById('t-f-id').textContent = t.fId;
+            document.getElementById('t-f-id-exp').textContent = t.fIdExp;
+            document.getElementById('t-f-role').textContent = t.fRole;
+            document.getElementById('t-f-shift').textContent = t.fShift;
+            document.getElementById('t-f-facility').textContent = t.fFacility;
+            document.getElementById('t-f-mand').textContent = t.fMand;
+            document.getElementById('t-btn-step1').textContent = t.btnStep1;
+
+            // Role and Shift dropdown options
+            document.getElementById('opt-role-1').textContent = t.optRole1;
+            document.getElementById('opt-role-2').textContent = t.optRole2;
+            document.getElementById('opt-role-3').textContent = t.optRole3;
+            document.getElementById('opt-role-4').textContent = t.optRole4;
+            document.getElementById('opt-shift-1').textContent = t.optShift1;
+            document.getElementById('opt-shift-2').textContent = t.optShift2;
+            document.getElementById('opt-shift-3').textContent = t.optShift3;
+            document.getElementById('opt-fac-1').textContent = t.optFac1;
+            document.getElementById('opt-fac-2').textContent = t.optFac2;
+            document.getElementById('opt-fac-3').textContent = t.optFac3;
+            document.getElementById('opt-fac-4').textContent = t.optFac4;
+
+            // Step 2
+            document.getElementById('t-c2-title').textContent = t.c2Title;
+            document.getElementById('t-c2-pill').textContent = t.c2Pill;
+            document.getElementById('t-c2-legal-head').textContent = t.c2LegalHead;
+            document.getElementById('t-c2-legal-body').textContent = t.c2LegalBody;
+            document.getElementById('t-c2-check-1').innerHTML = t.c2Check1;
+            document.getElementById('t-c2-check-2').innerHTML = t.c2Check2;
+            document.getElementById('t-c2-check-3').innerHTML = t.c2Check3;
+            if (document.getElementById('t-c2-check-4')) document.getElementById('t-c2-check-4').innerHTML = t.c2Check4;
+            if (document.getElementById('t-c2-check-5')) document.getElementById('t-c2-check-5').innerHTML = t.c2Check5;
+            if (document.getElementById('t-c2-check-6')) document.getElementById('t-c2-check-6').innerHTML = t.c2Check6;
+            document.getElementById('t-f-signature').textContent = t.fSignature;
+            document.getElementById('t-btn-back-1').textContent = t.btnBack1;
+            document.getElementById('t-btn-step2').textContent = t.btnStep2;
+
+            // Step 3
+            document.getElementById('t-c3-title').textContent = t.c3Title;
+            document.getElementById('t-c3-pill').textContent = t.c3Pill;
+            document.getElementById('t-c3-sub').textContent = t.c3Sub;
+            document.getElementById('t-m1-title').textContent = t.m1Title;
+            document.getElementById('t-m1-desc').textContent = t.m1Desc;
+            document.getElementById('t-m2-title').textContent = t.m2Title;
+            document.getElementById('t-m2-desc').textContent = t.m2Desc;
+            document.getElementById('t-m3-title').textContent = t.m3Title;
+            document.getElementById('t-m3-desc').textContent = t.m3Desc;
+            if (document.getElementById('t-m4-title')) document.getElementById('t-m4-title').textContent = t.m4Title;
+            if (document.getElementById('t-m4-desc')) document.getElementById('t-m4-desc').textContent = t.m4Desc;
+            if (document.getElementById('t-m5-title')) document.getElementById('t-m5-title').textContent = t.m5Title;
+            if (document.getElementById('t-m5-desc')) document.getElementById('t-m5-desc').textContent = t.m5Desc;
+            document.getElementById('t-quiz-head').innerHTML = t.quizHead;
+
+            document.getElementById('t-q1-text').textContent = t.q1Text;
+            document.getElementById('t-q1-oa').textContent = t.q1Oa;
+            document.getElementById('t-q1-ob').textContent = t.q1Ob;
+            document.getElementById('t-q1-oc').textContent = t.q1Oc;
+
+            document.getElementById('t-q2-text').textContent = t.q2Text;
+            document.getElementById('t-q2-oa').textContent = t.q2Oa;
+            document.getElementById('t-q2-ob').textContent = t.q2Ob;
+            document.getElementById('t-q2-oc').textContent = t.q2Oc;
+
+            document.getElementById('t-q3-text').textContent = t.q3Text;
+            document.getElementById('t-q3-oa').textContent = t.q3Oa;
+            document.getElementById('t-q3-ob').textContent = t.q3Ob;
+            document.getElementById('t-q3-oc').textContent = t.q3Oc;
+
+            document.getElementById('t-q4-text').textContent = t.q4Text;
+            document.getElementById('t-q4-oa').textContent = t.q4Oa;
+            document.getElementById('t-q4-ob').textContent = t.q4Ob;
+            document.getElementById('t-q4-oc').textContent = t.q4Oc;
+
+            if (document.getElementById('t-q5-text')) {
+                document.getElementById('t-q5-text').textContent = t.q5Text;
+                document.getElementById('t-q5-oa').textContent = t.q5Oa;
+                document.getElementById('t-q5-ob').textContent = t.q5Ob;
+                document.getElementById('t-q5-oc').textContent = t.q5Oc;
+            }
+
+            document.getElementById('t-btn-back-2').textContent = t.btnBack2;
+            document.getElementById('btn-submit-quiz').textContent = t.btnSubmitQuiz;
+
+            // Step 4
+            document.getElementById('t-c4-title').innerHTML = t.c4Title;
+            document.getElementById('t-c4-pill').textContent = t.c4Pill;
+            document.getElementById('t-c4-notice-head').textContent = t.c4NoticeHead;
+            document.getElementById('t-c4-notice-body').textContent = t.c4NoticeBody;
+            document.getElementById('t-badge-sub').textContent = t.badgeSub;
+            document.getElementById('t-badge-scan').textContent = t.badgeScan;
+            document.getElementById('t-badge-id-lbl').textContent = t.badgeIdLbl;
+            document.getElementById('t-badge-status-lbl').textContent = t.badgeStatusLbl;
+            document.getElementById('t-badge-active-val').textContent = t.badgeActiveVal;
+            document.getElementById('t-badge-clearance-lbl').textContent = t.badgeClearanceLbl;
+            document.getElementById('t-badge-hazcom-lbl').textContent = t.badgeHazcomLbl;
+            document.getElementById('t-badge-hazcom-val').textContent = t.badgeHazcomVal;
+            document.getElementById('t-badge-idnum-lbl').textContent = t.badgeIdnumLbl;
+            document.getElementById('t-badge-date-lbl').textContent = t.badgeDateLbl;
+            document.getElementById('t-btn-print').textContent = t.btnPrint;
+            document.getElementById('t-btn-done').textContent = t.btnDone;
+
+            // Modal
+            document.getElementById('t-m-title').textContent = t.mTitle;
+            document.getElementById('t-m-sub').textContent = t.mSub;
+            document.getElementById('t-m-tech').textContent = t.mTech;
+            document.getElementById('t-m-badge').textContent = t.mBadge;
+            document.getElementById('t-m-facility').textContent = t.mFacility;
+            document.getElementById('t-m-status').textContent = t.mStatus;
+            document.getElementById('t-m-status-val').textContent = t.mStatusVal;
+            document.getElementById('t-m-next-head').innerHTML = t.mNextHead;
+            document.getElementById('t-m-step-1').innerHTML = t.mStep1;
+            document.getElementById('t-m-step-2').innerHTML = t.mStep2;
+            document.getElementById('t-m-step-3').innerHTML = t.mStep3;
+            document.getElementById('t-m-print').textContent = t.mPrint;
+            if (document.getElementById('t-m-cockpit')) document.getElementById('t-m-cockpit').textContent = t.mCockpit;
+            if (document.getElementById('t-m-another')) document.getElementById('t-m-another').textContent = t.mAnother;
+            document.getElementById('t-m-finish').textContent = t.mFinish;
+
+            // Error Modal
+            if (document.getElementById('t-m-err-title')) {
+                document.getElementById('t-m-err-title').textContent = t.mErrTitle;
+                document.getElementById('t-m-err-sub').textContent = t.mErrSub;
+                document.getElementById('t-m-err-score-lbl').textContent = t.mErrScoreLbl;
+                document.getElementById('t-m-err-req-lbl').textContent = t.mErrReqLbl;
+                document.getElementById('t-m-err-act-head').innerHTML = t.mErrActHead;
+                document.getElementById('t-m-err-act-body').textContent = t.mErrActBody;
+                document.getElementById('t-m-err-btn').textContent = t.mErrBtn;
+            }
+
+            // Footer
+            document.getElementById('t-footer-desc').textContent = t.footerDesc;
+            document.getElementById('t-f-col1').textContent = t.fCol1;
+            document.getElementById('t-f-home').textContent = t.fHome;
+            document.getElementById('t-f-services').textContent = t.fServices;
+            document.getElementById('t-f-providers').textContent = t.fProviders;
+            document.getElementById('t-f-careers').textContent = t.fCareers;
+            document.getElementById('t-f-col2').textContent = t.fCol2;
+            document.getElementById('t-f-wfportal').textContent = t.fWfportal;
+            document.getElementById('t-footer-rights').textContent = t.footerRights;
+            document.getElementById('t-footer-priv').textContent = t.footerPriv;
+            document.getElementById('t-footer-terms').textContent = t.footerTerms;
+            document.getElementById('t-footer-powered').textContent = t.footerPowered;
+        }
+
+        function maskPhone(input) {
+            let v = input.value.replace(/\D/g, '');
+            if (v.length > 10) v = v.substring(0, 10);
+            let formatted = '';
+            if (v.length > 6) {
+                formatted = '(' + v.substring(0, 3) + ') ' + v.substring(3, 6) + '-' + v.substring(6);
+            } else if (v.length > 3) {
+                formatted = '(' + v.substring(0, 3) + ') ' + v.substring(3);
+            } else if (v.length > 0) {
+                formatted = '(' + v;
+            }
+            input.value = formatted;
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                const params = new URLSearchParams(window.location.search);
+                if (params.get('lang') === 'es') {
+                    switchLang('es');
+                } else if (params.get('lang') === 'en') {
+                    switchLang('en');
+                }
+                if (params.get('name')) {
+                    const el = document.getElementById('full_name');
+                    if (el) el.value = params.get('name');
+                }
+                if (params.get('phone')) {
+                    const el = document.getElementById('phone');
+                    if (el) {
+                        el.value = params.get('phone');
+                        maskPhone(el);
+                    }
+                }
+                if (params.get('email')) {
+                    const el = document.getElementById('email');
+                    if (el) el.value = params.get('email');
+                }
+                if (params.get('city')) {
+                    const el = document.getElementById('city');
+                    if (el) el.value = params.get('city');
+                }
+                if (params.get('facility')) {
+                    const el = document.getElementById('assigned_facility');
+                    if (el) el.value = params.get('facility');
+                }
+            } catch (e) {
+                console.error('URL pre-fill error:', e);
+            }
+        });
+    </script>
+</body>
+</html>
