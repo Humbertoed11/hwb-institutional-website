@@ -2,10 +2,10 @@
 
 | **Field** | **Current State** |
 | :--- | :--- |
-| **Objective** | ISO 9001 Claim Sanitization, Universal Decision Modal Integration & Poka-Yoke Dialog Inspection Gate (BUG-086) |
-| **Heat Zone Files** | `templates/backoffice_base.html`, `templates/HWB-WEB Sigma Executive.html`, `templates/backoffice_operations.html`, `templates/backoffice_scope_builder.html`, `templates/backoffice_workflow.html`, `templates/sales_desk.html`, `blueprints/operations.py`, `scratch/test_prohibited_browser_dialogs.py`, `docs/PROBLEMS-TO-SOLVE.md`, `HWB-SESSION-RECOVERY.md` |
-| **Last Action** | 1. Sanitized 8 occurrences of "ISO 9001:2015 Certified" and "Registered" to "ISO 9001:2015 Compliant" across backoffice navigation footers, official letterheads, capability statements (Austin Commercial & JE Dunn), and executive briefs per CEO directive.<br>2. Resolved unformatted web message in User Accounts & Access Governance: eradicated inline `onsubmit="return confirm(...)"` and replaced with centralized `showDecision()` confirmation dialog (`confirmDeleteUser`).<br>3. Centralized `modal-decision`, `showDecision(options)`, and `showToast(message, type)` inside `templates/backoffice_base.html`, making institutional clinical dialogs universally accessible to all backoffice modules.<br>4. Upgraded form button actions and validation across `HWB-WEB Sigma Executive.html`, `backoffice_operations.html`, `backoffice_scope_builder.html`, `backoffice_workflow.html`, and `sales_desk.html`, eradicating all raw browser `alert()` and `confirm()` calls.<br>5. Hardened `delete_user` controller in `blueprints/operations.py` with pre-delete target verification, clean user-facing flash feedback, and explicit `conn.rollback()` on exception.<br>6. Created automated Poka-Yoke inspection test `scratch/test_prohibited_browser_dialogs.py` verifying zero instances of prohibited browser dialogs across all active templates and static JS files (5/5 tests passing 100%).<br>7. Formally logged `BUG-086` in `docs/PROBLEMS-TO-SOLVE.md` with full root-cause analysis and preventative mandates. |
-| **Next Step** | Stand by for next executive directive from CEO Humberto Dominguez. |
+| **Objective** | Production Azure Container Deployment & Empirical Handover Verification (BUG-086, Sales Desk Hardening & Full Link Audit) |
+| **Heat Zone Files** | `database/schema_engine.py`, `blueprints/operations.py`, `blueprints/crm_api.py`, `templates/academy_catalog.html`, `scripts/deploy_live_container.sh`, `scratch/verify_live_azure_deployment.py`, `HWB-SESSION-RECOVERY.md` |
+| **Last Action** | 1. Built and deployed production container `hwbprodacr.azurecr.io/sigmafidelity-web:v5.2-2026-09-22-db60ec2` to Azure App Service (`hwb-institutional-website`) and custom domain `https://www.hwbcleaning.com`.<br>2. Discovered and resolved Azure PostgreSQL schema drift: provisioned missing telemetry columns (`tracking_token`, `opened_at`, `open_count`, `clicked_at`, `click_count`, `outbox_id`) in `database/schema_engine.py` and registered `012_marketing_tracking_and_builder` in modular migrations.<br>3. Implemented Poka-Yoke defensive query fallbacks in `blueprints/operations.py` for both `admin_operations()` and `sales_desk()`, eliminating HTTP 500 errors and restoring full 50-row lead table rendering.<br>4. Completed rigorous ISO 9001 claim sanitization across `templates/academy_catalog.html`, `blueprints/crm_api.py`, and migration scripts to "ISO 9001:2015 Compliant".<br>5. Empirically audited 22 public endpoints across `https://www.hwbcleaning.com` (100% HTTP 200 OK).<br>6. Empirically verified CEO Humberto Dominguez authentication (`hdominguez` & `admin`) yielding HTTP 302 -> `/admin/operations`, valid session cookies, and HTTP 200 across all 8 core backoffice modules (`/admin/operations`, `/admin/sales-desk`, `/admin/executive`, `/admin/master`, `/admin/construction-bids`, `/admin/institutional-bids`, `/manual`). |
+| **Next Step** | Handover complete. Stand by for next executive directive from CEO Humberto Dominguez. |
 | **Strategic Assessment Pipeline (Plan Table)** | **ARCH-003: SigmaClient™ Progressive Web App (PWA) Command Hub** — Staged for future assessment at 1,000 commercial client scale. Provides zero-download mobile home screen portal, offline-first inspection caching, interactive scope configurator, and SMS/email tokenized magic-link authentication, eliminating third-party platform risk (Telegram policy/pricing changes) at $0 recurring SaaS cost. |
 | **Live Azure Prod DB Count** | **`37,466`** Total Live Leads (`sigmajan-server.postgres.database.azure.com`) |
 | **Local Dev Sandbox Count** | **`28,643`** Total Dev Leads (Audit verified via `/api/v1/db-audit`) |
@@ -16,9 +16,9 @@
 | **ISO 9001 Compliance Baseline** | **`100% Compliant & Inspection-Ready`** (10-Clause Master Manual, Zero Certification Overclaims) |
 | **Institutional Footprint** | **`516,785 SF`** across 20 Public & Regional Facilities |
 | **Neural Cognitive Score** | **`100%` Enterprise Mature** (Fortune 500 Parity) |
-| **Database Latency** | **`1.14 ms`** (Live Container DB Connection Pool Active) |
-| **Session ID** | 2026-09-22-USER-GOVERNANCE-DECISION-MODAL-HARDENING |
-| **Timestamp** | 09/22/2026 12:08 PM |
+| **Database Latency** | **`10.34 ms`** (Live Azure VNet DB Connection Pool Active) |
+| **Session ID** | 2026-09-22-AZURE-PROD-DEPLOYMENT-AND-VERIFICATION-HANDOVER |
+| **Timestamp** | 09/22/2026 12:51 PM |
 
 ---
 *Note: This file is a temporary "Black Box" for immediate context recovery. It is updated after every successful Directive.*
