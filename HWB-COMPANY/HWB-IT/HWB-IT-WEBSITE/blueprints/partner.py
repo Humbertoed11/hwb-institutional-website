@@ -351,6 +351,8 @@ def bosanna_login():
     return render_template('bosanna_login.html')
 
 
+@partner_bp.route('/bosanna', methods=['GET', 'POST'], endpoint='bosanna_direct')
+@partner_bp.route('/bosanna-cockpit', methods=['GET', 'POST'], endpoint='bosanna_cockpit_direct')
 @partner_bp.route('/portal/bosanna/magic-login', methods=['GET', 'POST'], endpoint='bosanna_magic_login')
 def bosanna_magic_login():
     """Instant passwordless executive entrance for Angelica Hudgins."""
