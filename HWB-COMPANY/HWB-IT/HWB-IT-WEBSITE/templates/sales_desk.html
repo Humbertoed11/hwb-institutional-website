@@ -840,14 +840,15 @@
                         row.style.background = '#dcfce7';
                         row.innerHTML = `<td colspan="6" style="text-align: center; color: #166534; font-weight: 700; padding: 16px;">✓ Successfully Converted to Live Account ACC-${data.customer_id}! Handover Dispatched.</td>`;
                     }
+                    showToast(`Converted to Live Account ACC-${data.customer_id}! Handover dispatched.`, 'success');
                     setTimeout(() => location.reload(), 1500);
                 } else {
-                    alert(`Conversion Error: ${data.message || 'Server error'}`);
+                    showToast(`Conversion Error: ${data.message || 'Server error'}`, 'error');
                     btn.disabled = false;
                     btn.innerText = 'Confirm & Convert';
                 }
             } catch (err) {
-                alert(`Network Failure: ${err}`);
+                showToast(`Network Failure: ${err}`, 'error');
                 btn.disabled = false;
                 btn.innerText = 'Confirm & Convert';
             }
@@ -856,7 +857,7 @@
         async function submitFieldNote() {
             if (!currentLeadId) return;
             const noteText = document.getElementById('field-note-text').value.trim();
-            if (!noteText) { alert('Please enter a note.'); return; }
+            if (!noteText) { showToast('Please enter a note.', 'error'); return; }
 
             try {
                 const res = await fetch('/api/v1/activities', {
@@ -872,19 +873,40 @@
                 const data = await res.json();
                 if (data.status === 'success') {
                     closeModal('noteModal');
-                    alert('Field note logged successfully.');
+                    showToast('Field note logged successfully.', 'success');
                 } else {
-                    alert(`Failed to log note: ${data.message}`);
+                    showToast(`Failed to log note: ${data.message}`, 'error');
                 }
             } catch (err) {
-                alert(`Error: ${err}`);
+                showToast(`Error: ${err}`, 'error');
             }
         }
 
         function dispatchProposal() {
             const sqft = document.getElementById('calc-sqft').value;
             const monthly = document.getElementById('calc-monthly').innerText;
-            alert(`Proposal generated for ${sqft} SF at ${monthly}. Formal capability binder staged.`);
+            showToast(`Proposal generated for ${sqft} SF at ${monthly}. Formal capability binder staged.`, 'success');
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('sales-toast-container') || (function() {
+                const div = document.createElement('div');
+                div.id = 'sales-toast-container';
+                div.style.cssText = 'position: fixed; bottom: 2rem; right: 2rem; z-index: 99999; display: flex; flex-direction: column; gap: 0.75rem; pointer-events: none;';
+                document.body.appendChild(div);
+                return div;
+            })();
+            const toast = document.createElement('div');
+            const icon = type === 'success' ? '<i class="fas fa-check-circle" style="color: #10b981;"></i>' : '<i class="fas fa-exclamation-circle" style="color: #ef4444;"></i>';
+            const borderColor = type === 'success' ? '#10b981' : '#ef4444';
+            toast.style.cssText = `background: white; border-left: 4px solid ${borderColor}; padding: 1rem 1.5rem; border-radius: 6px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); font-weight: 700; font-size: 0.875rem; color: var(--slate-800, #1e293b); display: flex; align-items: center; gap: 0.75rem; pointer-events: auto;`;
+            toast.innerHTML = `${icon} <span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
         }
     </script>
 </body>

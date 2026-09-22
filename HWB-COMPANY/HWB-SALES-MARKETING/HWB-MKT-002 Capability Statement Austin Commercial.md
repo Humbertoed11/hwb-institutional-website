@@ -35,7 +35,7 @@ HWB Cleaning Services LLC is a premier provider of high-fidelity janitorial and 
 ## 5.0 Company Data
 *   **NAICS Code:** 561720 (Janitorial)
 *   **Service Region:** North Texas (DFW)
-*   **Certifications:** ISO 9001:2015 Registered
+*   **Quality Standards:** ISO 9001:2015 Compliant
 
 ---
 

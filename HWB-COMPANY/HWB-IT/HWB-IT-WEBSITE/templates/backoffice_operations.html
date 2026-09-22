@@ -5803,18 +5803,7 @@
     </div>
 </div>
 
-<!-- SigmaFidelity™ Decision Modal (Hardened 2026) -->
-<div id="modal-decision" class="isc-modal-overlay" style="display:none;">
-    <div class="isc-modal" style="max-width: 440px; text-align: center; padding: 3rem;">
-        <div id="decision-icon" style="font-size: 2.5rem; color: var(--brand); margin-bottom: 1.5rem;"><i class="fas fa-question-circle"></i></div>
-        <h2 id="decision-title" style="font-size: 1.5rem; font-weight: 800; color: var(--slate-900); margin-bottom: 0.5rem;">Are you sure?</h2>
-        <p id="decision-text" style="color: var(--slate-500); font-size: 0.95rem; margin-bottom: 2.5rem;">Please confirm this action to proceed.</p>
-        <div style="display: flex; gap: 1rem; justify-content: center;">
-            <button onclick="closeModal('modal-decision')" class="isc-btn isc-btn-outline" style="width: 140px;">Cancel</button>
-            <button id="btn-decision-confirm" class="isc-btn isc-btn-primary" style="width: 140px;">Confirm</button>
-        </div>
-    </div>
-</div>
+<!-- Modal decision now inherited from backoffice_base.html -->
 
 <!-- ============================================================================== -->
 <!-- 1. CAMPAIGN BUILDER MODAL (RIVALING APOLLO / HUBSPOT)                           -->
@@ -5920,7 +5909,7 @@
 
 &lt;p&gt;In operating a licensed childcare center in {city}, maintaining state chemical safety compliance under Texas Health and Human Services (HHS) and OSHA regulations is an ongoing priority. Traditional bleach solutions frequently present strong chemical odors, respiratory irritation among toddlers, and fabric degradation across classroom carpets.&lt;/p&gt;
 
-&lt;p&gt;&lt;strong&gt;HWB Cleaning Services LLC&lt;/strong&gt; provides an ISO 9001:2015 certified, hospital-grade green sanitization protocol engineered specifically for early educational environments. We replace harsh bleach mixtures with EPA List N hospital disinfectants that eliminate 99.99% of viral pathogens (RSV, Norovirus, Influenza) with zero toxic fumes and zero chemical residue.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;HWB Cleaning Services LLC&lt;/strong&gt; provides an ISO 9001:2015 compliant, hospital-grade green sanitization protocol engineered specifically for early educational environments. We replace harsh bleach mixtures with EPA List N hospital disinfectants that eliminate 99.99% of viral pathogens (RSV, Norovirus, Influenza) with zero toxic fumes and zero chemical residue.&lt;/p&gt;
 
 &lt;p&gt;As the local Owner &amp; Operator, I would be pleased to conduct a &lt;strong&gt;Complimentary 10-Point Sanitation Audit&lt;/strong&gt; of {facility_name} at no charge.&lt;/p&gt;
 
@@ -10630,41 +10619,56 @@
     }
 
     function executeOutboxBatch(action, limit) {
-        if (!confirm('Are you sure you want to ' + action + ' the next ' + limit + ' queued messages?')) return;
-        fetch('/api/v1/marketing/outbox/batch-action', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({action: action, limit: limit})
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.status === 'success') {
-                showToast(data.message, 'success');
-                setTimeout(() => { location.reload(); }, 1000);
-            } else {
-                showToast(data.message || 'Batch operation failed.', 'error');
+        showDecision({
+            title: `${action.toUpperCase()} Outbox Messages`,
+            text: `Are you sure you want to ${action} the next ${limit} queued messages?`,
+            confirmText: 'Execute Batch',
+            isDestructive: (action === 'cancel' || action === 'delete' || action === 'reject'),
+            icon: 'fa-mail-bulk',
+            onConfirm: () => {
+                fetch('/api/v1/marketing/outbox/batch-action', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({action: action, limit: limit})
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        showToast(data.message, 'success');
+                        setTimeout(() => { location.reload(); }, 1000);
+                    } else {
+                        showToast(data.message || 'Batch operation failed.', 'error');
+                    }
+                })
+                .catch(err => showToast('Batch error: ' + err, 'error'));
             }
-        })
-        .catch(err => showToast('Batch error: ' + err, 'error'));
+        });
     }
 
     function generateCampaignDrafts(campaignId, code) {
-        if (!confirm('Generate personalized HWB-COM-001 drafts for campaign ' + code + ' into the Outbox Queue?')) return;
-        fetch('/api/v1/marketing/campaign/' + campaignId + '/generate-drafts', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({limit: 50})
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.status === 'success') {
-                showToast(data.message, 'success');
-                setTimeout(() => { location.reload(); }, 1000);
-            } else {
-                showToast(data.message || 'Draft staging failed.', 'error');
+        showDecision({
+            title: 'Generate Campaign Drafts',
+            text: `Generate personalized HWB-COM-001 drafts for campaign ${code} into the Outbox Queue?`,
+            confirmText: 'Generate Drafts',
+            icon: 'fa-paper-plane',
+            onConfirm: () => {
+                fetch('/api/v1/marketing/campaign/' + campaignId + '/generate-drafts', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({limit: 50})
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        showToast(data.message, 'success');
+                        setTimeout(() => { location.reload(); }, 1000);
+                    } else {
+                        showToast(data.message || 'Draft staging failed.', 'error');
+                    }
+                })
+                .catch(err => showToast('Error staging drafts: ' + err, 'error'));
             }
-        })
-        .catch(err => showToast('Error staging drafts: ' + err, 'error'));
+        });
     }
 
     function updateAudiencePreview() {

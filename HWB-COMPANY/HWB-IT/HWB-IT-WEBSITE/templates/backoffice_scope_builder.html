@@ -85,10 +85,10 @@
  const taskName = document.getElementById('input_task').value.trim();
  const itemName = document.getElementById('input_item').value.trim();
 
- if (!areaName || !taskName) {
- alert("Area and Task are required for professional quality.");
- return;
- }
+  if (!areaName || !taskName) {
+  showToast("Area and Task are required for professional quality.", "error");
+  return;
+  }
 
  // 1. Find or Create Area
  let area = currentScope.find(a => a.name.toLowerCase() === areaName.toLowerCase());
@@ -164,15 +164,22 @@
  document.getElementById('final_service_id').value = document.getElementById('service_id_select').value;
  }
 
- function clearScope() {
- if (confirm("Reset current builder state?")) {
- currentScope = [];
- renderTree();
- document.getElementById('empty_msg').style.display = 'block';
- document.getElementById('submit_btn').disabled = true;
- document.getElementById('submit_btn').style.opacity = '0.5';
- }
- }
+  function clearScope() {
+      showDecision({
+          title: 'Reset Scope Builder',
+          text: 'Are you sure you want to reset the current builder state? All unsaved line items will be removed.',
+          confirmText: 'Reset Builder',
+          isDestructive: true,
+          icon: 'fa-undo',
+          onConfirm: () => {
+              currentScope = [];
+              renderTree();
+              document.getElementById('empty_msg').style.display = 'block';
+              document.getElementById('submit_btn').disabled = true;
+              document.getElementById('submit_btn').style.opacity = '0.5';
+          }
+      });
+  }
 
  document.getElementById('service_id_select').addEventListener('change', (e) => {
  document.getElementById('final_service_id').value = e.target.value;

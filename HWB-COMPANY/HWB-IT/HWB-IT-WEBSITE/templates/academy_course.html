@@ -784,7 +784,10 @@
                     document.getElementById('fail-msg-text').innerText = `You scored ${result.score}% (${result.correct_count} of ${result.total_questions} correct). An 80% passing grade is mandatory for OSHA & ISO 9001 compliance.`;
                 }
             } catch (err) {
-                alert('Connection error scoring quiz: ' + err.message);
+                if (document.getElementById('fail-msg-text') && document.getElementById('quiz-fail-box')) {
+                    document.getElementById('fail-msg-text').innerText = 'Connection error scoring quiz: ' + err.message;
+                    document.getElementById('quiz-fail-box').style.display = 'block';
+                }
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-award"></i> Submit for Certification';

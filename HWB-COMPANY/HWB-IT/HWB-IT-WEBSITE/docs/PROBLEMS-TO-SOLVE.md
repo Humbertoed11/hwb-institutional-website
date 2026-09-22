@@ -62,6 +62,7 @@ Responsibility: George (Architect)
 | 09/21/2026 | BUG-081 | Missing 'status' Column on Azure PostgreSQL 'Users' Table Triggering HTTP 500 on /login & Schema Parity Desync. | **RESOLVED** | CRITICAL |
 | 09/21/2026 | BUG-082 | CEO Login Alias & Password Permutation Rejection ("Invalid credentials." on www.hwbcleaning.com). | **RESOLVED** | CRITICAL |
 | 09/21/2026 | BUG-083 | Lead Data Integrity Contradictions (18,435 Legacy Car Lots Labeled Child Care, 81 Jammed Addresses, Blank Industries & Hidden Duplicates). | **RESOLVED** | HIGH |
+| 09/22/2026 | BUG-086 | Unformatted Native Browser Dialogs (confirm/alert) in User Governance Delete Action & Forms Missing Automated Inspection Gates. | **RESOLVED** | HIGH |
 
 ## BUG-080: Local Loopback Hostname (mop.test) Inaccessible to External Devices & Mobile Cleaners via Generated Onboarding Link
 **Detected:** 09/21/2026
@@ -936,6 +937,30 @@ CEO Humberto Dominguez attempting to log into `https://www.hwbcleaning.com/login
    - Standardized irregular phone numbers and preserved extensions in facility `notes`.
 2. **Schema Engine Integration:** Registered Migration 020 in `database/schema_engine.py` for idempotent execution across local and Azure production databases upon container boot.
 **Preventative:** Enforce inbound address and phone number sanitization during API synchronization and validate categorization against building capacity.
+
+## BUG-086: Unformatted Native Browser Dialogs (confirm/alert) in User Governance Delete Action & Forms Missing Automated Inspection Gates
+**Detected:** 09/22/2026
+**Status:** **RESOLVED**
+**Symptoms:**
+1. Clicking the Delete button in the "User Accounts & Access Governance" panel (`templates/HWB-WEB Sigma Executive.html`) triggered an unstyled, native browser dialog (`window.confirm`) stating *"Are you sure you want to delete account ...?"*.
+2. Password validation in user creation/edit forms triggered raw browser `alert()` popups when passwords mismatched.
+3. Batch actions in the Marketing Outbox and Scope Builder reset used raw `confirm()`, presenting inconsistent browser message boxes.
+4. If an exception occurred during account deletion (e.g. database foreign key constraints), `blueprints/operations.py` flashed raw PostgreSQL exception strings directly to the user without calling `conn.rollback()`.
+**Root Causes:**
+1. `templates/HWB-WEB Sigma Executive.html` relied on legacy inline `onsubmit="return confirm(...)"` and `alert(...)` rather than the clinical `showDecision()` modal engine.
+2. `modal-decision` and `showDecision()` were previously defined only locally in `templates/backoffice_operations.html`, leaving all other backoffice templates without access to standard decision modals.
+3. No automated CI/pre-commit inspection test existed in the test suite to scan templates for prohibited browser dialogs (`window.alert`, `window.confirm`, `window.prompt`), allowing these anti-patterns to slip into production commits undetected.
+4. Backend `delete_user` lacked `conn.rollback()` on exception and lacked clean pre-deletion target validation.
+**Solution:**
+1. **Centralized Decision Modal Architecture:** Moved `modal-decision`, `showDecision(options)`, and `showToast(message, type)` to `templates/backoffice_base.html`, making them universally available across all backoffice modules.
+2. **Upgraded User Accounts Delete Action:** Converted the Delete User button to invoke `confirmDeleteUser(userId, username)`, presenting a high-visibility, destructive-branded decision modal with explicit warnings before form submission.
+3. **Upgraded Form Validation & Actions:** Replaced all `alert()` calls in `HWB-WEB Sigma Executive.html`, `backoffice_scope_builder.html`, `backoffice_workflow.html`, and `sales_desk.html` with clinical toast notifications and decision modals.
+4. **Backend Resilience Hardening:** Hardened `delete_user` in `blueprints/operations.py` with pre-delete target verification, clean user-facing flash messaging, and explicit `conn.rollback()` on exceptions.
+5. **Poka-Yoke Inspection Quality Gate:** Created `scratch/test_prohibited_browser_dialogs.py` verifying 0 prohibited dialogs across all active templates and static JS files, passing 5/5 test assertions.
+6. **ISO 9001 Claim Sanitization:** Sanitized 8 occurrences of "ISO 9001:2015 Certified" / "Registered" to "ISO 9001:2015 Compliant" across all backoffice footers, letterheads, and capability statements per CEO approval.
+**Preventative:**
+1. Run `scratch/test_prohibited_browser_dialogs.py` in all CI and pre-handover verification test suites.
+2. All destructive and confirmation actions across backoffice forms must strictly use `showDecision({...})`. Inline `confirm()` and `alert()` are permanently prohibited.
 
 
 

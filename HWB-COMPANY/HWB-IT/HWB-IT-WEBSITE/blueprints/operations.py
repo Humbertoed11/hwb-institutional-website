@@ -1052,8 +1052,14 @@ def sigma_executive():
                     elif action == 'delete_user':
                         uid = request.form.get('user_id')
                         if str(uid) != str(current_user.id):
-                            cur.execute('DELETE FROM "Users" WHERE id = %s', (uid,))
-                            flash("User account deleted successfully.")
+                            cur.execute('SELECT username FROM "Users" WHERE id = %s', (uid,))
+                            target_u = cur.fetchone()
+                            if target_u:
+                                uname = target_u['username'] if isinstance(target_u, dict) else target_u[0]
+                                cur.execute('DELETE FROM "Users" WHERE id = %s', (uid,))
+                                flash(f"User account @{uname} permanently deleted.", "success")
+                            else:
+                                flash("User account not found.", "error")
                         else:
                             flash("Cannot delete currently active account.", "error")
                     elif action == 'update_password':
@@ -1093,8 +1099,10 @@ def sigma_executive():
                         cur.execute('UPDATE "PendingOutbox" SET status = \'REJECTED\' WHERE id = %s', (request.form.get('email_id'),))
                     
                     conn.commit()
-                except Exception as e: 
-                    flash(f"Executive Action Failure: {e}")
+                except Exception as e:
+                    conn.rollback()
+                    current_app.logger.error(f"[EXECUTIVE_ACTION_ERROR] Action '{action}' failed: {e}")
+                    flash(f"Executive Action Failed: Unable to complete {action}. System error logged.", "error")
 
                 redirect_tab = ""
                 if action and "social" in action: redirect_tab = "#social"

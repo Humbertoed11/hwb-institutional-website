@@ -45,7 +45,7 @@ To provide a standardized, high-fidelity letterhead for all HWB Cleaning Service
     <div class="hwb-footer" style="border-top: 1px solid #e2e8f0; padding-top: 20px; text-align: center; font-size: 10px; color: #94a3b8; line-height: 1.5;">
         <b>FIDELITY. SAFETY. RESPECT.</b><br>
         Texas Charter #802920409 • CAGE (SAM) #082830635 • Commercial EMR: .43<br>
-        © 2026 HWB Cleaning Services LLC. ISO 9001:2015 Registered.
+        © 2026 HWB Cleaning Services LLC. ISO 9001:2015 Compliant.
     </div>
 </div>
 ```

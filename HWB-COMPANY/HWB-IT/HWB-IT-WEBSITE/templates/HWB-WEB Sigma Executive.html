@@ -160,10 +160,10 @@
                             <input type="hidden" name="post_id" value="{{ post.id }}">
                             <button type="submit" class="isc-btn isc-btn-outline" style="color: #ef4444; border-color: #fca5a5;">Reject</button>
                         </form>
-                        <form action="{{ url_for('sigma_executive') }}" method="POST">
+                        <form id="form-delete-social-{{ post.id }}" action="{{ url_for('sigma_executive') }}" method="POST" style="display:inline;">
                             <input type="hidden" name="action" value="delete_social">
                             <input type="hidden" name="post_id" value="{{ post.id }}">
-                            <button type="submit" class="isc-btn isc-btn-outline" style="color: var(--slate-500);">Delete</button>
+                            <button type="button" onclick="confirmDeleteSocial('{{ post.id }}')" class="isc-btn isc-btn-outline" style="color: var(--slate-500);">Delete</button>
                         </form>
                     </div>
                 </div>
@@ -202,10 +202,10 @@
                             <input type="hidden" name="email_id" value="{{ email.id }}">
                             <button type="submit" class="isc-btn isc-btn-primary" style="background: #10b981;">Approve & Send</button>
                         </form>
-                        <form action="{{ url_for('sigma_executive') }}" method="POST">
+                        <form id="form-reject-email-{{ email.id }}" action="{{ url_for('sigma_executive') }}" method="POST" style="display:inline;">
                             <input type="hidden" name="action" value="reject_email">
                             <input type="hidden" name="email_id" value="{{ email.id }}">
-                            <button type="submit" class="isc-btn isc-btn-outline" style="color: #ef4444; border-color: #fca5a5;">Reject</button>
+                            <button type="button" onclick="confirmRejectEmail('{{ email.id }}')" class="isc-btn isc-btn-outline" style="color: #ef4444; border-color: #fca5a5;">Reject</button>
                         </form>
                     </div>
                 </div>
@@ -311,10 +311,10 @@
                                 <i class="fas fa-edit"></i> Edit
                             </button>
                             {% if current_user.id != user.id %}
-                                <form action="{{ url_for('sigma_executive') }}" method="POST" onsubmit="return confirm('Are you sure you want to delete account {{ user.username }}?');">
+                                <form id="form-delete-user-{{ user.id }}" action="{{ url_for('sigma_executive') }}" method="POST" style="display:inline;">
                                     <input type="hidden" name="action" value="delete_user">
                                     <input type="hidden" name="user_id" value="{{ user.id }}">
-                                    <button type="submit" class="isc-btn isc-btn-outline" style="height: 32px; padding: 0 0.5rem; font-size: 0.75rem; color: #ef4444; border-color: #fca5a5;">
+                                    <button type="button" onclick="confirmDeleteUser('{{ user.id }}', '{{ user.username }}')" class="isc-btn isc-btn-outline" title="Delete User Account" style="height: 32px; padding: 0 0.5rem; font-size: 0.75rem; color: #ef4444; border-color: #fca5a5;">
                                         <i class="fas fa-trash-alt"></i>
                                     </button>
                                 </form>
@@ -539,7 +539,7 @@ function validateAddUserForm(event) {
     const pass = document.getElementById('add_password').value;
     const confirm = document.getElementById('add_confirm_password').value;
     if (pass !== confirm) {
-        alert('Password and Confirm Password do not match. Please check and try again.');
+        showToast('Password and Confirm Password do not match. Please verify and try again.', 'error');
         event.preventDefault();
         return false;
     }
@@ -550,11 +550,53 @@ function validateEditUserForm(event) {
     const pass = document.getElementById('edit_password').value;
     const confirm = document.getElementById('edit_confirm_password').value;
     if (pass && pass !== confirm) {
-        alert('New Password and Confirm Password do not match. Please check and try again.');
+        showToast('New Password and Confirm Password do not match. Please verify and try again.', 'error');
         event.preventDefault();
         return false;
     }
     return true;
+}
+
+function confirmDeleteUser(userId, username) {
+    showDecision({
+        title: 'Delete User Account',
+        text: `Are you sure you want to permanently delete user account @${username}? This action will revoke all system credentials and access rights immediately.`,
+        confirmText: 'Delete Account',
+        isDestructive: true,
+        icon: 'fa-user-slash',
+        onConfirm: () => {
+            const form = document.getElementById(`form-delete-user-${userId}`);
+            if (form) form.submit();
+        }
+    });
+}
+
+function confirmDeleteSocial(postId) {
+    showDecision({
+        title: 'Delete Social Post',
+        text: 'Are you sure you want to permanently delete this social media post from the staging queue?',
+        confirmText: 'Delete Post',
+        isDestructive: true,
+        icon: 'fa-trash-alt',
+        onConfirm: () => {
+            const form = document.getElementById(`form-delete-social-${postId}`);
+            if (form) form.submit();
+        }
+    });
+}
+
+function confirmRejectEmail(emailId) {
+    showDecision({
+        title: 'Reject Outbound Email',
+        text: 'Are you sure you want to reject and cancel this staged outbound email dispatch?',
+        confirmText: 'Reject Email',
+        isDestructive: true,
+        icon: 'fa-envelope-open-text',
+        onConfirm: () => {
+            const form = document.getElementById(`form-reject-email-${emailId}`);
+            if (form) form.submit();
+        }
+    });
 }
 
 function openEditUserModalFromRow(btn) {

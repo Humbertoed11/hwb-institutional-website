@@ -171,13 +171,23 @@
  return Math.round(total / INITIAL_DATA.areas.length);
  }, [progress]);
 
- const handleReset = () => {
- if (confirm("Reset current shift data? This will clear all progress.")) {
- setProgress({});
- setSignoff("");
- localStorage.removeItem('hwb_shift_data');
- }
- };
+  const handleReset = () => {
+      showDecision({
+          title: 'Reset Shift Data',
+          text: 'Are you sure you want to reset current shift data? This will clear all recorded progress.',
+          confirmText: 'Reset Progress',
+          isDestructive: true,
+          icon: 'fa-trash-alt',
+          onConfirm: () => {
+              setProgress({});
+              setSignoff("");
+              localStorage.removeItem('hwb_shift_data');
+              if (typeof showToast === 'function') {
+                  showToast('Shift data successfully reset.', 'success');
+              }
+          }
+      });
+  };
 
  return (
  <div className="min-h-screen bg-slate-50 font-sans text-slate-900 pb-20">

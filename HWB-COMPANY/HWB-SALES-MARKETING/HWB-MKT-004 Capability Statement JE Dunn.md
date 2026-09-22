@@ -34,7 +34,7 @@ HWB Cleaning Services LLC is a precision-driven provider of janitorial and post-
 
 ## 5.0 Differentiators
 *   **SigmaFidelity™ Metrics:** Cpk: 6.67, DPMO: 1,785, RTY: 97.0%.
-*   **ISO 9001:2015 Registered:** Every procedure is documented and audited.
+*   **ISO 9001:2015 Compliant:** Every procedure is documented and audited.
 
 ## 6.0 Contact Information
 *   **Website:** [hwbcleaning.com](https://hwbcleaning.com)

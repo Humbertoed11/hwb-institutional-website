@@ -675,7 +675,7 @@ function selectRoleAndApply(title, id) {
 function viewJobDescription(id) {
     const pos = (window.publicJobPositions || []).find(p => p.id === id);
     if (!pos) {
-        alert('Position details not found.');
+        console.warn('Position details not found for id:', id);
         return;
     }
 

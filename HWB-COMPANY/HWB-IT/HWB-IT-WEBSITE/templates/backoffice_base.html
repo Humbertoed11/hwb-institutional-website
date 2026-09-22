@@ -437,19 +437,32 @@
  </div>
 
  <!-- company Logout Confirmation Modal -->
- <div id="modal-logout-confirm" class="isc-modal-overlay" style="display:none;">
- <div class="isc-modal" style="max-width: 440px; text-align: center; padding: 3rem;">
- <div style="font-size: 2.5rem; color: var(--brand); margin-bottom: 1.5rem;"><i class="fas fa-power-off"></i></div>
- <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--slate-900); margin-bottom: 0.5rem;">Log out now?</h2>
- <p style="color: var(--slate-500); font-size: 0.95rem; margin-bottom: 2.5rem;">All unsaved changes will be lost. Confirm session termination.</p>
- <div style="display: flex; gap: 1rem; justify-content: center;">
- <button onclick="closeModal('modal-logout-confirm')" class="isc-btn isc-btn-outline" style="width: 140px;">Stay</button>
- <a href="{{ url_for('logout') }}" id="btn-final-logout" class="isc-btn isc-btn-primary" style="width: 140px; background: #ef4444;">Log Out</a>
- </div>
- </div>
- </div>
+  <div id="modal-logout-confirm" class="isc-modal-overlay" style="display:none;">
+  <div class="isc-modal" style="max-width: 440px; text-align: center; padding: 3rem;">
+  <div style="font-size: 2.5rem; color: var(--brand); margin-bottom: 1.5rem;"><i class="fas fa-power-off"></i></div>
+  <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--slate-900); margin-bottom: 0.5rem;">Log out now?</h2>
+  <p style="color: var(--slate-500); font-size: 0.95rem; margin-bottom: 2.5rem;">All unsaved changes will be lost. Confirm session termination.</p>
+  <div style="display: flex; gap: 1rem; justify-content: center;">
+  <button onclick="closeModal('modal-logout-confirm')" class="isc-btn isc-btn-outline" style="width: 140px;">Stay</button>
+  <a href="{{ url_for('logout') }}" id="btn-final-logout" class="isc-btn isc-btn-primary" style="width: 140px; background: #ef4444;">Log Out</a>
+  </div>
+  </div>
+  </div>
 
- <div class="backoffice-container">
+  <!-- SigmaFidelity™ Institutional Decision Modal -->
+  <div id="modal-decision" class="isc-modal-overlay" style="display:none; z-index: 9999;">
+      <div class="isc-modal" style="max-width: 440px; text-align: center; padding: 2.5rem;">
+          <div id="decision-icon" style="font-size: 2.5rem; color: var(--brand); margin-bottom: 1.25rem;"><i class="fas fa-question-circle"></i></div>
+          <h2 id="decision-title" style="font-size: 1.35rem; font-weight: 800; color: var(--slate-900); margin-bottom: 0.5rem;">Are you sure?</h2>
+          <p id="decision-text" style="color: var(--slate-500); font-size: 0.9rem; line-height: 1.5; margin-bottom: 2rem;">Please confirm this action to proceed.</p>
+          <div style="display: flex; gap: 1rem; justify-content: center;">
+              <button type="button" onclick="closeModal('modal-decision')" class="isc-btn isc-btn-outline" style="width: 140px;">Cancel</button>
+              <button type="button" id="btn-decision-confirm" class="isc-btn isc-btn-primary" style="width: 140px;">Confirm</button>
+          </div>
+      </div>
+  </div>
+
+  <div class="backoffice-container">
  {% include "components/mega_bar.html" %}
 
  <main class="bo-main {% block bo_main_class %}{% endblock %}">
@@ -509,7 +522,7 @@
  <div style="display: flex; align-items: center; gap: 2rem;">
  <div style="display: flex; align-items: center; gap: 0.75rem; background: var(--slate-50); padding: 0.5rem 1.25rem; border-radius: 6px; border: 1px solid var(--slate-200);">
  <i class="fas fa-certificate" style="color: var(--brand);"></i>
- <span style="font-size: 0.7rem; font-weight: 900; color: var(--slate-900); text-transform: uppercase; letter-spacing: 0.05em;">ISO 9001:2015 CERTIFIED</span>
+ <span style="font-size: 0.7rem; font-weight: 900; color: var(--slate-900); text-transform: uppercase; letter-spacing: 0.05em;">ISO 9001:2015 COMPLIANT</span>
  </div>
  <a href="{{ url_for('privacy_policy') }}" style="color: var(--slate-400); text-decoration: none; font-size: 0.8rem; font-weight: 700;">Privacy Policy</a>
  </div>
@@ -531,6 +544,53 @@
           el.style.display = 'none';
           document.body.style.overflow = 'auto';
       }
+  }
+
+  // --- SigmaFidelity™ Global Decision Modal Engine ---
+  function showDecision(options) {
+      const modal = document.getElementById('modal-decision');
+      const title = document.getElementById('decision-title');
+      const text = document.getElementById('decision-text');
+      const icon = document.getElementById('decision-icon');
+      const confirmBtn = document.getElementById('btn-decision-confirm');
+      if (!modal) return;
+
+      title.innerText = options.title || 'Are you sure?';
+      text.innerText = options.text || 'Please confirm this action to proceed.';
+      confirmBtn.innerText = options.confirmText || 'Confirm';
+      confirmBtn.style.background = options.isDestructive ? '#ef4444' : 'var(--brand-gradient, #2563eb)';
+      icon.style.color = options.isDestructive ? '#ef4444' : 'var(--brand, #2563eb)';
+      icon.innerHTML = `<i class="fas ${options.icon || 'fa-question-circle'}"></i>`;
+
+      confirmBtn.onclick = () => {
+          if (typeof options.onConfirm === 'function') {
+              options.onConfirm();
+          }
+          closeModal('modal-decision');
+      };
+      openModal('modal-decision');
+  }
+
+  // --- SigmaFidelity™ Global Toast Notification System ---
+  function showToast(message, type = 'success') {
+      const container = document.getElementById('isc-toast-container') || (function() {
+          const div = document.createElement('div');
+          div.id = 'isc-toast-container';
+          div.style.cssText = 'position: fixed; bottom: 2rem; right: 2rem; z-index: 99999; display: flex; flex-direction: column; gap: 0.75rem; pointer-events: none;';
+          document.body.appendChild(div);
+          return div;
+      })();
+      const toast = document.createElement('div');
+      const icon = type === 'success' ? '<i class="fas fa-check-circle" style="color: #10b981;"></i>' : '<i class="fas fa-exclamation-circle" style="color: #ef4444;"></i>';
+      const borderColor = type === 'success' ? '#10b981' : '#ef4444';
+      toast.style.cssText = `background: white; border-left: 4px solid ${borderColor}; padding: 1rem 1.5rem; border-radius: 6px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); font-weight: 700; font-size: 0.875rem; color: var(--slate-800, #1e293b); display: flex; align-items: center; gap: 0.75rem; pointer-events: auto; animation: slideInUp 0.3s ease forwards;`;
+      toast.innerHTML = `${icon} <span>${message}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => {
+          toast.style.opacity = '0';
+          toast.style.transition = 'opacity 0.3s ease';
+          setTimeout(() => toast.remove(), 300);
+      }, 4000);
   }
 
   // --- Sigmaquality™ Connection Sequence ---
