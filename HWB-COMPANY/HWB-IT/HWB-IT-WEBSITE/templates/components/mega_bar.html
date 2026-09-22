@@ -195,7 +195,7 @@
             {% endif %}
         </nav>
         
-        <div class="desktop-ease-controls" style="display: flex; align-items: center; gap: 2rem;">
+        <div class="desktop-ease-controls" style="display: flex; align-items: center; gap: 1.5rem;">
             {% if not current_user.is_authenticated %}
                 <div class="header-phone" style="display: flex; flex-direction: column; text-align: right;">
                     <span style="font-size: 0.65rem; font-weight: 800; color: var(--hwb-slate); text-transform: uppercase; letter-spacing: 0.1em;">Direct Connect</span>
@@ -208,50 +208,71 @@
                     <i class="fas fa-shield-alt" style="margin-right: 6px; color: var(--brand);"></i> {{ nav_access.role_name or 'Active' }} Session
                 </div>
             {% endif %}
+
+            <!-- Mobile Hamburger Toggle (Phones & Tablets Only) -->
+            <button type="button" class="mobile-toggle" aria-label="Open Navigation Menu" onclick="toggleMobileMenu()">
+                <span class="hamburger-bar"></span>
+                <span class="hamburger-bar"></span>
+                <span class="hamburger-bar"></span>
+            </button>
         </div>
     </div>
 </header>
 
-<!-- 2026 Sigmaquality™ Mobile Menu System -->
+<!-- 2026 Sigmaquality™ Mobile Drawer System -->
 <div id="mobile-overlay" class="mobile-overlay">
+    <div class="mobile-overlay-header">
+        <a href="/" onclick="toggleMobileMenu()">
+            <img src="{{ url_for('static', filename='logo_standard.png') }}" alt="HWB Cleaning" style="height: 38px;">
+        </a>
+        <button type="button" class="mobile-close-btn" aria-label="Close Navigation Menu" onclick="toggleMobileMenu()">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
     <div class="mobile-overlay-links">
-        <a href="/">Home</a>
+        <a href="/" onclick="toggleMobileMenu()"><i class="fas fa-home" style="margin-right: 8px; color: #004889;"></i> Home</a>
+        
         {% if nav_access.can_view_command_hub %}
-            <div style="font-weight: 900; color: var(--hwb-blue); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: -1rem;">Command Hub</div>
-            <a href="{{ url_for('admin_operations', view='leads') }}" class="sub-link">Leads List</a>
-            <a href="{{ url_for('admin_operations', view='accounts') }}" class="sub-link">Accounts</a>
-            <a href="{{ url_for('admin_operations', view='workforce') }}" class="sub-link">Workforce & Subs</a>
+            <div class="mobile-menu-section-label">Command Hub</div>
+            <a href="{{ url_for('admin_operations', view='leads') }}" class="sub-link" onclick="toggleMobileMenu()">Leads Pipeline</a>
+            <a href="{{ url_for('admin_operations', view='accounts') }}" class="sub-link" onclick="toggleMobileMenu()">Client Accounts</a>
+            <a href="{{ url_for('admin_operations', view='workforce') }}" class="sub-link" onclick="toggleMobileMenu()">Workforce & Subs</a>
             {% if nav_access.is_executive %}
-            <a href="{{ url_for('sigma_executive') }}" class="sub-link">Executive Pulse</a>
-            <a href="{{ url_for('sigmajan_lab') }}" class="sub-link">The Lab</a>
+            <a href="{{ url_for('sigma_executive') }}" class="sub-link" onclick="toggleMobileMenu()">Executive Pulse</a>
+            <a href="{{ url_for('sigmajan_lab') }}" class="sub-link" onclick="toggleMobileMenu()">The Lab</a>
             {% endif %}
-            <a href="{{ url_for('manual_index') }}" class="sub-link">SOP Manual</a>
-            <a href="{{ url_for('logout') }}" class="sub-link" style="color: #ef4444;">Log Out</a>
+            <a href="{{ url_for('manual_index') }}" class="sub-link" onclick="toggleMobileMenu()">SOP Manual</a>
+            <a href="{{ url_for('logout') }}" class="sub-link" style="color: #ef4444;" onclick="toggleMobileMenu()">Log Out</a>
         {% elif nav_access.is_sales %}
-            <div style="font-weight: 900; color: var(--hwb-blue); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: -1rem;">Outside Sales</div>
-            <a href="{{ url_for('sales_desk') }}" class="sub-link" style="font-weight: 800; color: #1e3a8a;"><i class="fas fa-briefcase"></i> Field Sales Desk</a>
-            <a href="{{ url_for('logout') }}" class="sub-link" style="color: #ef4444;">Log Out</a>
+            <div class="mobile-menu-section-label">Outside Sales</div>
+            <a href="{{ url_for('sales_desk') }}" class="sub-link" style="font-weight: 800; color: #1e3a8a;" onclick="toggleMobileMenu()"><i class="fas fa-briefcase"></i> Field Sales Desk</a>
+            <a href="{{ url_for('logout') }}" class="sub-link" style="color: #ef4444;" onclick="toggleMobileMenu()">Log Out</a>
         {% endif %}
-            <div style="font-weight: 900; color: var(--hwb-blue); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: -1rem;">Our Services</div>
-            <a href="{{ url_for('services_janitorial') }}" class="sub-link">Janitorial Cleaning</a>
-            <a href="{{ url_for('services_commercial') }}" class="sub-link">Commercial deep cleaning</a>
-            <a href="{{ url_for('services_industrial') }}" class="sub-link">Industrial & Warehouse</a>
-            <a href="{{ url_for('services_construction') }}" class="sub-link">Construction Services</a>
-            <div style="font-weight: 900; color: var(--hwb-blue); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; margin-top: 1rem; margin-bottom: -1rem;">Service Areas</div>
-            <a href="{{ url_for('location_page', city='dallas') }}" class="sub-link">Dallas</a>
-            <a href="{{ url_for('location_page', city='plano') }}" class="sub-link">Plano</a>
-            <a href="{{ url_for('location_page', city='fort-worth') }}" class="sub-link">Fort Worth</a>
-            <a href="{{ url_for('location_page', city='waxahachie') }}" class="sub-link">Waxahachie</a>
-            <a href="{{ url_for('location_page', city='frisco') }}" class="sub-link">Frisco</a>
-            <a href="{{ url_for('location_page', city='mckinney') }}" class="sub-link">McKinney</a>
-            <a href="{{ url_for('about') }}">About Us</a>
-            <a href="{{ url_for('work_with_us') }}" class="sub-link" style="color: var(--brand); font-weight: 800;"><i class="fas fa-users-cog"></i> Work With Us</a>
+
+        <div class="mobile-menu-section-label">Our Services</div>
+        <a href="{{ url_for('services_janitorial') }}" class="sub-link" onclick="toggleMobileMenu()">Janitorial Cleaning</a>
+        <a href="{{ url_for('services_commercial') }}" class="sub-link" onclick="toggleMobileMenu()">Commercial Deep Cleaning</a>
+        <a href="{{ url_for('services_industrial') }}" class="sub-link" onclick="toggleMobileMenu()">Industrial & Warehouse</a>
+        <a href="{{ url_for('services_construction') }}" class="sub-link" onclick="toggleMobileMenu()">Construction Final Clean</a>
+
+        <div class="mobile-menu-section-label">Service Areas</div>
+        <a href="{{ url_for('location_page', city='dallas') }}" class="sub-link" onclick="toggleMobileMenu()">Dallas</a>
+        <a href="{{ url_for('location_page', city='plano') }}" class="sub-link" onclick="toggleMobileMenu()">Plano</a>
+        <a href="{{ url_for('location_page', city='fort-worth') }}" class="sub-link" onclick="toggleMobileMenu()">Fort Worth</a>
+        <a href="{{ url_for('location_page', city='waxahachie') }}" class="sub-link" onclick="toggleMobileMenu()">Waxahachie</a>
+        <a href="{{ url_for('location_page', city='frisco') }}" class="sub-link" onclick="toggleMobileMenu()">Frisco</a>
+        <a href="{{ url_for('location_page', city='mckinney') }}" class="sub-link" onclick="toggleMobileMenu()">McKinney</a>
+
+        <div class="mobile-menu-section-label">Company</div>
+        <a href="{{ url_for('about') }}" onclick="toggleMobileMenu()">About Us</a>
+        <a href="{{ url_for('work_with_us') }}" class="sub-link" style="color: var(--brand); font-weight: 800;" onclick="toggleMobileMenu()"><i class="fas fa-users-cog"></i> Work With Us</a>
     </div>
     
     <div class="mobile-overlay-footer">
-        <div style="font-weight: 900; color: var(--hwb-dark); font-size: 1.25rem;">(214)-586-0257</div>
-        <p style="color: var(--hwb-slate); font-size: 0.9rem; margin-top: 0.5rem; font-weight: 600;">Plano, Texas | Serving North Texas</p>
-        <a href="{{ url_for('get_quote') }}" class="nav-cta" style="display: block; margin-top: 2rem; text-align: center;">Start a quote</a>
+        <a href="tel:+12145860257" style="font-weight: 900; color: #004889; font-size: 1.35rem; text-decoration: none; display: block;">(214)-586-0257</a>
+        <p style="color: var(--hwb-slate); font-size: 0.85rem; margin-top: 0.35rem; font-weight: 600;">Plano, Texas | Serving North Texas</p>
+        <a href="{{ url_for('get_quote') }}" class="nav-cta" style="display: block; margin-top: 1.25rem; text-align: center;" onclick="toggleMobileMenu()">Start a Quote</a>
     </div>
 </div>
 
@@ -262,7 +283,9 @@
     const isOpening = !overlay.classList.contains('active');
     
     overlay.classList.toggle('active');
-    toggle.classList.toggle('active');
+    if (toggle) {
+        toggle.classList.toggle('active');
+    }
     document.body.style.overflow = isOpening ? 'hidden' : 'auto';
  }
 </script>

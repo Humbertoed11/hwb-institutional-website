@@ -66,6 +66,7 @@
  Approved By: Humberto Dominguez (CEO)
  -->
  <link rel="stylesheet" href="{{ url_for('static', filename='HWB-WEB Style.css') }}">
+ <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile_engine.css') }}?v=2.4.1">
  <link rel="preconnect" href="https://fonts.googleapis.com">
  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -219,7 +220,18 @@
    });
  </script>
 
+  {% if request.endpoint != 'login' %}
+  <!-- Mobile Sticky Action Bar (Smartphones <= 768px Only) -->
+  <div class="mobile-action-bar">
+      <a href="tel:+12145860257" class="mobile-bar-btn mobile-bar-call">
+          <i class="fas fa-phone-alt"></i> Call (214)-586-0257
+      </a>
+      <a href="{{ url_for('get_quote') }}" class="mobile-bar-btn mobile-bar-quote">
+          Start a Quote <i class="fas fa-arrow-right"></i>
+      </a>
+  </div>
+  {% endif %}
+
  {% block scripts %}{% endblock %}
 </body>
 </html>
-
