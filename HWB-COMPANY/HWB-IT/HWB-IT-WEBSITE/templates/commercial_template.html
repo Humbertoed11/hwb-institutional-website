@@ -86,88 +86,88 @@
  <p style="font-size: 1rem; color: var(--hwb-slate);">Get a clear plan for your building’s cleaning and set up a quick walkthrough.</p>
  </div>
 
- <div class="isc-card" style="padding: 2.5rem; border-radius: 6px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid var(--slate-200);">
- <form action="{{ url_for('get_quote') }}" method="POST" id="quote-form-main" class="sigma-form-container">
- <div class="sigma-form-body">
- <!-- 3-Column Bento Grid for Velocity -->
- <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2.5rem;">
- 
- <!-- Column 1: Building -->
- <div class="sigma-form-group">
- <span class="sigma-form-header">Building</span>
- <div class="sigma-field">
- <label>Building Type</label>
- <select name="facility_type" required class="sigma-input">
- <option value="office">Professional Office</option>
- <option value="medical">Medical Building</option>
- <option value="industrial">Warehouse Hub</option>
- <option value="daycare">Educational Center</option>
- <option value="other">Other</option>
- </select>
- </div>
- <div class="sigma-field">
- <label style="display: flex; justify-content: space-between;">
- <span>Size (SQF)</span>
- <strong id="sqft_label_home" style="color: var(--hwb-blue); font-weight: 800;">50,000 SQF</strong>
- </label>
- <input type="range" name="sqft" id="sqft_slider_home" min="500" max="1000000" step="500" value="50000" class="sigma-range-instrument" oninput="document.getElementById('sqft_label_home').innerText = Number(this.value).toLocaleString() + ' SQF'">
- </div>
- </div>
+    <div class="isc-card sigma-bento-quote-card" style="padding: 2.5rem; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid var(--slate-200);">
+        <form action="{{ url_for('get_quote') }}" method="POST" id="quote-form-main" class="sigma-form-container">
+            <div class="sigma-form-body">
+                <!-- Responsive 3-Column Bento Grid: Collapses on Tablet & Phone -->
+                <div class="sigma-bento-quote-grid" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2.5rem;">
+                    
+                    <!-- Column 1: Building -->
+                    <div class="sigma-form-group">
+                        <span class="sigma-form-header">Building</span>
+                        <div class="sigma-field">
+                            <label>Building Type</label>
+                            <select name="facility_type" required class="sigma-input">
+                                <option value="office">Professional Office</option>
+                                <option value="medical">Medical Building</option>
+                                <option value="industrial">Warehouse Hub</option>
+                                <option value="daycare">Educational Center</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="sigma-field">
+                            <label style="display: flex; justify-content: space-between;">
+                                <span>Size (SQF)</span>
+                                <strong id="sqft_label_home" style="color: var(--hwb-blue); font-weight: 800;">50,000 SQF</strong>
+                            </label>
+                            <input type="range" name="sqft" id="sqft_slider_home" min="500" max="1000000" step="500" value="50000" class="sigma-range-instrument" oninput="document.getElementById('sqft_label_home').innerText = Number(this.value).toLocaleString() + ' SQF'">
+                        </div>
+                    </div>
 
- <!-- Column 2: Requirements -->
- <div class="sigma-form-group">
- <span class="sigma-form-header">Requirements</span>
- <div class="sigma-field">
- <label>Traffic Cycle</label>
- <select name="need" required class="sigma-input">
- <option value="1">Slow Traffic</option>
- <option value="2" selected>High Traffic</option>
- <option value="3">24/7 Production</option>
- </select>
- </div>
- <div class="sigma-field">
- <label>Service Frequency</label>
- <select name="frequency" required class="sigma-input">
- <option value="Daily (5 Days)">Daily (5 Days)</option>
- <option value="24/7 (7 Days)">24/7 (7 Days)</option>
- <option value="3x Weekly">3x Weekly</option>
- <option value="Weekly">Weekly</option>
- <option value="Bi-Weekly">Bi-Weekly</option>
- </select>
- </div>
- </div>
+                    <!-- Column 2: Requirements -->
+                    <div class="sigma-form-group">
+                        <span class="sigma-form-header">Requirements</span>
+                        <div class="sigma-field">
+                            <label>Traffic Cycle</label>
+                            <select name="need" required class="sigma-input">
+                                <option value="1">Slow Traffic</option>
+                                <option value="2" selected>High Traffic</option>
+                                <option value="3">24/7 Production</option>
+                            </select>
+                        </div>
+                        <div class="sigma-field">
+                            <label>Service Frequency</label>
+                            <select name="frequency" required class="sigma-input">
+                                <option value="Daily (5 Days)">Daily (5 Days)</option>
+                                <option value="24/7 (7 Days)">24/7 (7 Days)</option>
+                                <option value="3x Weekly">3x Weekly</option>
+                                <option value="Weekly">Weekly</option>
+                                <option value="Bi-Weekly">Bi-Weekly</option>
+                            </select>
+                        </div>
+                    </div>
 
- <!-- Column 3: Contact & Submit -->
- <div class="sigma-form-group">
- <span class="sigma-form-header">Contact Information</span>
- <div class="sigma-field">
- <label>Full Name</label>
- <input type="text" name="name" required placeholder="Authorized Manager" class="sigma-input">
- </div>
- <div class="sigma-field">
- <label>Company Name</label>
- <input type="text" name="company" required placeholder="Company LLC" class="sigma-input">
- </div>
- <div class="sigma-field">
- <label>Work Email</label>
- <input type="email" name="email" required placeholder="manager@company.com" class="sigma-input">
- </div>
- <div class="sigma-field">
- <label>Phone Number</label>
- <input type="tel" name="phone" id="phone_home" required placeholder="(214) 000-0000" class="sigma-input">
- </div>
- </div>
- </div>
- </div>
+                    <!-- Column 3: Contact & Submit -->
+                    <div class="sigma-form-group">
+                        <span class="sigma-form-header">Contact Information</span>
+                        <div class="sigma-field">
+                            <label>Full Name</label>
+                            <input type="text" name="name" required autocomplete="name" placeholder="Authorized Manager" class="sigma-input">
+                        </div>
+                        <div class="sigma-field">
+                            <label>Company Name</label>
+                            <input type="text" name="company" required autocomplete="organization" placeholder="Company LLC" class="sigma-input">
+                        </div>
+                        <div class="sigma-field">
+                            <label>Work Email</label>
+                            <input type="email" name="email" required autocomplete="email" inputmode="email" placeholder="manager@company.com" class="sigma-input">
+                        </div>
+                        <div class="sigma-field">
+                            <label>Phone Number</label>
+                            <input type="tel" name="phone" id="phone_home" required autocomplete="tel" inputmode="tel" placeholder="(214) 000-0000" class="sigma-input">
+                        </div>
+                    </div>
+                </div>
+            </div>
 
- <div class="sigma-form-actions" style="background: transparent; margin-top: 2rem;">
- <button type="submit" id="submit-home-btn" class="isc-btn isc-btn-primary" style="height: 48px; padding: 0 4rem; font-weight: 800;">
- <span>Send My Cleaning Request</span>
- <i class="fas fa-arrow-right" style="margin-left: 0.5rem;"></i>
- </button>
- </div>
- </form>
- </div>
+            <div class="sigma-form-actions" style="background: transparent; margin-top: 2rem;">
+                <button type="submit" id="submit-home-btn" class="isc-btn isc-btn-primary" style="height: 50px; font-weight: 800;">
+                    <span>Send My Cleaning Request</span>
+                    <i class="fas fa-arrow-right" style="margin-left: 0.5rem;"></i>
+                </button>
+            </div>
+        </form>
+    </div>
  </div>
  </section>
 

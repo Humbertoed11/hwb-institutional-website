@@ -487,3 +487,255 @@
         display: none !important;
     }
 }
+
+/* ==========================================================================
+   9.0 UNIVERSAL MOBILE & TABLET FORM SYSTEM
+   Standard: HWB-QMS-7.2 Web Presentation & Form Usability Standards
+   Scope: Activates on <= 1024px (Tablets) and <= 768px (Smartphones)
+   ========================================================================== */
+
+/* 9.1 Tablet Optimization (769px - 1024px) */
+@media (max-width: 1024px) {
+    .sigma-quote-card,
+    .sigma-home-quote-card {
+        padding: 2.25rem 2rem !important;
+    }
+
+    .sigma-quote-grid {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 2rem !important;
+    }
+
+    .sigma-bento-quote-grid {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 1.75rem !important;
+    }
+
+    .sigma-bento-quote-grid .sigma-form-group:nth-child(3) {
+        grid-column: span 2 !important;
+    }
+}
+
+/* 9.2 Smartphone Optimization (<= 768px) */
+@media (max-width: 768px) {
+    /* Form Sections & Page Padding */
+    .quote-page-section,
+    #quote-form-home {
+        padding: 3rem 0 !important;
+    }
+
+    /* Cards */
+    .sigma-quote-card,
+    .sigma-home-quote-card,
+    .isc-card.form-card-responsive {
+        padding: 1.5rem 1.15rem !important;
+        border-radius: 10px !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Dedicated Quote Form Grid: Sequential 1-Column Flow */
+    .sigma-quote-grid {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 2rem !important;
+        width: 100% !important;
+    }
+
+    .sigma-quote-col {
+        width: 100% !important;
+        grid-column: span 1 !important;
+    }
+
+    /* Home Quote Grid: 1-Column Vertical Stack */
+    .sigma-home-quote-grid {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 1rem !important;
+        width: 100% !important;
+    }
+
+    .sigma-home-quote-grid .sigma-field {
+        grid-column: span 1 !important;
+        width: 100% !important;
+        margin-bottom: 0 !important;
+    }
+
+    /* Sector Bento Quote Grid: 1-Column Stack */
+    .sigma-bento-quote-grid {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 1.75rem !important;
+        width: 100% !important;
+    }
+
+    /* Form Fields & Labels */
+    .sigma-field {
+        margin-bottom: 1.25rem !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .sigma-field label {
+        font-size: 0.85rem !important;
+        font-weight: 700 !important;
+        margin-bottom: 0.45rem !important;
+        display: block !important;
+    }
+
+    /* Inputs, Selects & Textareas (Zero iOS Zoom, Touch-Friendly) */
+    .sigma-input,
+    input.sigma-input,
+    select.sigma-input,
+    textarea.sigma-input,
+    .vault-input {
+        width: 100% !important;
+        min-height: 48px !important;
+        font-size: 16px !important; /* Prevents auto-zoom on iOS */
+        padding: 0 0.85rem !important;
+        box-sizing: border-box !important;
+        border-radius: 6px !important;
+        font-family: inherit !important;
+    }
+
+    /* SQF Quick-Select Chips */
+    .sqft-chips-container {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 0.45rem !important;
+        margin-top: 0.75rem !important;
+    }
+
+    .sqft-chip {
+        padding: 0.4rem 0.65rem !important;
+        background: #f1f5f9 !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 6px !important;
+        font-size: 0.8rem !important;
+        font-weight: 700 !important;
+        color: #334155 !important;
+        cursor: pointer !important;
+        transition: all 0.15s ease !important;
+        touch-action: manipulation !important;
+    }
+
+    .sqft-chip:active,
+    .sqft-chip.active {
+        background: #004889 !important;
+        color: #ffffff !important;
+        border-color: #004889 !important;
+    }
+
+    /* Submit Actions & Full-Width Buttons */
+    .sigma-form-actions {
+        margin-top: 2rem !important;
+        padding-top: 1.5rem !important;
+        text-align: center !important;
+        width: 100% !important;
+    }
+
+    .sigma-form-actions button,
+    .sigma-form-actions .isc-btn,
+    .sigma-form-actions .nav-cta,
+    #submit-quote-btn,
+    #submit-home-btn,
+    .vault-btn {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 52px !important;
+        padding: 0 1rem !important;
+        font-size: 1rem !important;
+        font-weight: 800 !important;
+        border-radius: 8px !important;
+        box-sizing: border-box !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    .sigma-form-actions button:active,
+    .sigma-form-actions .isc-btn:active,
+    .vault-btn:active {
+        transform: scale(0.98) !important;
+    }
+
+    /* TCPA Consent Checkbox */
+    .tcpa-field {
+        display: flex !important;
+        align-items: flex-start !important;
+        gap: 0.75rem !important;
+        margin-top: 1.25rem !important;
+        text-align: left !important;
+    }
+
+    .tcpa-field input[type="checkbox"] {
+        width: 22px !important;
+        height: 22px !important;
+        min-width: 22px !important;
+        margin-top: 2px !important;
+        accent-color: #004889 !important;
+    }
+
+    .tcpa-field label {
+        font-size: 0.78rem !important;
+        line-height: 1.45 !important;
+        color: #64748b !important;
+        cursor: pointer !important;
+    }
+
+    /* Workforce Intake Track Switcher */
+    .workforce-toggle-bar {
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        border-radius: 12px !important;
+        gap: 6px !important;
+        padding: 6px !important;
+        box-sizing: border-box !important;
+    }
+
+    .workforce-toggle-btn {
+        width: 100% !important;
+        justify-content: center !important;
+        padding: 0.75rem 1rem !important;
+        font-size: 0.88rem !important;
+    }
+
+    /* Login Vault Container */
+    .login-vault-container {
+        padding: 2.25rem 1.25rem !important;
+        margin: 1rem !important;
+        max-width: calc(100vw - 2rem) !important;
+        box-sizing: border-box !important;
+    }
+
+    /* ROI & Waste Calculator Responsive View */
+    .calculator-view {
+        margin: 2rem auto !important;
+        padding: 0 1rem !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .calc-form {
+        padding: 1.5rem 1.15rem !important;
+        border-radius: 12px !important;
+        gap: 1.25rem !important;
+        box-sizing: border-box !important;
+    }
+
+    .form-group input {
+        min-height: 48px !important;
+        font-size: 16px !important; /* Prevents auto-zoom on iOS */
+    }
+
+    /* BabySOP Intake Container */
+    .intake-form-container {
+        margin: 2rem 1rem !important;
+        padding: 1.5rem 1.15rem !important;
+        border-radius: 14px !important;
+        box-sizing: border-box !important;
+    }
+}
+
