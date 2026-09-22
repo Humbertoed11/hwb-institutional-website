@@ -12,10 +12,12 @@ import json
 import hashlib
 import datetime
 from datetime import datetime as dt_cls
+import uuid
 from flask import Blueprint, request, jsonify, Response, current_app, send_file
 from werkzeug.utils import secure_filename
 from flask_login import login_required, current_user
 from core.services.database import get_db
+from core.services.email_service import transmit_email
 from core.services.sanitizer import clean_phone, clean_currency, clean_sqft, clean_zip, clean_email, clean_city
 from core.security import (
     encrypt_pii,
@@ -2684,4 +2686,514 @@ def api_transition_work_order(order_id: int):
             })
     finally:
         if conn: conn.close()
+
+
+# ==============================================================================
+# SIGMAFIDELITY™ MARKETING CAMPAIGNS & OUTBOX ENGINE (HWB-QMS-8.0 / HWB-SAL-2026-001)
+# ==============================================================================
+
+def format_marketing_letterhead(body_html: str, tracking_token: str = None) -> str:
+    """
+    Wraps content inside official HWB-COM-001 Letterhead Standard (v2.1.0)
+    with corporate branding, booking button, and tracking pixel.
+    """
+    tracking_pixel_html = ""
+    if tracking_token:
+        tracking_pixel_html = f'<img src="https://www.hwbcleaning.com/api/v1/marketing/track/open/{tracking_token}.gif" alt="" width="1" height="1" style="display:none;width:1px;height:1px;border:0;" />'
+    
+    current_year = datetime.datetime.now().year
+    return f"""<div class="hwb-letterhead" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; padding: 32px 36px; border: 1px solid #e2e8f0; border-radius: 8px; max-width: 760px; margin: 0 auto; background: #ffffff; color: #1e293b; box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
+    <!-- 🏛️ MASTHEAD -->
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2.5px solid #0f172a; padding-bottom: 16px; margin-bottom: 22px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <img src="https://www.hwbcleaning.com/static/logo_standard.png" alt="HWB Cleaning Services LLC" height="46" style="display: block; object-fit: contain;">
+            <div>
+                <div style="font-weight: 800; font-size: 15px; color: #0f172a; letter-spacing: -0.01em;">HWB CLEANING SERVICES LLC</div>
+                <div style="font-weight: 700; font-size: 10.5px; color: #2563eb; letter-spacing: 0.05em; text-transform: uppercase;">Institutional Division • SigmaFidelity™</div>
+            </div>
+        </div>
+        <div style="text-align: right; font-size: 11px; color: #475569; line-height: 1.45;">
+            <strong style="color: #0f172a;">Corporate Headquarters:</strong><br>
+            3342 FM 1827 Ste 8d, McKinney, TX 75071<br>
+            Office: (214) 586-0257 | Mobile: (972) 800-7808<br>
+            <a href="https://www.hwbcleaning.com" style="color: #2563eb; text-decoration: none; font-weight: 600;">www.hwbcleaning.com</a>
+        </div>
+    </div>
+
+    <!-- 📄 BODY CONTENT -->
+    <div style="padding: 10px 0 24px 0; min-height: 280px; line-height: 1.7; color: #1e293b; font-size: 14.5px;">
+        {body_html}
+    </div>
+
+    <!-- 📜 FOOTER BLOCK -->
+    <div style="border-top: 1px solid #e2e8f0; padding-top: 14px; text-align: center; font-size: 10.5px; color: #64748b; line-height: 1.5;">
+        <strong style="color: #0f172a; letter-spacing: 0.05em;">FIDELITY. SAFETY. RESPECT.</strong><br>
+        Texas Charter #802920409 • CAGE (SAM) #082830635 • Commercial EMR: .43<br>
+        © {current_year} HWB Cleaning Services LLC. ISO 9001:2015 Registered.
+    </div>
+    {tracking_pixel_html}
+</div>"""
+
+
+def replace_email_tokens(template: str, recipient: dict, tracking_token: str = None) -> str:
+    """
+    Replaces dynamic tokens with recipient values.
+    """
+    if not template:
+        return ""
+    
+    booking_dest = "https://outlook.office.com/bookwithme/user/hdominguez@hwbcleaning.com"
+    if tracking_token:
+        booking_link = f"https://www.hwbcleaning.com/api/v1/marketing/track/click/{tracking_token}?dest={booking_dest}"
+    else:
+        booking_link = booking_dest
+
+    director_name = recipient.get('recipient_name') or recipient.get('director') or "Director & Educational Leadership"
+    facility_name = recipient.get('facility_name') or recipient.get('center_name') or "your commercial facility"
+    city = recipient.get('city') or "North Texas"
+    county = recipient.get('county') or "Texas"
+    cap = recipient.get('capacity')
+    capacity_str = f"{cap} enrolled students" if cap else "your student body"
+    sqf = recipient.get('sqf')
+    sqf_str = f"{sqf:,} SF" if sqf else ""
+
+    content = template
+    replacements = {
+        "{director_name}": director_name,
+        "{recipient_name}": director_name,
+        "{facility_name}": facility_name,
+        "{center_name}": facility_name,
+        "{city}": city,
+        "{county}": county,
+        "{capacity}": capacity_str,
+        "{sqf}": sqf_str,
+        "{booking_link}": booking_link,
+        "{sender_name}": "Humberto Dominguez",
+        "{sender_title}": "Owner & Operator"
+    }
+    for token, val in replacements.items():
+        content = content.replace(token, str(val))
+    return content
+
+
+@crm_api_bp.route('/api/v1/marketing/leads/preview-count', methods=['GET'])
+@login_required
+def api_marketing_leads_preview_count():
+    """
+    Returns live count of verified commercial leads matching target filter criteria.
+    """
+    sector = (request.args.get('sector') or 'all').strip().lower()
+    geo = (request.args.get('geo') or 'north_texas').strip()
+    min_capacity = request.args.get('min_capacity', type=int) or 0
+    min_sqf = request.args.get('min_sqf', type=int) or 0
+
+    where_clauses = [
+        "email IS NOT NULL",
+        "POSITION('@' IN email) > 0",
+        "COALESCE(is_dnc, FALSE) = FALSE",
+        "COALESCE(is_converted, FALSE) = FALSE"
+    ]
+    params = []
+
+    if sector in ['child care', 'childcare', 'daycare']:
+        where_clauses.append("(industry ILIKE %s OR facility_type ILIKE %s)")
+        params.extend(['%child%', '%child%'])
+    elif sector in ['commercial', 'office', 'corporate']:
+        where_clauses.append("(industry ILIKE %s OR facility_type ILIKE %s)")
+        params.extend(['%commercial%', '%commercial%'])
+
+    if geo == 'north_texas':
+        where_clauses.append("county IN ('Collin', 'Dallas', 'Denton', 'Tarrant')")
+    elif geo and geo != 'all_texas' and geo != 'all':
+        where_clauses.append("county ILIKE %s")
+        params.append(f"%{geo}%")
+
+    if min_capacity > 0:
+        where_clauses.append("capacity >= %s")
+        params.append(min_capacity)
+
+    if min_sqf > 0:
+        where_clauses.append("sqf >= %s")
+        params.append(min_sqf)
+
+    where_sql = "WHERE " + " AND ".join(where_clauses)
+
+    db_url = current_app.config.get('DATABASE_URL')
+    conn = None
+    try:
+        conn = get_db(db_url)
+        with conn.cursor() as cur:
+            cur.execute(f'''
+                SELECT COUNT(*), COALESCE(SUM(estimated_annual_value), 0)
+                FROM "Leads"
+                {where_sql}
+            ''', tuple(params))
+            row = cur.fetchone()
+            count = row[0] if row else 0
+            est_value = float(row[1]) if row and row[1] else 0.0
+
+            cur.execute(f'''
+                SELECT center_name, director, city, county, capacity, sqf, email
+                FROM "Leads"
+                {where_sql}
+                ORDER BY capacity DESC NULLS LAST, id ASC
+                LIMIT 5
+            ''', tuple(params))
+            samples = [dict(r) for r in cur.fetchall()]
+
+            return jsonify({
+                'status': 'success',
+                'count': count,
+                'estimated_annual_value': est_value,
+                'samples': samples
+            })
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/marketing/campaign/create', methods=['POST'])
+@login_required
+def api_marketing_campaign_create():
+    """
+    Creates a new marketing campaign and optionally stages matching leads.
+    """
+    data = request.get_json() or request.form
+    name = (data.get('name') or '').strip()
+    campaign_code = (data.get('campaign_code') or '').strip().upper()
+    target_sector = (data.get('target_sector') or 'Licensed Childcare').strip()
+    target_geo = (data.get('target_geo') or 'North Texas Core').strip()
+    cadence_type = (data.get('cadence_type') or '1-Step Intro with Calendar Link').strip()
+    sender_persona = (data.get('sender_persona') or 'Humberto Dominguez (Owner & Operator)').strip()
+    daily_throttle = int(data.get('daily_throttle_limit') or 50)
+    subject_tmpl = (data.get('email_subject_template') or '').strip()
+    body_tmpl = (data.get('email_body_template') or '').strip()
+    stage_leads = data.get('stage_leads', True)
+    stage_limit = int(data.get('stage_limit') or 100)
+    min_capacity = int(data.get('min_capacity') or 0)
+
+    if not name:
+        return jsonify({'status': 'error', 'message': 'Campaign Name is required.'}), 400
+    if not campaign_code:
+        campaign_code = f"CMP-{datetime.datetime.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:4].upper()}"
+
+    db_url = current_app.config.get('DATABASE_URL')
+    conn = None
+    try:
+        conn = get_db(db_url)
+        with conn.cursor() as cur:
+            cur.execute('''
+                INSERT INTO "MarketingCampaigns" (
+                    campaign_code, name, target_sector, target_geo, cadence_type,
+                    sender_persona, status, daily_throttle_limit,
+                    email_subject_template, email_body_template, created_by
+                ) VALUES (%s, %s, %s, %s, %s, %s, 'Active', %s, %s, %s, %s)
+                RETURNING id;
+            ''', (
+                campaign_code, name, target_sector, target_geo, cadence_type,
+                sender_persona, daily_throttle, subject_tmpl, body_tmpl,
+                f"{current_user.username if hasattr(current_user, 'username') else 'Executive'}"
+            ))
+            campaign_id = cur.fetchone()[0]
+
+            staged_count = 0
+            if stage_leads:
+                where_clauses = [
+                    "email IS NOT NULL",
+                    "POSITION('@' IN email) > 0",
+                    "COALESCE(is_dnc, FALSE) = FALSE",
+                    "COALESCE(is_converted, FALSE) = FALSE"
+                ]
+                params = []
+                if 'child' in target_sector.lower() or 'daycare' in target_sector.lower():
+                    where_clauses.append("(industry ILIKE %s OR facility_type ILIKE %s)")
+                    params.extend(['%child%', '%child%'])
+                elif 'commercial' in target_sector.lower() or 'office' in target_sector.lower():
+                    where_clauses.append("(industry ILIKE %s OR facility_type ILIKE %s)")
+                    params.extend(['%commercial%', '%commercial%'])
+
+                if 'statewide' in target_geo.lower() or 'texas' in target_geo.lower():
+                    pass # all Texas
+                elif 'north' in target_geo.lower():
+                    where_clauses.append("county IN ('Collin', 'Dallas', 'Denton', 'Tarrant')")
+
+                if min_capacity > 0:
+                    where_clauses.append("capacity >= %s")
+                    params.append(min_capacity)
+
+                where_sql = "WHERE " + " AND ".join(where_clauses)
+                params.append(stage_limit)
+
+                cur.execute(f'''
+                    SELECT id, center_name, director, email, city, county, capacity, sqf
+                    FROM "Leads"
+                    {where_sql}
+                    ORDER BY capacity DESC NULLS LAST, id ASC
+                    LIMIT %s;
+                ''', tuple(params))
+                matched_leads = cur.fetchall()
+
+                for lead in matched_leads:
+                    lid, center, director, email, city, county, cap, sqf = lead
+                    token = uuid.uuid4().hex
+                    director_name = director.strip() if director and director.strip() else "Facility Director"
+                    cur.execute('''
+                        INSERT INTO "CampaignRecipients" (
+                            campaign_id, lead_id, recipient_email, recipient_name,
+                            facility_name, city, county, capacity, sqf,
+                            current_step, status, tracking_token
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 1, 'STAGED', %s);
+                    ''', (campaign_id, lid, email.strip(), director_name, center, city, county, cap or 0, sqf or 0, token))
+                    staged_count += 1
+
+                cur.execute('''
+                    UPDATE "MarketingCampaigns"
+                    SET total_targets = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s),
+                        staged_count = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s AND status = 'STAGED')
+                    WHERE id = %s;
+                ''', (campaign_id, campaign_id, campaign_id))
+
+            conn.commit()
+            return jsonify({
+                'status': 'success',
+                'campaign_id': campaign_id,
+                'campaign_code': campaign_code,
+                'staged_count': staged_count,
+                'message': f"Campaign {campaign_code} created with {staged_count} staged targets."
+            })
+    except Exception as e:
+        if conn: conn.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/marketing/campaign/<int:campaign_id>/generate-drafts', methods=['POST'])
+@login_required
+def api_marketing_generate_drafts(campaign_id):
+    """
+    Generates personalized HWB-COM-001 drafts into PendingOutbox for staged recipients.
+    """
+    db_url = current_app.config.get('DATABASE_URL')
+    conn = None
+    try:
+        conn = get_db(db_url)
+        with conn.cursor() as cur:
+            cur.execute('SELECT * FROM "MarketingCampaigns" WHERE id = %s', (campaign_id,))
+            campaign = cur.fetchone()
+            if not campaign:
+                return jsonify({'status': 'error', 'message': 'Campaign not found.'}), 404
+
+            subject_tmpl = campaign.get('email_subject_template') or "Avoiding State Licensing & Bleach Hazards: Certified Childcare Sanitation Protocol"
+            body_tmpl = campaign.get('email_body_template') or """<p>Dear {director_name},</p>
+<p>Maintaining chemical safety compliance under Texas HHS and OSHA regulations is an ongoing priority at {facility_name}. Traditional bleach solutions frequently present harsh odors and respiratory irritation among children.</p>
+<p><strong>HWB Cleaning Services LLC</strong> provides an ISO 9001:2015 certified, hospital-grade green sanitization protocol engineered specifically for early educational environments across {city}.</p>
+<p>I would be pleased to conduct a <strong>Complimentary 10-Point Sanitation Audit</strong> of {facility_name} at no charge.</p>
+<p><a href="{booking_link}" style="display: inline-block; background: #2563eb; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 700; margin-top: 10px;">Select a 15-Minute Slot on Humberto's Calendar</a></p>
+<p>Sincerely,</p>"""
+
+            limit = 50
+            if request.is_json and request.json:
+                limit = request.json.get('limit', 50)
+            
+            cur.execute('''
+                SELECT * FROM "CampaignRecipients"
+                WHERE campaign_id = %s AND outbox_id IS NULL AND status = 'STAGED'
+                ORDER BY capacity DESC NULLS LAST, id ASC
+                LIMIT %s;
+            ''', (campaign_id, limit))
+            recipients = cur.fetchall()
+
+            drafts_created = 0
+            for recip in recipients:
+                token = recip.get('tracking_token') or uuid.uuid4().hex
+                if not recip.get('tracking_token'):
+                    cur.execute('UPDATE "CampaignRecipients" SET tracking_token = %s WHERE id = %s', (token, recip['id']))
+
+                rendered_subject = replace_email_tokens(subject_tmpl, recip, token)
+                rendered_body = replace_email_tokens(body_tmpl, recip, token)
+                full_html = format_marketing_letterhead(rendered_body, token)
+
+                cur.execute('''
+                    INSERT INTO "PendingOutbox" (
+                        recipient, subject, body, created_at, status, tracking_token, campaign_id, recipient_id
+                    ) VALUES (%s, %s, %s, CURRENT_DATE, 'PENDING', %s, %s, %s)
+                    RETURNING id;
+                ''', (recip['recipient_email'], rendered_subject, full_html, token, campaign_id, recip['id']))
+                outbox_id = cur.fetchone()[0]
+
+                cur.execute('''
+                    UPDATE "CampaignRecipients"
+                    SET outbox_id = %s, status = 'AWAITING_APPROVAL', updated_at = CURRENT_TIMESTAMP
+                    WHERE id = %s;
+                ''', (outbox_id, recip['id']))
+                drafts_created += 1
+
+            cur.execute('''
+                UPDATE "MarketingCampaigns"
+                SET staged_count = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s AND status = 'STAGED'),
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = %s;
+            ''', (campaign_id, campaign_id))
+
+            conn.commit()
+            return jsonify({
+                'status': 'success',
+                'drafts_created': drafts_created,
+                'message': f"Generated {drafts_created} personalized drafts in PendingOutbox ready for CEO review."
+            })
+    except Exception as e:
+        if conn: conn.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/marketing/outbox/<int:email_id>', methods=['GET'])
+@login_required
+def api_marketing_get_outbox(email_id):
+    """
+    Returns full email draft content and recipient metadata for inspection and editing.
+    """
+    db_url = current_app.config.get('DATABASE_URL')
+    conn = None
+    try:
+        conn = get_db(db_url)
+        with conn.cursor() as cur:
+            cur.execute('''
+                SELECT po.*, cr.facility_name, cr.recipient_name, cr.city, cr.county, cr.capacity, cr.sqf, cr.open_count, cr.opened_at
+                FROM "PendingOutbox" po
+                LEFT JOIN "CampaignRecipients" cr ON po.recipient_id = cr.id OR po.tracking_token = cr.tracking_token
+                WHERE po.id = %s;
+            ''', (email_id,))
+            msg = cur.fetchone()
+            if not msg:
+                return jsonify({'status': 'error', 'message': 'Outbox message not found.'}), 404
+            return jsonify({
+                'status': 'success',
+                'email': serialize_row(msg)
+            })
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/marketing/outbox/<int:email_id>/update', methods=['POST', 'PUT'])
+@login_required
+def api_marketing_update_outbox(email_id):
+    """
+    Allows the CEO to edit the subject line or email body before releasing.
+    """
+    data = request.get_json() or request.form
+    new_subject = data.get('subject')
+    new_body = data.get('body') if data.get('body') is not None else data.get('body_text')
+
+    if not new_subject and not new_body:
+        return jsonify({'status': 'error', 'message': 'Subject or Body required for update.'}), 400
+
+    db_url = current_app.config.get('DATABASE_URL')
+    conn = None
+    try:
+        conn = get_db(db_url)
+        with conn.cursor() as cur:
+            cur.execute('SELECT * FROM "PendingOutbox" WHERE id = %s', (email_id,))
+            existing = cur.fetchone()
+            if not existing:
+                return jsonify({'status': 'error', 'message': 'Email not found.'}), 404
+
+            updated_subject = new_subject if new_subject is not None else existing['subject']
+            updated_body = new_body if new_body is not None else existing['body']
+
+            cur.execute('''
+                UPDATE "PendingOutbox"
+                SET subject = %s, body = %s
+                WHERE id = %s;
+            ''', (updated_subject, updated_body, email_id))
+            conn.commit()
+
+            return jsonify({
+                'status': 'success',
+                'message': f"Email #{email_id} successfully updated."
+            })
+    except Exception as e:
+        if conn: conn.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/marketing/outbox/batch-action', methods=['POST'])
+@login_required
+def api_marketing_outbox_batch():
+    """
+    Batch release or reject queued emails via Microsoft Graph API.
+    """
+    data = request.get_json() or request.form
+    action = data.get('action') # 'approve' or 'reject'
+    email_ids = data.get('email_ids', [])
+    limit = int(data.get('limit') or 10)
+
+    db_url = current_app.config.get('DATABASE_URL')
+    conn = None
+    try:
+        conn = get_db(db_url)
+        with conn.cursor() as cur:
+            if not email_ids:
+                cur.execute('''
+                    SELECT id, recipient, subject, body, tracking_token
+                    FROM "PendingOutbox"
+                    WHERE UPPER(status) = 'PENDING'
+                    ORDER BY id ASC
+                    LIMIT %s;
+                ''', (limit,))
+                pending_msgs = cur.fetchall()
+            else:
+                cur.execute('''
+                    SELECT id, recipient, subject, body, tracking_token
+                    FROM "PendingOutbox"
+                    WHERE id = ANY(%s) AND UPPER(status) = 'PENDING';
+                ''', (email_ids,))
+                pending_msgs = cur.fetchall()
+
+            success_count, error_count = 0, 0
+            for msg in pending_msgs:
+                eid = msg['id']
+                if action == 'approve':
+                    ok, reason = transmit_email(msg['recipient'], msg['subject'], msg['body'])
+                    if ok:
+                        cur.execute("UPDATE \"PendingOutbox\" SET status = 'SENT' WHERE id = %s", (eid,))
+                        cur.execute('''
+                            UPDATE "CampaignRecipients"
+                            SET status = 'SENT', sent_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+                            WHERE outbox_id = %s OR tracking_token = %s;
+                        ''', (eid, msg.get('tracking_token')))
+                        success_count += 1
+                    else:
+                        error_count += 1
+                elif action == 'reject':
+                    cur.execute("UPDATE \"PendingOutbox\" SET status = 'REJECTED' WHERE id = %s", (eid,))
+                    cur.execute('''
+                        UPDATE "CampaignRecipients"
+                        SET status = 'REJECTED', updated_at = CURRENT_TIMESTAMP
+                        WHERE outbox_id = %s OR tracking_token = %s;
+                    ''', (eid, msg.get('tracking_token')))
+                    success_count += 1
+
+            conn.commit()
+            return jsonify({
+                'status': 'success',
+                'action': action,
+                'processed': len(pending_msgs),
+                'successful': success_count,
+                'errors': error_count,
+                'message': f"Batch {action} completed: {success_count} messages processed successfully."
+            })
+    except Exception as e:
+        if conn: conn.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        if conn: conn.close()
+
 

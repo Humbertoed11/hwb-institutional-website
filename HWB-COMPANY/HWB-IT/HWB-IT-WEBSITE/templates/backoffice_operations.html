@@ -1500,40 +1500,47 @@
         <!-- View: Marketing Department & Campaign Console (HWB-QMS-8.0 / HWB-SAL-2026-001) -->
         {% if current_user.role != 'Sales' %}
         <div id="view-marketing" class="isc-view" style="display: {% if active_view == 'marketing' %}block{% else %}none{% endif %};">
-            {% set ns_mkt = namespace(total_targets=0, staged_targets=0, pending_outbox=pending_outbox_count or 0) %}
+            {% set ns_mkt = namespace(total_targets=0, staged_targets=0, sent_targets=0, opened_targets=0, pending_outbox=pending_outbox_count or 0) %}
             {% for c in marketing_campaigns %}
                 {% set ns_mkt.total_targets = ns_mkt.total_targets + (c.total_targets or 0) %}
                 {% set ns_mkt.staged_targets = ns_mkt.staged_targets + (c.staged_count or 0) %}
+                {% set ns_mkt.sent_targets = ns_mkt.sent_targets + (c.sent_count or 0) %}
+                {% set ns_mkt.opened_targets = ns_mkt.opened_targets + (c.opened_count or 0) %}
             {% endfor %}
 
-            <!-- Marketing Department KPI Header -->
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; margin-bottom: 2rem;">
-                <div class="isc-card" style="padding: 1.25rem; border-left: 4px solid #ec4899; background: #ffffff;">
-                    <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--slate-500); letter-spacing: 0.05em;">Marketing Campaigns</div>
-                    <div style="font-size: 1.75rem; font-weight: 900; color: var(--slate-900); margin-top: 0.25rem;">{{ marketing_campaigns|length }} <span style="font-size: 0.85rem; font-weight: 700; color: var(--slate-400);">Cadences</span></div>
-                    <div style="font-size: 0.72rem; color: #db2777; font-weight: 700; margin-top: 0.35rem;"><i class="fas fa-bullhorn"></i> Autonomous Zero-Caller</div>
+            <!-- Marketing Department KPI Header (Rivaling Apollo / HubSpot) -->
+            <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; margin-bottom: 2rem;">
+                <div class="isc-card" style="padding: 1.15rem; border-left: 4px solid #ec4899; background: #ffffff;">
+                    <div style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: var(--slate-500); letter-spacing: 0.05em;">Marketing Campaigns</div>
+                    <div style="font-size: 1.6rem; font-weight: 900; color: var(--slate-900); margin-top: 0.25rem;">{{ marketing_campaigns|length }} <span style="font-size: 0.8rem; font-weight: 700; color: var(--slate-400);">Cadences</span></div>
+                    <div style="font-size: 0.7rem; color: #db2777; font-weight: 700; margin-top: 0.35rem;"><i class="fas fa-bullhorn"></i> Autonomous Outreach</div>
                 </div>
-                <div class="isc-card" style="padding: 1.25rem; border-left: 4px solid #f59e0b; background: #ffffff;">
-                    <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--slate-500); letter-spacing: 0.05em;">Executive Outbox Queue</div>
-                    <div style="font-size: 1.75rem; font-weight: 900; color: #d97706; margin-top: 0.25rem;">{{ ns_mkt.pending_outbox }} <span style="font-size: 0.85rem; font-weight: 700; color: var(--slate-400);">Awaiting Release</span></div>
-                    <div style="font-size: 0.72rem; color: #b45309; font-weight: 700; margin-top: 0.35rem;"><i class="fas fa-lock"></i> CEO Poka-Yoke Gate</div>
+                <div class="isc-card" style="padding: 1.15rem; border-left: 4px solid #f59e0b; background: #ffffff;">
+                    <div style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: var(--slate-500); letter-spacing: 0.05em;">Executive Outbox Queue</div>
+                    <div style="font-size: 1.6rem; font-weight: 900; color: #d97706; margin-top: 0.25rem;">{{ ns_mkt.pending_outbox }} <span style="font-size: 0.8rem; font-weight: 700; color: var(--slate-400);">Queued</span></div>
+                    <div style="font-size: 0.7rem; color: #b45309; font-weight: 700; margin-top: 0.35rem;"><i class="fas fa-lock"></i> CEO Poka-Yoke Gate</div>
                 </div>
-                <div class="isc-card" style="padding: 1.25rem; border-left: 4px solid #0284c7; background: #ffffff;">
-                    <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--slate-500); letter-spacing: 0.05em;">Active Targets Staged</div>
-                    <div style="font-size: 1.75rem; font-weight: 900; color: var(--slate-900); margin-top: 0.25rem;">{{ ns_mkt.staged_targets }} <span style="font-size: 0.85rem; font-weight: 700; color: var(--slate-400);">Facilities</span></div>
-                    <div style="font-size: 0.72rem; color: #0284c7; font-weight: 700; margin-top: 0.35rem;"><i class="fas fa-school"></i> North Texas Childcare</div>
+                <div class="isc-card" style="padding: 1.15rem; border-left: 4px solid #10b981; background: #ffffff;">
+                    <div style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: var(--slate-500); letter-spacing: 0.05em;">Customer Opens &amp; Views</div>
+                    <div style="font-size: 1.6rem; font-weight: 900; color: #047857; margin-top: 0.25rem;">{{ ns_mkt.opened_targets }} <span style="font-size: 0.8rem; font-weight: 700; color: #059669;">Verified Reads</span></div>
+                    <div style="font-size: 0.7rem; color: #059669; font-weight: 700; margin-top: 0.35rem;"><i class="fas fa-eye"></i> Real-Time Telemetry</div>
                 </div>
-                <div class="isc-card" style="padding: 1.25rem; border-left: 4px solid #10b981; background: #ffffff;">
-                    <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--slate-500); letter-spacing: 0.05em;">Targeted Annual Pipeline</div>
-                    <div style="font-size: 1.75rem; font-weight: 900; color: #047857; margin-top: 0.25rem;">$3,571,200 <span style="font-size: 0.85rem; font-weight: 700; color: var(--slate-400);">Est.</span></div>
-                    <div style="font-size: 0.72rem; color: #059669; font-weight: 700; margin-top: 0.35rem;"><i class="fas fa-chart-line"></i> 14,880 Student Capacity</div>
+                <div class="isc-card" style="padding: 1.15rem; border-left: 4px solid #0284c7; background: #ffffff;">
+                    <div style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: var(--slate-500); letter-spacing: 0.05em;">Active Targets Staged</div>
+                    <div style="font-size: 1.6rem; font-weight: 900; color: var(--slate-900); margin-top: 0.25rem;">{{ ns_mkt.staged_targets }} <span style="font-size: 0.8rem; font-weight: 700; color: var(--slate-400);">Facilities</span></div>
+                    <div style="font-size: 0.7rem; color: #0284c7; font-weight: 700; margin-top: 0.35rem;"><i class="fas fa-school"></i> Texas Verified Leads</div>
+                </div>
+                <div class="isc-card" style="padding: 1.15rem; border-left: 4px solid #6366f1; background: #ffffff;">
+                    <div style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: var(--slate-500); letter-spacing: 0.05em;">Targeted Annual Pipeline</div>
+                    <div style="font-size: 1.6rem; font-weight: 900; color: #4338ca; margin-top: 0.25rem;">$3,571,200 <span style="font-size: 0.8rem; font-weight: 700; color: var(--slate-400);">Est.</span></div>
+                    <div style="font-size: 0.7rem; color: #4f46e5; font-weight: 700; margin-top: 0.35rem;"><i class="fas fa-chart-line"></i> Institutional Scope</div>
                 </div>
             </div>
 
             <!-- Executive Outbox Approval Gate (Poka-Yoke Mandate) -->
             {% if pending_outbox_items %}
             <div class="isc-card fluid-data" style="margin-bottom: 2rem; border-left: 4px solid #f59e0b; background: #fffdfa;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
                     <div>
                         <h3 style="margin: 0; font-size: 1.15rem; font-weight: 900; color: #92400e; display: flex; align-items: center; gap: 0.5rem;">
                             <i class="fas fa-shield-alt" style="color: #f59e0b;"></i> Executive Outbox Staging Queue (CEO Approval Gate)
@@ -1542,9 +1549,14 @@
                             Zero synthetic or unauthorized messages leave this server. Each email is verified against official letterhead HWB-COM-001.
                         </p>
                     </div>
-                    <span class="isc-badge" style="background: #fef3c7; color: #92400e; border: 1px solid #fde68a; font-weight: 800; font-size: 0.75rem; padding: 0.25rem 0.65rem;">
-                        {{ pending_outbox_items|length }} Messages Queued
-                    </span>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <span class="isc-badge" style="background: #fef3c7; color: #92400e; border: 1px solid #fde68a; font-weight: 800; font-size: 0.75rem; padding: 0.35rem 0.65rem;">
+                            {{ pending_outbox_items|length }} Messages Queued
+                        </span>
+                        <button type="button" onclick="executeOutboxBatch('approve', 10)" class="isc-btn isc-btn-primary" style="height: 32px; padding: 0 0.85rem; font-size: 0.75rem; font-weight: 800; background: #10b981; border-color: #059669; border-radius: 6px;">
+                            <i class="fas fa-paper-plane"></i> Batch Release Next 10
+                        </button>
+                    </div>
                 </div>
 
                 <div style="overflow-x: auto;">
@@ -1568,12 +1580,15 @@
                                     {{ item.body_preview|striptags }}...
                                 </td>
                                 <td style="padding: 0.75rem 0.85rem; text-align: right; white-space: nowrap;">
+                                    <button type="button" onclick="openEmailReviewModal({{ item.id }})" class="isc-btn isc-btn-outline" style="height: 28px; padding: 0 0.65rem; font-size: 0.72rem; color: #0284c7; border-color: #38bdf8; border-radius: 4px; margin-right: 0.35rem;" title="Inspect full letterhead preview and edit text">
+                                        <i class="fas fa-search-plus"></i> Inspect &amp; Edit
+                                    </button>
                                     <form method="POST" action="{{ url_for('sigma_executive') }}" style="display: inline-flex; gap: 0.35rem; margin: 0;">
                                         <input type="hidden" name="email_id" value="{{ item.id }}">
-                                        <button type="submit" name="action" value="approve_email" class="isc-btn isc-btn-primary" style="height: 28px; padding: 0 0.65rem; font-size: 0.72rem; background: #10b981; border-color: #10b981; border-radius: 4px;">
+                                        <button type="submit" name="action" value="approve_email" class="isc-btn isc-btn-primary" style="height: 28px; padding: 0 0.65rem; font-size: 0.72rem; background: #10b981; border-color: #10b981; border-radius: 4px;" title="Approve & Send Immediately">
                                             <i class="fas fa-paper-plane"></i> Release
                                         </button>
-                                        <button type="submit" name="action" value="reject_email" class="isc-btn isc-btn-outline" style="height: 28px; padding: 0 0.55rem; font-size: 0.72rem; color: #ef4444; border-color: #fca5a5; border-radius: 4px;">
+                                        <button type="submit" name="action" value="reject_email" class="isc-btn isc-btn-outline" style="height: 28px; padding: 0 0.55rem; font-size: 0.72rem; color: #ef4444; border-color: #fca5a5; border-radius: 4px;" title="Reject">
                                             <i class="fas fa-times"></i>
                                         </button>
                                     </form>
@@ -1597,6 +1612,9 @@
                             Autonomous B2B outbound cadences operating under HWB-SAL-2026-001 Zero-Caller Architecture.
                         </p>
                     </div>
+                    <button type="button" onclick="openModal('modal-create-campaign')" class="isc-btn isc-btn-primary" style="height: 36px; padding: 0 1.15rem; font-size: 0.8rem; font-weight: 800; background: #ec4899; border-color: #db2777; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.45rem;">
+                        <i class="fas fa-plus-circle"></i> Create Marketing Campaign
+                    </button>
                 </div>
 
                 <div style="overflow-x: auto;">
@@ -1607,6 +1625,7 @@
                                 <th style="padding: 0.75rem 1rem; font-weight: 800; color: var(--slate-600); font-size: 0.72rem; text-transform: uppercase;">Target Sector & Geo</th>
                                 <th style="padding: 0.75rem 1rem; font-weight: 800; color: var(--slate-600); font-size: 0.72rem; text-transform: uppercase;">Cadence Type</th>
                                 <th style="padding: 0.75rem 1rem; font-weight: 800; color: var(--slate-600); font-size: 0.72rem; text-transform: uppercase;">Sender Persona</th>
+                                <th style="padding: 0.75rem 1rem; font-weight: 800; color: var(--slate-600); font-size: 0.72rem; text-transform: uppercase;">Customer Opens</th>
                                 <th style="padding: 0.75rem 1rem; font-weight: 800; color: var(--slate-600); font-size: 0.72rem; text-transform: uppercase;">Volume & Throttle</th>
                                 <th style="padding: 0.75rem 1rem; font-weight: 800; color: var(--slate-600); font-size: 0.72rem; text-transform: uppercase;">Status</th>
                                 <th style="padding: 0.75rem 1rem; font-weight: 800; color: var(--slate-600); font-size: 0.72rem; text-transform: uppercase; text-align: right;">Actions</th>
@@ -1632,6 +1651,18 @@
                                     {{ c.sender_persona }}
                                 </td>
                                 <td style="padding: 0.85rem 1rem; vertical-align: top;">
+                                    <div style="font-weight: 800; color: #16a34a; font-size: 0.85rem;">
+                                        <i class="fas fa-eye"></i> {{ c.opened_count or 0 }} Opens
+                                    </div>
+                                    <div style="font-size: 0.7rem; color: var(--slate-500); margin-top: 0.15rem;">
+                                        {% if c.sent_count and c.sent_count > 0 %}
+                                            {{ "{:.1f}%".format((c.opened_count / c.sent_count) * 100) }} Open Rate
+                                        {% else %}
+                                            0.0% Open Rate
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td style="padding: 0.85rem 1rem; vertical-align: top;">
                                     <div style="font-weight: 800; color: var(--slate-900);">{{ c.staged_count }} / {{ c.total_targets }} Targets</div>
                                     <div style="font-size: 0.7rem; color: var(--slate-500); margin-top: 0.15rem;">Max {{ c.daily_throttle_limit or 50 }} / day</div>
                                 </td>
@@ -1640,15 +1671,18 @@
                                         {{ c.status }}
                                     </span>
                                 </td>
-                                <td style="padding: 0.85rem 1rem; vertical-align: top; text-align: right;">
-                                    <button class="isc-btn isc-btn-outline" style="height: 28px; padding: 0 0.65rem; font-size: 0.72rem; border-radius: 4px;">
-                                        <i class="fas fa-list"></i> View Targets
+                                <td style="padding: 0.85rem 1rem; vertical-align: top; text-align: right; white-space: nowrap;">
+                                    <a href="{{ url_for('admin_operations', view='marketing', campaign_id=c.id) }}" class="isc-btn isc-btn-outline" style="height: 28px; padding: 0 0.65rem; font-size: 0.72rem; border-radius: 4px; text-decoration: none; display: inline-flex; align-items: center; gap: 0.3rem; margin-right: 0.35rem; {% if active_campaign_id == c.id %}background: #eff6ff; border-color: #3b82f6; color: #1d4ed8; font-weight: 800;{% endif %}">
+                                        <i class="fas fa-list"></i> Targets ({{ c.staged_count or 0 }})
+                                    </a>
+                                    <button type="button" onclick="generateCampaignDrafts({{ c.id }}, '{{ c.campaign_code }}')" class="isc-btn isc-btn-primary" style="height: 28px; padding: 0 0.65rem; font-size: 0.72rem; border-radius: 4px; background: #0284c7; border-color: #0369a1;" title="Generate personalized HWB-COM-001 letterhead drafts for Outbox review">
+                                        <i class="fas fa-file-signature"></i> Stage Drafts
                                     </button>
                                 </td>
                             </tr>
                             {% else %}
                             <tr>
-                                <td colspan="7" style="text-align: center; padding: 3rem; color: var(--slate-400);">
+                                <td colspan="8" style="text-align: center; padding: 3rem; color: var(--slate-400);">
                                     <i class="fas fa-bullhorn" style="font-size: 2rem; margin-bottom: 0.5rem; opacity: 0.4;"></i>
                                     <div>No marketing campaigns configured yet.</div>
                                 </td>
@@ -1665,10 +1699,10 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
                     <div>
                         <h3 style="font-size: 1.15rem; font-weight: 900; color: var(--slate-900); margin: 0;">
-                            <i class="fas fa-users" style="color: #0284c7;"></i> Staged Campaign Recipients (Top Verified Commercial Facilities)
+                            <i class="fas fa-users" style="color: #0284c7;"></i> Staged Campaign Recipients (Verified Facilities)
                         </h3>
                         <p style="font-size: 0.78rem; color: var(--slate-500); margin: 0.2rem 0 0 0; font-weight: 600;">
-                            First wave of 99 high-capacity child care centers staged for CEO Humberto Dominguez's calendar sequence.
+                            High-capacity commercial facilities staged for outreach sequence with live customer read-receipt telemetry.
                         </p>
                     </div>
                     <span class="isc-badge" style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; font-weight: 800; font-size: 0.75rem;">
@@ -1685,7 +1719,7 @@
                                 <th style="padding: 0.65rem 0.85rem; font-weight: 800; color: var(--slate-600); font-size: 0.72rem; text-transform: uppercase;">Location</th>
                                 <th style="padding: 0.65rem 0.85rem; font-weight: 800; color: var(--slate-600); font-size: 0.72rem; text-transform: uppercase;">Capacity / SF</th>
                                 <th style="padding: 0.65rem 0.85rem; font-weight: 800; color: var(--slate-600); font-size: 0.72rem; text-transform: uppercase;">Estimated Value</th>
-                                <th style="padding: 0.65rem 0.85rem; font-weight: 800; color: var(--slate-600); font-size: 0.72rem; text-transform: uppercase;">Status</th>
+                                <th style="padding: 0.65rem 0.85rem; font-weight: 800; color: var(--slate-600); font-size: 0.72rem; text-transform: uppercase;">Delivery & Customer Opens</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1710,9 +1744,26 @@
                                     ${{ "{:,.2f}".format(r.estimated_annual_value) if r.estimated_annual_value else '36,000.00' }}
                                 </td>
                                 <td style="padding: 0.7rem 0.85rem;">
-                                    <span class="isc-badge" style="background: #fef3c7; color: #92400e; border: 1px solid #fde68a; font-size: 0.7rem; font-weight: 800; padding: 0.15rem 0.45rem; border-radius: 4px;">
-                                        {{ r.status }}
-                                    </span>
+                                    {% if r.opened_at or (r.open_count and r.open_count > 0) %}
+                                        <span class="isc-badge" style="background: #dcfce7; color: #15803d; border: 1px solid #86efac; font-size: 0.7rem; font-weight: 800; padding: 0.15rem 0.45rem; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.3rem;">
+                                            <i class="fas fa-eye"></i> Opened ({{ r.open_count or 1 }}x)
+                                        </span>
+                                        <div style="font-size: 0.68rem; color: #16a34a; font-weight: 600; margin-top: 0.15rem;">
+                                            {{ r.opened_at.strftime('%m/%d %I:%M %p') if r.opened_at else 'Verified Read' }}
+                                        </div>
+                                    {% elif r.status == 'SENT' %}
+                                        <span class="isc-badge" style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; font-size: 0.7rem; font-weight: 800; padding: 0.15rem 0.45rem; border-radius: 4px;">
+                                            <i class="fas fa-paper-plane"></i> Sent (Awaiting Open)
+                                        </span>
+                                    {% elif r.status == 'AWAITING_APPROVAL' %}
+                                        <span class="isc-badge" style="background: #fef3c7; color: #92400e; border: 1px solid #fde68a; font-size: 0.7rem; font-weight: 800; padding: 0.15rem 0.45rem; border-radius: 4px;">
+                                            <i class="fas fa-clock"></i> In Outbox Queue
+                                        </span>
+                                    {% else %}
+                                        <span class="isc-badge" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; font-size: 0.7rem; font-weight: 800; padding: 0.15rem 0.45rem; border-radius: 4px;">
+                                            {{ r.status }}
+                                        </span>
+                                    {% endif %}
                                 </td>
                             </tr>
                             {% endfor %}
@@ -5724,6 +5775,209 @@
         </div>
     </div>
 </div>
+
+<!-- ============================================================================== -->
+<!-- 1. CAMPAIGN BUILDER MODAL (RIVALING APOLLO / HUBSPOT)                           -->
+<!-- ============================================================================== -->
+<div id="modal-create-campaign" class="isc-modal-overlay" style="display:none; z-index: 1200;">
+    <div class="isc-modal" style="max-width: 900px; width: 95%;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--slate-200); padding-bottom: 1.25rem; margin-bottom: 1.5rem;">
+            <div>
+                <h2 style="font-size: 1.35rem; font-weight: 900; color: var(--slate-900); margin: 0; display: flex; align-items: center; gap: 0.65rem;">
+                    <i class="fas fa-bullhorn" style="color: #ec4899;"></i> Create Marketing Campaign &amp; Audience Sequence
+                </h2>
+                <p style="font-size: 0.78rem; color: var(--slate-500); margin: 0.25rem 0 0 0; font-weight: 600;">
+                    Stage an autonomous B2B outbound campaign powered by verified Texas commercial records &amp; Microsoft Graph API.
+                </p>
+            </div>
+            <button type="button" onclick="closeModal('modal-create-campaign')" style="background: var(--slate-100); border: none; width: 32px; height: 32px; border-radius: 6px; cursor: pointer; color: var(--slate-500); display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">&times;</button>
+        </div>
+
+        <form id="form-create-campaign" onsubmit="event.preventDefault(); submitNewCampaign();" class="sigma-form-container">
+            <!-- Row 1: Identification & Persona -->
+            <div style="display: grid; grid-template-columns: 1fr 2fr 1.5fr; gap: 1rem; margin-bottom: 1.25rem;">
+                <div>
+                    <label style="display: block; font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: var(--slate-600); margin-bottom: 0.35rem;">Campaign Code</label>
+                    <input type="text" id="mkt-code" class="sigma-input" value="CMP-{{ current_year | default(2026) }}-{{ range(100, 999)|random }}" style="font-weight: 700; color: var(--brand);" readonly />
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: var(--slate-600); margin-bottom: 0.35rem;">Campaign Name *</label>
+                    <input type="text" id="mkt-name" class="sigma-input" placeholder="e.g. North Texas Commercial Childcare Safety & Health Cadence" required />
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: var(--slate-600); margin-bottom: 0.35rem;">Sender Persona</label>
+                    <select id="mkt-persona" class="sigma-input">
+                        <option value="Humberto Dominguez (Owner &amp; Operator)">Humberto Dominguez (Owner &amp; Operator)</option>
+                        <option value="Lauri Tells (VP of Marketing)">Lauri Tells (VP of Marketing)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Row 2: Audience Targeting & Geo Radar -->
+            <div style="background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 10px; padding: 1.25rem; margin-bottom: 1.25rem;">
+                <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--slate-700); margin-bottom: 0.85rem; display: flex; align-items: center; gap: 0.45rem;">
+                    <i class="fas fa-filter" style="color: #0284c7;"></i> Lead Targeting &amp; Segmentation Radar (37,466 Texas Database)
+                </div>
+                <div style="display: grid; grid-template-columns: 1.2fr 1.2fr 1fr 1fr; gap: 1rem;">
+                    <div>
+                        <label style="display: block; font-size: 0.7rem; font-weight: 700; color: var(--slate-600); margin-bottom: 0.3rem;">Target Sector</label>
+                        <select id="mkt-sector" class="sigma-input" onchange="updateAudiencePreview()">
+                            <option value="Licensed Childcare">Licensed Childcare &amp; Early Education</option>
+                            <option value="Commercial Office">Commercial Real Estate &amp; Offices</option>
+                            <option value="all">All Verified Commercial Facilities</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.7rem; font-weight: 700; color: var(--slate-600); margin-bottom: 0.3rem;">Geographic Scope</label>
+                        <select id="mkt-geo" class="sigma-input" onchange="updateAudiencePreview()">
+                            <option value="North Texas Core">North Texas Core (Collin, Dallas, Denton, Tarrant)</option>
+                            <option value="Statewide Texas">Statewide Texas (Expansion Mandate)</option>
+                            <option value="Collin">Collin County Only</option>
+                            <option value="Dallas">Dallas County Only</option>
+                            <option value="Tarrant">Tarrant County Only</option>
+                            <option value="Denton">Denton County Only</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.7rem; font-weight: 700; color: var(--slate-600); margin-bottom: 0.3rem;">Min. Capacity / Size</label>
+                        <input type="number" id="mkt-min-capacity" class="sigma-input" value="75" placeholder="e.g. 75" onchange="updateAudiencePreview()" oninput="updateAudiencePreview()" />
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.7rem; font-weight: 700; color: var(--slate-600); margin-bottom: 0.3rem;">Daily Sending Throttle</label>
+                        <select id="mkt-throttle" class="sigma-input">
+                            <option value="25">25 / day (Safe)</option>
+                            <option value="50" selected>50 / day (Standard)</option>
+                            <option value="100">100 / day (High)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Live Audience Counter -->
+                <div id="mkt-audience-counter" style="margin-top: 1rem; background: #eff6ff; border: 1px solid #bfdbfe; padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.8rem; color: #1e40af; font-weight: 700; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-radar fa-spin"></i> Querying Texas verified database...
+                </div>
+            </div>
+
+            <!-- Row 3: Sequence Message Template & Tokens -->
+            <div style="margin-bottom: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <label style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--slate-700);">Email Subject Template *</label>
+                    <span style="font-size: 0.7rem; color: var(--slate-400);">Tokens supported: {director_name}, {facility_name}, {city}</span>
+                </div>
+                <input type="text" id="mkt-subject-tmpl" class="sigma-input" value="Avoiding State Licensing &amp; Bleach Hazards: Certified Childcare Sanitation Protocol" required style="margin-bottom: 1rem;" />
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <label style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--slate-700);">Email Body Template (HTML / Plain Text) *</label>
+                    <div style="display: flex; gap: 0.35rem; align-items: center;">
+                        <span style="font-size: 0.7rem; font-weight: 700; color: var(--slate-500); margin-right: 0.25rem;">Insert Token:</span>
+                        <button type="button" onclick="insertMarketingToken('{director_name}')" class="isc-badge" style="cursor: pointer; background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; font-size: 0.68rem; font-weight: 700;">+ Director</button>
+                        <button type="button" onclick="insertMarketingToken('{facility_name}')" class="isc-badge" style="cursor: pointer; background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; font-size: 0.68rem; font-weight: 700;">+ Facility</button>
+                        <button type="button" onclick="insertMarketingToken('{city}')" class="isc-badge" style="cursor: pointer; background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; font-size: 0.68rem; font-weight: 700;">+ City</button>
+                        <button type="button" onclick="insertMarketingToken('{booking_link}')" class="isc-badge" style="cursor: pointer; background: #fef3c7; color: #92400e; border: 1px solid #fde68a; font-size: 0.68rem; font-weight: 700;">+ Calendar Link</button>
+                    </div>
+                </div>
+                <textarea id="mkt-body-tmpl" class="sigma-input" style="height: 180px; font-family: monospace; font-size: 0.8rem; line-height: 1.5; resize: vertical;" required>&lt;p&gt;Dear {director_name},&lt;/p&gt;
+
+&lt;p&gt;In operating a licensed childcare center in {city}, maintaining state chemical safety compliance under Texas Health and Human Services (HHS) and OSHA regulations is an ongoing priority. Traditional bleach solutions frequently present strong chemical odors, respiratory irritation among toddlers, and fabric degradation across classroom carpets.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;HWB Cleaning Services LLC&lt;/strong&gt; provides an ISO 9001:2015 certified, hospital-grade green sanitization protocol engineered specifically for early educational environments. We replace harsh bleach mixtures with EPA List N hospital disinfectants that eliminate 99.99% of viral pathogens (RSV, Norovirus, Influenza) with zero toxic fumes and zero chemical residue.&lt;/p&gt;
+
+&lt;p&gt;As the local Owner &amp; Operator, I would be pleased to conduct a &lt;strong&gt;Complimentary 10-Point Sanitation Audit&lt;/strong&gt; of {facility_name} at no charge.&lt;/p&gt;
+
+&lt;p&gt;You can reserve a convenient 15-minute inspection slot directly on my calendar here:&lt;br /&gt;
+&lt;a href="{booking_link}" style="display: inline-block; background: #2563eb; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 700; margin-top: 10px;"&gt;Select a 15-Minute Slot on Humberto's Calendar&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;Thank you for your dedicated service to our community's children.&lt;/p&gt;
+
+&lt;p&gt;Sincerely,&lt;/p&gt;</textarea>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem; border-top: 1px solid var(--slate-200); padding-top: 1.25rem;">
+                <input type="hidden" id="mkt-cadence" value="1-Step Intro with Calendar Link" />
+                <button type="button" onclick="closeModal('modal-create-campaign')" class="isc-btn isc-btn-outline" style="height: 38px; padding: 0 1.25rem; font-size: 0.8rem;">Cancel</button>
+                <button type="submit" class="isc-btn isc-btn-primary" style="height: 38px; padding: 0 1.5rem; font-size: 0.8rem; font-weight: 800; background: #ec4899; border-color: #db2777;">
+                    <i class="fas fa-rocket"></i> Launch &amp; Stage Campaign
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ============================================================================== -->
+<!-- 2. EXECUTIVE EMAIL REVIEW & EDIT MODAL (HWB-COM-001 LETTERHEAD PROOF)          -->
+<!-- ============================================================================== -->
+<div id="modal-review-email" class="isc-modal-overlay" style="display:none; z-index: 1200;">
+    <div class="isc-modal" style="max-width: 1100px; width: 95%; max-height: 92vh; display: flex; flex-direction: column;">
+        <!-- Modal Header -->
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--slate-200); padding-bottom: 1rem; margin-bottom: 1rem;">
+            <div>
+                <h2 style="font-size: 1.3rem; font-weight: 900; color: var(--slate-900); margin: 0; display: flex; align-items: center; gap: 0.65rem;">
+                    <i class="fas fa-shield-alt" style="color: #f59e0b;"></i> Executive Email Review &amp; Edit Gate (HWB-COM-001)
+                </h2>
+                <p style="font-size: 0.78rem; color: var(--slate-500); margin: 0.2rem 0 0 0; font-weight: 600;">
+                    Verify formatting, edit personal notes, or release immediately via Microsoft Graph API.
+                </p>
+            </div>
+            <button type="button" onclick="closeModal('modal-review-email')" style="background: var(--slate-100); border: none; width: 32px; height: 32px; border-radius: 6px; cursor: pointer; color: var(--slate-500); display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">&times;</button>
+        </div>
+
+        <!-- Dual Pane Layout -->
+        <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 1.5rem; flex: 1; overflow-y: auto; padding-right: 0.5rem;">
+            <!-- Left Pane: Editor Form -->
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                <input type="hidden" id="edit-outbox-id" />
+                
+                <div>
+                    <label style="display: block; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: var(--slate-600); margin-bottom: 0.3rem;">Target Facility</label>
+                    <div id="edit-outbox-facility" style="font-weight: 800; font-size: 0.9rem; color: var(--slate-900); background: #f8fafc; padding: 0.5rem 0.75rem; border-radius: 6px; border: 1px solid var(--slate-200);">Commercial Facility</div>
+                </div>
+
+                <div>
+                    <label style="display: block; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: var(--slate-600); margin-bottom: 0.3rem;">Recipient Email Address</label>
+                    <input type="email" id="edit-outbox-recipient" class="sigma-input" readonly style="background: #f8fafc; font-weight: 700; color: var(--brand);" />
+                </div>
+
+                <div>
+                    <label style="display: block; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: var(--slate-600); margin-bottom: 0.3rem;">Subject Line (Editable)</label>
+                    <input type="text" id="edit-outbox-subject" class="sigma-input" style="font-weight: 700;" oninput="updateLiveEmailPreview()" />
+                </div>
+
+                <div style="flex: 1; display: flex; flex-direction: column;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem;">
+                        <label style="font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: var(--slate-600);">Email Body (Editable HTML / Text)</label>
+                        <span style="font-size: 0.68rem; color: var(--slate-400);">Updates right pane in real time</span>
+                    </div>
+                    <textarea id="edit-outbox-body" class="sigma-input" style="flex: 1; min-height: 240px; font-family: monospace; font-size: 0.78rem; line-height: 1.45; resize: vertical;" oninput="updateLiveEmailPreview()"></textarea>
+                </div>
+            </div>
+
+            <!-- Right Pane: Live Visual Letterhead Proof (HWB-COM-001) -->
+            <div style="background: #f1f5f9; border: 1px solid var(--slate-200); border-radius: 8px; padding: 1rem; overflow-y: auto; max-height: 580px;">
+                <div style="font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: var(--slate-500); margin-bottom: 0.75rem; letter-spacing: 0.05em; display: flex; justify-content: space-between; align-items: center;">
+                    <span><i class="fas fa-envelope-open-text" style="color: #2563eb;"></i> Live Client Letterhead Proof</span>
+                    <span class="isc-badge" style="background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; font-size: 0.65rem;">HWB-COM-001 Active</span>
+                </div>
+                <div id="live-letterhead-frame" style="background: #ffffff; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.06); padding: 0.5rem;">
+                    <!-- Rendered HTML injected dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Footer Actions -->
+        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--slate-200); padding-top: 1rem; margin-top: 1rem;">
+            <button type="button" onclick="closeModal('modal-review-email')" class="isc-btn isc-btn-outline" style="height: 36px; padding: 0 1.25rem; font-size: 0.78rem;">Close</button>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <button type="button" onclick="saveEmailReviewEdits()" class="isc-btn isc-btn-outline" style="height: 36px; padding: 0 1.15rem; font-size: 0.78rem; font-weight: 700; color: var(--brand); border-color: var(--brand);">
+                    <i class="fas fa-save"></i> Save Changes
+                </button>
+                <button type="button" onclick="releaseEmailFromReview()" class="isc-btn isc-btn-primary" style="height: 36px; padding: 0 1.35rem; font-size: 0.78rem; font-weight: 800; background: #10b981; border-color: #059669;">
+                    <i class="fas fa-paper-plane"></i> Release &amp; Send Now
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 <!-- Instant Activity Hover Card Popover (Interactive Scope) -->
 <div id="sigma-hover-card-popover" onmouseenter="keepActivityHoverCard()" onmouseleave="hideActivityHoverCard()" style="display: none; position: fixed; z-index: 99999; background: #0f172a; color: #ffffff; padding: 1.25rem; border-radius: 1rem; width: 340px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); border: 1px solid #334155; pointer-events: auto; transition: opacity 0.15s ease;">
@@ -10222,8 +10476,194 @@
         }
     }
 
+    // ==============================================================================
+    // SIGMAFIDELITY™ MARKETING CAMPAIGNS & OUTBOX ENGINE JAVASCRIPT CONTROLLERS
+    // ==============================================================================
+
+    function openEmailReviewModal(emailId) {
+        fetch('/api/v1/marketing/outbox/' + emailId)
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success' && data.email) {
+                    const em = data.email;
+                    document.getElementById('edit-outbox-id').value = em.id;
+                    document.getElementById('edit-outbox-recipient').value = em.recipient || '';
+                    document.getElementById('edit-outbox-facility').innerText = em.facility_name ? (em.facility_name + ' (' + (em.city || 'TX') + ')') : 'Commercial Facility';
+                    document.getElementById('edit-outbox-subject').value = em.subject || '';
+                    document.getElementById('edit-outbox-body').value = em.body || '';
+                    document.getElementById('live-letterhead-frame').innerHTML = em.body || '';
+                    openModal('modal-review-email');
+                } else {
+                    showToast(data.message || 'Failed to retrieve email dossier.', 'error');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                showToast('Error connecting to outbox service.', 'error');
+            });
+    }
+
+    function updateLiveEmailPreview() {
+        const bodyVal = document.getElementById('edit-outbox-body').value;
+        document.getElementById('live-letterhead-frame').innerHTML = bodyVal;
+    }
+
+    function saveEmailReviewEdits() {
+        const emailId = document.getElementById('edit-outbox-id').value;
+        const subject = document.getElementById('edit-outbox-subject').value;
+        const body = document.getElementById('edit-outbox-body').value;
+        if (!emailId) return;
+
+        fetch('/api/v1/marketing/outbox/' + emailId + '/update', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({subject: subject, body: body})
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                showToast('Email draft successfully updated!', 'success');
+                setTimeout(() => { location.reload(); }, 600);
+            } else {
+                showToast(data.message || 'Update failed.', 'error');
+            }
+        })
+        .catch(err => showToast('Error saving edits: ' + err, 'error'));
+    }
+
+    function releaseEmailFromReview() {
+        const emailId = parseInt(document.getElementById('edit-outbox-id').value);
+        if (!emailId) return;
+
+        fetch('/api/v1/marketing/outbox/batch-action', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({action: 'approve', email_ids: [emailId]})
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                showToast('Email released via Microsoft Graph API!', 'success');
+                closeModal('modal-review-email');
+                setTimeout(() => { location.reload(); }, 800);
+            } else {
+                showToast(data.message || 'Release failed.', 'error');
+            }
+        })
+        .catch(err => showToast('Error releasing email: ' + err, 'error'));
+    }
+
+    function executeOutboxBatch(action, limit) {
+        if (!confirm('Are you sure you want to ' + action + ' the next ' + limit + ' queued messages?')) return;
+        fetch('/api/v1/marketing/outbox/batch-action', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({action: action, limit: limit})
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                showToast(data.message, 'success');
+                setTimeout(() => { location.reload(); }, 1000);
+            } else {
+                showToast(data.message || 'Batch operation failed.', 'error');
+            }
+        })
+        .catch(err => showToast('Batch error: ' + err, 'error'));
+    }
+
+    function generateCampaignDrafts(campaignId, code) {
+        if (!confirm('Generate personalized HWB-COM-001 drafts for campaign ' + code + ' into the Outbox Queue?')) return;
+        fetch('/api/v1/marketing/campaign/' + campaignId + '/generate-drafts', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({limit: 50})
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                showToast(data.message, 'success');
+                setTimeout(() => { location.reload(); }, 1000);
+            } else {
+                showToast(data.message || 'Draft staging failed.', 'error');
+            }
+        })
+        .catch(err => showToast('Error staging drafts: ' + err, 'error'));
+    }
+
+    function updateAudiencePreview() {
+        const sector = document.getElementById('mkt-sector') ? document.getElementById('mkt-sector').value : 'Licensed Childcare';
+        const geo = document.getElementById('mkt-geo') ? document.getElementById('mkt-geo').value : 'North Texas Core';
+        const cap = document.getElementById('mkt-min-capacity') ? document.getElementById('mkt-min-capacity').value : '0';
+        const counterEl = document.getElementById('mkt-audience-counter');
+        if (!counterEl) return;
+
+        counterEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Querying Texas verified database...';
+        fetch('/api/v1/marketing/leads/preview-count?sector=' + encodeURIComponent(sector) + '&geo=' + encodeURIComponent(geo) + '&min_capacity=' + cap)
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const estFmt = '$' + Number(data.estimated_annual_value || 0).toLocaleString();
+                    counterEl.innerHTML = '<i class="fas fa-check-circle" style="color:#10b981;"></i> <strong>' + data.count.toLocaleString() + ' Verified Commercial Facilities Match</strong> (Est. Pipeline: ' + estFmt + ')';
+                }
+            })
+            .catch(err => {
+                counterEl.innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#ef4444;"></i> Unable to preview audience count.';
+            });
+    }
+
+    function submitNewCampaign() {
+        const name = document.getElementById('mkt-name').value.trim();
+        if (!name) { showToast('Campaign Name is required.', 'error'); return; }
+        const payload = {
+            name: name,
+            campaign_code: document.getElementById('mkt-code').value.trim(),
+            target_sector: document.getElementById('mkt-sector').value,
+            target_geo: document.getElementById('mkt-geo').value,
+            cadence_type: document.getElementById('mkt-cadence').value,
+            sender_persona: document.getElementById('mkt-persona').value,
+            daily_throttle_limit: parseInt(document.getElementById('mkt-throttle').value || 50),
+            min_capacity: parseInt(document.getElementById('mkt-min-capacity').value || 0),
+            email_subject_template: document.getElementById('mkt-subject-tmpl').value,
+            email_body_template: document.getElementById('mkt-body-tmpl').value,
+            stage_leads: true,
+            stage_limit: 100
+        };
+        fetch('/api/v1/marketing/campaign/create', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                showToast(data.message, 'success');
+                closeModal('modal-create-campaign');
+                setTimeout(() => { window.location.href = '/admin/operations?view=marketing&campaign_id=' + data.campaign_id; }, 800);
+            } else {
+                showToast(data.message || 'Creation failed.', 'error');
+            }
+        })
+        .catch(err => showToast('Error creating campaign: ' + err, 'error'));
+    }
+
+    function insertMarketingToken(tokenId) {
+        const textarea = document.getElementById('mkt-body-tmpl');
+        if (!textarea) return;
+        const cursorPos = textarea.selectionStart || textarea.value.length;
+        const textBefore = textarea.value.substring(0, cursorPos);
+        const textAfter = textarea.value.substring(cursorPos);
+        textarea.value = textBefore + tokenId + textAfter;
+        textarea.focus();
+        textarea.selectionStart = cursorPos + tokenId.length;
+        textarea.selectionEnd = cursorPos + tokenId.length;
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
         initBidUrgencyBadges();
+        if (document.getElementById('mkt-audience-counter')) {
+            updateAudiencePreview();
+        }
     });
 </script>
 

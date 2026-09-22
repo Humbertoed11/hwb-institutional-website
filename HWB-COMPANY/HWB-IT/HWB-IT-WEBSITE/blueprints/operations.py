@@ -416,8 +416,9 @@ def admin_operations():
                 ''', tuple(mkt_params))
                 marketing_campaigns = cur.fetchall()
 
-                # Primary campaign recipients
-                active_campaign_id = marketing_campaigns[0]['id'] if marketing_campaigns else None
+                # Active campaign selection (supports query parameter ?campaign_id=X)
+                req_campaign_id = request.args.get('campaign_id', type=int)
+                active_campaign_id = req_campaign_id or (marketing_campaigns[0]['id'] if marketing_campaigns else None)
                 if active_campaign_id:
                     try:
                         cur.execute('''
@@ -426,7 +427,7 @@ def admin_operations():
                             LEFT JOIN "Leads" l ON cr.lead_id = l.id
                             WHERE cr.campaign_id = %s
                             ORDER BY cr.capacity DESC NULLS LAST, cr.id ASC
-                            LIMIT 100
+                            LIMIT 150
                         ''', (active_campaign_id,))
                         campaign_recipients = cur.fetchall()
                     except Exception:
@@ -436,11 +437,11 @@ def admin_operations():
                 # PendingOutbox records awaiting CEO approval
                 try:
                     cur.execute('''
-                        SELECT id, recipient, subject, left(body, 350) as body_preview, created_at, status
+                        SELECT id, recipient, subject, left(body, 350) as body_preview, created_at, status, tracking_token, campaign_id, recipient_id
                         FROM "PendingOutbox"
                         WHERE UPPER(status) = 'PENDING'
                         ORDER BY id DESC
-                        LIMIT 50
+                        LIMIT 100
                     ''')
                     pending_outbox_items = cur.fetchall()
                     cur.execute("SELECT COUNT(*) FROM \"PendingOutbox\" WHERE UPPER(status) = 'PENDING'")
@@ -628,7 +629,7 @@ def admin_operations():
                          construction_bids=construction_bids, bids_count=bids_count,
                          institutional_bids=institutional_bids, inst_bids_count=inst_bids_count,
                          marketing_campaigns=marketing_campaigns, mkt_campaigns_count=mkt_campaigns_count,
-                         campaign_recipients=campaign_recipients,
+                         campaign_recipients=campaign_recipients, active_campaign_id=active_campaign_id,
                          pending_outbox_items=pending_outbox_items, pending_outbox_count=pending_outbox_count,
                          employees=employees, employees_count=employees_count, active_employees_count=active_employees_count,
                          total_weekly_labor_hours=total_weekly_labor_hours, total_biweekly_payroll=total_biweekly_payroll,
@@ -1077,7 +1078,11 @@ def sigma_executive():
 
                 redirect_tab = ""
                 if action and "social" in action: redirect_tab = "#social"
-                elif action and "email" in action: redirect_tab = "#outbox"
+                elif action and "email" in action:
+                    ref = request.referrer or ""
+                    if "operations" in ref or "marketing" in ref:
+                        return redirect(url_for("admin_operations", view="marketing"))
+                    redirect_tab = "#outbox"
                 elif action and "user" in action: redirect_tab = "#users"
                 elif action and "kpiv" in action: redirect_tab = "#tools"
                 return redirect(url_for("sigma_executive") + redirect_tab)

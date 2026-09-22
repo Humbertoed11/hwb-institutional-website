@@ -7,7 +7,7 @@ Custodians: George (Systems Architect) & Peter (Recovery Specialist)
 import time
 import os
 from urllib.parse import urlparse
-from flask import Blueprint, jsonify, current_app
+from flask import Blueprint, jsonify, current_app, Response, request, redirect
 from core.services.database import get_db, get_pool_status
 from core.services.task_queue import task_queue
 
@@ -140,4 +140,95 @@ def site_analytics_audit():
         },
         "internal_analytics": six_sigma_data
     }), 200
+
+
+# 1x1 Transparent GIF Byte Structure
+TRANSPARENT_GIF_BYTES = (
+    b'\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x80\x00\x00\xff\xff\xff'
+    b'\x00\x00\x00\x21\xf9\x04\x01\x00\x00\x00\x00\x2c\x00\x00\x00\x00'
+    b'\x01\x00\x01\x00\x00\x02\x02\x44\x01\x00\x3b'
+)
+
+
+@telemetry_bp.route('/api/v1/marketing/track/open/<tracking_token>.gif', methods=['GET'])
+@telemetry_bp.route('/api/v1/telemetry/pixel/<tracking_token>.gif', methods=['GET'])
+def track_email_open(tracking_token):
+    """
+    Transparent 1x1 GIF tracking pixel for marketing email open detection.
+    Updates CampaignRecipients and MarketingCampaigns telemetry in real time.
+    """
+    if tracking_token:
+        conn = None
+        try:
+            db_url = current_app.config.get('DATABASE_URL')
+            conn = get_db(db_url)
+            with conn.cursor() as cur:
+                cur.execute('''
+                    UPDATE "CampaignRecipients"
+                    SET opened_at = COALESCE(opened_at, CURRENT_TIMESTAMP),
+                        open_count = COALESCE(open_count, 0) + 1,
+                        status = CASE WHEN status IN ('STAGED', 'AWAITING_APPROVAL', 'SENT') THEN 'OPENED' ELSE status END,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE tracking_token = %s
+                    RETURNING campaign_id;
+                ''', (tracking_token,))
+                row = cur.fetchone()
+                if row and row[0]:
+                    camp_id = row[0]
+                    cur.execute('''
+                        UPDATE "MarketingCampaigns"
+                        SET opened_count = (SELECT COUNT(DISTINCT id) FROM "CampaignRecipients" WHERE campaign_id = %s AND COALESCE(open_count, 0) > 0),
+                            updated_at = CURRENT_TIMESTAMP
+                        WHERE id = %s;
+                    ''', (camp_id, camp_id))
+                conn.commit()
+        except Exception as e:
+            if conn:
+                try: conn.rollback()
+                except Exception: pass
+            current_app.logger.warning(f"[TRACKING PIXEL] Error recording open for token {tracking_token}: {e}")
+        finally:
+            if conn:
+                try: conn.close()
+                except Exception: pass
+
+    resp = Response(TRANSPARENT_GIF_BYTES, mimetype='image/gif')
+    resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, private, max-age=0'
+    resp.headers['Pragma'] = 'no-cache'
+    resp.headers['Expires'] = '0'
+    return resp
+
+
+@telemetry_bp.route('/api/v1/marketing/track/click/<tracking_token>', methods=['GET'])
+def track_email_click(tracking_token):
+    """
+    Tracks marketing email link clicks (e.g. CEO booking calendar) and redirects to destination.
+    """
+    dest = request.args.get('dest', 'https://outlook.office.com/bookwithme/user/hdominguez@hwbcleaning.com')
+    if tracking_token:
+        conn = None
+        try:
+            db_url = current_app.config.get('DATABASE_URL')
+            conn = get_db(db_url)
+            with conn.cursor() as cur:
+                cur.execute('''
+                    UPDATE "CampaignRecipients"
+                    SET clicked_at = COALESCE(clicked_at, CURRENT_TIMESTAMP),
+                        click_count = COALESCE(click_count, 0) + 1,
+                        status = 'ENGAGED',
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE tracking_token = %s;
+                ''', (tracking_token,))
+                conn.commit()
+        except Exception as e:
+            if conn:
+                try: conn.rollback()
+                except Exception: pass
+            current_app.logger.warning(f"[TRACKING CLICK] Error recording click for token {tracking_token}: {e}")
+        finally:
+            if conn:
+                try: conn.close()
+                except Exception: pass
+    return redirect(dest)
+
 

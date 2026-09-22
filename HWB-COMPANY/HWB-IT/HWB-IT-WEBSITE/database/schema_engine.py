@@ -273,7 +273,10 @@ def apply_system_migrations(conn: Any, db_url: Optional[str] = None) -> None:
                     subject TEXT,
                     body TEXT,
                     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                    status TEXT DEFAULT 'PENDING'
+                    status TEXT DEFAULT 'PENDING',
+                    tracking_token VARCHAR(64),
+                    campaign_id INTEGER,
+                    recipient_id INTEGER
                 );
 
                 CREATE TABLE IF NOT EXISTS "SocialOutbox" (
@@ -448,6 +451,8 @@ def apply_system_migrations(conn: Any, db_url: Optional[str] = None) -> None:
                     template_id VARCHAR(100) DEFAULT 'TMPL_CHILDCARE_HEALTH_V1',
                     sender_persona VARCHAR(100) DEFAULT 'Humberto Dominguez (Owner & Operator)',
                     status VARCHAR(50) DEFAULT 'Draft',
+                    email_subject_template TEXT,
+                    email_body_template TEXT,
                     total_targets INTEGER DEFAULT 0,
                     staged_count INTEGER DEFAULT 0,
                     sent_count INTEGER DEFAULT 0,
@@ -474,6 +479,11 @@ def apply_system_migrations(conn: Any, db_url: Optional[str] = None) -> None:
                     sqf INTEGER,
                     current_step INTEGER DEFAULT 1,
                     status VARCHAR(50) DEFAULT 'STAGED',
+                    tracking_token VARCHAR(64) UNIQUE,
+                    opened_at TIMESTAMP WITH TIME ZONE,
+                    open_count INTEGER DEFAULT 0,
+                    clicked_at TIMESTAMP WITH TIME ZONE,
+                    click_count INTEGER DEFAULT 0,
                     outbox_id INTEGER,
                     scheduled_send_at TIMESTAMP WITH TIME ZONE,
                     sent_at TIMESTAMP WITH TIME ZONE,
