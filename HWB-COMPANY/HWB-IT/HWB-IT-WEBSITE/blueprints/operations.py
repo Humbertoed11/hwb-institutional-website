@@ -42,10 +42,20 @@ def admin_operations():
     # Initialization
     leads, clients, work_orders, services, activities, system_users = [], [], [], [], [], []
     leads_count, bids_count, total_pages, portfolio_total = 0, 0, 1, 0
+    dup_count = 0
     lib = {'area': [], 'task': [], 'item': []}
     applicants, subcontractors = [], []
     applicants_count, subcontractors_count = 0, 0
     safety_manuals, safety_jhas, safety_incidents = [], [], []
+    construction_bids = []
+    institutional_bids, inst_bids_count = [], 0
+    marketing_campaigns, mkt_campaigns_count = [], 0
+    campaign_recipients = []
+    pending_outbox_items, pending_outbox_count = [], 0
+    job_positions = []
+    employees, employees_count, active_employees_count = [], 0, 0
+    active_technicians = []
+    total_weekly_labor_hours, total_biweekly_payroll = 0.0, 0.0
     
     # --- Dynamic Column Architecture ---
     default_cols_leads = 'company,status,sqf,value,priority,activities'
@@ -162,312 +172,414 @@ def admin_operations():
 
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
-        with conn.cursor() as cur:
-            # 1. FETCH ACCOUNTS
-            cur.execute('SELECT SUM(annual_revenue) FROM "Customers"')
-            portfolio_total_row = cur.fetchone()
-            portfolio_total = portfolio_total_row[0] if portfolio_total_row and portfolio_total_row[0] is not None else 0
+        # 1. FETCH ACCOUNTS
+        try:
+            with conn.cursor() as cur:
+                cur.execute('SELECT SUM(annual_revenue) FROM "Customers"')
+                portfolio_total_row = cur.fetchone()
+                portfolio_total = portfolio_total_row[0] if portfolio_total_row and portfolio_total_row[0] is not None else 0
 
-            account_sql_base = '''
-                SELECT c.*, 
-                       (SELECT COUNT(*) FROM "Contacts" WHERE account_id = c.customer_id) as contact_count,
-                       (SELECT COUNT(*) FROM "GlobalActivities" WHERE parent_id = c.customer_id AND parent_type = 'Account') as activity_count,
-                       (SELECT MAX(timestamp) FROM "GlobalActivities" WHERE parent_id = c.customer_id AND parent_type = 'Account') as last_contact,
-                       (SELECT description FROM "GlobalActivities" WHERE parent_id = c.customer_id AND parent_type = 'Account' ORDER BY timestamp DESC LIMIT 1) as last_note
-                FROM "Customers" c
-            '''
-            
-            where_clauses = []
-            params = []
+                account_sql_base = '''
+                    SELECT c.*, 
+                           (SELECT COUNT(*) FROM "Contacts" WHERE account_id = c.customer_id) as contact_count,
+                           (SELECT COUNT(*) FROM "GlobalActivities" WHERE parent_id = c.customer_id AND parent_type = 'Account') as activity_count,
+                           (SELECT MAX(timestamp) FROM "GlobalActivities" WHERE parent_id = c.customer_id AND parent_type = 'Account') as last_contact,
+                           (SELECT description FROM "GlobalActivities" WHERE parent_id = c.customer_id AND parent_type = 'Account' ORDER BY timestamp DESC LIMIT 1) as last_note
+                    FROM "Customers" c
+                '''
+                
+                where_clauses = []
+                params = []
 
-            if active_only:
-                where_clauses.append("(SELECT COUNT(*) FROM \"GlobalActivities\" WHERE parent_id = c.customer_id AND parent_type = 'Account') > 0")
+                if active_only:
+                    where_clauses.append("(SELECT COUNT(*) FROM \"GlobalActivities\" WHERE parent_id = c.customer_id AND parent_type = 'Account') > 0")
 
-            if search_q and active_view == 'accounts':
-                s_clauses, s_params = parse_advanced_search(search_q, 'accounts')
-                where_clauses.extend(s_clauses)
-                params.extend(s_params)
+                if search_q and active_view == 'accounts':
+                    s_clauses, s_params = parse_advanced_search(search_q, 'accounts')
+                    where_clauses.extend(s_clauses)
+                    params.extend(s_params)
 
-            full_where = ""
-            if where_clauses:
-                full_where = "WHERE " + " AND ".join(where_clauses)
+                full_where = ""
+                if where_clauses:
+                    full_where = "WHERE " + " AND ".join(where_clauses)
 
-            cur.execute(f"{account_sql_base} {full_where} ORDER BY {a_sort} {a_dir}", tuple(params))
-            clients = cur.fetchall()
+                cur.execute(f"{account_sql_base} {full_where} ORDER BY {a_sort} {a_dir}", tuple(params))
+                clients = cur.fetchall()
+        except Exception as acc_err:
+            conn.rollback()
+            current_app.logger.warning(f"[OPERATIONS] Accounts fetch warning: {acc_err}")
+            clients = []
 
-            # 2. FETCH LEADS
-            lead_where_clauses = []
-            lead_params = []
+        # 2. FETCH LEADS
+        try:
+            with conn.cursor() as cur:
+                lead_where_clauses = []
+                lead_params = []
 
-            include_archived = request.args.get('include_archived') == 'true'
-            if not include_archived and active_view == 'leads':
-                lead_where_clauses.append("is_commercial = TRUE")
+                include_archived = request.args.get('include_archived') == 'true'
+                if not include_archived and active_view == 'leads':
+                    lead_where_clauses.append("is_commercial = TRUE")
 
-            m_and_a_filter = request.args.get('m_and_a') == 'true'
-            if m_and_a_filter and active_view == 'leads':
-                lead_where_clauses.append("acquisition_tier IN ('Tier 1 - Mega Institutional', 'Tier 2 - Regional Commercial')")
+                m_and_a_filter = request.args.get('m_and_a') == 'true'
+                if m_and_a_filter and active_view == 'leads':
+                    lead_where_clauses.append("acquisition_tier IN ('Tier 1 - Mega Institutional', 'Tier 2 - Regional Commercial')")
 
-            duplicates_only = request.args.get('duplicates_only') == 'true'
-            if duplicates_only and active_view == 'leads':
-                lead_where_clauses.append("is_duplicate = TRUE")
-                l_sort, l_dir = "duplicate_group_id ASC, id", "ASC"
+                duplicates_only = request.args.get('duplicates_only') == 'true'
+                if duplicates_only and active_view == 'leads':
+                    lead_where_clauses.append("is_duplicate = TRUE")
+                    l_sort, l_dir = "duplicate_group_id ASC, id", "ASC"
 
-            if active_only:
-                lead_where_clauses.append("(SELECT COUNT(*) FROM \"GlobalActivities\" WHERE parent_id = l.id AND parent_type = 'Lead') > 0")
+                if active_only:
+                    lead_where_clauses.append("(SELECT COUNT(*) FROM \"GlobalActivities\" WHERE parent_id = l.id AND parent_type = 'Lead') > 0")
 
-            if search_q and active_view == 'leads':
-                s_clauses, s_params = parse_advanced_search(search_q, 'leads')
-                lead_where_clauses.extend(s_clauses)
-                lead_params.extend(s_params)
+                if search_q and active_view == 'leads':
+                    s_clauses, s_params = parse_advanced_search(search_q, 'leads')
+                    lead_where_clauses.extend(s_clauses)
+                    lead_params.extend(s_params)
 
-            lead_where_str = ("WHERE " + " AND ".join(lead_where_clauses)) if lead_where_clauses else ""
+                lead_where_str = ("WHERE " + " AND ".join(lead_where_clauses)) if lead_where_clauses else ""
 
-            cur.execute(f'SELECT COUNT(*) FROM "Leads" l {lead_where_str}', tuple(lead_params))
-            leads_count = cur.fetchone()[0]
+                cur.execute(f'SELECT COUNT(*) FROM "Leads" l {lead_where_str}', tuple(lead_params))
+                leads_count = cur.fetchone()[0]
 
-            cur.execute('SELECT COUNT(*) FROM "Leads" WHERE is_duplicate = TRUE;')
-            dup_count_row = cur.fetchone()
-            dup_count = dup_count_row[0] if dup_count_row else 0
+                try:
+                    cur.execute('SELECT COUNT(*) FROM "Leads" WHERE is_duplicate = TRUE;')
+                    dup_count_row = cur.fetchone()
+                    dup_count = dup_count_row[0] if dup_count_row else 0
+                except Exception:
+                    conn.rollback()
+                    dup_count = 0
 
-            lead_sql_base = f'''
-                SELECT l.*, 
-                       (SELECT COUNT(*) FROM "GlobalActivities" WHERE parent_id = l.id AND parent_type = 'Lead') as activity_count, 
-                       (SELECT MAX(timestamp) FROM "GlobalActivities" WHERE parent_id = l.id AND parent_type = 'Lead') as last_contact,
-                       (SELECT description FROM "GlobalActivities" WHERE parent_id = l.id AND parent_type = 'Lead' ORDER BY timestamp DESC LIMIT 1) as last_note
-                FROM "Leads" l 
-                {lead_where_str}
-            '''
-            
-            cur.execute(f'{lead_sql_base} ORDER BY {l_sort} {l_dir} NULLS LAST, id ASC LIMIT %s OFFSET %s', tuple(lead_params + [per_page, offset]))
-            leads = cur.fetchall()
-            total_pages = (leads_count + per_page - 1) // per_page
+                lead_sql_base = f'''
+                    SELECT l.*, 
+                           (SELECT COUNT(*) FROM "GlobalActivities" WHERE parent_id = l.id AND parent_type = 'Lead') as activity_count, 
+                           (SELECT MAX(timestamp) FROM "GlobalActivities" WHERE parent_id = l.id AND parent_type = 'Lead') as last_contact,
+                           (SELECT description FROM "GlobalActivities" WHERE parent_id = l.id AND parent_type = 'Lead' ORDER BY timestamp DESC LIMIT 1) as last_note
+                    FROM "Leads" l 
+                    {lead_where_str}
+                '''
+                
+                cur.execute(f'{lead_sql_base} ORDER BY {l_sort} {l_dir} NULLS LAST, id ASC LIMIT %s OFFSET %s', tuple(lead_params + [per_page, offset]))
+                leads = cur.fetchall()
+                total_pages = (leads_count + per_page - 1) // per_page
+        except Exception as lead_err:
+            conn.rollback()
+            current_app.logger.warning(f"[OPERATIONS] Leads fetch warning: {lead_err}")
+            leads = []
+            leads_count = 0
 
-            # 3. GLOBAL DISPATCH & MONITORING (SigmaFidelity™ HWB-QMS-11.2)
-            cur.execute('''
-                SELECT w.*, 
-                       c.company_name, 
-                       c.company_address as facility_address,
-                       c.city as facility_city,
-                       COALESCE(s.service_requested, w.service_type, 'Routine Nightly Custodial') as service_requested,
-                       e.first_name as tech_first_name,
-                       e.last_name as tech_last_name,
-                       e.employee_number as tech_employee_number,
-                       e.phone as tech_phone,
-                       e.dps_clearance_date as tech_dps_clearance,
-                       e.badge_status as tech_badge_status
-                FROM "WorkOrders" w 
-                JOIN "Customers" c ON w.customer_id = c.customer_id 
-                LEFT JOIN "Services" s ON w.service_id = s.service_id 
-                LEFT JOIN "Employees" e ON COALESCE(w.assigned_technician_id, w.crew_lead_id) = e.id
-                ORDER BY w.scheduled_date DESC, w.work_order_id DESC
-            ''')
-            work_orders = cur.fetchall()
-            
-            cur.execute('SELECT s.*, c.company_name FROM "Services" s JOIN "Customers" c ON s.customer_id = c.customer_id')
-            services = cur.fetchall()
-            
-            cur.execute('SELECT category, value FROM "ScopeLibrary" ORDER BY value ASC')
-            lib_raw = cur.fetchall()
-            for r in lib_raw: 
-                cat = r['category'].lower() if r['category'] else 'other'
-                if cat not in lib: lib[cat] = []
-                lib[cat].append(r['value'])
-            
-            cur.execute('SELECT * FROM "GlobalActivities" ORDER BY timestamp DESC LIMIT 50')
-            activities = cur.fetchall()
+        # 3. GLOBAL DISPATCH & MONITORING (SigmaFidelity™ HWB-QMS-11.2)
+        try:
+            with conn.cursor() as cur:
+                try:
+                    cur.execute('''
+                        SELECT w.*, 
+                               c.company_name, 
+                               c.company_address as facility_address,
+                               c.city as facility_city,
+                               COALESCE(s.service_requested, w.service_type, 'Routine Nightly Custodial') as service_requested,
+                               e.first_name as tech_first_name,
+                               e.last_name as tech_last_name,
+                               e.employee_number as tech_employee_number,
+                               e.phone as tech_phone,
+                               e.dps_clearance_date as tech_dps_clearance,
+                               e.badge_status as tech_badge_status
+                        FROM "WorkOrders" w 
+                        JOIN "Customers" c ON w.customer_id = c.customer_id 
+                        LEFT JOIN "Services" s ON w.service_id = s.service_id 
+                        LEFT JOIN "Employees" e ON COALESCE(w.assigned_technician_id, w.crew_lead_id) = e.id
+                        ORDER BY w.scheduled_date DESC, w.work_order_id DESC
+                    ''')
+                    work_orders = cur.fetchall()
+                except Exception as wo_err:
+                    conn.rollback()
+                    current_app.logger.warning(f"[OPERATIONS] WorkOrders fetch warning: {wo_err}")
+                    work_orders = []
+                
+                try:
+                    cur.execute('SELECT s.*, c.company_name FROM "Services" s JOIN "Customers" c ON s.customer_id = c.customer_id')
+                    services = cur.fetchall()
+                except Exception as serv_err:
+                    conn.rollback()
+                    services = []
+                
+                try:
+                    cur.execute('SELECT category, value FROM "ScopeLibrary" ORDER BY value ASC')
+                    lib_raw = cur.fetchall()
+                    for r in lib_raw: 
+                        cat = r['category'].lower() if r['category'] else 'other'
+                        if cat not in lib: lib[cat] = []
+                        lib[cat].append(r['value'])
+                except Exception as lib_err:
+                    conn.rollback()
+                
+                try:
+                    cur.execute('SELECT * FROM "GlobalActivities" ORDER BY timestamp DESC LIMIT 50')
+                    activities = cur.fetchall()
+                except Exception as act_err:
+                    conn.rollback()
+                    activities = []
+        except Exception as dispatch_err:
+            conn.rollback()
+            current_app.logger.warning(f"[OPERATIONS] Dispatch & services section warning: {dispatch_err}")
 
-            # 4. CONSTRUCTION BIDS PIPELINE
-            bid_where_clauses = []
-            bid_params = []
-            if search_q and active_view == 'construction_bids':
-                s_clauses, s_params = parse_advanced_search(search_q, 'construction_bids')
-                bid_where_clauses.extend(s_clauses)
-                bid_params.extend(s_params)
-            bid_where_str = ("WHERE " + " AND ".join(bid_where_clauses)) if bid_where_clauses else ""
+        # 4. CONSTRUCTION BIDS PIPELINE
+        try:
+            with conn.cursor() as cur:
+                bid_where_clauses = []
+                bid_params = []
+                if search_q and active_view == 'construction_bids':
+                    s_clauses, s_params = parse_advanced_search(search_q, 'construction_bids')
+                    bid_where_clauses.extend(s_clauses)
+                    bid_params.extend(s_params)
+                bid_where_str = ("WHERE " + " AND ".join(bid_where_clauses)) if bid_where_clauses else ""
 
-            cur.execute(f'SELECT COUNT(*) FROM "ConstructionBids" cb {bid_where_str}', tuple(bid_params))
-            bids_count_row = cur.fetchone()
-            bids_count = bids_count_row[0] if bids_count_row else 0
+                cur.execute(f'SELECT COUNT(*) FROM "ConstructionBids" cb {bid_where_str}', tuple(bid_params))
+                bids_count_row = cur.fetchone()
+                bids_count = bids_count_row[0] if bids_count_row else 0
 
-            if active_view == 'construction_bids':
-                total_pages = (bids_count + per_page - 1) // per_page or 1
+                if active_view == 'construction_bids':
+                    total_pages = (bids_count + per_page - 1) // per_page or 1
 
-            nulls_clause = "NULLS LAST" if b_dir == 'ASC' else "NULLS FIRST"
-            cur.execute(f'''
-                SELECT cb.*, 
-                       (SELECT COUNT(*) FROM "GlobalActivities" WHERE parent_id = cb.id AND parent_type = 'ConstructionBid') as activity_count, 
-                       (SELECT MAX(timestamp) FROM "GlobalActivities" WHERE parent_id = cb.id AND parent_type = 'ConstructionBid') as last_contact,
-                       (SELECT description FROM "GlobalActivities" WHERE parent_id = cb.id AND parent_type = 'ConstructionBid' ORDER BY timestamp DESC LIMIT 1) as last_note
-                FROM "ConstructionBids" cb
-                {bid_where_str}
-                ORDER BY {b_sort} {b_dir} {nulls_clause}, cb.id DESC
-                LIMIT %s OFFSET %s
-            ''', tuple(bid_params + [per_page, offset]))
-            construction_bids = cur.fetchall()
+                nulls_clause = "NULLS LAST" if b_dir == 'ASC' else "NULLS FIRST"
+                cur.execute(f'''
+                    SELECT cb.*, 
+                           (SELECT COUNT(*) FROM "GlobalActivities" WHERE parent_id = cb.id AND parent_type = 'ConstructionBid') as activity_count, 
+                           (SELECT MAX(timestamp) FROM "GlobalActivities" WHERE parent_id = cb.id AND parent_type = 'ConstructionBid') as last_contact,
+                           (SELECT description FROM "GlobalActivities" WHERE parent_id = cb.id AND parent_type = 'ConstructionBid' ORDER BY timestamp DESC LIMIT 1) as last_note
+                    FROM "ConstructionBids" cb
+                    {bid_where_str}
+                    ORDER BY {b_sort} {b_dir} {nulls_clause}, cb.id DESC
+                    LIMIT %s OFFSET %s
+                ''', tuple(bid_params + [per_page, offset]))
+                construction_bids = cur.fetchall()
+        except Exception as bid_err:
+            conn.rollback()
+            current_app.logger.warning(f"[OPERATIONS] ConstructionBids fetch warning: {bid_err}")
+            construction_bids = []
+            bids_count = 0
 
-            # 4b. INSTITUTIONAL BIDS PIPELINE (HWB-QMS-11.6)
-            inst_where_clauses = []
-            inst_params = []
-            if search_q and active_view == 'institutional_bids':
-                inst_where_clauses.append("(ib.solicitation_number ILIKE %s OR ib.title ILIKE %s OR ib.agency_name ILIKE %s OR ib.procurement_officer ILIKE %s OR ib.status ILIKE %s)")
-                param_v = f"%{search_q}%"
-                inst_params.extend([param_v, param_v, param_v, param_v, param_v])
-            inst_where_str = ("WHERE " + " AND ".join(inst_where_clauses)) if inst_where_clauses else ""
+        # 4b. INSTITUTIONAL BIDS PIPELINE (HWB-QMS-11.6)
+        try:
+            with conn.cursor() as cur:
+                inst_where_clauses = []
+                inst_params = []
+                if search_q and active_view == 'institutional_bids':
+                    inst_where_clauses.append("(ib.solicitation_number ILIKE %s OR ib.title ILIKE %s OR ib.agency_name ILIKE %s OR ib.procurement_officer ILIKE %s OR ib.status ILIKE %s)")
+                    param_v = f"%{search_q}%"
+                    inst_params.extend([param_v, param_v, param_v, param_v, param_v])
+                inst_where_str = ("WHERE " + " AND ".join(inst_where_clauses)) if inst_where_clauses else ""
 
-            cur.execute(f'SELECT COUNT(*) FROM "InstitutionalBids" ib {inst_where_str}', tuple(inst_params))
-            inst_count_row = cur.fetchone()
-            inst_bids_count = inst_count_row[0] if inst_count_row else 0
+                cur.execute(f'SELECT COUNT(*) FROM "InstitutionalBids" ib {inst_where_str}', tuple(inst_params))
+                inst_count_row = cur.fetchone()
+                inst_bids_count = inst_count_row[0] if inst_count_row else 0
 
-            if active_view == 'institutional_bids':
-                total_pages = (inst_bids_count + per_page - 1) // per_page or 1
+                if active_view == 'institutional_bids':
+                    total_pages = (inst_bids_count + per_page - 1) // per_page or 1
 
-            inst_nulls_clause = "NULLS LAST" if ib_dir == 'ASC' else "NULLS FIRST"
-            cur.execute(f'''
-                SELECT ib.*,
-                       (SELECT COUNT(*) FROM "GlobalActivities" WHERE parent_id = ib.id AND parent_type = 'InstitutionalBid') as activity_count,
-                       (SELECT MAX(timestamp) FROM "GlobalActivities" WHERE parent_id = ib.id AND parent_type = 'InstitutionalBid') as last_contact
-                FROM "InstitutionalBids" ib
-                {inst_where_str}
-                ORDER BY {ib_sort} {ib_dir} {inst_nulls_clause}, ib.id DESC
-                LIMIT %s OFFSET %s
-            ''', tuple(inst_params + [per_page, offset]))
-            institutional_bids = cur.fetchall()
+                inst_nulls_clause = "NULLS LAST" if ib_dir == 'ASC' else "NULLS FIRST"
+                cur.execute(f'''
+                    SELECT ib.*,
+                           (SELECT COUNT(*) FROM "GlobalActivities" WHERE parent_id = ib.id AND parent_type = 'InstitutionalBid') as activity_count,
+                           (SELECT MAX(timestamp) FROM "GlobalActivities" WHERE parent_id = ib.id AND parent_type = 'InstitutionalBid') as last_contact
+                    FROM "InstitutionalBids" ib
+                    {inst_where_str}
+                    ORDER BY {ib_sort} {ib_dir} {inst_nulls_clause}, ib.id DESC
+                    LIMIT %s OFFSET %s
+                ''', tuple(inst_params + [per_page, offset]))
+                institutional_bids = cur.fetchall()
+        except Exception as inst_err:
+            conn.rollback()
+            current_app.logger.warning(f"[OPERATIONS] InstitutionalBids fetch warning: {inst_err}")
+            institutional_bids = []
+            inst_bids_count = 0
 
-            # 4d. MARKETING DEPARTMENT & CAMPAIGNS PIPELINE (HWB-QMS-8.0 / HWB-SAL-2026-001)
-            mkt_where_clauses = []
-            mkt_params = []
-            if search_q and active_view == 'marketing':
-                mkt_where_clauses.append("(campaign_code ILIKE %s OR name ILIKE %s OR target_sector ILIKE %s OR status ILIKE %s)")
-                param_m = f"%{search_q}%"
-                mkt_params.extend([param_m, param_m, param_m, param_m])
-            mkt_where_str = ("WHERE " + " AND ".join(mkt_where_clauses)) if mkt_where_clauses else ""
+        # 4d. MARKETING DEPARTMENT & CAMPAIGNS PIPELINE (HWB-QMS-8.0 / HWB-SAL-2026-001)
+        try:
+            with conn.cursor() as cur:
+                mkt_where_clauses = []
+                mkt_params = []
+                if search_q and active_view == 'marketing':
+                    mkt_where_clauses.append("(campaign_code ILIKE %s OR name ILIKE %s OR target_sector ILIKE %s OR status ILIKE %s)")
+                    param_m = f"%{search_q}%"
+                    mkt_params.extend([param_m, param_m, param_m, param_m])
+                mkt_where_str = ("WHERE " + " AND ".join(mkt_where_clauses)) if mkt_where_clauses else ""
 
-            cur.execute(f'SELECT COUNT(*) FROM "MarketingCampaigns" {mkt_where_str}', tuple(mkt_params))
-            mkt_count_row = cur.fetchone()
-            mkt_campaigns_count = mkt_count_row[0] if mkt_count_row else 0
+                cur.execute(f'SELECT COUNT(*) FROM "MarketingCampaigns" {mkt_where_str}', tuple(mkt_params))
+                mkt_count_row = cur.fetchone()
+                mkt_campaigns_count = mkt_count_row[0] if mkt_count_row else 0
 
-            cur.execute(f'''
-                SELECT * FROM "MarketingCampaigns"
-                {mkt_where_str}
-                ORDER BY created_at DESC, id DESC
-            ''', tuple(mkt_params))
-            marketing_campaigns = cur.fetchall()
+                cur.execute(f'''
+                    SELECT * FROM "MarketingCampaigns"
+                    {mkt_where_str}
+                    ORDER BY created_at DESC, id DESC
+                ''', tuple(mkt_params))
+                marketing_campaigns = cur.fetchall()
 
-            # Primary campaign recipients
-            active_campaign_id = marketing_campaigns[0]['id'] if marketing_campaigns else None
+                # Primary campaign recipients
+                active_campaign_id = marketing_campaigns[0]['id'] if marketing_campaigns else None
+                if active_campaign_id:
+                    try:
+                        cur.execute('''
+                            SELECT cr.*, l.phone, l.address, l.estimated_annual_value
+                            FROM "CampaignRecipients" cr
+                            LEFT JOIN "Leads" l ON cr.lead_id = l.id
+                            WHERE cr.campaign_id = %s
+                            ORDER BY cr.capacity DESC NULLS LAST, cr.id ASC
+                            LIMIT 100
+                        ''', (active_campaign_id,))
+                        campaign_recipients = cur.fetchall()
+                    except Exception:
+                        conn.rollback()
+                        campaign_recipients = []
+
+                # PendingOutbox records awaiting CEO approval
+                try:
+                    cur.execute('''
+                        SELECT id, recipient, subject, left(body, 350) as body_preview, created_at, status
+                        FROM "PendingOutbox"
+                        WHERE UPPER(status) = 'PENDING'
+                        ORDER BY id DESC
+                        LIMIT 50
+                    ''')
+                    pending_outbox_items = cur.fetchall()
+                    cur.execute("SELECT COUNT(*) FROM \"PendingOutbox\" WHERE UPPER(status) = 'PENDING'")
+                    pending_outbox_count = cur.fetchone()[0]
+                except Exception:
+                    conn.rollback()
+                    pending_outbox_items = []
+                    pending_outbox_count = 0
+        except Exception as mkt_err:
+            conn.rollback()
+            current_app.logger.warning(f"[OPERATIONS] Marketing campaigns fetch warning: {mkt_err}")
+            marketing_campaigns = []
+            mkt_campaigns_count = 0
             campaign_recipients = []
-            if active_campaign_id:
-                cur.execute('''
-                    SELECT cr.*, l.phone, l.address, l.estimated_annual_value
-                    FROM "CampaignRecipients" cr
-                    LEFT JOIN "Leads" l ON cr.lead_id = l.id
-                    WHERE cr.campaign_id = %s
-                    ORDER BY cr.capacity DESC NULLS LAST, cr.id ASC
-                    LIMIT 100
-                ''', (active_campaign_id,))
-                campaign_recipients = cur.fetchall()
+            pending_outbox_items = []
+            pending_outbox_count = 0
 
-            # PendingOutbox records awaiting CEO approval
-            cur.execute('''
-                SELECT id, recipient, subject, left(body, 350) as body_preview, created_at, status
-                FROM "PendingOutbox"
-                WHERE UPPER(status) = 'PENDING'
-                ORDER BY id DESC
-                LIMIT 50
-            ''')
-            pending_outbox_items = cur.fetchall()
-            cur.execute("SELECT COUNT(*) FROM \"PendingOutbox\" WHERE UPPER(status) = 'PENDING'")
-            pending_outbox_count = cur.fetchone()[0]
+        # 4e. SAFETY & EHSQ DEPARTMENT (HWB-QMS-5.5 / HWB-QMS-5.7 / ISO 45001)
+        try:
+            with conn.cursor() as cur:
+                safety_where_clauses = []
+                safety_params = []
+                if search_q and active_view == 'safety':
+                    safety_where_clauses.append("(code ILIKE %s OR title ILIKE %s OR target_sector ILIKE %s OR regulatory_scope ILIKE %s)")
+                    param_s = f"%{search_q}%"
+                    safety_params.extend([param_s, param_s, param_s, param_s])
+                safety_where_str = ("WHERE " + " AND ".join(safety_where_clauses)) if safety_where_clauses else ""
 
-            # 4e. SAFETY & EHSQ DEPARTMENT (HWB-QMS-5.5 / HWB-QMS-5.7 / ISO 45001)
-            safety_where_clauses = []
-            safety_params = []
-            if search_q and active_view == 'safety':
-                safety_where_clauses.append("(code ILIKE %s OR title ILIKE %s OR target_sector ILIKE %s OR regulatory_scope ILIKE %s)")
-                param_s = f"%{search_q}%"
-                safety_params.extend([param_s, param_s, param_s, param_s])
-            safety_where_str = ("WHERE " + " AND ".join(safety_where_clauses)) if safety_where_clauses else ""
+                cur.execute(f'SELECT * FROM "SafetyManuals" {safety_where_str} ORDER BY id ASC', tuple(safety_params))
+                safety_manuals = cur.fetchall()
 
-            cur.execute(f'SELECT * FROM "SafetyManuals" {safety_where_str} ORDER BY id ASC', tuple(safety_params))
-            safety_manuals = cur.fetchall()
+                cur.execute('SELECT * FROM "JobHazardAnalyses" ORDER BY inspection_date DESC, id DESC LIMIT 50')
+                safety_jhas = cur.fetchall()
 
-            cur.execute('SELECT * FROM "JobHazardAnalyses" ORDER BY inspection_date DESC, id DESC LIMIT 50')
-            safety_jhas = cur.fetchall()
+                cur.execute('SELECT * FROM "SafetyIncidents" ORDER BY incident_date DESC, id DESC LIMIT 50')
+                safety_incidents = cur.fetchall()
+        except Exception as safe_err:
+            conn.rollback()
+            current_app.logger.warning(f"[OPERATIONS] Safety fetch warning: {safe_err}")
+            safety_manuals, safety_jhas, safety_incidents = [], [], []
 
-            cur.execute('SELECT * FROM "SafetyIncidents" ORDER BY incident_date DESC, id DESC LIMIT 50')
-            safety_incidents = cur.fetchall()
+        # 5. ACTIVE SYSTEM USERS
+        try:
+            with conn.cursor() as cur:
+                cur.execute('SELECT id, username, full_name, role FROM "Users" WHERE status = \'Active\' ORDER BY id ASC')
+                system_users = cur.fetchall()
+        except Exception as user_err:
+            conn.rollback()
+            current_app.logger.warning(f"[OPERATIONS] Users fetch warning: {user_err}")
+            system_users = []
 
-            # 5. ACTIVE SYSTEM USERS
-            cur.execute('SELECT id, username, full_name, role FROM "Users" WHERE status = \'Active\' ORDER BY id ASC')
-            system_users = cur.fetchall()
+        # 6. WORKFORCE & SUBCONTRACTORS
+        try:
+            with conn.cursor() as cur:
+                applicant_where_clauses = []
+                applicant_params = []
+                if search_q and active_view == 'workforce':
+                    applicant_where_clauses.append("(full_name ILIKE %s OR city ILIKE %s OR phone ILIKE %s OR desired_role ILIKE %s)")
+                    param_val = f"%{search_q}%"
+                    applicant_params.extend([param_val, param_val, param_val, param_val])
+                app_where_str = ("WHERE " + " AND ".join(applicant_where_clauses)) if applicant_where_clauses else ""
+                cur.execute(f'SELECT * FROM "JobApplicants" {app_where_str} ORDER BY created_at DESC', tuple(applicant_params))
+                applicants = cur.fetchall()
+                applicants_count = len(applicants)
 
-            # 6. WORKFORCE & SUBCONTRACTORS
-            applicant_where_clauses = []
-            applicant_params = []
-            if search_q and active_view == 'workforce':
-                applicant_where_clauses.append("(full_name ILIKE %s OR city ILIKE %s OR phone ILIKE %s OR desired_role ILIKE %s)")
-                param_val = f"%{search_q}%"
-                applicant_params.extend([param_val, param_val, param_val, param_val])
-            app_where_str = ("WHERE " + " AND ".join(applicant_where_clauses)) if applicant_where_clauses else ""
-            cur.execute(f'SELECT * FROM "JobApplicants" {app_where_str} ORDER BY created_at DESC', tuple(applicant_params))
-            applicants = cur.fetchall()
-            applicants_count = len(applicants)
+                sub_where_clauses = []
+                sub_params = []
+                if search_q and active_view == 'workforce':
+                    sub_where_clauses.append("(company_name ILIKE %s OR contact_name ILIKE %s OR city ILIKE %s OR specialties ILIKE %s)")
+                    param_val = f"%{search_q}%"
+                    sub_params.extend([param_val, param_val, param_val, param_val])
+                sub_where_str = ("WHERE " + " AND ".join(sub_where_clauses)) if sub_where_clauses else ""
+                cur.execute(f'SELECT * FROM "SubcontractorPartners" {sub_where_str} ORDER BY created_at DESC', tuple(sub_params))
+                subcontractors = cur.fetchall()
+                subcontractors_count = len(subcontractors)
+        except Exception as wf_err:
+            conn.rollback()
+            current_app.logger.warning(f"[OPERATIONS] Workforce fetch warning: {wf_err}")
+            applicants, subcontractors = [], []
+            applicants_count, subcontractors_count = 0, 0
 
-            sub_where_clauses = []
-            sub_params = []
-            if search_q and active_view == 'workforce':
-                sub_where_clauses.append("(company_name ILIKE %s OR contact_name ILIKE %s OR city ILIKE %s OR specialties ILIKE %s)")
-                param_val = f"%{search_q}%"
-                sub_params.extend([param_val, param_val, param_val, param_val])
-            sub_where_str = ("WHERE " + " AND ".join(sub_where_clauses)) if sub_where_clauses else ""
-            cur.execute(f'SELECT * FROM "SubcontractorPartners" {sub_where_str} ORDER BY created_at DESC', tuple(sub_params))
-            subcontractors = cur.fetchall()
-            subcontractors_count = len(subcontractors)
+        # 6b. JOB POSITIONS & DESCRIPTIONS (HWB-FORM-7.2-001)
+        try:
+            with conn.cursor() as cur:
+                cur.execute('SELECT * FROM "JobPositions" WHERE is_active = TRUE ORDER BY id ASC;')
+                job_positions_raw = cur.fetchall()
+                job_positions = [dict(jp) for jp in job_positions_raw]
+        except Exception as jp_err:
+            conn.rollback()
+            current_app.logger.warning(f"[OPERATIONS] JobPositions fetch warning: {jp_err}")
+            job_positions = []
 
-            # 6b. JOB POSITIONS & DESCRIPTIONS (HWB-FORM-7.2-001)
-            cur.execute('SELECT * FROM "JobPositions" WHERE is_active = TRUE ORDER BY id ASC;')
-            job_positions_raw = cur.fetchall()
-            job_positions = [dict(jp) for jp in job_positions_raw]
-
-            # 7. ACTIVE EMPLOYEES & WORKFORCE PERSONNEL (HWB-QMS-7.6)
-            emp_where_clauses = []
-            emp_params = []
-            if search_q and active_view == 'workforce':
-                emp_where_clauses.append("(e.first_name ILIKE %s OR e.last_name ILIKE %s OR e.employee_number ILIKE %s OR e.primary_role ILIKE %s)")
-                param_val = f"%{search_q}%"
-                emp_params.extend([param_val, param_val, param_val, param_val])
-            emp_where_str = ("WHERE " + " AND ".join(emp_where_clauses)) if emp_where_clauses else ""
-            cur.execute(f'''
-                SELECT e.*, c.company_name as assigned_facility_name,
-                       jp.position_code as job_position_code, jp.title as job_position_title,
-                       jp.reports_to as job_position_reports_to, jp.summary as job_position_summary,
-                       jp.key_responsibilities as job_position_responsibilities,
-                       jp.required_certifications as job_position_certifications,
-                       (SELECT COUNT(*) FROM "EmployeeDocuments" d WHERE d.employee_id = e.id) as document_count
-                FROM "Employees" e
-                LEFT JOIN "Customers" c ON e.assigned_customer_id = c.customer_id
-                LEFT JOIN "JobPositions" jp ON e.job_position_id = jp.id
-                {emp_where_str}
-                ORDER BY e.created_at DESC;
-            ''', tuple(emp_params))
-            employees_raw = cur.fetchall()
-            employees = []
-            for emp in employees_raw:
-                d = dict(emp)
-                d['pay_rate_hourly'] = float(d['pay_rate_hourly'] or 0.0)
-                d['overtime_rate_hourly'] = float(d['overtime_rate_hourly'] or 0.0)
-                d['weekly_hours_allocated'] = float(d['weekly_hours_allocated'] or 0.0)
-                d.pop('ssn_encrypted', None)
-                d.pop('direct_deposit_account_encrypted', None)
-                d['has_ssn'] = bool(d.get('ssn_last_four'))
-                d['ssn_masked'] = f"***-**-{d['ssn_last_four']}" if d.get('ssn_last_four') else ''
-                d['direct_deposit_account'] = f"••••••••{d['direct_deposit_account_last_four']}" if d.get('direct_deposit_account_last_four') else ''
-                employees.append(d)
-            employees_count = len(employees)
-            active_employees_count = sum(1 for emp in employees if emp['employment_status'] == 'Active')
-            active_technicians = [emp for emp in employees if emp.get('employment_status') == 'Active']
-            total_weekly_labor_hours = sum(emp['weekly_hours_allocated'] for emp in employees if emp['employment_status'] == 'Active')
-            total_biweekly_payroll = sum(emp['weekly_hours_allocated'] * 2.0 * emp['pay_rate_hourly'] for emp in employees if emp['employment_status'] == 'Active')
+        # 7. ACTIVE EMPLOYEES & WORKFORCE PERSONNEL (HWB-QMS-7.6)
+        try:
+            with conn.cursor() as cur:
+                emp_where_clauses = []
+                emp_params = []
+                if search_q and active_view == 'workforce':
+                    emp_where_clauses.append("(e.first_name ILIKE %s OR e.last_name ILIKE %s OR e.employee_number ILIKE %s OR e.primary_role ILIKE %s)")
+                    param_val = f"%{search_q}%"
+                    emp_params.extend([param_val, param_val, param_val, param_val])
+                emp_where_str = ("WHERE " + " AND ".join(emp_where_clauses)) if emp_where_clauses else ""
+                cur.execute(f'''
+                    SELECT e.*, c.company_name as assigned_facility_name,
+                           jp.position_code as job_position_code, jp.title as job_position_title,
+                           jp.reports_to as job_position_reports_to, jp.summary as job_position_summary,
+                           jp.key_responsibilities as job_position_responsibilities,
+                           jp.required_certifications as job_position_certifications,
+                           (SELECT COUNT(*) FROM "EmployeeDocuments" d WHERE d.employee_id = e.id) as document_count
+                    FROM "Employees" e
+                    LEFT JOIN "Customers" c ON e.assigned_customer_id = c.customer_id
+                    LEFT JOIN "JobPositions" jp ON e.job_position_id = jp.id
+                    {emp_where_str}
+                    ORDER BY e.created_at DESC;
+                ''', tuple(emp_params))
+                employees_raw = cur.fetchall()
+                employees = []
+                for emp in employees_raw:
+                    d = dict(emp)
+                    d['pay_rate_hourly'] = float(d['pay_rate_hourly'] or 0.0)
+                    d['overtime_rate_hourly'] = float(d['overtime_rate_hourly'] or 0.0)
+                    d['weekly_hours_allocated'] = float(d['weekly_hours_allocated'] or 0.0)
+                    d.pop('ssn_encrypted', None)
+                    d.pop('direct_deposit_account_encrypted', None)
+                    d['has_ssn'] = bool(d.get('ssn_last_four'))
+                    d['ssn_masked'] = f"***-**-{d['ssn_last_four']}" if d.get('ssn_last_four') else ''
+                    d['direct_deposit_account'] = f"••••••••{d['direct_deposit_account_last_four']}" if d.get('direct_deposit_account_last_four') else ''
+                    employees.append(d)
+                employees_count = len(employees)
+                active_employees_count = sum(1 for emp in employees if emp.get('employment_status') == 'Active')
+                active_technicians = [emp for emp in employees if emp.get('employment_status') == 'Active']
+                total_weekly_labor_hours = sum(emp['weekly_hours_allocated'] for emp in employees if emp.get('employment_status') == 'Active')
+                total_biweekly_payroll = sum(emp['weekly_hours_allocated'] * 2.0 * emp['pay_rate_hourly'] for emp in employees if emp.get('employment_status') == 'Active')
+        except Exception as emp_err:
+            conn.rollback()
+            current_app.logger.warning(f"[OPERATIONS] Employees fetch warning: {emp_err}")
+            employees, employees_count, active_employees_count = [], 0, 0
+            active_technicians = []
+            total_weekly_labor_hours, total_biweekly_payroll = 0.0, 0.0
     finally:
         if "conn" in locals() and conn: conn.close()
 

@@ -155,6 +155,33 @@ def apply_system_migrations(conn: Any, db_url: Optional[str] = None) -> None:
                 ALTER TABLE "Customers" ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'Active';
 
                 -- WorkOrders Parity
+                CREATE TABLE IF NOT EXISTS "WorkOrders" (
+                    work_order_id SERIAL PRIMARY KEY,
+                    customer_id INTEGER NOT NULL,
+                    service_id INTEGER,
+                    status TEXT DEFAULT 'PENDING',
+                    scheduled_date DATE,
+                    scheduled_time TEXT,
+                    actual_start_time TEXT,
+                    actual_end_time TEXT,
+                    crew_lead_id INTEGER,
+                    client_notes TEXT,
+                    crew_notes TEXT,
+                    photo_proof_url TEXT,
+                    last_gps_lat DOUBLE PRECISION,
+                    last_gps_long DOUBLE PRECISION,
+                    created_at DATE DEFAULT CURRENT_TIMESTAMP,
+                    shift_window VARCHAR(100) DEFAULT 'Evening Shift (6:00 PM – 11:00 PM)',
+                    service_type VARCHAR(100) DEFAULT 'Routine Nightly Custodial',
+                    assigned_technician_id INTEGER,
+                    quality_score NUMERIC(5,2),
+                    completion_signature TEXT,
+                    supervisor_signoff TEXT,
+                    checklist_progress JSONB DEFAULT '[]'::jsonb,
+                    dock_ingress_instructions TEXT,
+                    security_access_code VARCHAR(100)
+                );
+
                 ALTER TABLE "WorkOrders" ADD COLUMN IF NOT EXISTS shift_window VARCHAR(100) DEFAULT 'Evening Shift (6:00 PM – 11:00 PM)';
                 ALTER TABLE "WorkOrders" ADD COLUMN IF NOT EXISTS service_type VARCHAR(100) DEFAULT 'Routine Nightly Custodial';
                 ALTER TABLE "WorkOrders" ADD COLUMN IF NOT EXISTS assigned_technician_id INTEGER;
@@ -165,8 +192,362 @@ def apply_system_migrations(conn: Any, db_url: Optional[str] = None) -> None:
                 ALTER TABLE "WorkOrders" ADD COLUMN IF NOT EXISTS checklist_progress JSONB DEFAULT '[]'::jsonb;
                 ALTER TABLE "WorkOrders" ADD COLUMN IF NOT EXISTS dock_ingress_instructions TEXT;
                 ALTER TABLE "WorkOrders" ADD COLUMN IF NOT EXISTS security_access_code VARCHAR(100);
+
+                -- ConstructionBids Table Parity
+                CREATE TABLE IF NOT EXISTS "ConstructionBids" (
+                    id SERIAL PRIMARY KEY,
+                    gc_name VARCHAR(255) NOT NULL,
+                    project_name VARCHAR(255) NOT NULL,
+                    project_address VARCHAR(255),
+                    city VARCHAR(100),
+                    state VARCHAR(50) DEFAULT 'TX',
+                    zipcode VARCHAR(20),
+                    bid_due_date TIMESTAMP WITH TIME ZONE,
+                    estimated_start_date DATE,
+                    estimated_end_date DATE,
+                    cleanable_sqft NUMERIC DEFAULT 0,
+                    estimated_value NUMERIC DEFAULT 0,
+                    scope_phase VARCHAR(150) DEFAULT 'Rough, Final & Touch-Up Clean',
+                    special_requirements TEXT,
+                    estimator_name VARCHAR(150),
+                    estimator_title VARCHAR(100),
+                    estimator_email VARCHAR(150),
+                    estimator_phone VARCHAR(50),
+                    platform VARCHAR(100) DEFAULT 'BuildingConnected',
+                    rfp_url TEXT,
+                    plan_url TEXT,
+                    status VARCHAR(50) DEFAULT 'Invited',
+                    prequal_status VARCHAR(50) DEFAULT 'Ready',
+                    last_contact_date TIMESTAMP WITH TIME ZONE,
+                    next_action VARCHAR(255),
+                    next_action_date DATE,
+                    notes TEXT,
+                    email_id VARCHAR(255) UNIQUE,
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                );
+
+                -- Contacts Table Parity
+                CREATE TABLE IF NOT EXISTS "Contacts" (
+                    contact_id SERIAL PRIMARY KEY,
+                    account_id INTEGER,
+                    full_name TEXT,
+                    role TEXT,
+                    email TEXT,
+                    phone TEXT,
+                    title TEXT,
+                    department TEXT,
+                    reports_to INTEGER,
+                    lead_id INTEGER
+                );
+
+                -- ScopeLibrary Table Parity
+                CREATE TABLE IF NOT EXISTS "ScopeLibrary" (
+                    id SERIAL PRIMARY KEY,
+                    category TEXT NOT NULL,
+                    value TEXT NOT NULL
+                );
+
+                -- EmployeeDocuments Table Parity
+                CREATE TABLE IF NOT EXISTS "EmployeeDocuments" (
+                    id SERIAL PRIMARY KEY,
+                    employee_id INTEGER,
+                    applicant_id INTEGER,
+                    document_type VARCHAR(100) NOT NULL,
+                    file_name VARCHAR(255) NOT NULL,
+                    file_path VARCHAR(255) NOT NULL,
+                    file_size INTEGER,
+                    mime_type VARCHAR(100),
+                    verification_status VARCHAR(50) DEFAULT 'Verified',
+                    expiration_date DATE,
+                    verified_by VARCHAR(100) DEFAULT 'Humberto Dominguez',
+                    verified_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                    notes TEXT,
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                );
+
+                -- PendingOutbox & SocialOutbox Parity
+                CREATE TABLE IF NOT EXISTS "PendingOutbox" (
+                    id SERIAL PRIMARY KEY,
+                    recipient TEXT,
+                    subject TEXT,
+                    body TEXT,
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                    status TEXT DEFAULT 'PENDING'
+                );
+
+                CREATE TABLE IF NOT EXISTS "SocialOutbox" (
+                    id SERIAL PRIMARY KEY,
+                    platform TEXT,
+                    content TEXT,
+                    media_url TEXT,
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                    status TEXT DEFAULT 'PENDING'
+                );
+
+                -- JobPositions Table Parity
+                CREATE TABLE IF NOT EXISTS "JobPositions" (
+                    id SERIAL PRIMARY KEY,
+                    position_code VARCHAR(50) UNIQUE NOT NULL,
+                    title VARCHAR(150) NOT NULL,
+                    department VARCHAR(100) NOT NULL,
+                    reports_to VARCHAR(150) NOT NULL,
+                    summary TEXT NOT NULL,
+                    key_responsibilities JSONB NOT NULL DEFAULT '[]'::jsonb,
+                    required_competencies JSONB NOT NULL DEFAULT '[]'::jsonb,
+                    required_experience VARCHAR(150) NOT NULL,
+                    required_certifications JSONB NOT NULL DEFAULT '[]'::jsonb,
+                    physical_demands TEXT NOT NULL,
+                    work_environment VARCHAR(255) NOT NULL,
+                    hourly_min NUMERIC(8,2) NOT NULL DEFAULT 16.00,
+                    hourly_max NUMERIC(8,2) NOT NULL DEFAULT 25.00,
+                    standard_weekly_hours NUMERIC(4,1) DEFAULT 40.0,
+                    is_active BOOLEAN DEFAULT TRUE,
+                    sop_template_id VARCHAR(50) DEFAULT 'HWB-FORM-7.2-001',
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+                );
+
+                -- JobApplicants Table Parity
+                CREATE TABLE IF NOT EXISTS "JobApplicants" (
+                    id SERIAL PRIMARY KEY,
+                    full_name VARCHAR(150) NOT NULL,
+                    phone VARCHAR(50) NOT NULL,
+                    email VARCHAR(150),
+                    city VARCHAR(100),
+                    state VARCHAR(50) DEFAULT 'TX',
+                    desired_role VARCHAR(100) DEFAULT 'Commercial Cleaning Technician',
+                    desired_shift VARCHAR(50) DEFAULT 'Night',
+                    experience_level VARCHAR(50) DEFAULT '1-2 Years',
+                    has_transportation BOOLEAN DEFAULT TRUE,
+                    authorized_to_work_us BOOLEAN DEFAULT TRUE,
+                    preferred_language VARCHAR(50) DEFAULT 'English',
+                    status VARCHAR(50) DEFAULT 'New',
+                    notes TEXT,
+                    job_position_id INTEGER REFERENCES "JobPositions"(id) ON DELETE SET NULL,
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                );
+
+                -- SubcontractorPartners Table Parity
+                CREATE TABLE IF NOT EXISTS "SubcontractorPartners" (
+                    id SERIAL PRIMARY KEY,
+                    company_name VARCHAR(200) NOT NULL,
+                    contact_name VARCHAR(150) NOT NULL,
+                    phone VARCHAR(50) NOT NULL,
+                    email VARCHAR(150),
+                    ein_tax_id VARCHAR(50),
+                    city VARCHAR(100),
+                    state VARCHAR(50) DEFAULT 'TX',
+                    coi_status VARCHAR(50) DEFAULT 'Active',
+                    coi_expiration DATE,
+                    w9_status VARCHAR(50) DEFAULT 'Verified',
+                    preferred_payment_terms VARCHAR(50) DEFAULT 'Net 15',
+                    hourly_rate_agreed NUMERIC(10,2) DEFAULT 22.00,
+                    specialties TEXT,
+                    status VARCHAR(50) DEFAULT 'Active',
+                    notes TEXT,
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                );
+
+                -- Employees Table Parity
+                CREATE TABLE IF NOT EXISTS "Employees" (
+                    id SERIAL PRIMARY KEY,
+                    employee_number VARCHAR(50) UNIQUE NOT NULL,
+                    applicant_id INTEGER REFERENCES "JobApplicants"(id) ON DELETE SET NULL,
+                    first_name VARCHAR(100) NOT NULL,
+                    last_name VARCHAR(100) NOT NULL,
+                    phone VARCHAR(50) NOT NULL,
+                    email VARCHAR(150),
+                    date_of_birth DATE,
+                    hire_date DATE NOT NULL DEFAULT CURRENT_DATE,
+                    termination_date DATE,
+                    employment_status VARCHAR(50) DEFAULT 'Active',
+                    employment_type VARCHAR(50) DEFAULT 'W-2 Full-Time',
+                    primary_role VARCHAR(100) DEFAULT 'Commercial Cleaning Technician',
+                    pay_rate_hourly NUMERIC(10,2) NOT NULL DEFAULT 16.00,
+                    overtime_rate_hourly NUMERIC(10,2) DEFAULT 24.00,
+                    pay_frequency VARCHAR(50) DEFAULT 'Bi-Weekly',
+                    primary_language VARCHAR(50) DEFAULT 'Spanish',
+                    emergency_contact_name VARCHAR(150),
+                    emergency_contact_phone VARCHAR(50),
+                    address_street VARCHAR(255),
+                    address_city VARCHAR(100),
+                    address_state VARCHAR(50) DEFAULT 'TX',
+                    address_zip VARCHAR(20),
+                    direct_deposit_bank VARCHAR(100),
+                    direct_deposit_routing VARCHAR(50),
+                    direct_deposit_account VARCHAR(50),
+                    direct_deposit_account_encrypted TEXT,
+                    direct_deposit_account_last_four VARCHAR(4),
+                    ssn_encrypted TEXT,
+                    ssn_last_four VARCHAR(4),
+                    assigned_customer_id INTEGER REFERENCES "Customers"(customer_id) ON DELETE SET NULL,
+                    weekly_hours_allocated NUMERIC(6,2) DEFAULT 40.00,
+                    badge_status VARCHAR(50) DEFAULT 'Active',
+                    driver_license_number VARCHAR(50),
+                    driver_license_expiration DATE,
+                    dps_clearance_date DATE,
+                    notes TEXT,
+                    job_position_id INTEGER REFERENCES "JobPositions"(id) ON DELETE SET NULL,
+                    job_description_acknowledged_at TIMESTAMP WITH TIME ZONE,
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                );
+
+                -- InstitutionalBids Table Parity
+                CREATE TABLE IF NOT EXISTS "InstitutionalBids" (
+                    id SERIAL PRIMARY KEY,
+                    solicitation_number VARCHAR(100) UNIQUE NOT NULL,
+                    title VARCHAR(255) NOT NULL,
+                    agency_name VARCHAR(255) NOT NULL,
+                    sector VARCHAR(100) DEFAULT 'Transportation & Infrastructure',
+                    portal_name VARCHAR(100) DEFAULT 'NTTA Marketplace',
+                    portal_doc_id VARCHAR(100),
+                    procurement_officer VARCHAR(150),
+                    officer_email VARCHAR(150),
+                    officer_phone VARCHAR(50),
+                    contract_term_months INTEGER DEFAULT 24,
+                    cleanable_sqft NUMERIC DEFAULT 0,
+                    facilities_count INTEGER DEFAULT 1,
+                    published_budget NUMERIC(12,2) DEFAULT 0.00,
+                    hwb_bid_total NUMERIC(12,2) DEFAULT 0.00,
+                    monthly_base_rate NUMERIC(10,2) DEFAULT 0.00,
+                    annual_base_rate NUMERIC(12,2) DEFAULT 0.00,
+                    hourly_porter_rate NUMERIC(8,2) DEFAULT 0.00,
+                    pre_bid_datetime TIMESTAMP WITH TIME ZONE,
+                    pre_bid_type VARCHAR(100),
+                    pre_bid_url TEXT,
+                    site_walk_datetime TIMESTAMP WITH TIME ZONE,
+                    site_walk_location VARCHAR(255),
+                    questions_due_date TIMESTAMP WITH TIME ZONE,
+                    bid_due_date TIMESTAMP WITH TIME ZONE,
+                    public_opening_datetime TIMESTAMP WITH TIME ZONE,
+                    public_opening_url TEXT,
+                    status VARCHAR(50) DEFAULT 'Active Solicitation',
+                    compliance_status VARCHAR(100) DEFAULT 'Package Unified & Ready',
+                    compliance_summary TEXT,
+                    local_quote_path VARCHAR(255),
+                    bid_sheet_path VARCHAR(255),
+                    dossier_path VARCHAR(255),
+                    rfp_url TEXT,
+                    notes TEXT,
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                );
+
+                -- MarketingCampaigns Table Parity
+                CREATE TABLE IF NOT EXISTS "MarketingCampaigns" (
+                    id SERIAL PRIMARY KEY,
+                    campaign_code VARCHAR(64) UNIQUE NOT NULL,
+                    name VARCHAR(255) NOT NULL,
+                    target_sector VARCHAR(100) NOT NULL,
+                    target_geo VARCHAR(255) DEFAULT 'Collin, Dallas, Denton, Tarrant',
+                    cadence_type VARCHAR(50) DEFAULT '3-Step Compliance',
+                    template_id VARCHAR(100) DEFAULT 'TMPL_CHILDCARE_HEALTH_V1',
+                    sender_persona VARCHAR(100) DEFAULT 'Humberto Dominguez (Owner & Operator)',
+                    status VARCHAR(50) DEFAULT 'Draft',
+                    total_targets INTEGER DEFAULT 0,
+                    staged_count INTEGER DEFAULT 0,
+                    sent_count INTEGER DEFAULT 0,
+                    opened_count INTEGER DEFAULT 0,
+                    walkthroughs_booked INTEGER DEFAULT 0,
+                    total_mrr_won NUMERIC(12,2) DEFAULT 0.00,
+                    daily_throttle_limit INTEGER DEFAULT 50,
+                    created_by VARCHAR(100) DEFAULT 'George (Systems Architect)',
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                );
+
+                -- CampaignRecipients Table Parity
+                CREATE TABLE IF NOT EXISTS "CampaignRecipients" (
+                    id SERIAL PRIMARY KEY,
+                    campaign_id INTEGER REFERENCES "MarketingCampaigns"(id) ON DELETE CASCADE,
+                    lead_id INTEGER REFERENCES "Leads"(id) ON DELETE SET NULL,
+                    recipient_email VARCHAR(255) NOT NULL,
+                    recipient_name VARCHAR(150),
+                    facility_name VARCHAR(255),
+                    city VARCHAR(100),
+                    county VARCHAR(100),
+                    capacity INTEGER,
+                    sqf INTEGER,
+                    current_step INTEGER DEFAULT 1,
+                    status VARCHAR(50) DEFAULT 'STAGED',
+                    outbox_id INTEGER,
+                    scheduled_send_at TIMESTAMP WITH TIME ZONE,
+                    sent_at TIMESTAMP WITH TIME ZONE,
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                );
+
+                -- SafetyManuals Table Parity
+                CREATE TABLE IF NOT EXISTS "SafetyManuals" (
+                    id SERIAL PRIMARY KEY,
+                    code VARCHAR(50) UNIQUE NOT NULL,
+                    title VARCHAR(255) NOT NULL,
+                    subtitle VARCHAR(255),
+                    department VARCHAR(50) DEFAULT 'EHSQ',
+                    version VARCHAR(20) DEFAULT '1.0.0',
+                    status VARCHAR(50) DEFAULT 'APPROVED',
+                    regulatory_scope VARCHAR(255) NOT NULL,
+                    target_sector VARCHAR(100) NOT NULL,
+                    docx_url VARCHAR(255) NOT NULL DEFAULT '',
+                    html_url VARCHAR(255) NOT NULL DEFAULT '',
+                    approved_by VARCHAR(100) DEFAULT 'Humberto Dominguez, CEO',
+                    approval_date DATE DEFAULT '2026-09-21',
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                );
+
+                -- JobHazardAnalyses Table Parity
+                CREATE TABLE IF NOT EXISTS "JobHazardAnalyses" (
+                    id SERIAL PRIMARY KEY,
+                    jha_number VARCHAR(50) UNIQUE NOT NULL,
+                    project_name VARCHAR(255) NOT NULL,
+                    location VARCHAR(255) NOT NULL,
+                    facility_type VARCHAR(100) NOT NULL,
+                    inspection_date DATE NOT NULL,
+                    lead_inspector VARCHAR(100) NOT NULL,
+                    hazards_identified TEXT NOT NULL,
+                    ppe_mandates TEXT NOT NULL,
+                    engineering_controls TEXT NOT NULL,
+                    crew_count INTEGER DEFAULT 1,
+                    status VARCHAR(50) DEFAULT 'Active',
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                );
+
+                -- SafetyIncidents Table Parity
+                CREATE TABLE IF NOT EXISTS "SafetyIncidents" (
+                    id SERIAL PRIMARY KEY,
+                    incident_number VARCHAR(50) UNIQUE NOT NULL,
+                    incident_date DATE NOT NULL,
+                    incident_type VARCHAR(50) NOT NULL,
+                    location VARCHAR(255) NOT NULL,
+                    person_involved VARCHAR(100),
+                    description TEXT NOT NULL,
+                    corrective_action TEXT,
+                    days_away_from_work INTEGER DEFAULT 0,
+                    ceo_reviewed BOOLEAN DEFAULT FALSE,
+                    status VARCHAR(50) DEFAULT 'Logged',
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                );
             ''')
             conn.commit()
+
+            # Seed ScopeLibrary if empty
+            cur.execute('SELECT COUNT(*) FROM "ScopeLibrary";')
+            if cur.fetchone()[0] == 0:
+                cur.execute('''
+                    INSERT INTO "ScopeLibrary" (category, value) VALUES
+                    ('area', 'Main entrance'),
+                    ('task', 'Clean moving glass'),
+                    ('item', 'Front Door'),
+                    ('area', 'Main Lobby'),
+                    ('task', 'High Dusting'),
+                    ('item', 'Ceiling corners, fan, AC register');
+                ''')
+                conn.commit()
 
             # --- Modular Migrations (004 through 018) ---
             target_db_url = db_url or os.environ.get("DATABASE_URL", "postgresql://hwbdev:hwbpassword@db:5432/hwb_dev_db")
