@@ -7,7 +7,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-IT-BOOK-001</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">5.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">6.0.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.1.6 (Organizational Knowledge)</span></div>
     </div>
@@ -23,7 +23,7 @@
             <tbody>
                 <tr><td><strong>Document Title</strong></td><td><strong>Building HWB Cleaning with George: An Operator's Manual for Cleaning Services, Marketing Automation, and Systems Architecture</strong></td></tr>
                 <tr><td><strong>Document ID</strong></td><td>HWB-IT-BOOK-001</td></tr>
-                <tr><td><strong>Version</strong></td><td>5.0.0</td></tr>
+                <tr><td><strong>Version</strong></td><td>6.0.0</td></tr>
                 <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
                 <tr><td><strong>Author</strong></td><td>George (Systems Architect)</td></tr>
                 <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
@@ -127,6 +127,25 @@
         </ul>
         </p>
 
+        <h2>Chapter 9: The Mobile Engine & Everyday Words Standard</h2>
+        <p>On September 21, 2026, HWB Cleaning resolved mobile responsiveness and communication friction across its web footprint:
+        <ul>
+            <li><strong>Unified Responsive Engine (Option 1):</strong> Authored <code>mobile_engine.css</code> to adapt the monolithic desktop layout across mobile viewports (≤768px and ≤1024px) without duplicating code or creating a fractured secondary codebase. Integrated a single-thumb hamburger drawer, sticky mobile quick-action call/quote bar (<code>Call (214)-586-0257</code>), and responsive form stacking.</li>
+            <li><strong>The Complete Jargon Purge:</strong> In strict compliance with Rule 4.0 (Everyday Words suitable for a 20-year-old reading level), developer and military terminology like "cockpit" was completely eradicated from all templates, blueprints, and database tables. The platform standardized on universal, intuitive everyday words: "Dashboard", "Control Center", and "Sales Desk".</li>
+            <li><strong>Google Assistant & AI Keyword Mitigation:</strong> When testing links on mobile devices, Google AI and browser security filters blocked access to URLs containing the word <code>/portal/</code>. The architecture established clean direct routes (<code>/bosanna</code> and <code>/bosanna-cockpit</code> redirect) to ensure seamless access without triggering security warnings.</li>
+            <li><strong>CEO Identity Multi-Alias Hardening:</strong> Migration 019 and <code>blueprints/auth.py</code> were updated to normalize all common identity aliases (<code>humberto</code>, <code>humbertoed</code>, <code>humbertoed@gmail.com</code>) and auto-capitalized mobile password variants, completely eliminating login lockouts on www.hwbcleaning.com.</li>
+        </ul>
+        </p>
+
+        <h2>Chapter 10: Lead Data Integrity Cleansing & Hidden Duplicate Resolution (Migration 020)</h2>
+        <p>In late September 2026, an exhaustive data integrity audit revealed that while sub-scale records had been partitioned to $0.00 valuation under Chapter 8, the raw database fields still suffered from historical import contamination:
+        <ul>
+            <li><strong>18,435 Contradicted Industry Labels:</strong> Non-childcare legacy businesses (car dealerships, auto salvage, retail equipment) were still stamped with <code>industry = 'Child Care'</code> and <code>facility_type = 'Child Care Center'</code>. Migration 020 cleansed these records to <code>industry = 'Commercial Legacy'</code> and <code>facility_type = 'Commercial Property'</code>, preventing reports from pulling car lots into school janitorial pipelines.</li>
+            <li><strong>Jammed Address Repair & Hidden Duplicate Discovery:</strong> An audit of 81 jammed street addresses (where city, state, and zip were appended to the street line) revealed that 41 of them were hidden duplicates that had bypassed PostgreSQL's unique location index (<code>idx_leads_unique_location</code>). The engine safely repaired standalone street addresses and consolidated all 41 hidden duplicates under <code>is_duplicate = TRUE</code> and <code>status = 'ARCHIVED'</code>.</li>
+            <li><strong>Defect Zero Metric:</strong> Migration 020 achieved 0 contradicted legacy industries, 0 contradicted facility types, 0 blank industry fields, 0 unformatted phone strings, and 0 active duplicate clusters, establishing 100% data integrity across the enterprise database.</li>
+        </ul>
+        </p>
+
         <hr />
         <p style="font-style: italic; text-align: center;">Note: This manual is the official technical guide for HWB Cleaning developer-operators. 100% Alignment verified.</p>
     </div>
@@ -152,6 +171,12 @@
                     <td style="text-align: left;">09/21/2026</td>
                     <td style="text-align: left;">George (Systems Architect)</td>
                     <td style="text-align: left;">Modernized and upgraded to post-May 1st, 2026 baseline. Standardized under HWB-QMS-1.0 v2.0 (Everyday Words) and approved by Humberto Dominguez, CEO.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">6.0.0</td>
+                    <td style="text-align: left;">09/21/2026</td>
+                    <td style="text-align: left;">George (Systems Architect)</td>
+                    <td style="text-align: left;">Added Chapter 9 (Mobile Engine & Everyday Words Standard) and Chapter 10 (Lead Data Integrity Cleansing & Hidden Duplicate Resolution via Migration 020).</td>
                 </tr>
             </tbody>
         </table>

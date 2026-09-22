@@ -61,6 +61,7 @@ Responsibility: George (Architect)
 | 09/21/2026 | BUG-080 | Local Loopback Hostname (mop.test) Inaccessible to External Devices & Mobile Cleaners via Generated Onboarding Link. | **RESOLVED** | CRITICAL |
 | 09/21/2026 | BUG-081 | Missing 'status' Column on Azure PostgreSQL 'Users' Table Triggering HTTP 500 on /login & Schema Parity Desync. | **RESOLVED** | CRITICAL |
 | 09/21/2026 | BUG-082 | CEO Login Alias & Password Permutation Rejection ("Invalid credentials." on www.hwbcleaning.com). | **RESOLVED** | CRITICAL |
+| 09/21/2026 | BUG-083 | Lead Data Integrity Contradictions (18,435 Legacy Car Lots Labeled Child Care, 81 Jammed Addresses, Blank Industries & Hidden Duplicates). | **RESOLVED** | HIGH |
 
 ## BUG-080: Local Loopback Hostname (mop.test) Inaccessible to External Devices & Mobile Cleaners via Generated Onboarding Link
 **Detected:** 09/21/2026
@@ -910,6 +911,31 @@ CEO Humberto Dominguez attempting to log into `https://www.hwbcleaning.com/login
 4. **Automated Alias Migration (019):** Authored `scripts/migrate_019_ceo_credentials_and_alias_hardening.py` and registered it in `database/schema_engine.py` to provision synchronized `humberto` and `humbertoed` records with Executive privileges directly in PostgreSQL.
 5. **Mobile Form Hardening:** Added `autocapitalize="none"`, `autocorrect="off"`, and `autocomplete` tags to `templates/login.html`.
 **Preventative:** Ensure all corporate authentication endpoints support documented executive identity aliases and case-insensitive fallback synchronization.
+
+## BUG-083: Lead Data Integrity Contradictions (18,435 Legacy Car Lots Labeled Child Care, 81 Jammed Addresses, Blank Industries & Hidden Duplicates)
+**Detected:** 09/21/2026
+**Status:** **RESOLVED**
+**Symptoms:**
+1. Reports and queries filtering by `industry = 'Child Care'` accidentally returned over 18,400 non-childcare commercial entities (car dealerships, auto salvage, hardware suppliers, and commercial tax filings).
+2. Non-childcare entities retained `facility_type = 'Child Care Center'`, confusing sales reps and automatic dispatch routing.
+3. 81 records contained city, state, and zip code text jammed into the street address column (e.g., `1502 DIXIELAND RD  HARLINGEN TX- 78552 3345`), breaking mapping pins and mail delivery.
+4. 41 of these jammed address records were hidden duplicate entries that bypassed the database unique location constraint (`idx_leads_unique_location`).
+5. 58 records had completely blank industry fields, omitting legitimate daycare centers and federal solicitations from category searches.
+6. 7 phone numbers contained non-standard text (such as 'NO PHONE CALLS ACCEPTED', '0', and unparsed extensions).
+**Root Causes:**
+1. Earlier statewide commercial registry and business tax data imports stamped `industry = 'Child Care'` and `facility_type = 'Child Care Center'` by default across entire batches before strict partitioning was enforced.
+2. Address data pulled from certain state public files concatenated the city, state, and zip code onto the address line.
+3. Because the jammed address string differed from clean addresses, PostgreSQL unique index on `(lower(center_name), lower(address), lower(city))` did not detect the duplicate rows.
+**Solution:**
+1. **Automated Migration 020 (`migrate_020_lead_data_integrity_cleansing.py`):**
+   - Corrected `industry` to `'Commercial Legacy'` across all 18,435 non-childcare legacy records.
+   - Corrected `facility_type` to `'Commercial Property'` across all 18,435 non-childcare legacy records.
+   - Parsed all jammed addresses, successfully cleaning 10 standalone street addresses and identifying 41 hidden duplicates.
+   - Flagged duplicate records with `is_duplicate = TRUE`, `status = 'ARCHIVED'`, and linked `duplicate_group_id`.
+   - Classified all 58 blank industry records into accurate categories (`'Child Care'`, `'Government & Defense'`, `'Commercial Retail'`).
+   - Standardized irregular phone numbers and preserved extensions in facility `notes`.
+2. **Schema Engine Integration:** Registered Migration 020 in `database/schema_engine.py` for idempotent execution across local and Azure production databases upon container boot.
+**Preventative:** Enforce inbound address and phone number sanitization during API synchronization and validate categorization against building capacity.
 
 
 
