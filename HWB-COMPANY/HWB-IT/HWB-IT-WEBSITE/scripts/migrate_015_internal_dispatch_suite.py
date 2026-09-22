@@ -52,6 +52,11 @@ def run_migration(db_url: str):
                 ON CONFLICT (id) DO NOTHING;
             """)
 
+            # Check if Customer 4 exists in Customers
+            cur.execute('SELECT customer_id FROM "Customers" WHERE customer_id = 4;')
+            cust_exists = cur.fetchone()
+            assigned_cust = 4 if cust_exists else None
+
             cur.execute('SELECT id FROM "Employees" WHERE phone = %s OR employee_number = %s;', ('(214)-566-9999', 'HWB-EMP-1002'))
             existing_gonzalo = cur.fetchone()
             if not existing_gonzalo:
@@ -66,11 +71,11 @@ def run_migration(db_url: str):
                         'HWB-EMP-1002', 9, 'Gonzalo', 'Bolanos', '(214)-566-9999', 'gbolanos@gmail.com',
                         CURRENT_DATE, 'Active', 'W-2 Full-Time', 'Commercial Cleaning Technician',
                         18.00, 27.00, 'Bi-Weekly', 'English',
-                        'Dallas', 'TX', 4, 40.00,
+                        'Dallas', 'TX', %s, 40.00,
                         'Active', 'TX-32151555', '2026-10-31', '2026-09-20',
                         'TIPS #260102 Prime Dispatch Technician for Collin College Frisco Campus. Badge ID: BOS-2026-9566.'
                     );
-                """)
+                """, (assigned_cust,))
                 print("  ✓ Onboarded Gonzalo Bolanos (HWB-EMP-1002) into Employees with DPS FACT clearance.")
             else:
                 print("  ✓ Gonzalo Bolanos already present in Employees.")

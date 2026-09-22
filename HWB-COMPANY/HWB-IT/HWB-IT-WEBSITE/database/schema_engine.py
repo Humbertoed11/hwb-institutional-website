@@ -153,6 +153,18 @@ def apply_system_migrations(conn: Any, db_url: Optional[str] = None) -> None:
 
                 ALTER TABLE "Customers" ADD COLUMN IF NOT EXISTS cleaning_delivery_model VARCHAR(50) DEFAULT 'DIRECT_W2';
                 ALTER TABLE "Customers" ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'Active';
+
+                -- WorkOrders Parity
+                ALTER TABLE "WorkOrders" ADD COLUMN IF NOT EXISTS shift_window VARCHAR(100) DEFAULT 'Evening Shift (6:00 PM – 11:00 PM)';
+                ALTER TABLE "WorkOrders" ADD COLUMN IF NOT EXISTS service_type VARCHAR(100) DEFAULT 'Routine Nightly Custodial';
+                ALTER TABLE "WorkOrders" ADD COLUMN IF NOT EXISTS assigned_technician_id INTEGER;
+                ALTER TABLE "WorkOrders" ADD COLUMN IF NOT EXISTS crew_lead_id INTEGER;
+                ALTER TABLE "WorkOrders" ADD COLUMN IF NOT EXISTS quality_score NUMERIC(5,2);
+                ALTER TABLE "WorkOrders" ADD COLUMN IF NOT EXISTS completion_signature TEXT;
+                ALTER TABLE "WorkOrders" ADD COLUMN IF NOT EXISTS supervisor_signoff TEXT;
+                ALTER TABLE "WorkOrders" ADD COLUMN IF NOT EXISTS checklist_progress JSONB DEFAULT '[]'::jsonb;
+                ALTER TABLE "WorkOrders" ADD COLUMN IF NOT EXISTS dock_ingress_instructions TEXT;
+                ALTER TABLE "WorkOrders" ADD COLUMN IF NOT EXISTS security_access_code VARCHAR(100);
             ''')
             conn.commit()
 
