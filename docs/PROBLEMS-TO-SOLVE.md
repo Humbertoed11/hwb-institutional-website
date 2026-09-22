@@ -950,6 +950,21 @@ CEO Humberto Dominguez attempting to log into `https://www.hwbcleaning.com/login
 3. **Chained Execution:** Database seeding runs strictly after schema migrations commit and release all table locks, eliminating lock contention and deadlocks.
 **Preventative:** Never execute heavy database migrations or multiple uncoordinated database threads during top-level WSGI module imports. Keep application boot instantaneous and run background maintenance tasks in sequenced threads.
 
+## BUG-085: Marketing Lead Query Filter Syntax Friction (Unescaped '%' in Parameterized SQL Calls)
+**Detected:** 09/22/2026
+**Status:** **RESOLVED**
+**Symptoms:**
+1. Calling `GET /api/v1/marketing/leads/preview-count` or `POST /api/v1/marketing/campaign/create` with filtering criteria triggered an internal server error: `IndexError: tuple index out of range`.
+2. The interactive Campaign Builder modal could not display the live preview audience count.
+**Root Causes:**
+1. In `blueprints/crm_api.py`, the query generator included `"email LIKE '%@%'"`. When passed to `psycopg2`'s `cursor.execute(sql, tuple(params))`, Python's string interpolation parser interpreted `%@` as a format specifier expecting additional tuple arguments.
+**Solution:**
+1. Replaced `"email LIKE '%@%'"` with `POSITION('@' IN email) > 0` in both `api_marketing_leads_preview_count` and `api_marketing_campaign_create`. This achieves identical email verification while eliminating `%` format characters from the query string.
+2. Verified all endpoints in live container test suite, returning 200 OK with accurate empirical counts.
+**Preventative:**
+In parameterized psycopg2 queries, always use `POSITION(sub IN str) > 0` or escape literal percents as `%%` to prevent formatting collisions.
+
+
 
 
 
