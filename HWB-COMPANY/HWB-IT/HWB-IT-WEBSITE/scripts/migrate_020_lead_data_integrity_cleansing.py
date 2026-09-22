@@ -46,28 +46,27 @@ def run_migration(db_url: str = None):
     try:
         with conn.cursor() as cur:
             # -------------------------------------------------------------------------
-            # 1. Correct Contradicted Industry on Non-Childcare Legacy Records
+            # 1 & 2. Correct Contradicted Industry & Facility Type (Unified Query)
             # -------------------------------------------------------------------------
             cur.execute("""
                 UPDATE "Leads"
-                SET industry = 'Commercial Legacy'
+                SET industry = CASE 
+                        WHEN (industry = 'Child Care' OR industry IS NULL OR trim(industry) = '') THEN 'Commercial Legacy' 
+                        ELSE industry 
+                    END,
+                    facility_type = CASE 
+                        WHEN (facility_type = 'Child Care Center' OR facility_type IS NULL OR trim(facility_type) = '') THEN 'Commercial Property' 
+                        ELSE facility_type 
+                    END
                 WHERE commercial_status = 'Non-Childcare Legacy'
-                  AND (industry = 'Child Care' OR industry IS NULL OR trim(industry) = '');
+                  AND (
+                      (industry = 'Child Care' OR industry IS NULL OR trim(industry) = '')
+                      OR (facility_type = 'Child Care Center' OR facility_type IS NULL OR trim(facility_type) = '')
+                  );
             """)
-            fixed_ind_count = cur.rowcount
-            print(f"  ✓ Corrected industry to 'Commercial Legacy' on {fixed_ind_count:,} legacy commercial records.")
-
-            # -------------------------------------------------------------------------
-            # 2. Correct Contradicted Facility Type on Non-Childcare Legacy Records
-            # -------------------------------------------------------------------------
-            cur.execute("""
-                UPDATE "Leads"
-                SET facility_type = 'Commercial Property'
-                WHERE commercial_status = 'Non-Childcare Legacy'
-                  AND (facility_type = 'Child Care Center' OR facility_type IS NULL OR trim(facility_type) = '');
-            """)
-            fixed_fac_count = cur.rowcount
-            print(f"  ✓ Corrected facility_type to 'Commercial Property' on {fixed_fac_count:,} legacy commercial records.")
+            fixed_count = cur.rowcount
+            conn.commit()
+            print(f"  ✓ Corrected industry & facility_type on {fixed_count:,} legacy commercial records.")
 
             # -------------------------------------------------------------------------
             # 3. Clean Jammed Street Addresses & Resolve Hidden Duplicates
@@ -81,20 +80,29 @@ def run_migration(db_url: str = None):
             cleaned_addr_count = 0
             hidden_dupes_flagged = 0
 
+            candidates = []
             for lead_id, center_name, raw_addr, city_val in jammed_rows:
-                cleaned_addr = clean_jammed_address(raw_addr, city_val)
-                if cleaned_addr and cleaned_addr != raw_addr:
-                    # Check if a clean record already exists at this location
+                cleaned = clean_jammed_address(raw_addr, city_val)
+                if cleaned and cleaned != raw_addr:
+                    candidates.append((lead_id, center_name or "", cleaned, city_val or ""))
+
+            if candidates:
+                # Fast in-memory lookup via single batch query by center_name
+                names_to_check = list(set(c[1].strip().lower() for c in candidates if c[1].strip()))
+                existing_map = {}
+                if names_to_check:
                     cur.execute("""
-                        SELECT id FROM "Leads"
-                        WHERE lower(trim(center_name)) = lower(trim(%s))
-                          AND lower(trim(address)) = lower(trim(%s))
-                          AND lower(trim(city)) = lower(trim(%s))
-                          AND id != %s;
-                    """, (center_name, cleaned_addr, city_val, lead_id))
-                    match = cur.fetchone()
-                    if match:
-                        # Existing clean record exists - mark dirty row as duplicate
+                        SELECT id, lower(trim(center_name)), lower(trim(address)), lower(trim(city))
+                        FROM "Leads"
+                        WHERE lower(trim(center_name)) = ANY(%s);
+                    """, (names_to_check,))
+                    for ex_id, ex_name, ex_addr, ex_city in cur.fetchall():
+                        existing_map[(ex_name, ex_addr, ex_city)] = ex_id
+
+                for lead_id, center_name, cleaned_addr, city_val in candidates:
+                    key = (center_name.strip().lower(), cleaned_addr.strip().lower(), city_val.strip().lower())
+                    existing_id = existing_map.get(key)
+                    if existing_id and existing_id != lead_id:
                         cur.execute("""
                             UPDATE "Leads"
                             SET is_duplicate = TRUE,
@@ -102,51 +110,39 @@ def run_migration(db_url: str = None):
                                 status = 'ARCHIVED',
                                 notes = COALESCE(notes, '') || ' [Hidden duplicate resolved by Migration 020]'
                             WHERE id = %s;
-                        """, (str(match[0]), lead_id))
+                        """, (str(existing_id), lead_id))
                         hidden_dupes_flagged += 1
                     else:
-                        # No duplicate exists - safely update address
                         cur.execute("""
                             UPDATE "Leads"
                             SET address = %s
                             WHERE id = %s;
                         """, (cleaned_addr, lead_id))
                         cleaned_addr_count += 1
+                        existing_map[key] = lead_id
 
+            conn.commit()
             print(f"  ✓ Cleaned {cleaned_addr_count:,} jammed street addresses and resolved {hidden_dupes_flagged:,} hidden duplicate records.")
 
             # -------------------------------------------------------------------------
-            # 4. Classify Remaining Blank Industry Fields
+            # 4. Classify Remaining Blank Industry Fields (Single Set-Based Query)
             # -------------------------------------------------------------------------
             cur.execute("""
-                SELECT id, center_name, commercial_status, capacity
-                FROM "Leads"
+                UPDATE "Leads"
+                SET industry = CASE
+                    WHEN center_name ILIKE '%FED:%' OR center_name ILIKE '%Army%' OR center_name ILIKE '%Solicitation%' THEN 'Government & Defense'
+                    WHEN capacity IS NOT NULL AND capacity > 0 THEN 'Child Care'
+                    WHEN center_name ILIKE '%Lowe%' OR center_name ILIKE '%Tractor%' OR center_name ILIKE '%Truck%' OR center_name ILIKE '%Auto%' OR center_name ILIKE '%Properties%' THEN 'Commercial Retail'
+                    ELSE 'Commercial Legacy'
+                END
                 WHERE industry IS NULL OR trim(industry) = '';
             """)
-            blank_rows = cur.fetchall()
-            blank_remediated = 0
-
-            for lead_id, center_name, comm_status, capacity in blank_rows:
-                c_name = center_name or ""
-                new_ind = 'Commercial Legacy'
-                if 'FED:' in c_name or 'Army' in c_name or 'Solicitation' in c_name:
-                    new_ind = 'Government & Defense'
-                elif capacity and capacity > 0:
-                    new_ind = 'Child Care'
-                elif any(k in c_name for k in ['Lowe', 'Tractor', 'Truck', 'Auto', 'Properties']):
-                    new_ind = 'Commercial Retail'
-
-                cur.execute("""
-                    UPDATE "Leads"
-                    SET industry = %s
-                    WHERE id = %s;
-                """, (new_ind, lead_id))
-                blank_remediated += 1
-
+            blank_remediated = cur.rowcount
+            conn.commit()
             print(f"  ✓ Accurately categorized {blank_remediated:,} previously blank industry fields.")
 
             # -------------------------------------------------------------------------
-            # 5. Consolidate Duplicate Facility Pairs
+            # 5. Consolidate Duplicate Facility Pairs (Batch Execution)
             # -------------------------------------------------------------------------
             cur.execute("""
                 SELECT lower(trim(center_name)), lower(trim(address)), array_agg(id ORDER BY id ASC)
@@ -158,20 +154,26 @@ def run_migration(db_url: str = None):
             """)
             duplicate_clusters = cur.fetchall()
             marked_dupes = 0
+            sec_updates = []
 
             for name_key, addr_key, id_list in duplicate_clusters:
                 primary_id = id_list[0]
                 secondary_ids = id_list[1:]
                 for sec_id in secondary_ids:
-                    cur.execute("""
-                        UPDATE "Leads"
-                        SET is_duplicate = TRUE,
-                            duplicate_group_id = %s,
-                            status = 'ARCHIVED'
-                        WHERE id = %s;
-                    """, (str(primary_id), sec_id))
+                    sec_updates.append((str(primary_id), sec_id))
                     marked_dupes += 1
 
+            if sec_updates:
+                from psycopg2.extras import execute_batch
+                execute_batch(cur, """
+                    UPDATE "Leads"
+                    SET is_duplicate = TRUE,
+                        duplicate_group_id = %s,
+                        status = 'ARCHIVED'
+                    WHERE id = %s;
+                """, sec_updates)
+
+            conn.commit()
             print(f"  ✓ Safely flagged and consolidated {marked_dupes:,} duplicate secondary records across {len(duplicate_clusters)} clusters.")
 
             # -------------------------------------------------------------------------
@@ -202,7 +204,6 @@ def run_migration(db_url: str = None):
                     new_phone = base_p
                     notes_addition = f"Phone Extension: {ext_num}"
                 elif re.match(r'^\d{3}-\d{2}-\d{4}$', clean_p):
-                    # Social or EIN in phone field - remove for privacy
                     new_phone = None
                     notes_addition = "Irregular number purged during Data Integrity Cleansing."
 
@@ -217,10 +218,9 @@ def run_migration(db_url: str = None):
                 """, (new_phone, updated_notes if updated_notes else None, lead_id))
                 cleaned_phones += 1
 
+            conn.commit()
             print(f"  ✓ Standardized {cleaned_phones:,} irregular phone numbers and preserved extensions in notes.")
 
-        conn.commit()
-        print("================================================================================")
         print("  ✓ Migration 020 successfully applied and committed.")
         print("================================================================================\n")
     except Exception as err:

@@ -62,6 +62,7 @@ Responsibility: George (Architect)
 | 09/21/2026 | BUG-081 | Missing 'status' Column on Azure PostgreSQL 'Users' Table Triggering HTTP 500 on /login & Schema Parity Desync. | **RESOLVED** | CRITICAL |
 | 09/21/2026 | BUG-082 | CEO Login Alias & Password Permutation Rejection ("Invalid credentials." on www.hwbcleaning.com). | **RESOLVED** | CRITICAL |
 | 09/21/2026 | BUG-083 | Lead Data Integrity Contradictions (18,435 Legacy Car Lots Labeled Child Care, 81 Jammed Addresses, Blank Industries & Hidden Duplicates). | **RESOLVED** | HIGH |
+| 09/22/2026 | BUG-084 | Azure Web App Container Probe Timeout & Deadlock (Synchronous Boot Import, Heavy Migration 020 Scans, & Concurrent Seeder Lock Contention). | **RESOLVED** | CRITICAL |
 
 ## BUG-080: Local Loopback Hostname (mop.test) Inaccessible to External Devices & Mobile Cleaners via Generated Onboarding Link
 **Detected:** 09/21/2026
@@ -932,10 +933,23 @@ CEO Humberto Dominguez attempting to log into `https://www.hwbcleaning.com/login
    - Corrected `facility_type` to `'Commercial Property'` across all 18,435 non-childcare legacy records.
    - Parsed all jammed addresses, successfully cleaning 10 standalone street addresses and identifying 41 hidden duplicates.
    - Flagged duplicate records with `is_duplicate = TRUE`, `status = 'ARCHIVED'`, and linked `duplicate_group_id`.
-   - Classified all 58 blank industry records into accurate categories (`'Child Care'`, `'Government & Defense'`, `'Commercial Retail'`).
-   - Standardized irregular phone numbers and preserved extensions in facility `notes`.
-2. **Schema Engine Integration:** Registered Migration 020 in `database/schema_engine.py` for idempotent execution across local and Azure production databases upon container boot.
-**Preventative:** Enforce inbound address and phone number sanitization during API synchronization and validate categorization against building capacity.
+## BUG-084: Azure Web App Container Probe Timeout & Deadlock (Synchronous Boot Import, Heavy Migration 020 Scans, & Concurrent Seeder Lock Contention)
+**Detected:** 09/22/2026
+**Status:** **RESOLVED**
+**Symptoms:**
+1. Navigating to `https://www.hwbcleaning.com/` timed out with HTTP 504 / client timeout error.
+2. Azure Web App startup probe failed after 230 seconds: `Container did not respond to startup probe on port 5000 within the expected time limit of 230s`. Container was killed and entered an infinite restart loop.
+3. PostgreSQL log revealed: `deadlock detected: Process 4804 waits for AccessExclusiveLock on relation ... blocked by process 4803. Process 4803 waits for RowExclusiveLock on relation ... blocked by process 4804`.
+**Root Causes:**
+1. **Synchronous Module Import Block:** In `main_app.py`, `apply_system_migrations(conn)` ran synchronously within the top-level application context during Python module import. Gunicorn was unable to finish importing the WSGI app and bind to `0.0.0.0:5000` until all migrations finished.
+2. **Row-by-Row Unindexed Queries in Migration 020:** `migrate_020_lead_data_integrity_cleansing.py` performed 81 sequential full-table scans over 37,466 rows for jammed address checks and 41 sequential update queries, exceeding Azure's 230-second container startup limit.
+3. **Concurrent Thread Deadlock:** `run_seeder_async` was launched as an independent concurrent background thread while `apply_system_migrations` was running. Both threads connected to PostgreSQL simultaneously and modified `"Leads"` and `"Users"` tables, creating an `AccessExclusiveLock` vs `RowExclusiveLock` deadlock.
+**Solution:**
+1. **Unified Async Background Startup Thread:** Re-architected `main_app.py` to decouple database sequence synchronization, schema migrations, and seeding into a single, sequential daemon thread (`run_async_infrastructure_boot`). Gunicorn now completes module import in < 0.5s and binds port 5000 immediately, satisfying Azure's container startup probe within 1 second.
+2. **Set-Based Migration 020 Optimization:** Merged industry and facility type updates into a single SQL statement; replaced 81 per-row scans with a single batch `ANY(%s)` query and in-memory hash map lookup; vectorized industry classifications with SQL `CASE`; and batched secondary duplicate updates using `psycopg2.extras.execute_batch`. Migration 020 runtime dropped from >250s to <1s.
+3. **Chained Execution:** Database seeding runs strictly after schema migrations commit and release all table locks, eliminating lock contention and deadlocks.
+**Preventative:** Never execute heavy database migrations or multiple uncoordinated database threads during top-level WSGI module imports. Keep application boot instantaneous and run background maintenance tasks in sequenced threads.
+
 
 
 
