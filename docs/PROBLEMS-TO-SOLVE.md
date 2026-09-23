@@ -1008,9 +1008,28 @@ CEO Humberto Dominguez attempting to log into `https://www.hwbcleaning.com/login
 2. Maintain identical copies of all migration scripts in `HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/scripts/` to ensure inclusion in Docker builds.
 3. Wrap all catalog/dashboard aggregation queries in protective fallback blocks per Section 2.1 Minimization Mandate.
 
-
-
-
+## BUG-088: Azure PostgreSQL Construction Bids Pipeline Parity, Deal Capture Synchronization, and Duplicate View Isolation
+**Detected:** 09/22/2026
+**Status:** **RESOLVED**
+**Symptoms:**
+1. Live Azure website (`https://www.hwbcleaning.com/admin/operations?view=construction_bids`) rendered 0 construction bids, while local development database possessed 41 bids ($2,091,676.76).
+2. General Contractor solicitation emails received via Microsoft Graph API (`hdominguez@hwbcleaning.com`) were ingested locally by `telegram_listener.py` but never synchronized to Azure Cloud PostgreSQL.
+3. In `scripts/gc_bids_sync.py`, `USER_EMAIL` was set to `humbertoed@hwbcleaning.com` instead of `hdominguez@hwbcleaning.com`, and `sync_inbound_graph_bids()` fetched messages without parsing or inserting candidate bids into the database.
+4. The main leads view (`/admin/operations?view=leads`) leaked 8,923 soft-deleted duplicate records into standard operations views.
+**Root Causes:**
+1. `ConstructionBids` was provisioned via DDL in `schema_engine.py`, but no baseline migration or seeder populated Azure PostgreSQL with the 41 commercial bids.
+2. Background autonomous email capture operated solely against local `hwb_postgres_dev` without automated Azure cloud database sync.
+3. Operations view queries lacked an explicit filter for `is_duplicate = FALSE` and `status != 'ARCHIVED'`, displaying secondary duplicate records alongside active leads.
+**Solution:**
+1. **Migration 022 (`022_bids_pipeline_parity`):** Authored `scripts/migrate_022_bids_pipeline_parity.py` and registered it in `database/schema_engine.py`. Provisions table constraints and idempotently seeds all 41 commercial construction bids ($2.09M) and verifies both institutional solicitations ($5.16M: NTTA Ancillary Facilities & Collin College Frisco Campus).
+2. **Hardened Autonomous Deal Capture (`gc_bids_sync.py`):** Configured `USER_EMAIL = os.getenv('OFFICE365_USER_EMAIL', 'hdominguez@hwbcleaning.com')`, implemented full keyword scanning (`buildingconnected`, `planroom`, `invitation to bid`, etc.), deduplication against `email_id`, automatic insertion of candidate bids, and activity logging into `GlobalActivities`.
+3. **Continuous Deal Daemon in Web Core (`main_app.py`):** Embedded an initial deal sync on boot and launched an autonomous background daemon thread polling Graph API every 15 minutes.
+4. **Duplicate Exclusion (`blueprints/operations.py`):** Hardened default leads view queries to strictly exclude `is_duplicate = TRUE` and `status = 'ARCHIVED'` while preserving dedicated maintenance access via `duplicates_only=true`.
+5. **Telemetry Expansion (`blueprints/telemetry.py`):** Upgraded `/api/v1/db-audit` to output live counts and valuations for `active_clean_leads_count`, `duplicate_leads_count`, `construction_bids_count`, `construction_bids_total_value`, `institutional_bids_count`, and `institutional_bids_total_value`.
+**Preventative:**
+1. Include all pipeline tables (`ConstructionBids`, `InstitutionalBids`) in standard schema engine migrations.
+2. Ensure cloud web applications maintain autonomous background ingestion parity with local worker daemons.
+3. Enforce soft-deletion filters at the repository/query layer across all commercial operations views.
 
 
 

@@ -61,13 +61,36 @@ def db_audit_endpoint():
         with conn.cursor() as cur:
             cur.execute('SELECT COUNT(*) FROM "Leads";')
             total_leads = cur.fetchone()[0]
+            cur.execute('SELECT COUNT(*) FROM "Leads" WHERE (is_duplicate = FALSE OR is_duplicate IS NULL) AND (status != \'ARCHIVED\' OR status IS NULL);')
+            active_clean_leads = cur.fetchone()[0]
+            cur.execute('SELECT COUNT(*) FROM "Leads" WHERE is_duplicate = TRUE;')
+            duplicate_leads = cur.fetchone()[0]
             cur.execute('SELECT id, center_name FROM "Leads" WHERE id = 44518 OR center_name ILIKE \'%DFW6%\';')
             dfw6_rows = cur.fetchall()
             cur.execute('SELECT id, center_name FROM "Leads" WHERE center_name ILIKE \'%Test Lead%\';')
             test_leads = cur.fetchall()
+
+            # Commercial Construction Bids Telemetry
+            cur.execute('SELECT COUNT(*), COALESCE(SUM(estimated_value), 0) FROM "ConstructionBids";')
+            cb_row = cur.fetchone()
+            cb_count = cb_row[0] if cb_row else 0
+            cb_val = float(cb_row[1]) if cb_row and cb_row[1] else 0.0
+
+            # Institutional Bids Telemetry
+            cur.execute('SELECT COUNT(*), COALESCE(SUM(hwb_bid_total), 0) FROM "InstitutionalBids";')
+            ib_row = cur.fetchone()
+            ib_count = ib_row[0] if ib_row else 0
+            ib_val = float(ib_row[1]) if ib_row and ib_row[1] else 0.0
+
         return jsonify({
             'database_host': urlparse(db_url).hostname if db_url else "unknown",
             'total_leads_count': total_leads,
+            'active_clean_leads_count': active_clean_leads,
+            'duplicate_leads_count': duplicate_leads,
+            'construction_bids_count': cb_count,
+            'construction_bids_total_value': cb_val,
+            'institutional_bids_count': ib_count,
+            'institutional_bids_total_value': ib_val,
             'dfw6_rows_found': [dict(r) for r in dfw6_rows],
             'test_leads_found': [dict(r) for r in test_leads]
         }), 200

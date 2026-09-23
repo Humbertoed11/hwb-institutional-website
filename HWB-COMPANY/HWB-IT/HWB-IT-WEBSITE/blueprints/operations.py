@@ -218,17 +218,19 @@ def admin_operations():
                 lead_params = []
 
                 include_archived = request.args.get('include_archived') == 'true'
-                if not include_archived and active_view == 'leads':
+                duplicates_only = request.args.get('duplicates_only') == 'true'
+
+                if duplicates_only and active_view == 'leads':
+                    lead_where_clauses.append("is_duplicate = TRUE")
+                    l_sort, l_dir = "duplicate_group_id ASC, id", "ASC"
+                elif not include_archived and active_view == 'leads':
                     lead_where_clauses.append("is_commercial = TRUE")
+                    lead_where_clauses.append("(is_duplicate = FALSE OR is_duplicate IS NULL)")
+                    lead_where_clauses.append("(status != 'ARCHIVED' OR status IS NULL)")
 
                 m_and_a_filter = request.args.get('m_and_a') == 'true'
                 if m_and_a_filter and active_view == 'leads':
                     lead_where_clauses.append("acquisition_tier IN ('Tier 1 - Mega Institutional', 'Tier 2 - Regional Commercial')")
-
-                duplicates_only = request.args.get('duplicates_only') == 'true'
-                if duplicates_only and active_view == 'leads':
-                    lead_where_clauses.append("is_duplicate = TRUE")
-                    l_sort, l_dir = "duplicate_group_id ASC, id", "ASC"
 
                 if active_only:
                     lead_where_clauses.append("(SELECT COUNT(*) FROM \"GlobalActivities\" WHERE parent_id = l.id AND parent_type = 'Lead') > 0")

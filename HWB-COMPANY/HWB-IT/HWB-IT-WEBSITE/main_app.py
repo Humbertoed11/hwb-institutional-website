@@ -238,12 +238,38 @@ with app.app_context():
                     except Exception as thread_err:
                         print(f"[BOOT] Async Seeder Thread Error: {thread_err}", flush=True)
 
+                # 3. Autonomous Inbound GC / Institutional Bids Initial Sync
+                try:
+                    from scripts.gc_bids_sync import sync_inbound_graph_bids
+                    conn_sync = get_db(db_url)
+                    try:
+                        sync_inbound_graph_bids(conn_sync)
+                    finally:
+                        conn_sync.close()
+                except Exception as sync_err:
+                    print(f"[BOOT] Initial Inbound Deal Sync Notice: {sync_err}", flush=True)
+
                 print("[BOOT] Infrastructure Handshake Complete.", flush=True)
             except Exception as e:
                 print(f"[BOOT] Startup Handshake Warning: {e}", flush=True)
 
+        def run_autonomous_deal_sync_daemon(db_url):
+            import time
+            while True:
+                time.sleep(900)  # Check every 15 minutes
+                try:
+                    from scripts.gc_bids_sync import sync_inbound_graph_bids
+                    conn_loop = get_db(db_url)
+                    try:
+                        sync_inbound_graph_bids(conn_loop)
+                    finally:
+                        conn_loop.close()
+                except Exception as loop_err:
+                    print(f"[DEAL SYNC DAEMON] Error: {loop_err}", flush=True)
+
         seed_path = os.path.join(os.path.dirname(__file__), 'scripts', 'seed_data.json')
         threading.Thread(target=run_async_infrastructure_boot, args=(app.config['DATABASE_URL'], seed_path), daemon=True).start()
+        threading.Thread(target=run_autonomous_deal_sync_daemon, args=(app.config['DATABASE_URL'],), daemon=True).start()
     except Exception as e:
         print(f"[BOOT] Startup Handshake Warning: {e}", flush=True)
 

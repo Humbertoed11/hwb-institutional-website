@@ -26,7 +26,7 @@ DB_URL = os.getenv('DATABASE_URL')
 CID = os.getenv('GRAPH_API_PROD_APPLICATION_ID')
 SECRET = os.getenv('GRAPH_API_PROD_SECRET_VALUE')
 TID = os.getenv('GRAPH_API_PROD_TENANT_ID')
-USER_EMAIL = 'humbertoed@hwbcleaning.com'
+USER_EMAIL = os.getenv('OFFICE365_USER_EMAIL', 'hdominguez@hwbcleaning.com')
 
 SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS "ConstructionBids" (
@@ -274,13 +274,60 @@ def sync_inbound_graph_bids(conn):
     }
 
     try:
-        res = requests.get(url, headers=headers, params=params, timeout=15)
+        res = requests.get(url, headers=headers, params=params, timeout=20)
         if res.status_code != 200:
-            print(f"[SigmaFidelity] Graph API returned status {res.status_code}")
+            print(f"[SigmaFidelity] Graph API returned status {res.status_code}: {res.text}")
             return
         messages = res.json().get('value', [])
         print(f"[SigmaFidelity] Scanned {len(messages)} recent emails for new GC bid invites.")
+
+        gc_terms = ['buildingconnected', 'planroom', 'reproconnect', 'final clean', 'rough clean', 'construction clean', 'invitation to bid', 'itb', 'bid due', 'subcontractor bid']
+
+        new_gc_bids = 0
+        with conn.cursor() as cur:
+            for m in messages:
+                subj = m.get('subject', '')
+                sender_info = m.get('from', {}).get('emailAddress', {})
+                sender = sender_info.get('address', '')
+                name = sender_info.get('name', '')
+                body = m.get('bodyPreview', '')
+                msg_id = m.get('id')
+                recv_dt = m.get('receivedDateTime')
+
+                combined = f"{subj} {sender} {name} {body}".lower()
+                if any(term in combined for term in gc_terms):
+                    cur.execute('SELECT id FROM "ConstructionBids" WHERE email_id = %s;', (msg_id,))
+                    exists = cur.fetchone()
+                    if not exists:
+                        platform = 'BuildingConnected' if 'buildingconnected' in combined else 'Planroom'
+                        cur.execute('''
+                            INSERT INTO "ConstructionBids" (
+                                gc_name, project_name, platform, status, email_id, notes,
+                                estimator_name, estimator_email, created_at, updated_at
+                            ) VALUES (%s, %s, %s, 'Invited', %s, %s, %s, %s, COALESCE(%s::timestamptz, NOW()), NOW())
+                            RETURNING id;
+                        ''', (
+                            name or sender,
+                            subj[:200],
+                            platform,
+                            msg_id,
+                            f"Inbound solicitation email: {body[:300]}",
+                            name,
+                            sender,
+                            recv_dt
+                        ))
+                        new_id = cur.fetchone()[0]
+                        cur.execute('''
+                            INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
+                            VALUES (%s, 'ConstructionBid', 'Email Ingested', %s)
+                        ''', (new_id, f"Auto-ingested ITB email: {subj}"))
+                        new_gc_bids += 1
+                        print(f"[SigmaFidelity] Ingested new GC Bid #{new_id}: {subj[:50]} from {sender}")
+
+            conn.commit()
+            print(f"[SigmaFidelity] Sync completed: {new_gc_bids} new GC bids ingested.")
     except Exception as e:
+        conn.rollback()
         print(f"[SigmaFidelity] Error during Graph API sync: {e}")
 
 if __name__ == '__main__':
