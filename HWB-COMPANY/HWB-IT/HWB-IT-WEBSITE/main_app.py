@@ -14,6 +14,7 @@ from flask import Flask, render_template, request, redirect, url_for, jsonify, f
 from flask_compress import Compress
 from flask_login import LoginManager, current_user
 from werkzeug.exceptions import HTTPException
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from config import sys_config
 from core.models.user import User
@@ -45,6 +46,7 @@ load_dotenv(os.path.join(PROJECT_ROOT, ".env"))
 app = Flask(__name__, 
             static_folder=os.path.join(BASE_DIR, 'static'), 
             template_folder=os.path.join(BASE_DIR, 'templates'))
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 Compress(app)
 app.config.from_object(sys_config)
 app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(minutes=31)
@@ -306,6 +308,7 @@ def enforce_enterprise_role_quarantine():
         sales_whitelist = (
             '/admin/operations',
             '/admin/sales-desk',
+            '/sales-desk',
             '/admin/add-lead',
             '/admin/add-account',
             '/admin/edit-lead/',

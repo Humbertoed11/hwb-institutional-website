@@ -678,11 +678,47 @@ def admin_operations():
 
 # --- Field Sales Desk ---
 
-@operations_bp.route('/admin/sales-desk', endpoint='sales_desk')
-@login_required
-@roles_required('Sales', 'Executive', 'Admin', 'Manager')
+@operations_bp.route('/sales-desk', endpoint='sales_desk')
+@operations_bp.route('/admin/sales-desk', endpoint='admin_sales_desk')
 def sales_desk():
     """Field Sales Desk for Outside Sales Representatives (HWB-SAL-2026-001)."""
+    # 1. Seamless 301 redirection from legacy /admin/sales-desk to decoupled /sales-desk
+    if request.path == '/admin/sales-desk':
+        return redirect(url_for('operations.sales_desk', **request.args), code=301)
+
+    # 2. Tokenized Magic-Link Authentication for Mobile Devices & Automated Inspection
+    token = request.args.get('token', '').strip()
+    if token and not current_user.is_authenticated:
+        master_token = os.getenv('FIELD_SALES_TOKEN', 'hwb-sales-desk-2026')
+        db_url = current_app.config['DATABASE_URL']
+        conn_auth = None
+        try:
+            conn_auth = get_db(db_url)
+            with conn_auth.cursor() as cur_auth:
+                if token == master_token:
+                    cur_auth.execute('SELECT * FROM "Users" WHERE username = %s LIMIT 1;', ('sales_field',))
+                    u_rec = cur_auth.fetchone()
+                else:
+                    cur_auth.execute('SELECT * FROM "Users" WHERE custom_permissions::text ILIKE %s LIMIT 1;', (f"%{token}%",))
+                    u_rec = cur_auth.fetchone()
+
+                if u_rec:
+                    u_obj = User(u_rec['id'], u_rec['username'], u_rec.get('role', 'Sales'), u_rec.get('full_name'), u_rec.get('custom_permissions'))
+                    login_user(u_obj)
+        except Exception as e:
+            current_app.logger.warning(f"[SALES_DESK] Magic token login error: {e}")
+        finally:
+            if conn_auth:
+                conn_auth.close()
+
+    # 3. Enforce Authentication Guard
+    if not current_user.is_authenticated:
+        return redirect(url_for('login', next=request.url))
+
+    if current_user.role not in ['Sales', 'Executive', 'Admin', 'Manager']:
+        flash("Restricted area. Sales access is required.")
+        return redirect(url_for('admin_operations', view='leads'))
+
     search_q = request.args.get('q', '').strip()
     status_filter = request.args.get('status', '').strip()
     

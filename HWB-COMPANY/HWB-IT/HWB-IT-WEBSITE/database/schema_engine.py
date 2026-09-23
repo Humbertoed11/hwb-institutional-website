@@ -642,7 +642,8 @@ def apply_system_migrations(conn: Any, db_url: Optional[str] = None) -> None:
                 ("020_lead_data_integrity_cleansing", "scripts.migrate_020_lead_data_integrity_cleansing", "Lead data integrity, legacy industry/facility cleansing, address repair, and duplicate resolution"),
                 ("021_simplify_job_positions_and_competitive_pay", "scripts.migrate_021_simplify_job_positions_and_competitive_pay", "Simplified job descriptions, everyday words, and calibrated competitive pay"),
                 ("012_marketing_tracking_and_builder", "scripts.migrate_012_marketing_tracking_and_builder", "Telemetry open tracking pixel, tokens, and campaign builder template support"),
-                ("022_bids_pipeline_parity", "scripts.migrate_022_bids_pipeline_parity", "Commercial Construction Bids and Institutional Solicitations Parity Seed")
+                ("022_bids_pipeline_parity", "scripts.migrate_022_bids_pipeline_parity", "Commercial Construction Bids and Institutional Solicitations Parity Seed"),
+                ("023_sales_desk_and_credentials_parity", "scripts.migrate_023_sales_desk_and_credentials_parity", "Field Sales Desk decoupling and sales credentials parity")
             ]
 
             for v_tag, mod_path, v_desc in modular_migrations:

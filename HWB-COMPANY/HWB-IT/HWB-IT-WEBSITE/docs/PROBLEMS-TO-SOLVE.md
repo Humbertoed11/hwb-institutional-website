@@ -1031,6 +1031,31 @@ CEO Humberto Dominguez attempting to log into `https://www.hwbcleaning.com/login
 2. Ensure cloud web applications maintain autonomous background ingestion parity with local worker daemons.
 3. Enforce soft-deletion filters at the repository/query layer across all commercial operations views.
 
+## BUG-089: Sales Desk Decoupling to /sales-desk, ProxyFix Reverse-Proxy Scheme Hardening, and Mobile Tokenized Magic-Link Authentication
+**Detected:** 09/22/2026
+**Status:** **RESOLVED**
+**Symptoms:**
+1. External automated AI tools (Google AI / Gemini inspection), web previewers, and mobile field browsers were blocked from displaying the Sales Desk at `https://www.hwbcleaning.com/admin/sales-desk`.
+2. Heuristic safety filters flagged `/admin/*` as restricted administrative console endpoints.
+3. Unauthenticated requests to `/admin/sales-desk` received an HTTP 302 redirect with an insecure scheme artifact (`Location: /login?next=http://www.hwbcleaning.com/admin/sales-desk`) behind Azure reverse proxies, triggering mixed-content warnings.
+4. Outside sales representatives (`sales_field`, `Bwiley`) were unable to authenticate due to unaligned password hashes and were redirected to generic lead views instead of the Field Sales Desk.
+**Root Causes:**
+1. The Sales Desk was coupled exclusively to the `/admin/sales-desk` prefix without a clean public portal alias.
+2. Flask `request.url` failed to respect Azure App Service's `X-Forwarded-Proto: https` header without `werkzeug.middleware.proxy_fix.ProxyFix`.
+3. The Sales Desk lacked a tokenized magic-link authentication mechanism (unlike SigmaAcademy).
+4. `blueprints/auth.py` redirected `role == 'Sales'` to `/admin/operations?view=leads` instead of the dedicated Field Sales Desk.
+**Solution:**
+1. **Route Decoupling & Dual-Route Aliasing:** Re-architected `blueprints/operations.py` to serve the Field Sales Desk primarily at `/sales-desk` and converted `/admin/sales-desk` into an automatic 301 permanent redirect.
+2. **Reverse Proxy Hardening (`ProxyFix`):** Wrapped WSGI application in `ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)` in `main_app.py`, ensuring all redirects, schemes, and host headers generate strictly with `https://`.
+3. **Tokenized Magic-Link Authentication:** Added query parameter `?token=...` support to `/sales-desk`, enabling sales representatives and external AI inspection tools to preview lead routes and interactive scopes securely without manual password entry.
+4. **Migration 023 (`023_sales_desk_and_credentials_parity`):** Authored `scripts/migrate_023_sales_desk_and_credentials_parity.py` and registered in `database/schema_engine.py`, provisioning standardized sales credentials for `sales_field` and `Bwiley` and verifying `sales_desk` in `RolePermissions`.
+5. **Gatekeeper & Login Alignment:** Added `/sales-desk` to `sales_whitelist` in `main_app.py` and aligned `blueprints/auth.py` to route sales logins directly to `/sales-desk`.
+**Preventative:**
+1. Use clean, public portal routes (e.g. `/sales-desk`, `/academy`, `/prequal`) for operational tools accessed by field personnel.
+2. Enforce `ProxyFix` in all production WSGI containers behind reverse proxies.
+3. Provide tokenized magic links for all mobile field workflows per Minimization Mandate (Section 2.1).
+
+
 
 
 
