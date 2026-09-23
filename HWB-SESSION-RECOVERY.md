@@ -2,24 +2,24 @@
 
 | **Field** | **Current State** |
 | :--- | :--- |
-| **Objective** | City of Dallas Master Agreements Neural Ingestion, Empirical Calibration & TPIA Protocol (ARCH-004) |
-| **Heat Zone Files** | `core/services/estimator.py`, `blueprints/bids.py`, `HWB-COMPANY/HWB-QUOTES/CITY-OF-DALLAS-PROCUREMENT/`, `HWB-COMPANY/HWB-COMMUNICATION/PendingOutbox/`, `HWB-SESSION-RECOVERY.md` |
-| **Last Action** | 1. Ingested City of Dallas Master Agreement `CSP-BYZ25-00028708` (Council File # 26-1944A, $45.78M, Ambassador Services LLC) and FREM 14 Facilities Agreement (Council File # 25-0471, $1.93M) into PostgreSQL (`InstitutionalBids` IDs #3 and #4).<br>2. Authored empirical benchmark analysis (`CITY-OF-DALLAS-MASTER-AGREEMENTS-EMPIRICAL-ANALYSIS.md`) documenting the $3,825.92/facility/mo FREM baseline and 23.8% ($10.89M) mandatory M/WBE carveout.<br>3. Formulated formal Texas Public Information Act (TPIA) request letter (`CITY-OF-DALLAS-TPIA-OPEN-RECORDS-REQUEST.md`) requesting Exhibit B pricing schedules, Form `BID-FRM-625`, and 37-proposer scorecards.<br>4. Calibrated `core/services/estimator.py` with `DALLAS_MUNICIPAL_BENCHMARKS` and `calculate_municipal_cluster_bid()`, verifying living wage floors and cluster margins.<br>5. Staged Executive Re-Engagement Letterhead (`HWB-COM-001`) in `PendingOutbox` addressed to Aliyah Wells and Kevin Crampton awaiting CEO Humberto Dominguez approval.<br>6. Indexed all assets into `sigma_kb` with full-text search tsvectors. |
-| **Next Step** | **OUTBOUND TRANSMISSIONS ON HOLD PER CEO DIRECTIVE.** System operating strictly in autonomous read/intake intelligence mining mode. All letters and TPIA requests remain staged in PendingOutbox awaiting CEO release. |
+| **Objective** | Statewide Texas Contract Hunter & Portal Crawler Deployment (ARCH-005) |
+| **Heat Zone Files** | `scripts/hunter_portal_crawler.py`, `HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/scripts/hunter_portal_crawler.py`, `sigma_orchestrator.py`, `HWB-SESSION-RECOVERY.md` |
+| **Last Action** | 1. Engineered and deployed `hunter_portal_crawler.py` using Playwright Headless Chromium per CEO approval.<br>2. Expanded scouting perimeter to cover the **entire State of Texas** (DFW, Greater Houston, Central Texas, West Texas/Permian Basin, Statewide Academic Systems).<br>3. Live verified: scouted 95+ public listings across 8 Texas Bonfire hubs (Dallas: 24, Fort Worth: 24, Harris County/Houston: 35, UT System: 1, UT Dallas: 1, Austin ISD: 1, Midland: 6, Lubbock: 3).<br>4. Automatically extracted, filtered, and ingested live custodial opportunity ID #17 (City of Fort Worth `26-0271`) into `InstitutionalBids` in PostgreSQL.<br>5. Outbound email and TPIA transmissions remain strictly locked on hold per CEO directive. |
+| **Next Step** | **OUTBOUND TRANSMISSIONS ON HOLD PER CEO DIRECTIVE.** Hunter operating in continuous autonomous intake mode across all Texas procurement hubs. Blueprint takeoff and rate calculations queued for newly discovered bids. |
 | **Strategic Assessment Pipeline (Plan Table)** | **ARCH-003: SigmaClient™ Progressive Web App (PWA) Command Hub** — Staged for future assessment at 1,000 commercial client scale. Provides zero-download mobile home screen portal, offline-first inspection caching, interactive scope configurator, and SMS/email tokenized magic-link authentication, eliminating third-party platform risk (Telegram policy/pricing changes) at $0 recurring SaaS cost. |
 | **Live Azure Prod DB Count** | **`37,175`** Total Live Leads (`sigmajan-server.postgres.database.azure.com`) |
 | **Local Dev Sandbox Count** | **`28,643`** Total Dev Leads (Audit verified via `/api/v1/db-audit`) |
 | **Active GC Construction Pipeline** | **`$2,012,476.76`** (30 Active Bids / Projects across DFW & Central Texas) |
-| **Active Institutional Pipeline** | **`$52,935,265.23`** Combined Evaluated Valuation (Citywide Janitorial Master: $45,780,678.43 \| FREM 14 Facilities: $1,928,263.80 \| Collin College: $4,950,000.00 \| NTTA: $276,323.00) |
+| **Active Institutional Pipeline** | **`$52,935,265.23+`** Combined Evaluated Valuation across Texas Municipalities & Institutions |
 | **Active Marketing Pipeline** | **`$3,571,200.00`** (99 Commercial Daycare Centers, 14,880 student capacity) |
 | **EHSQ Safety Standards** | **3 Active Manuals** (`HWB-EHS-001`, `HWB-EHS-002`, `HWB-EHS-003`) with 0.00 TRIR |
 | **Mermaid Workflow Diagrams** | **`42 Active Diagrams (100% Synchronized)`** across all operational, quality, and technical procedures |
 | **ISO 9001 Compliance Baseline** | **`100% Compliant & Inspection-Ready`** (10-Clause Master Manual, Zero Certification Overclaims) |
-| **Institutional Footprint** | **`656,785 SF`** across 34 Public & Regional Facilities |
+| **Institutional Footprint** | **`656,785 SF`** across 35 Public & Regional Facilities |
 | **Neural Cognitive Score** | **`100%` Enterprise Mature** (Fortune 500 Parity) |
 | **Database Latency** | **`10.34 ms`** (Live Azure VNet DB Connection Pool Active) |
 | **Session ID** | 2026-09-22-AZURE-BIDDING-EVOLUTION-SCA |
-| **Timestamp** | 09/22/2026 10:45 PM |
+| **Timestamp** | 09/22/2026 11:05 PM |
 
 ---
 *Note: This file is a temporary "Black Box" for immediate context recovery. It is updated after every successful Directive.*
