@@ -89,7 +89,31 @@ result = calculate_institutional_bid(
 
 ---
 
-## 5.0 Key City Hall Contacts
+## 5.0 Major Prime Contractors in Texas (City of Dallas, Airports & GCs)
+
+### 5.1 Institutional Custodial & Facility Management Primes
+- **Ambassador Services, LLC:** Awarded **~$45.78 Million 5-Year Master Agreement** for Citywide Janitorial (`CSP-BYZ25-00028708`). Must subcontract **23.8% ($10.8M+)** to certified M/WBE partners. Target: Subcontract 15–30 facility clusters in North Dallas / Collin border.
+- **Oriental Building Services, Inc.:** Major City of Dallas municipal prime contractor (courts, libraries, FREM facilities).
+- **LGC Global Energy FM, LLC:** Prime contractor for municipal administration and Dallas Water Utilities (DWU) facilities.
+- **ABM Aviation / ABM Industry Groups:** Custodial prime at **Dallas Love Field Airport (DAL)** and **DFW International Airport** concourses.
+- **Flagship Facility Services:** Major aviation terminal maintenance contractor at DFW Airport.
+- **Pritchard Industries Southwest:** Primary contractor for **Collin College ($14.5M master award)** and NCTCOG regional contracts.
+- **SSC Services for Education (Compass Group):** University and school district custodial management across Texas.
+
+### 5.2 Top Commercial Construction Primes (General Contractors)
+When the City of Dallas, NTTA, or Dallas ISD build facilities, these GCs subcontract Division 01 post-construction clean:
+- **Austin Commercial (Dallas HQ):** DFW Airport terminals, Dallas City Hall renovations, UT Southwestern. (25%–30% M/WBE quota).
+- **Balfour Beatty (Dallas HQ):** NTTA service facilities, public high schools, civic centers. (20%–25% M/WBE quota).
+- **Turner Construction (Dallas HQ):** Parkland Hospital, municipal safety complexes. (25%+ M/WBE quota).
+- **The Beck Group (Downtown Dallas HQ):** Civic centers, university buildings, commercial towers. (20%–25% M/WBE quota).
+- **Manhattan Construction (Dallas HQ):** DFW Airport expansions, stadium sports venues. (20%–25% M/WBE quota).
+- **JE Dunn Construction (Dallas):** Municipal court facilities, police headquarters. (20%–25% M/WBE quota).
+- **DPR Construction (Dallas):** Technology centers, data facilities, healthcare. (15%–20% SBE quota).
+- **McCarthy Building Companies (Dallas):** DWU water treatment plants, major infrastructure. (20%–25% M/WBE quota).
+
+---
+
+## 6.0 Key City Hall Contacts
 
 | Name | Role | Email | Phone |
 | :--- | :--- | :--- | :--- |
@@ -99,11 +123,11 @@ result = calculate_institutional_bid(
 
 ---
 
-## 6.0 30-60-90 Day Execution Checklist
+## 7.0 30-60-90 Day Execution Checklist
 
 - [ ] **Day 1–15:** Complete joint NCTRCA MBE + Texas State HUB online application.
 - [ ] **Day 1–15:** Log into Bonfire (`dallascityhall.bonfirehub.com`) and confirm all 5 commodity codes are mapped.
 - [ ] **Day 1–15:** Set up HWB profile on Dallas B2Gnow diversity portal under NAICS `561720`.
 - [ ] **Day 16–30:** Send executive letterhead to Aliyah Wells (`aliyah.wells@dallas.gov`) requesting the follow-up meeting at 1500 Marilla St.
 - [ ] **Day 31–60:** Provide Texas HUB certificate number to buyers in Dallas Water Utilities and Library branches for informal quote rotation ($3k–$50k).
-- [ ] **Day 61–90:** Initiate teaming outreach to Ambassador Services LLC to position HWB as their certified local M/WBE partner on the $32M Master ID/IQ.
+- [ ] **Day 61–90:** Initiate teaming outreach to Ambassador Services LLC and Austin Commercial to position HWB as their certified local M/WBE partner.
