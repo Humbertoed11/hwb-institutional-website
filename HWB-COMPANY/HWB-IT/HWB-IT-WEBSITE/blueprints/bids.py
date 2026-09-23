@@ -321,7 +321,12 @@ def api_bid_estimate():
                 num_floors=int(data.get('num_floors', 1)),
                 has_high_glass=bool(data.get('has_high_glass', False)),
                 lift_rental=float(data.get('lift_rental', 0)),
-                target_margin=float(data.get('target_margin', 0.20))
+                target_margin=float(data.get('target_margin', 0.20)),
+                negotiation_buffer=float(data.get('negotiation_buffer', 0.04)),
+                walkaway_margin=float(data.get('walkaway_margin', 0.16)),
+                urban_logistics=bool(data.get('urban_logistics', False)),
+                retainage_float=bool(data.get('retainage_float', False)),
+                offsite_trash_hauling=bool(data.get('offsite_trash_hauling', False))
             )
         elif tier in ['institutional', 'municipal', 'tips']:
             res = calculate_institutional_bid(
@@ -334,7 +339,9 @@ def api_bid_estimate():
                 sup_hourly_rate=float(data.get('sup_hourly_rate', 18.50)),
                 supply_monthly=float(data.get('supply_monthly', 500.0)),
                 equipment_monthly=float(data.get('equipment_monthly', 350.0)),
-                target_margin=float(data.get('target_margin', 0.18))
+                target_margin=float(data.get('target_margin', 0.18)),
+                negotiation_buffer=float(data.get('negotiation_buffer', 0.03)),
+                walkaway_margin=float(data.get('walkaway_margin', 0.14))
             )
         elif tier in ['federal', 'sca', 'federal_sca']:
             res = calculate_federal_sca_bid(
