@@ -95,6 +95,16 @@ class SigmaOrchestrator:
         except Exception as e:
             print(f"[ORCHESTRATOR] Daycare sync failed: {e}")
 
+        # Trigger Municipal Procurement & Master Contract Mining Daemon
+        try:
+            import subprocess
+            import sys
+            print("[ORCHESTRATOR] Triggering Municipal Procurement & Master Contract Mining Daemon...")
+            subprocess.run([sys.executable, "scripts/municipal_contract_miner.py"], check=False)
+        except Exception as e:
+            print(f"[ORCHESTRATOR] Municipal contract miner failed: {e}")
+
+
 if __name__ == "__main__":
     orch = SigmaOrchestrator()
     while True:
