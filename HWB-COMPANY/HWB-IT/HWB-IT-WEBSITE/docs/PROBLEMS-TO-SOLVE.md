@@ -1053,7 +1053,35 @@ CEO Humberto Dominguez attempting to log into `https://www.hwbcleaning.com/login
 **Preventative:**
 1. Use clean, public portal routes (e.g. `/sales-desk`, `/academy`, `/prequal`) for operational tools accessed by field personnel.
 2. Enforce `ProxyFix` in all production WSGI containers behind reverse proxies.
-3. Provide tokenized magic links for all mobile field workflows per Minimization Mandate (Section 2.1).
+## ARCH-004: SigmaEstimator™ Bidding Evolution — Digital Bid Room, Addenda Sentinel, RFIs & McNamara-O'Hara Federal SCA Engine
+**Detected:** 09/22/2026
+**Status:** **RESOLVED**
+**Symptoms:**
+1. Bid preparation for commercial, institutional, and federal solicitations suffered from document fragmentation (drawing sets, specs, addenda, and RFIs scattered across email links and local drives).
+2. The bidding engine lacked mathematical formulas for the McNamara-O'Hara Service Contract Act (SCA), requiring manual calculation of Department of Labor Wage Determinations, mandatory Health & Welfare fringe ($4.98/$5.36/hr), statutory holiday accrual, and vacation reserves.
+3. Inbound addenda that altered bid due dates or scopes risked being missed without an automated change sentinel and alert system.
+4. Estimating math was fragmented across isolated scripts rather than unified in a centralized service API.
+**Root Causes:**
+1. Bidding schema previously only maintained top-level project metadata without child relational tables for document versioning, addenda, or RFIs.
+2. No reference table existed in PostgreSQL for Department of Labor (DOL) Wage Determinations.
+3. Service layer lacked a unified 3-tier estimating calculation engine (`core/services/estimator.py`).
+**Solution:**
+1. **Migration 024 (`migrate_024_bidding_evolution_documents_and_sca.py`):**
+   - Provisioned relational tables `BidDocuments`, `BidAddenda`, `BidRFIs`, and `ScaWageDeterminations`.
+   - Seeded empirical DOL Wage Determinations for North and Central Texas (WD 2015-5231, 2015-5253, 2015-5215) covering Janitors, Window Cleaners, Floor Care Techs, and Working Supervisors.
+2. **Unified Estimating Engine (`core/services/estimator.py`):**
+   - Implemented `calculate_commercial_gc_bid`, `calculate_institutional_bid`, and `calculate_federal_sca_bid`.
+   - Codified exact McNamara-O'Hara SCA formula with DOL base wage floor, mandatory Health & Welfare fringe ($4.98 with EO 13706), 11 paid holidays (4.23% accrual), 2 weeks paid vacation (3.85% accrual), and 20% statutory payroll burden.
+3. **API Endpoints (`blueprints/bids.py`):**
+   - Implemented `/api/v1/bids/estimate` (3-tier calculation API).
+   - Implemented `/api/v1/bids/sca/wage-determination` (DOL floor lookup).
+   - Implemented `/api/v1/bids/<int:bid_id>/documents` (Digital Bid Room vault).
+   - Implemented `/api/v1/bids/<int:bid_id>/addenda` (Addenda Sentinel with automatic parent bid due date updates).
+   - Implemented `/api/v1/bids/<int:bid_id>/rfis` (Formal RFI tracker with GlobalActivities audit logging).
+**Preventative:**
+1. Require all estimating calculations to originate from `core/services/estimator.py` for mathematical uniformity.
+2. Maintain active DOL Wage Determinations in PostgreSQL for zero-latency federal bid validation.
+
 
 
 
