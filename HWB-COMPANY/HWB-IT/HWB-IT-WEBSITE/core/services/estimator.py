@@ -127,6 +127,45 @@ INSTITUTIONAL_SAFEGUARDS = {
     "osha_safety_compliance": "Full adherence to OSHA 29 CFR 1910 General Industry Standards, including Hazard Communication standard (29 CFR 1910.1200), Bloodborne Pathogens standard (29 CFR 1910.1030), and facility-specific safety orientation."
 }
 
+DALLAS_MUNICIPAL_BENCHMARKS = {
+    "citywide_master_agreement": {
+        "solicitation_number": "CSP-BYZ25-00028708",
+        "council_file": "26-1944A",
+        "prime_contractor": "Ambassador Services LLC",
+        "council_approval_date": "2026-06-24",
+        "total_valuation": 45780678.43,
+        "base_five_year": 32046741.44,
+        "renewal_options_two_year": 13733936.99,
+        "monthly_pool": 763011.31,
+        "proposer_count": 37,
+        "mandatory_mwbe_pct": 0.2380,  # 23.8% BEH Mandate
+        "mandatory_mwbe_pool_total": 10895801.47,
+        "mandatory_mwbe_monthly_pool": 181596.69,
+        "scoring_weights": {
+            "cost": 25,
+            "experience": 25,
+            "qualifications": 25,
+            "work_plan": 20,
+            "local_preference": 5
+        }
+    },
+    "frem_14_facilities_agreement": {
+        "council_file": "25-0471",
+        "council_item": 39,
+        "prime_contractor": "Ambassador Services LLC",
+        "council_approval_date": "2025-03-26",
+        "term_months": 36,
+        "facilities_count": 14,
+        "total_valuation": 1928263.80,
+        "annual_run_rate": 642754.60,
+        "monthly_run_rate": 53562.88,
+        "monthly_per_facility_avg": 3825.92
+    },
+    "dallas_living_wage_floor": 18.00,
+    "fast_track_discretionary_threshold": 50000.00  # Texas Local Gov Code § 252.0215
+}
+
+
 FEDERAL_SCA_SAFEGUARDS = {
     "mcnamara_ohara_sca_clause": "Governed by 41 U.S.C. 6701 et seq. (Service Contract Act) and FAR 52.222-41. Base wages and mandatory fringe benefits strictly bound by the U.S. Department of Labor Wage Determination cited in CLIN 0001 schedule.",
     "cwhssa_overtime_clause": "Compliant with Contract Work Hours and Safety Standards Act (40 U.S.C. 3701 et seq.). Overtime compensated at 1.5x regular base rate for all hours in excess of 40 hours per workweek. Acknowledged statutory liquidated damages penalty of $31.00 per worker per day for non-compliance.",
@@ -340,6 +379,113 @@ def calculate_institutional_bid(
         "annual_submittal": annual_subcontract_submittal,
         "contract_total_value": contract_total,
         "net_margin_percentage": round(actual_margin * 100, 2),
+        "safeguards": INSTITUTIONAL_SAFEGUARDS
+    }
+
+def calculate_municipal_cluster_bid(
+    num_facilities: int = 14,
+    cleanable_sqft_per_facility: float = 10000.0,
+    days_per_week: int = 5,
+    custodians_per_facility: float = 1.0,
+    hours_per_day_per_custodian: float = 4.0,
+    hourly_wage: float = 18.00,
+    contract_term_months: int = 36,
+    supply_per_facility_monthly: float = 150.0,
+    equipment_per_facility_monthly: float = 100.0,
+    target_margin: float = 0.18,
+    negotiation_buffer: float = 0.03,
+    walkaway_margin: float = 0.14,
+    is_mwbe_subcontract: bool = True
+) -> Dict[str, Any]:
+    """
+    Tier 2b: Municipal Multi-Facility Campus/Cluster Proposal.
+    Calculates multi-facility municipal cluster pricing calibrated against
+    City of Dallas empirical benchmarks (Council Files 26-1944A & 25-0471).
+    Enforces the Dallas Living Wage floor ($18.00/hr) and models M/WBE carve-outs.
+    """
+    num_fac = max(1, int(num_facilities))
+    sqft_per_fac = max(100.0, float(cleanable_sqft_per_facility))
+    total_sqft = sqft_per_fac * num_fac
+    wage = max(18.00, float(hourly_wage))
+
+    # Weekly hours per facility = days * hours_per_day * custodians
+    weekly_hours_per_fac = days_per_week * hours_per_day_per_custodian * custodians_per_facility
+    total_weekly_hours = weekly_hours_per_fac * num_fac
+    monthly_hours = (total_weekly_hours * 52.0) / 12.0
+    annual_hours = total_weekly_hours * 52.0
+
+    # Labor Costs
+    monthly_base_labor = _to_currency(monthly_hours * wage)
+    monthly_labor_burden = _to_currency(monthly_base_labor * DEFAULT_BURDEN_RATE)
+    total_monthly_labor = monthly_base_labor + monthly_labor_burden
+
+    # Supplies & Equipment Amortization across cluster
+    monthly_supplies = _to_currency(supply_per_facility_monthly * num_fac)
+    monthly_equipment = _to_currency(equipment_per_facility_monthly * num_fac)
+    total_cogs = total_monthly_labor + monthly_supplies + monthly_equipment
+
+    # G&A Overhead (5.5% for operations supervision, digital quality audits, bonding)
+    monthly_ga = _to_currency(total_cogs * 0.055)
+    cost_basis = total_cogs + monthly_ga
+
+    # Negotiation Triads
+    published_monthly = _to_currency(cost_basis / (1.0 - (target_margin + negotiation_buffer)))
+    authorized_monthly = _to_currency(cost_basis / (1.0 - target_margin))
+    walkaway_monthly = _to_currency(cost_basis / (1.0 - walkaway_margin))
+
+    published_per_facility_mo = _to_currency(published_monthly / num_fac)
+    authorized_per_facility_mo = _to_currency(authorized_monthly / num_fac)
+    walkaway_per_facility_mo = _to_currency(walkaway_monthly / num_fac)
+
+    contract_total = _to_currency(published_monthly * contract_term_months)
+    annual_total = _to_currency(published_monthly * 12.0)
+    monthly_net_profit = _to_currency(published_monthly - cost_basis)
+
+    # Empirical Variance against City of Dallas FREM Benchmark ($3,825.92 / fac / mo)
+    empirical_dal_fac_benchmark = DALLAS_MUNICIPAL_BENCHMARKS["frem_14_facilities_agreement"]["monthly_per_facility_avg"]
+    fac_rate_variance = _to_currency(authorized_per_facility_mo - empirical_dal_fac_benchmark)
+    fac_rate_variance_pct = round(((authorized_per_facility_mo - empirical_dal_fac_benchmark) / empirical_dal_fac_benchmark) * 100.0, 2)
+
+    # Ambassador Master Agreement M/WBE Pool Share (23.8% = $181,596.69 / mo)
+    mwbe_monthly_pool = DALLAS_MUNICIPAL_BENCHMARKS["citywide_master_agreement"]["mandatory_mwbe_monthly_pool"]
+    mwbe_pool_consumption_pct = round((authorized_monthly / mwbe_monthly_pool) * 100.0, 2)
+
+    return {
+        "tier": "Municipal Cluster (Empirical Calibration)",
+        "cluster_summary": {
+            "facilities_count": num_fac,
+            "cleanable_sqft_per_facility": sqft_per_fac,
+            "total_cleanable_sqft": total_sqft,
+            "days_per_week": days_per_week,
+            "total_monthly_hours": round(monthly_hours, 1),
+            "effective_sqft_monthly_rate": round(published_monthly / total_sqft, 4) if total_sqft > 0 else 0.0,
+            "contract_term_months": contract_term_months
+        },
+        "pricing_per_facility": {
+            "published_monthly": published_per_facility_mo,
+            "authorized_field_close_monthly": authorized_per_facility_mo,
+            "walkaway_floor_monthly": walkaway_per_facility_mo
+        },
+        "pricing_cluster_totals": {
+            "published_monthly": published_monthly,
+            "published_annual": annual_total,
+            "published_contract_total": contract_total,
+            "authorized_monthly": authorized_monthly,
+            "authorized_contract_total": _to_currency(authorized_monthly * contract_term_months),
+            "walkaway_floor_monthly": walkaway_monthly,
+            "walkaway_contract_total": _to_currency(walkaway_monthly * contract_term_months),
+            "monthly_net_profit": monthly_net_profit,
+            "net_margin_percentage": round((monthly_net_profit / published_monthly) * 100.0, 2)
+        },
+        "empirical_benchmarks_audit": {
+            "dallas_frem_14_facility_benchmark_monthly": empirical_dal_fac_benchmark,
+            "delta_vs_frem_benchmark_per_facility": fac_rate_variance,
+            "delta_vs_frem_benchmark_pct": fac_rate_variance_pct,
+            "dallas_mwbe_monthly_pool_total": mwbe_monthly_pool,
+            "share_of_dallas_mwbe_subcontract_pool_pct": mwbe_pool_consumption_pct,
+            "dallas_living_wage_floor_enforced": wage >= 18.00,
+            "scoring_matrix_alignment": DALLAS_MUNICIPAL_BENCHMARKS["citywide_master_agreement"]["scoring_weights"]
+        },
         "safeguards": INSTITUTIONAL_SAFEGUARDS
     }
 

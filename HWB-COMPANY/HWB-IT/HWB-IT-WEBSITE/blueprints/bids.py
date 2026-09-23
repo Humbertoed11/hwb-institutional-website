@@ -15,6 +15,7 @@ from core.services.task_queue import task_queue
 from core.services.estimator import (
     calculate_commercial_gc_bid,
     calculate_institutional_bid,
+    calculate_municipal_cluster_bid,
     calculate_federal_sca_bid,
     get_sca_wage_determination
 )
@@ -328,21 +329,39 @@ def api_bid_estimate():
                 retainage_float=bool(data.get('retainage_float', False)),
                 offsite_trash_hauling=bool(data.get('offsite_trash_hauling', False))
             )
-        elif tier in ['institutional', 'municipal', 'tips']:
-            res = calculate_institutional_bid(
-                cleanable_sqft=float(data.get('cleanable_sqft', 0)),
-                mandated_weekly_hours=float(data.get('weekly_hours', 40.0)),
-                term_months=int(data.get('term_months', 24)),
-                day_porters=int(data.get('day_porters', 1)),
-                night_custodians=int(data.get('night_custodians', 2)),
-                base_hourly_rate=float(data.get('base_hourly_rate', 16.00)),
-                sup_hourly_rate=float(data.get('sup_hourly_rate', 18.50)),
-                supply_monthly=float(data.get('supply_monthly', 500.0)),
-                equipment_monthly=float(data.get('equipment_monthly', 350.0)),
-                target_margin=float(data.get('target_margin', 0.18)),
-                negotiation_buffer=float(data.get('negotiation_buffer', 0.03)),
-                walkaway_margin=float(data.get('walkaway_margin', 0.14))
-            )
+        elif tier in ['institutional', 'municipal', 'tips', 'cluster', 'municipal_cluster']:
+            num_facilities = int(data.get('num_facilities', 1) or 1)
+            if num_facilities > 1 or tier in ['cluster', 'municipal_cluster']:
+                res = calculate_municipal_cluster_bid(
+                    num_facilities=num_facilities,
+                    cleanable_sqft_per_facility=float(data.get('cleanable_sqft_per_facility', data.get('cleanable_sqft', 10000.0) or 10000.0)),
+                    days_per_week=int(data.get('days_per_week', 5) or 5),
+                    custodians_per_facility=float(data.get('custodians_per_facility', 1.0) or 1.0),
+                    hours_per_day_per_custodian=float(data.get('hours_per_day', 4.0) or 4.0),
+                    hourly_wage=float(data.get('base_hourly_rate', data.get('hourly_wage', 18.00)) or 18.00),
+                    contract_term_months=int(data.get('term_months', 36) or 36),
+                    supply_per_facility_monthly=float(data.get('supply_monthly', 150.0) or 150.0),
+                    equipment_per_facility_monthly=float(data.get('equipment_monthly', 100.0) or 100.0),
+                    target_margin=float(data.get('target_margin', 0.18) or 0.18),
+                    negotiation_buffer=float(data.get('negotiation_buffer', 0.03) or 0.03),
+                    walkaway_margin=float(data.get('walkaway_margin', 0.14) or 0.14),
+                    is_mwbe_subcontract=bool(data.get('is_mwbe_subcontract', True))
+                )
+            else:
+                res = calculate_institutional_bid(
+                    cleanable_sqft=float(data.get('cleanable_sqft', 0)),
+                    mandated_weekly_hours=float(data.get('weekly_hours', 40.0)),
+                    term_months=int(data.get('term_months', 24)),
+                    day_porters=int(data.get('day_porters', 1)),
+                    night_custodians=int(data.get('night_custodians', 2)),
+                    base_hourly_rate=float(data.get('base_hourly_rate', 16.00)),
+                    sup_hourly_rate=float(data.get('sup_hourly_rate', 18.50)),
+                    supply_monthly=float(data.get('supply_monthly', 500.0)),
+                    equipment_monthly=float(data.get('equipment_monthly', 350.0)),
+                    target_margin=float(data.get('target_margin', 0.18)),
+                    negotiation_buffer=float(data.get('negotiation_buffer', 0.03)),
+                    walkaway_margin=float(data.get('walkaway_margin', 0.14))
+                )
         elif tier in ['federal', 'sca', 'federal_sca']:
             res = calculate_federal_sca_bid(
                 county=data.get('county', 'Collin'),
