@@ -36,36 +36,57 @@ def academy_catalog():
     """Renders the SigmaAcademy Course Catalog & Training Portal."""
     db_url = current_app.config['DATABASE_URL']
     conn = get_db(db_url)
+    courses = []
+    packages = []
+    certified_count = 0
+    active_tenants = 0
     try:
         with conn.cursor() as cur:
-            cur.execute('''
-                SELECT 
-                    c.id, c.course_code, c.title, c.category, c.regulatory_standard,
-                    c.description, c.estimated_minutes, c.renewal_months, c.badge_icon,
-                    COUNT(DISTINCT m.id) as module_count,
-                    COUNT(DISTINCT q.id) as question_count
-                FROM "AcademyCourses" c
-                LEFT JOIN "AcademyCourseModules" m ON m.course_id = c.id
-                LEFT JOIN "AcademyQuizQuestions" q ON q.course_id = c.id
-                GROUP BY c.id
-                ORDER BY c.id ASC;
-            ''')
-            courses = [serialize_db_row(r) for r in cur.fetchall()]
+            try:
+                cur.execute('''
+                    SELECT 
+                        c.id, c.course_code, c.title, c.category, c.regulatory_standard,
+                        c.description, c.estimated_minutes, c.renewal_months, c.badge_icon,
+                        COUNT(DISTINCT m.id) as module_count,
+                        COUNT(DISTINCT q.id) as question_count
+                    FROM "AcademyCourses" c
+                    LEFT JOIN "AcademyCourseModules" m ON m.course_id = c.id
+                    LEFT JOIN "AcademyQuizQuestions" q ON q.course_id = c.id
+                    GROUP BY c.id
+                    ORDER BY c.id ASC;
+                ''')
+                courses = [serialize_db_row(r) for r in cur.fetchall()]
+            except Exception as c_err:
+                conn.rollback()
+                current_app.logger.warning(f"[ACADEMY] Courses query warning: {c_err}")
 
-            cur.execute('SELECT COUNT(*) FROM "AcademyEnrollments" WHERE status = \'PASSED\';')
-            certified_count = cur.fetchone()[0]
+            try:
+                cur.execute('SELECT COUNT(*) FROM "AcademyEnrollments" WHERE status = \'PASSED\';')
+                certified_count = cur.fetchone()[0]
+            except Exception as enr_err:
+                conn.rollback()
+                current_app.logger.warning(f"[ACADEMY] Enrollments count warning: {enr_err}")
 
-            cur.execute('SELECT COUNT(*) FROM "AcademyTenants" WHERE is_active = TRUE;')
-            active_tenants = cur.fetchone()[0]
+            try:
+                cur.execute('SELECT COUNT(*) FROM "AcademyTenants" WHERE is_active = TRUE;')
+                active_tenants = cur.fetchone()[0]
+            except Exception as ten_err:
+                conn.rollback()
+                current_app.logger.warning(f"[ACADEMY] Tenants count warning: {ten_err}")
 
             # Fetch active packages for the catalog
-            cur.execute('''
-                SELECT p.package_code, p.title, p.target_role, p.description, p.regulatory_standards, p.price_usd
-                FROM "AcademyPackages" p
-                WHERE p.is_active = TRUE
-                ORDER BY p.id ASC;
-            ''')
-            packages = [serialize_db_row(r) for r in cur.fetchall()]
+            try:
+                cur.execute('''
+                    SELECT p.package_code, p.title, p.target_role, p.description, p.regulatory_standards, p.price_usd
+                    FROM "AcademyPackages" p
+                    WHERE p.is_active = TRUE
+                    ORDER BY p.id ASC;
+                ''')
+                packages = [serialize_db_row(r) for r in cur.fetchall()]
+            except Exception as pkg_err:
+                conn.rollback()
+                current_app.logger.warning(f"[ACADEMY] Packages fetch warning: {pkg_err}")
+                packages = []
     finally:
         conn.close()
 

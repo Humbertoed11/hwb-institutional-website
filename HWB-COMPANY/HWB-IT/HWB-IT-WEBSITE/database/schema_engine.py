@@ -514,6 +514,43 @@ def apply_system_migrations(conn: Any, db_url: Optional[str] = None) -> None:
                 CREATE INDEX IF NOT EXISTS "idx_pending_outbox_token" ON "PendingOutbox" (tracking_token);
                 CREATE INDEX IF NOT EXISTS "idx_pending_outbox_campaign" ON "PendingOutbox" (campaign_id);
 
+                -- AcademyPackages Table Parity (Curriculum Bundles)
+                CREATE TABLE IF NOT EXISTS "AcademyPackages" (
+                    id SERIAL PRIMARY KEY,
+                    package_code VARCHAR(64) UNIQUE NOT NULL,
+                    title VARCHAR(255) NOT NULL,
+                    target_role VARCHAR(100) NOT NULL,
+                    description TEXT,
+                    regulatory_standards VARCHAR(255),
+                    price_usd NUMERIC(10,2) DEFAULT 0.00,
+                    is_active BOOLEAN DEFAULT TRUE,
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                );
+
+                CREATE INDEX IF NOT EXISTS "idx_academy_packages_code" ON "AcademyPackages" (package_code);
+                CREATE INDEX IF NOT EXISTS "idx_academy_packages_role" ON "AcademyPackages" (target_role);
+
+                -- AcademyPackageCourses Table Parity
+                CREATE TABLE IF NOT EXISTS "AcademyPackageCourses" (
+                    id SERIAL PRIMARY KEY,
+                    package_id INTEGER REFERENCES "AcademyPackages"(id) ON DELETE CASCADE,
+                    course_id INTEGER REFERENCES "AcademyCourses"(id) ON DELETE CASCADE,
+                    display_order INTEGER DEFAULT 1,
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(package_id, course_id)
+                );
+
+                -- AcademyEnrollments Enhancement Parity
+                ALTER TABLE "AcademyEnrollments" ADD COLUMN IF NOT EXISTS magic_token VARCHAR(64) UNIQUE;
+                ALTER TABLE "AcademyEnrollments" ADD COLUMN IF NOT EXISTS assigned_package_code VARCHAR(64);
+                ALTER TABLE "AcademyEnrollments" ADD COLUMN IF NOT EXISTS assigned_by VARCHAR(100);
+                ALTER TABLE "AcademyEnrollments" ADD COLUMN IF NOT EXISTS due_date DATE;
+                ALTER TABLE "AcademyEnrollments" ADD COLUMN IF NOT EXISTS notification_sent BOOLEAN DEFAULT FALSE;
+
+                CREATE INDEX IF NOT EXISTS "idx_academy_enrollments_token" ON "AcademyEnrollments" (magic_token);
+                CREATE INDEX IF NOT EXISTS "idx_academy_enrollments_pkg" ON "AcademyEnrollments" (assigned_package_code);
+
                 -- SafetyManuals Table Parity
                 CREATE TABLE IF NOT EXISTS "SafetyManuals" (
                     id SERIAL PRIMARY KEY,
@@ -591,6 +628,7 @@ def apply_system_migrations(conn: Any, db_url: Optional[str] = None) -> None:
                 ("006_telegram_behavioral_telemetry", "scripts.migrate_006_telegram_behavioral_telemetry", "Telegram behavioral telemetry and interaction scoring"),
                 ("007_human_resources_and_payroll", "scripts.migrate_007_human_resources_and_payroll", "Human Resources master personnel ledger, secure document vault, and payroll timesheet engine"),
                 ("008_sigma_academy_lms", "scripts.migrate_008_sigma_academy_lms", "Sigma Academy LMS courses, enrollments, and progress tracking"),
+                ("009_academy_packages", "scripts.migrate_009_academy_packages", "SigmaAcademy role-based training packages, curriculum bundles, and magic tokens"),
                 ("010_institutional_bids", "scripts.migrate_010_institutional_bids", "Construction bids and document attachment vault"),
                 ("011_marketing_department", "scripts.migrate_011_marketing_department", "Marketing campaigns and social dispatch outbox"),
                 ("012_ehsq_safety_department", "scripts.migrate_012_ehsq_safety_department", "EHSQ safety inspections, hazard tracking, and compliance certifications"),

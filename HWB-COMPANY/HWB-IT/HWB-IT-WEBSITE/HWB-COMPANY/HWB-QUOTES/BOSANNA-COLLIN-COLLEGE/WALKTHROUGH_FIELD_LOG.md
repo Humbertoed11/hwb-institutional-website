@@ -49,3 +49,15 @@
 
 ### [2026-09-22 09:39:53] Library & Learning Resource Center (Code L)
 - **Note:** Check the live website www.hwbcleaning.com
+
+### [2026-09-22 14:47:43] Library & Learning Resource Center (Code L)
+- **Note:** Check www.hwbcleaning.com/academy it is not working
+
+### [2026-09-22 14:47:43] Library & Learning Resource Center (Code L)
+- **Note:** Check www.hwbcleaning.com/academy it is not working
+
+### [2026-09-22 15:13:19] Library & Learning Resource Center (Code L)
+- **Note:** Status on http://www.hwbcleaning.com/academy
+
+### [2026-09-22 15:13:19] Library & Learning Resource Center (Code L)
+- **Note:** Status on http://www.hwbcleaning.com/academy
