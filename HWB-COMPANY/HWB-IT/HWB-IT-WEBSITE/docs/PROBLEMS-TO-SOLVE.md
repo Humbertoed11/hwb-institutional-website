@@ -62,7 +62,9 @@ Responsibility: George (Architect)
 | 09/21/2026 | BUG-081 | Missing 'status' Column on Azure PostgreSQL 'Users' Table Triggering HTTP 500 on /login & Schema Parity Desync. | **RESOLVED** | CRITICAL |
 | 09/21/2026 | BUG-082 | CEO Login Alias & Password Permutation Rejection ("Invalid credentials." on www.hwbcleaning.com). | **RESOLVED** | CRITICAL |
 | 09/21/2026 | BUG-083 | Lead Data Integrity Contradictions (18,435 Legacy Car Lots Labeled Child Care, 81 Jammed Addresses, Blank Industries & Hidden Duplicates). | **RESOLVED** | HIGH |
+| 09/22/2026 | BUG-084 | Azure Web App Container Probe Timeout & Deadlock (Synchronous Boot Import, Heavy Migration 020 Scans, & Concurrent Seeder Lock Contention). | **RESOLVED** | CRITICAL |
 | 09/22/2026 | BUG-086 | Unformatted Native Browser Dialogs (confirm/alert) in User Governance Delete Action & Forms Missing Automated Inspection Gates. | **RESOLVED** | HIGH |
+| 09/22/2026 | BUG-087 | Missing AcademyPackages Schema Migration (009) and Uncaught Query Exception on Live /academy Endpoint. | **RESOLVED** | HIGH |
 
 ## BUG-080: Local Loopback Hostname (mop.test) Inaccessible to External Devices & Mobile Cleaners via Generated Onboarding Link
 **Detected:** 09/21/2026
@@ -933,11 +935,34 @@ CEO Humberto Dominguez attempting to log into `https://www.hwbcleaning.com/login
    - Corrected `facility_type` to `'Commercial Property'` across all 18,435 non-childcare legacy records.
    - Parsed all jammed addresses, successfully cleaning 10 standalone street addresses and identifying 41 hidden duplicates.
    - Flagged duplicate records with `is_duplicate = TRUE`, `status = 'ARCHIVED'`, and linked `duplicate_group_id`.
-   - Classified all 58 blank industry records into accurate categories (`'Child Care'`, `'Government & Defense'`, `'Commercial Retail'`).
-   - Standardized irregular phone numbers and preserved extensions in facility `notes`.
-2. **Schema Engine Integration:** Registered Migration 020 in `database/schema_engine.py` for idempotent execution across local and Azure production databases upon container boot.
-**Preventative:** Enforce inbound address and phone number sanitization during API synchronization and validate categorization against building capacity.
+## BUG-084: Azure Web App Container Probe Timeout & Deadlock (Synchronous Boot Import, Heavy Migration 020 Scans, & Concurrent Seeder Lock Contention)
+**Detected:** 09/22/2026
+**Status:** **RESOLVED**
+**Symptoms:**
+1. Navigating to `https://www.hwbcleaning.com/` timed out with HTTP 504 / client timeout error.
+2. Azure Web App startup probe failed after 230 seconds: `Container did not respond to startup probe on port 5000 within the expected time limit of 230s`. Container was killed and entered an infinite restart loop.
+3. PostgreSQL log revealed: `deadlock detected: Process 4804 waits for AccessExclusiveLock on relation ... blocked by process 4803. Process 4803 waits for RowExclusiveLock on relation ... blocked by process 4804`.
+**Root Causes:**
+1. **Synchronous Module Import Block:** In `main_app.py`, `apply_system_migrations(conn)` ran synchronously within the top-level application context during Python module import. Gunicorn was unable to finish importing the WSGI app and bind to `0.0.0.0:5000` until all migrations finished.
+2. **Row-by-Row Unindexed Queries in Migration 020:** `migrate_020_lead_data_integrity_cleansing.py` performed 81 sequential full-table scans over 37,466 rows for jammed address checks and 41 sequential update queries, exceeding Azure's 230-second container startup limit.
+3. **Concurrent Thread Deadlock:** `run_seeder_async` was launched as an independent concurrent background thread while `apply_system_migrations` was running. Both threads connected to PostgreSQL simultaneously and modified `"Leads"` and `"Users"` tables, creating an `AccessExclusiveLock` vs `RowExclusiveLock` deadlock.
+**Solution:**
+1. **Unified Async Background Startup Thread:** Re-architected `main_app.py` to decouple database sequence synchronization, schema migrations, and seeding into a single, sequential daemon thread (`run_async_infrastructure_boot`). Gunicorn now completes module import in < 0.5s and binds port 5000 immediately, satisfying Azure's container startup probe within 1 second.
+2. **Set-Based Migration 020 Optimization:** Merged industry and facility type updates into a single SQL statement; replaced 81 per-row scans with a single batch `ANY(%s)` query and in-memory hash map lookup; vectorized industry classifications with SQL `CASE`; and batched secondary duplicate updates using `psycopg2.extras.execute_batch`. Migration 020 runtime dropped from >250s to <1s.
+3. **Chained Execution:** Database seeding runs strictly after schema migrations commit and release all table locks, eliminating lock contention and deadlocks.
+**Preventative:** Never execute heavy database migrations or multiple uncoordinated database threads during top-level WSGI module imports. Keep application boot instantaneous and run background maintenance tasks in sequenced threads.
 
+## BUG-085: Marketing Lead Query Filter Syntax Friction (Unescaped '%' in Parameterized SQL Calls)
+**Detected:** 09/22/2026
+**Status:** **RESOLVED**
+**Symptoms:**
+1. Calling `GET /api/v1/marketing/leads/preview-count` or `POST /api/v1/marketing/campaign/create` with filtering criteria triggered an internal server error: `IndexError: tuple index out of range`.
+2. The interactive Campaign Builder modal could not display the live preview audience count.
+**Root Causes:**
+1. In `blueprints/crm_api.py`, the query generator included `"email LIKE '%@%'"`. When passed to `psycopg2`'s `cursor.execute(sql, tuple(params))`, Python's string interpolation parser interpreted `%@` as a format specifier expecting additional tuple arguments.
+**Solution:**
+1. Replaced `"email LIKE '%@%'"` with `POSITION('@' IN email) > 0` in both `api_marketing_leads_preview_count` and `api_marketing_campaign_create`. This achieves identical email verification while eliminating `%` format characters from the query string.
+2. Verified all endpoints in live container test suite, returning 200 OK with accurate empirical counts.
 ## BUG-086: Unformatted Native Browser Dialogs (confirm/alert) in User Governance Delete Action & Forms Missing Automated Inspection Gates
 **Detected:** 09/22/2026
 **Status:** **RESOLVED**
@@ -961,6 +986,31 @@ CEO Humberto Dominguez attempting to log into `https://www.hwbcleaning.com/login
 **Preventative:**
 1. Run `scratch/test_prohibited_browser_dialogs.py` in all CI and pre-handover verification test suites.
 2. All destructive and confirmation actions across backoffice forms must strictly use `showDecision({...})`. Inline `confirm()` and `alert()` are permanently prohibited.
+
+## BUG-087: Missing AcademyPackages Schema Migration (009) and Uncaught Query Exception on Live /academy Endpoint
+**Detected:** 09/22/2026
+**Status:** **RESOLVED**
+**Symptoms:**
+1. Accessing `https://www.hwbcleaning.com/academy` produced an HTTP 500 error (`A system error occurred. Our team has been notified.`).
+2. Azure App Service container logs showed: `[FATAL] System Exception: relation "AcademyPackages" does not exist LINE 3: FROM "AcademyPackages" p`.
+**Root Causes:**
+1. `migrate_009_academy_packages.py` resided exclusively in the root `scripts/` directory and had not been placed in `HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/scripts/`. As a result, it was not included in the Docker build context.
+2. `009_academy_packages` was missing from `modular_migrations` in `database/schema_engine.py` (which leaped directly from `008_sigma_academy_lms` to `010_institutional_bids`). Consequently, Azure PostgreSQL never executed table creation for `"AcademyPackages"` and `"AcademyPackageCourses"`.
+3. In `blueprints/academy.py`, `academy_catalog()` executed queries against `"AcademyCourses"`, `"AcademyTenants"`, and `"AcademyPackages"` without per-block `try/except` protection. When the relation was missing, the uncaught exception aborted the HTTP request with a 500 status.
+**Solution:**
+1. **Container Migration Script Sync:** Copied `scripts/migrate_009_academy_packages.py` into `HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/scripts/migrate_009_academy_packages.py`.
+2. **Schema Engine Hardening:** Added explicit DDL parity for `"AcademyPackages"` and `"AcademyPackageCourses"` in `database/schema_engine.py` bootstrap, and registered `009_academy_packages` in `modular_migrations`.
+3. **Poka-Yoke Query Resilience:** Wrapped each query in `academy_catalog()` (`blueprints/academy.py`) in individual `try/except` blocks with transaction rollbacks and clean defaults, preventing portal crashes during rolling upgrades or schema drift.
+4. **Live Azure Deployment & Telemetry Verification:** Built and pushed container `v5.2-2026-09-22-751477c` to Azure Container Registry and restarted Azure App Service.
+5. **Empirical Verification:** Verified `https://www.hwbcleaning.com/academy` returns HTTP 200 OK (16,060 bytes), `/academy/course/TRN-SAF-01` returns HTTP 200 OK (59,166 bytes), and `/api/v1/academy/packages` returns HTTP 200 OK with 6 active curriculum packages.
+**Preventative:**
+1. Keep `database/schema_engine.py` modular migration sequence numbered sequentially without gaps.
+2. Maintain identical copies of all migration scripts in `HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/scripts/` to ensure inclusion in Docker builds.
+3. Wrap all catalog/dashboard aggregation queries in protective fallback blocks per Section 2.1 Minimization Mandate.
+
+
+
+
 
 
 

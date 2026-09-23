@@ -64,6 +64,7 @@ Responsibility: George (Architect)
 | 09/21/2026 | BUG-083 | Lead Data Integrity Contradictions (18,435 Legacy Car Lots Labeled Child Care, 81 Jammed Addresses, Blank Industries & Hidden Duplicates). | **RESOLVED** | HIGH |
 | 09/22/2026 | BUG-084 | Azure Web App Container Probe Timeout & Deadlock (Synchronous Boot Import, Heavy Migration 020 Scans, & Concurrent Seeder Lock Contention). | **RESOLVED** | CRITICAL |
 | 09/22/2026 | BUG-086 | Unformatted Native Browser Dialogs (confirm/alert) in User Governance Delete Action & Forms Missing Automated Inspection Gates. | **RESOLVED** | HIGH |
+| 09/22/2026 | BUG-087 | Missing AcademyPackages Schema Migration (009) and Uncaught Query Exception on Live /academy Endpoint. | **RESOLVED** | HIGH |
 
 ## BUG-080: Local Loopback Hostname (mop.test) Inaccessible to External Devices & Mobile Cleaners via Generated Onboarding Link
 **Detected:** 09/21/2026
@@ -985,6 +986,28 @@ CEO Humberto Dominguez attempting to log into `https://www.hwbcleaning.com/login
 **Preventative:**
 1. Run `scratch/test_prohibited_browser_dialogs.py` in all CI and pre-handover verification test suites.
 2. All destructive and confirmation actions across backoffice forms must strictly use `showDecision({...})`. Inline `confirm()` and `alert()` are permanently prohibited.
+
+## BUG-087: Missing AcademyPackages Schema Migration (009) and Uncaught Query Exception on Live /academy Endpoint
+**Detected:** 09/22/2026
+**Status:** **RESOLVED**
+**Symptoms:**
+1. Accessing `https://www.hwbcleaning.com/academy` produced an HTTP 500 error (`A system error occurred. Our team has been notified.`).
+2. Azure App Service container logs showed: `[FATAL] System Exception: relation "AcademyPackages" does not exist LINE 3: FROM "AcademyPackages" p`.
+**Root Causes:**
+1. `migrate_009_academy_packages.py` resided exclusively in the root `scripts/` directory and had not been placed in `HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/scripts/`. As a result, it was not included in the Docker build context.
+2. `009_academy_packages` was missing from `modular_migrations` in `database/schema_engine.py` (which leaped directly from `008_sigma_academy_lms` to `010_institutional_bids`). Consequently, Azure PostgreSQL never executed table creation for `"AcademyPackages"` and `"AcademyPackageCourses"`.
+3. In `blueprints/academy.py`, `academy_catalog()` executed queries against `"AcademyCourses"`, `"AcademyTenants"`, and `"AcademyPackages"` without per-block `try/except` protection. When the relation was missing, the uncaught exception aborted the HTTP request with a 500 status.
+**Solution:**
+1. **Container Migration Script Sync:** Copied `scripts/migrate_009_academy_packages.py` into `HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/scripts/migrate_009_academy_packages.py`.
+2. **Schema Engine Hardening:** Added explicit DDL parity for `"AcademyPackages"` and `"AcademyPackageCourses"` in `database/schema_engine.py` bootstrap, and registered `009_academy_packages` in `modular_migrations`.
+3. **Poka-Yoke Query Resilience:** Wrapped each query in `academy_catalog()` (`blueprints/academy.py`) in individual `try/except` blocks with transaction rollbacks and clean defaults, preventing portal crashes during rolling upgrades or schema drift.
+4. **Live Azure Deployment & Telemetry Verification:** Built and pushed container `v5.2-2026-09-22-751477c` to Azure Container Registry and restarted Azure App Service.
+5. **Empirical Verification:** Verified `https://www.hwbcleaning.com/academy` returns HTTP 200 OK (16,060 bytes), `/academy/course/TRN-SAF-01` returns HTTP 200 OK (59,166 bytes), and `/api/v1/academy/packages` returns HTTP 200 OK with 6 active curriculum packages.
+**Preventative:**
+1. Keep `database/schema_engine.py` modular migration sequence numbered sequentially without gaps.
+2. Maintain identical copies of all migration scripts in `HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/scripts/` to ensure inclusion in Docker builds.
+3. Wrap all catalog/dashboard aggregation queries in protective fallback blocks per Section 2.1 Minimization Mandate.
+
 
 
 

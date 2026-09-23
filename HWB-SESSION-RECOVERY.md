@@ -2,10 +2,10 @@
 
 | **Field** | **Current State** |
 | :--- | :--- |
-| **Objective** | Production Azure Container Deployment & Empirical Handover Verification (BUG-086, Sales Desk Hardening & Full Link Audit) |
-| **Heat Zone Files** | `database/schema_engine.py`, `blueprints/operations.py`, `blueprints/crm_api.py`, `templates/academy_catalog.html`, `scripts/deploy_live_container.sh`, `scratch/verify_live_azure_deployment.py`, `HWB-SESSION-RECOVERY.md` |
-| **Last Action** | 1. Built and deployed production container `hwbprodacr.azurecr.io/sigmafidelity-web:v5.2-2026-09-22-db60ec2` to Azure App Service (`hwb-institutional-website`) and custom domain `https://www.hwbcleaning.com`.<br>2. Discovered and resolved Azure PostgreSQL schema drift: provisioned missing telemetry columns (`tracking_token`, `opened_at`, `open_count`, `clicked_at`, `click_count`, `outbox_id`) in `database/schema_engine.py` and registered `012_marketing_tracking_and_builder` in modular migrations.<br>3. Implemented Poka-Yoke defensive query fallbacks in `blueprints/operations.py` for both `admin_operations()` and `sales_desk()`, eliminating HTTP 500 errors and restoring full 50-row lead table rendering.<br>4. Completed rigorous ISO 9001 claim sanitization across `templates/academy_catalog.html`, `blueprints/crm_api.py`, and migration scripts to "ISO 9001:2015 Compliant".<br>5. Empirically audited 22 public endpoints across `https://www.hwbcleaning.com` (100% HTTP 200 OK).<br>6. Empirically verified CEO Humberto Dominguez authentication (`hdominguez` & `admin`) yielding HTTP 302 -> `/admin/operations`, valid session cookies, and HTTP 200 across all 8 core backoffice modules (`/admin/operations`, `/admin/sales-desk`, `/admin/executive`, `/admin/master`, `/admin/construction-bids`, `/admin/institutional-bids`, `/manual`). |
-| **Next Step** | Handover complete. Stand by for next executive directive from CEO Humberto Dominguez. |
+| **Objective** | Production Azure Academy Verification, Schema Drift Remediation & Container Deployment (BUG-087) |
+| **Heat Zone Files** | `blueprints/academy.py`, `database/schema_engine.py`, `scripts/migrate_009_academy_packages.py`, `docs/PROBLEMS-TO-SOLVE.md`, `HWB-SESSION-RECOVERY.md` |
+| **Last Action** | 1. Diagnosed HTTP 500 on `https://www.hwbcleaning.com/academy` caused by missing `AcademyPackages` relation in Azure PostgreSQL.<br>2. Copied `migrate_009_academy_packages.py` into `HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/scripts/` ensuring Docker build parity.<br>3. Hardened `database/schema_engine.py` with direct DDL provisioning for `AcademyPackages`, `AcademyPackageCourses`, and missing `AcademyEnrollments` columns (`magic_token`, `assigned_package_code`, `assigned_by`, `due_date`, `notification_sent`), and registered `009_academy_packages` in `modular_migrations`.<br>4. Implemented Poka-Yoke defensive query fallbacks in `blueprints/academy.py` `academy_catalog()` to guarantee resilient page rendering.<br>5. Built and deployed live container `hwbprodacr.azurecr.io/sigmafidelity-web:v5.2-2026-09-22-751477c` to Azure Web App (`hwb-institutional-website`).<br>6. Empirically verified `https://www.hwbcleaning.com/academy` (HTTP 200, 16,060 bytes), individual course views (HTTP 200), and all Academy API endpoints (`/api/v1/academy/packages`, `/api/v1/academy/courses`, `/api/v1/academy/enrollments`).<br>7. Logged `BUG-087` in `docs/PROBLEMS-TO-SOLVE.md` and executed `sigma_sync.py`. |
+| **Next Step** | Production Academy portal 100% operational on live Azure Web App. Stand by for next executive directive from CEO Humberto Dominguez. |
 | **Strategic Assessment Pipeline (Plan Table)** | **ARCH-003: SigmaClient™ Progressive Web App (PWA) Command Hub** — Staged for future assessment at 1,000 commercial client scale. Provides zero-download mobile home screen portal, offline-first inspection caching, interactive scope configurator, and SMS/email tokenized magic-link authentication, eliminating third-party platform risk (Telegram policy/pricing changes) at $0 recurring SaaS cost. |
 | **Live Azure Prod DB Count** | **`37,466`** Total Live Leads (`sigmajan-server.postgres.database.azure.com`) |
 | **Local Dev Sandbox Count** | **`28,643`** Total Dev Leads (Audit verified via `/api/v1/db-audit`) |
@@ -17,8 +17,8 @@
 | **Institutional Footprint** | **`516,785 SF`** across 20 Public & Regional Facilities |
 | **Neural Cognitive Score** | **`100%` Enterprise Mature** (Fortune 500 Parity) |
 | **Database Latency** | **`10.34 ms`** (Live Azure VNet DB Connection Pool Active) |
-| **Session ID** | 2026-09-22-AZURE-PROD-DEPLOYMENT-AND-VERIFICATION-HANDOVER |
-| **Timestamp** | 09/22/2026 12:51 PM |
+| **Session ID** | 2026-09-22-AZURE-ACADEMY-DEPLOYMENT-VERIFICATION |
+| **Timestamp** | 09/22/2026 03:10 PM |
 
 ---
 *Note: This file is a temporary "Black Box" for immediate context recovery. It is updated after every successful Directive.*
