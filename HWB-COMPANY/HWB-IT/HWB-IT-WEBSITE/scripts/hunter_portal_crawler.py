@@ -7,12 +7,13 @@ Mission:
 Actively hunt, crawl, extract, and ingest public janitorial, custodial, and commercial
 facility maintenance contracts across the ENTIRE STATE OF TEXAS:
 - Dallas-Fort Worth Metroplex (Dallas, Fort Worth, Arlington, Plano, Collin, NTTA)
-- Central Texas (Austin, Travis County, Williamson County, San Marcos, Waco, Austin ISD)
-- Greater Houston (City of Houston, Harris County, Montgomery County, Galveston)
+- IonWave Metroplex & ISD Fleet (Denton, Garland, Carrollton, Mansfield ISD, Midlothian, Plano, Irving)
+- Independent School Districts (Dallas ISD, Austin ISD, Lewisville ISD, Denton ISD, Plano ISD, Frisco ISD, Mansfield ISD, Richardson ISD, Allen ISD, Keller ISD, Arlington ISD)
+- Central Texas (Austin, Travis County, Williamson County, Round Rock, Waco)
+- Greater Houston (City of Houston, Harris County, Fort Bend County, Brazoria County, Galveston)
 - South Texas (San Antonio, Bexar County, Corpus Christi, Rio Grande Valley)
-- West & North Texas (El Paso, Lubbock, Midland-Odessa, Amarillo)
-- Texas Higher Education Systems (UT System, UT Dallas, UT Austin, TAMUS, Texas Tech)
-- Texas State Government (TxDOT, Texas Facilities Commission, Comptroller ESBD)
+- West & North Texas (Midland-Odessa, Lubbock, Amarillo, El Paso)
+- Texas Higher Education Systems (UT System, UT Dallas)
 
 Engines: Playwright Headless Chromium + BeautifulSoup4 + Requests + PostgreSQL
 """
@@ -25,7 +26,6 @@ import datetime
 import subprocess
 import argparse
 from typing import List, Dict, Any, Optional
-from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 
 # Load Institutional Secrets
@@ -33,7 +33,7 @@ load_dotenv('.env')
 
 DB_URL = os.getenv('DATABASE_URL', 'postgresql://hwbdev:hwbpassword@db:5432/hwb_dev_db')
 
-# Verified Statewide Texas Bonfire Portal Fleet
+# Verified Statewide Texas Bonfire Portal Fleet (17 High-Volume Hubs)
 TEXAS_BONFIRE_PORTALS = [
     {
         "agency_name": "City of Dallas",
@@ -48,10 +48,70 @@ TEXAS_BONFIRE_PORTALS = [
         "portal_name": "Fort Worth Bonfire"
     },
     {
+        "agency_name": "Dallas Independent School District (Dallas ISD)",
+        "region": "DFW Metroplex / Dallas",
+        "url": "https://dallasisd.bonfirehub.com/portal/?tab=openOpportunities",
+        "portal_name": "Dallas ISD Bonfire"
+    },
+    {
+        "agency_name": "City of McKinney",
+        "region": "DFW / Collin County (HWB HQ)",
+        "url": "https://mckinneytexas.bonfirehub.com/portal/?tab=openOpportunities",
+        "portal_name": "City of McKinney Bonfire"
+    },
+    {
+        "agency_name": "City of Frisco",
+        "region": "DFW / Collin & Denton",
+        "url": "https://friscotexas.bonfirehub.com/portal/?tab=openOpportunities",
+        "portal_name": "City of Frisco Bonfire"
+    },
+    {
+        "agency_name": "City of Richardson",
+        "region": "DFW / Dallas & Collin",
+        "url": "https://cor.bonfirehub.com/portal/?tab=openOpportunities",
+        "portal_name": "City of Richardson Bonfire"
+    },
+    {
         "agency_name": "Harris County (Greater Houston)",
         "region": "Houston Gulf Coast",
         "url": "https://harriscountytx.bonfirehub.com/portal/?tab=openOpportunities",
         "portal_name": "Harris County Bonfire"
+    },
+    {
+        "agency_name": "Fort Bend County",
+        "region": "Houston Metro / Sugar Land",
+        "url": "https://fortbendcountytx.bonfirehub.com/portal/?tab=openOpportunities",
+        "portal_name": "Fort Bend County Bonfire"
+    },
+    {
+        "agency_name": "Brazoria County",
+        "region": "Houston Gulf Coast / Pearland",
+        "url": "https://brazoriacounty.bonfirehub.com/portal/?tab=openOpportunities",
+        "portal_name": "Brazoria County Bonfire"
+    },
+    {
+        "agency_name": "City of San Antonio",
+        "region": "South Texas / San Antonio",
+        "url": "https://sanantonio.bonfirehub.com/portal/?tab=openOpportunities",
+        "portal_name": "City of San Antonio Bonfire"
+    },
+    {
+        "agency_name": "Bexar County",
+        "region": "South Texas / San Antonio",
+        "url": "https://bexar.bonfirehub.com/portal/?tab=openOpportunities",
+        "portal_name": "Bexar County Bonfire"
+    },
+    {
+        "agency_name": "City of Round Rock",
+        "region": "Central Texas / Austin Metro",
+        "url": "https://roundrocktexas.bonfirehub.com/portal/?tab=openOpportunities",
+        "portal_name": "City of Round Rock Bonfire"
+    },
+    {
+        "agency_name": "Austin Independent School District",
+        "region": "Central Texas / Austin",
+        "url": "https://austinisd.bonfirehub.com/portal/?tab=openOpportunities",
+        "portal_name": "Austin ISD Bonfire"
     },
     {
         "agency_name": "University of Texas System",
@@ -64,12 +124,6 @@ TEXAS_BONFIRE_PORTALS = [
         "region": "DFW Metroplex / Richardson",
         "url": "https://utdallas.bonfirehub.com/portal/?tab=openOpportunities",
         "portal_name": "UT Dallas Bonfire"
-    },
-    {
-        "agency_name": "Austin Independent School District",
-        "region": "Central Texas / Austin",
-        "url": "https://austinisd.bonfirehub.com/portal/?tab=openOpportunities",
-        "portal_name": "Austin ISD Bonfire"
     },
     {
         "agency_name": "City of Midland",
@@ -85,23 +139,170 @@ TEXAS_BONFIRE_PORTALS = [
     }
 ]
 
-# Statewide Search Filters
-TARGET_NIGP_CODES = ['910-39', '962-58', '910-70', '910-25', '910-04', '910-06', '910-52']
+# Verified North Texas & Regional IonWave Portal Fleet (18 Municipal & ISD Portals)
+TEXAS_IONWAVE_PORTALS = [
+    {
+        "agency_name": "City of Denton",
+        "region": "DFW / Denton County",
+        "url": "https://dentontx.ionwave.net/SourcingEvents.aspx?SourceType=1",
+        "portal_name": "City of Denton IonWave"
+    },
+    {
+        "agency_name": "City of Garland",
+        "region": "DFW / Dallas County",
+        "url": "https://garlandtx.ionwave.net/SourcingEvents.aspx?SourceType=1",
+        "portal_name": "City of Garland IonWave"
+    },
+    {
+        "agency_name": "City of Carrollton",
+        "region": "DFW / Dallas & Denton",
+        "url": "https://carrolltonbids.ionwave.net/SourcingEvents.aspx?SourceType=1",
+        "portal_name": "City of Carrollton IonWave"
+    },
+    {
+        "agency_name": "Mansfield Independent School District",
+        "region": "DFW / Tarrant & Johnson",
+        "url": "https://misd.ionwave.net/SourcingEvents.aspx?SourceType=1",
+        "portal_name": "Mansfield ISD IonWave"
+    },
+    {
+        "agency_name": "Central Texas Purchasing Alliance (CTPA) / Midlothian ISD",
+        "region": "DFW & Central Texas (30+ ISDs)",
+        "url": "https://ctpa.ionwave.net/SourcingEvents.aspx?SourceType=1",
+        "portal_name": "CTPA IonWave Alliance"
+    },
+    {
+        "agency_name": "City of Plano",
+        "region": "DFW / Collin County",
+        "url": "https://planotx.ionwave.net/SourcingEvents.aspx?SourceType=1",
+        "portal_name": "City of Plano IonWave"
+    },
+    {
+        "agency_name": "City of Irving",
+        "region": "DFW / Dallas County",
+        "url": "https://cityofirving.ionwave.net/SourcingEvents.aspx?SourceType=1",
+        "portal_name": "City of Irving IonWave"
+    },
+    {
+        "agency_name": "Plano Independent School District",
+        "region": "DFW / Collin County",
+        "url": "https://pisd.ionwave.net/SourcingEvents.aspx?SourceType=1",
+        "portal_name": "Plano ISD IonWave"
+    },
+    {
+        "agency_name": "Frisco Independent School District",
+        "region": "DFW / Collin & Denton",
+        "url": "https://fisd.ionwave.net/SourcingEvents.aspx?SourceType=1",
+        "portal_name": "Frisco ISD IonWave"
+    },
+    {
+        "agency_name": "McKinney Independent School District",
+        "region": "DFW / Collin County",
+        "url": "https://mckinneyisd.ionwave.net/SourcingEvents.aspx?SourceType=1",
+        "portal_name": "McKinney ISD IonWave"
+    },
+    {
+        "agency_name": "Lewisville Independent School District",
+        "region": "DFW / Denton County",
+        "url": "https://lisd.ionwave.net/SourcingEvents.aspx?SourceType=1",
+        "portal_name": "Lewisville ISD IonWave"
+    },
+    {
+        "agency_name": "Denton Independent School District",
+        "region": "DFW / Denton County",
+        "url": "https://dentonisd.ionwave.net/SourcingEvents.aspx?SourceType=1",
+        "portal_name": "Denton ISD IonWave"
+    },
+    {
+        "agency_name": "Richardson Independent School District",
+        "region": "DFW / Dallas County",
+        "url": "https://risd.ionwave.net/SourcingEvents.aspx?SourceType=1",
+        "portal_name": "Richardson ISD IonWave"
+    },
+    {
+        "agency_name": "Allen Independent School District",
+        "region": "DFW / Collin County",
+        "url": "https://allenisd.ionwave.net/SourcingEvents.aspx?SourceType=1",
+        "portal_name": "Allen ISD IonWave"
+    },
+    {
+        "agency_name": "Coppell Independent School District",
+        "region": "DFW / Dallas County",
+        "url": "https://coppellisd.ionwave.net/SourcingEvents.aspx?SourceType=1",
+        "portal_name": "Coppell ISD IonWave"
+    },
+    {
+        "agency_name": "Keller Independent School District",
+        "region": "DFW / Tarrant County",
+        "url": "https://kellerisd.ionwave.net/SourcingEvents.aspx?SourceType=1",
+        "portal_name": "Keller ISD IonWave"
+    },
+    {
+        "agency_name": "Arlington Independent School District",
+        "region": "DFW / Tarrant County",
+        "url": "https://aisd.ionwave.net/SourcingEvents.aspx?SourceType=1",
+        "portal_name": "Arlington ISD IonWave"
+    },
+    {
+        "agency_name": "Collin County Government",
+        "region": "DFW / Collin County",
+        "url": "https://collincountytx.ionwave.net/SourcingEvents.aspx?SourceType=1",
+        "portal_name": "Collin County IonWave"
+    }
+]
+
+# Statewide Search Filters & Precision Vocabulary
 TARGET_KEYWORDS = [
-    'janitorial', 'custodial', 'cleaning', 'cleaner', 'day porter',
-    'floor care', 'carpet extraction', 'sanitization', 'disinfection',
-    'window washing', 'pressure wash', 'facility maintenance',
-    'post-construction clean', 'terminal cleaning', 'restroom'
+    'janitorial', 'custodial', 'day porter', 'porter services',
+    'floor care', 'carpet extraction', 'carpet cleaning',
+    'sanitization', 'disinfection', 'window washing', 'pressure wash',
+    'power wash', 'facility maintenance', 'facilities maintenance',
+    'terminal cleaning', 'post-construction clean', 'restroom cleaning',
+    'building cleaning', 'office cleaning', 'custodial supplies'
+]
+
+# Industrial Disqualification Filter (Prevents False Positives from Public Works/Machinery)
+NEGATIVE_KEYWORDS = [
+    'sewer', 'culvert', 'grease trap', 'fleet', 'vehicle', 'truck',
+    'street sweeper', 'hvac duct', 'duct cleaning', 'heavy equipment',
+    'parts only', 'stormwater', 'catch basin', 'dry cleaner',
+    'laundry service', 'water reclamation', 'wastewater', 'pipe cleaning'
 ]
 
 def is_custodial_opportunity(title: str, description: str = "") -> bool:
-    """Checks whether a project title or description matches janitorial scopes."""
+    """
+    Evaluates whether a solicitation represents commercial custodial/janitorial work.
+    Applies strict industrial negative filtering to eliminate municipal public works machinery.
+    """
     combined = f"{title} {description}".lower()
-    return any(kw in combined for kw in TARGET_KEYWORDS)
+
+    # 1. Industrial Disqualification Check
+    for neg in NEGATIVE_KEYWORDS:
+        if re.search(r'\b' + re.escape(neg) + r'\b', combined):
+            return False
+
+    # 2. Scope Inclusion Check
+    for pos in TARGET_KEYWORDS:
+        if pos in combined:
+            return True
+
+    return False
 
 def execute_psql_query(sql: str) -> bool:
     """Executes SQL via docker exec or direct psycopg2 connection."""
-    # First try docker exec directly (works reliably on host)
+    # First try direct psycopg2 if running inside container
+    try:
+        import psycopg2
+        conn = psycopg2.connect(DB_URL)
+        with conn.cursor() as cur:
+            cur.execute(sql)
+        conn.commit()
+        conn.close()
+        return True
+    except Exception:
+        pass
+
+    # Fallback to docker exec on host
     try:
         proc = subprocess.run(
             ['docker', 'exec', '-i', 'hwb_postgres_dev', 'psql', '-U', 'hwbdev', '-d', 'hwb_dev_db'],
@@ -112,21 +313,12 @@ def execute_psql_query(sql: str) -> bool:
         )
         if proc.returncode == 0:
             return True
-    except Exception:
-        pass
-
-    # Fallback to direct psycopg2 if running inside container
-    try:
-        import psycopg2
-        conn = psycopg2.connect(DB_URL)
-        with conn.cursor() as cur:
-            cur.execute(sql)
-        conn.commit()
-        conn.close()
-        return True
+        else:
+            print(f"[HUNTER DB ERROR] docker exec stderr: {proc.stderr}")
     except Exception as e:
         print(f"[HUNTER DB ERROR] SQL execution failed: {e}")
-        return False
+
+    return False
 
 def crawl_bonfire_portal(portal_info: Dict[str, str], headless: bool = True) -> List[Dict[str, Any]]:
     """
@@ -138,7 +330,7 @@ def crawl_bonfire_portal(portal_info: Dict[str, str], headless: bool = True) -> 
     region = portal_info["region"]
     portal_name = portal_info["portal_name"]
     
-    print(f"[HUNTER] Scouting {agency_name} ({region}) via {url}...")
+    print(f"[HUNTER BONFIRE] Scouting {agency_name} ({region})...")
     opportunities = []
 
     try:
@@ -147,22 +339,25 @@ def crawl_bonfire_portal(portal_info: Dict[str, str], headless: bool = True) -> 
             browser = p.chromium.launch(headless=headless)
             page = browser.new_page()
             try:
-                page.goto(url, wait_until="networkidle", timeout=30000)
-            except Exception as e:
-                print(f"[HUNTER] Navigation timeout for {agency_name}: {e}")
-                browser.close()
-                return []
-
-            # Wait for data table
-            try:
-                page.wait_for_selector('table tbody tr', timeout=7000)
+                page.goto(url, wait_until="networkidle", timeout=25000)
             except Exception:
-                print(f"[HUNTER] No active table rows found for {agency_name}.")
+                try:
+                    page.goto(url, wait_until="domcontentloaded", timeout=15000)
+                    time.sleep(3)
+                except Exception as e:
+                    print(f"[HUNTER BONFIRE] Navigation timeout for {agency_name}: {e}")
+                    browser.close()
+                    return []
+
+            try:
+                page.wait_for_selector('table tbody tr', timeout=6000)
+            except Exception:
+                print(f"[HUNTER BONFIRE] No active table rows found for {agency_name}.")
                 browser.close()
                 return []
 
             rows = page.query_selector_all('table tbody tr')
-            print(f"[HUNTER] Found {len(rows)} raw listings on {agency_name} portal.")
+            print(f"[HUNTER BONFIRE] Found {len(rows)} raw listings on {agency_name} portal.")
 
             for r in rows:
                 text = r.inner_text().strip()
@@ -178,7 +373,6 @@ def crawl_bonfire_portal(portal_info: Dict[str, str], headless: bool = True) -> 
                 title = cells[2].inner_text().strip()
                 close_date = cells[3].inner_text().strip() if len(cells) > 3 else ""
                 
-                # Extract link if available
                 link_el = r.query_selector('a[href*="/opportunities/"]')
                 opp_link = ""
                 if link_el:
@@ -186,9 +380,8 @@ def crawl_bonfire_portal(portal_info: Dict[str, str], headless: bool = True) -> 
                     if href:
                         opp_link = href if href.startswith('http') else f"https://{portal_info['url'].split('/')[2]}{href}"
 
-                # Match against custodial/cleaning keywords
                 if is_custodial_opportunity(title):
-                    print(f"🎯 [HUNTER HIT] Matched Janitorial in {region}: [{ref_num}] {title} (Closes: {close_date})")
+                    print(f"🎯 [HUNTER HIT - BONFIRE] Matched Janitorial in {region}: [{ref_num}] {title} (Closes: {close_date})")
                     opportunities.append({
                         "solicitation_number": ref_num or f"BONFIRE-{abs(hash(title)) % 1000000}",
                         "title": title,
@@ -203,28 +396,102 @@ def crawl_bonfire_portal(portal_info: Dict[str, str], headless: bool = True) -> 
 
             browser.close()
     except Exception as e:
-        print(f"[HUNTER] Error scouting {agency_name}: {e}")
+        print(f"[HUNTER BONFIRE] Error scouting {agency_name}: {e}")
 
     return opportunities
 
-def crawl_texas_statewide_bonfire_fleet() -> List[Dict[str, Any]]:
-    """Crawls all configured Bonfire municipal and higher-ed portals across Texas."""
-    all_opps = []
-    for portal in TEXAS_BONFIRE_PORTALS:
-        opps = crawl_bonfire_portal(portal)
-        all_opps.extend(opps)
-        time.sleep(1) # Polite pause between portals
-    return all_opps
+def crawl_ionwave_portal(portal_info: Dict[str, str], headless: bool = True) -> List[Dict[str, Any]]:
+    """
+    Crawls an IonWave electronic procurement portal (eBid) using Playwright.
+    Extracts live open sourcing events from Telerik RadGrid structures.
+    """
+    agency_name = portal_info["agency_name"]
+    url = portal_info["url"]
+    region = portal_info["region"]
+    portal_name = portal_info["portal_name"]
+    
+    print(f"[HUNTER IONWAVE] Scouting {agency_name} ({region})...")
+    opportunities = []
+
+    try:
+        from playwright.sync_api import sync_playwright
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=headless)
+            page = browser.new_page()
+            try:
+                page.goto(url, wait_until="domcontentloaded", timeout=20000)
+            except Exception as e:
+                print(f"[HUNTER IONWAVE] Navigation timeout for {agency_name}: {e}")
+                browser.close()
+                return []
+
+            time.sleep(2)  # RadGrid AJAX stabilization
+            rows = page.query_selector_all('tr.rgRow, tr.rgAltRow')
+            print(f"[HUNTER IONWAVE] Found {len(rows)} raw sourcing events on {agency_name} portal.")
+
+            for r in rows:
+                cells = r.query_selector_all('td')
+                if len(cells) < 4:
+                    continue
+
+                ref_num = cells[1].inner_text().strip()
+                title = cells[2].inner_text().strip()
+                bid_type = cells[3].inner_text().strip() if len(cells) > 3 else "RFP"
+                close_date = cells[6].inner_text().strip() if len(cells) > 6 else ""
+
+                link_el = r.query_selector('a[href*="SourcingEventDetail.aspx"]')
+                opp_link = ""
+                if link_el:
+                    href = link_el.get_attribute('href')
+                    if href:
+                        opp_link = href if href.startswith('http') else f"https://{url.split('/')[2]}/{href}"
+
+                if is_custodial_opportunity(title):
+                    print(f"🎯 [HUNTER HIT - IONWAVE] Matched Janitorial in {region}: [{ref_num}] {title} (Closes: {close_date})")
+                    opportunities.append({
+                        "solicitation_number": ref_num or f"IONWAVE-{abs(hash(title)) % 1000000}",
+                        "title": title,
+                        "agency_name": agency_name,
+                        "region": region,
+                        "portal_name": portal_name,
+                        "status_badge": "Open Sourcing Event",
+                        "close_date_raw": close_date,
+                        "rfp_url": opp_link or url,
+                        "scouted_date": datetime.datetime.now().isoformat()
+                    })
+
+            browser.close()
+    except Exception as e:
+        print(f"[HUNTER IONWAVE] Error scouting {agency_name}: {e}")
+
+    return opportunities
+
+def clean_database_false_positives():
+    """
+    Cleans up any historically ingested records that fail the negative keyword filter.
+    Example: 'RFP Sewer Cleaning Equipment' (Fort Worth #17).
+    """
+    cleanup_sql = """
+    DELETE FROM "InstitutionalBids"
+    WHERE title ILIKE '%sewer%'
+       OR title ILIKE '%culvert%'
+       OR title ILIKE '%grease trap%'
+       OR title ILIKE '%street sweeper%'
+       OR title ILIKE '%heavy equipment%';
+    """
+    execute_psql_query(cleanup_sql)
 
 def ingest_opportunities_to_database(opportunities: List[Dict[str, Any]]) -> int:
     """
     Ingests newly discovered Texas statewide opportunities into PostgreSQL InstitutionalBids.
     """
+    # Clean up any legacy false positives
+    clean_database_false_positives()
+
     if not opportunities:
         print("[HUNTER] No new custodial opportunities matched in this cycle.")
         return 0
 
-    inserted_count = 0
     sql_statements = []
     for opp in opportunities:
         solicitation_num = opp["solicitation_number"].replace("'", "''")
@@ -246,6 +513,7 @@ def ingest_opportunities_to_database(opportunities: List[Dict[str, Any]]) -> int
         ) ON CONFLICT (solicitation_number) DO UPDATE SET
             title = EXCLUDED.title,
             rfp_url = EXCLUDED.rfp_url,
+            notes = EXCLUDED.notes,
             updated_at = CURRENT_TIMESTAMP;
         """
         sql_statements.append(sql)
@@ -259,22 +527,39 @@ def ingest_opportunities_to_database(opportunities: List[Dict[str, Any]]) -> int
         print("[HUNTER PERSISTENCE] Failed to synchronize opportunities.")
         return 0
 
-def run_statewide_hunter_cycle():
+def run_statewide_hunter_cycle(portal_filter: str = "all"):
     """
     Master execution entrypoint for the Statewide Texas Hunter Engine.
+    Crawls both Bonfire (17 hubs) and IonWave (18 portals) across Texas.
     """
     print("================================================================================")
-    print("🏹  SigmaFidelity™ Statewide Texas Contract Hunter & Portal Crawler")
+    print("🏹  SigmaFidelity™ Statewide Texas Contract Hunter (Bonfire + IonWave Networks)")
     print(f"🕒  Timestamp: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print("📍  Territory: Entire State of Texas (DFW, Central, Houston, South, West)")
+    print("📍  Territory: Entire State of Texas (DFW, Central, Houston, South, West, ISDs)")
     print("================================================================================")
 
-    # 1. Crawl Statewide Bonfire Network
-    found_opportunities = crawl_texas_statewide_bonfire_fleet()
-    print(f"\n[HUNTER SUMMARY] Discovered {len(found_opportunities)} matching custodial opportunities statewide.")
+    all_opportunities = []
 
-    # 2. Ingest to PostgreSQL
-    ingested = ingest_opportunities_to_database(found_opportunities)
+    # 1. Crawl Bonfire Network
+    if portal_filter in ["all", "bonfire"]:
+        print(f"\n--- Phase 1: Scouting Texas Bonfire Network ({len(TEXAS_BONFIRE_PORTALS)} Portals) ---")
+        for portal in TEXAS_BONFIRE_PORTALS:
+            opps = crawl_bonfire_portal(portal)
+            all_opportunities.extend(opps)
+            time.sleep(1.5)  # Polite pause between Bonfire hubs
+
+    # 2. Crawl IonWave Network (DFW Municipalities & ISDs)
+    if portal_filter in ["all", "ionwave"]:
+        print(f"\n--- Phase 2: Scouting Texas IonWave Network ({len(TEXAS_IONWAVE_PORTALS)} Portals) ---")
+        for portal in TEXAS_IONWAVE_PORTALS:
+            opps = crawl_ionwave_portal(portal)
+            all_opportunities.extend(opps)
+            time.sleep(2.0)  # Polite pause between IonWave endpoints
+
+    print(f"\n[HUNTER SUMMARY] Discovered {len(all_opportunities)} matching custodial opportunities statewide.")
+
+    # 3. Ingest to PostgreSQL
+    ingested = ingest_opportunities_to_database(all_opportunities)
     print(f"[HUNTER DB] {ingested} opportunities staged in InstitutionalBids.")
 
     print("================================================================================")
@@ -283,7 +568,7 @@ def run_statewide_hunter_cycle():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="SigmaFidelity Statewide Texas Contract Hunter")
-    parser.add_argument("--dry-run", action="store_true", help="Crawl without database write")
+    parser.add_argument("--portal", choices=["all", "bonfire", "ionwave"], default="all", help="Target portal network")
     args = parser.parse_args()
     
-    run_statewide_hunter_cycle()
+    run_statewide_hunter_cycle(portal_filter=args.portal)

@@ -104,6 +104,15 @@ class SigmaOrchestrator:
         except Exception as e:
             print(f"[ORCHESTRATOR] Municipal contract miner failed: {e}")
 
+        # Trigger Statewide Hunter Contract & Portal Crawler (Bonfire + IonWave)
+        try:
+            import subprocess
+            import sys
+            print("[ORCHESTRATOR] Triggering Statewide Texas Hunter Contract & Portal Crawler...")
+            subprocess.run([sys.executable, "scripts/hunter_portal_crawler.py", "--portal=all"], check=False)
+        except Exception as e:
+            print(f"[ORCHESTRATOR] Hunter portal crawler failed: {e}")
+
 
 if __name__ == "__main__":
     orch = SigmaOrchestrator()
