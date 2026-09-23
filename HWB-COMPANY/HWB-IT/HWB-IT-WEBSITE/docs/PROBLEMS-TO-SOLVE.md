@@ -1072,8 +1072,11 @@ CEO Humberto Dominguez attempting to log into `https://www.hwbcleaning.com/login
 2. **Unified Estimating Engine (`core/services/estimator.py`):**
    - Implemented `calculate_commercial_gc_bid`, `calculate_institutional_bid`, and `calculate_federal_sca_bid`.
    - Codified exact McNamara-O'Hara SCA formula with DOL base wage floor, mandatory Health & Welfare fringe ($4.98 with EO 13706), 11 paid holidays (4.23% accrual), 2 weeks paid vacation (3.85% accrual), and 20% statutory payroll burden.
+   - Built the **Negotiation Triad Architecture** across tiers: Published Submittal Price (with negotiation buffer), Authorized Field Close Price (at target margin), Walk-Away Floor Price, and Buyout Discount Cushion.
+   - Integrated Multi-Statute Contractual Safeguards: Commercial GC Trade Stacking (1-pass rule, $38.50/hr CO rate, $450 dry run fee), Tempered Glass Scratch Waiver, Site Utilities Preconditions, Texas Ch. 2258 Prevailing Wage ($60/day penalty notice), Texas Ch. 2251 Prompt Pay (10-day sub pay flowdown), Texas Education Code § 22.0834 FAST fingerprint badging, CWHSSA (40 U.S.C. 3701 overtime + $31/day penalty), EO 13706 Paid Sick Leave (up to 56 hrs/yr), and Davis-Bacon 29 CFR 5.2(j) post-construction clean craft threshold.
+   - Integrated Scope & Logistics Alternates: Urban parking logistics ($150/day), off-site dumpster hauling ($750/container), and 10% retainage float financing (1.5%).
 3. **API Endpoints (`blueprints/bids.py`):**
-   - Implemented `/api/v1/bids/estimate` (3-tier calculation API).
+   - Implemented `/api/v1/bids/estimate` (3-tier calculation API with negotiation buffer and logistics switches).
    - Implemented `/api/v1/bids/sca/wage-determination` (DOL floor lookup).
    - Implemented `/api/v1/bids/<int:bid_id>/documents` (Digital Bid Room vault).
    - Implemented `/api/v1/bids/<int:bid_id>/addenda` (Addenda Sentinel with automatic parent bid due date updates).
@@ -1081,6 +1084,7 @@ CEO Humberto Dominguez attempting to log into `https://www.hwbcleaning.com/login
 **Preventative:**
 1. Require all estimating calculations to originate from `core/services/estimator.py` for mathematical uniformity.
 2. Maintain active DOL Wage Determinations in PostgreSQL for zero-latency federal bid validation.
+3. Automatically append standard statutory safeguards and negotiation buffers to all published subcontractor proposals to insulate profit margins during GC buyout.
 
 
 
