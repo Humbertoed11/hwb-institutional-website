@@ -113,6 +113,15 @@ class SigmaOrchestrator:
         except Exception as e:
             print(f"[ORCHESTRATOR] Hunter portal crawler failed: {e}")
 
+        # Trigger Autonomous Solicitation Scope Parser & Proposal Engine (ARCH-006)
+        try:
+            import subprocess
+            import sys
+            print("[ORCHESTRATOR] Triggering Autonomous Solicitation Scope Parser & Takeoff Engine...")
+            subprocess.run([sys.executable, "scripts/solicitation_scope_parser.py", "--sync-all"], check=False)
+        except Exception as e:
+            print(f"[ORCHESTRATOR] Solicitation scope parser failed: {e}")
+
 
 if __name__ == "__main__":
     orch = SigmaOrchestrator()

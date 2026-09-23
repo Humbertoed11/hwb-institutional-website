@@ -26,6 +26,7 @@ import datetime
 import subprocess
 import argparse
 from typing import List, Dict, Any, Optional
+from pathlib import Path
 from dotenv import load_dotenv
 
 # Load Institutional Secrets
@@ -527,48 +528,133 @@ def ingest_opportunities_to_database(opportunities: List[Dict[str, Any]]) -> int
         print("[HUNTER PERSISTENCE] Failed to synchronize opportunities.")
         return 0
 
-def run_statewide_hunter_cycle(portal_filter: str = "all"):
+def harvest_solicitation_attachments(opp: Dict[str, Any], project_root: Optional[Any] = None) -> List[str]:
+    """
+    Creates institutional quote workspace and attempts attachment harvesting.
+    Triggers solicitation_scope_parser on downloaded RFP specifications.
+    """
+    from pathlib import Path
+    import re
+    
+    curr = Path(__file__).resolve().parent
+    root = project_root or (curr.parent if curr.name == "scripts" else curr.parent.parent)
+    
+    agency_clean = re.sub(r'[^A-Za-z0-9]', '-', opp.get("agency_name", "TEXAS-AGENCY")).strip('-').upper()[:25]
+    sol_clean = re.sub(r'[^A-Za-z0-9]', '-', opp.get("solicitation_number", "BID")).strip('-').upper()[:25]
+    
+    save_dir = root / "HWB-COMPANY" / "HWB-QUOTES" / f"{agency_clean}_{sol_clean}"
+    save_dir.mkdir(parents=True, exist_ok=True)
+    
+    manifest_file = save_dir / "PORTAL_STAGING_MANIFEST.json"
+    manifest_data = {
+        "solicitation_number": opp.get("solicitation_number"),
+        "title": opp.get("title"),
+        "agency_name": opp.get("agency_name"),
+        "region": opp.get("region"),
+        "portal_name": opp.get("portal_name"),
+        "rfp_url": opp.get("rfp_url"),
+        "close_date": opp.get("close_date_raw"),
+        "scouted_date": opp.get("scouted_date"),
+        "staging_path": str(save_dir),
+        "harvest_status": "Staging Directory Created / Ready for Scope Takeoff"
+    }
+    with open(manifest_file, "w") as f:
+        json.dump(manifest_data, f, indent=2)
+        
+    downloaded_files = []
+    rfp_url = opp.get("rfp_url", "")
+    
+    if any(ext in rfp_url.lower() for ext in [".pdf", ".doc", ".xlsx"]):
+        try:
+            import requests
+            fname = rfp_url.split("/")[-1].split("?")[0] or "solicitation_spec.pdf"
+            target_file = save_dir / fname
+            resp = requests.get(rfp_url, timeout=15)
+            if resp.status_code == 200 and len(resp.content) > 1000:
+                with open(target_file, "wb") as f:
+                    f.write(resp.content)
+                downloaded_files.append(str(target_file))
+                print(f"[HARVESTER] Downloaded primary document: {fname}")
+        except Exception as e:
+            print(f"[HARVESTER] Direct download failed for {rfp_url}: {e}")
+
+    for pdf in save_dir.glob("*.pdf"):
+        if str(pdf) not in downloaded_files:
+            downloaded_files.append(str(pdf))
+
+    if downloaded_files:
+        try:
+            import sys
+            parser_script = root / "scripts" / "solicitation_scope_parser.py"
+            if not parser_script.exists():
+                parser_script = root / "HWB-COMPANY" / "HWB-IT" / "HWB-IT-WEBSITE" / "scripts" / "solicitation_scope_parser.py"
+            for pdf_path in downloaded_files:
+                subprocess.run([sys.executable, str(parser_script), "--file", pdf_path], check=False)
+        except Exception as e:
+            print(f"[HARVESTER] Scope parser trigger failed: {e}")
+
+    return downloaded_files
+
+def run_statewide_hunter_cycle(portal_filter: str = "all", harvest_only: bool = False):
     """
     Master execution entrypoint for the Statewide Texas Hunter Engine.
     Crawls both Bonfire (17 hubs) and IonWave (18 portals) across Texas.
+    Harvests attachments and triggers autonomous scope takeoff parsing.
     """
     print("================================================================================")
-    print("🏹  SigmaFidelity™ Statewide Texas Contract Hunter (Bonfire + IonWave Networks)")
+    print("🏹  SigmaFidelity™ Statewide Texas Contract Hunter & Proposal Factory")
     print(f"🕒  Timestamp: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("📍  Territory: Entire State of Texas (DFW, Central, Houston, South, West, ISDs)")
     print("================================================================================")
 
     all_opportunities = []
 
-    # 1. Crawl Bonfire Network
-    if portal_filter in ["all", "bonfire"]:
-        print(f"\n--- Phase 1: Scouting Texas Bonfire Network ({len(TEXAS_BONFIRE_PORTALS)} Portals) ---")
-        for portal in TEXAS_BONFIRE_PORTALS:
-            opps = crawl_bonfire_portal(portal)
-            all_opportunities.extend(opps)
-            time.sleep(1.5)  # Polite pause between Bonfire hubs
+    if not harvest_only:
+        # 1. Crawl Bonfire Network
+        if portal_filter in ["all", "bonfire"]:
+            print(f"\n--- Phase 1: Scouting Texas Bonfire Network ({len(TEXAS_BONFIRE_PORTALS)} Portals) ---")
+            for portal in TEXAS_BONFIRE_PORTALS:
+                opps = crawl_bonfire_portal(portal)
+                all_opportunities.extend(opps)
+                time.sleep(1.5)  # Polite pause between Bonfire hubs
 
-    # 2. Crawl IonWave Network (DFW Municipalities & ISDs)
-    if portal_filter in ["all", "ionwave"]:
-        print(f"\n--- Phase 2: Scouting Texas IonWave Network ({len(TEXAS_IONWAVE_PORTALS)} Portals) ---")
-        for portal in TEXAS_IONWAVE_PORTALS:
-            opps = crawl_ionwave_portal(portal)
-            all_opportunities.extend(opps)
-            time.sleep(2.0)  # Polite pause between IonWave endpoints
+        # 2. Crawl IonWave Network (DFW Municipalities & ISDs)
+        if portal_filter in ["all", "ionwave"]:
+            print(f"\n--- Phase 2: Scouting Texas IonWave Network ({len(TEXAS_IONWAVE_PORTALS)} Portals) ---")
+            for portal in TEXAS_IONWAVE_PORTALS:
+                opps = crawl_ionwave_portal(portal)
+                all_opportunities.extend(opps)
+                time.sleep(2.0)  # Polite pause between IonWave endpoints
 
-    print(f"\n[HUNTER SUMMARY] Discovered {len(all_opportunities)} matching custodial opportunities statewide.")
+        print(f"\n[HUNTER SUMMARY] Discovered {len(all_opportunities)} matching custodial opportunities statewide.")
 
-    # 3. Ingest to PostgreSQL
-    ingested = ingest_opportunities_to_database(all_opportunities)
-    print(f"[HUNTER DB] {ingested} opportunities staged in InstitutionalBids.")
+        # 3. Ingest to PostgreSQL
+        ingested = ingest_opportunities_to_database(all_opportunities)
+        print(f"[HUNTER DB] {ingested} opportunities staged in InstitutionalBids.")
+
+    # 4. Phase 3: Harvest Attachments & Execute Scope Parsing
+    print(f"\n--- Phase 3: Automated Attachment Harvesting & Scope Takeoff Parsing ---")
+    for opp in all_opportunities:
+        harvest_solicitation_attachments(opp)
+
+    # 5. Full Repository Scope Takeoff Synchronization
+    print(f"\n--- Phase 4: Full Institutional Repository Takeoff Synchronization ---")
+    try:
+        import sys
+        root = Path(__file__).resolve().parent.parent if Path(__file__).resolve().parent.name == "scripts" else Path(__file__).resolve().parent
+        parser_script = root / "scripts" / "solicitation_scope_parser.py"
+        subprocess.run([sys.executable, str(parser_script), "--sync-all"], check=False)
+    except Exception as e:
+        print(f"[HUNTER SUMMARY] Scope synchronizer trigger failed: {e}")
 
     print("================================================================================")
-    print("🏁  Statewide Hunter Cycle Complete. Ready for blueprint takeoff & executive review.")
+    print("🏁  Statewide Hunter & Proposal Factory Cycle Complete.")
     print("================================================================================")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="SigmaFidelity Statewide Texas Contract Hunter")
     parser.add_argument("--portal", choices=["all", "bonfire", "ionwave"], default="all", help="Target portal network")
+    parser.add_argument("--harvest-only", action="store_true", help="Skip crawling and execute harvesting/sync on existing records")
     args = parser.parse_args()
     
-    run_statewide_hunter_cycle(portal_filter=args.portal)
+    run_statewide_hunter_cycle(portal_filter=args.portal, harvest_only=args.harvest_only)
