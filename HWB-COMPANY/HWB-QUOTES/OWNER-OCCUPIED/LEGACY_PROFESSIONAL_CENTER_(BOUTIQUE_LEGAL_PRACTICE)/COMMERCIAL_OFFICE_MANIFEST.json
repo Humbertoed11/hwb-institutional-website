@@ -1,0 +1,93 @@
+{
+  "company_name": "Legacy Professional Center (Boutique Legal Practice)",
+  "address": "5700 Tennyson Pkwy, Plano, TX 75024",
+  "sqft": 14500.0,
+  "owner_ceo": "David Vance, Managing Partner",
+  "assessment": {
+    "assessment_timestamp": "2026-09-23T00:15:00.817895",
+    "lead_identifier": "OWNER-PLANO-LEGALLAW-01",
+    "lead_title": "Legacy Professional Center (Boutique Legal Practice)",
+    "composite_score": 92,
+    "qualification_tier": "PLATINUM (Priority Immediate Action)",
+    "matched_playbook": {
+      "playbook_id": "PLAYBOOK-OWNER-OCCUPANT",
+      "title": "Commercial Owner-Occupant Direct Authority Playbook",
+      "estimator_tier": "Tier 5: Commercial Recurring",
+      "economic_driver": "Direct Peer-to-Peer Decision Velocity (Zero corporate committee red tape; 48-to-72 hour proposal turnaround directly to the deed holder / Managing Partner).",
+      "decision_maker_target": "Managing Partner / Founder / President / CEO"
+    },
+    "pillar_breakdown": {
+      "pillar_1_economic_arbitrage": {
+        "score": 16,
+        "max": 20,
+        "rationale": "Standard high-ticket commercial scope (14,500 SQFT)."
+      },
+      "pillar_2_decision_velocity": {
+        "score": 20,
+        "max": 20,
+        "rationale": "Direct executive authority: Single decision-maker; 48-72 hr close velocity."
+      },
+      "pillar_3_regulatory_compliance": {
+        "score": 16,
+        "max": 20,
+        "rationale": "Client-facing professional standard; confidential data privacy protocols."
+      },
+      "pillar_4_operational_density": {
+        "score": 20,
+        "max": 20,
+        "rationale": "Epicenter of existing operational cluster (Plano); 0-mile dispatch radius."
+      },
+      "pillar_5_contract_ltv_margin": {
+        "score": 20,
+        "max": 20,
+        "rationale": "Multi-year institutional agreement (36 months); high LTV retention."
+      }
+    },
+    "recommended_action": "Autonomous Proposal Generation & Outbox Letter Staging (Official Letterhead HWB-COM-001)"
+  },
+  "proposal": {
+    "tier": "Commercial Recurring Janitorial",
+    "facility_profile": {
+      "cleanable_sqft": 14500.0,
+      "facility_type": "legal",
+      "cleanings_per_week": 5,
+      "contract_term_months": 36,
+      "issa_production_rate_sqft_hr": 3000.0,
+      "hours_per_cleaning_shift": 4.83
+    },
+    "pricing_structure": {
+      "published_monthly_submittal": 3903.88,
+      "published_annual_total": 46846.56,
+      "published_contract_total": 140539.68,
+      "effective_monthly_sqft_rate": 0.2692,
+      "effective_annual_sqft_rate": 3.2308,
+      "authorized_field_close_monthly": 3703.68,
+      "authorized_contract_total": 133332.48,
+      "walkaway_floor_monthly": 3439.13,
+      "walkaway_contract_total": 123808.68
+    },
+    "operations_cogs": {
+      "weekly_labor_hours": 24.1,
+      "monthly_labor_hours": 104.6,
+      "assigned_technician_wage": 19.5,
+      "monthly_base_labor": 2040.67,
+      "monthly_labor_burden_20pct": 408.13,
+      "total_monthly_labor": 2448.8,
+      "monthly_supplies_and_disinfectant": 217.5,
+      "monthly_equipment_depreciation": 85.0,
+      "total_monthly_cogs": 2751.3,
+      "monthly_ga_overhead_5pct": 137.57,
+      "monthly_net_ebitda": 1015.01,
+      "net_operating_margin_pct": 26.0
+    },
+    "safeguards": {
+      "scope_demarcation": "Janitorial specifications cover all designated private offices, conference rooms, restrooms, kitchenettes/break areas, reception lobbies, and common circulation corridors. Exterior grounds and parking lots are excluded unless expressly added via Exhibit Rider.",
+      "access_and_keycard_governance": "All security fobs, electronic access badges, and facility keys shall be cryptographically logged in the SigmaFidelity Chain-of-Custody register. Technicians are strictly prohibited from granting facility access to unvetted third parties.",
+      "cross_contamination_prevention": "Mandatory color-coded microfiber protocol (Red = Restroom Sanitary/Toilets, Blue = General Office Surfaces/Desks, Green = Kitchen/Food Prep, Yellow = High-Touch Fixtures/Doorknobs) utilizing EPA-registered hospital-grade disinfectant.",
+      "periodic_deep_maintenance_schedule": "Contract includes quarterly machine burnishing of VCT/hard surfaces and annual hot-water extraction of high-traffic carpet runners, coordinated 14 days in advance with facility management.",
+      "price_escalation_clause": "Annual automatic rate adjustment indexed to the Bureau of Labor Statistics Consumer Price Index for All Urban Consumers (CPI-U DFW MSA) or 3.0%, whichever is greater, to protect labor wage floors against inflationary drift.",
+      "cancellation_terms": "Mutual thirty (30) day written notice for cause, preceded by a formal ten (10) day cure period documented via the SigmaFidelity Digital Audit Portal."
+    }
+  },
+  "staged_date": "2026-09-23"
+}

@@ -1,0 +1,94 @@
+{
+  "property_name": "Preserve at Craig Ranch",
+  "address": "7900 Craig Ranch Pkwy, McKinney, TX 75070",
+  "units": 185,
+  "management_company": "Cortland Communities",
+  "assessment": {
+    "assessment_timestamp": "2026-09-23T00:15:00.599641",
+    "lead_identifier": "BTR-MCKINNEY-PARK-03",
+    "lead_title": "Preserve at Craig Ranch",
+    "composite_score": 95,
+    "qualification_tier": "PLATINUM (Priority Immediate Action)",
+    "matched_playbook": {
+      "playbook_id": "PLAYBOOK-VALET-WASTE",
+      "title": "Multi-Family & BTR Doorstep Valet Waste & Grounds Playbook",
+      "estimator_tier": "Tier 4: Valet Waste",
+      "economic_driver": "Landlord NOI Arbitrage (Spread between $30/mo resident fee and $14/mo vendor cost yields +$16/mo pure net profit per door, expanding asset valuation by +$300k+ @ 6% cap rate).",
+      "decision_maker_target": "Regional Facilities Director / Community Manager / Asset Manager"
+    },
+    "pillar_breakdown": {
+      "pillar_1_economic_arbitrage": {
+        "score": 20,
+        "max": 20,
+        "rationale": "Landlord NOI Arbitrage: 185 doors generate pure net asset profit."
+      },
+      "pillar_2_decision_velocity": {
+        "score": 17,
+        "max": 20,
+        "rationale": "Onsite management authority with direct budgetary signoff."
+      },
+      "pillar_3_regulatory_compliance": {
+        "score": 18,
+        "max": 20,
+        "rationale": "Tied directly to resident amenity lease covenants and municipal solid waste rules."
+      },
+      "pillar_4_operational_density": {
+        "score": 20,
+        "max": 20,
+        "rationale": "Epicenter of existing operational cluster (Mckinney); 0-mile dispatch radius."
+      },
+      "pillar_5_contract_ltv_margin": {
+        "score": 20,
+        "max": 20,
+        "rationale": "Multi-year institutional agreement (36 months); high LTV retention."
+      }
+    },
+    "recommended_action": "Autonomous Proposal Generation & Outbox Letter Staging (Official Letterhead HWB-COM-001)"
+  },
+  "proposal": {
+    "tier": "Multi-Family / BTR Doorstep Valet Waste",
+    "community_profile": {
+      "total_units": 185,
+      "collection_days_per_week": 5,
+      "pet_waste_stations": 4,
+      "compactor_pad_washing_included": true,
+      "contract_term_months": 36
+    },
+    "pricing_structure": {
+      "published_door_rate": 14.0,
+      "published_monthly_total": 2940.0,
+      "published_annual_total": 35280.0,
+      "published_contract_total": 105840.0,
+      "authorized_field_close_monthly": 2755.0,
+      "authorized_contract_total": 99180.0,
+      "walkaway_floor_monthly": 2570.0,
+      "walkaway_contract_total": 92520.0
+    },
+    "operations_cogs": {
+      "estimated_shift_hours_nightly": 1.48,
+      "monthly_labor_hours": 32.1,
+      "monthly_direct_labor": 769.6,
+      "monthly_supplies_and_bags": 110.0,
+      "monthly_equipment": 45.0,
+      "total_monthly_cogs": 924.6,
+      "monthly_net_profit": 1969.17,
+      "net_operating_margin_pct": 66.98
+    },
+    "landlord_noi_expansion_model": {
+      "resident_monthly_fee_benchmark": 30.0,
+      "landlord_gross_resident_collections_monthly": 5550.0,
+      "landlord_net_monthly_profit": 2610.0,
+      "landlord_annual_noi_increase": 31320.0,
+      "property_capital_asset_appreciation_6pct_cap": 522000.0
+    },
+    "safeguards": {
+      "doorstep_collection_protocol": "Service includes five (5) nights per week (Sunday through Thursday) collection of tied, bagged household waste placed in property-approved 13-gallon doorstep receptacles between 6:00 PM and 8:00 PM. Collection begins promptly at 8:00 PM.",
+      "compactor_corral_maintenance": "Nightly sweep, litter policing, and deodorizing spray application across the central commercial compactor enclosure and dumpster pad following collection completion.",
+      "hot_water_pressure_washing": "Quarterly high-pressure hot-water sanitization (3,500 PSI @ 200\u00b0F) of concrete compactor pads to eliminate grease, organic residue, bacteria, and leachate odors.",
+      "pet_waste_station_service": "Weekly bag restocking, canister sanitization, and waste disposal across all designated community pet waste stations.",
+      "bulk_junk_hauling_schedule": "Move-out bulk items (mattresses, couches, furniture) left in corrals or breezeways shall be hauled away on-demand at $125.00\u2013$225.00 per item upon property manager dispatch.",
+      "zero_leak_guarantee": "Technicians utilize leak-proof vinyl transport containers to prevent liquid leachate stains on breezeways, concrete sidewalks, and interior residential corridors."
+    }
+  },
+  "staged_date": "2026-09-23"
+}

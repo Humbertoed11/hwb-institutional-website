@@ -122,6 +122,15 @@ class SigmaOrchestrator:
         except Exception as e:
             print(f"[ORCHESTRATOR] Solicitation scope parser failed: {e}")
 
+        # Trigger Autonomous Commercial & Multi-Family CAD Hunter Engine (ARCH-006 Frontier 2)
+        try:
+            import subprocess
+            import sys
+            print("[ORCHESTRATOR] Triggering Commercial & Multi-Family CAD Hunter Engine...")
+            subprocess.run([sys.executable, "scripts/commercial_cad_hunter.py", "--sync"], check=False)
+        except Exception as e:
+            print(f"[ORCHESTRATOR] Commercial CAD hunter failed: {e}")
+
 
 if __name__ == "__main__":
     orch = SigmaOrchestrator()

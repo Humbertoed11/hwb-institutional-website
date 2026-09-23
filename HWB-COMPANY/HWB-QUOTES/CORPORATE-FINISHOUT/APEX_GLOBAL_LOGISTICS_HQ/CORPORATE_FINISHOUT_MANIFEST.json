@@ -1,0 +1,145 @@
+{
+  "project_name": "Legacy West Tower Corporate Tenant Finish-Out",
+  "tenant_name": "Apex Global Logistics HQ",
+  "gc_name": "DPR Construction",
+  "address": "5900 Legacy Dr, Plano, TX 75024",
+  "sqft": 32000.0,
+  "assessment": {
+    "assessment_timestamp": "2026-09-23T00:15:01.296064",
+    "lead_identifier": "CORP-PLANO-LEGACYWEST-01",
+    "lead_title": "",
+    "composite_score": 85,
+    "qualification_tier": "GOLD (Standard High-Yield Pursuit)",
+    "matched_playbook": {
+      "playbook_id": "PLAYBOOK-CORPORATE-FINISHOUT",
+      "title": "Class A Corporate Tenant Finish-Out & Move-In Radar Playbook",
+      "estimator_tier": "Tier 1: Commercial GC + Tier 5: Commercial Recurring",
+      "economic_driver": "Dual-Revenue Funnel (One-time post-construction final clean for General Contractor converts directly into 3-year recurring master janitorial contract before market competitors discover tenant).",
+      "decision_maker_target": "General Contractor Project Manager + Inbound Corporate Facilities Manager"
+    },
+    "pillar_breakdown": {
+      "pillar_1_economic_arbitrage": {
+        "score": 16,
+        "max": 20,
+        "rationale": "Standard high-ticket commercial scope (32,000 SQFT)."
+      },
+      "pillar_2_decision_velocity": {
+        "score": 15,
+        "max": 20,
+        "rationale": "Technical facility buyer with departmental purchase requisition authority."
+      },
+      "pillar_3_regulatory_compliance": {
+        "score": 14,
+        "max": 20,
+        "rationale": "Standard commercial lease maintenance standard."
+      },
+      "pillar_4_operational_density": {
+        "score": 20,
+        "max": 20,
+        "rationale": "Epicenter of existing operational cluster (Plano); 0-mile dispatch radius."
+      },
+      "pillar_5_contract_ltv_margin": {
+        "score": 20,
+        "max": 20,
+        "rationale": "Multi-year institutional agreement (36 months); high LTV retention."
+      }
+    },
+    "recommended_action": "Autonomous Proposal Generation & Outbox Letter Staging (Official Letterhead HWB-COM-001)"
+  },
+  "gc_cleanup_proposal": {
+    "tier": "Commercial GC",
+    "cleanable_sqft": 32000.0,
+    "scope_phase": "Rough, Final & Touch-Up Clean",
+    "num_floors": 2,
+    "base_unit_rate": 0.3,
+    "effective_unit_rate": 0.081,
+    "rough_clean_total": 3200.0,
+    "final_clean_total": 5120.0,
+    "touchup_clean_total": 1280.0,
+    "high_glass_total": 0.0,
+    "lift_rental": 0.0,
+    "submittal_total": 2592.33,
+    "negotiation_triad": {
+      "published_submittal_price": 2592.33,
+      "published_margin_pct": 24.0,
+      "authorized_field_close_price": 2462.71,
+      "authorized_margin_pct": 20.0,
+      "walkaway_floor_price": 2345.44,
+      "walkaway_floor_margin_pct": 16.0,
+      "buyout_discount_cushion_dollars": 129.62
+    },
+    "cogs": {
+      "estimated_labor_hours": 58.7,
+      "estimated_shift_days": 1.8,
+      "direct_labor_cost": 1085.33,
+      "consumables_cost": 480.0,
+      "equipment_cost": 320.0,
+      "urban_logistics_parking": 0.0,
+      "offsite_trash_hauling": 0.0,
+      "retainage_float_cost": 0.0,
+      "ga_overhead": 84.84,
+      "total_direct_cogs": 1885.33
+    },
+    "gross_profit": 707.0,
+    "margin_percentage": 27.27,
+    "safeguards": {
+      "trade_stacking_clause": "This proposal includes one (1) continuous cleaning pass per contracted phase. Any re-cleaning required due to dust, foot traffic, or work performed by subsequent construction trades, punch-list repairs, or HVAC commissioning shall be billed as an extra at HWB's contractual change-order rate of $38.50 per man-hour.",
+      "dry_run_fee_clause": "If HWB mobilizes to the site as scheduled and the facility is not broom-clean and clear of conflicting trades, a $450.00 Trip / Failed Mobilization Fee applies.",
+      "tempered_glass_waiver": "HWB utilizes micro-bevel stainless steel blades and specialized slip agents. HWB is not liable for existing scratches or microscopic fabricating debris fused onto heat-strengthened or tempered glass during manufacturing.",
+      "site_utility_preconditions": "Bid assumes continuous 110V/20A electrical power within 50 feet of work areas, domestic hot and cold running water, adequate overhead lighting, and operational climate-controlled HVAC (68\u00b0F\u201378\u00b0F for proper floor finish curing) are provided continuously by the General Contractor at zero cost to subcontractor.",
+      "dumpster_disposal_clause": "Bid includes transporting job debris to on-site dumpsters provided by the General Contractor located within 150 feet of the building entrance. Off-site hauling or dedicated dumpster rental, if required, shall be billed as an extra at $750.00 per 30-yard container.",
+      "explicit_exclusions": [
+        "No removal of paint, concrete, or mortar from anodized aluminum window mullions (risk of chemical etching).",
+        "No exterior masonry efflorescence removal or chemical acid washing.",
+        "No cleaning inside energized high-voltage electrical switchgear, server racks, or air duct interiors.",
+        "No hazardous materials, asbestos, lead, or medical sharps disposal.",
+        "No carpet stretching, floor moisture mitigation, or subfloor repairs."
+      ]
+    }
+  },
+  "recurring_janitorial_proposal": {
+    "tier": "Commercial Recurring Janitorial",
+    "facility_profile": {
+      "cleanable_sqft": 32000.0,
+      "facility_type": "office",
+      "cleanings_per_week": 5,
+      "contract_term_months": 36,
+      "issa_production_rate_sqft_hr": 3500.0,
+      "hours_per_cleaning_shift": 9.14
+    },
+    "pricing_structure": {
+      "published_monthly_submittal": 6889.34,
+      "published_annual_total": 82672.08,
+      "published_contract_total": 248016.24,
+      "effective_monthly_sqft_rate": 0.2153,
+      "effective_annual_sqft_rate": 2.5835,
+      "authorized_field_close_monthly": 6536.04,
+      "authorized_contract_total": 235297.44,
+      "walkaway_floor_monthly": 6069.18,
+      "walkaway_contract_total": 218490.48
+    },
+    "operations_cogs": {
+      "weekly_labor_hours": 45.7,
+      "monthly_labor_hours": 198.0,
+      "assigned_technician_wage": 18.5,
+      "monthly_base_labor": 3663.62,
+      "monthly_labor_burden_20pct": 732.72,
+      "total_monthly_labor": 4396.34,
+      "monthly_supplies_and_disinfectant": 384.0,
+      "monthly_equipment_depreciation": 75.0,
+      "total_monthly_cogs": 4855.34,
+      "monthly_ga_overhead_5pct": 242.77,
+      "monthly_net_ebitda": 1791.23,
+      "net_operating_margin_pct": 26.0
+    },
+    "safeguards": {
+      "scope_demarcation": "Janitorial specifications cover all designated private offices, conference rooms, restrooms, kitchenettes/break areas, reception lobbies, and common circulation corridors. Exterior grounds and parking lots are excluded unless expressly added via Exhibit Rider.",
+      "access_and_keycard_governance": "All security fobs, electronic access badges, and facility keys shall be cryptographically logged in the SigmaFidelity Chain-of-Custody register. Technicians are strictly prohibited from granting facility access to unvetted third parties.",
+      "cross_contamination_prevention": "Mandatory color-coded microfiber protocol (Red = Restroom Sanitary/Toilets, Blue = General Office Surfaces/Desks, Green = Kitchen/Food Prep, Yellow = High-Touch Fixtures/Doorknobs) utilizing EPA-registered hospital-grade disinfectant.",
+      "periodic_deep_maintenance_schedule": "Contract includes quarterly machine burnishing of VCT/hard surfaces and annual hot-water extraction of high-traffic carpet runners, coordinated 14 days in advance with facility management.",
+      "price_escalation_clause": "Annual automatic rate adjustment indexed to the Bureau of Labor Statistics Consumer Price Index for All Urban Consumers (CPI-U DFW MSA) or 3.0%, whichever is greater, to protect labor wage floors against inflationary drift.",
+      "cancellation_terms": "Mutual thirty (30) day written notice for cause, preceded by a formal ten (10) day cure period documented via the SigmaFidelity Digital Audit Portal."
+    }
+  },
+  "staged_date": "2026-09-23"
+}

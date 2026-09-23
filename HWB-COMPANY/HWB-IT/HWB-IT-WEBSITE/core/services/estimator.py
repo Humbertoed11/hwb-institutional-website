@@ -590,3 +590,236 @@ def calculate_federal_sca_bid(
         },
         "safeguards": FEDERAL_SCA_SAFEGUARDS
     }
+
+
+MULTI_FAMILY_VALET_SAFEGUARDS = {
+    "doorstep_collection_protocol": "Service includes five (5) nights per week (Sunday through Thursday) collection of tied, bagged household waste placed in property-approved 13-gallon doorstep receptacles between 6:00 PM and 8:00 PM. Collection begins promptly at 8:00 PM.",
+    "compactor_corral_maintenance": "Nightly sweep, litter policing, and deodorizing spray application across the central commercial compactor enclosure and dumpster pad following collection completion.",
+    "hot_water_pressure_washing": "Quarterly high-pressure hot-water sanitization (3,500 PSI @ 200°F) of concrete compactor pads to eliminate grease, organic residue, bacteria, and leachate odors.",
+    "pet_waste_station_service": "Weekly bag restocking, canister sanitization, and waste disposal across all designated community pet waste stations.",
+    "bulk_junk_hauling_schedule": "Move-out bulk items (mattresses, couches, furniture) left in corrals or breezeways shall be hauled away on-demand at $125.00–$225.00 per item upon property manager dispatch.",
+    "zero_leak_guarantee": "Technicians utilize leak-proof vinyl transport containers to prevent liquid leachate stains on breezeways, concrete sidewalks, and interior residential corridors."
+}
+
+
+def calculate_valet_waste_bid(
+    num_units: int = 122,
+    days_per_week: int = 5,
+    pet_stations_count: int = 5,
+    include_compactor_washing: bool = True,
+    contract_term_months: int = 36,
+    base_door_rate: float = 14.00,
+    resident_fee_benchmark: float = 30.00,
+    target_margin: float = 0.25,
+    negotiation_buffer: float = 0.04,
+    walkaway_margin: float = 0.18
+) -> Dict[str, Any]:
+    """
+    Tier 4: Multi-Family & Built-to-Rent (BTR) Doorstep Valet Waste & Grounds Proposal.
+    Calculates per-door recurring pricing, compactor pad sanitization, pet station management,
+    direct labor build-up, and models Landlord Net Operating Income (NOI) expansion and
+    property asset appreciation (6% Capitalization Rate).
+    """
+    num_units = max(10, int(num_units))
+    days_per_week = max(3, min(7, int(days_per_week)))
+    term_months = max(12, int(contract_term_months))
+    base_door_rate = max(10.00, float(base_door_rate))
+
+    # 1. Monthly Revenue Buildup
+    monthly_valet_base = _to_currency(num_units * base_door_rate)
+    monthly_pet_stations = _to_currency(pet_stations_count * 50.00)
+    monthly_compactor_care = 150.00 if include_compactor_washing else 0.00
+    
+    published_monthly = _to_currency(monthly_valet_base + monthly_pet_stations + monthly_compactor_care)
+    authorized_monthly = _to_currency((num_units * (base_door_rate - 1.00)) + monthly_pet_stations + monthly_compactor_care)
+    walkaway_monthly = _to_currency((num_units * (base_door_rate - 2.00)) + monthly_pet_stations + monthly_compactor_care)
+
+    annual_submittal = _to_currency(published_monthly * 12.0)
+    contract_total = _to_currency(published_monthly * term_months)
+
+    # 2. Labor & Operations COGS Buildup
+    # Collection pacing: ~0.4 min/unit + 15 min compactor policing
+    collection_hours_per_night = max(0.75, round(((num_units * 0.4) + 15.0) / 60.0, 2))
+    weekly_labor_hours = collection_hours_per_night * days_per_week
+    monthly_labor_hours = (weekly_labor_hours * 52.0) / 12.0
+
+    tech_hourly_wage = 20.00  # Dallas Living Wage compliant technician rate
+    monthly_base_labor = _to_currency(monthly_labor_hours * tech_hourly_wage)
+    monthly_labor_burden = _to_currency(monthly_base_labor * DEFAULT_BURDEN_RATE)
+    total_monthly_labor = monthly_base_labor + monthly_labor_burden
+
+    monthly_supplies = _to_currency(50.00 + (pet_stations_count * 15.00))  # Can liners, pet bags, enzymes
+    monthly_equipment = 45.00  # Collection cart depreciation & PPE
+    total_cogs = total_monthly_labor + monthly_supplies + monthly_equipment
+
+    # Fixed G&A Overhead (5.0%)
+    monthly_ga_overhead = _to_currency(total_cogs * 0.050)
+    cost_basis = total_cogs + monthly_ga_overhead
+
+    monthly_net_profit = _to_currency(published_monthly - cost_basis)
+    actual_margin = (monthly_net_profit / published_monthly) if published_monthly > 0 else 0.0
+
+    # 3. Landlord Economic Modeling (Asset Manager Pitch Deck)
+    landlord_gross_resident_mo = _to_currency(num_units * resident_fee_benchmark)
+    landlord_net_noi_mo = _to_currency(landlord_gross_resident_mo - published_monthly)
+    landlord_net_noi_annual = _to_currency(landlord_net_noi_mo * 12.0)
+    
+    # Capital Asset Appreciation @ 6% Market Cap Rate
+    property_asset_value_gain = _to_currency(landlord_net_noi_annual / 0.06)
+
+    return {
+        "tier": "Multi-Family / BTR Doorstep Valet Waste",
+        "community_profile": {
+            "total_units": num_units,
+            "collection_days_per_week": days_per_week,
+            "pet_waste_stations": pet_stations_count,
+            "compactor_pad_washing_included": include_compactor_washing,
+            "contract_term_months": term_months
+        },
+        "pricing_structure": {
+            "published_door_rate": base_door_rate,
+            "published_monthly_total": published_monthly,
+            "published_annual_total": annual_submittal,
+            "published_contract_total": contract_total,
+            "authorized_field_close_monthly": authorized_monthly,
+            "authorized_contract_total": _to_currency(authorized_monthly * term_months),
+            "walkaway_floor_monthly": walkaway_monthly,
+            "walkaway_contract_total": _to_currency(walkaway_monthly * term_months)
+        },
+        "operations_cogs": {
+            "estimated_shift_hours_nightly": collection_hours_per_night,
+            "monthly_labor_hours": round(monthly_labor_hours, 1),
+            "monthly_direct_labor": total_monthly_labor,
+            "monthly_supplies_and_bags": monthly_supplies,
+            "monthly_equipment": monthly_equipment,
+            "total_monthly_cogs": total_cogs,
+            "monthly_net_profit": monthly_net_profit,
+            "net_operating_margin_pct": round(actual_margin * 100, 2)
+        },
+        "landlord_noi_expansion_model": {
+            "resident_monthly_fee_benchmark": resident_fee_benchmark,
+            "landlord_gross_resident_collections_monthly": landlord_gross_resident_mo,
+            "landlord_net_monthly_profit": landlord_net_noi_mo,
+            "landlord_annual_noi_increase": landlord_net_noi_annual,
+            "property_capital_asset_appreciation_6pct_cap": property_asset_value_gain
+        },
+        "safeguards": MULTI_FAMILY_VALET_SAFEGUARDS
+    }
+
+
+COMMERCIAL_RECURRING_SAFEGUARDS = {
+    "scope_demarcation": "Janitorial specifications cover all designated private offices, conference rooms, restrooms, kitchenettes/break areas, reception lobbies, and common circulation corridors. Exterior grounds and parking lots are excluded unless expressly added via Exhibit Rider.",
+    "access_and_keycard_governance": "All security fobs, electronic access badges, and facility keys shall be cryptographically logged in the SigmaFidelity Chain-of-Custody register. Technicians are strictly prohibited from granting facility access to unvetted third parties.",
+    "cross_contamination_prevention": "Mandatory color-coded microfiber protocol (Red = Restroom Sanitary/Toilets, Blue = General Office Surfaces/Desks, Green = Kitchen/Food Prep, Yellow = High-Touch Fixtures/Doorknobs) utilizing EPA-registered hospital-grade disinfectant.",
+    "periodic_deep_maintenance_schedule": "Contract includes quarterly machine burnishing of VCT/hard surfaces and annual hot-water extraction of high-traffic carpet runners, coordinated 14 days in advance with facility management.",
+    "price_escalation_clause": "Annual automatic rate adjustment indexed to the Bureau of Labor Statistics Consumer Price Index for All Urban Consumers (CPI-U DFW MSA) or 3.0%, whichever is greater, to protect labor wage floors against inflationary drift.",
+    "cancellation_terms": "Mutual thirty (30) day written notice for cause, preceded by a formal ten (10) day cure period documented via the SigmaFidelity Digital Audit Portal."
+}
+
+
+def calculate_commercial_recurring_bid(
+    cleanable_sqft: float,
+    cleanings_per_week: int = 5,
+    facility_type: str = "office",
+    contract_term_months: int = 36,
+    base_hourly_wage: Optional[float] = None,
+    target_margin: float = 0.22,
+    negotiation_buffer: float = 0.04,
+    walkaway_margin: float = 0.16
+) -> Dict[str, Any]:
+    """
+    Tier 5: Commercial Recurring Office & Facility Janitorial Proposal.
+    Calculates recurring commercial cleaning pricing calibrated against ISSA 540
+    production standards by facility archetype (Office, Legal, Medical, Surgical, Industrial Flex).
+    Enforces the Dallas Living Wage floor ($18.00/hr) and models negotiation triads.
+    """
+    cleanable_sqft = max(500.0, float(cleanable_sqft))
+    cleanings_per_week = max(1, min(7, int(cleanings_per_week)))
+    term_months = max(12, int(contract_term_months))
+    fac_type = facility_type.lower().strip()
+
+    # Facility archetype calibration profiles
+    # (Production rate sqft/hr, default wage, supply cost $/sqft/mo, monthly equipment depreciation)
+    archetype_profiles = {
+        "office": (3500.0, 18.50, 0.012, 75.00),
+        "legal": (3000.0, 19.50, 0.015, 85.00),
+        "financial": (3000.0, 19.50, 0.015, 85.00),
+        "medical": (2400.0, 20.50, 0.022, 110.00),
+        "surgical": (1800.0, 22.50, 0.030, 150.00),
+        "industrial_flex": (5500.0, 19.00, 0.008, 225.00),
+        "education": (3200.0, 18.50, 0.014, 85.00)
+    }
+
+    prod_rate, default_wage, supply_sqft_rate, equipment_cost = archetype_profiles.get(
+        fac_type, (3500.0, 18.50, 0.012, 75.00)
+    )
+
+    wage = float(base_hourly_wage) if base_hourly_wage is not None else default_wage
+    wage = max(18.00, wage)  # Dallas Living Wage floor enforcement
+
+    # 1. Labor Hours Calculation (ISSA 540 Standard)
+    hours_per_clean = max(1.0, round(cleanable_sqft / prod_rate, 2))
+    weekly_hours = hours_per_clean * cleanings_per_week
+    monthly_hours = (weekly_hours * 52.0) / 12.0
+    annual_hours = weekly_hours * 52.0
+
+    monthly_base_labor = _to_currency(monthly_hours * wage)
+    monthly_labor_burden = _to_currency(monthly_base_labor * DEFAULT_BURDEN_RATE)
+    total_monthly_labor = monthly_base_labor + monthly_labor_burden
+
+    # 2. Consumables & Equipment Amortization
+    monthly_supplies = _to_currency(max(65.00, cleanable_sqft * supply_sqft_rate))
+    total_direct_cogs = total_monthly_labor + monthly_supplies + equipment_cost
+
+    # 3. Fixed G&A Overhead (5.0%)
+    monthly_ga = _to_currency(total_direct_cogs * 0.05)
+    cost_basis = total_direct_cogs + monthly_ga
+
+    # 4. Negotiation Triad Build-Up
+    published_monthly = _to_currency(cost_basis / (1.0 - (target_margin + negotiation_buffer)))
+    authorized_monthly = _to_currency(cost_basis / (1.0 - target_margin))
+    walkaway_monthly = _to_currency(cost_basis / (1.0 - walkaway_margin))
+
+    published_annual = _to_currency(published_monthly * 12.0)
+    contract_total = _to_currency(published_monthly * term_months)
+    monthly_net_profit = _to_currency(published_monthly - cost_basis)
+
+    return {
+        "tier": "Commercial Recurring Janitorial",
+        "facility_profile": {
+            "cleanable_sqft": cleanable_sqft,
+            "facility_type": fac_type,
+            "cleanings_per_week": cleanings_per_week,
+            "contract_term_months": term_months,
+            "issa_production_rate_sqft_hr": prod_rate,
+            "hours_per_cleaning_shift": hours_per_clean
+        },
+        "pricing_structure": {
+            "published_monthly_submittal": published_monthly,
+            "published_annual_total": published_annual,
+            "published_contract_total": contract_total,
+            "effective_monthly_sqft_rate": round(published_monthly / cleanable_sqft, 4),
+            "effective_annual_sqft_rate": round(published_annual / cleanable_sqft, 4),
+            "authorized_field_close_monthly": authorized_monthly,
+            "authorized_contract_total": _to_currency(authorized_monthly * term_months),
+            "walkaway_floor_monthly": walkaway_monthly,
+            "walkaway_contract_total": _to_currency(walkaway_monthly * term_months)
+        },
+        "operations_cogs": {
+            "weekly_labor_hours": round(weekly_hours, 1),
+            "monthly_labor_hours": round(monthly_hours, 1),
+            "assigned_technician_wage": wage,
+            "monthly_base_labor": monthly_base_labor,
+            "monthly_labor_burden_20pct": monthly_labor_burden,
+            "total_monthly_labor": total_monthly_labor,
+            "monthly_supplies_and_disinfectant": monthly_supplies,
+            "monthly_equipment_depreciation": equipment_cost,
+            "total_monthly_cogs": total_direct_cogs,
+            "monthly_ga_overhead_5pct": monthly_ga,
+            "monthly_net_ebitda": monthly_net_profit,
+            "net_operating_margin_pct": round((monthly_net_profit / published_monthly) * 100.0, 2) if published_monthly > 0 else 0.0
+        },
+        "safeguards": COMMERCIAL_RECURRING_SAFEGUARDS
+    }
+
+
