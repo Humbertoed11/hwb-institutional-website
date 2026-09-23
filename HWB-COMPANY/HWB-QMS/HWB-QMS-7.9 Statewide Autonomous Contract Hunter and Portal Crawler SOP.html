@@ -1,0 +1,149 @@
+<!-- 
+    SigmaFidelity™ Institutional SOP: Statewide Autonomous Contract Hunter & Portal Crawler
+    Standard: HWB-QMS-1.0 v3.0 / HWB-QMS-7.9 & 2026-07-22 Statewide Mandate
+    Authority: George (Systems Architect & mbB) | Approved: Humberto Dominguez (CEO)
+-->
+<div class="sop-card">
+    <!-- 0.0 DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-7.9</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">8.2 &amp; 8.4 (Market Requirements &amp; External Sourcing)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <table>
+            <thead>
+                <tr>
+                    <th><strong>Document Control</strong></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td><strong>Document Title</strong></td><td><strong>Statewide Autonomous Contract Hunter and Portal Crawler SOP</strong></td></tr>
+                <tr><td><strong>Document ID</strong></td><td>HWB-QMS-7.9</td></tr>
+                <tr><td><strong>Version</strong></td><td>1.0.0</td></tr>
+                <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
+                <tr><td><strong>Author</strong></td><td>George (Systems Architect &amp; mbB)</td></tr>
+                <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
+                <tr><td><strong>Date</strong></td><td>09-22-2026</td></tr>
+                <tr><td><strong>ISO 9001 Clause</strong></td><td>8.2.1, 8.2.2, 8.4.1 (Control of Externally Provided Solicitations)</td></tr>
+            </tbody>
+        </table>
+
+        <hr />
+
+        <h1>Standard Operating Procedure: <strong>Statewide Autonomous Contract Hunter and Portal Crawler</strong></h1>
+
+        <h2>1.0 Purpose</h2>
+        <p>This procedure establishes the rules and operating instructions for the SigmaFidelity™ Autonomous Hunter Engine. The hunter crawler continuously monitors, searches, extracts, and ingests live public janitorial, commercial custodial, and facility maintenance bidding opportunities across all municipal, county, and school district procurement networks in the <strong>entire State of Texas</strong>. This eliminates manual search effort and gives HWB instant visibility on all newly posted public tenders.</p>
+
+        <h2>2.0 Scope &amp; Geographic Perimeter</h2>
+        <p>In accordance with the <strong>2026-07-22 Statewide Mandate</strong>, the scouting perimeter encompasses all major metropolitan, regional, and school district jurisdictions across Texas:</p>
+        <ul>
+            <li><strong>Dallas-Fort Worth Metroplex:</strong> City of Dallas, City of Fort Worth, City of McKinney, City of Frisco, City of Richardson, City of Denton, City of Garland, City of Carrollton, City of Plano, City of Irving, and Collin County Government.</li>
+            <li><strong>Independent School Districts (ISDs):</strong> Dallas ISD, Austin ISD, Mansfield ISD, Lewisville ISD, Denton ISD, Plano ISD, Frisco ISD, McKinney ISD, Richardson ISD, Allen ISD, Coppell ISD, Keller ISD, Arlington ISD, and the Central Texas Purchasing Alliance (CTPA / Midlothian ISD, covering 30+ regional districts).</li>
+            <li><strong>Central Texas:</strong> City of Round Rock, Austin ISD, Travis County, and Williamson County.</li>
+            <li><strong>Greater Houston:</strong> Harris County, Fort Bend County, Brazoria County, and City of Houston.</li>
+            <li><strong>South Texas:</strong> City of San Antonio and Bexar County.</li>
+            <li><strong>West Texas &amp; Panhandle:</strong> City of Midland and Lubbock Power &amp; Light / City of Lubbock.</li>
+            <li><strong>Statewide Higher Education:</strong> University of Texas System and University of Texas at Dallas.</li>
+        </ul>
+
+        <h2>3.0 Monitored Public Portal Fleet (35 Target Hubs)</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Portal Network</th>
+                    <th>Monitored Portals</th>
+                    <th>Technical Architecture &amp; Endpoint</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Bonfire Hub Network (17 Hubs)</strong></td>
+                    <td>Dallas, Fort Worth, Dallas ISD, McKinney, Frisco, Richardson, Harris County, Fort Bend County, Brazoria County, San Antonio, Bexar County, Round Rock, Austin ISD, UT System, UT Dallas, Midland, Lubbock.</td>
+                    <td>Single-Page Application (Angular/SPA). Solicitations rendered via JavaScript tables. Crawled via Playwright Headless Chromium at <code>https://[subdomain].bonfirehub.com/portal/?tab=openOpportunities</code>.</td>
+                </tr>
+                <tr>
+                    <td><strong>IonWave Electronic Bidding Fleet (18 Portals)</strong></td>
+                    <td>City of Denton, City of Garland, City of Carrollton, Mansfield ISD, CTPA / Midlothian ISD, City of Plano, City of Irving, Plano ISD, Frisco ISD, McKinney ISD, Lewisville ISD, Denton ISD, Richardson ISD, Allen ISD, Coppell ISD, Keller ISD, Arlington ISD, Collin County.</td>
+                    <td>ASP.NET Telerik RadGrid structures. Public sourcing events extracted from <code>tr.rgRow</code> and <code>tr.rgAltRow</code> table rows at <code>https://[subdomain].ionwave.net/SourcingEvents.aspx?SourceType=1</code>.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>4.0 Crawling Protocol &amp; Web Security Rules</h2>
+        <ol>
+            <li><strong>Headless Browser Deployment:</strong> All portal crawling must be executed using Playwright Headless Chromium running inside the <code>hwb_agent_worker</code> container or Linux host.</li>
+            <li><strong>Network Load &amp; Pacing:</strong>
+                <ul>
+                    <li>Bonfire Hubs: Enforce a minimum <strong>1.5-second polite pause</strong> between portal requests to prevent rate limiting.</li>
+                    <li>IonWave Portals: Enforce a minimum <strong>2.0-second delay</strong> between agency endpoints to avoid Web Application Firewall (WAF) HTTP 429 warnings.</li>
+                </ul>
+            </li>
+            <li><strong>Page Load Strategy:</strong> Use <code>wait_until="domcontentloaded"</code> with a 20-second timeout. Wait for AJAX tables to settle before reading DOM nodes.</li>
+        </ol>
+
+        <h2>5.0 Poka-Yoke False-Positive Filtration System</h2>
+        <p>To preserve 100% empirical database integrity and prevent non-cleaning public works projects from cluttering executive dashboards, the hunter engine enforces a strict two-stage filter:</p>
+
+        <div class="callout callout-note">
+            <strong>Stage 1: Industrial Negative Exclusions (Immediate Disqualification)</strong>
+            <p>If any of the following terms appear in the title or project description, the record is immediately discarded: <code>sewer</code>, <code>culvert</code>, <code>grease trap</code>, <code>fleet</code>, <code>vehicle</code>, <code>truck</code>, <code>street sweeper</code>, <code>hvac duct</code>, <code>heavy equipment</code>, <code>parts only</code>, <code>stormwater</code>, <code>catch basin</code>, <code>dry cleaner</code>, <code>laundry service</code>, <code>water reclamation</code>, <code>wastewater</code>, <code>pipe cleaning</code>.</p>
+        </div>
+
+        <div class="callout callout-note">
+            <strong>Stage 2: Positive Custodial Keyword Matching</strong>
+            <p>Solicitations are qualified if they match core janitorial terms: <code>janitorial</code>, <code>custodial</code>, <code>clean</code>, <code>day porter</code>, <code>floor care</code>, <code>carpet extraction</code>, <code>sanitization</code>, <code>disinfection</code>, <code>window washing</code>, <code>pressure wash</code>, <code>power wash</code>, <code>facility maintenance</code>, <code>facilities maintenance</code>, <code>post-construction clean</code>, or <code>restroom cleaning</code>.</p>
+        </div>
+
+        <h2>6.0 Database Synchronization &amp; Downstream Handoff</h2>
+        <ol>
+            <li>Qualified solicitations are staged in PostgreSQL table <code>"InstitutionalBids"</code> with initial status <code>'Hunter Scouted'</code> and compliance status <code>'Pending Takeoff Analysis'</code>.</li>
+            <li>Records are keyed by unique solicitation number (<code>ON CONFLICT DO UPDATE</code>) to ensure idempotent synchronization without duplicates.</li>
+            <li>When bids are confirmed, the Estimating Engine (<code>core/services/estimator.py</code>) calculates municipal labor models under Dallas Living Wage ($18.00/hr) or prevailing wage guidelines.</li>
+            <li><strong>Executive Hold Mandate:</strong> No emails, inquiries, or open records requests may be transmitted to any agency without explicit sign-off from CEO Humberto Dominguez.</li>
+        </ol>
+
+        <h2>7.0 Autonomous Worker Execution Schedule</h2>
+        <p>The hunter crawler is registered in <code>sigma_orchestrator.py</code> inside <code>hwb_agent_worker</code> and executes on a <strong>recurring 6-hour cycle (21,600 seconds)</strong> alongside the Texas Daycare Registry sync and Graph API procurement mining tools.</p>
+
+        <h2>8.0 Verification &amp; Zero-Defect Check</h2>
+        <ul>
+            <li>Executing <code>python3 scripts/hunter_portal_crawler.py --portal=all</code> returns exit code 0 without unhandled exceptions.</li>
+            <li>Chromium launches in headless mode inside <code>hwb_agent_worker</code> without missing shared library errors.</li>
+            <li>PostgreSQL table <code>"InstitutionalBids"</code> contains zero disqualified machinery/sewer records.</li>
+            <li>Outbound communications outbox remains 100% frozen until CEO release.</li>
+        </ul>
+
+        <hr />
+
+        <h2>9.0 Revision History</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Version</th>
+                    <th>Date</th>
+                    <th>Author</th>
+                    <th>Change Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1.0.0</td>
+                    <td>09-22-2026</td>
+                    <td>George (Systems Architect &amp; mbB)</td>
+                    <td>Initial release codifying the Statewide Autonomous Contract Hunter Engine across 35 Texas portals (18 IonWave + 17 Bonfire hubs), headless Chromium container deployment, and Poka-Yoke false-positive filtration. Approved by Humberto Dominguez, CEO.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="sop-card-footer">
+        <span>&copy; 2026 HWB Cleaning Services LLC</span>
+        <span>Controlled Document | HWB-QMS-7.9</span>
+        <span>Page <span class="page-number"></span></span>
+    </div>
+</div>

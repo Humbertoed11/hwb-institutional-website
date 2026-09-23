@@ -2,7 +2,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-9.3</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.1.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.1.3 (Infrastructure) &amp; ISO 27001 A.12.1</span></div>
     </div>
@@ -26,7 +26,7 @@
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>Version</strong></td>
-                    <td style="text-align: left;">3.0.0</td>
+                    <td style="text-align: left;">3.1.0</td>
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>Status</strong></td>
@@ -42,7 +42,7 @@
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>Date</strong></td>
-                    <td style="text-align: left;">09/21/2026</td>
+                    <td style="text-align: left;">09/22/2026</td>
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>ISO Standard</strong></td>
@@ -104,10 +104,12 @@
         </table>
 
         <h2>4.0 System Dependencies &amp; Cryptographic Vault Configuration</h2>
-        <p>The system infrastructure relies on the following core dependencies (updated September 21, 2026):</p>
+        <p>The system infrastructure relies on the following core dependencies (updated September 22, 2026):</p>
         <ul>
             <li><strong>Operating System:</strong> Linux / WSL2 Ubuntu 22.04 LTS.</li>
-            <li><strong>Container Runtime:</strong> Docker 26+ running containers: <code>hwb_web_app</code> (Gunicorn Flask, Port 5000), <code>hwb_postgres_dev</code> (PostgreSQL 13, Port 5432), <code>hwb_compliance_engine</code> (Nginx static QMS, Port 80), <code>hwb_traffic_director</code> (Port 8000), and <code>hwb_agent_worker</code>.</li>
+            <li><strong>Container Runtime:</strong> Docker 26+ running containers: <code>hwb_web_app</code> (Gunicorn Flask, Port 5000), <code>hwb_postgres_dev</code> (PostgreSQL 13, Port 5432), <code>hwb_compliance_engine</code> (Nginx static QMS, Port 80), <code>hwb_traffic_director</code> (Port 8000), and <code>hwb_agent_worker</code> (Autonomous Worker Container).</li>
+            <li><strong>Autonomous Worker Browser Engine:</strong> <code>playwright 1.63.0</code> and <strong>Chrome Headless Shell (v1243)</strong> installed natively in <code>hwb_agent_worker</code>. Empowers the background worker to bypass WAF security checks and crawl modern JavaScript single-page applications.</li>
+            <li><strong>Statewide Hunter Crawler Fleet:</strong> <code>scripts/hunter_portal_crawler.py</code> continuously scouts 35 Texas municipal and ISD procurement portals (18 IonWave + 17 Bonfire hubs), operating on an autonomous 6-hour cycle orchestrated by <code>sigma_orchestrator.py</code>.</li>
             <li><strong>Python Cryptography Core:</strong> <code>cryptography 48.0.0</code> installed in <code>hwb_web_app</code>. Enables deterministic AES-256 Fernet ciphers for PII vaulting.</li>
             <li><strong>Environment Secrets:</strong>
                 <ul>
@@ -116,7 +118,7 @@
                     <li><code>AZURE_CLIENT_SECRET</code>: Microsoft Graph API OAuth secret. <em>Institutional Alert: Secret rotation required prior to expiration on <strong>03/02/2027</strong>.</em></li>
                 </ul>
             </li>
-            <li><strong>Database Schema State:</strong> Unified relational schema up to <strong>Migration 016</strong> (<code>scripts/migrate_016_sensitive_pii_vault.py</code>), providing columns <code>ssn_encrypted</code>, <code>ssn_last_four</code>, <code>direct_deposit_account_encrypted</code>, and <code>direct_deposit_account_last_four</code> on <code>"Employees"</code>.</li>
+            <li><strong>Database Schema State:</strong> Unified relational schema up to <strong>Migration 024</strong> (<code>scripts/migrate_024_bidding_evolution_documents_and_sca.py</code>), providing tables <code>InstitutionalBids</code>, <code>ConstructionBids</code>, <code>SCA_WageDeterminations</code>, and secure PII vaulting on <code>Employees</code>.</li>
         </ul>
 
         <h2>5.0 Step-by-Step Restoration Procedures</h2>
@@ -158,6 +160,12 @@
                 </tr>
             </thead>
             <tbody>
+                <tr>
+                    <td style="text-align: left;">3.1.0</td>
+                    <td style="text-align: left;">09/22/2026</td>
+                    <td style="text-align: left;">Peter &amp; George</td>
+                    <td style="text-align: left;">Upgraded per Continuous Recovery Mandate following installation of Playwright 1.63.0 and Chrome Headless Shell (v1243) in hwb_agent_worker container, deployment of Statewide Hunter Contract Crawler (scripts/hunter_portal_crawler.py) across 35 Texas portals (18 IonWave + 17 Bonfire), and integration into sigma_orchestrator 6-hour autonomous background cycle. Approved by Humberto Dominguez, CEO.</td>
+                </tr>
                 <tr>
                     <td style="text-align: left;">3.0.0</td>
                     <td style="text-align: left;">09/21/2026</td>

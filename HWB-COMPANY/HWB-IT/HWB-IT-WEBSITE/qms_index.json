@@ -1,5 +1,23 @@
 [
     {
+        "title": "Standard Operating Procedure: Statewide Autonomous Contract Hunter and Portal Crawler SOP",
+        "id": "HWB-QMS-7.9",
+        "dept": "OPERATIONS",
+        "file": "HWB-QMS-7.9 Statewide Autonomous Contract Hunter and Portal Crawler SOP.html",
+        "version": "1.0.0",
+        "compliance": "UPDATED",
+        "date": "09-22-2026"
+    },
+    {
+        "title": "Playbook: Municipal Procurement and Government Certification Playbook",
+        "id": "HWB-QMS-8.9",
+        "dept": "OPERATIONS",
+        "file": "HWB-QMS-8.9 Municipal Procurement and Certification Playbook.html",
+        "version": "1.2.0",
+        "compliance": "UPDATED",
+        "date": "09-22-2026"
+    },
+    {
         "title": "Master Chronicle Book: From Mops to Machines \u2014 The Creation of SigmaAcademy\u2122",
         "id": "HWB-ACADEMY-BOOK-001",
         "dept": "OPERATIONS",
