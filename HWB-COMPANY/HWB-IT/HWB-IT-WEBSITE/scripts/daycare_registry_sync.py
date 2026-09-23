@@ -12,6 +12,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 DB_URL = os.getenv("DATABASE_URL", "postgresql://hwbdev:hwbpassword@db:5432/hwb_dev_db")
+if "@localhost" in DB_URL and os.path.exists("/.dockerenv"):
+    DB_URL = DB_URL.replace("@localhost", "@db")
+
+API_ENDPOINT = "https://data.texas.gov/resource/bc5r-88dy.json"
 import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'HWB-COMPANY', 'HWB-IT', 'HWB-IT-WEBSITE'))
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
@@ -50,11 +54,10 @@ def sync_daycares(force=False):
 
     start_time = time.time()
     
-    # 1. Fetch active Licensed Centers in DFW counties
-    # Using county in (COLLIN, DALLAS, TARRANT, DENTON)
+    # 1. Fetch active Licensed Centers statewide across all of Texas (2026-07-22 Mandate)
     params = {
-        "$where": "county in ('COLLIN', 'DALLAS', 'TARRANT', 'DENTON') AND operation_type = 'Licensed Center' AND operation_status = 'Y'",
-        "$limit": 5000
+        "$where": "operation_type = 'Licensed Center' AND operation_status = 'Y'",
+        "$limit": 15000
     }
     
     try:
@@ -65,7 +68,7 @@ def sync_daycares(force=False):
         
         records = response.json()
         fetch_latency = time.time() - start_time
-        print(f"[SYNC] Successfully fetched {len(records)} active DFW Licensed Centers in {fetch_latency:.2f}s", flush=True)
+        print(f"[SYNC] Successfully fetched {len(records)} active Texas Licensed Centers in {fetch_latency:.2f}s", flush=True)
     except Exception as e:
         print(f"[API ERROR] Failed to query Texas Daycare Portal: {e}", flush=True)
         return False
