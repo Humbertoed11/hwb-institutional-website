@@ -357,6 +357,22 @@ def sync_cli_conversations():
     except Exception as e:
         print(f"Error syncing CLI conversations: {e}")
 
+def sync_rack_telemetry_snapshot():
+    print("[SYNC] Ingesting 7-Rack Historical Telemetry Snapshot into RackTelemetryHistory...")
+    try:
+        import sys
+        if "/app" not in sys.path and os.path.exists("/app"):
+            sys.path.insert(0, "/app")
+        from core.services.self_healing_engine import record_rack_telemetry_snapshot
+        session_id = datetime.now().strftime("%Y-%m-%d-%H%M-PERSISTENCE-CLOSE")
+        res = record_rack_telemetry_snapshot(session_id=session_id, db_url=DB_URL)
+        if res.get("status") == "success":
+            print(f"  -> SUCCESS: Logged {res.get('racks_logged')} racks into RackTelemetryHistory in {res.get('latency_ms')} ms (Session: {session_id})")
+        else:
+            print(f"  -> [WARNING] Snapshot failed: {res.get('message')}")
+    except Exception as e:
+        print(f"  -> [ERROR] Failed to sync rack telemetry snapshot: {e}")
+
 def run_all():
     print("--- SigmaFidelity: Initiating Institutional Persistence Sync ---")
     sync_walkthrough()
@@ -364,6 +380,7 @@ def run_all():
     sync_system_state()
     sync_problems_to_solve()
     sync_cli_conversations()
+    sync_rack_telemetry_snapshot()
     print("--- SUCCESS: All neural cores synchronized. ---")
 
 if __name__ == "__main__":

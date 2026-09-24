@@ -1435,3 +1435,51 @@ def api_it_self_heal_duplicates():
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
+
+@operations_bp.route('/api/v1/it/telemetry/snapshot', methods=['POST'])
+@login_required
+@roles_required('Executive', 'Admin')
+def api_it_telemetry_snapshot():
+    """Captures and stores an immediate historical snapshot of all 7 racks in RackTelemetryHistory."""
+    try:
+        from core.services.self_healing_engine import record_rack_telemetry_snapshot
+        payload = request.get_json(silent=True) or {}
+        session_id = payload.get('session_id')
+        operator = current_user.name if hasattr(current_user, 'name') and current_user.name else "George (Systems Architect)"
+        result = record_rack_telemetry_snapshot(session_id=session_id, db_url=current_app.config['DATABASE_URL'], operator=operator)
+        return jsonify(result), (200 if result.get('status') == 'success' else 500)
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+@operations_bp.route('/api/v1/it/telemetry/history', methods=['GET'])
+@login_required
+@roles_required('Executive', 'Admin')
+def api_it_telemetry_history():
+    """Returns historical rack telemetry snapshots for trendlines and SPC charts."""
+    try:
+        from core.services.self_healing_engine import get_historical_rack_telemetry
+        rack_num = request.args.get('rack_number', type=int)
+        cat = request.args.get('category')
+        days = request.args.get('days', default=30, type=int)
+        limit = request.args.get('limit', default=100, type=int)
+        records = get_historical_rack_telemetry(rack_number=rack_num, metric_category=cat, days=days, limit=limit, db_url=current_app.config['DATABASE_URL'])
+        return jsonify({'status': 'success', 'data': records})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+@operations_bp.route('/api/v1/it/telemetry/trends', methods=['GET'])
+@login_required
+@roles_required('Executive', 'Admin')
+def api_it_telemetry_trends():
+    """Returns 30-day statistical process control (SPC) summary metrics."""
+    try:
+        from core.services.self_healing_engine import get_telemetry_historical_trends
+        days = request.args.get('days', default=30, type=int)
+        trends = get_telemetry_historical_trends(days=days, db_url=current_app.config['DATABASE_URL'])
+        return jsonify(trends), (200 if trends.get('status') == 'success' else 500)
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+

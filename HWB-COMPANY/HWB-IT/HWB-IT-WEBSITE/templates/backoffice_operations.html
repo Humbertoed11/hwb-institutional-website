@@ -3395,12 +3395,19 @@
                             <div style="background: var(--slate-200); border-radius: 9999px; height: 3px; overflow: hidden;"><div style="background: #10b981; height: 100%; width: 95%;"></div></div>
                         </div>
                     </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; margin-top: 0.65rem;">
+                    <div style="font-size: 0.65rem; color: var(--slate-500); display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--slate-100); padding-top: 0.4rem; margin-top: 0.5rem;">
+                        <span><i class="fas fa-database" style="color: #0284c7; margin-right: 0.2rem;"></i> Historical Ledger: <strong id="spc-history-status" style="color: #059669;">Active</strong></span>
+                        <span id="spc-history-count" style="font-size: 0.62rem; color: var(--slate-400);">RackTelemetryHistory</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; margin-top: 0.4rem;">
                         <button type="button" onclick="runSequenceAutoHeal()" class="sigma-nav-btn" style="background: #0284c7; color: #ffffff; border-color: #0284c7; font-size: 0.68rem; padding: 0.35rem 0.5rem; font-weight: 700;">
                             <i class="fas fa-wrench"></i> Auto-Heal Sequences
                         </button>
                         <button type="button" onclick="runDuplicateAutoHeal(true)" class="sigma-nav-btn" style="background: #0f172a; color: #ffffff; border-color: #0f172a; font-size: 0.68rem; padding: 0.35rem 0.5rem; font-weight: 700;">
                             <i class="fas fa-copy"></i> Heal Duplicates (Sim)
+                        </button>
+                        <button type="button" onclick="captureTelemetrySnapshot()" class="sigma-nav-btn" style="grid-column: span 2; background: #059669; color: #ffffff; border-color: #059669; font-size: 0.68rem; padding: 0.35rem 0.5rem; font-weight: 700;">
+                            <i class="fas fa-camera"></i> Snapshot 7 Racks to History (SPC)
                         </button>
                     </div>
                 </div>
@@ -11373,6 +11380,35 @@
                     }
                 } else {
                     term.innerHTML += `✗ Duplicate Auto-Heal Failed: ${res.message}\n`;
+                }
+            }
+        })
+        .catch(err => {
+            if (term) term.innerHTML += `✗ Network Error: ${err.message}\n`;
+        });
+    }
+
+    function captureTelemetrySnapshot() {
+        const term = document.getElementById('it-terminal-output');
+        if (term) {
+            term.style.display = 'block';
+            term.innerHTML += '[HISTORICAL SPC] Capturing instantaneous 7-rack state into RackTelemetryHistory...\n';
+        }
+        fetch('/api/v1/it/telemetry/snapshot', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ session_id: 'MANUAL-SPC-UI-' + Date.now() })
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (term) {
+                if (res.status === 'success') {
+                    term.innerHTML += `✓ ${res.message} (7 Racks Logged, Latency: ${res.latency_ms} ms)\n`;
+                    const st = document.getElementById('spc-history-status');
+                    if (st) st.textContent = 'Captured (' + res.latency_ms + 'ms)';
+                    if (typeof showToast === 'function') showToast(`7 Racks Captured to History (${res.latency_ms}ms)`);
+                } else {
+                    term.innerHTML += `✗ Snapshot Failed: ${res.message}\n`;
                 }
             }
         })
