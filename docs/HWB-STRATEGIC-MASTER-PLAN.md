@@ -30,10 +30,11 @@ flowchart TD
     end
 
     subgraph Phase 2: Immediate Staged Objectives
-        P2A["ARCH-006 Frontier 2: Automated Addenda & RFI Delta Tracker"]
-        P2B["ARCH-006 Frontier 3: Prime Contractor Teaming Radar"]
-        P2C["GC Vetting Automation & Domain Enrichment"]
-        P2D["Texas Statewide Lead Sync Expansion (CCL & GIS)"]
+        P2A["Twilio WebRTC Voice Softphone & Cadence Automation (Tomorrow)"]
+        P2B["ARCH-006 Frontier 2: Automated Addenda & RFI Delta Tracker"]
+        P2C["ARCH-006 Frontier 3: Prime Contractor Teaming Radar"]
+        P2D["GC Vetting Automation & Domain Enrichment"]
+        P2E["Texas Statewide Lead Sync Expansion (CCL & GIS)"]
     end
 
     subgraph Phase 3: Mobile & Field Execution
@@ -81,6 +82,27 @@ flowchart TD
   - Update API endpoints to ingest all Texas CCL licenses without county bounding restrictions.
   - Implement automated duplicate deduplication and brand umbrella clustering (`autonomous_umbrella_engine.py`).
 
+#### 2.4 Twilio WebRTC In-Browser Calling & Telephony Automation Engine [Planning Target: Tomorrow 09/25/2026]
+- **Objective:** Eliminate manual dialing and external application switching by embedding a native WebRTC softphone directly into the Calling Cadence Console (`modal-lead-cadence`) and Field Sales Desk (`/sales-desk`).
+- **Financial Architecture:**
+  - Client WebRTC connection leg: $0.0040 / minute.
+  - Outbound US PSTN destination leg: $0.0140 / minute.
+  - Total combined calling rate: $0.0180 / minute (~$2.25/day for 100 calls, ~$50.65/month per representative).
+  - Dedicated local Texas caller ID number: $1.15 / month per salesperson.
+- **Implementation Deliverables for Tomorrow:**
+  1. **Twilio Voice Backend (`core/services/telephony.py`):**
+     - JWT Capability Token endpoint (`/api/v1/voice/token`) with identity mapping to active CRM user.
+     - TwiML Voice Webhook (`/api/v1/voice/call-connect`) bridging WebRTC browser audio to outbound prospect phone numbers with local Texas caller ID.
+     - Telephony Webhook (`/api/v1/voice/call-status`) capturing empirical call duration and connection status.
+  2. **In-Browser Softphone Cockpit (`modal-lead-cadence` in `templates/backoffice_operations.html`):**
+     - Embed Twilio Voice JavaScript SDK directly into the calling console.
+     - Real-time audio indicators: In-Call timer, live mute/unmute microphone toggle, and call disconnect.
+     - Headset direct stream: Zero external OS app prompts or FaceTime popups.
+  3. **Automated Post-Call Workflows:**
+     - Automatic activity creation in `GlobalActivities` with empirical call duration.
+     - 1-Click "Send 1-Page Info Sheet" triggering Microsoft Graph API outbound email.
+     - Automatic queue advance upon hang-up or outcome button selection.
+
 ---
 
 ### Phase 3: Field Operations & Standalone Mobile App [2026-03-21 Mandate]
@@ -108,6 +130,18 @@ flowchart TD
 | **Data Integrity** | Empirical Data Integrity Mandate | Zero Synthetic Data; Empirical Heuristic Tags Active |
 | **Recovery** | Peter Sentinel Shadow Snapshots | Active (`shadow_snapshots/`) |
 | **Outbound Freeze** | CEO Humberto Dominguez Approval Rule | 100% Frozen; Stage in `PendingOutbox/` only |
+
+---
+
+### 4.1 Phase 2 Implementation & Automation Target Table
+
+| Priority | Feature / Module | Target Date | Executive Owner | Unit Cost Floor | Operational Impact | Automation Status |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **P0** | **Twilio WebRTC Softphone & Calling Console** | **Tomorrow (09/25/2026)** | Hunter Vance (Sales) & Silas Sync (CRM) | $0.0180/min + $1.15/mo | 50 calls/hr inside browser; zero manual dialing | **STAGED FOR TOMORROW** |
+| **P1** | **ARCH-006 Frontier 2: Automated Addenda Tracker** | 09/26/2026 | Yamamoto Moto (Lead Estimator) | In-house ($0.00) | Auto-diffing bid specs & deadline drift alerts | Queued |
+| **P1** | **ARCH-006 Frontier 3: Prime Contractor Radar** | 09/28/2026 | George (Systems Architect) | In-house ($0.00) | Harvesting planholder lists & JV teaming proposals | Queued |
+| **P2** | **Texas Statewide CCL & GIS Sync Daemon** | 10/01/2026 | Silas Sync (VP of CRM) | State Open Data ($0.00) | Statewide expansion across Austin, Houston, DFW | Queued |
+| **P2** | **Standalone Mobile App for Cleaning Techs** | Phase 3 | Engineering & Peter (Recovery) | In-house ($0.00) | Offline-first React Scope of Work engine | Active Branch |
 
 ---
 
