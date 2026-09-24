@@ -31,6 +31,7 @@ Zero outbound transmissions dispatched without explicit CEO release.
 import os
 import sys
 import json
+import re
 import datetime
 import argparse
 import subprocess
@@ -226,41 +227,42 @@ def stage_valet_waste_target(target: Dict[str, Any]) -> bool:
     """
     letter_path = stage_outbox_letter(sol_num, f"Doorstep Valet Waste & Grounds Agreement - {prop_name}", f"Community Manager & Regional Facilities Director, {mgmt_co}", address, body_html)
 
-    # 5. Synchronize to PostgreSQL InstitutionalBids
+    # 5. Synchronize to PostgreSQL Leads Table
+    center_name = f"{mgmt_co} / {prop_name}"
+    street_address = address.split(',')[0].strip() if ',' in address else address
+    zip_match = re.search(r'\b\d{5}\b', address)
+    zipcode = zip_match.group(0) if zip_match else target.get("zipcode", "")
+
     notes = (
         f"Autonomous BTR Valet Waste Model. {units} Units. 5 nights/wk doorstep trash + {pet_stations} pet stations + quarterly compactor wash. "
-        f"Landlord Net NOI Gain: ${landlord_noi_annual:,.2f}/yr (+${asset_gain:,.2f} asset appreciation @ 6% cap). Playbook Score: {score}/100 ({tier}). Staged in PendingOutbox."
+        f"Landlord Net NOI Gain: ${landlord_noi_annual:,.2f}/yr (+${asset_gain:,.2f} asset appreciation @ 6% cap). Playbook Score: {score}/100 ({tier}). "
+        f"Workspace: {save_dir}. Staged in PendingOutbox."
     )
 
     sql = f"""
-    INSERT INTO "InstitutionalBids" (
-        solicitation_number, title, agency_name, sector, portal_name,
-        procurement_officer, contract_term_months, cleanable_sqft, facilities_count,
-        hwb_bid_total, annual_base_rate, monthly_base_rate, hourly_porter_rate,
-        status, compliance_status, compliance_summary, local_quote_path, notes,
-        updated_at
+    INSERT INTO "Leads" (
+        center_name, address, city, state, zipcode,
+        facility_type, industry, sqf, estimated_annual_value,
+        decision_maker, lead_source, is_commercial, status,
+        priority_level, notes, updated_at
     ) VALUES (
-        {esc(sol_num)}, {esc(f"Doorstep Valet Waste & Grounds Sanitation Agreement - {prop_name} ({units} Units)")},
-        {esc(f"{mgmt_co} / {prop_name}")}, {esc(f"Multi-Family & BTR Residential ({city})")}, 'CAD Multi-Family Registry',
-        'Community Manager / Regional Facilities Director', 36, {units}, {units},
-        {contract_total}, {annual_total}, {published_mo}, 20.00,
-        'Hunter Scouted', {esc(tier)}, {esc(json.dumps(assessment, indent=2))},
-        {esc(str(save_dir))}, {esc(notes)}, CURRENT_TIMESTAMP
-    ) ON CONFLICT (solicitation_number) DO UPDATE SET
-        title = EXCLUDED.title,
-        cleanable_sqft = EXCLUDED.cleanable_sqft,
-        facilities_count = EXCLUDED.facilities_count,
-        hwb_bid_total = EXCLUDED.hwb_bid_total,
-        annual_base_rate = EXCLUDED.annual_base_rate,
-        monthly_base_rate = EXCLUDED.monthly_base_rate,
-        compliance_status = EXCLUDED.compliance_status,
-        compliance_summary = EXCLUDED.compliance_summary,
-        local_quote_path = EXCLUDED.local_quote_path,
+        {esc(center_name)}, {esc(street_address)}, {esc(city)}, 'TX', {esc(zipcode)},
+        'Other', 'Multi-Family Luxury BTR', {units}, {annual_total},
+        'Community Manager / Regional Facilities Director', 'CAD Multi-Family Registry',
+        true, 'NEW', 'High', {esc(notes)}, CURRENT_DATE
+    ) ON CONFLICT (lower(btrim(center_name)), lower(btrim(address)), lower(btrim(city))) DO UPDATE SET
+        facility_type = EXCLUDED.facility_type,
+        industry = EXCLUDED.industry,
+        sqf = EXCLUDED.sqf,
+        estimated_annual_value = EXCLUDED.estimated_annual_value,
+        decision_maker = EXCLUDED.decision_maker,
+        lead_source = EXCLUDED.lead_source,
+        is_commercial = EXCLUDED.is_commercial,
         notes = EXCLUDED.notes,
-        updated_at = CURRENT_TIMESTAMP;
+        updated_at = CURRENT_DATE;
     """
     execute_psql(sql)
-    print(f"✅  Staged Valet Waste Account: {prop_name} ({units} Units) [Score: {score}] -> ${published_mo:,.2f}/mo (3-Yr: ${contract_total:,.2f})")
+    print(f"✅  Staged Valet Waste Account in Leads: {prop_name} ({units} Units) [Score: {score}] -> ${published_mo:,.2f}/mo (Annual: ${annual_total:,.2f})")
     return True
 
 
@@ -326,40 +328,52 @@ def stage_owner_occupant_target(target: Dict[str, Any]) -> bool:
     """
     stage_outbox_letter(sol_num, f"Commercial Facility Janitorial Agreement - {company_name}", owner_ceo, address, body_html)
 
-    # 5. Synchronize to PostgreSQL
+    # 5. Synchronize to PostgreSQL Leads Table
+    center_name = company_name
+    street_address = address.split(',')[0].strip() if ',' in address else address
+    zip_match = re.search(r'\b\d{5}\b', address)
+    zipcode = zip_match.group(0) if zip_match else target.get("zipcode", "")
+    
+    fac_mapping = {
+        "office": "Office",
+        "legal": "Office",
+        "financial": "Office",
+        "surgical": "Medical",
+        "medical": "Medical"
+    }
+    lead_fac_type = fac_mapping.get(fac_type.lower(), "Office")
+    industry = target.get("sector_type", "Commercial Owner-Occupant")
+
     notes = (
         f"Autonomous Owner-Occupied CAD Discovery. Physical address matches deed holder. {sqft:,.0f} SQFT ({fac_type}). "
-        f"Direct CEO authority: {owner_ceo}. Playbook Score: {score}/100 ({tier}). 36-mo Agreement."
+        f"Direct CEO authority: {owner_ceo}. Playbook Score: {score}/100 ({tier}). 36-mo Agreement. "
+        f"Workspace: {save_dir}. Staged in PendingOutbox."
     )
 
     sql = f"""
-    INSERT INTO "InstitutionalBids" (
-        solicitation_number, title, agency_name, sector, portal_name,
-        procurement_officer, contract_term_months, cleanable_sqft, facilities_count,
-        hwb_bid_total, annual_base_rate, monthly_base_rate, hourly_porter_rate,
-        status, compliance_status, compliance_summary, local_quote_path, notes,
-        updated_at
+    INSERT INTO "Leads" (
+        center_name, address, city, state, zipcode,
+        facility_type, industry, sqf, estimated_annual_value,
+        decision_maker, lead_source, is_commercial, status,
+        priority_level, notes, updated_at
     ) VALUES (
-        {esc(sol_num)}, {esc(f"Commercial Facility Janitorial Agreement - {company_name} ({sqft:,.0f} SQFT)")},
-        {esc(company_name)}, {esc(f"Commercial Owner-Occupant ({city})")}, 'CAD Commercial F1 Registry',
-        {esc(owner_ceo)}, 36, {sqft}, 1,
-        {contract_total}, {annual_total}, {published_mo}, {hourly_equiv},
-        'Hunter Scouted', {esc(tier)}, {esc(json.dumps(assessment, indent=2))},
-        {esc(str(save_dir))}, {esc(notes)}, CURRENT_TIMESTAMP
-    ) ON CONFLICT (solicitation_number) DO UPDATE SET
-        title = EXCLUDED.title,
-        cleanable_sqft = EXCLUDED.cleanable_sqft,
-        hwb_bid_total = EXCLUDED.hwb_bid_total,
-        annual_base_rate = EXCLUDED.annual_base_rate,
-        monthly_base_rate = EXCLUDED.monthly_base_rate,
-        compliance_status = EXCLUDED.compliance_status,
-        compliance_summary = EXCLUDED.compliance_summary,
-        local_quote_path = EXCLUDED.local_quote_path,
+        {esc(center_name)}, {esc(street_address)}, {esc(city)}, 'TX', {esc(zipcode)},
+        {esc(lead_fac_type)}, {esc(industry)}, {int(sqft)}, {annual_total},
+        {esc(owner_ceo)}, 'CAD Commercial F1 Registry',
+        true, 'NEW', 'High', {esc(notes)}, CURRENT_DATE
+    ) ON CONFLICT (lower(btrim(center_name)), lower(btrim(address)), lower(btrim(city))) DO UPDATE SET
+        facility_type = EXCLUDED.facility_type,
+        industry = EXCLUDED.industry,
+        sqf = EXCLUDED.sqf,
+        estimated_annual_value = EXCLUDED.estimated_annual_value,
+        decision_maker = EXCLUDED.decision_maker,
+        lead_source = EXCLUDED.lead_source,
+        is_commercial = EXCLUDED.is_commercial,
         notes = EXCLUDED.notes,
-        updated_at = CURRENT_TIMESTAMP;
+        updated_at = CURRENT_DATE;
     """
     execute_psql(sql)
-    print(f"✅  Staged Owner-Occupant Account: {company_name} ({sqft:,.0f} SQFT, {fac_type}) [Score: {score}] -> ${published_mo:,.2f}/mo (3-Yr: ${contract_total:,.2f})")
+    print(f"✅  Staged Owner-Occupant Account in Leads: {company_name} ({sqft:,.0f} SQFT, {lead_fac_type}) [Score: {score}] -> ${published_mo:,.2f}/mo (Annual: ${annual_total:,.2f})")
     return True
 
 
@@ -419,40 +433,44 @@ def stage_corporate_finishout_target(target: Dict[str, Any]) -> bool:
     """
     stage_outbox_letter(sol_num, f"Turnkey Post-Construction & Ongoing Corporate Janitorial - {tenant_name}", f"Project Director, {gc_name} / {tenant_name}", address, body_html)
 
-    # 4. Synchronize to PostgreSQL
+    # 4. Synchronize to PostgreSQL Leads Table
+    center_name = f"{gc_name} / {tenant_name}"
+    street_address = address.split(',')[0].strip() if ',' in address else address
+    zip_match = re.search(r'\b\d{5}\b', address)
+    zipcode = zip_match.group(0) if zip_match else target.get("zipcode", "")
+    industry = target.get("sector_type", "Corporate Tenant Finish-Out")
+    officer = target.get("procurement_officer", "Project Director, DPR Construction / Apex Facilities Director")
+
     notes = (
         f"Autonomous TDLR Move-In Radar. {sqft:,.0f} SQFT Class A Finish-Out. GC: {gc_name}. Tenant: {tenant_name}. "
-        f"Post-Clean: ${gc_cleanup_submittal:,.2f} + Recurring: ${monthly_recurring:,.2f}/mo. Playbook Score: {score}/100 ({tier}). Staged in PendingOutbox."
+        f"Post-Clean: ${gc_cleanup_submittal:,.2f} + Recurring: ${monthly_recurring:,.2f}/mo. Playbook Score: {score}/100 ({tier}). "
+        f"Workspace: {save_dir}. Staged in PendingOutbox."
     )
 
     sql = f"""
-    INSERT INTO "InstitutionalBids" (
-        solicitation_number, title, agency_name, sector, portal_name,
-        procurement_officer, contract_term_months, cleanable_sqft, facilities_count,
-        hwb_bid_total, annual_base_rate, monthly_base_rate, hourly_porter_rate,
-        status, compliance_status, compliance_summary, local_quote_path, notes,
-        updated_at
+    INSERT INTO "Leads" (
+        center_name, address, city, state, zipcode,
+        facility_type, industry, sqf, estimated_annual_value,
+        decision_maker, lead_source, is_commercial, status,
+        priority_level, notes, updated_at
     ) VALUES (
-        {esc(sol_num)}, {esc(f"Turnkey Post-Construction & Corporate Janitorial - {tenant_name} ({sqft:,.0f} SQFT)")},
-        {esc(f"{gc_name} / {tenant_name}")}, {esc(f"Corporate Tenant Finish-Out ({city})")}, 'TDLR Architectural Barriers Registry',
-        'GC Project Manager & Tenant Facilities Director', 36, {sqft}, 1,
-        {contract_total}, {annual_recurring}, {monthly_recurring}, 20.00,
-        'Hunter Scouted', {esc(tier)}, {esc(json.dumps(assessment, indent=2))},
-        {esc(str(save_dir))}, {esc(notes)}, CURRENT_TIMESTAMP
-    ) ON CONFLICT (solicitation_number) DO UPDATE SET
-        title = EXCLUDED.title,
-        cleanable_sqft = EXCLUDED.cleanable_sqft,
-        hwb_bid_total = EXCLUDED.hwb_bid_total,
-        annual_base_rate = EXCLUDED.annual_base_rate,
-        monthly_base_rate = EXCLUDED.monthly_base_rate,
-        compliance_status = EXCLUDED.compliance_status,
-        compliance_summary = EXCLUDED.compliance_summary,
-        local_quote_path = EXCLUDED.local_quote_path,
+        {esc(center_name)}, {esc(street_address)}, {esc(city)}, 'TX', {esc(zipcode)},
+        'Office', {esc(industry)}, {int(sqft)}, {annual_recurring},
+        {esc(officer)}, 'TDLR Architectural Barriers Registry',
+        true, 'NEW', 'High', {esc(notes)}, CURRENT_DATE
+    ) ON CONFLICT (lower(btrim(center_name)), lower(btrim(address)), lower(btrim(city))) DO UPDATE SET
+        facility_type = EXCLUDED.facility_type,
+        industry = EXCLUDED.industry,
+        sqf = EXCLUDED.sqf,
+        estimated_annual_value = EXCLUDED.estimated_annual_value,
+        decision_maker = EXCLUDED.decision_maker,
+        lead_source = EXCLUDED.lead_source,
+        is_commercial = EXCLUDED.is_commercial,
         notes = EXCLUDED.notes,
-        updated_at = CURRENT_TIMESTAMP;
+        updated_at = CURRENT_DATE;
     """
     execute_psql(sql)
-    print(f"✅  Staged Corporate Finish-Out Account: {tenant_name} ({sqft:,.0f} SQFT) [Score: {score}] -> Post: ${gc_cleanup_submittal:,.2f} + ${monthly_recurring:,.2f}/mo (3-Yr: ${contract_total:,.2f})")
+    print(f"✅  Staged Corporate Finish-Out Account in Leads: {tenant_name} ({sqft:,.0f} SQFT) [Score: {score}] -> Post: ${gc_cleanup_submittal:,.2f} + ${monthly_recurring:,.2f}/mo (Annual: ${annual_recurring:,.2f})")
     return True
 
 
@@ -512,40 +530,43 @@ def stage_industrial_logistics_target(target: Dict[str, Any]) -> bool:
     """
     stage_outbox_letter(sol_num, f"Industrial Facility Floor Maintenance Agreement - {facility_name}", officer, address, body_html)
 
-    # 4. Synchronize to PostgreSQL
+    # 4. Synchronize to PostgreSQL Leads Table
+    center_name = facility_name
+    street_address = address.split(',')[0].strip() if ',' in address else address
+    zip_match = re.search(r'\b\d{5}\b', address)
+    zipcode = zip_match.group(0) if zip_match else target.get("zipcode", "")
+    industry = target.get("sector_type", "Industrial Logistics & Flex Distribution")
+
     notes = (
         f"Autonomous Industrial CAD Discovery. {sqft:,.0f} SQFT Logistics Flex. Ride-on auto scrubber focus. "
-        f"Playbook Score: {score}/100 ({tier}). 36-mo Agreement."
+        f"Playbook Score: {score}/100 ({tier}). 36-mo Agreement. "
+        f"Workspace: {save_dir}. Staged in PendingOutbox."
     )
 
     sql = f"""
-    INSERT INTO "InstitutionalBids" (
-        solicitation_number, title, agency_name, sector, portal_name,
-        procurement_officer, contract_term_months, cleanable_sqft, facilities_count,
-        hwb_bid_total, annual_base_rate, monthly_base_rate, hourly_porter_rate,
-        status, compliance_status, compliance_summary, local_quote_path, notes,
-        updated_at
+    INSERT INTO "Leads" (
+        center_name, address, city, state, zipcode,
+        facility_type, industry, sqf, estimated_annual_value,
+        decision_maker, lead_source, is_commercial, status,
+        priority_level, notes, updated_at
     ) VALUES (
-        {esc(sol_num)}, {esc(f"Industrial Facility Floor Maintenance Agreement - {facility_name} ({sqft:,.0f} SQFT)")},
-        {esc(facility_name)}, {esc(f"Industrial Logistics & Flex Distribution ({city})")}, 'CAD Industrial F2 Registry',
-        {esc(officer)}, 36, {sqft}, 1,
-        {contract_total}, {annual_total}, {published_mo}, 19.00,
-        'Hunter Scouted', {esc(tier)}, {esc(json.dumps(assessment, indent=2))},
-        {esc(str(save_dir))}, {esc(notes)}, CURRENT_TIMESTAMP
-    ) ON CONFLICT (solicitation_number) DO UPDATE SET
-        title = EXCLUDED.title,
-        cleanable_sqft = EXCLUDED.cleanable_sqft,
-        hwb_bid_total = EXCLUDED.hwb_bid_total,
-        annual_base_rate = EXCLUDED.annual_base_rate,
-        monthly_base_rate = EXCLUDED.monthly_base_rate,
-        compliance_status = EXCLUDED.compliance_status,
-        compliance_summary = EXCLUDED.compliance_summary,
-        local_quote_path = EXCLUDED.local_quote_path,
+        {esc(center_name)}, {esc(street_address)}, {esc(city)}, 'TX', {esc(zipcode)},
+        'Warehouse', {esc(industry)}, {int(sqft)}, {annual_total},
+        {esc(officer)}, 'CAD Industrial F2 Registry',
+        true, 'NEW', 'High', {esc(notes)}, CURRENT_DATE
+    ) ON CONFLICT (lower(btrim(center_name)), lower(btrim(address)), lower(btrim(city))) DO UPDATE SET
+        facility_type = EXCLUDED.facility_type,
+        industry = EXCLUDED.industry,
+        sqf = EXCLUDED.sqf,
+        estimated_annual_value = EXCLUDED.estimated_annual_value,
+        decision_maker = EXCLUDED.decision_maker,
+        lead_source = EXCLUDED.lead_source,
+        is_commercial = EXCLUDED.is_commercial,
         notes = EXCLUDED.notes,
-        updated_at = CURRENT_TIMESTAMP;
+        updated_at = CURRENT_DATE;
     """
     execute_psql(sql)
-    print(f"✅  Staged Industrial Account: {facility_name} ({sqft:,.0f} SQFT) [Score: {score}] -> ${published_mo:,.2f}/mo (3-Yr: ${contract_total:,.2f})")
+    print(f"✅  Staged Industrial Account in Leads: {facility_name} ({sqft:,.0f} SQFT) [Score: {score}] -> ${published_mo:,.2f}/mo (Annual: ${annual_total:,.2f})")
     return True
 
 
@@ -682,7 +703,7 @@ def run_commercial_cad_hunting_cycle():
         stage_industrial_logistics_target(ind)
 
     print("\n================================================================================")
-    print("🏁  Commercial CAD Hunting Cycle Complete. All proposals staged in PostgreSQL.")
+    print("🏁  Commercial CAD Hunting Cycle Complete. All proposals staged in Leads table.")
     print("🔒  Strict Executive Freeze Enforced: Zero outbound communications dispatched.")
     print("================================================================================")
 
