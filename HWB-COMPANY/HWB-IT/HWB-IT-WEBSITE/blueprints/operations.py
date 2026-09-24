@@ -8,6 +8,7 @@ import os
 import re
 import json
 import datetime
+from zoneinfo import ZoneInfo
 from flask import Blueprint, render_template, request, redirect, url_for, jsonify, flash, session, current_app, abort
 from flask_login import login_required, current_user, login_user
 from werkzeug.security import generate_password_hash
@@ -385,7 +386,17 @@ def admin_operations():
                     ORDER BY {b_sort} {b_dir} {nulls_clause}, cb.id DESC
                     LIMIT %s OFFSET %s
                 ''', tuple(bid_params + [per_page, offset]))
-                construction_bids = cur.fetchall()
+                raw_construction_bids = cur.fetchall()
+                processed_cb = []
+                central_tz = ZoneInfo('America/Chicago')
+                for cb_row in raw_construction_bids:
+                    cb_dict = dict(cb_row)
+                    for dk in ['bid_due_date', 'last_contact', 'created_at', 'updated_at']:
+                        v = cb_dict.get(dk)
+                        if v and hasattr(v, 'astimezone'):
+                            cb_dict[dk] = v.astimezone(central_tz)
+                    processed_cb.append(cb_dict)
+                construction_bids = processed_cb
         except Exception as bid_err:
             conn.rollback()
             current_app.logger.warning(f"[OPERATIONS] ConstructionBids fetch warning: {bid_err}")
@@ -422,6 +433,7 @@ def admin_operations():
                 ''', tuple(inst_params + [per_page, offset]))
                 raw_inst_bids = cur.fetchall()
                 processed_inst_bids = []
+                central_tz = ZoneInfo('America/Chicago')
                 for row in raw_inst_bids:
                     row_dict = dict(row)
                     raw_summary = row_dict.get('compliance_summary')
@@ -432,6 +444,13 @@ def admin_operations():
                         except Exception:
                             parsed_compliance = None
                     row_dict['parsed_compliance'] = parsed_compliance
+
+                    # Convert timestamps to Texas Central Time (CDT/CST)
+                    for dk in ['pre_bid_datetime', 'site_walk_datetime', 'bid_due_date', 'public_opening_datetime', 'created_at', 'updated_at', 'last_contact']:
+                        v = row_dict.get(dk)
+                        if v and hasattr(v, 'astimezone'):
+                            row_dict[dk] = v.astimezone(central_tz)
+
                     processed_inst_bids.append(row_dict)
                 institutional_bids = processed_inst_bids
         except Exception as inst_err:
@@ -439,6 +458,33 @@ def admin_operations():
             current_app.logger.warning(f"[OPERATIONS] InstitutionalBids fetch warning: {inst_err}")
             institutional_bids = []
             inst_bids_count = 0
+
+        # 4c. GENERAL CONTRACTORS MASTER REGISTRY (Migration 025)
+        try:
+            with conn.cursor() as cur:
+                gc_where_clauses = []
+                gc_params = []
+                if search_q and active_view == 'general_contractors':
+                    gc_where_clauses.append("(gc.company_name ILIKE %s OR gc.city ILIKE %s OR gc.primary_market ILIKE %s OR gc.lead_estimator_name ILIKE %s)")
+                    param_gc = f"%{search_q}%"
+                    gc_params.extend([param_gc, param_gc, param_gc, param_gc])
+                gc_where_str = ("WHERE " + " AND ".join(gc_where_clauses)) if gc_where_clauses else ""
+
+                cur.execute(f'''
+                    SELECT gc.*,
+                           (SELECT COUNT(*) FROM "ConstructionBids" cb WHERE (cb.gc_id = gc.id OR cb.gc_name ILIKE gc.company_name) AND cb.status NOT IN ('Lost', 'Archived Walkthrough Photo')) as active_bids_count,
+                           (SELECT COALESCE(SUM(cb.estimated_value), 0) FROM "ConstructionBids" cb WHERE (cb.gc_id = gc.id OR cb.gc_name ILIKE gc.company_name) AND cb.status NOT IN ('Lost', 'Archived Walkthrough Photo')) as total_pipeline_value
+                    FROM "GeneralContractors" gc
+                    {gc_where_str}
+                    ORDER BY gc.vetting_score DESC, gc.id ASC
+                ''', tuple(gc_params))
+                general_contractors = cur.fetchall()
+                general_contractors_count = len(general_contractors)
+        except Exception as gc_err:
+            conn.rollback()
+            current_app.logger.warning(f"[OPERATIONS] GeneralContractors fetch warning: {gc_err}")
+            general_contractors = []
+            general_contractors_count = 0
 
         # 4d. MARKETING DEPARTMENT & CAMPAIGNS PIPELINE (HWB-QMS-8.0 / HWB-SAL-2026-001)
         try:
@@ -744,6 +790,7 @@ def admin_operations():
                          active_technicians=active_technicians,
                          construction_bids=construction_bids, bids_count=bids_count,
                          institutional_bids=institutional_bids, inst_bids_count=inst_bids_count,
+                         general_contractors=general_contractors, general_contractors_count=general_contractors_count,
                          marketing_campaigns=marketing_campaigns, mkt_campaigns_count=mkt_campaigns_count,
                          campaign_recipients=campaign_recipients, active_campaign_id=active_campaign_id,
                          pending_outbox_items=pending_outbox_items, pending_outbox_count=pending_outbox_count,

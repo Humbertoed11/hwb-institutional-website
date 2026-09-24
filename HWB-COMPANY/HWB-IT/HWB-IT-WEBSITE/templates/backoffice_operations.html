@@ -2,7 +2,7 @@
 
 {% block title %}Operations Control | SigmaQuality™ Admin Dashboard{% endblock %}
 
-{% block bo_main_class %}{% if active_view in ['leads', 'accounts', 'construction_bids', 'institutional_bids', 'marketing', 'workforce'] %}fluid{% endif %}{% endblock %}
+{% block bo_main_class %}{% if active_view in ['leads', 'accounts', 'construction_bids', 'institutional_bids', 'general_contractors', 'marketing', 'workforce'] %}fluid{% endif %}{% endblock %}
 
 {% block bo_title %}Operations Control{% endblock %}
 {% block bo_subtitle %}Professional Standardized Control{% endblock %}
@@ -1134,7 +1134,7 @@
                         </thead>
                         <tbody>
                             {% for bid in construction_bids %}
-                            <tr id="bid-row-{{ bid.id }}" style="border-bottom: 1px solid var(--slate-100); transition: background 0.15s;">
+                            <tr id="bid-row-{{ bid.id }}" style="border-bottom: 1px solid var(--slate-100); transition: background 0.15s; cursor: pointer;" onclick="if(!event.target.closest('button, a, select, input')) openCommercialTakeoffModal({{ bid|tojson }});">
                                 {% for col_key in active_cols %}
                                     {% if col_key == 'project' %}
                                     <td class="sticky-1">
@@ -1220,9 +1220,19 @@
                                     </td>
                                     {% elif col_key == 'platform' %}
                                     <td>
-                                        <span style="font-size: 0.65rem; font-weight: 800; padding: 0.2rem 0.5rem; border-radius: 4px; background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd;">
+                                        {% if bid.plan_url %}
+                                        <a href="{{ bid.plan_url }}" target="_blank" class="sigma-mini-btn" style="text-decoration: none; font-size: 0.68rem; font-weight: 800; padding: 0.2rem 0.5rem; border-radius: 4px; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; display: inline-flex; align-items: center; gap: 0.25rem;" title="Open Online Planroom">
+                                            <i class="fas fa-folder-open"></i> {{ bid.platform or 'Planroom' }} ↗
+                                        </a>
+                                        {% elif bid.rfp_url %}
+                                        <a href="{{ bid.rfp_url }}" target="_blank" class="sigma-mini-btn" style="text-decoration: none; font-size: 0.68rem; font-weight: 800; padding: 0.2rem 0.5rem; border-radius: 4px; background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; display: inline-flex; align-items: center; gap: 0.25rem;" title="Open Bid Portal">
+                                            <i class="fas fa-external-link-alt"></i> {{ bid.platform or 'Portal' }} ↗
+                                        </a>
+                                        {% else %}
+                                        <span style="font-size: 0.65rem; font-weight: 800; padding: 0.2rem 0.5rem; border-radius: 4px; background: #f1f5f9; color: var(--slate-600); border: 1px solid #e2e8f0;">
                                             {{ bid.platform or 'BuildingConnected' }}
                                         </span>
+                                        {% endif %}
                                     </td>
                                     {% elif col_key == 'estimator' %}
                                     <td>
@@ -1301,6 +1311,9 @@
                                     {% elif col_key == 'actions' %}
                                     <td style="text-align: right;">
                                         <div style="display: flex; gap: 0.4rem; justify-content: flex-end; align-items: center;">
+                                            <button onclick='openCommercialTakeoffModal({{ bid|tojson }})' class="sigma-mini-btn" title="Open Interactive Takeoff Calculator & Price Engine" style="color: #047857; border-color: #a7f3d0; background: #ecfdf5; font-weight: 800;">
+                                                <i class="fas fa-drafting-compass"></i> Takeoff
+                                            </button>
                                             <button onclick='enrichGCBid({{ bid.id }})' class="sigma-mini-btn" title="Run 4-Point Vetting & Autonomous Profile Completer" style="color: #0369a1; border-color: #bae6fd; background: #f0f9ff;">
                                                 <i class="fas fa-magic"></i> Enrich
                                             </button>
@@ -1343,6 +1356,214 @@
                             Next <i class="fas fa-chevron-right" style="margin-left: 0.5rem;"></i>
                         </a>
                         {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- View: General Contractors Master Registry (HWB-QMS-11.2 / Migration 025) -->
+        {% if current_user.role != 'Sales' %}
+        <div id="view-general-contractors" class="isc-view" style="display: {% if active_view == 'general_contractors' %}block{% else %}none{% endif %};">
+            {% set ns_gc = namespace(tier1_count=0, total_pipeline=0, avg_score=0, score_sum=0) %}
+            {% for gc in general_contractors %}
+                {% if 'Tier 1' in (gc.vetting_tier or '') %}
+                    {% set ns_gc.tier1_count = ns_gc.tier1_count + 1 %}
+                {% endif %}
+                {% set ns_gc.total_pipeline = ns_gc.total_pipeline + (gc.total_pipeline_value or 0) %}
+                {% set ns_gc.score_sum = ns_gc.score_sum + (gc.vetting_score or 0) %}
+            {% endfor %}
+            {% if general_contractors|length > 0 %}
+                {% set ns_gc.avg_score = (ns_gc.score_sum / general_contractors|length)|round(1) %}
+            {% endif %}
+
+            <!-- GC Registry Metrics Header -->
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; margin-bottom: 2rem;">
+                <div class="isc-card" style="padding: 1.25rem; border-left: 4px solid #0284c7; background: #ffffff;">
+                    <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--slate-500); letter-spacing: 0.05em;">General Contractors</div>
+                    <div style="font-size: 1.75rem; font-weight: 900; color: var(--slate-900); margin-top: 0.25rem;">{{ general_contractors|length }} <span style="font-size: 0.85rem; font-weight: 700; color: var(--slate-400);">Primes</span></div>
+                    <div style="font-size: 0.72rem; color: #0284c7; font-weight: 700; margin-top: 0.35rem;"><i class="fas fa-building"></i> Commercial &amp; Healthcare Primes</div>
+                </div>
+                <div class="isc-card" style="padding: 1.25rem; border-left: 4px solid #10b981; background: #ffffff;">
+                    <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--slate-500); letter-spacing: 0.05em;">Preferred Tier 1 Primes</div>
+                    <div style="font-size: 1.75rem; font-weight: 900; color: #047857; margin-top: 0.25rem;">{{ ns_gc.tier1_count }} <span style="font-size: 0.85rem; font-weight: 700; color: var(--slate-400);">Preferred</span></div>
+                    <div style="font-size: 0.72rem; color: #059669; font-weight: 700; margin-top: 0.35rem;"><i class="fas fa-crown"></i> Net 30 • 5% Retainage • Verified</div>
+                </div>
+                <div class="isc-card" style="padding: 1.25rem; border-left: 4px solid #f59e0b; background: #ffffff;">
+                    <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--slate-500); letter-spacing: 0.05em;">Active Pipeline Linked</div>
+                    <div style="font-size: 1.75rem; font-weight: 900; color: #b45309; margin-top: 0.25rem;">${{ "{:,.2f}".format(ns_gc.total_pipeline) }}</div>
+                    <div style="font-size: 0.72rem; color: #d97706; font-weight: 700; margin-top: 0.35rem;"><i class="fas fa-chart-line"></i> Active Commercial Bids</div>
+                </div>
+                <div class="isc-card" style="padding: 1.25rem; border-left: 4px solid #6366f1; background: #ffffff;">
+                    <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--slate-500); letter-spacing: 0.05em;">Average Vetting Score</div>
+                    <div style="font-size: 1.75rem; font-weight: 900; color: #4338ca; margin-top: 0.25rem;">{{ ns_gc.avg_score }} <span style="font-size: 0.85rem; font-weight: 700; color: var(--slate-400);">/ 100</span></div>
+                    <div style="font-size: 0.72rem; color: #6366f1; font-weight: 700; margin-top: 0.35rem;"><i class="fas fa-shield-alt"></i> 4-Point Financial &amp; Standing Audit</div>
+                </div>
+            </div>
+
+            <!-- Main GC Registry Table Card -->
+            <div class="isc-card fluid-data">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                    <div>
+                        <h2 style="font-size: 1.25rem; font-weight: 900; color: var(--slate-900); margin: 0; display: flex; align-items: center; gap: 0.65rem;">
+                            <i class="fas fa-city" style="color: #0284c7;"></i> General Contractors Directory &amp; 4-Point Vetting Registry
+                        </h2>
+                        <p style="font-size: 0.8rem; color: var(--slate-500); margin: 0.25rem 0 0 0; font-weight: 600;">
+                            Institutional master record of vetted commercial primes, payment terms, lead estimators, and direct planrooms. Regulated under HWB-QMS-11.2.
+                        </p>
+                    </div>
+                    <div style="display: flex; gap: 0.75rem; align-items: center;">
+                        <form method="GET" action="{{ url_for('admin_operations') }}" style="display: flex; gap: 0.5rem; margin: 0;">
+                            <input type="hidden" name="view" value="general_contractors">
+                            <input type="text" name="q" value="{{ search_q or '' }}" placeholder="Search GC company, city, market, estimator..." class="sigma-cell-input" style="height: 36px; min-width: 280px; font-size: 0.8rem;">
+                            <button type="submit" class="isc-btn isc-btn-primary" style="height: 36px; padding: 0 1rem; font-size: 0.78rem;">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Table Container -->
+                <div style="overflow-x: auto;">
+                    <table class="sigma-table" style="width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.82rem;">
+                        <thead>
+                            <tr style="background: #f8fafc; border-bottom: 1.5px solid var(--slate-200); text-align: left;">
+                                <th style="padding: 0.75rem 1rem; font-weight: 800; color: var(--slate-600); font-size: 0.72rem; text-transform: uppercase;">General Contractor</th>
+                                <th style="padding: 0.75rem 1rem; font-weight: 800; color: var(--slate-600); font-size: 0.72rem; text-transform: uppercase;">4-Point Vetting &amp; Standing</th>
+                                <th style="padding: 0.75rem 1rem; font-weight: 800; color: var(--slate-600); font-size: 0.72rem; text-transform: uppercase;">Commercial Terms</th>
+                                <th style="padding: 0.75rem 1rem; font-weight: 800; color: var(--slate-600); font-size: 0.72rem; text-transform: uppercase;">Primary Market Specialization</th>
+                                <th style="padding: 0.75rem 1rem; font-weight: 800; color: var(--slate-600); font-size: 0.72rem; text-transform: uppercase;">Lead Commercial Estimator</th>
+                                <th style="padding: 0.75rem 1rem; font-weight: 800; color: var(--slate-600); font-size: 0.72rem; text-transform: uppercase;">Active Pipeline</th>
+                                <th style="padding: 0.75rem 1rem; font-weight: 800; color: var(--slate-600); font-size: 0.72rem; text-transform: uppercase; text-align: right;">Planroom &amp; Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for gc in general_contractors %}
+                            <tr style="border-bottom: 1px solid var(--slate-100); transition: background 0.15s ease;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+                                <td style="padding: 0.85rem 1rem; vertical-align: top;">
+                                    <div style="font-weight: 800; color: var(--slate-900); font-size: 0.9rem;">
+                                        {{ gc.company_name }}
+                                    </div>
+                                    <div style="font-size: 0.75rem; color: var(--slate-500); margin-top: 0.2rem;">
+                                        <i class="fas fa-map-marker-alt" style="color: #ef4444; font-size: 0.7rem;"></i> {{ gc.city or 'DFW' }}, {{ gc.state or 'TX' }}
+                                    </div>
+                                    {% if gc.address %}
+                                    <div style="font-size: 0.7rem; color: var(--slate-400); margin-top: 0.15rem;">
+                                        {{ gc.address }}
+                                    </div>
+                                    {% endif %}
+                                </td>
+                                <td style="padding: 0.85rem 1rem; vertical-align: top;">
+                                    <div style="display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.3rem;">
+                                        <span class="isc-badge" style="font-weight: 900; font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 4px; background: {% if gc.vetting_score >= 90 %}#ecfdf5; color: #047857; border: 1px solid #a7f3d0;{% elif gc.vetting_score >= 80 %}#eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;{% else %}#fefce8; color: #a16207; border: 1px solid #fde047;{% endif %}">
+                                            Score: {{ gc.vetting_score }}/100
+                                        </span>
+                                    </div>
+                                    {% if 'Tier 1' in (gc.vetting_tier or '') %}
+                                    <span style="font-size: 0.68rem; font-weight: 800; background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; padding: 0.15rem 0.45rem; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.25rem;">
+                                        <i class="fas fa-shield-alt"></i> Tier 1 Prime
+                                    </span>
+                                    {% elif 'Tier 2' in (gc.vetting_tier or '') %}
+                                    <span style="font-size: 0.68rem; font-weight: 800; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; padding: 0.15rem 0.45rem; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.25rem;">
+                                        <i class="fas fa-store"></i> Tier 2 Retail
+                                    </span>
+                                    {% else %}
+                                    <span style="font-size: 0.68rem; font-weight: 700; background: #f8fafc; color: var(--slate-600); border: 1px solid var(--slate-200); padding: 0.15rem 0.45rem; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.25rem;">
+                                        <i class="fas fa-broadcast-tower"></i> {{ gc.vetting_tier or 'Tier 3' }}
+                                    </span>
+                                    {% endif %}
+                                    <div style="font-size: 0.7rem; color: #059669; font-weight: 700; margin-top: 0.25rem;">
+                                        <i class="fas fa-check-circle"></i> {{ gc.standing_status or 'Active Good Standing' }}
+                                    </div>
+                                </td>
+                                <td style="padding: 0.85rem 1rem; vertical-align: top;">
+                                    <div style="font-weight: 800; color: var(--slate-800); font-size: 0.82rem;">
+                                        {{ gc.payment_terms or 'Net 30' }}
+                                    </div>
+                                    <div style="font-size: 0.72rem; color: var(--slate-500); margin-top: 0.2rem;">
+                                        Retainage: <strong style="color: var(--slate-700);">{{ gc.retainage_pct or 5.0 }}%</strong>
+                                    </div>
+                                    <div style="font-size: 0.68rem; color: #4338ca; font-weight: 700; margin-top: 0.15rem;">
+                                        <i class="fas fa-file-contract"></i> Standard Subcontract
+                                    </div>
+                                </td>
+                                <td style="padding: 0.85rem 1rem; vertical-align: top; max-width: 240px;">
+                                    <div style="font-weight: 600; color: var(--slate-700); font-size: 0.78rem; line-height: 1.35;">
+                                        {{ gc.primary_market or 'Commercial General Construction' }}
+                                    </div>
+                                    {% if gc.notes %}
+                                    <div style="font-size: 0.68rem; color: var(--slate-400); margin-top: 0.25rem; font-style: italic;">
+                                        {{ gc.notes }}
+                                    </div>
+                                    {% endif %}
+                                </td>
+                                <td style="padding: 0.85rem 1rem; vertical-align: top;">
+                                    <div style="font-weight: 800; color: var(--slate-900); font-size: 0.82rem;">
+                                        {{ gc.lead_estimator_name or 'Estimating Desk' }}
+                                    </div>
+                                    {% if gc.lead_estimator_phone %}
+                                    <div style="margin-top: 0.2rem;">
+                                        <a href="tel:{{ gc.lead_estimator_phone }}" style="color: var(--brand); text-decoration: none; font-weight: 700; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 0.25rem;">
+                                            <i class="fas fa-phone-alt" style="font-size: 0.65rem;"></i> {{ gc.lead_estimator_phone|format_phone }}
+                                        </a>
+                                    </div>
+                                    {% endif %}
+                                    {% if gc.lead_estimator_email %}
+                                    <div style="margin-top: 0.15rem;">
+                                        <a href="mailto:{{ gc.lead_estimator_email }}" style="color: var(--slate-600); text-decoration: none; font-weight: 600; font-size: 0.72rem; display: inline-flex; align-items: center; gap: 0.25rem;">
+                                            <i class="fas fa-envelope" style="font-size: 0.65rem;"></i> {{ gc.lead_estimator_email }}
+                                        </a>
+                                    </div>
+                                    {% endif %}
+                                </td>
+                                <td style="padding: 0.85rem 1rem; vertical-align: top;">
+                                    <div style="font-weight: 900; color: #047857; font-size: 0.95rem;">
+                                        ${{ "{:,.2f}".format(gc.total_pipeline_value or 0) }}
+                                    </div>
+                                    <div style="font-size: 0.72rem; color: var(--slate-600); font-weight: 700; margin-top: 0.2rem;">
+                                        <a href="{{ url_for('admin_operations', view='construction_bids', q=gc.company_name) }}" style="color: #0284c7; text-decoration: none;">
+                                            {{ gc.active_bids_count or 0 }} Active Subcontracts ↗
+                                        </a>
+                                    </div>
+                                </td>
+                                <td style="padding: 0.85rem 1rem; vertical-align: top; text-align: right;">
+                                    <div style="display: inline-flex; flex-direction: column; gap: 0.35rem; align-items: flex-end;">
+                                        {% if gc.planroom_url %}
+                                        <a href="{{ gc.planroom_url }}" target="_blank" class="isc-btn" style="height: 28px; padding: 0 0.65rem; font-size: 0.72rem; border-radius: 4px; background: #0284c7; color: #ffffff; display: inline-flex; align-items: center; gap: 0.35rem; text-decoration: none;" title="Open Direct GC Planroom">
+                                            <i class="fas fa-folder-open"></i> {{ gc.planroom_platform or 'Planroom' }} ↗
+                                        </a>
+                                        {% else %}
+                                        <a href="https://app.buildingconnected.com" target="_blank" class="isc-btn isc-btn-outline" style="height: 28px; padding: 0 0.65rem; font-size: 0.72rem; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.35rem; text-decoration: none;" title="Open BuildingConnected Network">
+                                            <i class="fas fa-network-wired"></i> BuildingConnected ↗
+                                        </a>
+                                        {% endif %}
+                                        <a href="/prequal" target="_blank" class="isc-btn isc-btn-outline" style="height: 26px; padding: 0 0.55rem; font-size: 0.68rem; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.35rem; text-decoration: none; color: #4338ca; border-color: #c7d2fe;">
+                                            <i class="fas fa-shield-alt"></i> Prequal Binder
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="7" style="text-align: center; padding: 3rem; color: var(--slate-400);">
+                                    <i class="fas fa-city" style="font-size: 2rem; margin-bottom: 0.5rem; opacity: 0.4;"></i>
+                                    <div>No general contractors found matching criteria.</div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Footer -->
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 0 0 0; border-top: 1px solid var(--slate-200); margin-top: 1.25rem;">
+                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--slate-500);">
+                        {{ general_contractors|length }} Vetted General Contractors in Master Registry
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <a href="{{ url_for('admin_operations', view='general_contractors') }}" class="isc-btn isc-btn-outline" style="height: 32px; padding: 0 0.85rem; font-size: 0.75rem; border-radius: 4px;">
+                            Reset Search
+                        </a>
                     </div>
                 </div>
             </div>
@@ -1565,20 +1786,43 @@
                                     </span>
                                 </td>
                                 <td style="padding: 0.85rem 1rem; vertical-align: top; text-align: right;">
-                                    <div style="display: inline-flex; flex-direction: column; gap: 0.4rem; align-items: flex-end;">
-                                        {% if ib.rfp_url %}
-                                        <a href="{{ ib.rfp_url }}" target="_blank" class="isc-btn isc-btn-outline" style="height: 28px; padding: 0 0.65rem; font-size: 0.72rem; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.35rem;">
-                                            <i class="fas fa-external-link-alt"></i> Public Portal
+                                    <div style="display: inline-flex; flex-direction: column; gap: 0.35rem; align-items: flex-end;">
+                                        <div style="display: flex; gap: 0.35rem; flex-wrap: wrap; justify-content: flex-end;">
+                                            {% if ib.bid_sheet_path %}
+                                            <a href="/api/v1/bids/download-file?path={{ ib.bid_sheet_path }}&download=1" class="isc-btn" style="height: 28px; padding: 0 0.65rem; font-size: 0.72rem; border-radius: 4px; background: #047857; color: #ffffff; display: inline-flex; align-items: center; gap: 0.35rem; text-decoration: none;" title="Download Official Signed Excel Bid Sheet">
+                                                <i class="fas fa-file-excel"></i> Bid Sheet (.xlsx)
+                                            </a>
+                                            {% endif %}
+                                            {% if ib.dossier_path %}
+                                            <a href="/api/v1/bids/download-file?path={{ ib.dossier_path }}" target="_blank" class="isc-btn" style="height: 28px; padding: 0 0.65rem; font-size: 0.72rem; border-radius: 4px; background: #0284c7; color: #ffffff; display: inline-flex; align-items: center; gap: 0.35rem; text-decoration: none;" title="View Pre-Bid Site Walk Dossier & Facility Analysis">
+                                                <i class="fas fa-clipboard-check"></i> Site Walk Dossier
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                        <div style="display: flex; gap: 0.35rem; flex-wrap: wrap; justify-content: flex-end;">
+                                            {% if ib.pre_bid_url %}
+                                            <a href="{{ ib.pre_bid_url }}" target="_blank" class="isc-btn" style="height: 28px; padding: 0 0.65rem; font-size: 0.72rem; border-radius: 4px; background: #4f46e5; color: #ffffff; display: inline-flex; align-items: center; gap: 0.35rem; text-decoration: none;" title="Join Pre-Bid Conference on Microsoft Teams">
+                                                <i class="fas fa-video"></i> Pre-Bid Teams
+                                            </a>
+                                            {% endif %}
+                                            {% if ib.public_opening_url %}
+                                            <a href="{{ ib.public_opening_url }}" target="_blank" class="isc-btn" style="height: 28px; padding: 0 0.65rem; font-size: 0.72rem; border-radius: 4px; background: #7c3aed; color: #ffffff; display: inline-flex; align-items: center; gap: 0.35rem; text-decoration: none;" title="Join Public Bid Opening on Microsoft Teams">
+                                                <i class="fas fa-broadcast-tower"></i> Public Opening
+                                            </a>
+                                            {% endif %}
+                                            {% if ib.rfp_url %}
+                                            <a href="{{ ib.rfp_url }}" target="_blank" class="isc-btn isc-btn-outline" style="height: 28px; padding: 0 0.65rem; font-size: 0.72rem; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.35rem; text-decoration: none;" title="Open Public Procurement Portal">
+                                                <i class="fas fa-external-link-alt"></i> Public Portal
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                        {% if '06507' in (ib.solicitation_number or '') %}
+                                        <a href="/api/v1/bids/download-file?path=HWB-COMPANY/HWB-QUOTES/NTTA-06507-ANCILLARY/COMPLIANCE_PACKAGE/NTTA-06507-MANDATORY-COMPLIANCE-PACKAGE-UNIFIED.pdf" target="_blank" class="isc-btn isc-btn-outline" style="height: 26px; padding: 0 0.55rem; font-size: 0.68rem; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.35rem; color: #b91c1c; border-color: #fca5a5; text-decoration: none;" title="View Unified Mandatory Compliance Package (COI, GFE, CIQ, Safety Plan)">
+                                            <i class="fas fa-file-pdf" style="color: #ef4444;"></i> Mandatory Compliance Package (.pdf)
                                         </a>
-                                        {% endif %}
-                                        {% if ib.pre_bid_url %}
-                                        <a href="{{ ib.pre_bid_url }}" target="_blank" class="isc-btn" style="height: 28px; padding: 0 0.65rem; font-size: 0.72rem; border-radius: 4px; background: #4f46e5; color: #ffffff; display: inline-flex; align-items: center; gap: 0.35rem;">
-                                            <i class="fas fa-video"></i> Pre-Bid Teams
-                                        </a>
-                                        {% endif %}
-                                        {% if ib.local_quote_path %}
+                                        {% elif ib.local_quote_path %}
                                         <span style="font-size: 0.68rem; color: var(--slate-400); font-family: monospace;">
-                                            {{ ib.local_quote_path.split('/')[-1] }}
+                                            <i class="fas fa-folder"></i> {{ ib.local_quote_path.split('/')[-1] }}
                                         </span>
                                         {% endif %}
                                     </div>
@@ -5056,6 +5300,157 @@
             <div style="grid-column: span 2; display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 0.5rem;">
                 <button type="button" onclick="closeModal('modal-add-bid')" class="isc-btn isc-btn-outline" style="height: 38px; padding: 0 1.25rem; font-size: 0.8rem;">Cancel</button>
                 <button type="submit" class="isc-btn isc-btn-primary" style="height: 38px; padding: 0 1.5rem; font-size: 0.8rem; font-weight: 800;">Save Subcontract Bid</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: SigmaEstimator™ Commercial Takeoff & Price Engine (HWB-QMS-11.2 / HWB-QMS-7.7) -->
+<div id="modal-commercial-takeoff" class="isc-modal-overlay" style="display:none; z-index: 1200;">
+    <div class="isc-modal" style="max-width: 900px; max-height: 92vh; overflow-y: auto;">
+        <!-- Header -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem; border-bottom: 1px solid var(--slate-100); padding-bottom: 1rem;">
+            <div>
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;">
+                    <span style="font-size: 0.7rem; font-weight: 900; background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; padding: 0.2rem 0.55rem; border-radius: 4px; text-transform: uppercase;">SigmaEstimator™ 2026</span>
+                    <span id="takeoff-modal-platform-badge" style="font-size: 0.7rem; font-weight: 800; background: #e0f2fe; color: #0369a1; padding: 0.2rem 0.5rem; border-radius: 4px;">BuildingConnected</span>
+                    <span id="takeoff-modal-id-badge" style="font-size: 0.7rem; font-weight: 800; background: #f1f5f9; color: var(--slate-600); padding: 0.2rem 0.5rem; border-radius: 4px;">Bid #--</span>
+                </div>
+                <h2 id="takeoff-modal-project-name" style="font-weight: 900; font-size: 1.45rem; color: var(--slate-900); margin: 0; line-height: 1.25;">Project Takeoff &amp; Pricing</h2>
+                <div style="display: flex; align-items: center; gap: 0.75rem; margin-top: 0.35rem; font-size: 0.82rem;">
+                    <span id="takeoff-modal-gc-name" style="font-weight: 800; color: var(--brand);">Novel Builders, LLC</span>
+                    <span style="color: var(--slate-300);">•</span>
+                    <span id="takeoff-modal-location" style="color: var(--slate-600); font-weight: 600;">Burleson, TX</span>
+                    <span style="color: var(--slate-300);">•</span>
+                    <span id="takeoff-modal-due-date" style="color: #991b1b; font-weight: 800;"><i class="fas fa-clock"></i> Due: --</span>
+                </div>
+            </div>
+            <button type="button" onclick="closeModal('modal-commercial-takeoff')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; color: var(--slate-500);">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <!-- Estimator Quick-Launch Ribbon -->
+        <div style="display: flex; gap: 0.75rem; align-items: center; justify-content: space-between; background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <span style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: var(--slate-400);">Planroom:</span>
+                <a id="takeoff-modal-planroom-btn" href="#" target="_blank" class="isc-btn" style="height: 28px; padding: 0 0.75rem; font-size: 0.72rem; border-radius: 4px; background: #0284c7; color: #ffffff; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem;">
+                    <i class="fas fa-folder-open"></i> Open Plans &amp; Specs ↗
+                </a>
+                <a id="takeoff-modal-cadence-btn" href="#" onclick="openEstimatorCadenceFromTakeoff(); return false;" class="isc-btn isc-btn-outline" style="height: 28px; padding: 0 0.75rem; font-size: 0.72rem; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.35rem; color: #b45309; border-color: #fcd34d;">
+                    <i class="fas fa-phone-volume"></i> 2-Min GC Script
+                </a>
+            </div>
+            <div style="display: flex; gap: 1rem; align-items: center; font-size: 0.78rem;">
+                <span id="takeoff-modal-estimator-display" style="font-weight: 700; color: var(--slate-700);"><i class="fas fa-user-tie" style="color: var(--slate-400);"></i> Estimator: Austin Addis</span>
+                <a id="takeoff-modal-phone-btn" href="#" style="color: var(--brand); font-weight: 700; text-decoration: none;"><i class="fas fa-phone-alt"></i> Direct Dial</a>
+                <a id="takeoff-modal-email-btn" href="#" style="color: var(--slate-600); font-weight: 600; text-decoration: none;"><i class="fas fa-envelope"></i> Email</a>
+            </div>
+        </div>
+
+        <!-- Form: Takeoff Engine -->
+        <form id="form-commercial-takeoff" onsubmit="commitCommercialTakeoff(event)">
+            <input type="hidden" id="takeoff-bid-id" name="bid_id">
+            
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; margin-bottom: 1.5rem;">
+                <!-- Column 1: Cleanable Area & ISSA Rates -->
+                <div style="background: #ffffff; border: 1px solid var(--slate-200); border-radius: 8px; padding: 1rem;">
+                    <div style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: var(--slate-500); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.4rem;">
+                        <i class="fas fa-ruler-combined" style="color: #0284c7;"></i> 1. Footprint &amp; Dimensions
+                    </div>
+                    <label style="font-size: 0.75rem; font-weight: 700; color: var(--slate-700); display: block; margin-bottom: 0.25rem;">Cleanable Footprint (SF) *</label>
+                    <input type="number" id="takeoff-cleanable-sqft" name="cleanable_sqft" required step="1" oninput="calculateTakeoffFields('sqft')" style="width: 100%; height: 38px; padding: 0.4rem 0.75rem; border: 1.5px solid var(--slate-300); border-radius: 6px; font-size: 0.95rem; font-weight: 800; color: var(--slate-900);">
+                    
+                    <div style="margin-top: 0.85rem;">
+                        <label style="font-size: 0.72rem; font-weight: 700; color: var(--slate-600); display: block; margin-bottom: 0.25rem;">ISSA 612 Production Rate</label>
+                        <select id="takeoff-production-rate" onchange="calculateTakeoffFields('rate')" style="width: 100%; height: 34px; padding: 0 0.5rem; border: 1px solid var(--slate-200); border-radius: 6px; font-size: 0.78rem; font-weight: 700; background: #f8fafc;">
+                            <option value="450">Commercial Post-Construction (450 SF/hr)</option>
+                            <option value="550" selected>Standard Industrial Shell (550 SF/hr)</option>
+                            <option value="350">Medical Cleanroom / Micro-Hospital (350 SF/hr)</option>
+                            <option value="750">Final Polish / Turnkey Touch-Up (750 SF/hr)</option>
+                        </select>
+                    </div>
+
+                    <div style="margin-top: 0.85rem; padding: 0.65rem; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 6px; font-size: 0.75rem;">
+                        <div style="color: #0369a1; font-weight: 800; display: flex; justify-content: space-between;">
+                            <span>Est. Field Labor:</span>
+                            <span id="takeoff-labor-hours-calc">0 Hours</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Column 2: Scope Phasing & Pricing -->
+                <div style="background: #ffffff; border: 1px solid var(--slate-200); border-radius: 8px; padding: 1rem;">
+                    <div style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: var(--slate-500); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.4rem;">
+                        <i class="fas fa-tags" style="color: #10b981;"></i> 2. Pricing &amp; Subcontract Scope
+                    </div>
+                    <label style="font-size: 0.75rem; font-weight: 700; color: var(--slate-700); display: block; margin-bottom: 0.25rem;">Scope Phase *</label>
+                    <select id="takeoff-scope-phase" name="scope_phase" style="width: 100%; height: 38px; padding: 0 0.65rem; border: 1.5px solid var(--slate-300); border-radius: 6px; font-size: 0.82rem; font-weight: 800; color: var(--slate-900);">
+                        <option value="Rough, Final & Touch-Up (3 Phases)">Rough, Final &amp; Touch-Up (3 Phases)</option>
+                        <option value="Final Clean & Window Polish Only">Final Clean &amp; Window Polish Only</option>
+                        <option value="Rough Clean & Floor Scrub Only">Rough Clean &amp; Floor Scrub Only</option>
+                        <option value="Terminal Healthcare Disinfection & Certification">Terminal Healthcare Disinfection &amp; Certification</option>
+                        <option value="Multi-Building Shell Turnkey Package">Multi-Building Shell Turnkey Package</option>
+                    </select>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.85rem;">
+                        <div>
+                            <label style="font-size: 0.72rem; font-weight: 700; color: var(--slate-600); display: block; margin-bottom: 0.25rem;">Unit Rate ($/SF)</label>
+                            <input type="number" id="takeoff-rate-per-sqft" step="0.01" value="0.22" oninput="calculateTakeoffFields('unit_rate')" style="width: 100%; height: 34px; padding: 0 0.5rem; border: 1px solid var(--slate-200); border-radius: 6px; font-size: 0.85rem; font-weight: 700;">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.72rem; font-weight: 700; color: var(--slate-600); display: block; margin-bottom: 0.25rem;">Mobilizations</label>
+                            <input type="number" id="takeoff-mobilizations" value="3" min="1" max="10" style="width: 100%; height: 34px; padding: 0 0.5rem; border: 1px solid var(--slate-200); border-radius: 6px; font-size: 0.85rem; font-weight: 700;">
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 0.85rem;">
+                        <label style="font-size: 0.75rem; font-weight: 800; color: #047857; display: block; margin-bottom: 0.25rem;">Estimated Subcontract Value ($) *</label>
+                        <input type="number" id="takeoff-estimated-value" name="estimated_value" required step="0.01" oninput="calculateTakeoffFields('total')" style="width: 100%; height: 38px; padding: 0.4rem 0.75rem; border: 2px solid #10b981; border-radius: 6px; font-size: 1.1rem; font-weight: 900; color: #047857; background: #f0fdf4;">
+                    </div>
+                </div>
+
+                <!-- Column 3: Pipeline Status & Milestones -->
+                <div style="background: #ffffff; border: 1px solid var(--slate-200); border-radius: 8px; padding: 1rem;">
+                    <div style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: var(--slate-500); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.4rem;">
+                        <i class="fas fa-clipboard-check" style="color: #6366f1;"></i> 3. Status &amp; Compliance
+                    </div>
+                    <label style="font-size: 0.75rem; font-weight: 700; color: var(--slate-700); display: block; margin-bottom: 0.25rem;">Pipeline Status</label>
+                    <select id="takeoff-status" name="status" style="width: 100%; height: 38px; padding: 0 0.65rem; border: 1.5px solid var(--slate-300); border-radius: 6px; font-size: 0.82rem; font-weight: 800; color: var(--slate-900);">
+                        <option value="Invited">📩 Invited</option>
+                        <option value="Plans Downloaded">📂 Plans Downloaded / In Hand</option>
+                        <option value="Takeoff Completed" selected>📐 Takeoff Completed</option>
+                        <option value="Bid Submitted">🚀 Bid Submitted to GC</option>
+                        <option value="Under Review">🔍 Under Review with Estimator</option>
+                        <option value="Awarded">🏆 Contract Awarded</option>
+                        <option value="Lost">❌ Lost / Canceled</option>
+                    </select>
+
+                    <div style="margin-top: 1rem; padding: 0.75rem; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 6px;">
+                        <div style="font-size: 0.72rem; font-weight: 800; color: #047857;"><i class="fas fa-shield-alt"></i> Prequalification Standing</div>
+                        <div style="font-size: 0.7rem; color: #065f46; margin-top: 0.2rem;">W-9 Active • COI $2M Loaded • EMR 0.82 • OSHA 30 Certified</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Addenda & Estimator Scope Notes -->
+            <div style="margin-bottom: 1.5rem;">
+                <label style="font-size: 0.75rem; font-weight: 800; color: var(--slate-700); display: flex; justify-content: space-between; margin-bottom: 0.35rem;">
+                    <span>Scope Breakouts, Addenda &amp; Estimator Notes</span>
+                    <span style="font-size: 0.7rem; color: var(--slate-400); font-weight: 600;">E.g. Building breakouts, dumpster provision, lift rentals, floor sealing</span>
+                </label>
+                <textarea id="takeoff-notes" name="notes" rows="3" style="width: 100%; padding: 0.65rem 0.75rem; border: 1px solid var(--slate-300); border-radius: 6px; font-size: 0.82rem; line-height: 1.4; color: var(--slate-800);"></textarea>
+            </div>
+
+            <!-- Footer Actions -->
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--slate-100); padding-top: 1rem;">
+                <div id="takeoff-modal-message" style="font-size: 0.78rem; font-weight: 700; color: #047857;"></div>
+                <div style="display: flex; gap: 0.75rem;">
+                    <button type="button" onclick="closeModal('modal-commercial-takeoff')" class="isc-btn isc-btn-outline" style="height: 38px; padding: 0 1.25rem; font-size: 0.8rem;">Cancel</button>
+                    <button type="submit" id="btn-save-takeoff" class="isc-btn isc-btn-primary" style="height: 38px; padding: 0 1.75rem; font-size: 0.82rem; font-weight: 800; background: #047857; border-color: #047857;">
+                        <i class="fas fa-check-circle" style="margin-right: 0.4rem;"></i> Commit Estimate to Bid Pipeline
+                    </button>
+                </div>
             </div>
         </form>
     </div>
@@ -8691,6 +9086,195 @@
         }).catch(err => {
             console.error("Copy failed", err);
         });
+    }
+
+    let currentTakeoffBid = null;
+
+    function openCommercialTakeoffModal(bid) {
+        if (!bid) return;
+        currentTakeoffBid = bid;
+
+        document.getElementById('takeoff-bid-id').value = bid.id || '';
+        document.getElementById('takeoff-modal-id-badge').innerText = `Bid #${bid.id}`;
+        document.getElementById('takeoff-modal-project-name').innerText = bid.project_name || 'Subcontract Project';
+        document.getElementById('takeoff-modal-gc-name').innerText = bid.gc_name || 'General Contractor';
+        document.getElementById('takeoff-modal-location').innerText = `${bid.city || 'DFW'}, ${bid.state || 'TX'}`;
+        
+        const platform = bid.platform || 'BuildingConnected';
+        document.getElementById('takeoff-modal-platform-badge').innerText = platform;
+
+        const dueFormatted = bid.bid_due_date ? new Date(bid.bid_due_date).toLocaleDateString() : 'TBD';
+        document.getElementById('takeoff-modal-due-date').innerHTML = `<i class="fas fa-clock"></i> Due: ${dueFormatted}`;
+
+        // Planroom link
+        const planBtn = document.getElementById('takeoff-modal-planroom-btn');
+        if (bid.plan_url) {
+            planBtn.href = bid.plan_url;
+            planBtn.style.display = 'inline-flex';
+        } else if (bid.rfp_url) {
+            planBtn.href = bid.rfp_url;
+            planBtn.style.display = 'inline-flex';
+        } else {
+            planBtn.href = 'https://app.buildingconnected.com';
+            planBtn.style.display = 'inline-flex';
+        }
+
+        // Estimator contact
+        const estName = bid.estimator_name || 'Lead Estimator';
+        document.getElementById('takeoff-modal-estimator-display').innerHTML = `<i class="fas fa-user-tie" style="color: var(--slate-400);"></i> Estimator: ${estName}`;
+        
+        const phone = bid.estimator_phone || '';
+        const cleanPhone = phone.replace(/[^0-9+]/g, '');
+        const phoneBtn = document.getElementById('takeoff-modal-phone-btn');
+        phoneBtn.href = cleanPhone ? `tel:${cleanPhone}` : '#';
+        phoneBtn.innerHTML = `<i class="fas fa-phone-alt"></i> ${phone || 'Call GC'}`;
+
+        const email = bid.estimator_email || '';
+        const emailBtn = document.getElementById('takeoff-modal-email-btn');
+        emailBtn.href = email ? `mailto:${email}` : '#';
+        emailBtn.innerHTML = `<i class="fas fa-envelope"></i> ${email || 'Email'}`;
+
+        // Populate Form Fields
+        const sqft = parseFloat(bid.cleanable_sqft) || 0;
+        document.getElementById('takeoff-cleanable-sqft').value = sqft || '';
+        
+        const val = parseFloat(bid.estimated_value) || 0;
+        document.getElementById('takeoff-estimated-value').value = val ? val.toFixed(2) : '';
+
+        if (bid.scope_phase) {
+            const scopeSelect = document.getElementById('takeoff-scope-phase');
+            let foundScope = false;
+            for (let i = 0; i < scopeSelect.options.length; i++) {
+                if (scopeSelect.options[i].value === bid.scope_phase) {
+                    scopeSelect.selectedIndex = i;
+                    foundScope = true;
+                    break;
+                }
+            }
+            if (!foundScope) {
+                scopeSelect.value = bid.scope_phase;
+            }
+        }
+
+        if (bid.status) {
+            document.getElementById('takeoff-status').value = bid.status;
+        }
+
+        document.getElementById('takeoff-notes').value = bid.special_requirements || bid.notes || '';
+        document.getElementById('takeoff-modal-message').innerText = '';
+
+        // Calculate unit rate & labor hours
+        calculateTakeoffFields('init');
+
+        openModal('modal-commercial-takeoff');
+    }
+
+    function calculateTakeoffFields(origin) {
+        const sqftInput = document.getElementById('takeoff-cleanable-sqft');
+        const ratePerSqftInput = document.getElementById('takeoff-rate-per-sqft');
+        const totalValueInput = document.getElementById('takeoff-estimated-value');
+        const prodRateSelect = document.getElementById('takeoff-production-rate');
+        const laborDisplay = document.getElementById('takeoff-labor-hours-calc');
+
+        const sqft = parseFloat(sqftInput.value) || 0;
+        const prodRate = parseFloat(prodRateSelect.value) || 550;
+
+        // Compute labor hours
+        if (sqft > 0 && prodRate > 0) {
+            const hours = Math.round(sqft / prodRate);
+            laborDisplay.innerText = `${hours.toLocaleString()} Man-Hours`;
+        } else {
+            laborDisplay.innerText = '0 Hours';
+        }
+
+        // Pricing math
+        if (origin === 'sqft' || origin === 'unit_rate') {
+            const unitRate = parseFloat(ratePerSqftInput.value) || 0;
+            if (sqft > 0 && unitRate > 0) {
+                totalValueInput.value = (sqft * unitRate).toFixed(2);
+            }
+        } else if (origin === 'total') {
+            const total = parseFloat(totalValueInput.value) || 0;
+            if (sqft > 0 && total > 0) {
+                ratePerSqftInput.value = (total / sqft).toFixed(2);
+            }
+        } else if (origin === 'init') {
+            const total = parseFloat(totalValueInput.value) || 0;
+            if (sqft > 0 && total > 0) {
+                ratePerSqftInput.value = (total / sqft).toFixed(2);
+            }
+        }
+    }
+
+    function openEstimatorCadenceFromTakeoff() {
+        if (currentTakeoffBid) {
+            closeModal('modal-commercial-takeoff');
+            openEstimatorCadence(currentTakeoffBid);
+        }
+    }
+
+    async function commitCommercialTakeoff(event) {
+        event.preventDefault();
+        const bidId = document.getElementById('takeoff-bid-id').value;
+        const cleanableSqft = parseFloat(document.getElementById('takeoff-cleanable-sqft').value) || 0;
+        const estimatedValue = parseFloat(document.getElementById('takeoff-estimated-value').value) || 0;
+        const scopePhase = document.getElementById('takeoff-scope-phase').value;
+        const status = document.getElementById('takeoff-status').value;
+        const notes = document.getElementById('takeoff-notes').value;
+
+        const saveBtn = document.getElementById('btn-save-takeoff');
+        const msgEl = document.getElementById('takeoff-modal-message');
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Committing Estimate...';
+        msgEl.innerText = '';
+
+        try {
+            const res = await fetch(`/api/v1/bids/${bidId}/commit-estimate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    cleanable_sqft: cleanableSqft,
+                    estimated_value: estimatedValue,
+                    scope_phase: scopePhase,
+                    status: status,
+                    notes: notes
+                })
+            });
+            const data = await res.json();
+            if (res.ok && data.status === 'success') {
+                msgEl.style.color = '#047857';
+                msgEl.innerText = '✓ Takeoff committed successfully to pipeline!';
+                
+                // Update table row live if row exists in view
+                const row = document.getElementById(`bid-row-${bidId}`);
+                if (row) {
+                    const sqfCell = row.querySelector('[data-col="sqf"], td:nth-child(5)');
+                    if (sqfCell) sqfCell.innerHTML = `<div style="font-weight: 800; font-size: 0.88rem; color: var(--slate-900);">${cleanableSqft.toLocaleString()} <span style="font-size: 0.72rem; font-weight: 600; color: var(--slate-400);">SF</span></div>`;
+                    
+                    const valCell = row.querySelector('[data-col="value"], td:nth-child(6)');
+                    if (valCell) valCell.innerHTML = `<div style="font-size: 0.88rem; font-weight: 900; color: #047857;">$${estimatedValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>`;
+                }
+
+                if (typeof showToast === 'function') {
+                    showToast(`Bid #${bidId} takeoff and pricing updated to $${estimatedValue.toLocaleString()}!`, 'success');
+                }
+
+                setTimeout(() => {
+                    closeModal('modal-commercial-takeoff');
+                    window.location.reload();
+                }, 1000);
+            } else {
+                msgEl.style.color = '#b91c1c';
+                msgEl.innerText = data.message || 'Error committing estimate.';
+            }
+        } catch (err) {
+            console.error('Commit error:', err);
+            msgEl.style.color = '#b91c1c';
+            msgEl.innerText = 'Network error committing estimate.';
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="fas fa-check-circle" style="margin-right: 0.4rem;"></i> Commit Estimate to Bid Pipeline';
+        }
     }
 
     async function loadCadenceHistory(bidId) {

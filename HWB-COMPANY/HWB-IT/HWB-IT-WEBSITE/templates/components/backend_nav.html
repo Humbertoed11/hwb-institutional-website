@@ -301,6 +301,9 @@
             <a href="{{ url_for('admin_operations', view='construction_bids') }}" class="sigma-nav-btn {% if request.endpoint == 'admin_operations' and active_view == 'construction_bids' %}active{% endif %}">
                 <i class="fas fa-hard-hat" style="color: #f59e0b;"></i> GC Bids
             </a>
+            <a href="{{ url_for('admin_operations', view='general_contractors') }}" class="sigma-nav-btn {% if request.endpoint == 'admin_operations' and active_view == 'general_contractors' %}active{% endif %}" title="General Contractors Directory & 4-Point Vetting Registry">
+                <i class="fas fa-city" style="color: #0284c7;"></i> General Contractors
+            </a>
             {% endif %}
             {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('institutional_bids', 'view')) or not current_user.custom_permissions %}
             <a href="{{ url_for('admin_operations', view='institutional_bids') }}" class="sigma-nav-btn {% if request.endpoint == 'admin_operations' and active_view == 'institutional_bids' %}active{% endif %}">

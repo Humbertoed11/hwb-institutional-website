@@ -6,7 +6,7 @@ Custodians: George (Systems Architect) & Natalie Navy (CDO)
 
 import os
 import subprocess
-from flask import Blueprint, request, jsonify, render_template, redirect, url_for, current_app
+from flask import Blueprint, request, jsonify, render_template, redirect, url_for, current_app, abort, send_from_directory
 from flask_login import login_required
 from core.services.database import get_db
 from core.services.sanitizer import clean_phone, clean_email
@@ -652,5 +652,74 @@ def api_bid_rfis(bid_id):
         return jsonify({'status': 'error', 'message': str(e)}), 500
     finally:
         if 'conn' in locals() and conn: conn.close()
+
+
+@bids_bp.route('/api/v1/bids/download-file', methods=['GET'])
+@login_required
+def api_bid_download_file():
+    """Securely streams quote files, bid sheets, dossiers, or plans from HWB-QUOTES."""
+    file_path = request.args.get('path', '').strip()
+    if not file_path:
+        abort(400, "Missing path parameter")
+
+    clean_path = file_path
+    for pfx in ['/home/humbertoed/gemini_projects/', '/app/', '/home/humbertoed/gemini_projects', '/app']:
+        if clean_path.startswith(pfx):
+            clean_path = clean_path[len(pfx):]
+            break
+    clean_path = clean_path.lstrip('/')
+    base_app_dir = current_app.root_path  # /app in Docker container
+    target_abs = os.path.normpath(os.path.join(base_app_dir, clean_path))
+
+    allowed_base = os.path.normpath(os.path.join(base_app_dir, 'HWB-COMPANY'))
+    if not target_abs.startswith(allowed_base) or not os.path.exists(target_abs):
+        alt_base = os.path.normpath(os.path.join(base_app_dir, '../../..', clean_path))
+        if os.path.exists(alt_base) and not os.path.isdir(alt_base):
+            target_abs = alt_base
+        else:
+            abort(404, "File not found or access restricted")
+
+    if os.path.isdir(target_abs):
+        abort(400, "Cannot download directory")
+
+    directory = os.path.dirname(target_abs)
+    filename = os.path.basename(target_abs)
+    return send_from_directory(directory, filename, as_attachment=('download' in request.args))
+
+
+@bids_bp.route('/api/v1/bids/<int:bid_id>/commit-estimate', methods=['POST'])
+@login_required
+@roles_required('Executive', 'Admin')
+def api_bid_commit_estimate(bid_id):
+    """Commits recalculated takeoff values, square footage, and pricing to ConstructionBids."""
+    payload = request.get_json() or {}
+    cleanable_sqft = float(payload.get('cleanable_sqft', 0))
+    estimated_value = float(payload.get('estimated_value', 0))
+    scope_phase = payload.get('scope_phase', '').strip()
+    status = payload.get('status', 'Takeoff Completed')
+    notes = payload.get('notes', '')
+
+    db_url = current_app.config['DATABASE_URL']
+    conn = get_db(db_url)
+    try:
+        with conn.cursor() as cur:
+            cur.execute('''
+                UPDATE "ConstructionBids"
+                SET cleanable_sqft = %s,
+                    estimated_value = %s,
+                    scope_phase = COALESCE(NULLIF(%s, ''), scope_phase),
+                    status = %s,
+                    notes = COALESCE(NULLIF(%s, ''), notes),
+                    updated_at = NOW()
+                WHERE id = %s;
+            ''', (cleanable_sqft, estimated_value, scope_phase, status, notes, bid_id))
+            conn.commit()
+        return jsonify({'status': 'success', 'message': f'Bid #{bid_id} updated successfully.'})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        conn.close()
+
 
 
