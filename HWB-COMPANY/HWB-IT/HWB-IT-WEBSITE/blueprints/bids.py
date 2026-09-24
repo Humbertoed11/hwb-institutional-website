@@ -672,15 +672,19 @@ def api_bid_download_file():
     target_abs = os.path.normpath(os.path.join(base_app_dir, clean_path))
 
     allowed_base = os.path.normpath(os.path.join(base_app_dir, 'HWB-COMPANY'))
-    if not target_abs.startswith(allowed_base) or not os.path.exists(target_abs):
-        alt_base = os.path.normpath(os.path.join(base_app_dir, '../../..', clean_path))
-        if os.path.exists(alt_base) and not os.path.isdir(alt_base):
-            target_abs = alt_base
-        else:
-            abort(404, "File not found or access restricted")
+    alt_allowed_base = os.path.normpath(os.path.join(base_app_dir, '../../../HWB-COMPANY'))
 
-    if os.path.isdir(target_abs):
-        abort(400, "Cannot download directory")
+    target_is_valid = False
+    if target_abs.startswith(allowed_base) and os.path.exists(target_abs):
+        target_is_valid = True
+    else:
+        alt_target = os.path.normpath(os.path.join(base_app_dir, '../../..', clean_path))
+        if alt_target.startswith(alt_allowed_base) and os.path.exists(alt_target):
+            target_abs = alt_target
+            target_is_valid = True
+
+    if not target_is_valid or os.path.isdir(target_abs):
+        abort(404, "File not found or access restricted")
 
     directory = os.path.dirname(target_abs)
     filename = os.path.basename(target_abs)
