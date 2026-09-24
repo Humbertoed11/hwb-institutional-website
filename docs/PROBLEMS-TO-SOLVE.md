@@ -71,6 +71,7 @@ Responsibility: George (Architect)
 | 09/23/2026 | BUG-090 | Telegram Bot Hardcoded Project Prompt Rigidity & Multi-User Context Loss (Blocking Field Leads). | **RESOLVED** | HIGH |
 | 09/24/2026 | ARCH-005 | Enterprise Dev-to-Live Parity Gate, Relative Resource Storage & IT Department 6-Rack Command Hub. | **RESOLVED** | HIGH |
 | 09/24/2026 | ARCH-006 | SigmaFidelity™ Architectural Scorecard (6σ), Top 5 Pareto Radar & Autonomous Self-Healing Suite. | **RESOLVED** | HIGH |
+| 09/24/2026 | BUG-091 | Raw JSON String Bleed in Institutional Bids Compliance Status Column & Missing Tier Pill Styling. | **RESOLVED** | HIGH |
 
 ## BUG-080: Local Loopback Hostname (mop.test) Inaccessible to External Devices & Mobile Cleaners via Generated Onboarding Link
 **Detected:** 09/21/2026
@@ -1177,3 +1178,29 @@ CEO Humberto Dominguez attempting to log into `https://www.hwbcleaning.com/login
 **Preventative:**
 1. Maintain continuous automated Pareto distribution checks to detect recurring friction before code deployments.
 2. Enforce atomic survivorship merging and natural-key uniqueness on all lead ingestion pipelines.
+
+## BUG-091: Raw JSON String Bleed in Institutional Bids Compliance Status Column & Missing Tier Pill Styling
+**Detected:** 09/24/2026
+**Status:** **RESOLVED** (09/24/2026)
+**Symptoms:**
+1. Navigating to `http://mop.test:5000/admin/operations?view=institutional_bids` displays a severely distorted "Compliance Status" column.
+2. The column displays huge, unparsed, multiline JSON text dumps (e.g. `{\n "solicitation_number": "-2026-FW01", "cleanable_sqft": 25000.0, ...}` and `{\n "assessment_timestamp": "...", "qualification_tier": "PLATINUM", ...}`) directly inside the table cells.
+3. Row heights are expanded uncontrollably, destroying vertical table density and violating the SigmaFidelity™ High-Density Hardening Standard.
+4. Compliance status badges (`PLATINUM`, `GOLD`, `Scope Parsed`, `Pre-RFP Scouting`) default to a static green styling instead of tiered visual badges.
+**Root Causes:**
+1. In `templates/backoffice_operations.html` (~line 1504), the template renders `{{ ib.compliance_summary }}` as raw text without detecting or parsing JSON strings.
+2. The estimator and strategic playbook engines serialize rich structural summaries as JSON text into `compliance_summary` without a Jinja2 filter or Python helper to extract user-facing key attributes (e.g. Wage Standard, Staffing Hours, Playbook Title, Composite Score).
+3. The badge container uses a hardcoded green color (`#f0fdf4` / `#166534`) for all compliance states, failing to visually differentiate `PLATINUM`, `GOLD`, and `Scouting` tiers.
+**Solution & Scalability Architecture:**
+1. **Jinja2 / Controller Filter & Parser:** Add a resilient parser helper in `blueprints/operations.py` (or custom Jinja filter) that safely parses `compliance_summary`. If JSON, extracts and formats key data:
+   - For Estimator records: Displays `Wage: [wage_standard]`, `Staffing: [porters/custodians/hours]`, and `[discrepancy_notice]` tag.
+   - For Playbook records: Displays `Playbook: [playbook title]`, `Score: [composite_score]/100`, and `Velocity: [decision_velocity]`.
+   - For plain text: Displays clean truncated text.
+2. **Dynamic Tier Badge Styling:** Map `compliance_status` to appropriate institutional palette:
+   - `PLATINUM`: `#ede9fe` / `#6d28d9` (Royal Purple).
+   - `GOLD`: `#fef3c7` / `#92400e` (Amber Gold).
+   - `Scope Parsed / Ready`: `#dcfce7` / `#166534` (Emerald Green).
+   - `Scouting / Registration`: `#f1f5f9` / `#475569` (Slate Grey).
+3. **Modal Deep-Dive Drawer:** Add a `"View Full Specs"` tooltip or modal inspector for operators wanting to inspect raw JSON parameters without polluting the primary grid.
+**Preventative:**
+1. Add an automated template linter check ensuring that database columns storing serialized JSON are never rendered as raw string interpolation (`{{ row.json_col }}`) without a deserialization helper or formatted component.

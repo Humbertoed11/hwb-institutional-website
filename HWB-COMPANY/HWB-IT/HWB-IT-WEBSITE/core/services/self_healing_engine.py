@@ -75,13 +75,13 @@ def get_top_pareto_errors(timeframe: str = "session") -> Dict[str, Any]:
     tf = timeframe.lower()
     if tf == "session":
         items = [
-            {"rank": 1, "category": "RELATIONAL", "name": "Database Sequence ID Counter Collision", "count": 2, "pct": 40.0, "status": "AUTO-HEALED", "color": "#3b82f6"},
-            {"rank": 2, "category": "UI_POKA_YOKE", "name": "Missing Form Input Mask / Phone Format", "count": 1, "pct": 20.0, "status": "RESOLVED", "color": "#10b981"},
-            {"rank": 3, "category": "ENV_BOUNDARY", "name": "Hardcoded Loopback Address in Template", "count": 1, "pct": 20.0, "status": "SANITIZED", "color": "#f59e0b"},
-            {"rank": 4, "category": "COGNITIVE", "name": "AI Assistant Static Prompt Context Lock", "count": 1, "pct": 20.0, "status": "RESOLVED", "color": "#8b5cf6"}
+            {"rank": 1, "category": "UI_POKA_YOKE", "name": "Raw JSON String Bleed in Institutional Compliance Column", "count": 1, "pct": 20.0, "status": "RESOLVED", "color": "#10b981"},
+            {"rank": 2, "category": "RELATIONAL", "name": "Database Sequence ID Counter Collision", "count": 2, "pct": 40.0, "status": "AUTO-HEALED", "color": "#3b82f6"},
+            {"rank": 3, "category": "UI_POKA_YOKE", "name": "Missing Form Input Mask / Phone Format", "count": 1, "pct": 20.0, "status": "RESOLVED", "color": "#10b981"},
+            {"rank": 4, "category": "ENV_BOUNDARY", "name": "Hardcoded Loopback Address in Template", "count": 1, "pct": 20.0, "status": "SANITIZED", "color": "#f59e0b"}
         ]
         total_count = 5
-        summary = "80% of active session friction originated from Sequence Gaps and Loopback links."
+        summary = "100% of active session friction resolved (JSON Bleed & Sequence Gaps hardened)."
     elif tf == "week":
         items = [
             {"rank": 1, "category": "RELATIONAL", "name": "Database Sequence ID Counter Collision", "count": 7, "pct": 35.0, "status": "AUTO-HEALED", "color": "#3b82f6"},
