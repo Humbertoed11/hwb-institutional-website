@@ -7,7 +7,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-7.7</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.0.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">8.1 & 8.2 (Operational Planning & Requirements Review)</span></div>
     </div>
@@ -23,11 +23,11 @@
             <tbody>
                 <tr><td><strong>Document Title</strong></td><td><strong>Commercial Construction Takeoff, Planroom Ingestion, and Estimating Engine SOP</strong></td></tr>
                 <tr><td><strong>Document ID</strong></td><td>HWB-QMS-7.7</td></tr>
-                <tr><td><strong>Version</strong></td><td>2.0.0</td></tr>
+                <tr><td><strong>Version</strong></td><td>3.0.0</td></tr>
                 <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
                 <tr><td><strong>Author</strong></td><td>George (Systems Architect)</td></tr>
                 <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
-                <tr><td><strong>Date</strong></td><td>09/21/2026</td></tr>
+                <tr><td><strong>Date</strong></td><td>09/23/2026</td></tr>
                 <tr><td><strong>ISO 9001 Clause</strong></td><td>8.1 & 8.2</td></tr>
             </tbody>
         </table>
@@ -99,6 +99,16 @@
             <li><strong>Mobile Dispatch:</strong> Send a 1-tap interactive card to CEO Humberto Dominguez's Telegram bot with instant buttons: <code>Approve & Submit</code>, <code>Adjust Scope</code>, or <code>View Specs</code>.</li>
         </ol>
 
+        <h3>3.4 Automated 4-Point GC Vetting Engine & Autonomous Profile Completer</h3>
+        <p>To eliminate wasted estimator hours and protect cash flow, all inbound invitations to bid must pass through the automated 4-point vetting scorecard (<code>core/services/gc_vetting_engine.py</code>) prior to takeoff preparation:</p>
+        <ol>
+            <li><strong>Pillar 1: Corporate Standing & SOS Charter (25 Pts):</strong> Verifies active corporate registration and franchise tax good standing via the Texas Secretary of State / Comptroller. Foreign entities operating in Texas must hold active foreign authority.</li>
+            <li><strong>Pillar 2: Payment Terms & Retainage Integrity (25 Pts):</strong> Audits subcontractor agreements for standard AIA G702 progress billing, Net 30 terms, and capped 5%–10% retainage. Bids requiring non-standard 90-day pay-when-paid clauses are penalized or flagged.</li>
+            <li><strong>Pillar 3: Geographic Cluster & Mobilization (25 Pts):</strong> Scores project proximity against HWB's 90-mile operating cluster (DFW Metroplex down to Waco). Remote bids (>150 miles) require guaranteed mobilization riders.</li>
+            <li><strong>Pillar 4: Profile Completeness & Estimator Contact (25 Pts):</strong> Requires a named estimator, direct phone number, cleanable square footage, and project street address.</li>
+            <li><strong>Autonomous Profile Completer Protocol:</strong> When incoming ITBs have incomplete profiles (missing phone numbers, generic estimator titles, or blank square footage), the system autonomously retrieves full email bodies, parses email signatures and attachments, and enriches data from the Master <code>GeneralContractors</code> directory.</li>
+        </ol>
+
         <h2>4.0 Verification (Zero-Defect Check)</h2>
         <ul>
             <li><strong>Mathematical Verification:</strong> Sum of rough, final, touch-up, and specialty line items must exactly equal total proposal value without rounding drift.</li>
@@ -123,11 +133,17 @@
                     <td>George</td>
                     <td>Initial Release. Standardized planroom ingestion, PyMuPDF finish schedule extraction, CSI 01 74 23 3-phase pricing engine, and the Empirical Integrity Mandate for architectural takeoffs. Approved by CEO.</td>
                 </tr>
-                            <tr>
+                <tr>
                     <td style="text-align: left;">2.0.0</td>
                     <td style="text-align: left;">09/21/2026</td>
                     <td style="text-align: left;">George (Systems Architect)</td>
                     <td style="text-align: left;">Modernized and upgraded to post-May 1st, 2026 baseline. Standardized under HWB-QMS-1.0 v2.0 (Everyday Words) and approved by Humberto Dominguez, CEO.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">3.0.0</td>
+                    <td style="text-align: left;">09/23/2026</td>
+                    <td style="text-align: left;">George (Systems Architect)</td>
+                    <td style="text-align: left;">Added Section 3.4: Automated 4-Point GC Vetting Engine, Master GeneralContractors Registry, and Autonomous Profile Completer Protocol. Approved by Humberto Dominguez, CEO.</td>
                 </tr>
             </tbody>
         </table>

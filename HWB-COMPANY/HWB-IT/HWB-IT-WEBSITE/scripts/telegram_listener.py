@@ -726,30 +726,20 @@ def dispatch_graph_email(record_id):
 
         # Check for brand asset / logo attachments
         attachments = []
-        is_logo_requested = any(w in item["subject"].lower() or w in item["body"].lower() for w in ["logo", "brand asset", "branding"])
-        has_cid_logo = "cid:hwblogo" in item["body"]
-
-        if is_logo_requested or has_cid_logo:
+        if any(w in item["subject"].lower() or w in item["body"].lower() for w in ["logo", "brand asset", "branding"]):
             logo_candidates = [
-                "/app/static/logo_standard.png",
-                os.path.join(BASE_DIR, "static", "logo_standard.png"),
-                "/home/humbertoed/gemini_projects/HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/static/logo_standard.png",
-                "/app/static/img/hwb_commercial_cleaning_logo.png",
-                os.path.join(BASE_DIR, "static", "img", "hwb_commercial_cleaning_logo.png")
+                "/app/static/1-hwb-cleaning-services-llc-logo-plano-tx.png",
+                os.path.join(BASE_DIR, "static", "1-hwb-cleaning-services-llc-logo-plano-tx.png")
             ]
             for lpath in logo_candidates:
                 if os.path.exists(lpath):
                     with open(lpath, "rb") as lf:
-                        att_dict = {
+                        attachments.append({
                             "@odata.type": "#microsoft.graph.fileAttachment",
-                            "name": "logo_standard.png",
+                            "name": "1-hwb-cleaning-services-llc-logo-plano-tx.png",
                             "contentType": "image/png",
                             "contentBytes": base64.b64encode(lf.read()).decode("utf-8")
-                        }
-                        if has_cid_logo:
-                            att_dict["contentId"] = "hwblogo"
-                            att_dict["isInline"] = True
-                        attachments.append(att_dict)
+                        })
                     break
 
         email_payload = {
@@ -781,9 +771,9 @@ def dispatch_graph_email(record_id):
             conn.close()
 
 
-# --- COLLIN COLLEGE FRISCO CAMPUS MASTER SPECIFICATIONS ---
+# --- MASTER SPECIFICATIONS & DYNAMIC RESOLVER CAPSULES ---
 COLLIN_COLLEGE_CONTEXT = """
-COLLIN COLLEGE FRISCO CAMPUS OPERATIONAL & PRICING SPECIFICATIONS:
+ACTIVE PROJECT: COLLIN COLLEGE FRISCO CAMPUS OPERATIONAL & PRICING SPECIFICATIONS:
 - Project: Collin College Frisco Campus Custodial Replacement (RFP # FY2024-RFP-005 Replacement).
 - Prime Partner: Bosanna LLC (Attn: Angelica Hudgins). TIPS Contracts: #260103 / #260102.
 - Total Footprint: 478,418 Cleanable SF across 10 Campus Buildings.
@@ -832,31 +822,137 @@ COLLIN COLLEGE FRISCO CAMPUS OPERATIONAL & PRICING SPECIFICATIONS:
   * Pritchard Industries Southwest defaulted under RFP # FY2024-RFP-005 ($14.5M 3-yr / $4.95M annual district-wide contract) due to chronic staffing shortages and supervisory failure. Collin College T&C § 41 allows District to backcharge replacement costs.
 """
 
+HORIZON_PREMIER_CONTEXT = """
+ACTIVE PROJECT: HORIZON AT PREMIER (PLANO, TX)
+- Facility: Horizon at Premier (Multi-Family Townhome Community).
+- Address: 3409 Premier Dr, Plano, TX 75023.
+- Community Size: 122 Homes / Multi-Family Townhome Doors.
+- Primary Scope: Doorstep Valet Trash & Recycling Removal.
+- Schedule / Frequency: 7 Nights a Week (Daily evening collection between 7:00 PM - 9:00 PM).
+- Collection Workflow: Nightly collection from resident doorstep receptacles directly to community dumpsters/compactors.
+- Benchmarks & Financial Formulas:
+  * Benchmark Door Rate: $20.00 - $25.00 / door / month.
+  * Recommended Base Submittal: $22.50 / door / month ($2,745.00/mo | $32,940.00/yr).
+  * Conservative Tier: $18.00 / door / month ($2,196.00/mo | $26,352.00/yr).
+  * Premium 7-Night Tier: $25.00 / door / month ($3,050.00/mo | $36,600.00/yr).
+  * Direct Labor Requirement: 1 Porter, 1.5 - 2.0 hrs/night @ $20.00/hr = ~$900 - $1,200/mo labor COGS.
+  * Gross Margin: ~55% - 65% for valet waste management.
+- Database Record: Lead #82474 (Status: Walkthrough Completed by Mirna Rondinella).
+- Operational Directives:
+  * Validate compactor access, gate remotes, and collection protocol.
+  * Confirm that CEO Humberto Dominguez holds approval authority for the final client proposal.
+"""
+
+def get_dynamic_session_context(chat_id, incoming_text="", caption=""):
+    """
+    Dynamic Project & Problem Resolver:
+    1. Identifies topic pivots from message content or user directives.
+    2. Updates and retrieves session context in UserBehavioralProfiles per user.
+    3. Dynamically queries PostgreSQL for live Lead, Opportunity, or Construction Bid data.
+    4. Seamlessly adapts system prompts without rigid hardcoded lockouts.
+    """
+    combined_query = f"{incoming_text} {caption}".lower()
+
+    new_context = None
+    if any(k in combined_query for k in ["horizon", "premier", "3409 premier", "valet trash", "trash pickup", "waste management", "122 home", "122 unit"]):
+        new_context = "HORIZON_PREMIER"
+    elif any(k in combined_query for k in ["collin college", "frisco campus", "rfp-005", "pritchard", "heritage hall", "founders hall"]):
+        new_context = "COLLIN_COLLEGE"
+    elif any(k in combined_query for k in ["stop", "reset", "clear project", "different project", "new project"]) and not any(k in combined_query for k in ["horizon", "collin"]):
+        new_context = "GENERAL"
+
+    active_context = None
+    extra_db_context = ""
+    try:
+        conn = get_db_connection()
+        with conn.cursor() as cur:
+            if new_context:
+                cur.execute("""
+                    UPDATE "UserBehavioralProfiles"
+                    SET active_project_context = %s
+                    WHERE chat_id = %s;
+                """, (new_context, chat_id))
+                conn.commit()
+                active_context = new_context
+            else:
+                cur.execute("""
+                    SELECT active_project_context FROM "UserBehavioralProfiles"
+                    WHERE chat_id = %s;
+                """, (chat_id,))
+                row = cur.fetchone()
+                active_context = row[0] if row and row[0] else None
+
+            # Dynamic database lookup if user mentions specific property or address
+            words = [w for w in re.findall(r'[A-Za-z0-9]{4,}', combined_query) if w not in ["project", "clean", "about", "there", "their", "please", "george", "hello", "trash", "pickup", "frisco", "plano", "college", "horizon"]]
+            if words:
+                search_term = f"%{words[0]}%"
+                cur.execute("""
+                    SELECT id, center_name, address, city, notes, estimated_annual_value
+                    FROM "Leads"
+                    WHERE center_name ILIKE %s OR address ILIKE %s
+                    ORDER BY id DESC LIMIT 1;
+                """, (search_term, search_term))
+                lead_match = cur.fetchone()
+                if lead_match:
+                    extra_db_context = (
+                        f"\n\nDATABASE MATCH FOUND (Lead #{lead_match[0]}):\n"
+                        f"- Facility: {lead_match[1]}\n"
+                        f"- Address: {lead_match[2]}, {lead_match[3]}\n"
+                        f"- Estimated Value: ${lead_match[5] or 0:,.2f}\n"
+                        f"- Recorded Notes: {lead_match[4] or 'None'}\n"
+                    )
+        conn.close()
+    except Exception as e:
+        print(f"[DYNAMIC RESOLVER ERROR] {e}", flush=True)
+        active_context = new_context or "GENERAL"
+        extra_db_context = ""
+
+    if active_context == "HORIZON_PREMIER":
+        return HORIZON_PREMIER_CONTEXT + extra_db_context
+    elif active_context == "COLLIN_COLLEGE":
+        return COLLIN_COLLEGE_CONTEXT + extra_db_context
+    else:
+        return """
+ACTIVE OPERATIONAL CONTEXT (GENERAL PIPELINE):
+- You have unrestricted access to all active operations, leads, and bids for HWB Cleaning Services LLC.
+- Active Focus Areas:
+  * Horizon at Premier (3409 Premier Dr, Plano - 122 units, 7 days/wk valet waste removal - Lead #82474)
+  * Collin College Frisco Campus Custodial Replacement (478,418 SF, 10 buildings, RFP # FY2024-RFP-005 Replacement)
+  * North Texas Daycare & Commercial Pipeline (10,000+ facilities in DFW)
+- OPERATIONAL DIRECTIVE: Listen carefully to the user's project, location, or walk-through observations. Do not force them into an unrelated project. Acknowledge their exact numbers (units, square footage, frequencies, addresses), record their findings, and assist with immediate estimation and operational execution.
+""" + extra_db_context
+
+
 # --- GEMINI MULTIMODAL REASONING (VOICE & VISION) ---
 
-def analyze_voice_with_gemini(audio_bytes):
+def analyze_voice_with_gemini(audio_bytes, chat_id=None):
     """Uses Gemini 2.5 Flash to transcribe and parse executive intent from voice notes."""
     if not GEMINI_API_KEY:
         return None, "GEMINI_API_KEY not configured."
     b64_audio = base64.b64encode(audio_bytes).decode("utf-8")
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
+    
+    actor_user = get_user_for_chat(chat_id) if chat_id else None
+    actor_name = actor_user.get("name", "CEO Humberto Dominguez") if actor_user else "Team Member"
+    dynamic_context = get_dynamic_session_context(chat_id) if chat_id else COLLIN_COLLEGE_CONTEXT
+
     prompt = (
         "You are George, Lead Systems Architect and Senior Estimator for HWB Cleaning Services LLC.\n"
-        "Listen to this executive voice memo from CEO Humberto Dominguez.\n\n"
-        f"{COLLIN_COLLEGE_CONTEXT}\n\n"
+        f"Listen to this field voice memo from {actor_name}.\n\n"
+        f"{dynamic_context}\n\n"
         "1. Transcribe the exact words spoken.\n"
         "2. Identify the operational intent:\n"
-        "   - 'create_calendar_event': Humberto wants a meeting, site walkthrough, or appointment scheduled.\n"
-        "   - 'draft_email': Humberto wants an email, quote, or proposal prepared.\n"
-        "   - 'send_proposal': Humberto wants the Collin College Excel model or bid proposal transmitted.\n"
-        "   - 'update_bid': Humberto wants to modify a bid price, status, or scope.\n"
+        "   - 'create_calendar_event': Wants a meeting, site walkthrough, or appointment scheduled.\n"
+        "   - 'draft_email': Wants an email, quote, or proposal prepared.\n"
+        "   - 'send_proposal': Wants a bid proposal or model transmitted.\n"
+        "   - 'update_bid': Wants to modify a bid price, status, or scope.\n"
         "   - 'strategic_note': General directive, walkthrough observation, or operational command.\n"
         "3. Output MUST start with a JSON code block with fields:\n"
         "```json\n"
         "{\"intent\": \"create_calendar_event\"|\"draft_email\"|\"send_proposal\"|\"update_bid\"|\"strategic_note\", "
         "\"title\": \"...\", \"recipient\": \"...\", \"date_time\": \"...\", \"summary\": \"...\", \"bid_id\": 17}\n"
         "```\n"
-        "Followed by a concise, authoritative executive briefing with emojis and bold headers."
+        "Followed by a concise, authoritative field briefing with emojis and bold headers."
     )
     payload = {
         "contents": [{
@@ -874,26 +970,31 @@ def analyze_voice_with_gemini(audio_bytes):
     except Exception as e:
         return None, str(e)
 
-def analyze_photo_with_gemini(image_bytes, caption=""):
+def analyze_photo_with_gemini(image_bytes, caption="", chat_id=None):
     """Uses Gemini 2.5 Flash Vision to extract blueprints, finish schedules, and site conditions."""
     if not GEMINI_API_KEY:
         return None, "GEMINI_API_KEY not configured."
     b64_img = base64.b64encode(image_bytes).decode("utf-8")
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
+    
+    actor_user = get_user_for_chat(chat_id) if chat_id else None
+    actor_name = actor_user.get("name", "CEO Humberto Dominguez") if actor_user else "Team Member"
+    dynamic_context = get_dynamic_session_context(chat_id, caption=caption) if chat_id else COLLIN_COLLEGE_CONTEXT
+
     prompt = (
         "You are George, Lead Systems Architect and Senior Estimator for HWB Cleaning Services LLC.\n"
-        "Analyze this construction blueprint sheet, finish schedule, or jobsite photo taken by CEO Humberto Dominguez.\n\n"
-        f"{COLLIN_COLLEGE_CONTEXT}\n\n"
-        f"Context/Caption provided by CEO: \"{caption or 'Collin College Frisco Campus Walkthrough'}\"\n\n"
+        f"Analyze this construction blueprint sheet, finish schedule, or jobsite photo taken by {actor_name}.\n\n"
+        f"{dynamic_context}\n\n"
+        f"Context/Caption provided: \"{caption or 'Facility Walkthrough'}\"\n\n"
         "Provide a surgically precise industrial analysis:\n"
-        "1. 🏢 Building / Space & Substrate Identified (VCT, Terrazzo, Ceramic Tile, Carpet, Sealed Concrete)\n"
-        "2. 🔍 Condition & Wear Assessment (wax buildup, yellowing, grout discoloration, scratches, traffic lanes)\n"
-        "3. 🧹 Restorative Maintenance Scope Required (Tri-annual deep strip & 4-coat wax, diamond hone, Kaivac restroom wash, hot-water carpet extraction)\n"
-        "4. ⚠️ Forensic Discrepancies, Hidden Pitfalls, or Backcharge Risks against Incumbent (Pritchard Industries)\n\n"
+        "1. 🏢 Building / Space & Substrate Identified (VCT, Terrazzo, Ceramic Tile, Carpet, Sealed Concrete, Waste Areas)\n"
+        "2. 🔍 Condition & Wear Assessment (wax buildup, yellowing, grout discoloration, scratches, traffic lanes, trash accumulation)\n"
+        "3. 🧹 Restorative Maintenance Scope Required (Tri-annual deep strip & 4-coat wax, Kaivac wash, hot-water extraction, waste staging)\n"
+        "4. ⚠️ Forensic Discrepancies, Hidden Pitfalls, or Backcharge Risks\n\n"
         "Format cleanly with bold headers and emojis for mobile reading.\n"
         "Conclude with a JSON block:\n"
         "```json\n"
-        "{\"project_name\": \"Collin College Walkthrough\", \"estimated_sqft\": 15000, \"primary_floor\": \"VCT/Terrazzo\", \"is_clinical\": false}\n"
+        "{\"project_name\": \"Site Walkthrough\", \"estimated_sqft\": 15000, \"primary_floor\": \"VCT/Terrazzo\", \"is_clinical\": false}\n"
         "```"
     )
     payload = {
@@ -914,7 +1015,7 @@ def analyze_photo_with_gemini(image_bytes, caption=""):
 
 
 def analyze_text_with_gemini(text, chat_id):
-    """Conversational field intelligence for team members on Telegram."""
+    """Conversational field intelligence for team members on Telegram with Dynamic Resolver."""
     if not GEMINI_API_KEY:
         return "⚠️ GEMINI_API_KEY not configured.", None
 
@@ -924,15 +1025,19 @@ def analyze_text_with_gemini(text, chat_id):
     actor_name = actor_user.get("name", "CEO Humberto Dominguez") if actor_user else "Team Member"
     actor_role = actor_user.get("role", "Executive") if actor_user else "Team Member"
 
+    # Dynamic Resolver Context Capsule
+    dynamic_context = get_dynamic_session_context(chat_id, incoming_text=text)
+
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
     system_prompt = (
         "You are George, Lead Autonomous Systems Architect, Senior Estimator, Senior ISO 9001 Auditor, and Certified Lean Six Sigma Master Black Belt for HWB Cleaning Services LLC.\n"
         f"You are conversing directly in real-time with {actor_name} ({actor_role}) via Telegram during mobile operations and facility walkthroughs.\n\n"
-        f"{COLLIN_COLLEGE_CONTEXT}\n\n"
+        f"{dynamic_context}\n\n"
         "OPERATIONAL RULES:\n"
         "1. Strictly maintain a professional, authoritative tone. Use everyday words, bold headers, bullet points, and emojis suitable for mobile reading.\n"
         f"2. Tailor your responses to {actor_name}'s role ({actor_role}). For executives, provide exact financial figures, margins, and operational approvals. For operators, provide clear workflows, candidate details, and task schedules.\n"
-        "3. If the user gives an operational directive, include an optional JSON block at the very start of your response:\n"
+        "3. Never force the user back into an unrelated project if they state they are working on a different lead, location, or facility.\n"
+        "4. If the user gives an operational directive, include an optional JSON block at the very start of your response:\n"
         "```json\n"
         "{\n"
         '  "intent": "create_calendar_event" | "draft_email" | "send_proposal" | "conversational",\n'
@@ -943,7 +1048,7 @@ def analyze_text_with_gemini(text, chat_id):
         '  "bid_id": 17\n'
         "}\n"
         "```\n"
-        f"4. Follow the JSON block with your crisp, high-impact operational response to {actor_name}."
+        f"5. Follow the JSON block with your crisp, high-impact operational response to {actor_name}."
     )
 
     payload = {
@@ -1929,7 +2034,7 @@ def handle_voice_message(voice_obj, chat_id):
             vf.write(audio_bytes)
 
         # Gemini Multimodal Speech Reasoning
-        gemini_result, err = analyze_voice_with_gemini(audio_bytes)
+        gemini_result, err = analyze_voice_with_gemini(audio_bytes, chat_id=chat_id)
         if err:
             send_telegram_message(chat_id, f"⚠️ Voice analysis error: {err}")
             return
@@ -2072,7 +2177,7 @@ def handle_photo_message(photo_list, chat_id, caption=""):
             except Exception as pe:
                 print(f"[GPS] Plotter error: {pe}", flush=True)
 
-        gemini_result, err = analyze_photo_with_gemini(img_bytes, caption=caption)
+        gemini_result, err = analyze_photo_with_gemini(img_bytes, caption=caption, chat_id=chat_id)
         if err:
             send_telegram_message(chat_id, f"⚠️ Vision analysis error: {err}")
             return

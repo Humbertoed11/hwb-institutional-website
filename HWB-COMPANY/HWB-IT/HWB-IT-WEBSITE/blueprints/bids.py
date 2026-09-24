@@ -19,6 +19,7 @@ from core.services.estimator import (
     calculate_federal_sca_bid,
     get_sca_wage_determination
 )
+from core.services.gc_vetting_engine import GCVettingEngine
 
 bids_bp = Blueprint('bids', __name__)
 
@@ -198,6 +199,51 @@ def api_bid_edit(bid_id):
             return jsonify({'status': 'success', 'message': 'Bid parameters updated.'})
     except Exception as e:
         conn.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        if 'conn' in locals() and conn: conn.close()
+
+# --- GC Vetting & Profile Completer Engine (Option 1 Standard) ---
+
+@bids_bp.route('/api/v1/gc-vetting/<int:bid_id>/enrich', methods=['POST'])
+@login_required
+@roles_required('Executive', 'Admin', 'Manager', 'Estimator')
+def api_enrich_single_bid(bid_id):
+    """Executes on-demand autonomous profile enrichment and 4-point vetting for a bid."""
+    db_url = current_app.config['DATABASE_URL']
+    res = GCVettingEngine.enrich_single_bid(bid_id, db_url)
+    status_code = 200 if res.get('status') == 'success' else 500
+    return jsonify(res), status_code
+
+@bids_bp.route('/api/v1/gc-vetting/enrich-all', methods=['POST'])
+@login_required
+@roles_required('Executive', 'Admin', 'Manager')
+def api_enrich_all_bids():
+    """Executes batch autonomous profile completion across all commercial construction bids."""
+    db_url = current_app.config['DATABASE_URL']
+    summary = GCVettingEngine.enrich_all_bids(db_url)
+    return jsonify(summary)
+
+@bids_bp.route('/api/v1/general-contractors', methods=['GET'])
+@login_required
+def api_list_general_contractors():
+    """Fetches master directory of vetted general contractors."""
+    db_url = current_app.config['DATABASE_URL']
+    conn = get_db(db_url)
+    try:
+        with conn.cursor() as cur:
+            cur.execute('''
+                SELECT id, company_name, legal_name, headquarters_address, city, state, zipcode,
+                       corporate_phone, website, entity_type, sos_status, certifications,
+                       lead_estimator_name, lead_estimator_title, lead_estimator_email, lead_estimator_phone,
+                       payment_terms, billing_format, retainage_pct, pay_rating, operating_radius_miles,
+                       primary_market, vetting_score, vetting_tier, vetting_notes, is_verified
+                FROM "GeneralContractors"
+                ORDER BY vetting_score DESC, company_name ASC;
+            ''')
+            rows = cur.fetchall()
+            return jsonify({'status': 'success', 'count': len(rows), 'general_contractors': [dict(r) for r in rows]})
+    except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
     finally:
         if 'conn' in locals() and conn: conn.close()

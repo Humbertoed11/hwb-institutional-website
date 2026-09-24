@@ -258,6 +258,7 @@ def calculate_commercial_gc_bid(
         "touchup_clean_total": touchup_clean_val,
         "high_glass_total": high_glass_val,
         "lift_rental": lift_rental,
+        "subtotal_services": subtotal_services,
         "submittal_total": published_submittal,
         "negotiation_triad": {
             "published_submittal_price": published_submittal,

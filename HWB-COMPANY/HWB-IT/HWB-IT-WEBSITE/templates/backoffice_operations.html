@@ -1076,6 +1076,9 @@
                         <button onclick="syncGCBids()" class="sigma-mini-btn" id="btn-sync-bids" style="padding: 0 1rem; font-size: 0.75rem; display: flex; align-items: center; gap: 0.4rem; height: 38px; border-radius: 0.75rem;">
                             <i class="fas fa-sync-alt" id="icon-sync-bids"></i> Sync Graph Inbound ITBs
                         </button>
+                        <button onclick="enrichAllGCBids()" class="sigma-mini-btn" id="btn-enrich-all-bids" style="padding: 0 1rem; font-size: 0.75rem; display: flex; align-items: center; gap: 0.4rem; height: 38px; border-radius: 0.75rem; background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0;">
+                            <i class="fas fa-shield-alt"></i> 4-Point GC Vetting & Auto-Complete
+                        </button>
                         <button onclick="openModal('modal-add-bid')" class="isc-btn isc-btn-primary" style="height: 38px; padding: 0 1.25rem; font-size: 0.78rem; font-weight: 800; border-radius: 0.75rem; display: inline-flex; align-items: center; gap: 0.5rem;">
                             <i class="fas fa-plus"></i> New Subcontract Bid
                         </button>
@@ -1260,9 +1263,28 @@
                                     </td>
                                     {% elif col_key == 'prequal' %}
                                     <td>
-                                        <span style="font-size: 0.68rem; font-weight: 800; padding: 0.2rem 0.5rem; border-radius: 4px; background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0;">
+                                        {% if bid.vetting_tier == 'Tier 1 - Preferred Prime' %}
+                                        <span style="font-size: 0.68rem; font-weight: 800; padding: 0.2rem 0.5rem; border-radius: 4px; background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0;" title="Score: {{ bid.vetting_score }}/100 | {{ bid.standing_status }} | {{ bid.payment_terms }}">
+                                            <i class="fas fa-shield-alt"></i> Tier 1 Prime ({{ bid.vetting_score }})
+                                        </span>
+                                        {% elif bid.vetting_tier == 'Tier 2 - National Retail' %}
+                                        <span style="font-size: 0.68rem; font-weight: 800; padding: 0.2rem 0.5rem; border-radius: 4px; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;" title="Score: {{ bid.vetting_score }}/100 | {{ bid.standing_status }} | {{ bid.payment_terms }}">
+                                            <i class="fas fa-store"></i> Tier 2 Retail ({{ bid.vetting_score }})
+                                        </span>
+                                        {% elif bid.vetting_tier == 'Tier 3 - Planroom Broadcast' %}
+                                        <span style="font-size: 0.68rem; font-weight: 800; padding: 0.2rem 0.5rem; border-radius: 4px; background: #fefce8; color: #a16207; border: 1px solid #fde047;" title="Score: {{ bid.vetting_score }}/100 | {{ bid.standing_status }}">
+                                            <i class="fas fa-broadcast-tower"></i> Tier 3 ({{ bid.vetting_score }})
+                                        </span>
+                                        {% else %}
+                                        <span style="font-size: 0.68rem; font-weight: 800; padding: 0.2rem 0.5rem; border-radius: 4px; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;">
                                             {{ bid.prequal_status or 'Pre-Qualified' }}
                                         </span>
+                                        {% endif %}
+                                        {% if bid.profile_completeness_pct %}
+                                        <div style="font-size: 0.62rem; color: var(--slate-500); margin-top: 0.2rem; font-weight: 600;">
+                                            Profile: {{ bid.profile_completeness_pct }}%
+                                        </div>
+                                        {% endif %}
                                     </td>
                                     {% elif col_key == 'special_reqs' %}
                                     <td>
@@ -1279,6 +1301,9 @@
                                     {% elif col_key == 'actions' %}
                                     <td style="text-align: right;">
                                         <div style="display: flex; gap: 0.4rem; justify-content: flex-end; align-items: center;">
+                                            <button onclick='enrichGCBid({{ bid.id }})' class="sigma-mini-btn" title="Run 4-Point Vetting & Autonomous Profile Completer" style="color: #0369a1; border-color: #bae6fd; background: #f0f9ff;">
+                                                <i class="fas fa-magic"></i> Enrich
+                                            </button>
                                             <button onclick='openEstimatorCadence({{ bid|tojson }})' class="sigma-mini-btn" title="Open 2-Minute Estimator Follow-Up Script & Direct Dial" style="color: #b45309; border-color: #fcd34d; background: #fffbeb;">
                                                 <i class="fas fa-phone-volume"></i> Cadence
                                             </button>
@@ -5378,6 +5403,7 @@
                     <div class="sigma-form-group">
                         <span class="sigma-form-header">Identity</span>
                         <div class="sigma-field"><label>Company Name</label><input type="text" id="edit-lead-company" name="company_name" required class="sigma-input"></div>
+                        <div class="sigma-field"><label>Umbrella / Corporate Parent</label><input type="text" id="edit-lead-umbrella" name="umbrella_name" placeholder="e.g. Fractal Education Group" class="sigma-input"></div>
                         <div class="sigma-field"><label>Main Manager</label><input type="text" id="edit-lead-dm" name="decision_maker" class="sigma-input"></div>
                         <div class="sigma-field"><label>Manager Title</label><input type="text" id="edit-lead-job-title" name="job_title" class="sigma-input"></div>
                         <div class="sigma-field"><label>Email Address</label><input type="email" id="edit-lead-email" name="email" class="sigma-input"></div>
@@ -5466,6 +5492,30 @@
                         <input type="text" id="edit-lead-interest" name="service_interest" class="sigma-input">
                     </div>
                 </div>
+                <div class="sigma-row sigma-row-60-40" style="margin-top: 1rem;">
+                    <div class="sigma-field">
+                        <label>M&A Acquisition Tier</label>
+                        <select id="edit-lead-tier" name="acquisition_tier" class="sigma-input">
+                            <option value="">-- Unranked --</option>
+                            <option value="Tier 1 - Mega Institutional">Tier 1 - Mega Institutional</option>
+                            <option value="Tier 2 - Regional Commercial">Tier 2 - Regional Commercial</option>
+                            <option value="Tier 3 - Commercial Add-on">Tier 3 - Commercial Add-on</option>
+                            <option value="Tier 3 - Tuck-in Target">Tier 3 - Tuck-in Target</option>
+                            <option value="Corporate / Network (200+)">Corporate / Network (200+)</option>
+                            <option value="Corporate / Network (150-199)">Corporate / Network (150-199)</option>
+                            <option value="Corporate / Network (60-149)">Corporate / Network (60-149)</option>
+                            <option value="Disqualified">Disqualified</option>
+                        </select>
+                    </div>
+                    <div class="sigma-field">
+                        <label>Cleaning Delivery Model</label>
+                        <select id="edit-lead-delivery-model" name="cleaning_delivery_model" class="sigma-input">
+                            <option value="Model C Institutional Prime (Bosanna)">Model C Institutional Prime (Bosanna)</option>
+                            <option value="OUTSOURCED">OUTSOURCED (Trade Partner 1099)</option>
+                            <option value="SELF_PERFORMED">SELF_PERFORMED (W-2 Crew)</option>
+                        </select>
+                    </div>
+                </div>
                 <div class="sigma-field" style="margin-top: 1rem;"><label>Work Notes</label><textarea id="edit-lead-notes" name="notes" class="sigma-input" style="height: 60px; resize: none;"></textarea></div>
                 <div class="sigma-form-actions">
                     <button type="button" onclick="toggleEditLead()" class="isc-btn isc-btn-outline">Cancel</button>
@@ -5514,6 +5564,7 @@
                 <div class="sigma-form-group">
                     <span class="sigma-form-header">Company & Contact</span>
                     <div class="sigma-field"><label>Company Name</label><input type="text" name="company_name" required placeholder="Legal Entity Name" class="sigma-input"></div>
+                    <div class="sigma-field"><label>DBA / Umbrella Name</label><input type="text" name="umbrella_name" placeholder="e.g. Bosanna LLC / Fractal Education Group" class="sigma-input"></div>
                     <div class="sigma-row sigma-row-60-40">
                         <div class="sigma-field"><label>Main Manager</label><input type="text" name="contact_person_name" placeholder="Full Name" class="sigma-input"></div>
                         <div class="sigma-field"><label>Phone Number</label><input type="text" name="phone" placeholder="(000)-000-0000" class="sigma-input" oninput="maskPhone(event)"></div>
@@ -5697,6 +5748,7 @@
                 <div class="sigma-form-group">
                     <span class="sigma-form-header">Contact Information</span>
                     <div class="sigma-field"><label>Company Name</label><input type="text" name="company_name" required placeholder="Legal Entity Name" class="sigma-input"></div>
+                    <div class="sigma-field"><label>Umbrella / Corporate Parent</label><input type="text" name="umbrella_name" placeholder="e.g. Fractal Education Group" class="sigma-input"></div>
                     <div class="sigma-row sigma-row-60-40">
                         <div class="sigma-field"><label>Main Manager</label><input type="text" name="decision_maker" placeholder="Full Name" class="sigma-input"></div>
                         <div class="sigma-field"><label>Manager Title</label><input type="text" name="job_title" placeholder="e.g. Facilities Manager" class="sigma-input"></div>
@@ -6639,7 +6691,8 @@
             }
 
             const overview = [
-                { label: 'Company Name', val: lead.center_name || '--' },
+                { label: 'Company Name', val: (lead.center_name || '--') + (lead.umbrella_name ? ` (${lead.umbrella_name})` : '') },
+                { label: '🏢 Corporate Umbrella', val: lead.umbrella_name || '--' },
                 { label: 'Main Manager', val: (lead.decision_maker || '--') + (lead.job_title ? ' (' + lead.job_title + ')' : '') },
                 { label: 'Contact Details', val: (lead.phone || '--') + ' | ' + (lead.email || '--') },
                 { label: 'Building Address', val: (lead.address || '--') + ' | ' + (lead.city || '') + ', ' + (lead.state || '') + ' ' + (lead.zipcode || '') },
@@ -6656,6 +6709,7 @@
                 { label: 'Service Interest', val: lead.service_interest || '--' },
                 { label: '🎯 M&A Acquisition Tier', val: lead.acquisition_tier || '--' },
                 { label: '🏷️ Ownership Classification', val: lead.ownership_type || '--' },
+                { label: 'Cleaning Delivery Model', val: lead.cleaning_delivery_model || 'Model C Institutional Prime (Bosanna)' },
                 { label: 'Lead Owner', val: lead.owner_id ? (SYSTEM_USERS_MAP[lead.owner_id] || ('User #' + lead.owner_id)) : '-- Unassigned --' }
             ];
 
@@ -6671,6 +6725,7 @@
             if (listOverview) { listOverview.innerHTML = overview.map(o => `<div class="sigma-read-field"><label style="font-size:0.8rem; font-weight:500; color:var(--slate-600); text-transform:none; margin-bottom:0.25rem;">${o.label}</label><div style="font-weight:600; color:var(--slate-900); font-size:0.9rem;">${o.val}</div></div>`).join(''); }
 
             setVal('edit-lead-company', lead.center_name);
+            setVal('edit-lead-umbrella', lead.umbrella_name);
             setVal('edit-lead-capacity', lead.capacity);
             setVal('edit-lead-dm', lead.decision_maker);
             setVal('edit-lead-job-title', lead.job_title);
@@ -6692,6 +6747,8 @@
             setVal('edit-lead-owner', lead.owner_id || '');
             setVal('edit-lead-source', lead.lead_source);
             setVal('edit-lead-interest', lead.service_interest);
+            setVal('edit-lead-tier', lead.acquisition_tier);
+            setVal('edit-lead-delivery-model', lead.cleaning_delivery_model || 'Model C Institutional Prime (Bosanna)');
             setVal('edit-lead-id', id);
             
             setVal('visit-manager', lead.decision_maker);
@@ -6874,6 +6931,7 @@
             
             const overview = [
                 { label: 'Company / Entity Name', val: (acc.company_name || '--') + (acc.umbrella_name ? ` (${acc.umbrella_name})` : '') },
+                { label: '🏢 Corporate Umbrella', val: acc.umbrella_name || '--' },
                 { label: 'Main Manager', val: acc.contact_person_name || '--' },
                 { label: 'Contact Details', val: (formatPhoneJS(acc.phone)) + ' | ' + (acc.email || '--') },
                 { label: 'Building Address', val: (acc.company_address || '--') + ' | ' + (acc.city || '') + ', ' + (acc.state || '') + ' ' + (acc.zip || '') },
@@ -8154,6 +8212,62 @@
                 badge.style.borderColor = '#86efac';
             }
         });
+    }
+
+    async function enrichGCBid(bidId) {
+        const btn = event.currentTarget;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Vetting...';
+        btn.disabled = true;
+        try {
+            const res = await fetch(`/api/v1/gc-vetting/${bidId}/enrich`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                const sc = data.scorecard || {};
+                alert(`GC Profile Completed & Vetted!\n• Contractor: ${data.gc_name}\n• Lead Estimator: ${data.estimator_name || 'N/A'}\n• Phone: ${data.estimator_phone || 'N/A'}\n• Cleanable SQFT: ${data.cleanable_sqft ? Number(data.cleanable_sqft).toLocaleString() + ' SF' : 'N/A'}\n• Subcontract Value: $${data.estimated_value ? Number(data.estimated_value).toLocaleString(undefined, {minimumFractionDigits: 2}) : '0.00'}\n• Vetting Tier: ${sc.vetting_tier || 'N/A'} (${sc.total_score || 0}/100)\n• Standing: ${sc.standing_status || 'N/A'}\n• Payment Terms: ${sc.payment_terms || 'N/A'}`);
+                window.location.reload();
+            } else {
+                alert('Enrichment notice: ' + (data.message || 'Operation failed.'));
+            }
+        } catch (e) {
+            alert('Network communication error: ' + e);
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    }
+
+    async function enrichAllGCBids() {
+        const btn = document.getElementById('btn-enrich-all-bids');
+        const orig = btn ? btn.innerHTML : '';
+        if (btn) {
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Vetting All GCs...';
+            btn.disabled = true;
+        }
+        try {
+            const res = await fetch('/api/v1/gc-vetting/enrich-all', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                const b = data.tier_breakdown || {};
+                alert(`Autonomous 4-Point Vetting & Profile Completer Finished!\n• Processed: ${data.total_processed} Bids\n• Enriched: ${data.enriched_count} Profiles\n\nTier Breakdown:\n• Tier 1 (Preferred Prime): ${b['Tier 1 - Preferred Prime'] || 0}\n• Tier 2 (National Retail): ${b['Tier 2 - National Retail'] || 0}\n• Tier 3 (Planroom Broadcast): ${b['Tier 3 - Planroom Broadcast'] || 0}\n• Needs Review: ${b['Needs Review / Flagged'] || 0}`);
+                window.location.reload();
+            } else {
+                alert('Vetting error: ' + (data.message || 'Operation failed.'));
+            }
+        } catch (e) {
+            alert('Network error: ' + e);
+        } finally {
+            if (btn) {
+                btn.innerHTML = orig;
+                btn.disabled = false;
+            }
+        }
     }
 
     async function openEstimatorCadence(bid) {

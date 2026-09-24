@@ -644,7 +644,8 @@ def apply_system_migrations(conn: Any, db_url: Optional[str] = None) -> None:
                 ("012_marketing_tracking_and_builder", "scripts.migrate_012_marketing_tracking_and_builder", "Telemetry open tracking pixel, tokens, and campaign builder template support"),
                 ("022_bids_pipeline_parity", "scripts.migrate_022_bids_pipeline_parity", "Commercial Construction Bids and Institutional Solicitations Parity Seed"),
                 ("023_sales_desk_and_credentials_parity", "scripts.migrate_023_sales_desk_and_credentials_parity", "Field Sales Desk decoupling and sales credentials parity"),
-                ("024_bidding_evolution_documents_and_sca", "scripts.migrate_024_bidding_evolution_documents_and_sca", "Digital Bid Room, BidAddenda sentinel, BidRFIs, and McNamara-O'Hara SCA engine")
+                ("024_bidding_evolution_documents_and_sca", "scripts.migrate_024_bidding_evolution_documents_and_sca", "Digital Bid Room, BidAddenda sentinel, BidRFIs, and McNamara-O'Hara SCA engine"),
+                ("025_gc_vetting_and_profile_enrichment", "scripts.migrate_025_gc_vetting_and_profile_enrichment", "Master GeneralContractors registry, 4-point vetting scorecard, and autonomous profile enrichment")
             ]
 
             for v_tag, mod_path, v_desc in modular_migrations:

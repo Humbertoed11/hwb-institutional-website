@@ -898,9 +898,9 @@ def add_manual_lead():
                     city, state, zipcode, industry, facility_type, sqf, 
                     traffic_cycle, service_interest, lead_source, priority_level, 
                     estimated_annual_value, status, notes, input_date, last_contacted_by,
-                    owner_id
+                    owner_id, umbrella_name
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ''', (
                 data.get('company_name'), data.get('decision_maker'), data.get('job_title'),
                 clean_email(data.get('email')) or data.get('email'), 
@@ -909,7 +909,7 @@ def add_manual_lead():
                 data.get('facility_type'), sqf, traffic, data.get('service_interest'), 
                 data.get('lead_source'), data.get('priority_level'), annual_value,
                 'New', data.get('notes'), datetime.date.today().isoformat(), user_attribution,
-                owner_id
+                owner_id, data.get('umbrella_name') or None
             ))
             conn.commit()
             flash("Lead saved successfully.")
@@ -940,16 +940,18 @@ def add_account():
                 INSERT INTO "Customers" (
                     company_name, contact_person_name, email, phone, 
                     company_address, city, state, zip, website, sqf, annual_revenue, 
-                    traffic_cycle, quote_number, frequency, notes, status, assigned_rep_id
+                    traffic_cycle, quote_number, frequency, notes, status, assigned_rep_id,
+                    umbrella_name
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'Active', %s) RETURNING customer_id
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'Active', %s, %s) RETURNING customer_id
             ''', (data.get('company_name'), data.get('contact_person_name'), 
                   clean_email(data.get('email')) or data.get('email'), 
                   clean_phone(data.get('phone')) or data.get('phone'), 
                   data.get('company_address'), clean_city(data.get('city')) or data.get('city'), data.get('state'), clean_zip(data.get('zip')), 
                   data.get('website'), sqf, revenue, 
                   data.get('traffic_cycle'), data.get('quote_number'),
-                  data.get('frequency'), data.get('notes'), assigned_rep_id))
+                  data.get('frequency'), data.get('notes'), assigned_rep_id,
+                  data.get('umbrella_name') or None))
             customer_id = cur.fetchone()[0]
 
             cur.execute('''

@@ -65,6 +65,10 @@ Responsibility: George (Architect)
 | 09/22/2026 | BUG-084 | Azure Web App Container Probe Timeout & Deadlock (Synchronous Boot Import, Heavy Migration 020 Scans, & Concurrent Seeder Lock Contention). | **RESOLVED** | CRITICAL |
 | 09/22/2026 | BUG-086 | Unformatted Native Browser Dialogs (confirm/alert) in User Governance Delete Action & Forms Missing Automated Inspection Gates. | **RESOLVED** | HIGH |
 | 09/22/2026 | BUG-087 | Missing AcademyPackages Schema Migration (009) and Uncaught Query Exception on Live /academy Endpoint. | **RESOLVED** | HIGH |
+| 09/22/2026 | BUG-088 | Azure PostgreSQL Construction Bids Pipeline Parity, Deal Capture Synchronization, and Duplicate View Isolation. | **RESOLVED** | HIGH |
+| 09/22/2026 | BUG-089 | Sales Desk Decoupling to /sales-desk, ProxyFix Reverse-Proxy Scheme Hardening, and Mobile Tokenized Magic-Link Authentication. | **RESOLVED** | HIGH |
+| 09/22/2026 | ARCH-004 | SigmaEstimator™ Bidding Evolution — Digital Bid Room, Addenda Sentinel, RFIs & McNamara-O'Hara Federal SCA Engine. | **RESOLVED** | HIGH |
+| 09/23/2026 | BUG-090 | Telegram Bot Hardcoded Project Prompt Rigidity & Multi-User Context Loss (Blocking Field Leads). | **RESOLVED** | HIGH |
 
 ## BUG-080: Local Loopback Hostname (mop.test) Inaccessible to External Devices & Mobile Cleaners via Generated Onboarding Link
 **Detected:** 09/21/2026
@@ -1085,6 +1089,34 @@ CEO Humberto Dominguez attempting to log into `https://www.hwbcleaning.com/login
 1. Require all estimating calculations to originate from `core/services/estimator.py` for mathematical uniformity.
 2. Maintain active DOL Wage Determinations in PostgreSQL for zero-latency federal bid validation.
 3. Automatically append standard statutory safeguards and negotiation buffers to all published subcontractor proposals to insulate profit margins during GC buyout.
+
+## BUG-090: Conversational Telegram Listener Persona Rigidity, Static Prompt Inelasticity, and Multi-User Dynamic Routing Failure
+**Detected:** 09/23/2026
+**Status:** **RESOLVED** (09/23/2026)
+**Symptoms:**
+1. Field operators and team members communicating via Telegram (specifically Mirna Rondinella, user ID 3, chat ID 8443354512) attempting to submit on-site walkthrough findings and request pricing for new opportunities (Horizon at Premier, 3409 Premier Dr, Plano — 122 units, 7 days/week trash valet) were repeatedly blocked and dismissed by the automated bot persona ("George").
+2. The bot repeatedly forced the conversation back to an unrelated legacy proposal ("Collin College Frisco Campus Custodial Replacement"), explicitly telling the field operator that their project was not the priority, rejecting topic changes despite 15+ messages of explicit clarification ("No George stop with the Frisco project", "My priority is Horizon @ Premier").
+3. As more users and team members are onboarded to Telegram, this conversational rigidity creates severe field friction, risks lost commercial opportunities, frustrates operational staff, and prevents automated intake of new projects.
+**Root Causes:**
+1. In `scripts/telegram_listener.py`, the function `analyze_text_with_gemini(text, chat_id)` unconditionally interpolated a static global string variable `COLLIN_COLLEGE_CONTEXT` into the Gemini system prompt (`f"{COLLIN_COLLEGE_CONTEXT}\n\n"`).
+2. The static `COLLIN_COLLEGE_CONTEXT` explicitly instructed the AI that its mandatory top priority was the Collin College Frisco Campus RFP # FY2024-RFP-005 Replacement.
+3. The prompt lacked dynamic, user-specific, or conversation-specific state management. There was no capability for George to detect when an authorized user is initiating a *new* lead/opportunity or reporting a walkthrough for a different facility.
+4. The conversational handler lacked dynamic retrieval of active projects from PostgreSQL (`Opportunities`, `Leads`, `ConstructionBids`) and had no mechanism to adapt context based on the user's role, recent activity, or explicit directive to start a new project.
+**Solution & Scalability Architecture:**
+1. **Decoupled Static Context:** Replaced the hardcoded `COLLIN_COLLEGE_CONTEXT` across `analyze_voice_with_gemini`, `analyze_photo_with_gemini`, and `analyze_text_with_gemini` with `get_dynamic_session_context(chat_id, incoming_text, caption)`.
+2. **Dynamic Project Resolver:** Built real-time session context management leveraging `active_project_context` in PostgreSQL table `UserBehavioralProfiles`. Each user (`chat_id`) maintains an isolated active project state.
+3. **Intent Detection & Topic Pivoting:** When a user mentions a property name (e.g. "Horizon", "Premier"), address ("3409 Premier"), or states "stop/switch", the system immediately updates session context in PostgreSQL and loads the corresponding operational capsule (`HORIZON_PREMIER_CONTEXT` vs `COLLIN_COLLEGE_CONTEXT`).
+4. **Live Database Grounding:** Integrated real-time regex extraction that searches the `Leads` table dynamically. If a user cites a known building or address, George injects the live Lead ID, SQF, and notes into the context automatically.
+5. **Ingested Horizon at Premier:** Inserted Lead #82474 (`Horizon at Premier`, 3409 Premier Dr, Plano - 122 units, 7 days/wk valet trash, $32,940/yr) with matching `GlobalActivities` walk-through records.
+6. **Empirical Verification:** Executed live multi-turn test suite simulating Mirna's chat (`chat_id = 8443354512`):
+   - Query 1: "The new proposal for Horizons @ Premier" -> George immediately acknowledged Lead #82474, door counts, and proposal next steps without mentioning Collin College.
+   - Query 2: "Now let us review Collin College Frisco" -> George pivoted seamlessly to Collin College specs (478,418 SF, 10 buildings).
+   - Query 3: "Stop with Frisco. I am at 3409 Premier Dr." -> George pivoted back, auto-matched Lead #82474 from PostgreSQL, and gave on-site walkthrough instructions for compactor and dumpster access.
+**Preventative:**
+1. Prohibit hardcoded static project contexts inside global LLM system prompts in production daemons.
+2. Require all LLM conversational bots to support dynamic topic pivoting and graceful intake of new field projects.
+3. Ensure automated integration tests verify that a bot can switch context from Project A to Project B when directed by an authorized team member.
+
 
 
 
