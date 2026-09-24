@@ -64,6 +64,8 @@ def parse_advanced_search(search_q: str, view: str = 'leads') -> Tuple[List[str]
             'date': ('input_date', 'date'),
             'created': ('input_date', 'date'),
             'input_date': ('input_date', 'date'),
+            'id': ('id', 'num'),
+            'ld': ('id', 'num'),
         }
         general_cols = [
             'center_name', 'facility_type', 'city', 'state', 'zipcode', 
@@ -92,6 +94,8 @@ def parse_advanced_search(search_q: str, view: str = 'leads') -> Tuple[List[str]
             'umbrella': ('c.umbrella_name', 'text'),
             'rep': ('c.assigned_rep_id', 'user_ref'),
             'owner': ('c.assigned_rep_id', 'user_ref'),
+            'id': ('customer_id', 'num'),
+            'acc': ('customer_id', 'num'),
         }
         general_cols = [
             'company_name', 'company_address', 'city', 'state', 'zip',
@@ -118,6 +122,8 @@ def parse_advanced_search(search_q: str, view: str = 'leads') -> Tuple[List[str]
             'scope': ('cb.scope_phase', 'text'),
             'date': ('cb.bid_due_date', 'date'),
             'due': ('cb.bid_due_date', 'date'),
+            'id': ('cb.id', 'num'),
+            'bid': ('cb.id', 'num'),
         }
         general_cols = [
             'cb.project_name', 'cb.gc_name', 'cb.city', 'cb.project_address',
@@ -199,7 +205,27 @@ def parse_advanced_search(search_q: str, view: str = 'leads') -> Tuple[List[str]
         elif d['word']:
             w = d['word']
             norm_date = normalize_date(w)
-            if norm_date != w:
+
+            # Check for Entity Shorthand format: GC-#014, GC-14, IB-#001, ACC-#003, LD-#1842, #14, etc.
+            id_prefix_match = re.match(r'^(?:(?:gc|ib|acc|ld|app|cand|wo|vet)[-#]*)(\d+)$', w, re.I)
+            raw_hash_match = re.match(r'^#(\d+)$', w)
+            target_id = None
+            if id_prefix_match:
+                target_id = int(id_prefix_match.group(1))
+            elif raw_hash_match:
+                target_id = int(raw_hash_match.group(1))
+
+            if target_id is not None:
+                if view in ('leads', 'sales_desk'):
+                    where_clauses.append('id = %s')
+                    params.append(target_id)
+                elif view == 'accounts':
+                    where_clauses.append('customer_id = %s')
+                    params.append(target_id)
+                elif view == 'construction_bids':
+                    where_clauses.append('cb.id = %s')
+                    params.append(target_id)
+            elif norm_date != w:
                 sub = ' OR '.join([f'{c}::text ILIKE %s' for c in general_cols])
                 where_clauses.append(f'({sub})')
                 params.extend([f'%{norm_date}%'] * len(general_cols))

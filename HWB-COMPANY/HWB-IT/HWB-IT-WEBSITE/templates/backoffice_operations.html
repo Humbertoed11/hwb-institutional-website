@@ -116,6 +116,51 @@
 .sigma-editable-cell.is-editing {
     background: #ffffff !important;
 }
+
+/* SigmaFidelity™ Fast-Reference Standard Badge (2026) */
+.sigma-id-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: #1e40af;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 4px;
+    padding: 0.12rem 0.45rem;
+    cursor: pointer;
+    user-select: none;
+    letter-spacing: 0.02em;
+    transition: all 0.15s ease;
+    line-height: 1.2;
+    margin-right: 0.35rem;
+    vertical-align: middle;
+}
+.sigma-id-badge:hover {
+    background: #dbeafe;
+    border-color: #93c5fd;
+    color: #1d4ed8;
+    transform: translateY(-1px);
+    box-shadow: 0 1px 3px rgba(37, 99, 235, 0.18);
+}
+.sigma-id-badge:active {
+    transform: translateY(0);
+}
+.sigma-id-badge i {
+    font-size: 0.65rem;
+    opacity: 0.6;
+    transition: opacity 0.15s;
+}
+.sigma-id-badge:hover i {
+    opacity: 1;
+}
+.sigma-id-badge.copied {
+    background: #ecfdf5 !important;
+    border-color: #a7f3d0 !important;
+    color: #065f46 !important;
+}
 </style>
         <!-- View: Leads -->
         <div id="view-leads" class="isc-view" style="display: {% if active_view == 'leads' %}block{% else %}none{% endif %};">
@@ -344,7 +389,7 @@
                                     {% if col_key == 'company' %}
                                     <td class="sticky-1">
                                         <div class="sigma-unit-data">
-                                            <div class="sigma-unit-primary">{{ lead.center_name }} {% if lead.is_duplicate %}<span onclick="openCompareModal(event, '{{ lead.duplicate_group_id }}', '{{ lead.id }}')" style="background: #fef3c7; color: #b45309; border: 1px solid #fcd34d; padding: 0.1rem 0.4rem; border-radius: 0.4rem; font-size: 0.65rem; font-weight: 800; cursor: pointer; margin-left: 0.4rem;">⚠️ Twin</span>{% endif %}</div>
+                                            <div class="sigma-unit-primary"><span class="sigma-id-badge" onclick="copySigmaId(event, 'LD-#{{ lead.id }}')" title="Click to copy LD-#{{ lead.id }}">LD-#{{ lead.id }} <i class="far fa-copy"></i></span> {{ lead.center_name }} {% if lead.is_duplicate %}<span onclick="openCompareModal(event, '{{ lead.duplicate_group_id }}', '{{ lead.id }}')" style="background: #fef3c7; color: #b45309; border: 1px solid #fcd34d; padding: 0.1rem 0.4rem; border-radius: 0.4rem; font-size: 0.65rem; font-weight: 800; cursor: pointer; margin-left: 0.4rem;">⚠️ Twin</span>{% endif %}</div>
                                             <div class="sigma-unit-secondary" style="font-weight: 500;">{{ lead.address if lead.address and lead.address != 'None' else '--' }}</div>
                                             {% if lead.campaign_info %}
                                                 {% set cparts = lead.campaign_info.split('::') %}
@@ -815,15 +860,18 @@
                                     {% if col_key == 'company' %}
                                     <td class="sticky-1">
                                         <div class="sigma-unit-data">
-                                            <div class="sigma-unit-primary" style="display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap;">
-                                                <span>{{ client.company_name }}</span>
+                                            <div class="sigma-unit-primary" style="display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap;">
+                                                <span class="sigma-id-badge" onclick="copySigmaId(event, 'ACC-#{{ '%03d'|format(client.customer_id) }}')" title="Click to copy ACC-#{{ '%03d'|format(client.customer_id) }}">
+                                                    ACC-#{{ "%03d"|format(client.customer_id) }} <i class="far fa-copy"></i>
+                                                </span>
+                                                <span style="font-weight: 800; color: var(--slate-900);">{{ client.company_name }}</span>
                                                 {% if client.cleaning_delivery_model and 'Model C' in client.cleaning_delivery_model %}
                                                 <a href="/bosanna" target="_blank" onclick="event.stopPropagation();" title="Open Partner Dashboard" style="text-decoration: none; display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.65rem; font-weight: 800; background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; padding: 0.15rem 0.45rem; border-radius: 4px;">
                                                     <i class="fas fa-chalkboard-user" style="font-size: 0.65rem; color: #059669;"></i> Partner Dashboard
                                                 </a>
                                                 {% endif %}
                                             </div>
-                                            <div class="sigma-unit-secondary" style="font-weight: 500;">ACC-{{ client.customer_id }}</div>
+                                            <div class="sigma-unit-secondary" style="font-weight: 500;">{{ client.company_address or '--' }}</div>
                                         </div>
                                     </td>
                                     {% elif col_key == 'status' %}<td class="sticky-2"><span class="sigma-unit-pill" style="background:#f1f5f9; color:#475569">{{ client.status or 'Active' }}</span></td>
@@ -1138,8 +1186,13 @@
                                 {% for col_key in active_cols %}
                                     {% if col_key == 'project' %}
                                     <td class="sticky-1">
-                                        <div style="font-weight: 800; font-size: 0.88rem; color: var(--slate-900);">
-                                            {{ bid.project_name }}
+                                        <div style="display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap;">
+                                            <span class="sigma-id-badge" onclick="copySigmaId(event, 'GC-#{{ '%03d'|format(bid.id) }}')" title="Click to copy GC-#{{ '%03d'|format(bid.id) }}">
+                                                GC-#{{ "%03d"|format(bid.id) }} <i class="far fa-copy"></i>
+                                            </span>
+                                            <span style="font-weight: 800; font-size: 0.88rem; color: var(--slate-900);">
+                                                {{ bid.project_name }}
+                                            </span>
                                         </div>
                                         <div style="font-size: 0.75rem; font-weight: 700; color: var(--brand); margin-top: 0.15rem; display: flex; align-items: center; gap: 0.35rem;">
                                             <i class="fas fa-building" style="opacity: 0.6;"></i> {{ bid.gc_name }}
@@ -1441,8 +1494,13 @@
                             {% for gc in general_contractors %}
                             <tr style="border-bottom: 1px solid var(--slate-100); transition: background 0.15s ease;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
                                 <td style="padding: 0.85rem 1rem; vertical-align: top;">
-                                    <div style="font-weight: 800; color: var(--slate-900); font-size: 0.9rem;">
-                                        {{ gc.company_name }}
+                                    <div style="display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap; margin-bottom: 0.15rem;">
+                                        <span class="sigma-id-badge" onclick="copySigmaId(event, 'VET-#{{ '%02d'|format(gc.id) }}')" title="Click to copy VET-#{{ '%02d'|format(gc.id) }}">
+                                            VET-#{{ "%02d"|format(gc.id) }} <i class="far fa-copy"></i>
+                                        </span>
+                                        <span style="font-weight: 800; color: var(--slate-900); font-size: 0.9rem;">
+                                            {{ gc.company_name }}
+                                        </span>
                                     </div>
                                     <div style="font-size: 0.75rem; color: var(--slate-500); margin-top: 0.2rem;">
                                         <i class="fas fa-map-marker-alt" style="color: #ef4444; font-size: 0.7rem;"></i> {{ gc.city or 'DFW' }}, {{ gc.state or 'TX' }}
@@ -1648,8 +1706,13 @@
                             {% for ib in institutional_bids %}
                             <tr style="border-bottom: 1px solid var(--slate-100); transition: background 0.15s ease;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
                                 <td style="padding: 0.85rem 1rem; vertical-align: top;">
-                                    <div style="font-weight: 800; color: var(--brand); font-size: 0.85rem;">
-                                        {{ ib.solicitation_number }}
+                                    <div style="display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap;">
+                                        <span class="sigma-id-badge" onclick="copySigmaId(event, 'IB-#{{ '%03d'|format(ib.id) }}')" title="Click to copy IB-#{{ '%03d'|format(ib.id) }}">
+                                            IB-#{{ "%03d"|format(ib.id) }} <i class="far fa-copy"></i>
+                                        </span>
+                                        <span style="font-weight: 800; color: var(--brand); font-size: 0.85rem;">
+                                            {{ ib.solicitation_number }}
+                                        </span>
                                     </div>
                                     <div style="font-weight: 700; color: var(--slate-800); margin-top: 0.2rem;">
                                         {{ ib.agency_name }}
@@ -2579,10 +2642,15 @@
                             <tbody>
                                 {% if applicants %}
                                     {% for app in applicants %}
-                                    <tr id="applicant-row-{{ app.id }}" class="applicant-data-row" data-status="{{ app.status }}" data-search="{{ (app.full_name ~ ' ' ~ app.city ~ ' ' ~ app.phone ~ ' ' ~ (app.email or ''))|lower }}" style="border-bottom: 1px solid var(--slate-100);">
+                                    <tr id="applicant-row-{{ app.id }}" class="applicant-data-row" data-status="{{ app.status }}" data-search="{{ (app.full_name ~ ' app-#' ~ app.id ~ ' #' ~ app.id ~ ' ' ~ app.city ~ ' ' ~ app.phone ~ ' ' ~ (app.email or ''))|lower }}" style="border-bottom: 1px solid var(--slate-100);">
                                         <td style="padding: 0.65rem 0.85rem;">
-                                            <div style="font-weight: 800; font-size: 0.85rem; color: var(--slate-900);">{{ app.full_name }}</div>
-                                            <div style="font-size: 0.72rem; color: var(--slate-400); font-weight: 600;">ID #{{ app.id }} • {{ app.preferred_language or 'English' }}</div>
+                                            <div style="display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap;">
+                                                <span class="sigma-id-badge" onclick="copySigmaId(event, 'APP-#{{ '%03d'|format(app.id) }}')" title="Click to copy APP-#{{ '%03d'|format(app.id) }}">
+                                                    APP-#{{ "%03d"|format(app.id) }} <i class="far fa-copy"></i>
+                                                </span>
+                                                <span style="font-weight: 800; font-size: 0.85rem; color: var(--slate-900);">{{ app.full_name }}</span>
+                                            </div>
+                                            <div style="font-size: 0.72rem; color: var(--slate-400); font-weight: 600; margin-top: 0.15rem;">{{ app.preferred_language or 'English' }}</div>
                                         </td>
                                         <td style="padding: 0.65rem 0.85rem;">
                                             <div><a href="tel:{{ app.phone }}" style="color: var(--brand); font-weight: 700; font-size: 0.82rem; text-decoration: none;"><i class="fas fa-phone" style="font-size: 0.7rem; margin-right: 3px;"></i> {{ app.phone }}</a></div>
@@ -3038,7 +3106,9 @@
                                 <td>
                                     <div class="sigma-unit-data">
                                         <div class="sigma-unit-primary" style="display: flex; align-items: center; gap: 0.35rem;">
-                                            <span style="font-family: monospace; color: var(--brand); font-weight: 900;">WO-#{{ "%04d"|format(order.work_order_id) }}</span>
+                                            <span class="sigma-id-badge" onclick="copySigmaId(event, 'WO-#{{ '%04d'|format(order.work_order_id) }}')" title="Click to copy WO-#{{ '%04d'|format(order.work_order_id) }}">
+                                                WO-#{{ "%04d"|format(order.work_order_id) }} <i class="far fa-copy"></i>
+                                            </span>
                                         </div>
                                         <div class="sigma-unit-secondary">
                                             <i class="far fa-calendar-alt" style="margin-right: 3px;"></i> {{ order.scheduled_date or 'Today' }}
@@ -5314,7 +5384,7 @@
                 <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;">
                     <span style="font-size: 0.7rem; font-weight: 900; background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; padding: 0.2rem 0.55rem; border-radius: 4px; text-transform: uppercase;">SigmaEstimator™ 2026</span>
                     <span id="takeoff-modal-platform-badge" style="font-size: 0.7rem; font-weight: 800; background: #e0f2fe; color: #0369a1; padding: 0.2rem 0.5rem; border-radius: 4px;">BuildingConnected</span>
-                    <span id="takeoff-modal-id-badge" style="font-size: 0.7rem; font-weight: 800; background: #f1f5f9; color: var(--slate-600); padding: 0.2rem 0.5rem; border-radius: 4px;">Bid #--</span>
+                    <span id="takeoff-modal-id-badge" class="sigma-id-badge" onclick="copySigmaId(event, this.innerText)" title="Click to copy Bid Code">GC-#-- <i class="far fa-copy"></i></span>
                 </div>
                 <h2 id="takeoff-modal-project-name" style="font-weight: 900; font-size: 1.45rem; color: var(--slate-900); margin: 0; line-height: 1.25;">Project Takeoff &amp; Pricing</h2>
                 <div style="display: flex; align-items: center; gap: 0.75rem; margin-top: 0.35rem; font-size: 0.82rem;">
@@ -7303,6 +7373,47 @@
         }, 4000);
     }
 
+    function copySigmaId(event, text) {
+        if (event) {
+            event.stopPropagation();
+            event.preventDefault();
+        }
+        if (!text) return;
+        const doSuccess = () => {
+            const el = event?.currentTarget;
+            if (el) {
+                el.classList.add('copied');
+                const origHtml = el.innerHTML;
+                el.innerHTML = `${text} <i class="fas fa-check" style="color: #059669;"></i>`;
+                setTimeout(() => {
+                    el.classList.remove('copied');
+                    el.innerHTML = origHtml;
+                }, 1200);
+            }
+            showToast(`Copied ${text} to clipboard!`, 'success');
+        };
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(doSuccess).catch(() => {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                doSuccess();
+            });
+        } else {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            doSuccess();
+        }
+    }
+
     function formatDashboardDate(ts) { 
         if(!ts) return '--/--/----'; 
         ts = String(ts);
@@ -9095,7 +9206,7 @@
         currentTakeoffBid = bid;
 
         document.getElementById('takeoff-bid-id').value = bid.id || '';
-        document.getElementById('takeoff-modal-id-badge').innerText = `Bid #${bid.id}`;
+        document.getElementById('takeoff-modal-id-badge').innerHTML = `GC-#${String(bid.id).padStart(3, '0')} <i class="far fa-copy"></i>`;
         document.getElementById('takeoff-modal-project-name').innerText = bid.project_name || 'Subcontract Project';
         document.getElementById('takeoff-modal-gc-name').innerText = bid.gc_name || 'General Contractor';
         document.getElementById('takeoff-modal-location').innerText = `${bid.city || 'DFW'}, ${bid.state || 'TX'}`;

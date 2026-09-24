@@ -87,6 +87,14 @@ class YamamotoMotoEstimatingTestSuite(unittest.TestCase):
         self.assertIn("Pre-Bid Teams", html, "Pre-Bid Teams video meeting button missing")
         self.assertIn("Public Opening", html, "Public Opening Teams video meeting button missing")
 
+        # 4. Fast-Reference Shorthand Badge & Omnibox Search (HWB-QMS-11.2)
+        self.assertIn("sigma-id-badge", html, "Sigma Fast-Reference ID badge missing from Institutional Desk")
+        self.assertIn("IB-#", html, "IB-# identifier missing from Institutional Desk")
+
+        res_search = client.get('/admin/operations?view=institutional_bids&q=ib-1')
+        self.assertEqual(res_search.status_code, 200)
+        self.assertIn("06507-NTT-00-GS-MA", res_search.data.decode('utf-8'), "Shorthand search q=ib-1 failed to find bid #1")
+
         log_audit("PASS: Institutional Bids Desk verified with 100% asset and mathematical fidelity.")
 
     def test_02_institutional_bid_file_streaming_endpoint(self):
@@ -135,6 +143,13 @@ class YamamotoMotoEstimatingTestSuite(unittest.TestCase):
 
         # 3. Interactive Planroom / BuildingConnected links
         self.assertTrue("Planroom" in html or "BuildingConnected" in html, "Planroom links missing from table")
+
+        # 4. Fast-Reference Shorthand Badge & Omnibox Search (HWB-QMS-11.2)
+        self.assertIn("sigma-id-badge", html, "Sigma Fast-Reference ID badge missing from GC Desk")
+        self.assertIn("GC-#", html, "GC-# identifier missing from GC Pipeline Desk")
+
+        res_search = client.get('/admin/operations?view=construction_bids&q=gc-1')
+        self.assertEqual(res_search.status_code, 200)
 
         log_audit("PASS: Commercial GC Pipeline & SigmaEstimator™ Takeoff Modal verified.")
 

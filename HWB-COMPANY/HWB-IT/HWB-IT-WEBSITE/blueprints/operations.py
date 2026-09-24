@@ -409,9 +409,16 @@ def admin_operations():
                 inst_where_clauses = []
                 inst_params = []
                 if search_q and active_view == 'institutional_bids':
-                    inst_where_clauses.append("(ib.solicitation_number ILIKE %s OR ib.title ILIKE %s OR ib.agency_name ILIKE %s OR ib.procurement_officer ILIKE %s OR ib.status ILIKE %s)")
-                    param_v = f"%{search_q}%"
-                    inst_params.extend([param_v, param_v, param_v, param_v, param_v])
+                    id_match = re.search(r'^(?:ib[-#\s]*)?(\d+)$', search_q.strip(), re.I)
+                    if id_match:
+                        target_id = int(id_match.group(1))
+                        inst_where_clauses.append("(ib.id = %s OR ib.solicitation_number ILIKE %s OR ib.title ILIKE %s OR ib.agency_name ILIKE %s)")
+                        param_v = f"%{search_q}%"
+                        inst_params.extend([target_id, param_v, param_v, param_v])
+                    else:
+                        inst_where_clauses.append("(ib.solicitation_number ILIKE %s OR ib.title ILIKE %s OR ib.agency_name ILIKE %s OR ib.procurement_officer ILIKE %s OR ib.status ILIKE %s)")
+                        param_v = f"%{search_q}%"
+                        inst_params.extend([param_v, param_v, param_v, param_v, param_v])
                 inst_where_str = ("WHERE " + " AND ".join(inst_where_clauses)) if inst_where_clauses else ""
 
                 cur.execute(f'SELECT COUNT(*) FROM "InstitutionalBids" ib {inst_where_str}', tuple(inst_params))
