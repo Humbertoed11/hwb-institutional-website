@@ -334,6 +334,9 @@
                 <a href="{{ url_for('sigmajan_lab') }}" class="sigma-nav-btn {% if request.endpoint == 'sigmajan_lab' %}active{% endif %}">
                     <i class="fas fa-flask" style="color: #8b5cf6;"></i> Lab
                 </a>
+                <a href="{{ url_for('admin_operations', view='it_department') }}" class="sigma-nav-btn {% if request.endpoint == 'admin_operations' and active_view == 'it_department' %}active{% endif %}" title="SigmaFidelity™ IT Command Hub &amp; Parity Cockpit">
+                    <i class="fas fa-server" style="color: #6366f1;"></i> IT Department
+                </a>
             {% endif %}
             {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('qms', 'view')) or not current_user.custom_permissions %}
             <a href="{{ url_for('manual_index') }}" class="sigma-nav-btn {% if request.endpoint == 'manual_index' or request.endpoint == 'view_sop' %}active{% endif %}">

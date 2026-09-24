@@ -771,7 +771,8 @@
                     document.getElementById('cert-uuid-val').innerText = result.enrollment_uuid;
                     document.getElementById('cert-score-val').innerText = result.score + '% (Verified Pass)';
                     
-                    const verifyUrl = window.location.origin + result.verification_url;
+                    const baseOrigin = (window.location.origin.includes('mop.test') || window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')) ? 'https://hwbcleaning.com' : window.location.origin;
+                    const verifyUrl = baseOrigin + result.verification_url;
                     document.getElementById('cert-public-link').href = result.verification_url;
                     document.getElementById('cert-qr-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(verifyUrl)}`;
                     

@@ -69,6 +69,7 @@ Responsibility: George (Architect)
 | 09/22/2026 | BUG-089 | Sales Desk Decoupling to /sales-desk, ProxyFix Reverse-Proxy Scheme Hardening, and Mobile Tokenized Magic-Link Authentication. | **RESOLVED** | HIGH |
 | 09/22/2026 | ARCH-004 | SigmaEstimator™ Bidding Evolution — Digital Bid Room, Addenda Sentinel, RFIs & McNamara-O'Hara Federal SCA Engine. | **RESOLVED** | HIGH |
 | 09/23/2026 | BUG-090 | Telegram Bot Hardcoded Project Prompt Rigidity & Multi-User Context Loss (Blocking Field Leads). | **RESOLVED** | HIGH |
+| 09/24/2026 | ARCH-005 | Enterprise Dev-to-Live Parity Gate, Relative Resource Storage & IT Department 6-Rack Command Hub. | **RESOLVED** | HIGH |
 
 ## BUG-080: Local Loopback Hostname (mop.test) Inaccessible to External Devices & Mobile Cleaners via Generated Onboarding Link
 **Detected:** 09/21/2026
@@ -1117,15 +1118,34 @@ CEO Humberto Dominguez attempting to log into `https://www.hwbcleaning.com/login
 2. Require all LLM conversational bots to support dynamic topic pivoting and graceful intake of new field projects.
 3. Ensure automated integration tests verify that a bot can switch context from Project A to Project B when directed by an authorized team member.
 
-
-
-
-
-
-
-
-
-
-
-
-
+## ARCH-005: Enterprise Dev-to-Live Parity Gate, Relative Resource Storage, and IT Department 6-Rack Command Hub
+**Detected:** 09/24/2026
+**Status:** **RESOLVED** (09/24/2026)
+**Symptoms:**
+1. Potential link breakage and missing static assets when moving data from local development (`mop.test:5000` / `mop.dev`) to the live production server (`hwbcleaning.com`).
+2. Hardcoded domain links in select templates (e.g. `templates/concept_lab.html` and `templates/academy_course.html`) risk pointing users to private local addresses instead of public production addresses.
+3. PostgreSQL primary key sequence drift risks collision errors (`Key (id)=(X) already exists`) during cross-environment record synchronization.
+4. Absence of a centralized, real-time IT Department dashboard in the backoffice to monitor AI cognitive rot, backup health, background daemons, cloud connectivity, and data parity.
+**Root Causes:**
+1. Storing absolute domain names inside templates or database columns couples the database directly to a specific computer, breaking when data is restored in another environment.
+2. Direct database-level domain mapping tables introduce DNS failure points (smartphones fail at the cellular DNS stage before ever reaching the server) and add query overhead.
+3. Lack of an automated pre-flight audit tool allowed minor sequence gaps and dead links to go undetected prior to container deployment.
+**Solution & Scalability Architecture:**
+1. **Sanitized Template & Asset Links:**
+   - Updated `templates/concept_lab.html` to eliminate `http://mop.test:5005` in favor of an in-app sandbox notice.
+   - Updated `templates/academy_course.html` to dynamically generate QR codes resolving to the canonical production domain (`hwbcleaning.com`) on external devices.
+2. **Schema Engine Parity Hardening:**
+   - Consolidated `database/schema_engine.py` to prevent redundant import attempts of inline SQL migrations (013-021), eliminating boot warnings.
+3. **Automated Pre-Flight Parity Audit Tool (`scripts/audit_dev_to_live_parity.py`):**
+   - Built a sub-second parity test suite verifying schema migrations, all 67 PostgreSQL sequence alignments, template links across 77 HTML files, and embedded JavaScript syntax across 51 script blocks.
+   - Scored 100/100 Grade A+ (PASS).
+4. **Idempotent Data Bridge (`scripts/dev_to_live_bridge.py`):**
+   - Engineered safe, conflict-free syncing between development and production databases using natural keys (`ON CONFLICT DO UPDATE`), relative resource enforcement, and `--dry-run` simulation modes.
+5. **IT Department 6-Rack Command Hub Deployed:**
+   - Added IT Department entry to backoffice navigation (`templates/components/backend_nav.html`).
+   - Integrated live telemetry controller in `blueprints/operations.py` (`POST /api/v1/it/parity-audit`).
+   - Built clinical 6-Rack visual dashboard in `templates/backoffice_operations.html` monitoring Cognitive Rot, Peter's Shield, Daemon Fleet, Cloud Gateway, Problem Resolver, and Dev-to-Live Parity Cockpit.
+**Preventative:**
+1. Enforce Twelve-Factor App standards: store relative paths (`/static/...`) in databases and resolve domains dynamically via environment variables (`CANONICAL_DOMAIN`).
+2. Require running `audit_dev_to_live_parity.py` before any major release or data synchronization.
+3. Strictly prohibit mutable domain mapping tables in the database to prevent DNS boundary failures and restore contamination.

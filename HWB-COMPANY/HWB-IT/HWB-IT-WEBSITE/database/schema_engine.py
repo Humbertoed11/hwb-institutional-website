@@ -617,9 +617,28 @@ def apply_system_migrations(conn: Any, db_url: Optional[str] = None) -> None:
                     ('task', 'High Dusting'),
                     ('item', 'Ceiling corners, fan, AC register');
                 ''')
-                conn.commit()
+                # Record inline baseline migrations
+            inline_versions = [
+                ("013_employee_lifecycle_suite", "Employee lifecycle, W-4, PTO, and compliance columns"),
+                ("014_account_lifecycle_suite", "Institutional account lifecycle, contract terms, and COI verification"),
+                ("016_sensitive_pii_vault", "Sensitive PII AES-256 encrypted vault for SSN/ITIN and banking"),
+                ("018_institutional_users_and_schema_parity", "Institutional Users table hardening, credential sync, and leads parity"),
+                ("019_ceo_credentials_and_alias_hardening", "CEO credentials and identity alias hardening"),
+                ("020_lead_data_integrity_cleansing", "Lead data integrity, legacy industry/facility cleansing, address repair, and duplicate resolution"),
+                ("021_simplify_job_positions_and_competitive_pay", "Simplified job descriptions, everyday words, and calibrated competitive pay"),
+                ("012_marketing_tracking_and_builder", "Telemetry open tracking pixel, tokens, and campaign builder template support")
+            ]
+            for iv_tag, iv_desc in inline_versions:
+                if iv_tag not in applied:
+                    cur.execute("""
+                        INSERT INTO "schema_migrations" (version, description)
+                        VALUES (%s, %s)
+                        ON CONFLICT (version) DO NOTHING;
+                    """, (iv_tag, iv_desc))
+                    applied.add(iv_tag)
+            conn.commit()
 
-            # --- Modular Migrations (004 through 018) ---
+            # --- Modular Migrations (External Scripts) ---
             target_db_url = db_url or os.environ.get("DATABASE_URL", "postgresql://hwbdev:hwbpassword@db:5432/hwb_dev_db")
             
             modular_migrations = [
@@ -632,16 +651,8 @@ def apply_system_migrations(conn: Any, db_url: Optional[str] = None) -> None:
                 ("010_institutional_bids", "scripts.migrate_010_institutional_bids", "Construction bids and document attachment vault"),
                 ("011_marketing_department", "scripts.migrate_011_marketing_department", "Marketing campaigns and social dispatch outbox"),
                 ("012_ehsq_safety_department", "scripts.migrate_012_ehsq_safety_department", "EHSQ safety inspections, hazard tracking, and compliance certifications"),
-                ("013_employee_lifecycle_suite", "scripts.migrate_013_employee_lifecycle_suite", "Employee lifecycle, W-4, PTO, and compliance columns"),
-                ("014_account_lifecycle_suite", "scripts.migrate_014_account_lifecycle_suite", "Institutional account lifecycle, contract terms, and COI verification"),
                 ("015_internal_dispatch_suite", "scripts.migrate_015_internal_dispatch_suite", "Internal dispatch work orders, shifts, and execution monitor"),
-                ("016_sensitive_pii_vault", "scripts.migrate_016_sensitive_pii_vault", "Sensitive PII AES-256 encrypted vault for SSN/ITIN and banking"),
                 ("017_job_positions_and_descriptions", "scripts.migrate_017_job_positions_and_descriptions", "Job positions catalog, digital job descriptions, and ATS linking"),
-                ("018_institutional_users_and_schema_parity", "scripts.migrate_018_institutional_users_and_schema_parity", "Institutional Users table hardening, credential sync, and leads parity"),
-                ("019_ceo_credentials_and_alias_hardening", "scripts.migrate_019_ceo_credentials_and_alias_hardening", "CEO credentials and identity alias hardening"),
-                ("020_lead_data_integrity_cleansing", "scripts.migrate_020_lead_data_integrity_cleansing", "Lead data integrity, legacy industry/facility cleansing, address repair, and duplicate resolution"),
-                ("021_simplify_job_positions_and_competitive_pay", "scripts.migrate_021_simplify_job_positions_and_competitive_pay", "Simplified job descriptions, everyday words, and calibrated competitive pay"),
-                ("012_marketing_tracking_and_builder", "scripts.migrate_012_marketing_tracking_and_builder", "Telemetry open tracking pixel, tokens, and campaign builder template support"),
                 ("022_bids_pipeline_parity", "scripts.migrate_022_bids_pipeline_parity", "Commercial Construction Bids and Institutional Solicitations Parity Seed"),
                 ("023_sales_desk_and_credentials_parity", "scripts.migrate_023_sales_desk_and_credentials_parity", "Field Sales Desk decoupling and sales credentials parity"),
                 ("024_bidding_evolution_documents_and_sca", "scripts.migrate_024_bidding_evolution_documents_and_sca", "Digital Bid Room, BidAddenda sentinel, BidRFIs, and McNamara-O'Hara SCA engine"),
