@@ -30,6 +30,8 @@ import psycopg2
 from psycopg2.extras import Json, RealDictCursor
 from dotenv import load_dotenv
 import msal
+from bs4 import BeautifulSoup
+from dateutil import parser as dt_parser
 
 # Configuration
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -771,6 +773,282 @@ def dispatch_graph_email(record_id):
             conn.close()
 
 
+# --- MICROSOFT GRAPH MESSAGE SEARCH, BID PARSING & INGESTION ---
+
+def parse_email_bid_details(subject, text, sender_name="", sender_email="", recv_dt=None):
+    """
+    Extracts project name, location, bid dates, and contacts from solicitation email content.
+    Prevents generic email subjects like 'COMPETITIVE SEALED PROPOSAL' from masking the real project name.
+    """
+    # 1. Project Name
+    project_name = ""
+    m = re.search(r"(?:Project Name|Project):\s*(.*?)(?=\s*(?:Description|Location|Contact|Prebid|Bid Date|$))", text, re.IGNORECASE)
+    if m and len(m.group(1).strip()) > 3:
+        project_name = m.group(1).strip()
+    if not project_name:
+        generic_subjects = ["COMPETITIVE SEALED PROPOSAL", "INVITATION TO BID", "BID INVITE", "CURRENTLY BIDDING", "NEW BID OPPORTUNITY"]
+        if not any(g in subject.upper() for g in generic_subjects):
+            project_name = subject.strip()
+        else:
+            code_match = re.search(r"((?:FWISD|TEA|RFP|CSP|ISD)\s*[0-9A-Z\s-]+)", text)
+            if code_match and len(code_match.group(1).strip()) > 5:
+                project_name = code_match.group(1).strip()
+            else:
+                project_name = subject.strip()
+
+    # 2. Location
+    address = ""
+    city = "Fort Worth" if "FORT WORTH" in text.upper() else "Texas"
+    state = "TX"
+    zipcode = ""
+    loc_match = re.search(r"(?:Location|Address):\s*(.*?)(?=\s*(?:Contact|Prebid|Bid Date|Description|$))", text, re.IGNORECASE)
+    if loc_match:
+        loc_str = loc_match.group(1).strip()
+        address = loc_str
+        parts = [p.strip() for p in loc_str.split(",")]
+        if len(parts) >= 2:
+            address = parts[0]
+            city = parts[1]
+        if len(parts) >= 3:
+            st_zip = parts[2].split()
+            if len(st_zip) >= 1:
+                state = st_zip[0]
+            if len(st_zip) >= 2:
+                zipcode = st_zip[1]
+
+    # 3. Dates
+    bid_date = None
+    bid_match = re.search(r"(?<!pre)(?<!sub)bid date:\s*([0-9\/\-:\sapmAPM]+)", text, re.IGNORECASE)
+    if bid_match:
+        try:
+            bid_date = dt_parser.parse(bid_match.group(1).strip())
+        except Exception:
+            pass
+
+    prebid_date_str = ""
+    prebid_match = re.search(r"prebid date:\s*([0-9\/\-:\sapmAPM]+)", text, re.IGNORECASE)
+    if prebid_match:
+        prebid_date_str = prebid_match.group(1).strip()
+
+    # 4. Description
+    desc_str = ""
+    desc_match = re.search(r"description:\s*(.*?)(?=\s*(?:Location|Contact|Prebid|Bid Date|$))", text, re.IGNORECASE)
+    if desc_match:
+        desc_str = desc_match.group(1).strip()
+
+    # 5. Contact
+    estimator_name = sender_name
+    estimator_email = sender_email
+    estimator_phone = ""
+    contact_match = re.search(r"contact:\s*(.*?)(?=\s*(?:Prebid|Bid Date|Location|Description|$))", text, re.IGNORECASE)
+    if contact_match:
+        c_str = contact_match.group(1).strip()
+        estimator_name = c_str
+        phone_match = re.search(r"(\d{3}[-\.\s]??\d{3}[-\.\s]??\d{4})", c_str)
+        if phone_match:
+            estimator_phone = phone_match.group(1)
+        email_match = re.search(r"([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)", c_str)
+        if email_match:
+            estimator_email = email_match.group(1)
+
+    # 6. Planroom / RFP URL
+    plan_url = None
+    url_matches = re.findall(r"https?://[^\s\"'<>]+", text)
+    for u in url_matches:
+        if any(dom in u.lower() for dom in ["fwisdplanroom.com", "reproconnect.com", "buildingconnected.com", "planhub.com", "isqft.com"]):
+            if "unsubscribe" not in u.lower():
+                plan_url = u
+                break
+
+    return {
+        "project_name": project_name,
+        "address": address,
+        "city": city,
+        "state": state,
+        "zipcode": zipcode,
+        "bid_due_date": bid_date,
+        "prebid_date_str": prebid_date_str,
+        "description": desc_str,
+        "estimator_name": estimator_name,
+        "estimator_email": estimator_email,
+        "estimator_phone": estimator_phone,
+        "plan_url": plan_url
+    }
+
+def search_graph_messages(query, top=5):
+    """Searches Microsoft Graph API messages in hdominguez@hwbcleaning.com mailbox."""
+    token = get_graph_token()
+    if not token:
+        return []
+    try:
+        clean_q = re.sub(r'["\']', '', query).strip()
+        if not clean_q:
+            return []
+        url = f'https://graph.microsoft.com/v1.0/users/{USER_EMAIL}/messages?$search="{clean_q}"&$top={top}&$select=id,subject,from,receivedDateTime,bodyPreview,body'
+        headers = {'Authorization': f'Bearer {token}'}
+        res = session.get(url, headers=headers, timeout=20)
+        if res.status_code != 200:
+            print(f"[GRAPH SEARCH] HTTP {res.status_code}: {res.text[:200]}", flush=True)
+            return []
+        data = res.json().get('value', [])
+        results = []
+        for m in data:
+            sender_obj = m.get('from', {}).get('emailAddress', {})
+            raw_body = m.get('body', {}).get('content', '')
+            clean_body = re.sub(r'<[^>]+>', ' ', raw_body)
+            clean_body = re.sub(r'\s+', ' ', clean_body).strip()
+            
+            details = parse_email_bid_details(m.get('subject', ''), clean_body, sender_obj.get('name', ''), sender_obj.get('address', ''))
+            
+            results.append({
+                "id": m.get('id'),
+                "subject": m.get('subject', 'No Subject'),
+                "sender_name": sender_obj.get('name', ''),
+                "sender_email": sender_obj.get('address', ''),
+                "received_date": (m.get('receivedDateTime') or '')[:10],
+                "preview": m.get('bodyPreview', ''),
+                "body_text": clean_body,
+                "parsed_details": details
+            })
+        return results
+    except Exception as e:
+        print(f"[GRAPH SEARCH ERROR] {e}", flush=True)
+        return []
+
+def ingest_bid_from_email_id(message_id):
+    """Ingests or updates a ConstructionBid directly from an Outlook message ID."""
+    token = get_graph_token()
+    if not token:
+        return False, "Failed to acquire Microsoft Graph token", None
+
+    try:
+        url = f'https://graph.microsoft.com/v1.0/users/{USER_EMAIL}/messages/{message_id}'
+        headers = {'Authorization': f'Bearer {token}'}
+        res = session.get(url, headers=headers, timeout=20)
+        if res.status_code != 200:
+            return False, f"Failed to retrieve email: HTTP {res.status_code}", None
+
+        msg = res.json()
+        subject = msg.get('subject', 'Inbound Solicitation')
+        sender_obj = msg.get('from', {}).get('emailAddress', {})
+        sender_name = sender_obj.get('name', '')
+        sender_email = sender_obj.get('address', '')
+        raw_body = msg.get('body', {}).get('content', '')
+        clean_body = re.sub(r'<[^>]+>', ' ', raw_body)
+        clean_body = re.sub(r'\s+', ' ', clean_body).strip()
+
+        details = parse_email_bid_details(subject, clean_body, sender_name, sender_email)
+
+        conn = get_db_connection()
+        with conn.cursor() as cur:
+            cur.execute('SELECT id FROM "ConstructionBids" WHERE email_id = %s;', (message_id,))
+            existing = cur.fetchone()
+            if existing:
+                bid_id = existing[0]
+                cur.execute('''
+                    UPDATE "ConstructionBids"
+                    SET project_name = %s,
+                        project_address = COALESCE(%s, project_address),
+                        city = COALESCE(%s, city),
+                        state = COALESCE(%s, state),
+                        zipcode = COALESCE(%s, zipcode),
+                        bid_due_date = COALESCE(%s, bid_due_date),
+                        plan_url = COALESCE(%s, plan_url),
+                        rfp_url = COALESCE(%s, rfp_url),
+                        estimator_name = COALESCE(%s, estimator_name),
+                        estimator_email = COALESCE(%s, estimator_email),
+                        estimator_phone = COALESCE(%s, estimator_phone),
+                        special_requirements = COALESCE(%s, special_requirements),
+                        updated_at = NOW()
+                    WHERE id = %s
+                    RETURNING id;
+                ''', (
+                    details["project_name"],
+                    details["address"] or None,
+                    details["city"] or None,
+                    details["state"] or None,
+                    details["zipcode"] or None,
+                    details["bid_due_date"],
+                    details["plan_url"],
+                    details["plan_url"],
+                    details["estimator_name"] or None,
+                    details["estimator_email"] or None,
+                    details["estimator_phone"] or None,
+                    f"Prebid: {details['prebid_date_str']}. {details['description']}",
+                    bid_id
+                ))
+            else:
+                cur.execute('''
+                    INSERT INTO "ConstructionBids" (
+                        gc_name, project_name, project_address, city, state, zipcode,
+                        bid_due_date, plan_url, rfp_url, estimator_name, estimator_email, estimator_phone,
+                        platform, status, email_id, special_requirements, notes, created_at, updated_at
+                    ) VALUES (
+                        %s, %s, %s, %s, %s, %s,
+                        %s, %s, %s, %s, %s, %s,
+                        'Planroom', 'Invited', %s, %s, %s, NOW(), NOW()
+                    ) RETURNING id;
+                ''', (
+                    sender_name or "General Contractor",
+                    details["project_name"],
+                    details["address"] or None,
+                    details["city"] or None,
+                    details["state"] or None,
+                    details["zipcode"] or None,
+                    details["bid_due_date"],
+                    details["plan_url"],
+                    details["plan_url"],
+                    details["estimator_name"] or None,
+                    details["estimator_email"] or None,
+                    details["estimator_phone"] or None,
+                    message_id,
+                    f"Prebid: {details['prebid_date_str']}. {details['description']}",
+                    f"Inbound solicitation email: {subject}. {clean_body[:300]}"
+                ))
+                bid_id = cur.fetchone()[0]
+
+            cur.execute('''
+                INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
+                VALUES (%s, 'ConstructionBid', 'Email Ingested via Telegram', %s);
+            ''', (bid_id, f"Solicitation ingested from email: {details['project_name']}"))
+            conn.commit()
+        conn.close()
+        return True, f"Bid #{bid_id} ({details['project_name']}) registered in Commercial GC Pipeline.", bid_id
+    except Exception as e:
+        return False, f"Ingestion error: {e}", None
+
+def get_recent_conversation_history(chat_id, limit=6):
+    """Retrieves the last N conversation turns from sigma_kb to preserve multi-turn context."""
+    conn = None
+    try:
+        conn = get_db_connection()
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT content, metadata
+                FROM sigma_kb
+                WHERE doc_id LIKE %s
+                  AND (metadata->>'chat_id' = %s OR metadata->>'chat_id' IS NULL)
+                ORDER BY doc_id DESC
+                LIMIT %s;
+            """, ("telegram-convo%", str(chat_id), limit))
+            rows = cur.fetchall()
+        if not rows:
+            return "No previous conversation turns recorded."
+        turns = []
+        for content, meta in reversed(rows):
+            clean_content = content.strip()
+            if len(clean_content) > 500:
+                clean_content = clean_content[:500] + "... [truncated]"
+            turns.append(clean_content)
+        return "\n---\n".join(turns)
+    except Exception as e:
+        print(f"[CONVERSATION MEMORY ERROR] {e}", flush=True)
+        return "Conversation history unavailable."
+    finally:
+        if conn:
+            conn.close()
+
+
 # --- MASTER SPECIFICATIONS & DYNAMIC RESOLVER CAPSULES ---
 COLLIN_COLLEGE_CONTEXT = """
 ACTIVE PROJECT: COLLIN COLLEGE FRISCO CAMPUS OPERATIONAL & PRICING SPECIFICATIONS:
@@ -848,8 +1126,9 @@ def get_dynamic_session_context(chat_id, incoming_text="", caption=""):
     Dynamic Project & Problem Resolver:
     1. Identifies topic pivots from message content or user directives.
     2. Updates and retrieves session context in UserBehavioralProfiles per user.
-    3. Dynamically queries PostgreSQL for live Lead, Opportunity, or Construction Bid data.
+    3. Dynamically queries PostgreSQL for live Commercial GC Bids, Institutional Bids, or Leads.
     4. Seamlessly adapts system prompts without rigid hardcoded lockouts.
+    5. Falls back to Microsoft Graph API email search if the project was received via inbound email.
     """
     combined_query = f"{incoming_text} {caption}".lower()
 
@@ -882,26 +1161,114 @@ def get_dynamic_session_context(chat_id, incoming_text="", caption=""):
                 row = cur.fetchone()
                 active_context = row[0] if row and row[0] else None
 
-            # Dynamic database lookup if user mentions specific property or address
-            words = [w for w in re.findall(r'[A-Za-z0-9]{4,}', combined_query) if w not in ["project", "clean", "about", "there", "their", "please", "george", "hello", "trash", "pickup", "frisco", "plano", "college", "horizon"]]
-            if words:
-                search_term = f"%{words[0]}%"
-                cur.execute("""
-                    SELECT id, center_name, address, city, notes, estimated_annual_value
-                    FROM "Leads"
-                    WHERE center_name ILIKE %s OR address ILIKE %s
-                    ORDER BY id DESC LIMIT 1;
-                """, (search_term, search_term))
-                lead_match = cur.fetchone()
-                if lead_match:
-                    extra_db_context = (
-                        f"\n\nDATABASE MATCH FOUND (Lead #{lead_match[0]}):\n"
-                        f"- Facility: {lead_match[1]}\n"
-                        f"- Address: {lead_match[2]}, {lead_match[3]}\n"
-                        f"- Estimated Value: ${lead_match[5] or 0:,.2f}\n"
-                        f"- Recorded Notes: {lead_match[4] or 'None'}\n"
-                    )
+            # Dynamic database lookup across Bids and Leads
+            ignore_words = {"project", "clean", "about", "there", "their", "please", "george", "hello", "trash", "pickup", "frisco", "plano", "college", "horizon", "what", "have", "check", "email", "emails", "domain", "from", "with", "that", "this", "some"}
+            words = [w for w in re.findall(r'[A-Za-z0-9]{4,}', combined_query) if w not in ignore_words]
+            
+            matched = False
+            for w in words[:3]:
+                search_term = f"%{w}%"
+                
+                # 1. Search Commercial GC Bids (ConstructionBids)
+                try:
+                    cur.execute("""
+                        SELECT id, gc_name, project_name, project_address, city, state, zipcode,
+                               estimated_value, cleanable_sqft, bid_due_date, special_requirements, notes,
+                               rfp_url, plan_url, estimator_name, estimator_email, status,
+                               word_similarity(%s, project_name) as sim
+                        FROM "ConstructionBids"
+                        WHERE project_name ILIKE %s
+                           OR notes ILIKE %s
+                           OR word_similarity(%s, project_name) > 0.3
+                        ORDER BY sim DESC NULLS LAST
+                        LIMIT 1;
+                    """, (w, search_term, search_term, w))
+                    bid_match = cur.fetchone()
+                    if bid_match:
+                        b_id, b_gc, b_proj, b_addr, b_city, b_st, b_zip, b_val, b_sqft, b_due, b_spec, b_notes, b_rfp, b_plan, b_est_name, b_est_email, b_stat, _ = bid_match
+                        due_str = b_due.strftime("%m/%d/%Y at %I:%M %p") if b_due else "Pending"
+                        val_str = f"${float(b_val):,.2f}" if b_val else "$0.00"
+                        sqft_str = f"{int(b_sqft):,} SF" if b_sqft else "Pending"
+                        extra_db_context += (
+                            f"\n\nDATABASE MATCH FOUND (Commercial GC Bid #{b_id}):\n"
+                            f"- Project: {b_proj}\n"
+                            f"- General Contractor / Client: {b_gc}\n"
+                            f"- Location: {b_addr or ''}, {b_city or ''}, {b_st or ''} {b_zip or ''}\n"
+                            f"- Bid Due Date: {due_str}\n"
+                            f"- Cleanable Footprint / Estimated Value: {sqft_str} | {val_str}\n"
+                            f"- Scope / Special Requirements: {b_spec or b_notes or 'Standard CSI Division 01 Clean'}\n"
+                            f"- Estimator / Contact: {b_est_name or 'N/A'} ({b_est_email or 'N/A'})\n"
+                            f"- Planroom Access / URL: {b_plan or b_rfp or 'Pending'}\n"
+                            f"- Pipeline Status: {b_stat}\n"
+                        )
+                        matched = True
+                        break
+                except Exception:
+                    pass
+
+                # 2. Search Institutional Bids
+                if not matched:
+                    try:
+                        cur.execute("""
+                            SELECT id, agency_name, title, solicitation_number, hwb_bid_total, cleanable_sqft, bid_due_date, status
+                            FROM "InstitutionalBids"
+                            WHERE agency_name ILIKE %s OR title ILIKE %s OR solicitation_number ILIKE %s
+                            LIMIT 1;
+                        """, (search_term, search_term, search_term))
+                        ib_match = cur.fetchone()
+                        if ib_match:
+                            ib_due_str = ib_match[6].strftime("%m/%d/%Y at %I:%M %p") if ib_match[6] else "Pending"
+                            extra_db_context += (
+                                f"\n\nDATABASE MATCH FOUND (Institutional Bid #{ib_match[0]}):\n"
+                                f"- Agency: {ib_match[1]} | Title: {ib_match[2]} (Solicitation: {ib_match[3]})\n"
+                                f"- Footprint: {ib_match[5] or 'N/A'} SF | Value: ${ib_match[4] or 0:,.2f}\n"
+                                f"- Deadline: {ib_due_str} | Status: {ib_match[7]}\n"
+                            )
+                            matched = True
+                            break
+                    except Exception:
+                        pass
+
+                # 3. Search CRM Leads
+                if not matched:
+                    cur.execute("""
+                        SELECT id, center_name, address, city, notes, estimated_annual_value
+                        FROM "Leads"
+                        WHERE center_name ILIKE %s OR address ILIKE %s
+                        ORDER BY id DESC LIMIT 1;
+                    """, (search_term, search_term))
+                    lead_match = cur.fetchone()
+                    if lead_match:
+                        extra_db_context += (
+                            f"\n\nDATABASE MATCH FOUND (Lead #{lead_match[0]}):\n"
+                            f"- Facility: {lead_match[1]}\n"
+                            f"- Address: {lead_match[2]}, {lead_match[3]}\n"
+                            f"- Estimated Value: ${lead_match[5] or 0:,.2f}\n"
+                            f"- Recorded Notes: {lead_match[4] or 'None'}\n"
+                        )
+                        matched = True
+                        break
         conn.close()
+
+        # 4. Fallback search via Microsoft Graph API if no DB match or user explicitly inquiries about email/domain
+        if not matched and (any(k in combined_query for k in ["email", "domain", "reproconnect", "inbox", "sent", "solicitation"]) or words):
+            lookup_kw = "reproconnect" if "reproconnect" in combined_query else (words[0] if words else "")
+            if lookup_kw:
+                found_emails = search_graph_messages(lookup_kw, top=2)
+                if found_emails:
+                    extra_db_context += "\n\nOUTLOOK INBOX MATCHES FOUND (Incoming Email Solicitations):\n"
+                    for fe in found_emails:
+                        pd = fe["parsed_details"]
+                        due_fmt = pd['bid_due_date'].strftime('%m/%d/%Y %I:%M %p') if pd['bid_due_date'] else 'Pending'
+                        extra_db_context += (
+                            f"- Project: {pd['project_name']}\n"
+                            f"  * From: {fe['sender_name']} <{fe['sender_email']}> | Date: {fe['received_date']}\n"
+                            f"  * Location: {pd['address']}, {pd['city']} {pd['state']}\n"
+                            f"  * Bid Due: {due_fmt} | Prebid: {pd['prebid_date_str'] or 'None'}\n"
+                            f"  * Scope: {pd['description'][:200]}\n"
+                            f"  * Planroom Link: {pd['plan_url'] or 'N/A'}\n"
+                        )
+
     except Exception as e:
         print(f"[DYNAMIC RESOLVER ERROR] {e}", flush=True)
         active_context = new_context or "GENERAL"
@@ -916,8 +1283,10 @@ def get_dynamic_session_context(chat_id, incoming_text="", caption=""):
 ACTIVE OPERATIONAL CONTEXT (GENERAL PIPELINE):
 - You have unrestricted access to all active operations, leads, and bids for HWB Cleaning Services LLC.
 - Active Focus Areas:
+  * FWISD TEA 048 - Polytech Pyramid Middle School Consolidation (1101 Nashville Ave, Fort Worth - Bid #42)
+  * FWISD TEA 044 - Northside Pyramid Middle School (709 NW 21st St, Fort Worth - Bid #43)
   * Horizon at Premier (3409 Premier Dr, Plano - 122 units, 7 days/wk valet waste removal - Lead #82474)
-  * Collin College Frisco Campus Custodial Replacement (478,418 SF, 10 buildings, RFP # FY2024-RFP-005 Replacement)
+  * Collin College Frisco Campus Custodial Replacement (478,418 SF, 10 buildings, RFP # FY2024-RFP-005 Replacement - Bid #17)
   * North Texas Daycare & Commercial Pipeline (10,000+ facilities in DFW)
 - OPERATIONAL DIRECTIVE: Listen carefully to the user's project, location, or walk-through observations. Do not force them into an unrelated project. Acknowledge their exact numbers (units, square footage, frequencies, addresses), record their findings, and assist with immediate estimation and operational execution.
 """ + extra_db_context
@@ -1015,7 +1384,7 @@ def analyze_photo_with_gemini(image_bytes, caption="", chat_id=None):
 
 
 def analyze_text_with_gemini(text, chat_id):
-    """Conversational field intelligence for team members on Telegram with Dynamic Resolver."""
+    """Conversational field intelligence for team members on Telegram with Dynamic Resolver & Episodic Memory."""
     if not GEMINI_API_KEY:
         return "⚠️ GEMINI_API_KEY not configured.", None
 
@@ -1025,6 +1394,9 @@ def analyze_text_with_gemini(text, chat_id):
     actor_name = actor_user.get("name", "CEO Humberto Dominguez") if actor_user else "Team Member"
     actor_role = actor_user.get("role", "Executive") if actor_user else "Team Member"
 
+    # Multi-turn episodic conversation memory (eliminates amnesia)
+    recent_history = get_recent_conversation_history(chat_id, limit=6)
+
     # Dynamic Resolver Context Capsule
     dynamic_context = get_dynamic_session_context(chat_id, incoming_text=text)
 
@@ -1032,23 +1404,27 @@ def analyze_text_with_gemini(text, chat_id):
     system_prompt = (
         "You are George, Lead Autonomous Systems Architect, Senior Estimator, Senior ISO 9001 Auditor, and Certified Lean Six Sigma Master Black Belt for HWB Cleaning Services LLC.\n"
         f"You are conversing directly in real-time with {actor_name} ({actor_role}) via Telegram during mobile operations and facility walkthroughs.\n\n"
+        f"EPISODIC DIALOGUE MEMORY (Recent conversation turns with {actor_name}):\n"
+        f"{recent_history}\n\n"
         f"{dynamic_context}\n\n"
         "OPERATIONAL RULES:\n"
         "1. Strictly maintain a professional, authoritative tone. Use everyday words, bold headers, bullet points, and emojis suitable for mobile reading.\n"
         f"2. Tailor your responses to {actor_name}'s role ({actor_role}). For executives, provide exact financial figures, margins, and operational approvals. For operators, provide clear workflows, candidate details, and task schedules.\n"
         "3. Never force the user back into an unrelated project if they state they are working on a different lead, location, or facility.\n"
-        "4. If the user gives an operational directive, include an optional JSON block at the very start of your response:\n"
+        "4. CONTINUITY MANDATE: If the user refers to previous context (e.g. 'that domain', 'that project', 'I just gave it to you', 'check emails for it'), RESOLVE IT IMMEDIATELY using the EPISODIC DIALOGUE MEMORY above. Never ask the user to repeat what they previously stated.\n"
+        "5. If the user gives an operational directive, asks about emails, or references a project, include a JSON block at the very start of your response:\n"
         "```json\n"
         "{\n"
-        '  "intent": "create_calendar_event" | "draft_email" | "send_proposal" | "conversational",\n'
+        '  "intent": "search_emails" | "ingest_bid" | "create_calendar_event" | "draft_email" | "send_proposal" | "conversational",\n'
+        '  "query": "search query or domain (e.g. reproconnect.com, polytech pyramid, etc.)",\n'
         '  "title": "...",\n'
         '  "recipient": "...",\n'
         '  "date_time": "...",\n'
         '  "summary": "...",\n'
-        '  "bid_id": 17\n'
+        '  "bid_id": 42\n'
         "}\n"
         "```\n"
-        f"5. Follow the JSON block with your crisp, high-impact operational response to {actor_name}."
+        f"6. Follow the JSON block with your crisp, high-impact operational response to {actor_name}."
     )
 
     payload = {
@@ -1090,7 +1466,66 @@ def handle_text_conversation(text, chat_id):
     intent = intent_data.get("intent", "conversational")
     action_note = ""
 
-    # Execute Triggered Actions
+    # 1. Email Search Intent Execution (Pillar 2)
+    is_email_query = (intent == "search_emails") or (
+        ("email" in text.lower() or "inbox" in text.lower() or "domain" in text.lower() or "reproconnect" in text.lower()) and
+        any(k in text.lower() for k in ["check", "find", "search", "what", "any", "look", "from", "for"])
+    )
+    if is_email_query:
+        query_term = intent_data.get("query") or ""
+        if not query_term or query_term.lower() in ["that domain", "the domain", "email", "emails"]:
+            if "reproconnect" in text.lower() or "reproconnect" in clean_reply.lower():
+                query_term = "reproconnect"
+            else:
+                m_dom = re.search(r'([a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)', gemini_reply + " " + text)
+                query_term = m_dom.group(1) if m_dom else "reproconnect"
+
+        send_telegram_chat_action(chat_id, "typing")
+        results = search_graph_messages(query_term, top=3)
+        if results:
+            msg_lines = [
+                f"📬 *Inbound Email Solicitations in Outlook:*",
+                f"🔎 *Search Filter:* `{query_term}`",
+                "━━━━━━━━━━━━━━━━━━━━━"
+            ]
+            action_buttons = []
+            conn = get_db_connection()
+            for idx, r in enumerate(results, 1):
+                pd = r["parsed_details"]
+                p_title = pd["project_name"] or r["subject"]
+                msg_lines.append(f"*{idx}. {p_title}*")
+                msg_lines.append(f"  • *Sender:* `{r['sender_email']}` | *Date:* {r['received_date']}")
+                if pd["address"]:
+                    msg_lines.append(f"  • *Location:* {pd['address']}, {pd['city']} {pd['state']}")
+                if pd["bid_due_date"]:
+                    msg_lines.append(f"  • *Bid Date:* {pd['bid_due_date'].strftime('%m/%d/%Y %I:%M %p')}")
+                if pd["prebid_date_str"]:
+                    msg_lines.append(f"  • *Prebid:* {pd['prebid_date_str']}")
+                msg_lines.append("")
+
+                with conn.cursor() as cur:
+                    cur.execute('SELECT id FROM "ConstructionBids" WHERE email_id = %s OR project_name ILIKE %s LIMIT 1;', (r['id'], f"%{p_title[:25]}%"))
+                    eb = cur.fetchone()
+                if eb:
+                    action_buttons.append([{"text": f"📐 Inspect Bid #{eb[0]} ({p_title[:20]}...)", "callback_data": f"takeoff_{eb[0]}"}])
+                else:
+                    action_buttons.append([{"text": f"📥 Ingest {p_title[:25]}...", "callback_data": f"ingest_msg_{r['id']}"}])
+            conn.close()
+
+            action_buttons.append([{"text": "📊 Active GC Bids", "callback_data": "cmd_bids"}, {"text": "📬 Outbox", "callback_data": "cmd_pending"}])
+            full_msg = "\n".join(msg_lines)
+            send_telegram_message(chat_id, full_msg, reply_markup={"inline_keyboard": action_buttons})
+            return
+
+    # 2. GC Ingestion Intent Execution
+    if intent == "ingest_bid" and intent_data.get("query"):
+        found = search_graph_messages(intent_data["query"], top=1)
+        if found:
+            ok, imsg, n_bid_id = ingest_bid_from_email_id(found[0]["id"])
+            if ok and n_bid_id:
+                action_note = f"\n\n📥 *GC Pipeline Ingestion:* Registered as Bid #{n_bid_id}."
+
+    # 3. Calendar & Proposal Actions
     if intent == "create_calendar_event":
         subj = intent_data.get("title") or "Executive Appointment"
         dt = intent_data.get("date_time")
@@ -1147,11 +1582,28 @@ def handle_text_conversation(text, chat_id):
         except Exception:
             pass
 
-    # Deliver message with interactive buttons
-    buttons = [
-        [{"text": "🏫 Collin Dashboard", "callback_data": "cmd_collin"}, {"text": "📑 Send Excel", "callback_data": "proposal_17"}],
-        [{"text": "📊 Active Bids", "callback_data": "cmd_bids"}, {"text": "📬 Outbox", "callback_data": "cmd_pending"}]
-    ]
+    # Dynamic contextual buttons
+    buttons = []
+    target_bid_id = intent_data.get("bid_id")
+    if not target_bid_id:
+        m_bid = re.search(r'bid\s*#?(\d+)', clean_reply + " " + text, re.IGNORECASE)
+        if m_bid:
+            target_bid_id = int(m_bid.group(1))
+
+    if target_bid_id:
+        buttons.append([{"text": f"📐 Inspect Bid #{target_bid_id}", "callback_data": f"takeoff_{target_bid_id}"}])
+    elif any(k in clean_reply.lower() for k in ["polytech", "politech"]):
+        buttons.append([{"text": "📐 Inspect Polytech Bid #42", "callback_data": "takeoff_42"}])
+    elif "northside" in clean_reply.lower():
+        buttons.append([{"text": "📐 Inspect Northside Bid #43", "callback_data": "takeoff_43"}])
+    elif "collin" in clean_reply.lower():
+        buttons.append([{"text": "🏫 Collin Dashboard", "callback_data": "cmd_collin"}, {"text": "📑 Send Excel", "callback_data": "proposal_17"}])
+
+    buttons.append([
+        {"text": "📊 Active Bids", "callback_data": "cmd_bids"},
+        {"text": "📬 Outbox", "callback_data": "cmd_pending"}
+    ])
+
     full_msg = f"🏛️ *George (Systems Architect):*\n━━━━━━━━━━━━━━━━━━━━━\n{clean_reply}{action_note}"
     send_telegram_message(chat_id, full_msg, reply_markup={"inline_keyboard": buttons})
 
@@ -2439,12 +2891,17 @@ def handle_cmd_search(chat_id, query):
     try:
         conn = get_db_connection()
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            clean_term = query.strip()
             cur.execute("""
-                SELECT id, gc_name, project_name, estimated_value, status 
+                SELECT id, gc_name, project_name, estimated_value, status,
+                       similarity(project_name, %s) as sim
                 FROM \"ConstructionBids\" 
                 WHERE gc_name ILIKE %s OR project_name ILIKE %s OR notes ILIKE %s
+                   OR similarity(project_name, %s) > 0.15
+                   OR soundex(project_name) = soundex(%s)
+                ORDER BY sim DESC NULLS LAST
                 LIMIT 4;
-            """, (q, q, q))
+            """, (clean_term, q, q, q, clean_term, clean_term))
             bids = cur.fetchall()
 
             cur.execute("""
@@ -2483,11 +2940,20 @@ def handle_cmd_search(chat_id, query):
             for d in docs:
                 lines.append(f"  • `{d['doc_id']}`")
 
-        if not bids and not leads and not docs:
+        # Fallback search into Outlook emails if no bids found or explicit solicitation search
+        found_emails = search_graph_messages(query.strip(), top=3)
+        if found_emails:
+            lines.append("\n📬 *Inbound Outlook Solicitations:*")
+            for em in found_emails:
+                p_title = em["parsed_details"]["project_name"] or em["subject"]
+                lines.append(f"  • *{p_title}* (`{em['sender_email']}` - {em['received_date']})")
+                buttons.append([{"text": f"📥 Ingest {p_title[:22]}...", "callback_data": f"ingest_msg_{em['id']}"}])
+
+        if not bids and not leads and not docs and not found_emails:
             lines.append(f"❌ No matching records found for `{query.strip()}`.")
 
         lines.append("━━━━━━━━━━━━━━━━━━━━━")
-        markup = {"inline_keyboard": buttons[:6]} if buttons else get_main_menu_keyboard()
+        markup = {"inline_keyboard": buttons[:8]} if buttons else get_main_menu_keyboard()
         send_telegram_message(chat_id, "\n".join(lines), reply_markup=markup)
     except Exception as e:
         send_telegram_message(chat_id, f"⚠️ Search Error: {e}")
@@ -2739,6 +3205,22 @@ def process_callback_query(callback_query):
                     answer_callback_query(query_id, f"User {target_username} not found.")
             except Exception as e:
                 answer_callback_query(query_id, f"Error: {e}")
+    elif data.startswith("ingest_msg_"):
+        msg_id = data.replace("ingest_msg_", "")
+        answer_callback_query(query_id, "Ingesting solicitation into GC Pipeline...")
+        ok, res_msg, bid_id = ingest_bid_from_email_id(msg_id)
+        if ok and bid_id:
+            btns = [
+                [{"text": f"📐 Open Takeoff #{bid_id}", "callback_data": f"takeoff_{bid_id}"}],
+                [{"text": "📊 View All Bids", "callback_data": "cmd_bids"}]
+            ]
+            send_telegram_message(chat_id, f"✅ *Successfully Ingested Bid #{bid_id}!*\n━━━━━━━━━━━━━━━━━━━━━\n{res_msg}", reply_markup={"inline_keyboard": btns})
+        else:
+            send_telegram_message(chat_id, f"⚠️ Ingestion Failed: {res_msg}")
+    elif data.startswith("search_email_"):
+        kw = data.replace("search_email_", "")
+        answer_callback_query(query_id, f"Searching emails for '{kw}'...")
+        handle_text_conversation(f"Check my emails for {kw}", chat_id)
     else:
         answer_callback_query(query_id, "Acknowledged")
 
@@ -3034,27 +3516,49 @@ def autonomous_deal_capture_loop():
                                 cur.execute("SELECT id FROM \"ConstructionBids\" WHERE email_id = %s;", (msg_id,))
                                 exists = cur.fetchone()
                                 if not exists:
+                                    parsed = parse_email_bid_details(subj, body, sender_name=name, sender_email=sender)
+                                    real_proj = parsed["project_name"] or subj[:100]
                                     cur.execute("""
                                         INSERT INTO \"ConstructionBids\" (
-                                            gc_name, project_name, platform, status, email_id, notes, created_at, updated_at
-                                        ) VALUES (%s, %s, %s, 'Invited', %s, %s, NOW(), NOW())
+                                            gc_name, project_name, project_address, city, state, zipcode,
+                                            bid_due_date, plan_url, rfp_url, estimator_name, estimator_email, estimator_phone,
+                                            platform, status, email_id, special_requirements, notes, created_at, updated_at
+                                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'Invited', %s, %s, %s, NOW(), NOW())
                                         RETURNING id;
-                                    """, (name or sender, subj[:100], 'BuildingConnected' if 'buildingconnected' in combined else 'Planroom', msg_id, body[:200]))
+                                    """, (
+                                        name or sender,
+                                        real_proj,
+                                        parsed["address"] or None,
+                                        parsed["city"] or None,
+                                        parsed["state"] or None,
+                                        parsed["zipcode"] or None,
+                                        parsed["bid_due_date"],
+                                        parsed["plan_url"],
+                                        parsed["plan_url"],
+                                        parsed["estimator_name"] or None,
+                                        parsed["estimator_email"] or None,
+                                        parsed["estimator_phone"] or None,
+                                        'BuildingConnected' if 'buildingconnected' in combined else 'Planroom',
+                                        msg_id,
+                                        f"Prebid: {parsed['prebid_date_str']}. {parsed['description']}",
+                                        body[:200]
+                                    ))
                                     new_id = cur.fetchone()[0]
                                     conn.commit()
 
                                     alert_msg = (
                                         f"🔔 *NEW GC BID INVITATION DETECTED*\n"
                                         f"━━━━━━━━━━━━━━━━━━━━━\n"
-                                        f"🏢 *General Contractor:* {name}\n"
-                                        f"📁 *Project:* {subj}\n"
+                                        f"🏢 *General Contractor:* {name or sender}\n"
+                                        f"📁 *Project:* {real_proj}\n"
+                                        f"📍 *Location:* {parsed['city']}, {parsed['state']}\n"
                                         f"✉️ *Sender:* `{sender}`\n"
                                         f"━━━━━━━━━━━━━━━━━━━━━\n"
                                         f"Registered in database as *Bid #{new_id}*."
                                     )
                                     markup = {
                                         "inline_keyboard": [
-                                            [{"text": f"📥 1-Tap Auto-Takeoff", "callback_data": f"autotakeoff_{new_id}"}],
+                                            [{"text": f"📐 Takeoff #{new_id}", "callback_data": f"takeoff_{new_id}"}, {"text": f"📥 1-Tap Auto-Takeoff", "callback_data": f"autotakeoff_{new_id}"}],
                                             [{"text": "📊 View All Bids", "callback_data": "cmd_bids"}]
                                         ]
                                     }

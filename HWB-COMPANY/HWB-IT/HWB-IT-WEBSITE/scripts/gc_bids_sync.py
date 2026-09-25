@@ -301,15 +301,33 @@ def sync_inbound_graph_bids(conn):
                     exists = cur.fetchone()
                     if not exists:
                         platform = 'BuildingConnected' if 'buildingconnected' in combined else 'Planroom'
+                        
+                        # Extract project name from body if subject is generic
+                        real_pname = subj[:200]
+                        m_p = re.search(r"(?:Project Name|Project):\s*([^\n\r]+)", body, re.IGNORECASE)
+                        if m_p:
+                            real_pname = m_p.group(1).strip()
+                        elif any(g in subj.upper() for g in ["COMPETITIVE SEALED PROPOSAL", "INVITATION TO BID", "BID INVITE", "CURRENTLY BIDDING"]):
+                            code_match = re.search(r"((?:FWISD|TEA|RFP|CSP|ISD)\s*[0-9A-Z\s-]+)", body)
+                            if code_match and len(code_match.group(1).strip()) > 5:
+                                real_pname = code_match.group(1).strip()
+
+                        # Extract location
+                        loc_match = re.search(r"(?:Location|Address):\s*([^\n\r]+)", body, re.IGNORECASE)
+                        loc_str = loc_match.group(1).strip() if loc_match else None
+
                         cur.execute('''
                             INSERT INTO "ConstructionBids" (
-                                gc_name, project_name, platform, status, email_id, notes,
+                                gc_name, project_name, project_address, city, state, platform, status, email_id, notes,
                                 estimator_name, estimator_email, created_at, updated_at
-                            ) VALUES (%s, %s, %s, 'Invited', %s, %s, %s, %s, COALESCE(%s::timestamptz, NOW()), NOW())
+                            ) VALUES (%s, %s, %s, %s, %s, %s, 'Invited', %s, %s, %s, %s, COALESCE(%s::timestamptz, NOW()), NOW())
                             RETURNING id;
                         ''', (
                             name or sender,
-                            subj[:200],
+                            real_pname,
+                            loc_str,
+                            'Fort Worth' if 'FORT WORTH' in body.upper() else 'Texas',
+                            'TX',
                             platform,
                             msg_id,
                             f"Inbound solicitation email: {body[:300]}",
@@ -321,9 +339,9 @@ def sync_inbound_graph_bids(conn):
                         cur.execute('''
                             INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
                             VALUES (%s, 'ConstructionBid', 'Email Ingested', %s)
-                        ''', (new_id, f"Auto-ingested ITB email: {subj}"))
+                        ''', (new_id, f"Auto-ingested ITB email: {real_pname}"))
                         new_gc_bids += 1
-                        print(f"[SigmaFidelity] Ingested new GC Bid #{new_id}: {subj[:50]} from {sender}")
+                        print(f"[SigmaFidelity] Ingested new GC Bid #{new_id}: {real_pname[:50]} from {sender}")
 
             conn.commit()
             print(f"[SigmaFidelity] Sync completed: {new_gc_bids} new GC bids ingested.")

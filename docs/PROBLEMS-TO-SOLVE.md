@@ -72,6 +72,7 @@ Responsibility: George (Architect)
 | 09/24/2026 | ARCH-005 | Enterprise Dev-to-Live Parity Gate, Relative Resource Storage & IT Department 6-Rack Command Hub. | **RESOLVED** | HIGH |
 | 09/24/2026 | ARCH-006 | SigmaFidelity™ Architectural Scorecard (6σ), Top 5 Pareto Radar & Autonomous Self-Healing Suite. | **RESOLVED** | HIGH |
 | 09/24/2026 | BUG-091 | Raw JSON String Bleed in Institutional Bids Compliance Status Column & Missing Tier Pill Styling. | **RESOLVED** | HIGH |
+| 09/25/2026 | BUG-092 | Telegram Bot Conversational Amnesia, Inbound Solicitation Subject Masking & Missing Outlook Graph Search. | **RESOLVED** | HIGH |
 
 ## BUG-080: Local Loopback Hostname (mop.test) Inaccessible to External Devices & Mobile Cleaners via Generated Onboarding Link
 **Detected:** 09/21/2026
@@ -1204,3 +1205,31 @@ CEO Humberto Dominguez attempting to log into `https://www.hwbcleaning.com/login
 3. **Modal Deep-Dive Drawer:** Add a `"View Full Specs"` tooltip or modal inspector for operators wanting to inspect raw JSON parameters without polluting the primary grid.
 **Preventative:**
 1. Add an automated template linter check ensuring that database columns storing serialized JSON are never rendered as raw string interpolation (`{{ row.json_col }}`) without a deserialization helper or formatted component.
+
+## BUG-092: Telegram Bot Conversational Amnesia, Inbound Solicitation Subject Masking & Missing Outlook Graph Search
+**Detected:** 09/25/2026
+**Status:** **RESOLVED** (09/25/2026)
+**Symptoms:**
+1. In Telegram, when an executive issued a follow-up directive referencing previous dialogue (e.g. *"Check my emails for that domain"*, *"I just gave it to you"*, or *"What do we have for politech pyramid"*), George experienced complete conversational amnesia, asking the user to repeat the domain or stating that no records existed.
+2. Inbound construction solicitation emails from reproconnect.com and DFW Planroom (e.g. Fort Worth ISD Middle School consolidations) were ingested with generic email subject lines (`COMPETITIVE SEALED PROPOSAL`) instead of their real project names (`FWISD TEA 048 - POLYTECH PYRAMID MIDDLE SCHOOL CONSOLIDATION` and `FWISD TEA 044 - NORTHSIDE PYRAMID MIDDLE SCHOOL`), blinding subsequent database searches.
+3. George lacked an autonomous Microsoft Graph API search tool, preventing him from actively searching Outlook messages for received solicitations, RFP links, prebid dates, and project plans.
+**Root Causes:**
+1. `analyze_text_with_gemini(text, chat_id)` was stateless. It only ingested the single current turn without querying `sigma_kb` for recent dialogue turns.
+2. Inbound solicitation email parsers in `gc_bids_sync.py` and `telegram_listener.py` used `subject[:200]` directly as the `project_name` without extracting the explicit `Project Name:` or `Location:` fields from the email body.
+3. `get_dynamic_session_context` only searched the `Leads` table, omitting `ConstructionBids`, `InstitutionalBids`, and live Graph API message search.
+**Solution & Scalability Architecture:**
+1. **Episodic Conversation Memory (`get_recent_conversation_history`):**
+   - Retrieves the last 6 conversational turns from `sigma_kb` for the active `chat_id` and injects them directly into Gemini's prompt. George now resolves anaphoric references ("that domain", "that project") effortlessly.
+2. **Autonomous Microsoft Graph API Search & Ingestion Tooling:**
+   - Implemented `search_graph_messages(query, top=5)` using existing OAuth tokens.
+   - Built `parse_email_bid_details` to accurately extract `project_name`, `address`, `city`, `state`, `zipcode`, `bid_due_date`, `prebid_date`, and planroom links from inbound email bodies.
+   - Built `ingest_bid_from_email_id(message_id)` allowing 1-tap ingestion directly into `ConstructionBids`.
+3. **Phonetic & Trigram Tolerant Matching:**
+   - Upgraded database search in `get_dynamic_session_context` and `/search` to leverage PostgreSQL `similarity(project_name, query) > 0.15` and `soundex()`. Misspellings like *"politech"* seamlessly resolve to *"polytech"*.
+4. **Interactive Action Buttons:**
+   - Upgraded message dispatch to attach dynamic inline action buttons (`[ 📐 Inspect Bid #42 ]`, `[ 📥 Ingest as GC Bid ]`, `[ 📊 Active Bids ]`, `[ 📬 Outbox ]`).
+5. **Backfill & Correction:**
+   - Corrected records #42 and #43 in `ConstructionBids` with empirical project names, addresses, contacts, and bid dates.
+**Preventative:**
+1. Ensure all conversational AI endpoints inject episodic memory from `sigma_kb`.
+2. Prohibit using raw email subjects as project titles without regex parsing for explicit solicitation metadata.
