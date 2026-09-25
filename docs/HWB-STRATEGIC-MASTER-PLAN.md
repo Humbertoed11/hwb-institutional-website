@@ -27,6 +27,8 @@ flowchart TD
         P1B["BUG-090: Dynamic Project Resolver & Telegram Context"]
         P1C["Operational Form Hardening: Umbrella & Delivery Model"]
         P1D["Calendar Daycare Walkthrough Sync (2024-2025)"]
+        P1E["Migration 026: 7-Rack SPC Telemetry Ledger"]
+        P1F["ARCH-007: Telegram Operations Gateway & /cmd Shell"]
     end
 
     subgraph Phase 2: Immediate Staged Objectives
@@ -57,6 +59,8 @@ flowchart TD
 - [x] **Calendar Walkthrough Mining:** Extracted and linked CEO Humberto Dominguez's 2024–2025 daycare walkthrough visits to CRM records.
 - [x] **Form Parity & Corporate Umbrella:** Added Corporate Umbrella, M&A Acquisition Tier, and Cleaning Delivery Model across Lead Edit, Add Lead, and Add Account forms. Unified 20 Fractal Education Group centers with zero missing fields.
 - [x] **Peter's Recovery Shield:** Shadow snapshot automation (`peter_sentinel.py`), Ghost Checkpoint branch tracking, and daily incremental backups.
+- [x] **Historical SPC Telemetry Ledger (`Migration 026`):** Provisioned `RackTelemetryHistory` in PostgreSQL and automated 7-rack capture during session finalization.
+- [x] **Telegram Operations Gateway & Permissions Architecture (`ARCH-007`):** Embedded single-pane mobile user management inside `/admin/executive#users`. Enforced 5-Tier permission matrix, single-use token Magic Link onboarding (`https://t.me/Georgebytesbot?start=auth_<token>`), `/cmd <bash>` mobile Linux terminal shell gateway, episodic conversational memory, and live Google Search Grounding with Gemini 2.5 Flash.
 
 ---
 

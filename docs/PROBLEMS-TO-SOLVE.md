@@ -73,6 +73,7 @@ Responsibility: George (Architect)
 | 09/24/2026 | ARCH-006 | SigmaFidelity™ Architectural Scorecard (6σ), Top 5 Pareto Radar & Autonomous Self-Healing Suite. | **RESOLVED** | HIGH |
 | 09/24/2026 | BUG-091 | Raw JSON String Bleed in Institutional Bids Compliance Status Column & Missing Tier Pill Styling. | **RESOLVED** | HIGH |
 | 09/25/2026 | BUG-092 | Telegram Bot Conversational Amnesia, Inbound Solicitation Subject Masking & Missing Outlook Graph Search. | **RESOLVED** | HIGH |
+| 09/25/2026 | ARCH-007 | Telegram Operations Gateway: 5-Tier User Permissions, Single-Use Magic Link Onboarding, /cmd Linux Terminal Shell & Live Google Grounding. | **RESOLVED** | HIGH |
 
 ## BUG-080: Local Loopback Hostname (mop.test) Inaccessible to External Devices & Mobile Cleaners via Generated Onboarding Link
 **Detected:** 09/21/2026
@@ -1233,3 +1234,39 @@ CEO Humberto Dominguez attempting to log into `https://www.hwbcleaning.com/login
 **Preventative:**
 1. Ensure all conversational AI endpoints inject episodic memory from `sigma_kb`.
 2. Prohibit using raw email subjects as project titles without regex parsing for explicit solicitation metadata.
+
+## ARCH-007: Telegram Operations Gateway: 5-Tier User Permissions, Single-Use Magic Link Onboarding, /cmd Linux Terminal Shell & Live Google Grounding
+**Detected / Architected:** 09/25/2026
+**Status:** **RESOLVED** (09/25/2026)
+**Context & Operational Friction:**
+1. While CEO Humberto Dominguez possessed Telegram bot access, additional team members across Estimating, Operations, and Sales lacked authorized access or granular permissions.
+2. Granting Telegram access previously required manually discovering numerical Telegram chat IDs, copying them into `.env` or running manual SQL updates.
+3. Operators on mobile devices lacked role-based security boundaries: non-executive users could potentially trigger outbound email approvals, view internal pricing multipliers, or run system actions.
+4. Executive leadership lacked mobile terminal parity, forcing the CEO to sit at a workstation terminal to run system status checks, inspect docker containers, or run diagnostics.
+**Solution & Scalability Architecture:**
+1. **Single-Pane User Governance (`/admin/executive#users`):**
+   - Embedded Telegram configuration directly into the Executive User Management console (`HWB-WEB Sigma Executive.html` and `blueprints/operations.py`).
+   - Added live `Telegram Bot` status column (`Connected` vs `Off`).
+   - Integrated unitized permission checkboxes in Add/Edit user modals storing JSON configuration in `Users.custom_permissions['telegram']`.
+2. **5-Tier Granular Permission Hierarchy:**
+   - `can_approve_outbox`: Authorization to approve and dispatch staged client emails via Microsoft Graph API.
+   - `can_run_terminal_cmd`: Authorization to execute Linux shell commands directly via Telegram.
+   - `can_view_margins`: Authorization to view internal pricing margins, gross multipliers, and labor burden.
+   - `can_ingest_bids`: Authorization to parse and register commercial solicitations into the GC pipeline.
+   - `can_search_web`: Authorization to leverage live Gemini 2.5 Flash Google Search Grounding for field research.
+   - `can_audit_photos`: Authorization to upload jobsite walkthrough photos for computer vision analysis.
+   - `receive_daily_briefing`: Authorization to receive the automated 7:00 AM executive briefing.
+3. **Single-Use Magic Link Onboarding (`POST /api/v1/users/<id>/telegram-magic-link`):**
+   - Generates a 16-byte cryptographically secure token and deep link: `https://t.me/Georgebytesbot?start=auth_<token>`.
+   - When tapped by a team member on their mobile device, Telegram issues `/start auth_<token>`.
+   - `telegram_listener.py` matches the token, binds the user's numerical Telegram Chat ID, activates the account, consumes the single-use token, and notifies the CEO.
+4. **Mobile Linux Terminal Shell Gateway (`/cmd <bash>`):**
+   - Implemented `handle_cmd_terminal` executing shell commands with a 35-second safety timeout.
+   - Strictly gated to users with `can_run_terminal_cmd = True`. Unauthorized attempts are rejected with permission denial alerts.
+5. **Live Google Search Grounding:**
+   - Injected `"tools": [{"google_search": {}}]` into Gemini 2.5 Flash conversational queries when `can_search_web = True`, returning grounded real-time search intelligence and web citations directly into Telegram chat.
+6. **Empirical User Roster Backfill:**
+   - Backfilled all existing users in PostgreSQL with explicit role-appropriate Telegram permission structures (Executive, Estimator, Operations, Sales).
+**Preventative:**
+1. All future mobile command modules must query `auth_user.get("telegram_perms")` prior to execution.
+2. Magic link tokens must always be consumed upon first use to prevent credential reuse.
