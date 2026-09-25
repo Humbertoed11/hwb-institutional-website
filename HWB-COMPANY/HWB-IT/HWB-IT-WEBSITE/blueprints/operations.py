@@ -7,6 +7,7 @@ Custodians: George (Systems Architect) & Humberto Dominguez (CEO)
 import os
 import re
 import json
+import secrets
 import datetime
 from zoneinfo import ZoneInfo
 from flask import Blueprint, render_template, request, redirect, url_for, jsonify, flash, session, current_app, abort
@@ -1218,6 +1219,7 @@ def sigma_executive():
                         role = request.form.get('user_role', 'Operator')
                         status = request.form.get('status', 'Active')
                         force_pwd = True if request.form.get('force_pwd_reset') == 'true' else False
+                        telegram_cid = (request.form.get('telegram_chat_id') or '').strip() or None
                         
                         custom_perms = {}
                         for module in ['leads', 'accounts', 'sales_desk', 'bids', 'workforce', 'monitor', 'qms', 'social', 'outbox', 'users', 'tools']:
@@ -1226,10 +1228,21 @@ def sigma_executive():
                                 'edit': True if request.form.get(f'perm_{module}_edit') == 'true' else False,
                                 'delete': True if request.form.get(f'perm_{module}_delete') == 'true' else False,
                             }
+                        
+                        custom_perms['telegram'] = {
+                            'enabled': True if request.form.get('tg_enabled') == 'true' else False,
+                            'can_approve_outbox': True if request.form.get('tg_can_approve_outbox') == 'true' else False,
+                            'can_run_terminal_cmd': True if request.form.get('tg_can_run_terminal_cmd') == 'true' else False,
+                            'can_view_margins': True if request.form.get('tg_can_view_margins') == 'true' else False,
+                            'can_ingest_bids': True if request.form.get('tg_can_ingest_bids') == 'true' else False,
+                            'can_search_web': True if request.form.get('tg_can_search_web') == 'true' else False,
+                            'can_audit_photos': True if request.form.get('tg_can_audit_photos') == 'true' else False,
+                            'receive_daily_briefing': True if request.form.get('tg_receive_daily_briefing') == 'true' else False,
+                        }
                         perms_json = json.dumps(custom_perms)
                         
-                        cur.execute('INSERT INTO "Users" (username, password_hash, full_name, email, role, status, force_pwd_reset, custom_permissions) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)',
-                                     (request.form.get('new_username'), phash, request.form.get('full_name'), clean_email(request.form.get('user_email')) or request.form.get('user_email'), role, status, force_pwd, perms_json))
+                        cur.execute('INSERT INTO "Users" (username, password_hash, full_name, email, role, status, force_pwd_reset, custom_permissions, telegram_chat_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)',
+                                     (request.form.get('new_username'), phash, request.form.get('full_name'), clean_email(request.form.get('user_email')) or request.form.get('user_email'), role, status, force_pwd, perms_json, telegram_cid))
                         flash("User account created successfully.")
                     elif action == 'edit_user':
                         uid = request.form.get('user_id')
@@ -1239,23 +1252,47 @@ def sigma_executive():
                         ustatus = request.form.get('status', 'Active')
                         force_pwd = True if request.form.get('force_pwd_reset') == 'true' else False
                         new_pass = request.form.get('new_password')
+                        telegram_cid = (request.form.get('telegram_chat_id') or '').strip() or None
                         
-                        custom_perms = {}
+                        cur.execute('SELECT custom_permissions FROM "Users" WHERE id = %s', (uid,))
+                        existing_row = cur.fetchone()
+                        existing_perms_str = existing_row['custom_permissions'] if isinstance(existing_row, dict) else (existing_row[0] if existing_row else None)
+                        try:
+                            custom_perms = json.loads(existing_perms_str) if existing_perms_str else {}
+                        except Exception:
+                            custom_perms = {}
+
                         for module in ['leads', 'accounts', 'sales_desk', 'bids', 'workforce', 'monitor', 'qms', 'social', 'outbox', 'users', 'tools']:
                             custom_perms[module] = {
                                 'view': True if request.form.get(f'perm_{module}_view') == 'true' else False,
                                 'edit': True if request.form.get(f'perm_{module}_edit') == 'true' else False,
                                 'delete': True if request.form.get(f'perm_{module}_delete') == 'true' else False,
                             }
+                        
+                        existing_tg = custom_perms.get('telegram', {})
+                        new_tg = {
+                            'enabled': True if request.form.get('tg_enabled') == 'true' else False,
+                            'can_approve_outbox': True if request.form.get('tg_can_approve_outbox') == 'true' else False,
+                            'can_run_terminal_cmd': True if request.form.get('tg_can_run_terminal_cmd') == 'true' else False,
+                            'can_view_margins': True if request.form.get('tg_can_view_margins') == 'true' else False,
+                            'can_ingest_bids': True if request.form.get('tg_can_ingest_bids') == 'true' else False,
+                            'can_search_web': True if request.form.get('tg_can_search_web') == 'true' else False,
+                            'can_audit_photos': True if request.form.get('tg_can_audit_photos') == 'true' else False,
+                            'receive_daily_briefing': True if request.form.get('tg_receive_daily_briefing') == 'true' else False,
+                        }
+                        if 'auth_token' in existing_tg:
+                            new_tg['auth_token'] = existing_tg['auth_token']
+                            new_tg['auth_token_created_at'] = existing_tg.get('auth_token_created_at')
+                        custom_perms['telegram'] = new_tg
                         perms_json = json.dumps(custom_perms)
                         
                         if new_pass:
                             phash = generate_password_hash(new_pass)
-                            cur.execute('UPDATE "Users" SET full_name = %s, email = %s, role = %s, status = %s, force_pwd_reset = %s, custom_permissions = %s, password_hash = %s WHERE id = %s',
-                                         (fname, uemail, urole, ustatus, force_pwd, perms_json, phash, uid))
+                            cur.execute('UPDATE "Users" SET full_name = %s, email = %s, role = %s, status = %s, force_pwd_reset = %s, custom_permissions = %s, telegram_chat_id = %s, password_hash = %s WHERE id = %s',
+                                         (fname, uemail, urole, ustatus, force_pwd, perms_json, telegram_cid, phash, uid))
                         else:
-                            cur.execute('UPDATE "Users" SET full_name = %s, email = %s, role = %s, status = %s, force_pwd_reset = %s, custom_permissions = %s WHERE id = %s',
-                                         (fname, uemail, urole, ustatus, force_pwd, perms_json, uid))
+                            cur.execute('UPDATE "Users" SET full_name = %s, email = %s, role = %s, status = %s, force_pwd_reset = %s, custom_permissions = %s, telegram_chat_id = %s WHERE id = %s',
+                                         (fname, uemail, urole, ustatus, force_pwd, perms_json, telegram_cid, uid))
                         flash("User account updated successfully.")
                     elif action == 'delete_user':
                         uid = request.form.get('user_id')
@@ -1535,5 +1572,43 @@ def api_it_telemetry_trends():
         return jsonify(trends), (200 if trends.get('status') == 'success' else 500)
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+@operations_bp.route('/api/v1/users/<int:user_id>/telegram-magic-link', methods=['POST'])
+@login_required
+@roles_required('Executive', 'Admin')
+def api_generate_telegram_magic_link(user_id):
+    """Generates a secure single-use Telegram onboarding token and link."""
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            cur.execute('SELECT id, username, custom_permissions FROM "Users" WHERE id = %s', (user_id,))
+            u = cur.fetchone()
+            if not u:
+                return jsonify({'status': 'error', 'message': 'User account not found'}), 404
+            
+            perms_str = u['custom_permissions'] if isinstance(u, dict) else u[2]
+            try:
+                perms = json.loads(perms_str) if perms_str else {}
+            except Exception:
+                perms = {}
+            
+            token = secrets.token_hex(16)
+            tg_dict = perms.get('telegram', {})
+            tg_dict['auth_token'] = token
+            tg_dict['auth_token_created_at'] = datetime.datetime.now().isoformat()
+            perms['telegram'] = tg_dict
+            
+            cur.execute('UPDATE "Users" SET custom_permissions = %s WHERE id = %s', (json.dumps(perms), user_id))
+            conn.commit()
+            
+            bot_username = os.getenv("TELEGRAM_BOT_USERNAME", "Georgebytesbot")
+            magic_link = f"https://t.me/{bot_username}?start=auth_{token}"
+            return jsonify({'status': 'success', 'token': token, 'magic_link': magic_link})
+    except Exception as e:
+        if 'conn' in locals() and conn: conn.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        if 'conn' in locals() and conn: conn.close()
 
 

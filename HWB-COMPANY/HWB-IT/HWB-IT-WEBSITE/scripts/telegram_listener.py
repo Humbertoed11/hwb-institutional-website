@@ -82,6 +82,16 @@ def get_authorized_chat_map():
     }
     """
     auth_map = {}
+    ceo_perms = {
+        "enabled": True,
+        "can_approve_outbox": True,
+        "can_run_terminal_cmd": True,
+        "can_view_margins": True,
+        "can_ingest_bids": True,
+        "can_search_web": True,
+        "can_audit_photos": True,
+        "receive_daily_briefing": True
+    }
     # 1. Add from .env TELEGRAM_CHAT_ID (supports comma-separated list)
     env_cids = os.getenv("TELEGRAM_CHAT_ID", "8564340073").split(",")
     for cid in env_cids:
@@ -90,32 +100,62 @@ def get_authorized_chat_map():
             continue
         try:
             int_cid = int(cid)
-            auth_map[int_cid] = {"username": "ceo", "name": "Humberto Dominguez", "role": "Executive", "email": "hdominguez@hwbcleaning.com"}
+            auth_map[int_cid] = {"username": "ceo", "name": "Humberto Dominguez", "role": "Executive", "email": "hdominguez@hwbcleaning.com", "telegram_perms": ceo_perms}
             auth_map[str(int_cid)] = auth_map[int_cid]
         except ValueError:
-            auth_map[cid] = {"username": "ceo", "name": "Humberto Dominguez", "role": "Executive", "email": "hdominguez@hwbcleaning.com"}
+            auth_map[cid] = {"username": "ceo", "name": "Humberto Dominguez", "role": "Executive", "email": "hdominguez@hwbcleaning.com", "telegram_perms": ceo_perms}
 
     # 2. Add from PostgreSQL Users table where telegram_chat_id IS NOT NULL and status = 'Active'
     try:
         conn = get_db_connection()
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute('SELECT id, username, full_name, email, role, telegram_chat_id FROM "Users" WHERE status = \'Active\' AND telegram_chat_id IS NOT NULL AND telegram_chat_id != \'\';')
+            cur.execute('SELECT id, username, full_name, email, role, telegram_chat_id, custom_permissions FROM "Users" WHERE status = \'Active\' AND telegram_chat_id IS NOT NULL AND telegram_chat_id != \'\';')
             for u in cur.fetchall():
                 t_id = str(u.get("telegram_chat_id") or "").strip()
-                if t_id:
-                    user_info = {
-                        "user_id": u["id"],
-                        "username": u["username"],
-                        "name": u["full_name"] or u["username"],
-                        "email": u["email"],
-                        "role": u["role"]
-                    }
+                if not t_id:
+                    continue
+
+                c_perms_raw = u.get("custom_permissions")
+                c_perms = {}
+                if c_perms_raw:
                     try:
-                        int_t = int(t_id)
-                        auth_map[int_t] = user_info
-                        auth_map[str(int_t)] = user_info
-                    except ValueError:
-                        auth_map[t_id] = user_info
+                        c_perms = json.loads(c_perms_raw) if isinstance(c_perms_raw, str) else c_perms_raw
+                    except Exception:
+                        c_perms = {}
+
+                tg_cfg = c_perms.get("telegram", {})
+                is_exec = (u["role"] in ["Executive", "Admin"]) or (t_id in env_cids)
+                is_estimator = (u["role"] == "Estimator")
+
+                default_tg_perms = {
+                    "enabled": True,
+                    "can_approve_outbox": is_exec,
+                    "can_run_terminal_cmd": is_exec,
+                    "can_view_margins": is_exec or is_estimator,
+                    "can_ingest_bids": is_exec or is_estimator,
+                    "can_search_web": True,
+                    "can_audit_photos": True,
+                    "receive_daily_briefing": is_exec
+                }
+
+                effective_tg = {**default_tg_perms, **tg_cfg}
+                if effective_tg.get("enabled") is False:
+                    continue
+
+                user_info = {
+                    "user_id": u["id"],
+                    "username": u["username"],
+                    "name": u["full_name"] or u["username"],
+                    "email": u["email"],
+                    "role": u["role"],
+                    "telegram_perms": effective_tg
+                }
+                try:
+                    int_t = int(t_id)
+                    auth_map[int_t] = user_info
+                    auth_map[str(int_t)] = user_info
+                except ValueError:
+                    auth_map[t_id] = user_info
         conn.close()
     except Exception as e:
         pass
@@ -234,6 +274,175 @@ def handle_user_registration(chat_id, text, from_user):
     except Exception as e:
         print(f"[TELEGRAM ERROR] Registration failed: {e}", flush=True)
         send_telegram_message(chat_id, f"⚠️ Error linking account: {e}")
+
+def handle_magic_link_auth(chat_id, token, from_user):
+    token = token.strip()
+    if not token:
+        welcome_unregistered_user(chat_id, from_user)
+        return
+
+    sender_name = from_user.get("first_name", "Team Member")
+    username_tg = from_user.get("username", "")
+
+    try:
+        conn = get_db_connection()
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute('SELECT id, username, full_name, email, role, status, custom_permissions, telegram_chat_id FROM "Users";')
+            users = cur.fetchall()
+
+            target_user = None
+            for u in users:
+                c_perms = u.get("custom_permissions")
+                if c_perms:
+                    try:
+                        p_dict = json.loads(c_perms) if isinstance(c_perms, str) else c_perms
+                        tg_cfg = p_dict.get("telegram", {})
+                        if tg_cfg.get("auth_token") == token:
+                            target_user = (u, p_dict)
+                            break
+                    except Exception:
+                        pass
+
+            if not target_user:
+                conn.close()
+                send_telegram_message(
+                    chat_id,
+                    "❌ *Invalid or Expired Onboarding Link*\n"
+                    "━━━━━━━━━━━━━━━━━━━━━\n"
+                    "This magic link is either invalid, already used, or expired.\n\n"
+                    "Please contact CEO Humberto Dominguez or log in to the SigmaFidelity™ Executive Backoffice to request a fresh onboarding link."
+                )
+                return
+
+            u_record, p_dict = target_user
+            if u_record["status"] != "Active":
+                conn.close()
+                send_telegram_message(
+                    chat_id,
+                    "⚠️ *Account Inactive*\n"
+                    f"The account for @{u_record['username']} is currently suspended."
+                )
+                return
+
+            tg_cfg = p_dict.get("telegram", {})
+            tg_cfg["enabled"] = True
+            tg_cfg.pop("auth_token", None)
+            tg_cfg["linked_at"] = datetime.now().isoformat()
+            p_dict["telegram"] = tg_cfg
+
+            cur.execute('UPDATE "Users" SET telegram_chat_id = %s, custom_permissions = %s WHERE id = %s;', 
+                        (str(chat_id), json.dumps(p_dict), u_record["id"]))
+            conn.commit()
+            conn.close()
+
+            u_name = u_record["full_name"] or u_record["username"]
+            u_role = u_record["role"]
+
+            send_telegram_message(
+                chat_id,
+                f"🚀 *Welcome to SigmaFidelity™ Operations Control*, {u_name}!\n"
+                f"━━━━━━━━━━━━━━━━━━━━━\n"
+                f"Your Telegram profile has been successfully linked to your company account.\n\n"
+                f"👤 *Username:* @{u_record['username']}\n"
+                f"💼 *System Role:* {u_role}\n"
+                f"🆔 *Chat ID:* `{chat_id}`\n"
+                f"✉️ *Email:* {u_record['email']}\n"
+                f"━━━━━━━━━━━━━━━━━━━━━\n"
+                f"You can now receive operational notifications, facility walkthrough alerts, and communicate with George.\n\n"
+                f"Send `/help` or tap an option below to get started.",
+                reply_markup=get_main_menu_keyboard(chat_id)
+            )
+
+            # Alert CEO
+            try:
+                ceo_chat_id = int(os.getenv("TELEGRAM_CHAT_ID", "8564340073").split(",")[0].strip())
+                if str(ceo_chat_id) != str(chat_id):
+                    send_telegram_message(
+                        ceo_chat_id,
+                        f"🔔 *Team Member Onboarded via Magic Link*\n"
+                        f"━━━━━━━━━━━━━━━━━━━━━\n"
+                        f"👤 *Name:* {u_name} (@{u_record['username']})\n"
+                        f"💼 *Role:* {u_role} ({u_record['email']})\n"
+                        f"📱 *Telegram Chat ID:* `{chat_id}`\n"
+                        f"✈️ *Telegram Handle:* @{username_tg or sender_name}\n"
+                        f"━━━━━━━━━━━━━━━━━━━━━\n"
+                        f"Authentication token consumed. User is live in operations."
+                    )
+            except Exception:
+                pass
+            print(f"[TELEGRAM] User {u_name} successfully linked via magic link to chat_id {chat_id}", flush=True)
+    except Exception as e:
+        print(f"[TELEGRAM ERROR] Magic link authentication failed: {e}", flush=True)
+        send_telegram_message(chat_id, f"⚠️ Error linking account: {e}")
+
+def handle_cmd_terminal(chat_id, command_str):
+    auth_user = get_user_for_chat(chat_id)
+    perms = auth_user.get("telegram_perms", {}) if auth_user else {}
+    if not perms.get("can_run_terminal_cmd"):
+        send_telegram_message(
+            chat_id,
+            "🚫 *Permission Denied*\n"
+            "Your user profile does not have authorization for Terminal Shell Execution (`can_run_terminal_cmd`).\n"
+            "This capability is restricted to CEO and System Administrators."
+        )
+        return
+
+    cmd = command_str.strip()
+    if not cmd:
+        send_telegram_message(
+            chat_id,
+            "⚡ *SigmaFidelity™ Terminal Shell Gateway*\n"
+            "━━━━━━━━━━━━━━━━━━━━━\n"
+            "Execute Linux shell commands directly from your mobile device:\n\n"
+            "Usage: `/cmd <bash command>`\n\n"
+            "Examples:\n"
+            "• `/cmd docker ps`\n"
+            "• `/cmd git status`\n"
+            "• `/cmd df -h`"
+        )
+        return
+
+    send_telegram_chat_action(chat_id, "typing")
+    try:
+        proc = subprocess.run(
+            cmd,
+            shell=True,
+            capture_output=True,
+            text=True,
+            timeout=35,
+            cwd="/home/humbertoed/gemini_projects"
+        )
+        stdout = (proc.stdout or "").strip()
+        stderr = (proc.stderr or "").strip()
+        ret_code = proc.returncode
+
+        status_badge = "✅ *SUCCESS (0)*" if ret_code == 0 else f"❌ *EXIT CODE ({ret_code})*"
+
+        combined_output = ""
+        if stdout:
+            combined_output += stdout
+        if stderr:
+            if combined_output:
+                combined_output += "\n--- STDERR ---\n"
+            combined_output += stderr
+
+        if not combined_output:
+            combined_output = "(No output produced)"
+
+        if len(combined_output) > 3500:
+            combined_output = combined_output[:3500] + "\n... [OUTPUT TRUNCATED]"
+
+        msg = (
+            f"⚡ *Terminal Command:* `{cmd}`\n"
+            f"📊 Status: {status_badge}\n"
+            f"━━━━━━━━━━━━━━━━━━━━━\n"
+            f"```bash\n{combined_output}\n```"
+        )
+        send_telegram_message(chat_id, msg)
+    except subprocess.TimeoutExpired:
+        send_telegram_message(chat_id, "⚠️ *Execution Timed Out* (>35s). For long background tasks, launch asynchronously.")
+    except Exception as e:
+        send_telegram_message(chat_id, f"⚠️ *Execution Error:* {e}")
 
 def handle_cmd_adduser(chat_id, arg):
     parts = arg.split()
@@ -1435,6 +1644,10 @@ def analyze_text_with_gemini(text, chat_id):
         }]
     }
 
+    actor_perms = actor_user.get("telegram_perms", {}) if actor_user else {}
+    if actor_perms.get("can_search_web", True):
+        payload["tools"] = [{"google_search": {}}]
+
     try:
         res = session.post(url, json=payload, timeout=30)
         if res.status_code == 200:
@@ -2102,13 +2315,21 @@ def send_all_buildings_menu(chat_id):
     send_telegram_message(chat_id, msg, reply_markup={"inline_keyboard": keyboard})
 
 def handle_cmd_help(chat_id):
+    auth_user = get_user_for_chat(chat_id)
+    actor_name = auth_user.get("name", "Team Member") if auth_user else "Team Member"
+    actor_role = auth_user.get("role", "Operator") if auth_user else "Team Member"
+    perms = auth_user.get("telegram_perms", {}) if auth_user else {}
+    can_cmd = perms.get("can_run_terminal_cmd", False)
+    
+    cmd_line = "⚡ */cmd <command>* — Linux terminal shell execution\n" if can_cmd else ""
     msg = (
-        "🏛️ *SigmaFidelity™ Executive Mobile Operations Node v3.0*\n"
-        "👤 *Operator:* George (Systems Architect)\n"
+        f"🏛️ *SigmaFidelity™ Operations Command Node v3.0*\n"
+        f"👤 *Logged In:* {actor_name} ({actor_role})\n"
         "━━━━━━━━━━━━━━━━━━━━━\n"
-        "⚡ *7-Frontier Industrial Capabilities:*\n\n"
+        "⚡ *Operations Commands:*\n\n"
+        f"{cmd_line}"
         "🏫 */collin* — Collin College Frisco Campus Walkthrough Hub\n"
-        "💬 *Chat with George* — Type any question or directive directly\n"
+        "💬 *Chat with George* — Natural language directives, emails & research\n"
         "📊 */bids* — Active GC bids, takeoffs & live pipeline\n"
         "📥 */autotakeoff <ID>* — 1-Tap BuildingConnected planroom extraction\n"
         "📤 */submit_bid <ID>* — 1-Tap BuildingConnected portal bid submission\n"
@@ -2122,11 +2343,12 @@ def handle_cmd_help(chat_id):
         "🔍 */search <query>* — Universal cross-table database search\n"
         "📑 */proposal <ID>* — Receive Excel proposal file directly in chat\n"
         "🧠 */sync* — Trigger neural persistence handshake\n"
+        "👥 */users* — Team member Telegram roster & connection status\n"
         "━━━━━━━━━━━━━━━━━━━━━\n"
-        "🎙️ *Voice Notes:* AI-powered speech parsing (Creates Calendar events or Outbox emails)\n"
-        "📷 *Photos:* Multimodal blueprint analysis & instant takeoff generation"
+        "🎙️ *Voice Notes:* Multimodal speech parsing to tasks/calendar\n"
+        "📷 *Photos:* Computer vision inspection & GPS mapping"
     )
-    send_telegram_message(chat_id, msg, reply_markup=get_main_menu_keyboard())
+    send_telegram_message(chat_id, msg, reply_markup=get_main_menu_keyboard(chat_id))
 
 def handle_cmd_briefing(chat_id):
     """Frontier 6: Dispatches the 7:00 AM Executive Morning Briefing."""
@@ -2762,6 +2984,19 @@ def handle_action_preview(chat_id, record_id, callback_id=None):
             conn.close()
 
 def handle_cmd_approve(chat_id, arg, callback_id=None):
+    auth_user = get_user_for_chat(chat_id)
+    perms = auth_user.get("telegram_perms", {}) if auth_user else {}
+    if not perms.get("can_approve_outbox"):
+        if callback_id:
+            answer_callback_query(callback_id, "Unauthorized: Outbox approval requires Executive role.")
+        send_telegram_message(
+            chat_id,
+            "🚫 *Permission Denied*\n"
+            "Your profile is not authorized to approve outbound transmissions (`can_approve_outbox`).\n"
+            "Outbox approvals require Executive authorization."
+        )
+        return
+
     if not arg or not str(arg).strip().isdigit():
         send_telegram_message(chat_id, "⚠️ Usage: `/approve <ID>`")
         return
@@ -2807,6 +3042,18 @@ def handle_cmd_approve(chat_id, arg, callback_id=None):
             conn.close()
 
 def handle_action_dispatch(chat_id, record_id, callback_id=None):
+    auth_user = get_user_for_chat(chat_id)
+    perms = auth_user.get("telegram_perms", {}) if auth_user else {}
+    if not perms.get("can_approve_outbox"):
+        if callback_id:
+            answer_callback_query(callback_id, "Unauthorized: Outbox dispatch requires Executive role.")
+        send_telegram_message(
+            chat_id,
+            "🚫 *Permission Denied*\n"
+            "Your profile is not authorized to dispatch outbound transmissions (`can_approve_outbox`)."
+        )
+        return
+
     if callback_id:
         answer_callback_query(callback_id, f"Dispatching #{record_id} via Microsoft Graph...")
     send_telegram_message(chat_id, f"🚀 Dispatching email #{record_id} via Microsoft Graph API ({USER_EMAIL})...")
@@ -3291,6 +3538,13 @@ def process_message(message):
         send_telegram_message(chat_id, msg)
         return
 
+    # Check for Magic Link Onboarding Token
+    if text.startswith("/start auth_") or text.startswith("auth_"):
+        token = text.split("auth_")[1].strip()
+        record_and_mirror_activity(chat_id, from_user, "magic_link_auth", f"Attempting magic link authentication", detected_intent="magic_link")
+        handle_magic_link_auth(chat_id, token, from_user)
+        return
+
     if not auth_user:
         chat_type = chat.get("type", "private")
         record_and_mirror_activity(chat_id, from_user, "unregistered_contact", f"Incoming text from unlinked account: \"{text}\"", friction_flag=True, detected_intent="onboarding")
@@ -3367,7 +3621,9 @@ def process_message(message):
 
         record_and_mirror_activity(chat_id, from_user, "command", f"Command: {cmd} {arg}".strip(), detected_intent=cmd.replace('/', ''))
 
-        if cmd in ["/start", "/help"]:
+        if cmd in ["/cmd", "/bash", "/sh", "/terminal"]:
+            handle_cmd_terminal(chat_id, arg)
+        elif cmd in ["/start", "/help"]:
             handle_cmd_help(chat_id)
         elif cmd in ["/mirror"]:
             handle_cmd_mirror(chat_id, arg)

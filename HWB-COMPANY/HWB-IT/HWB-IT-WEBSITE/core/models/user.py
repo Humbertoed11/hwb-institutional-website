@@ -29,5 +29,16 @@ class User(UserMixin):
             return bool(self.custom_permissions[module].get(action, False))
         return False
 
+    def has_telegram_permission(self, action: str) -> bool:
+        """Evaluates whether the user has granular permission for Telegram operations."""
+        if self.role in ['Executive', 'Admin']:
+            return True
+        if self.custom_permissions and 'telegram' in self.custom_permissions:
+            tg = self.custom_permissions['telegram']
+            if tg.get('enabled') is False:
+                return False
+            return bool(tg.get(action, False))
+        return False
+
     def __repr__(self):
         return f"<User id={self.id} username='{self.username}' role='{self.role}'>"
