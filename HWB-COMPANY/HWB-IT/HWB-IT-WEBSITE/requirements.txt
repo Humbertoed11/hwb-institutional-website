@@ -12,3 +12,4 @@ lxml
 fake-useragent
 cryptography
 openpyxl
+pymupdf

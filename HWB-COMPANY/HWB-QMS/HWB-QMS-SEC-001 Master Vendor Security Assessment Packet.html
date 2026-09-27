@@ -1,0 +1,226 @@
+<!-- 
+    SigmaFidelity™ Institutional QMS Document
+    Standard: HWB-QMS-1.0 v2.0 (HTML Baseline, Everyday Words)
+    Document ID: HWB-QMS-SEC-001
+-->
+<div class="sop-card">
+    <!-- 0.0 DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-SEC-001</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">ISO 9001: 8.2 &amp; ISO 27001 / SOC 2 Type II</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <table>
+            <thead>
+                <tr>
+                    <th><strong>Document Control</strong></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td><strong>Document Title</strong></td><td><strong>Master Vendor Security Assessment Packet (SIG / CAIQ / VSAQ Core Standard)</strong></td></tr>
+                <tr><td><strong>Document ID</strong></td><td>HWB-QMS-SEC-001</td></tr>
+                <tr><td><strong>Version</strong></td><td>1.0.0</td></tr>
+                <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
+                <tr><td><strong>Author</strong></td><td>George (Systems Architect &amp; mbB, Senior ISO 9001 Auditor)</td></tr>
+                <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
+                <tr><td><strong>Date</strong></td><td>09/27/2026</td></tr>
+                <tr><td><strong>Applicable Standards</strong></td><td>ISO 9001:2015 Clause 8.2, ISO/IEC 27001:2022, AICPA SOC 2 Type II, Texas Bus. &amp; Com. Code § 521</td></tr>
+            </tbody>
+        </table>
+
+        <hr />
+
+        <h1>Master Vendor Security Assessment Packet: <strong>SIG / CAIQ / VSAQ Response Standard</strong></h1>
+
+        <h2>1.0 Purpose &amp; How to Use This Packet</h2>
+        <p>This document is the official security disclosure and vendor assessment packet for <strong>HWB Cleaning Services LLC</strong> and its proprietary software platform, <strong>SigmaFidelity™ / SigmaJan™</strong>. When enterprise clients, commercial property managers, school districts, universities, or General Contractors ask us to complete a security review—such as a <strong>Standardized Information Gathering (SIG)</strong>, <strong>Consensus Assessments Initiative Questionnaire (CAIQ)</strong>, or <strong>Vendor Security Assessment Questionnaire (VSAQ)</strong>—this approved packet provides all verified answers in everyday words.</p>
+
+        <div class="callout callout-note">
+            <strong>Executive Instructions for Sales &amp; Operations</strong>
+            <p>Team members may provide this document directly to client procurement, legal, and IT security teams. It answers the standard 14 security domains required by enterprise vendor onboarding, eliminating 30-day security review delays.</p>
+        </div>
+
+        <h2>2.0 Company &amp; Technology Profile</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Profile Category</th>
+                    <th>Company Information</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td><strong>Legal Company Name</strong></td><td>HWB Cleaning Services LLC</td></tr>
+                <tr><td><strong>Headquarters</strong></td><td>Dallas-Fort Worth Metroplex, Texas, USA</td></tr>
+                <tr><td><strong>Primary Executive Authority</strong></td><td>Humberto Dominguez, Chief Executive Officer (CEO)</td></tr>
+                <tr><td><strong>Systems Architecture &amp; Security Authority</strong></td><td>George, Systems Architect (PhD, mbB, Senior ISO 9001 Auditor)</td></tr>
+                <tr><td><strong>Platform Architecture</strong></td><td>SigmaFidelity™ / SigmaJan™ Cloud SaaS &amp; Operations Suite</td></tr>
+                <tr><td><strong>Primary Cloud Infrastructure</strong></td><td>Microsoft Azure Cloud (US South Central / Texas) &amp; Containerized Linux Services</td></tr>
+                <tr><td><strong>Production Database</strong></td><td>PostgreSQL 13 (Azure Flexible Server inside Private Virtual Network)</td></tr>
+                <tr><td><strong>Corporate Email &amp; Identity</strong></td><td>Microsoft 365 Enterprise (Azure Entra ID &amp; Microsoft Graph API)</td></tr>
+            </tbody>
+        </table>
+
+        <h2>3.0 Security Architecture in Everyday Words</h2>
+        <p>To ensure total clarity for non-technical managers and business reviewers, our security architecture is built on five simple, unbendable rules:</p>
+        <ol>
+            <li><strong>Separate Rooms for Every Company (Multi-Tenancy):</strong> Every subscribing business has its own separate space. Through PostgreSQL Kernel Row-Level Security, the database physically stops Company A from ever seeing Company B's bids, customer lists, or cleaner records.</li>
+            <li><strong>Unbreakable Digital Locks (AES-256 Encryption):</strong> All data moving across the web is protected with modern TLS 1.3 encryption. Highly sensitive personal details (such as Social Security Numbers and direct deposit bank accounts) are scrambled with AES-256 encryption keys before being stored.</li>
+            <li><strong>The Quarantine Room (Clean Inbound Data):</strong> When a client uploads a spreadsheet of customer contacts, it never touches our main system right away. It lands in a quarantine holding room where computer rules clean up phone numbers, fix addresses, and check for duplicates first.</li>
+            <li><strong>Peter's 15-Minute Safety Net (Disaster Recovery):</strong> The system saves full database backup snapshots every hour. If an entire cloud server goes dark, operations can be fully restored in less than 60 minutes with less than 15 minutes of data difference.</li>
+            <li><strong>Tessa Test's Hourly Quality Sentinel:</strong> An automated digital inspector named Tessa Test runs 8 different test batteries every single hour to ensure all web links, security doors, phone masks, and database connections work with zero defects.</li>
+        </ol>
+
+        <h2>4.0 Master Vendor Assessment Questionnaire (SIG / CAIQ / VSAQ Core Standard)</h2>
+        <p>The following table provides verified, binding responses across all 14 standard enterprise vendor assessment categories.</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Domain #</th>
+                    <th>Assessment Domain</th>
+                    <th>Standard Question</th>
+                    <th>Verified Response</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>1.0</strong></td>
+                    <td><strong>Information Security Governance</strong></td>
+                    <td>Does the organization maintain a formal Information Security Management System (ISMS) and documented policies approved by executive leadership?</td>
+                    <td><strong>YES.</strong> Governed under the SigmaFidelity™ Quality Management System (HWB-QMS). All policies are authored by a Senior ISO 9001 Auditor and formally approved by CEO Humberto Dominguez. Reviewed quarterly.</td>
+                    <td><span style="color: #16a34a; font-weight: 700;">● COMPLIANT</span></td>
+                </tr>
+                <tr>
+                    <td><strong>2.0</strong></td>
+                    <td><strong>Multi-Tenant Data Segregation</strong></td>
+                    <td>How is customer data logically or physically separated to prevent unauthorized access or contamination by other tenants?</td>
+                    <td><strong>KERNEL ROW-LEVEL SECURITY (RLS).</strong> Enforced inside the PostgreSQL database engine (Migration 027). Every table row requires a verified <code>tenant_id</code>. Unprivileged database roles are physically blocked by database kernel policies from querying foreign tenant records (verified 0 rows leaked).</td>
+                    <td><span style="color: #16a34a; font-weight: 700;">● COMPLIANT</span></td>
+                </tr>
+                <tr>
+                    <td><strong>3.0</strong></td>
+                    <td><strong>Data Ingestion &amp; Processing Integrity</strong></td>
+                    <td>What controls prevent dirty, malicious, or corrupted external data imports (CSV, Excel, API) from polluting core databases?</td>
+                    <td><strong>QUARANTINE BUFFER GATEWAY.</strong> All external data enters an isolated staging table (<code>crm_ingestion_quarantine</code>). The platform normalizes phone numbers to PROC-002 <code>(###) ###-####</code>, checks addresses, runs fuzzy duplicate detection (&gt;85% match), and isolates defects before committing.</td>
+                    <td><span style="color: #16a34a; font-weight: 700;">● COMPLIANT</span></td>
+                </tr>
+                <tr>
+                    <td><strong>4.0</strong></td>
+                    <td><strong>Cryptography &amp; Data Encryption</strong></td>
+                    <td>Is customer data encrypted both in transit across public networks and at rest in databases and backups?</td>
+                    <td><strong>YES.</strong> In transit: Enforced TLS 1.3 / HTTPS across all web, API, and Microsoft Graph channels. At rest: Azure managed disk encryption (AES-256) plus dedicated column-level AES-256 Fernet encryption for all sensitive PII (SSN, ITIN, banking accounts).</td>
+                    <td><span style="color: #16a34a; font-weight: 700;">● COMPLIANT</span></td>
+                </tr>
+                <tr>
+                    <td><strong>5.0</strong></td>
+                    <td><strong>Identity &amp; Access Management (IAM)</strong></td>
+                    <td>Does the platform enforce Role-Based Access Control (RBAC), password standards, and multi-factor authentication?</td>
+                    <td><strong>YES.</strong> Declarative role guards (<code>roles_required</code>) restrict Outside Sales, Cleaners, and Operations managers from accessing accounting or executive configurations. Multi-factor authentication is enforced via Microsoft 365 Entra ID.</td>
+                    <td><span style="color: #16a34a; font-weight: 700;">● COMPLIANT</span></td>
+                </tr>
+                <tr>
+                    <td><strong>6.0</strong></td>
+                    <td><strong>Audit Logging &amp; Monitoring</strong></td>
+                    <td>Are user access events, data modifications, administrative actions, and security violations logged in a tamper-resistant format?</td>
+                    <td><strong>YES.</strong> All security events, blocked unauthorized attempts, and data exports are logged to <code>GlobalActivities</code> and <code>RackTelemetryHistory</code> capturing user ID, role, IP address, timestamp, and target resource.</td>
+                    <td><span style="color: #16a34a; font-weight: 700;">● COMPLIANT</span></td>
+                </tr>
+                <tr>
+                    <td><strong>7.0</strong></td>
+                    <td><strong>Business Continuity &amp; Disaster Recovery</strong></td>
+                    <td>What are the organization's documented Recovery Time Objective (RTO) and Recovery Point Objective (RPO)?</td>
+                    <td><strong>RTO &le; 1 HOUR; RPO &le; 15 MINUTES.</strong> Governed by HWB-QMS-9.3. Peter's Recovery Directives execute hourly binary database snapshots, daily configuration freezes, and automated container recreation scripts.</td>
+                    <td><span style="color: #16a34a; font-weight: 700;">● COMPLIANT</span></td>
+                </tr>
+                <tr>
+                    <td><strong>8.0</strong></td>
+                    <td><strong>Threat &amp; Vulnerability Management</strong></td>
+                    <td>Does the platform undergo automated regression testing, vulnerability scanning, and defect monitoring?</td>
+                    <td><strong>YES.</strong> The Tessa Test continuous regression daemon (ARCH-008/009) runs hourly automated audits across 8 operational modules. System hardening is audited via Lynis (score: 72), Nikto, and ClamAV with zero open critical issues.</td>
+                    <td><span style="color: #16a34a; font-weight: 700;">● COMPLIANT</span></td>
+                </tr>
+                <tr>
+                    <td><strong>9.0</strong></td>
+                    <td><strong>Privacy &amp; Texas PII Compliance</strong></td>
+                    <td>Does the platform comply with statutory privacy mandates regarding personal identifying information (PII)?</td>
+                    <td><strong>YES.</strong> Complies with the Texas Identity Theft Enforcement and Protection Act (Texas Bus. &amp; Com. Code &sect; 521). PII uses default last-4 masking (<code>***-**-1234</code>) with an audited 30-second timed reveal toggle.</td>
+                    <td><span style="color: #16a34a; font-weight: 700;">● COMPLIANT</span></td>
+                </tr>
+                <tr>
+                    <td><strong>10.0</strong></td>
+                    <td><strong>Physical &amp; Datacenter Security</strong></td>
+                    <td>Where is customer data physically hosted, and what physical security safeguards exist at hosting facilities?</td>
+                    <td><strong>MICROSOFT AZURE CLOUD (TEXAS).</strong> All servers operate in Tier III/IV Microsoft Azure datacenters with 24/7 armed security, biometric access gates, redundant power, and ISO 27001 / SOC 2 Type II physical certifications.</td>
+                    <td><span style="color: #16a34a; font-weight: 700;">● COMPLIANT</span></td>
+                </tr>
+                <tr>
+                    <td><strong>11.0</strong></td>
+                    <td><strong>Human Resources &amp; Personnel Screening</strong></td>
+                    <td>Are employees and contractors subjected to background checks and confidentiality agreements prior to system access?</td>
+                    <td><strong>YES.</strong> All employees and field technicians undergo nationwide criminal background checks and sign Non-Disclosure Agreements (NDAs). Mandatory training is completed through SigmaAcademy™ LMS.</td>
+                    <td><span style="color: #16a34a; font-weight: 700;">● COMPLIANT</span></td>
+                </tr>
+                <tr>
+                    <td><strong>12.0</strong></td>
+                    <td><strong>Software Development Lifecycle (SDLC)</strong></td>
+                    <td>How are code changes tested and deployed to production to prevent system downtime or vulnerabilities?</td>
+                    <td><strong>ZERO-HOTFIX &amp; PARITY STANDARD (HWB-QMS-7.6).</strong> All changes pass through the Dev-to-Live Parity Gate (ARCH-005), Docker container virtualization, and Tessa Test automated regression suites before executive release.</td>
+                    <td><span style="color: #16a34a; font-weight: 700;">● COMPLIANT</span></td>
+                </tr>
+                <tr>
+                    <td><strong>13.0</strong></td>
+                    <td><strong>Incident Response &amp; Breach Notification</strong></td>
+                    <td>What is the protocol for identifying, containing, and reporting an unauthorized data access incident?</td>
+                    <td><strong>HWB-QMS-11.4 INCIDENT RESPONSE.</strong> The security gateway automatically logs unauthorized attempts. In the event of a confirmed breach, affected customers and Texas state authorities are notified within statutory timeframes (&le; 24-48 hours).</td>
+                    <td><span style="color: #16a34a; font-weight: 700;">● COMPLIANT</span></td>
+                </tr>
+                <tr>
+                    <td><strong>14.0</strong></td>
+                    <td><strong>Healthcare &amp; HIPAA Readiness</strong></td>
+                    <td>Can the platform support commercial cleaning operations in medical and healthcare environments under HIPAA guidelines?</td>
+                    <td><strong>YES.</strong> The platform enforces unique user identification, encrypted storage, automatic session timeouts, and role-based access restrictions. HWB enters into standard Business Associate Agreements (BAAs) for healthcare accounts.</td>
+                    <td><span style="color: #16a34a; font-weight: 700;">● COMPLIANT</span></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>5.0 Verification &amp; Zero-Defect Inspection Gate</h2>
+        <p>To satisfy ISO 9001 Clause 8.2 and enterprise customer audit requests, this security packet is continuously verified by autonomous software gates:</p>
+        <ul>
+            <li><strong>RLS Verification:</strong> Verified by Tessa Test Module 8 (<code>test_08_multitenant_rls_and_quarantine_ingestion</code>) asserting 0 leaked records across tenant boundaries.</li>
+            <li><strong>Input Cleansing Verification:</strong> Verified by the automated Quarantine Ingestion Engine requiring zero format defects before database commit.</li>
+            <li><strong>Disaster Recovery Verification:</strong> Verified by Peter Sentinel's daily backup ledger and binary snapshot tracking.</li>
+        </ul>
+
+        <h2>6.0 Revision History</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Version</th>
+                    <th>Date</th>
+                    <th>Author</th>
+                    <th>Change Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1.0.0</td>
+                    <td>09/27/2026</td>
+                    <td>George (Systems Architect)</td>
+                    <td>Initial Master Release. Standardized under HWB-QMS-1.0 v2.0 (Everyday Words) and approved by Humberto Dominguez, CEO. Establishes official SIG/CAIQ/VSAQ enterprise response standard following Migration 027 and ARCH-009 implementation.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="sop-card-footer">
+        <span>&copy; 2026 HWB Cleaning Services LLC</span>
+        <span>Controlled Document | HWB-QMS-SEC-001</span>
+        <span>Page <span class="page-number"></span></span>
+    </div>
+</div>

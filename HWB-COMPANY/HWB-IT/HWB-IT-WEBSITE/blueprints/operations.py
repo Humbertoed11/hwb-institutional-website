@@ -9,6 +9,8 @@ import re
 import json
 import secrets
 import datetime
+import urllib.parse
+import requests
 from zoneinfo import ZoneInfo
 from flask import Blueprint, render_template, request, redirect, url_for, jsonify, flash, session, current_app, abort
 from flask_login import login_required, current_user, login_user
@@ -1324,7 +1326,51 @@ def sigma_executive():
                             ''', (perm_role, module, can_v, can_e, can_d))
                         flash(f"Access rights updated for role: {perm_role}")
                     elif action == 'approve_social':
-                        cur.execute('UPDATE "SocialOutbox" SET status = \'APPROVED\' WHERE id = %s', (request.form.get('post_id'),))
+                        post_id = request.form.get('post_id')
+                        cur.execute('SELECT * FROM "SocialOutbox" WHERE id = %s', (post_id,))
+                        post = cur.fetchone()
+                        if post:
+                            cur.execute('SELECT key, value FROM "SystemSettings" WHERE key IN (\'linkedin_access_token\', \'linkedin_member_urn\');')
+                            settings = dict(cur.fetchall())
+                            token = settings.get('linkedin_access_token')
+                            urn = settings.get('linkedin_member_urn')
+                            if token and urn:
+                                endpoint = "https://api.linkedin.com/v2/ugcPosts"
+                                headers = {
+                                    "Authorization": f"Bearer {token}",
+                                    "Content-Type": "application/json",
+                                    "X-Restli-Protocol-Version": "2.0.0"
+                                }
+                                post_body = {
+                                    "author": urn,
+                                    "lifecycleState": "PUBLISHED",
+                                    "specificContent": {
+                                        "com.linkedin.ugc.ShareContent": {
+                                            "shareCommentary": {"text": post['content']},
+                                            "shareMediaCategory": "NONE"
+                                        }
+                                    },
+                                    "visibility": {"com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"}
+                                }
+                                try:
+                                    resp = requests.post(endpoint, headers=headers, json=post_body, timeout=15)
+                                    if resp.status_code == 201:
+                                        cur.execute('UPDATE "SocialOutbox" SET status = \'SENT\' WHERE id = %s', (post_id,))
+                                        flash("Post successfully published to LinkedIn!", "success")
+                                    else:
+                                        cur.execute('UPDATE "SocialOutbox" SET status = \'FAILED\' WHERE id = %s', (post_id,))
+                                        flash(f"LinkedIn Transmission Failed ({resp.status_code}): {resp.text[:150]}", "error")
+                                except Exception as e:
+                                    cur.execute('UPDATE "SocialOutbox" SET status = \'FAILED\' WHERE id = %s', (post_id,))
+                                    flash(f"LinkedIn Transmission Error: {e}", "error")
+                            else:
+                                cur.execute('UPDATE "SocialOutbox" SET status = \'APPROVED\' WHERE id = %s', (post_id,))
+                                flash("LinkedIn credentials missing. Post marked as APPROVED for manual posting.", "warning")
+                    elif action == 'edit_social':
+                        new_content = request.form.get('content', '').strip()
+                        if new_content:
+                            cur.execute('UPDATE "SocialOutbox" SET content = %s WHERE id = %s', (new_content, request.form.get('post_id'),))
+                            flash("Social post draft updated successfully.", "success")
                     elif action == 'reject_social':
                         cur.execute('UPDATE "SocialOutbox" SET status = \'REJECTED\' WHERE id = %s', (request.form.get('post_id'),))
                     elif action == 'delete_social':
@@ -1432,9 +1478,148 @@ def sigmajan_lab():
 
 @operations_bp.route('/admin/linkedin-auth')
 @login_required
+@roles_required('Executive', 'Admin')
 def linkedin_auth():
-    flash("LinkedIn Authorization Module is currently in R&D.")
-    return redirect(url_for('sigma_executive'))
+    client_id = os.getenv('LINKEDIN_CLIENT_ID') or os.getenv('client_id')
+    redirect_uri = os.getenv('LINKEDIN_REDIRECT_URI', 'http://localhost:8000/admin/linkedin-callback')
+    if not client_id:
+        flash("LinkedIn Client ID is missing. Please check .env configuration.", "error")
+        return redirect(url_for('operations.sigma_executive') + '#social')
+
+    scope = request.args.get('scope') or 'w_member_social'
+    state = 'hwb_exec_' + secrets.token_hex(8)
+    session['linkedin_oauth_state'] = state
+
+    auth_url = (
+        f"https://www.linkedin.com/oauth/v2/authorization?"
+        f"response_type=code&client_id={urllib.parse.quote(client_id)}&"
+        f"redirect_uri={urllib.parse.quote(redirect_uri)}&"
+        f"state={urllib.parse.quote(state)}&"
+        f"scope={urllib.parse.quote(scope)}"
+    )
+    return redirect(auth_url)
+
+
+@operations_bp.route('/admin/linkedin-callback')
+def linkedin_callback():
+    code = request.args.get('code')
+    error = request.args.get('error')
+    error_desc = request.args.get('error_description')
+
+    if error:
+        flash(f"LinkedIn Authorization Denied: {error_desc or error}", "error")
+        return redirect(url_for('operations.sigma_executive') + '#social')
+
+    if not code:
+        flash("LinkedIn Authorization Error: No authorization code received.", "error")
+        return redirect(url_for('operations.sigma_executive') + '#social')
+
+    client_id = os.getenv('LINKEDIN_CLIENT_ID') or os.getenv('client_id')
+    client_secret = os.getenv('LINKEDIN_CLIENT_SECRET') or os.getenv('client_secret')
+    redirect_uri = os.getenv('LINKEDIN_REDIRECT_URI', 'http://localhost:8000/admin/linkedin-callback')
+
+    token_url = "https://www.linkedin.com/oauth/v2/accessToken"
+    payload = {
+        'grant_type': 'authorization_code',
+        'code': code,
+        'redirect_uri': redirect_uri,
+        'client_id': client_id,
+        'client_secret': client_secret
+    }
+
+    try:
+        resp = requests.post(token_url, data=payload, headers={'Content-Type': 'application/x-www-form-urlencoded'}, timeout=15)
+        if resp.status_code != 200:
+            current_app.logger.error(f"[LINKEDIN_OAUTH_ERROR] {resp.status_code}: {resp.text}")
+            flash(f"LinkedIn Token Exchange Failed ({resp.status_code}): {resp.text[:150]}", "error")
+            return redirect(url_for('operations.sigma_executive') + '#social')
+
+        data = resp.json()
+        access_token = data.get('access_token')
+
+        member_urn = "urn:li:person:69t5uGn1nH"
+        user_name = "Humberto Dominguez"
+        try:
+            u_resp = requests.get('https://api.linkedin.com/v2/userinfo', headers={'Authorization': f'Bearer {access_token}'}, timeout=10)
+            if u_resp.status_code == 200:
+                udata = u_resp.json()
+                if 'sub' in udata:
+                    member_urn = f"urn:li:person:{udata['sub']}"
+                if 'name' in udata:
+                    user_name = udata['name']
+        except Exception as e:
+            current_app.logger.warning(f"[LINKEDIN_USERINFO_WARN] {e}")
+
+        conn = get_db(current_app.config['DATABASE_URL'])
+        try:
+            with conn.cursor() as cur:
+                cur.execute('''
+                    INSERT INTO "SystemSettings" (key, value) VALUES ('linkedin_access_token', %s)
+                    ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
+                ''', (access_token,))
+                if member_urn:
+                    cur.execute('''
+                        INSERT INTO "SystemSettings" (key, value) VALUES ('linkedin_member_urn', %s)
+                        ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
+                    ''', (member_urn,))
+                conn.commit()
+            flash(f"LinkedIn Connected Successfully! Authenticated as {user_name}.", "success")
+        finally:
+            if conn: conn.close()
+
+    except Exception as e:
+        current_app.logger.error(f"[LINKEDIN_OAUTH_EXCEPTION] {e}")
+        flash(f"LinkedIn Connection Error: {str(e)}", "error")
+
+    if current_user.is_authenticated:
+        return redirect(url_for('operations.sigma_executive') + '#social')
+    return redirect(url_for('login') + '?next=' + url_for('operations.sigma_executive'))
+
+
+@operations_bp.route('/admin/linkedin-direct-token', methods=['POST'])
+@login_required
+@roles_required('Executive', 'Admin')
+def linkedin_direct_token():
+    token = request.form.get('direct_token', '').strip()
+    if not token:
+        flash("Direct token cannot be empty.", "error")
+        return redirect(url_for('operations.sigma_executive') + '#social')
+
+    member_urn = "urn:li:person:69t5uGn1nH"
+    user_name = "Humberto Dominguez"
+    try:
+        # Check token validity against LinkedIn
+        u_resp = requests.get('https://api.linkedin.com/v2/userinfo', headers={'Authorization': f'Bearer {token}'}, timeout=10)
+        if u_resp.status_code == 200:
+            udata = u_resp.json()
+            if 'sub' in udata:
+                member_urn = f"urn:li:person:{udata['sub']}"
+            if 'name' in udata:
+                user_name = udata['name']
+        elif u_resp.status_code == 401:
+            flash("The token provided is invalid or expired. Please check and try again.", "error")
+            return redirect(url_for('operations.sigma_executive') + '#social')
+
+        conn = get_db(current_app.config['DATABASE_URL'])
+        try:
+            with conn.cursor() as cur:
+                cur.execute('''
+                    INSERT INTO "SystemSettings" (key, value) VALUES ('linkedin_access_token', %s)
+                    ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
+                ''', (token,))
+                if member_urn:
+                    cur.execute('''
+                        INSERT INTO "SystemSettings" (key, value) VALUES ('linkedin_member_urn', %s)
+                        ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
+                    ''', (member_urn,))
+                conn.commit()
+            flash(f"LinkedIn Access Token Stored Successfully! Authenticated as {user_name}.", "success")
+        finally:
+            if conn: conn.close()
+    except Exception as e:
+        flash(f"Error saving LinkedIn token: {e}", "error")
+
+    return redirect(url_for('operations.sigma_executive') + '#social')
 
 
 @operations_bp.route('/debug-login')

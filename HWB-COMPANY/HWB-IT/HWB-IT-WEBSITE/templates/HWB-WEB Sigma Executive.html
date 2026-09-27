@@ -130,11 +130,13 @@
                 <h2 style="font-weight: 800; font-size: 1.1rem; color: var(--slate-900);">LinkedIn Post Approval</h2>
                 <p style="color: var(--slate-500); font-size: 0.875rem; margin-top: 0.25rem;">Review and approve social media posts before publishing.</p>
             </div>
-            <div>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
                 {% if linkedin_authorized %}
                     <span style="padding: 0.4rem 0.8rem; background: #dcfce7; color: #166534; border-radius: 6px; font-size: 0.75rem; font-weight: 700; border: 1px solid #bbf7d0;">Connected to LinkedIn</span>
+                    <button type="button" onclick="openModal('modal-direct-token')" class="isc-btn isc-btn-outline" style="font-size: 0.75rem; padding: 0.35rem 0.6rem;">Rotate Token</button>
                 {% else %}
                     <a href="{{ url_for('linkedin_auth') }}" class="isc-btn isc-btn-primary" style="text-decoration: none;">Connect LinkedIn</a>
+                    <button type="button" onclick="openModal('modal-direct-token')" class="isc-btn isc-btn-outline" style="font-size: 0.75rem; padding: 0.4rem 0.75rem;">Paste Token</button>
                 {% endif %}
             </div>
         </div>
@@ -147,20 +149,49 @@
                         <span style="padding: 0.25rem 0.6rem; background: #dbeafe; color: #1e40af; border-radius: 4px; font-size: 0.7rem; font-weight: 800;">{{ post.platform }}</span>
                         <span style="font-size: 0.75rem; color: var(--slate-400);">Created: {{ post.created_at }}</span>
                     </div>
-                    <div style="font-family: inherit; line-height: 1.6; color: var(--slate-800); margin-bottom: 1.5rem; white-space: pre-wrap;">{{ post.content }}</div>
-                    
-                    <div style="display: flex; gap: 0.75rem;">
+                    <div id="post-view-{{ post.id }}">
+                        <div id="post-content-{{ post.id }}" style="font-family: inherit; line-height: 1.6; color: var(--slate-800); margin-bottom: 1.5rem; white-space: pre-wrap;">{{ post.content }}</div>
+                    </div>
+                    <div id="post-edit-{{ post.id }}" style="display: none; margin-bottom: 1.5rem;">
                         <form action="{{ url_for('sigma_executive') }}" method="POST">
+                            <input type="hidden" name="action" value="edit_social">
+                            <input type="hidden" name="post_id" value="{{ post.id }}">
+                            <textarea name="content" rows="15" style="width: 100%; padding: 1rem; border-radius: 8px; border: 1px solid var(--slate-300); font-family: inherit; font-size: 0.9rem; line-height: 1.6; box-sizing: border-box;">{{ post.content }}</textarea>
+                            <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem;">
+                                <button type="submit" class="isc-btn isc-btn-primary">Save Changes</button>
+                                <button type="button" onclick="toggleEditSocial('{{ post.id }}')" class="isc-btn isc-btn-outline">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                    {% if post.media_url %}
+                    <div style="margin-bottom: 1.5rem;">
+                        <img src="{{ post.media_url }}" alt="Attached Media" style="max-height: 380px; max-width: 100%; border-radius: 8px; border: 1px solid var(--slate-200); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); object-fit: contain; background: #ffffff;">
+                    </div>
+                    {% endif %}
+                    
+                    <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+                        <button type="button" onclick="toggleEditSocial('{{ post.id }}')" class="isc-btn isc-btn-outline" style="color: var(--slate-700);">
+                            <i class="fas fa-edit"></i> Edit Text
+                        </button>
+                        <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('post-content-{{ post.id }}').innerText); this.innerHTML='<i class=\'fas fa-check\'></i> Copied!'; setTimeout(() => this.innerHTML='<i class=\'fas fa-copy\'></i> Copy Text', 2000);" class="isc-btn isc-btn-outline" style="color: #2563eb; border-color: #93c5fd; background: #eff6ff;">
+                            <i class="fas fa-copy"></i> Copy Text
+                        </button>
+                        {% if post.media_url %}
+                        <a href="{{ post.media_url }}" download="photo-linkedin.jpg" class="isc-btn isc-btn-outline" style="color: var(--slate-700); text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem;">
+                            <i class="fas fa-download"></i> Download Image
+                        </a>
+                        {% endif %}
+                        <form action="{{ url_for('sigma_executive') }}" method="POST" style="margin: 0;">
                             <input type="hidden" name="action" value="approve_social">
                             <input type="hidden" name="post_id" value="{{ post.id }}">
-                            <button type="submit" class="isc-btn isc-btn-primary" style="background: #10b981;">Approve & Post</button>
+                            <button type="submit" class="isc-btn isc-btn-primary" style="background: #10b981;">Approve</button>
                         </form>
-                        <form action="{{ url_for('sigma_executive') }}" method="POST">
+                        <form action="{{ url_for('sigma_executive') }}" method="POST" style="margin: 0;">
                             <input type="hidden" name="action" value="reject_social">
                             <input type="hidden" name="post_id" value="{{ post.id }}">
                             <button type="submit" class="isc-btn isc-btn-outline" style="color: #ef4444; border-color: #fca5a5;">Reject</button>
                         </form>
-                        <form id="form-delete-social-{{ post.id }}" action="{{ url_for('sigma_executive') }}" method="POST" style="display:inline;">
+                        <form id="form-delete-social-{{ post.id }}" action="{{ url_for('sigma_executive') }}" method="POST" style="display:inline; margin: 0;">
                             <input type="hidden" name="action" value="delete_social">
                             <input type="hidden" name="post_id" value="{{ post.id }}">
                             <button type="button" onclick="confirmDeleteSocial('{{ post.id }}')" class="isc-btn isc-btn-outline" style="color: var(--slate-500);">Delete</button>
@@ -916,6 +947,40 @@ window.onload = function() {
     if (typeof rolePermissionsData !== 'undefined' && rolePermissionsData.length > 0) {
         switchMatrixRole('Sales');
     }
+};
+
+function toggleEditSocial(id) {
+    const v = document.getElementById('post-view-' + id);
+    const e = document.getElementById('post-edit-' + id);
+    if (v.style.display === 'none') {
+        v.style.display = 'block';
+        e.style.display = 'none';
+    } else {
+        v.style.display = 'none';
+        e.style.display = 'block';
+    }
 }
 </script>
+<!-- Direct LinkedIn Token Modal -->
+<div id="modal-direct-token" class="modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
+    <div style="background: white; border-radius: 12px; width: 100%; max-width: 520px; padding: 2rem; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); margin: auto; position: relative;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+            <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--slate-900); margin: 0;">Paste LinkedIn Access Token</h3>
+            <button type="button" onclick="closeModal('modal-direct-token')" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--slate-400); line-height: 1;">&times;</button>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--slate-600); margin-bottom: 1.25rem; line-height: 1.5;">
+            Generated directly from the <a href="https://www.linkedin.com/developers/tools/oauth" target="_blank" style="color: #2563eb; font-weight: 700;">LinkedIn Developer OAuth Token Generator</a>. This immediately bypasses redirect URL restrictions.
+        </p>
+        <form action="{{ url_for('operations.linkedin_direct_token') }}" method="POST">
+            <div style="margin-bottom: 1.25rem;">
+                <label style="display: block; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--slate-600); margin-bottom: 0.5rem;">Access Token (Starts with AQ...)</label>
+                <textarea name="direct_token" rows="4" required placeholder="Paste the generated access token string here..." style="width: 100%; padding: 0.75rem; border-radius: 6px; border: 1px solid var(--slate-200); font-family: monospace; font-size: 0.8rem; box-sizing: border-box; resize: vertical;"></textarea>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+                <button type="button" onclick="closeModal('modal-direct-token')" class="isc-btn isc-btn-outline">Cancel</button>
+                <button type="submit" class="isc-btn isc-btn-primary">Save & Validate Token</button>
+            </div>
+        </form>
+    </div>
+</div>
 {% endblock %}

@@ -657,7 +657,10 @@ def apply_system_migrations(conn: Any, db_url: Optional[str] = None) -> None:
                 ("023_sales_desk_and_credentials_parity", "scripts.migrate_023_sales_desk_and_credentials_parity", "Field Sales Desk decoupling and sales credentials parity"),
                 ("024_bidding_evolution_documents_and_sca", "scripts.migrate_024_bidding_evolution_documents_and_sca", "Digital Bid Room, BidAddenda sentinel, BidRFIs, and McNamara-O'Hara SCA engine"),
                 ("025_gc_vetting_and_profile_enrichment", "scripts.migrate_025_gc_vetting_and_profile_enrichment", "Master GeneralContractors registry, 4-point vetting scorecard, and autonomous profile enrichment"),
-                ("026_rack_telemetry_historical_snapshots", "scripts.migrate_026_rack_telemetry_history", "Historical snapshot ledger for 7-rack telemetry, memory rot, Six Sigma SPC, and Pareto distributions")
+                ("026_rack_telemetry_historical_snapshots", "scripts.migrate_026_rack_telemetry_history", "Historical snapshot ledger for 7-rack telemetry, memory rot, Six Sigma SPC, and Pareto distributions"),
+                ("027_multitenant_rls_and_quarantine_ingestion", "scripts.migrate_027_multitenant_rls_and_quarantine_ingestion", "Kernel-level PostgreSQL Row-Level Security (RLS) tenant isolation and quarantine ingestion buffer"),
+                ("028_lead_dataset_cleansing_and_deduplication", "scripts.migrate_028_lead_dataset_cleansing_and_deduplication", "Lead dataset deduplication, PROC-002 phone normalization, state standardization, and valuation backfill"),
+                ("029_lead_industry_facility_classification", "scripts.migrate_029_lead_industry_facility_classification", "Lead industry and facility type classification, lexical parsing, and source purification")
             ]
 
             for v_tag, mod_path, v_desc in modular_migrations:

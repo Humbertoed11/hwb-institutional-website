@@ -9,7 +9,8 @@ AGENTS = [
     ["python", "sigma_orchestrator.py"],
     # ["python", "news_updater.py"],
     ["python", "watchdog.py"],
-    ["python", "scripts/telegram_listener.py"]
+    ["python", "scripts/telegram_listener.py"],
+    ["python", "scripts/tessa_regression_suite.py", "--daemon", "--interval", "3600"]
 ]
 
 def launch_agents():

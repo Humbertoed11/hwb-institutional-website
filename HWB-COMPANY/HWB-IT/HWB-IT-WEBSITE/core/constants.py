@@ -16,9 +16,23 @@ FACILITY_TYPES = [
     {"value": "Other", "label": "Other Commercial"}
 ]
 
+INDUSTRIES = [
+    {"value": "Child Care", "label": "Child Care & Early Learning"},
+    {"value": "Automotive", "label": "Automotive Sales & Services"},
+    {"value": "Education", "label": "Education & K-12 Academics"},
+    {"value": "Corporate / Office", "label": "Corporate & Professional Office"},
+    {"value": "Healthcare / Medical", "label": "Healthcare & Medical Clinical"},
+    {"value": "Industrial / Logistics", "label": "Industrial & Logistics / Warehouse"},
+    {"value": "Retail & Hospitality", "label": "Retail, Wholesale & Hospitality"},
+    {"value": "Religious / Nonprofit", "label": "Religious / Places of Worship"},
+    {"value": "Construction", "label": "Construction & Post-Finishout"},
+    {"value": "Commercial Property", "label": "General Commercial Property"}
+]
+
 LEAD_SOURCES = [
     {"value": "Texas CCL API", "label": "Texas CCL API (Active State Feed)"},
     {"value": "Texas Childcare Registry", "label": "Texas Childcare Registry (Master Import)"},
+    {"value": "Texas Commercial Registry", "label": "Texas Commercial Registry (B2B Directory)"},
     {"value": "Website Quote Form", "label": "Website Quote Form (Inbound Web)"},
     {"value": "Google", "label": "Google Search / Organic SEO"},
     {"value": "Referral", "label": "Referral / Word-of-Mouth"},

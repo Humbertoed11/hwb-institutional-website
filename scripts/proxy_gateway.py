@@ -40,8 +40,12 @@ class ProxyHandler(http.server.BaseHTTPRequestHandler):
         conn = http.client.HTTPConnection(host, int(port))
         
         # Filter and Forward Headers
+        client_host = self.headers.get('Host', 'localhost:8000')
         headers = {k: v for k, v in self.headers.items() if k.lower() not in ['host', 'connection']}
         headers['Host'] = host
+        headers['X-Forwarded-Host'] = client_host
+        headers['X-Forwarded-Proto'] = 'http'
+        headers['X-Forwarded-For'] = self.client_address[0]
 
         try:
             conn.request(self.command, self.path, body, headers)

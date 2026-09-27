@@ -20,10 +20,12 @@ import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'HWB-COMPANY', 'HWB-IT', 'HWB-IT-WEBSITE'))
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 try:
-    from core.services.sanitizer import clean_phone
+    from core.services.sanitizer import clean_phone, clean_city
+    from core.services.classifier import BusinessClassifierEngine
 except ImportError:
     try:
-        from HWB_COMPANY.HWB_IT.HWB_IT_WEBSITE.core.services.sanitizer import clean_phone
+        from HWB_COMPANY.HWB_IT.HWB_IT_WEBSITE.core.services.sanitizer import clean_phone, clean_city
+        from HWB_COMPANY.HWB_IT.HWB_IT_WEBSITE.core.services.classifier import BusinessClassifierEngine
     except ImportError:
         def clean_phone(p):
             if not p: return None
@@ -31,6 +33,16 @@ except ImportError:
             if len(d) == 11 and d.startswith('1'): d = d[1:]
             if len(d) == 10: return f"({d[:3]})-{d[3:6]}-{d[6:]}"
             return p
+        def clean_city(c):
+            return str(c).strip().title() if c else None
+        class BusinessClassifierEngine:
+            @classmethod
+            def classify(cls, center_name, capacity=None, lead_source=None, raw_payload=None):
+                class Dummy:
+                    industry = 'Child Care'
+                    facility_type = 'Child Care Center'
+                    normalized_lead_source = lead_source or 'Texas CCL API'
+                return Dummy()
 
 def sync_daycares(force=False):
     print(f"--- SigmaFidelity: Initiating Texas Daycare API Sync ---", flush=True)
@@ -93,7 +105,7 @@ def sync_daycares(force=False):
             phone = clean_phone(raw_phone) or raw_phone
             address = item.get("address_line") or item.get("location_address", "")
             address = address.strip()
-            city = item.get("city", "").strip().upper()
+            city = clean_city(item.get("city")) or item.get("city", "").strip().title()
             county = item.get("county", "").strip().upper()
             zipcode = item.get("zipcode", "").strip()
             director = item.get("administrator_director_name", "").strip()
@@ -137,25 +149,40 @@ def sync_daycares(force=False):
                     needs_update = True
                     update_fields.append("process_id")
                     
+                # Dynamic Business Classification Gate
+                classification = BusinessClassifierEngine.classify(
+                    center_name=center_name,
+                    capacity=capacity,
+                    lead_source='Texas CCL API'
+                )
+
                 if needs_update:
                     cur.execute("""
                         UPDATE "Leads"
-                        SET capacity = %s, phone = %s, director = %s, address = %s, process_id = %s, updated_at = %s
+                        SET capacity = %s, phone = %s, director = %s, address = %s, process_id = %s,
+                            industry = %s, facility_type = %s, updated_at = %s
                         WHERE id = %s;
-                    """, (capacity, phone, director, address, process_id, datetime.now().date(), lead_id))
+                    """, (capacity, phone, director, address, process_id, classification.industry, classification.facility_type, datetime.now().date(), lead_id))
                     updated_count += 1
                 else:
                     skipped_count += 1
             else:
-                # Insert new daycare lead
+                # Dynamic Business Classification Gate
+                classification = BusinessClassifierEngine.classify(
+                    center_name=center_name,
+                    capacity=capacity,
+                    lead_source='Texas CCL API'
+                )
+
+                # Insert new lead with verified classification
                 cur.execute("""
                     INSERT INTO "Leads" (
                         center_name, phone, address, county, zipcode, director, capacity, city, state,
-                        industry, input_date, status, is_converted, lead_source, process_id, updated_at
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+                        industry, facility_type, input_date, status, is_converted, lead_source, process_id, updated_at
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
                 """, (
                     center_name, phone, address, county, zipcode, director, capacity, city, state,
-                    'Child Care', datetime.now().date(), 'NEW', False, 'Texas CCL API', process_id, datetime.now().date()
+                    classification.industry, classification.facility_type, datetime.now().date(), 'NEW', False, classification.normalized_lead_source, process_id, datetime.now().date()
                 ))
                 new_count += 1
                 
