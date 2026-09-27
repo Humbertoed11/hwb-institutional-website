@@ -78,7 +78,7 @@ url_config = f'https://management.azure.com/subscriptions/{SUBSCRIPTION_ID}/reso
 config_payload = {
     'properties': {
         'linuxFxVersion': f'DOCKER|{NEW_IMAGE}',
-        'appCommandLine': 'gunicorn --bind=0.0.0.0:5000 --timeout 600 main_app:app'
+        'appCommandLine': ''
     }
 }
 res_config = requests.patch(url_config, headers=headers, json=config_payload)

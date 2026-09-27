@@ -6,6 +6,8 @@ __pycache__/
 *.pyc
 *.db
 *.sqlite3
-templates/.snapshots_pre_salesforce_ui/*.sql
-backup/*.sql
+templates/.snapshots_pre_salesforce_ui/
+backup/
+.backups/
+HWB-COMPANY/
 trash-out/
