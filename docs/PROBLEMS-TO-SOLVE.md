@@ -78,6 +78,35 @@ Responsibility: George (Architect)
 | 09/25/2026 | ARCH-008 | Tessa Test Continuous Regression Supervisor Daemon: 7-Module Platform Verification & Zero-Defect CI/CD Quality Gate. | **RESOLVED** | HIGH |
 | 09/27/2026 | ARCH-009 | Multi-Tenant Kernel Row-Level Security (RLS), Anti-Spoofing Isolation & Quarantine Ingestion Gateway (Poka-Yoke Data Sanitization). | **RESOLVED** | CRITICAL |
 | 09/27/2026 | BUG-095 | Live Lead Dataset Contamination (28,033 Unformatted Phones, 3,690 Cloned Duplicate Rows, State Drift & Missing Valuations). | **RESOLVED** | HIGH |
+| 09/27/2026 | BUG-096 | Telegram Inbound Message Drop & Unhandled ValueError on Multi-User Comma-Separated TELEGRAM_CHAT_ID String. | **RESOLVED** | CRITICAL |
+| 09/27/2026 | ARCH-010 | Telegram Enterprise Concurrency Engine: 16-Worker ThreadPoolExecutor, Poka-Yoke Fault Isolation & Safe Ingestion. | **RESOLVED** | HIGH |
+
+## BUG-096: Telegram Inbound Message Drop & Unhandled ValueError on Multi-User Comma-Separated TELEGRAM_CHAT_ID String
+**Detected:** 09/27/2026
+**Status:** **RESOLVED** (09/27/2026)
+**Symptoms:**
+1. CEO Humberto Dominguez sent multiple messages ("Test", "Are you connected", and "yes") to `@Georgebytesbot` on Telegram, but received no response.
+2. No interactions were recorded in PostgreSQL `TelegramEventStream` or `sigma_kb` for September 27.
+3. Live container logs revealed repeated unhandled exceptions on every inbound packet:
+   `[TELEGRAM POLLING EXCEPTION]: invalid literal for int() with base 10: '8564340073,8443354512'`
+**Root Causes:**
+1. Multi-user support was enabled in `.env` (`TELEGRAM_CHAT_ID='8564340073,8443354512'`) to include both CEO Humberto Dominguez and Operator Mirna Rondinella.
+2. In `scripts/telegram_listener.py`, three internal functions (`mirror_activity_to_ceo` line 606, `handle_cmd_mirror` line 676, and `handle_text_conversation` line 1780) attempted direct integer casting: `int(os.getenv("TELEGRAM_CHAT_ID", "8564340073"))`.
+3. In `poll_updates()`, the Telegram update offset was incremented *before* message processing completed. When the unhandled `ValueError` aborted message processing, the outer loop caught the error and polled Telegram with the incremented offset, instructing Telegram servers to discard the unprocessed messages.
+**Solution:**
+1. Implemented centralized ID sanitization: `get_ceo_chat_id()` and `get_allowed_chat_ids()` that cleanly split comma-separated strings, strip whitespace, and safely extract the integer ID.
+2. Hardened `mirror_activity_to_ceo()` and `record_and_mirror_activity()` with defensive `try...except` isolation so that mirroring or telemetry issues never crash message processing.
+3. Deployed the **Enterprise Concurrency Engine (ARCH-010)**: 16-worker `ThreadPoolExecutor` and isolated `safe_process_update` wrapper ensuring zero loop blocking and complete fault tolerance.
+
+## ARCH-010: Telegram Enterprise Concurrency Engine (16-Worker ThreadPoolExecutor & Zero-Loss Ingestion)
+**Detected:** 09/27/2026
+**Status:** **RESOLVED** (09/27/2026)
+**Symptoms:**
+1. Prior single-threaded synchronous polling loop would block completely whenever an LLM reasoning call (Gemini 2.5 Flash), Microsoft Graph email search, or PDF blueprint parse occurred, creating an unbounded backlog and packet dropouts if scaled to 1,000 users.
+**Solution:**
+1. Re-engineered `poll_updates()` with a dedicated `concurrent.futures.ThreadPoolExecutor(max_workers=16, thread_name_prefix="tg_worker")`.
+2. Update polling immediately submits packets to `safe_process_update()` in the worker pool, yielding the network socket back to Telegram immediately.
+3. Isolated all worker tasks with comprehensive exception logging, ensuring that an anomaly in one user's session never interrupts or affects concurrent users.
 
 ## BUG-080: Local Loopback Hostname (mop.test) Inaccessible to External Devices & Mobile Cleaners via Generated Onboarding Link
 **Detected:** 09/21/2026

@@ -22,6 +22,7 @@ import base64
 import tempfile
 import threading
 import subprocess
+import concurrent.futures
 from datetime import datetime, timezone, timedelta
 import requests
 from requests.adapters import HTTPAdapter
@@ -55,10 +56,26 @@ if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
     print("[TELEGRAM] CRITICAL: TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID missing from .env", flush=True)
     sys.exit(1)
 
-try:
-    ALLOWED_CHAT_ID = int(TELEGRAM_CHAT_ID)
-except ValueError:
-    ALLOWED_CHAT_ID = TELEGRAM_CHAT_ID
+def get_ceo_chat_id() -> int:
+    """Returns the primary CEO Telegram Chat ID safely regardless of comma-separated configs."""
+    raw = os.getenv("TELEGRAM_CHAT_ID", "8564340073")
+    try:
+        first_id = raw.split(",")[0].strip()
+        return int(first_id)
+    except Exception:
+        return 8564340073
+
+def get_allowed_chat_ids() -> list:
+    """Returns a list of all integer chat IDs configured in .env."""
+    raw = os.getenv("TELEGRAM_CHAT_ID", "8564340073")
+    ids = []
+    for part in raw.split(","):
+        part = part.strip()
+        if part.isdigit():
+            ids.append(int(part))
+    return ids or [8564340073]
+
+ALLOWED_CHAT_ID = get_ceo_chat_id()
 
 # Resilient HTTP session
 session = requests.Session()
@@ -600,42 +617,43 @@ def log_telegram_event(user_id, chat_id, user_handle, user_full_name, user_role,
 def mirror_activity_to_ceo(actor_user, chat_id, from_user, event_type, payload_summary, detected_intent=None, friction_flag=False):
     """
     Real-time activity mirroring to CEO Humberto Dominguez (chat_id: 8564340073).
-    Mirrors all user actions, queries, button clicks, voice notes, and uploads
+    Mirrors critical user actions, queries, button clicks, voice notes, and uploads
     performed by any team member or incoming contact.
+    Enterprise Fault-Tolerant: Failures in mirroring will NEVER crash the caller.
     """
-    ceo_chat_id = int(os.getenv("TELEGRAM_CHAT_ID", "8564340073"))
-    
-    # Do not mirror CEO's own direct actions back to his own chat window
-    if str(chat_id) == str(ceo_chat_id):
-        return False
-
-    actor_name = actor_user.get("name") if actor_user else None
-    if not actor_name and from_user:
-        f_name = f"{from_user.get('first_name', '')} {from_user.get('last_name', '')}".strip()
-        actor_name = f_name or from_user.get("username") or f"Contact #{chat_id}"
-    elif not actor_name:
-        actor_name = f"Contact #{chat_id}"
-
-    actor_role = actor_user.get("role", "Unregistered") if actor_user else "External Contact"
-    handle_str = f"@{from_user.get('username')}" if from_user and from_user.get("username") else (f"@{actor_user.get('username')}" if actor_user and actor_user.get("username") else f"ID `{chat_id}`")
-    
-    timestamp = datetime.now().strftime("%I:%M:%S %p CST")
-    
-    alert_icon = "⚠️" if friction_flag else "📡"
-    mirror_msg = (
-        f"{alert_icon} *[TELEGRAM ACTIVITY MIRROR]*\n"
-        f"━━━━━━━━━━━━━━━━━━━━━\n"
-        f"👤 *Actor:* {actor_name} ({actor_role})\n"
-        f"🏷️ *Handle:* {handle_str} | Chat `{chat_id}`\n"
-        f"⚡ *Event:* `{event_type.upper()}`\n"
-        f"🎯 *Intent:* `{detected_intent or 'General'}`\n"
-        f"📝 *Details:* {payload_summary}\n"
-        f"⏰ *Time:* {timestamp}\n"
-        f"━━━━━━━━━━━━━━━━━━━━━\n"
-        f"🧠 _Logged to TelegramEventStream for behavioral profiling._"
-    )
-
     try:
+        ceo_chat_id = get_ceo_chat_id()
+        
+        # Do not mirror CEO's own direct actions back to his own chat window
+        if str(chat_id) == str(ceo_chat_id):
+            return False
+
+        actor_name = actor_user.get("name") if actor_user else None
+        if not actor_name and from_user:
+            f_name = f"{from_user.get('first_name', '')} {from_user.get('last_name', '')}".strip()
+            actor_name = f_name or from_user.get("username") or f"Contact #{chat_id}"
+        elif not actor_name:
+            actor_name = f"Contact #{chat_id}"
+
+        actor_role = actor_user.get("role", "Unregistered") if actor_user else "External Contact"
+        handle_str = f"@{from_user.get('username')}" if from_user and from_user.get("username") else (f"@{actor_user.get('username')}" if actor_user and actor_user.get("username") else f"ID `{chat_id}`")
+        
+        timestamp = datetime.now().strftime("%I:%M:%S %p CST")
+        
+        alert_icon = "⚠️" if friction_flag else "📡"
+        mirror_msg = (
+            f"{alert_icon} *[TELEGRAM ACTIVITY MIRROR]*\n"
+            f"━━━━━━━━━━━━━━━━━━━━━\n"
+            f"👤 *Actor:* {actor_name} ({actor_role})\n"
+            f"🏷️ *Handle:* {handle_str} | Chat `{chat_id}`\n"
+            f"⚡ *Event:* `{event_type.upper()}`\n"
+            f"🎯 *Intent:* `{detected_intent or 'General'}`\n"
+            f"📝 *Details:* {payload_summary}\n"
+            f"⏰ *Time:* {timestamp}\n"
+            f"━━━━━━━━━━━━━━━━━━━━━\n"
+            f"🧠 _Logged to TelegramEventStream for behavioral profiling._"
+        )
+
         send_telegram_message(ceo_chat_id, mirror_msg)
         return True
     except Exception as e:
@@ -645,6 +663,7 @@ def mirror_activity_to_ceo(actor_user, chat_id, from_user, event_type, payload_s
 def record_and_mirror_activity(chat_id, from_user, event_type, payload_summary, detected_intent=None, friction_flag=False, latency_ms=0):
     """
     Unified entry point to both record to database stream and mirror to CEO.
+    Hardened with Poka-Yoke exception isolation so telemetry failures NEVER abort processing.
     """
     actor_user = get_user_for_chat(chat_id)
     user_id = actor_user.get("user_id") if actor_user else None
@@ -653,27 +672,36 @@ def record_and_mirror_activity(chat_id, from_user, event_type, payload_summary, 
     user_role = actor_user.get("role") if actor_user else "Unregistered"
 
     # Mirror to CEO if not CEO himself
-    mirrored = mirror_activity_to_ceo(actor_user, chat_id, from_user, event_type, payload_summary, detected_intent, friction_flag)
-    
+    mirrored = False
+    try:
+        mirrored = mirror_activity_to_ceo(actor_user, chat_id, from_user, event_type, payload_summary, detected_intent, friction_flag)
+    except Exception as me:
+        print(f"[MIRROR ERROR] Non-fatal mirror failure: {me}", flush=True)
+
     # Log to PostgreSQL
-    event_id = log_telegram_event(
-        user_id=user_id,
-        chat_id=chat_id,
-        user_handle=user_handle,
-        user_full_name=user_full_name,
-        user_role=user_role,
-        event_type=event_type,
-        payload_summary=payload_summary,
-        detected_intent=detected_intent,
-        friction_flag=friction_flag,
-        latency_ms=latency_ms,
-        mirrored=mirrored
-    )
+    event_id = None
+    try:
+        event_id = log_telegram_event(
+            user_id=user_id,
+            chat_id=chat_id,
+            user_handle=user_handle,
+            user_full_name=user_full_name,
+            user_role=user_role,
+            event_type=event_type,
+            payload_summary=payload_summary,
+            detected_intent=detected_intent,
+            friction_flag=friction_flag,
+            latency_ms=latency_ms,
+            mirrored=mirrored
+        )
+    except Exception as le:
+        print(f"[TELEMETRY ERROR] Non-fatal logging failure: {le}", flush=True)
+
     return event_id
 
 def handle_cmd_mirror(chat_id, arg=""):
     """Displays real-time mirroring telemetry and team activity feed."""
-    ceo_chat_id = int(os.getenv("TELEGRAM_CHAT_ID", "8564340073"))
+    ceo_chat_id = get_ceo_chat_id()
     conn = get_db_connection()
     stats = {}
     recent = []
@@ -1777,7 +1805,7 @@ def handle_text_conversation(text, chat_id):
         print(f"[TELEGRAM] Warning logging to sigma_kb: {db_e}", flush=True)
 
     # Mirror George's reply to the CEO if talking to another team member
-    ceo_chat_id = int(os.getenv("TELEGRAM_CHAT_ID", "8564340073"))
+    ceo_chat_id = get_ceo_chat_id()
     if str(chat_id) != str(ceo_chat_id):
         actor_user = get_user_for_chat(chat_id)
         actor_name = actor_user.get("name", "Team Member") if actor_user else f"Contact {chat_id}"
@@ -3481,6 +3509,7 @@ def process_message(message):
     text = message.get("text", "").strip()
 
     from_user = message.get("from", {})
+    print(f"[TELEGRAM] >>> INCOMING MESSAGE from chat_id={chat_id}, user={from_user.get('first_name')} (@{from_user.get('username')}): '{text}'", flush=True)
 
     # Check for Forwarded Messages (Effortless User & Group ID Detection)
     forward_from = message.get("forward_from")
@@ -3826,12 +3855,30 @@ def autonomous_deal_capture_loop():
 
         time.sleep(900)
 
+def safe_process_update(update: dict):
+    """
+    Enterprise worker task: processes a single update in an isolated thread.
+    Catches all exceptions to prevent thread deaths and preserve loop integrity.
+    """
+    try:
+        if "callback_query" in update:
+            process_callback_query(update["callback_query"])
+        elif "message" in update:
+            process_message(update["message"])
+    except Exception as exc:
+        import traceback
+        tb = traceback.format_exc()
+        print(f"[TELEGRAM WORKER EXCEPTION]: {exc}\n{tb}", flush=True)
+
 def poll_updates():
     offset = None
-    print("[TELEGRAM] Starting SigmaFidelity™ Executive Command Node v3.0 (6-Frontier Architecture)...", flush=True)
+    print("[TELEGRAM] Starting SigmaFidelity™ Executive Command Node v3.1 (Enterprise Concurrency Engine)...", flush=True)
 
     monitor_thread = threading.Thread(target=autonomous_deal_capture_loop, daemon=True)
     monitor_thread.start()
+
+    # Enterprise ThreadPool: 16 concurrent workers to ensure non-blocking polling and instant scaling
+    executor = concurrent.futures.ThreadPoolExecutor(max_workers=16, thread_name_prefix="tg_worker")
 
     while True:
         url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/getUpdates"
@@ -3846,14 +3893,13 @@ def poll_updates():
                 if data.get("ok"):
                     for update in data.get("result", []):
                         offset = update.get("update_id") + 1
-                        
-                        if "callback_query" in update:
-                            process_callback_query(update["callback_query"])
-                        elif "message" in update:
-                            process_message(update["message"])
+                        print(f"[TELEGRAM] >>> INCOMING UPDATE #{offset}: {update}", flush=True)
+                        executor.submit(safe_process_update, update)
             else:
+                print(f"[TELEGRAM POLLING WARNING] getUpdates returned HTTP {res.status_code}: {res.text}", flush=True)
                 time.sleep(2)
         except Exception as e:
+            print(f"[TELEGRAM POLLING EXCEPTION]: {e}", flush=True)
             time.sleep(3)
 
         time.sleep(0.5)
