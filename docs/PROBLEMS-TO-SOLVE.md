@@ -1478,3 +1478,30 @@ CEO Humberto Dominguez attempting to log into `https://www.hwbcleaning.com/login
 1. All future mining scripts and manual uploads must invoke `BusinessClassifierEngine.classify()`.
 2. Any record scoring `< 0.85` or exhibiting a cognitive conflict is quarantined in `crm_ingestion_quarantine` for supervisor review.
 
+## BUG-097: Timezone Distortion & Date Rollback on Institutional Bids Desk (UTC vs. Texas Central Time CDT/CST)
+**Detected:** 09/27/2026
+**Status:** **IN PROGRESS**
+**Symptoms:**
+1. Navigating to `http://mop.test:5000/admin/operations?view=institutional_bids` reveals severe timezone and milestone date distortions under the "Procurement Milestones" column:
+   - Federal contracts ingested from USAspending (e.g., end dates of 09/30/2027, 03/31/2028, 06/30/2031) display as `Due: 09/29/2027 07:00 PM`, `03/30/2028 07:00 PM`, `06/29/2031 07:00 PM`—shifting the calendar date backwards by one full day and appending an erroneous 7:00 PM evening time.
+   - NTTA Solicitation `06507-NTT-00-GS-MA` displays:
+     - Bid Due Date: `Due: 10/07/2026 06:00 AM` (instead of 11:00 AM Central).
+     - Site Walk: `Site Walk: 09/29/2026 04:00 AM` (instead of 9:00 AM Central).
+     - Pre-Bid Conference: `Pre-Bid: 09/28/2026 09:00 AM` (instead of 2:00 PM Central).
+2. The UI shows unrealistic procurement milestones (e.g. mandatory field site walks at 4:00 AM in the dark, and public bid submissions due at 6:00 AM).
+**Root Causes:**
+1. **Uncalibrated UTC Storage of Texas Local Times:** In `scripts/migrate_010_institutional_bids.py` and `solicitation_scope_parser.py`, Texas procurement milestones (which are published in Texas Central Time CT/CDT) were parsed or seeded with UTC offsets (`+00`) or naive strings. Because PostgreSQL container defaults to `TIMEZONE = 'Etc/UTC'`, PostgreSQL treated the local hour (e.g. 11:00, 09:00) as UTC.
+2. **UTC-to-Central Double Conversion (5-Hour Subtract):** In `blueprints/operations.py`, lines 458-464 execute: `row_dict[dk] = v.astimezone(ZoneInfo('America/Chicago'))`. Because `v` was already recorded with UTC tags, Python subtracted 5 hours (CDT) from the stored hour:
+   - 11:00 AM UTC - 5 hours = 06:00 AM CDT.
+   - 09:00 AM UTC - 5 hours = 04:00 AM CDT.
+   - 14:00 (2:00 PM) UTC - 5 hours = 09:00 AM CDT.
+3. **Date-Only Boundary Shift on Midnight Timestamps:** Federal contract records from USAspending are date-only calendar values (`YYYY-MM-DD`). Ingesting them into `TIMESTAMP WITH TIME ZONE` created midnight timestamps (`00:00:00+00`). Converting midnight UTC to America/Chicago subtracted 5 hours, resulting in 7:00 PM (`19:00:00-05:00`) on the *previous calendar day*.
+4. **Template strftime Formatting Blindness:** In `templates/backoffice_operations.html`, `ib.bid_due_date.strftime('%m/%d/%Y %I:%M %p')` unconditionally renders hours and minutes, displaying `07:00 PM` on pure calendar dates.
+**Proposed Solution:**
+1. **Timezone Normalization in Database:** Update `InstitutionalBids` records to store true UTC timestamps (e.g., 11:00 AM CDT -> 16:00:00 UTC; 09:00 AM CDT -> 14:00:00 UTC; 02:00 PM CDT -> 19:00:00 UTC).
+2. **USAspending Ingestion Calibration (`scripts/usaspending_miner.py`):** When parsing date-only strings (`YYYY-MM-DD`), assign time at 23:59:59 Central (or 17:00:00 Central close of business) localized to `ZoneInfo('America/Chicago')` so that conversion can never roll back into the previous calendar day.
+3. **Operations View & Template Hardening:** In `blueprints/operations.py` and `templates/backoffice_operations.html`, introduce date-only awareness: if a bid date represents a calendar date (e.g. hour is 0 or 23:59 or flagged as date-only), format cleanly as `%m/%d/%Y` without arbitrary hour strings; for explicit milestone times, format as `%m/%d/%Y %I:%M %p CT`.
+**Preventative:**
+1. All public procurement parsers must attach `ZoneInfo('America/Chicago')` to parsed local time strings before database persistence.
+2. Automated regression test in `yamamoto_bid_test_suite.py` must assert that NTTA bid due date displays exactly as `10/07/2026 11:00 AM` and site walk as `09/29/2026 09:00 AM`.
+
