@@ -1763,17 +1763,21 @@
                                 <td style="padding: 0.85rem 1rem; vertical-align: top; font-size: 0.75rem;">
                                     {% if ib.pre_bid_datetime %}
                                     <div style="color: #92400e; font-weight: 700; margin-bottom: 0.25rem;">
-                                        <i class="fas fa-video" style="color: #f59e0b;"></i> Pre-Bid: {{ ib.pre_bid_datetime.strftime('%m/%d/%Y %I:%M %p') }}
+                                        <i class="fas fa-video" style="color: #f59e0b;"></i> Pre-Bid: {{ ib.pre_bid_datetime.strftime('%m/%d/%Y %I:%M %p') }} CT
                                     </div>
                                     {% endif %}
                                     {% if ib.site_walk_datetime %}
                                     <div style="color: #1e40af; font-weight: 700; margin-bottom: 0.25rem;">
-                                        <i class="fas fa-walking" style="color: #3b82f6;"></i> Site Walk: {{ ib.site_walk_datetime.strftime('%m/%d/%Y %I:%M %p') }}
+                                        <i class="fas fa-walking" style="color: #3b82f6;"></i> Site Walk: {{ ib.site_walk_datetime.strftime('%m/%d/%Y %I:%M %p') }} CT
                                     </div>
                                     {% endif %}
                                     {% if ib.bid_due_date %}
                                     <div style="color: #991b1b; font-weight: 800;">
-                                        <i class="fas fa-clock" style="color: #ef4444;"></i> Due: {{ ib.bid_due_date.strftime('%m/%d/%Y %I:%M %p') }}
+                                        {% if (ib.portal_name and 'USAspending' in ib.portal_name) or (ib.bid_due_date.hour == 17 and ib.bid_due_date.minute == 0) or (ib.bid_due_date.hour == 0 and ib.bid_due_date.minute == 0) %}
+                                        <i class="fas fa-calendar-alt" style="color: #ef4444;"></i> Expiration: {{ ib.bid_due_date.strftime('%m/%d/%Y') }}
+                                        {% else %}
+                                        <i class="fas fa-clock" style="color: #ef4444;"></i> Due: {{ ib.bid_due_date.strftime('%m/%d/%Y %I:%M %p') }} CT
+                                        {% endif %}
                                     </div>
                                     {% endif %}
                                     {% if not ib.pre_bid_datetime and not ib.bid_due_date %}

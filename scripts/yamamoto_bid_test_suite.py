@@ -91,6 +91,11 @@ class YamamotoMotoEstimatingTestSuite(unittest.TestCase):
         self.assertIn("sigma-id-badge", html, "Sigma Fast-Reference ID badge missing from Institutional Desk")
         self.assertIn("IB-#", html, "IB-# identifier missing from Institutional Desk")
 
+        # 5. Temporal Milestones in Texas Central Time (HWB-QMS-11.6 / BUG-097)
+        self.assertIn("10/07/2026 11:00 AM CT", html, "NTTA bid due date must display in Texas Central Time (11:00 AM CT)")
+        self.assertIn("09/29/2026 09:00 AM CT", html, "NTTA site walk must display in Texas Central Time (09:00 AM CT)")
+        self.assertIn("09/28/2026 02:00 PM CT", html, "NTTA pre-bid conference must display in Texas Central Time (02:00 PM CT)")
+
         res_search = client.get('/admin/operations?view=institutional_bids&q=ib-1')
         self.assertEqual(res_search.status_code, 200)
         self.assertIn("06507-NTT-00-GS-MA", res_search.data.decode('utf-8'), "Shorthand search q=ib-1 failed to find bid #1")
@@ -207,14 +212,12 @@ class YamamotoMotoEstimatingTestSuite(unittest.TestCase):
     def test_06_core_estimating_engine_living_wage_rules(self):
         """Yamamoto Moto tests core estimator compliance with Texas and Dallas wage floors."""
         log_audit("Inspecting Module 4: Core Estimating Engine (ISSA 612 / Living Wage)")
-        try:
-            from core.services.estimator import calculate_institutional_bid
-            bid_calc = calculate_institutional_bid(cleanable_sqft=38867, mandated_weekly_hours=40.0, day_porters=1, night_custodians=2)
-            self.assertIsNotNone(bid_calc, "Estimator returned None")
-            self.assertTrue(bid_calc.get('total_contract_value', 0) > 100000, "Estimated value suspiciously low")
-            log_audit(f"PASS: Core Estimating Engine generated ${bid_calc.get('total_contract_value', 0):,.2f} proposal.")
-        except Exception as e:
-            log_audit(f"Notice: Core service test evaluated: {e}")
+        from core.services.estimator import calculate_institutional_bid
+        bid_calc = calculate_institutional_bid(cleanable_sqft=38867, mandated_weekly_hours=40.0, day_porters=1, night_custodians=2)
+        self.assertIsNotNone(bid_calc, "Estimator returned None")
+        contract_val = bid_calc.get('contract_total_value') or bid_calc.get('total_contract_value', 0)
+        self.assertTrue(contract_val > 100000, f"Estimated value suspiciously low: {contract_val}")
+        log_audit(f"PASS: Core Estimating Engine generated ${contract_val:,.2f} proposal.")
 
     # -------------------------------------------------------------
     # MODULE 5: FUTURE BIDDING MODULES READINESS GATE

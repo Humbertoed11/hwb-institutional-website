@@ -22,6 +22,7 @@ import json
 import time
 import argparse
 import datetime
+from zoneinfo import ZoneInfo
 from typing import List, Dict, Any, Optional, Tuple
 from dateutil import parser as date_parser
 from dotenv import load_dotenv
@@ -201,11 +202,14 @@ def sync_awards_to_database(
                 sector = classify_federal_sector(awarding_agency, awarding_sub_agency, raw_desc)
                 months, monthly_rate, annual_rate = calculate_contract_metrics(start_date_str, end_date_str, award_amount)
 
-                # Format end_date as timestamp if valid
+                # Format end_date as timestamp in Texas Central Time (America/Chicago)
+                # USAspending provides date strings (YYYY-MM-DD). Localize to 17:00 CT (close of business)
+                # to prevent midnight UTC rollback into the previous calendar day.
                 bid_due = None
                 if end_date_str:
                     try:
-                        bid_due = date_parser.parse(end_date_str)
+                        d = date_parser.parse(end_date_str).date()
+                        bid_due = datetime.datetime(d.year, d.month, d.day, 17, 0, 0, tzinfo=ZoneInfo("America/Chicago"))
                     except Exception:
                         bid_due = None
 

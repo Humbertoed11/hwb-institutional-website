@@ -379,6 +379,7 @@ def calculate_institutional_bid(
         },
         "annual_submittal": annual_subcontract_submittal,
         "contract_total_value": contract_total,
+        "total_contract_value": contract_total,
         "net_margin_percentage": round(actual_margin * 100, 2),
         "safeguards": INSTITUTIONAL_SAFEGUARDS
     }
