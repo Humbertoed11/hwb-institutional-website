@@ -428,7 +428,7 @@
 
             <!-- 7. Dispatch & Mobile Split Tab -->
             {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('monitor', 'view')) or not current_user.custom_permissions %}
-            <div class="sigma-split-tab {% if (request.endpoint == 'admin_operations' and active_view in ['monitor', 'scope']) or request.endpoint == 'technician_mobile' %}active{% endif %}" id="tab-dispatch-container">
+            <div class="sigma-split-tab {% if (request.endpoint == 'admin_operations' and active_view in ['monitor', 'scope']) or request.path == '/mobile' %}active{% endif %}" id="tab-dispatch-container">
                 <a href="{{ url_for('admin_operations', view='monitor') }}" class="sigma-split-main" title="Internal Work Order Dispatch &amp; Shift Execution Monitor">
                     <i class="fas fa-clipboard-check" style="color: #06b6d4; margin-right: 6px; font-size: 0.75rem;"></i> Dispatch Hub
                 </a>
@@ -444,7 +444,7 @@
                         <span><i class="fas fa-clipboard-check" style="color: #06b6d4;"></i> Live Shift Dispatch</span>
                         <span class="sigma-jump-badge">Real-Time</span>
                     </a>
-                    <a href="{{ url_for('technician_mobile') }}" target="_blank" class="sigma-jump-item" title="Standalone Offline-First Technician Mobile App">
+                    <a href="/mobile" target="_blank" class="sigma-jump-item" title="Standalone Offline-First Technician Mobile App">
                         <span><i class="fas fa-mobile-alt" style="color: #10b981;"></i> Technician Mobile App</span>
                         <span class="sigma-jump-badge" style="background:#ecfdf5; color:#065f46; font-weight:800;">PWA / Live</span>
                     </a>
@@ -460,7 +460,7 @@
                     <button type="button" onclick="openDispatchModal()" class="sigma-jump-action">
                         <i class="fas fa-calendar-plus" style="margin-right: 0.5rem; font-size: 0.85rem;"></i> + Create Shift Dispatch
                     </button>
-                    <a href="{{ url_for('technician_mobile') }}?simulate=true" target="_blank" class="sigma-jump-item" title="Open Mobile Simulator in New Window">
+                    <a href="/mobile?simulate=true" target="_blank" class="sigma-jump-item" title="Open Mobile Simulator in New Window">
                         <span><i class="fas fa-laptop-code" style="color: #6366f1;"></i> Mobile Engine Simulator</span>
                         <span class="sigma-jump-badge">Preview</span>
                     </a>

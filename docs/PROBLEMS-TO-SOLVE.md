@@ -80,6 +80,8 @@ Responsibility: George (Architect)
 | 09/27/2026 | BUG-095 | Live Lead Dataset Contamination (28,033 Unformatted Phones, 3,690 Cloned Duplicate Rows, State Drift & Missing Valuations). | **RESOLVED** | HIGH |
 | 09/27/2026 | BUG-096 | Telegram Inbound Message Drop & Unhandled ValueError on Multi-User Comma-Separated TELEGRAM_CHAT_ID String. | **RESOLVED** | CRITICAL |
 | 09/27/2026 | ARCH-010 | Telegram Enterprise Concurrency Engine: 16-Worker ThreadPoolExecutor, Poka-Yoke Fault Isolation & Safe Ingestion. | **RESOLVED** | HIGH |
+| 09/27/2026 | BUG-097 | Timezone Distortion & Date Rollback on Institutional Bids Desk (UTC vs. Texas Central Time CDT/CST). | **RESOLVED** | HIGH |
+| 09/27/2026 | BUG-098 | Gunicorn Stale In-Memory Worker Route Collision on Dynamic Backend Nav (HTTP 500 on /admin/operations?view=leads). | **RESOLVED** | HIGH |
 
 ## BUG-096: Telegram Inbound Message Drop & Unhandled ValueError on Multi-User Comma-Separated TELEGRAM_CHAT_ID String
 **Detected:** 09/27/2026
@@ -1505,4 +1507,32 @@ CEO Humberto Dominguez attempting to log into `https://www.hwbcleaning.com/login
 **Preventative:**
 1. All public procurement parsers must attach `ZoneInfo('America/Chicago')` to parsed local time strings before database persistence.
 2. Automated regression test in `yamamoto_bid_test_suite.py` must assert that NTTA bid due date displays exactly as `10/07/2026 11:00 AM` and site walk as `09/29/2026 09:00 AM`.
+
+## BUG-098: Gunicorn Stale In-Memory Worker Route Collision on Dynamic Backend Nav (HTTP 500 on /admin/operations?view=leads)
+**Detected:** 09/27/2026
+**Status:** **RESOLVED** (09/27/2026)
+**Symptoms:**
+1. Navigating to `http://mop.test:5000/admin/operations?view=leads&active_only=true` returned an unhandled HTTP 500 Internal Server Error.
+2. Live container logs from `hwb_web_app` showed a fatal routing error during Jinja2 template rendering of `templates/components/backend_nav.html`:
+   `[FATAL] System Exception: Could not build url for endpoint 'technician_mobile'. Did you mean 'api_quick_assign_technician' instead?`
+**Root Causes:**
+1. **Gunicorn In-Memory Route Desynchronization:** Gunicorn worker processes inside the long-running web container (running continuously for >20 hours) were forked prior to the registration of `mobile_api_bp` in `main_app.py`.
+2. **Template Coupling to In-Flight Blueprint Endpoints:** In `templates/components/backend_nav.html`, the newly added "Dispatch & Mobile Split Tab" utilized `url_for('technician_mobile')` and inspected `request.endpoint == 'technician_mobile'`. When existing Gunicorn worker processes that had not recycled evaluated `url_for()`, Werkzeug raised `BuildError`, crashing the entire page render for leads, accounts, and backoffice operations.
+**Solution:**
+1. **Poka-Yoke Template Hardening (`templates/components/backend_nav.html`):**
+   - Decoupled navigation links from blueprint endpoint resolution by utilizing direct root URLs: `href="/mobile"` and `href="/mobile?simulate=true"`.
+   - Updated tab active state evaluation from `request.endpoint == 'technician_mobile'` to `request.path == '/mobile'`.
+   - This ensures that navigation rendering is immune to worker route compilation lag and can never trigger `BuildError`.
+2. **Container Cycle & Route Compilation:**
+   - Executed `docker restart hwb_web_app` to cycle all Gunicorn worker processes.
+   - Verified that `/mobile` endpoint and all administrative routes re-bind cleanly.
+3. **Automated Verification:**
+   - Verified authenticated HTTP 200 on `/admin/operations?view=leads&active_only=true` (2.23 MB response, all lead filters and UI components intact).
+   - Confirmed unauthenticated requests cleanly return HTTP 302 redirecting to `/login`.
+   - Passed Yamamoto Moto verification suite (`scripts/yamamoto_bid_test_suite.py`) with Grade A+ (7/7 tests).
+   - Passed Tessa Test regression battery (`scripts/tessa_regression_suite.py`) with Grade A+ (9/9 tests).
+**Preventative:**
+1. Static or micro-frontend root landing routes (`/mobile`, `/sales-desk`) should use direct URI references (`/mobile`) rather than dynamic `url_for` lookups in global navigation templates shared across all backend views.
+2. Ensure container restart / SIGHUP worker reload is systematically triggered after blueprint registrations.
+
 
