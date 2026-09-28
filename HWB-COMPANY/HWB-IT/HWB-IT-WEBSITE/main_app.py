@@ -35,6 +35,7 @@ from blueprints import (
     crm_api_bp,
     academy_bp,
     partner_bp,
+    mobile_api_bp,
     register_blueprint_hub
 )
 
@@ -60,6 +61,7 @@ register_blueprint_hub(app, operations_bp)
 register_blueprint_hub(app, crm_api_bp)
 register_blueprint_hub(app, academy_bp)
 register_blueprint_hub(app, partner_bp)
+register_blueprint_hub(app, mobile_api_bp)
 
 # --- SigmaFidelity™ Institutional JSON Encoder ---
 class InstitutionalJSONEncoder(json.JSONEncoder):

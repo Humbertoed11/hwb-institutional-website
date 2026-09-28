@@ -13,6 +13,7 @@ from .operations import operations_bp
 from .crm_api import crm_api_bp
 from .academy import academy_bp
 from .partner import partner_bp
+from .mobile_api import mobile_api_bp
 
 def register_blueprint_hub(app: Flask, bp: Blueprint, **kwargs) -> None:
     """
@@ -38,5 +39,6 @@ __all__ = [
     "crm_api_bp",
     "academy_bp",
     "partner_bp",
+    "mobile_api_bp",
     "register_blueprint_hub"
 ]

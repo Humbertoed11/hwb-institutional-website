@@ -426,11 +426,46 @@
             </div>
             {% endif %}
 
-            <!-- 7. Dispatch Hub -->
+            <!-- 7. Dispatch & Mobile Split Tab -->
             {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('monitor', 'view')) or not current_user.custom_permissions %}
-            <a href="{{ url_for('admin_operations', view='monitor') }}" class="sigma-nav-btn {% if request.endpoint == 'admin_operations' and active_view == 'monitor' %}active{% endif %}" title="Internal Work Order Dispatch &amp; Execution Monitor">
-                <i class="fas fa-clipboard-check" style="color: #06b6d4;"></i> Dispatch Hub
-            </a>
+            <div class="sigma-split-tab {% if (request.endpoint == 'admin_operations' and active_view in ['monitor', 'scope']) or request.endpoint == 'technician_mobile' %}active{% endif %}" id="tab-dispatch-container">
+                <a href="{{ url_for('admin_operations', view='monitor') }}" class="sigma-split-main" title="Internal Work Order Dispatch &amp; Shift Execution Monitor">
+                    <i class="fas fa-clipboard-check" style="color: #06b6d4; margin-right: 6px; font-size: 0.75rem;"></i> Dispatch Hub
+                </a>
+                <button type="button" class="sigma-split-chevron" onclick="toggleSigmaJump('menu-jump-dispatch', event)" title="Dispatch, Mobile &amp; Field Operations">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div id="menu-jump-dispatch" class="sigma-jump-menu">
+                    <div class="sigma-jump-header">
+                        <span>Field Operations &amp; Dispatch</span>
+                        <i class="fas fa-satellite-dish"></i>
+                    </div>
+                    <a href="{{ url_for('admin_operations', view='monitor') }}" class="sigma-jump-item">
+                        <span><i class="fas fa-clipboard-check" style="color: #06b6d4;"></i> Live Shift Dispatch</span>
+                        <span class="sigma-jump-badge">Real-Time</span>
+                    </a>
+                    <a href="{{ url_for('technician_mobile') }}" target="_blank" class="sigma-jump-item" title="Standalone Offline-First Technician Mobile App">
+                        <span><i class="fas fa-mobile-alt" style="color: #10b981;"></i> Technician Mobile App</span>
+                        <span class="sigma-jump-badge" style="background:#ecfdf5; color:#065f46; font-weight:800;">PWA / Live</span>
+                    </a>
+                    <a href="{{ url_for('admin_operations', view='scope') }}" class="sigma-jump-item" title="Detailed Facility Scope Builder &amp; ISSA 612 Task Matrix">
+                        <span><i class="fas fa-tasks" style="color: #f59e0b;"></i> Scope of Work Builder</span>
+                        <span class="sigma-jump-badge">ISSA 612</span>
+                    </a>
+                    <div class="sigma-jump-divider"></div>
+                    <div class="sigma-jump-header">
+                        <span>Integrity &amp; Quick Dispatch</span>
+                        <i class="fas fa-qrcode"></i>
+                    </div>
+                    <button type="button" onclick="openDispatchModal()" class="sigma-jump-action">
+                        <i class="fas fa-calendar-plus" style="margin-right: 0.5rem; font-size: 0.85rem;"></i> + Create Shift Dispatch
+                    </button>
+                    <a href="{{ url_for('technician_mobile') }}?simulate=true" target="_blank" class="sigma-jump-item" title="Open Mobile Simulator in New Window">
+                        <span><i class="fas fa-laptop-code" style="color: #6366f1;"></i> Mobile Engine Simulator</span>
+                        <span class="sigma-jump-badge">Preview</span>
+                    </a>
+                </div>
+            </div>
             {% endif %}
 
             <!-- 8. Executive & IT Tab (Split Dropdown: Executive Warchest + IT Command Hub + Lab) -->

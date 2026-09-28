@@ -1,8 +1,8 @@
 {
-    "name": "HWB SigmaFidelity™",
-    "short_name": "HWB App",
-    "description": "Institutional Command Center for HWB Cleaning Services LLC",
-    "start_url": "/app-v2",
+    "name": "HWB Field Technician | SigmaFidelity™",
+    "short_name": "HWB Field",
+    "description": "Zero-Defect Field Operations & Scope Execution for HWB Cleaning Services LLC",
+    "start_url": "/mobile",
     "display": "standalone",
     "background_color": "#004aad",
     "theme_color": "#004aad",

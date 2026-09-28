@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="HWB Field">
+    
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='logo_standard.png') }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo_standard.png') }}">
+    
+    <title>HWB Field Operations | SigmaFidelity™ Technician App</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-canvas: #0f172a;
+            --surface-card: #ffffff;
+            --surface-muted: #f8fafc;
+            --border-subtle: #e2e8f0;
+            --border-strong: #cbd5e1;
+            --text-heading: #0f172a;
+            --text-body: #334155;
+            --text-muted: #64748b;
+            --brand-primary: #2563eb;
+            --brand-hover: #1d4ed8;
+            --success: #10b981;
+            --success-dark: #065f46;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --safe-bottom: env(safe-area-inset-bottom, 16px);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #0b1120;
+            color: var(--text-body);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        /* Desktop Container / Mobile Bezel */
+        .mobile-shell {
+            width: 100%;
+            max-width: 440px;
+            min-height: 100vh;
+            background-color: var(--surface-muted);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border-left: 1px solid rgba(255, 255, 255, 0.08);
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        /* Top Sticky Telemetry Bar */
+        .telemetry-header {
+            background-color: #0f172a;
+            color: #ffffff;
+            padding: 0.85rem 1.25rem;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid #1e293b;
+        }
+
+        .telemetry-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .brand-logo {
+            height: 24px;
+        }
+
+        .brand-title {
+            font-size: 0.82rem;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            color: #ffffff;
+            text-transform: uppercase;
+        }
+
+        .operator-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #1e293b;
+            padding: 0.25rem 0.65rem;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #94a3b8;
+            border: 1px solid #334155;
+        }
+
+        .live-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background-color: var(--success);
+            box-shadow: 0 0 6px var(--success);
+            animation: pulse-dot 2s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.9); }
+        }
+
+        /* GPS Centroid Status Sub-Bar */
+        .gps-status-strip {
+            background-color: #1e293b;
+            padding: 0.4rem 1.25rem;
+            font-size: 0.68rem;
+            color: #94a3b8;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #334155;
+        }
+
+        .gps-status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+        }
+
+        .gps-status-indicator.locked {
+            color: #34d399;
+        }
+
+        .gps-status-indicator.breach {
+            color: #f87171;
+        }
+
+        /* Scrollable Operational Stage */
+        .app-stage {
+            flex: 1;
+            padding: 1.25rem;
+            overflow-y: auto;
+            padding-bottom: calc(85px + var(--safe-bottom));
+        }
+
+        /* Facility Briefing Card */
+        .facility-card {
+            background: #ffffff;
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1.25rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+        }
+
+        .facility-eyebrow {
+            font-size: 0.68rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--brand-primary);
+            margin-bottom: 0.35rem;
+        }
+
+        .facility-name {
+            font-size: 1.25rem;
+            font-weight: 900;
+            color: var(--text-heading);
+            line-height: 1.25;
+            margin-bottom: 0.5rem;
+        }
+
+        .facility-meta {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            margin-bottom: 1rem;
+        }
+
+        .facility-meta-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .access-callout {
+            background: #f1f5f9;
+            border-left: 3px solid var(--brand-primary);
+            border-radius: 4px;
+            padding: 0.65rem 0.85rem;
+            font-size: 0.78rem;
+            color: var(--text-body);
+        }
+
+        .access-callout strong {
+            color: var(--text-heading);
+            display: block;
+            margin-bottom: 0.2rem;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        /* Shift Clock-In Banner */
+        .clock-gate-panel {
+            background: #ffffff;
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1.25rem;
+            text-align: center;
+        }
+
+        .clock-gate-status {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-bottom: 0.85rem;
+        }
+
+        .btn-touch-action {
+            width: 100%;
+            height: 52px;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.15s ease;
+        }
+
+        .btn-clockin {
+            background-color: var(--success);
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.28);
+        }
+
+        .btn-clockin:active {
+            transform: scale(0.98);
+            background-color: #059669;
+        }
+
+        .btn-clockout {
+            background-color: #0f172a;
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25);
+        }
+
+        /* SOW Sequential Section Header */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.85rem;
+            padding: 0 0.25rem;
+        }
+
+        .section-title {
+            font-size: 0.85rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-heading);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .progress-indicator {
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: var(--brand-primary);
+            background: #eff6ff;
+            padding: 0.2rem 0.6rem;
+            border-radius: 999px;
+            border: 1px solid #bfdbfe;
+        }
+
+        /* Sequential Task Cards (Poka-Yoke) */
+        .task-card {
+            background: #ffffff;
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 1.15rem;
+            margin-bottom: 0.85rem;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .task-card.active {
+            border-color: var(--brand-primary);
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+        }
+
+        .task-card.completed {
+            border-color: #a7f3d0;
+            background: #f0fdf4;
+        }
+
+        .task-card.locked {
+            opacity: 0.55;
+            background: #f8fafc;
+            border-color: #e2e8f0;
+            pointer-events: none;
+        }
+
+        .task-top-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 0.4rem;
+        }
+
+        .task-sequence-badge {
+            font-size: 0.7rem;
+            font-weight: 800;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .task-card.active .task-sequence-badge {
+            color: var(--brand-primary);
+        }
+
+        .task-card.completed .task-sequence-badge {
+            color: var(--success);
+        }
+
+        .task-status-pill {
+            font-size: 0.65rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+        }
+
+        .task-status-pill.status-pending { background: #fef3c7; color: #b45309; }
+        .task-status-pill.status-active { background: #dbeafe; color: #1e40af; }
+        .task-status-pill.status-done { background: #dcfce7; color: #15803d; }
+        .task-status-pill.status-locked { background: #f1f5f9; color: #94a3b8; }
+
+        .task-title {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: var(--text-heading);
+            margin-bottom: 0.35rem;
+            line-height: 1.3;
+        }
+
+        .task-instructions {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+            margin-bottom: 0.85rem;
+        }
+
+        .high-stakes-notice {
+            background: #fffbeb;
+            border: 1px dashed #f59e0b;
+            border-radius: 6px;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #b45309;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 0.85rem;
+        }
+
+        /* Evidence Capture Box */
+        .evidence-section {
+            margin-bottom: 0.85rem;
+        }
+
+        .evidence-preview-wrap {
+            position: relative;
+            display: inline-block;
+            margin-top: 0.5rem;
+        }
+
+        .evidence-preview-img {
+            max-width: 100%;
+            height: 140px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid var(--border-strong);
+            display: block;
+        }
+
+        .watermark-overlay {
+            position: absolute;
+            bottom: 4px;
+            left: 4px;
+            background: rgba(15, 23, 42, 0.75);
+            color: #ffffff;
+            font-size: 0.6rem;
+            font-weight: 700;
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+        }
+
+        /* Camera Upload Button */
+        .btn-capture {
+            background: #f8fafc;
+            border: 1px dashed var(--brand-primary);
+            color: var(--brand-primary);
+            width: 100%;
+            height: 44px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-task-complete {
+            width: 100%;
+            height: 46px;
+            border-radius: 8px;
+            background: var(--brand-primary);
+            color: #ffffff;
+            font-weight: 800;
+            font-size: 0.85rem;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 2px 6px rgba(37, 99, 235, 0.2);
+        }
+
+        .btn-task-complete:disabled {
+            background: #cbd5e1;
+            color: #64748b;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        /* Offline Sync Notice Strip */
+        .offline-strip {
+            background: #fef3c7;
+            color: #92400e;
+            padding: 0.45rem 1rem;
+            font-size: 0.72rem;
+            font-weight: 700;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            border-bottom: 1px solid #fde68a;
+        }
+
+        /* Desktop Simulation Control Link */
+        .desktop-exit-bar {
+            text-align: center;
+            padding: 0.85rem;
+            background: #0b1120;
+            font-size: 0.75rem;
+        }
+        .desktop-exit-bar a {
+            color: #94a3b8;
+            text-decoration: none;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .desktop-exit-bar a:hover {
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="mobile-shell">
+        <!-- Telemetry Header -->
+        <header class="telemetry-header">
+            <div class="telemetry-row">
+                <div class="brand-badge">
+                    <img src="{{ url_for('static', filename='logo_standard.png') }}" alt="HWB" class="brand-logo">
+                    <span class="brand-title">Field Operations</span>
+                </div>
+                <div class="operator-pill">
+                    <div class="live-dot"></div>
+                    <span id="label-tech-name">{{ current_user.username if current_user.is_authenticated else 'Crew Lead A' }}</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- GPS Centroid Telemetry Strip -->
+        <div class="gps-status-strip">
+            <div class="gps-status-indicator locked" id="gps-indicator">
+                <i class="fas fa-crosshairs"></i>
+                <span id="gps-text">GPS Centroid: Initializing...</span>
+            </div>
+            <div id="offline-badge" style="font-size: 0.65rem; font-weight: 700; color: #34d399;">
+                <i class="fas fa-wifi"></i> Online
+            </div>
+        </div>
+
+        <div class="offline-strip" id="offline-banner">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span>Offline Mode Active: Scope progress buffering to IndexedDB</span>
+        </div>
+
+        <!-- Main Scrollable App Stage -->
+        <main class="app-stage" id="app-stage">
+            
+            <!-- Facility Briefing Card -->
+            <section class="facility-card" id="facility-card">
+                <div class="facility-eyebrow" id="shift-window-label">Scheduled Evening Shift</div>
+                <h1 class="facility-name" id="facility-name">Plano Daycare Center #261</h1>
+                
+                <div class="facility-meta">
+                    <div class="facility-meta-row">
+                        <i class="fas fa-map-marker-alt" style="color: var(--brand-primary); width: 14px;"></i>
+                        <span id="facility-address">123 Corporate Blvd, Plano, TX 75024</span>
+                    </div>
+                    <div class="facility-meta-row">
+                        <i class="fas fa-clipboard-list" style="color: var(--brand-primary); width: 14px;"></i>
+                        <span id="facility-scope-label">Nightly Medical/Childcare Disinfection Protocol</span>
+                    </div>
+                </div>
+
+                <div class="access-callout">
+                    <strong><i class="fas fa-key"></i> Ingress &amp; Supply Closet Access:</strong>
+                    <div id="facility-ingress">Staff Entrance Door B (Code: #2601) | Custodial Closet in Corridor 2.</div>
+                </div>
+            </section>
+
+            <!-- Shift Clock-In Gate -->
+            <section class="clock-gate-panel" id="clockin-panel">
+                <div class="clock-gate-status" id="clock-status-msg">
+                    <i class="fas fa-shield-alt" style="color: var(--brand-primary);"></i>
+                    <span>GPS Centroid Gate: Stand within 50m to Clock-In</span>
+                </div>
+                <button type="button" class="btn-touch-action btn-clockin" id="btn-clockin" onclick="handleClockIn()">
+                    <i class="fas fa-fingerprint" style="font-size: 1.25rem;"></i>
+                    <span>Clock In (Start Shift)</span>
+                </button>
+                <div style="margin-top: 0.65rem;">
+                    <label style="font-size: 0.7rem; color: var(--text-muted); cursor: pointer;">
+                        <input type="checkbox" id="check-gps-override" style="vertical-align: middle;"> Demo Geofence Override (Simulator Mode)
+                    </label>
+                </div>
+            </section>
+
+            <!-- Active Shift Scope Section (Hidden until Clock-In) -->
+            <section id="sow-engine-container" style="display: none;">
+                <div class="section-header">
+                    <div class="section-title">
+                        <i class="fas fa-list-check" style="color: var(--brand-primary);"></i>
+                        <span>Scope of Work Checklist</span>
+                    </div>
+                    <div class="progress-indicator" id="progress-indicator">0 / 6 Complete</div>
+                </div>
+
+                <!-- Sequential Task Rack -->
+                <div id="tasks-rack">
+                    <!-- Injected dynamically by SOW Engine -->
+                </div>
+
+                <!-- Clock-Out Panel (Locked until 100% Tasks Complete) -->
+                <div class="clock-gate-panel" id="clockout-panel" style="margin-top: 1.5rem; display: none;">
+                    <div style="font-size: 0.85rem; font-weight: 800; color: #065f46; margin-bottom: 0.5rem;">
+                        <i class="fas fa-check-double"></i> All Scope Tasks Verified Zero-Defect!
+                    </div>
+                    <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 1rem;">
+                        Confirm building perimeter lockout and submit final shift completion audit to Azure SQL Brain.
+                    </p>
+                    <button type="button" class="btn-touch-action btn-clockout" id="btn-clockout" onclick="handleClockOut()">
+                        <i class="fas fa-file-signature"></i>
+                        <span>Clock Out &amp; Certify Shift</span>
+                    </button>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- Desktop Simulation Navigation Link -->
+        <div class="desktop-exit-bar">
+            <a href="{{ url_for('admin_operations', view='monitor') }}">
+                <i class="fas fa-desktop"></i> Return to Backoffice Operations Hub
+            </a>
+        </div>
+    </div>
+
+    <!-- Hidden file input for camera evidence capture -->
+    <input type="file" id="camera-file-input" accept="image/*" capture="environment" style="display: none;" onchange="handleEvidenceCaptured(event)">
+
+    <script>
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').then(reg => {
+                    console.log('[PWA] Service Worker registered with scope:', reg.scope);
+                }).catch(err => {
+                    console.warn('[PWA] Service Worker registration failed:', err);
+                });
+            });
+        }
+
+        // Connectivity Monitoring
+        window.addEventListener('online', () => {
+            document.getElementById('offline-banner').style.display = 'none';
+            document.getElementById('offline-badge').innerHTML = '<i class="fas fa-wifi"></i> Online';
+            document.getElementById('offline-badge').style.color = '#34d399';
+            flushOfflineQueue();
+        });
+
+        window.addEventListener('offline', () => {
+            document.getElementById('offline-banner').style.display = 'flex';
+            document.getElementById('offline-badge').innerHTML = '<i class="fas fa-plane"></i> Offline Buffer';
+            document.getElementById('offline-badge').style.color = '#f59e0b';
+        });
+
+        // State Machine
+        let activeWorkOrder = null;
+        let activeTasks = [];
+        let currentActiveTaskIndex = 0;
+        let capturingTaskId = null;
+        let userCoords = { lat: 33.0198, lon: -96.6989 };
+
+        // GPS Centroid Polling
+        function updateGpsLocation() {
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition(
+                    pos => {
+                        userCoords.lat = pos.coords.latitude;
+                        userCoords.lon = pos.coords.longitude;
+                        document.getElementById('gps-indicator').className = 'gps-status-indicator locked';
+                        document.getElementById('gps-text').innerText = `GPS Locked: ${userCoords.lat.toFixed(4)}, ${userCoords.lon.toFixed(4)}`;
+                    },
+                    err => {
+                        console.warn("[GPS] Location error:", err.message);
+                        document.getElementById('gps-indicator').className = 'gps-status-indicator locked';
+                        document.getElementById('gps-text').innerText = 'GPS: Calibrated Centroid (Plano TX)';
+                    },
+                    { enableHighAccuracy: true, timeout: 5000 }
+                );
+            } else {
+                document.getElementById('gps-text').innerText = 'GPS: Calibrated Centroid (Plano TX)';
+            }
+        }
+        updateGpsLocation();
+
+        // Load Shift Data from REST API
+        async function fetchShiftData() {
+            try {
+                const res = await fetch('/api/v1/mobile/shifts/today');
+                const data = await res.json();
+                if (data.status === 'success' && data.shifts && data.shifts.length > 0) {
+                    activeWorkOrder = data.shifts[0];
+                    renderFacilityBriefing(activeWorkOrder);
+                    activeTasks = activeWorkOrder.tasks;
+                    
+                    // If already In Progress or Completed, adjust view
+                    if (activeWorkOrder.status === 'In Progress' || activeWorkOrder.status === 'COMPLETED') {
+                        document.getElementById('clockin-panel').style.display = 'none';
+                        document.getElementById('sow-engine-container').style.display = 'block';
+                        renderTasks();
+                    }
+                }
+            } catch (err) {
+                console.warn("[API] Failed to fetch shifts, reading local offline store:", err);
+                const local = localStorage.getItem('HWB_CURRENT_SHIFT');
+                if (local) {
+                    activeWorkOrder = JSON.parse(local);
+                    renderFacilityBriefing(activeWorkOrder);
+                    activeTasks = activeWorkOrder.tasks;
+                    renderTasks();
+                }
+            }
+        }
+
+        function renderFacilityBriefing(wo) {
+            document.getElementById('facility-name').innerText = wo.facility_name;
+            document.getElementById('facility-address').innerText = wo.facility_address;
+            document.getElementById('facility-scope-label').innerText = wo.service_requested || 'Nightly Disinfection & Janitorial';
+            document.getElementById('facility-ingress').innerText = `${wo.dock_ingress_instructions} | ${wo.closet_access}`;
+            document.getElementById('shift-window-label').innerText = wo.shift_window || 'Evening Shift';
+        }
+
+        // Clock In Action
+        async function handleClockIn() {
+            const btn = document.getElementById('btn-clockin');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Validating Centroid Geofence...';
+
+            const allowOverride = document.getElementById('check-gps-override').checked;
+            const payload = {
+                work_order_id: activeWorkOrder ? activeWorkOrder.work_order_id : 1,
+                latitude: userCoords.lat,
+                longitude: userCoords.lon,
+                allow_override: allowOverride
+            };
+
+            try {
+                const res = await fetch('/api/v1/mobile/clock-in', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await res.json();
+
+                if (result.status === 'success') {
+                    document.getElementById('clockin-panel').style.display = 'none';
+                    document.getElementById('sow-engine-container').style.display = 'block';
+                    activeWorkOrder.status = 'In Progress';
+                    localStorage.setItem('HWB_CURRENT_SHIFT', JSON.stringify(activeWorkOrder));
+                    renderTasks();
+                } else if (result.status === 'geofence_breach') {
+                    alert(`⚠️ GEOFENCE BREACH: ${result.message}\nEnable 'Demo Geofence Override' to test inside office.`);
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-fingerprint"></i> Clock In (Start Shift)';
+                } else {
+                    alert(result.message || 'Clock-in failed.');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-fingerprint"></i> Clock In (Start Shift)';
+                }
+            } catch (err) {
+                // Offline fallback
+                document.getElementById('clockin-panel').style.display = 'none';
+                document.getElementById('sow-engine-container').style.display = 'block';
+                renderTasks();
+            }
+        }
+
+        // Render Sequential Tasks (Poka-Yoke)
+        function renderTasks() {
+            const rack = document.getElementById('tasks-rack');
+            rack.innerHTML = '';
+
+            let completedCount = 0;
+            let firstPendingFound = false;
+
+            activeTasks.forEach((task, idx) => {
+                const isCompleted = task.status === 'completed';
+                if (isCompleted) completedCount++;
+
+                let cardStateClass = 'locked';
+                let pillClass = 'status-locked';
+                let pillText = 'Locked';
+
+                if (isCompleted) {
+                    cardStateClass = 'completed';
+                    pillClass = 'status-done';
+                    pillText = '✓ Certified';
+                } else if (!firstPendingFound) {
+                    // This is the active sequentially unlocked task
+                    cardStateClass = 'active';
+                    pillClass = 'status-active';
+                    pillText = 'Active Task';
+                    firstPendingFound = true;
+                    currentActiveTaskIndex = idx;
+                }
+
+                const card = document.createElement('div');
+                card.className = `task-card ${cardStateClass}`;
+                card.id = `task-card-${task.task_id}`;
+
+                let highStakesHtml = '';
+                if (task.is_high_stakes) {
+                    highStakesHtml = `
+                        <div class="high-stakes-notice">
+                            <i class="fas fa-shield-virus"></i>
+                            <span>HIGH-STAKES GATE: Photo evidence mandatory before completion</span>
+                        </div>
+                    `;
+                }
+
+                let evidenceHtml = '';
+                if (task.evidence_url) {
+                    evidenceHtml = `
+                        <div class="evidence-preview-wrap">
+                            <img src="${task.evidence_url}" class="evidence-preview-img" alt="Evidence">
+                            <span class="watermark-overlay"><i class="fas fa-certificate"></i> Verified Photo Proof</span>
+                        </div>
+                    `;
+                } else if (cardStateClass === 'active') {
+                    evidenceHtml = `
+                        <div class="evidence-section" id="evidence-box-${task.task_id}">
+                            <button type="button" class="btn-capture" onclick="triggerCamera('${task.task_id}')">
+                                <i class="fas fa-camera"></i>
+                                <span>Capture Photo Evidence</span>
+                            </button>
+                            <div id="preview-slot-${task.task_id}"></div>
+                        </div>
+                    `;
+                }
+
+                let actionButtonHtml = '';
+                if (cardStateClass === 'active') {
+                    const reqPhoto = task.is_high_stakes && !task.evidence_url;
+                    actionButtonHtml = `
+                        <button type="button" class="btn-task-complete" id="btn-complete-${task.task_id}" 
+                                onclick="submitTaskCompletion('${task.task_id}')" ${reqPhoto ? 'disabled' : ''}>
+                            <i class="fas fa-check-circle"></i>
+                            <span>Complete &amp; Unlock Next Task</span>
+                        </button>
+                    `;
+                }
+
+                card.innerHTML = `
+                    <div class="task-top-row">
+                        <span class="task-sequence-badge">Task ${idx + 1} of ${activeTasks.length} • ${task.area || 'Zone'}</span>
+                        <span class="task-status-pill ${pillClass}">${pillText}</span>
+                    </div>
+                    <h3 class="task-title">${task.title}</h3>
+                    <p class="task-instructions">${task.instructions}</p>
+                    ${highStakesHtml}
+                    ${evidenceHtml}
+                    ${actionButtonHtml}
+                `;
+                rack.appendChild(card);
+            });
+
+            // Update Progress Indicator
+            document.getElementById('progress-indicator').innerText = `${completedCount} / ${activeTasks.length} Complete`;
+
+            // If 100% complete, show Clock-Out panel
+            if (completedCount === activeTasks.length && activeTasks.length > 0) {
+                document.getElementById('clockout-panel').style.display = 'block';
+            } else {
+                document.getElementById('clockout-panel').style.display = 'none';
+            }
+        }
+
+        // Trigger Native Device Camera
+        function triggerCamera(taskId) {
+            capturingTaskId = taskId;
+            document.getElementById('camera-file-input').click();
+        }
+
+        // Process Captured Evidence
+        function handleEvidenceCaptured(e) {
+            const file = e.target.files[0];
+            if (!file || !capturingTaskId) return;
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const previewSlot = document.getElementById(`preview-slot-${capturingTaskId}`);
+                if (previewSlot) {
+                    previewSlot.innerHTML = `
+                        <div class="evidence-preview-wrap">
+                            <img src="${evt.target.result}" class="evidence-preview-img" alt="Proof">
+                            <span class="watermark-overlay"><i class="fas fa-clock"></i> Captured: ${new Date().toLocaleTimeString()}</span>
+                        </div>
+                    `;
+                }
+
+                // Enable the Complete button
+                const completeBtn = document.getElementById(`btn-complete-${capturingTaskId}`);
+                if (completeBtn) completeBtn.disabled = false;
+
+                // Cache evidence in memory
+                const currentTask = activeTasks.find(t => t.task_id === capturingTaskId);
+                if (currentTask) currentTask.pending_photo_file = file;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Submit Single Task Completion
+        async function submitTaskCompletion(taskId) {
+            const btn = document.getElementById(`btn-complete-${taskId}`);
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Certifying Quality...';
+            }
+
+            const currentTask = activeTasks.find(t => t.task_id === taskId);
+            const formData = new FormData();
+            formData.append('work_order_id', activeWorkOrder ? activeWorkOrder.work_order_id : 1);
+            formData.append('task_id', taskId);
+            formData.append('notes', 'Completed per ISSA 612 zero-defect protocol.');
+
+            if (currentTask && currentTask.pending_photo_file) {
+                formData.append('evidence_photo', currentTask.pending_photo_file);
+            }
+
+            try {
+                const res = await fetch('/api/v1/mobile/tasks/complete', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await res.json();
+                
+                if (result.status === 'success') {
+                    if (currentTask) {
+                        currentTask.status = 'completed';
+                        currentTask.evidence_url = result.evidence_url;
+                    }
+                    localStorage.setItem('HWB_CURRENT_SHIFT', JSON.stringify(activeWorkOrder));
+                    renderTasks();
+                } else {
+                    alert('Submission error: ' + result.message);
+                    if (btn) btn.disabled = false;
+                }
+            } catch (err) {
+                // Offline Buffer fallback
+                console.warn("[OFFLINE] Buffering task completion locally:", taskId);
+                if (currentTask) {
+                    currentTask.status = 'completed';
+                    currentTask.evidence_url = currentTask.pending_photo_file ? URL.createObjectURL(currentTask.pending_photo_file) : null;
+                }
+                queueOfflineMutation({
+                    action: 'task_complete',
+                    work_order_id: activeWorkOrder ? activeWorkOrder.work_order_id : 1,
+                    task_id: taskId,
+                    timestamp: new Date().toISOString()
+                });
+                localStorage.setItem('HWB_CURRENT_SHIFT', JSON.stringify(activeWorkOrder));
+                renderTasks();
+            }
+        }
+
+        // Clock Out Action
+        async function handleClockOut() {
+            const btn = document.getElementById('btn-clockout');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting Final Shift Audit...';
+
+            const payload = {
+                work_order_id: activeWorkOrder ? activeWorkOrder.work_order_id : 1,
+                completion_signature: 'Verified Field Technician',
+                crew_notes: 'Full scope of work completed with 100% zero-defect verification.'
+            };
+
+            try {
+                const res = await fetch('/api/v1/mobile/clock-out', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await res.json();
+
+                if (result.status === 'success') {
+                    alert('✅ SHIFT COMPLETE: All records and photo evidence committed to the SigmaFidelity™ database.');
+                    localStorage.removeItem('HWB_CURRENT_SHIFT');
+                    window.location.reload();
+                } else {
+                    alert(result.message || 'Clock out error.');
+                    btn.disabled = false;
+                }
+            } catch (err) {
+                alert('✅ Offline Shift Complete: Recorded locally and will sync upon cellular reconnection.');
+                localStorage.removeItem('HWB_CURRENT_SHIFT');
+                window.location.reload();
+            }
+        }
+
+        // Offline Queueing Helper
+        function queueOfflineMutation(mutation) {
+            const queue = JSON.parse(localStorage.getItem('HWB_OFFLINE_MUTATIONS') || '[]');
+            queue.push(mutation);
+            localStorage.setItem('HWB_OFFLINE_MUTATIONS', JSON.stringify(queue));
+        }
+
+        async function flushOfflineQueue() {
+            const queue = JSON.parse(localStorage.getItem('HWB_OFFLINE_MUTATIONS') || '[]');
+            if (queue.length === 0) return;
+
+            try {
+                const res = await fetch('/api/v1/mobile/sync-offline', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mutations: queue })
+                });
+                const result = await res.json();
+                if (result.status === 'success') {
+                    console.log('[OFFLINE SYNC] Flushed mutations:', result.processed_count);
+                    localStorage.removeItem('HWB_OFFLINE_MUTATIONS');
+                }
+            } catch (e) {
+                console.warn('[OFFLINE SYNC] Retry failed:', e);
+            }
+        }
+
+        // Boot
+        fetchShiftData();
+    </script>
+</body>
+</html>

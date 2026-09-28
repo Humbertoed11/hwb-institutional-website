@@ -397,4 +397,14 @@ def bosanna_onboarding():
     """White-labeled Bosanna LLC workforce compliance and technician onboarding portal (Model C)."""
     return render_template('bosanna_onboarding.html')
 
+@public_bp.route('/sw.js', methods=['GET'], endpoint='service_worker')
+def service_worker():
+    """Serves PWA service worker with root scope."""
+    return send_from_directory(current_app.static_folder, 'sw.js', mimetype='application/javascript')
+
+@public_bp.route('/manifest.json', methods=['GET'], endpoint='pwa_manifest')
+def pwa_manifest():
+    """Serves PWA web app manifest."""
+    return send_from_directory(current_app.static_folder, 'manifest.json', mimetype='application/json')
+
 
