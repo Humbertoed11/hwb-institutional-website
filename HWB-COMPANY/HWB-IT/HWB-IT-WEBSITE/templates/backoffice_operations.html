@@ -3845,14 +3845,17 @@
                     </div>
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; margin-top: 0.4rem;">
-                        <button type="button" onclick="runCasingAutoHeal(true)" class="sigma-nav-btn" style="background: #2563eb; color: #ffffff; border-color: #2563eb; font-size: 0.68rem; padding: 0.35rem 0.5rem; font-weight: 700;">
-                            <i class="fas fa-font"></i> Heal Casing (Sim)
+                        <button type="button" onclick="runFixAllDataHealth(true)" class="sigma-nav-btn" style="grid-column: span 2; background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%); color: #ffffff; border: 1px solid #4338ca; font-size: 0.72rem; padding: 0.45rem 0.5rem; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 0.4rem; box-shadow: 0 1px 2px rgba(79, 70, 229, 0.2);">
+                            <i class="fas fa-bolt-lightning"></i> Remediate All Data Health Defects (Fix All)
                         </button>
-                        <button type="button" onclick="runDuplicateAutoHeal(true)" class="sigma-nav-btn" style="background: #0f172a; color: #ffffff; border-color: #0f172a; font-size: 0.68rem; padding: 0.35rem 0.5rem; font-weight: 700;">
-                            <i class="fas fa-copy"></i> Heal Duplicates (Sim)
+                        <button type="button" onclick="runCasingAutoHeal(false)" class="sigma-nav-btn" style="background: #2563eb; color: #ffffff; border-color: #2563eb; font-size: 0.68rem; padding: 0.35rem 0.5rem; font-weight: 700;">
+                            <i class="fas fa-font"></i> Heal Casing (Live)
                         </button>
-                        <button type="button" onclick="runGhostPurge(true)" class="sigma-nav-btn" style="grid-column: span 2; background: #dc2626; color: #ffffff; border-color: #dc2626; font-size: 0.68rem; padding: 0.35rem 0.5rem; font-weight: 700;">
-                            <i class="fas fa-trash-can"></i> Purge Expired Ghosts (Policy 1 Sim)
+                        <button type="button" onclick="runDuplicateAutoHeal(false)" class="sigma-nav-btn" style="background: #0f172a; color: #ffffff; border-color: #0f172a; font-size: 0.68rem; padding: 0.35rem 0.5rem; font-weight: 700;">
+                            <i class="fas fa-copy"></i> Heal Duplicates (Live)
+                        </button>
+                        <button type="button" onclick="runGhostPurge(false)" class="sigma-nav-btn" style="grid-column: span 2; background: #dc2626; color: #ffffff; border-color: #dc2626; font-size: 0.68rem; padding: 0.35rem 0.5rem; font-weight: 700;">
+                            <i class="fas fa-trash-can"></i> Purge Expired Ghosts (Policy 1 Live)
                         </button>
                     </div>
                 </div>
@@ -12247,6 +12250,54 @@
                     if (typeof showToast === 'function') showToast(`Ghost Purge (${modeLabel}): ${res.count_purged} leads`);
                 } else {
                     term.innerHTML += `✗ Ghost Purge Failed: ${res.message}\n`;
+                }
+            }
+        })
+        .catch(err => {
+            if (term) term.innerHTML += `✗ Network Error: ${err.message}\n`;
+        });
+    }
+
+    function runFixAllDataHealth(liveRun) {
+        const term = document.getElementById('it-terminal-output');
+        const modeLabel = liveRun ? 'Live Execution' : 'Simulation';
+        if (term) {
+            term.style.display = 'block';
+            term.innerHTML += `\n[RACK 8 FIX-ALL] Initializing 5-Stage Data Health Remediation Pipeline (${modeLabel})...\n`;
+            term.scrollTop = term.scrollHeight;
+        }
+        fetch('/api/v1/it/self-heal/fix-all', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ dry_run: !liveRun })
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (term) {
+                if (res.status === 'success') {
+                    const data = res.data;
+                    const s = data.stages;
+                    term.innerHTML += `✓ [STAGE 1] Policy 1 Ghost Purge: ${s.stage_1_ghost_purge.count} ghost shells ${s.stage_1_ghost_purge.status}\n`;
+                    term.innerHTML += `✓ [STAGE 2] Option A Deduplication: ${s.stage_2_deduplication.clusters_merged} clusters consolidated (${s.stage_2_deduplication.twin_rows_removed} twin shells removed)\n`;
+                    term.innerHTML += `✓ [STAGE 3] Title Casing: ${s.stage_3_title_casing.count_normalized} corporate names formatted with legal acronym retention\n`;
+                    term.innerHTML += `✓ [STAGE 4] PostgreSQL Sequences: ${s.stage_4_sequences.aligned_count} sequences aligned (MAX(id))\n`;
+                    term.innerHTML += `✓ [STAGE 5] Telemetry Updated in ${data.latency_ms} ms: Score ${s.stage_5_telemetry.pre_score} -> ${s.stage_5_telemetry.post_score} (GRADE ${s.stage_5_telemetry.post_grade})\n`;
+                    term.scrollTop = term.scrollHeight;
+
+                    // Update live badge in DOM
+                    const badge = document.getElementById('dhi-badge');
+                    if (badge) {
+                        badge.innerText = `${s.stage_5_telemetry.post_score} / 100 GRADE ${s.stage_5_telemetry.post_grade}`;
+                        badge.style.background = s.stage_5_telemetry.post_score >= 85 ? '#ecfdf5' : '#fef3c7';
+                        badge.style.color = s.stage_5_telemetry.post_score >= 85 ? '#065f46' : '#92400e';
+                        badge.style.borderColor = s.stage_5_telemetry.post_score >= 85 ? '#a7f3d0' : '#fde68a';
+                    }
+
+                    if (typeof showToast === 'function') {
+                        showToast(`Remediation Complete: DHI ${s.stage_5_telemetry.post_score} / 100 Grade ${s.stage_5_telemetry.post_grade}`);
+                    }
+                } else {
+                    term.innerHTML += `✗ Master Remediation Pipeline Failed: ${res.message}\n`;
                 }
             }
         })

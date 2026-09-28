@@ -1757,6 +1757,22 @@ def api_it_purge_ghost_leads():
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
+@operations_bp.route('/api/v1/it/self-heal/fix-all', methods=['POST'])
+@login_required
+@roles_required('Executive', 'Admin')
+def api_it_self_heal_fix_all():
+    """Self-Healing Master Action: Executes the unified 5-stage Data Health Remediation Pipeline from Rack 8."""
+    try:
+        from core.services.self_healing_engine import remediate_all_data_health
+        payload = request.get_json(silent=True) or {}
+        dry_run = payload.get('dry_run', False)
+        operator = current_user.name if hasattr(current_user, 'name') and current_user.name else "George (Systems Architect)"
+        result = remediate_all_data_health(dry_run=dry_run, db_url=current_app.config['DATABASE_URL'], operator=operator)
+        return jsonify(result), (200 if result.get('status') == 'success' else 500)
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
 @operations_bp.route('/api/v1/it/data-health', methods=['GET'])
 @login_required
 @roles_required('Executive', 'Admin')
