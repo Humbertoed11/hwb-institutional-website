@@ -304,7 +304,7 @@ def sync_chronicles_book():
         print(f"Error syncing chronicles book: {e}")
 
 def sync_rack_telemetry_snapshot():
-    print("[SYNC] Ingesting 7-Rack Historical Telemetry Snapshot into RackTelemetryHistory...")
+    print("[SYNC] Ingesting 8-Rack Historical Telemetry Snapshot into RackTelemetryHistory...")
     try:
         import sys
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

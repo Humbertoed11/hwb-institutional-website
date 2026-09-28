@@ -358,7 +358,7 @@ def sync_cli_conversations():
         print(f"Error syncing CLI conversations: {e}")
 
 def sync_rack_telemetry_snapshot():
-    print("[SYNC] Ingesting 7-Rack Historical Telemetry Snapshot into RackTelemetryHistory...")
+    print("[SYNC] Ingesting 8-Rack Historical Telemetry Snapshot into RackTelemetryHistory...")
     try:
         import sys
         if "/app" not in sys.path and os.path.exists("/app"):
