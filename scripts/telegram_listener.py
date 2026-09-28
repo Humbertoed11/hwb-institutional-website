@@ -126,7 +126,7 @@ def get_authorized_chat_map():
     try:
         conn = get_db_connection()
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute('SELECT id, username, full_name, email, role, telegram_chat_id, custom_permissions FROM "Users" WHERE status = \'Active\' AND telegram_chat_id IS NOT NULL AND telegram_chat_id != \'\';')
+            cur.execute('SELECT id, username, full_name, email, role, telegram_chat_id, custom_permissions FROM "Users" WHERE status = \'Active\' AND telegram_chat_id IS NOT NULL AND telegram_chat_id != \'\' ORDER BY (CASE WHEN username = \'admin\' THEN 2 ELSE 1 END), id ASC;')
             for u in cur.fetchall():
                 t_id = str(u.get("telegram_chat_id") or "").strip()
                 if not t_id:
@@ -169,9 +169,16 @@ def get_authorized_chat_map():
                 }
                 try:
                     int_t = int(t_id)
+                    # Poka-Yoke: Do not let generic 'admin' overwrite a named executive profile
+                    existing = auth_map.get(int_t) or auth_map.get(str(int_t))
+                    if existing and u["username"] == "admin" and existing.get("username") != "admin":
+                        continue
                     auth_map[int_t] = user_info
                     auth_map[str(int_t)] = user_info
                 except ValueError:
+                    existing = auth_map.get(t_id)
+                    if existing and u["username"] == "admin" and existing.get("username") != "admin":
+                        continue
                     auth_map[t_id] = user_info
         conn.close()
     except Exception as e:
@@ -504,8 +511,39 @@ def handle_cmd_users(chat_id):
         send_telegram_message(chat_id, f"⚠️ Error fetching team: {e}")
 
 def send_telegram_message(chat_id, text, reply_markup=None, parse_mode="Markdown"):
-    """Dispatches a formatted message with optional inline keyboard buttons."""
+    """Dispatches a formatted message with optional inline keyboard buttons. Auto-chunks if >4000 chars."""
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+
+    if len(text) > 4000:
+        chunks = []
+        current = text
+        while len(current) > 4000:
+            split_idx = current.rfind("\n\n", 0, 4000)
+            if split_idx == -1:
+                split_idx = current.rfind("\n", 0, 4000)
+            if split_idx == -1:
+                split_idx = 4000
+            chunks.append(current[:split_idx])
+            current = current[split_idx:].lstrip()
+        if current:
+            chunks.append(current)
+
+        for i, chunk in enumerate(chunks):
+            chunk_markup = reply_markup if i == len(chunks) - 1 else None
+            payload = {"chat_id": chat_id, "text": chunk}
+            if parse_mode:
+                payload["parse_mode"] = parse_mode
+            if chunk_markup:
+                payload["reply_markup"] = chunk_markup
+            try:
+                res = session.post(url, json=payload, timeout=15)
+                if res.status_code != 200 and parse_mode:
+                    payload.pop("parse_mode", None)
+                    session.post(url, json=payload, timeout=15)
+            except Exception as e:
+                print(f"[TELEGRAM] Error sending chunk: {e}", flush=True)
+        return
+
     payload = {"chat_id": chat_id, "text": text}
     if parse_mode:
         payload["parse_mode"] = parse_mode
@@ -1571,7 +1609,12 @@ def analyze_voice_with_gemini(audio_bytes, chat_id=None):
     try:
         res = session.post(url, json=payload, timeout=35)
         if res.status_code == 200:
-            return res.json()["candidates"][0]["content"]["parts"][0]["text"], None
+            candidates = res.json().get("candidates", [])
+            if candidates:
+                parts = candidates[0].get("content", {}).get("parts", [])
+                text_content = "\n\n".join(p.get("text", "") for p in parts if p.get("text")).strip()
+                return text_content, None
+            return None, "Empty candidates returned by Gemini Speech AI"
         return None, f"Gemini API Error: {res.status_code}"
     except Exception as e:
         return None, str(e)
@@ -1614,7 +1657,12 @@ def analyze_photo_with_gemini(image_bytes, caption="", chat_id=None):
     try:
         res = session.post(url, json=payload, timeout=40)
         if res.status_code == 200:
-            return res.json()["candidates"][0]["content"]["parts"][0]["text"], None
+            candidates = res.json().get("candidates", [])
+            if candidates:
+                parts = candidates[0].get("content", {}).get("parts", [])
+                text_content = "\n\n".join(p.get("text", "") for p in parts if p.get("text")).strip()
+                return text_content, None
+            return None, "Empty candidates returned by Gemini Vision AI"
         return None, f"Gemini Vision Error: {res.status_code}"
     except Exception as e:
         return None, str(e)
@@ -1661,7 +1709,7 @@ def analyze_text_with_gemini(text, chat_id):
         '  "bid_id": 42\n'
         "}\n"
         "```\n"
-        f"6. Follow the JSON block with your crisp, high-impact operational response to {actor_name}."
+        f"6. MANDATORY COMPLETE BRIEFING: You MUST ALWAYS follow the JSON block with your full, thorough, detailed, high-impact operational response, strategic analysis, and executive reasoning to {actor_name}. NEVER output only a JSON block. Always provide your complete analytical findings."
     )
 
     payload = {
@@ -1677,10 +1725,14 @@ def analyze_text_with_gemini(text, chat_id):
         payload["tools"] = [{"google_search": {}}]
 
     try:
-        res = session.post(url, json=payload, timeout=30)
+        res = session.post(url, json=payload, timeout=35)
         if res.status_code == 200:
-            gemini_reply = res.json()["candidates"][0]["content"]["parts"][0]["text"]
-            return gemini_reply, None
+            candidates = res.json().get("candidates", [])
+            if candidates:
+                parts = candidates[0].get("content", {}).get("parts", [])
+                gemini_reply = "\n\n".join(p.get("text", "") for p in parts if p.get("text")).strip()
+                return gemini_reply, None
+            return "⚠️ Empty response generated by Gemini.", None
         return f"⚠️ Gemini API returned HTTP {res.status_code}", None
     except Exception as e:
         return f"⚠️ Error communicating with Gemini: {e}", None
@@ -1703,6 +1755,33 @@ def handle_text_conversation(text, chat_id):
             clean_reply = gemini_reply.replace(json_match.group(0), '').strip()
         except Exception:
             pass
+
+    # Direct query: List last messages
+    if any(k in text.lower() for k in ["last 5 message", "last messages", "recent message", "my message"]):
+        conn = get_db_connection()
+        history_lines = ["📜 *Recent Telegram Operational Interactions:*", "━━━━━━━━━━━━━━━━━━━━━"]
+        try:
+            with conn.cursor() as cur:
+                cur.execute('SELECT id, event_type, payload_summary, created_at FROM "TelegramEventStream" WHERE chat_id = %s ORDER BY id DESC LIMIT 5;', (chat_id,))
+                for row in cur.fetchall():
+                    ev_time = row[3].strftime("%I:%M:%S %p CST") if row[3] else "Recent"
+                    history_lines.append(f"• *#{row[0]}* ({ev_time})\n  `{row[1]}`: {row[2]}")
+            conn.close()
+            history_lines.append("━━━━━━━━━━━━━━━━━━━━━")
+            full_msg = "\n".join(history_lines)
+            send_telegram_message(chat_id, full_msg, reply_markup=get_main_menu_keyboard(chat_id))
+            return
+        except Exception as he:
+            if conn:
+                conn.close()
+
+    # Guarantee clean_reply is never empty if Gemini only returned JSON
+    if not clean_reply:
+        summary_text = intent_data.get("summary") or intent_data.get("query")
+        if summary_text:
+            clean_reply = f"Acknowledged: **{summary_text}**.\n\nDirective registered in operational stream. Standing by for next command."
+        else:
+            clean_reply = "Directive registered in operational stream. Standing by for next command."
 
     intent = intent_data.get("intent", "conversational")
     action_note = ""
