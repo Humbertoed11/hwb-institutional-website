@@ -6,7 +6,10 @@
         </a>
     </div>
 
-    <div style="display: flex; align-items: center; gap: 2rem;">
+    <div style="display: flex; align-items: center; gap: 1.5rem;">
+        <a href="{{ url_for('manual_index') }}" class="isc-btn isc-btn-outline" style="height: 32px; font-size: 0.75rem; font-weight: 700; color: var(--slate-700); border-color: var(--slate-300); display: inline-flex; align-items: center; gap: 0.45rem; padding: 0 0.85rem; border-radius: 6px; text-decoration: none;" title="ISO 9001:2015 Quality Management System Manual">
+            <i class="fas fa-book" style="color: var(--brand);"></i> QMS Manual
+        </a>
         <div style="display: flex; flex-direction: column; text-align: right;">
             <span style="font-size: 0.7rem; font-weight: 800; color: var(--brand); text-transform: uppercase;">{{ current_user.username if current_user.is_authenticated else 'Operator' }}</span>
             <span style="font-size: 0.65rem; color: var(--slate-400); font-weight: 700;">HWB Authorized Session</span>
