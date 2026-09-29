@@ -114,6 +114,60 @@ def dynamic_upsert(cur, table_name: str, records: list, conflict_col: str, exclu
     return len(formatted_records)
 
 
+def sync_construction_bids(cur, const_bids: list) -> tuple:
+    """Reconciles and synchronizes ConstructionBids without unique constraint violations."""
+    if not const_bids or not table_exists(cur, "ConstructionBids"):
+        return 0, 0
+
+    cur.execute("""
+        SELECT column_name, data_type FROM information_schema.columns 
+        WHERE table_schema = 'public' AND table_name = 'ConstructionBids';
+    """)
+    col_info = {r['column_name']: r['data_type'] for r in cur.fetchall()}
+    valid_cols = set(col_info.keys())
+
+    cur.execute('SELECT id, email_id, LOWER(TRIM(project_name)) as pname, LOWER(TRIM(COALESCE(gc_name, \'\'))) as gname FROM "ConstructionBids";')
+    existing_rows = cur.fetchall()
+    existing_by_email = {r['email_id']: r['id'] for r in existing_rows if r.get('email_id')}
+    existing_by_pname = {(r['pname'], r['gname']): r['id'] for r in existing_rows if r.get('pname')}
+    existing_ids = {r['id'] for r in existing_rows}
+
+    updated_count = 0
+    inserted_count = 0
+
+    for cb in const_bids:
+        matched_id = None
+        email_id = cb.get('email_id')
+        pname = (cb.get('project_name') or '').strip().lower()
+        gname = (cb.get('gc_name') or '').strip().lower()
+
+        if email_id and email_id in existing_by_email:
+            matched_id = existing_by_email[email_id]
+        elif (pname, gname) in existing_by_pname:
+            matched_id = existing_by_pname[(pname, gname)]
+
+        if matched_id:
+            upd_cols = [c for c in cb.keys() if c in valid_cols and c != 'id']
+            set_clauses = ', '.join([f'"{c}" = %({c})s' for c in upd_cols])
+            sql_upd = f'UPDATE "ConstructionBids" SET {set_clauses} WHERE id = %(target_id)s;'
+            params = {c: cb[c] for c in upd_cols}
+            params['target_id'] = matched_id
+            cur.execute(sql_upd, params)
+            updated_count += 1
+        else:
+            ins_rec = {c: cb[c] for c in cb.keys() if c in valid_cols}
+            if ins_rec.get('id') in existing_ids:
+                del ins_rec['id']
+            ins_cols = list(ins_rec.keys())
+            cols_str = ', '.join([f'"{c}"' for c in ins_cols])
+            vals_str = ', '.join([f'%({c})s' for c in ins_cols])
+            sql_ins = f'INSERT INTO "ConstructionBids" ({cols_str}) VALUES ({vals_str});'
+            cur.execute(sql_ins, ins_rec)
+            inserted_count += 1
+
+    return inserted_count, updated_count
+
+
 def run_migration(db_url: str = None) -> dict:
     target_url = db_url or DB_URL
     t_start = time.time()
@@ -192,8 +246,8 @@ def run_migration(db_url: str = None) -> dict:
             # -------------------------------------------------------------
             const_bids = payload.get("construction_bids", [])
             print(f"[STAGE 6] Syncing {len(const_bids)} Construction Bids...", flush=True)
-            n_cb = dynamic_upsert(cur, "ConstructionBids", const_bids, conflict_col="id")
-            print(f"  -> Synced {n_cb} ConstructionBids.", flush=True)
+            ins_cb, upd_cb = sync_construction_bids(cur, const_bids)
+            print(f"  -> ConstructionBids: {ins_cb} inserted, {upd_cb} enriched.", flush=True)
 
             # -------------------------------------------------------------
             # STEP 7: NEW LEADS (1,231 rows) WITH POKA-YOKE CONFLICT DEFENSE
