@@ -5,11 +5,11 @@ Standard: HWB-QMS-7.6 Enterprise Architecture Standards & Lean Six Sigma Zero-De
 Authority: Humberto Dominguez (CEO) - Approved 09/29/2026
 Auditors: George (Systems Architect & mbB) & Peter (Data Recovery Custodian)
 
-High-Speed Set-Based Execution:
-Executes bulk SQL operations directly in PostgreSQL engine for sub-second performance.
-1. Non-destructively backfills missing attributes from duplicates into clean Golden Masters.
-2. Re-parents child relationships (CampaignRecipients, Contacts, GlobalActivities).
-3. Safely purges all 14,704 duplicate shells in a single transaction.
+High-Velocity Indexed Execution:
+Eliminates cartesian joins and uses indexed group matching for sub-second execution.
+1. Re-parents child records (CampaignRecipients, Contacts, GlobalActivities) to clean masters.
+2. Removes lingering foreign key constraints on duplicate shells.
+3. Purges all 14,704 duplicate shells (is_duplicate = TRUE) in a single bulk operation.
 4. Enforces composite unique index idx_leads_unique_location.
 5. Auto-aligns all PostgreSQL sequences.
 6. Records migration in schema_migrations.
@@ -37,7 +37,7 @@ def run_migration(db_url: str = None) -> dict:
     target_url = db_url or DB_URL
     t_start = time.time()
     print("\n==================================================================", flush=True)
-    print("  Applying Migration 033: High-Speed Set-Based Lead Deduplication", flush=True)
+    print("  Applying Migration 033: High-Velocity Indexed Lead Deduplication", flush=True)
     print("==================================================================", flush=True)
 
     conn = psycopg2.connect(target_url)
@@ -62,6 +62,10 @@ def run_migration(db_url: str = None) -> dict:
 
             print(f"[PRE-FLIGHT] Total Leads: {pre_total:,} | Flagged Duplicates: {pre_duplicates:,} | Active Clean: {pre_clean:,}", flush=True)
 
+            # Ensure index on duplicate_group_id exists for fast join
+            cur.execute('CREATE INDEX IF NOT EXISTS idx_leads_dup_group ON "Leads" (duplicate_group_id);')
+            cur.execute('CREATE INDEX IF NOT EXISTS idx_leads_is_dup ON "Leads" (is_duplicate);')
+
             # -------------------------------------------------------------
             # STEP 1: BULK ATTRIBUTE BACKFILL INTO CLEAN MASTERS
             # -------------------------------------------------------------
@@ -80,73 +84,47 @@ def run_migration(db_url: str = None) -> dict:
                     estimated_annual_value = CASE WHEN (m.estimated_annual_value IS NULL OR m.estimated_annual_value = 0) AND d.estimated_annual_value > 0 THEN d.estimated_annual_value ELSE m.estimated_annual_value END
                 FROM "Leads" d
                 WHERE m.duplicate_group_id = d.duplicate_group_id
+                  AND m.duplicate_group_id IS NOT NULL
                   AND (m.is_duplicate = FALSE OR m.is_duplicate IS NULL)
                   AND d.is_duplicate = TRUE
                   AND m.id != d.id;
             """)
-            enriched_by_group = cur.rowcount
-
-            # Secondary pass: match on identical physical address + name
-            cur.execute("""
-                UPDATE "Leads" m
-                SET email = COALESCE(NULLIF(m.email, ''), NULLIF(d.email, '')),
-                    phone = COALESCE(NULLIF(m.phone, ''), NULLIF(d.phone, '')),
-                    director = COALESCE(NULLIF(m.director, ''), NULLIF(d.director, '')),
-                    decision_maker = COALESCE(NULLIF(m.decision_maker, ''), NULLIF(d.decision_maker, '')),
-                    sqf = CASE WHEN (m.sqf IS NULL OR m.sqf = 0) AND d.sqf > 0 THEN d.sqf ELSE m.sqf END
-                FROM "Leads" d
-                WHERE LOWER(TRIM(m.center_name)) = LOWER(TRIM(d.center_name))
-                  AND LOWER(TRIM(m.address)) = LOWER(TRIM(d.address))
-                  AND LOWER(TRIM(m.city)) = LOWER(TRIM(d.city))
-                  AND (m.is_duplicate = FALSE OR m.is_duplicate IS NULL)
-                  AND d.is_duplicate = TRUE
-                  AND m.id != d.id;
-            """)
-            enriched_by_location = cur.rowcount
-            print(f"  -> Enriched {enriched_by_group + enriched_by_location:,} master records.", flush=True)
+            enriched_count = cur.rowcount
+            print(f"  -> Enriched {enriched_count:,} master records.", flush=True)
 
             # -------------------------------------------------------------
-            # STEP 2: BULK FOREIGN KEY RE-PARENTING
+            # STEP 2: FAST INDEXED CHILD RE-PARENTING
             # -------------------------------------------------------------
-            print("[STAGE 2] Bulk re-parenting child records to Golden Masters...", flush=True)
-            # CampaignRecipients
+            print("[STAGE 2] Re-parenting child records using indexed group keys...", flush=True)
             cur.execute("""
                 UPDATE "CampaignRecipients" cr
                 SET lead_id = m.id
                 FROM "Leads" d
-                JOIN "Leads" m ON (m.duplicate_group_id = d.duplicate_group_id OR (
-                    LOWER(TRIM(m.center_name)) = LOWER(TRIM(d.center_name)) AND
-                    LOWER(TRIM(m.address)) = LOWER(TRIM(d.address)) AND
-                    LOWER(TRIM(m.city)) = LOWER(TRIM(d.city))
-                )) AND (m.is_duplicate = FALSE OR m.is_duplicate IS NULL) AND m.id != d.id
+                JOIN "Leads" m ON m.duplicate_group_id = d.duplicate_group_id 
+                              AND (m.is_duplicate = FALSE OR m.is_duplicate IS NULL)
+                              AND m.id != d.id
                 WHERE cr.lead_id = d.id AND d.is_duplicate = TRUE;
             """)
             reparented_campaigns = cur.rowcount
 
-            # Contacts
             cur.execute("""
                 UPDATE "Contacts" c
                 SET lead_id = m.id
                 FROM "Leads" d
-                JOIN "Leads" m ON (m.duplicate_group_id = d.duplicate_group_id OR (
-                    LOWER(TRIM(m.center_name)) = LOWER(TRIM(d.center_name)) AND
-                    LOWER(TRIM(m.address)) = LOWER(TRIM(d.address)) AND
-                    LOWER(TRIM(m.city)) = LOWER(TRIM(d.city))
-                )) AND (m.is_duplicate = FALSE OR m.is_duplicate IS NULL) AND m.id != d.id
+                JOIN "Leads" m ON m.duplicate_group_id = d.duplicate_group_id 
+                              AND (m.is_duplicate = FALSE OR m.is_duplicate IS NULL)
+                              AND m.id != d.id
                 WHERE c.lead_id = d.id AND d.is_duplicate = TRUE;
             """)
             reparented_contacts = cur.rowcount
 
-            # GlobalActivities
             cur.execute("""
                 UPDATE "GlobalActivities" ga
                 SET parent_id = m.id
                 FROM "Leads" d
-                JOIN "Leads" m ON (m.duplicate_group_id = d.duplicate_group_id OR (
-                    LOWER(TRIM(m.center_name)) = LOWER(TRIM(d.center_name)) AND
-                    LOWER(TRIM(m.address)) = LOWER(TRIM(d.address)) AND
-                    LOWER(TRIM(m.city)) = LOWER(TRIM(d.city))
-                )) AND (m.is_duplicate = FALSE OR m.is_duplicate IS NULL) AND m.id != d.id
+                JOIN "Leads" m ON m.duplicate_group_id = d.duplicate_group_id 
+                              AND (m.is_duplicate = FALSE OR m.is_duplicate IS NULL)
+                              AND m.id != d.id
                 WHERE ga.parent_id = d.id AND ga.parent_type = 'Lead' AND d.is_duplicate = TRUE;
             """)
             reparented_activities = cur.rowcount
@@ -156,13 +134,26 @@ def run_migration(db_url: str = None) -> dict:
             # STEP 3: CLEAN REMAINING ORPHANED CHILD REFERENCES & PURGE DUPLICATES
             # -------------------------------------------------------------
             print("[STAGE 3] Purging redundant duplicate shells in bulk...", flush=True)
-            cur.execute('DELETE FROM "CampaignRecipients" WHERE lead_id IN (SELECT id FROM "Leads" WHERE is_duplicate = TRUE);')
-            cur.execute('DELETE FROM "Contacts" WHERE lead_id IN (SELECT id FROM "Leads" WHERE is_duplicate = TRUE);')
+            cur.execute("""
+                DELETE FROM "CampaignRecipients" 
+                WHERE lead_id IN (SELECT id FROM "Leads" WHERE is_duplicate = TRUE);
+            """)
+            cur.execute("""
+                DELETE FROM "Contacts" 
+                WHERE lead_id IN (SELECT id FROM "Leads" WHERE is_duplicate = TRUE);
+            """)
             try:
-                cur.execute('DELETE FROM "ApiBillingTracker" WHERE lead_id IN (SELECT id FROM "Leads" WHERE is_duplicate = TRUE);')
+                cur.execute("""
+                    DELETE FROM "ApiBillingTracker" 
+                    WHERE lead_id IN (SELECT id FROM "Leads" WHERE is_duplicate = TRUE);
+                """)
             except Exception:
                 pass
-            cur.execute("DELETE FROM \"GlobalActivities\" WHERE parent_id IN (SELECT id FROM \"Leads\" WHERE is_duplicate = TRUE) AND parent_type = 'Lead';")
+            cur.execute("""
+                DELETE FROM "GlobalActivities" 
+                WHERE parent_id IN (SELECT id FROM "Leads" WHERE is_duplicate = TRUE) 
+                  AND parent_type = 'Lead';
+            """)
 
             cur.execute('DELETE FROM "Leads" WHERE is_duplicate = TRUE;')
             deleted_count = cur.rowcount
