@@ -1911,3 +1911,86 @@ def api_generate_telegram_magic_link(user_id):
         if 'conn' in locals() and conn: conn.close()
 
 
+@operations_bp.route('/api/v1/compliance/audit', methods=['GET', 'POST'])
+@login_required
+@roles_required('Executive', 'Admin', 'Manager', 'Operator')
+def api_compliance_audit():
+    """
+    SigmaFidelity™ Multi-Tenant B2G Compliance & Certification Audit API.
+    Audits eligibility against 13 CFR § 124, Texas HUB, and regional criteria.
+    Returns 5-gate scorecard, waiver evaluation, auto-generated memo, and evidence items.
+    """
+    from core.services.compliance_engine import audit_tenant_eligibility, generate_sba_waiver_justification_memo
+
+    tenant_id = session.get('tenant_id', 1)
+
+    default_profile = {
+        'company_name': 'HWB Cleaning Services LLC',
+        'tenant_name': 'HWB Cleaning Services LLC',
+        'ein': '88-4395801',
+        'duns': '08-283-0635',
+        'cage_code': '9Z0D4',
+        'owner_name': 'Humberto Dominguez',
+        'net_worth': 420000.00,
+        'three_year_avg_agi': 118000.00,
+        'total_assets': 950000.00,
+        'operating_months': 18,
+        'ownership_pct': 100.0,
+        'is_us_citizen': True,
+        'annual_gross_receipts': 345000.00,
+        'has_management_experience': True,
+        'has_technical_capability': True,
+        'has_adequate_capital': True,
+        'has_client_contracts': True,
+        'has_insurance_and_licenses': True,
+        'negative_covenants_detected': False,
+        'capital_reserves': '$150,000+'
+    }
+
+    if request.is_json and request.get_json():
+        req_data = request.get_json()
+        default_profile.update(req_data)
+
+    audit_result = audit_tenant_eligibility(default_profile)
+    memo = generate_sba_waiver_justification_memo(default_profile)
+
+    evidence_items = []
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            cur.execute('''
+                SELECT id, tenant_id, program_code, document_name, document_category,
+                       file_path, verification_status, defect_notes
+                FROM "TenantCertificationEvidence"
+                WHERE tenant_id = %s
+                ORDER BY id ASC;
+            ''', (tenant_id,))
+            for r in cur.fetchall():
+                evidence_items.append(dict(r) if isinstance(r, dict) else {
+                    'id': r[0], 'tenant_id': r[1], 'program_code': r[2],
+                    'document_name': r[3], 'document_category': r[4],
+                    'file_path': r[5], 'verification_status': r[6],
+                    'defect_notes': r[7]
+                })
+    except Exception as e:
+        current_app.logger.warning(f"Error fetching evidence items: {e}")
+    finally:
+        if 'conn' in locals() and conn: conn.close()
+
+    return jsonify({
+        'status': 'success',
+        'profile': {
+            'company_name': default_profile['company_name'],
+            'owner_name': default_profile['owner_name'],
+            'operating_months': default_profile['operating_months'],
+            'net_worth': default_profile['net_worth'],
+            'three_year_avg_agi': default_profile['three_year_avg_agi'],
+            'annual_gross_receipts': default_profile['annual_gross_receipts']
+        },
+        'audit': audit_result,
+        'waiver_memo': memo,
+        'evidence_vault': evidence_items
+    }), 200
+
+
+

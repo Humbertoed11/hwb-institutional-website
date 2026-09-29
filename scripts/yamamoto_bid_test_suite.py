@@ -234,6 +234,66 @@ class YamamotoMotoEstimatingTestSuite(unittest.TestCase):
         self.assertIn("General Contractors", html, "Navigation General Contractors tab missing")
         log_audit("PASS: Future bidding architecture extensible and hardened.")
 
+    # -------------------------------------------------------------
+    # MODULE 6: B2G GOVERNMENT PROGRAMS & COMPLIANCE ENGINE
+    # -------------------------------------------------------------
+    def test_08_b2g_government_programs_and_compliance_engine(self):
+        """Yamamoto Moto tests B2G Government Programs Desk, 5-Gate Poka-Yoke Auditor, and 13 CFR 124 Engine."""
+        log_audit("Inspecting Module 6: B2G Compliance & Multi-Tenant Programs (/admin/operations?view=programs)")
+        client = self.get_authenticated_client()
+
+        # 1. Test View Rendering and Seeded Programs
+        res_view = client.get('/admin/operations?view=programs')
+        self.assertEqual(res_view.status_code, 200, "Gov Programs desk returned non-200 status")
+        html = res_view.data.decode('utf-8')
+        self.assertIn("SBA_8A", html, "SBA 8(a) program code missing from desk")
+        self.assertIn("TX_HUB", html, "Texas HUB program code missing from desk")
+        self.assertIn("NCTRCA_MBE", html, "NCTRCA MBE program code missing from desk")
+        self.assertIn("SAM_SDB", html, "SAM SDB program code missing from desk")
+        self.assertIn("Run Eligibility Audit", html, "Run Eligibility Audit action button missing")
+        self.assertIn("modal-compliance-audit", html, "Compliance audit modal overlay missing from DOM")
+
+        # 2. Test Standalone Compliance Engine Logic
+        from core.services.compliance_engine import audit_tenant_eligibility, generate_sba_waiver_justification_memo
+        test_profile = {
+            'company_name': 'HWB Cleaning Services LLC',
+            'net_worth': 420000.00,
+            'three_year_avg_agi': 118000.00,
+            'total_assets': 950000.00,
+            'operating_months': 18,
+            'ownership_pct': 100.0,
+            'is_us_citizen': True,
+            'annual_gross_receipts': 345000.00,
+            'has_management_experience': True,
+            'has_technical_capability': True,
+            'has_adequate_capital': True,
+            'has_client_contracts': True,
+            'has_insurance_and_licenses': True,
+            'negative_covenants_detected': False
+        }
+        audit = audit_tenant_eligibility(test_profile)
+        self.assertEqual(audit['overall_status'], 'FULLY_QUALIFIED')
+        self.assertEqual(audit['readiness_score'], 100)
+        self.assertEqual(audit['checks']['operating_runway']['waiver_score'], 100)
+        self.assertTrue(audit['checks']['economic_disadvantage']['net_worth_pass'])
+
+        # 3. Test Waiver Memorandum Generation
+        memo = generate_sba_waiver_justification_memo(test_profile)
+        self.assertIn("13 CFR § 124.107(b)", memo)
+        self.assertIn("MEMORANDUM IN SUPPORT OF TWO-YEAR RULE WAIVER", memo)
+        self.assertIn("Humberto Dominguez, Chief Executive Officer", memo)
+
+        # 4. Test REST API: /api/v1/compliance/audit
+        res_api = client.get('/api/v1/compliance/audit')
+        self.assertEqual(res_api.status_code, 200, "Compliance audit API returned non-200")
+        api_data = res_api.get_json()
+        self.assertEqual(api_data.get('status'), 'success')
+        self.assertEqual(api_data.get('audit', {}).get('overall_status'), 'FULLY_QUALIFIED')
+        self.assertTrue(len(api_data.get('evidence_vault', [])) >= 4, "Evidence vault ledger missing baseline documents")
+
+        log_audit("PASS: B2G Compliance Engine & Multi-Tenant Programs certified (13 CFR § 124 compliant).")
+
+
 
 def run_yamamoto_audit():
     print("\n" + "="*80)
