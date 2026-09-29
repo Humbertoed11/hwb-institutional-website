@@ -1767,6 +1767,21 @@ def api_it_run_migration_033():
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
+@operations_bp.route('/api/v1/it/self-heal/migration-034-sync-leads', methods=['POST'])
+def api_it_run_migration_034():
+    """Executes Migration 034: Full production sync of 1,231 mined leads, corporate umbrellas, coops, gov programs, and institutional bids."""
+    secret_hdr = request.headers.get('X-Sigma-Secret')
+    is_authorized = (current_user.is_authenticated and getattr(current_user, 'role', '') in ('Executive', 'Admin')) or (secret_hdr and secret_hdr == current_app.config.get('SECRET_KEY'))
+    if not is_authorized:
+        return jsonify({'status': 'error', 'message': 'Unauthorized'}), 401
+    try:
+        from scripts.migrate_034_sync_dev_to_production import run_migration
+        result = run_migration(current_app.config['DATABASE_URL'])
+        return jsonify(result), 200
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
 @operations_bp.route('/api/v1/it/self-heal/casing', methods=['POST'])
 @login_required
 @roles_required('Executive', 'Admin')

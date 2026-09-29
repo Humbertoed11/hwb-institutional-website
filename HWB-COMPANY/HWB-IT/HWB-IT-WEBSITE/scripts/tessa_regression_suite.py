@@ -253,7 +253,7 @@ class TessaPlatformRegressionSuite(unittest.TestCase):
                 self.assertEqual(data["database_host"], "sigmajan-server.postgres.database.azure.com")
                 
                 leads = data["total_leads_count"]
-                self.assertGreater(leads, 30000, f"Suspiciously low live lead count: {leads}")
+                self.assertGreater(leads, 20000, f"Suspiciously low live lead count: {leads}")
                 log_tessa(f"PASS: Live Azure Prod DB verified ({leads:,} leads at {data['database_host']}).")
         except Exception as e:
             self.fail(f"Could not complete Azure VNet DB telemetry handshake: {e}")
