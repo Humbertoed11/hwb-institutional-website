@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Email Preferences & Unsubscribe | HWB Cleaning Services LLC{% endblock %}
+
+{% block content %}
+<section style="padding: 5rem 1.5rem; min-height: 70vh; display: flex; align-items: center; justify-content: center; background: #f8fafc;">
+    <div style="max-width: 620px; width: 100%; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.04); padding: 3rem 2.5rem; text-align: center;">
+        
+        {% if unsubscribed %}
+        <!-- Success State -->
+        <div style="width: 64px; height: 64px; background: #ecfdf5; border: 2px solid #a7f3d0; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem auto; color: #10b981; font-size: 1.75rem;">
+            <i class="fas fa-check"></i>
+        </div>
+
+        <h1 style="font-size: 1.85rem; font-weight: 900; color: #0f172a; margin-bottom: 0.75rem; letter-spacing: -0.02em;">
+            You Have Been Unsubscribed
+        </h1>
+
+        <div style="background: #f1f5f9; padding: 0.75rem 1.25rem; border-radius: 8px; display: inline-block; margin-bottom: 1.5rem; font-family: monospace; font-size: 0.95rem; color: #0f172a; font-weight: 700;">
+            {{ email }}
+        </div>
+
+        <p style="font-size: 0.95rem; color: #475569; line-height: 1.6; margin-bottom: 2rem;">
+            Your email address has been permanently marked as <strong>Do Not Contact</strong> in our institutional CRM database. All pending marketing and outreach communications queued for this address have been cancelled immediately.
+        </p>
+
+        <!-- Compliance Transparency Box -->
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #3b82f6; border-radius: 8px; padding: 1.25rem; text-align: left; margin-bottom: 2rem; font-size: 0.82rem; color: #64748b; line-height: 1.55;">
+            <strong style="color: #1e293b; display: block; margin-bottom: 0.35rem;">
+                <i class="fas fa-shield-alt" style="color: #2563eb;"></i> Statutory Compliance Record:
+            </strong>
+            This opt-out was executed automatically in accordance with:
+            <ul style="margin: 0.35rem 0 0 1.25rem; padding: 0;">
+                <li>Federal CAN-SPAM Act (15 U.S.C. § 7701 et seq.)</li>
+                <li>Texas Anti-Spam Act (Tex. Bus. & Com. Code § 321.051)</li>
+                <li>AICPA SOC 2 Type II Privacy Trust Criteria P2.1 (Choice & Consent)</li>
+            </ul>
+            <div style="margin-top: 0.5rem; font-family: monospace; font-size: 0.75rem; color: #94a3b8;">
+                Audit Timestamp: {{ audit_timestamp }} | Reference Token: {{ token_ref }}
+            </div>
+        </div>
+
+        <div>
+            <a href="/" class="isc-btn isc-btn-outline" style="border: 1.5px solid #cbd5e1; color: #334155; font-weight: 700; padding: 10px 24px; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; font-size: 0.9rem;">
+                <i class="fas fa-home"></i> Return to Homepage
+            </a>
+        </div>
+
+        {% else %}
+        <!-- Manual Email Opt-Out Entry Form -->
+        <div style="width: 64px; height: 64px; background: #eff6ff; border: 2px solid #bfdbfe; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem auto; color: #2563eb; font-size: 1.75rem;">
+            <i class="fas fa-envelope-open-text"></i>
+        </div>
+
+        <h1 style="font-size: 1.85rem; font-weight: 900; color: #0f172a; margin-bottom: 0.75rem; letter-spacing: -0.02em;">
+            Email Communication Preferences
+        </h1>
+
+        <p style="font-size: 0.95rem; color: #475569; line-height: 1.6; margin-bottom: 2rem;">
+            Enter your business email address below to immediately opt out of all future marketing communications from HWB Cleaning Services LLC.
+        </p>
+
+        {% if error_msg %}
+        <div style="background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; padding: 0.75rem 1rem; border-radius: 6px; font-size: 0.88rem; margin-bottom: 1.5rem; font-weight: 600;">
+            {{ error_msg }}
+        </div>
+        {% endif %}
+
+        <form action="{{ url_for('public.unsubscribe_direct') }}" method="POST" style="text-align: left;">
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-size: 0.85rem; font-weight: 700; color: #334155; margin-bottom: 0.5rem;">
+                    Corporate Email Address *
+                </label>
+                <input type="email" name="email" required placeholder="director@facility.com" class="sigma-input" style="width: 100%; height: 46px; border: 1.5px solid #cbd5e1; border-radius: 6px; padding: 0 1rem; font-size: 0.95rem; box-sizing: border-box;">
+            </div>
+
+            <button type="submit" class="isc-btn isc-btn-primary" style="width: 100%; height: 46px; border-radius: 6px; font-weight: 800; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <i class="fas fa-ban"></i> Unsubscribe This Email Address
+            </button>
+        </form>
+
+        <p style="font-size: 0.78rem; color: #94a3b8; margin-top: 1.5rem; line-height: 1.4;">
+            HWB Cleaning Services LLC respects your inbox and data rights under federal CAN-SPAM and Texas state privacy statutes.
+        </p>
+        {% endif %}
+
+    </div>
+</section>
+{% endblock %}

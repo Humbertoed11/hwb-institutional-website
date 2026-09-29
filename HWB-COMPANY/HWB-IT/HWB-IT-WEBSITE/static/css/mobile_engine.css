@@ -739,3 +739,144 @@
     }
 }
 
+/* --------------------------------------------------------------------------
+   8.0 ENTERPRISE RESPONSIVE BLOCKS & SPLIT-FEATURES (HWB-QMS-7.2)
+   -------------------------------------------------------------------------- */
+.split-feature {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: center;
+}
+
+.about-detailed-services {
+    padding: 0 40px;
+}
+
+.about-split-content {
+    padding: 4rem 5rem;
+}
+
+.about-mission-vision {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+.about-quality-card {
+    padding: 6rem 4rem;
+}
+
+.about-quality-formula {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 3rem;
+}
+
+.about-metrics-card {
+    padding: 4rem;
+}
+
+.about-track-record {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+}
+
+/* Tablet Overrides (<= 1024px) */
+@media (max-width: 1024px) {
+    .split-feature {
+        grid-template-columns: 1fr !important;
+        gap: 2.5rem !important;
+        margin-top: 0 !important;
+        margin-bottom: 4rem !important;
+    }
+
+    .split-feature.image-right .split-content,
+    .split-feature.image-left .split-content {
+        order: 1 !important;
+        padding: 2.5rem 2rem !important;
+    }
+
+    .split-feature .split-image-container,
+    .split-feature .sigma-image-frame {
+        order: 2 !important;
+        width: 100% !important;
+        height: auto !important;
+        max-height: 350px !important;
+    }
+
+    .about-split-content {
+        padding: 2.5rem 2rem !important;
+    }
+
+    .about-quality-card {
+        padding: 4rem 2rem !important;
+    }
+
+    .about-quality-formula {
+        grid-template-columns: 1fr !important;
+        gap: 1.5rem !important;
+    }
+
+    .about-metrics-card {
+        padding: 3rem 2rem !important;
+    }
+
+    .about-track-record {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 1.5rem !important;
+    }
+}
+
+/* Smartphone Overrides (<= 768px) */
+@media (max-width: 768px) {
+    .split-feature {
+        grid-template-columns: 1fr !important;
+        gap: 1.5rem !important;
+        margin-top: 0 !important;
+        margin-bottom: 2.5rem !important;
+    }
+
+    .about-detailed-services {
+        padding: 0 1rem !important;
+    }
+
+    .about-split-content {
+        padding: 1.75rem 1.25rem !important;
+    }
+
+    .about-mission-vision {
+        grid-template-columns: 1fr !important;
+        gap: 1.25rem !important;
+    }
+
+    .about-signatures {
+        flex-direction: column !important;
+        gap: 1.5rem !important;
+        align-items: flex-start !important;
+    }
+
+    .about-quality-card {
+        padding: 2.5rem 1.25rem !important;
+        margin-bottom: 3.5rem !important;
+    }
+
+    .about-metrics-card {
+        padding: 2.5rem 1.25rem !important;
+        margin-bottom: 3.5rem !important;
+    }
+
+    .about-track-record {
+        grid-template-columns: 1fr !important;
+        gap: 1rem !important;
+    }
+
+    .split-feature .split-image-container,
+    .split-feature .sigma-image-frame {
+        max-height: 240px !important;
+        padding: 1rem !important;
+    }
+}
+
+

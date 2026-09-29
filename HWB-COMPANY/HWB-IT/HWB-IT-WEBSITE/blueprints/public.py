@@ -104,9 +104,143 @@ def ehsq():
 def methodology():
     return render_template('methodology.html')
 
-@public_bp.route('/privacy-policy')
+@public_bp.route('/privacy-policy', endpoint='privacy_policy')
 def privacy_policy():
     return render_template('privacy_policy.html')
+
+@public_bp.route('/terms', endpoint='terms_of_service')
+@public_bp.route('/terms-of-service')
+def terms_of_service():
+    """Official SigmaFidelity™ Terms of Service view (Texas Collin County Jurisdiction & SOC 2 PI1.1)."""
+    return render_template('terms.html')
+
+@public_bp.route('/unsubscribe/<tracking_token>', methods=['GET', 'POST'], endpoint='unsubscribe_token')
+@public_bp.route('/unsubscribe', methods=['GET', 'POST'], endpoint='unsubscribe_direct')
+def unsubscribe(tracking_token=None):
+    """
+    CAN-SPAM Act (15 U.S.C. § 7701), Texas Anti-Spam (Tex. Bus. & Com. Code § 321),
+    and SOC 2 Privacy Criteria P2.1 (Choice & Consent) automated opt-out handler.
+    Permanently marks lead as Do Not Call (DNC) / Unsubscribed, cancels pending outbox messages,
+    and displays enterprise compliance confirmation.
+    """
+    conn = None
+    audit_ts = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
+    
+    if request.method == 'POST':
+        raw_email = request.form.get('email', '').strip().lower()
+        if not raw_email or '@' not in raw_email:
+            return render_template('unsubscribe_success.html', unsubscribed=False, error_msg="Please provide a valid corporate email address.")
+        
+        try:
+            conn = get_db(current_app.config['DATABASE_URL'])
+            with conn.cursor() as cur:
+                cur.execute('''
+                    UPDATE "Leads"
+                    SET is_dnc = TRUE, status = 'Do Not Call (DNC)', updated_at = CURRENT_DATE
+                    WHERE LOWER(email) = %s;
+                ''', (raw_email,))
+                
+                cur.execute('''
+                    UPDATE "CampaignRecipients"
+                    SET status = 'UNSUBSCRIBED', updated_at = CURRENT_TIMESTAMP
+                    WHERE LOWER(recipient_email) = %s;
+                ''', (raw_email,))
+                
+                cur.execute('''
+                    UPDATE "PendingOutbox"
+                    SET status = 'CANCELLED'
+                    WHERE LOWER(recipient) = %s AND status = 'PENDING';
+                ''', (raw_email,))
+            conn.commit()
+        except Exception as e:
+            if conn:
+                try: conn.rollback()
+                except Exception: pass
+            current_app.logger.error(f"[UNSUBSCRIBE DIRECT ERROR] {e}")
+        finally:
+            if conn:
+                try: conn.close()
+                except Exception: pass
+                
+        return render_template('unsubscribe_success.html', 
+                               unsubscribed=True, 
+                               email=raw_email, 
+                               audit_timestamp=audit_ts, 
+                               token_ref="MANUAL_DIRECT_FORM")
+                               
+    if tracking_token:
+        found_email = None
+        lead_id = None
+        try:
+            conn = get_db(current_app.config['DATABASE_URL'])
+            with conn.cursor() as cur:
+                cur.execute('''
+                    SELECT id, lead_id, recipient_email, facility_name
+                    FROM "CampaignRecipients"
+                    WHERE tracking_token = %s;
+                ''', (tracking_token,))
+                recip_row = cur.fetchone()
+                
+                if recip_row:
+                    found_email = recip_row['recipient_email'] if isinstance(recip_row, dict) else recip_row[2]
+                    lead_id = recip_row['lead_id'] if isinstance(recip_row, dict) else recip_row[1]
+                    
+                    cur.execute('''
+                        UPDATE "CampaignRecipients"
+                        SET status = 'UNSUBSCRIBED', updated_at = CURRENT_TIMESTAMP
+                        WHERE tracking_token = %s OR LOWER(recipient_email) = LOWER(%s);
+                    ''', (tracking_token, found_email))
+                else:
+                    cur.execute('''
+                        SELECT id, recipient, recipient_id
+                        FROM "PendingOutbox"
+                        WHERE tracking_token = %s;
+                    ''', (tracking_token,))
+                    outbox_row = cur.fetchone()
+                    if outbox_row:
+                        found_email = outbox_row['recipient'] if isinstance(outbox_row, dict) else outbox_row[1]
+                        lead_id = outbox_row['recipient_id'] if isinstance(outbox_row, dict) else outbox_row[2]
+                
+                if found_email:
+                    cur.execute('''
+                        UPDATE "Leads"
+                        SET is_dnc = TRUE, status = 'Do Not Call (DNC)', updated_at = CURRENT_DATE
+                        WHERE LOWER(email) = LOWER(%s) OR (id = %s AND %s IS NOT NULL);
+                    ''', (found_email, lead_id, lead_id))
+                    
+                    cur.execute('''
+                        UPDATE "PendingOutbox"
+                        SET status = 'CANCELLED'
+                        WHERE (LOWER(recipient) = LOWER(%s) OR tracking_token = %s) AND status = 'PENDING';
+                    ''', (found_email, tracking_token))
+                    
+                    if lead_id:
+                        cur.execute('''
+                            INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
+                            VALUES (%s, 'Lead', 'Unsubscribed', %s);
+                        ''', (lead_id, f"Lead opted out via 1-click unsubscribe token ({tracking_token[:8]}...). Suppressed from all future campaigns."))
+                        
+            if conn:
+                conn.commit()
+        except Exception as e:
+            if conn:
+                try: conn.rollback()
+                except Exception: pass
+            current_app.logger.error(f"[UNSUBSCRIBE TOKEN ERROR] {e}")
+        finally:
+            if conn:
+                try: conn.close()
+                except Exception: pass
+
+        if found_email:
+            return render_template('unsubscribe_success.html',
+                                   unsubscribed=True,
+                                   email=found_email,
+                                   audit_timestamp=audit_ts,
+                                   token_ref=tracking_token[:16] + "...")
+
+    return render_template('unsubscribe_success.html', unsubscribed=False, error_msg=None)
+
 
 @public_bp.route('/capability-statement', endpoint='capability_statement')
 @public_bp.route('/capability')

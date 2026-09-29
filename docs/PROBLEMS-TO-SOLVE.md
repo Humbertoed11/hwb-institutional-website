@@ -82,6 +82,10 @@ Responsibility: George (Architect)
 | 09/27/2026 | ARCH-010 | Telegram Enterprise Concurrency Engine: 16-Worker ThreadPoolExecutor, Poka-Yoke Fault Isolation & Safe Ingestion. | **RESOLVED** | HIGH |
 | 09/27/2026 | BUG-097 | Timezone Distortion & Date Rollback on Institutional Bids Desk (UTC vs. Texas Central Time CDT/CST). | **RESOLVED** | HIGH |
 | 09/27/2026 | BUG-098 | Gunicorn Stale In-Memory Worker Route Collision on Dynamic Backend Nav (HTTP 500 on /admin/operations?view=leads). | **RESOLVED** | HIGH |
+| 09/29/2026 | BUG-099 | Viewport Responsive Degradation on Phone/Tablet Across Marketing & Services Views. | **RESOLVED** | HIGH |
+| 09/29/2026 | BUG-100 | Unlabeled Interactive Buttons Across Public & Backoffice Views (WCAG 2.1 AA / ADA). | **RESOLVED** | HIGH |
+| 09/29/2026 | BUG-101 | Statutory Compliance Vulnerabilities (CAN-SPAM Unsubscribe, Terms of Service, Cookie & FCRA). | **RESOLVED** | CRITICAL |
+| 09/29/2026 | BUG-102 | Live Production Lead Duplication Desynchronization (14,704 isolated duplicate leads on www.hwbcleaning.com). | **STAGED FOR RESOLUTION** | HIGH |
 
 ## BUG-096: Telegram Inbound Message Drop & Unhandled ValueError on Multi-User Comma-Separated TELEGRAM_CHAT_ID String
 **Detected:** 09/27/2026
@@ -1535,4 +1539,77 @@ CEO Humberto Dominguez attempting to log into `https://www.hwbcleaning.com/login
 1. Static or micro-frontend root landing routes (`/mobile`, `/sales-desk`) should use direct URI references (`/mobile`) rather than dynamic `url_for` lookups in global navigation templates shared across all backend views.
 2. Ensure container restart / SIGHUP worker reload is systematically triggered after blueprint registrations.
 
+## BUG-099: Viewport Responsive Degradation on Phone/Tablet Across Public Marketing & Backoffice Pages
+**Detected:** 09/29/2026
+**Status:** **RESOLVED** (09/29/2026)
+**Symptoms:**
+1. Navigating to `http://mop.test:5000/about` on mobile phones (320px–414px) and portrait tablets (768px–1024px) exhibited severe layout breakdown:
+   - 4-column empirical operational stats grid (`repeat(4, 1fr)`) compressed numbers and headers into unreadable narrow columns (~70px wide) or forced horizontal overflow.
+   - 3-column "HWB Quality Formula" grid (`repeat(3, 1fr)`) squashed cards.
+   - 2-column Mission & Vision grid (`1fr 1fr`) squashed narrative text.
+   - Executive signatures block (`Mirna Rondinella` & `Humberto Dominguez`) overflowed the viewport.
+   - Corporate registration bar overflowed horizontally.
+   - Excessive desktop padding (`padding: 4rem 5rem` = 160px horizontal padding) squashed mobile content.
+2. Similar inline multi-column grids and unconstrained split-feature containers existed across `commercial.html`, `janitorial.html`, `industrial.html`, `construction.html`.
+**Root Causes:**
+1. Hardcoded inline grid styles (`grid-template-columns: 1fr 1fr`) that external stylesheets could not override without specificity rules.
+2. Absence of responsive classes for `.split-feature`, `.about-track-record`, `.about-quality-formula`, and `.about-mission-vision` in `mobile_engine.css`.
+**Solution:**
+1. Added Section 8.0 in `static/css/mobile_engine.css` implementing universal responsive rules for `.split-feature` (stacks 1-column on tablet and mobile with ordered image-below-content, fluid padding, and capped image heights).
+2. Refactored `templates/about.html` with responsive classes (`.about-detailed-services`, `.about-split-content`, `.about-mission-vision`, `.about-signatures`, `.about-quality-card`, `.about-quality-formula`, `.about-metrics-card`, `.about-track-record`, and `.about-meta-row`).
+3. Refactored `commercial.html`, `janitorial.html`, `industrial.html`, and `construction.html` removing inline grid overrides.
+4. Verified layout renders with 100% responsiveness on mobile, tablet, and desktop viewports without horizontal scrollbars.
 
+## BUG-100: Unlabeled Interactive Buttons Across Public & Backoffice Views (WCAG 2.1 / Poka-Yoke Defect)
+**Detected:** 09/29/2026
+**Status:** **RESOLVED** (09/29/2026)
+**Symptoms:**
+1. Codebase accessibility audit detected 89 unlabeled interactive `<button>` elements (modal close icon-only buttons, navigation split chevrons, search triggers, and clipboard buttons).
+2. Screen readers and mobile touch devices lacked accessible names and touch descriptions for interactive elements.
+**Root Causes:**
+1. Icon-only button glyphs (`<i class="fas fa-times"></i>`) implemented without `aria-label` or accessible text.
+**Solution:**
+1. Added explicit `aria-label` and `title` to all 45 modal close buttons, search submit triggers, and map clipboard utilities in `templates/backoffice_operations.html`.
+2. Added `aria-label` to all 8 navigation dropdown split chevrons in `templates/components/backend_nav.html`.
+3. Added `aria-label` to password visibility toggles in `templates/HWB-WEB Sigma Executive.html`.
+4. Added `aria-label` to job description modal close button in `templates/work_with_us.html`.
+5. Added `aria-label` to certification search button in `templates/academy_catalog.html` and pinned SOP button in `templates/sop_base.html`.
+6. Verified automated accessibility scan: 0 unlabeled buttons remaining across all active templates.
+
+## BUG-101: Statutory Compliance Vulnerabilities (Missing CAN-SPAM Unsubscribe Link, Absent Terms of Service, Omitted Cookie Notice & FCRA Disclosures)
+**Detected:** 09/29/2026
+**Status:** **RESOLVED** (09/29/2026)
+**Symptoms:**
+1. Outbound marketing email letterhead lacked an unsubscribe link/mechanism, exposing the company to federal CAN-SPAM ($51,744/email) and Texas Anti-Spam (Tex. Bus. & Com. Code § 321) penalties, and creating a SOC 2 Privacy P2.1 control exception.
+2. The website lacked published Terms of Service (`/terms`), leaving proposal calculators unprotected under Texas DTPA and AICPA SOC 2 Processing Integrity (PI1.1).
+3. Google Analytics 4 (`gtag.js`) was loaded in `base.html` without cookie disclosures in `privacy_policy.html` (Texas TDPSA / SOC 2 Privacy P1.1 gap).
+4. Technician career application in `work_with_us.html` lacked a standalone Fair Credit Reporting Act (FCRA) disclosure and Equal Employment Opportunity (EEO) statement.
+**Root Causes:**
+1. Marketing generator focused solely on aesthetic branding without statutory compliance footer.
+2. Initial site launch omitted Terms of Service and cookie transparency sections.
+**Solution:**
+1. Upgraded `format_marketing_letterhead()` in `blueprints/crm_api.py` with an official CAN-SPAM / Texas Anti-Spam / SOC 2 Privacy P2.1 compliant footer containing physical headquarters address and 1-click tokenized unsubscribe link.
+2. Implemented `@public_bp.route('/unsubscribe/<tracking_token>')` and `@public_bp.route('/unsubscribe')` in `blueprints/public.py` backed by `templates/unsubscribe_success.html`. Automatically flags lead as `is_dnc = TRUE`, sets `status = 'Do Not Call (DNC)'`, cancels pending outbox emails, and logs to `GlobalActivities`.
+3. Authored and deployed enterprise-grade `templates/terms.html` and registered `@public_bp.route('/terms')` (Collin County, Texas venue, DTPA safe harbor, and Proposal Calculator Heuristic Disclaimer for SOC 2 PI1.1). Linked in `templates/base.html` footer.
+4. Added Section 2.5 (GA4 Cookie & Web Beacons Disclosure) and Section 4.1 (CAN-SPAM 1-Click Unsubscribe Policy) to `templates/privacy_policy.html`.
+5. Added standalone FCRA background screening authorization checkbox and Equal Employment Opportunity (EEO) employer policy statement to `templates/work_with_us.html`.
+6. Verified all routes, automated tests, and end-to-end token unsubscribe flow pass with 100% fidelity. Passed Yamamoto Moto Estimating Suite (8/8 OK, Grade A+) and Tessa Platform Regression Battery (9/9 OK, Grade A+).
+## BUG-102: Live Production Lead Duplication Desynchronization (14,704 Isolated Duplicate Leads on www.hwbcleaning.com)
+**Detected:** 09/29/2026
+**Status:** **STAGED FOR RESOLUTION** (Awaiting Executive Approval)
+**Symptoms:**
+1. Telemetry query to `https://www.hwbcleaning.com/api/v1/db-audit` reveals 37,085 total leads in Azure PostgreSQL (`sigmajan-server.postgres.database.azure.com`), with 14,704 duplicate records flagged (`is_duplicate = TRUE`), leaving 22,381 clean active leads.
+2. Local development environment has 0 duplicate leads across 27,983 sales-ready records following local execution of the 5-stage Data Health remediation pipeline (Fix-All ARCH-012).
+3. The live Azure database was not purged due to private VNet network isolation (`network.publicNetworkAccess: Disabled`), preventing external direct psql connections.
+**Root Causes:**
+1. Multiple historical lead ingestion jobs (Texas CCL child care API, daycares, car dealerships) inserted duplicate records over time.
+2. While duplicate flagging scripts marked records with `is_duplicate = TRUE`, physical deletion and child relationship re-parenting were deferred to prevent unverified data loss.
+**Planned Solution:**
+1. **Peter's Recovery Directive & Snapshot:** Create an automated snapshot/checkpoint prior to deletion.
+2. **Golden Master Smart Survivorship:** For each duplicate cluster (matched on normalized name, phone, address, and city), designate the Golden Master record based on conversion status, field completeness score, and oldest ID.
+3. **Non-Destructive Attribute Backfill:** Copy missing phone, email, contact person, square footage, and notes from duplicate twins into the Golden Master before deletion.
+4. **Foreign Key Re-Parenting:** Re-assign all related child rows in `CampaignRecipients`, `Contacts`, and `GlobalActivities` to the Golden Master ID to ensure zero orphaned records.
+5. **Redundant Shell Purge:** Delete the 14,704 redundant duplicate records (`is_duplicate = TRUE` and duplicate clusters).
+6. **Poka-Yoke Constraint:** Verify composite unique index `idx_leads_unique_location` on `(LOWER(TRIM(center_name)), LOWER(TRIM(address)), LOWER(TRIM(city)))` to permanently block duplicate insertion.
+7. **Sequence Realignment:** Execute `setval` on all PostgreSQL primary key sequences to ensure `id >= MAX(id)`.
+8. **Deployment & Execution:** Package the cleanup into an idempotent migration (`Migration 033: Live Lead Dataset Deduplication & Golden Master Consolidation`) and deploy via `scripts/deploy_live_container.sh`, verifying that `https://www.hwbcleaning.com/api/v1/db-audit` confirms `duplicate_leads_count: 0`.

@@ -216,7 +216,7 @@
             <a href="{{ url_for('admin_operations', view='leads') }}" class="sigma-split-main" title="Open Leads Pipeline">
                 <i class="fas fa-building" style="margin-right: 6px; font-size: 0.75rem;"></i> Leads
             </a>
-            <button type="button" class="sigma-split-chevron" onclick="toggleSigmaJump('menu-jump-leads', event)" title="Recent Leads & Quick Views">
+            <button type="button" class="sigma-split-chevron" onclick="toggleSigmaJump('menu-jump-leads', event)" title="Recent Leads & Quick Views" aria-label="Recent Leads & Quick Views">
                 <i class="fas fa-chevron-down"></i>
             </button>
             <div id="menu-jump-leads" class="sigma-jump-menu">
@@ -274,7 +274,7 @@
             <a href="{{ url_for('admin_operations', view='accounts') }}" class="sigma-split-main" title="Open Client Accounts">
                 <i class="fas fa-handshake" style="margin-right: 6px; font-size: 0.75rem;"></i> Accounts
             </a>
-            <button type="button" class="sigma-split-chevron" onclick="toggleSigmaJump('menu-jump-accounts', event)" title="Recent Accounts & Quick Actions">
+            <button type="button" class="sigma-split-chevron" onclick="toggleSigmaJump('menu-jump-accounts', event)" title="Recent Accounts & Quick Actions" aria-label="Recent Accounts & Quick Actions">
                 <i class="fas fa-chevron-down"></i>
             </button>
             <div id="menu-jump-accounts" class="sigma-jump-menu">
@@ -315,7 +315,7 @@
                 <a href="{{ url_for('admin_operations', view='construction_bids') }}" class="sigma-split-main" title="Active Commercial GC Bids &amp; SigmaEstimator™ Takeoffs">
                     <i class="fas fa-hard-hat" style="color: #f59e0b; margin-right: 6px; font-size: 0.75rem;"></i> GC Bids
                 </a>
-                <button type="button" class="sigma-split-chevron" onclick="toggleSigmaJump('menu-jump-gcbids', event)" title="GC Pipeline &amp; Directory Views">
+                <button type="button" class="sigma-split-chevron" onclick="toggleSigmaJump('menu-jump-gcbids', event)" title="GC Pipeline &amp; Directory Views" aria-label="GC Pipeline &amp; Directory Views">
                     <i class="fas fa-chevron-down"></i>
                 </button>
                 <div id="menu-jump-gcbids" class="sigma-jump-menu">
@@ -345,7 +345,7 @@
                 <a href="{{ url_for('admin_operations', view='institutional_bids') }}" class="sigma-split-main" title="Public Sector &amp; Purchasing Cooperatives Solicitations Desk">
                     <i class="fas fa-landmark" style="color: #6366f1; margin-right: 6px; font-size: 0.75rem;"></i> Institutional Bids
                 </a>
-                <button type="button" class="sigma-split-chevron" onclick="toggleSigmaJump('menu-jump-instbids', event)" title="Cooperatives &amp; Charter Pipeline">
+                <button type="button" class="sigma-split-chevron" onclick="toggleSigmaJump('menu-jump-instbids', event)" title="Cooperatives &amp; Charter Pipeline" aria-label="Cooperatives &amp; Charter Pipeline">
                     <i class="fas fa-chevron-down"></i>
                 </button>
                 <div id="menu-jump-instbids" class="sigma-jump-menu">
@@ -382,7 +382,7 @@
                 <a href="{{ url_for('admin_operations', view='programs') }}" class="sigma-split-main" title="SBA 8(a), Texas HUB, NCTRCA Diversity Certifications & Compliance Desk">
                     <i class="fas fa-stamp" style="color: #0d9488; margin-right: 6px; font-size: 0.75rem;"></i> Gov Programs
                 </a>
-                <button type="button" class="sigma-split-chevron" onclick="toggleSigmaJump('menu-jump-programs', event)" title="Certifications & Compliance Programs">
+                <button type="button" class="sigma-split-chevron" onclick="toggleSigmaJump('menu-jump-programs', event)" title="Certifications & Compliance Programs" aria-label="Certifications & Compliance Programs">
                     <i class="fas fa-chevron-down"></i>
                 </button>
                 <div id="menu-jump-programs" class="sigma-jump-menu">
@@ -427,7 +427,7 @@
                 <a href="{{ url_for('admin_operations', view='workforce') }}" class="sigma-split-main" title="Internal W-2 Personnel, Applicants, Academy Training &amp; Payroll">
                     <i class="fas fa-id-card-clip" style="color: #10b981; margin-right: 6px; font-size: 0.75rem;"></i> Workforce &amp; HR
                 </a>
-                <button type="button" class="sigma-split-chevron" onclick="toggleSigmaJump('menu-jump-workforce', event)" title="Workforce &amp; Safety Modules">
+                <button type="button" class="sigma-split-chevron" onclick="toggleSigmaJump('menu-jump-workforce', event)" title="Workforce &amp; Safety Modules" aria-label="Workforce &amp; Safety Modules">
                     <i class="fas fa-chevron-down"></i>
                 </button>
                 <div id="menu-jump-workforce" class="sigma-jump-menu">
@@ -470,7 +470,7 @@
                 <a href="{{ url_for('admin_operations', view='monitor') }}" class="sigma-split-main" title="Internal Work Order Dispatch &amp; Shift Execution Monitor">
                     <i class="fas fa-clipboard-check" style="color: #06b6d4; margin-right: 6px; font-size: 0.75rem;"></i> Dispatch Hub
                 </a>
-                <button type="button" class="sigma-split-chevron" onclick="toggleSigmaJump('menu-jump-dispatch', event)" title="Dispatch, Mobile &amp; Field Operations">
+                <button type="button" class="sigma-split-chevron" onclick="toggleSigmaJump('menu-jump-dispatch', event)" title="Dispatch, Mobile &amp; Field Operations" aria-label="Dispatch, Mobile &amp; Field Operations">
                     <i class="fas fa-chevron-down"></i>
                 </button>
                 <div id="menu-jump-dispatch" class="sigma-jump-menu">
@@ -512,7 +512,7 @@
                 <a href="{{ url_for('sigma_executive') }}" class="sigma-split-main" title="Executive Command &amp; IT Infrastructure">
                     <i class="fas fa-crown" style="color: #d97706; margin-right: 6px; font-size: 0.75rem;"></i> Executive &amp; IT
                 </a>
-                <button type="button" class="sigma-split-chevron" onclick="toggleSigmaJump('menu-jump-execit', event)" title="Executive, IT &amp; Lab Modules">
+                <button type="button" class="sigma-split-chevron" onclick="toggleSigmaJump('menu-jump-execit', event)" title="Executive, IT &amp; Lab Modules" aria-label="Executive, IT &amp; Lab Modules">
                     <i class="fas fa-chevron-down"></i>
                 </button>
                 <div id="menu-jump-execit" class="sigma-jump-menu sigma-jump-menu-right">

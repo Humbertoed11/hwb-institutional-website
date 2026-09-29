@@ -428,17 +428,16 @@
                 <label style="display: block; font-size: 0.75rem; font-weight: 600; color: var(--slate-700); margin-bottom: 0.4rem;">Password</label>
                 <div style="position: relative;">
                     <input type="password" id="add_password" name="new_password" required style="width: 100%; height: 38px; padding: 0 2.5rem 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-200); font-size: 0.875rem; box-sizing: border-box;">
-                    <button type="button" onclick="togglePassVisibility('add_password', 'add_eye_1')" style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--slate-400);">
+                    <button type="button" onclick="togglePassVisibility('add_password', 'add_eye_1')" aria-label="Toggle password visibility" title="Show/Hide Password" style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--slate-400);">
                         <i id="add_eye_1" class="fas fa-eye"></i>
                     </button>
                 </div>
             </div>
-
             <div>
                 <label style="display: block; font-size: 0.75rem; font-weight: 600; color: var(--slate-700); margin-bottom: 0.4rem;">Confirm Password</label>
                 <div style="position: relative;">
                     <input type="password" id="add_confirm_password" required style="width: 100%; height: 38px; padding: 0 2.5rem 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-200); font-size: 0.875rem; box-sizing: border-box;">
-                    <button type="button" onclick="togglePassVisibility('add_confirm_password', 'add_eye_2')" style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--slate-400);">
+                    <button type="button" onclick="togglePassVisibility('add_confirm_password', 'add_eye_2')" aria-label="Toggle password visibility" title="Show/Hide Password" style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--slate-400);">
                         <i id="add_eye_2" class="fas fa-eye"></i>
                     </button>
                 </div>

@@ -1469,7 +1469,7 @@
                         <form method="GET" action="{{ url_for('admin_operations') }}" style="display: flex; gap: 0.5rem; margin: 0;">
                             <input type="hidden" name="view" value="general_contractors">
                             <input type="text" name="q" value="{{ search_q or '' }}" placeholder="Search GC company, city, market, estimator..." class="sigma-cell-input" style="height: 36px; min-width: 280px; font-size: 0.8rem;">
-                            <button type="submit" class="isc-btn isc-btn-primary" style="height: 36px; padding: 0 1rem; font-size: 0.78rem;">
+                            <button type="submit" class="isc-btn isc-btn-primary" style="height: 36px; padding: 0 1rem; font-size: 0.78rem;" aria-label="Search General Contractors" title="Search General Contractors">
                                 <i class="fas fa-search"></i>
                             </button>
                         </form>
@@ -1680,7 +1680,7 @@
                         <form method="GET" action="{{ url_for('admin_operations') }}" style="display: flex; gap: 0.5rem; margin: 0;">
                             <input type="hidden" name="view" value="institutional_bids">
                             <input type="text" name="q" value="{{ search_q or '' }}" placeholder="Search solicitations, agency, officer..." class="sigma-cell-input" style="height: 36px; min-width: 260px; font-size: 0.8rem;">
-                            <button type="submit" class="isc-btn isc-btn-primary" style="height: 36px; padding: 0 1rem; font-size: 0.78rem;">
+                            <button type="submit" class="isc-btn isc-btn-primary" style="height: 36px; padding: 0 1rem; font-size: 0.78rem;" aria-label="Search Institutional Bids" title="Search Institutional Bids">
                                 <i class="fas fa-search"></i>
                             </button>
                         </form>
@@ -2139,7 +2139,7 @@
                             <h2 style="font-weight: 900; font-size: 1.35rem; color: var(--slate-900); margin: 0.4rem 0 0 0;" id="modal-audit-title">Enterprise B2G Compliance &amp; Qualification Audit</h2>
                             <p style="font-size: 0.78rem; color: var(--slate-500); font-weight: 600; margin-top: 0.2rem;">Algorithmic verification across 13 CFR § 124, Texas HUB, and regional diversity set-asides with automated SBA Two-Year Runway Waiver analysis.</p>
                         </div>
-                        <button type="button" onclick="closeModal('modal-compliance-audit')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; color: var(--slate-400);">
+                        <button type="button" onclick="closeModal('modal-compliance-audit')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; color: var(--slate-400);" aria-label="Close Compliance Audit Modal">
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
@@ -2264,7 +2264,7 @@
                     </div>
 
                     <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 0.75rem;">
-                        <button type="button" onclick="closeModal('modal-compliance-audit')" class="isc-btn isc-btn-outline" style="height: 36px; padding: 0 1.25rem; font-size: 0.8rem; font-weight: 700;">Close</button>
+                        <button type="button" onclick="closeModal('modal-compliance-audit')" class="isc-btn isc-btn-outline" style="height: 36px; padding: 0 1.25rem; font-size: 0.8rem; font-weight: 700;" aria-label="Close Compliance Audit Modal">Close</button>
                     </div>
                 </div>
             </div>
@@ -3701,7 +3701,7 @@
                         <h2 style="font-weight: 900; font-size: 1.35rem; color: var(--slate-900); margin: 0.35rem 0 0 0;">Create &amp; Dispatch Shift</h2>
                         <p style="font-size: 0.78rem; color: var(--slate-500); font-weight: 600; margin-top: 0.2rem;">Assign active commercial cleaning technicians, configure facility shift windows, and set dock access protocols.</p>
                     </div>
-                    <button type="button" onclick="closeModal('modal-dispatch-create')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; color: var(--slate-400);">
+                    <button type="button" onclick="closeModal('modal-dispatch-create')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; color: var(--slate-400);" aria-label="Close Dispatch Create Modal">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
@@ -3780,7 +3780,7 @@
                     </div>
 
                     <div style="display: flex; gap: 0.75rem; justify-content: flex-end; border-top: 1px solid var(--slate-100); padding-top: 1.25rem;">
-                        <button type="button" onclick="closeModal('modal-dispatch-create')" class="isc-btn isc-btn-outline" style="height: 38px; padding: 0 1.25rem; font-size: 0.8rem; font-weight: 700;">Cancel</button>
+                        <button type="button" onclick="closeModal('modal-dispatch-create')" class="isc-btn isc-btn-outline" style="height: 38px; padding: 0 1.25rem; font-size: 0.8rem; font-weight: 700;" aria-label="Close Dispatch Create Modal">Cancel</button>
                         <button type="submit" id="btn-submit-dispatch" class="isc-btn isc-btn-primary" style="height: 38px; padding: 0 1.5rem; font-size: 0.8rem; font-weight: 800; background: var(--brand);">
                             <i class="fas fa-paper-plane" style="margin-right: 0.4rem;"></i> Schedule &amp; Dispatch Shift
                         </button>
@@ -3801,7 +3801,7 @@
                         <h2 id="detail-wo-title" style="font-weight: 900; font-size: 1.35rem; color: var(--slate-900); margin: 0.35rem 0 0 0;">Work Order Dossier</h2>
                         <p id="detail-wo-subtitle" style="font-size: 0.78rem; color: var(--slate-500); font-weight: 600; margin-top: 0.2rem;">Complete operational record and audit trail.</p>
                     </div>
-                    <button type="button" onclick="closeModal('modal-dispatch-detail')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; color: var(--slate-400);">
+                    <button type="button" onclick="closeModal('modal-dispatch-detail')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; color: var(--slate-400);" aria-label="Close Dispatch Detail Modal">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
@@ -4246,7 +4246,7 @@
                 <h2 style="font-weight: 900; font-size: 1.35rem; color: var(--slate-900); margin: 0.35rem 0 0 0;">Onboard Employee to Active Personnel</h2>
                 <p style="font-size: 0.78rem; color: var(--slate-500); font-weight: 600; margin-top: 0.2rem;">Promote candidate to official HWB Cleaning Services roster, assign facility hours, and set wage structure.</p>
             </div>
-            <button type="button" onclick="closeModal('modal-onboard-candidate')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; color: var(--slate-400);">
+            <button type="button" onclick="closeModal('modal-onboard-candidate')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; color: var(--slate-400);" aria-label="Close Onboard Candidate Modal">
                 <i class="fas fa-times"></i>
             </button>
         </div>
@@ -4370,7 +4370,7 @@
             </div>
 
             <div style="display: flex; justify-content: flex-end; gap: 0.75rem; border-top: 1px solid var(--slate-100); padding-top: 1.25rem;">
-                <button type="button" onclick="closeModal('modal-onboard-candidate')" class="isc-btn isc-btn-outline" style="height: 38px; padding: 0 1.25rem; font-size: 0.8rem; border-radius: 6px;">
+                <button type="button" onclick="closeModal('modal-onboard-candidate')" class="isc-btn isc-btn-outline" style="height: 38px; padding: 0 1.25rem; font-size: 0.8rem; border-radius: 6px;" aria-label="Close Onboard Candidate Modal">
                     Cancel
                 </button>
                 <button type="submit" id="btn-submit-onboard" class="isc-btn isc-btn-primary" style="height: 38px; padding: 0 1.5rem; font-size: 0.8rem; border-radius: 6px; font-weight: 800; display: inline-flex; align-items: center; gap: 0.5rem; background: #059669; border-color: #059669;">
@@ -4394,7 +4394,7 @@
                 <h2 id="edit-emp-header-name" style="font-weight: 900; font-size: 1.35rem; color: var(--slate-900); margin: 0;">Edit Personnel Record</h2>
                 <p style="font-size: 0.78rem; color: var(--slate-500); font-weight: 600; margin-top: 0.2rem;">SigmaFidelity™ Enterprise Dossier: Wage rates, W-4 tax withholding, compliance clearances, and facility assignment.</p>
             </div>
-            <button type="button" onclick="closeModal('modal-employee-edit')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; color: var(--slate-400);">
+            <button type="button" onclick="closeModal('modal-employee-edit')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; color: var(--slate-400);" aria-label="Close Employee Edit Modal">
                 <i class="fas fa-times"></i>
             </button>
         </div>
@@ -4798,7 +4798,7 @@
 
             <!-- Modal Action Buttons -->
             <div style="display: flex; justify-content: flex-end; gap: 0.75rem; border-top: 1px solid var(--slate-100); padding-top: 1.25rem; margin-top: 1.5rem;">
-                <button type="button" onclick="closeModal('modal-employee-edit')" class="isc-btn isc-btn-outline" style="height: 38px; padding: 0 1.25rem; font-size: 0.8rem; border-radius: 6px;">
+                <button type="button" onclick="closeModal('modal-employee-edit')" class="isc-btn isc-btn-outline" style="height: 38px; padding: 0 1.25rem; font-size: 0.8rem; border-radius: 6px;" aria-label="Close Employee Edit Modal">
                     Cancel
                 </button>
                 <button type="submit" id="btn-submit-edit-emp" class="isc-btn isc-btn-primary" style="height: 38px; padding: 0 1.5rem; font-size: 0.8rem; border-radius: 6px; font-weight: 800; display: inline-flex; align-items: center; gap: 0.5rem;">
@@ -4823,7 +4823,7 @@
                     Department: <strong id="bo-pjd-department" style="color: var(--slate-800);">Operations</strong> &bull; Reports To: <span id="bo-pjd-reports-to">Site Supervisor</span>
                 </div>
             </div>
-            <button type="button" onclick="closeModal('modal-view-backoffice-job-desc')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--slate-400);">
+            <button type="button" onclick="closeModal('modal-view-backoffice-job-desc')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--slate-400);" aria-label="Close View Backoffice Job Desc Modal">
                 <i class="fas fa-times"></i>
             </button>
         </div>
@@ -4876,7 +4876,7 @@
         </div>
 
         <div style="display: flex; justify-content: flex-end; gap: 0.75rem; border-top: 1px solid var(--slate-100); padding-top: 1.25rem;">
-            <button type="button" onclick="closeModal('modal-view-backoffice-job-desc')" class="isc-btn isc-btn-outline" style="height: 38px; padding: 0 1.25rem; font-size: 0.8rem; font-weight: 700; border-radius: 6px;">
+            <button type="button" onclick="closeModal('modal-view-backoffice-job-desc')" class="isc-btn isc-btn-outline" style="height: 38px; padding: 0 1.25rem; font-size: 0.8rem; font-weight: 700; border-radius: 6px;" aria-label="Close View Backoffice Job Desc Modal">
                 Close
             </button>
         </div>
@@ -4895,7 +4895,7 @@
                 <h2 id="doc-vault-emp-name" style="font-weight: 900; font-size: 1.35rem; color: var(--slate-900); margin: 0.35rem 0 0 0;">Employee Document Vault</h2>
                 <p style="font-size: 0.78rem; color: var(--slate-500); font-weight: 600; margin-top: 0.2rem;">Encrypted storage for Form I-9, W-4/W-9, Photo IDs, and Texas DWC-83 records.</p>
             </div>
-            <button type="button" onclick="closeModal('modal-employee-doc-upload')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; color: var(--slate-400);">
+            <button type="button" onclick="closeModal('modal-employee-doc-upload')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; color: var(--slate-400);" aria-label="Close Employee Doc Upload Modal">
                 <i class="fas fa-times"></i>
             </button>
         </div>
@@ -4953,7 +4953,7 @@
             </div>
 
             <div style="display: flex; justify-content: flex-end; gap: 0.75rem; border-top: 1px solid var(--slate-100); padding-top: 1.25rem;">
-                <button type="button" onclick="closeModal('modal-employee-doc-upload')" class="isc-btn isc-btn-outline" style="height: 38px; padding: 0 1.25rem; font-size: 0.8rem; border-radius: 6px;">
+                <button type="button" onclick="closeModal('modal-employee-doc-upload')" class="isc-btn isc-btn-outline" style="height: 38px; padding: 0 1.25rem; font-size: 0.8rem; border-radius: 6px;" aria-label="Close Employee Doc Upload Modal">
                     Close
                 </button>
                 <button type="submit" id="btn-submit-upload-doc" class="isc-btn isc-btn-primary" style="height: 38px; padding: 0 1.5rem; font-size: 0.8rem; border-radius: 6px; font-weight: 800; display: inline-flex; align-items: center; gap: 0.5rem; background: #2563eb; border-color: #2563eb;">
@@ -4975,7 +4975,7 @@
                 <h2 style="font-weight: 900; font-size: 1.35rem; color: var(--slate-900); margin: 0.35rem 0 0 0;">Onboard Subcontractor Trade Partner</h2>
                 <p style="font-size: 0.78rem; color: var(--slate-500); font-weight: 600; margin-top: 0.2rem;">Register commercial contractor, verify COI liability insurance, and assign crew capacity.</p>
             </div>
-            <button type="button" onclick="closeModal('modal-subcontractor-onboard')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; color: var(--slate-400);">
+            <button type="button" onclick="closeModal('modal-subcontractor-onboard')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; color: var(--slate-400);" aria-label="Close Subcontractor Onboard Modal">
                 <i class="fas fa-times"></i>
             </button>
         </div>
@@ -5073,7 +5073,7 @@
             </div>
 
             <div style="display: flex; justify-content: flex-end; gap: 0.75rem; border-top: 1px solid var(--slate-100); padding-top: 1.25rem;">
-                <button type="button" onclick="closeModal('modal-subcontractor-onboard')" class="isc-btn isc-btn-outline" style="height: 38px; padding: 0 1.25rem; font-size: 0.8rem; border-radius: 6px;">
+                <button type="button" onclick="closeModal('modal-subcontractor-onboard')" class="isc-btn isc-btn-outline" style="height: 38px; padding: 0 1.25rem; font-size: 0.8rem; border-radius: 6px;" aria-label="Close Subcontractor Onboard Modal">
                     Cancel
                 </button>
                 <button type="submit" id="btn-submit-onboard-sub" class="isc-btn isc-btn-primary" style="height: 38px; padding: 0 1.5rem; font-size: 0.8rem; border-radius: 6px; font-weight: 800; display: inline-flex; align-items: center; gap: 0.5rem; background: #7c3aed; border-color: #7c3aed;">
@@ -5096,7 +5096,7 @@
                 <h2 id="edit-sub-header-name" style="font-weight: 900; font-size: 1.35rem; color: var(--slate-900); margin: 0.35rem 0 0 0;">Edit Subcontractor Partner</h2>
                 <p style="font-size: 0.78rem; color: var(--slate-500); font-weight: 600; margin-top: 0.2rem;">Modify trade rates, crew capacity, insurance policies, and compliance records.</p>
             </div>
-            <button type="button" onclick="closeModal('modal-subcontractor-edit')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; color: var(--slate-400);">
+            <button type="button" onclick="closeModal('modal-subcontractor-edit')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; color: var(--slate-400);" aria-label="Close Subcontractor Edit Modal">
                 <i class="fas fa-times"></i>
             </button>
         </div>
@@ -5210,7 +5210,7 @@
             </div>
 
             <div style="display: flex; justify-content: flex-end; gap: 0.75rem; border-top: 1px solid var(--slate-100); padding-top: 1.25rem;">
-                <button type="button" onclick="closeModal('modal-subcontractor-edit')" class="isc-btn isc-btn-outline" style="height: 38px; padding: 0 1.25rem; font-size: 0.8rem; border-radius: 6px;">
+                <button type="button" onclick="closeModal('modal-subcontractor-edit')" class="isc-btn isc-btn-outline" style="height: 38px; padding: 0 1.25rem; font-size: 0.8rem; border-radius: 6px;" aria-label="Close Subcontractor Edit Modal">
                     Cancel
                 </button>
                 <button type="submit" id="btn-submit-edit-sub" class="isc-btn isc-btn-primary" style="height: 38px; padding: 0 1.5rem; font-size: 0.8rem; border-radius: 6px; font-weight: 800; display: inline-flex; align-items: center; gap: 0.5rem; background: #7c3aed; border-color: #7c3aed;">
@@ -5233,7 +5233,7 @@
                 <h2 id="sub-doc-modal-company" style="font-weight: 900; font-size: 1.35rem; color: var(--slate-900); margin: 0.35rem 0 0 0;">Subcontractor Compliance Vault</h2>
                 <p style="font-size: 0.78rem; color: var(--slate-500); font-weight: 600; margin-top: 0.2rem;">Certificate of Insurance (COI) & Form W-9 verification files.</p>
             </div>
-            <button type="button" onclick="closeModal('modal-subcontractor-doc-upload')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; color: var(--slate-400);">
+            <button type="button" onclick="closeModal('modal-subcontractor-doc-upload')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; color: var(--slate-400);" aria-label="Close Subcontractor Doc Upload Modal">
                 <i class="fas fa-times"></i>
             </button>
         </div>
@@ -5298,7 +5298,7 @@
             </div>
 
             <div style="display: flex; justify-content: flex-end; gap: 0.75rem; border-top: 1px solid var(--slate-100); padding-top: 1.25rem;">
-                <button type="button" onclick="closeModal('modal-subcontractor-doc-upload')" class="isc-btn isc-btn-outline" style="height: 38px; padding: 0 1.25rem; font-size: 0.8rem; border-radius: 6px;">
+                <button type="button" onclick="closeModal('modal-subcontractor-doc-upload')" class="isc-btn isc-btn-outline" style="height: 38px; padding: 0 1.25rem; font-size: 0.8rem; border-radius: 6px;" aria-label="Close Subcontractor Doc Upload Modal">
                     Close
                 </button>
                 <button type="submit" id="btn-submit-upload-sub-doc" class="isc-btn isc-btn-primary" style="height: 38px; padding: 0 1.5rem; font-size: 0.8rem; border-radius: 6px; font-weight: 800; display: inline-flex; align-items: center; gap: 0.5rem; background: #7c3aed; border-color: #7c3aed;">
@@ -5321,7 +5321,7 @@
                 <h2 id="wf-notes-title" style="font-weight: 900; font-size: 1.35rem; color: var(--slate-900); margin: 0.35rem 0 0 0;">Candidate Operational Notes</h2>
                 <p id="wf-notes-subtitle" style="font-size: 0.78rem; color: var(--slate-500); font-weight: 600; margin-top: 0.2rem;">Internal records, interview outcomes, and field screening assessments.</p>
             </div>
-            <button type="button" onclick="closeModal('modal-workforce-notes')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; color: var(--slate-400); transition: all 0.15s ease;">
+            <button type="button" onclick="closeModal('modal-workforce-notes')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; color: var(--slate-400); transition: all 0.15s ease;" aria-label="Close Workforce Notes Modal">
                 <i class="fas fa-times"></i>
             </button>
         </div>
@@ -5342,7 +5342,7 @@
             </div>
 
             <div style="display: flex; justify-content: flex-end; gap: 0.75rem; border-top: 1px solid var(--slate-100); padding-top: 1.25rem;">
-                <button type="button" onclick="closeModal('modal-workforce-notes')" class="isc-btn isc-btn-outline" style="height: 38px; padding: 0 1.25rem; font-size: 0.8rem; border-radius: 6px;">
+                <button type="button" onclick="closeModal('modal-workforce-notes')" class="isc-btn isc-btn-outline" style="height: 38px; padding: 0 1.25rem; font-size: 0.8rem; border-radius: 6px;" aria-label="Close Workforce Notes Modal">
                     Cancel
                 </button>
                 <button type="submit" id="btn-save-wf-notes" class="isc-btn isc-btn-primary" style="height: 38px; padding: 0 1.5rem; font-size: 0.8rem; border-radius: 6px; font-weight: 800; display: inline-flex; align-items: center; gap: 0.5rem;">
@@ -5365,7 +5365,7 @@
                 <h2 id="assign-training-student-name" style="font-weight: 900; font-size: 1.35rem; color: var(--slate-900); margin: 0.35rem 0 0 0;">Assign Training Package</h2>
                 <p style="font-size: 0.78rem; color: var(--slate-500); font-weight: 600; margin-top: 0.2rem;">Select a role-based bundle or single course to issue an automated magic access link.</p>
             </div>
-            <button type="button" onclick="closeModal('modal-assign-training')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; color: var(--slate-400); transition: all 0.15s ease;">
+            <button type="button" onclick="closeModal('modal-assign-training')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; color: var(--slate-400); transition: all 0.15s ease;" aria-label="Close Assign Training Modal">
                 <i class="fas fa-times"></i>
             </button>
         </div>
@@ -5456,7 +5456,7 @@
             </div>
 
             <div style="display: flex; justify-content: flex-end; gap: 0.75rem; border-top: 1px solid var(--slate-100); padding-top: 1.25rem;">
-                <button type="button" onclick="closeModal('modal-assign-training')" class="isc-btn isc-btn-outline" style="height: 38px; padding: 0 1.25rem; font-size: 0.8rem; border-radius: 6px;">
+                <button type="button" onclick="closeModal('modal-assign-training')" class="isc-btn isc-btn-outline" style="height: 38px; padding: 0 1.25rem; font-size: 0.8rem; border-radius: 6px;" aria-label="Close Assign Training Modal">
                     Close
                 </button>
                 <button type="submit" id="btn-submit-assign-training" class="isc-btn isc-btn-primary" style="height: 38px; padding: 0 1.5rem; font-size: 0.8rem; border-radius: 6px; font-weight: 800; display: inline-flex; align-items: center; gap: 0.5rem; background: #6366f1;">
@@ -5479,7 +5479,7 @@
                 <h2 id="cadence-project-title" style="font-weight: 900; font-size: 1.4rem; color: var(--slate-900); margin: 0.35rem 0 0 0;">Project Name</h2>
                 <p id="cadence-gc-name" style="font-size: 0.82rem; color: var(--brand); font-weight: 700; margin-top: 0.15rem;"></p>
             </div>
-            <button onclick="closeModal('modal-estimator-cadence')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; color: var(--slate-500);">
+            <button onclick="closeModal('modal-estimator-cadence')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; color: var(--slate-500);" aria-label="Close Estimator Cadence Modal">
                 <i class="fas fa-times"></i>
             </button>
         </div>
@@ -5587,7 +5587,7 @@
                 <button type="button" onclick="navigateLeadCadence(1)" class="isc-btn isc-btn-outline" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" title="Next Lead">
                     <i class="fas fa-chevron-right" style="font-size: 0.75rem;"></i>
                 </button>
-                <button onclick="closeModal('modal-lead-cadence')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; color: var(--slate-500); transition: all 0.2s;">
+                <button onclick="closeModal('modal-lead-cadence')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; color: var(--slate-500); transition: all 0.2s;" aria-label="Close Lead Cadence Modal">
                     <i class="fas fa-times" style="font-size: 0.9rem;"></i>
                 </button>
             </div>
@@ -5754,7 +5754,7 @@
             <h2 style="font-weight: 900; font-size: 1.35rem; color: var(--slate-900); margin: 0; display: flex; align-items: center; gap: 0.5rem;">
                 <i class="fas fa-hard-hat" style="color: #f59e0b;"></i> New Commercial Subcontract Bid
             </h2>
-            <button onclick="closeModal('modal-add-bid')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; color: var(--slate-500);">
+            <button onclick="closeModal('modal-add-bid')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; color: var(--slate-500);" aria-label="Close Add Bid Modal">
                 <i class="fas fa-times"></i>
             </button>
         </div>
@@ -5814,7 +5814,7 @@
                 <textarea name="special_requirements" rows="2" placeholder="Breakouts required, addenda notes, site access requirements..." style="width: 100%; padding: 0.55rem 0.75rem; border: 1px solid var(--slate-200); border-radius: 6px; font-size: 0.82rem;"></textarea>
             </div>
             <div style="grid-column: span 2; display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 0.5rem;">
-                <button type="button" onclick="closeModal('modal-add-bid')" class="isc-btn isc-btn-outline" style="height: 38px; padding: 0 1.25rem; font-size: 0.8rem;">Cancel</button>
+                <button type="button" onclick="closeModal('modal-add-bid')" class="isc-btn isc-btn-outline" style="height: 38px; padding: 0 1.25rem; font-size: 0.8rem;" aria-label="Close Add Bid Modal">Cancel</button>
                 <button type="submit" class="isc-btn isc-btn-primary" style="height: 38px; padding: 0 1.5rem; font-size: 0.8rem; font-weight: 800;">Save Subcontract Bid</button>
             </div>
         </form>
@@ -5841,7 +5841,7 @@
                     <span id="takeoff-modal-due-date" style="color: #991b1b; font-weight: 800;"><i class="fas fa-clock"></i> Due: --</span>
                 </div>
             </div>
-            <button type="button" onclick="closeModal('modal-commercial-takeoff')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; color: var(--slate-500);">
+            <button type="button" onclick="closeModal('modal-commercial-takeoff')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; color: var(--slate-500);" aria-label="Close Commercial Takeoff Modal">
                 <i class="fas fa-times"></i>
             </button>
         </div>
@@ -5962,7 +5962,7 @@
             <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--slate-100); padding-top: 1rem;">
                 <div id="takeoff-modal-message" style="font-size: 0.78rem; font-weight: 700; color: #047857;"></div>
                 <div style="display: flex; gap: 0.75rem;">
-                    <button type="button" onclick="closeModal('modal-commercial-takeoff')" class="isc-btn isc-btn-outline" style="height: 38px; padding: 0 1.25rem; font-size: 0.8rem;">Cancel</button>
+                    <button type="button" onclick="closeModal('modal-commercial-takeoff')" class="isc-btn isc-btn-outline" style="height: 38px; padding: 0 1.25rem; font-size: 0.8rem;" aria-label="Close Commercial Takeoff Modal">Cancel</button>
                     <button type="submit" id="btn-save-takeoff" class="isc-btn isc-btn-primary" style="height: 38px; padding: 0 1.75rem; font-size: 0.82rem; font-weight: 800; background: #047857; border-color: #047857;">
                         <i class="fas fa-check-circle" style="margin-right: 0.4rem;"></i> Commit Estimate to Bid Pipeline
                     </button>
@@ -5990,7 +5990,7 @@
                 <button type="button" onclick="toggleEditAccount()" class="isc-btn isc-btn-outline" style="height: 32px; font-size: 0.7rem; border-radius: 6px;">
                     <i class="fas fa-edit"></i> Edit
                 </button>
-                <button onclick="closeModal('modal-account-command')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; color: var(--slate-500); transition: all 0.2s;">
+                <button onclick="closeModal('modal-account-command')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; color: var(--slate-500); transition: all 0.2s;" aria-label="Close Account Command Modal">
                     <i class="fas fa-times" style="font-size: 0.9rem;"></i>
                 </button>
             </div>
@@ -6098,8 +6098,8 @@
                             <label>Google Maps Link</label>
                             <div style="display: flex; gap: 0.5rem;">
                                 <input type="url" id="visit-map-link-acc" class="sigma-input" style="flex-grow: 1;">
-                                <button type="button" onclick="pasteFromClipboard('visit-map-link-acc')" class="isc-btn isc-btn-outline" style="height: 44px; width: 44px; padding: 0; border-radius: 12px;"><i class="fas fa-clipboard"></i></button>
-                                <button type="button" onclick="verifyMapLinkAcc()" class="isc-btn isc-btn-outline" style="height: 44px; width: 44px; padding: 0; border-radius: 12px;"><i class="fas fa-external-link-alt"></i></button>
+                                <button type="button" onclick="pasteFromClipboard('visit-map-link-acc')" class="isc-btn isc-btn-outline" style="height: 44px; width: 44px; padding: 0; border-radius: 12px;" aria-label="Paste Google Maps URL" title="Paste from Clipboard"><i class="fas fa-clipboard"></i></button>
+                                <button type="button" onclick="verifyMapLinkAcc()" class="isc-btn isc-btn-outline" style="height: 44px; width: 44px; padding: 0; border-radius: 12px;" aria-label="Verify and Open Google Maps" title="Verify and Open Map"><i class="fas fa-external-link-alt"></i></button>
                             </div>
                         </div>
                         <div class="sigma-field"><label>Gate Access / Special Instructions</label><textarea id="visit-instructions-acc" class="sigma-input" style="height: 80px; resize: none;"></textarea></div>
@@ -6556,7 +6556,7 @@
                 <button type="button" onclick="toggleEditLead()" class="isc-btn isc-btn-outline" style="height: 32px; font-size: 0.7rem; border-radius: 6px;">
                     <i class="fas fa-edit"></i> Edit
                 </button>
-                <button onclick="closeModal('modal-lead-command')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; color: var(--slate-500); transition: all 0.2s;">
+                <button onclick="closeModal('modal-lead-command')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; color: var(--slate-500); transition: all 0.2s;" aria-label="Close Lead Command Modal">
                     <i class="fas fa-times" style="font-size: 0.9rem;"></i>
                 </button>
             </div>
@@ -6650,8 +6650,8 @@
                             <label>Google Maps Link</label>
                             <div style="display: flex; gap: 0.5rem;">
                                 <input type="url" id="visit-map-link" placeholder="https://maps.google.com/..." class="sigma-input" style="flex-grow: 1;">
-                                <button type="button" onclick="pasteFromClipboard('visit-map-link')" class="isc-btn isc-btn-outline" style="height: 44px; width: 44px; padding: 0; border-radius: 12px;"><i class="fas fa-clipboard"></i></button>
-                                <button type="button" onclick="verifyMapLink()" class="isc-btn isc-btn-outline" style="height: 44px; width: 44px; padding: 0; border-radius: 12px;"><i class="fas fa-external-link-alt"></i></button>
+                                <button type="button" onclick="pasteFromClipboard('visit-map-link')" class="isc-btn isc-btn-outline" style="height: 44px; width: 44px; padding: 0; border-radius: 12px;" aria-label="Paste Google Maps URL" title="Paste from Clipboard"><i class="fas fa-clipboard"></i></button>
+                                <button type="button" onclick="verifyMapLink()" class="isc-btn isc-btn-outline" style="height: 44px; width: 44px; padding: 0; border-radius: 12px;" aria-label="Verify and Open Google Maps" title="Verify and Open Map"><i class="fas fa-external-link-alt"></i></button>
                             </div>
                         </div>
                         <div class="sigma-field"><label>Gate Access / Special Instructions</label><textarea id="visit-instructions" placeholder="Codes..." class="sigma-input" style="height: 80px; resize: none;"></textarea></div>
@@ -6837,7 +6837,7 @@
     <div class="isc-modal" style="max-width: 1100px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4rem;">
             <div><h2 style="font-weight: 900; font-size: 2.25rem; color: var(--slate-900); letter-spacing: -0.02em;">Add New Account</h2><p style="font-size: 0.875rem; color: var(--brand); margin-top: 0.25rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;">New Client Registration</p></div>
-            <button onclick="closeModal('modal-add-account')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 10px; cursor: pointer; color: var(--slate-400); transition: all 0.2s;">&times;</button>
+            <button onclick="closeModal('modal-add-account')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 10px; cursor: pointer; color: var(--slate-400); transition: all 0.2s;" aria-label="Close Add Account Modal">&times;</button>
         </div>
         <form action="{{ url_for('add_account') }}" method="POST" class="sigma-form-container">
             <div class="sigma-form-section">
@@ -6898,7 +6898,7 @@
                 </div>
             </div>
             <div class="sigma-form-actions">
-                <button type="button" onclick="closeModal('modal-add-account')" class="isc-btn isc-btn-outline" style="padding: 1rem 3rem;">Cancel</button>
+                <button type="button" onclick="closeModal('modal-add-account')" class="isc-btn isc-btn-outline" style="padding: 1rem 3rem;" aria-label="Close Add Account Modal">Cancel</button>
                 <button type="submit" class="isc-btn isc-btn-primary" style="padding: 1rem 4rem;">Create Account</button>
             </div>
         </form>
@@ -6915,7 +6915,7 @@
                     <i class="fas fa-handshake-angle"></i> White-Label Ingress, LMS Workspace &amp; Campus Shift Dispatch
                 </p>
             </div>
-            <button onclick="closeModal('modal-add-partner')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 10px; cursor: pointer; color: var(--slate-400); transition: all 0.2s;">&times;</button>
+            <button onclick="closeModal('modal-add-partner')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 10px; cursor: pointer; color: var(--slate-400); transition: all 0.2s;" aria-label="Close Add Partner Modal">&times;</button>
         </div>
         <form action="{{ url_for('add_partner') }}" method="POST" class="sigma-form-container">
             <div class="sigma-form-section">
@@ -7008,7 +7008,7 @@
                 </div>
             </div>
             <div class="sigma-form-actions">
-                <button type="button" onclick="closeModal('modal-add-partner')" class="isc-btn isc-btn-outline" style="padding: 1rem 3rem;">Cancel</button>
+                <button type="button" onclick="closeModal('modal-add-partner')" class="isc-btn isc-btn-outline" style="padding: 1rem 3rem;" aria-label="Close Add Partner Modal">Cancel</button>
                 <button type="submit" class="isc-btn isc-btn-primary" style="padding: 1rem 4rem; background: #064e3b; border-color: #064e3b;">
                     <i class="fas fa-check-circle" style="margin-right: 0.5rem;"></i> Provision Institutional Partner
                 </button>
@@ -7021,7 +7021,7 @@
     <div class="isc-modal" style="max-width: 1100px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4rem;">
             <div><h2 style="font-weight: 900; font-size: 2.25rem; color: var(--slate-900); letter-spacing: -0.02em;">Add New Lead</h2><p style="font-size: 0.875rem; color: var(--brand); margin-top: 0.25rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;">Quick Lead Entry</p></div>
-            <button onclick="closeModal('modal-add-lead')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 10px; cursor: pointer; color: var(--slate-400); transition: all 0.2s;">&times;</button>
+            <button onclick="closeModal('modal-add-lead')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 10px; cursor: pointer; color: var(--slate-400); transition: all 0.2s;" aria-label="Close Add Lead Modal">&times;</button>
         </div>
         <form action="{{ url_for('add_manual_lead') }}" method="POST" class="sigma-form-container">
             <div class="sigma-form-section">
@@ -7111,7 +7111,7 @@
                 </div>
             </div>
             <div class="sigma-form-actions">
-                <button type="button" onclick="closeModal('modal-add-lead')" class="isc-btn isc-btn-outline" style="padding: 1rem 3rem;">Cancel</button>
+                <button type="button" onclick="closeModal('modal-add-lead')" class="isc-btn isc-btn-outline" style="padding: 1rem 3rem;" aria-label="Close Add Lead Modal">Cancel</button>
                 <button type="submit" class="isc-btn isc-btn-primary" style="padding: 1rem 4rem;">Add Lead</button>
             </div>
         </form>
@@ -7122,7 +7122,7 @@
     <div class="isc-modal" style="max-width: 800px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem;">
             <div><h2 style="font-weight: 900; font-size: 1.75rem; color: var(--slate-900);">Search Reports</h2><p style="font-size: 0.75rem; color: var(--slate-500); font-weight: 800; text-transform: uppercase;">SigmaFidelity™ Advanced Operators</p></div>
-            <button onclick="closeModal('modal-search-help')" style="background: none; border: none; font-size: 2.5rem; cursor: pointer; color: var(--slate-300);">&times;</button>
+            <button onclick="closeModal('modal-search-help')" style="background: none; border: none; font-size: 2.5rem; cursor: pointer; color: var(--slate-300);" aria-label="Close Search Help Modal">&times;</button>
         </div>
         <div style="display: flex; flex-direction: column; gap: 1.25rem;">
             <div class="isc-list-item" style="padding: 1.25rem;"><div style="font-weight: 900; color: var(--brand); font-size: 0.7rem; margin-bottom: 0.5rem; text-transform: uppercase;">EXACT PHRASE</div><code style="background: var(--slate-100); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem; font-weight: 700;">"North Texas"</code><p style="font-size: 0.8rem; color: var(--slate-600); margin-top: 0.5rem;">Finds literal text matches within quotes.</p></div>
@@ -7152,7 +7152,7 @@
                     Stage an autonomous B2B outbound campaign powered by verified Texas commercial records &amp; Microsoft Graph API.
                 </p>
             </div>
-            <button type="button" onclick="closeModal('modal-create-campaign')" style="background: var(--slate-100); border: none; width: 32px; height: 32px; border-radius: 6px; cursor: pointer; color: var(--slate-500); display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">&times;</button>
+            <button type="button" onclick="closeModal('modal-create-campaign')" style="background: var(--slate-100); border: none; width: 32px; height: 32px; border-radius: 6px; cursor: pointer; color: var(--slate-500); display: flex; align-items: center; justify-content: center; font-size: 1.2rem;" aria-label="Close Create Campaign Modal">&times;</button>
         </div>
 
         <form id="form-create-campaign" onsubmit="event.preventDefault(); submitNewCampaign();" class="sigma-form-container">
@@ -7256,7 +7256,7 @@
 
             <div style="display: flex; justify-content: flex-end; gap: 0.75rem; border-top: 1px solid var(--slate-200); padding-top: 1.25rem;">
                 <input type="hidden" id="mkt-cadence" value="1-Step Intro with Calendar Link" />
-                <button type="button" onclick="closeModal('modal-create-campaign')" class="isc-btn isc-btn-outline" style="height: 38px; padding: 0 1.25rem; font-size: 0.8rem;">Cancel</button>
+                <button type="button" onclick="closeModal('modal-create-campaign')" class="isc-btn isc-btn-outline" style="height: 38px; padding: 0 1.25rem; font-size: 0.8rem;" aria-label="Close Create Campaign Modal">Cancel</button>
                 <button type="submit" class="isc-btn isc-btn-primary" style="height: 38px; padding: 0 1.5rem; font-size: 0.8rem; font-weight: 800; background: #ec4899; border-color: #db2777;">
                     <i class="fas fa-rocket"></i> Launch &amp; Stage Campaign
                 </button>
@@ -7280,7 +7280,7 @@
                     Verify formatting, edit personal notes, or release immediately via Microsoft Graph API.
                 </p>
             </div>
-            <button type="button" onclick="closeModal('modal-review-email')" style="background: var(--slate-100); border: none; width: 32px; height: 32px; border-radius: 6px; cursor: pointer; color: var(--slate-500); display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">&times;</button>
+            <button type="button" onclick="closeModal('modal-review-email')" style="background: var(--slate-100); border: none; width: 32px; height: 32px; border-radius: 6px; cursor: pointer; color: var(--slate-500); display: flex; align-items: center; justify-content: center; font-size: 1.2rem;" aria-label="Close Review Email Modal">&times;</button>
         </div>
 
         <!-- Dual Pane Layout -->
@@ -7327,7 +7327,7 @@
 
         <!-- Modal Footer Actions -->
         <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--slate-200); padding-top: 1rem; margin-top: 1rem;">
-            <button type="button" onclick="closeModal('modal-review-email')" class="isc-btn isc-btn-outline" style="height: 36px; padding: 0 1.25rem; font-size: 0.78rem;">Close</button>
+            <button type="button" onclick="closeModal('modal-review-email')" class="isc-btn isc-btn-outline" style="height: 36px; padding: 0 1.25rem; font-size: 0.78rem;" aria-label="Close Review Email Modal">Close</button>
             <div style="display: flex; gap: 0.5rem; align-items: center;">
                 <button type="button" onclick="saveEmailReviewEdits()" class="isc-btn isc-btn-outline" style="height: 36px; padding: 0 1.15rem; font-size: 0.78rem; font-weight: 700; color: var(--brand); border-color: var(--brand);">
                     <i class="fas fa-save"></i> Save Changes
@@ -12152,7 +12152,7 @@
                         <a href="/admin/operations?view=accounts&account_id=${o.customer_id}&action=edit" class="isc-btn isc-btn-outline" style="height:34px; padding:0 1rem; font-size:0.75rem; text-decoration:none; display:inline-flex; align-items:center;">
                             Account Dossier
                         </a>
-                        <button type="button" onclick="closeModal('modal-dispatch-detail')" class="isc-btn isc-btn-primary" style="height:34px; padding:0 1rem; font-size:0.75rem;">
+                        <button type="button" onclick="closeModal('modal-dispatch-detail')" class="isc-btn isc-btn-primary" style="height:34px; padding:0 1rem; font-size:0.75rem;" aria-label="Close Dispatch Detail Modal">
                             Close
                         </button>
                     </div>
@@ -12689,7 +12689,7 @@
                 <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--slate-900); margin: 0;">🔍 Duplicate Record Comparison</h3>
                 <span id="dup-modal-subtitle" style="font-size: 0.75rem; color: var(--slate-500); font-weight: 600;">Group ID: DUP-0001</span>
             </div>
-            <button type="button" onclick="closeModal('modal-compare-duplicates')" style="background: none; border: none; font-size: 1.25rem; cursor: pointer; color: var(--slate-400);">✕</button>
+            <button type="button" onclick="closeModal('modal-compare-duplicates')" style="background: none; border: none; font-size: 1.25rem; cursor: pointer; color: var(--slate-400);" aria-label="Close Compare Duplicates Modal">✕</button>
         </div>
 
         <!-- Twins Side-by-Side Grid Container -->
@@ -12699,7 +12699,7 @@
 
         <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--slate-100); padding-top: 1.25rem;">
             <button type="button" onclick="dismissCurrentGroup()" class="isc-btn isc-btn-outline" style="padding: 0.5rem 1rem; border-color: #cbd5e1; color: #475569; font-weight: 700; font-size: 0.75rem;">🟡 Keep Both (Not Duplicates)</button>
-            <button type="button" onclick="closeModal('modal-compare-duplicates')" class="isc-btn isc-btn-secondary" style="padding: 0.5rem 1.25rem;">Close</button>
+            <button type="button" onclick="closeModal('modal-compare-duplicates')" class="isc-btn isc-btn-secondary" style="padding: 0.5rem 1.25rem;" aria-label="Close Compare Duplicates Modal">Close</button>
         </div>
     </div>
 </div>

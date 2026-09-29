@@ -2713,6 +2713,7 @@ def format_marketing_letterhead(body_html: str, tracking_token: str = None) -> s
         tracking_pixel_html = f'<img src="https://www.hwbcleaning.com/api/v1/marketing/track/open/{tracking_token}.gif" alt="" width="1" height="1" style="display:none;width:1px;height:1px;border:0;" />'
     
     current_year = datetime.datetime.now().year
+    unsub_url = f"https://www.hwbcleaning.com/unsubscribe/{tracking_token}" if tracking_token else "https://www.hwbcleaning.com/unsubscribe"
     return f"""<div class="hwb-letterhead" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; padding: 32px 36px; border: 1px solid #e2e8f0; border-radius: 8px; max-width: 760px; margin: 0 auto; background: #ffffff; color: #1e293b; box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
     <!-- 🏛️ MASTHEAD -->
     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2.5px solid #0f172a; padding-bottom: 16px; margin-bottom: 22px;">
@@ -2736,11 +2737,15 @@ def format_marketing_letterhead(body_html: str, tracking_token: str = None) -> s
         {body_html}
     </div>
 
-    <!-- 📜 FOOTER BLOCK -->
-    <div style="border-top: 1px solid #e2e8f0; padding-top: 14px; text-align: center; font-size: 10.5px; color: #64748b; line-height: 1.5;">
+    <!-- 📜 FOOTER BLOCK (CAN-SPAM Act, Texas Anti-Spam & SOC 2 Privacy P2.1 Compliant) -->
+    <div style="border-top: 1px solid #e2e8f0; padding-top: 16px; margin-top: 20px; text-align: center; font-size: 11px; color: #64748b; line-height: 1.6;">
         <strong style="color: #0f172a; letter-spacing: 0.05em;">FIDELITY. SAFETY. RESPECT.</strong><br>
-        Texas Charter #802920409 • CAGE (SAM) #082830635 • Commercial EMR: .43<br>
-        © {current_year} HWB Cleaning Services LLC. ISO 9001:2015 Registered.
+        HWB Cleaning Services LLC • 3342 FM 1827 Ste 8d, McKinney, TX 75071 • Phone: (214) 586-0257<br>
+        Texas Charter #802920409 • CAGE (SAM) #082830635 • Commercial EMR: .43 • ISO 9001:2015 Registered<br>
+        <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #cbd5e1; font-size: 10.5px; color: #94a3b8;">
+            You are receiving this commercial communication as an operational facility contact in Texas.<br>
+            To stop receiving future marketing messages, you may <a href="{unsub_url}" style="color: #2563eb; text-decoration: underline; font-weight: 600;">Unsubscribe Instantly</a> or email <a href="mailto:info@hwbcleaning.com?subject=Unsubscribe" style="color: #2563eb; text-decoration: underline;">info@hwbcleaning.com</a>.
+        </div>
     </div>
     {tracking_pixel_html}
 </div>"""

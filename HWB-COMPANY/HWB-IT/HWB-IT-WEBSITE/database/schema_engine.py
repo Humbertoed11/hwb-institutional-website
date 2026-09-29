@@ -660,7 +660,11 @@ def apply_system_migrations(conn: Any, db_url: Optional[str] = None) -> None:
                 ("026_rack_telemetry_historical_snapshots", "scripts.migrate_026_rack_telemetry_history", "Historical snapshot ledger for 7-rack telemetry, memory rot, Six Sigma SPC, and Pareto distributions"),
                 ("027_multitenant_rls_and_quarantine_ingestion", "scripts.migrate_027_multitenant_rls_and_quarantine_ingestion", "Kernel-level PostgreSQL Row-Level Security (RLS) tenant isolation and quarantine ingestion buffer"),
                 ("028_lead_dataset_cleansing_and_deduplication", "scripts.migrate_028_lead_dataset_cleansing_and_deduplication", "Lead dataset deduplication, PROC-002 phone normalization, state standardization, and valuation backfill"),
-                ("029_lead_industry_facility_classification", "scripts.migrate_029_lead_industry_facility_classification", "Lead industry and facility type classification, lexical parsing, and source purification")
+                ("029_lead_industry_facility_classification", "scripts.migrate_029_lead_industry_facility_classification", "Lead industry and facility type classification, lexical parsing, and source purification"),
+                ("030_purchasing_cooperatives_and_charter_institutions", "scripts.migrate_030_purchasing_cooperatives_and_charter_institutions", "Purchasing cooperatives and TEA charter school institutions registry"),
+                ("031_government_programs_and_certifications", "scripts.migrate_031_government_programs_and_certifications", "Government programs SBA 8(a), HUB, and SDB certifications master registry"),
+                ("032_multitenant_compliance_and_governance", "scripts.migrate_032_multitenant_compliance_and_governance", "Multi-tenant B2G compliance engine, multi-tenant program matching, and 13 CFR § 124 rules"),
+                ("033_live_lead_deduplication", "scripts.migrate_033_live_lead_deduplication", "Live lead dataset deduplication, Golden Master consolidation, child re-parenting, and unique index enforcement")
             ]
 
             for v_tag, mod_path, v_desc in modular_migrations:
