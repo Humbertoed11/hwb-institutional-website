@@ -11,3 +11,4 @@ backup/
 .backups/
 HWB-COMPANY/
 trash-out/
+*.sql

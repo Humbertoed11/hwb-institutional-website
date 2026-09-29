@@ -5,14 +5,14 @@ Standard: HWB-QMS-7.6 Enterprise Architecture Standards & Lean Six Sigma Zero-De
 Authority: Humberto Dominguez (CEO) - Approved 09/29/2026
 Auditors: George (Systems Architect & mbB) & Peter (Data Recovery Custodian)
 
-High-Velocity Indexed Execution:
-Eliminates cartesian joins and uses indexed group matching for sub-second execution.
-1. Re-parents child records (CampaignRecipients, Contacts, GlobalActivities) to clean masters.
-2. Removes lingering foreign key constraints on duplicate shells.
-3. Purges all 14,704 duplicate shells (is_duplicate = TRUE) in a single bulk operation.
-4. Enforces composite unique index idx_leads_unique_location.
-5. Auto-aligns all PostgreSQL sequences.
-6. Records migration in schema_migrations.
+High-Velocity Indexed Execution with Schema Defensive Guards:
+1. Verifies table/column existence before execution (prevents PostgreSQL aborted transaction locks).
+2. Uses indexed group keys for fast execution.
+3. Re-parents child records (CampaignRecipients, Contacts, GlobalActivities) to clean masters.
+4. Purges all 14,704 duplicate shells (is_duplicate = TRUE).
+5. Enforces composite unique index idx_leads_unique_location.
+6. Auto-aligns all PostgreSQL sequences.
+7. Records migration in schema_migrations.
 """
 
 import os
@@ -33,11 +33,21 @@ load_dotenv(WEBSITE_DIR / ".env")
 DB_URL = os.getenv("DATABASE_URL", "postgresql://hwbdev:hwbpassword@localhost:5432/hwb_dev_db")
 
 
+def table_exists(cur, table_name: str) -> bool:
+    cur.execute("SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = %s;", (table_name,))
+    return cur.fetchone() is not None
+
+
+def column_exists(cur, table_name: str, column_name: str) -> bool:
+    cur.execute("SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = %s AND column_name = %s;", (table_name, column_name))
+    return cur.fetchone() is not None
+
+
 def run_migration(db_url: str = None) -> dict:
     target_url = db_url or DB_URL
     t_start = time.time()
     print("\n==================================================================", flush=True)
-    print("  Applying Migration 033: High-Velocity Indexed Lead Deduplication", flush=True)
+    print("  Applying Migration 033: Hardened High-Speed Lead Deduplication", flush=True)
     print("==================================================================", flush=True)
 
     conn = psycopg2.connect(target_url)
@@ -62,7 +72,7 @@ def run_migration(db_url: str = None) -> dict:
 
             print(f"[PRE-FLIGHT] Total Leads: {pre_total:,} | Flagged Duplicates: {pre_duplicates:,} | Active Clean: {pre_clean:,}", flush=True)
 
-            # Ensure index on duplicate_group_id exists for fast join
+            # Ensure index on duplicate_group_id and is_duplicate exists for fast operations
             cur.execute('CREATE INDEX IF NOT EXISTS idx_leads_dup_group ON "Leads" (duplicate_group_id);')
             cur.execute('CREATE INDEX IF NOT EXISTS idx_leads_is_dup ON "Leads" (is_duplicate);')
 
@@ -96,64 +106,71 @@ def run_migration(db_url: str = None) -> dict:
             # STEP 2: FAST INDEXED CHILD RE-PARENTING
             # -------------------------------------------------------------
             print("[STAGE 2] Re-parenting child records using indexed group keys...", flush=True)
-            cur.execute("""
-                UPDATE "CampaignRecipients" cr
-                SET lead_id = m.id
-                FROM "Leads" d
-                JOIN "Leads" m ON m.duplicate_group_id = d.duplicate_group_id 
-                              AND (m.is_duplicate = FALSE OR m.is_duplicate IS NULL)
-                              AND m.id != d.id
-                WHERE cr.lead_id = d.id AND d.is_duplicate = TRUE;
-            """)
-            reparented_campaigns = cur.rowcount
+            reparented_campaigns = 0
+            if table_exists(cur, "CampaignRecipients"):
+                cur.execute("""
+                    UPDATE "CampaignRecipients" cr
+                    SET lead_id = m.id
+                    FROM "Leads" d
+                    JOIN "Leads" m ON m.duplicate_group_id = d.duplicate_group_id 
+                                  AND (m.is_duplicate = FALSE OR m.is_duplicate IS NULL)
+                                  AND m.id != d.id
+                    WHERE cr.lead_id = d.id AND d.is_duplicate = TRUE;
+                """)
+                reparented_campaigns = cur.rowcount
 
-            cur.execute("""
-                UPDATE "Contacts" c
-                SET lead_id = m.id
-                FROM "Leads" d
-                JOIN "Leads" m ON m.duplicate_group_id = d.duplicate_group_id 
-                              AND (m.is_duplicate = FALSE OR m.is_duplicate IS NULL)
-                              AND m.id != d.id
-                WHERE c.lead_id = d.id AND d.is_duplicate = TRUE;
-            """)
-            reparented_contacts = cur.rowcount
+            reparented_contacts = 0
+            if table_exists(cur, "Contacts"):
+                cur.execute("""
+                    UPDATE "Contacts" c
+                    SET lead_id = m.id
+                    FROM "Leads" d
+                    JOIN "Leads" m ON m.duplicate_group_id = d.duplicate_group_id 
+                                  AND (m.is_duplicate = FALSE OR m.is_duplicate IS NULL)
+                                  AND m.id != d.id
+                    WHERE c.lead_id = d.id AND d.is_duplicate = TRUE;
+                """)
+                reparented_contacts = cur.rowcount
 
-            cur.execute("""
-                UPDATE "GlobalActivities" ga
-                SET parent_id = m.id
-                FROM "Leads" d
-                JOIN "Leads" m ON m.duplicate_group_id = d.duplicate_group_id 
-                              AND (m.is_duplicate = FALSE OR m.is_duplicate IS NULL)
-                              AND m.id != d.id
-                WHERE ga.parent_id = d.id AND ga.parent_type = 'Lead' AND d.is_duplicate = TRUE;
-            """)
-            reparented_activities = cur.rowcount
+            reparented_activities = 0
+            if table_exists(cur, "GlobalActivities"):
+                cur.execute("""
+                    UPDATE "GlobalActivities" ga
+                    SET parent_id = m.id
+                    FROM "Leads" d
+                    JOIN "Leads" m ON m.duplicate_group_id = d.duplicate_group_id 
+                                  AND (m.is_duplicate = FALSE OR m.is_duplicate IS NULL)
+                                  AND m.id != d.id
+                    WHERE ga.parent_id = d.id AND ga.parent_type = 'Lead' AND d.is_duplicate = TRUE;
+                """)
+                reparented_activities = cur.rowcount
             print(f"  -> Re-parented: {reparented_campaigns:,} campaigns, {reparented_contacts:,} contacts, {reparented_activities:,} activities.", flush=True)
 
             # -------------------------------------------------------------
             # STEP 3: CLEAN REMAINING ORPHANED CHILD REFERENCES & PURGE DUPLICATES
             # -------------------------------------------------------------
             print("[STAGE 3] Purging redundant duplicate shells in bulk...", flush=True)
-            cur.execute("""
-                DELETE FROM "CampaignRecipients" 
-                WHERE lead_id IN (SELECT id FROM "Leads" WHERE is_duplicate = TRUE);
-            """)
-            cur.execute("""
-                DELETE FROM "Contacts" 
-                WHERE lead_id IN (SELECT id FROM "Leads" WHERE is_duplicate = TRUE);
-            """)
-            try:
+            if table_exists(cur, "CampaignRecipients"):
+                cur.execute("""
+                    DELETE FROM "CampaignRecipients" 
+                    WHERE lead_id IN (SELECT id FROM "Leads" WHERE is_duplicate = TRUE);
+                """)
+            if table_exists(cur, "Contacts"):
+                cur.execute("""
+                    DELETE FROM "Contacts" 
+                    WHERE lead_id IN (SELECT id FROM "Leads" WHERE is_duplicate = TRUE);
+                """)
+            if table_exists(cur, "ApiBillingTracker"):
                 cur.execute("""
                     DELETE FROM "ApiBillingTracker" 
                     WHERE lead_id IN (SELECT id FROM "Leads" WHERE is_duplicate = TRUE);
                 """)
-            except Exception:
-                pass
-            cur.execute("""
-                DELETE FROM "GlobalActivities" 
-                WHERE parent_id IN (SELECT id FROM "Leads" WHERE is_duplicate = TRUE) 
-                  AND parent_type = 'Lead';
-            """)
+            if table_exists(cur, "GlobalActivities"):
+                cur.execute("""
+                    DELETE FROM "GlobalActivities" 
+                    WHERE parent_id IN (SELECT id FROM "Leads" WHERE is_duplicate = TRUE) 
+                      AND parent_type = 'Lead';
+                """)
 
             cur.execute('DELETE FROM "Leads" WHERE is_duplicate = TRUE;')
             deleted_count = cur.rowcount
