@@ -261,10 +261,75 @@ def print_dashboard(data: Dict[str, Any], conv_id: str):
     print("=" * 76 + "\n")
 
 
+def record_memory_rot_to_db(db_url: str = None) -> Dict[str, Any]:
+    """Analyzes latest transcript and persists live Rack 1 snapshot into RackTelemetryHistory in PostgreSQL."""
+    import psycopg2
+    from psycopg2.extras import Json
+    
+    target_url = db_url or os.environ.get('DATABASE_URL', 'postgresql://hwbdev:hwbpassword@localhost:5432/hwb_dev_db')
+    conv_dir = find_latest_transcript_dir()
+    if not conv_dir or not os.path.exists(conv_dir):
+        return {"status": "error", "message": "Could not locate active conversation directory"}
+    
+    conv_id = os.path.basename(conv_dir)
+    transcript_p = os.path.join(conv_dir, ".system_generated", "logs", "transcript.jsonl")
+    data = analyze_transcript(transcript_p)
+    if "error" in data:
+        return {"status": "error", "message": data["error"]}
+    
+    rot = data["rot_index"]
+    m = data["metrics"]
+    bloat = m["bloat"]["score"]
+    
+    conn = psycopg2.connect(target_url)
+    try:
+        with conn.cursor() as cur:
+            details = {
+                "conversation_id": conv_id,
+                "composite_score": rot,
+                "status": data["status_label"],
+                "status_badge": data["status_badge"],
+                "recommendation": data["recommendation"],
+                "bloat_ratio": f"{bloat}%",
+                "dilution_ratio": f"{m['dilution']['score']}%",
+                "lost_in_middle": f"{m['lost_in_middle']['score']}%",
+                "cognitive_drift": f"{m['drift']['score']}%",
+                "transcript_size_mb": m["bloat"]["file_size_mb"],
+                "total_steps": m["bloat"]["total_steps"],
+                "tool_calls": m["bloat"]["tool_calls"],
+                "effective_focus_pct": m["dilution"]["attention_retention_est"],
+                "governance_compliance_pct": m["drift"]["governance_compliance_pct"],
+                "analyzed_at": datetime.now().isoformat()
+            }
+            status_tag_clean = data["status_label"].split(" / ")[0].replace("🟢 ", "").replace("🟡 ", "").replace("🟠 ", "").replace("🔴 ", "").strip()
+            cur.execute("""
+                INSERT INTO "RackTelemetryHistory" 
+                (rack_number, rack_name, metric_category, score_value, secondary_value, status_tag, recorded_by, session_id, details_json, timestamp)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW());
+            """, (
+                1,
+                "Cognitive Health & Memory Rot Meter",
+                "MEMORY_ROT",
+                rot,
+                bloat,
+                status_tag_clean,
+                "George (Systems Architect)",
+                f"ROT-{conv_id[:8]}",
+                Json(details)
+            ))
+            conn.commit()
+            return {"status": "success", "data": details}
+    finally:
+        conn.close()
+
+
 def main():
     conv_dir = ""
-    if len(sys.argv) > 1:
-        arg = sys.argv[1]
+    save_to_db = "--no-save" not in sys.argv
+    clean_args = [a for a in sys.argv[1:] if not a.startswith("--")]
+
+    if clean_args:
+        arg = clean_args[0]
         if os.path.isdir(arg):
             conv_dir = arg
         else:
@@ -282,6 +347,14 @@ def main():
     res = analyze_transcript(transcript_p)
     print_dashboard(res, conv_id)
 
+    if save_to_db:
+        db_res = record_memory_rot_to_db()
+        if db_res.get("status") == "success":
+            print(f"✓ Recorded live empirical Rack 1 snapshot to PostgreSQL RackTelemetryHistory (Score: {res['rot_index']}%)")
+        else:
+            print(f"⚠️ Note: Database recording skipped ({db_res.get('message')})")
+
 
 if __name__ == "__main__":
     main()
+

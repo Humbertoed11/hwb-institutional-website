@@ -357,6 +357,25 @@ def sync_cli_conversations():
     except Exception as e:
         print(f"Error syncing CLI conversations: {e}")
 
+def sync_memory_rot():
+    print("[SYNC] Analyzing live Memory Rot & Cognitive Health (Rack 1)...")
+    try:
+        import sys
+        if "/app/scripts" not in sys.path and os.path.exists("/app/scripts"):
+            sys.path.insert(0, "/app/scripts")
+        scripts_dir = os.path.dirname(os.path.abspath(__file__))
+        if scripts_dir not in sys.path:
+            sys.path.insert(0, scripts_dir)
+        from memory_rot_meter import record_memory_rot_to_db
+        res = record_memory_rot_to_db(db_url=DB_URL)
+        if res.get("status") == "success":
+            d = res["data"]
+            print(f"  -> SUCCESS: Memory Rot Index: {d['composite_score']}% ({d['status']})")
+        else:
+            print(f"  -> [INFO] Memory rot analysis note: {res.get('message')}")
+    except Exception as e:
+        print(f"  -> [WARNING] Failed to sync memory rot: {e}")
+
 def sync_rack_telemetry_snapshot():
     print("[SYNC] Ingesting 8-Rack Historical Telemetry Snapshot into RackTelemetryHistory...")
     try:
@@ -380,6 +399,7 @@ def run_all():
     sync_system_state()
     sync_problems_to_solve()
     sync_cli_conversations()
+    sync_memory_rot()
     sync_rack_telemetry_snapshot()
     print("--- SUCCESS: All neural cores synchronized. ---")
 
