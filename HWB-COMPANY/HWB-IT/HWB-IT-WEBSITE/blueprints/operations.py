@@ -54,6 +54,7 @@ def admin_operations():
     safety_manuals, safety_jhas, safety_incidents = [], [], []
     construction_bids = []
     institutional_bids, inst_bids_count = [], 0
+    government_programs, gov_programs_count = [], 0
     marketing_campaigns, mkt_campaigns_count = [], 0
     campaign_recipients = []
     pending_outbox_items, pending_outbox_count = [], 0
@@ -683,6 +684,33 @@ def admin_operations():
             employees, employees_count, active_employees_count = [], 0, 0
             active_technicians = []
             total_weekly_labor_hours, total_biweekly_payroll = 0.0, 0.0
+
+        # 4g. GOVERNMENT PROGRAMS & CERTIFICATIONS REGISTRY (Migration 031 / HWB-QMS-8.9)
+        try:
+            with conn.cursor() as cur:
+                prog_where_clauses = []
+                prog_params = []
+                if search_q and active_view == 'programs':
+                    prog_where_clauses.append("(program_code ILIKE %s OR program_name ILIKE %s OR sponsoring_agency ILIKE %s OR jurisdiction ILIKE %s OR status ILIKE %s)")
+                    param_p = f"%{search_q}%"
+                    prog_params.extend([param_p, param_p, param_p, param_p, param_p])
+                prog_where_str = ("WHERE " + " AND ".join(prog_where_clauses)) if prog_where_clauses else ""
+
+                cur.execute(f'SELECT COUNT(*) FROM "GovernmentPrograms" {prog_where_str}', tuple(prog_params))
+                prog_count_row = cur.fetchone()
+                gov_programs_count = prog_count_row[0] if prog_count_row else 0
+
+                cur.execute(f'''
+                    SELECT * FROM "GovernmentPrograms"
+                    {prog_where_str}
+                    ORDER BY readiness_score DESC, id ASC
+                ''', tuple(prog_params))
+                government_programs = cur.fetchall()
+        except Exception as prog_err:
+            conn.rollback()
+            current_app.logger.warning(f"[OPERATIONS] GovernmentPrograms fetch warning: {prog_err}")
+            government_programs = []
+            gov_programs_count = 0
     finally:
         if "conn" in locals() and conn: conn.close()
 
@@ -710,11 +738,12 @@ def admin_operations():
                 'active_technicians': [serialize_row(t) for t in active_technicians] if active_technicians else [],
                 'applicants': [serialize_row(a) for a in applicants] if applicants else [],
                 'subcontractors': [serialize_row(s) for s in subcontractors] if subcontractors else [],
+                'government_programs': [serialize_row(gp) for gp in government_programs] if government_programs else [],
                 'system_users': [serialize_row(u) for u in system_users] if system_users else [],
                 'facility_types': FACILITY_TYPES,
                 'lead_sources': LEAD_SOURCES,
                 'priority_levels': PRIORITY_LEVELS,
-                'counts': {'leads': leads_count or 0, 'accounts': len(clients) if clients else 0, 'work_orders': len(work_orders) if work_orders else 0, 'bids': len(construction_bids) if construction_bids else 0, 'institutional_bids': inst_bids_count, 'campaigns': mkt_campaigns_count, 'pending_outbox': pending_outbox_count, 'employees': employees_count, 'applicants': applicants_count, 'subcontractors': subcontractors_count},
+                'counts': {'leads': leads_count or 0, 'accounts': len(clients) if clients else 0, 'work_orders': len(work_orders) if work_orders else 0, 'bids': len(construction_bids) if construction_bids else 0, 'institutional_bids': inst_bids_count, 'programs': gov_programs_count, 'campaigns': mkt_campaigns_count, 'pending_outbox': pending_outbox_count, 'employees': employees_count, 'applicants': applicants_count, 'subcontractors': subcontractors_count},
                 'active_view': active_view
             })
         except Exception as e:
@@ -810,6 +839,7 @@ def admin_operations():
                          active_technicians=active_technicians,
                          construction_bids=construction_bids, bids_count=bids_count,
                          institutional_bids=institutional_bids, inst_bids_count=inst_bids_count,
+                         government_programs=government_programs, gov_programs_count=gov_programs_count,
                          general_contractors=general_contractors, general_contractors_count=general_contractors_count,
                          marketing_campaigns=marketing_campaigns, mkt_campaigns_count=mkt_campaigns_count,
                          campaign_recipients=campaign_recipients, active_campaign_id=active_campaign_id,

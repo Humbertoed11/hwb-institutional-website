@@ -1922,6 +1922,209 @@
         </div>
         {% endif %}
 
+        <!-- View: Government Programs & Certification Compliance Registry (Migration 031 / HWB-QMS-8.9) -->
+        {% if current_user.role != 'Sales' %}
+        <div id="view-programs" class="isc-view" style="display: {% if active_view == 'programs' %}block{% else %}none{% endif %};">
+            <!-- Programs & Certifications KPI Bar -->
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem;">
+                <div class="isc-card" style="padding: 1.15rem; border-left: 4px solid #0d9488; background: #ffffff;">
+                    <div style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: var(--slate-500); letter-spacing: 0.05em;">Programs In Scope</div>
+                    <div style="font-size: 1.6rem; font-weight: 900; color: var(--slate-900); margin-top: 0.25rem;">{{ government_programs|length }} <span style="font-size: 0.8rem; font-weight: 700; color: #0d9488;">Programs</span></div>
+                    <div style="font-size: 0.72rem; color: var(--slate-500); margin-top: 0.25rem;">SBA 8(a), HUB, NCTRCA, SDB, DFW MSDC</div>
+                </div>
+                <div class="isc-card" style="padding: 1.15rem; border-left: 4px solid #2563eb; background: #ffffff;">
+                    <div style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: var(--slate-500); letter-spacing: 0.05em;">SBA 8(a) Sole-Source Cap</div>
+                    <div style="font-size: 1.6rem; font-weight: 900; color: #2563eb; margin-top: 0.25rem;">$4.5M <span style="font-size: 0.8rem; font-weight: 700; color: var(--slate-400);">/ Award</span></div>
+                    <div style="font-size: 0.72rem; color: var(--slate-500); margin-top: 0.25rem;">NAICS 561720 &bull; Direct Federal Award</div>
+                </div>
+                <div class="isc-card" style="padding: 1.15rem; border-left: 4px solid #d97706; background: #ffffff;">
+                    <div style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: var(--slate-500); letter-spacing: 0.05em;">Texas HUB Fast-Track</div>
+                    <div style="font-size: 1.6rem; font-weight: 900; color: #d97706; margin-top: 0.25rem;">$50,000 <span style="font-size: 0.8rem; font-weight: 700; color: var(--slate-400);">PO Limit</span></div>
+                    <div style="font-size: 0.72rem; color: var(--slate-500); margin-top: 0.25rem;">Texas Local Gov Code § 252.0215</div>
+                </div>
+                <div class="isc-card" style="padding: 1.15rem; border-left: 4px solid #7c3aed; background: #ffffff;">
+                    <div style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: var(--slate-500); letter-spacing: 0.05em;">Dallas / NTTA M/WBE Quota</div>
+                    <div style="font-size: 1.6rem; font-weight: 900; color: #7c3aed; margin-top: 0.25rem;">23.8% <span style="font-size: 0.8rem; font-weight: 700; color: var(--slate-400);">Carve-Out</span></div>
+                    <div style="font-size: 0.72rem; color: var(--slate-500); margin-top: 0.25rem;">$10.89M Pool &bull; NCTRCA Verified</div>
+                </div>
+            </div>
+
+            <!-- Master Table Card -->
+            <div class="isc-card fluid-data">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem;">
+                    <div>
+                        <h2 style="font-size: 1.2rem; font-weight: 800; color: var(--slate-900); margin: 0;">Government Programs &amp; Diversity Certification Registry</h2>
+                        <p style="font-size: 0.78rem; color: var(--slate-500); margin-top: 0.25rem;">Active tracking of federal, state, and regional certifications for sole-source awards, discretionary purchases, and prime subcontracting carve-outs.</p>
+                    </div>
+                    <div style="display: flex; gap: 0.75rem; align-items: center;">
+                        <form method="GET" action="{{ url_for('admin_operations') }}" style="display: flex; gap: 0.5rem; align-items: center;">
+                            <input type="hidden" name="view" value="programs">
+                            <input type="text" name="q" value="{{ search_q if active_view == 'programs' else '' }}" placeholder="Search program, agency, jurisdiction..." style="height: 36px; padding: 0 1rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.82rem; width: 280px;">
+                            <button type="submit" class="isc-btn isc-btn-primary" style="height: 36px; padding: 0 1rem; font-size: 0.78rem;">Filter</button>
+                            {% if search_q and active_view == 'programs' %}
+                            <a href="{{ url_for('admin_operations', view='programs') }}" class="isc-btn isc-btn-outline" style="height: 36px; font-size: 0.78rem;">Reset</a>
+                            {% endif %}
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Programs Data Grid -->
+                <div style="overflow-x: auto; border: 1px solid var(--slate-200); border-radius: 6px;">
+                    <table class="isc-grid" style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                        <thead>
+                            <tr style="background: var(--slate-50); border-bottom: 2px solid var(--slate-200);">
+                                <th style="padding: 0.75rem 1rem; text-align: left; font-size: 0.7rem; font-weight: 800; color: var(--slate-500); text-transform: uppercase;">Program / Code</th>
+                                <th style="padding: 0.75rem 1rem; text-align: left; font-size: 0.7rem; font-weight: 800; color: var(--slate-500); text-transform: uppercase;">Agency &amp; Jurisdiction</th>
+                                <th style="padding: 0.75rem 1rem; text-align: left; font-size: 0.7rem; font-weight: 800; color: var(--slate-500); text-transform: uppercase;">Strategic Benefit &amp; Revenue Tier</th>
+                                <th style="padding: 0.75rem 1rem; text-align: left; font-size: 0.7rem; font-weight: 800; color: var(--slate-500); text-transform: uppercase;">Runway Rule / Waiver Status</th>
+                                <th style="padding: 0.75rem 1rem; text-align: left; font-size: 0.7rem; font-weight: 800; color: var(--slate-500); text-transform: uppercase;">Readiness</th>
+                                <th style="padding: 0.75rem 1rem; text-align: right; font-size: 0.7rem; font-weight: 800; color: var(--slate-500); text-transform: uppercase;">Portal &amp; Evidence Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for prog in government_programs %}
+                            <tr style="border-bottom: 1px solid var(--slate-200); transition: background 0.15s;">
+                                <td style="padding: 1rem; vertical-align: top;">
+                                    <div style="display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.35rem;">
+                                        <span class="sigma-id-badge" style="background: #0f172a; color: #38bdf8; font-family: monospace; font-size: 0.7rem; padding: 0.2rem 0.5rem; border-radius: 4px;">{{ prog.program_code }}</span>
+                                        <span style="font-weight: 800; color: var(--slate-900); font-size: 0.9rem;">{{ prog.program_name }}</span>
+                                    </div>
+                                    <div style="font-size: 0.72rem; color: var(--slate-500); line-height: 1.4;">{{ prog.notes }}</div>
+                                </td>
+                                <td style="padding: 1rem; vertical-align: top;">
+                                    <div style="font-weight: 700; color: var(--slate-800);">{{ prog.sponsoring_agency }}</div>
+                                    <div style="margin-top: 0.25rem;">
+                                        <span class="isc-badge" style="background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; font-size: 0.65rem; font-weight: 800; padding: 0.15rem 0.45rem; border-radius: 4px;">
+                                            <i class="fas fa-globe-americas"></i> {{ prog.jurisdiction }}
+                                        </span>
+                                    </div>
+                                    <div style="font-size: 0.7rem; color: var(--slate-400); margin-top: 0.35rem;">NAICS: {{ prog.primary_naics }}</div>
+                                </td>
+                                <td style="padding: 1rem; vertical-align: top;">
+                                    <div style="font-weight: 800; color: #047857; font-size: 0.85rem;">{{ prog.benefit_tier }}</div>
+                                    {% if prog.net_worth_limit %}
+                                    <div style="font-size: 0.7rem; color: var(--slate-500); margin-top: 0.3rem;">
+                                        <i class="fas fa-scale-balanced"></i> Net Worth Cap: <strong>${{ "{:,.2f}".format(prog.net_worth_limit) }}</strong>
+                                    </div>
+                                    {% endif %}
+                                </td>
+                                <td style="padding: 1rem; vertical-align: top;">
+                                    <div style="font-size: 0.78rem; font-weight: 700; color: var(--slate-700);">{{ prog.operating_requirement }}</div>
+                                    <div style="margin-top: 0.35rem;">
+                                        {% if 'Waiver' in prog.status %}
+                                        <span class="isc-badge" style="background: #fef3c7; color: #92400e; border: 1px solid #fde68a; font-size: 0.65rem; font-weight: 800; padding: 0.15rem 0.5rem; border-radius: 4px;">
+                                            <i class="fas fa-file-signature"></i> {{ prog.status }}
+                                        </span>
+                                        {% elif 'Active' in prog.status %}
+                                        <span class="isc-badge" style="background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; font-size: 0.65rem; font-weight: 800; padding: 0.15rem 0.5rem; border-radius: 4px;">
+                                            <i class="fas fa-check-circle"></i> {{ prog.status }}
+                                        </span>
+                                        {% else %}
+                                        <span class="isc-badge" style="background: #f1f5f9; color: var(--slate-700); border: 1px solid var(--slate-300); font-size: 0.65rem; font-weight: 800; padding: 0.15rem 0.5rem; border-radius: 4px;">
+                                            <i class="fas fa-clock"></i> {{ prog.status }}
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td style="padding: 1rem; vertical-align: top;">
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <div style="flex: 1; background: var(--slate-100); height: 8px; border-radius: 4px; overflow: hidden; width: 60px;">
+                                            <div style="background: {% if prog.readiness_score >= 90 %}#10b981{% elif prog.readiness_score >= 80 %}#3b82f6{% else %}#f59e0b{% endif %}; height: 100%; width: {{ prog.readiness_score }}%;"></div>
+                                        </div>
+                                        <span style="font-weight: 800; font-size: 0.8rem; color: var(--slate-800);">{{ prog.readiness_score }}%</span>
+                                    </div>
+                                </td>
+                                <td style="padding: 1rem; vertical-align: top; text-align: right;">
+                                    <div style="display: flex; gap: 0.4rem; justify-content: flex-end; flex-wrap: wrap;">
+                                        {% if prog.portal_url %}
+                                        <a href="{{ prog.portal_url }}" target="_blank" class="isc-btn isc-btn-outline" style="height: 28px; padding: 0 0.65rem; font-size: 0.72rem; border-radius: 4px;" title="Open Official Government Certification Portal">
+                                            <i class="fas fa-external-link-alt"></i> Official Portal
+                                        </a>
+                                        {% endif %}
+                                        <button type="button" class="isc-btn isc-btn-primary" style="height: 28px; padding: 0 0.65rem; font-size: 0.72rem; border-radius: 4px; background: #0f172a;" onclick="alert('Program Requirements for {{ prog.program_name }}:\n\n{{ prog.notes }}\n\nAgency: {{ prog.sponsoring_agency }}\nRunway: {{ prog.operating_requirement }}')" title="Inspect Required Evidence Package">
+                                            <i class="fas fa-clipboard-list"></i> Evidence Box
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="6" style="padding: 3rem; text-align: center; color: var(--slate-500);">
+                                    <i class="fas fa-stamp" style="font-size: 2rem; color: var(--slate-300); margin-bottom: 1rem; display: block;"></i>
+                                    No government programs found matching your search.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Architectural Blueprint: 4 Modules for Automated Program Intelligence -->
+            <div style="margin-top: 2rem; display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem;">
+                <div class="isc-card" style="padding: 1.75rem; border-top: 4px solid #2563eb;">
+                    <div style="font-size: 0.72rem; font-weight: 900; text-transform: uppercase; color: #2563eb; letter-spacing: 0.08em; margin-bottom: 0.5rem;">
+                        <i class="fas fa-radar"></i> Module 1: Program Discovery &amp; Crawler Engine
+                    </div>
+                    <h3 style="font-size: 1.05rem; font-weight: 800; color: var(--slate-900); margin-bottom: 0.5rem;">Autonomous Federal &amp; State Program Scanning</h3>
+                    <p style="font-size: 0.8rem; color: var(--slate-600); line-height: 1.5; margin-bottom: 1rem;">
+                        An autonomous background daemon designed to monitor and index changes across official federal and Texas state small business portals:
+                    </p>
+                    <ul style="font-size: 0.78rem; color: var(--slate-700); line-height: 1.6; padding-left: 1.25rem;">
+                        <li><strong>SBA Program Notices:</strong> Tracks CFR updates on 13 CFR § 124 (8(a) thresholds, mentor-protégé joint ventures).</li>
+                        <li><strong>Texas Comptroller CMBL Scraper:</strong> Monitors NIGP commodity code solicitations for 910-39 (Janitorial) and 962-58 (Post-Construction).</li>
+                        <li><strong>Regional Diversity Updates:</strong> Tracks NCTRCA, City of Dallas, and DFW Airport MWBE inclusion mandates.</li>
+                    </ul>
+                </div>
+
+                <div class="isc-card" style="padding: 1.75rem; border-top: 4px solid #0d9488;">
+                    <div style="font-size: 0.72rem; font-weight: 900; text-transform: uppercase; color: #0d9488; letter-spacing: 0.08em; margin-bottom: 0.5rem;">
+                        <i class="fas fa-sliders"></i> Module 2: Qualification Matching &amp; Eligibility Engine
+                    </div>
+                    <h3 style="font-size: 1.05rem; font-weight: 800; color: var(--slate-900); margin-bottom: 0.5rem;">Automated Poka-Yoke Eligibility Auditing</h3>
+                    <p style="font-size: 0.8rem; color: var(--slate-600); line-height: 1.5; margin-bottom: 1rem;">
+                        Algorithmic verification of HWB corporate data against statutory qualification criteria before any application is submitted:
+                    </p>
+                    <ul style="font-size: 0.78rem; color: var(--slate-700); line-height: 1.6; padding-left: 1.25rem;">
+                        <li><strong>Personal Net Worth Floor:</strong> Confirms Form 413 personal assets remain under $850,000 (excluding primary home &amp; equity).</li>
+                        <li><strong>Two-Year Operating Runway Audit:</strong> Validates filed 2025 business tax returns and calculates waiver readiness score.</li>
+                        <li><strong>51% Sovereign Control Verification:</strong> Scans the Texas LLC Operating Agreement for negative veto covenants.</li>
+                    </ul>
+                </div>
+
+                <div class="isc-card" style="padding: 1.75rem; border-top: 4px solid #d97706;">
+                    <div style="font-size: 0.72rem; font-weight: 900; text-transform: uppercase; color: #d97706; letter-spacing: 0.08em; margin-bottom: 0.5rem;">
+                        <i class="fas fa-scale-balanced"></i> Module 3: Empirical Legal Sources &amp; Statute Index
+                    </div>
+                    <h3 style="font-size: 1.05rem; font-weight: 800; color: var(--slate-900); margin-bottom: 0.5rem;">Verifiable Statutory Grounding</h3>
+                    <p style="font-size: 0.8rem; color: var(--slate-600); line-height: 1.5; margin-bottom: 1rem;">
+                        Direct statutory citations hardcoded into the SigmaFidelity™ compliance index to replace assumptions with verified legal truth:
+                    </p>
+                    <ul style="font-size: 0.78rem; color: var(--slate-700); line-height: 1.6; padding-left: 1.25rem;">
+                        <li><strong>Federal 8(a) Regulations:</strong> 13 CFR § 124.101 through § 124.108 (Social &amp; Economic Disadvantage, Runway Waiver).</li>
+                        <li><strong>Texas Discretionary Purchasing:</strong> Texas Local Government Code § 252.0215 (Mandatory 2-HUB rotation under $50,000).</li>
+                        <li><strong>City of Dallas BID Policy:</strong> Council Resolution 20-0441 (Mandatory 23.8% M/WBE subcontracting goal).</li>
+                    </ul>
+                </div>
+
+                <div class="isc-card" style="padding: 1.75rem; border-top: 4px solid #7c3aed;">
+                    <div style="font-size: 0.72rem; font-weight: 900; text-transform: uppercase; color: #7c3aed; letter-spacing: 0.08em; margin-bottom: 0.5rem;">
+                        <i class="fas fa-network-wired"></i> Module 4: Government API Integration Hub
+                    </div>
+                    <h3 style="font-size: 1.05rem; font-weight: 800; color: var(--slate-900); margin-bottom: 0.5rem;">Direct Government API Processing</h3>
+                    <p style="font-size: 0.8rem; color: var(--slate-600); line-height: 1.5; margin-bottom: 1rem;">
+                        Direct machine-to-machine integrations to feed live opportunities into the Sales Desk and Operations Dashboard:
+                    </p>
+                    <ul style="font-size: 0.78rem; color: var(--slate-700); line-height: 1.6; padding-left: 1.25rem;">
+                        <li><strong>SAM.gov Entity Management API:</strong> Live sync of HWB’s CAGE code, UEI status, and SDB self-certification.</li>
+                        <li><strong>USAspending REST API v2:</strong> Ingests expiring federal custodial awards across Texas military and civilian hubs.</li>
+                        <li><strong>B2Gnow Diversity Compliance API:</strong> Live monitoring of prime contractor subcontracting compliance on City of Dallas contracts.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
         <!-- View: Marketing Department & Campaign Console (HWB-QMS-8.0 / HWB-SAL-2026-001) -->
         {% if current_user.role != 'Sales' %}
         <div id="view-marketing" class="isc-view" style="display: {% if active_view == 'marketing' %}block{% else %}none{% endif %};">
