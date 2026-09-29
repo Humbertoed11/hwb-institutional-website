@@ -5,14 +5,15 @@ Standard: HWB-QMS-7.6 Enterprise Architecture Standards & Lean Six Sigma Zero-De
 Authority: Humberto Dominguez (CEO) - Approved 09/29/2026
 Auditors: George (Systems Architect & mbB) & Peter (Data Recovery Custodian)
 
-High-Velocity Indexed Execution with Schema Defensive Guards:
-1. Verifies table/column existence before execution (prevents PostgreSQL aborted transaction locks).
-2. Uses indexed group keys for fast execution.
-3. Re-parents child records (CampaignRecipients, Contacts, GlobalActivities) to clean masters.
-4. Purges all 14,704 duplicate shells (is_duplicate = TRUE).
-5. Enforces composite unique index idx_leads_unique_location.
-6. Auto-aligns all PostgreSQL sequences.
-7. Records migration in schema_migrations.
+High-Velocity Indexed Execution with Schema Defensive Guards & Native Sequence Sync:
+1. Aligns all sequences using native pg_get_serial_sequence.
+2. Verifies table/column existence before execution.
+3. Uses indexed group keys for fast execution.
+4. Re-parents child records (CampaignRecipients, Contacts, GlobalActivities) to clean masters.
+5. Purges all 14,704 duplicate shells (is_duplicate = TRUE).
+6. Enforces composite unique index idx_leads_unique_location.
+7. Aligns all sequences post-purge.
+8. Records migration in schema_migrations.
 """
 
 import os
@@ -38,24 +39,43 @@ def table_exists(cur, table_name: str) -> bool:
     return cur.fetchone() is not None
 
 
-def column_exists(cur, table_name: str, column_name: str) -> bool:
-    cur.execute("SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = %s AND column_name = %s;", (table_name, column_name))
-    return cur.fetchone() is not None
+def align_sequences(cur):
+    """Aligns all PostgreSQL primary key sequences using native pg_get_serial_sequence."""
+    align_sql = """
+    DO $$ DECLARE
+        r RECORD;
+        seq TEXT;
+    BEGIN
+        FOR r IN (
+            SELECT table_name, column_name 
+            FROM information_schema.columns 
+            WHERE column_default LIKE 'nextval(%' AND table_schema = 'public'
+        ) LOOP
+            seq := pg_get_serial_sequence('"' || r.table_name || '"', r.column_name);
+            IF seq IS NOT NULL THEN
+                EXECUTE 'SELECT setval(''' || seq || ''', COALESCE(MAX("' || r.column_name || '"), 1)) FROM "' || r.table_name || '"';
+            END IF;
+        END LOOP;
+    END $$;
+    """
+    cur.execute(align_sql)
 
 
 def run_migration(db_url: str = None) -> dict:
     target_url = db_url or DB_URL
     t_start = time.time()
     print("\n==================================================================", flush=True)
-    print("  Applying Migration 033: Hardened High-Speed Lead Deduplication", flush=True)
+    print("  Applying Migration 033: Hardened Lead Deduplication & Sequence Sync", flush=True)
     print("==================================================================", flush=True)
 
     conn = psycopg2.connect(target_url)
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             # -------------------------------------------------------------
-            # STEP 0: PRE-FLIGHT TELEMETRY AUDIT
+            # STEP 0: PRE-FLIGHT ALIGNMENT & TELEMETRY AUDIT
             # -------------------------------------------------------------
+            align_sequences(cur)
+
             cur.execute('SELECT COUNT(*) as total FROM "Leads";')
             pre_total = cur.fetchone()["total"]
 
@@ -72,7 +92,6 @@ def run_migration(db_url: str = None) -> dict:
 
             print(f"[PRE-FLIGHT] Total Leads: {pre_total:,} | Flagged Duplicates: {pre_duplicates:,} | Active Clean: {pre_clean:,}", flush=True)
 
-            # Ensure index on duplicate_group_id and is_duplicate exists for fast operations
             cur.execute('CREATE INDEX IF NOT EXISTS idx_leads_dup_group ON "Leads" (duplicate_group_id);')
             cur.execute('CREATE INDEX IF NOT EXISTS idx_leads_is_dup ON "Leads" (is_duplicate);')
 
@@ -189,23 +208,10 @@ def run_migration(db_url: str = None) -> dict:
             """)
 
             # -------------------------------------------------------------
-            # STEP 5: ALIGN POSTGRESQL SEQUENCES
+            # STEP 5: POST-PURGE SEQUENCE AUTO-ALIGNMENT
             # -------------------------------------------------------------
-            print("[STAGE 5] Auto-aligning PostgreSQL sequences...", flush=True)
-            align_sql = """
-            DO $$ DECLARE
-                r RECORD;
-            BEGIN
-                FOR r IN (
-                    SELECT table_name, column_name, column_default 
-                    FROM information_schema.columns 
-                    WHERE column_default LIKE 'nextval(%' AND table_schema = 'public'
-                ) LOOP
-                    EXECUTE 'SELECT setval(''' || substring(r.column_default from '''(.*)''' ) || ''', COALESCE(MAX(' || r.column_name || '), 1)) FROM "' || r.table_name || '"';
-                END LOOP;
-            END $$;
-            """
-            cur.execute(align_sql)
+            print("[STAGE 5] Re-aligning all PostgreSQL sequences post-purge...", flush=True)
+            align_sequences(cur)
 
             # -------------------------------------------------------------
             # STEP 6: POST-FLIGHT AUDIT & TELEMETRY
@@ -233,10 +239,17 @@ def run_migration(db_url: str = None) -> dict:
                 ON CONFLICT (version) DO NOTHING;
             """)
 
-            cur.execute("""
-                INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description, timestamp)
-                VALUES (1, 'System', '[LIVE-LEAD-DEDUPLICATION]', %s, NOW());
-            """, (f"Migration 033: Purged {deleted_count:,} duplicate shells. Clean leads: {post_clean:,}.",))
+            # Safe audit log insert protected by Savepoint
+            try:
+                cur.execute("SAVEPOINT ga_audit_savepoint;")
+                cur.execute("""
+                    INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description, timestamp)
+                    VALUES (1, 'System', '[LIVE-LEAD-DEDUPLICATION]', %s, NOW());
+                """, (f"Migration 033: Purged {deleted_count:,} duplicate shells. Clean leads: {post_clean:,}.",))
+                cur.execute("RELEASE SAVEPOINT ga_audit_savepoint;")
+            except Exception as audit_err:
+                cur.execute("ROLLBACK TO SAVEPOINT ga_audit_savepoint;")
+                print(f"[AUDIT LOG WARNING] GlobalActivities insert skipped: {audit_err}", flush=True)
 
         conn.commit()
         latency_s = round(time.time() - t_start, 2)
