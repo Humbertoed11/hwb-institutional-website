@@ -25,6 +25,7 @@ from core.services.email_service import transmit_email
 from core.security import roles_required, log_security_violation
 from core.constants import FACILITY_TYPES, LEAD_SOURCES, PRIORITY_LEVELS, CORPORATE_INFO
 from core.utils import format_to_mdy
+from core.services.bot_defense import generate_form_security_token
 from database.schema_engine import apply_system_migrations
 from blueprints import (
     telemetry_bp,
@@ -377,6 +378,13 @@ def inject_enterprise_nav():
 def inject_corporate_info():
     """Injects verified empirical corporate identity across all templates."""
     return {'corp_info': CORPORATE_INFO}
+
+@app.context_processor
+def inject_security_utilities():
+    """Injects enterprise bot defense and form security token generator across all templates."""
+    return {
+        'get_form_security_token': generate_form_security_token
+    }
 
 # --- Standardized Error Handlers ---
 @app.errorhandler(500)

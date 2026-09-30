@@ -13,6 +13,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from core.services.database import get_db
 from core.services.sanitizer import clean_phone, clean_email
 from core.services.rate_limiter import rate_limit
+from core.services.bot_defense import evaluate_bot_defense
 from core.services.task_queue import task_queue
 from core.services.notification_service import dispatch_lead_notifications
 
@@ -371,16 +372,8 @@ def get_quote():
             email = data.get('email', '')
             phone = data.get('phone', '')
             
-            is_spam = False
-            for text in [company, name]:
-                if not text:
-                    continue
-                if any(x in text for x in ["http://", "https://", "graph.org", ".org/", ".net/", ".com/"]):
-                    is_spam = True
-                    break
-                if any(x in text.lower() for x in ["us dollars", "usdc", "transfer of", "payment", "get the transfer", "balance", "transaction to you"]):
-                    is_spam = True
-                    break
+            # Enterprise Bot Defense (HWB-QMS-11.10): Honeypot + Signed Speed Gate + Lexical Scan + Origin Check
+            is_bot, bot_reason = evaluate_bot_defense(request)
             
             data_dict = {
                 'name': name,
@@ -392,8 +385,8 @@ def get_quote():
                 'need_label': need_label
             }
 
-            if is_spam:
-                print(f"[SPAM DETECTED] Honey-pot triggered for lead: {company} / {email}")
+            if is_bot:
+                print(f"[BOT_DEFENSE_BLOCKED] Bot submission dropped via Silent Blackhole. Reason: {bot_reason} | IP: {request.remote_addr} | Target: {company} / {email}", flush=True)
                 return render_template('quote_success.html', data=data_dict)
 
             consent_val = data.get('tcpa_consent')
