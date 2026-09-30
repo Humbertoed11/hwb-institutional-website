@@ -1616,3 +1616,20 @@ CEO Humberto Dominguez attempting to log into `https://www.hwbcleaning.com/login
    - `duplicate_leads_count`: 0 (Target achieved: 0 defects)
    - Database Host: `sigmajan-server.postgres.database.azure.com`
 
+## BUG-103: Cross-Environment Migration 034 Schema Traps: PostgreSQL JSONB Type Casting & Alternate Unique Key Collisions
+**Detected:** 09/29/2026
+**Status:** **RESOLVED** (09/29/2026)
+**Symptoms:**
+1. During execution of Migration 034, `dynamic_upsert` on `GovernmentPrograms` failed with `psycopg2.errors.DatatypeMismatch: column "required_documents" is of type jsonb but expression is of type text[]`.
+2. Executing `dynamic_upsert` on `ConstructionBids` on live Azure PostgreSQL failed with `psycopg2.errors.UniqueViolation: duplicate key value violates unique constraint "ConstructionBids_email_id_key" DETAIL: Key (email_id)=(WEEKES-BN-3631-20260904) already exists`.
+**Root Causes:**
+1. *PostgreSQL JSONB vs Array Adapter:* `psycopg2` default type adaptation formats Python lists as PostgreSQL arrays (`ARRAY[...]` or `'{...}'`). When target columns are defined as `jsonb`, PostgreSQL rejects the array syntax without an explicit JSON string cast.
+2. *Environment Primary Key Sequence Divergence:* Artificial primary keys (`id`) diverged between dev and production. The record with `email_id = 'WEEKES-BN-3631-20260904'` was assigned `id = 1` in dev, but had an alternative `id` in production. Running `ON CONFLICT (id)` caused PostgreSQL to attempt an INSERT because `id=1` was not found, triggering a collision on the alternate unique constraint `ConstructionBids_email_id_key`.
+**Solution:**
+1. **Dynamic JSONB Serialization:** Upgraded `dynamic_upsert()` in `scripts/migrate_034_sync_dev_to_production.py` to query `information_schema.columns.data_type`. Automatically applies `json.dumps()` to nested dicts/lists and constructs `%({col})s::jsonb` expressions.
+2. **Dual-Pass Natural Key Reconciliation:** Authored `sync_construction_bids()`, indexing existing production rows by `email_id` and composite `(LOWER(TRIM(project_name)), LOWER(TRIM(gc_name)))`. Successfully enriches existing records in-place without triggering unique key violations, and strips `id` from truly new records so serial sequences safely auto-increment.
+3. **Poka-Yoke Sequence Alignment:** Enforced `align_sequences()` pre-flight and post-execution, aligning all primary key sequences to `MAX(id)`.
+**Preventative:**
+1. Cross-environment dataset synchronization must reconcile on natural business keys (`email_id`, `(center_name, address, city)`, `solicitation_number`) rather than volatile serial primary keys.
+2. Bulk upsert utilities must dynamically inspect column definitions to handle PostgreSQL `jsonb` casting.
+
