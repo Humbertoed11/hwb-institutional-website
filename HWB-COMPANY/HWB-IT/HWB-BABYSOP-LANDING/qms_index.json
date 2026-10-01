@@ -1,491 +1,1559 @@
 [
-    {
-        "title": "Master Chronicle Book: From Mops to Machines — The Creation of SigmaAcademy™",
-        "id": "HWB-ACADEMY-BOOK-001",
-        "dept": "OPERATIONS",
-        "file": "hwb-qms-book-01_from_mops_to_machines_the_creation_of_sigma_academy.html",
-        "version": "1.0.0",
-        "compliance": "UPDATED",
-        "date": "09-19-2026"
-    },
-    {
-        "id": "HEX-REPORT-12.0",
-        "title": "DMAIC Six Sigma Valuation Charter",
-        "file": "evaluation/HEX-REPORT-12.0-dmaic-charter.html",
-        "department": "01 Executive Governance"
-    },
-    {
-        "id": "HEX-REPORT-13.0",
-        "title": "Six Sigma Black Belt Project Ledger",
-        "file": "evaluation/HEX-REPORT-13.0-black-belt-ledger.html",
-        "department": "01 Executive Governance"
-    },
-    {
-        "id": "HEX-REPORT-17.0",
-        "title": "Strategic Roadmap & Hex-Terminal Standards",
-        "file": "leadership/HEX-REPORT-17.0-executive-directives.html",
-        "department": "01 Executive Governance"
-    },
-    {
-        "id": "HEX-REPORT-2.0",
-        "title": "Master Specification Comparison",
-        "file": "evaluation/HEX-REPORT-2.0-master-comparison.html",
-        "department": "01 Executive Governance"
-    },
-    {
-        "id": "HEX-REPORT-3.0",
-        "title": "Strategy Comparison",
-        "file": "evaluation/HEX-REPORT-3.0-strategy-comparison.html",
-        "department": "01 Executive Governance"
-    },
-    {
-        "id": "HEX-SOP-0.1",
-        "title": "Business Birth Certificate",
-        "file": "context/HEX-SOP-0.1-birth.html",
-        "department": "01 Executive Governance"
-    },
-    {
-        "id": "HEX-SOP-0.2",
-        "title": "Master Execution Roadmap",
-        "file": "context/HEX-SOP-0.2-roadmap.html",
-        "department": "01 Executive Governance"
-    },
-    {
-        "id": "HEX-SOP-1.0",
-        "title": "Naming & Architecture",
-        "file": "leadership/HEX-SOP-1.0-naming-convention.html",
-        "department": "01 Executive Governance"
-    },
-    {
-        "id": "HEX-SOP-1.2",
-        "title": "System Architecture SOP",
-        "file": "leadership/HEX-SOP-1.2-system-architecture.html",
-        "department": "01 Executive Governance"
-    },
-    {
-        "id": "HEX-SOP-1.1",
-        "title": "Organizational Roles & Chart",
-        "file": "leadership/HEX-SOP-1.1-org-chart.html",
-        "department": "02 HR (Human Resources)"
-    },
-    {
-        "id": "HEX-IP-26.1",
-        "title": "Implementation Plan: Spatial & Neural Stack Optimization",
-        "file": "planning/HEX-IP-26.1-stack-optimization.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-IP-9.2",
-        "title": "HEXGROWTH Deep Search Implementation Plan",
-        "file": "planning/HEX-IP-9.2-deep-search-refinement.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-LOBE-1.0",
-        "title": "City Brain (Municipal)",
-        "file": "operations/lobes/HEX-LOBE-1.0-city.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-LOBE-2.0",
-        "title": "TxDOT Brain (Infrastructure)",
-        "file": "operations/lobes/HEX-LOBE-2.0-txdot.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-LOBE-3.0",
-        "title": "Power Brain (Utility)",
-        "file": "operations/lobes/HEX-LOBE-3.0-power.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-LOBE-4.0",
-        "title": "Legal/Env Brain (Risk)",
-        "file": "operations/lobes/HEX-LOBE-4.0-legal.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-LOBE-5.0",
-        "title": "Ranger Brain (Ground Truth)",
-        "file": "operations/lobes/HEX-LOBE-5.0-ranger.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-LOBE-6.0",
-        "title": "Pulse Brain (Culture)",
-        "file": "operations/lobes/HEX-LOBE-6.0-pulse.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-LOBE-7.0",
-        "title": "Finance Brain (Market)",
-        "file": "operations/lobes/HEX-LOBE-7.0-finance.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-REPORT-19.0",
-        "title": "100 Economic & Real Estate Inferences",
-        "file": "HEX-REPORT-19.0-economic-inferences.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-REPORT-20.0",
-        "title": "100 Anomalies for Geospatial Intelligence",
-        "file": "evaluation/HEX-REPORT-20.0-100-anomalies-ledger.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-REPORT-21.0",
-        "title": "8-Lobe Neural Mapping & Development Plan",
-        "file": "HEX-REPORT-21.0-neural-mapping.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-REPORT-22.0",
-        "title": "Infrastructure Migration Expenditures",
-        "file": "evaluation/HEX-REPORT-22.0-infrastructure-expenditures.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-REPORT-23.0",
-        "title": "Cross-Lobe Duplication Audit",
-        "file": "HEX-REPORT-23.0-brain-duplication-audit.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-REPORT-25.0",
-        "title": "Benchmark Evaluation against SkillsBench and ClawsBench",
-        "file": "HEX-REPORT-25.0-benchmark-comparison.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-REPORT-26.0",
-        "title": "Competitor Intelligence & Product Expansion Report: Analysis of Brokerage AI Velocity",
-        "file": "HEX-REPORT-26.0-competitor-analysis.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-REPORT-27.0",
-        "title": "Spatial Data Science & Statistical Integration Plan",
-        "file": "HEX-REPORT-27.0-spatial-data-science.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-REPORT-28.0",
-        "title": "Predictive Land Valuation Models Plan",
-        "file": "HEX-REPORT-28.0-predictive-valuation-models.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-REPORT-29.0",
-        "title": "HUD Mouse Click Interaction Rectification",
-        "file": "HEX-REPORT-29.0-hud-interaction-rectification.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-REPORT-30.0",
-        "title": "HUD Views Operator Guide",
-        "file": "HEX-REPORT-30.0-hud-views-manual.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-REPORT-31.0",
-        "title": "Client Developer Assessment Report",
-        "file": "HEX-REPORT-31.0-client-developer-assessment.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-REPORT-32.0",
-        "title": "10 Client Simulation Scenarios",
-        "file": "HEX-REPORT-32.0-client-simulation-scenarios.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-REPORT-33.0",
-        "title": "JBREC-Brookfield Baybrook/Midline MPC: Opportunity Analysis & Reverse Engineering Report",
-        "file": "planning/HEX-REPORT-33.0-brookfield-baybrook-midline-analysis.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-REPORT-34.0",
-        "title": "Institutional Normalization & Real Estate Alignment: Global Implementation Plan",
-        "file": "planning/HEX-REPORT-34.0-normalization-and-real-estate-alignment.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-REPORT-35.0",
-        "title": "Texas Real Estate Research Center: Market Intelligence Ingestion & Mapping",
-        "file": "planning/HEX-REPORT-35.0-texas-real-estate-research-center-integration.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-REPORT-5.0",
-        "title": "Lobe Expansion Functions",
-        "file": "evaluation/HEX-REPORT-5.0-lobe-functions.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-SOP-10.0",
-        "title": "Alpha Brain (Lobe 10)",
-        "file": "HEX-SOP-10.0-alpha-brain.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-SOP-11.0",
-        "title": "Scout Brain (Lobe 11)",
-        "file": "HEX-SOP-11.0-scout-brain.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-SOP-2.0",
-        "title": "Universal H3 Grid",
-        "file": "planning/HEX-SOP-2.0-universal-grid.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-SOP-3.0",
-        "title": "The Miner (Layer 2)",
-        "file": "operations/HEX-SOP-3.0-the-miner.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-SOP-3.1",
-        "title": "Python Codebase Standards SOP",
-        "file": "operations/HEX-SOP-3.1-python-standards.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-SOP-3.2",
-        "title": "Vocabulary and Technical Translation Database SOP",
-        "file": "operations/HEX-SOP-3.2-vocabulary-database.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-SOP-3.3",
-        "title": "Exploratory Data Analysis and Grid Standards SOP",
-        "file": "operations/HEX-SOP-3.3-data-exploration-standards.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-SOP-4.0",
-        "title": "Heads-Up Display Master Manual",
-        "file": "HEX-SOP-4.0-master-hud-manual.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-SOP-4.1",
-        "title": "Standard Operating Procedure: H3 Spatial Indexing System Analysis",
-        "file": "HEX-SOP-4.1-h3-index-analysis.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-SOP-4.3",
-        "title": "Master Operating Procedure: Opportunity & Alarm Beacons",
-        "file": "HEX-SOP-4.3-beacon-client-manual.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-SOP-4.4",
-        "title": "HUD Timeline & Lobe Growth Simulation User Manual",
-        "file": "HEX-SOP-4.4-timeline-simulation-manual.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-SOP-5.0",
-        "title": "Neural Voting & HexScore",
-        "file": "HEX-SOP-5.0-neural-voting.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-SOP-5.1",
-        "title": "Inference Brain (Lobe 8)",
-        "file": "HEX-SOP-5.1-inference-brain.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-SOP-6.0",
-        "title": "Multi-Brain\u2122 Consensus",
-        "file": "operations/HEX-SOP-6.0-consensus.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-SOP-6.1",
-        "title": "Daily Inference & Continuous Learning Protocol",
-        "file": "HEX-SOP-6.1-inference-daily-learning.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-SOP-8.0",
-        "title": "Neural Migration",
-        "file": "operations/HEX-SOP-8.0-neural-migration.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-SOP-8.1",
-        "title": "Backend Database & Memory Master Manual",
-        "file": "operations/HEX-SOP-8.1-master-backend-database-manual.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-SOP-8.2",
-        "title": "Reporting Architecture",
-        "file": "operations/HEX-SOP-8.2-reporting-architecture.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-SOP-8.3",
-        "title": "Memory Architecture and Core Brain Models SOP",
-        "file": "operations/HEX-SOP-8.3-memory-architecture.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-SOP-8.4",
-        "title": "Pulse Brain Plan & Competitor Radar",
-        "file": "operations/HEX-SOP-8.4-pulse-neural-plan.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-SOP-8.6",
-        "title": "Frontend Portal & Viewport Master Manual",
-        "file": "operations/HEX-SOP-8.6-master-frontend-portal-manual.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-SOP-9.0",
-        "title": "Accountability Brain (Lobe 9)",
-        "file": "HEX-SOP-9.0-accountability-brain.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-SOP-9.1",
-        "title": "Cross-Lobe Learning & Adaptation",
-        "file": "HEX-SOP-9.1-cross-learning.html",
-        "department": "03 Operations"
-    },
-    {
-        "id": "HEX-IP-9.0",
-        "title": "Separation Implementation Plan",
-        "file": "planning/HEX-IP-9.0-SEPARATION.html",
-        "department": "04 Purchasing"
-    },
-    {
-        "id": "HEX-REPORT-18.0",
-        "title": "Samsung U.S. Headquarters Relocation Opportunity",
-        "file": "evaluation/HEX-REPORT-18.0-samsung-hq-relocation.html",
-        "department": "05 Marketing & Sales"
-    },
-    {
-        "id": "HEX-REPORT-4.0",
-        "title": "Master Reference Specification",
-        "file": "evaluation/HEX-REPORT-4.0-master-reference.html",
-        "department": "05 Marketing & Sales"
-    },
-    {
-        "id": "HEX-REPORT-6.0",
-        "title": "Mavericks Relocation Opportunity",
-        "file": "evaluation/HEX-REPORT-6.0-mavericks-relocation.html",
-        "department": "05 Marketing & Sales"
-    },
-    {
-        "id": "HEX-REPORT-7.0",
-        "title": "HUD Customization Options",
-        "file": "evaluation/HEX-REPORT-7.0-hud-customization.html",
-        "department": "05 Marketing & Sales"
-    },
-    {
-        "id": "HEX-REPORT-9.0",
-        "title": "Domain Name Options",
-        "file": "evaluation/HEX-REPORT-9.0-domain-options.html",
-        "department": "05 Marketing & Sales"
-    },
-    {
-        "id": "HEX-REPORT-1.0",
-        "title": "Token Saving Strategy Status",
-        "file": "evaluation/HEX-REPORT-1.0-token-saving.html",
-        "department": "06 IT (Information Technology)"
-    },
-    {
-        "id": "HEX-REPORT-14.0",
-        "title": "ISO 9001 Readiness Gap Analysis",
-        "file": "evaluation/HEX-REPORT-14.0-iso-readiness-gap-analysis.html",
-        "department": "06 IT (Information Technology)"
-    },
-    {
-        "id": "HEX-REPORT-15.0",
-        "title": "FMEA Ledger",
-        "file": "evaluation/HEX-REPORT-15.0-fmea-ledger.html",
-        "department": "06 IT (Information Technology)"
-    },
-    {
-        "id": "HEX-REPORT-16.0",
-        "title": "Process Control Plan & Value Stream Map",
-        "file": "evaluation/HEX-REPORT-16.0-process-control-plan.html",
-        "department": "06 IT (Information Technology)"
-    },
-    {
-        "id": "HEX-SOP-2.1",
-        "title": "DevOps & Twelve Factor Standards SOP",
-        "file": "planning/HEX-SOP-2.1-devops-standards.html",
-        "department": "06 IT (Information Technology)"
-    },
-    {
-        "id": "HEX-SOP-2.2",
-        "title": "Docker Operations & Audit SOP",
-        "file": "planning/HEX-SOP-2.2-docker-operations.html",
-        "department": "06 IT (Information Technology)"
-    },
-    {
-        "id": "HEX-SOP-4.2",
-        "title": "Standard Operating Procedure: QGIS AI Integration & MCP Orchestration",
-        "file": "HEX-SOP-4.2-qgis-ai-integration.html",
-        "department": "06 IT (Information Technology)"
-    },
-    {
-        "id": "HEX-SOP-7.5",
-        "title": "ISO 9001 Compliance Tracker",
-        "file": "planning/HEX-SOP-7.5-iso-compliance-tracker.html",
-        "department": "06 IT (Information Technology)"
-    },
-    {
-        "id": "HWB QMS 11.5",
-        "title": "Standard Operating Procedure: Preflight Risk Audit and Foresight SOP",
-        "file": "planning/hwb-qms-11.5_pre-flight_risk_audit_&_foresight_sop.html",
-        "department": "06 IT (Information Technology)"
-    },
-    {
-        "id": "HWB-QMS-9.6",
-        "title": "Standard Operating Procedure / Report: HexGrowth Web App Deployment Audit and Publishing Strategy",
-        "file": "planning/hwb-qms-9.6_hexgrowth_web_app_deployment_audit_and_publishing_strategy.html",
-        "department": "06 IT (Information Technology)"
-    },
-    {
-        "id": "HEX-REPORT-8.0",
-        "title": "Path B Cost Projections",
-        "file": "evaluation/HEX-REPORT-8.0-cost-projection.html",
-        "department": "08 Accounting"
-    },
-    {
-        "id": "HEX-IP-9.1",
-        "title": "Legal Separation Implementation Plan",
-        "file": "legal/HEX-IP-9.1-legal-compliance.html",
-        "department": "09 Legal & Compliance"
-    },
-    {
-        "id": "HEX-SOP-7.1",
-        "title": "Data Privacy & Portfolio Security",
-        "file": "legal/HEX-SOP-7.1-privacy-policy.html",
-        "department": "09 Legal & Compliance"
-    },
-    {
-        "id": "HWB-QMS-7.2",
-        "title": "HWB-QMS-7.2: SigmaFidelity\u2122 Web & UI Standardization SOP",
-        "file": "legal/hwb-qms-7.2_backoffice_ui_standardization_sop.html",
-        "department": "09 Legal & Compliance"
-    },
-    {
-        "id": "HEX-REPORT-24.0",
-        "title": "Telegram Ingest Incident Report",
-        "file": "evaluation/HEX-REPORT-24.0-telegram-ingest-incident.html",
-        "department": "10 Improvement"
-    }
+  {
+    "title": "Standard Operating Procedure: Statewide Autonomous Contract Hunter and Portal Crawler SOP",
+    "id": "HWB-QMS-7.9",
+    "dept": "OPERATIONS",
+    "file": "HWB-QMS-7.9 Statewide Autonomous Contract Hunter and Portal Crawler SOP.html",
+    "version": "1.0.0",
+    "compliance": "UPDATED",
+    "date": "09-22-2026"
+  },
+  {
+    "title": "Playbook: Municipal Procurement and Government Certification Playbook",
+    "id": "HWB-QMS-8.9",
+    "dept": "OPERATIONS",
+    "file": "HWB-QMS-8.9 Municipal Procurement and Certification Playbook.html",
+    "version": "1.2.0",
+    "compliance": "UPDATED",
+    "date": "09-22-2026"
+  },
+  {
+    "title": "Master Chronicle Book: From Mops to Machines \u2014 The Creation of SigmaAcademy\u2122",
+    "id": "HWB-ACADEMY-BOOK-001",
+    "dept": "OPERATIONS",
+    "file": "hwb-qms-book-01_from_mops_to_machines_the_creation_of_sigma_academy.html",
+    "version": "4.0.0",
+    "compliance": "UPDATED",
+    "date": "10-01-2026"
+  },
+  {
+    "title": "Course Manual: Safe Work Habits & Ergonomic Injury Prevention",
+    "id": "HWB-QMS-7.2-TRN-001",
+    "dept": "HR",
+    "file": "hwb-qms-7.2-trn-001_safe_work_habits_and_ergonomic_injury_prevention_sop.html",
+    "version": "1.0.0",
+    "compliance": "UPDATED",
+    "date": "09-19-2026"
+  },
+  {
+    "title": "Commercial Proposal: Downtown Fort Worth 11-Building Lobby Floor Care (With 4-Point Photographic Damage Survey)",
+    "id": "HWB-BID-2026-FW01",
+    "dept": "SALES-MARKETING",
+    "file": "hwb-bid-2026-09-02-downtown-fort-worth-floor-cleaning-quote.html",
+    "version": "2.3.0",
+    "compliance": "UPDATED",
+    "date": "09-02-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Accounting Management SOP",
+    "id": "HWB-ACC-001",
+    "dept": "ACCOUNTING",
+    "file": "hwb-acc-001_accounting_management_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: 12-Month Azure Cost Forecast",
+    "id": "HWB-ACC-AZR-2026-01",
+    "dept": "ACCOUNTING",
+    "file": "hwb-acc-2026-03-13-azure-service-cost-forecast.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Monthly Institutional Cost Audit",
+    "id": "HWB-ACC-AUD-2026-03",
+    "dept": "ACCOUNTING",
+    "file": "hwb-acc-2026-03-20-monthly-cost-audit.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: BabySOP Project Expense Forecast",
+    "id": "HWB-ACC-BSOP-2026-01",
+    "dept": "ACCOUNTING",
+    "file": "hwb-acc-2026-03-13-babysop-expense-forecast.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Accounts Payable (AP) Management",
+    "id": "HWB-ACC-003",
+    "dept": "ACCOUNTING",
+    "file": "hwb-acc-003_accounts_payable_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Live Azure Cost Audit (April)",
+    "id": "HWB-ACC-AUD-2026-04",
+    "dept": "ACCOUNTING",
+    "file": "hwb-acc-04-27-2026-live-audit.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Accounts Receivable (AR) Management",
+    "id": "HWB-ACC-002",
+    "dept": "ACCOUNTING",
+    "file": "hwb-acc-002_accounts_receivable_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Official Logo Rebranding & SEO Audit (HWB-COM-002)",
+    "id": "HWB-COM-002",
+    "dept": "MARKETING",
+    "file": "hwb-com-002_official_logo_rebranding_and_seo_audit.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Official Institutional Letterhead (HWB-COM-001)",
+    "id": "HWB-COM-001",
+    "dept": "EXECUTIVE",
+    "file": "hwb-com-001_official_letterhead_template.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Environmental Management SOP",
+    "id": "HWB-QMS-14001",
+    "dept": "EHSQ",
+    "file": "hwb-qms-4.5_environmental_management_system_iso-14001_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Job Hazard Analysis (JHA) Form",
+    "id": "HWB-FORM-8.1-001",
+    "dept": "EHSQ",
+    "file": "hwb-form-8.1-001_job_hazard_analysis_form.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Occupational Health & Safety (OH&S)",
+    "id": "HWB-QMS-45001",
+    "dept": "EHSQ",
+    "file": "hwb-qms-4.6_occupational_health_and_safety_iso-45001_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Internal Security Audit Report: System & Webserver Integrity",
+    "id": "HWB-QMS-9.2-FORM-001",
+    "dept": "EHSQ",
+    "file": "hwb-qms-9.2-form-001_internal_security_audit_report.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: EHSQ Management System SOP",
+    "id": "HWB-QMS-4.5",
+    "dept": "EHSQ",
+    "file": "hwb-qms-4.5_ehsq_management_system_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Job Hazard Analysis (JHA)",
+    "id": "HWB-QMS-8.1-001",
+    "dept": "EHSQ",
+    "file": "hwb-qms-8.1-001_job_hazard_analysis_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Employee Information File Checklist",
+    "id": "HWB-FORM-7.2-004",
+    "dept": "HR",
+    "file": "hwb-form-7.2-004_employee_file_checklist.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "AI VP Profile: Maria Bolanos (VP of Finance)",
+    "id": "HWB-HR-AGENT-001",
+    "dept": "HR",
+    "file": "maria-bolanos-vp-finance.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Employee Competence SOP",
+    "id": "HWB-QMS-7.2-COMP",
+    "dept": "HR",
+    "file": "hwb-sop-7.2-001_employee_competence_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Employee Onboarding SOP",
+    "id": "HWB-QMS-7.2",
+    "dept": "HR",
+    "file": "hwb-qms-7.2_employee_onboarding_sop.html",
+    "version": "3.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Training Record",
+    "id": "HWB-FORM-7.2-003",
+    "dept": "HR",
+    "file": "hwb-form-7.2-003_training_record.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Job Description Template",
+    "id": "HWB-FORM-7.2-001",
+    "dept": "HR",
+    "file": "hwb-form-7.2-001_job_description_template.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Job Hazard Analysis (Jha) Form",
+    "id": "HWB-FORM-8.1",
+    "dept": "HR",
+    "file": "hwb-form-8.1-001_jha_-_humberto_dominguez_-_2026-02-28.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Employee Onboarding Form",
+    "id": "HWB-FORM-7.2-005",
+    "dept": "HR",
+    "file": "hwb-form-7.2-005_employee_onboarding_form.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: HR Management System SOP",
+    "id": "HWB-QMS-7.2-MGMT",
+    "dept": "HR",
+    "file": "hwb-qms-7.2_hr_management_system_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: AI Executive Prompt Registry",
+    "id": "HWB-HR-002",
+    "dept": "HR",
+    "file": "hwb-hr-002_ai_executive_prompt_registry.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Training Needs and Plan",
+    "id": "HWB-FORM-7.2-002",
+    "dept": "HR",
+    "file": "hwb-form-7.2-002_training_needs_and_plan.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Website Architectural Flowchart SOP",
+    "id": "HWB-QMS-7.1-WEB-001",
+    "dept": "IT",
+    "file": "hwb-qms-7.1_website_architectural_flowchart_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Audio Recording and Playback SOP",
+    "id": "SOP-AUD-001",
+    "dept": "IT",
+    "file": "recording_and_playback_sop.html",
+    "version": "3.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Webserver Monitoring & Uptime Analytics SOP",
+    "id": "[QMS-9.1-SYS]",
+    "dept": "IT",
+    "file": "hwb-qms-9.1_webserver_monitoring_and_uptime_analytics_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: ChatGPT CLI Installation",
+    "id": "SOP-CLI-001",
+    "dept": "IT",
+    "file": "chatgpt_cli_installation_sop.html",
+    "version": "1.1",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Disaster Recovery and Data Restoration SOP",
+    "id": "HWB-QMS-9.3",
+    "dept": "IT",
+    "file": "hwb-qms-9.3_disaster_recovery_and_data_restoration_sop.html",
+    "version": "4.0.0",
+    "compliance": "UPDATED",
+    "date": "10-01-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Natalie Navy",
+    "id": "HWB-AGENT-NAVY-001",
+    "dept": "IT",
+    "file": "hwb-agents-navy-birth-certificate.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Youtube Automation & Metadata Protocol",
+    "id": "HWB-IT-010",
+    "dept": "IT",
+    "file": "hwb-it-010_youtube_automation_protocol.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "SOP: Website Content and SEO Improvement",
+    "id": "HWB-TBD",
+    "dept": "IT",
+    "file": "website_improvement_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Intranet Homepage Redesign Specification",
+    "id": "HWB-QMS-IT-008",
+    "dept": "IT",
+    "file": "hwb-qms-it-008_intranet_homepage_redesign_specification.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Computer Backup and Restoration",
+    "id": "SOP-BCK-001",
+    "dept": "IT",
+    "file": "computer_backup_and_restoration_sop.html",
+    "version": "1.1",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Official Institutional Sharepoint & Intranet Management Sop",
+    "id": "HWB-QMS-IT-007",
+    "dept": "IT",
+    "file": "hwb-qms-it-007_sharepoint_management_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: ChatGPT Software Architecture SOP",
+    "id": "HWB-IT-001",
+    "dept": "IT",
+    "file": "hwb-it-001_chatgpt_software_notes.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: AI Agents & Specialized Automation Scripts SOP",
+    "id": "HWB-QMS-9.2",
+    "dept": "IT",
+    "file": "hwb-qms-9.2_ai_agents_and_specialised_scripts_sop.html",
+    "version": "4.0.0",
+    "compliance": "UPDATED",
+    "date": "10-01-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Computer Security & Endpoint Protection SOP",
+    "id": "HWB-QMS-9.4",
+    "dept": "IT",
+    "file": "hwb-qms-9.4_computer_security_sop.html",
+    "version": "1.3",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Information Security Management System (ISO 27001)",
+    "id": "HWB-QMS-9.6",
+    "dept": "IT",
+    "file": "hwb-qms-9.6_information_security_management_iso-27001_sop.html",
+    "version": "4.0.0",
+    "compliance": "UPDATED",
+    "date": "10-01-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Obsidian Android Sync SOP",
+    "id": "SOP-OBS-001",
+    "dept": "IT",
+    "file": "obsidian_android_sync_sop.html",
+    "version": "3.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Gemini Master Setup SOP",
+    "id": "SOP-GEM-001",
+    "dept": "IT",
+    "file": "gemini_master_setup_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Institutional Website Architecture Report",
+    "id": "HWB-QMS-IT-015",
+    "dept": "IT",
+    "file": "hwb-qms-it-015_institutional_website_architecture_report.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: IT Management System SOP",
+    "id": "HWB-QMS-7.1",
+    "dept": "IT",
+    "file": "hwb-qms-7.1_it_management_system_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Git Troubleshooting SOP",
+    "id": "SOP-GIT-001",
+    "dept": "IT",
+    "file": "git_troubleshooting_sop.html",
+    "version": "3.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Backend Architecture & Enterprise Standards SOP",
+    "id": "HWB-QMS-7.6",
+    "dept": "IT",
+    "file": "hwb-qms-7.6_backend_architecture.html",
+    "version": "3.1.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Microsoft 365 & Graph API Integration SOP",
+    "id": "HWB-QMS-7.6-M365",
+    "dept": "IT",
+    "file": "hwb-qms-7.6_microsoft_365_integration_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Company Logins & Secret Credential Governance",
+    "id": "HWB-IT-CRED-001",
+    "dept": "IT",
+    "file": "hwb-company-logins.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Google Home Obsidian Integration SOP",
+    "id": "SOP-GHO-001",
+    "dept": "IT",
+    "file": "google_home_obsidian_sop.html",
+    "version": "3.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "HWB Privacy Policy",
+    "id": "HWB-LEG-PRV-001",
+    "dept": "LEGAL",
+    "file": "hwb-leg-prv-001_privacy_policy.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: AI Brain Rules (Prompt Registry)",
+    "id": "HWB-LEG-002",
+    "dept": "LEGAL",
+    "file": "hwb-leg-002_intellectual_property_prompt_registry.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Legal and Compliance SOP",
+    "id": "HWB-LEG-001",
+    "dept": "LEGAL",
+    "file": "hwb-leg-001_legal_and_compliance_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Operations Management SOP",
+    "id": "HWB-OPS-001",
+    "dept": "OPERATIONS",
+    "file": "hwb-ops-001_operations_management_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Equipment Use Log Book SOP",
+    "id": "HWB-SOP-7.1-001",
+    "dept": "OPERATIONS",
+    "file": "hwb-sop-7.1-001_equipment_use_log_book_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Food Safety Management System (ISO 22000)",
+    "id": "HWB-QMS-8.7",
+    "dept": "OPERATIONS",
+    "file": "hwb-qms-8.7_food_safety_management_iso-22000_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Equipment Use Log",
+    "id": "HWB-FORM-7.1-001",
+    "dept": "OPERATIONS",
+    "file": "hwb-form-7.1-001_equipment_use_log.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Data Center Contamination Control",
+    "id": "HWB-QMS-8.6",
+    "dept": "OPERATIONS",
+    "file": "hwb-qms-8.6_data_center_precision_cleaning_and_contamination_control_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Purchasing Process (ISO 8.4)",
+    "id": "HWB-QMS-8.4",
+    "dept": "PURCHASING",
+    "file": "hwb-qms-8.4_purchasing_process_sop_with_flowchart.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Purchasing and Procurement SOP",
+    "id": "HWB-PUR-001",
+    "dept": "PURCHASING",
+    "file": "hwb-pur-001_purchasing_and_procurement_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Container XChange Procurement SOP",
+    "id": "HWB-PUR-001",
+    "dept": "PURCHASING",
+    "file": "hwb-pur-001_container_xchange.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Google Business Profile Integration Plan",
+    "id": "HWB-QMS-8.3",
+    "dept": "QMS",
+    "file": "hwb-qms-8.3_google_business_profile_integration_plan.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "SigmaFidelity\u2122 Market Launch: Arrow Diagram",
+    "id": "HWB-QMS-STRAT-008",
+    "dept": "QMS",
+    "file": "hwb-qms-strat-008_project_arrow_diagram.html",
+    "version": "1.1",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Website Architectural Flowchart SOP",
+    "id": "HWB-QMS-7.1",
+    "dept": "QMS",
+    "file": "hwb-qms-7.1_website_architectural_flowchart_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Webserver Monitoring & Uptime Analytics SOP",
+    "id": "HWB-QMS-9.1",
+    "dept": "QMS",
+    "file": "hwb-qms-9.1_webserver_monitoring_and_uptime_analytics_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Cloud Deployment And Infrastructure Log",
+    "id": "HWB-QMS-9.5",
+    "dept": "QMS",
+    "file": "hwb-qms-9.5_cloud_deployment_and_infrastructure_log.html",
+    "version": "5.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Strategic Roadmap: SigmaJan SaaS Development Milestones",
+    "id": "HWB-QMS-7.1",
+    "dept": "QMS",
+    "file": "hwb-qms-7.1_sigmajan_saas_development_roadmap_and_milestones.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Quote App Setup & Development Log SOP",
+    "id": "HWB-QMS-7.5",
+    "dept": "QMS",
+    "file": "hwb-qms-7.5_quote_app_setup_and_development_log_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Obsidian Android Sync SOP",
+    "id": "HWB-QMS-7.5",
+    "dept": "QMS",
+    "file": "hwb-qms-7.5_obsidian_android_sync_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Python Project Initialization SOP",
+    "id": "HWB-QMS-7.5",
+    "dept": "QMS",
+    "file": "hwb-qms-7.5_python_project_initialization_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Backoffice and CRM Management SOP",
+    "id": "HWB-QMS-7.5-BO-CRM",
+    "dept": "QMS",
+    "file": "hwb-qms-7.5_backoffice_and_crm_management_sop.html",
+    "version": "4.0.0",
+    "compliance": "UPDATED",
+    "date": "10-01-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Institutional Documentation Standard SOP",
+    "id": "HWB-QMS-1.0",
+    "dept": "QMS",
+    "file": "hwb-qms-1.0_institutional_documentation_standard_sop.html",
+    "version": "2.0.0 (HTML Transition)",
+    "compliance": "UPDATED",
+    "date": "05/22/2026"
+  },
+  {
+    "title": "Master SOP Index",
+    "id": "HWB-QMS-7.5-IDX-001",
+    "dept": "QMS",
+    "file": "hwb-qms-7.5_master_sop_index.html",
+    "version": "2.3.0",
+    "compliance": "UPDATED",
+    "date": "05-22-2026"
+  },
+  {
+    "title": "Master Quality Management System Manual",
+    "id": "HWB-QMS-MASTER-MAP-001",
+    "dept": "QMS",
+    "file": "hwb-qms-master-iso-9001-audit-mapping-flowchart.html",
+    "version": "3.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "SIPOC Diagram: HWB-MOB-2026 Mobile Execution Engine",
+    "id": "HWB-QMS-BB-002",
+    "dept": "QMS",
+    "file": "hwb-qms-bb-002_hwb-mob-2026_sipoc_diagram.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Master Quality Management System Manual",
+    "id": "HWB-QMS-MASTER",
+    "dept": "QMS",
+    "file": "hwb-qms-master_quality_management_system_manual.html",
+    "version": "4.0.0",
+    "compliance": "UPDATED",
+    "date": "10-01-2026"
+  },
+  {
+    "title": "Official Letterhead Template",
+    "id": "HWB-QMS-FORM-007",
+    "dept": "QMS",
+    "file": "hwb-qms-form-007_official_letterhead_template.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Why-Why Analysis: The \"Payroll Mop\" Crisis",
+    "id": "HWB-QMS-STRAT-006",
+    "dept": "QMS",
+    "file": "hwb-qms-strat-006_strategic_why-why_diagram.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Ability and Skill Innovation",
+    "id": "HWB-QMS-10.5",
+    "dept": "QMS",
+    "file": "hwb-qms-10.5_ability_and_skill_innovation_sop.html",
+    "version": "1.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Autonomous Routine Governance",
+    "id": "HWB-QMS-8.6-AUTO",
+    "dept": "QMS",
+    "file": "hwb-qms-8.6_autonomous_routine_governance_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Institutional QMS Web Layout",
+    "id": "HWB-QMS-7.5",
+    "dept": "QMS",
+    "file": "hwb-qms-7.5_institutional_qms_web_layout_sop.html",
+    "version": "3.0.0",
+    "compliance": "UPDATED",
+    "date": "05-22-2026"
+  },
+  {
+    "title": "SigmaFidelity\u2122 DMADV Design Roadmap",
+    "id": "HWB-QMS-STRAT-003",
+    "dept": "QMS",
+    "file": "hwb-qms-strat-003_dmadv_design_roadmap.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Note Naming Convention SOP",
+    "id": "HWB-QMS-7.5",
+    "dept": "QMS",
+    "file": "hwb-qms-7.5_note_naming_convention_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Institutional Website Replacement Plan",
+    "id": "HWB-QMS-8.3",
+    "dept": "QMS",
+    "file": "hwb-qms-8.3_hwb_strategic_website_replacement_plan.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "S4/IEE Project Charter",
+    "id": "HWB-QMS-FORM-008",
+    "dept": "QMS",
+    "file": "hwb-qms-form-008_s4-iee_project_charter_template.html",
+    "version": "1.4",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Quote App Database Access SOP",
+    "id": "HWB-QMS-7.5",
+    "dept": "QMS",
+    "file": "hwb-qms-7.5_quote_app_database_access_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Secret Management & API Credential Governance SOP",
+    "id": "HWB-QMS-9.5",
+    "dept": "QMS",
+    "file": "hwb-qms-9.5_secret_management_and_api_credential_governance_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Institutional Memory & Neural Integration",
+    "id": "HWB-QMS-11.1-MEM",
+    "dept": "QMS",
+    "file": "hwb-qms-11.1_institutional_memory_&_neural_integration_sop.html",
+    "version": "3.1.0 (HTML Baseline)",
+    "compliance": "UPDATED",
+    "date": "05-22-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Certified High-Stakes Sanitation Protocols",
+    "id": "HWB-QMS-8.8",
+    "dept": "QMS",
+    "file": "hwb-qms-8.8_certified_high-stakes_sanitation_protocols.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Entity Relationship Diagram (ERD)",
+    "id": "HWB-QMS-7.5-ERD",
+    "dept": "QMS",
+    "file": "hwb-qms-7.5_entity_relationship_diagram.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Data Flow Diagram",
+    "id": "HWB-QMS-7.5-DFD",
+    "dept": "QMS",
+    "file": "hwb-qms-7.5_data_flow_diagram.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: ChatGPT CLI Installation SOP",
+    "id": "HWB-QMS-9.2",
+    "dept": "QMS",
+    "file": "hwb-qms-9.2_chatgpt_cli_installation_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Technical Specifications: React 'Scope of Work' Engine",
+    "id": "HWB-QMS-BB-004",
+    "dept": "QMS",
+    "file": "hwb-qms-bb-004_hwb-mob-2026_technical_specifications_-_react_sow_engine.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Note Title Naming Convention SOP",
+    "id": "SOP-NAM-001",
+    "dept": "QMS",
+    "file": "note_naming_convention_sop.html",
+    "version": "1.1",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Corrective Action Request Form",
+    "id": "HWB-QMS-FORM-005",
+    "dept": "QMS",
+    "file": "hwb-qms-form-005_corrective_action_request_form.html",
+    "version": "1.1",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Organizational Structure",
+    "id": "HWB-QMS-5.3",
+    "dept": "QMS",
+    "file": "hwb-qms-5.3_organizational_structure_sop_with_flowchart.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Quality Planning Process",
+    "id": "HWB-QMS-6.0",
+    "dept": "QMS",
+    "file": "hwb-qms-6.0_quality_planning_process_sop_with_flowchart.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "SigmaFidelity\u2122 DMAIC Execution Roadmap",
+    "id": "HWB-QMS-STRAT-002",
+    "dept": "QMS",
+    "file": "hwb-qms-strat-002_s4-iee_execution_roadmap.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Risk and Opportunity Register",
+    "id": "HWB-QMS-003",
+    "dept": "QMS",
+    "file": "hwb-qms-form-003_risk_register.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Generative AI Asset Onboarding SOP",
+    "id": "HWB-QMS-7.5",
+    "dept": "QMS",
+    "file": "hwb-qms-7.5_generative_asset_onboarding_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "S4/IEE Project Charter: HWB-MOB-2026 Mobile Execution Engine",
+    "id": "HWB-QMS-FORM-008-BB-001",
+    "dept": "QMS",
+    "file": "hwb-qms-form-008_hwb-mob-2026_black_belt_project_charter.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Quality Management Record: Mistake & Friction Audit Log (HWB-QMS-FORM-005)",
+    "id": "HWB-QMS-FORM-005-LOG",
+    "dept": "QMS",
+    "file": "hwb-qms-form-005-mistake-log.html",
+    "version": "2.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Corrective Action Request (CAR) Form",
+    "id": "HWB-QMS-FORM-005-TEMP",
+    "dept": "QMS",
+    "file": "hwb-qms-form-005_corrective_action_request_form_template.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Ikigai Business Alignment",
+    "id": "HWB-QMS-1.1",
+    "dept": "QMS",
+    "file": "hwb-qms-1.1_ikigai_business_alignment_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Process Efficiency",
+    "id": "HWB-QMS-4.4",
+    "dept": "QMS",
+    "file": "hwb-qms-4.4_process_efficiency_sop_with_flowchart.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Departmental Governance",
+    "id": "HWB-QMS-5.5",
+    "dept": "QMS",
+    "file": "hwb-qms-5.5_departmental_infrastructure_and_governance_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Cognitive Architecture &amp; Neural Growth",
+    "id": "HWB-QMS-11.2",
+    "dept": "QMS",
+    "file": "hwb-qms-11.2_cognitive_architecture_&_neural_growth_sop.html",
+    "version": "1.0.0",
+    "compliance": "UPDATED",
+    "date": "05-22-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Risk Management Guidelines (ISO 31000)",
+    "id": "HWB-QMS-4.7",
+    "dept": "QMS",
+    "file": "hwb-qms-4.7_risk_management_guidelines_iso-31000_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "AI Delegation & QMS Subagent Governance",
+    "id": "HWB-QMS-11.3",
+    "dept": "QMS",
+    "file": "hwb-qms-11.3_ai_delegation_&_qms_subagent_governance_sop.html",
+    "version": "1.0.0",
+    "compliance": "UPDATED",
+    "date": "05-22-2026"
+  },
+  {
+    "title": "Internal Audit Report Form",
+    "id": "HWB-QMS-FORM-004",
+    "dept": "QMS",
+    "file": "hwb-qms-form-004_internal_audit_report_form.html",
+    "version": "1.1",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Customer Communication Process SOP with Flowchart",
+    "id": "HWB-QMS-7.4-COM-001",
+    "dept": "QMS",
+    "file": "hwb-qms-7.4_customer_communication_process_sop_with_flowchart.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Corrective Action Process (CAR)",
+    "id": "HWB-QMS-10.2",
+    "dept": "QMS",
+    "file": "hwb-qms-10.2_corrective_action_process_sop_with_flowchart.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Automated Problem Management",
+    "id": "HWB-QMS-10.3",
+    "dept": "QMS",
+    "file": "hwb-qms-10.3_automated_problem_management_sop.html",
+    "version": "1.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: AI Agents & Specialized Automation Scripts SOP",
+    "id": "HWB-QMS-9.2",
+    "dept": "QMS",
+    "file": "hwb-qms-9.2_ai_agents_and_specialised_scripts_sop.html",
+    "version": "4.0.0",
+    "compliance": "UPDATED",
+    "date": "10-01-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Computer Security & Endpoint Protection SOP",
+    "id": "HWB-QMS-9.4",
+    "dept": "QMS",
+    "file": "hwb-qms-9.4_computer_security_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: AI Department Charter SOP",
+    "id": "HWB-QMS-5.6",
+    "dept": "QMS",
+    "file": "hwb-qms-5.6_artificial_intelligence_department_charter_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Git Troubleshooting",
+    "id": "HWB-QMS-9.1-GIT",
+    "dept": "QMS",
+    "file": "hwb-qms-9.1_git_troubleshooting_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Data Acquisition and Fidelity",
+    "id": "HWB-QMS-7.5-DAF",
+    "dept": "QMS",
+    "file": "hwb-qms-7.5_data_acquisition_and_fidelity_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Strategic Brief: Strategic Data Asset War Chest",
+    "id": "HWB-TBD",
+    "dept": "QMS",
+    "file": "hwb-qms-strat-009_strategic_data_asset_war_chest.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Gemini & Antigravity Master Setup",
+    "id": "HWB-QMS-9.1-GEM",
+    "dept": "QMS",
+    "file": "hwb-qms-9.1_antigravity_master_setup_sop.html",
+    "version": "2.1.0",
+    "compliance": "UPDATED",
+    "date": "05/22/2026"
+  },
+  {
+    "title": "Strategic AHP: Vertical Prioritization",
+    "id": "HWB-QMS-STRAT-007",
+    "dept": "QMS",
+    "file": "hwb-qms-strat-007_strategic_ahp_model.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Azure Provisioning Log",
+    "id": "HWB-QMS-7.1-AZR",
+    "dept": "QMS",
+    "file": "hwb-qms-7.1_azure_provisioning_log_sigmajan.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Data Collection Plan: HWB-MOB-2026 Mobile Execution Engine",
+    "id": "HWB-QMS-BB-003",
+    "dept": "QMS",
+    "file": "hwb-qms-bb-003_hwb-mob-2026_data_collection_plan.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Root Cause Analysis: General Quality Failure",
+    "id": "HWB-QMS-STRAT-004",
+    "dept": "QMS",
+    "file": "hwb-qms-strat-004_quality_failure_fishbone.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: IT Management System SOP",
+    "id": "HWB-QMS-7.1",
+    "dept": "QMS",
+    "file": "hwb-qms-7.1_it_management_system_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Corporate Vendor Outreach SOP",
+    "id": "HWB-QMS-8.4",
+    "dept": "QMS",
+    "file": "hwb-qms-8.4_corporate_vendor_outreach_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Daily System Maintenance",
+    "id": "HWB-QMS-9.1-MAIN",
+    "dept": "QMS",
+    "file": "hwb-qms-9.1_daily_system_maintenance_sop.html",
+    "version": "3.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Microsoft 365 & Graph API Integration SOP",
+    "id": "HWB-QMS-7.6",
+    "dept": "QMS",
+    "file": "hwb-qms-7.6_microsoft_365_integration_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: SigmaJan Design System & Brand Palette SOP",
+    "id": "HWB-QMS-7.5",
+    "dept": "QMS",
+    "file": "hwb-qms-7.5_sigmajan_design_system_and_brand_palette_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Mobile Field Operations SOP",
+    "id": "HWB-QMS-8.5",
+    "dept": "QMS",
+    "file": "hwb-qms-8.5_mobile_field_operations_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Technical Specification: SigmaJan Database Architecture & ERD",
+    "id": "HWB-QMS-7.1",
+    "dept": "QMS",
+    "file": "hwb-qms-7.1_sigmajan_saas_database_architecture_and_erd.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Strategic Management & Planning Tools",
+    "id": "HWB-QMS-STRAT-005",
+    "dept": "QMS",
+    "file": "hwb-qms-strat-005_management_planning_suite.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Google Home Obsidian Integration SOP",
+    "id": "HWB-QMS-7.5",
+    "dept": "QMS",
+    "file": "hwb-qms-7.5_google_home_obsidian_integration_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Audio Recording and Playback SOP",
+    "id": "HWB-QMS-9.2",
+    "dept": "QMS",
+    "file": "hwb-qms-9.2_audio_recording_and_playback_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Disaster Recovery & Shadow Snapshots",
+    "id": "HWB-QMS-9.3",
+    "dept": "QMS",
+    "file": "hwb-qms-9.3_disaster_recovery_&_shadow_snapshots_sop.html",
+    "version": "4.0.0",
+    "compliance": "UPDATED",
+    "date": "10-01-2026"
+  },
+  {
+    "title": "Project Communication Plan",
+    "id": "HWB-QMS-7.4-PLAN-001",
+    "dept": "QMS",
+    "file": "hwb-qms-7.4_project_communication_plan.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Secret Management And Api Credential Governance Sop Desktop Bcsqj7I",
+    "id": "HWB-QMS-9.5",
+    "dept": "QMS",
+    "file": "hwb-qms-9.5_secret_management_and_api_credential_governance_sop-desktop-bcsqj7i.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Website Improvement & Optimization SOP",
+    "id": "HWB-QMS-8.3",
+    "dept": "QMS",
+    "file": "hwb-qms-8.3_website_improvement_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Operational Velocity and Efficiency",
+    "id": "HWB-QMS-10.4",
+    "dept": "QMS",
+    "file": "hwb-qms-10.4_operational_velocity_and_efficiency_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/22/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Sigmafidelity\u2122 Web & Ui Standardization Sop",
+    "id": "HWB-QMS-7.2",
+    "dept": "QMS",
+    "file": "hwb-qms-7.2_backoffice_ui_standardization_sop.html",
+    "version": "4.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Intuition Engine and Pattern Recognition",
+    "id": "HWB-QMS-9.4",
+    "dept": "QMS",
+    "file": "hwb-qms-9.4_intuition_engine_and_pattern_recognition_sop.html",
+    "version": "1.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Strategic Plan: BabySOP Vertical Business Plan",
+    "id": "HWB-TBD",
+    "dept": "QMS",
+    "file": "hwb-qms-strat-010_babysop_business_plan.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Sales Proposal Template",
+    "id": "HWB-QMS-FORM-006",
+    "dept": "SALES-MARKETING",
+    "file": "hwb-qms-form-006_proposal_template.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "HWB Cleaning Services LLC: Capability Statement",
+    "id": "HWB-MKT-004",
+    "dept": "SALES-MARKETING",
+    "file": "hwb-mkt-004_capability_statement_je_dunn.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: SigmaFidelity\u2122 Social Media Strategy",
+    "id": "HWB-MKT-SOC-001",
+    "dept": "SALES-MARKETING",
+    "file": "hwb-mkt-soc-001_social_media_strategy_and_tactics.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Sales Process Flowchart",
+    "id": "HWB-QMS-8.0-FLOW-001",
+    "dept": "SALES-MARKETING",
+    "file": "hwb-qms-8.0_sales_process_flowchart.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Sales Process SOP",
+    "id": "HWB-QMS-8.0",
+    "dept": "SALES-MARKETING",
+    "file": "hwb-qms-8.0_sales_process_sop_with_flowchart.html",
+    "version": "4.0.0",
+    "compliance": "UPDATED",
+    "date": "10-01-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Marketing Web Design Standard",
+    "id": "HWB-QMS-8.1",
+    "dept": "SALES-MARKETING",
+    "file": "hwb-qms-8.1_marketing_web_design_concepts.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Corporate Vendor Outreach SOP",
+    "id": "HWB-MKT-001",
+    "dept": "SALES-MARKETING",
+    "file": "corporate_vendor_outreach_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Marketing Process SOP",
+    "id": "HWB-QMS-8.0-MKT-001",
+    "dept": "SALES-MARKETING",
+    "file": "hwb-qms-8.0_marketing_process_sop_with_flowchart.html",
+    "version": "2.1.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Cargo Culture Series Strategy",
+    "id": "HWB-MKT-SOC-SERIES-001",
+    "dept": "SALES-MARKETING",
+    "file": "hwb-mkt-soc-series-001_cargo_culture_series.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Marketing Form Standard",
+    "id": "HWB-MKT-FORM-001",
+    "dept": "SALES-MARKETING",
+    "file": "hwb-mkt-form-001_digital_lead_capture_form.html",
+    "version": "2.1.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Capability Statement Development",
+    "id": "HWB-MKT-001",
+    "dept": "SALES-MARKETING",
+    "file": "hwb-mkt-001_capability_statement_sop.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "HWB Cleaning Services LLC: Capability Statement",
+    "id": "HWB-MKT-002",
+    "dept": "SALES-MARKETING",
+    "file": "hwb-mkt-002_capability_statement_austin_commercial.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: National Data Intelligence Report",
+    "id": "HWB-MKT-NIR-001",
+    "dept": "SALES-MARKETING",
+    "file": "hwb-mkt-2026-03-05-national-intelligence-report.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Extreme SEO Audit Report",
+    "id": "HWB-QMS-8.2",
+    "dept": "SALES-MARKETING",
+    "file": "hwb-qms-8.2_extreme_seo_audit_report.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Texas Institutional Intelligence Report",
+    "id": "HWB-MKT-NIR-002",
+    "dept": "SALES-MARKETING",
+    "file": "hwb-mkt-2026-03-05-texas-institutional-intelligence-report.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: LinkedIn Article: The Digital DNA",
+    "id": "HWB-MKT-ART-001",
+    "dept": "SALES-MARKETING",
+    "file": "hwb-mkt-art-001_the_prompt_is_the_ip.html",
+    "version": "10.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Corporate Outreach Log: JE Dunn",
+    "id": "HWB-OUTREACH-001",
+    "dept": "SALES-MARKETING",
+    "file": "hwb-outreach-001_je_dunn_trq.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "HWB Cleaning Services LLC: Capability Statement",
+    "id": "HWB-MKT-003",
+    "dept": "SALES-MARKETING",
+    "file": "hwb-mkt-003_capability_statement_balfour_beatty.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "05/21/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: HWB Multi-Brain\u2122 Consensus",
+    "id": "HWB-QMS-11.8-CONSENSUS",
+    "dept": "QMS",
+    "file": "hwb-qms-11.8_hwb_multi-brain_consensus_sop.html",
+    "version": "1.0.0 (HTML Baseline)",
+    "compliance": "UPDATED",
+    "date": "05-25-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: About Page 500 Resolution Walkthrough",
+    "id": "HWB-QMS-11.9-DOC",
+    "dept": "QMS",
+    "file": "hwb-qms-11.9_about_page_500_resolution_walkthrough.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "06/01/2026"
+  },
+  {
+    "title": "Building Brains with George: An Operator's Manual for Geospatial Intelligence and Cognitive Systems",
+    "id": "HWB-IT-BOOK-001",
+    "dept": "IT",
+    "file": "building-brains-with-george.html",
+    "version": "1.0.0",
+    "compliance": "UPDATED",
+    "date": "07/20/2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Master Environmental Health & Safety (EHS) Manual",
+    "id": "HWB-EHS-001",
+    "dept": "EHSQ",
+    "file": "hwb-ehs-001_master_safety_manual.html",
+    "version": "3.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Construction Site Safety and Silica Dust Control Plan (CSSP)",
+    "id": "HWB-EHS-002",
+    "dept": "EHSQ",
+    "file": "hwb-ehs-002_construction_safety_plan.html",
+    "version": "1.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Institutional Facilities Health and Safety Plan (IFSP)",
+    "id": "HWB-EHS-003",
+    "dept": "EHSQ",
+    "file": "hwb-ehs-003_institutional_facility_safety_plan.html",
+    "version": "1.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Internal Audit Schedule & QMS Modernization Report",
+    "id": "HWB-QMS-AUDIT-2026",
+    "dept": "QMS",
+    "file": "hwb-qms-audit-2026_internal_audit_schedule_and_qms_modernization_report.html",
+    "version": "2.0.0",
+    "compliance": "UPDATED",
+    "date": "09-21-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Spam Protection, Enterprise Bot Defense, and Mobile Operations System",
+    "id": "HWB-QMS-11.10",
+    "dept": "IT",
+    "file": "hwb-qms-11.10_spam_protection_honey-pot_ingestion_and_telegraph_integration_sop.html",
+    "version": "4.0.0",
+    "compliance": "UPDATED",
+    "date": "10-01-2026"
+  }
 ]

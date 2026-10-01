@@ -2,7 +2,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-9.6</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">4.0.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">ISO/IEC 27001:2022 &amp; SOC 2 Type II</span></div>
     </div>
@@ -12,7 +12,7 @@
             <thead>
                 <tr>
                     <th style="text-align: left;"><strong>Document Control</strong></th>
-                    <th style="text-align: left;"></th>
+                    <th style="text-align: left;"><strong>Institutional Specification</strong></th>
                 </tr>
             </thead>
             <tbody>
@@ -26,7 +26,7 @@
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>Version</strong></td>
-                    <td style="text-align: left;">3.0.0</td>
+                    <td style="text-align: left;">4.0.0</td>
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>Status</strong></td>
@@ -41,12 +41,12 @@
                     <td style="text-align: left;">Humberto Dominguez, CEO</td>
                 </tr>
                 <tr>
-                    <td style="text-align: left;"><strong>Date</strong></td>
-                    <td style="text-align: left;">09/21/2026</td>
+                    <td style="text-align: left;"><strong>Effective Date</strong></td>
+                    <td style="text-align: left;">10/01/2026</td>
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>Regulatory Standards</strong></td>
-                    <td style="text-align: left;">ISO/IEC 27001:2022, SOC 2 Type II, Texas Bus. &amp; Com. Code § 521.053</td>
+                    <td style="text-align: left;">ISO/IEC 27001:2022 Controls (A.8.10, A.8.12, A.8.15, A.12.4), SOC 2 Type II (CC6.1, CC6.8), Texas Bus. &amp; Com. Code § 521.053, TDPSA</td>
                 </tr>
             </tbody>
         </table>
@@ -55,7 +55,7 @@
         <h1>Standard Operating Procedure: <strong>Information Security Management System (ISMS) &amp; PII Vault</strong></h1>
 
         <h2>1.0 Purpose</h2>
-        <p>This SOP aligns the IT, cryptographic, and operational security controls of HWB Cleaning Services LLC with <strong>ISO/IEC 27001:2022</strong>, <strong>SOC 2 Type II</strong>, and <strong>Texas Business and Commerce Code § 521.053</strong>. It guarantees that company databases, customer data, AI agent workflows, and employee identification records are safeguarded against unauthorized access, data compromise, and cyber threats.</p>
+        <p>This SOP aligns the IT, cryptographic, and operational security controls of HWB Cleaning Services LLC with <strong>ISO/IEC 27001:2022</strong>, <strong>SOC 2 Type II</strong>, the <strong>Texas Data Privacy and Security Act (TDPSA)</strong>, and <strong>Texas Business and Commerce Code § 521.053</strong>. It guarantees that company databases, customer data, AI agent workflows, and employee identification records are safeguarded against unauthorized access, data compromise, and cyber threats.</p>
 
         <h2>2.0 Scope</h2>
         <p>Applies to all digital infrastructure, databases, container networks, APIs, administrative personnel, and physical commercial cleaning staff operating inside sensitive client facilities (data centers, defense facilities, corporate offices).</p>
@@ -73,6 +73,7 @@
             <li><strong>Encryption in Transit:</strong> All HTTP traffic is secured via modern TLS 1.3 encryption. External API webhooks and internal database bridges communicate exclusively across private Docker networks or SSL-encrypted Azure endpoints.</li>
             <li><strong>PostgreSQL Database Protection:</strong> All operational data resides in PostgreSQL with volume encryption at rest and strict connection pooling (<code>ThreadedConnectionPool</code>) enforcing sub-millisecond query verification.</li>
             <li><strong>Role-Based Access Control (RBAC):</strong> The application enforces centralized gateway interception. Outside Sales personnel are strictly locked to the Field Sales Desk (<code>/admin/sales-desk</code>) and blocked from operational tables or data exports.</li>
+            <li><strong>30-Minute Idle Session Timeout:</strong> All authenticated user sessions across administrative and backoffice desks automatically expire and invalidate following 30 minutes of inactivity.</li>
         </ol>
 
         <h3 id="33-pii-vault">3.3 Personally Identifiable Information (PII) Vault Protocol (SEC-001)</h3>
@@ -85,11 +86,45 @@
             <li><strong>Automated Violation Telemetry:</strong> Any unauthorized role attempting to call sensitive PII reveal endpoints is blocked with HTTP 403 Forbidden and logged as a <code>SECURITY_VIOLATION</code> event in the corporate audit ledger.</li>
         </ol>
 
+        <h3 id="34-iso-27001-controls">3.4 Advanced ISO 27001:2022 &amp; SOC 2 Controls (Version 4.0.0 Architecture)</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>ISO 27001 Control</th>
+                    <th>Technical Implementation</th>
+                    <th>Compliance Target</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Control A.8.12 (Data Leakage Prevention)</strong></td>
+                    <td>Strict Dual-Zone Air-Gap in <code>templates/base.html</code>. Third-party heatmap scripts (Microsoft Clarity) are strictly prohibited from loading on authenticated portals, admin pages, or login screens. Only anonymous public marketing pages may execute external scripts.</td>
+                    <td>Zero third-party exposure of employee PII, financial records, or operational data.</td>
+                </tr>
+                <tr>
+                    <td><strong>Control A.8.15 (Logging &amp; Telemetry)</strong></td>
+                    <td>First-party DOM Sensor (<code>static/js/sigma_breadcrumbs.js</code>) and <code>ClientBreadcrumbs</code> PostgreSQL table. Tracks page navigation, button clicks, rage clicks, and JavaScript errors with automated client-side redacting of passwords, cards, and tax IDs.</td>
+                    <td>100% sovereign client-side observability without third-party vendor data transfer.</td>
+                </tr>
+                <tr>
+                    <td><strong>Control A.8.10 (Information Deletion)</strong></td>
+                    <td>Automated PostgreSQL lifecycle stored procedure: <code>purge_expired_client_breadcrumbs(retention_days=30)</code>. Runs scheduled automated purges of telemetry logs older than 30 days.</td>
+                    <td>Relentless data minimization and compliance with TDPSA / GDPR storage limitation.</td>
+                </tr>
+                <tr>
+                    <td><strong>Control A.12.4 (Log Tamper Protection)</strong></td>
+                    <td>Write-Once-Read-Many (WORM) immutability trigger <code>prevent_security_audit_mutation()</code> on the <code>SecurityAuditLogs</code> table. Strictly blocks <code>UPDATE</code> and <code>DELETE</code> statements at the database engine level.</td>
+                    <td>Permanent, tamper-evident security audit trail for SOC 2 Type II and regulatory auditors.</td>
+                </tr>
+            </tbody>
+        </table>
+
         <h2>4.0 Verification &amp; Compliance Audit</h2>
         <ul>
-            <li><strong>Automated Regression Testing:</strong> Automated test batteries verify that unauthorized roles receive HTTP 403 and generate audit records upon attempting sensitive data reveal.</li>
+            <li><strong>Automated Regression Testing:</strong> <code>scripts/tessa_regression_suite.py</code> verifies RBAC gates, PostgreSQL connection pool latency, and security audit integrity.</li>
             <li><strong>Cryptographic Verification:</strong> Direct SQL queries confirm that all SSN and banking columns contain exclusively AES-256 ciphertext blobs with zero plaintext leaks.</li>
-            <li><strong>Personnel Vetting:</strong> All cleaning technicians undergo criminal background clearance (DPS) and I-9 verification before receiving facility dispatch badges.</li>
+            <li><strong>Air-Gap Verification:</strong> Automated browser tests confirm third-party script tags do not exist in the DOM on <code>/admin/*</code> and <code>/login</code> routes.</li>
+            <li><strong>WORM Immutability Verification:</strong> Direct SQL tests confirm that attempts to mutate <code>SecurityAuditLogs</code> are rejected with PostgreSQL exception <code>SECURITY AUDIT LOG IS IMMUTABLE (WORM)</code>.</li>
         </ul>
 
         <h2>5.0 Notes and Cautions</h2>
@@ -110,6 +145,12 @@
                 </tr>
             </thead>
             <tbody>
+                <tr>
+                    <td style="text-align: left;">4.0.0</td>
+                    <td style="text-align: left;">10/01/2026</td>
+                    <td style="text-align: left;">George (Systems Architect)</td>
+                    <td style="text-align: left;">Major upgrade: Codified Section 3.4 documenting ISO 27001 Controls A.8.10 (30-day purge_expired_client_breadcrumbs), A.8.12 (Strict Dual-Zone Air-Gap on third-party analytics), A.8.15 (ClientBreadcrumbs first-party DOM sensor), and A.12.4 (SecurityAuditLogs WORM immutability trigger). Added 30-minute idle session timeout standard. Approved by Humberto Dominguez, CEO.</td>
+                </tr>
                 <tr>
                     <td style="text-align: left;">3.0.0</td>
                     <td style="text-align: left;">09/21/2026</td>

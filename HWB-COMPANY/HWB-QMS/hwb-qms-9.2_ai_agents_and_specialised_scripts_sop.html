@@ -1,14 +1,14 @@
 <!-- 
-    SigmaFidelity™ Institutional SOP Template (HTML Version 3.0)
+    SigmaFidelity™ Institutional SOP Template (HTML Version 4.0)
     Standard: HWB-QMS-1.0 v2.0 (HTML Baseline)
 -->
 <div class="sop-card">
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-9.2</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">4.0.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
-        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">8.1 (Operational Planning & Control)</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">8.1 (Operational Planning &amp; Control)</span></div>
     </div>
 
     <div class="sop-content-body">
@@ -22,11 +22,11 @@
             <tbody>
                 <tr><td><strong>Document Title</strong></td><td><strong>AI Agents &amp; Specialized Automation Scripts SOP</strong></td></tr>
                 <tr><td><strong>Document ID</strong></td><td>HWB-QMS-9.2</td></tr>
-                <tr><td><strong>Version</strong></td><td>3.0.0</td></tr>
+                <tr><td><strong>Version</strong></td><td>4.0.0</td></tr>
                 <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
                 <tr><td><strong>Author</strong></td><td>George (Systems Architect)</td></tr>
                 <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
-                <tr><td><strong>Date</strong></td><td>09/25/2026</td></tr>
+                <tr><td><strong>Effective Date</strong></td><td>10/01/2026</td></tr>
                 <tr><td><strong>Department</strong></td><td>IT / Artificial Intelligence Department</td></tr>
                 <tr><td><strong>ISO Standard</strong></td><td>ISO 9001:2015 Clause 8.1 &amp; Clause 7.1.3 (Infrastructure)</td></tr>
             </tbody>
@@ -74,20 +74,32 @@
                 <tr>
                     <td><strong>telegram_listener.py</strong></td>
                     <td>Container (hwb_agent_worker)</td>
-                    <td>Continuous Polling</td>
+                    <td>Continuous Polling (16 Threads)</td>
                     <td>Mobile executive command node; enforces 5-tier user permissions; handles single-use magic-link auth; gates /cmd Linux shell and Google Search.</td>
                 </tr>
                 <tr>
                     <td><strong>tessa_regression_suite.py</strong></td>
                     <td>Container (hwb_agent_worker)</td>
                     <td>Continuous 1-Hour Loop</td>
-                    <td>Tessa Test QA daemon (--daemon --interval 3600); executes 7-module platform regression testing; certifies zero-defect operation to audit log.</td>
+                    <td>Tessa Test QA daemon (--daemon --interval 3600); executes 11-module platform regression testing; certifies zero-defect operation to audit log.</td>
                 </tr>
                 <tr>
                     <td><strong>yamamoto_bid_test_suite.py</strong></td>
                     <td>Container &amp; Host CLI</td>
-                    <td>Pre-Deployment</td>
-                    <td>Yamamoto Moto's estimating inspection battery; validates square footage takeoffs, living wage floors, and multi-tier bid calculations.</td>
+                    <td>Pre-Deployment Quality Gate</td>
+                    <td>Yamamoto Moto's estimating inspection battery; validates square footage takeoffs, federal SCA living wage floors, and multi-tier bid calculations across 8 modules.</td>
+                </tr>
+                <tr>
+                    <td><strong>bot_defense_test_suite.py</strong></td>
+                    <td>Host &amp; Container CLI</td>
+                    <td>Pre-Deployment Quality Gate</td>
+                    <td>Verifies Enterprise Bot Defense Battery (6 modules) testing honeypot trap rejection, sub-second rapid drops, direct curl drops, and financial spam blocking.</td>
+                </tr>
+                <tr>
+                    <td><strong>site_security_audit.py</strong></td>
+                    <td>Host &amp; Container CLI</td>
+                    <td>Pre-Deployment Quality Gate</td>
+                    <td>Audits Site Security Rack #9 (11 modules), verifying WORM immutability on SecurityAuditLogs, SSL/TLS ciphers, and RBAC endpoint protection.</td>
                 </tr>
                 <tr>
                     <td><strong>solicitation_scope_parser.py</strong></td>
@@ -100,6 +112,18 @@
                     <td>Container (hwb_agent_worker)</td>
                     <td>Orchestrator Trigger</td>
                     <td>Playwright headless browser crawler scouting 35 Texas municipal and ISD procurement hubs across Bonfire and IonWave networks.</td>
+                </tr>
+                <tr>
+                    <td><strong>migrate_033_live_lead_deduplication.py</strong></td>
+                    <td>Web App &amp; Worker</td>
+                    <td>On Demand / Migration Gate</td>
+                    <td>High-performance bulk SQL deduplication engine; normalized 28,000+ phone records and reconciled 14,704 duplicates on live Azure PostgreSQL.</td>
+                </tr>
+                <tr>
+                    <td><strong>migrate_036_client_breadcrumbs.py</strong></td>
+                    <td>Web App &amp; Worker</td>
+                    <td>On Demand / Migration Gate</td>
+                    <td>Provisions ClientBreadcrumbs table and deploys purge_expired_client_breadcrumbs(30) automated data lifecycle procedure for ISO 27001 data minimization.</td>
                 </tr>
                 <tr>
                     <td><strong>peter_sentinel.py</strong></td>
@@ -116,19 +140,28 @@
             </tbody>
         </table>
 
-        <h2>4.0 Daemon Supervision &amp; The Zero-Crash Mandate</h2>
+        <h2>4.0 Daemon Supervision &amp; The 4-Tier Zero-Defect Mandate</h2>
         <ol>
             <li><strong>Worker Supervision:</strong> All background agent daemons running inside <code>hwb_agent_worker</code> must be registered in the <code>AGENTS</code> array of <code>worker_launcher.py</code>.</li>
             <li><strong>Idempotency:</strong> Every script must be completely idempotent. A restart or redundant execution cycle must never duplicate database records, corrupt ongoing transactions, or clobber reconciled financial data.</li>
             <li><strong>Strict Output Staging:</strong> Automated outreach scripts are strictly prohibited from dispatching live communications directly to prospective clients. All outbound proposals must be staged into <code>PendingOutbox</code> using the <code>HWB-COM-001</code> official letterhead for CEO review and approval.</li>
             <li><strong>Error Logging:</strong> If any background script encounters an unhandled exception or operational failure, the event must be immediately recorded to <code>docs/PROBLEMS-TO-SOLVE.md</code> per our institutional error logging mandate.</li>
+            <li><strong>4-Tier Automated Quality Gate:</strong> Prior to any production deployment, the codebase must pass all 4 testing tiers with a 100% score:
+                <ul>
+                    <li><strong>Tier 1:</strong> Tessa Platform Regression Suite (11 modules) — <code>python3 scripts/tessa_regression_suite.py</code></li>
+                    <li><strong>Tier 2:</strong> Yamamoto Moto AI Estimator Suite (8 modules) — <code>python3 scripts/yamamoto_bid_test_suite.py</code></li>
+                    <li><strong>Tier 3:</strong> Site Security Rack #9 Suite (11 modules) — <code>python3 scripts/site_security_audit.py</code></li>
+                    <li><strong>Tier 4:</strong> Enterprise Bot Defense Battery (6 modules) — <code>python3 scripts/bot_defense_test_suite.py</code></li>
+                </ul>
+            </li>
         </ol>
 
         <h2>5.0 Verification (Zero-Defect Check)</h2>
         <ul>
-            <li>Run <code>docker top hwb_agent_worker</code> to verify all 5 supervisor processes are actively executing.</li>
+            <li>Run <code>docker top hwb_agent_worker</code> to verify all supervisor processes are actively executing.</li>
             <li>Inspect <code>HWB-IT-SYSTEM-LOGS/tessa_regression_audit.log</code> to confirm the latest regression audit passed with Grade A+ certification.</li>
             <li>Verify that Peter's host sentinel is running on the host via <code>ps aux | grep peter_sentinel</code>.</li>
+            <li>Execute the 4-tier regression battery and verify 100% pass rates across all modules.</li>
         </ul>
 
         <h2>6.0 Revision History</h2>
@@ -142,6 +175,12 @@
                 </tr>
             </thead>
             <tbody>
+                <tr>
+                    <td style="text-align: left;">4.0.0</td>
+                    <td style="text-align: left;">10/01/2026</td>
+                    <td style="text-align: left;">George (Systems Architect)</td>
+                    <td style="text-align: left;">Comprehensive upgrade: Expanded script inventory to include Yamamoto Moto's 8-module bidding test suite, Tessa's 11-module expanded platform suite, Bot Defense Battery, Rack #9 Site Security audit, Migration 033 deduplication, and Migration 036 ClientBreadcrumbs. Codified mandatory 4-Tier Automated Quality Gate. Approved by Humberto Dominguez, CEO.</td>
+                </tr>
                 <tr>
                     <td style="text-align: left;">3.0.0</td>
                     <td style="text-align: left;">09/25/2026</td>

@@ -2,7 +2,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-7.5-BO-CRM</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">4.0.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5 &amp; 8.1 (Operational Planning)</span></div>
     </div>
@@ -12,7 +12,7 @@
             <thead>
                 <tr>
                     <th style="text-align: left;"><strong>Document Control</strong></th>
-                    <th style="text-align: left;"></th>
+                    <th style="text-align: left;"><strong>Institutional Specification</strong></th>
                 </tr>
             </thead>
             <tbody>
@@ -26,7 +26,7 @@
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>Version</strong></td>
-                    <td style="text-align: left;">3.0.0</td>
+                    <td style="text-align: left;">4.0.0</td>
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>Status</strong></td>
@@ -41,8 +41,8 @@
                     <td style="text-align: left;">Humberto Dominguez, CEO</td>
                 </tr>
                 <tr>
-                    <td style="text-align: left;"><strong>Date</strong></td>
-                    <td style="text-align: left;">09/21/2026</td>
+                    <td style="text-align: left;"><strong>Effective Date</strong></td>
+                    <td style="text-align: left;">10/01/2026</td>
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>ISO Standards</strong></td>
@@ -70,48 +70,44 @@
                     <li><code>"Leads"</code>: Statewide commercial Texas prospects, GIS coordinates, building square footage, and contact details.</li>
                     <li><code>"Employees"</code>: Active W-2 technicians, payroll rates, facility assignments, and AES-256 encrypted PII vault columns.</li>
                     <li><code>"JobApplicants"</code>: Candidate pool (ATS) records, interview statuses, and application tracks.</li>
-                    <li><code>"WorkOrders"</code>: Scheduled service visits, crew notes, client notes, shift times, and security ingress access codes.</li>
-                    <li><code>"GlobalActivities"</code>: Immutable SOC 2 / ISO 27001 audit ledger recording all system events, conversions, and sensitive data accesses.</li>
+                    <li><code>"WorkOrders"</code>: Scheduled service visits, crew notes, shift times, and security ingress access codes.</li>
+                    <li><code>"ClientBreadcrumbs"</code>: Micro-interaction DOM telemetry tracking user clicks, rage clicks, and JavaScript errors for instant client troubleshooting.</li>
+                    <li><code>"SecurityAuditLogs"</code>: Immutable WORM ledger recording all administrative actions, logins, and sensitive PII unmasking events.</li>
                 </ul>
             </li>
         </ul>
 
-        <h2>4.0 The Operations Hub Modular Views (/admin/operations)</h2>
-        <p>The centralized Operations Hub is structured into 5 dedicated operational modules:</p>
+        <h2>4.0 The Operations Hub 8-Core Enterprise Architecture</h2>
+        <p>The backoffice operations system is structured into 8 core enterprise modules:</p>
         <ol>
-            <li><strong>Workforce Hub (<code>?view=workforce</code>):</strong>
-                <ul>
-                    <li><strong>Active Technicians:</strong> Displays active W-2 commercial cleaning technicians, assigned customer facility, hourly rate, weekly hours, and compliance document counts.</li>
-                    <li><strong>Candidate Pool (ATS):</strong> Real-time intake from <code>/work-with-us</code>. Provides one-click <code>+ Onboard</code> candidate promotion to W-2 or 1099 personnel.</li>
-                    <li><strong>Subcontractor Partners:</strong> 1099 commercial cleaning partner companies, primary contacts, and verified insurance certifications.</li>
-                    <li><strong>Payroll &amp; Labor Tracking:</strong> Weekly allocated labor hours, bi-weekly payroll projections, and ADP/QuickBooks CSV export.</li>
-                </ul>
-            </li>
-            <li><strong>Portfolio Accounts (<code>?view=accounts</code>):</strong> Tracks active client facilities (e.g., Collin College Frisco Campus, Bosanna LLC, NTTA). Manages building specifications, square footage, primary billing contacts, service frequencies, and keyholder maps.</li>
-            <li><strong>Commercial Leads (<code>?view=leads</code>):</strong> Manages our commercial Texas lead pipeline across Dallas-Fort Worth, Austin, Houston, and San Antonio. Tracks lead qualification, outreach cadence, walkthrough scheduling, and one-click account conversion.</li>
-            <li><strong>Dispatch &amp; Work Orders (<code>?view=monitor</code>):</strong> Real-time operations board tracking nightly shifts, technician assignments, gate access codes, ingress instructions, and supervisor inspection pass rates.</li>
+            <li><strong>Accounts Desk (<code>?view=accounts</code>):</strong> Tracks active client facilities (e.g., Collin College Frisco Campus, Bosanna LLC, NTTA). Manages building specifications, square footage, primary billing contacts, service frequencies, and keyholder maps.</li>
+            <li><strong>Commercial Leads &amp; Two-Phase Intake (<code>?view=leads</code>):</strong> Manages our commercial Texas lead pipeline. Supports Contact-First 10-Second intake tagging (Desktop vs. Mobile Express) and displays post-submission pricing calibration updates.</li>
+            <li><strong>Bids &amp; Procurement Hub (<code>?view=bids</code>):</strong> Manages Institutional Bids, Commercial GC Pipeline, General Contractors Registry, and Texas Government Programs. Certifies estimates against Yamamoto Moto's bidding engine.</li>
+            <li><strong>Dispatch &amp; Mobile Technician Hub (<code>?view=monitor</code>):</strong> Real-time operations board tracking nightly shifts, technician assignments, gate access codes, and mobile PWA workflow execution.</li>
+            <li><strong>Workforce &amp; ATS Pool (<code>?view=workforce</code>):</strong> Active W-2 technicians, ATS candidate pool, 1099 subcontractor partners, and automated payroll exports.</li>
             <li><strong>Safety &amp; EHSQ (<code>?view=safety</code>):</strong> Daily Job Hazard Analysis (JHA) records, OSHA 300 logs, incident reports, and EPA-registered chemical Safety Data Sheets (SDS).</li>
+            <li><strong>IT Operations &amp; Server Telemetry Bay (<code>?view=it</code>):</strong> 9-Rack Command Hub monitoring server health, database connection latency, automated WORM audit trails, and Fix-All remediation pipelines.</li>
+            <li><strong>Executive Center &amp; Lexicon Governance (<code>?view=executive</code>):</strong> User management, 5-tier Telegram permissions, magic link issuance, and compliance reporting using plain commercial cleaning language.</li>
         </ol>
 
         <h2>5.0 Employee Master Dossier &amp; PII Vault Security (SEC-001)</h2>
         <ol>
             <li><strong>Zero Plaintext Storage:</strong> Social Security Numbers, ITINs, and direct deposit checking/savings accounts are encrypted at the database layer using AES-256 Fernet ciphers.</li>
             <li><strong>Default Masked Display:</strong> Opening the employee modal displays Social Security Numbers as <code>***-**-####</code> and bank accounts as <code>••••••••####</code>.</li>
-            <li><strong>Audited 30-Second Timed Reveal:</strong> Authorized administrators (Executive, Admin, Operations) may click "Reveal" to inspect decrypted identification. The gateway logs the accessor username and IP to <code>GlobalActivities</code>, and the screen automatically locks and re-masks after 30 seconds.</li>
-            <li><strong>Automated Security Lockout Protocol:</strong> Terminated or Fired personnel automatically have badge credentials revoked, linked ATS records marked terminated, and facility access permissions terminated.</li>
+            <li><strong>Audited 30-Second Timed Reveal:</strong> Authorized administrators (Executive, Admin, Operations) may click "Reveal" to inspect decrypted identification. The gateway logs the accessor username and IP to <code>SecurityAuditLogs</code>, and the screen automatically locks and re-masks after 30 seconds.</li>
+            <li><strong>Automated Security Lockout Protocol:</strong> Terminated personnel automatically have badge credentials revoked, linked ATS records marked terminated, and facility access permissions terminated.</li>
         </ol>
 
-        <h2>6.0 Prime Contractor Cockpit Integration (/portal/bosanna/cockpit)</h2>
+        <h2>6.0 Client Problem Troubleshooting &amp; DOM Breadcrumbs</h2>
         <ol>
-            <li><strong>Decoupled Partner Cockpit:</strong> Prime contractor partners (e.g., Bosanna LLC) manage on-site facility personnel, deployment approvals, and cleaning checklists through their dedicated portal.</li>
-            <li><strong>Status Synchronization:</strong> Changes made in the partner cockpit synchronize immediately with the central HWB database, maintaining absolute data consistency without double entry.</li>
+            <li><strong>Forensic Telemetry Inspection:</strong> When a client or field technician reports unexpected website behavior or submission issues, support personnel can query <code>GET /api/v1/telemetry/breadcrumbs?session_id=&lt;id&gt;</code> to inspect the exact click stream, rapid rage clicks, and JavaScript exceptions leading up to the issue.</li>
+            <li><strong>Privacy-Safe Troubleshooting:</strong> Breadcrumbs automatically redact form inputs, allowing operators to diagnose client friction without exposing passwords or confidential banking numbers.</li>
         </ol>
 
         <h2>7.0 Verification &amp; Quality Control</h2>
         <ul>
-            <li>All lead conversions and employee onboardings must be verifiable in the <code>GlobalActivities</code> feed.</li>
+            <li>All lead conversions and employee onboardings must be verifiable in the <code>SecurityAuditLogs</code> feed.</li>
             <li>Subtab transitions in the Workforce view must synchronize with URL parameters without page reloads.</li>
-            <li>Sortable drag-and-drop table headers must persist user column orders across sessions.</li>
             <li>Zero synthetic data: all records must correspond to physical commercial properties or verified human personnel.</li>
         </ul>
 
@@ -128,10 +124,16 @@
             </thead>
             <tbody>
                 <tr>
+                    <td style="text-align: left;">4.0.0</td>
+                    <td style="text-align: left;">10/01/2026</td>
+                    <td style="text-align: left;">George (Systems Architect)</td>
+                    <td style="text-align: left;">Expanded to 8-Core Enterprise Operations Hub. Documented Two-Phase Contact-First lead intake, Mobile Express source tagging, Section 6.0 Client Problem Troubleshooting with ClientBreadcrumbs telemetry, 9-Rack IT Telemetry Bay, and plain language lexicon compliance. Approved by Humberto Dominguez, CEO.</td>
+                </tr>
+                <tr>
                     <td style="text-align: left;">3.0.0</td>
                     <td style="text-align: left;">09/21/2026</td>
                     <td style="text-align: left;">George (Systems Architect)</td>
-                    <td style="text-align: left;">TOTAL MODERNIZATION to PostgreSQL unified schema. Added Operations Hub 5-module architecture, Workforce ATS Candidate Pool, SEC-001 PII Vault protocol, Bosanna Cockpit synchronization, and Automated Security Lockout Protocol. Approved by Humberto Dominguez, CEO.</td>
+                    <td style="text-align: left;">TOTAL MODERNIZATION to PostgreSQL unified schema. Added Operations Hub 5-module architecture, Workforce ATS Candidate Pool, SEC-001 PII Vault protocol, and Automated Security Lockout Protocol. Approved by Humberto Dominguez, CEO.</td>
                 </tr>
                 <tr>
                     <td style="text-align: left;">2.0.0</td>
