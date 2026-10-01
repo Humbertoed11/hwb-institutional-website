@@ -9,11 +9,15 @@ Mission:
 Autonomously stress-test and verify full-stack system integrity across:
 1. Public & Core Commercial Routes (HTTP 200 / Zero Dead Links)
 2. Enterprise RBAC & Security Gateway (Gated Access, Clean Redirects)
-3. Database Connection Pool & Schema Parity (PostgreSQL 13 / Migrations)
+3. Database Connection Pool & Schema Parity (PostgreSQL 16 / Migrations)
 4. Telegram Operations Gateway & 5-Tier User Permissions Matrix
 5. Azure VNet Database Telemetry Handshake (/api/v1/db-audit)
 6. Form Input Validation & PII Vault Security (Phone Masks / Encryption)
 7. Autonomous Sentinel & Recovery Snapshot Verification (Peter Sentinel)
+8. Anti-Spoofing & Ingestion Quarantine Gateway
+9. Business Classifier & Ingestion Gateway Hardening
+10. WCAG 2.1 AA Button Accessibility & Disambiguation Quality Gate
+11. Domain-Driven Lexicon Governance & Jargon Quality Gate
 """
 
 import os
@@ -465,6 +469,109 @@ class TessaPlatformRegressionSuite(unittest.TestCase):
         finally:
             conn.close()
 
+    # -------------------------------------------------------------
+    # MODULE 10: WCAG 2.1 AA BUTTON ACCESSIBILITY & DISAMBIGUATION GATE
+    # -------------------------------------------------------------
+    def test_10_wcag_button_accessibility_gate(self) -> None:
+        """Tessa Test verifies all interactive buttons across public and core routes have accessible labels (WCAG 2.1 AA)."""
+        log_tessa("Inspecting Module 10: WCAG 2.1 AA Button Accessibility & Disambiguation Quality Gate")
+        from bs4 import BeautifulSoup
+
+        routes = [
+            "/",
+            "/get-quote",
+            "/work-with-us",
+            "/terms",
+            "/privacy-policy",
+            "/login",
+            "/services/janitorial",
+            "/services/commercial",
+            "/services/industrial",
+            "/services/construction"
+        ]
+
+        total_buttons_checked = 0
+        for route in routes:
+            url = f"{self.base_url}{route}"
+            resp = self.client.get(url, timeout=5)
+            self.assertEqual(resp.status_code, 200, f"Route {route} failed with status {resp.status_code}")
+
+            soup = BeautifulSoup(resp.text, "html.parser")
+            buttons = soup.find_all("button")
+            for b in buttons:
+                total_buttons_checked += 1
+                text = b.get_text(strip=True)
+                aria_label = (b.get("aria-label") or "").strip()
+                title = (b.get("title") or "").strip()
+                has_label = bool(text or aria_label or title)
+                self.assertTrue(
+                    has_label,
+                    f"Accessible button violation on {route}: button tag <button {b.attrs}> lacks text, aria-label, or title."
+                )
+
+        # Dedicated inspection for /get-quote quick facility type buttons (Option 1 Streamlined Flow)
+        quote_url = f"{self.base_url}/get-quote"
+        q_resp = self.client.get(quote_url, timeout=5)
+        q_soup = BeautifulSoup(q_resp.text, "html.parser")
+        chips = q_soup.find_all("button", class_="facility-chip")
+        self.assertGreaterEqual(len(chips), 6, "Expected at least 6 facility type quick select buttons on /get-quote")
+        for chip in chips:
+            chip_aria = chip.get("aria-label")
+            self.assertTrue(bool(chip_aria and "facility" in chip_aria.lower()), f"Chip {chip} missing descriptive aria-label")
+            self.assertIn(chip.get("aria-pressed"), ["true", "false"], f"Chip {chip} missing aria-pressed state")
+
+        # Dedicated inspection for /work-with-us job position buttons
+        work_url = f"{self.base_url}/work-with-us"
+        w_resp = self.client.get(work_url, timeout=5)
+        w_soup = BeautifulSoup(w_resp.text, "html.parser")
+        detail_btns = w_soup.find_all("button", onclick=re.compile(r"viewJobDescription"))
+        for d_btn in detail_btns:
+            aria = d_btn.get("aria-label") or ""
+            self.assertTrue("for " in aria.lower(), f"Job details button {d_btn} lacks contextual job title in aria-label")
+
+        log_tessa(f"PASS: WCAG 2.1 AA Button Accessibility Gate passed: {total_buttons_checked} buttons verified across {len(routes)} routes with 100% compliance.")
+
+    # -------------------------------------------------------------
+    # MODULE 11: DOMAIN-DRIVEN LEXICON GOVERNANCE & JARGON LINTER
+    # -------------------------------------------------------------
+    def test_11_domain_driven_lexicon_governance_gate(self) -> None:
+        """Tessa Test verifies 0 occurrences of prohibited aviation jargon ('cockpit') and developer slang across templates and rendered pages."""
+        log_tessa("Inspecting Module 11: Domain-Driven Lexicon Governance & Jargon Linter")
+        from core.services.lexicon_governance import scan_templates_directory, BANNED_WORDS_PATTERN
+
+        # 1. Scan all active HTML templates
+        templates_path = os.path.join(APP_DIR, "templates")
+        if not os.path.exists(templates_path):
+            templates_path = os.path.join(BASE_DIR, "templates")
+        scan_results = scan_templates_directory(templates_path)
+        self.assertEqual(
+            scan_results["violations_count"],
+            0,
+            f"Lexicon Governance defect: Found {scan_results['violations_count']} prohibited jargon violations in templates: {scan_results['violations']}"
+        )
+
+        # 2. Scan rendered HTML of public and core routes for prohibited words
+        routes = [
+            "/",
+            "/get-quote",
+            "/work-with-us",
+            "/services/janitorial",
+            "/portal/bosanna/login",
+            "/login"
+        ]
+
+        for route in routes:
+            url = f"{self.base_url}{route}"
+            resp = self.client.get(url, timeout=5)
+            self.assertEqual(resp.status_code, 200, f"Failed fetching {route}")
+            matches = list(BANNED_WORDS_PATTERN.finditer(resp.text))
+            self.assertEqual(
+                len(matches),
+                0,
+                f"Lexicon violation on rendered route {route}: found banned term '{[m.group(0) for m in matches]}'"
+            )
+
+        log_tessa(f"PASS: Lexicon Governance Gate passed: 0 prohibited jargon terms found across {scan_results['scanned_files']} templates and {len(routes)} live rendered routes.")
 
 
 def run_tessa_audit() -> bool:

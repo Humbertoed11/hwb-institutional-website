@@ -665,7 +665,8 @@ def apply_system_migrations(conn: Any, db_url: Optional[str] = None) -> None:
                 ("031_government_programs_and_certifications", "scripts.migrate_031_government_programs_and_certifications", "Government programs SBA 8(a), HUB, and SDB certifications master registry"),
                 ("032_multitenant_compliance_and_governance", "scripts.migrate_032_multitenant_compliance_and_governance", "Multi-tenant B2G compliance engine, multi-tenant program matching, and 13 CFR § 124 rules"),
                 ("033_live_lead_deduplication", "scripts.migrate_033_live_lead_deduplication", "Live lead dataset deduplication, Golden Master consolidation, child re-parenting, and unique index enforcement"),
-                ("034_sync_dev_to_production", "scripts.migrate_034_sync_dev_to_production", "Full production sync: 1,231 mined leads, corporate umbrellas, coops, gov programs, and institutional bids")
+                ("034_sync_dev_to_production", "scripts.migrate_034_sync_dev_to_production", "Full production sync: 1,231 mined leads, corporate umbrellas, coops, gov programs, and institutional bids"),
+                ("035_site_security_rack_09", "scripts.migrate_035_site_security_rack_09", "Site Security Rack #9 immutable audit ledger with database-level WORM trigger and high-density indexing")
             ]
 
             for v_tag, mod_path, v_desc in modular_migrations:

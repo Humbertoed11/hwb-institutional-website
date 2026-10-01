@@ -298,8 +298,8 @@ We are pleased to confirm that the SigmaFidelity™ Model C operational infrastr
 
 Your white-labeled digital ecosystem includes the following dedicated portals:
 
-1. PRIME CONTRACTOR COCKPIT:
-   Direct URL: http://mop.test:5000/portal/{slug}/cockpit
+1. PRIME CONTRACTOR OPERATIONS PORTAL:
+   Direct URL: http://mop.test:5000/portal/{slug}/portal
    Magic Access: http://mop.test:5000/portal/{slug}/magic-login
    Features: Real-time candidate roster, bench-ready standby counts, dock inspection status, and 1-click auditor compliance dossier exports.
 

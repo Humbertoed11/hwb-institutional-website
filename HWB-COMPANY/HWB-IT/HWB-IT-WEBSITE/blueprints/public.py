@@ -9,7 +9,7 @@ import re
 import json
 import requests
 from datetime import datetime
-from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, current_app, send_from_directory
+from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, current_app, send_from_directory, jsonify
 from core.services.database import get_db
 from core.services.sanitizer import clean_phone, clean_email
 from core.services.rate_limiter import rate_limit
@@ -354,23 +354,42 @@ def get_quote():
                 facility_type = "Not Specified"
                 frequency = "TBD (Handshake)"
                 need_label = "Handshake Protocol"
+                city = ""
+                zipcode = ""
+                job_title = ""
+                target_start = "Within 30 Days"
+                scope_addons = []
             else:
-                sqf = float(data.get('sqft', 0))
+                sqf_raw = str(data.get('sqft', '') or '').strip().replace(',', '')
+                sqf = float(sqf_raw) if sqf_raw else 0.0
                 need = int(data.get('need', 2))
-                facility_type = data.get('facility_type', 'Other')
+                facility_type = data.get('facility_type', 'office')
                 frequency = data.get('frequency', 'Standard')
                 need_labels = { "1": "Slow Traffic", "2": "High Traffic", "3": "24/7 Production" }
                 need_label = need_labels.get(data.get('need'), "Standard")
+                city = (data.get('city') or '').strip()
+                zipcode = (data.get('zipcode') or '').strip()
+                job_title = (data.get('job_title') or '').strip()
+                target_start = (data.get('target_start') or 'within_30').strip()
+                scope_addons = request.form.getlist('scope_addons')
             
             multiplier = 1.0
             if need == 2: multiplier = 1.5
             if need == 3: multiplier = 2.5
-            annual_value = (sqf * 0.12) * multiplier * 12
+            annual_value = (sqf * 0.12) * multiplier * 12 if sqf > 0 else 0.0
             
-            company = data.get('company', '')
-            name = data.get('name', '')
-            email = data.get('email', '')
-            phone = data.get('phone', '')
+            company = (data.get('company') or '').strip()
+            name = (data.get('name') or '').strip()
+            email = (data.get('email') or '').strip()
+            phone = (data.get('phone') or '').strip()
+            
+            # If Mobile Express or company omitted, generate descriptive title
+            if not company:
+                company = f"{name}'s Commercial Facility" if name else "Commercial Client Facility"
+            if not city:
+                city = "Pending Walkthrough / Discovery"
+            if not frequency or frequency == 'Standard':
+                frequency = "Standard Business (Pending Verification)"
             
             # Enterprise Bot Defense (HWB-QMS-11.10): Honeypot + Signed Speed Gate + Lexical Scan + Origin Check
             is_bot, bot_reason = evaluate_bot_defense(request)
@@ -381,27 +400,71 @@ def get_quote():
                 'email': email,
                 'phone': phone,
                 'facility_type': facility_type,
-                'sqft': f"{int(sqf):,}" if sqf > 0 else "Pending Verification",
-                'need_label': need_label
+                'sqft': f"{int(sqf):,}" if sqf > 0 else "Pending Walkthrough Verification",
+                'need_label': need_label,
+                'city': city,
+                'zipcode': zipcode,
+                'frequency': frequency
             }
 
             if is_bot:
                 print(f"[BOT_DEFENSE_BLOCKED] Bot submission dropped via Silent Blackhole. Reason: {bot_reason} | IP: {request.remote_addr} | Target: {company} / {email}", flush=True)
+                try:
+                    from core.services.security_logger import log_security_event
+                    log_security_event(
+                        event_category='BOT_DEFENSE',
+                        event_action='BOT_DROPPED',
+                        severity='WARNING',
+                        endpoint='/get-quote',
+                        http_method='POST',
+                        status_code=200,
+                        details={'reason': bot_reason, 'target_company': company, 'target_email': email}
+                    )
+                except Exception:
+                    pass
                 return render_template('quote_success.html', data=data_dict)
 
+            raw_phone = (data.get('phone') or '').strip()
+            clean_p = clean_phone(raw_phone) if raw_phone else ''
+            clean_e = clean_email(data.get('email')) or (data.get('email') or '').strip()
+
             consent_val = data.get('tcpa_consent')
-            consent_notes = "TCPA Consent: Granted (Explicit checkbox checked during quote submission)." if consent_val else "TCPA Consent: Not Provided."
+            if not clean_p:
+                consent_str = "Not Applicable (Email Only Lead)"
+            elif consent_val:
+                consent_str = "Granted (Explicit Checkbox)"
+            else:
+                consent_str = "Not Provided (Phone On File, No SMS)"
+
+            addons_str = ", ".join(scope_addons) if scope_addons else "None Specified"
+            full_notes = (
+                f"TCPA Consent: {consent_str} | "
+                f"Horizon: {target_start} | "
+                f"Frequency: {frequency} | "
+                f"Scope Addons: {addons_str}"
+            )
             
             db_url = current_app.config['DATABASE_URL']
             conn = get_db(db_url)
             try:
                 with conn.cursor() as cur:
-                    clean_p = clean_phone(data.get('phone')) or data.get('phone')
-                    clean_e = clean_email(data.get('email')) or data.get('email')
+                    actual_source = 'Website Quote Form (Mobile Express)' if form_version == 'mobile_express' else f'Website Quote Form ({form_version})'
                     cur.execute('''
-                        INSERT INTO "Leads" (center_name, decision_maker, email, phone, facility_type, sqf, estimated_annual_value, status, lead_source, traffic_cycle, notes)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                    ''', (data.get('company'), data.get('name'), clean_e, clean_p, facility_type, sqf, annual_value, 'New', f'Website Quote Form ({form_version})', frequency, consent_notes))
+                        INSERT INTO "Leads" (
+                            center_name, decision_maker, email, phone, facility_type, sqf,
+                            estimated_annual_value, status, lead_source, traffic_cycle, notes,
+                            city, zipcode, job_title
+                        )
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        RETURNING id
+                    ''', (
+                        company, name, clean_e, clean_p, facility_type,
+                        int(sqf), annual_value, 'New', actual_source,
+                        frequency, full_notes, city, zipcode, job_title
+                    ))
+                    inserted_row = cur.fetchone()
+                    lead_id = inserted_row[0] if inserted_row else None
+                    data_dict['lead_id'] = lead_id
                     
                     request_type = "Quick Registration" if form_version == "v2" else "Full Cleaning Plan"
                     email_body = f"""
@@ -413,12 +476,17 @@ def get_quote():
                             </div>
                         </div>
                         <div style="line-height: 1.8; color: #1e293b; font-size: 14px;">
-                            <h2 style="font-size: 18px; font-weight: 800; margin-bottom: 20px;">New Business Information Received</h2>
-                            <p><strong>Business Name:</strong> {data.get('company')}</p>
-                            <p><strong>Contact Person:</strong> {data.get('name')}</p>
-                            <p><strong>Email Address:</strong> {data.get('email')}</p>
-                            <p><strong>Phone Number:</strong> {data.get('phone')}</p>
-                            <p><strong>Building Details:</strong> {facility_type} ({data_dict['sqft']} SQF)</p>
+                            <h2 style="font-size: 18px; font-weight: 800; margin-bottom: 20px;">New Commercial Lead Intake</h2>
+                            <p><strong>Organization:</strong> {data.get('company')}</p>
+                            <p><strong>Contact:</strong> {data.get('name')}{f" ({job_title})" if job_title else ""}</p>
+                            <p><strong>Email Address:</strong> {clean_e}</p>
+                            <p><strong>Phone Number:</strong> {clean_p or 'Not Provided (Email Only Request)'}</p>
+                            <p><strong>Contact Permission:</strong> {consent_str}</p>
+                            <p><strong>Location:</strong> {city or 'DFW Metroplex'}, TX {zipcode}</p>
+                            <p><strong>Building Details:</strong> {facility_type} ({data_dict['sqft']} SQF) &bull; {frequency}</p>
+                            <p><strong>Target Horizon:</strong> {target_start}</p>
+                            <p><strong>Scope Additions:</strong> {addons_str}</p>
+                            <p><strong>Estimated Annual Valuation:</strong> ${annual_value:,.2f}</p>
                             <hr style="border: none; border-top: 1px solid #f1f5f9; margin: 30px 0;">
                             <p style="font-size: 12px; color: #94a3b8; font-style: italic;">Automatic message from the HWB system.</p>
                         </div>
@@ -427,11 +495,16 @@ def get_quote():
                     notification_payload = {
                         'company': data.get('company'),
                         'name': data.get('name'),
+                        'job_title': job_title,
                         'phone': clean_p,
                         'email': clean_e,
+                        'city': city,
+                        'zipcode': zipcode,
                         'facility_type': facility_type,
                         'sqft': data_dict.get('sqft', 'Pending Verification'),
                         'frequency': frequency,
+                        'target_start': target_start,
+                        'scope_addons': scope_addons,
                         'annual_value': annual_value,
                         'form_version': form_version
                     }
@@ -475,6 +548,70 @@ def get_quote():
             flash("Processing error. Please call (214)-586-0257.")
             
     return render_template('quote_form.html')
+
+@public_bp.route('/update-quote-details', methods=['POST'], endpoint='update_quote_details')
+@public_bp.route('/update-quote-sqft', methods=['POST'], endpoint='update_quote_sqft')
+def update_quote_details():
+    """Optional post-submission pricing calibration updater (Option B: Mobile Express Enrichment)."""
+    lead_id = request.form.get('lead_id')
+    sqft_val = (request.form.get('sqft') or '').strip().replace(',', '')
+    city_val = (request.form.get('city') or '').strip()
+    freq_val = (request.form.get('frequency') or '').strip()
+
+    if lead_id:
+        try:
+            db_url = current_app.config['DATABASE_URL']
+            conn = get_db(db_url)
+            with conn.cursor() as cur:
+                updates = []
+                params = []
+                notes_append = []
+
+                if sqft_val:
+                    try:
+                        sqf = float(sqft_val)
+                        annual_value = (sqf * 0.12) * 1.5 * 12
+                        updates.append("sqf = %s")
+                        params.append(int(sqf))
+                        updates.append("estimated_annual_value = %s")
+                        params.append(annual_value)
+                        notes_append.append(f"Building Size Added: {int(sqf):,} SF")
+                    except ValueError:
+                        pass
+
+                if city_val:
+                    updates.append("city = %s")
+                    params.append(city_val)
+                    notes_append.append(f"City Confirmed: {city_val}")
+
+                if freq_val:
+                    updates.append("traffic_cycle = %s")
+                    params.append(freq_val)
+                    notes_append.append(f"Frequency Selected: {freq_val}")
+
+                if notes_append:
+                    updates.append("notes = COALESCE(notes, '') || %s")
+                    params.append(" | " + " | ".join(notes_append))
+
+                if updates:
+                    params.append(int(lead_id))
+                    sql = f'UPDATE "Leads" SET {", ".join(updates)} WHERE id = %s'
+                    cur.execute(sql, tuple(params))
+                    conn.commit()
+                    print(f"[PUBLIC_SUCCESS] Quote details enriched for Lead #{lead_id}: {notes_append}", flush=True)
+
+            conn.close()
+        except Exception as e:
+            print(f"[PUBLIC_WARN] Quote details update error: {e}", flush=True)
+
+    return jsonify({
+        'status': 'success',
+        'lead_id': lead_id,
+        'sqft': sqft_val,
+        'city': city_val,
+        'frequency': freq_val
+    })
+
 
 @public_bp.route('/robots.txt', endpoint='robots_txt')
 def robots_txt():

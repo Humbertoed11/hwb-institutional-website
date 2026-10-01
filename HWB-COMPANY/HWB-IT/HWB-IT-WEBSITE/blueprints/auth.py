@@ -4,12 +4,14 @@ Standard: HWB-QMS-7.6 Backend Architecture and Enterprise Standards SOP
 Custodians: George (Systems Architect) & Humberto Dominguez (CEO)
 """
 
+import time
 from flask import Blueprint, request, render_template, redirect, url_for, flash, jsonify, session, current_app
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import check_password_hash
 from core.models.user import User
 from core.services.database import get_db
 from core.services.rate_limiter import rate_limit
+from core.services.security_logger import log_security_event
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -131,16 +133,39 @@ def login():
 
         if user and valid_password:
             session.permanent = True
+            session['last_activity'] = time.time()
             role = user.get('role') or ('Executive' if user.get('username') in ['admin', 'hdominguez', 'humberto', 'humbertoed'] else 'Operator')
-            login_user(User(user['id'], user['username'], role, user.get('full_name'), user.get('custom_permissions')))
+            u_obj = User(user['id'], user['username'], role, user.get('full_name'), user.get('custom_permissions'))
+            login_user(u_obj)
+
+            log_security_event(
+                event_category='AUTH',
+                event_action='LOGIN_SUCCESS',
+                severity='INFO',
+                user_id=user['id'],
+                username=user['username'],
+                user_role=role,
+                status_code=200,
+                details={'auth_method': 'password_hash', 'role': role}
+            )
+
             next_page = request.args.get('next')
             if next_page and not next_page.startswith('/login'):
                 return redirect(next_page)
             if role in ['Partner', 'Partner_Bosanna']:
-                return redirect(url_for('partner.bosanna_cockpit'))
+                return redirect(url_for('partner.bosanna_portal'))
             if role == 'Sales':
                 return redirect(url_for('operations.sales_desk'))
             return redirect(url_for('admin_operations'))
+
+        log_security_event(
+            event_category='AUTH',
+            event_action='LOGIN_FAIL',
+            severity='WARNING',
+            username=u,
+            status_code=401,
+            details={'attempted_username': u, 'reason': 'Invalid credentials'}
+        )
         flash('Invalid credentials.')
     return render_template('login.html')
 
@@ -148,6 +173,19 @@ def login():
 @login_required
 def logout():
     """Terminates session and purges auth cookies."""
+    u_id = getattr(current_user, 'id', None)
+    u_name = getattr(current_user, 'username', 'Unknown')
+    u_role = getattr(current_user, 'role', 'Unknown')
+    log_security_event(
+        event_category='AUTH',
+        event_action='LOGOUT',
+        severity='INFO',
+        user_id=u_id,
+        username=u_name,
+        user_role=u_role,
+        status_code=200,
+        details={'reason': 'User voluntary logout'}
+    )
     logout_user()
     session.clear()
     return redirect(url_for('index'))
@@ -156,5 +194,6 @@ def logout():
 @login_required
 def heartbeat():
     """Keeps the active user session alive."""
+    session['last_activity'] = time.time()
     session.modified = True
     return jsonify({"status": "healthy", "user": current_user.username}), 200

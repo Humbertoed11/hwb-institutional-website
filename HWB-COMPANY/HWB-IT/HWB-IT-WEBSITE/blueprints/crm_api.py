@@ -27,6 +27,7 @@ from core.security import (
     log_sensitive_access,
     log_security_violation
 )
+from core.services.security_logger import log_security_event
 
 crm_api_bp = Blueprint('crm_api', __name__)
 
@@ -310,6 +311,13 @@ def api_export_selected_accounts():
             for r in rows:
                 writer.writerow([r['customer_id'], r['company_name'], r['contact_person_name'], r['email'], r['phone'], r['company_address'], r['city'], r['state'], r['zip'], r['annual_revenue'], r['sqf'], r['status']])
                 
+            log_security_event(
+                event_category='DATA_LIFECYCLE',
+                event_action='BULK_DATA_EXPORT',
+                severity='WARNING',
+                details={'export_type': 'accounts', 'row_count': len(rows), 'requested_count': len(account_ids)}
+            )
+
             response = Response(output.getvalue(), mimetype='text/csv')
             response.headers['Content-Disposition'] = f'attachment; filename=hwb_accounts_export_{datetime.datetime.now().strftime("%Y%m%d")}.csv'
             return response
@@ -625,6 +633,13 @@ def api_export_selected_leads():
             for r in rows:
                 writer.writerow([r['center_name'], r['phone'], r['address'], r['county'], r['zipcode'], r['director'], r['capacity'], r['city'], r['state'], r['status'], r['lead_source']])
                 
+            log_security_event(
+                event_category='DATA_LIFECYCLE',
+                event_action='BULK_DATA_EXPORT',
+                severity='WARNING',
+                details={'export_type': 'leads', 'row_count': len(rows), 'requested_count': len(lead_ids)}
+            )
+
             response = Response(output.getvalue(), mimetype='text/csv')
             response.headers['Content-Disposition'] = f'attachment; filename=hwb_leads_export_{datetime.datetime.now().strftime("%Y%m%d")}.csv'
             return response
@@ -2217,6 +2232,12 @@ def api_export_payroll_csv():
                 ])
 
             output.seek(0)
+            log_security_event(
+                event_category='DATA_LIFECYCLE',
+                event_action='BULK_DATA_EXPORT',
+                severity='WARNING',
+                details={'export_type': 'payroll', 'row_count': len(rows)}
+            )
             timestamp = dt_cls.now().strftime('%Y%m%d')
             return Response(
                 output.getvalue(),

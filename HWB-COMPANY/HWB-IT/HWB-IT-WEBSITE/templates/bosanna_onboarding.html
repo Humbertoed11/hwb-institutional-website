@@ -930,7 +930,7 @@
                     <li><a href="https://bosanna.com/providers" class="nav-link" id="t-nav-providers">Providers</a></li>
                     <li><a href="https://bosanna.com/careers" class="nav-link" id="t-nav-careers">Careers</a></li>
                     <li><a href="/onboard/bosanna" class="nav-link active-tab"><span class="nav-badge" id="t-nav-onboard"><i class="fas fa-id-badge"></i> Technician Onboarding</span></a></li>
-                    <li><a href="{% if current_user.is_authenticated %}/portal/bosanna/cockpit{% else %}/portal/bosanna/login{% endif %}" class="nav-link" id="t-nav-cockpit"><i class="fas fa-shield-alt"></i> Executive Cockpit</a></li>
+                    <li><a href="{% if current_user.is_authenticated %}/portal/bosanna/portal{% else %}/portal/bosanna/login{% endif %}" class="nav-link" id="t-nav-portal"><i class="fas fa-shield-alt"></i> Executive Portal</a></li>
                 </ul>
             </nav>
         </div>
@@ -1362,7 +1362,7 @@
 
                 <div class="modal-btn-row" style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;">
                     <button type="button" class="btn-gold" onclick="window.print()"><i class="fas fa-print"></i> <span id="t-m-print">Print Worker File</span></button>
-                    <a href="/portal/bosanna/cockpit" class="btn-primary" style="text-decoration: none;" id="t-m-cockpit-link"><i class="fas fa-shield-alt"></i> <span id="t-m-cockpit">Return to Cockpit</span></a>
+                    <a href="/portal/bosanna/portal" class="btn-primary" style="text-decoration: none;" id="t-m-portal-link"><i class="fas fa-shield-alt"></i> <span id="t-m-portal">Return to Portal</span></a>
                     <button type="button" class="btn-outline" onclick="resetOnboarding()"><i class="fas fa-user-plus"></i> <span id="t-m-another">Onboard Another</span></button>
                     <button type="button" class="btn-outline" onclick="closeSuccessModal()"><i class="fas fa-times"></i> <span id="t-m-finish">Close</span></button>
                 </div>
@@ -1681,7 +1681,7 @@
                 navProviders: "Providers",
                 navCareers: "Careers",
                 navOnboard: "<i class='fas fa-id-badge'></i> Technician Onboarding",
-                navCockpit: "<i class='fas fa-shield-alt'></i> Executive Cockpit",
+                navCockpit: "<i class='fas fa-shield-alt'></i> Executive Portal",
                 tipsBadge: "TIPS National Cooperative Awarded Vendor #260102 / #260103",
                 heroTitle: "Workforce Compliance & Technician Onboarding",
                 heroSub: "Official Credentialing and Field Readiness Portal for Bosanna LLC Institutional Facilities, Collin College Campus Operations, and Municipal Projects.",
@@ -1793,7 +1793,7 @@
                 mStep2: "<strong>2. Safety Compliance:</strong> OSHA HazCom and Bloodborne Pathogen passing certificate archived.",
                 mStep3: "<strong>3. Campus Access:</strong> Present your digital badge or printout to the Bosanna Operations Lead at the campus facilities dock for RFID card release.",
                 mPrint: "Print Worker File",
-                mCockpit: "Return to Cockpit",
+                mCockpit: "Return to Portal",
                 mAnother: "Onboard Another",
                 mFinish: "Close",
                 mErrTitle: "Safety Assessment Incomplete",
@@ -1971,7 +1971,7 @@
             document.getElementById('t-nav-providers').textContent = t.navProviders;
             document.getElementById('t-nav-careers').textContent = t.navCareers;
             document.getElementById('t-nav-onboard').innerHTML = t.navOnboard;
-            document.getElementById('t-nav-cockpit').innerHTML = t.navCockpit;
+            document.getElementById('t-nav-portal').innerHTML = t.navCockpit;
 
             // Hero
             document.getElementById('t-tips-badge').textContent = t.tipsBadge;
@@ -2107,7 +2107,7 @@
             document.getElementById('t-m-step-2').innerHTML = t.mStep2;
             document.getElementById('t-m-step-3').innerHTML = t.mStep3;
             document.getElementById('t-m-print').textContent = t.mPrint;
-            if (document.getElementById('t-m-cockpit')) document.getElementById('t-m-cockpit').textContent = t.mCockpit;
+            if (document.getElementById('t-m-portal')) document.getElementById('t-m-portal').textContent = t.mCockpit;
             if (document.getElementById('t-m-another')) document.getElementById('t-m-another').textContent = t.mAnother;
             document.getElementById('t-m-finish').textContent = t.mFinish;
 

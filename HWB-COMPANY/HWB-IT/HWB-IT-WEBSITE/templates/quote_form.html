@@ -1,226 +1,308 @@
 {% extends "base.html" %}
 
-{% block title %}Request a Custom Cleaning Plan | HWB Cleaning Services LLC{% endblock %}
+{% block title %}Request a Free Cleaning Quote | HWB Cleaning Services LLC{% endblock %}
 
 {% block content %}
-<section class="section-white quote-page-section" style="padding: 4.5rem 0;">
-    <div class="content-wrapper">
-        <div class="section-header" style="text-align: center; margin-bottom: 2.5rem;">
-            <h2 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 0.75rem; color: var(--hwb-dark); letter-spacing: -0.02em;">Custom Cleaning Proposal</h2>
-            <p style="font-size: 1.1rem; color: var(--hwb-slate); max-width: 750px; margin: 0 auto; font-weight: 500;">Provide facility dimensions and requirements. The system generates a technical scope and contract plan for your North Texas facility.</p>
+<section class="section-white quote-page-section" style="padding: 3.5rem 0 5rem 0; background: #f8fafc; min-height: 85vh;">
+    <div class="content-wrapper" style="max-width: 1280px; margin: 0 auto; padding: 0 1.5rem;">
+        
+        <!-- Plain English Header -->
+        <div class="section-header" style="text-align: center; margin-bottom: 2.75rem;">
+            <div style="display: inline-flex; align-items: center; gap: 0.5rem; background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; padding: 0.35rem 0.85rem; border-radius: 999px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.85rem;">
+                <i class="fas fa-bolt"></i> Fast 60-Second Quote Request
+            </div>
+            <div class="mobile-express-badge" style="align-items: center; gap: 0.5rem; background: #ecfdf5; border: 1px solid #a7f3d0; color: #047857; padding: 0.35rem 0.85rem; border-radius: 999px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.85rem; margin-left: 0.5rem;">
+                <i class="fas fa-mobile-alt"></i> Mobile Express (10s)
+            </div>
+            <h1 style="font-size: 2.35rem; font-weight: 900; margin: 0 0 0.5rem 0; color: #0f172a; letter-spacing: -0.025em; line-height: 1.2;">Get Your Free Commercial Cleaning Quote</h1>
+            <p style="font-size: 1.05rem; color: #475569; max-width: 720px; margin: 0 auto; font-weight: 500; line-height: 1.5;">Tell us a little about your building. We will prepare custom pricing and service options for your North Texas facility.</p>
         </div>
 
-        <div class="isc-card sigma-quote-card" style="border-radius: 12px; border: 1px solid var(--hwb-border); background: var(--white); box-shadow: 0 20px 40px rgba(0,0,0,0.03);">
-            <form action="{{ url_for('get_quote') }}" method="POST" id="quote-form-page" class="sigma-form-container">
-                <!-- SigmaFidelity™ Enterprise Anti-Bot Honeypot & Security Gate (HWB-QMS-11.10) -->
-                <input type="hidden" name="form_security_token" value="{{ get_form_security_token() }}">
-                <div style="opacity: 0; position: absolute; top: 0; left: -5000px; height: 0; width: 0; z-index: -1; overflow: hidden;" aria-hidden="true">
-                    <label for="hp_organization_url">Do not fill this field</label>
-                    <input type="text" name="hp_organization_url" id="hp_organization_url" tabindex="-1" autocomplete="off">
-                    <label for="hp_tax_id">Leave this blank</label>
-                    <input type="text" name="hp_tax_id" id="hp_tax_id" tabindex="-1" autocomplete="off">
-                </div>
-                <div class="sigma-form-body">
-                    <!-- Responsive Grid: 2 Columns on Desktop/Tablet, 1 Column on Mobile -->
-                    <div class="sigma-quote-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 3rem;">
-                        
-                        <!-- Column 1: Building Information -->
-                        <div class="sigma-quote-col">
-                            <span class="sigma-form-header" style="display: block; font-size: 0.75rem; font-weight: 900; color: var(--hwb-blue); text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 1.75rem; border-bottom: 2px solid var(--hwb-blue-glow); padding-bottom: 0.75rem;">01. Building Information</span>
-                            
-                            <div class="sigma-field" style="margin-bottom: 1.5rem;">
-                                <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.5rem;">Facility Category</label>
-                                <select name="facility_type" id="facility_type" required class="sigma-input">
-                                    <option value="office">Professional Office / Corporate</option>
-                                    <option value="medical">Medical / Clinical Building</option>
-                                    <option value="industrial">Warehouse / Logistics Hub</option>
-                                    <option value="daycare">Childcare / Educational</option>
-                                    <option value="worship">House of Worship</option>
-                                    <option value="dealership">Car Dealership</option>
-                                    <option value="other">Other Commercial Facility</option>
-                                </select>
-                            </div>
+        <!-- 65/35 Enterprise Split Container -->
+        <div class="sigma-quote-split-container">
+            
+            <!-- Left (65%): Contact-First Fast Quote Form -->
+            <div class="sigma-quote-main-card">
+                <form action="{{ url_for('get_quote') }}" method="POST" id="quote-form-page" class="sigma-form-container">
+                    <!-- Enterprise Anti-Bot Honeypot Gate (HWB-QMS-11.10) -->
+                    <input type="hidden" name="form_security_token" value="{{ get_form_security_token() }}">
+                    <input type="hidden" name="form_version" id="form_version" value="v1">
+                    <div style="opacity: 0; position: absolute; top: 0; left: -5000px; height: 0; width: 0; z-index: -1; overflow: hidden;" aria-hidden="true">
+                        <label for="hp_organization_url">Do not fill this field</label>
+                        <input type="text" name="hp_organization_url" id="hp_organization_url" tabindex="-1" autocomplete="off">
+                        <label for="hp_tax_id">Leave this blank</label>
+                        <input type="text" name="hp_tax_id" id="hp_tax_id" tabindex="-1" autocomplete="off">
+                    </div>
 
-                            <div class="sigma-field" style="margin-bottom: 1.5rem;">
-                                <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.5rem;">Traffic & Usage Level</label>
-                                <select name="need" id="need" required class="sigma-input">
-                                    <option value="1">Slow Traffic (Reduced Wear)</option>
-                                    <option value="2" selected>High Traffic (Daily Routine)</option>
-                                    <option value="3">24/7 Production (Heavy Continuous Wear)</option>
-                                </select>
-                            </div>
+                    <!-- Step 1: Your Space & Schedule -->
+                    <div class="sigma-form-section">
+                        <div class="sigma-section-badge">
+                            <span class="badge-num">01</span>
+                            <span class="badge-title">Your Building &amp; Schedule</span>
+                        </div>
 
-                            <div class="sigma-field">
-                                <label style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.6rem;">
-                                    <span>Approximate Size (SQF)</span>
-                                    <span style="display: flex; align-items: center; gap: 0.35rem;">
-                                        <input type="number" name="sqft" id="sqft_number_input" min="500" max="1000000" step="500" value="50000" inputmode="numeric" style="width: 100px; height: 34px; padding: 0 0.5rem; text-align: right; font-weight: 800; font-size: 0.95rem; color: #004889; border: 1px solid #cbd5e1; border-radius: 6px; font-family: inherit;" oninput="syncSQFTFromNumber(this.value)">
-                                        <span style="font-size: 0.8rem; font-weight: 700; color: #64748b;">SQF</span>
-                                    </span>
-                                </label>
-                                <div class="slider-instrument-container" style="padding: 0.5rem 0;">
-                                    <input type="range" id="sqft_slider_page" min="500" max="250000" step="500" value="50000" class="sigma-range-instrument" oninput="syncSQFTFromSlider(this.value)">
-                                </div>
-                                <!-- Touch-Friendly Quick Select Chips -->
-                                <div class="sqft-chips-container">
-                                    <button type="button" class="sqft-chip" onclick="setSQFTChip(2500)">2,500</button>
-                                    <button type="button" class="sqft-chip" onclick="setSQFTChip(5000)">5,000</button>
-                                    <button type="button" class="sqft-chip" onclick="setSQFTChip(10000)">10,000</button>
-                                    <button type="button" class="sqft-chip" onclick="setSQFTChip(25000)">25,000</button>
-                                    <button type="button" class="sqft-chip active" onclick="setSQFTChip(50000)">50,000</button>
-                                    <button type="button" class="sqft-chip" onclick="setSQFTChip(100000)">100,000+</button>
-                                </div>
+                        <!-- Facility Type Selection Chips -->
+                        <div class="sigma-field" style="margin-bottom: 1.25rem;">
+                            <label class="sigma-label">What type of building do you have?</label>
+                            <input type="hidden" name="facility_type" id="facility_type" value="office">
+                            <div class="facility-chips-container">
+                                <button type="button" class="facility-chip active" data-val="office" onclick="setFacilityType('office', this)" aria-label="Select office facility" title="Office" aria-pressed="true">
+                                    <i class="fas fa-building"></i> Office
+                                </button>
+                                <button type="button" class="facility-chip" data-val="medical" onclick="setFacilityType('medical', this)" aria-label="Select medical clinic facility" title="Medical Clinic" aria-pressed="false">
+                                    <i class="fas fa-clinic-medical"></i> Medical Clinic
+                                </button>
+                                <button type="button" class="facility-chip" data-val="daycare" onclick="setFacilityType('daycare', this)" aria-label="Select school or daycare facility" title="School / Daycare" aria-pressed="false">
+                                    <i class="fas fa-school"></i> School / Daycare
+                                </button>
+                                <button type="button" class="facility-chip" data-val="industrial" onclick="setFacilityType('industrial', this)" aria-label="Select warehouse facility" title="Warehouse" aria-pressed="false">
+                                    <i class="fas fa-warehouse"></i> Warehouse
+                                </button>
+                                <button type="button" class="facility-chip" data-val="worship" onclick="setFacilityType('worship', this)" aria-label="Select church or worship facility" title="Church / Worship" aria-pressed="false">
+                                    <i class="fas fa-church"></i> Church / Worship
+                                </button>
+                                <button type="button" class="facility-chip" data-val="other" onclick="setFacilityType('other', this)" aria-label="Select other commercial facility" title="Other Commercial" aria-pressed="false">
+                                    <i class="fas fa-city"></i> Other Commercial
+                                </button>
                             </div>
                         </div>
 
-                        <!-- Column 2: Contact Information -->
-                        <div class="sigma-quote-col">
-                            <span class="sigma-form-header" style="display: block; font-size: 0.75rem; font-weight: 900; color: var(--hwb-blue); text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 1.75rem; border-bottom: 2px solid var(--hwb-blue-glow); padding-bottom: 0.75rem;">02. Contact Information</span>
-                            
-                            <div class="sigma-field" style="margin-bottom: 1.25rem;">
-                                <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.45rem;">Full Name</label>
-                                <input type="text" name="name" required autocomplete="name" placeholder="Manager Name" class="sigma-input">
-                            </div>
+                        <!-- Cleaning Frequency (Full Width Dedicated Selector) -->
+                        <div class="sigma-field desktop-only-field" style="margin-top: 1.25rem;">
+                            <label for="frequency" class="sigma-label">How often do you need cleaning?</label>
+                            <select name="frequency" id="frequency" required class="sigma-input">
+                                <option value="Daily (5 Days/Week) - Standard Corporate" selected>Daily (5 Days / Week) — Standard Business</option>
+                                <option value="Periodic (3 Days/Week) - Mon/Wed/Fri">2 to 3 Days / Week — Regular Care</option>
+                                <option value="Weekly (1 Day/Week) - Light Occupancy">Weekly (1 Day / Week) — Light Care</option>
+                                <option value="Intensive (7 Days/Week) - High Traffic">Every Day (7 Days / Week) — High Traffic</option>
+                                <option value="Post-Construction / One-Time Deep Clean">One-Time Deep Cleaning</option>
+                            </select>
+                        </div>
 
-                            <div class="sigma-field" style="margin-bottom: 1.25rem;">
-                                <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.45rem;">Organization Name</label>
-                                <input type="text" name="company" required autocomplete="organization" placeholder="Company LLC" class="sigma-input">
+                        <!-- Location Row: City (70%) and Zip Code (30%) Asymmetric Grid -->
+                        <div class="sigma-form-row-asym desktop-only-field" style="margin-top: 1.25rem;">
+                            <div class="sigma-field">
+                                <label for="quote-city" class="sigma-label">City in North Texas</label>
+                                <input type="text" name="city" id="quote-city" placeholder="e.g. Plano, Dallas, Frisco" class="sigma-input" required autocomplete="address-level2">
                             </div>
-
-                            <div class="sigma-field" style="margin-bottom: 1.25rem;">
-                                <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.45rem;">Work Email</label>
-                                <input type="email" name="email" required autocomplete="email" inputmode="email" placeholder="name@company.com" class="sigma-input">
-                            </div>
-
-                            <div class="sigma-field" style="margin-bottom: 1.25rem;">
-                                <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--slate-900); margin-bottom: 0.45rem;">Phone Number</label>
-                                <input type="tel" name="phone" id="phone_page" required autocomplete="tel" inputmode="tel" placeholder="(214) 000-0000" class="sigma-input">
-                            </div>
-                            
-                            <!-- TCPA Prior Express Consent Safeguard -->
-                            <div class="sigma-field tcpa-field" style="margin-top: 1.25rem; display: flex; align-items: flex-start; gap: 0.75rem;">
-                                <input type="checkbox" name="tcpa_consent" id="tcpa_consent" style="margin-top: 0.25rem; width: 20px; height: 20px; cursor: pointer; flex-shrink: 0;">
-                                <label for="tcpa_consent" style="font-size: 0.78rem; line-height: 1.45; color: var(--hwb-slate); font-weight: 500; cursor: pointer; text-align: left;">
-                                    I consent to receive phone calls and automated SMS text messages from HWB Cleaning Services LLC regarding my proposal and customer support at the number provided above. Consent is not a condition of purchase. Msg & data rates may apply.
-                                </label>
+                            <div class="sigma-field">
+                                <label for="quote-zipcode" class="sigma-label">Zip Code</label>
+                                <input type="text" name="zipcode" id="quote-zipcode" placeholder="75024" maxlength="5" pattern="[0-9]{5}" class="sigma-input" required autocomplete="postal-code" inputmode="numeric">
                             </div>
                         </div>
                     </div>
+
+                    <!-- Step 2: Contact Details -->
+                    <div class="sigma-form-section" style="margin-top: 2rem;">
+                        <div class="sigma-section-badge">
+                            <span class="badge-num">02</span>
+                            <span class="badge-title">Where Should We Send Your Quote?</span>
+                        </div>
+
+                        <div class="sigma-form-row-2">
+                            <div class="sigma-field">
+                                <label for="quote-name" class="sigma-label">Your Name <span style="color: #dc2626;">*</span></label>
+                                <input type="text" name="name" id="quote-name" required autocomplete="name" placeholder="Full Name" class="sigma-input">
+                            </div>
+                            <div class="sigma-field desktop-only-field">
+                                <label for="quote-company" class="sigma-label">Company <span style="color: #dc2626;">*</span></label>
+                                <input type="text" name="company" id="quote-company" required autocomplete="organization" placeholder="Your Business LLC" class="sigma-input">
+                            </div>
+                        </div>
+
+                        <div class="sigma-form-row-2" style="margin-top: 1.25rem;">
+                            <div class="sigma-field">
+                                <label for="quote-email" class="sigma-label">Work Email <span style="color: #dc2626;">*</span></label>
+                                <input type="email" name="email" id="quote-email" required autocomplete="email" inputmode="email" placeholder="name@company.com" class="sigma-input">
+                            </div>
+                            <div class="sigma-field">
+                                <label for="phone_page" class="sigma-label">Phone <span style="font-weight: 500; color: #64748b; font-size: 0.78rem;">(Optional)</span></label>
+                                <input type="tel" name="phone" id="phone_page" autocomplete="tel" inputmode="tel" placeholder="(214) 000-0000" class="sigma-input">
+                            </div>
+                        </div>
+
+                        <!-- TCPA Prior Express Consent Safeguard -->
+                        <div class="tcpa-compliance-box">
+                            <input type="checkbox" name="tcpa_consent" id="tcpa_consent" checked>
+                            <label for="tcpa_consent">
+                                If providing a phone number, I authorize HWB Cleaning Services LLC to send my proposal and service updates by phone call or SMS text message to the number provided. Consent is not a condition of purchase. Message and data rates may apply. If left blank, quotes will be sent strictly to your email.
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Submission Action Bar -->
+                    <div class="sigma-form-actions" style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #e2e8f0; text-align: center;">
+                        <button type="submit" id="submit-quote-btn" class="sigma-enterprise-submit-btn" aria-label="Get My Free Cleaning Quote" title="Get My Free Cleaning Quote">
+                            <i class="fas fa-paper-plane"></i>
+                            <span>Get My Free Cleaning Quote &rarr;</span>
+                        </button>
+                        <div class="submission-micro-proof">
+                            <span><i class="fas fa-lock"></i> Safe &amp; Secure Transmission</span>
+                            <span>&bull;</span>
+                            <span><i class="fas fa-shield-alt"></i> $2M Insured &amp; Bonded</span>
+                            <span>&bull;</span>
+                            <span><i class="fas fa-clock"></i> We Respond in Under 4 Hours</span>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Right (35%): Human Reassurance & Proof Deck -->
+            <div class="sigma-quote-sidebar">
+                <div class="sidebar-header-badge">
+                    <i class="fas fa-shield-alt"></i> Why North Texas Businesses Choose HWB
                 </div>
 
-                <div class="sigma-form-actions" style="margin-top: 2.5rem; padding-top: 2rem; border-top: 1px solid var(--slate-100); text-align: center;">
-                    <button type="submit" id="submit-quote-btn" class="nav-cta" style="border: none; cursor: pointer;">
-                        <span>Submit Cleaning Proposal Request →</span>
-                    </button>
-                    <p style="margin-top: 1.25rem; font-size: 0.82rem; color: var(--hwb-slate); font-weight: 600;">Safe & Secure Data Transmission • No Obligation Quote</p>
+                <!-- Trust Card 1: $2M Insured & Bonded -->
+                <div class="trust-deck-card">
+                    <div class="trust-card-icon"><i class="fas fa-shield-virus"></i></div>
+                    <div class="trust-card-content">
+                        <h4>$2,000,000 Insured &amp; Bonded</h4>
+                        <p>Complete protection for your building and property. We provide official certificates of insurance before any work starts.</p>
+                        <div class="trust-card-meta">A-Rated Commercial Coverage (Policy #GHF000742)</div>
+                    </div>
                 </div>
-            </form>
+
+                <!-- Trust Card 2: 100% Background-Checked Staff -->
+                <div class="trust-deck-card">
+                    <div class="trust-card-icon"><i class="fas fa-id-badge"></i></div>
+                    <div class="trust-card-content">
+                        <h4>Background-Checked Staff</h4>
+                        <p>Real company employees wearing uniforms and badges. Every cleaner is background checked and verified. Never unvetted subcontractors.</p>
+                        <div class="trust-card-meta">Direct Company Supervision</div>
+                    </div>
+                </div>
+
+                <!-- Trust Card 3: Clear, Honest Pricing -->
+                <div class="trust-deck-card">
+                    <div class="trust-card-icon"><i class="fas fa-check-double"></i></div>
+                    <div class="trust-card-content">
+                        <h4>Clear, Honest Pricing</h4>
+                        <p>Simple monthly pricing with no surprise charges, hidden fees, or sudden rate increases. Everything is written down clearly.</p>
+                        <div class="trust-card-meta">Price Lock Guarantee</div>
+                    </div>
+                </div>
+
+                <!-- Trust Card 4: Fast Local Response -->
+                <div class="trust-deck-card">
+                    <div class="trust-card-icon"><i class="fas fa-bolt"></i></div>
+                    <div class="trust-card-content">
+                        <h4>Fast Local Response</h4>
+                        <p>A dedicated operations supervisor is assigned to your building. If you ever have a question or need something, we respond within 4 hours.</p>
+                        <div class="trust-card-meta">Local DFW Field Support</div>
+                    </div>
+                </div>
+
+                <!-- Trust Metric Strip -->
+                <div class="institutional-metrics-card">
+                    <div class="metric-row">
+                        <div class="metric-box">
+                            <span class="metric-num">656,785+</span>
+                            <span class="metric-lbl">Cleanable SF Serviced</span>
+                        </div>
+                        <div class="metric-divider"></div>
+                        <div class="metric-box">
+                            <span class="metric-num">100%</span>
+                            <span class="metric-lbl">On-Time Performance</span>
+                        </div>
+                    </div>
+                    <div class="service-corridor-tag">
+                        <i class="fas fa-map-marker-alt"></i> Serving Plano &bull; Dallas &bull; Frisco &bull; Fort Worth &bull; McKinney &bull; Waxahachie
+                    </div>
+                </div>
+
+            </div>
+
         </div>
     </div>
 </section>
 
-<style>
- .slider-instrument-container {
-     padding: 0.5rem 0;
- }
- 
- .sigma-range-instrument {
-     -webkit-appearance: none;
-     width: 100%;
-     height: 6px;
-     background: #f1f5f9;
-     border: 1px solid var(--slate-200);
-     border-radius: 3px;
-     outline: none;
- }
-
- .sigma-range-instrument::-webkit-slider-thumb {
-     -webkit-appearance: none;
-     appearance: none;
-     width: 18px;
-     height: 26px;
-     background: var(--hwb-blue);
-     border: 2px solid white;
-     border-radius: 4px;
-     cursor: pointer;
-     box-shadow: 0 4px 6px -1px rgba(0,0,0,0.15);
-     transition: all 0.15s;
- }
-
- .sigma-range-instrument::-webkit-slider-thumb:hover {
-     transform: scaleY(1.1);
-     background: #1d4ed8;
- }
-</style>
-
 <script>
- function syncSQFTFromSlider(val) {
-     const num = Number(val);
-     document.getElementById('sqft_number_input').value = num;
-     updateChipActiveState(num);
- }
+function setFacilityType(val, btn) {
+    document.getElementById('facility_type').value = val;
+    document.querySelectorAll('.facility-chip').forEach(chip => {
+        chip.classList.remove('active');
+        chip.setAttribute('aria-pressed', 'false');
+    });
+    if (btn) {
+        btn.classList.add('active');
+        btn.setAttribute('aria-pressed', 'true');
+    }
+}
 
- function syncSQFTFromNumber(val) {
-     let num = Number(val);
-     if (isNaN(num) || num < 0) num = 500;
-     document.getElementById('sqft_slider_page').value = Math.min(num, 250000);
-     updateChipActiveState(num);
- }
+// Phone Masking
+const phoneInput = document.getElementById('phone_page');
+if (phoneInput) {
+    phoneInput.addEventListener('input', function(e) {
+        let x = e.target.value.replace(/\D/g, '').match(/(\d{0,3})(\d{0,3})(\d{0,4})/);
+        e.target.value = !x[2] ? x[1] : '(' + x[1] + ')-' + x[2] + (x[3] ? '-' + x[3] : '');
+    });
+}
 
- function setSQFTChip(val) {
-     document.getElementById('sqft_slider_page').value = Math.min(val, 250000);
-     document.getElementById('sqft_number_input').value = val;
-     updateChipActiveState(val);
- }
+// Mobile Express Dynamic Mode Handler
+function applyMobileExpressMode() {
+    const isMobile = window.innerWidth <= 768;
+    const formVerInput = document.getElementById('form_version');
+    const freqInput = document.getElementById('frequency');
+    const cityInput = document.getElementById('quote-city');
+    const zipInput = document.getElementById('quote-zipcode');
+    const compInput = document.getElementById('quote-company');
 
- function updateChipActiveState(val) {
-     document.querySelectorAll('.sqft-chip').forEach(chip => {
-         const chipVal = parseInt(chip.innerText.replace(/\D/g, ''));
-         if (chipVal === val) {
-             chip.classList.add('active');
-         } else {
-             chip.classList.remove('active');
-         }
-     });
- }
+    if (isMobile) {
+        if (formVerInput) formVerInput.value = 'mobile_express';
+        if (freqInput) freqInput.removeAttribute('required');
+        if (cityInput) cityInput.removeAttribute('required');
+        if (zipInput) zipInput.removeAttribute('required');
+        if (compInput) compInput.removeAttribute('required');
+    } else {
+        if (formVerInput) formVerInput.value = 'v1';
+        if (freqInput) freqInput.setAttribute('required', 'required');
+        if (cityInput) cityInput.setAttribute('required', 'required');
+        if (zipInput) zipInput.setAttribute('required', 'required');
+        if (compInput) compInput.setAttribute('required', 'required');
+    }
+}
+window.addEventListener('resize', applyMobileExpressMode);
 
- // Phone Masking
- document.getElementById('phone_page').addEventListener('input', function(e) {
-     let x = e.target.value.replace(/\D/g, '').match(/(\d{0,3})(\d{0,3})(\d{0,4})/);
-     e.target.value = !x[2] ? x[1] : '(' + x[1] + ')-' + x[2] + (x[3] ? '-' + x[3] : '');
- });
+// Dynamic Submission Narrative
+const quoteForm = document.getElementById('quote-form-page');
+const submitBtn = document.getElementById('submit-quote-btn');
+if (quoteForm && submitBtn) {
+    const btnSpan = submitBtn.querySelector('span');
+    quoteForm.onsubmit = function() {
+        applyMobileExpressMode();
+        submitBtn.disabled = true;
+        submitBtn.style.opacity = "0.75";
+        if (btnSpan) btnSpan.innerText = "Sending Request...";
+        
+        let messages = ["Connecting to Local Team...", "Confirming Facility Details...", "Sending Quote Request..."];
+        let i = 0;
+        const interval = setInterval(() => {
+            if (i < messages.length && btnSpan) {
+                btnSpan.innerText = messages[i];
+                i++;
+            } else {
+                clearInterval(interval);
+            }
+        }, 650);
+    };
+}
 
- // Connection Narrative for Public Form
- const quoteForm = document.getElementById('quote-form-page');
- const submitBtn = document.getElementById('submit-quote-btn');
- const btnSpan = submitBtn.querySelector('span');
-
- quoteForm.onsubmit = function() {
-     submitBtn.disabled = true;
-     submitBtn.style.opacity = "0.7";
-     btnSpan.innerText = "Saving Information...";
-     
-     let messages = ["Syncing Field Ops...", "Finalizing Scope...", "Sending Request..."];
-     let i = 0;
-     const interval = setInterval(() => {
-         if (i < messages.length) {
-             btnSpan.innerText = messages[i];
-             i++;
-         } else {
-             clearInterval(interval);
-         }
-     }, 700);
- };
-
- // Auto-populate from URL Parameters (if any)
- document.addEventListener('DOMContentLoaded', function() {
-     const params = new URLSearchParams(window.location.search);
-     if (params.has('type')) document.getElementById('facility_type').value = params.get('type');
-     if (params.has('sqft')) {
-         const val = Number(params.get('sqft'));
-         if (!isNaN(val)) setSQFTChip(val);
-     }
-     if (params.has('need')) document.getElementById('need').value = params.get('need');
- });
+// Auto-populate from URL Parameters
+document.addEventListener('DOMContentLoaded', function() {
+    applyMobileExpressMode();
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('type')) {
+        const t = params.get('type');
+        const targetBtn = document.querySelector(`.facility-chip[data-val="${t}"]`);
+        if (targetBtn) setFacilityType(t, targetBtn);
+    }
+    if (params.has('city') && document.getElementById('quote-city')) {
+        document.getElementById('quote-city').value = params.get('city');
+    }
+    if (params.has('zip') && document.getElementById('quote-zipcode')) {
+        document.getElementById('quote-zipcode').value = params.get('zip');
+    }
+});
 </script>
 {% endblock %}

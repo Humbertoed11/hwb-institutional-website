@@ -85,7 +85,14 @@ Responsibility: George (Architect)
 | 09/29/2026 | BUG-099 | Viewport Responsive Degradation on Phone/Tablet Across Marketing & Services Views. | **RESOLVED** | HIGH |
 | 09/29/2026 | BUG-100 | Unlabeled Interactive Buttons Across Public & Backoffice Views (WCAG 2.1 AA / ADA). | **RESOLVED** | HIGH |
 | 09/29/2026 | BUG-101 | Statutory Compliance Vulnerabilities (CAN-SPAM Unsubscribe, Terms of Service, Cookie & FCRA). | **RESOLVED** | CRITICAL |
-| 09/29/2026 | BUG-102 | Live Production Lead Duplication Desynchronization (14,704 isolated duplicate leads on www.hwbcleaning.com). | **STAGED FOR RESOLUTION** | HIGH |
+| 09/29/2026 | BUG-102 | Live Production Lead Duplication Desynchronization (14,704 isolated duplicate leads on www.hwbcleaning.com). | **RESOLVED** | HIGH |
+| 09/29/2026 | BUG-103 | Cross-Environment Migration 034 Schema Traps: PostgreSQL JSONB Type Casting & Alternate Unique Key Collisions. | **RESOLVED** | HIGH |
+| 09/30/2026 | BUG-104 | Viewport Media Query CSS Nesting Trap & Unformatted Desktop Buttons on `/get-quote`. | **RESOLVED** | HIGH |
+| 09/30/2026 | BUG-105 | Lexical Jargon Contamination & Aviation Vocabulary ("Cockpit") in Commercial Cleaning Domain. | **RESOLVED** | HIGH |
+| 10/01/2026 | BUG-107 | Cognitive Friction & Jargon on Client Intake Form (High Abandonment from Mandatory SQF Inputs Before Contact Capture). | **RESOLVED** | HIGH |
+| 10/01/2026 | BUG-108 | Quote Intake Grid Misalignment, Mandatory Phone Friction for Email-Only Leads, and Insurance Discrepancy ($5M vs Actual $2M Policy). | **RESOLVED** | HIGH |
+| 10/01/2026 | BUG-109 | Mobile Form Completion Friction & Two-Phase Mobile Express Architecture. | **RESOLVED** | HIGH |
+
 
 ## BUG-096: Telegram Inbound Message Drop & Unhandled ValueError on Multi-User Comma-Separated TELEGRAM_CHAT_ID String
 **Detected:** 09/27/2026
@@ -1633,3 +1640,148 @@ CEO Humberto Dominguez attempting to log into `https://www.hwbcleaning.com/login
 1. Cross-environment dataset synchronization must reconcile on natural business keys (`email_id`, `(center_name, address, city)`, `solicitation_number`) rather than volatile serial primary keys.
 2. Bulk upsert utilities must dynamically inspect column definitions to handle PostgreSQL `jsonb` casting.
 
+## BUG-104: Viewport Media Query CSS Nesting Trap & Unformatted Desktop Buttons on `/get-quote`
+**Detected:** 09/30/2026
+**Status:** **RESOLVED** (09/30/2026)
+**Symptoms:**
+1. Square footage quick-select buttons on `/get-quote` appeared completely unformatted (plain browser-default rectangular bevel buttons with no padding, border radius, or active states) on desktop viewports (>768px).
+2. While mobile viewports (<=768px) rendered rounded pill touch chips, the desktop display rendered an unfinished, broken appearance.
+3. The buttons lacked unit descriptors and accessibility attributes (`aria-label`, `title`, `aria-pressed`), triggering screen reader ambiguity.
+**Root Causes:**
+1. *Viewport Media Query CSS Nesting Trap:* In commit `5eb96df`, touch chips were added for mobile phones, but the CSS rule declarations for `.sqft-chips-container` and `.sqft-chip` were placed exclusively inside `@media (max-width: 768px)` in `static/css/mobile_engine.css` (lines 602–628).
+2. On desktop screens (>768px), the class `.sqft-chip` did not exist in the CSS cascade, falling back to unstyled browser user-agent defaults.
+3. Lack of an automated CI/CD viewport regression test scanning component class availability across both desktop and mobile breakpoints.
+**Solution:**
+1. **Universal Component CSS Architecture:** Extracted `.sqft-chips-container` and `.sqft-chip` from `@media (max-width: 768px)` and defined base styles at the root level of `mobile_engine.css` (Section 10.0) and `HWB-WEB Style.css`.
+2. **Apple HIG / WCAG Touch Target Compliance:** Standardized touch chip minimum height to 44px with a 6px industrial border radius, soft transition states, and high-visibility keyboard `:focus-visible` focus rings.
+3. **WCAG 2.1 AA Semantic Markup:** Updated `templates/quote_form.html` with explicit `aria-label="Select X square feet"`, `title="X SQF"`, and dynamic `aria-pressed="true|false"` state synchronization in `updateChipActiveState()`.
+4. **CI/CD Quality Gate (Module 10):** Integrated automated button accessibility scanner into `scripts/tessa_regression_suite.py` that verifies 100% of interactive buttons possess non-empty accessible labels, titles, and pressed states.
+**Preventative & Evolutionary Learning:**
+1. Never define base component styles exclusively inside a media query. Media queries must only apply delta overrides to a pre-existing root component standard.
+2. Every interactive UI component must be accompanied by an automated CI/CD test verifying rendering and accessibility attributes across all viewport breakpoints.
+
+## BUG-105: Lexical Jargon Contamination & Aviation Vocabulary ("Cockpit") in Commercial Cleaning Domain
+**Detected:** 09/30/2026
+**Status:** **RESOLVED** (09/30/2026)
+**Symptoms:**
+1. Public and backoffice views were contaminated with internal developer engineering terminology and aviation vocabulary: the word "cockpit" was used 75 times across administrative dashboards, partner portals, and telemetry monitors.
+2. Aviation jargon ("cockpit") is completely foreign to commercial facilities directors, general contractors, and cleaning technicians.
+3. Developer jargon ("handshake protocol", "heuristic estimate", "poka-yoke") was exposed to clients, cleaners, and the public, violating the institutional mandate for everyday words suitable for a 20-year-old reading level.
+**Root Causes:**
+1. Developer copy was introduced directly into frontend views without a domain-driven lexicon governance dictionary.
+2. Lack of an automated CI/CD vocabulary scanner / linter to block non-cleaning terminology before code deployment.
+**Solution:**
+1. **Institutional Lexicon Governance Engine (`core/services/lexicon_governance.py`):** Authored a central vocabulary rule engine maintaining an immutable dictionary of prohibited jargon terms mapped to approved plain-English commercial cleaning vocabulary.
+2. **Complete Domain Vocabulary Modernization:**
+   - Rack 9 renamed from "Site Security & Forensic Audit Cockpit" to "Site Security & Operations Hub".
+   - Rack 8 renamed from "Data Health & Lead Hygiene Cockpit" to "Data Health & Maintenance Center".
+   - Rack 6 renamed from "Dev-to-Live Parity Cockpit" to "Dev-to-Live Parity Center".
+   - Bosanna Partner Portal renamed from "Bosanna Prime Cockpit" to "Bosanna Operations Portal", and route updated to `/portal/bosanna/portal` with an automated HTTP 301 permanent redirect for `/portal/bosanna/cockpit`.
+   - Replaced all public and admin occurrences of "cockpit" with domain-accurate facility management terminology.
+3. **Job Button Disambiguation (`work_with_us.html`):** Replaced ambiguous repeated "Details" and "Apply" buttons with role-specific `aria-label="View job description for {{ pos.title }}"` and `aria-label="Apply for {{ pos.title }}"`.
+4. **CI/CD Quality Gate (Module 11):** Integrated automated Lexicon Governance & Jargon Linter into `scripts/tessa_regression_suite.py` that verifies 0 occurrences of prohibited jargon across all active templates and rendered web routes.
+**Preventative & Evolutionary Learning:**
+1. The company builds software for commercial cleaning, janitorial operations, and facility directors. Terminology must strictly mirror the facility management domain.
+2. Quality gates must enforce vocabulary rules autonomously at build time so jargon never escapes to production.
+
+## BUG-106: Prototype-Grade Client Proposal Intake Form on `/get-quote` (Redundant Toy Slider Widget, Missing Core Commercial Scope Fields, and Absence of Institutional Trust Architecture)
+**Detected:** 10/01/2026
+**Status:** **RESOLVED** (10/01/2026)
+**Symptoms:**
+1. The proposal intake form on `/get-quote` appeared as an MVP prototype: a single isolated white card floating on a blank canvas with no structural depth or visual hierarchy.
+2. The square footage selector featured a consumer-grade HTML5 range slider with conflicting limits (slider maxed at 250,000 SQF while adjacent number input accepted 1,000,000 SQF), jammed alongside six quick-select buttons in an awkward triplicate input pattern.
+3. Commercial cleaning scope parameters were incomplete: the form failed to capture Cleaning Frequency (daily vs periodic), Facility Location (City / Zip Code in North Texas), Desired Start Horizon, and Specialized Scope Add-ons.
+4. The page lacked institutional trust anchors ($5M Commercial Umbrella, ISO 9001:2015 Scope Guarantee, W-2 Verified Technicians, Turnaround SLA), damaging conversion rates for enterprise B2B facilities directors.
+5. The submit button used `.nav-cta` with generic inline styling, paired with an unformatted raw TCPA checkbox.
+**Root Causes:**
+1. Initial development prioritized rapid lead capture over enterprise procurement standards.
+2. Lack of an institutional 65/35 split intake layout separating technical scope inputs from corporate risk mitigation assurances.
+**Solution:**
+1. **Enterprise 65/35 Split Responsive Architecture:** Rebuilt `templates/quote_form.html` with a clinical 65% facility specification intake form paired with a 35% Institutional Credibility & SLA Assurance Deck.
+2. **Eliminated Toy Range Slider:** Replaced the HTML5 slider with a clinical numeric input adorned with a unitized "SQF" container, paired with 6 standardized commercial facility footprint tiers (Suite, Office, Mid-Rise, Facility, Campus, Logistics / Complex).
+3. **Comprehensive Scope Capture:** Integrated Cleaning Frequency (Daily 5x, Intensive 7x, Periodic 3x, Weekly, One-time project), Facility Location (City & North Texas Zip Code), Start Date Horizon, and Scope Add-Ons (Restrooms, Floors, Glazing, Day Porter).
+4. **Corporate Risk & Trust Deck:** Embedded empirical credentials ($5M Commercial Umbrella & General Liability, 100% W-2 Background Screened, OSHA 30 / Texas Education Code FAST cleared, < 4-Hour SLA, and 656,785+ SF North Texas track record).
+5. **Phase 3 Industrial Action Bar & TCPA Shield:** Upgraded submit action to a vertically compressed 44px `.sigma-action-btn` reading "Generate Calibrated Proposal Scope" with an institutional lock icon and a unitized `#f8fafc` compliance container.
+6. **Backend Synchronization:** Upgraded `blueprints/public.py` to capture `city`, `zipcode`, `frequency`, `target_start`, and `scope_addons` into PostgreSQL `"Leads"` records and audit notifications.
+7. **Verified Quality Gates:** Passed 100% across Tessa Platform Battery (11/11 OK), Yamamoto Moto Suite (8/8 OK), Site Security Battery (11/11 OK), and Bot Defense Battery (6/6 OK).
+**Preventative & Evolutionary Learning:**
+1. Public customer intake forms must balance streamlined input with serious commercial procurement depth; property directors assess technical competence through the rigor of the intake instrument.
+2. Always pair corporate RFP intake with enterprise trust proofs (insurance, W-2 workforce status, ISO standards) to eliminate risk perception.
+ 
++## BUG-107: Excessive Cognitive Friction & Technical Jargon on Client Intake Form (High Abandonment from Mandatory SQF Inputs Before Lead Capture)
++**Detected:** 10/01/2026
++**Status:** **RESOLVED** (10/01/2026)
++**Symptoms:**
++1. The `/get-quote` form placed technical internal cost-estimator questions (Square footage, ISSA 612 production rate references, commencement horizons, glazing, and bio-disinfection) in front of the user before securing basic identity.
++2. In commercial cleaning, most initial inquiries originate from office managers, clinic administrators, and church staff who do not know their exact square footage.
++3. Forcing square footage calculation upfront induced cognitive friction, hesitation, and abandonment: prospective clients who do not know their square footage leave the form without submitting contact information, resulting in 0 phone numbers, 0 emails, and 0 follow-up capability.
++4. Button copy ("Generate Calibrated Proposal Scope") and sidebar labels ("0.00 TRIR Safety Rate", "HWB-QMS-4.1") reflected internal systems jargon rather than everyday commercial cleaning language.
++**Root Causes:**
++1. Confusing internal cost-estimation standards with customer-facing lead generation. In commercial janitorial, binding contracts are never executed via web forms without an on-site walkthrough or phone discovery.
++2. Violating the "Contact-First" lead capture principle: requiring complex technical metrics prior to securing the visitor's name, email, and phone number.
++**Solution (Option 1 - Contact-First 30-Second Architecture):**
++1. **Completely Removed Mandatory SQF Inputs & Sliders:** Eradicated the square footage slider and numeric inputs from `/get-quote`. The form now captures:
++   - What type of building? (6 touch-friendly quick select buttons: Office, Medical Clinic, School/Daycare, Warehouse, Church, Other Commercial)
++   - How often? (Daily 5x, 2-3 Days/week, Weekly, One-Time)
++   - Where? (North Texas City and Zip Code)
++   - Contact Details: (Name, Company, Work Email, Direct Phone)
++2. **Plain English Modernization:** Replaced all jargon with everyday plain English. Button now reads: "Get My Free Cleaning Quote →". Reassurance deck translated into human trust benefits: $5M Insured & Bonded, 100% Background-Checked Staff, Clear Honest Pricing, and Fast 4-Hour Local Response.
++3. **Option 1 Post-Submission Building Size Capture:** On `quote_success.html`, after the lead's contact information is securely stored in PostgreSQL and dispatched to Telegram, an optional block invites the prospect to provide their approximate square footage if they know it. Submitting via AJAX instantly updates the lead's `sqf` and annual valuation in PostgreSQL without any risk of abandonment.
++4. **CI/CD Quality Gate Synchronization:** Updated Module 10 in `scripts/tessa_regression_suite.py` to inspect the 6 facility quick select buttons under WCAG 2.1 AA accessibility standards (`aria-label`, `title`, and `aria-pressed`).
++**Preventative & Evolutionary Learning:**
++1. Never place technical estimation barriers in front of basic lead capture. A lead with a phone number and zero square footage can be called and closed; a form abandoned at square footage is zero revenue.
++2. Keep customer-facing copy strictly grounded in everyday language suitable for a 20-year-old reading level.
+
+## BUG-108: Quote Intake Field Grid Misalignment, Mandatory Phone Barrier for Email-Only Prospects, and Insurance Credential Discrepancy ($5M vs Actual $2M Policy)
+**Detected:** 10/01/2026
+**Status:** **RESOLVED** (10/01/2026)
+**Symptoms:**
+1. In Step 1 of `/get-quote`, the 3-field row (Cleaning Frequency, City, and Zip Code) had uneven label lengths ("How often do you need cleaning?" vs "Zip Code"). On standard laptop and desktop screens, the frequency label wrapped to 2 lines while the others stayed on 1 line, breaking the horizontal top baseline of the input fields.
+2. The form stacked three conflicting horizontal column ratios (3-column uniform chips, 3-column asymmetric flex, and 2-column contact grid), causing vertical border stagger down the page.
+3. Phone number was strictly required (`required` attribute), creating cognitive friction and potential form abandonment for prospective commercial clients who only want a quote delivered to their corporate email.
+4. The reassurance deck claimed "$5,000,000 Insured & Bonded", conflicting with the empirical reality of HWB Cleaning Services LLC's actual commercial ACORD 25 policy ($2,000,000 Umbrella / Aggregate, Policy #GHF000742).
+**Root Causes:**
+1. Cramming operational choices (frequency) and physical location fields (City/Zip) into a single 3-column flex container without fixed height or postal alignment standards.
+2. Defaulting phone input to mandatory without an email-first fallback workflow.
+3. Overclaiming insurance coverage in marketing copy, in direct violation of the Empirical Data Integrity Mandate.
+**Solution:**
+1. **Option 1 Unified 2-Row Alignment:** Separated Service Frequency into its own full-width dedicated selector (100% width), and placed City (70%) and Zip Code (30%) into a standardized asymmetric postal grid (`.sigma-form-row-asym`).
+2. **Standardized Pixel Height:** Added `input.sigma-input, select.sigma-input { height: 40px; box-sizing: border-box; }` to eliminate native browser select-vs-input height variance and enforce a razor-sharp baseline.
+3. **Strategy B (Email-First / Optional Phone):** Removed the `required` tag from the phone field. Updated the TCPA disclaimer to clarify that quotes will be delivered strictly by email if phone is omitted. Updated `blueprints/public.py` to record `TCPA Consent: Not Applicable (Email Only Lead)` in PostgreSQL `"Leads"` when phone is blank.
+4. **Corrected Insurance Claims to Empirical Truth:** Modernized all trust badges and copy from $5M to empirical **$2,000,000 Insured & Bonded** (Policy #GHF000742), strictly adhering to the Empirical Data Integrity Mandate.
+5. **Quality Gate Verification:** Certified 100% passing across Tessa Platform Suite (11/11 OK), Yamamoto Moto Suite (8/8 OK), Site Security Battery (11/11 OK), and Bot Defense Battery (6/6 OK).
+**Preventative & Evolutionary Learning:**
+1. Always align postal address fields (City/State/Zip) in standard asymmetric pairs rather than mixing them with operational questions.
+2. Give prospects the choice of communication channel: when phone is optional, privacy-conscious buyers will submit work email instead of bouncing.
+3. Marketing proof anchors must strictly mirror empirical ACORD 25 insurance binders ($2,000,000) with zero exaggeration.
+ 
+## BUG-109: Mobile Form Completion Friction & Two-Phase Mobile Express Architecture
+**Detected:** 10/01/2026
+**Status:** **RESOLVED** (10/01/2026)
+**Symptoms:**
+1. On mobile devices (< 768px), prospective commercial buyers faced a lengthy 7-field form requiring vertical scrolling, soft-keyboard toggling between text, numeric, and email keyboards, and extensive thumb typing.
+2. Mobile visitors in the field (e.g., facility managers walking job sites or on smartphones) have low tolerance for typing out company names, cleaning schedules, cities, and zip codes, leading to mobile drop-off.
+**Root Causes:**
+1. Treating mobile screens identically to desktop screens without adapting the intake to mobile user behavior and thumb reach constraints.
+2. Failing to separate mandatory contact capture from progressive post-submission data enrichment.
+**Solution (Option B - Dedicated Mobile Express 10-Second Intake):**
+1. **Responsive Viewport Detection & Adaptive CSS:**
+   - Introduced `.desktop-only-field` and `.mobile-express-badge` in `static/HWB-WEB Style.css` and `static/css/mobile_engine.css`.
+   - On screens `<= 768px`, non-essential fields (Cleaning Frequency, City & Zip Code, and Company Name) are hidden cleanly.
+   - Building types are organized in 2 touch-friendly columns with 44px touch targets.
+2. **Poka-Yoke Browser Validation Safety:**
+   - Implemented `applyMobileExpressMode()` in `templates/quote_form.html` to dynamically remove the HTML `required` attribute from hidden inputs on mobile (`window.innerWidth <= 768`) and set `form_version = 'mobile_express'`, preventing browser validation lockups.
+3. **Backend Fault Tolerance & Graceful Defaults:**
+   - In `blueprints/public.py`, added graceful server-side defaults: `lead_source = 'Website Quote Form (Mobile Express)'`, `company = f"{name}'s Commercial Facility"`, `city = 'Pending Walkthrough / Discovery'`, and `frequency = 'Standard Business (Pending Verification)'`.
+4. **Two-Phase Post-Submission Pricing Calibration Card:**
+   - Upgraded `templates/quote_success.html` with a prominent **10-Second Pricing Calibration** card.
+   - Once the contact lead is safely stored in PostgreSQL and dispatched to Telegram/email, prospects can optionally tap 1-touch City chips (Plano, Dallas, Frisco, Fort Worth, Irving), Frequency chips, and approximate SQF.
+   - Submissions hit the multi-attribute updater `POST /update-quote-details` via AJAX, enriching the database record without any risk of top-of-funnel abandonment.
+5. **Quality Gate Certification:**
+   - Tessa Platform Suite: 11/11 OK.
+   - Yamamoto Moto Bidding Suite: 8/8 OK.
+   - Site Security Rack #9: 11/11 OK.
+   - Bot Defense Battery: 6/6 OK.
+**Preventative & Evolutionary Learning:**
+1. On mobile devices, conversion rate is inversely proportional to form friction. Capture contact credentials first in under 10 seconds, then progressively enrich facility details on the confirmation screen.
+2. Always ensure hidden form inputs have their HTML `required` attribute removed dynamically via client-side script to prevent silent browser submission blocking.

@@ -599,20 +599,21 @@
         font-family: inherit !important;
     }
 
-    /* SQF Quick-Select Chips */
+    /* SQF Quick-Select Chips (Mobile Sizing & Touch Targets) */
     .sqft-chips-container {
         display: flex !important;
         flex-wrap: wrap !important;
-        gap: 0.45rem !important;
+        gap: 0.5rem !important;
         margin-top: 0.75rem !important;
     }
 
     .sqft-chip {
-        padding: 0.4rem 0.65rem !important;
+        min-height: 44px !important; /* Apple HIG & Material Design 44px touch target */
+        padding: 0.5rem 0.75rem !important;
         background: #f1f5f9 !important;
         border: 1px solid #cbd5e1 !important;
         border-radius: 6px !important;
-        font-size: 0.8rem !important;
+        font-size: 0.85rem !important;
         font-weight: 700 !important;
         color: #334155 !important;
         cursor: pointer !important;
@@ -878,5 +879,111 @@
         padding: 1rem !important;
     }
 }
+
+/* ==========================================================================
+   10.0 UNIVERSAL COMPONENT STANDARDS (DESKTOP, TABLET, MOBILE)
+   ========================================================================== */
+.sqft-chips-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    margin-bottom: 0.5rem;
+    width: 100%;
+}
+
+.sqft-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 38px;
+    padding: 0.45rem 0.85rem;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #1e293b;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    touch-action: manipulation;
+    user-select: none;
+    line-height: 1;
+    font-family: inherit;
+}
+
+.sqft-chip:hover {
+    background: #e2e8f0;
+    border-color: #94a3b8;
+    color: #0f172a;
+    transform: translateY(-1px);
+}
+
+.sqft-chip:focus-visible {
+    outline: 2px solid #004889;
+    outline-offset: 2px;
+}
+
+.sqft-chip:active,
+.sqft-chip.active {
+    background: #004889 !important;
+    color: #ffffff !important;
+    border-color: #004889 !important;
+    box-shadow: 0 2px 6px rgba(0, 72, 137, 0.25);
+}
+
+/* ==========================================================================
+   13.0 SIGMAFIDELITY™ ENTERPRISE PROPOSAL SPLIT RESPONSIVE ENGINE
+   ========================================================================== */
+@media (max-width: 1024px) {
+    .sigma-quote-split-container {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 2rem !important;
+    }
+
+    .sigma-quote-main-card,
+    .sigma-quote-sidebar {
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .sigma-quote-main-card {
+        padding: 1.5rem 1.15rem !important;
+    }
+
+    .sigma-form-row-2,
+    .sigma-form-row-3,
+    .sigma-form-row-asym {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 1.25rem !important;
+    }
+
+    .scope-addons-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .facility-chips-container {
+        grid-template-columns: 1fr 1fr !important;
+    }
+
+    .sigma-enterprise-submit-btn {
+        height: 52px !important;
+        font-size: 0.9rem !important;
+    }
+
+    .desktop-only-field {
+        display: none !important;
+    }
+
+    .mobile-express-badge {
+        display: inline-flex !important;
+    }
+}
+
+
 
 

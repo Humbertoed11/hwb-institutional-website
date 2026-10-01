@@ -6,13 +6,14 @@ Custodians: George (Systems Architect) & Humberto Dominguez (CEO)
 
 import os
 import json
+import time
 import datetime
 import threading
 from typing import Optional
 from dotenv import load_dotenv
 from flask import Flask, render_template, request, redirect, url_for, jsonify, flash, abort, session
 from flask_compress import Compress
-from flask_login import LoginManager, current_user
+from flask_login import LoginManager, current_user, logout_user
 from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
 
@@ -52,6 +53,7 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 Compress(app)
 app.config.from_object(sys_config)
 app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(minutes=31)
+app.config['SESSION_INACTIVITY_TIMEOUT_SECONDS'] = int(os.getenv('SESSION_INACTIVITY_TIMEOUT_SECONDS', '1800'))
 
 # --- Register Enterprise Blueprints via Blueprint Hub ---
 register_blueprint_hub(app, telemetry_bp)
@@ -116,6 +118,50 @@ def load_user(user_id):
         if conn:
             conn.close()
     return None
+
+@app.before_request
+def enforce_session_inactivity_timeout():
+    """
+    SigmaFidelity™ Enterprise Inactivity Timeout Guard (SOC 2 / ISO 27001).
+    Terminates authenticated sessions after 30 minutes of user inactivity.
+    """
+    # Exclude static assets and health checks from timeout tracking
+    if request.path.startswith('/static') or request.path == '/health' or request.endpoint == 'static':
+        return
+
+    if current_user.is_authenticated:
+        now = time.time()
+        last_active = session.get('last_activity')
+        inactivity_limit = app.config.get('SESSION_INACTIVITY_TIMEOUT_SECONDS', 1800)
+
+        if last_active and (now - last_active > inactivity_limit):
+            inactive_mins = round((now - last_active) / 60, 1)
+            from core.services.security_logger import log_security_event
+            log_security_event(
+                event_category='AUTH',
+                event_action='SESSION_TIMEOUT',
+                severity='INFO',
+                user_id=getattr(current_user, 'id', None),
+                username=getattr(current_user, 'username', 'Unknown'),
+                user_role=getattr(current_user, 'role', 'Unknown'),
+                status_code=401,
+                details={'inactive_minutes': inactive_mins, 'threshold_seconds': inactivity_limit}
+            )
+
+            logout_user()
+            session.clear()
+
+            if request.path.startswith('/api/'):
+                return jsonify({
+                    'status': 'error',
+                    'reason': 'SESSION_TIMEOUT',
+                    'message': f'Your session expired due to {inactive_mins} minutes of inactivity. Please log in again.'
+                }), 401
+
+            flash('Your session expired due to inactivity. Please log in again to continue.')
+            return redirect(url_for('auth.login', next=request.path, reason='inactivity'))
+
+        session['last_activity'] = now
 
 # --- Boot & Infrastructure Handshake Sequence ---
 with app.app_context():

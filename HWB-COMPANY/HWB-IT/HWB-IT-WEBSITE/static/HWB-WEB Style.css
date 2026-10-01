@@ -2502,6 +2502,56 @@ nav a:hover {
     background: #1d4ed8;
 }
 
+/* --- SigmaFidelity™ SQF Quick-Select Chips (Universal Component Standard - WCAG 2.1 AA) --- */
+.sqft-chips-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    margin-bottom: 0.5rem;
+    width: 100%;
+}
+
+.sqft-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 38px;
+    padding: 0.45rem 0.85rem;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #1e293b;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    touch-action: manipulation;
+    user-select: none;
+    line-height: 1;
+    font-family: inherit;
+}
+
+.sqft-chip:hover {
+    background: #e2e8f0;
+    border-color: #94a3b8;
+    color: #0f172a;
+    transform: translateY(-1px);
+}
+
+.sqft-chip:focus-visible {
+    outline: 2px solid #004889;
+    outline-offset: 2px;
+}
+
+.sqft-chip:active,
+.sqft-chip.active {
+    background: #004889 !important;
+    color: #ffffff !important;
+    border-color: #004889 !important;
+    box-shadow: 0 2px 6px rgba(0, 72, 137, 0.25);
+}
+
 /* --- Global Service Container --- */
 .detailed-services {
     max-width: 1400px;
@@ -2890,3 +2940,445 @@ header.main-header {
     justify-content: space-between;
     align-items: center;
 }
+
+/* ==========================================================================
+   SigmaFidelity™ Enterprise Split Proposal Intake Architecture (/get-quote)
+   Standard: HWB-QMS-7.2 & 2026 Phase 3 High-Density Hardening
+   ========================================================================== */
+.sigma-quote-split-container {
+    display: grid;
+    grid-template-columns: 65% 35%;
+    gap: 2.25rem;
+    align-items: start;
+    margin-top: 1rem;
+}
+
+.sigma-quote-main-card {
+    background: #ffffff;
+    border: 1px solid var(--hwb-border, #e2e8f0);
+    border-radius: 12px;
+    padding: 2.75rem 2.5rem;
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+}
+
+.sigma-quote-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+/* Section Header Badges */
+.sigma-section-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding-bottom: 0.85rem;
+    border-bottom: 2px solid #e2e8f0;
+    margin-bottom: 1.5rem;
+}
+
+.sigma-section-badge .badge-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: #004889;
+    color: #ffffff;
+    font-size: 0.75rem;
+    font-weight: 900;
+    border-radius: 6px;
+}
+
+.sigma-section-badge .badge-title {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: #0f172a;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+/* Row Grids */
+.sigma-form-row-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+}
+
+.sigma-form-row-asym {
+    display: grid;
+    grid-template-columns: 70% 30%;
+    gap: 1.25rem;
+}
+
+.sigma-form-row-3 {
+    display: flex;
+    gap: 1.25rem;
+}
+
+input.sigma-input,
+select.sigma-input {
+    height: 40px;
+    box-sizing: border-box;
+}
+
+.sigma-label {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.35rem;
+}
+
+.desktop-only-field {
+    display: block;
+}
+
+.mobile-express-badge {
+    display: none;
+}
+
+/* SQF Precision Numeric Wrapper */
+.sqft-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.sqft-input-precision {
+    padding-right: 3.75rem !important;
+    font-weight: 800 !important;
+    font-size: 1.05rem !important;
+    color: #004889 !important;
+    text-align: right !important;
+}
+
+.sqft-unit-tag {
+    position: absolute;
+    right: 0.85rem;
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: #64748b;
+    pointer-events: none;
+}
+
+.chips-micro-label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.35rem;
+}
+
+/* Scope Addon Chips */
+.scope-addons-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.65rem;
+}
+
+.scope-addon-chip {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.65rem 0.85rem;
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #1e293b;
+    transition: all 0.15s ease;
+    user-select: none;
+}
+
+.scope-addon-chip:hover {
+    background: #f1f5f9;
+    border-color: #004889;
+}
+
+.scope-addon-chip input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #004889;
+    cursor: pointer;
+}
+
+.scope-addon-chip .addon-title {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.scope-addon-chip .addon-title i {
+    color: #004889;
+    font-size: 0.8rem;
+}
+
+/* TCPA Compliance Box */
+.tcpa-compliance-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 0.85rem 1rem;
+    margin-top: 1.25rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.tcpa-compliance-box input[type="checkbox"] {
+    margin-top: 0.2rem;
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    flex-shrink: 0;
+    accent-color: #004889;
+}
+
+.tcpa-compliance-box label {
+    font-size: 0.76rem;
+    line-height: 1.45;
+    color: #475569;
+    font-weight: 500;
+    cursor: pointer;
+    margin: 0;
+}
+
+/* Submission Action */
+.sigma-enterprise-submit-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.65rem;
+    width: 100%;
+    height: 48px;
+    background: linear-gradient(135deg, #004889 0%, #002b52 100%);
+    color: #ffffff !important;
+    font-size: 0.95rem;
+    font-weight: 800;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 72, 137, 0.25);
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-family: inherit;
+}
+
+.sigma-enterprise-submit-btn:hover {
+    background: linear-gradient(135deg, #0056a3 0%, #00386b 100%);
+    box-shadow: 0 6px 16px rgba(0, 72, 137, 0.35);
+    transform: translateY(-1px);
+}
+
+.sigma-enterprise-submit-btn:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 6px rgba(0, 72, 137, 0.2);
+}
+
+.submission-micro-proof {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    margin-top: 0.85rem;
+    font-size: 0.76rem;
+    color: #64748b;
+    font-weight: 600;
+    flex-wrap: wrap;
+}
+
+.submission-micro-proof i {
+    color: #004889;
+    margin-right: 0.25rem;
+}
+
+/* Sidebar Assurance Deck */
+.sidebar-header-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #0f172a;
+    color: #ffffff;
+    padding: 0.75rem 1.25rem;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.trust-deck-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 1.25rem;
+    display: flex;
+    gap: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.trust-deck-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+    border-color: #cbd5e1;
+}
+
+.trust-card-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    background: #eff6ff;
+    color: #004889;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.trust-card-content h4 {
+    margin: 0 0 0.35rem 0;
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.trust-card-content p {
+    margin: 0 0 0.5rem 0;
+    font-size: 0.78rem;
+    line-height: 1.45;
+    color: #475569;
+}
+
+.trust-card-meta {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #004889;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+/* Institutional Metrics Card */
+.institutional-metrics-card {
+    background: #0f172a;
+    color: #ffffff;
+    border-radius: 10px;
+    padding: 1.25rem;
+    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.25);
+}
+
+.metric-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+}
+
+.metric-box {
+    text-align: center;
+}
+
+.metric-num {
+    display: block;
+    font-size: 1.35rem;
+    font-weight: 900;
+    color: #38bdf8;
+    letter-spacing: -0.02em;
+}
+
+.metric-lbl {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #94a3b8;
+    margin-top: 0.2rem;
+}
+
+.metric-divider {
+    width: 1px;
+    height: 36px;
+    background: #334155;
+}
+
+.service-corridor-tag {
+    margin-top: 1rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid #1e293b;
+    font-size: 0.72rem;
+    color: #94a3b8;
+    text-align: center;
+    line-height: 1.4;
+}
+
+.service-corridor-tag i {
+    color: #38bdf8;
+    margin-right: 0.35rem;
+}
+
+/* --- Facility Type Quick Selection Chips (WCAG 2.1 AA Compliant) --- */
+.facility-chips-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.65rem;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+    width: 100%;
+}
+
+.facility-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 44px;
+    padding: 0.5rem 0.85rem;
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #1e293b;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    touch-action: manipulation;
+    user-select: none;
+    line-height: 1;
+    font-family: inherit;
+}
+
+.facility-chip i {
+    color: #004889;
+    font-size: 0.9rem;
+}
+
+.facility-chip:hover {
+    background: #eff6ff;
+    border-color: #004889;
+    color: #004889;
+    transform: translateY(-1px);
+}
+
+.facility-chip:focus-visible {
+    outline: 2px solid #004889;
+    outline-offset: 2px;
+}
+
+.facility-chip.active {
+    background: #004889 !important;
+    color: #ffffff !important;
+    border-color: #004889 !important;
+    box-shadow: 0 2px 6px rgba(0, 72, 137, 0.25);
+}
+
+.facility-chip.active i {
+    color: #ffffff !important;
+}
+

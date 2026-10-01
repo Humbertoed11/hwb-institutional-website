@@ -288,7 +288,7 @@ def partner_access_required(f):
 def bosanna_login():
     """White-labeled authentication gate for Bosanna LLC leadership."""
     if current_user.is_authenticated and current_user.role in ['Partner', 'Partner_Bosanna', 'Executive', 'Admin']:
-        return redirect(url_for('partner.bosanna_cockpit'))
+        return redirect(url_for('partner.bosanna_portal'))
 
     if request.method == 'POST':
         identifier = (request.form.get('username') or '').strip()
@@ -344,7 +344,7 @@ def bosanna_login():
 
             session.permanent = True
             login_user(User(user['id'], user['username'], user_role, user.get('full_name'), user.get('custom_permissions')))
-            return redirect(url_for('partner.bosanna_cockpit'))
+            return redirect(url_for('partner.bosanna_portal'))
 
         flash('Invalid credentials. Please verify your email and password.')
 
@@ -352,6 +352,7 @@ def bosanna_login():
 
 
 @partner_bp.route('/bosanna', methods=['GET', 'POST'], endpoint='bosanna_direct')
+@partner_bp.route('/bosanna-portal', methods=['GET', 'POST'], endpoint='bosanna_portal_direct')
 @partner_bp.route('/bosanna-cockpit', methods=['GET', 'POST'], endpoint='bosanna_cockpit_direct')
 @partner_bp.route('/portal/bosanna/magic-login', methods=['GET', 'POST'], endpoint='bosanna_magic_login')
 def bosanna_magic_login():
@@ -377,16 +378,16 @@ def bosanna_magic_login():
         session.permanent = True
         user_role = user.get('role') or 'Partner_Bosanna'
         login_user(User(user['id'], user['username'], user_role, user.get('full_name'), user.get('custom_permissions')))
-        return redirect(url_for('partner.bosanna_cockpit'))
+        return redirect(url_for('partner.bosanna_portal'))
 
     flash('Executive profile could not be located. Please contact technical administration.')
     return redirect(url_for('partner.bosanna_login'))
 
 
-@partner_bp.route('/portal/bosanna/cockpit', methods=['GET'], endpoint='bosanna_cockpit')
+@partner_bp.route('/portal/bosanna/portal', methods=['GET'], endpoint='bosanna_portal')
 @partner_access_required
-def bosanna_cockpit():
-    """Single-Source Prime Contractor Cockpit for Bosanna LLC (Collin College Frisco Campus)."""
+def bosanna_portal():
+    """Single-Source Prime Contractor Operations Portal for Bosanna LLC (Collin College Frisco Campus)."""
     facility_filter = request.args.get('facility', '').strip()
     status_filter = request.args.get('status', '').strip()
     search_q = request.args.get('q', '').strip().lower()
@@ -461,6 +462,12 @@ def bosanna_cockpit():
         search_q=search_q,
         user=current_user
     )
+
+
+@partner_bp.route('/portal/bosanna/cockpit', methods=['GET'], endpoint='bosanna_cockpit')
+def bosanna_cockpit():
+    """Permanent 301 redirect from legacy URL to standardized Operations Portal URL."""
+    return redirect(url_for('partner.bosanna_portal'), code=301)
 
 
 @partner_bp.route('/portal/bosanna/file/<int:applicant_id>', methods=['GET'], endpoint='bosanna_file')
@@ -705,7 +712,7 @@ RE: Collin College Frisco Campus Custodial Operations (TIPS #260102)
             body += f"""
 4.0 ON-DEMAND COMPLIANCE DOSSIER
 Prime contractor leadership may export full county auditor packages at:
-https://hwbcleaning.com/portal/bosanna/cockpit
+https://hwbcleaning.com/portal/bosanna/portal
 
 Report compiled by SigmaFidelity™ Automated Operations Engine.
 Approved for distribution.

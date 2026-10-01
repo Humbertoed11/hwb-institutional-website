@@ -39,7 +39,7 @@
         }
 
         /* 1.0 TOP ENTERPRISE NAVIGATION BAR */
-        .cockpit-header {
+        .portal-header {
             background: var(--bosanna-pine);
             color: var(--bosanna-white);
             padding: 0.85rem 2rem;
@@ -151,7 +151,7 @@
         }
 
         /* 2.0 MAIN DASHBOARD CONTAINER */
-        .cockpit-container {
+        .portal-container {
             max-width: 1440px;
             margin: 1.5rem auto;
             padding: 0 2rem;
@@ -706,7 +706,7 @@
 <body>
 
     <!-- 1.0 TOP ENTERPRISE NAVIGATION -->
-    <header class="cockpit-header">
+    <header class="portal-header">
         <div class="header-content">
             <div class="brand-section">
                 <a href="https://bosanna.com/" class="brand-logo-text">BOSANNA LLC</a>
@@ -730,8 +730,8 @@
         </div>
     </header>
 
-    <!-- 2.0 MAIN COCKPIT -->
-    <main class="cockpit-container">
+    <!-- 2.0 MAIN OPERATIONS PORTAL -->
+    <main class="portal-container">
 
         <!-- 2.1 VIEW TITLE -->
         <div class="view-header">
@@ -801,7 +801,7 @@
         </div>
 
         <!-- 2.3 TOOLBAR & FILTERS -->
-        <form method="GET" action="/portal/bosanna/cockpit" class="toolbar-card">
+        <form method="GET" action="/portal/bosanna/portal" class="toolbar-card">
             <div class="filter-group">
                 <div class="search-box">
                     <i class="fas fa-search"></i>
@@ -825,7 +825,7 @@
                     <i class="fas fa-filter"></i> Apply Filters
                 </button>
                 {% if search_q or facility_filter or status_filter %}
-                <a href="/portal/bosanna/cockpit" class="btn-table-action" style="color: #ef4444;">
+                <a href="/portal/bosanna/portal" class="btn-table-action" style="color: #ef4444;">
                     <i class="fas fa-times"></i> Reset
                 </a>
                 {% endif %}
@@ -1127,7 +1127,7 @@
                 </div>
                 <button type="button" class="btn-modal-close" onclick="closeEditWorkerModal()">&times;</button>
             </div>
-            <form id="form-cockpit-edit-worker" onsubmit="saveWorkerFileCockpit(event)" style="margin: 0;">
+            <form id="form-portal-edit-worker" onsubmit="saveWorkerFileCockpit(event)" style="margin: 0;">
                 <input type="hidden" id="cockpit_edit_id" value="">
                 <div class="modal-body" style="padding: 1.5rem; text-align: left;">
                     

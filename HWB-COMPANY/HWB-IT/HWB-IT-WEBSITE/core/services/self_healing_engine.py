@@ -570,6 +570,9 @@ def record_rack_telemetry_snapshot(
     self_heal = get_self_healing_telemetry()
     data_health = get_data_health_telemetry(target_url)
 
+    from core.services.security_logger import get_site_security_telemetry
+    site_sec = get_site_security_telemetry(target_url)
+
     racks_data = [
         # Rack 1: Cognitive Health & Memory Rot Meter
         {
@@ -629,10 +632,10 @@ def record_rack_telemetry_snapshot(
                 "error_items": pareto_session.get("error_items", [])
             }
         },
-        # Rack 6: Dev-to-Live Parity Cockpit
+        # Rack 6: Dev-to-Live Parity Center
         {
             "rack_number": 6,
-            "rack_name": "Dev-to-Live Parity Cockpit",
+            "rack_name": "Dev-to-Live Parity Center",
             "metric_category": "PARITY_AUDIT",
             "score_value": float(parity_cockpit.get("parity_score", 100)),
             "secondary_value": float(parity_cockpit.get("sequences_aligned_count", 70)),
@@ -652,15 +655,25 @@ def record_rack_telemetry_snapshot(
                 "self_healing": self_heal
             }
         },
-        # Rack 8: Data Health & Lead Hygiene Cockpit
+        # Rack 8: Data Health & Maintenance Center
         {
             "rack_number": 8,
-            "rack_name": "Data Health & Lead Hygiene Cockpit",
+            "rack_name": "Data Health & Maintenance Center",
             "metric_category": "DATA_HYGIENE",
             "score_value": float(data_health.get("composite_score", 81.6)),
             "secondary_value": float(data_health.get("total_leads", 27983)),
             "status_tag": data_health.get("status_tag", "HEALTHY"),
             "details_json": data_health
+        },
+        # Rack 9: Site Security & Operations Hub (HWB-QMS-11.2 / SOC 2 / ISO 27001)
+        {
+            "rack_number": 9,
+            "rack_name": "Site Security & Operations Hub",
+            "metric_category": "SITE_SECURITY",
+            "score_value": float(site_sec.get("composite_score", 99.4)),
+            "secondary_value": float(site_sec.get("total_events_24h", 0)),
+            "status_tag": site_sec.get("threat_level", "NOMINAL"),
+            "details_json": site_sec
         }
     ]
 
@@ -681,7 +694,7 @@ def record_rack_telemetry_snapshot(
                     r["score_value"],
                     r["secondary_value"],
                     r["status_tag"],
-                    Json(r["details_json"]),
+                    Json(r["details_json"], dumps=lambda obj: json.dumps(obj, default=str)),
                     operator
                 ))
             conn.commit()
@@ -692,7 +705,7 @@ def record_rack_telemetry_snapshot(
             "session_id": s_id,
             "racks_logged": len(racks_data),
             "latency_ms": latency_ms,
-            "message": f"Successfully committed 8-rack historical snapshot (Session: {s_id}) in {latency_ms} ms."
+            "message": f"Successfully committed 9-rack historical snapshot (Session: {s_id}) in {latency_ms} ms."
         }
     except Exception as e:
         conn.rollback()

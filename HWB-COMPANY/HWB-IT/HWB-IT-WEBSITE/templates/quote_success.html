@@ -43,13 +43,13 @@
                         </div>
                         <div>
                             <label style="display: block; font-size: 0.65rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">Plan Type</label>
-                            <div style="font-size: 1rem; font-weight: 800; color: #1e293b;">Standard Cleaning</div>
+                            <div style="font-size: 1rem; font-weight: 800; color: #1e293b;" id="disp-frequency">{{ data.get('frequency', 'Standard Cleaning') }}</div>
                         </div>
                     </div>
                     <div>
                         <div style="margin-bottom: 1.5rem;">
                             <label style="display: block; font-size: 0.65rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">Your Phone</label>
-                            <div style="font-size: 1rem; font-weight: 800; color: #1e293b;">{{ data['phone'] }}</div>
+                            <div style="font-size: 1rem; font-weight: 800; color: #1e293b;">{{ data['phone'] or 'Not Provided (Email Only)' }}</div>
                         </div>
                         <div>
                             <label style="display: block; font-size: 0.65rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">Your Email</label>
@@ -58,11 +58,79 @@
                     </div>
                 </div>
 
+                <!-- 10-Second Pricing Calibration (Frictionless Post-Submission Enrichment) -->
+                <div id="optional-sqft-box" style="margin-top: 2.5rem; background: #ffffff; border: 1.5px solid #bfdbfe; border-radius: 12px; padding: 2rem; text-align: left; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.05);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; color: #1d4ed8; font-weight: 800; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                            <i class="fas fa-sliders-h"></i> 10-Second Pricing Calibration (Optional)
+                        </div>
+                        <span style="font-size: 0.75rem; background: #eff6ff; color: #1d4ed8; padding: 0.2rem 0.6rem; border-radius: 999px; font-weight: 700;">Faster Quote</span>
+                    </div>
+                    <p style="color: #475569; font-size: 0.92rem; line-height: 1.5; margin: 0 0 1.25rem 0;">
+                        Tap below to give our estimating team more details about your building. This helps us prepare exact pricing options before our first call.
+                    </p>
+
+                    <form id="optional-calibration-form" action="{{ url_for('update_quote_details') }}" method="POST">
+                        <input type="hidden" name="lead_id" value="{{ data.get('lead_id', '') }}">
+                        <input type="hidden" name="city" id="calib_city" value="{{ data.get('city') if data.get('city') != 'Pending Walkthrough / Discovery' else '' }}">
+                        <input type="hidden" name="frequency" id="calib_frequency" value="">
+
+                        <!-- City Quick Chips -->
+                        <div style="margin-bottom: 1.25rem;">
+                            <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: #334155; margin-bottom: 0.5rem;">
+                                Facility City
+                            </label>
+                            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                                <button type="button" class="calib-city-btn" onclick="selectCalibCity('Plano', this)" style="padding: 0.4rem 0.85rem; border-radius: 6px; border: 1px solid #cbd5e1; background: #f8fafc; font-size: 0.82rem; font-weight: 700; color: #1e293b; cursor: pointer;">Plano</button>
+                                <button type="button" class="calib-city-btn" onclick="selectCalibCity('Dallas', this)" style="padding: 0.4rem 0.85rem; border-radius: 6px; border: 1px solid #cbd5e1; background: #f8fafc; font-size: 0.82rem; font-weight: 700; color: #1e293b; cursor: pointer;">Dallas</button>
+                                <button type="button" class="calib-city-btn" onclick="selectCalibCity('Frisco', this)" style="padding: 0.4rem 0.85rem; border-radius: 6px; border: 1px solid #cbd5e1; background: #f8fafc; font-size: 0.82rem; font-weight: 700; color: #1e293b; cursor: pointer;">Frisco</button>
+                                <button type="button" class="calib-city-btn" onclick="selectCalibCity('Fort Worth', this)" style="padding: 0.4rem 0.85rem; border-radius: 6px; border: 1px solid #cbd5e1; background: #f8fafc; font-size: 0.82rem; font-weight: 700; color: #1e293b; cursor: pointer;">Fort Worth</button>
+                                <button type="button" class="calib-city-btn" onclick="selectCalibCity('Irving', this)" style="padding: 0.4rem 0.85rem; border-radius: 6px; border: 1px solid #cbd5e1; background: #f8fafc; font-size: 0.82rem; font-weight: 700; color: #1e293b; cursor: pointer;">Irving</button>
+                                <button type="button" class="calib-city-btn" onclick="selectCalibCity('Other DFW', this)" style="padding: 0.4rem 0.85rem; border-radius: 6px; border: 1px solid #cbd5e1; background: #f8fafc; font-size: 0.82rem; font-weight: 700; color: #1e293b; cursor: pointer;">Other DFW</button>
+                            </div>
+                        </div>
+
+                        <!-- Frequency Quick Chips -->
+                        <div style="margin-bottom: 1.25rem;">
+                            <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: #334155; margin-bottom: 0.5rem;">
+                                Cleaning Schedule
+                            </label>
+                            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                                <button type="button" class="calib-freq-btn" onclick="selectCalibFreq('Daily (5 Days/Week) - Standard Corporate', this)" style="padding: 0.4rem 0.85rem; border-radius: 6px; border: 1px solid #cbd5e1; background: #f8fafc; font-size: 0.82rem; font-weight: 700; color: #1e293b; cursor: pointer;">Daily (5x / Wk)</button>
+                                <button type="button" class="calib-freq-btn" onclick="selectCalibFreq('Periodic (3 Days/Week) - Mon/Wed/Fri', this)" style="padding: 0.4rem 0.85rem; border-radius: 6px; border: 1px solid #cbd5e1; background: #f8fafc; font-size: 0.82rem; font-weight: 700; color: #1e293b; cursor: pointer;">2 to 3x / Wk</button>
+                                <button type="button" class="calib-freq-btn" onclick="selectCalibFreq('Weekly (1 Day/Week) - Light Occupancy', this)" style="padding: 0.4rem 0.85rem; border-radius: 6px; border: 1px solid #cbd5e1; background: #f8fafc; font-size: 0.82rem; font-weight: 700; color: #1e293b; cursor: pointer;">Weekly (1x / Wk)</button>
+                                <button type="button" class="calib-freq-btn" onclick="selectCalibFreq('Post-Construction / One-Time Deep Clean', this)" style="padding: 0.4rem 0.85rem; border-radius: 6px; border: 1px solid #cbd5e1; background: #f8fafc; font-size: 0.82rem; font-weight: 700; color: #1e293b; cursor: pointer;">One-Time Deep Clean</button>
+                            </div>
+                        </div>
+
+                        <!-- Approximate Square Footage -->
+                        <div style="margin-bottom: 1.25rem;">
+                            <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: #334155; margin-bottom: 0.5rem;">
+                                Rough Square Footage (Approximate)
+                            </label>
+                            <div style="display: flex; gap: 0.75rem; align-items: center; max-width: 360px;">
+                                <div style="position: relative; flex: 1;">
+                                    <input type="number" name="sqft" id="opt_sqft" placeholder="e.g. 5,000" min="500" max="1000000" step="500" class="sigma-input" style="padding-right: 3.5rem; font-weight: 700; height: 42px;">
+                                    <span style="position: absolute; right: 0.85rem; top: 50%; transform: translateY(-50%); font-size: 0.8rem; font-weight: 800; color: #64748b; pointer-events: none;">SQF</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" id="btn-save-calibration" class="isc-btn isc-btn-primary" style="height: 44px; padding: 0 1.5rem; font-weight: 800; border-radius: 6px; font-size: 0.9rem;" aria-label="Save Calibration Details" title="Save Calibration Details">
+                            Save Calibration Details &rarr;
+                        </button>
+                    </form>
+
+                    <div id="calibration-saved-msg" style="display: none; margin-top: 1.25rem; color: #166534; font-weight: 700; font-size: 0.95rem; background: #dcfce7; padding: 0.85rem 1.25rem; border-radius: 6px; border: 1px solid #bbf7d0;">
+                        <i class="fas fa-check-circle"></i> Thank you! Your facility calibration has been updated on your file.
+                    </div>
+                </div>
+
                 <!-- Next Steps -->
-                <div style="margin-top: 4rem; padding: 2rem; background: #eff6ff; border-left: 5px solid #2563eb; border-radius: 4px;">
+                <div style="margin-top: 2.5rem; padding: 2rem; background: #eff6ff; border-left: 5px solid #2563eb; border-radius: 4px;">
                     <strong style="display: block; font-size: 0.7rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; color: #1e40af; margin-bottom: 1rem;">What happens next</strong>
                     <p style="font-size: 1rem; color: #1e40af; line-height: 1.6; margin: 0;">
-                        Our team member just received your information. Someone from HWB will call you within <strong>4 hours</strong> to talk about your building and finish your cleaning plan.
+                        Our team member just received your information. Someone from HWB will reach out within <strong>4 hours</strong> by email or phone to discuss your building and finish your custom cleaning plan.
                     </p>
                 </div>
 
@@ -110,6 +178,77 @@
       console.log('[GA4] Dispatched generate_lead conversion event.');
     }
   });
+
+  // Option B: 10-Second Pricing Calibration Handler
+  function selectCalibCity(val, btn) {
+      document.getElementById('calib_city').value = val;
+      document.querySelectorAll('.calib-city-btn').forEach(b => {
+          b.style.background = '#f8fafc';
+          b.style.color = '#1e293b';
+          b.style.borderColor = '#cbd5e1';
+      });
+      if (btn) {
+          btn.style.background = '#004889';
+          btn.style.color = '#ffffff';
+          btn.style.borderColor = '#004889';
+      }
+  }
+
+  function selectCalibFreq(val, btn) {
+      document.getElementById('calib_frequency').value = val;
+      document.querySelectorAll('.calib-freq-btn').forEach(b => {
+          b.style.background = '#f8fafc';
+          b.style.color = '#1e293b';
+          b.style.borderColor = '#cbd5e1';
+      });
+      if (btn) {
+          btn.style.background = '#004889';
+          btn.style.color = '#ffffff';
+          btn.style.borderColor = '#004889';
+      }
+  }
+
+  const calibForm = document.getElementById('optional-calibration-form');
+  if (calibForm) {
+      calibForm.addEventListener('submit', function(e) {
+          e.preventDefault();
+          const leadIdInput = calibForm.querySelector('input[name="lead_id"]');
+          const leadId = leadIdInput ? leadIdInput.value : '';
+          const sqftInput = document.getElementById('opt_sqft');
+          const sqftVal = sqftInput ? sqftInput.value : '';
+          const cityVal = document.getElementById('calib_city') ? document.getElementById('calib_city').value : '';
+          const freqVal = document.getElementById('calib_frequency') ? document.getElementById('calib_frequency').value : '';
+
+          if (!leadId) {
+              return;
+          }
+
+          const saveBtn = document.getElementById('btn-save-calibration');
+          if (saveBtn) {
+              saveBtn.disabled = true;
+              saveBtn.innerText = "Saving Details...";
+          }
+
+          fetch('{{ url_for("update_quote_details") }}', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              body: new URLSearchParams({
+                  lead_id: leadId,
+                  sqft: sqftVal,
+                  city: cityVal,
+                  frequency: freqVal
+              })
+          }).then(res => res.json()).then(data => {
+              calibForm.style.display = 'none';
+              document.getElementById('calibration-saved-msg').style.display = 'block';
+              if (freqVal && document.getElementById('disp-frequency')) {
+                  document.getElementById('disp-frequency').innerText = freqVal;
+              }
+          }).catch(err => {
+              calibForm.submit();
+          });
+      });
+  }
 </script>
 {% endblock %}
 

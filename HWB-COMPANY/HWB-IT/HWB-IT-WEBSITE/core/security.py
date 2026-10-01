@@ -4,8 +4,9 @@ Standard: HWB-QMS-7.6 Zero-Hotfix Standard / SOC 2 / ISO 27001
 Custodians: George (Systems Architect) & Humberto Dominguez (CEO)
 """
 
+import os
 from functools import wraps
-from flask import request, redirect, url_for, flash, abort, current_app
+from flask import request, redirect, url_for, flash, abort, current_app, has_app_context
 from flask_login import current_user
 from core.services.database import get_db
 
@@ -14,7 +15,7 @@ def log_security_violation(user_id, username, role, path, method):
     """Institutional Security Telemetry (SOC 2 / ISO 27001): Logs access breaches to GlobalActivities."""
     conn = None
     try:
-        db_url = current_app.config['DATABASE_URL']
+        db_url = (current_app.config.get('DATABASE_URL') if has_app_context() else None) or os.getenv('DATABASE_URL')
         conn = get_db(db_url)
         with conn.cursor() as cur:
             desc = f"Role '{role}' ({username}) blocked from accessing {method} {path}"
@@ -23,6 +24,20 @@ def log_security_violation(user_id, username, role, path, method):
                 VALUES (%s, %s, %s, %s)
             ''', (user_id, "User", "SECURITY_VIOLATION", desc))
             conn.commit()
+
+        from core.services.security_logger import log_security_event
+        log_security_event(
+            event_category='RBAC',
+            event_action='ROUTE_BLOCKED',
+            severity='WARNING',
+            user_id=user_id,
+            username=username,
+            user_role=role,
+            endpoint=path,
+            http_method=method,
+            status_code=403,
+            details={'blocked_role': role, 'path': path, 'method': method}
+        )
     except Exception as e:
         print(f"[SECURITY_LOG_ERROR] Could not log violation: {e}", flush=True)
     finally:
@@ -115,7 +130,7 @@ def log_sensitive_access(user_id, username, employee_id, field_name, ip_address=
     """Institutional Audit Log: Records all unmasking / decryptions of sensitive PII."""
     conn = None
     try:
-        db_url = current_app.config['DATABASE_URL']
+        db_url = (current_app.config.get('DATABASE_URL') if has_app_context() else None) or os.getenv('DATABASE_URL')
         conn = get_db(db_url)
         with conn.cursor() as cur:
             desc = f"Admin {username} (ID #{user_id}) inspected decrypted {field_name} for Employee #{employee_id} from {ip_address or 'internal'}"
@@ -125,6 +140,18 @@ def log_sensitive_access(user_id, username, employee_id, field_name, ip_address=
             ''', (employee_id, "Employee", "SENSITIVE_DATA_ACCESS", desc))
             conn.commit()
             print(f"[SECURITY_PII_AUDIT] {desc}", flush=True)
+
+        from core.services.security_logger import log_security_event
+        log_security_event(
+            event_category='PII_ACCESS',
+            event_action='PII_REVEAL',
+            severity='CRITICAL',
+            user_id=user_id,
+            username=username,
+            ip_address=ip_address,
+            status_code=200,
+            details={'employee_id': employee_id, 'field_name': field_name, 'action': '30s_timed_reveal'}
+        )
     except Exception as e:
         print(f"[SECURITY_LOG_ERROR] Could not log PII access: {e}", flush=True)
     finally:

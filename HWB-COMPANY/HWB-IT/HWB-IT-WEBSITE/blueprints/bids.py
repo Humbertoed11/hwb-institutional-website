@@ -20,6 +20,7 @@ from core.services.estimator import (
     get_sca_wage_determination
 )
 from core.services.gc_vetting_engine import GCVettingEngine
+from core.services.security_logger import log_security_event
 
 bids_bp = Blueprint('bids', __name__)
 
@@ -718,6 +719,19 @@ def api_bid_commit_estimate(bid_id):
                 WHERE id = %s;
             ''', (cleanable_sqft, estimated_value, scope_phase, status, notes, bid_id))
             conn.commit()
+        
+        log_security_event(
+            event_category='FINANCIAL_INTEGRITY',
+            event_action='TAKEOFF_COMMITTED',
+            severity='INFO',
+            details={
+                'bid_id': bid_id,
+                'cleanable_sqft': cleanable_sqft,
+                'estimated_value': estimated_value,
+                'scope_phase': scope_phase,
+                'status': status
+            }
+        )
         return jsonify({'status': 'success', 'message': f'Bid #{bid_id} updated successfully.'})
     except Exception as e:
         conn.rollback()

@@ -73,6 +73,20 @@ def rate_limit(limit: int = 5, period_seconds: int = 60, scope: str = None):
             allowed, retry_after = limiter.is_allowed(key, limit, period_seconds)
             if not allowed:
                 print(f"[SECURITY_ALERT] Rate limit exceeded for {key} ({limit}/{period_seconds}s). Blocked for {retry_after}s.", flush=True)
+                try:
+                    from core.services.security_logger import log_security_event
+                    log_security_event(
+                        event_category='RATE_LIMIT',
+                        event_action='RATE_LIMIT_BLOCKED',
+                        severity='WARNING',
+                        ip_address=ip,
+                        endpoint=request.path,
+                        http_method=request.method,
+                        status_code=429,
+                        details={'key': key, 'limit': limit, 'period_seconds': period_seconds, 'retry_after': retry_after}
+                    )
+                except Exception:
+                    pass
                 
                 # Format response based on request content negotiation
                 is_json = request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.path.startswith('/api/')

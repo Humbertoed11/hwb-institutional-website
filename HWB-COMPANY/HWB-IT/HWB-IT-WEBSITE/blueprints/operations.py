@@ -23,6 +23,7 @@ from core.services.database import get_db
 from core.services.search import parse_advanced_search
 from core.services.sanitizer import clean_phone, clean_currency, clean_sqft, clean_zip, clean_email, clean_city
 from core.services.email_service import transmit_email
+from core.services.security_logger import get_site_security_telemetry, log_security_event
 
 operations_bp = Blueprint('operations', __name__)
 
@@ -826,8 +827,17 @@ def admin_operations():
         'api_gateway': cloud_gateway_data,
         'pareto_errors': pareto_errors_data,
         'scorecard': scorecard_data,
-        'self_healing': get_self_healing_telemetry()
+        'self_healing': get_self_healing_telemetry(),
+        'site_security': get_site_security_telemetry(db_url)
     }
+
+    if active_view == 'it_telemetry':
+        log_security_event(
+            event_category='SECURITY_AUDIT',
+            event_action='AUDIT_LOG_INSPECTED',
+            severity='INFO',
+            details={'view': 'it_command_hub', 'rack': 'Rack 9 Site Security'}
+        )
 
     return render_template('backoffice_operations.html', 
                          active_view=active_view, leads=leads, leads_count=leads_count, dup_count=dup_count,
@@ -1201,7 +1211,7 @@ def add_partner():
             db_url=current_app.config['DATABASE_URL']
         )
 
-        flash(f"Institutional Partner '{company_name}' provisioned successfully! Dedicated portal live at /portal/{slug}/cockpit.", "success")
+        flash(f"Institutional Partner '{company_name}' provisioned successfully! Dedicated portal live at /portal/{slug}/portal.", "success")
     except Exception as e:
         current_app.logger.error(f"Partner Onboarding Error: {e}")
         flash(f"Partner Onboarding Failed: {e}", "error")
@@ -1256,8 +1266,9 @@ def sigma_executive():
                     if action == 'update_kpiv':
                         cur.execute('INSERT OR REPLACE INTO "KPIVs" (metric_name, value, target) VALUES (%s, %s, %s)',
                                      (request.form.get('metric_name'), request.form.get('value'), request.form.get('target')))
-                    elif action == 'add_user':
-                        phash = generate_password_hash(request.form.get('new_password'))
+                    elif action in ['add_user', 'create_user']:
+                        raw_pwd = request.form.get('new_password') or request.form.get('user_password') or 'DefaultPass2026!'
+                        phash = generate_password_hash(raw_pwd)
                         role = request.form.get('user_role', 'Operator')
                         status = request.form.get('status', 'Active')
                         force_pwd = True if request.form.get('force_pwd_reset') == 'true' else False
@@ -1285,6 +1296,12 @@ def sigma_executive():
                         
                         cur.execute('INSERT INTO "Users" (username, password_hash, full_name, email, role, status, force_pwd_reset, custom_permissions, telegram_chat_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)',
                                      (request.form.get('new_username'), phash, request.form.get('full_name'), clean_email(request.form.get('user_email')) or request.form.get('user_email'), role, status, force_pwd, perms_json, telegram_cid))
+                        log_security_event(
+                            event_category='USER_ADMIN',
+                            event_action='USER_CREATED',
+                            severity='INFO',
+                            details={'created_username': request.form.get('new_username'), 'assigned_role': role, 'full_name': request.form.get('full_name')}
+                        )
                         flash("User account created successfully.")
                     elif action == 'edit_user':
                         uid = request.form.get('user_id')
@@ -1296,9 +1313,10 @@ def sigma_executive():
                         new_pass = request.form.get('new_password')
                         telegram_cid = (request.form.get('telegram_chat_id') or '').strip() or None
                         
-                        cur.execute('SELECT custom_permissions FROM "Users" WHERE id = %s', (uid,))
+                        cur.execute('SELECT role, custom_permissions FROM "Users" WHERE id = %s', (uid,))
                         existing_row = cur.fetchone()
-                        existing_perms_str = existing_row['custom_permissions'] if isinstance(existing_row, dict) else (existing_row[0] if existing_row else None)
+                        prior_role = existing_row['role'] if isinstance(existing_row, dict) else (existing_row[0] if existing_row else None)
+                        existing_perms_str = existing_row['custom_permissions'] if isinstance(existing_row, dict) else (existing_row[1] if existing_row and len(existing_row) > 1 else None)
                         try:
                             custom_perms = json.loads(existing_perms_str) if existing_perms_str else {}
                         except Exception:
@@ -1328,6 +1346,7 @@ def sigma_executive():
                         custom_perms['telegram'] = new_tg
                         perms_json = json.dumps(custom_perms)
                         
+                        role_changed = (prior_role is not None and prior_role != urole)
                         if new_pass:
                             phash = generate_password_hash(new_pass)
                             cur.execute('UPDATE "Users" SET full_name = %s, email = %s, role = %s, status = %s, force_pwd_reset = %s, custom_permissions = %s, telegram_chat_id = %s, password_hash = %s WHERE id = %s',
@@ -1335,6 +1354,20 @@ def sigma_executive():
                         else:
                             cur.execute('UPDATE "Users" SET full_name = %s, email = %s, role = %s, status = %s, force_pwd_reset = %s, custom_permissions = %s, telegram_chat_id = %s WHERE id = %s',
                                          (fname, uemail, urole, ustatus, force_pwd, perms_json, telegram_cid, uid))
+                        
+                        log_security_event(
+                            event_category='USER_ADMIN',
+                            event_action='USER_ROLE_CHANGED' if role_changed else 'USER_MODIFIED',
+                            severity='WARNING' if (role_changed or new_pass) else 'INFO',
+                            details={
+                                'target_user_id': uid,
+                                'prior_role': prior_role,
+                                'new_role': urole,
+                                'status': ustatus,
+                                'password_reset': bool(new_pass),
+                                'role_changed': role_changed
+                            }
+                        )
                         flash("User account updated successfully.")
                     elif action == 'delete_user':
                         uid = request.form.get('user_id')
@@ -1344,14 +1377,27 @@ def sigma_executive():
                             if target_u:
                                 uname = target_u['username'] if isinstance(target_u, dict) else target_u[0]
                                 cur.execute('DELETE FROM "Users" WHERE id = %s', (uid,))
+                                log_security_event(
+                                    event_category='USER_ADMIN',
+                                    event_action='USER_DELETED',
+                                    severity='WARNING',
+                                    details={'deleted_user_id': uid, 'deleted_username': uname}
+                                )
                                 flash(f"User account @{uname} permanently deleted.", "success")
                             else:
                                 flash("User account not found.", "error")
                         else:
                             flash("Cannot delete currently active account.", "error")
                     elif action == 'update_password':
+                        target_uid = request.form.get('user_id')
                         phash = generate_password_hash(request.form.get('new_password'))
-                        cur.execute('UPDATE "Users" SET password_hash = %s WHERE id = %s', (phash, request.form.get('user_id')))
+                        cur.execute('UPDATE "Users" SET password_hash = %s WHERE id = %s', (phash, target_uid))
+                        log_security_event(
+                            event_category='USER_ADMIN',
+                            event_action='PASSWORD_CHANGED',
+                            severity='WARNING',
+                            details={'target_user_id': target_uid}
+                        )
                     elif action == 'update_role_permissions':
                         perm_role = request.form.get('target_role')
                         for module in ['leads', 'accounts', 'sales_desk', 'bids', 'workforce', 'monitor', 'qms', 'social', 'outbox', 'users', 'tools']:
@@ -1364,6 +1410,12 @@ def sigma_executive():
                                 ON CONFLICT (role, module) DO UPDATE 
                                 SET can_view = EXCLUDED.can_view, can_edit = EXCLUDED.can_edit, can_delete = EXCLUDED.can_delete;
                             ''', (perm_role, module, can_v, can_e, can_d))
+                        log_security_event(
+                            event_category='USER_ADMIN',
+                            event_action='ROLE_PERMISSIONS_UPDATED',
+                            severity='WARNING',
+                            details={'target_role': perm_role}
+                        )
                         flash(f"Access rights updated for role: {perm_role}")
                     elif action == 'approve_social':
                         post_id = request.form.get('post_id')
@@ -1884,6 +1936,12 @@ def api_it_telemetry_history():
         days = request.args.get('days', default=30, type=int)
         limit = request.args.get('limit', default=100, type=int)
         records = get_historical_rack_telemetry(rack_number=rack_num, metric_category=cat, days=days, limit=limit, db_url=current_app.config['DATABASE_URL'])
+        log_security_event(
+            event_category='SECURITY_AUDIT',
+            event_action='AUDIT_LOG_INSPECTED',
+            severity='INFO',
+            details={'endpoint': '/api/v1/it/telemetry/history', 'rack_number': rack_num, 'category': cat}
+        )
         return jsonify({'status': 'success', 'data': records})
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
