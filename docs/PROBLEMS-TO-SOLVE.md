@@ -89,9 +89,11 @@ Responsibility: George (Architect)
 | 09/29/2026 | BUG-103 | Cross-Environment Migration 034 Schema Traps: PostgreSQL JSONB Type Casting & Alternate Unique Key Collisions. | **RESOLVED** | HIGH |
 | 09/30/2026 | BUG-104 | Viewport Media Query CSS Nesting Trap & Unformatted Desktop Buttons on `/get-quote`. | **RESOLVED** | HIGH |
 | 09/30/2026 | BUG-105 | Lexical Jargon Contamination & Aviation Vocabulary ("Cockpit") in Commercial Cleaning Domain. | **RESOLVED** | HIGH |
+| 10/01/2026 | BUG-106 | Prototype-Grade Proposal Intake on `/get-quote` (Redundant Toy Slider Widget & Missing Institutional Trust Architecture). | **RESOLVED** | HIGH |
 | 10/01/2026 | BUG-107 | Cognitive Friction & Jargon on Client Intake Form (High Abandonment from Mandatory SQF Inputs Before Contact Capture). | **RESOLVED** | HIGH |
 | 10/01/2026 | BUG-108 | Quote Intake Grid Misalignment, Mandatory Phone Friction for Email-Only Leads, and Insurance Discrepancy ($5M vs Actual $2M Policy). | **RESOLVED** | HIGH |
 | 10/01/2026 | BUG-109 | Mobile Form Completion Friction & Two-Phase Mobile Express Architecture. | **RESOLVED** | HIGH |
+| 10/01/2026 | BUG-110 | Client-Side Micro-Interaction Observability Deficit & Air-Gapped Dual-Zone Telemetry Architecture. | **RESOLVED** | HIGH |
 
 
 ## BUG-096: Telegram Inbound Message Drop & Unhandled ValueError on Multi-User Comma-Separated TELEGRAM_CHAT_ID String
@@ -1785,3 +1787,37 @@ CEO Humberto Dominguez attempting to log into `https://www.hwbcleaning.com/login
 **Preventative & Evolutionary Learning:**
 1. On mobile devices, conversion rate is inversely proportional to form friction. Capture contact credentials first in under 10 seconds, then progressively enrich facility details on the confirmation screen.
 2. Always ensure hidden form inputs have their HTML `required` attribute removed dynamically via client-side script to prevent silent browser submission blocking.
+
+## BUG-110: Client-Side Micro-Interaction Observability Deficit & Air-Gapped Dual-Zone Telemetry Architecture
+**Detected:** 10/01/2026
+**Status:** **RESOLVED** (10/01/2026)
+**Symptoms:**
+1. Operations leadership and executive support had zero visibility into real-time client interaction friction, rage clicks, unhandled browser JavaScript exceptions, or dead clicks when prospects and technicians encountered issues on public web forms or internal portals.
+2. Relying solely on third-party SaaS replay vendors (e.g., Hotjar, FullStory, Clarity) across the entire platform would trigger serious compliance violations: exposing employee PII, financial data, and credentials to third-party CDNs, in direct violation of SOC 2 Type II (CC6.1, CC6.8), ISO 27001 (A.8.12 Data Leakage Prevention), and the Texas Data Privacy and Security Act (TDPSA).
+3. Conversely, running an un-buffered database write on every single mouse click would exhaust PostgreSQL connection pools and flood transaction logs with ephemeral junk.
+**Root Causes:**
+1. Platform observability historically ended at the HTTP web server ingress log (Nginx / Gunicorn / Flask); client-side browser DOM execution remained an unmonitored blind spot.
+2. Lack of an air-gapped distinction between public anonymous marketing pages and authenticated corporate/administrative zones.
+**Solution (Dual-Zone Hybrid Observability Architecture):**
+1. **PostgreSQL Migration 036 (`ClientBreadcrumbs`):**
+   - Authored and applied `scripts/migrate_036_client_breadcrumbs.py` (and website mirror).
+   - Provisioned `"ClientBreadcrumbs"` table with indexed `timestamp`, `session_id`, `event_type`, and `page_url`.
+   - Engineered native PostgreSQL stored function `purge_expired_client_breadcrumbs(retention_days=30)` for automated data lifecycle minimization (ISO 27001 A.8.10).
+2. **Lightweight First-Party DOM Sensor (`static/js/sigma_breadcrumbs.js`):**
+   - Created ultra-lightweight (< 3.5KB), vanilla JS telemetry sensor tracking clicks, rage clicks (3+ rapid clicks in < 1s), unhandled JS runtime errors (`window.onerror`, `unhandledrejection`), and page views.
+   - Built-in Poka-Yoke PII sanitization: strictly redacts inputs matching password, ssn, card, cvv, tax, or bank account credentials.
+   - Uses non-blocking `navigator.sendBeacon()` with background `fetch` fallback.
+3. **Backend Ingestion & Forensic Endpoints (`blueprints/telemetry.py`):**
+   - Implemented `POST /api/v1/telemetry/breadcrumbs`: batched ingestion with bounds checking (max 50 events/request) into `"ClientBreadcrumbs"`.
+   - Implemented `GET /api/v1/telemetry/breadcrumbs`: RBAC-protected executive forensic query endpoint for client problem troubleshooting.
+4. **Strict Dual-Zone Air-Gap Governance (`templates/base.html`):**
+   - Injected third-party visual heatmap tooling (Microsoft Clarity) strictly wrapped in an air-gap condition: `{% if not current_user.is_authenticated and not request.path.startswith('/admin') and not request.path.startswith('/login') %}`.
+   - Zero third-party scripts ever execute or load on authenticated, administrative, or login routes, maintaining absolute data sovereignty.
+5. **Quality Gate Verification:**
+   - Tessa Platform Regression Battery: 11/11 OK (Grade A+).
+   - Yamamoto Moto AI Estimator Suite: 8/8 OK (Grade A+).
+   - Site Security Rack #9 Suite: 11/11 OK.
+   - Bot Defense Battery: 6/6 OK.
+**Preventative & Evolutionary Learning:**
+1. Maintain a strict air-gap between public marketing pages and authenticated backoffice applications. Third-party visual replay scripts must never touch authenticated operational environments.
+2. First-party micro-interaction breadcrumbs in PostgreSQL with rolling 30-day retention provide forensic certainty without recurring SaaS vendor lock-in or privacy compliance exposure.

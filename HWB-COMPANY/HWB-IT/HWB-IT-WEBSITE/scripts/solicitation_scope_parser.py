@@ -228,17 +228,21 @@ def extract_text_from_pdf(pdf_path: str, max_pages: int = 150) -> Tuple[str, Lis
 
 
 def parse_clean_datetime(raw_str: str) -> Optional[datetime.datetime]:
-    """Cleans up date/time strings from public RFPs and parses to datetime."""
+    """Cleans up date/time strings from public RFPs and parses to datetime in Texas Central Time."""
     if not raw_str:
         return None
     try:
+        from zoneinfo import ZoneInfo
         clean = raw_str.strip()
         clean = re.sub(r'\s+at\s+', ' ', clean, flags=re.IGNORECASE)
         clean = re.sub(r'beginning\s+at\s+', '', clean, flags=re.IGNORECASE)
         clean = re.sub(r'([ap])\.m\.', r'\1m', clean, flags=re.IGNORECASE)
         clean = re.sub(r'\b(CT|CDT|CST|EST|PST)\b', '', clean, flags=re.IGNORECASE).strip()
         clean = re.sub(r'\s+', ' ', clean)
-        return date_parser.parse(clean, fuzzy=True)
+        dt = date_parser.parse(clean, fuzzy=True)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=ZoneInfo("America/Chicago"))
+        return dt
     except Exception:
         return None
 

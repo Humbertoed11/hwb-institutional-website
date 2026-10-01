@@ -307,3 +307,113 @@ def track_email_click(tracking_token):
     return redirect(dest)
 
 
+@telemetry_bp.route('/api/v1/telemetry/breadcrumbs', methods=['POST'])
+def record_client_breadcrumbs():
+    """
+    Ingests client-side micro-interaction breadcrumbs (clicks, rage clicks, JS runtime errors).
+    Standard: ISO 27001 Control A.8.15 / SOC 2 CC6.8.
+    """
+    try:
+        data = request.get_json(silent=True, force=True) or {}
+        session_id = (data.get('session_id') or 'anon_session')[:100]
+        page_url = (data.get('page_url') or request.path)[:255]
+        events = data.get('events') or []
+        if not isinstance(events, list) or len(events) == 0:
+            return jsonify({'status': 'ignored', 'reason': 'empty_events'}), 200
+
+        # Cap batch size to 50 events per request (Poka-Yoke anti-abuse)
+        events = events[:50]
+
+        client_ip = request.headers.get('X-Forwarded-For', request.remote_addr or '127.0.0.1').split(',')[0].strip()
+        user_agent = request.headers.get('User-Agent', '')[:500]
+
+        from psycopg2.extras import Json
+        db_url = current_app.config.get('DATABASE_URL')
+        conn = get_db(db_url)
+        inserted_count = 0
+        try:
+            with conn.cursor() as cur:
+                for ev in events:
+                    if not isinstance(ev, dict):
+                        continue
+                    event_type = (ev.get('event_type') or 'CLICK')[:50]
+                    ev_page = (ev.get('page_url') or page_url)[:255]
+                    tag = (ev.get('element_tag') or '')[:50]
+                    el_id = (ev.get('element_id') or '')[:100]
+                    el_class = (ev.get('element_class') or '')[:150]
+                    el_text = (ev.get('element_text') or '')[:150]
+                    details = ev.get('details')
+
+                    cur.execute('''
+                        INSERT INTO "ClientBreadcrumbs" (
+                            timestamp, session_id, page_url, event_type, element_tag,
+                            element_id, element_class, element_text, details, ip_address, user_agent
+                        ) VALUES (
+                            NOW(), %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                        );
+                    ''', (
+                        session_id, ev_page, event_type, tag,
+                        el_id, el_class, el_text,
+                        Json(details) if details else None,
+                        client_ip, user_agent
+                    ))
+                    inserted_count += 1
+            conn.commit()
+        finally:
+            conn.close()
+
+        return jsonify({'status': 'success', 'ingested': inserted_count}), 200
+    except Exception as e:
+        current_app.logger.warning(f"[CLIENT_BREADCRUMBS_ERROR] Failed to ingest breadcrumbs: {e}")
+        return jsonify({'status': 'error', 'message': 'telemetry_swallowed'}), 200
+
+
+@telemetry_bp.route('/api/v1/telemetry/breadcrumbs', methods=['GET'])
+def get_client_breadcrumbs():
+    """Returns recent client interaction breadcrumbs for forensic troubleshooting."""
+    from flask_login import current_user
+    if not current_user.is_authenticated or getattr(current_user, 'role', '') != 'Executive':
+        return jsonify({'status': 'error', 'message': 'Unauthorized'}), 403
+
+    session_id = request.args.get('session_id')
+    limit = min(int(request.args.get('limit', 50)), 200)
+
+    db_url = current_app.config.get('DATABASE_URL')
+    conn = get_db(db_url)
+    try:
+        with conn.cursor() as cur:
+            if session_id:
+                cur.execute('''
+                    SELECT id, timestamp, session_id, page_url, event_type, element_tag, element_id, element_class, element_text, details, ip_address
+                    FROM "ClientBreadcrumbs"
+                    WHERE session_id = %s
+                    ORDER BY id DESC LIMIT %s;
+                ''', (session_id, limit))
+            else:
+                cur.execute('''
+                    SELECT id, timestamp, session_id, page_url, event_type, element_tag, element_id, element_class, element_text, details, ip_address
+                    FROM "ClientBreadcrumbs"
+                    ORDER BY id DESC LIMIT %s;
+                ''', (limit,))
+            rows = cur.fetchall()
+            results = []
+            for r in rows:
+                results.append({
+                    'id': r[0],
+                    'timestamp': r[1].isoformat() if hasattr(r[1], 'isoformat') else str(r[1]),
+                    'session_id': r[2],
+                    'page_url': r[3],
+                    'event_type': r[4],
+                    'element_tag': r[5],
+                    'element_id': r[6],
+                    'element_class': r[7],
+                    'element_text': r[8],
+                    'details': r[9],
+                    'ip_address': r[10]
+                })
+        return jsonify({'status': 'success', 'count': len(results), 'breadcrumbs': results}), 200
+    finally:
+        conn.close()
+
+
+

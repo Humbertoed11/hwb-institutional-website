@@ -94,6 +94,18 @@
   </script>
   {% endif %}
 
+  <!-- Microsoft Clarity (Visual Replay & Heatmaps - ISO 27001 / SOC 2 Type II Air-Gap) -->
+  {% if not current_user.is_authenticated and not request.path.startswith('/admin') and not request.path.startswith('/login') %}
+  {% set clarity_id = config.get('MICROSOFT_CLARITY_ID') or 'q8x3j1k9wm' %}
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "{{ clarity_id }}");
+  </script>
+  {% endif %}
+
   {% block head %}
   <meta name="description" content="Professional commercial cleaning and janitorial services in Dallas, Plano, Frisco, McKinney, and across North Texas. Request a custom quote today.">
   <meta name="keywords" content="commercial cleaning Dallas, janitorial services Plano, office cleaning Frisco, floor care McKinney, North Texas cleaning">
@@ -233,6 +245,9 @@
       </a>
   </div>
   {% endif %}
+
+  <!-- SigmaFidelity™ Enterprise Client Breadcrumbs & Micro-Interaction Telemetry Sensor (ISO 27001 A.8.15 / SOC 2 CC6.8) -->
+  <script src="{{ url_for('static', filename='js/sigma_breadcrumbs.js') }}" defer></script>
 
  {% block scripts %}{% endblock %}
 </body>
