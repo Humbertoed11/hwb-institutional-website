@@ -12,8 +12,18 @@ Tests:
 8. Bot Trap 6: Financial wire fraud terms -> Silent Blackhole (0 leads created)
 """
 
+import os
+import sys
 import time
 import unittest
+
+# Ensure application root is in python path
+APP_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if APP_DIR not in sys.path:
+    sys.path.insert(0, APP_DIR)
+if '/app' not in sys.path:
+    sys.path.insert(0, '/app')
+
 import psycopg2
 from bs4 import BeautifulSoup
 from main_app import app

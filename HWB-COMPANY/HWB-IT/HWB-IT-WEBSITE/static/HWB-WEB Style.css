@@ -2891,7 +2891,13 @@ header.main-header {
 .isc-btn-outline {
     background: transparent;
     border: 1px solid rgba(255,255,255,0.2);
-    color: white !important;
+    color: inherit;
+}
+
+.executive-cta .isc-btn-outline,
+.services-hero .isc-btn-outline,
+.cta-banner .isc-btn-outline {
+    color: white;
 }
 
 .isc-btn-outline:hover {

@@ -22,7 +22,7 @@
     "id": "HWB-ACADEMY-BOOK-001",
     "dept": "OPERATIONS",
     "file": "hwb-qms-book-01_from_mops_to_machines_the_creation_of_sigma_academy.html",
-    "version": "4.0.0",
+    "version": "4.2.0",
     "compliance": "UPDATED",
     "date": "10-01-2026"
   },
@@ -319,7 +319,7 @@
     "id": "HWB-QMS-9.3",
     "dept": "IT",
     "file": "hwb-qms-9.3_disaster_recovery_and_data_restoration_sop.html",
-    "version": "4.0.0",
+    "version": "4.1.0",
     "compliance": "UPDATED",
     "date": "10-01-2026"
   },
@@ -1183,7 +1183,7 @@
     "id": "HWB-QMS-9.1-MAIN",
     "dept": "QMS",
     "file": "hwb-qms-9.1_daily_system_maintenance_sop.html",
-    "version": "3.0.0",
+    "version": "3.1.0",
     "compliance": "UPDATED",
     "date": "05/21/2026"
   },
@@ -1555,5 +1555,23 @@
     "version": "4.0.0",
     "compliance": "UPDATED",
     "date": "10-01-2026"
+  },
+  {
+    "title": "Executive Standards Transition Charter (ISO 9001:2026 & ISO/IEC 42001:2023)",
+    "id": "HWB-QMS-4.0-CHARTER",
+    "dept": "QMS",
+    "file": "hwb-qms-4.0_standards_transition_charter_iso_9001_2026_and_42001.html",
+    "version": "1.0.0",
+    "compliance": "APPROVED",
+    "date": "10-02-2026"
+  },
+  {
+    "title": "Standard Operating Procedure: Artificial Intelligence Systems Management & Governance SOP",
+    "id": "HWB-QMS-7.7",
+    "dept": "IT",
+    "file": "hwb-qms-7.7_artificial_intelligence_management_and_governance_sop.html",
+    "version": "1.0.0",
+    "compliance": "APPROVED",
+    "date": "10-02-2026"
   }
 ]

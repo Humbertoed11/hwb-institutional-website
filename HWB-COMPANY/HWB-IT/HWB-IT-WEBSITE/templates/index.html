@@ -149,5 +149,21 @@
     span.innerText = "Processing...";
     setTimeout(() => span.innerText = "Syncing Field Ops...", 700);
  };
+
+ // Google Analytics 4 (GA4) Service Card Telemetry (Rack 10)
+ document.querySelectorAll('.service-card').forEach(function(card) {
+    card.addEventListener('click', function() {
+       const titleEl = this.querySelector('h3');
+       const title = titleEl ? titleEl.innerText.trim() : 'Service';
+       const href = this.getAttribute('href');
+       if (typeof gtag === 'function') {
+          gtag('event', 'select_content', {
+             'content_type': 'service_card',
+             'item_id': href,
+             'card_title': title
+          });
+       }
+    });
+ });
 </script>
 {% endblock %}

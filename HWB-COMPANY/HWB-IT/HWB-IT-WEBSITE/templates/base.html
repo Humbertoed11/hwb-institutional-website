@@ -217,9 +217,10 @@
     </footer>
  {% endif %}
 
- <!-- SigmaFidelity™ Analytics: Automated Click-to-Call & Phone Engagement Tracking -->
+ <!-- SigmaFidelity™ Analytics: Automated Click-to-Call & Document Download Tracking -->
  <script>
    document.addEventListener('DOMContentLoaded', function() {
+     // Track telephone link clicks
      document.querySelectorAll('a[href^="tel:"]').forEach(function(el) {
        el.addEventListener('click', function() {
          if (typeof gtag === 'function') {
@@ -228,6 +229,24 @@
              'event_label': el.getAttribute('href').replace('tel:', ''),
              'transport_type': 'beacon'
            });
+         }
+       });
+     });
+
+     // Track PDF document downloads (Capability Statement, Prequal packets)
+     document.querySelectorAll('a[href$=".pdf"], a[download]').forEach(function(el) {
+       el.addEventListener('click', function() {
+         if (typeof gtag === 'function') {
+           const href = el.getAttribute('href') || '';
+           const filename = href.split('/').pop() || 'document.pdf';
+           gtag('event', 'file_download', {
+             'event_category': 'Document',
+             'file_name': filename,
+             'file_extension': 'pdf',
+             'link_url': href,
+             'transport_type': 'beacon'
+           });
+           console.log('[GA4] Dispatched file_download event:', filename);
          }
        });
      });

@@ -40,6 +40,11 @@ class Config:
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
 
+    # Digital Visibility & Google Analytics / Search Console (Rack 10)
+    GA_MEASUREMENT_ID = os.getenv("GA_MEASUREMENT_ID", "G-8BX5Q7THYR")
+    GOOGLE_SITE_VERIFICATION = os.getenv("GOOGLE_SITE_VERIFICATION")
+    MICROSOFT_CLARITY_ID = os.getenv("MICROSOFT_CLARITY_ID", "q8x3j1k9wm")
+
 class DevelopmentConfig(Config):
     """Local Development Configuration."""
     DEBUG = True

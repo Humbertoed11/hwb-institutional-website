@@ -244,6 +244,17 @@
               if (freqVal && document.getElementById('disp-frequency')) {
                   document.getElementById('disp-frequency').innerText = freqVal;
               }
+              if (typeof gtag === 'function') {
+                  gtag('event', 'pricing_calibrated', {
+                      'event_category': 'Calibration',
+                      'event_label': cityVal || 'DFW',
+                      'value': 250.00,
+                      'currency': 'USD',
+                      'frequency': freqVal,
+                      'sqft': sqftVal
+                  });
+                  console.log('[GA4] Dispatched pricing_calibrated conversion event.');
+              }
           }).catch(err => {
               calibForm.submit();
           });

@@ -4,6 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Capability Statement 2026 | HWB Cleaning Services LLC</title>
+    <link rel="canonical" href="https://www.hwbcleaning.com/capability-statement">
+    <meta name="description" content="Official 2026 Commercial Capability Statement for HWB Cleaning Services LLC. North Texas janitorial, commercial, and industrial cleaning.">
+    <!-- Google tag (gtag.js) - GA4 Official Measurement Container -->
+    {% if not current_user.is_authenticated %}
+    {% set ga_id = config.get('GA_MEASUREMENT_ID') or 'G-8BX5Q7THYR' %}
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{ ga_id }}"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', '{{ ga_id }}');
+    </script>
+    {% endif %}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @media print {

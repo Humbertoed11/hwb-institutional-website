@@ -4,6 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SigmaAcademy™ | B2B Commercial Training & Compliance Portal</title>
+    <link rel="canonical" href="https://www.hwbcleaning.com/academy">
+    <meta name="description" content="SigmaAcademy™ Commercial Training Catalog and OSHA Cleaning Compliance Certification for HWB Cleaning Services LLC.">
+    <!-- Google tag (gtag.js) - GA4 Official Measurement Container -->
+    {% if not current_user.is_authenticated %}
+    {% set ga_id = config.get('GA_MEASUREMENT_ID') or 'G-8BX5Q7THYR' %}
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{ ga_id }}"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', '{{ ga_id }}');
+    </script>
+    {% endif %}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>

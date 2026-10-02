@@ -94,6 +94,7 @@ Responsibility: George (Architect)
 | 10/01/2026 | BUG-108 | Quote Intake Grid Misalignment, Mandatory Phone Friction for Email-Only Leads, and Insurance Discrepancy ($5M vs Actual $2M Policy). | **RESOLVED** | HIGH |
 | 10/01/2026 | BUG-109 | Mobile Form Completion Friction & Two-Phase Mobile Express Architecture. | **RESOLVED** | HIGH |
 | 10/01/2026 | BUG-110 | Client-Side Micro-Interaction Observability Deficit & Air-Gapped Dual-Zone Telemetry Architecture. | **RESOLVED** | HIGH |
+| 10/02/2026 | BUG-111 | White-on-White Text Cascade Deficit on Public .isc-btn-outline Elements (/work-with-us). | **RESOLVED** | HIGH |
 
 
 ## BUG-096: Telegram Inbound Message Drop & Unhandled ValueError on Multi-User Comma-Separated TELEGRAM_CHAT_ID String
@@ -1821,3 +1822,33 @@ CEO Humberto Dominguez attempting to log into `https://www.hwbcleaning.com/login
 **Preventative & Evolutionary Learning:**
 1. Maintain a strict air-gap between public marketing pages and authenticated backoffice applications. Third-party visual replay scripts must never touch authenticated operational environments.
 2. First-party micro-interaction breadcrumbs in PostgreSQL with rolling 30-day retention provide forensic certainty without recurring SaaS vendor lock-in or privacy compliance exposure.
+
+## BUG-111: White-on-White Text Cascade Deficit on Public .isc-btn-outline Elements (/work-with-us)
+**Detected:** 10/02/2026
+**Status:** **RESOLVED** (10/02/2026)
+**Symptoms:**
+1. On the public workforce intake portal (`/work-with-us`), the button directly to the left of the blue "Apply" button on all job position cards appeared as an empty white rectangle with no visible text or icon to visitors.
+2. When users clicked the blank white button, the job description modal opened and functioned normally, proving the underlying button element and JavaScript event listeners were active.
+3. Automated headless regression tests (BeautifulSoup DOM parsing) reported the button text as `"Details"` because the text node existed inside `<button><i class="fas fa-file-alt"></i> Details</button>`, masking the visual defect from DOM-only scanners.
+**Root Causes:**
+1. In `static/HWB-WEB Style.css`, the `.isc-btn-outline` rule contained `color: white !important;`, which was originally written for high-contrast dark hero banners.
+2. When applied to light/white cards on `/work-with-us`, this CSS rule forced the button's text and icon to render as pure white (`#ffffff`) on a white background (`#ffffff`), producing a 1:1 contrast ratio that made the label completely invisible to human eyes.
+3. A prior fix in `static/backoffice.css` had resolved white-on-white buttons for admin screens, but public routes extending `base.html` did not import `backoffice.css`, leaving public `.isc-btn-outline` buttons unhardened.
+**Solution:**
+1. **Global CSS Hardening (`static/HWB-WEB Style.css`):**
+   - Removed `color: white !important;` from the base `.isc-btn-outline` class, setting `color: inherit;`.
+   - Explicitly restricted white text rules to dark container surfaces (`.executive-cta .isc-btn-outline`, `.services-hero .isc-btn-outline`, `.cta-banner .isc-btn-outline`).
+2. **Component-Level Isolation (`templates/work_with_us.html`):**
+   - Authored explicit classes `.btn-workforce-details` and `.btn-workforce-apply` with locked dark slate text (`color: #1e293b !important;`), visible borders (`border: 1.5px solid #cbd5e1 !important;`), crisp white backgrounds, subtle depth shadow, and responsive hover transitions (`#f8fafc`).
+   - Upgraded all 4 workforce job card action buttons, modal dismiss/close buttons, and form reset triggers to use `.btn-workforce-details`.
+3. **Quality Gate Certification:**
+   - Tessa Platform Regression Battery: 11/11 OK (Grade A+).
+   - Yamamoto Moto AI Estimator Suite: 8/8 OK (Grade A+).
+   - Site Security Rack #9 Suite: 11/11 OK.
+   - Bot Defense Battery: 6/6 OK.
+   - Labor Recruitment & Cyber Suite: 4/4 OK.
+   - Verified WCAG 2.1 AA / ADA compliant contrast ratio (> 7:1 contrast on dark slate text on white background).
+**Preventative & Evolutionary Learning:**
+1. DOM-only checks cannot detect CSS contrast failures. Automated accessibility gates must compute rendered contrast or inspect computed color tokens to catch white-on-white text overrides.
+2. Never apply `!important` to text color rules on generic utility classes (`.isc-btn-outline`) that can appear across varied background surfaces.
+

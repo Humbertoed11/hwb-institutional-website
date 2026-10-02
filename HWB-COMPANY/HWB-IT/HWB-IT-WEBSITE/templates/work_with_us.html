@@ -99,6 +99,52 @@
     align-items: center;
     gap: 0.6rem;
 }
+.btn-workforce-details {
+    flex: 1;
+    height: 34px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    border-radius: 6px;
+    color: #1e293b !important;
+    border: 1.5px solid #cbd5e1 !important;
+    background: #ffffff !important;
+    padding: 0 0.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.15s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+.btn-workforce-details:hover {
+    background: #f8fafc !important;
+    border-color: #94a3b8 !important;
+    color: #0f172a !important;
+}
+.btn-workforce-apply {
+    flex: 1;
+    height: 34px;
+    font-size: 0.82rem;
+    font-weight: 800;
+    border-radius: 6px;
+    color: #ffffff !important;
+    border: none !important;
+    background: var(--brand) !important;
+    padding: 0 0.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.15s ease;
+    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.25);
+}
+.btn-workforce-apply:hover {
+    background: #1d4ed8 !important;
+}
 </style>
 
 <!-- Hero Section -->
@@ -115,11 +161,11 @@
         </p>
 
         <!-- Track Switcher -->
-        <div class="workforce-toggle-bar">
-            <button type="button" class="workforce-toggle-btn active" id="btn-tab-technician" onclick="switchWorkforceTab('technician')">
+        <div class="workforce-toggle-bar" role="tablist" aria-label="Workforce Opportunities Pathway">
+            <button type="button" class="workforce-toggle-btn active" id="btn-tab-technician" role="tab" aria-selected="true" aria-controls="panel-technician" onclick="switchWorkforceTab('technician')">
                 <i class="fas fa-user-check"></i> Cleaning Technician (W-2)
             </button>
-            <button type="button" class="workforce-toggle-btn" id="btn-tab-subcontractor" onclick="switchWorkforceTab('subcontractor')">
+            <button type="button" class="workforce-toggle-btn" id="btn-tab-subcontractor" role="tab" aria-selected="false" aria-controls="panel-subcontractor" onclick="switchWorkforceTab('subcontractor')">
                 <i class="fas fa-users-cog"></i> Subcontractor Crew (1099)
             </button>
         </div>
@@ -174,10 +220,10 @@
                                 <p style="font-size: 0.78rem; color: #64748b; line-height: 1.45; margin: 0 0 0.75rem 0;">{{ pos.summary }}</p>
                             </div>
                             <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem; border-top: 1px solid #e2e8f0; padding-top: 0.75rem;">
-                                <button type="button" onclick="viewJobDescription({{ pos.id }})" aria-label="View job description for {{ pos.title }}" title="View details for {{ pos.title }}" class="isc-btn isc-btn-outline" style="flex: 1; height: 32px; font-size: 0.72rem; font-weight: 700; border-radius: 5px; color: #475569; border-color: #cbd5e1; background: #ffffff; padding: 0 0.5rem;">
-                                    <i class="fas fa-file-alt"></i> Details
+                                <button type="button" onclick="viewJobDescription({{ pos.id }})" aria-label="View job description for {{ pos.title }}" title="View details for {{ pos.title }}" class="btn-workforce-details">
+                                    <i class="fas fa-file-alt" style="color: #64748b;"></i> Details
                                 </button>
-                                <button type="button" onclick="selectRoleAndApply('{{ pos.title }}', {{ pos.id }})" aria-label="Apply for {{ pos.title }}" title="Apply for {{ pos.title }}" class="isc-btn isc-btn-primary" style="flex: 1; height: 32px; font-size: 0.72rem; font-weight: 800; border-radius: 5px; padding: 0 0.5rem;">
+                                <button type="button" onclick="selectRoleAndApply('{{ pos.title }}', {{ pos.id }})" aria-label="Apply for {{ pos.title }}" title="Apply for {{ pos.title }}" class="btn-workforce-apply">
                                     <i class="fas fa-arrow-down"></i> Apply
                                 </button>
                             </div>
@@ -194,7 +240,7 @@
                         Thank you for applying to HWB Cleaning Services. Our operations supervisor will reach out via phone or text message within 24–48 hours for a quick 5-minute phone interview.
                     </p>
                     <div style="margin-top: 1.5rem;">
-                        <button type="button" onclick="resetTechForm()" class="isc-btn isc-btn-outline" style="height: 38px; padding: 0 1.25rem; font-size: 0.85rem; font-weight: 700; border-radius: 6px; border: 1.5px solid #16a34a; color: #166534; background: #ffffff;">
+                        <button type="button" onclick="resetTechForm()" class="btn-workforce-details" style="flex: initial; height: 38px; padding: 0 1.25rem; font-size: 0.85rem; font-weight: 700; border: 1.5px solid #16a34a !important; color: #166534 !important; background: #ffffff !important;">
                             <i class="fas fa-redo"></i> Submit Another Application
                         </button>
                     </div>
@@ -210,29 +256,29 @@
                     
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; margin-bottom: 1.25rem;">
                         <div>
-                            <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Full Name *</label>
-                            <input type="text" name="full_name" required autocomplete="name" placeholder="First and Last Name" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
+                            <label for="tech-full-name" style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Full Name *</label>
+                            <input type="text" id="tech-full-name" name="full_name" required autocomplete="name" placeholder="First and Last Name" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
                         </div>
                         <div>
-                            <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Phone Number (Mobile for SMS) *</label>
+                            <label for="tech-phone" style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Phone Number (Mobile for SMS) *</label>
                             <input type="tel" id="tech-phone" name="phone" required autocomplete="tel" placeholder="(214)-555-0123" maxlength="14" oninput="maskPhone(this)" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
                         </div>
                     </div>
 
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; margin-bottom: 1.25rem;">
                         <div>
-                            <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Email Address</label>
-                            <input type="email" name="email" autocomplete="email" placeholder="name@email.com" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
+                            <label for="tech-email" style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Email Address</label>
+                            <input type="email" id="tech-email" name="email" autocomplete="email" placeholder="name@email.com" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
                         </div>
                         <div>
-                            <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">City / Location in DFW *</label>
-                            <input type="text" name="city" required placeholder="e.g. Dallas, Fort Worth, Plano, Arlington" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
+                            <label for="tech-city" style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">City / Location in DFW *</label>
+                            <input type="text" id="tech-city" name="city" required placeholder="e.g. Dallas, Fort Worth, Plano, Arlington" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
                         </div>
                     </div>
 
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; margin-bottom: 1.25rem;">
                         <div>
-                            <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Position Desired</label>
+                            <label for="tech-desired-role" style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Position Desired</label>
                             <select name="desired_role" id="tech-desired-role" onchange="onRoleSelectionChange(this)" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem; background: #fff;">
                                 {% if job_positions %}
                                     {% for pos in job_positions %}
@@ -247,8 +293,8 @@
                             </select>
                         </div>
                         <div>
-                            <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Preferred Shift</label>
-                            <select name="desired_shift" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem; background: #fff;">
+                            <label for="tech-desired-shift" style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Preferred Shift</label>
+                            <select name="desired_shift" id="tech-desired-shift" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem; background: #fff;">
                                 <option value="Night">Evening / Night (Standard Janitorial)</option>
                                 <option value="Day">Day Porter / Facility Maintenance</option>
                                 <option value="Weekend">Weekends Only</option>
@@ -259,16 +305,16 @@
 
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem;">
                         <div>
-                            <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Commercial Cleaning Experience</label>
-                            <select name="experience_level" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem; background: #fff;">
+                            <label for="tech-experience-level" style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Commercial Cleaning Experience</label>
+                            <select name="experience_level" id="tech-experience-level" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem; background: #fff;">
                                 <option value="Entry">Entry Level (Paid training provided)</option>
                                 <option value="1-2 Years">1 - 2 Years Commercial Experience</option>
                                 <option value="3+ Years / Supervisor">3+ Years / Crew Lead Experience</option>
                             </select>
                         </div>
                         <div>
-                            <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Language Preference</label>
-                            <select name="preferred_language" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem; background: #fff;">
+                            <label for="tech-preferred-language" style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Language Preference</label>
+                            <select name="preferred_language" id="tech-preferred-language" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem; background: #fff;">
                                 <option value="Bilingual">Bilingual (English & Spanish)</option>
                                 <option value="Spanish">Español</option>
                                 <option value="English">English</option>
@@ -329,7 +375,7 @@
                         Your business entity has been added to our pre-qualified subcontractor bench. Our estimating and operations desk will contact you with Scope of Work details as relevant project bids are awarded.
                     </p>
                     <div style="margin-top: 1.5rem;">
-                        <button type="button" onclick="resetSubForm()" class="isc-btn isc-btn-outline" style="height: 38px; padding: 0 1.25rem; font-size: 0.85rem; font-weight: 700; border-radius: 6px; border: 1.5px solid #16a34a; color: #166534; background: #ffffff;">
+                        <button type="button" onclick="resetSubForm()" class="btn-workforce-details" style="flex: initial; height: 38px; padding: 0 1.25rem; font-size: 0.85rem; font-weight: 700; border: 1.5px solid #16a34a !important; color: #166534 !important; background: #ffffff !important;">
                             <i class="fas fa-redo"></i> Register Another Crew
                         </button>
                     </div>
@@ -343,34 +389,34 @@
                 <form id="form-sub-application" onsubmit="submitSubcontractorApp(event)">
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; margin-bottom: 1.25rem;">
                         <div>
-                            <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Business / Company Name *</label>
-                            <input type="text" name="company_name" required autocomplete="organization" placeholder="e.g. Apex Janitorial LLC" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
+                            <label for="sub-company-name" style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Business / Company Name *</label>
+                            <input type="text" id="sub-company-name" name="company_name" required autocomplete="organization" placeholder="e.g. Apex Janitorial LLC" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
                         </div>
                         <div>
-                            <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Contact Person & Title *</label>
-                            <input type="text" name="contact_name" required autocomplete="name" placeholder="e.g. Carlos Gomez, Owner" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
+                            <label for="sub-contact-name" style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Contact Person & Title *</label>
+                            <input type="text" id="sub-contact-name" name="contact_name" required autocomplete="name" placeholder="e.g. Carlos Gomez, Owner" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
                         </div>
                     </div>
 
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; margin-bottom: 1.25rem;">
                         <div>
-                            <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Business Phone *</label>
+                            <label for="sub-phone" style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Business Phone *</label>
                             <input type="tel" id="sub-phone" name="phone" required autocomplete="tel" placeholder="(214)-555-0199" maxlength="14" oninput="maskPhone(this)" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
                         </div>
                         <div>
-                            <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Business Email *</label>
-                            <input type="email" name="email" required autocomplete="email" placeholder="contact@company.com" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
+                            <label for="sub-email" style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Business Email *</label>
+                            <input type="email" id="sub-email" name="email" required autocomplete="email" placeholder="contact@company.com" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
                         </div>
                     </div>
 
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; margin-bottom: 1.25rem;">
                         <div>
-                            <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Base City *</label>
-                            <input type="text" name="city" required placeholder="e.g. Fort Worth, Dallas, Arlington" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
+                            <label for="sub-city" style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Base City *</label>
+                            <input type="text" id="sub-city" name="city" required placeholder="e.g. Fort Worth, Dallas, Arlington" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
                         </div>
                         <div>
-                            <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Active Crew Size *</label>
-                            <select name="crew_size" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem; background: #fff;">
+                            <label for="sub-crew-size" style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Active Crew Size *</label>
+                            <select name="crew_size" id="sub-crew-size" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem; background: #fff;">
                                 <option value="2">2 - 3 Workers (Small Jobs / Office)</option>
                                 <option value="5" selected>4 - 6 Workers (Medium Commercial / Daycares)</option>
                                 <option value="8">7 - 10 Workers (Post-Construction Surge)</option>
@@ -411,16 +457,16 @@
 
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem;">
                         <div>
-                            <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">General Liability Insurance Status *</label>
-                            <select name="coi_status" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem; background: #fff;">
+                            <label for="sub-coi-status" style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">General Liability Insurance Status *</label>
+                            <select name="coi_status" id="sub-coi-status" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem; background: #fff;">
                                 <option value="Verified">Active $1,000,000+ General Liability Policy</option>
                                 <option value="Pending">Policy in Place (Will Send COI)</option>
                                 <option value="Needs Assistance">Need Assistance Setting Up Coverage</option>
                             </select>
                         </div>
                         <div>
-                            <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Expected Crew Hourly Rate or Subcontract Target</label>
-                            <input type="text" name="hourly_rate_range" placeholder="e.g. Hourly rate or project target" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
+                            <label for="sub-hourly-rate" style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Expected Crew Hourly Rate or Subcontract Target</label>
+                            <input type="text" id="sub-hourly-rate" name="hourly_rate_range" placeholder="e.g. Hourly rate or project target" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
                         </div>
                     </div>
 
@@ -517,12 +563,16 @@ function switchWorkforceTab(tab) {
 
     if (tab === 'technician') {
         btnTech.classList.add('active');
+        btnTech.setAttribute('aria-selected', 'true');
         btnSub.classList.remove('active');
+        btnSub.setAttribute('aria-selected', 'false');
         panelTech.classList.add('active');
         panelSub.classList.remove('active');
     } else {
         btnSub.classList.add('active');
+        btnSub.setAttribute('aria-selected', 'true');
         btnTech.classList.remove('active');
+        btnTech.setAttribute('aria-selected', 'false');
         panelSub.classList.add('active');
         panelTech.classList.remove('active');
     }
@@ -810,10 +860,10 @@ function closePublicJobDescModal() {
 
         <!-- Action Footer -->
         <div style="display: flex; justify-content: flex-end; gap: 0.75rem; border-top: 1px solid #e2e8f0; padding-top: 1.25rem;">
-            <button type="button" onclick="closePublicJobDescModal()" class="isc-btn isc-btn-outline" style="height: 40px; padding: 0 1.25rem; font-size: 0.85rem; font-weight: 700; border-radius: 6px;">
+            <button type="button" onclick="closePublicJobDescModal()" aria-label="Close Job Description Modal" class="btn-workforce-details" style="flex: initial; height: 40px; padding: 0 1.5rem; font-size: 0.85rem; font-weight: 700; border-radius: 6px;">
                 Close
             </button>
-            <button type="button" id="btn-modal-apply-role" class="isc-btn isc-btn-primary" style="height: 40px; padding: 0 1.5rem; font-size: 0.85rem; font-weight: 800; border-radius: 6px;">
+            <button type="button" id="btn-modal-apply-role" aria-label="Apply for this Position" class="btn-workforce-apply" style="flex: initial; height: 40px; padding: 0 1.5rem; font-size: 0.85rem; font-weight: 800; border-radius: 6px;">
                 <i class="fas fa-check"></i> Apply for this Position
             </button>
         </div>
