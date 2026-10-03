@@ -1619,8 +1619,109 @@ def analyze_voice_with_gemini(audio_bytes, chat_id=None):
     except Exception as e:
         return None, str(e)
 
+
+# ==============================================================================
+# AI ADVERSARIAL PROMPT-INJECTION & JAILBREAK GUARDRAIL (SO-COM-001-DIR-04)
+# Standard: OWASP LLM01 / HWB-QMS-11.10 / Mandate 12
+# ==============================================================================
+
+ADVERSARIAL_INJECTION_RULES = [
+    # 1. System Prompt Leakage & Instruction Extraction
+    (r"(?i)\bignore\s+(?:all\s+)?(?:previous|prior|above)\s+instructions\b", "System Prompt Override Attempt"),
+    (r"(?i)\bdisregard\s+(?:all\s+)?(?:previous|prior|above)\s+instructions\b", "System Prompt Override Attempt"),
+    (r"(?i)\b(?:reveal|show|print|output|display|repeat|leak|dump)\s+(?:the\s+|your\s+)?(?:system\s+prompt|system\s+instructions|initial\s+instructions|master\s+prompt|base\s+prompt)\b", "System Prompt Leakage Request"),
+    (r"(?i)\bwhat\s+(?:is|are)\s+your\s+(?:system\s+prompt|system\s+instructions|secret\s+instructions)\b", "System Prompt Inspection Request"),
+    (r"(?i)\brepeat\s+(?:everything|the\s+prompt|all\s+text)\s+above\b", "Prompt Reconstruction Request"),
+    (r"(?i)\bprint\s+instructions\b", "Instruction Extraction Request"),
+
+    # 2. Persona Hijacking & Jailbreaks
+    (r"(?i)\bdan\s+mode\b|\bdo\s+anything\s+now\b", "DAN Mode Persona Hijack"),
+    (r"(?i)\bdeveloper\s+mode\b|\benable\s+developer\s+mode\b", "Developer Mode Jailbreak"),
+    (r"(?i)\bunrestricted\s+mode\b", "Unrestricted Mode Jailbreak"),
+    (r"(?i)\bjailbreak\b", "Generic Jailbreak Signature"),
+    (r"(?i)\bbypass\s+(?:all\s+)?(?:safety|guardrails?|filters?|rules?|policies)\b", "Safety Filter Bypass Attempt"),
+    (r"(?i)\bignore\s+(?:safety|ethics|rules|policy|guidelines)\b", "Safety Bypass Directive"),
+
+    # 3. Unauthorized Privilege Escalation & Command Execution Strings
+    (r"(?i)\b(?:sudo\s+|rm\s+-rf|chmod\s+777|drop\s+table|delete\s+from\s+\"?users\"?)\b", "Unauthorized Command Execution Injection"),
+    (r"(?i)\bcat\s+/etc/(?:passwd|shadow|hosts)\b", "Host File Access Injection"),
+    (r"(?i)\b(?:reveal|show|dump|print)\s+(?:api[_\s-]?key|gemini[_\s-]?api[_\s-]?key|db[_\s-]?password|jwt[_\s-]?secret)\b", "Credential Harvesting Injection"),
+    (r"(?i)\b(?:exec\(|eval\(|os\.system\(|subprocess\.Popen|__import__)\b", "Code Execution Injection")
+]
+
+def log_prompt_injection_event(text: str, rule_name: str, matched_snippet: str, chat_id=None):
+    """Logs an immutable forensic security event in SecurityAuditLogs under event_action='PROMPT_INJECTION_BLOCKED'."""
+    try:
+        conn = get_db_connection()
+        with conn.cursor() as cur:
+            user_info = get_user_for_chat(chat_id) if chat_id else {}
+            user_id = user_info.get("user_id") if user_info else 1
+            username = user_info.get("username", "telegram_user") if user_info else "telegram_user"
+            user_role = user_info.get("role", "Unknown") if user_info else "Unknown"
+            
+            details = {
+                "directive": "SO-COM-001-DIR-04",
+                "event_type": "PROMPT_INJECTION_BLOCKED",
+                "violation_code": "OWASP_LLM01",
+                "rule_name": rule_name,
+                "matched_snippet": matched_snippet,
+                "quarantined_text_preview": text[:500],
+                "chat_id": chat_id,
+                "action": "QUARANTINED"
+            }
+            
+            cur.execute("""
+                INSERT INTO "SecurityAuditLogs" (
+                    timestamp, event_category, event_action, user_id, username,
+                    user_role, ip_address, user_agent, endpoint, http_method,
+                    status_code, severity, details
+                ) VALUES (
+                    CURRENT_TIMESTAMP, 'AI_GUARDRAIL', 'PROMPT_INJECTION_BLOCKED',
+                    %s, %s, %s, '127.0.0.1', 'TelegramBot/Guardrail-v3.0',
+                    '/telegram/ai/prompt-guardrail', 'POST', 403, 'HIGH', %s
+                );
+            """, (user_id, username, user_role, Json(details)))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"[SECURITY LOG ERROR] Failed to log prompt injection event: {e}", flush=True)
+
+def validate_prompt_safety(text: str, chat_id=None) -> tuple[bool, str]:
+    """
+    OWASP LLM01: Prompt-Injection & Adversarial Jailbreak Guardrail (SO-COM-001-DIR-04).
+    Validates inbound prompt against known adversarial injection, leakage, and jailbreak patterns.
+    Returns: (is_safe: bool, refusal_or_reason: str)
+    """
+    if not text:
+        return True, ""
+    
+    clean_text = text.strip()
+    
+    for pattern, rule_name in ADVERSARIAL_INJECTION_RULES:
+        match = re.search(pattern, clean_text)
+        if match:
+            matched_snippet = match.group(0)
+            print(f"[GUARDRAIL BLOCKED] Malicious prompt detected! Rule: '{rule_name}' | Matched: '{matched_snippet}' | Chat ID: {chat_id}", flush=True)
+            
+            # Log forensic security event in SecurityAuditLogs
+            log_prompt_injection_event(
+                text=clean_text,
+                rule_name=rule_name,
+                matched_snippet=matched_snippet,
+                chat_id=chat_id
+            )
+            
+            refusal_msg = "Request blocked by SigmaFidelity™ Prompt Guardrail (OWASP LLM01 Violation)."
+            return False, refusal_msg
+            
+    return True, ""
+
 def analyze_photo_with_gemini(image_bytes, caption="", chat_id=None):
     """Uses Gemini 2.5 Flash Vision to extract blueprints, finish schedules, and site conditions."""
+    if caption:
+        is_safe, refusal_msg = validate_prompt_safety(caption, chat_id=chat_id)
+        if not is_safe:
+            return None, refusal_msg
     if not GEMINI_API_KEY:
         return None, "GEMINI_API_KEY not configured."
     b64_img = base64.b64encode(image_bytes).decode("utf-8")
@@ -1670,6 +1771,11 @@ def analyze_photo_with_gemini(image_bytes, caption="", chat_id=None):
 
 def analyze_text_with_gemini(text, chat_id):
     """Conversational field intelligence for team members on Telegram with Dynamic Resolver & Episodic Memory."""
+    # 0. Prompt-Injection & Adversarial Jailbreak Guardrail (OWASP LLM01 - SO-COM-001-DIR-04)
+    is_safe, refusal_msg = validate_prompt_safety(text, chat_id=chat_id)
+    if not is_safe:
+        return refusal_msg, None
+
     if not GEMINI_API_KEY:
         return "⚠️ GEMINI_API_KEY not configured.", None
 
@@ -1739,6 +1845,12 @@ def analyze_text_with_gemini(text, chat_id):
 
 def handle_text_conversation(text, chat_id):
     """Frontier 7: Two-Way Real-Time Conversational AI with George."""
+    # 0. Fast-path Prompt-Injection Guardrail (OWASP LLM01 - SO-COM-001-DIR-04)
+    is_safe, refusal_msg = validate_prompt_safety(text, chat_id=chat_id)
+    if not is_safe:
+        send_telegram_message(chat_id, refusal_msg)
+        return
+
     send_telegram_chat_action(chat_id, "typing")
     gemini_reply, err = analyze_text_with_gemini(text, chat_id)
     if err or not gemini_reply:
