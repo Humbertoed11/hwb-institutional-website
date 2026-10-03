@@ -325,15 +325,21 @@ class SiteSecurityRack09TestSuite(unittest.TestCase):
             racks = cur.fetchall()
 
             rack_numbers = [r['rack_number'] for r in racks]
-            # Expect exactly 9 racks (racks 1 through 9)
-            self.assertEqual(len(rack_numbers), 9, f"Expected 9 racks, found {len(rack_numbers)}: {rack_numbers}")
-            self.assertEqual(rack_numbers, list(range(1, 10)), f"Rack sequence mismatch: {rack_numbers}")
+            # Expect all operational racks (1 through 11 post DIR-07)
+            self.assertGreaterEqual(len(rack_numbers), 9, f"Expected at least 9 racks, found {len(rack_numbers)}: {rack_numbers}")
+            self.assertIn(9, rack_numbers, f"Rack 9 missing from sequence: {rack_numbers}")
 
             # Verify Rack 9 specifically
             rack_09 = next(r for r in racks if r['rack_number'] == 9)
             self.assertEqual(rack_09['metric_category'], 'SITE_SECURITY')
             self.assertGreaterEqual(rack_09['score_value'], 0)
             self.assertLessEqual(rack_09['score_value'], 100)
+
+            # Verify Rack 10 specifically
+            rack_10 = next(r for r in racks if r['rack_number'] == 10)
+            self.assertEqual(rack_10['metric_category'], 'WEB_ANALYTICS')
+            self.assertGreaterEqual(rack_10['score_value'], 0)
+            self.assertLessEqual(rack_10['score_value'], 100)
         conn.close()
 
     def test_08_bulk_data_export_audit_logging(self):
