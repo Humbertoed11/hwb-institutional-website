@@ -1997,6 +1997,19 @@ def api_it_telemetry_cloudflare():
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
+@operations_bp.route('/api/v1/it/telemetry/credentials', methods=['GET'])
+def api_it_telemetry_credentials():
+    """Returns live Credential & Secret Expiry Sentinel telemetry for Rack 4."""
+    try:
+        from core.services.credential_sentinel import audit_all_credentials
+        return jsonify({
+            'status': 'success',
+            'telemetry': audit_all_credentials()
+        }), 200
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
 @operations_bp.route('/api/v1/users/<int:user_id>/telegram-magic-link', methods=['POST'])
 @login_required
 @roles_required('Executive', 'Admin')
