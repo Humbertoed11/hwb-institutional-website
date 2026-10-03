@@ -11,7 +11,7 @@ services:
       - POSTGRES_DB=hwb_dev_db
       - TZ=America/Chicago
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -24,7 +24,7 @@ services:
     container_name: hwb_web_app
     restart: always
     ports:
-      - "5000:5000"
+      - "127.0.0.1:5000:5000"
     env_file:
       - .env
     environment:
