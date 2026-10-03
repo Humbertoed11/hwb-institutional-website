@@ -6114,11 +6114,11 @@
 </div>
 
 <!-- Modal: Lead Cadence & Outbound Calling Console (High-Velocity Outreach Workstation) -->
-<div id="modal-lead-cadence" class="isc-modal-overlay" style="display:none; z-index: 1050;">
-    <div class="isc-modal" style="max-width: 1120px; width: 95vw; max-height: 90vh; overflow-y: auto; padding: 1.5rem; display: flex; flex-direction: column;">
+<div id="modal-lead-cadence" class="isc-modal-overlay" style="display:none;">
+    <div class="isc-modal" style="display: flex; flex-direction: column;">
         
         <!-- Header & Stepper -->
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; border-bottom: 1px solid var(--slate-100); padding-bottom: 0.85rem;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem; border-bottom: 1px solid var(--slate-100); padding-bottom: 1rem;">
             <div>
                 <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
                     <span style="font-size: 0.7rem; font-weight: 800; background: #e0f2fe; color: #0369a1; padding: 0.2rem 0.6rem; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.05em;">
@@ -6128,10 +6128,13 @@
                         Lead 1 of 1
                     </span>
                 </div>
-                <h2 id="lead-cadence-title" style="font-weight: 900; font-size: 1.3rem; color: var(--slate-900); margin: 0;">Facility Name</h2>
+                <h2 id="lead-cadence-title" style="font-weight: 900; font-size: 1.35rem; color: var(--slate-900); margin: 0;">Facility Name</h2>
                 <p id="lead-cadence-location" style="font-size: 0.8rem; color: var(--slate-500); font-weight: 600; margin-top: 0.15rem; margin-bottom: 0;"></p>
             </div>
             <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <a href="/capability-statement" target="_blank" class="sigma-mini-btn" style="background: #eff6ff; color: #1e40af; border-color: #bfdbfe; font-weight: 700; height: 32px; padding: 0 0.65rem; font-size: 0.72rem; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem;" title="Open Official HWB Capability Statement in new tab">
+                    <i class="fas fa-file-contract"></i> Capabilities
+                </a>
                 <button type="button" onclick="navigateLeadCadence(-1)" class="isc-btn isc-btn-outline" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" title="Previous Lead">
                     <i class="fas fa-chevron-left" style="font-size: 0.75rem;"></i>
                 </button>
@@ -6144,167 +6147,178 @@
             </div>
         </div>
 
-        <!-- Two-Column Calling Workstation -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 1.25rem; align-items: start;">
+        <!-- Workstation Fixed Height Body Wrapper (Matches 600px Height of Lead Detail File) -->
+        <div style="height: 600px; overflow-y: auto; scrollbar-width: thin; padding-right: 0.35rem;">
             
-            <!-- Column 1: Facility Information & Calling Script -->
-            <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <!-- Two-Column Calling Workstation -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 1.25rem; align-items: start;">
                 
-                <!-- Facility & Contact Card -->
-                <div style="background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: 8px; padding: 0.85rem 1rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.65rem;">
-                        <span style="font-size: 0.68rem; font-weight: 800; color: var(--slate-600); text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.35rem;">
-                            <i class="fas fa-id-card" style="color: var(--brand);"></i> Facility & Contact Information
-                        </span>
-                        <button type="button" onclick="openLeadCommandFromCadence()" class="sigma-mini-btn" style="background: #ffffff; color: var(--slate-700); font-weight: 700; border-color: var(--slate-200); height: 26px; padding: 0 0.5rem; font-size: 0.7rem;">
-                            <i class="fas fa-external-link-alt"></i> Full Record
-                        </button>
-                    </div>
-
-                    <!-- 2-by-2 Clean Contact Grid -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem;">
-                        <div>
-                            <label style="font-size: 0.65rem; font-weight: 700; color: var(--slate-500); text-transform: uppercase; display: block; margin-bottom: 0.2rem;">Director / Decision Maker</label>
-                            <input type="text" id="cadence-lead-dm" class="sigma-input" style="height: 34px; font-weight: 700; font-size: 0.82rem; width: 100%;" placeholder="Director Name" oninput="renderLeadScriptContent()">
-                        </div>
-                        <div>
-                            <label style="font-size: 0.65rem; font-weight: 700; color: var(--slate-500); text-transform: uppercase; display: block; margin-bottom: 0.2rem;">Job Title</label>
-                            <input type="text" id="cadence-lead-title" class="sigma-input" style="height: 34px; font-size: 0.82rem; width: 100%;" placeholder="e.g. Center Director">
-                        </div>
-                        <div>
-                            <label style="font-size: 0.65rem; font-weight: 700; color: var(--slate-500); text-transform: uppercase; display: block; margin-bottom: 0.2rem;">Direct Phone</label>
-                            <div style="display: flex; gap: 0.35rem;">
-                                <input type="text" id="cadence-lead-phone" class="sigma-input" style="height: 34px; font-weight: 800; color: var(--brand); font-size: 0.85rem; width: 100%;" placeholder="(000)-000-0000" oninput="maskPhone(event); const cl = this.value.replace(/[^0-9+]/g, ''); document.getElementById('cadence-lead-dial-btn').href = cl ? 'tel:' + cl : '#';">
-                                <a id="cadence-lead-dial-btn" href="#" class="isc-btn isc-btn-primary" style="height: 34px; width: 34px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 6px; text-decoration: none; flex-shrink: 0;" title="Click to Call">
-                                    <i class="fas fa-phone-alt" style="font-size: 0.75rem;"></i>
-                                </a>
-                            </div>
-                        </div>
-                        <div>
-                            <label style="font-size: 0.65rem; font-weight: 700; color: var(--slate-500); text-transform: uppercase; display: block; margin-bottom: 0.2rem;">Email Address</label>
-                            <div style="display: flex; gap: 0.35rem;">
-                                <input type="email" id="cadence-lead-email" class="sigma-input" style="height: 34px; font-size: 0.82rem; width: 100%;" placeholder="director@domain.com" oninput="document.getElementById('cadence-lead-email-btn').href = this.value.trim() ? 'mailto:' + this.value.trim() : '#';">
-                                <a id="cadence-lead-email-btn" href="#" class="isc-btn isc-btn-outline" style="height: 34px; width: 34px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 6px; text-decoration: none; flex-shrink: 0;" title="Send Email">
-                                    <i class="fas fa-envelope" style="font-size: 0.75rem;"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Facility Metrics Bar -->
-                    <div style="margin-top: 0.65rem; padding-top: 0.5rem; border-top: 1px solid var(--slate-200); display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
-                        <div><span style="color: var(--slate-400); font-weight: 600;">Capacity:</span> <strong id="cadence-lead-capacity">--</strong> <span style="color: var(--slate-400);">Kids</span></div>
-                        <div><span style="color: var(--slate-400); font-weight: 600;">Area:</span> <strong id="cadence-lead-sqf">--</strong> <span style="color: var(--slate-400);">SF</span></div>
-                        <div><span style="color: var(--slate-400); font-weight: 600;">Est. Value:</span> <strong id="cadence-lead-value" style="color: #047857; font-weight: 800;">$--</strong></div>
-                        <div><span id="cadence-lead-status-pill" style="font-weight: 800; font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 4px; background: #e0f2fe; color: #0369a1;">New</span></div>
-                    </div>
-                </div>
-
-                <!-- Call Script & Objection Helper -->
-                <div style="background: #ffffff; border: 1px solid var(--slate-200); border-radius: 8px; padding: 0.85rem 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem;">
-                        <span style="font-weight: 800; font-size: 0.75rem; color: var(--slate-700); text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.35rem;">
-                            <i class="fas fa-comment-dots" style="color: var(--brand);"></i> Quick Call Script & Responses
-                        </span>
-                        <div style="display: flex; gap: 0.35rem; align-items: center;">
-                            <button type="button" onclick="copyLeadScript()" class="sigma-mini-btn" id="btn-copy-lead-script" style="background: #ffffff; color: var(--slate-600); border-color: var(--slate-200); height: 26px; padding: 0 0.5rem; font-size: 0.7rem;">
-                                <i class="fas fa-copy"></i> Copy
-                            </button>
-                            <span id="lead-script-copied-alert" style="display: none; font-size: 0.72rem; font-weight: 800; color: #047857;">
-                                <i class="fas fa-check"></i> Copied
+                <!-- Column 1: Facility Information & Calling Script -->
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    
+                    <!-- Facility & Contact Card -->
+                    <div style="background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: 8px; padding: 0.85rem 1rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.65rem;">
+                            <span style="font-size: 0.68rem; font-weight: 800; color: var(--slate-600); text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.35rem;">
+                                <i class="fas fa-id-card" style="color: var(--brand);"></i> Facility & Contact Information
                             </span>
+                            <button type="button" onclick="openLeadCommandFromCadence()" class="sigma-mini-btn" style="background: #ffffff; color: var(--slate-700); font-weight: 700; border-color: var(--slate-200); height: 26px; padding: 0 0.5rem; font-size: 0.7rem;">
+                                <i class="fas fa-external-link-alt"></i> Full Record
+                            </button>
+                        </div>
+
+                        <!-- 2-by-2 Clean Contact Grid -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem;">
+                            <div>
+                                <label style="font-size: 0.65rem; font-weight: 700; color: var(--slate-500); text-transform: uppercase; display: block; margin-bottom: 0.2rem;">Director / Decision Maker</label>
+                                <input type="text" id="cadence-lead-dm" class="sigma-input" style="height: 34px; font-weight: 700; font-size: 0.82rem; width: 100%;" placeholder="Director Name" oninput="renderLeadScriptContent()">
+                            </div>
+                            <div>
+                                <label style="font-size: 0.65rem; font-weight: 700; color: var(--slate-500); text-transform: uppercase; display: block; margin-bottom: 0.2rem;">Job Title</label>
+                                <input type="text" id="cadence-lead-title" class="sigma-input" style="height: 34px; font-size: 0.82rem; width: 100%;" placeholder="e.g. Center Director">
+                            </div>
+                            <div>
+                                <label style="font-size: 0.65rem; font-weight: 700; color: var(--slate-500); text-transform: uppercase; display: block; margin-bottom: 0.2rem;">Direct Phone</label>
+                                <div style="display: flex; gap: 0.35rem;">
+                                    <input type="text" id="cadence-lead-phone" class="sigma-input" style="height: 34px; font-weight: 800; color: var(--brand); font-size: 0.85rem; width: 100%;" placeholder="(000)-000-0000" oninput="maskPhone(event); const cl = this.value.replace(/[^0-9+]/g, ''); document.getElementById('cadence-lead-dial-btn').href = cl ? 'tel:' + cl : '#';">
+                                    <a id="cadence-lead-dial-btn" href="#" class="isc-btn isc-btn-primary" style="height: 34px; width: 34px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 6px; text-decoration: none; flex-shrink: 0;" title="Click to Call">
+                                        <i class="fas fa-phone-alt" style="font-size: 0.75rem;"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            <div>
+                                <label style="font-size: 0.65rem; font-weight: 700; color: var(--slate-500); text-transform: uppercase; display: block; margin-bottom: 0.2rem;">Email Address</label>
+                                <div style="display: flex; gap: 0.35rem;">
+                                    <input type="email" id="cadence-lead-email" class="sigma-input" style="height: 34px; font-size: 0.82rem; width: 100%;" placeholder="director@domain.com" oninput="document.getElementById('cadence-lead-email-btn').href = this.value.trim() ? 'mailto:' + this.value.trim() : '#';">
+                                    <a id="cadence-lead-email-btn" href="#" class="isc-btn isc-btn-outline" style="height: 34px; width: 34px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 6px; text-decoration: none; flex-shrink: 0;" title="Send Email">
+                                        <i class="fas fa-envelope" style="font-size: 0.75rem;"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Facility Metrics Bar -->
+                        <div style="margin-top: 0.65rem; padding-top: 0.5rem; border-top: 1px solid var(--slate-200); display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                            <div><span style="color: var(--slate-400); font-weight: 600;">Capacity:</span> <strong id="cadence-lead-capacity">--</strong> <span style="color: var(--slate-400);">Kids</span></div>
+                            <div><span style="color: var(--slate-400); font-weight: 600;">Area:</span> <strong id="cadence-lead-sqf">--</strong> <span style="color: var(--slate-400);">SF</span></div>
+                            <div><span style="color: var(--slate-400); font-weight: 600;">Est. Value:</span> <strong id="cadence-lead-value" style="color: #047857; font-weight: 800;">$--</strong></div>
+                            <div><span id="cadence-lead-status-pill" style="font-weight: 800; font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 4px; background: #e0f2fe; color: #0369a1;">New</span></div>
                         </div>
                     </div>
 
-                    <!-- Script Scenario Tabs -->
-                    <div style="display: flex; gap: 0.3rem; margin-bottom: 0.65rem; flex-wrap: wrap;">
-                        <button type="button" onclick="switchLeadScriptTab('gatekeeper')" id="tab-script-gatekeeper" class="lead-script-tab" style="padding: 0.3rem 0.55rem; border-radius: 5px; font-size: 0.72rem; font-weight: 800; cursor: pointer; border: 1px solid var(--brand); background: var(--brand); color: white;">
-                            🚪 Receptionist
-                        </button>
-                        <button type="button" onclick="switchLeadScriptTab('obj-regarding')" id="tab-script-obj-regarding" class="lead-script-tab" style="padding: 0.3rem 0.55rem; border-radius: 5px; font-size: 0.72rem; font-weight: 700; cursor: pointer; border: 1px solid var(--slate-200); background: #ffffff; color: var(--slate-700);">
-                            ❓ "What regarding?"
-                        </button>
-                        <button type="button" onclick="switchLeadScriptTab('obj-cleaner')" id="tab-script-obj-cleaner" class="lead-script-tab" style="padding: 0.3rem 0.55rem; border-radius: 5px; font-size: 0.72rem; font-weight: 700; cursor: pointer; border: 1px solid var(--slate-200); background: #ffffff; color: var(--slate-700);">
-                            🧹 "Have cleaner"
-                        </button>
-                        <button type="button" onclick="switchLeadScriptTab('obj-email')" id="tab-script-obj-email" class="lead-script-tab" style="padding: 0.3rem 0.55rem; border-radius: 5px; font-size: 0.72rem; font-weight: 700; cursor: pointer; border: 1px solid var(--slate-200); background: #ffffff; color: var(--slate-700);">
-                            📧 "Send email"
-                        </button>
-                        <button type="button" onclick="switchLeadScriptTab('director')" id="tab-script-director" class="lead-script-tab" style="padding: 0.3rem 0.55rem; border-radius: 5px; font-size: 0.72rem; font-weight: 800; cursor: pointer; border: 1px solid #10b981; background: #ffffff; color: #047857;">
-                            🎯 Director Pitch
-                        </button>
+                    <!-- Call Script & Objection Helper -->
+                    <div style="background: #ffffff; border: 1px solid var(--slate-200); border-radius: 8px; padding: 0.85rem 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem;">
+                            <span style="font-weight: 800; font-size: 0.75rem; color: var(--slate-700); text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.35rem;">
+                                <i class="fas fa-comment-dots" style="color: var(--brand);"></i> Quick Call Script & Responses
+                            </span>
+                            <div style="display: flex; gap: 0.35rem; align-items: center;">
+                                <a href="/capability-statement" target="_blank" class="sigma-mini-btn" style="background: #ffffff; color: var(--brand); border-color: var(--slate-200); height: 26px; padding: 0 0.5rem; font-size: 0.7rem; text-decoration: none; display: inline-flex; align-items: center; gap: 0.3rem;" title="Open Official Capability Statement in new tab">
+                                    <i class="fas fa-file-alt"></i> Capabilities
+                                </a>
+                                <button type="button" onclick="copyLeadScript()" class="sigma-mini-btn" id="btn-copy-lead-script" style="background: #ffffff; color: var(--slate-600); border-color: var(--slate-200); height: 26px; padding: 0 0.5rem; font-size: 0.7rem;">
+                                    <i class="fas fa-copy"></i> Copy
+                                </button>
+                                <span id="lead-script-copied-alert" style="display: none; font-size: 0.72rem; font-weight: 800; color: #047857;">
+                                    <i class="fas fa-check"></i> Copied
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Script Scenario Tabs -->
+                        <div style="display: flex; gap: 0.3rem; margin-bottom: 0.65rem; flex-wrap: wrap;">
+                            <button type="button" onclick="switchLeadScriptTab('gatekeeper')" id="tab-script-gatekeeper" class="lead-script-tab" style="padding: 0.3rem 0.55rem; border-radius: 5px; font-size: 0.72rem; font-weight: 800; cursor: pointer; border: 1px solid var(--brand); background: var(--brand); color: white;">
+                                🚪 Receptionist
+                            </button>
+                            <button type="button" onclick="switchLeadScriptTab('obj-regarding')" id="tab-script-obj-regarding" class="lead-script-tab" style="padding: 0.3rem 0.55rem; border-radius: 5px; font-size: 0.72rem; font-weight: 700; cursor: pointer; border: 1px solid var(--slate-200); background: #ffffff; color: var(--slate-700);">
+                                ❓ "What regarding?"
+                            </button>
+                            <button type="button" onclick="switchLeadScriptTab('obj-cleaner')" id="tab-script-obj-cleaner" class="lead-script-tab" style="padding: 0.3rem 0.55rem; border-radius: 5px; font-size: 0.72rem; font-weight: 700; cursor: pointer; border: 1px solid var(--slate-200); background: #ffffff; color: var(--slate-700);">
+                                🧹 "Have cleaner"
+                            </button>
+                            <button type="button" onclick="switchLeadScriptTab('obj-email')" id="tab-script-obj-email" class="lead-script-tab" style="padding: 0.3rem 0.55rem; border-radius: 5px; font-size: 0.72rem; font-weight: 700; cursor: pointer; border: 1px solid var(--slate-200); background: #ffffff; color: var(--slate-700);">
+                                📧 "Send email"
+                            </button>
+                            <button type="button" onclick="switchLeadScriptTab('obj-services')" id="tab-script-obj-services" class="lead-script-tab" style="padding: 0.3rem 0.55rem; border-radius: 5px; font-size: 0.72rem; font-weight: 700; cursor: pointer; border: 1px solid var(--slate-200); background: #ffffff; color: var(--slate-700);">
+                                🧼 "What services?"
+                            </button>
+                            <button type="button" onclick="switchLeadScriptTab('director')" id="tab-script-director" class="lead-script-tab" style="padding: 0.3rem 0.55rem; border-radius: 5px; font-size: 0.72rem; font-weight: 800; cursor: pointer; border: 1px solid #10b981; background: #ffffff; color: #047857;">
+                                🎯 Director Pitch
+                            </button>
+                        </div>
+
+                        <!-- Script Body -->
+                        <div id="lead-script-content" style="font-size: 0.85rem; line-height: 1.5; color: var(--slate-800); background: #f8fafc; padding: 0.85rem; border-radius: 6px; border: 1px solid var(--slate-200); min-height: 110px; max-height: 200px; overflow-y: auto;">
+                            Loading script...
+                        </div>
                     </div>
 
-                    <!-- Script Body -->
-                    <div id="lead-script-content" style="font-size: 0.85rem; line-height: 1.5; color: var(--slate-800); background: #f8fafc; padding: 0.85rem; border-radius: 6px; border: 1px solid var(--slate-200); min-height: 90px; max-height: 160px; overflow-y: auto;">
-                        Loading script...
-                    </div>
                 </div>
 
-            </div>
+                <!-- Column 2: Call Notes, Follow-Up Date & One-Click Outcome Actions -->
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    
+                    <!-- Notes & Date Picker -->
+                    <div style="background: #ffffff; border: 1px solid var(--slate-200); border-radius: 8px; padding: 0.85rem 1rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.4rem;">
+                            <span style="font-weight: 800; font-size: 0.75rem; color: var(--slate-800); text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.35rem;">
+                                <i class="fas fa-edit" style="color: var(--brand);"></i> Call Notes & Follow-Up Date
+                            </span>
+                            <div style="display: flex; gap: 0.25rem; align-items: center;">
+                                <input type="date" id="cadence-lead-next-date" class="sigma-inline-date" style="height: 28px; font-size: 0.72rem; padding: 0 0.35rem;">
+                                <button type="button" onclick="setLeadCadenceNextDate(0)" class="sigma-mini-btn" style="height: 26px; padding: 0 0.45rem; font-size: 0.7rem;" title="Set date to Today">Today</button>
+                                <button type="button" onclick="setLeadCadenceNextDate(1)" class="sigma-mini-btn" style="height: 26px; padding: 0 0.45rem; font-size: 0.7rem;" title="Set date to Tomorrow">+1d</button>
+                                <button type="button" onclick="setLeadCadenceNextDate(3)" class="sigma-mini-btn" style="height: 26px; padding: 0 0.45rem; font-size: 0.7rem;" title="Set date in 3 Days">+3d</button>
+                                <button type="button" onclick="setLeadCadenceNextDate(7)" class="sigma-mini-btn" style="height: 26px; padding: 0 0.45rem; font-size: 0.7rem;" title="Set date in 1 Week">+1w</button>
+                            </div>
+                        </div>
 
-            <!-- Column 2: Call Notes, Follow-Up Date & One-Click Outcome Actions -->
-            <div style="display: flex; flex-direction: column; gap: 1rem;">
-                
-                <!-- Notes & Date Picker -->
-                <div style="background: #ffffff; border: 1px solid var(--slate-200); border-radius: 8px; padding: 0.85rem 1rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.4rem;">
-                        <span style="font-weight: 800; font-size: 0.75rem; color: var(--slate-800); text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.35rem;">
-                            <i class="fas fa-edit" style="color: var(--brand);"></i> Call Notes & Follow-Up Date
-                        </span>
-                        <div style="display: flex; gap: 0.25rem; align-items: center;">
-                            <input type="date" id="cadence-lead-next-date" class="sigma-inline-date" style="height: 28px; font-size: 0.72rem; padding: 0 0.35rem;">
-                            <button type="button" onclick="setLeadCadenceNextDate(0)" class="sigma-mini-btn" style="height: 26px; padding: 0 0.45rem; font-size: 0.7rem;" title="Set date to Today">Today</button>
-                            <button type="button" onclick="setLeadCadenceNextDate(1)" class="sigma-mini-btn" style="height: 26px; padding: 0 0.45rem; font-size: 0.7rem;" title="Set date to Tomorrow">+1d</button>
-                            <button type="button" onclick="setLeadCadenceNextDate(3)" class="sigma-mini-btn" style="height: 26px; padding: 0 0.45rem; font-size: 0.7rem;" title="Set date in 3 Days">+3d</button>
-                            <button type="button" onclick="setLeadCadenceNextDate(7)" class="sigma-mini-btn" style="height: 26px; padding: 0 0.45rem; font-size: 0.7rem;" title="Set date in 1 Week">+1w</button>
+                        <textarea id="cadence-lead-notes" placeholder="Type call notes here (e.g., Spoke with receptionist Maria; Director Sandra is available Mon-Fri 8am-11am; requested email comparison)..." style="width: 100%; height: 85px; resize: vertical; padding: 0.6rem; border-radius: 6px; border: 1px solid var(--slate-200); font-size: 0.82rem; outline: none; background: #f8fafc; font-family: inherit; margin-bottom: 0.65rem;"></textarea>
+
+                        <!-- Standardized Call Outcome Buttons (2-Column Grid) -->
+                        <div style="margin-bottom: 0.5rem;">
+                            <div style="font-size: 0.68rem; font-weight: 700; color: var(--slate-400); text-transform: uppercase; margin-bottom: 0.35rem;">
+                                Log Outcome & Auto-Advance:
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem;">
+                                <button type="button" onclick="submitLeadCadenceOutcome('Spoke to Director', 'Contacted', true)" class="sigma-mini-btn" style="height: 36px; font-weight: 800; background: #f0fdf4; color: #15803d; border-color: #bbf7d0; justify-content: center; display: flex; align-items: center; gap: 0.35rem;" title="Spoke directly with Director">
+                                    📞 Spoke - Follow Up
+                                </button>
+                                <button type="button" onclick="submitLeadCadenceOutcome('Walkthrough Booked', 'Qualified', true, 'CRITICAL')" class="sigma-mini-btn" style="height: 36px; font-weight: 900; background: #047857; color: #ffffff; border-color: #065f46; justify-content: center; display: flex; align-items: center; gap: 0.35rem;" title="Walkthrough successfully scheduled">
+                                    🎉 Book Walkthrough
+                                </button>
+                                <button type="button" onclick="submitLeadCadenceOutcome('Gatekeeper Blocked', 'Contacted', true)" class="sigma-mini-btn" style="height: 36px; font-weight: 700; background: #f8fafc; color: var(--slate-700); border-color: var(--slate-200); justify-content: center; display: flex; align-items: center; gap: 0.35rem;" title="Receptionist refused transfer or left message">
+                                    🛡️ Gatekeeper Blocked
+                                </button>
+                                <button type="button" onclick="submitLeadCadenceOutcome('Left Voicemail', 'Contacted', true)" class="sigma-mini-btn" style="height: 36px; font-weight: 700; background: #f8fafc; color: var(--slate-700); border-color: var(--slate-200); justify-content: center; display: flex; align-items: center; gap: 0.35rem;" title="Left a phone voicemail message">
+                                    📼 Left Voicemail
+                                </button>
+                                <button type="button" onclick="submitLeadCadenceOutcome('DNC Requested', 'Do Not Call (DNC)', true)" class="sigma-mini-btn" style="height: 36px; font-weight: 700; background: #fef2f2; color: #991b1b; border-color: #fecaca; justify-content: center; display: flex; align-items: center; gap: 0.35rem;" title="Facility requested Do Not Call">
+                                    🚫 Do Not Call (DNC)
+                                </button>
+                                <button type="button" onclick="submitLeadCadenceOutcome('Bad Number / Lost', 'Lost', true)" class="sigma-mini-btn" style="height: 36px; font-weight: 700; background: #f1f5f9; color: #64748b; border-color: #cbd5e1; justify-content: center; display: flex; align-items: center; gap: 0.35rem;" title="Disconnected or invalid phone number">
+                                    ❌ Wrong / Bad #
+                                </button>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; justify-content: flex-end; padding-top: 0.4rem; border-top: 1px solid var(--slate-100);">
+                            <button type="button" onclick="submitLeadCadenceOutcome('General Note Saved', null, false)" class="isc-btn isc-btn-outline" style="height: 32px; padding: 0 0.85rem; font-size: 0.75rem; font-weight: 700; border-radius: 6px;" title="Save updates without moving to the next lead">
+                                <i class="fas fa-save"></i> Save Notes Only (Stay)
+                            </button>
                         </div>
                     </div>
 
-                    <textarea id="cadence-lead-notes" placeholder="Type call notes here (e.g., Spoke with receptionist Maria; Director Sandra is available Mon-Fri 8am-11am; requested email comparison)..." style="width: 100%; height: 85px; resize: vertical; padding: 0.6rem; border-radius: 6px; border: 1px solid var(--slate-200); font-size: 0.82rem; outline: none; background: #f8fafc; font-family: inherit; margin-bottom: 0.65rem;"></textarea>
-
-                    <!-- Standardized Call Outcome Buttons (2-Column Grid) -->
-                    <div style="margin-bottom: 0.5rem;">
-                        <div style="font-size: 0.68rem; font-weight: 700; color: var(--slate-400); text-transform: uppercase; margin-bottom: 0.35rem;">
-                            Log Outcome & Auto-Advance:
+                    <!-- Past Call History for this Facility -->
+                    <div style="background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: 8px; padding: 0.75rem 1rem;">
+                        <div style="font-size: 0.68rem; font-weight: 800; color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.45rem; display: flex; align-items: center; gap: 0.35rem;">
+                            <i class="fas fa-history"></i> Past Activity History
                         </div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem;">
-                            <button type="button" onclick="submitLeadCadenceOutcome('Spoke to Director', 'Contacted', true)" class="sigma-mini-btn" style="height: 36px; font-weight: 800; background: #f0fdf4; color: #15803d; border-color: #bbf7d0; justify-content: center; display: flex; align-items: center; gap: 0.35rem;" title="Spoke directly with Director">
-                                📞 Spoke - Follow Up
-                            </button>
-                            <button type="button" onclick="submitLeadCadenceOutcome('Walkthrough Booked', 'Qualified', true, 'CRITICAL')" class="sigma-mini-btn" style="height: 36px; font-weight: 900; background: #047857; color: #ffffff; border-color: #065f46; justify-content: center; display: flex; align-items: center; gap: 0.35rem;" title="Walkthrough successfully scheduled">
-                                🎉 Book Walkthrough
-                            </button>
-                            <button type="button" onclick="submitLeadCadenceOutcome('Gatekeeper Blocked', 'Contacted', true)" class="sigma-mini-btn" style="height: 36px; font-weight: 700; background: #f8fafc; color: var(--slate-700); border-color: var(--slate-200); justify-content: center; display: flex; align-items: center; gap: 0.35rem;" title="Receptionist refused transfer or left message">
-                                🛡️ Gatekeeper Blocked
-                            </button>
-                            <button type="button" onclick="submitLeadCadenceOutcome('Left Voicemail', 'Contacted', true)" class="sigma-mini-btn" style="height: 36px; font-weight: 700; background: #f8fafc; color: var(--slate-700); border-color: var(--slate-200); justify-content: center; display: flex; align-items: center; gap: 0.35rem;" title="Left a phone voicemail message">
-                                📼 Left Voicemail
-                            </button>
-                            <button type="button" onclick="submitLeadCadenceOutcome('DNC Requested', 'Do Not Call (DNC)', true)" class="sigma-mini-btn" style="height: 36px; font-weight: 700; background: #fef2f2; color: #991b1b; border-color: #fecaca; justify-content: center; display: flex; align-items: center; gap: 0.35rem;" title="Facility requested Do Not Call">
-                                🚫 Do Not Call (DNC)
-                            </button>
-                            <button type="button" onclick="submitLeadCadenceOutcome('Bad Number / Lost', 'Lost', true)" class="sigma-mini-btn" style="height: 36px; font-weight: 700; background: #f1f5f9; color: #64748b; border-color: #cbd5e1; justify-content: center; display: flex; align-items: center; gap: 0.35rem;" title="Disconnected or invalid phone number">
-                                ❌ Wrong / Bad #
-                            </button>
+                        <div id="lead-cadence-history-list" style="display: flex; flex-direction: column; gap: 0.35rem; max-height: 120px; overflow-y: auto;">
+                            <div style="font-size: 0.75rem; color: var(--slate-400); font-style: italic;">No previous touches recorded.</div>
                         </div>
                     </div>
 
-                    <div style="display: flex; justify-content: flex-end; padding-top: 0.4rem; border-top: 1px solid var(--slate-100);">
-                        <button type="button" onclick="submitLeadCadenceOutcome('General Note Saved', null, false)" class="isc-btn isc-btn-outline" style="height: 32px; padding: 0 0.85rem; font-size: 0.75rem; font-weight: 700; border-radius: 6px;" title="Save updates without moving to the next lead">
-                            <i class="fas fa-save"></i> Save Notes Only (Stay)
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Past Call History for this Facility -->
-                <div style="background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: 8px; padding: 0.75rem 1rem;">
-                    <div style="font-size: 0.68rem; font-weight: 800; color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.45rem; display: flex; align-items: center; gap: 0.35rem;">
-                        <i class="fas fa-history"></i> Past Activity History
-                    </div>
-                    <div id="lead-cadence-history-list" style="display: flex; flex-direction: column; gap: 0.35rem; max-height: 120px; overflow-y: auto;">
-                        <div style="font-size: 0.75rem; color: var(--slate-400); font-style: italic;">No previous touches recorded.</div>
-                    </div>
                 </div>
 
             </div>
@@ -7114,6 +7128,9 @@
                 <p id="lead-modal-subtitle" style="font-size: 0.75rem; color: var(--slate-500); margin-top: 0.25rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;"></p>
             </div>
             <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <button type="button" id="btn-return-to-cadence" onclick="returnToLeadCadence()" class="isc-btn isc-btn-primary" style="display:none; height: 32px; font-size: 0.72rem; font-weight: 800; border-radius: 6px; padding: 0 0.85rem; align-items: center; gap: 0.35rem; background: #047857; border-color: #065f46;" title="Return to active calling session">
+                    <i class="fas fa-phone-volume"></i> Return to Calling
+                </button>
                 <button type="button" onclick="navigateLeads(-1)" class="isc-btn isc-btn-outline" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" title="Previous Lead">
                     <i class="fas fa-chevron-left" style="font-size: 0.75rem;"></i>
                 </button>
@@ -7123,7 +7140,7 @@
                 <button type="button" onclick="toggleEditLead()" class="isc-btn isc-btn-outline" style="height: 32px; font-size: 0.7rem; border-radius: 6px;">
                     <i class="fas fa-edit"></i> Edit
                 </button>
-                <button onclick="closeModal('modal-lead-command')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; color: var(--slate-500); transition: all 0.2s;" aria-label="Close Lead Command Modal">
+                <button onclick="closeModal('modal-lead-command'); window.activeCadenceReturn = false;" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; color: var(--slate-500); transition: all 0.2s;" aria-label="Close Lead Command Modal">
                     <i class="fas fa-times" style="font-size: 0.9rem;"></i>
                 </button>
             </div>
@@ -8532,6 +8549,10 @@
     async function openLeadCommand(id, mode = 'overview') {
         if (mode === 'visit' || mode === 'actions') {
             mode = 'activities';
+        }
+        if (!window.activeCadenceReturn) {
+            const returnBtn = document.getElementById('btn-return-to-cadence');
+            if (returnBtn) returnBtn.style.display = 'none';
         }
         openModal('modal-lead-command');
         try {
@@ -10720,6 +10741,22 @@
                     "I completely understand. I can email over our 1-page Childcare Cleanliness & State Licensing Compliance Sheet so you have it on file. What is the Director's direct first name and best email address so it reaches them directly?"
                 </div>
             </div>`;
+        } else if (activeLeadScriptTab === 'obj-services') {
+            html = `<div>
+                <div style="font-size: 0.9rem; color: var(--slate-900); line-height: 1.55;">
+                    "Great question! We specialize specifically in licensed childcare and educational facilities across <b>${city}</b>. Our core services include:
+                    <ul style="margin: 0.45rem 0 0.65rem 1.15rem; padding: 0; font-size: 0.83rem; color: var(--slate-700); line-height: 1.45;">
+                        <li><b>Nightly Classroom Disinfection:</b> Child-safe, hospital-grade sanitization of toys, cots, tables, and high-touch points with zero harsh chemical residue.</li>
+                        <li><b>Texas Child Care Compliance:</b> Deep sanitization of diaper changing stations, hand sinks, and restrooms aligned with state licensing standards.</li>
+                        <li><b>Complete Floor Care:</b> Commercial auto-scrubbing, stripping, waxing, and buffing for VCT tile, plus deep carpet extraction.</li>
+                        <li><b>Day Porters:</b> Midday on-site staff for rapid spill cleanup, continuous touchpoint wipe-downs, and restroom restocking.</li>
+                    </ul>
+                    Would it make sense to schedule a quick 5-minute walkthrough of <b>${center}</b> this week so we can review your current scope and leave our side-by-side pricing sheet?"
+                </div>
+                <div style="font-size: 0.72rem; color: #0369a1; margin-top: 0.5rem; font-style: italic; display: flex; align-items: center; gap: 0.35rem;">
+                    <i class="fas fa-lightbulb"></i> <b>Caller Tip:</b> If they ask about insurance ($2M limit), bonding, or machine specs, click the <b>Capabilities</b> button above for our official 1-page statement.
+                </div>
+            </div>`;
         } else if (activeLeadScriptTab === 'director') {
             html = `<div>
                 <div style="font-size: 0.92rem; color: var(--slate-900); line-height: 1.55;">
@@ -10734,7 +10771,7 @@
     function copyLeadScript() {
         const box = document.getElementById('lead-script-content');
         if (!box) return;
-        const text = box.innerText.replace(/Operator Tip:.*$/g, '').trim();
+        const text = box.innerText.replace(/Caller Tip:.*$/g, '').replace(/Operator Tip:.*$/g, '').trim();
         navigator.clipboard.writeText(text).then(() => {
             const alertEl = document.getElementById('lead-script-copied-alert');
             if (alertEl) {
@@ -10747,8 +10784,42 @@
 
     function openLeadCommandFromCadence() {
         if (!activeCadenceLead) return;
-        closeModal('modal-lead-cadence');
+        window.activeCadenceReturn = true;
+
+        // Hide cadence without destroying state or triggering scroll resets
+        const cadenceModal = document.getElementById('modal-lead-cadence');
+        if (cadenceModal) cadenceModal.style.display = 'none';
+
+        // Suppress entry animation on target modal for seamless in-place swap
+        const cmdModal = document.getElementById('modal-lead-command');
+        if (cmdModal) {
+            const card = cmdModal.querySelector('.isc-modal');
+            if (card) card.style.animation = 'none';
+            const returnBtn = document.getElementById('btn-return-to-cadence');
+            if (returnBtn) returnBtn.style.display = 'inline-flex';
+        }
+
         openLeadCommand(activeCadenceLead.id, 'overview');
+    }
+
+    function returnToLeadCadence() {
+        window.activeCadenceReturn = false;
+
+        // Hide lead command modal
+        const cmdModal = document.getElementById('modal-lead-command');
+        if (cmdModal) {
+            cmdModal.style.display = 'none';
+            const returnBtn = document.getElementById('btn-return-to-cadence');
+            if (returnBtn) returnBtn.style.display = 'none';
+        }
+
+        // Restore cadence modal in-place without animation flicker
+        const cadenceModal = document.getElementById('modal-lead-cadence');
+        if (cadenceModal) {
+            const card = cadenceModal.querySelector('.isc-modal');
+            if (card) card.style.animation = 'none';
+            cadenceModal.style.display = 'flex';
+        }
     }
 
     function navigateLeadCadence(direction) {
