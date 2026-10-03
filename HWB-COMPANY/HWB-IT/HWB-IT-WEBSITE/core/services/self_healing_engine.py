@@ -1146,7 +1146,14 @@ def get_data_health_telemetry(db_url: Optional[str] = None) -> Dict[str, Any]:
             "composite_score": 77.5,
             "letter_grade": "B+",
             "status_tag": "NEEDS_HYGIENE",
-            "total_leads": 28298
+            "total_leads": 25378,
+            "lead_hygiene_histogram": {
+                "total_leads": 25378,
+                "tier_1": {"name": "Tier 1: Pristine (Full Contact + Address)", "count": 17882, "pct": 70.5, "color": "#10b981"},
+                "tier_2": {"name": "Tier 2: Strong (Email + Phone)", "count": 4, "pct": 0.02, "color": "#3b82f6"},
+                "tier_3": {"name": "Tier 3: Single-Channel (Phone/Email Only)", "count": 7182, "pct": 28.3, "color": "#f59e0b"},
+                "tier_4": {"name": "Tier 4: Quarantined / Incomplete", "count": 310, "pct": 1.2, "color": "#ef4444"}
+            }
         }
 
     start_time = time.time()
@@ -1241,6 +1248,30 @@ def get_data_health_telemetry(db_url: Optional[str] = None) -> Dict[str, Any]:
                 {"id": "taxonomy", "name": "7. Taxonomy & Sector Conflicts", "count": 0, "pct": 0.0, "weight": 10.0, "penalty": 0.0, "severity": "PRISTINE", "color": "#10b981"},
             ]
 
+            # 5. Lead Hygiene 4-Tier Distribution Histogram (SO-COM-001-DIR-08)
+            cur.execute("""
+                SELECT 
+                    COUNT(*) FILTER (WHERE email IS NOT NULL AND length(trim(email)) > 0 AND phone IS NOT NULL AND length(trim(phone)) > 0 AND address IS NOT NULL AND length(trim(address)) > 0) AS tier_1,
+                    COUNT(*) FILTER (WHERE email IS NOT NULL AND length(trim(email)) > 0 AND phone IS NOT NULL AND length(trim(phone)) > 0 AND (address IS NULL OR length(trim(address)) = 0)) AS tier_2,
+                    COUNT(*) FILTER (WHERE ((email IS NOT NULL AND length(trim(email)) > 0 AND (phone IS NULL OR length(trim(phone)) = 0)) OR (phone IS NOT NULL AND length(trim(phone)) > 0 AND (email IS NULL OR length(trim(email)) = 0)))) AS tier_3,
+                    COUNT(*) FILTER (WHERE (email IS NULL OR length(trim(email)) = 0) AND (phone IS NULL OR length(trim(phone)) = 0)) AS tier_4
+                FROM "Leads";
+            """)
+            t_row = cur.fetchone()
+            t1_cnt = t_row[0] or 0
+            t2_cnt = t_row[1] or 0
+            t3_cnt = t_row[2] or 0
+            t4_cnt = t_row[3] or 0
+            t_tot = total_leads or 1
+
+            lead_hygiene_histogram = {
+                "total_leads": total_leads,
+                "tier_1": {"name": "Tier 1: Pristine (Full Contact + Address)", "count": t1_cnt, "pct": round(t1_cnt * 100.0 / t_tot, 1), "color": "#10b981"},
+                "tier_2": {"name": "Tier 2: Strong (Email + Phone)", "count": t2_cnt, "pct": round(t2_cnt * 100.0 / t_tot, 2), "color": "#3b82f6"},
+                "tier_3": {"name": "Tier 3: Single-Channel (Phone/Email Only)", "count": t3_cnt, "pct": round(t3_cnt * 100.0 / t_tot, 1), "color": "#f59e0b"},
+                "tier_4": {"name": "Tier 4: Quarantined / Incomplete", "count": t4_cnt, "pct": round(t4_cnt * 100.0 / t_tot, 1), "color": "#ef4444"}
+            }
+
             latency_ms = round((time.time() - start_time) * 1000, 2)
             return {
                 "status": "success",
@@ -1252,6 +1283,7 @@ def get_data_health_telemetry(db_url: Optional[str] = None) -> Dict[str, Any]:
                 "quarantine_count": quarantine_count,
                 "cass_compliance_pct": 99.8,
                 "latency_ms": latency_ms,
+                "lead_hygiene_histogram": lead_hygiene_histogram,
                 "tiers": {
                     "tier_a": {"name": "Tier A (Pristine)", "count": tier_a_count, "pct": round(tier_a_count * 100 / total_leads, 1), "color": "#10b981"},
                     "tier_b": {"name": "Tier B (Marketable)", "count": tier_b_count, "pct": round(tier_b_count * 100 / total_leads, 1), "color": "#3b82f6"},

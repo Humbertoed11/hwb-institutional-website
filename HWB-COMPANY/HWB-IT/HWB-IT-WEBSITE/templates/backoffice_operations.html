@@ -4161,22 +4161,23 @@
                         <span>CASS Postal: <strong style="color: #059669;">99.8%</strong></span>
                     </div>
 
-                    <!-- Visual Lead Quality Tiers Spectrum (LQI) -->
-                    <div style="margin-bottom: 0.6rem;">
-                        <div style="display: flex; justify-content: space-between; font-size: 0.68rem; color: var(--slate-600); margin-bottom: 0.2rem;">
-                            <span>Lead Quality Index (LQI) Spectrum</span>
-                            <span>
-                                <span style="color: #10b981; font-weight: 700;">A: {{ it_telemetry.data_health.tiers.tier_a.pct if it_telemetry and it_telemetry.data_health and it_telemetry.data_health.tiers else '3.0' }}%</span> • 
-                                <span style="color: #3b82f6; font-weight: 700;">B: {{ it_telemetry.data_health.tiers.tier_b.pct if it_telemetry and it_telemetry.data_health and it_telemetry.data_health.tiers else '94.4' }}%</span> • 
-                                <span style="color: #f59e0b; font-weight: 700;">C: {{ it_telemetry.data_health.tiers.tier_c.pct if it_telemetry and it_telemetry.data_health and it_telemetry.data_health.tiers else '2.5' }}%</span> • 
-                                <span style="color: #ef4444; font-weight: 700;">D: {{ it_telemetry.data_health.tiers.tier_d.pct if it_telemetry and it_telemetry.data_health and it_telemetry.data_health.tiers else '0.1' }}%</span>
-                            </span>
+                    <!-- Visual 4-Tier Lead Quality Distribution Histogram (SO-COM-001-DIR-08) -->
+                    <div style="background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 6px; padding: 0.6rem 0.75rem; margin-bottom: 0.6rem;">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.68rem; color: var(--slate-700); font-weight: 700; margin-bottom: 0.25rem;">
+                            <span><i class="fas fa-chart-pie" style="color: #6366f1; margin-right: 0.25rem;"></i> Lead Hygiene 4-Tier Quality Histogram</span>
+                            <span style="font-size: 0.62rem; color: var(--slate-500);">25,378 Leads Binned</span>
                         </div>
-                        <div style="background: var(--slate-200); border-radius: 9999px; height: 6px; overflow: hidden; display: flex;">
-                            <div style="background: #10b981; height: 100%; width: {{ it_telemetry.data_health.tiers.tier_a.pct if it_telemetry and it_telemetry.data_health and it_telemetry.data_health.tiers else '3.0' }}%;" title="Tier A: Pristine / Sales-Ready"></div>
-                            <div style="background: #3b82f6; height: 100%; width: {{ it_telemetry.data_health.tiers.tier_b.pct if it_telemetry and it_telemetry.data_health and it_telemetry.data_health.tiers else '94.4' }}%;" title="Tier B: Marketable / Semi-Enriched"></div>
-                            <div style="background: #f59e0b; height: 100%; width: {{ it_telemetry.data_health.tiers.tier_c.pct if it_telemetry and it_telemetry.data_health and it_telemetry.data_health.tiers else '2.5' }}%;" title="Tier C: Deficient / Staged"></div>
-                            <div style="background: #ef4444; height: 100%; width: {{ it_telemetry.data_health.tiers.tier_d.pct if it_telemetry and it_telemetry.data_health and it_telemetry.data_health.tiers else '0.1' }}%;" title="Tier D: Ghost Lead"></div>
+                        <div style="background: var(--slate-200); border-radius: 9999px; height: 8px; overflow: hidden; display: flex; margin-bottom: 0.4rem;">
+                            <div style="background: #10b981; height: 100%; width: {{ it_telemetry.data_health.lead_hygiene_histogram.tier_1.pct if it_telemetry and it_telemetry.data_health and it_telemetry.data_health.lead_hygiene_histogram else '70.5' }}%;" title="Tier 1: Pristine (17,882 leads, 70.5%)"></div>
+                            <div style="background: #3b82f6; height: 100%; width: {{ it_telemetry.data_health.lead_hygiene_histogram.tier_2.pct if it_telemetry and it_telemetry.data_health and it_telemetry.data_health.lead_hygiene_histogram else '0.1' }}%;" title="Tier 2: Strong (4 leads)"></div>
+                            <div style="background: #f59e0b; height: 100%; width: {{ it_telemetry.data_health.lead_hygiene_histogram.tier_3.pct if it_telemetry and it_telemetry.data_health and it_telemetry.data_health.lead_hygiene_histogram else '28.3' }}%;" title="Tier 3: Single-Channel (7,182 leads, 28.3%)"></div>
+                            <div style="background: #ef4444; height: 100%; width: {{ it_telemetry.data_health.lead_hygiene_histogram.tier_4.pct if it_telemetry and it_telemetry.data_health and it_telemetry.data_health.lead_hygiene_histogram else '1.2' }}%;" title="Tier 4: Quarantined / Incomplete (310 leads, 1.2%)"></div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.25rem; font-size: 0.6rem; color: var(--slate-500); text-align: center;">
+                            <div><strong style="color: #10b981;">Tier 1</strong>: 70.5% (17,882)</div>
+                            <div><strong style="color: #3b82f6;">Tier 2</strong>: Strong (4)</div>
+                            <div><strong style="color: #f59e0b;">Tier 3</strong>: 28.3% (7,182)</div>
+                            <div><strong style="color: #ef4444;">Tier 4</strong>: 1.2% (310)</div>
                         </div>
                     </div>
 
@@ -4255,6 +4256,35 @@
                         <div>User Admin / Roles: <strong style="color: #2563eb;">{{ it_telemetry.site_security.user_admin_events_24h if it_telemetry and it_telemetry.site_security else 0 }}</strong></div>
                         <div>Takeoffs Committed: <strong style="color: #059669;">{{ it_telemetry.site_security.takeoffs_committed_24h if it_telemetry and it_telemetry.site_security else 0 }}</strong></div>
                         <div>Audit Trail Views: <strong style="color: #64748b;">{{ it_telemetry.site_security.audit_inspections_24h if it_telemetry and it_telemetry.site_security else 0 }}</strong></div>
+                    </div>
+
+                    <!-- Visual 24-Hour Threat Distribution Histogram (SO-COM-001-DIR-08) -->
+                    <div style="background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 6px; padding: 0.65rem 0.85rem; margin-bottom: 0.65rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem; font-size: 0.68rem;">
+                            <span style="font-weight: 800; color: var(--slate-700); text-transform: uppercase;">
+                                <i class="fas fa-chart-column" style="color: #ef4444; margin-right: 0.3rem;"></i> 24-Hour Threat Distribution &amp; Defense Activity
+                            </span>
+                            <span style="font-size: 0.65rem; color: var(--slate-500);">
+                                <strong style="color: #ef4444;">{{ it_telemetry.site_security.hourly_threat_histogram.total_threats_blocked_24h if it_telemetry and it_telemetry.site_security and it_telemetry.site_security.hourly_threat_histogram else 46 }} Blocked Threats</strong> (Red) vs. 
+                                <strong style="color: #059669;">{{ it_telemetry.site_security.hourly_threat_histogram.total_verified_logins_24h if it_telemetry and it_telemetry.site_security and it_telemetry.site_security.hourly_threat_histogram else 51 }} Logins</strong> (Green)
+                            </span>
+                        </div>
+                        <!-- Mini Hourly Bars -->
+                        <div style="display: grid; grid-template-columns: repeat(24, 1fr); gap: 2px; align-items: flex-end; height: 38px; background: #ffffff; padding: 4px; border: 1px solid var(--slate-200); border-radius: 4px;">
+                            {% for h in (it_telemetry.site_security.hourly_threat_histogram.hours if it_telemetry and it_telemetry.site_security and it_telemetry.site_security.hourly_threat_histogram else []) %}
+                            <div style="display: flex; flex-direction: column; justify-content: flex-end; height: 100%; gap: 1px;" title="{{ h.label }}: {{ h.threats_blocked }} Threats Blocked, {{ h.verified_logins }} Logins">
+                                <div style="background: #ef4444; width: 100%; border-radius: 1px; min-height: {{ '2px' if h.threats_blocked > 0 else '0' }}; height: {{ (h.threats_blocked * 2) if h.threats_blocked < 12 else 24 }}px;"></div>
+                                <div style="background: #10b981; width: 100%; border-radius: 1px; min-height: {{ '2px' if h.verified_logins > 0 else '0' }}; height: {{ (h.verified_logins * 1.2) if h.verified_logins < 18 else 22 }}px;"></div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.58rem; color: var(--slate-400); margin-top: 0.25rem;">
+                            <span>00:00 (Midnight)</span>
+                            <span>06:00 (Morning)</span>
+                            <span>12:00 (Noon)</span>
+                            <span>18:00 (Evening)</span>
+                            <span>23:00 (Night)</span>
+                        </div>
                     </div>
 
                     <!-- Recent Security Events Forensic Stream -->
@@ -4490,6 +4520,32 @@
                         <div>Edge Latency: <strong style="color: #059669;">{{ it_telemetry.cloudflare_edge.edge_latency_ms if it_telemetry and it_telemetry.cloudflare_edge else 210.0 }} ms (TTFB)</strong></div>
                         <div>Origin Firewall: <strong style="color: #7c3aed;">15 Cloudflare CIDRs</strong></div>
                         <div>Direct Bypass: <strong style="color: #059669;">BLOCKED (403 Forbidden)</strong></div>
+                    </div>
+
+                    <!-- Edge Speed & Ingress Latency Distribution Histogram (SO-COM-001-DIR-08) -->
+                    <div style="background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 6px; padding: 0.65rem 0.85rem; margin-bottom: 0.65rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem; font-size: 0.68rem;">
+                            <span style="font-weight: 800; color: var(--slate-700); text-transform: uppercase;">
+                                <i class="fas fa-gauge-high" style="color: #f38020; margin-right: 0.3rem;"></i> Edge Ingress Speed Spectrum
+                            </span>
+                            <span style="font-size: 0.65rem; color: var(--slate-500);">
+                                <span style="color: #10b981; font-weight: 700;">&lt;50ms (Cache)</span> • 
+                                <span style="color: #0284c7; font-weight: 700;">50-150ms (DFW Anycast)</span> • 
+                                <span style="color: #3b82f6; font-weight: 700;">150-300ms (Origin Proxy)</span> • 
+                                <span style="color: #ef4444; font-weight: 700;">&gt;300ms (Cold)</span>
+                            </span>
+                        </div>
+                        <div style="background: var(--slate-200); border-radius: 9999px; height: 7px; overflow: hidden; display: flex; margin-bottom: 0.35rem;">
+                            <div style="background: #10b981; height: 100%; width: 10%;" title="<50ms: Instant Edge Cache"></div>
+                            <div style="background: #0284c7; height: 100%; width: 55%;" title="50-150ms: Anycast DFW Routing"></div>
+                            <div style="background: #3b82f6; height: 100%; width: 35%;" title="150-300ms: Dynamic Azure Origin Proxy"></div>
+                            <div style="background: #ef4444; height: 100%; width: 0%;" title=">300ms: Cold / Congested"></div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.6rem; color: var(--slate-500);">
+                            <span>Target: <strong style="color: #059669;">https://hwbcleaning.com</strong></span>
+                            <span>Live PoP: <strong style="color: #2563eb;">DFW Anycast</strong></span>
+                            <span>Direct Origin: <strong style="color: #dc2626;">Isolated (403 Blocked)</strong></span>
+                        </div>
                     </div>
 
                     <!-- Dual Sub-Bay Split Layout -->

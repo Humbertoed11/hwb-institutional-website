@@ -317,6 +317,12 @@ def get_site_security_telemetry(db_url: Optional[str] = None) -> Dict[str, Any]:
         "user_admin_events_24h": 0,
         "takeoffs_committed_24h": 0,
         "audit_inspections_24h": 0,
+        "hourly_threat_histogram": {
+            "hours": [{"hour": h, "label": f"{h:02d}:00", "total_events": 0, "threats_blocked": 0, "verified_logins": 0, "session_timeouts": 0} for h in range(24)],
+            "total_threats_blocked_24h": 0,
+            "total_verified_logins_24h": 0,
+            "peak_threat_hour": 0
+        },
         "recent_events": [],
         "security_pillars": [
             {"name": "WORM Audit Immutability", "status": "LOCKED", "color": "#10b981"},
@@ -396,7 +402,48 @@ def get_site_security_telemetry(db_url: Optional[str] = None) -> Dict[str, Any]:
                 rd = synthesize_audit_event_context(rd)
                 recent_events.append(rd)
 
-            # 3. Determine Threat Level & Composite Score
+            # 3. Query hourly threat & event distribution over rolling 24h
+            cur.execute('''
+                SELECT 
+                    EXTRACT(HOUR FROM timestamp)::int as hr,
+                    COUNT(*) as total_events,
+                    COUNT(*) FILTER (WHERE event_action IN ('PROMPT_INJECTION_BLOCKED', 'PROMPT_INJECTION_DETECTED', 'BOT_DROPPED', 'ROUTE_BLOCKED', 'LOGIN_FAIL', 'INJECTION_QUARANTINED') OR severity IN ('WARNING', 'CRITICAL')) as threats_blocked,
+                    COUNT(*) FILTER (WHERE event_action = 'LOGIN_SUCCESS') as verified_logins,
+                    COUNT(*) FILTER (WHERE event_action = 'SESSION_TIMEOUT') as session_timeouts
+                FROM "SecurityAuditLogs"
+                WHERE timestamp >= NOW() - INTERVAL '24 hours'
+                GROUP BY hr
+                ORDER BY hr;
+            ''')
+            h_rows = cur.fetchall()
+            h_map = {}
+            for hr_entry in h_rows:
+                h_val = hr_entry['hr'] if isinstance(hr_entry, dict) else hr_entry[0]
+                h_map[h_val] = {
+                    'total_events': hr_entry['total_events'] if isinstance(hr_entry, dict) else hr_entry[1],
+                    'threats_blocked': hr_entry['threats_blocked'] if isinstance(hr_entry, dict) else hr_entry[2],
+                    'verified_logins': hr_entry['verified_logins'] if isinstance(hr_entry, dict) else hr_entry[3],
+                    'session_timeouts': hr_entry['session_timeouts'] if isinstance(hr_entry, dict) else hr_entry[4]
+                }
+
+            hourly_threat_histogram = {
+                "hours": [
+                    {
+                        "hour": h,
+                        "label": f"{h:02d}:00",
+                        "total_events": h_map.get(h, {}).get('total_events', 0),
+                        "threats_blocked": h_map.get(h, {}).get('threats_blocked', 0),
+                        "verified_logins": h_map.get(h, {}).get('verified_logins', 0),
+                        "session_timeouts": h_map.get(h, {}).get('session_timeouts', 0)
+                    }
+                    for h in range(24)
+                ],
+                "total_threats_blocked_24h": sum(h_map.get(h, {}).get('threats_blocked', 0) for h in range(24)),
+                "total_verified_logins_24h": sum(h_map.get(h, {}).get('verified_logins', 0) for h in range(24)),
+                "peak_threat_hour": max(range(24), key=lambda h: h_map.get(h, {}).get('threats_blocked', 0)) if h_map else 0
+            }
+
+            # 4. Determine Threat Level & Composite Score
             score = 100.0
             if auth_fail > 0:
                 score -= min(15.0, auth_fail * 2.0)
@@ -452,6 +499,7 @@ def get_site_security_telemetry(db_url: Optional[str] = None) -> Dict[str, Any]:
                     "takeoffs_committed_24h": takeoffs_comm,
                     "audit_inspections_24h": audit_insp
                 },
+                "hourly_threat_histogram": hourly_threat_histogram,
                 "recent_events": recent_events,
                 "security_pillars": fallback["security_pillars"]
             }
