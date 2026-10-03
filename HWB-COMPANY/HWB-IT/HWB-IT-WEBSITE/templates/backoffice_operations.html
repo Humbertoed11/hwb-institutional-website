@@ -6132,9 +6132,9 @@
                 <p id="lead-cadence-location" style="font-size: 0.8rem; color: var(--slate-500); font-weight: 600; margin-top: 0.15rem; margin-bottom: 0;"></p>
             </div>
             <div style="display: flex; gap: 0.5rem; align-items: center;">
-                <a href="/capability-statement" target="_blank" class="sigma-mini-btn" style="background: #eff6ff; color: #1e40af; border-color: #bfdbfe; font-weight: 700; height: 32px; padding: 0 0.65rem; font-size: 0.72rem; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem;" title="Open Official HWB Capability Statement in new tab">
+                <button type="button" onclick="openCapabilityReferenceModal()" class="sigma-mini-btn" style="background: #eff6ff; color: #1e40af; border-color: #bfdbfe; font-weight: 700; height: 32px; padding: 0 0.65rem; font-size: 0.72rem; display: inline-flex; align-items: center; gap: 0.35rem; cursor: pointer;" title="Open Official HWB Capability Reference">
                     <i class="fas fa-file-contract"></i> Capabilities
-                </a>
+                </button>
                 <button type="button" onclick="navigateLeadCadence(-1)" class="isc-btn isc-btn-outline" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" title="Previous Lead">
                     <i class="fas fa-chevron-left" style="font-size: 0.75rem;"></i>
                 </button>
@@ -6213,9 +6213,9 @@
                                 <i class="fas fa-comment-dots" style="color: var(--brand);"></i> Quick Call Script & Responses
                             </span>
                             <div style="display: flex; gap: 0.35rem; align-items: center;">
-                                <a href="/capability-statement" target="_blank" class="sigma-mini-btn" style="background: #ffffff; color: var(--brand); border-color: var(--slate-200); height: 26px; padding: 0 0.5rem; font-size: 0.7rem; text-decoration: none; display: inline-flex; align-items: center; gap: 0.3rem;" title="Open Official Capability Statement in new tab">
+                                <button type="button" onclick="openCapabilityReferenceModal()" class="sigma-mini-btn" style="background: #ffffff; color: var(--brand); border-color: var(--slate-200); height: 26px; padding: 0 0.5rem; font-size: 0.7rem; display: inline-flex; align-items: center; gap: 0.3rem; cursor: pointer;" title="Open Fast Capability Reference">
                                     <i class="fas fa-file-alt"></i> Capabilities
-                                </a>
+                                </button>
                                 <button type="button" onclick="copyLeadScript()" class="sigma-mini-btn" id="btn-copy-lead-script" style="background: #ffffff; color: var(--slate-600); border-color: var(--slate-200); height: 26px; padding: 0 0.5rem; font-size: 0.7rem;">
                                     <i class="fas fa-copy"></i> Copy
                                 </button>
@@ -6325,6 +6325,173 @@
 
         </div>
 
+    </div>
+</div>
+
+<!-- Modal: HWB Commercial Capability & Technical Reference (HWB-CAP-001) -->
+<div id="modal-capability-reference" class="isc-modal-overlay" style="display:none; z-index: 3500;">
+    <div class="isc-modal" style="max-width: 1050px; display: flex; flex-direction: column;">
+        <!-- Header -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem; border-bottom: 1px solid var(--slate-100); padding-bottom: 1rem;">
+            <div>
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                    <span style="font-size: 0.7rem; font-weight: 800; background: #eff6ff; color: #1e40af; padding: 0.2rem 0.6rem; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.05em;">
+                        <i class="fas fa-file-contract"></i> HWB-CAP-001 Reference
+                    </span>
+                    <span style="font-size: 0.7rem; font-weight: 800; background: #ecfdf5; color: #047857; padding: 0.2rem 0.6rem; border-radius: 4px;">
+                        Active 2026 Commercial Specifications
+                    </span>
+                </div>
+                <h2 style="font-weight: 900; font-size: 1.35rem; color: var(--slate-900); margin: 0;">Capability Statement &amp; Technical Reference</h2>
+                <p style="font-size: 0.8rem; color: var(--slate-500); font-weight: 600; margin-top: 0.15rem; margin-bottom: 0;">Instant Answers for Outbound Calling, Director Questions &amp; Bid Requirements</p>
+            </div>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <a href="/capability-statement" target="_blank" class="sigma-mini-btn" style="background: #ffffff; color: var(--brand); border-color: var(--slate-200); height: 32px; padding: 0 0.75rem; font-size: 0.72rem; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem;" title="Open Clean Printable PDF Document">
+                    <i class="fas fa-print"></i> Open / Print PDF ↗
+                </a>
+                <button type="button" onclick="closeModal('modal-capability-reference')" class="isc-btn isc-btn-outline" style="height: 32px; font-size: 0.72rem; font-weight: 800; border-radius: 6px; padding: 0 0.85rem;" title="Close reference card">
+                    <i class="fas fa-times"></i> Close
+                </button>
+            </div>
+        </div>
+
+        <!-- Body Grid (Scrollable, Clean 620px height) -->
+        <div style="max-height: 620px; overflow-y: auto; scrollbar-width: thin; padding-right: 0.35rem; display: flex; flex-direction: column; gap: 1rem;">
+            
+            <!-- Quick Key Metrics Bar -->
+            <div style="background: #0f172a; color: white; border-radius: 8px; padding: 0.85rem 1.25rem; display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; text-align: center;">
+                <div>
+                    <div style="font-size: 0.65rem; font-weight: 700; color: #94a3b8; text-transform: uppercase;">General Liability</div>
+                    <div style="font-size: 1.1rem; font-weight: 900; color: #38bdf8;">$2,000,000</div>
+                    <div style="font-size: 0.68rem; color: #cbd5e1;">$1M Per Occurrence</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.65rem; font-weight: 700; color: #94a3b8; text-transform: uppercase;">Experience Mod (EMR)</div>
+                    <div style="font-size: 1.1rem; font-weight: 900; color: #4ade80;">.43 Superior</div>
+                    <div style="font-size: 0.68rem; color: #cbd5e1;">Zero TRIR Incidents</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.65rem; font-weight: 700; color: #94a3b8; text-transform: uppercase;">Surety Bonding</div>
+                    <div style="font-size: 1.1rem; font-weight: 900; color: #fbbf24;">$50,000</div>
+                    <div style="font-size: 0.68rem; color: #cbd5e1;">100% Bonded &amp; Insured</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.65rem; font-weight: 700; color: #94a3b8; text-transform: uppercase;">Square Feet Cleaned</div>
+                    <div style="font-size: 1.1rem; font-weight: 900; color: #ffffff;">6,000,000+</div>
+                    <div style="font-size: 0.68rem; color: #cbd5e1;">35+ Crews Statewide</div>
+                </div>
+            </div>
+
+            <!-- Two-Column Technical Cards -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                
+                <!-- Column A: Risk, Insurance & Codes -->
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <!-- Insurance Card -->
+                    <div style="background: #ffffff; border: 1px solid var(--slate-200); border-radius: 8px; padding: 1rem;">
+                        <div style="font-size: 0.72rem; font-weight: 800; color: var(--slate-700); text-transform: uppercase; margin-bottom: 0.65rem; display: flex; align-items: center; gap: 0.35rem;">
+                            <i class="fas fa-shield-alt" style="color: var(--brand);"></i> Risk Management &amp; Insurance Policies
+                        </div>
+                        <table style="width: 100%; font-size: 0.8rem; border-collapse: collapse;">
+                            <tr style="border-bottom: 1px solid var(--slate-100);">
+                                <td style="padding: 0.4rem 0; color: var(--slate-500); font-weight: 600;">General Liability:</td>
+                                <td style="padding: 0.4rem 0; font-weight: 800; text-align: right; color: var(--slate-900);">$2,000,000 Aggregate / $1,000,000 Occ.</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid var(--slate-100);">
+                                <td style="padding: 0.4rem 0; color: var(--slate-500); font-weight: 600;">Automobile Liability:</td>
+                                <td style="padding: 0.4rem 0; font-weight: 800; text-align: right; color: var(--slate-900);">$1,000,000 Combined Single Limit</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid var(--slate-100);">
+                                <td style="padding: 0.4rem 0; color: var(--slate-500); font-weight: 600;">Workers' Compensation:</td>
+                                <td style="padding: 0.4rem 0; font-weight: 800; text-align: right; color: var(--slate-900);">$1,000,000 Statutory Coverage</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid var(--slate-100);">
+                                <td style="padding: 0.4rem 0; color: var(--slate-500); font-weight: 600;">Policy Number:</td>
+                                <td style="padding: 0.4rem 0; font-weight: 800; text-align: right; color: var(--brand);">GHF000742</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 0.4rem 0; color: var(--slate-500); font-weight: 600;">Agency &amp; Broker:</td>
+                                <td style="padding: 0.4rem 0; font-weight: 700; text-align: right; color: var(--slate-700);">Insurance Risk Consultants (Carlos Aguirre: 682-667-3863)</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <!-- Corporate Codes Card -->
+                    <div style="background: #ffffff; border: 1px solid var(--slate-200); border-radius: 8px; padding: 1rem;">
+                        <div style="font-size: 0.72rem; font-weight: 800; color: var(--slate-700); text-transform: uppercase; margin-bottom: 0.65rem; display: flex; align-items: center; gap: 0.35rem;">
+                            <i class="fas fa-landmark" style="color: var(--brand);"></i> Registrations &amp; Industrial Codes
+                        </div>
+                        <table style="width: 100%; font-size: 0.8rem; border-collapse: collapse;">
+                            <tr style="border-bottom: 1px solid var(--slate-100);">
+                                <td style="padding: 0.4rem 0; color: var(--slate-500); font-weight: 600;">Primary NAICS:</td>
+                                <td style="padding: 0.4rem 0; font-weight: 800; text-align: right; color: var(--slate-900);">561720 (Janitorial Services)</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid var(--slate-100);">
+                                <td style="padding: 0.4rem 0; color: var(--slate-500); font-weight: 600;">Secondary NAICS:</td>
+                                <td style="padding: 0.4rem 0; font-weight: 700; text-align: right; color: var(--slate-700);">561740 (Carpet &amp; Upholstery), 238990 (Specialty)</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid var(--slate-100);">
+                                <td style="padding: 0.4rem 0; color: var(--slate-500); font-weight: 600;">CAGE / SAM.gov:</td>
+                                <td style="padding: 0.4rem 0; font-weight: 800; text-align: right; color: var(--slate-900);">082830635</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid var(--slate-100);">
+                                <td style="padding: 0.4rem 0; color: var(--slate-500); font-weight: 600;">DUNS Number:</td>
+                                <td style="padding: 0.4rem 0; font-weight: 700; text-align: right; color: var(--slate-700);">08-283-0635</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid var(--slate-100);">
+                                <td style="padding: 0.4rem 0; color: var(--slate-500); font-weight: 600;">Texas Charter #:</td>
+                                <td style="padding: 0.4rem 0; font-weight: 700; text-align: right; color: var(--slate-700);">802920409</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 0.4rem 0; color: var(--slate-500); font-weight: 600;">Federal EIN:</td>
+                                <td style="padding: 0.4rem 0; font-weight: 700; text-align: right; color: var(--slate-700);">82-4377459</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Column B: Protocols & Equipment -->
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <!-- Childcare & School Sanitation Card -->
+                    <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 1rem;">
+                        <div style="font-size: 0.72rem; font-weight: 800; color: #166534; text-transform: uppercase; margin-bottom: 0.65rem; display: flex; align-items: center; gap: 0.35rem;">
+                            <i class="fas fa-check-circle" style="color: #16a34a;"></i> Childcare Compliance &amp; Health Standards
+                        </div>
+                        <ul style="margin: 0; padding-left: 1.1rem; font-size: 0.8rem; color: #1e3a8a; line-height: 1.5;">
+                            <li><b>Texas Child Care Regulation (TCCR):</b> Sanitation protocols aligned 100% with state health inspection checklists.</li>
+                            <li><b>Hospital-Grade Pathogen Kill:</b> EPA List N registered disinfectants for norovirus, RSV, COVID-19, and flu.</li>
+                            <li><b>Child-Safe Chemistry:</b> Green Seal certified, zero harsh chemical fumes or corrosive residues on toys and cots.</li>
+                            <li><b>Diaper Changing Stations:</b> Multi-step terminal sanitization of pads, handwash sinks, and disposal bins.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Equipment Fleet Card -->
+                    <div style="background: #ffffff; border: 1px solid var(--slate-200); border-radius: 8px; padding: 1rem;">
+                        <div style="font-size: 0.72rem; font-weight: 800; color: var(--slate-700); text-transform: uppercase; margin-bottom: 0.65rem; display: flex; align-items: center; gap: 0.35rem;">
+                            <i class="fas fa-tools" style="color: var(--brand);"></i> Commercial Machinery &amp; Equipment Fleet
+                        </div>
+                        <ul style="margin: 0; padding-left: 1.1rem; font-size: 0.8rem; color: var(--slate-700); line-height: 1.5;">
+                            <li><b>Auto-Scrubbers:</b> Advance SC500 Commercial Walk-Behind Automatic Floor Scrubbers (water recovery &amp; high-speed shine).</li>
+                            <li><b>HEPA Vacuuming:</b> ProTeam Super Coach Pro 10 HEPA Backpacks (CRI Gold Seal, 99.97% indoor air particulate retention).</li>
+                            <li><b>Deep Carpet Care:</b> EDIC Galaxy 2000 Commercial Heat Extraction Systems.</li>
+                            <li><b>VCT Floor Restoration:</b> Clarke 20" High-Torque Stripping, Scrubbing &amp; High-Speed Burnishing Fleet.</li>
+                        </ul>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Footer -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--slate-100); font-size: 0.75rem;">
+            <div style="color: var(--slate-500);">
+                <strong>HWB Cleaning Services LLC</strong> • 3342 FM 1827 Ste 8d, McKinney, TX 75071 • Switchboard: (214)-586-0257
+            </div>
+            <button type="button" onclick="closeModal('modal-capability-reference')" class="isc-btn isc-btn-primary" style="height: 32px; font-size: 0.72rem; font-weight: 800; border-radius: 6px; padding: 0 1.25rem;">
+                Return to Calling Session
+            </button>
+        </div>
     </div>
 </div>
 
@@ -10819,6 +10986,14 @@
             const card = cadenceModal.querySelector('.isc-modal');
             if (card) card.style.animation = 'none';
             cadenceModal.style.display = 'flex';
+        }
+    }
+
+    function openCapabilityReferenceModal() {
+        const modal = document.getElementById('modal-capability-reference');
+        if (modal) {
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
         }
     }
 

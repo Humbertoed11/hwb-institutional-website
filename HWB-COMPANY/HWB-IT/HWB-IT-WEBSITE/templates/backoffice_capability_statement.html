@@ -1,0 +1,274 @@
+{% extends "backoffice_base.html" %}
+
+{% block title %}Commercial Capability Statement 2026 | HWB Backoffice{% endblock %}
+
+{% block breadcrumbs %}
+<a href="/">HWB</a> <i class="fas fa-chevron-right" style="font-size: 0.5rem; opacity: 0.4;"></i> <a href="{{ url_for('admin_operations', view='leads') }}" style="color: var(--slate-400); text-decoration: none;">Operations</a> <i class="fas fa-chevron-right" style="font-size: 0.5rem; opacity: 0.4;"></i> <span style="color: var(--slate-900); font-weight: 900;">Capability Statement</span>
+{% endblock %}
+
+{% block bo_actions %}
+<a href="{{ url_for('admin_operations', view='leads') }}" class="isc-btn isc-btn-outline" style="height: 36px; font-weight: 700;">
+    <i class="fas fa-phone-volume"></i> Lead Calling Queue
+</a>
+<a href="{{ url_for('public.capability_statement') }}" target="_blank" class="isc-btn isc-btn-outline" style="height: 36px; font-weight: 700;" title="Open clean public version in a new tab">
+    <i class="fas fa-external-link-alt"></i> Public Client View ↗
+</a>
+<button type="button" onclick="window.print()" class="isc-btn isc-btn-primary" style="height: 36px; font-weight: 800;">
+    <i class="fas fa-print"></i> Print / Save PDF
+</button>
+{% endblock %}
+
+{% block bo_content %}
+<style>
+@media print {
+    .top-utility-bar, .main-header, .ambient-security-bar, .bo-command-bar, .action-bar, .no-print {
+        display: none !important;
+    }
+    body, .backoffice-body {
+        background: #ffffff !important;
+        padding: 0 !important;
+    }
+    .backoffice-container {
+        margin: 0 !important;
+        padding: 0 !important;
+        max-width: 100% !important;
+    }
+    .capability-sheet {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+    }
+}
+.capability-sheet {
+    max-width: 1000px;
+    margin: 0 auto 3rem auto;
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid var(--slate-200);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+    padding: 2.5rem 3rem;
+}
+.cap-section-header {
+    background: #0f172a;
+    color: #ffffff;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 0.4rem 0.85rem;
+    border-radius: 4px;
+    margin: 1.5rem 0 0.85rem 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+</style>
+
+<div class="capability-sheet">
+    
+    <!-- Masthead -->
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2.5px solid #0f172a; padding-bottom: 1.25rem; margin-bottom: 1.5rem; gap: 1.5rem; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 1.25rem;">
+            <img src="{{ url_for('static', filename='logo_standard.png') }}" alt="HWB Cleaning Services LLC" style="height: 58px; width: auto; object-fit: contain;">
+            <div>
+                <h1 style="font-size: 1.65rem; font-weight: 900; color: #0f172a; margin: 0; letter-spacing: -0.02em;">HWB CLEANING SERVICES LLC</h1>
+                <div style="font-size: 0.85rem; font-weight: 700; color: #2563eb; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 0.2rem;">
+                    Capability Statement 2026 • Commercial &amp; Institutional Services
+                </div>
+            </div>
+        </div>
+        <div style="text-align: right; font-size: 0.82rem; color: #334155; line-height: 1.45;">
+            <strong>Headquarters:</strong> 3342 FM 1827 Ste 8d, McKinney, TX 75071<br>
+            <strong>Office Switchboard:</strong> (214)-586-0257<br>
+            <strong>Executive Inquiries:</strong> hdominguez@hwbcleaning.com<br>
+            <strong>Online Portal:</strong> www.hwbcleaning.com
+        </div>
+    </div>
+
+    <!-- Key Metrics Highlight Ribbon -->
+    <div style="background: #0f172a; color: white; border-radius: 8px; padding: 1rem 1.5rem; display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; text-align: center; margin-bottom: 1.5rem;">
+        <div>
+            <div style="font-size: 0.68rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">General Liability</div>
+            <div style="font-size: 1.25rem; font-weight: 900; color: #38bdf8;">$2,000,000</div>
+            <div style="font-size: 0.72rem; color: #cbd5e1;">$1M Per Occurrence</div>
+        </div>
+        <div>
+            <div style="font-size: 0.68rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">Experience Mod (EMR)</div>
+            <div style="font-size: 1.25rem; font-weight: 900; color: #4ade80;">.43 Superior</div>
+            <div style="font-size: 0.72rem; color: #cbd5e1;">Zero TRIR Incident Record</div>
+        </div>
+        <div>
+            <div style="font-size: 0.68rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">Surety Bonding</div>
+            <div style="font-size: 1.25rem; font-weight: 900; color: #fbbf24;">$50,000</div>
+            <div style="font-size: 0.72rem; color: #cbd5e1;">100% Bonded &amp; Insured</div>
+        </div>
+        <div>
+            <div style="font-size: 0.68rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">Cleaned Footprint</div>
+            <div style="font-size: 1.25rem; font-weight: 900; color: #ffffff;">6,000,000+ SF</div>
+            <div style="font-size: 0.72rem; color: #cbd5e1;">35+ Crews Statewide</div>
+        </div>
+    </div>
+
+    <!-- About Us Narrative -->
+    <div class="cap-section-header">
+        <span><i class="fas fa-building"></i> Corporate Overview &amp; Operational Philosophy</span>
+        <span style="font-size: 0.65rem; opacity: 0.8;">HWB-CAP-001</span>
+    </div>
+    <p style="font-size: 0.88rem; color: #334155; line-height: 1.55; margin: 0 0 1rem 0;">
+        It is not just about cleaning anymore; it is about the human experience that our clients and communities depend upon every single day. HWB Cleaning Services LLC is a standardized commercial cleaning contractor delivering turnkey janitorial, deep sanitization, and specialized custodial solutions across the private and public sectors. Operating throughout the Dallas-Fort Worth Metroplex and across the State of Texas, our operational delivery is grounded in three immutable pillars: <strong>Integrity, Communication, and Surgical Attention to Detail</strong>.
+    </p>
+
+    <!-- Core Competencies & Differentiators Grid -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+        <div>
+            <div class="cap-section-header">
+                <span><i class="fas fa-check-double"></i> Core Competencies</span>
+            </div>
+            <ul style="margin: 0; padding-left: 1.25rem; font-size: 0.85rem; color: #334155; line-height: 1.55;">
+                <li><strong>Clinical Quality Assurance:</strong> Routine multi-point inspection audits and standardized digital checklists.</li>
+                <li><strong>Rapid Incident Escalation:</strong> Direct supervisor communication with immediate same-day physical remediation.</li>
+                <li><strong>Continuous Technician Training:</strong> Structured standard operating procedures (SOPs) and strict OSHA alignment.</li>
+                <li><strong>Transparent Cost Control:</strong> Verifiable square-footage production rates with zero hidden fees or scope creep.</li>
+                <li><strong>Green Chemical Stewardship:</strong> Certified plant-based, non-corrosive, and child-safe disinfectant formulations.</li>
+                <li><strong>Safety &amp; Compliance Programs:</strong> Zero-tolerance safety enforcement with full PPE compliance.</li>
+                <li><strong>Digital Supervision:</strong> Real-time task timestamping and operational quality tracking.</li>
+                <li><strong>24/7/365 Mobilization:</strong> Daytime porters, evening deep sanitization, weekend crews, and emergency dispatch.</li>
+            </ul>
+        </div>
+        <div>
+            <div class="cap-section-header">
+                <span><i class="fas fa-medal"></i> Key Differentiators</span>
+            </div>
+            <ul style="margin: 0; padding-left: 1.25rem; font-size: 0.85rem; color: #334155; line-height: 1.55;">
+                <li><strong>Hyper-Local Crew Mobilization:</strong> Technicians and team leads live within 5 to 10 minutes of assigned facilities, preventing transit delays and absenteeism during severe weather.</li>
+                <li><strong>Dedicated Single-Point Supervision:</strong> An assigned field supervisor provides one direct telephone and email line for instant executive accountability.</li>
+                <li><strong>Low-Decibel HEPA Fleets:</strong> Commercial vacuum and air purification equipment engineered to run during business hours without disturbing occupants or students.</li>
+                <li><strong>Zero Citation Track Record:</strong> 100% inspection pass rate for licensed childcare centers governed by Texas Child Care Regulation health standards.</li>
+                <li><strong>Ironclad Commercial Reliability:</strong> We execute exactly what is committed in the scope of work. Every single night.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Machinery Fleet & Protocols Grid -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+        <div>
+            <div class="cap-section-header">
+                <span><i class="fas fa-tools"></i> Commercial Equipment Fleet</span>
+            </div>
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 1rem; font-size: 0.82rem; line-height: 1.5;">
+                <div style="margin-bottom: 0.65rem;">
+                    <strong style="color: var(--brand);">Advance SC500 Auto-Scrubbers:</strong> Walk-behind commercial scrubbing units with immediate water recovery for mirror-grade finish.
+                </div>
+                <div style="margin-bottom: 0.65rem;">
+                    <strong style="color: var(--brand);">ProTeam Super Coach Pro 10 HEPA Backpacks:</strong> CRI Gold Seal certified, trapping 99.97% of indoor particulates down to 0.3 microns.
+                </div>
+                <div style="margin-bottom: 0.65rem;">
+                    <strong style="color: var(--brand);">EDIC Galaxy 2000 Extractors:</strong> Dual-vacuum commercial heated carpet extraction systems for deep fiber pathogen removal.
+                </div>
+                <div>
+                    <strong style="color: var(--brand);">Clarke 20" High-Torque Polishers:</strong> Heavy commercial stripping, scrubbing, and 1,500 RPM high-speed burnishing machines for VCT tile.
+                </div>
+            </div>
+        </div>
+        <div>
+            <div class="cap-section-header">
+                <span><i class="fas fa-shield-virus"></i> Texas Childcare &amp; Health Protocols</span>
+            </div>
+            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 1rem; font-size: 0.82rem; line-height: 1.5;">
+                <div style="margin-bottom: 0.65rem;">
+                    <strong style="color: #166534;">TCCR Health Standards:</strong> Fully compliant with Texas Child Care Regulation mandatory sanitation inspection criteria.
+                </div>
+                <div style="margin-bottom: 0.65rem;">
+                    <strong style="color: #166534;">Hospital-Grade EPA List N Disinfectants:</strong> Laboratory-verified kill times against Norovirus, RSV, Influenza, COVID-19, and common pathogens.
+                </div>
+                <div style="margin-bottom: 0.65rem;">
+                    <strong style="color: #166534;">Zero Harsh Chemical Residue:</strong> Odorless, hypoallergenic sanitizers safe for infants, toddlers, cots, toys, and food contact tables.
+                </div>
+                <div>
+                    <strong style="color: #166534;">Diaper Changing Station Protocol:</strong> Multi-step terminal decontamination of changing pads, handwash stations, and diaper receptacles.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Corporate Registrations, Codes & Insurance -->
+    <div class="cap-section-header">
+        <span><i class="fas fa-file-contract"></i> Corporate Registrations, Codes &amp; Insurance Coverage</span>
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 1rem;">
+            <table style="width: 100%; font-size: 0.82rem; border-collapse: collapse;">
+                <tr style="border-bottom: 1px dashed #e2e8f0;">
+                    <td style="padding: 0.4rem 0; font-weight: 700; color: #475569;">Texas LLC Charter #:</td>
+                    <td style="padding: 0.4rem 0; font-weight: 800; text-align: right; color: #0f172a;">802920409</td>
+                </tr>
+                <tr style="border-bottom: 1px dashed #e2e8f0;">
+                    <td style="padding: 0.4rem 0; font-weight: 700; color: #475569;">Federal Tax ID (EIN) #:</td>
+                    <td style="padding: 0.4rem 0; font-weight: 800; text-align: right; color: #0f172a;">82-4377459</td>
+                </tr>
+                <tr style="border-bottom: 1px dashed #e2e8f0;">
+                    <td style="padding: 0.4rem 0; font-weight: 700; color: #475569;">Texas Sales Tax ID #:</td>
+                    <td style="padding: 0.4rem 0; font-weight: 800; text-align: right; color: #0f172a;">32005785756</td>
+                </tr>
+                <tr style="border-bottom: 1px dashed #e2e8f0;">
+                    <td style="padding: 0.4rem 0; font-weight: 700; color: #475569;">DUNS Number:</td>
+                    <td style="padding: 0.4rem 0; font-weight: 800; text-align: right; color: #0f172a;">08-283-0635</td>
+                </tr>
+                <tr style="border-bottom: 1px dashed #e2e8f0;">
+                    <td style="padding: 0.4rem 0; font-weight: 700; color: #475569;">CAGE Code (SAM.gov):</td>
+                    <td style="padding: 0.4rem 0; font-weight: 800; text-align: right; color: #0f172a;">082830635</td>
+                </tr>
+                <tr>
+                    <td style="padding: 0.4rem 0; font-weight: 700; color: #475569;">Industrial Codes:</td>
+                    <td style="padding: 0.4rem 0; font-weight: 800; text-align: right; color: var(--brand);">NAICS 561720 • 561740 • 238990</td>
+                </tr>
+            </table>
+        </div>
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 1rem;">
+            <table style="width: 100%; font-size: 0.82rem; border-collapse: collapse;">
+                <tr style="border-bottom: 1px dashed #e2e8f0;">
+                    <td style="padding: 0.4rem 0; font-weight: 700; color: #475569;">Commercial Policy #:</td>
+                    <td style="padding: 0.4rem 0; font-weight: 800; text-align: right; color: var(--brand);">GHF000742</td>
+                </tr>
+                <tr style="border-bottom: 1px dashed #e2e8f0;">
+                    <td style="padding: 0.4rem 0; font-weight: 700; color: #475569;">Experience Mod (EMR):</td>
+                    <td style="padding: 0.4rem 0; font-weight: 900; text-align: right; color: #16a34a;">.43 (Superior Safety)</td>
+                </tr>
+                <tr style="border-bottom: 1px dashed #e2e8f0;">
+                    <td style="padding: 0.4rem 0; font-weight: 700; color: #475569;">Insurance Brokerage:</td>
+                    <td style="padding: 0.4rem 0; font-weight: 700; text-align: right; color: #0f172a;">Insurance Risk Consultants</td>
+                </tr>
+                <tr style="border-bottom: 1px dashed #e2e8f0;">
+                    <td style="padding: 0.4rem 0; font-weight: 700; color: #475569;">Agent of Record:</td>
+                    <td style="padding: 0.4rem 0; font-weight: 700; text-align: right; color: #0f172a;">Carlos Aguirre (682) 667-3863</td>
+                </tr>
+                <tr style="border-bottom: 1px dashed #e2e8f0;">
+                    <td style="padding: 0.4rem 0; font-weight: 700; color: #475569;">General Liability Limit:</td>
+                    <td style="padding: 0.4rem 0; font-weight: 800; text-align: right; color: #0f172a;">$2,000,000 Agg. / $1,000,000 Occ.</td>
+                </tr>
+                <tr>
+                    <td style="padding: 0.4rem 0; font-weight: 700; color: #475569;">Workers' Comp &amp; Auto:</td>
+                    <td style="padding: 0.4rem 0; font-weight: 800; text-align: right; color: #0f172a;">$1,000,000 / $1,000,000 CSL</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- Executive Leadership & Attestation -->
+    <div style="background: #eff6ff; border-left: 4px solid #2563eb; padding: 1rem 1.5rem; border-radius: 0 8px 8px 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <strong style="font-size: 1rem; color: #1e3a8a;">Mirna Rondinella</strong><br>
+            <span style="font-size: 0.8rem; color: #64748b; font-weight: 600;">President</span>
+        </div>
+        <div style="text-align: center;">
+            <span style="font-size: 0.72rem; text-transform: uppercase; color: #64748b; font-weight: 800; letter-spacing: 0.05em;">Operating Region</span><br>
+            <strong style="font-size: 0.92rem; color: #0f172a;">Dallas-Fort Worth Metroplex &amp; Entire State of Texas</strong>
+        </div>
+        <div style="text-align: right;">
+            <strong style="font-size: 1rem; color: #1e3a8a;">Humberto Dominguez</strong><br>
+            <span style="font-size: 0.8rem; color: #64748b; font-weight: 600;">Chief Executive Officer</span>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

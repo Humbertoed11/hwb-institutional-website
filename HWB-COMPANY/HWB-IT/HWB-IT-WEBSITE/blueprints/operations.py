@@ -888,6 +888,16 @@ def admin_operations():
                          facility_types=FACILITY_TYPES, lead_sources=LEAD_SOURCES, priority_levels=PRIORITY_LEVELS)
 
 
+# --- Backoffice Commercial Capability Statement (HWB-CAP-001) ---
+
+@operations_bp.route('/admin/capability-statement', endpoint='admin_capability_statement')
+@login_required
+@roles_required('Executive', 'Admin', 'Manager', 'Operator', 'Sales')
+def admin_capability_statement():
+    """Official Integrated Backoffice View of Commercial Capability Statement."""
+    return render_template('backoffice_capability_statement.html')
+
+
 # --- Field Sales Desk ---
 
 @operations_bp.route('/sales-desk', endpoint='sales_desk')
