@@ -17,6 +17,15 @@ from flask_login import LoginManager, current_user, logout_user
 from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
 
+# Mask backend server signature to prevent gunicorn disclosure (SO-COM-001-DIR-05)
+try:
+    import gunicorn
+    gunicorn.SERVER_SOFTWARE = 'Cloudflare'
+    from gunicorn.http import wsgi
+    wsgi.SERVER = 'Cloudflare'
+except Exception:
+    pass
+
 from config import sys_config
 from core.models.user import User
 from core.services.database import get_db, sync_db_sequences
@@ -162,6 +171,20 @@ def enforce_session_inactivity_timeout():
             return redirect(url_for('auth.login', next=request.path, reason='inactivity'))
 
         session['last_activity'] = now
+
+@app.after_request
+def apply_application_security_headers(response):
+    """
+    Direct Application Security Headers (SO-COM-001-DIR-05).
+    Enforces HSTS, MIME sniffing protection, clickjacking defense, referrer policy,
+    and masks backend server headers to prevent Gunicorn disclosure.
+    """
+    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains; preload'
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    response.headers['Server'] = 'Cloudflare'
+    return response
 
 # --- Boot & Infrastructure Handshake Sequence ---
 with app.app_context():
