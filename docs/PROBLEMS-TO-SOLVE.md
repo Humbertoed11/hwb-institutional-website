@@ -95,6 +95,7 @@ Responsibility: George (Architect)
 | 10/01/2026 | BUG-109 | Mobile Form Completion Friction & Two-Phase Mobile Express Architecture. | **RESOLVED** | HIGH |
 | 10/01/2026 | BUG-110 | Client-Side Micro-Interaction Observability Deficit & Air-Gapped Dual-Zone Telemetry Architecture. | **RESOLVED** | HIGH |
 | 10/02/2026 | BUG-111 | White-on-White Text Cascade Deficit on Public .isc-btn-outline Elements (/work-with-us). | **RESOLVED** | HIGH |
+| 10/02/2026 | BUG-112 | Windows PowerShell 5.1 ANSI Parsing Failure on UTF-8 Scripts Without BOM (Character 0x84 Smart Quote Inversion on D:\run-backup.ps1 & D:\restore-system.ps1). | **RESOLVED** | HIGH |
 
 
 ## BUG-096: Telegram Inbound Message Drop & Unhandled ValueError on Multi-User Comma-Separated TELEGRAM_CHAT_ID String
@@ -1851,4 +1852,34 @@ CEO Humberto Dominguez attempting to log into `https://www.hwbcleaning.com/login
 **Preventative & Evolutionary Learning:**
 1. DOM-only checks cannot detect CSS contrast failures. Automated accessibility gates must compute rendered contrast or inspect computed color tokens to catch white-on-white text overrides.
 2. Never apply `!important` to text color rules on generic utility classes (`.isc-btn-outline`) that can appear across varied background surfaces.
+
+## BUG-112: Windows PowerShell 5.1 ANSI Parsing Failure on UTF-8 Scripts Without BOM (Character 0x84 Smart Quote Inversion on D:\run-backup.ps1 & D:\restore-system.ps1)
+**Detected:** 10/02/2026
+**Status:** **RESOLVED** (10/02/2026)
+**Symptoms:**
+1. When attempting to execute `D:\run-backup.ps1` from Windows PowerShell, the script terminated immediately with syntax and parser errors:
+   - `At D:\run-backup.ps1:18 char:51: The ampersand (&) character is not allowed. The & operator is reserved for future use; wrap an ampersand in double quotation marks ("&") to pass it as part of a string.`
+   - `At D:\run-backup.ps1:69 char:100: The output stream for this command is already redirected.`
+   - `At D:\run-backup.ps1:72 char:107: The token '&&' is not a valid statement separator in this version.`
+   - `At D:\run-backup.ps1:106 char:79: Unexpected token 'GB' in expression or statement.`
+   - `At D:\run-backup.ps1:148 char:37: The string is missing the terminator: ".`
+**Root Causes:**
+1. The script was authored and saved in UTF-8 without a Byte Order Mark (BOM).
+2. Windows PowerShell 5.1 (the default `powershell.exe` in Windows) parses `.ps1` files without a BOM using the Windows ANSI code page (Windows-1252 / CP1252) rather than UTF-8.
+3. On line 18, the script contained: `Write-Host "   SIGMAFIDELITY™ DISASTER RECOVERY & WEATHER SURVIVAL BACKUP" -ForegroundColor Cyan`.
+4. In UTF-8, the trademark symbol `™` is encoded as the 3-byte sequence `0xE2 0x84 0xA2`.
+5. Under Windows-1252, byte `0x84` maps to `„` (U+201E: Double Low-9 Quotation Mark).
+6. Windows PowerShell's tokenizer treats Unicode typographical quotes (`„`, `”`, `“`) as valid string quotation mark delimiters.
+7. Consequently, byte `0x84` prematurely terminated the string `"   SIGMAFIDELITYâ`, leaving `¢ DISASTER RECOVERY & WEATHER SURVIVAL BACKUP"` outside quotation marks.
+8. The `&` character was encountered as an unquoted operator, throwing `AmpersandNotAllowed`.
+9. The trailing double quote at the end of line 18 opened a new string, inverting the quoting context across the entire rest of the file and triggering downstream cascading stream redirection, token, and string terminator errors.
+**Solution:**
+1. **Clean ASCII Normalization:** Replaced all non-ASCII `™` symbols in `run-backup.ps1` and `restore-system.ps1` (on both Drive `D:\` and `C:\wsl-backup\`) with clean ASCII `[TM]`.
+2. **UTF-8 with BOM Encoding:** Encoded all scripts with a standard UTF-8 Byte Order Mark (`0xEF, 0xBB, 0xBF`), ensuring Windows PowerShell 5.1 unambiguously identifies the file encoding regardless of regional system code page settings.
+3. **Pre-Allocation Deletion Guard:** Hardened `run-backup.ps1` to explicitly remove any existing target `ubuntu-ext4.vhdx` on Drive `D:\` immediately prior to copy, releasing disk sectors back to the host filesystem to prevent mid-transfer disk space exhaustion.
+4. **Turnkey 1-Click Batch Launchers:** Generated `D:\run-backup.bat` and `C:\wsl-backup\run-backup.bat` (mirroring `restore-system.bat`), providing instant double-click execution with automatic `-ExecutionPolicy Bypass`.
+**Preventative & Evolutionary Learning:**
+1. All Windows PowerShell (`.ps1`) scripts deployed to host environments must be authored in pure 7-bit ASCII and saved with a UTF-8 BOM (`\xef\xbb\xbf`) to prevent code page ambiguity across diverse Windows installations.
+2. Never rely on non-ASCII symbols inside PowerShell double quotes without BOM validation, as multibyte sequences containing `0x84`, `0x93`, or `0x94` trigger typographical quote collision in the PowerShell tokenizer.
+
 
