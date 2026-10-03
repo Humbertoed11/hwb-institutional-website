@@ -18,9 +18,22 @@ from typing import Dict, Any, List, Optional
 import requests
 from dotenv import load_dotenv
 
-BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
-if not os.path.exists(os.path.join(BASE_DIR, ".env")):
-    BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+def find_env_file(explicit_path: Optional[str] = None) -> Optional[str]:
+    """Resolves .env location across local host and Docker container paths."""
+    candidates = [
+        explicit_path,
+        os.environ.get("ENV_FILE_PATH"),
+        "/app/.env",
+        "/home/humbertoed/gemini_projects/.env",
+        os.path.join(os.getcwd(), ".env"),
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "..", ".env")),
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".env")),
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".env")),
+    ]
+    for c in candidates:
+        if c and os.path.exists(c):
+            return c
+    return None
 
 
 def audit_all_credentials(env_path: Optional[str] = None) -> Dict[str, Any]:
@@ -28,9 +41,9 @@ def audit_all_credentials(env_path: Optional[str] = None) -> Dict[str, Any]:
     Audits all system credentials, API tokens, SSL certificates, and client secrets.
     Computes days remaining, probes live validity, and returns an inventory payload.
     """
-    target_env = env_path or os.path.join(BASE_DIR, ".env")
-    if os.path.exists(target_env):
-        load_dotenv(target_env, override=False)
+    resolved_env = find_env_file(env_path)
+    if resolved_env:
+        load_dotenv(resolved_env, override=True)
 
     now = datetime.datetime.now(timezone.utc)
     today = datetime.date.today()
