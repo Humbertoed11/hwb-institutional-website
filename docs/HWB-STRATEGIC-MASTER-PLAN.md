@@ -107,6 +107,23 @@ flowchart TD
      - 1-Click "Send 1-Page Info Sheet" triggering Microsoft Graph API outbound email.
      - Automatic queue advance upon hang-up or outcome button selection.
 
+#### 2.5 Corporate Umbrella & Parent Organization Data Architecture [Planning Target: Tomorrow 10/04/2026]
+- **Objective:** Enable multi-unit commercial clustering, parent-child account mapping, and centralized procurement routing for regional daycare franchises, healthcare clinics, and property management portfolios.
+- **Implementation Deliverables for Tomorrow:**
+  1. **Parent-Child Schema Architecture (`core/models/crm.py` & PostgreSQL):**
+     - `umbrella_organization_id`: Foreign key or UUID linking branch facility locations to an overarching parent corporate entity.
+     - `parent_company_name`: Verified parent enterprise name (e.g., *KinderCare Learning Companies, Inc.*, *Primrose Schools Corporate*, *Transwestern Property Group*).
+     - `corporate_structure_type`: Standardized taxonomy (`FRANCHISE_INDEPENDENT`, `FRANCHISE_CORPORATE_OWNED`, `CORPORATE_CHAIN`, `INDEPENDENT_STANDALONE`, `GOVERNMENT_DISTRICT`).
+     - `decision_making_tier`: Operational authority level (`LOCAL_DIRECTOR_AUTONOMY`, `REGIONAL_DIRECTOR_APPROVAL`, `CENTRALIZED_CORPORATE_PROCUREMENT`).
+     - `cleaning_delivery_model`: Operational janitorial model populated via opt-out feedback survey (`IN_HOUSE_STAFF` vs `OUTSOURCED_CONTRACT`).
+     - `parent_headquarters_ref`: Corporate procurement contact, HQ address, and master contract agreement reference.
+  2. **Automated Brand Clustering:**
+     - Pattern matching engine scanning incoming leads to auto-associate childcare chains with their verified corporate parent.
+     - Centralized reporting rollup: View aggregated square footage, student capacity, and contract value across all centers under a single umbrella.
+  3. **Verified Calendar Appointment Engine (DEPLOYED & ACTIVE):**
+     - Active Booking URL: `https://bookings.cloud.microsoft/book/FacilityWalkthroughquote@NETORGFT3163094.onmicrosoft.com/` (15-min discovery walkthroughs with Humberto Dominguez).
+     - Integrated with Poka-Yoke legacy click intercept in `blueprints/telemetry.py` and `PendingOutbox` marketing pipeline.
+
 ---
 
 ### Phase 3: Field Operations & Standalone Mobile App [2026-03-21 Mandate]
@@ -130,21 +147,23 @@ flowchart TD
 | :--- | :--- | :--- |
 | **QMS / Quality** | ISO 9001:2015 (10-Clause Manual) | 100% Inspection-Ready |
 | **Safety / EHSQ** | HWB-EHS-001, 002, 003 | 0.00 TRIR (Zero incidents) |
-| **Living Chronicles** | Act V: The Living Chronicles | Entries 001–010 Synchronized |
+| **Living Chronicles** | Act V: The Living Chronicles | Entries 001–025 Synchronized |
 | **Data Integrity** | Empirical Data Integrity Mandate | Zero Synthetic Data; Empirical Heuristic Tags Active |
 | **Recovery** | Peter Sentinel Shadow Snapshots | Active (`shadow_snapshots/`) |
 | **Outbound Freeze** | CEO Humberto Dominguez Approval Rule | 100% Frozen; Stage in `PendingOutbox/` only |
+| **Calendar Booking** | Microsoft Bookings (Facility Walkthrough) | Active & Verified (`FacilityWalkthroughquote@NETORGFT3163094.onmicrosoft.com`) |
 
 ---
 
-### 4.1 Phase 2 Implementation & Automation Target Table
+### 4.1 Phase 2 Implementation & Automation Planning Table
 
 | Priority | Feature / Module | Target Date | Executive Owner | Unit Cost Floor | Operational Impact | Automation Status |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **P0** | **Twilio WebRTC Softphone & Calling Console** | **Tomorrow (09/25/2026)** | Hunter Vance (Sales) & Silas Sync (CRM) | $0.0180/min + $1.15/mo | 50 calls/hr inside browser; zero manual dialing | **STAGED FOR TOMORROW** |
-| **P1** | **ARCH-006 Frontier 2: Automated Addenda Tracker** | 09/26/2026 | Yamamoto Moto (Lead Estimator) | In-house ($0.00) | Auto-diffing bid specs & deadline drift alerts | Queued |
-| **P1** | **ARCH-006 Frontier 3: Prime Contractor Radar** | 09/28/2026 | George (Systems Architect) | In-house ($0.00) | Harvesting planholder lists & JV teaming proposals | Queued |
-| **P2** | **Texas Statewide CCL & GIS Sync Daemon** | 10/01/2026 | Silas Sync (VP of CRM) | State Open Data ($0.00) | Statewide expansion across Austin, Houston, DFW | Queued |
+| **P0** | **Corporate Umbrella & Parent Entity Data Architecture** | **Tomorrow (10/04/2026)** | Silas Sync (CRM) & George (Architect) | In-house ($0.00) | Hierarchical multi-unit clustering, corporate parent IDs, and procurement decision routing | **STAGED FOR TOMORROW** |
+| **P0** | **Twilio WebRTC Softphone & Calling Console** | 10/05/2026 | Hunter Vance (Sales) & Silas Sync (CRM) | $0.0180/min + $1.15/mo | 50 calls/hr inside browser; zero manual dialing | Staged |
+| **P1** | **ARCH-006 Frontier 2: Automated Addenda Tracker** | 10/06/2026 | Yamamoto Moto (Lead Estimator) | In-house ($0.00) | Auto-diffing bid specs & deadline drift alerts | Queued |
+| **P1** | **ARCH-006 Frontier 3: Prime Contractor Radar** | 10/08/2026 | George (Systems Architect) | In-house ($0.00) | Harvesting planholder lists & JV teaming proposals | Queued |
+| **P2** | **Texas Statewide CCL & GIS Sync Daemon** | 10/10/2026 | Silas Sync (VP of CRM) | State Open Data ($0.00) | Statewide expansion across Austin, Houston, DFW | Queued |
 | **P2** | **Standalone Mobile App for Cleaning Techs** | Phase 3 | Engineering & Peter (Recovery) | In-house ($0.00) | Offline-first React Scope of Work engine | Active Branch |
 
 ---

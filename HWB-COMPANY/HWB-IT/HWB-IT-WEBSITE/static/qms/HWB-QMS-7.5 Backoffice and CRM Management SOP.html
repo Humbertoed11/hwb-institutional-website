@@ -1,184 +1,157 @@
-<!-- 
-    SigmaFidelity™ Institutional SOP
-    Standard: HWB-QMS-1.0 v2.0 (HTML Baseline)
-    Document ID: HWB-QMS-7.5
--->
 <div class="sop-card">
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
-        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-7.5</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.1.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-7.5-BO-CRM</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">4.1.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
-        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5 (Documented Information)</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5 &amp; 8.1 (Operational Planning)</span></div>
     </div>
 
     <div class="sop-content-body">
         <table>
             <thead>
                 <tr>
-                    <th><strong>Document Control</strong></th>
-                    <th></th>
+                    <th style="text-align: left;"><strong>Document Control</strong></th>
+                    <th style="text-align: left;"><strong>Institutional Specification</strong></th>
                 </tr>
             </thead>
             <tbody>
-                <tr><td><strong>Document Title</strong></td><td><strong>Backoffice and CRM Management SOP</strong></td></tr>
-                <tr><td><strong>Document ID</strong></td><td>HWB-QMS-7.5</td></tr>
-                <tr><td><strong>Version</strong></td><td>3.1.0</td></tr>
-                <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
-                <tr><td><strong>Author</strong></td><td>George (Systems Architect)</td></tr>
-                <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
-                <tr><td><strong>Date</strong></td><td>09/21/2026</td></tr>
-                <tr><td><strong>ISO 9001 Clause</strong></td><td>7.5</td></tr>
+                <tr>
+                    <td style="text-align: left;"><strong>Document Title</strong></td>
+                    <td style="text-align: left;"><strong>Backoffice Operations &amp; CRM Management SOP</strong></td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;"><strong>Document ID</strong></td>
+                    <td style="text-align: left;">HWB-QMS-7.5-BO-CRM</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;"><strong>Version</strong></td>
+                    <td style="text-align: left;">4.1.0</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;"><strong>Status</strong></td>
+                    <td style="text-align: left;">APPROVED</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;"><strong>Author</strong></td>
+                    <td style="text-align: left;">George (Systems Architect, mbB, Lead ISO Auditor)</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;"><strong>Approved By</strong></td>
+                    <td style="text-align: left;">Humberto Dominguez, CEO</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;"><strong>Effective Date</strong></td>
+                    <td style="text-align: left;">10/01/2026</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;"><strong>ISO Standards</strong></td>
+                    <td style="text-align: left;">ISO 9001:2015 Clause 7.5 &amp; Clause 8.1 / ISO 27001 ISMS</td>
+                </tr>
             </tbody>
         </table>
-
         <hr />
 
-        <h1>Standard Operating Procedure: <strong>Backoffice & CRM Management Suite</strong></h1>
+        <h1>Standard Operating Procedure: <strong>Backoffice Operations &amp; CRM Management</strong></h1>
 
         <h2>1.0 Purpose</h2>
-        <p>This document explains how to use and manage the HWB backoffice and client database. It ensures that client information remains accurate, access is kept safe, and automated timeouts protect the system when it is not being used.</p>
+        <p>This procedure defines the operational standards for navigating, managing, and maintaining the central <strong>SigmaFidelity™ Operations Hub</strong> (<code>/admin/operations</code>), our unified PostgreSQL relational database, and client account lifecycle. It ensures real-time operational visibility, flawless field dispatching, strict data confidentiality, and complete alignment between executive leadership and field cleaning crews.</p>
 
         <h2>2.0 Scope</h2>
-        <p>This procedure applies to all office employees, support team members, and developers who manage our digital tools and customer database.</p>
+        <p>Applies to all administrative operators, dispatch supervisors, executive managers, and partner account liaisons managing commercial accounts, leads, work orders, and personnel rosters for HWB Cleaning Services LLC.</p>
 
-        <h2>3.0 Operational Procedures</h2>
-
-        <h3>3.1 System Access and Login</h3>
-        <p>To access the administrative tools:</p>
-        <ol>
-            <li>Open the web browser and navigate to the `/login` route.</li>
-            <li>Enter your corporate username and password.</li>
-            <li>If the login is successful, you will be redirected to the main operations hub. All failed attempts are sent to a safety page and recorded for review.</li>
-        </ol>
-
-        <h3>3.2 Login Timeout and Inactivity Policy</h3>
-        <p>To prevent unauthorized access to sensitive company and client data, a strict inactivity policy is enforced:</p>
+        <h2>3.0 System Architecture &amp; Database Foundation</h2>
+        <p>The system operates on an immutable, enterprise-grade architecture:</p>
         <ul>
-            <li><strong>Inactivity Window:</strong> The system continuously checks for user activity (mouse movements, clicks, scrolls, or keystrokes). If no activity is detected for **30 minutes**, an alert is triggered.</li>
-            <li><strong>Countdown Alert:</strong> A conspicuous warning modal overlay appears on the screen with a **1-minute (60 seconds) timer**.</li>
-            <li><strong>Action Choices:</strong>
+            <li><strong>Database Engine:</strong> PostgreSQL 13+ (Local container: <code>hwb_postgres_dev</code>; Production: Azure Database for PostgreSQL Flexible Server). All legacy SQLite files are officially retired.</li>
+            <li><strong>Core Relational Tables:</strong>
                 <ul>
-                    <li><strong>Keep Working:</strong> Clicking this button hides the warning, resets the 30-minute idle timer, and sends a quick backend ping (`/heartbeat`) to refresh your session cookie.</li>
-                    <li><strong>Logout Now / Expiration:</strong> Clicking this button or allowing the 60-second timer to hit zero immediately logs you out and redirects the browser to the login screen.</li>
+                    <li><code>"Customers"</code>: Commercial client facilities, square footage, assigned technicians, and contract values.</li>
+                    <li><code>"Leads"</code>: Statewide commercial Texas prospects, GIS coordinates, building square footage, and contact details.</li>
+                    <li><code>"Employees"</code>: Active W-2 technicians, payroll rates, facility assignments, and AES-256 encrypted PII vault columns.</li>
+                    <li><code>"JobApplicants"</code>: Candidate pool (ATS) records, interview statuses, and application tracks.</li>
+                    <li><code>"WorkOrders"</code>: Scheduled service visits, crew notes, shift times, and security ingress access codes.</li>
+                    <li><code>"ClientBreadcrumbs"</code>: Micro-interaction DOM telemetry tracking user clicks, rage clicks, and JavaScript errors for instant client troubleshooting.</li>
+                    <li><code>"SecurityAuditLogs"</code>: Immutable WORM ledger recording all administrative actions, logins, and sensitive PII unmasking events.</li>
                 </ul>
             </li>
-            <li><strong>Backend Enforcement:</strong> To prevent any bypass of the frontend timer, a hard **31-minute session lifetime** is enforced in the server configuration. Any request made after 31 minutes of silence is rejected.</li>
         </ul>
 
-        <div class="callout callout-note">
-            <strong>Security Standard</strong>
-            <p>Never leave your computer unlocked or unattended while logged in. If you step away from your desk, the system will automatically log you out after 30 minutes to protect our client files.</p>
-        </div>
-
-        <h3>3.3 Managing the Double-Sidebar Layout</h3>
-        <p>The office dashboard uses two sidebars to make work faster and cleaner:</p>
-        <ul>
-            <li><strong>Primary Sidebar (Far Left):</strong> Used to switch between main areas of the website (Pulse, CRM, Assets, Lab).</li>
-            <li><strong>Control Rack (Inner Left):</strong> Used for specific actions inside each department (e.g., "Add Activity," "Filters").</li>
-        </ul>
-
-        <h3>3.4 Adding Leads and Client Conversions</h3>
+        <h2>4.0 The Operations Hub 8-Core Enterprise Architecture</h2>
+        <p>The backoffice operations system is structured into 8 core enterprise modules:</p>
         <ol>
-            <li><strong>Gathering Data:</strong> The marketing team saves new leads as raw files inside the marketing folder.</li>
-            <li><strong>Ingesting Leads:</strong> Run the `Lead Ingestor` script to transfer the files directly into the PostgreSQL database.</li>
-            <li><strong>Client Conversion:</strong> Find the lead in the marketing dashboard and click the **"Convert ⚡"** button. The system will automatically move the information to the active Client list and create a new history record.</li>
+            <li><strong>Accounts Desk (<code>?view=accounts</code>):</strong> Tracks active client facilities (e.g., Collin College Frisco Campus, Bosanna LLC, NTTA). Manages building specifications, square footage, primary billing contacts, service frequencies, and keyholder maps.</li>
+            <li><strong>Commercial Leads &amp; Two-Phase Intake (<code>?view=leads</code>):</strong> Manages our commercial Texas lead pipeline. Supports Contact-First 10-Second intake tagging (Desktop vs. Mobile Express) and displays post-submission pricing calibration updates.</li>
+            <li><strong>Bids &amp; Procurement Hub (<code>?view=bids</code>):</strong> Manages Institutional Bids, Commercial GC Pipeline, General Contractors Registry, and Texas Government Programs. Certifies estimates against Yamamoto Moto's bidding engine.</li>
+            <li><strong>Dispatch &amp; Mobile Technician Hub (<code>?view=monitor</code>):</strong> Real-time operations board tracking nightly shifts, technician assignments, gate access codes, and mobile PWA workflow execution.</li>
+            <li><strong>Workforce &amp; ATS Pool (<code>?view=workforce</code>):</strong> Active W-2 technicians, ATS candidate pool, 1099 subcontractor partners, and automated payroll exports.</li>
+            <li><strong>Safety &amp; EHSQ (<code>?view=safety</code>):</strong> Daily Job Hazard Analysis (JHA) records, OSHA 300 logs, incident reports, and EPA-registered chemical Safety Data Sheets (SDS).</li>
+            <li><strong>IT Operations &amp; Server Telemetry Bay (<code>?view=it</code>):</strong> 9-Rack Command Hub monitoring server health, database connection latency, automated WORM audit trails, and Fix-All remediation pipelines.</li>
+            <li><strong>Executive Center &amp; Lexicon Governance (<code>?view=executive</code>):</strong> User management, 5-tier Telegram permissions, magic link issuance, and compliance reporting using plain commercial cleaning language.</li>
         </ol>
 
-        <h3>3.5 Role-Based Page Access and Record Ownership</h3>
-        <p>To support multi-user operations and protect business data, the system uses roles and ownership assignments:</p>
+        <h2>5.0 Employee Master Dossier &amp; PII Vault Security (SEC-001)</h2>
+        <ol>
+            <li><strong>Zero Plaintext Storage:</strong> Social Security Numbers, ITINs, and direct deposit checking/savings accounts are encrypted at the database layer using AES-256 Fernet ciphers.</li>
+            <li><strong>Default Masked Display:</strong> Opening the employee modal displays Social Security Numbers as <code>***-**-####</code> and bank accounts as <code>••••••••####</code>.</li>
+            <li><strong>Audited 30-Second Timed Reveal:</strong> Authorized administrators (Executive, Admin, Operations) may click "Reveal" to inspect decrypted identification. The gateway logs the accessor username and IP to <code>SecurityAuditLogs</code>, and the screen automatically locks and re-masks after 30 seconds.</li>
+            <li><strong>Automated Security Lockout Protocol:</strong> Terminated personnel automatically have badge credentials revoked, linked ATS records marked terminated, and facility access permissions terminated.</li>
+        </ol>
+
+        <h2>6.0 Client Problem Troubleshooting &amp; DOM Breadcrumbs</h2>
+        <ol>
+            <li><strong>Forensic Telemetry Inspection:</strong> When a client or field technician reports unexpected website behavior or submission issues, support personnel can query <code>GET /api/v1/telemetry/breadcrumbs?session_id=&lt;id&gt;</code> to inspect the exact click stream, rapid rage clicks, and JavaScript exceptions leading up to the issue.</li>
+            <li><strong>Privacy-Safe Troubleshooting:</strong> Breadcrumbs automatically redact form inputs, allowing operators to diagnose client friction without exposing passwords or confidential banking numbers.</li>
+        </ol>
+
+        <h2>7.0 Verification &amp; Quality Control</h2>
         <ul>
-            <li><strong>Executive (Administrator):</strong> Has full access to all admin tools, dashboard, master settings, backups, user creation, and communications.</li>
-            <li><strong>Sales (Representative):</strong> Restricted to CRM and bidding pages. Can manage details popup forms, claim leads, assign representatives to client accounts, and run price calculations. Access is blocked to executive and master consoles.</li>
-            <li><strong>Operator (Logistics & Tech):</strong> Has read-only access to building details and logistics fields, plus access to the technical SOP manuals and prototyping lab. Access is blocked to executive control, master logs, and CRM edit tools.</li>
-        </ul>
-        
-        <p><strong>Page Access Map:</strong></p>
-        <pre style="background: #0f172a; color: #f8fafc; padding: 1.25rem; border-radius: 8px; font-family: monospace; font-size: 0.85rem; line-height: 1.4; overflow-x: auto;">
-+---------------------------------------------------------------------------------+
-|                        SigmaFidelity™ Page Access Matrix                        |
-+---------------------------------------------------------------------------------+
-[1] EXECUTIVE ROLE (Full Authority)
-    ├── /admin/executive   --> User Control, Financial Target Board, Telemetry
-    ├── /admin/master      --> System Settings, Backups, Server Logs, Releases
-    ├── /admin/operations  --> Portfolio Accounts, Leads List, Global Scheduling
-    ├── /manual            --> Corporate QMS Manuals, Compliance SOPs
-    └── Public Pages       --> Quote Engine, Corporate Home, Locations, Services
-
-[2] SALES ROLE (CRM & B2B Proposals)
-    ├── /admin/operations  --> Claim Leads, Schedule Client Visits, Log Notes
-    ├── /admin/edit-lead   --> Edit Profile Details, Set Valuations, Next Actions
-    ├── /admin/scope-builder-> Bid Calculators, B2B Cleaning Proposals
-    ├── /manual            --> Sales SOPs & B2B Proposals Procedures
-    └── Public Pages       --> Quote Engine, Public Site Pages
-    * ACCESS DENIED *      --> /admin/executive, /admin/master
-
-[3] OPERATOR ROLE (Logistics & Tech Support)
-    ├── /admin/operations  --> Read-Only Portfolio Details & Building Specs
-    ├── /admin/lab         --> System Testing & Operational Lab Tooling
-    ├── /manual            --> Technical SOPs, Safety Standards, Procedures
-    └── Public Pages       --> Services, Calculator, Public Site Pages
-    * ACCESS DENIED *      --> /admin/executive, /admin/master, /admin/edit-lead
-+---------------------------------------------------------------------------------+
-        </pre>
-
-        <p><strong>Ownership Assignment and Deletion Shifting:</strong></p>
-        <ul>
-            <li><strong>Leads and Accounts Ownership:</strong> Leads contain an `owner_id` column to identify the salesperson, and Client Accounts contain an `assigned_rep_id` column. When a Lead is promoted/converted to an Account, the assigned owner is automatically mapped to the Account rep column in the database.</li>
-            <li><strong>In-Modal Navigation:</strong> Users can browse through records in the details modal using previous/next chevrons or keyboard Left and Right arrow keys. Keyboard listener turns off automatically if typing inside forms.</li>
-            <li><strong>Smooth Deletion Transitions:</strong> If a record is deleted from inside the Details modal, the system automatically checks if other records are visible. If so, it slides the display to show the next adjacent record. If no other records remain on the page, the modal closes cleanly.</li>
+            <li>All lead conversions and employee onboardings must be verifiable in the <code>SecurityAuditLogs</code> feed.</li>
+            <li>Subtab transitions in the Workforce view must synchronize with URL parameters without page reloads.</li>
+            <li>Zero synthetic data: all records must correspond to physical commercial properties or verified human personnel.</li>
         </ul>
 
-        <h3>3.6 M&A Deal Radar & Commercial Daycare Partitioning</h3>
-        <p>To eliminate phantom sales valuations and uncover high-ticket acquisition targets, the CRM integrates dual-key commercial partitioning:</p>
-        <ul>
-            <li><strong>Commercial Enclosure:</strong> The CRM view defaults to showing only verified commercial centers (<code>is_commercial = TRUE</code>). In-home daycares and non-childcare tax filings are archived with zero estimated value (<code>$0.00</code>).</li>
-            <li><strong>M&A Deal Radar Quick Filter:</strong> Clicking the <strong>"🎯 M&A Targets"</strong> button on the toolbar isolates independent commercial daycares licensed for 150+ children (Tier 1 Mega: 200+ capacity, Tier 2 Regional: 150-199 capacity).</li>
-            <li><strong>Acquisition Columns & Badges:</strong> The table displays stylized badges for <code>Acquisition Tier</code>, <code>Ownership Type</code>, and <code>Owner Verification Status</code>. Users can toggle column visibility via the Columns dropdown.</li>
-            <li><strong>Empirical Verification Tracking:</strong> Leads display their verified state (<code>EMPIRICALLY_VERIFIED</code>, <code>DIRECTOR_CONFIRMED_OWNER_PENDING</code>, or <code>AUDITED_PENDING_PROOF</code>) with direct website citations and regulatory permit links.</li>
-        </ul>
-
-        <h2>4.0 Verification (Zero-Defect Check)</h2>
-        <ul>
-            <li><strong>Timeout Verification:</strong> Open the dashboard, remain completely still for 30 minutes, and confirm that the session warning modal pops up.</li>
-            <li><strong>Heartbeat Verification:</strong> Click "Keep Working" on the modal and verify that it hides the warning and that the browser sends a successful `/heartbeat` network request.</li>
-            <li><strong>Hard Logout Verification:</strong> Allow the countdown timer to hit zero and confirm that the browser is redirected to the home index page.</li>
-        </ul>
-
-        <h2>5.0 Revision History</h2>
+        <hr />
+        <h2>8.0 Revision History</h2>
         <table>
             <thead>
                 <tr>
-                    <th>Version</th>
-                    <th>Date</th>
-                    <th>Author</th>
-                    <th>Change Description</th>
+                    <th style="text-align: left;">Version</th>
+                    <th style="text-align: left;">Date</th>
+                    <th style="text-align: left;">Author</th>
+                    <th style="text-align: left;">Change Description</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
-                    <td>1.0.0</td>
-                    <td>03-05-2026</td>
-                    <td>CRM Specialist</td>
-                    <td>Legacy Markdown version (Outdated/Retired).</td>
+                    <td style="text-align: left;">4.1.0</td>
+                    <td style="text-align: left;">10/03/2026</td>
+                    <td style="text-align: left;">George (Systems Architect)</td>
+                    <td style="text-align: left;">Integrated Corporate Umbrella &amp; Parent Entity data architecture, opt-out intelligence survey mapping to delivery model (IN_HOUSE_STAFF vs OUTSOURCED_CONTRACT), zero-loss lead deduplication (2,605 duplicates merged), and verified Microsoft Bookings walkthrough calendar integration. Approved by Humberto Dominguez, CEO.</td>
                 </tr>
                 <tr>
-                    <td>2.0.0</td>
-                    <td>06-02-2026</td>
-                    <td>George</td>
-                    <td>Modernized to HTML format under everyday words standard. Integrated the 30-minute inactivity timeout and 1-minute warning modal procedures. Approved by CEO.</td>
+                    <td style="text-align: left;">4.0.0</td>
+                    <td style="text-align: left;">10/01/2026</td>
+                    <td style="text-align: left;">George (Systems Architect)</td>
+                    <td style="text-align: left;">Expanded to 8-Core Enterprise Operations Hub. Documented Two-Phase Contact-First lead intake, Mobile Express source tagging, Section 6.0 Client Problem Troubleshooting with ClientBreadcrumbs telemetry, 9-Rack IT Telemetry Bay, and plain language lexicon compliance. Approved by Humberto Dominguez, CEO.</td>
                 </tr>
                 <tr>
-                    <td>3.0.0</td>
-                    <td>07-20-2026</td>
-                    <td>George</td>
-                    <td>Introduced three system role tiers (Executive, Sales, Operator), established the page access matrix, and integrated lead-to-account ownership assignment and transition rules. Approved by CEO.</td>
+                    <td style="text-align: left;">3.0.0</td>
+                    <td style="text-align: left;">09/21/2026</td>
+                    <td style="text-align: left;">George (Systems Architect)</td>
+                    <td style="text-align: left;">TOTAL MODERNIZATION to PostgreSQL unified schema. Added Operations Hub 5-module architecture, Workforce ATS Candidate Pool, SEC-001 PII Vault protocol, and Automated Security Lockout Protocol. Approved by Humberto Dominguez, CEO.</td>
                 </tr>
                 <tr>
-                    <td>3.1.0</td>
-                    <td>09-11-2026</td>
-                    <td>George</td>
-                    <td>Integrated Section 3.6 M&A Deal Radar operations, commercial daycare partitioning, toolbar quick filter presets, and empirical owner verification tracking. Approved by CEO.</td>
+                    <td style="text-align: left;">2.0.0</td>
+                    <td style="text-align: left;">05/21/2026</td>
+                    <td style="text-align: left;">George</td>
+                    <td style="text-align: left;">Modernized to post-May 1st, 2026 baseline. Standardized under Everyday Words.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">1.0.0</td>
+                    <td style="text-align: left;">03/05/2026</td>
+                    <td style="text-align: left;">CRM Specialist</td>
+                    <td style="text-align: left;">Initial Release.</td>
                 </tr>
             </tbody>
         </table>
@@ -186,7 +159,7 @@
 
     <div class="sop-card-footer">
         <span>&copy; 2026 HWB Cleaning Services LLC</span>
-        <span>Controlled Document | HWB-QMS-7.5</span>
+        <span>Controlled Document | HWB-QMS-7.5-BO-CRM</span>
         <span>Page <span class="page-number"></span></span>
     </div>
 </div>
