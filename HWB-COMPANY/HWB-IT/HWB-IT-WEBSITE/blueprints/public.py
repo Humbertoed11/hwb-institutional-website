@@ -205,7 +205,15 @@ def unsubscribe(tracking_token=None):
                 if found_email:
                     cur.execute('''
                         UPDATE "Leads"
-                        SET is_dnc = TRUE, status = 'Do Not Call (DNC)', updated_at = CURRENT_DATE
+                        SET is_dnc = TRUE, 
+                            status = 'Unsubscribed', 
+                            notes = CASE 
+                                WHEN notes IS NULL OR TRIM(notes) = '' THEN 
+                                    '[' || TO_CHAR(CURRENT_DATE, 'MM/DD/YYYY') || '] Contact clicked email unsubscribe link. Suppressed from all future marketing.'
+                                ELSE 
+                                    notes || E'\n[' || TO_CHAR(CURRENT_DATE, 'MM/DD/YYYY') || '] Contact clicked email unsubscribe link. Suppressed from all future marketing.'
+                            END,
+                            updated_at = CURRENT_DATE
                         WHERE LOWER(email) = LOWER(%s) OR (id = %s AND %s IS NOT NULL);
                     ''', (found_email, lead_id, lead_id))
                     
@@ -217,8 +225,8 @@ def unsubscribe(tracking_token=None):
                     
                     if lead_id:
                         cur.execute('''
-                            INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
-                            VALUES (%s, 'Lead', 'Unsubscribed', %s);
+                            INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description, timestamp)
+                            VALUES (%s, 'Lead', 'Unsubscribed', %s, CURRENT_TIMESTAMP);
                         ''', (lead_id, f"Lead opted out via 1-click unsubscribe token ({tracking_token[:8]}...). Suppressed from all future campaigns."))
                         
             if conn:
@@ -238,9 +246,89 @@ def unsubscribe(tracking_token=None):
                                    unsubscribed=True,
                                    email=found_email,
                                    audit_timestamp=audit_ts,
-                                   token_ref=tracking_token[:16] + "...")
+                                   token_ref=tracking_token[:16] + "...",
+                                   tracking_token=tracking_token)
 
     return render_template('unsubscribe_success.html', unsubscribed=False, error_msg=None)
+
+
+@public_bp.route('/api/v1/unsubscribe/reason', methods=['POST'])
+def api_unsubscribe_reason():
+    """
+    Captures post-unsubscribe intelligence survey without server/proxy false positives.
+    Records whether facility uses in-house employees, has active vendor contract, or is not interested.
+    """
+    data = request.get_json(silent=True) or request.form
+    token = (data.get('token') or '').strip()
+    reason = (data.get('reason') or '').strip()
+
+    if not token or not reason:
+        return jsonify({'status': 'error', 'message': 'Missing token or reason'}), 400
+
+    conn = None
+    try:
+        conn = get_db(current_app.config['DATABASE_URL'])
+        with conn.cursor() as cur:
+            cur.execute('''
+                SELECT lead_id, recipient_email FROM "CampaignRecipients" WHERE tracking_token = %s
+                UNION
+                SELECT recipient_id, recipient FROM "PendingOutbox" WHERE tracking_token = %s
+                LIMIT 1;
+            ''', (token, token))
+            row = cur.fetchone()
+
+            if not row:
+                return jsonify({'status': 'error', 'message': 'Token reference not found'}), 404
+
+            lead_id = row['lead_id'] if isinstance(row, dict) else row[0]
+            email = row['recipient_email'] if isinstance(row, dict) else row[1]
+
+            reason_desc = ""
+            delivery_model = None
+
+            if reason == 'employees':
+                delivery_model = 'IN_HOUSE_STAFF'
+                reason_desc = "Uses in-house employees / staff (Corporate operational model)"
+            elif reason == 'contract':
+                delivery_model = 'OUTSOURCED_CONTRACT'
+                reason_desc = "Has active contract with cleaning company (Future requote target)"
+            elif reason == 'not_interested':
+                reason_desc = "Not interested in commercial cleaning services"
+            else:
+                reason_desc = f"Other: {reason}"
+
+            if lead_id or email:
+                cur.execute('''
+                    UPDATE "Leads"
+                    SET cleaning_delivery_model = COALESCE(%s, cleaning_delivery_model),
+                        notes = CASE 
+                            WHEN notes IS NULL OR TRIM(notes) = '' THEN 
+                                '[' || TO_CHAR(CURRENT_DATE, 'MM/DD/YYYY') || '] Unsubscribe Feedback: ' || %s
+                            ELSE 
+                                notes || E'\n[' || TO_CHAR(CURRENT_DATE, 'MM/DD/YYYY') || '] Unsubscribe Feedback: ' || %s
+                        END,
+                        updated_at = CURRENT_DATE
+                    WHERE (id = %s AND %s IS NOT NULL) OR LOWER(email) = LOWER(%s);
+                ''', (delivery_model, reason_desc, reason_desc, lead_id, lead_id, email))
+
+                if lead_id:
+                    cur.execute('''
+                        INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description, timestamp)
+                        VALUES (%s, 'Lead', 'Unsubscribe Reason Survey', %s, CURRENT_TIMESTAMP);
+                    ''', (lead_id, f"Opt-Out Feedback Recorded: {reason_desc}"))
+
+            conn.commit()
+            return jsonify({'status': 'success', 'message': 'Preference recorded successfully.'})
+    except Exception as e:
+        if conn:
+            try: conn.rollback()
+            except Exception: pass
+        current_app.logger.error(f"[UNSUBSCRIBE REASON ERROR] {e}")
+        return jsonify({'status': 'error', 'message': 'Failed to save reason'}), 500
+    finally:
+        if conn:
+            try: conn.close()
+            except Exception: pass
 
 
 @public_bp.route('/capability-statement', endpoint='capability_statement')

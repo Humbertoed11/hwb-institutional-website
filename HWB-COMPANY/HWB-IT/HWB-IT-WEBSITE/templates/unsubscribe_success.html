@@ -24,6 +24,45 @@
             Your email address has been permanently marked as <strong>Do Not Contact</strong> in our institutional CRM database. All pending marketing and outreach communications queued for this address have been cancelled immediately.
         </p>
 
+        <!-- Intelligence-Gathering Opt-Out Feedback -->
+        {% if tracking_token %}
+        <div id="unsub-survey-card" style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 10px; padding: 1.5rem; text-align: left; margin-bottom: 2rem;">
+            <div style="font-weight: 800; font-size: 0.95rem; color: #0f172a; margin-bottom: 0.35rem;">
+                <i class="fas fa-poll" style="color: #2563eb;"></i> Quick Feedback (Optional 1-Click)
+            </div>
+            <p style="font-size: 0.82rem; color: #64748b; margin-bottom: 1rem; line-height: 1.45;">
+                To help Humberto improve our service offerings, what was the primary reason for opting out?
+            </p>
+            <div style="display: flex; flex-direction: column; gap: 0.65rem;" id="unsub-options-container">
+                <button type="button" onclick="submitUnsubReason('employees')" class="sigma-unsub-btn" style="text-align: left; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.85rem; font-weight: 600; color: #1e293b; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 0.65rem;">
+                    <i class="fas fa-users-cog" style="color: #0284c7; width: 18px;"></i> We use our own employees / internal staff
+                </button>
+                <button type="button" onclick="submitUnsubReason('contract')" class="sigma-unsub-btn" style="text-align: left; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.85rem; font-weight: 600; color: #1e293b; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 0.65rem;">
+                    <i class="fas fa-file-signature" style="color: #16a34a; width: 18px;"></i> We currently have an active contract with a cleaning company
+                </button>
+                <button type="button" onclick="submitUnsubReason('not_interested')" class="sigma-unsub-btn" style="text-align: left; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.85rem; font-weight: 600; color: #1e293b; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 0.65rem;">
+                    <i class="fas fa-ban" style="color: #dc2626; width: 18px;"></i> Not interested in commercial cleaning services
+                </button>
+            </div>
+            <div id="unsub-survey-confirmation" style="display: none; background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; font-size: 0.85rem; font-weight: 700; padding: 0.75rem 1rem; border-radius: 6px; text-align: center;">
+                <i class="fas fa-check-circle"></i> Thank you! Your feedback has been recorded in our system.
+            </div>
+        </div>
+        <script>
+        function submitUnsubReason(reason) {
+            const token = "{{ tracking_token }}";
+            fetch('/api/v1/unsubscribe/reason', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: token, reason: reason })
+            }).then(r => r.json()).then(data => {
+                document.getElementById('unsub-options-container').style.display = 'none';
+                document.getElementById('unsub-survey-confirmation').style.display = 'block';
+            }).catch(err => console.error(err));
+        }
+        </script>
+        {% endif %}
+
         <!-- Compliance Transparency Box -->
         <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #3b82f6; border-radius: 8px; padding: 1.25rem; text-align: left; margin-bottom: 2rem; font-size: 0.82rem; color: #64748b; line-height: 1.55;">
             <strong style="color: #1e293b; display: block; margin-bottom: 0.35rem;">

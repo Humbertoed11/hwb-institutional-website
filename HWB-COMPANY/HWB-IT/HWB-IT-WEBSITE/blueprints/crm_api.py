@@ -2775,6 +2775,7 @@ def format_marketing_letterhead(body_html: str, tracking_token: str = None) -> s
 def replace_email_tokens(template: str, recipient: dict, tracking_token: str = None) -> str:
     """
     Replaces dynamic tokens with recipient values.
+    Ensures first-name only and conversational facility phrasing per CEO directive.
     """
     if not template:
         return ""
@@ -2782,11 +2783,21 @@ def replace_email_tokens(template: str, recipient: dict, tracking_token: str = N
     booking_dest = "https://outlook.office.com/bookwithme/user/hdominguez@hwbcleaning.com"
     if tracking_token:
         booking_link = f"https://www.hwbcleaning.com/api/v1/marketing/track/click/{tracking_token}?dest={booking_dest}"
+        unsub_link = f"https://www.hwbcleaning.com/unsubscribe/{tracking_token}"
     else:
         booking_link = booking_dest
+        unsub_link = "https://www.hwbcleaning.com/unsubscribe"
 
-    director_name = recipient.get('recipient_name') or recipient.get('director') or "Director & Educational Leadership"
-    facility_name = recipient.get('facility_name') or recipient.get('center_name') or "your commercial facility"
+    raw_name = recipient.get('recipient_name') or recipient.get('director') or ""
+    parts = raw_name.strip().split()
+    if parts:
+        first = parts[0]
+        if first.lower().replace('.', '') in ['mr', 'ms', 'mrs', 'dr'] and len(parts) > 1:
+            first = parts[1]
+        first_name = first
+    else:
+        first_name = "there"
+
     city = recipient.get('city') or "North Texas"
     county = recipient.get('county') or "Texas"
     cap = recipient.get('capacity')
@@ -2796,15 +2807,19 @@ def replace_email_tokens(template: str, recipient: dict, tracking_token: str = N
 
     content = template
     replacements = {
-        "{director_name}": director_name,
-        "{recipient_name}": director_name,
-        "{facility_name}": facility_name,
-        "{center_name}": facility_name,
+        "{first_name}": first_name,
+        "{director_first_name}": first_name,
+        "{director_name}": first_name,
+        "{recipient_name}": first_name,
+        "{facility_name}": "your facility",
+        "{center_name}": "your facility",
+        "{facility}": "your facility",
         "{city}": city,
         "{county}": county,
         "{capacity}": capacity_str,
         "{sqf}": sqf_str,
         "{booking_link}": booking_link,
+        "{unsubscribe_link}": unsub_link,
         "{sender_name}": "Humberto Dominguez",
         "{sender_title}": "Owner & Operator"
     }
@@ -3041,13 +3056,45 @@ def api_marketing_generate_drafts(campaign_id):
             if not campaign:
                 return jsonify({'status': 'error', 'message': 'Campaign not found.'}), 404
 
-            subject_tmpl = campaign.get('email_subject_template') or "Avoiding State Licensing & Bleach Hazards: Certified Childcare Sanitation Protocol"
-            body_tmpl = campaign.get('email_body_template') or """<p>Dear {director_name},</p>
-<p>Maintaining chemical safety compliance under Texas HHS and OSHA regulations is an ongoing priority at {facility_name}. Traditional bleach solutions frequently present harsh odors and respiratory irritation among children.</p>
-<p><strong>HWB Cleaning Services LLC</strong> provides an ISO 9001:2015 compliant, hospital-grade green sanitization protocol engineered specifically for early educational environments across {city}.</p>
-<p>I would be pleased to conduct a <strong>Complimentary 10-Point Sanitation Audit</strong> of {facility_name} at no charge.</p>
-<p><a href="{booking_link}" style="display: inline-block; background: #2563eb; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 700; margin-top: 10px;">Select a 15-Minute Slot on Humberto's Calendar</a></p>
-<p>Sincerely,</p>"""
+            subject_tmpl = campaign.get('email_subject_template') or "Quick question regarding after-hours cleaning for your facility"
+            body_tmpl = campaign.get('email_body_template') or """<p>Hi {first_name},</p>
+
+<p>You probably already have a regular cleaning crew or an active contract in place—and if you are happy with their service, that is wonderful.</p>
+
+<p>Still, you and I know that running a successful facility and protecting your bottom line takes a team effort. HWB Cleaning Services is my company, and here are three things I will put together for you at zero cost:</p>
+
+<ol style="margin: 0.5rem 0 1rem 1.25rem; padding: 0; line-height: 1.6;">
+    <li><strong>A Walkthrough Plan</strong> with your total cleanable square footage and room layout.</li>
+    <li><strong>An Objective Cleanliness Score</strong> so you know exactly where your facility currently stands.</li>
+    <li><strong>A Locked-In Contract</strong> with an exact flat monthly dollar figure you can keep in your back pocket whenever you need to replace or requote your current contract.</li>
+</ol>
+
+<p style="font-size: 0.88rem; color: #64748b; background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px 14px; border-radius: 6px;">
+    If you don't want to continue with my sales pitch, please feel free to <a href="{unsubscribe_link}" style="color: #2563eb; text-decoration: underline; font-weight: 600;">click here to unsubscribe</a> and you will receive no further emails from me.
+</p>
+
+<p>But if having a solid backup plan will save your school headaches, protect your budget, and keep your staff from burning out, here is what our service covers:</p>
+
+<ul style="margin: 0.5rem 0 1rem 1.25rem; padding: 0; line-height: 1.6;">
+    <li><strong>Teachers Don't Stay Late:</strong> We handle all the heavy vacuuming and scrubbing after 6:30 PM so your teachers don't have to stay late after a full day with the kids.</li>
+    <li><strong>Classroom Rugs &amp; HEPA Filtration:</strong> Backpack vacuums with quiet HEPA filters that trap dust and dirt instead of blowing it around, plus fresh mopping on all hard floors.</li>
+    <li><strong>Restrooms &amp; Low Sinks:</strong> Nightly deep scrubbing of toddler toilets, sinks, faucets, and door handles.</li>
+    <li><strong>Diaper Pails to Dumpster:</strong> All diaper bins emptied directly to the outside dumpster so your facility opens fresh and clean every morning.</li>
+    <li><strong>Morning Restock:</strong> Soap, paper towels, and toilet paper restocked every night so teachers are fully ready for the 6:30 AM drop-off.</li>
+    <li><strong>Floor Care Included (No Surprise Bills):</strong> Stripping, waxing, and carpet cleaning twice a year included right in your regular monthly rate, with no extra fees.</li>
+</ul>
+
+<p>If you're open to it, I can swing by for just 5 minutes this week to take a quick look at your layout and get these three items ready for you.</p>
+
+<p>Would you have 5 minutes this Tuesday morning or Thursday afternoon? Or feel free to pick a time directly on my calendar here:<br />
+<a href="{booking_link}" style="display: inline-block; background: #2563eb; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 700; margin-top: 10px;">Select a 5-Minute Time on Humberto's Calendar</a></p>
+
+<p>Thank you for everything you and your team do for our local kids every day.</p>
+
+<p>Sincerely,<br />
+<strong>Humberto Dominguez</strong><br />
+Owner &amp; Operator | HWB Cleaning Services LLC<br />
+(972) 800-7808 | hdominguez@hwbcleaning.com</p>"""
 
             limit = 50
             if request.is_json and request.json:
