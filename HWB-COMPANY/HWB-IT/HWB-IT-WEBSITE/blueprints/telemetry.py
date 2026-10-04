@@ -254,8 +254,10 @@ def track_email_click(tracking_token):
     """
     Tracks marketing email link clicks (e.g. CEO booking calendar) and redirects to destination.
     """
-    default_dest = os.getenv('HWB_CEO_BOOKING_URL') or 'https://outlook.office.com/bookwithme/user/hdominguez@hwbcleaning.com'
+    default_dest = os.getenv('HWB_CEO_BOOKING_URL') or 'https://bookings.cloud.microsoft/book/FacilityWalkthroughquote@NETORGFT3163094.onmicrosoft.com/'
     dest = request.args.get('dest') or default_dest
+    if 'hdominguez@hwbcleaning.com' in dest and 'bookwithme' in dest:
+        dest = default_dest
     if tracking_token:
         conn = None
         try:

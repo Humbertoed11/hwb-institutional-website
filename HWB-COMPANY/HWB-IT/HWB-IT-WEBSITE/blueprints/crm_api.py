@@ -2781,7 +2781,7 @@ def replace_email_tokens(template: str, recipient: dict, tracking_token: str = N
     if not template:
         return ""
     
-    booking_dest = os.getenv('HWB_CEO_BOOKING_URL') or "https://outlook.office.com/bookwithme/user/hdominguez@hwbcleaning.com"
+    booking_dest = os.getenv('HWB_CEO_BOOKING_URL') or "https://bookings.cloud.microsoft/book/FacilityWalkthroughquote@NETORGFT3163094.onmicrosoft.com/"
     if tracking_token:
         encoded_dest = urllib.parse.quote_plus(booking_dest)
         booking_link = f"https://www.hwbcleaning.com/api/v1/marketing/track/click/{tracking_token}?dest={encoded_dest}"
@@ -2822,6 +2822,8 @@ def replace_email_tokens(template: str, recipient: dict, tracking_token: str = N
         "{sqf}": sqf_str,
         "{booking_link}": booking_link,
         "{unsubscribe_link}": unsub_link,
+        "[BOOKING_LINK]": booking_link,
+        "[UNSUBSCRIBE_LINK]": unsub_link,
         "{sender_name}": "Humberto Dominguez",
         "{sender_title}": "Owner & Operator"
     }
