@@ -6213,6 +6213,12 @@
                                 <i class="fas fa-comment-dots" style="color: var(--brand);"></i> Quick Call Script & Responses
                             </span>
                             <div style="display: flex; gap: 0.35rem; align-items: center;">
+                                <button type="button" onclick="openUserScriptEditorModal()" class="sigma-mini-btn" style="background: #f0fdf4; color: #15803d; border-color: #bbf7d0; height: 26px; padding: 0 0.55rem; font-size: 0.7rem; font-weight: 800; display: inline-flex; align-items: center; gap: 0.3rem;" title="Create and save a custom calling script to your profile">
+                                    <i class="fas fa-plus-circle"></i> + My Script
+                                </button>
+                                <button type="button" id="btn-edit-active-custom-script" onclick="editActiveCustomScript()" class="sigma-mini-btn" style="display: none; background: #fffbeb; color: #b45309; border-color: #fde68a; height: 26px; padding: 0 0.5rem; font-size: 0.7rem;" title="Edit this personal script">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
                                 <button type="button" onclick="openCapabilityReferenceModal()" class="sigma-mini-btn" style="background: #ffffff; color: var(--brand); border-color: var(--slate-200); height: 26px; padding: 0 0.5rem; font-size: 0.7rem; display: inline-flex; align-items: center; gap: 0.3rem; cursor: pointer;" title="Open Fast Capability Reference">
                                     <i class="fas fa-file-alt"></i> Capabilities
                                 </button>
@@ -6226,7 +6232,7 @@
                         </div>
 
                         <!-- Script Scenario Tabs -->
-                        <div style="display: flex; gap: 0.3rem; margin-bottom: 0.65rem; flex-wrap: wrap;">
+                        <div id="lead-script-tabs-container" style="display: flex; gap: 0.3rem; margin-bottom: 0.65rem; flex-wrap: wrap;">
                             <button type="button" onclick="switchLeadScriptTab('gatekeeper')" id="tab-script-gatekeeper" class="lead-script-tab" style="padding: 0.3rem 0.55rem; border-radius: 5px; font-size: 0.72rem; font-weight: 800; cursor: pointer; border: 1px solid var(--brand); background: var(--brand); color: white;">
                                 🚪 Receptionist
                             </button>
@@ -6245,6 +6251,8 @@
                             <button type="button" onclick="switchLeadScriptTab('director')" id="tab-script-director" class="lead-script-tab" style="padding: 0.3rem 0.55rem; border-radius: 5px; font-size: 0.72rem; font-weight: 800; cursor: pointer; border: 1px solid #10b981; background: #ffffff; color: #047857;">
                                 🎯 Director Pitch
                             </button>
+                            <!-- User Custom Scripts Container -->
+                            <span id="user-custom-script-tabs" style="display: contents;"></span>
                         </div>
 
                         <!-- Script Body -->
@@ -6492,6 +6500,99 @@
                 Return to Calling Session
             </button>
         </div>
+    </div>
+</div>
+
+<!-- Modal: User Custom Calling Script Editor (HWB-SAL-2026-SCRIPTS) -->
+<div id="modal-user-script-editor" class="isc-modal-overlay" style="display:none; z-index: 3600;">
+    <div class="isc-modal" style="max-width: 680px; display: flex; flex-direction: column;">
+        <!-- Header -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem; border-bottom: 1px solid var(--slate-100); padding-bottom: 1rem;">
+            <div>
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                    <span style="font-size: 0.7rem; font-weight: 800; background: #fef3c7; color: #92400e; padding: 0.2rem 0.6rem; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.05em;">
+                        <i class="fas fa-magic"></i> Personal Script Profile
+                    </span>
+                    <span id="user-script-editor-mode-badge" style="font-size: 0.7rem; font-weight: 800; background: #ecfdf5; color: #047857; padding: 0.2rem 0.6rem; border-radius: 4px;">
+                        New Script
+                    </span>
+                </div>
+                <h2 id="user-script-editor-title" style="font-weight: 900; font-size: 1.35rem; color: var(--slate-900); margin: 0;">My Calling Script Editor</h2>
+                <p style="font-size: 0.8rem; color: var(--slate-500); font-weight: 600; margin-top: 0.15rem; margin-bottom: 0;">Save customized pitches directly to your account profile</p>
+            </div>
+            <button type="button" onclick="closeModal('modal-user-script-editor')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; color: var(--slate-500);" aria-label="Close Script Editor">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <!-- Form Body -->
+        <form id="form-user-script-editor" onsubmit="saveUserScript(event)" style="display: flex; flex-direction: column; gap: 1rem;">
+            <input type="hidden" id="user-script-id" value="">
+
+            <div style="display: grid; grid-template-columns: 3fr 2fr; gap: 1rem;">
+                <div>
+                    <label style="font-size: 0.72rem; font-weight: 800; color: var(--slate-700); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Tab Button Name *</label>
+                    <input type="text" id="user-script-tab-label" required placeholder="e.g. ⭐ My Intro, 💰 Budget Pushback" style="width: 100%; height: 36px; padding: 0 0.75rem; border: 1px solid var(--slate-300); border-radius: 6px; font-size: 0.85rem; font-weight: 700;">
+                </div>
+                <div>
+                    <label style="font-size: 0.72rem; font-weight: 800; color: var(--slate-700); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Scenario Type</label>
+                    <select id="user-script-scenario-type" style="width: 100%; height: 36px; padding: 0 0.5rem; border: 1px solid var(--slate-300); border-radius: 6px; font-size: 0.82rem; font-weight: 700; background: #ffffff;">
+                        <option value="Director Pitch">Director Pitch / Opener</option>
+                        <option value="Gatekeeper">Receptionist / Gatekeeper</option>
+                        <option value="Objection Handling">Objection Handling</option>
+                        <option value="Closing">Appointment Walkthrough Close</option>
+                        <option value="Custom Pitch" selected>Custom Pitch</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Smart Dynamic Tags Helper Ribbon -->
+            <div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                    <label style="font-size: 0.72rem; font-weight: 800; color: var(--slate-700); text-transform: uppercase;">Script Words *</label>
+                    <div style="font-size: 0.7rem; color: var(--slate-500); display: flex; align-items: center; gap: 0.35rem;">
+                        <span style="font-weight: 700;">Insert Smart Tag:</span>
+                        <button type="button" onclick="insertScriptVariable('{Director}')" class="sigma-mini-btn" style="background: #eff6ff; color: #1e40af; border-color: #bfdbfe; font-size: 0.68rem;" title="Inserts director name">{Director}</button>
+                        <button type="button" onclick="insertScriptVariable('{Facility}')" class="sigma-mini-btn" style="background: #eff6ff; color: #1e40af; border-color: #bfdbfe; font-size: 0.68rem;" title="Inserts center name">{Facility}</button>
+                        <button type="button" onclick="insertScriptVariable('{City}')" class="sigma-mini-btn" style="background: #eff6ff; color: #1e40af; border-color: #bfdbfe; font-size: 0.68rem;" title="Inserts city">{City}</button>
+                        <button type="button" onclick="insertScriptVariable('{Phone}')" class="sigma-mini-btn" style="background: #eff6ff; color: #1e40af; border-color: #bfdbfe; font-size: 0.68rem;" title="Inserts phone">{Phone}</button>
+                    </div>
+                </div>
+                <textarea id="user-script-text" required rows="7" placeholder="Type your personal call script here... Click the Smart Tags above to insert dynamic lead information." style="width: 100%; padding: 0.75rem; border: 1.5px solid var(--slate-300); border-radius: 6px; font-size: 0.88rem; line-height: 1.55; outline: none; background: #ffffff; font-family: inherit; resize: vertical;"></textarea>
+            </div>
+
+            <div>
+                <label style="font-size: 0.72rem; font-weight: 800; color: var(--slate-700); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Personal Caller Tip / Reminder (Optional)</label>
+                <input type="text" id="user-script-tip" placeholder="e.g. Keep a positive tone; ask if Tuesday or Thursday morning works best" style="width: 100%; height: 34px; padding: 0 0.75rem; border: 1px solid var(--slate-300); border-radius: 6px; font-size: 0.82rem; background: #f8fafc;">
+            </div>
+
+            <!-- Options Checkboxes -->
+            <div style="background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 6px; padding: 0.75rem 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+                <label style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.78rem; font-weight: 700; color: var(--slate-700);">
+                    <input type="checkbox" id="user-script-is-default" style="width: 16px; height: 16px; border-radius: 4px; accent-color: var(--brand);">
+                    ⭐ Make this my Default Opener (Opens first on every call)
+                </label>
+                <label style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.78rem; font-weight: 700; color: #1e40af;">
+                    <input type="checkbox" id="user-script-is-shared" style="width: 16px; height: 16px; border-radius: 4px; accent-color: #2563eb;">
+                    👥 Share with Team Library
+                </label>
+            </div>
+
+            <!-- Footer Actions -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem; padding-top: 0.75rem; border-top: 1px solid var(--slate-100);">
+                <button type="button" id="btn-delete-user-script" onclick="deleteUserScript()" class="isc-btn isc-btn-outline" style="display: none; height: 34px; padding: 0 0.85rem; font-size: 0.75rem; color: #dc2626; border-color: #fca5a5;">
+                    <i class="fas fa-trash-alt"></i> Delete Script
+                </button>
+                <div style="display: flex; gap: 0.5rem; margin-left: auto;">
+                    <button type="button" onclick="closeModal('modal-user-script-editor')" class="isc-btn isc-btn-outline" style="height: 34px; padding: 0 1rem; font-size: 0.75rem;">
+                        Cancel
+                    </button>
+                    <button type="submit" id="btn-save-user-script" class="isc-btn isc-btn-primary" style="height: 34px; padding: 0 1.5rem; font-size: 0.75rem; font-weight: 800;">
+                        <i class="fas fa-save"></i> Save to My Profile
+                    </button>
+                </div>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -10037,6 +10138,7 @@
 
     window.addEventListener('DOMContentLoaded', () => {
         initLibrary();
+        fetchUserScripts();
         
         const syncColumns = (evt, tableId) => {
             const table = document.getElementById(tableId);
@@ -10728,6 +10830,8 @@
     let cadenceLeadQueue = [];
     let cadenceQueueIndex = 0;
     let activeLeadScriptTab = 'gatekeeper';
+    let loadedUserScripts = [];
+    let userDefaultScriptTab = null;
 
     function setLeadCadenceNextDate(offsetDays) {
         const d = new Date();
@@ -10812,8 +10916,13 @@
             document.getElementById('cadence-lead-notes').value = '';
             document.getElementById('cadence-lead-next-date').value = activeCadenceLead.next_action_date || '';
 
-            // Reset script tab to gatekeeper
-            switchLeadScriptTab('gatekeeper');
+            // Load caller's custom scripts and select default opener
+            await fetchUserScripts();
+            if (userDefaultScriptTab) {
+                switchLeadScriptTab(userDefaultScriptTab);
+            } else {
+                switchLeadScriptTab('gatekeeper');
+            }
 
             // Render Touchpoint History
             renderLeadCadenceHistory(data.activities || []);
@@ -10844,6 +10953,16 @@
         `).join('');
     }
 
+    function escapeUserScriptHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
     function switchLeadScriptTab(tabKey) {
         activeLeadScriptTab = tabKey;
         document.querySelectorAll('.lead-script-tab').forEach(b => {
@@ -10853,18 +10972,35 @@
             b.style.fontWeight = '700';
         });
 
-        const activeBtn = document.getElementById(`tab-script-${tabKey}`);
-        if (activeBtn) {
-            if (tabKey === 'director') {
-                activeBtn.style.background = '#047857';
+        const editBtn = document.getElementById('btn-edit-active-custom-script');
+        if (tabKey.startsWith('user_')) {
+            const scriptId = parseInt(tabKey.replace('user_', ''));
+            const s = loadedUserScripts.find(x => x.id === scriptId);
+            const activeBtn = document.getElementById(`tab-script-${tabKey}`);
+            if (activeBtn) {
+                activeBtn.style.background = '#d97706';
                 activeBtn.style.color = '#ffffff';
-                activeBtn.style.border = '1px solid #065f46';
+                activeBtn.style.border = '1px solid #b45309';
                 activeBtn.style.fontWeight = '800';
-            } else {
-                activeBtn.style.background = '#0284c7';
-                activeBtn.style.color = '#ffffff';
-                activeBtn.style.border = '1px solid #0369a1';
-                activeBtn.style.fontWeight = '800';
+            }
+            if (editBtn) {
+                editBtn.style.display = (s && s.is_mine) ? 'inline-flex' : 'none';
+            }
+        } else {
+            if (editBtn) editBtn.style.display = 'none';
+            const activeBtn = document.getElementById(`tab-script-${tabKey}`);
+            if (activeBtn) {
+                if (tabKey === 'director') {
+                    activeBtn.style.background = '#047857';
+                    activeBtn.style.color = '#ffffff';
+                    activeBtn.style.border = '1px solid #065f46';
+                    activeBtn.style.fontWeight = '800';
+                } else {
+                    activeBtn.style.background = '#0284c7';
+                    activeBtn.style.color = '#ffffff';
+                    activeBtn.style.border = '1px solid #0369a1';
+                    activeBtn.style.fontWeight = '800';
+                }
             }
         }
 
@@ -10879,9 +11015,48 @@
         const firstName = dm.split(' ')[0] || 'Director';
         const center = activeCadenceLead.center_name || 'your facility';
         const city = activeCadenceLead.city || 'DFW';
+        const phone = activeCadenceLead.phone || '';
+        const state = activeCadenceLead.state || 'TX';
 
         let html = '';
-        if (activeLeadScriptTab === 'gatekeeper') {
+        if (activeLeadScriptTab && activeLeadScriptTab.startsWith('user_')) {
+            const scriptId = parseInt(activeLeadScriptTab.replace('user_', ''));
+            const s = loadedUserScripts.find(x => x.id === scriptId);
+            if (s) {
+                let body = escapeUserScriptHtml(s.script_text || '');
+                body = body.replace(/\{Director\}/gi, `<b style="color: var(--brand);">${escapeUserScriptHtml(dm)}</b>`);
+                body = body.replace(/\{Facility\}/gi, `<b>${escapeUserScriptHtml(center)}</b>`);
+                body = body.replace(/\{City\}/gi, `<b>${escapeUserScriptHtml(city)}</b>`);
+                body = body.replace(/\{Phone\}/gi, `<b>${escapeUserScriptHtml(phone)}</b>`);
+                body = body.replace(/\{State\}/gi, `<b>${escapeUserScriptHtml(state)}</b>`);
+
+                const formattedBody = body.replace(/\n\n/g, '<div style="margin-top: 0.65rem;"></div>').replace(/\n/g, '<br>');
+
+                let tipHtml = '';
+                if (s.operator_tip && s.operator_tip.trim()) {
+                    tipHtml = `<div style="font-size: 0.75rem; color: #b45309; background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; padding: 0.45rem 0.65rem; margin-top: 0.75rem; display: flex; align-items: center; gap: 0.4rem;">
+                        <i class="fas fa-lightbulb"></i> <b>Operator Tip:</b> ${escapeUserScriptHtml(s.operator_tip.trim())}
+                    </div>`;
+                }
+
+                let authorNote = '';
+                if (!s.is_mine) {
+                    authorNote = `<div style="font-size: 0.72rem; color: #64748b; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.35rem;">
+                        <i class="fas fa-users" style="color: #2563eb;"></i> Team Library Pitch by <b>${escapeUserScriptHtml(s.author_name)}</b> <span style="background: #e2e8f0; color: #475569; padding: 0.1rem 0.4rem; border-radius: 4px; font-size: 0.65rem; font-weight: 700;">${escapeUserScriptHtml(s.scenario_type || 'Pitch')}</span>
+                    </div>`;
+                }
+
+                html = `<div>
+                    ${authorNote}
+                    <div style="font-size: 0.92rem; color: var(--slate-900); line-height: 1.6;">
+                        ${formattedBody}
+                    </div>
+                    ${tipHtml}
+                </div>`;
+            } else {
+                html = `<div style="color: var(--slate-500); font-style: italic;">Custom script not found.</div>`;
+            }
+        } else if (activeLeadScriptTab === 'gatekeeper') {
             html = `<div>
                 <div style="font-size: 0.95rem; font-weight: 700; color: var(--slate-900);">
                     "Hi, good morning! May I speak with <b style="color: var(--brand);">${dm}</b>, please?"
@@ -10947,6 +11122,228 @@
             }
             if (typeof showToast === 'function') showToast("Calling script copied to clipboard!", "success");
         }).catch(err => console.error("Copy failed", err));
+    }
+
+    // --- Personal & Shared Custom Scripts Manager (HWB-SAL-2026-SCRIPTS) ---
+    async function fetchUserScripts() {
+        try {
+            const res = await fetch('/api/v1/user/scripts');
+            const data = await res.json();
+            if (res.ok && data.status === 'success') {
+                loadedUserScripts = data.scripts || [];
+                const def = loadedUserScripts.find(s => s.is_default && s.is_mine) || loadedUserScripts.find(s => s.is_default);
+                userDefaultScriptTab = def ? `user_${def.id}` : null;
+                renderUserScriptTabs();
+            }
+        } catch (err) {
+            console.error("Error loading user custom scripts:", err);
+        }
+    }
+
+    function renderUserScriptTabs() {
+        const container = document.getElementById('user-custom-script-tabs');
+        if (!container) return;
+
+        if (!loadedUserScripts || loadedUserScripts.length === 0) {
+            container.innerHTML = '';
+            return;
+        }
+
+        container.innerHTML = loadedUserScripts.map(s => {
+            const tabKey = `user_${s.id}`;
+            const isActive = activeLeadScriptTab === tabKey;
+            const bg = isActive ? '#d97706' : '#ffffff';
+            const color = isActive ? '#ffffff' : 'var(--slate-700)';
+            const border = isActive ? '1px solid #b45309' : '1px solid var(--slate-200)';
+            const weight = isActive ? '800' : '700';
+
+            let icon = '⭐';
+            let titleAttr = `${escapeUserScriptHtml(s.tab_label)} (${escapeUserScriptHtml(s.scenario_type || 'Pitch')})`;
+            if (!s.is_mine) {
+                icon = '👥';
+                titleAttr = `Shared by ${escapeUserScriptHtml(s.author_name)} - ${escapeUserScriptHtml(s.tab_label)}`;
+            } else if (s.is_default) {
+                icon = '⭐ Default:';
+            }
+
+            return `<button type="button" onclick="switchLeadScriptTab('${tabKey}')" id="tab-script-${tabKey}" class="lead-script-tab" style="padding: 0.3rem 0.55rem; border-radius: 5px; font-size: 0.72rem; font-weight: ${weight}; cursor: pointer; border: ${border}; background: ${bg}; color: ${color};" title="${titleAttr}">
+                ${icon} ${escapeUserScriptHtml(s.tab_label)}
+            </button>`;
+        }).join(' ');
+    }
+
+    function openUserScriptEditorModal(scriptId = null) {
+        const modal = document.getElementById('modal-user-script-editor');
+        if (!modal) return;
+
+        const form = document.getElementById('form-user-script-editor');
+        if (form) form.reset();
+
+        const idInput = document.getElementById('user-script-id');
+        const titleEl = document.getElementById('user-script-editor-title');
+        const badgeEl = document.getElementById('user-script-editor-mode-badge');
+        const delBtn = document.getElementById('btn-delete-user-script');
+
+        if (scriptId) {
+            const s = loadedUserScripts.find(x => x.id === scriptId);
+            if (!s) {
+                if (typeof showToast === 'function') showToast("Script record not found.", "error");
+                return;
+            }
+            if (idInput) idInput.value = s.id;
+            document.getElementById('user-script-tab-label').value = s.tab_label || '';
+            document.getElementById('user-script-scenario-type').value = s.scenario_type || 'Custom Pitch';
+            document.getElementById('user-script-text').value = s.script_text || '';
+            document.getElementById('user-script-tip').value = s.operator_tip || '';
+            document.getElementById('user-script-is-default').checked = !!s.is_default;
+            document.getElementById('user-script-is-shared').checked = !!s.is_shared;
+
+            if (titleEl) titleEl.innerText = 'Edit Personal Script';
+            if (badgeEl) {
+                badgeEl.innerText = 'Edit Mode';
+                badgeEl.style.background = '#fef3c7';
+                badgeEl.style.color = '#92400e';
+            }
+            if (delBtn) delBtn.style.display = s.is_mine ? 'inline-flex' : 'none';
+        } else {
+            if (idInput) idInput.value = '';
+            if (titleEl) titleEl.innerText = 'My Calling Script Editor';
+            if (badgeEl) {
+                badgeEl.innerText = 'New Script';
+                badgeEl.style.background = '#ecfdf5';
+                badgeEl.style.color = '#047857';
+            }
+            if (delBtn) delBtn.style.display = 'none';
+            document.getElementById('user-script-tab-label').value = '';
+            document.getElementById('user-script-text').value = '';
+            document.getElementById('user-script-tip').value = '';
+            document.getElementById('user-script-is-default').checked = false;
+            document.getElementById('user-script-is-shared').checked = false;
+        }
+
+        openModal('modal-user-script-editor');
+    }
+
+    function editActiveCustomScript() {
+        if (!activeLeadScriptTab || !activeLeadScriptTab.startsWith('user_')) return;
+        const scriptId = parseInt(activeLeadScriptTab.replace('user_', ''));
+        if (scriptId) openUserScriptEditorModal(scriptId);
+    }
+
+    function insertScriptVariable(tag) {
+        const textarea = document.getElementById('user-script-text');
+        if (!textarea) return;
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const text = textarea.value;
+        textarea.value = text.substring(0, start) + tag + text.substring(end);
+        textarea.selectionStart = textarea.selectionEnd = start + tag.length;
+        textarea.focus();
+    }
+
+    async function saveUserScript(e) {
+        if (e && e.preventDefault) e.preventDefault();
+
+        const id = document.getElementById('user-script-id').value.trim();
+        const tabLabel = document.getElementById('user-script-tab-label').value.trim();
+        const scenarioType = document.getElementById('user-script-scenario-type').value;
+        const scriptText = document.getElementById('user-script-text').value.trim();
+        const operatorTip = document.getElementById('user-script-tip').value.trim();
+        const isDefault = document.getElementById('user-script-is-default').checked;
+        const isShared = document.getElementById('user-script-is-shared').checked;
+
+        if (!tabLabel || !scriptText) {
+            if (typeof showToast === 'function') showToast("Please enter a Tab Name and Script Text.", "error");
+            return;
+        }
+
+        const payload = {
+            tab_label: tabLabel,
+            scenario_type: scenarioType,
+            script_text: scriptText,
+            operator_tip: operatorTip,
+            is_default: isDefault,
+            is_shared: isShared
+        };
+
+        const saveBtn = document.getElementById('btn-save-user-script');
+        if (saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+        }
+
+        try {
+            const url = id ? `/api/v1/user/scripts/${id}` : '/api/v1/user/scripts';
+            const method = id ? 'PUT' : 'POST';
+            const res = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (!res.ok || data.status === 'error') {
+                if (typeof showToast === 'function') showToast(data.message || "Failed to save script.", "error");
+                return;
+            }
+
+            if (typeof showToast === 'function') showToast("Custom pitch saved to your profile!", "success");
+            closeModal('modal-user-script-editor');
+
+            await fetchUserScripts();
+
+            const targetId = id ? parseInt(id) : (data.script && data.script.id);
+            if (targetId) {
+                switchLeadScriptTab(`user_${targetId}`);
+            }
+        } catch (err) {
+            console.error("Save Script Error:", err);
+            if (typeof showToast === 'function') showToast("Network error while saving script.", "error");
+        } finally {
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="fas fa-save"></i> Save to My Profile';
+            }
+        }
+    }
+
+    async function deleteUserScript() {
+        const id = document.getElementById('user-script-id').value.trim();
+        if (!id) return;
+
+        if (!confirm("Are you sure you want to delete this calling script from your profile?")) {
+            return;
+        }
+
+        const delBtn = document.getElementById('btn-delete-user-script');
+        if (delBtn) {
+            delBtn.disabled = true;
+            delBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
+        }
+
+        try {
+            const res = await fetch(`/api/v1/user/scripts/${id}`, {
+                method: 'DELETE'
+            });
+            const data = await res.json();
+            if (!res.ok || data.status === 'error') {
+                if (typeof showToast === 'function') showToast(data.message || "Failed to delete script.", "error");
+                return;
+            }
+
+            if (typeof showToast === 'function') showToast("Script deleted from your profile.", "info");
+            closeModal('modal-user-script-editor');
+
+            await fetchUserScripts();
+            switchLeadScriptTab('gatekeeper');
+        } catch (err) {
+            console.error("Delete Script Error:", err);
+            if (typeof showToast === 'function') showToast("Network error deleting script.", "error");
+        } finally {
+            if (delBtn) {
+                delBtn.disabled = false;
+                delBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Delete Script';
+            }
+        }
     }
 
     function openLeadCommandFromCadence() {

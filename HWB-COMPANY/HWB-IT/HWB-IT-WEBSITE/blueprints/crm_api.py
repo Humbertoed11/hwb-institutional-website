@@ -3260,3 +3260,189 @@ def api_marketing_outbox_batch():
         if conn: conn.close()
 
 
+# --- User Custom Calling Scripts REST API (HWB-SAL-2026-SCRIPTS) ---
+
+@crm_api_bp.route('/api/v1/user/scripts', methods=['GET'], endpoint='api_get_user_scripts')
+@login_required
+def api_get_user_scripts():
+    """Retrieves all personal and team-shared calling scripts for the authenticated user."""
+    conn = None
+    try:
+        conn = get_db(current_app.config['DATABASE_URL'])
+        with conn.cursor() as cur:
+            cur.execute('''
+                SELECT 
+                    s.id, 
+                    s.user_id, 
+                    s.tab_label, 
+                    s.scenario_type, 
+                    s.script_text, 
+                    s.operator_tip, 
+                    s.is_default, 
+                    s.is_shared,
+                    s.created_at,
+                    s.updated_at,
+                    u.full_name as author_name,
+                    u.username as author_username,
+                    (s.user_id = %s) as is_mine
+                FROM user_scripts s
+                LEFT JOIN "Users" u ON s.user_id = u.id
+                WHERE s.user_id = %s OR s.is_shared = TRUE
+                ORDER BY s.is_default DESC, (s.user_id = %s) DESC, s.updated_at DESC;
+            ''', (current_user.id, current_user.id, current_user.id))
+            rows = cur.fetchall()
+            scripts = []
+            for r in rows:
+                scripts.append({
+                    'id': r['id'],
+                    'user_id': r['user_id'],
+                    'tab_label': r['tab_label'],
+                    'scenario_type': r['scenario_type'] or 'Custom Pitch',
+                    'script_text': r['script_text'],
+                    'operator_tip': r['operator_tip'] or '',
+                    'is_default': bool(r['is_default']),
+                    'is_shared': bool(r['is_shared']),
+                    'is_mine': bool(r['is_mine']),
+                    'author_name': r['author_name'] or r['author_username'] or 'Team Member',
+                    'created_at': r['created_at'].isoformat() if r['created_at'] else None,
+                    'updated_at': r['updated_at'].isoformat() if r['updated_at'] else None
+                })
+            return jsonify({'status': 'success', 'scripts': scripts, 'count': len(scripts)})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/user/scripts', methods=['POST'], endpoint='api_create_user_script')
+@login_required
+def api_create_user_script():
+    """Creates a new personal calling script for the authenticated user."""
+    data = request.get_json() or {}
+    tab_label = (data.get('tab_label') or '').strip()
+    script_text = (data.get('script_text') or '').strip()
+    scenario_type = (data.get('scenario_type') or 'Custom Pitch').strip()
+    operator_tip = (data.get('operator_tip') or '').strip()
+    is_default = bool(data.get('is_default', False))
+    is_shared = bool(data.get('is_shared', False))
+
+    if not tab_label:
+        return jsonify({'status': 'error', 'message': 'Tab button name is required.'}), 400
+    if not script_text:
+        return jsonify({'status': 'error', 'message': 'Script content text is required.'}), 400
+
+    conn = None
+    try:
+        conn = get_db(current_app.config['DATABASE_URL'])
+        with conn.cursor() as cur:
+            if is_default:
+                cur.execute('UPDATE user_scripts SET is_default = FALSE WHERE user_id = %s;', (current_user.id,))
+
+            cur.execute('''
+                INSERT INTO user_scripts (user_id, tab_label, scenario_type, script_text, operator_tip, is_default, is_shared)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                RETURNING id, created_at, updated_at;
+            ''', (current_user.id, tab_label, scenario_type, script_text, operator_tip, is_default, is_shared))
+            res = cur.fetchone()
+            conn.commit()
+
+            return jsonify({
+                'status': 'success',
+                'message': 'Custom script saved to profile successfully.',
+                'script': {
+                    'id': res['id'],
+                    'user_id': current_user.id,
+                    'tab_label': tab_label,
+                    'scenario_type': scenario_type,
+                    'script_text': script_text,
+                    'operator_tip': operator_tip,
+                    'is_default': is_default,
+                    'is_shared': is_shared,
+                    'is_mine': True,
+                    'author_name': getattr(current_user, 'full_name', None) or current_user.username
+                }
+            }), 201
+    except Exception as e:
+        if conn: conn.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/user/scripts/<int:script_id>', methods=['PUT'], endpoint='api_update_user_script')
+@login_required
+def api_update_user_script(script_id):
+    """Updates an existing personal script."""
+    data = request.get_json() or {}
+    tab_label = (data.get('tab_label') or '').strip()
+    script_text = (data.get('script_text') or '').strip()
+    scenario_type = (data.get('scenario_type') or 'Custom Pitch').strip()
+    operator_tip = (data.get('operator_tip') or '').strip()
+    is_default = bool(data.get('is_default', False))
+    is_shared = bool(data.get('is_shared', False))
+
+    if not tab_label or not script_text:
+        return jsonify({'status': 'error', 'message': 'Tab name and script text are required.'}), 400
+
+    conn = None
+    try:
+        conn = get_db(current_app.config['DATABASE_URL'])
+        with conn.cursor() as cur:
+            # Check ownership or executive role
+            cur.execute('SELECT user_id FROM user_scripts WHERE id = %s;', (script_id,))
+            row = cur.fetchone()
+            if not row:
+                return jsonify({'status': 'error', 'message': 'Script not found.'}), 404
+            
+            if row['user_id'] != current_user.id and current_user.role not in ['Executive', 'Admin']:
+                return jsonify({'status': 'error', 'message': 'Unauthorized to edit this script.'}), 403
+
+            if is_default:
+                cur.execute('UPDATE user_scripts SET is_default = FALSE WHERE user_id = %s;', (current_user.id,))
+
+            cur.execute('''
+                UPDATE user_scripts
+                SET tab_label = %s, scenario_type = %s, script_text = %s, operator_tip = %s,
+                    is_default = %s, is_shared = %s, updated_at = CURRENT_TIMESTAMP
+                WHERE id = %s;
+            ''', (tab_label, scenario_type, script_text, operator_tip, is_default, is_shared, script_id))
+            conn.commit()
+
+            return jsonify({
+                'status': 'success',
+                'message': 'Custom script updated successfully.'
+            })
+    except Exception as e:
+        if conn: conn.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/user/scripts/<int:script_id>', methods=['DELETE'], endpoint='api_delete_user_script')
+@login_required
+def api_delete_user_script(script_id):
+    """Deletes a custom script from the user's profile."""
+    conn = None
+    try:
+        conn = get_db(current_app.config['DATABASE_URL'])
+        with conn.cursor() as cur:
+            cur.execute('SELECT user_id FROM user_scripts WHERE id = %s;', (script_id,))
+            row = cur.fetchone()
+            if not row:
+                return jsonify({'status': 'error', 'message': 'Script not found.'}), 404
+            
+            if row['user_id'] != current_user.id and current_user.role not in ['Executive', 'Admin']:
+                return jsonify({'status': 'error', 'message': 'Unauthorized to delete this script.'}), 403
+
+            cur.execute('DELETE FROM user_scripts WHERE id = %s;', (script_id,))
+            conn.commit()
+
+            return jsonify({'status': 'success', 'message': 'Custom script removed from profile.'})
+    except Exception as e:
+        if conn: conn.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        if conn: conn.close()
+
+
