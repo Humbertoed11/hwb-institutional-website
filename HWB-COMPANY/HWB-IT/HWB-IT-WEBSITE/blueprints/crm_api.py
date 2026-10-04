@@ -7,6 +7,7 @@ Custodians: George (Systems Architect) & Silas Sync (VP of CRM)
 import os
 import io
 import re
+import urllib.parse
 import csv
 import json
 import hashlib
@@ -2780,9 +2781,10 @@ def replace_email_tokens(template: str, recipient: dict, tracking_token: str = N
     if not template:
         return ""
     
-    booking_dest = "https://outlook.office.com/bookwithme/user/hdominguez@hwbcleaning.com"
+    booking_dest = os.getenv('HWB_CEO_BOOKING_URL') or "https://outlook.office.com/bookwithme/user/hdominguez@hwbcleaning.com"
     if tracking_token:
-        booking_link = f"https://www.hwbcleaning.com/api/v1/marketing/track/click/{tracking_token}?dest={booking_dest}"
+        encoded_dest = urllib.parse.quote_plus(booking_dest)
+        booking_link = f"https://www.hwbcleaning.com/api/v1/marketing/track/click/{tracking_token}?dest={encoded_dest}"
         unsub_link = f"https://www.hwbcleaning.com/unsubscribe/{tracking_token}"
     else:
         booking_link = booking_dest
