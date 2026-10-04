@@ -11062,38 +11062,40 @@
                     "Hi, good morning! May I speak with <b style="color: var(--brand);">${dm}</b>, please?"
                 </div>
                 <div style="font-size: 0.75rem; color: #0369a1; margin-top: 0.6rem; font-style: italic; display: flex; align-items: center; gap: 0.35rem;">
-                    <i class="fas fa-lightbulb"></i> <b>Operator Tip:</b> Sound confident and direct. Do not pitch the receptionist—treat them with respect and ask for the director by name.
+                    <i class="fas fa-lightbulb"></i> <b>Operator Tip:</b> Speak in a friendly, relaxed, and confident voice. Do not pitch the receptionist. Ask for the director by first name.
                 </div>
             </div>`;
         } else if (activeLeadScriptTab === 'obj-regarding') {
             html = `<div>
                 <div style="font-size: 0.92rem; color: var(--slate-900); line-height: 1.55;">
-                    "Yes, this is Humberto's office with HWB Cleaning Services here in <b>${city}</b>. We handle specialized nightly sanitization for licensed childcare facilities, and I'm following up regarding your annual Texas Child Care Regulation health inspection sanitation standards for <b>${center}</b>. Is <b style="color: var(--brand);">${dm}</b> in for just a quick moment?"
+                    "Yes, this is Humberto's office with HWB Cleaning Services here in <b>${city}</b>. We provide nightly after-hours cleaning for local childcare centers so your teachers don't have to stay late mopping floors and cleaning bathrooms. I just have a quick 30-second question for <b style="color: var(--brand);">${dm}</b>—are they available for just a moment?"
                 </div>
             </div>`;
         } else if (activeLeadScriptTab === 'obj-cleaner') {
             html = `<div>
                 <div style="font-size: 0.92rem; color: var(--slate-900); line-height: 1.55;">
-                    "Understood! Most of the centers we partner with already had someone before discovering our Texas licensing compliance checklists, chemical-free pathogen disinfection, and guaranteed morning readiness audits. We just want to introduce our backup commercial pricing before your next state inspection. Who is the best person to email that 1-page comparison to?"
+                    "I completely understand! Most centers we work with already have a regular cleaner. The main difference with us is that we include your twice-a-year floor stripping and waxing and your carpet cleaning right into the regular monthly price, so you never get billed thousands extra. We put together a simple 1-page price comparison—who is the best person to email that to?"
                 </div>
             </div>`;
         } else if (activeLeadScriptTab === 'obj-email') {
             html = `<div>
                 <div style="font-size: 0.92rem; color: var(--slate-900); line-height: 1.55;">
-                    "I completely understand. I can email over our 1-page Childcare Cleanliness & State Licensing Compliance Sheet so you have it on file. What is the Director's direct first name and best email address so it reaches them directly?"
+                    "I can definitely email over our 1-page Childcare Nightly Cleaning & Floor Care Sheet so you have it on file. What is the Director's direct first name and email address so it reaches them directly?"
                 </div>
             </div>`;
         } else if (activeLeadScriptTab === 'obj-services') {
             html = `<div>
                 <div style="font-size: 0.9rem; color: var(--slate-900); line-height: 1.55;">
-                    "Great question! We specialize specifically in licensed childcare and educational facilities across <b>${city}</b>. Our core services include:
+                    "Great question! We specialize in nightly after-hours cleaning (after 6:30 PM) for licensed childcare facilities across <b>${city}</b>. Our standard service covers:
                     <ul style="margin: 0.45rem 0 0.65rem 1.15rem; padding: 0; font-size: 0.83rem; color: var(--slate-700); line-height: 1.45;">
-                        <li><b>Nightly Classroom Disinfection:</b> Child-safe, hospital-grade sanitization of toys, cots, tables, and high-touch points with zero harsh chemical residue.</li>
-                        <li><b>Texas Child Care Compliance:</b> Deep sanitization of diaper changing stations, hand sinks, and restrooms aligned with state licensing standards.</li>
-                        <li><b>Complete Floor Care:</b> Commercial auto-scrubbing, stripping, waxing, and buffing for VCT tile, plus deep carpet extraction.</li>
-                        <li><b>Day Porters:</b> Midday on-site staff for rapid spill cleanup, continuous touchpoint wipe-downs, and restroom restocking.</li>
+                        <li><b>Floors & Classroom Rugs:</b> Backpack vacuuming with HEPA filters on all carpets and educational mats, plus thorough mopping of all hard tile floors.</li>
+                        <li><b>Restrooms & Sinks:</b> Deep scrubbing and sanitizing of toddler toilets, sinks, faucets, and door hardware every night.</li>
+                        <li><b>Trash & Diaper Pails:</b> Emptying every trash can and diaper bin, replacing liners, and hauling waste to the dumpster so rooms smell fresh by morning.</li>
+                        <li><b>Morning Readiness Restock:</b> Restocking all paper towels, hand soap, and toilet paper dispensers so teachers are fully ready for the 6:30 AM opening.</li>
+                        <li><b>Doors & Entry Glass:</b> Cleaning fingerprints and smudges off entrance glass, door windows, light switches, and wall plates.</li>
+                        <li><b>Included Floor Care:</b> Stripping and waxing hard floors twice a year, plus deep carpet cleaning twice a year, at zero extra charge.</li>
                     </ul>
-                    Would it make sense to schedule a quick 5-minute walkthrough of <b>${center}</b> this week so we can review your current scope and leave our side-by-side pricing sheet?"
+                    Would it make sense to schedule a quick 5-minute walkthrough of <b>${center}</b> this week so we can see your layout and leave our 1-page pricing sheet on your desk?"
                 </div>
                 <div style="font-size: 0.72rem; color: #0369a1; margin-top: 0.5rem; font-style: italic; display: flex; align-items: center; gap: 0.35rem;">
                     <i class="fas fa-lightbulb"></i> <b>Caller Tip:</b> If they ask about insurance ($2M limit), bonding, or machine specs, click the <b>Capabilities</b> button above for our official 1-page statement.
@@ -11102,7 +11104,7 @@
         } else if (activeLeadScriptTab === 'director') {
             html = `<div>
                 <div style="font-size: 0.92rem; color: var(--slate-900); line-height: 1.55;">
-                    "Hi <b style="color: #047857;">${firstName}</b>, this is [Your Name] with HWB Cleaning Services. We specialize exclusively in nightly sanitization for licensed childcare facilities across <b>${city}</b> to keep classroom attendance high and eliminate state licensing citations. I know you're busy running the center—I'm just calling to schedule a quick 5-minute walkthrough to give you a side-by-side comparison on your current janitorial scope. Would Tuesday morning or Thursday afternoon work better for a quick 5-minute visit?"
+                    "Hi <b style="color: #047857;">${firstName}</b>, this is [Your Name] with HWB Cleaning Services here in <b>${city}</b>. I know you're busy running the school—I'm just calling because we specialize in after-hours nightly cleaning for local childcare centers. We handle the heavy cleaning after 6:30 PM so your teachers don't have to stay late vacuuming rugs and scrubbing bathrooms. On top of that, we include your twice-a-year floor stripping, waxing, and carpet cleaning right into one flat monthly price with no surprise charges. I'd love to stop by for a quick 5-minute walkthrough of <b>${center}</b> this week to see your layout and drop off our 1-page price comparison. Would Tuesday morning or Thursday afternoon work better for a quick 5-minute visit?"
                 </div>
             </div>`;
         }
