@@ -3,7 +3,7 @@
 {% block title %}Email Preferences & Unsubscribe | HWB Cleaning Services LLC{% endblock %}
 
 {% block content %}
-<section style="padding: 5rem 1.5rem; min-height: 70vh; display: flex; align-items: center; justify-content: center; background: #f8fafc;">
+<section style="padding: 5rem 1.5rem 7.5rem 1.5rem; min-height: 70vh; display: flex; align-items: center; justify-content: center; background: #f8fafc;">
     <div style="max-width: 620px; width: 100%; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.04); padding: 3rem 2.5rem; text-align: center;">
         
         {% if unsubscribed %}
@@ -24,8 +24,7 @@
             Your email address has been permanently marked as <strong>Do Not Contact</strong> in our institutional CRM database. All pending marketing and outreach communications queued for this address have been cancelled immediately.
         </p>
 
-        <!-- Intelligence-Gathering Opt-Out Feedback -->
-        {% if tracking_token %}
+        <!-- Intelligence-Gathering Opt-Out Feedback (Universal for Direct & Tokenized Unsubscribes) -->
         <div id="unsub-survey-card" style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 10px; padding: 1.5rem; text-align: left; margin-bottom: 2rem;">
             <div style="font-weight: 800; font-size: 0.95rem; color: #0f172a; margin-bottom: 0.35rem;">
                 <i class="fas fa-poll" style="color: #2563eb;"></i> Quick Feedback (Optional 1-Click)
@@ -34,14 +33,14 @@
                 To help Humberto improve our service offerings, what was the primary reason for opting out?
             </p>
             <div style="display: flex; flex-direction: column; gap: 0.65rem;" id="unsub-options-container">
-                <button type="button" onclick="submitUnsubReason('employees')" class="sigma-unsub-btn" style="text-align: left; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.85rem; font-weight: 600; color: #1e293b; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 0.65rem;">
-                    <i class="fas fa-users-cog" style="color: #0284c7; width: 18px;"></i> We use our own employees / internal staff
+                <button type="button" onclick="submitUnsubReason('employees')" class="sigma-unsub-btn" style="text-align: left; background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 0.85rem 1rem; font-size: 0.88rem; font-weight: 700; color: #1e293b !important; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 0.65rem; width: 100%;">
+                    <i class="fas fa-users-cog" style="color: #0284c7; width: 18px;"></i> <span>We use our own employees / internal staff</span>
                 </button>
-                <button type="button" onclick="submitUnsubReason('contract')" class="sigma-unsub-btn" style="text-align: left; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.85rem; font-weight: 600; color: #1e293b; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 0.65rem;">
-                    <i class="fas fa-file-signature" style="color: #16a34a; width: 18px;"></i> We currently have an active contract with a cleaning company
+                <button type="button" onclick="submitUnsubReason('contract')" class="sigma-unsub-btn" style="text-align: left; background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 0.85rem 1rem; font-size: 0.88rem; font-weight: 700; color: #1e293b !important; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 0.65rem; width: 100%;">
+                    <i class="fas fa-file-signature" style="color: #16a34a; width: 18px;"></i> <span>We currently have an active contract with a cleaning company</span>
                 </button>
-                <button type="button" onclick="submitUnsubReason('not_interested')" class="sigma-unsub-btn" style="text-align: left; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.85rem; font-weight: 600; color: #1e293b; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 0.65rem;">
-                    <i class="fas fa-ban" style="color: #dc2626; width: 18px;"></i> Not interested in commercial cleaning services
+                <button type="button" onclick="submitUnsubReason('not_interested')" class="sigma-unsub-btn" style="text-align: left; background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 0.85rem 1rem; font-size: 0.88rem; font-weight: 700; color: #1e293b !important; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 0.65rem; width: 100%;">
+                    <i class="fas fa-ban" style="color: #dc2626; width: 18px;"></i> <span>Not interested in commercial cleaning services</span>
                 </button>
             </div>
             <div id="unsub-survey-confirmation" style="display: none; background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; font-size: 0.85rem; font-weight: 700; padding: 0.75rem 1rem; border-radius: 6px; text-align: center;">
@@ -50,18 +49,18 @@
         </div>
         <script>
         function submitUnsubReason(reason) {
-            const token = "{{ tracking_token }}";
+            const token = "{{ tracking_token or '' }}";
+            const email = "{{ email or '' }}";
             fetch('/api/v1/unsubscribe/reason', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token: token, reason: reason })
+                body: JSON.stringify({ token: token, email: email, reason: reason })
             }).then(r => r.json()).then(data => {
                 document.getElementById('unsub-options-container').style.display = 'none';
                 document.getElementById('unsub-survey-confirmation').style.display = 'block';
             }).catch(err => console.error(err));
         }
         </script>
-        {% endif %}
 
         <!-- Compliance Transparency Box -->
         <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #3b82f6; border-radius: 8px; padding: 1.25rem; text-align: left; margin-bottom: 2rem; font-size: 0.82rem; color: #64748b; line-height: 1.55;">
@@ -79,9 +78,10 @@
             </div>
         </div>
 
-        <div>
-            <a href="/" class="isc-btn isc-btn-outline" style="border: 1.5px solid #cbd5e1; color: #334155; font-weight: 700; padding: 10px 24px; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; font-size: 0.9rem;">
-                <i class="fas fa-home"></i> Return to Homepage
+        <div style="margin-top: 2rem;">
+            <a href="/" aria-label="Return to Homepage" style="background: #0f172a; color: #ffffff !important; font-weight: 700; padding: 12px 32px; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 10px; font-size: 0.95rem; box-shadow: 0 4px 14px rgba(15, 23, 42, 0.2); transition: all 0.2s ease;">
+                <i class="fas fa-home" style="color: #ffffff !important; font-size: 1rem;"></i>
+                <span style="color: #ffffff !important; font-weight: 700; letter-spacing: -0.01em;">Return to Homepage</span>
             </a>
         </div>
 

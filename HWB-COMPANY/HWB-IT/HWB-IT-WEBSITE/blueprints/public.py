@@ -257,31 +257,40 @@ def api_unsubscribe_reason():
     """
     Captures post-unsubscribe intelligence survey without server/proxy false positives.
     Records whether facility uses in-house employees, has active vendor contract, or is not interested.
+    Supports both tokenized 1-click links and direct manual form submissions.
     """
     data = request.get_json(silent=True) or request.form
     token = (data.get('token') or '').strip()
+    email_val = (data.get('email') or '').strip().lower()
     reason = (data.get('reason') or '').strip()
 
-    if not token or not reason:
-        return jsonify({'status': 'error', 'message': 'Missing token or reason'}), 400
+    if not reason or (not token and not email_val):
+        return jsonify({'status': 'error', 'message': 'Missing token/email or reason'}), 400
 
     conn = None
     try:
         conn = get_db(current_app.config['DATABASE_URL'])
         with conn.cursor() as cur:
-            cur.execute('''
-                SELECT lead_id, recipient_email FROM "CampaignRecipients" WHERE tracking_token = %s
-                UNION
-                SELECT recipient_id, recipient FROM "PendingOutbox" WHERE tracking_token = %s
-                LIMIT 1;
-            ''', (token, token))
-            row = cur.fetchone()
+            lead_id = None
+            email = email_val
 
-            if not row:
-                return jsonify({'status': 'error', 'message': 'Token reference not found'}), 404
+            if token:
+                cur.execute('''
+                    SELECT lead_id, recipient_email FROM "CampaignRecipients" WHERE tracking_token = %s
+                    UNION
+                    SELECT recipient_id, recipient FROM "PendingOutbox" WHERE tracking_token = %s
+                    LIMIT 1;
+                ''', (token, token))
+                row = cur.fetchone()
+                if row:
+                    lead_id = row['lead_id'] if isinstance(row, dict) else row[0]
+                    email = (row['recipient_email'] if isinstance(row, dict) else row[1]) or email_val
 
-            lead_id = row['lead_id'] if isinstance(row, dict) else row[0]
-            email = row['recipient_email'] if isinstance(row, dict) else row[1]
+            if not lead_id and email:
+                cur.execute('SELECT id FROM "Leads" WHERE LOWER(email) = LOWER(%s) LIMIT 1;', (email,))
+                lead_row = cur.fetchone()
+                if lead_row:
+                    lead_id = lead_row['id'] if isinstance(lead_row, dict) else lead_row[0]
 
             reason_desc = ""
             delivery_model = None

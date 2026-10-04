@@ -2890,19 +2890,29 @@ header.main-header {
 
 .isc-btn-outline {
     background: transparent;
-    border: 1px solid rgba(255,255,255,0.2);
-    color: inherit;
+    border: 1.5px solid var(--slate-300);
+    color: var(--slate-700);
 }
 
 .executive-cta .isc-btn-outline,
 .services-hero .isc-btn-outline,
 .cta-banner .isc-btn-outline {
-    color: white;
+    border-color: rgba(255,255,255,0.3);
+    color: white !important;
 }
 
 .isc-btn-outline:hover {
+    background: var(--slate-100);
+    border-color: var(--slate-400);
+    color: var(--slate-900);
+}
+
+.executive-cta .isc-btn-outline:hover,
+.services-hero .isc-btn-outline:hover,
+.cta-banner .isc-btn-outline:hover {
     background: rgba(255,255,255,0.1);
-    border-color: rgba(255,255,255,0.4);
+    border-color: rgba(255,255,255,0.6);
+    color: white !important;
 }
 
 .executive-cta {
