@@ -15,15 +15,18 @@ from docx.oxml.ns import qn
 
 from .archetypes import ClientArchetype
 from .palette import ArchetypeStyle, get_style
+from .company import CompanyProfile, get_company
 
 class WordBuilder:
     def __init__(
         self,
         doc_title: str,
+        company: Any = "HWB",
         archetype: ClientArchetype = ClientArchetype.REGIONAL,
         margin_inches: float = 0.75
     ):
         self.doc_title = doc_title
+        self.company: CompanyProfile = get_company(company)
         self.archetype = archetype
         self.style: ArchetypeStyle = get_style(archetype)
         self.doc = docx.Document()
@@ -106,15 +109,16 @@ class WordBuilder:
         run._r.append(fldChar2)
         run._r.append(fldChar3)
 
-    def setup_header_footer(self, doc_ref_id: str = "HWB-PROPOSAL-2026", footer_company_text: str = "HWB Cleaning Services LLC | Dallas, TX | www.hwbcleaning.com"):
+    def setup_header_footer(self, doc_ref_id: str = "PROPOSAL-2026", footer_company_text: Optional[str] = None):
         """Configures running headers and dynamic page-numbered footers for subsequent pages."""
         section = self.doc.sections[0]
+        f_text = footer_company_text or self.company.footer_text
         
         # 1. Header
         header = section.header
         p_hdr = header.paragraphs[0]
         p_hdr.text = ""
-        r_hdr_l = p_hdr.add_run(f"{self.doc_title.upper()}")
+        r_hdr_l = p_hdr.add_run(f"{self.company.name.upper()}  •  {self.doc_title.upper()}")
         r_hdr_l.font.size = Pt(8)
         r_hdr_l.font.bold = True
         r_hdr_l.font.color.rgb = self.style.rgb_primary
@@ -132,7 +136,7 @@ class WordBuilder:
         p_ftr = footer.paragraphs[0]
         p_ftr.text = ""
         
-        r_ftr_l = p_ftr.add_run(f"{footer_company_text}   —   ")
+        r_ftr_l = p_ftr.add_run(f"{f_text}   —   ")
         r_ftr_l.font.size = Pt(8)
         r_ftr_l.font.color.rgb = RGBColor(100, 116, 139)
 
@@ -155,10 +159,12 @@ class WordBuilder:
         client_name: str,
         facility_address: str,
         date_str: str = "October 2026",
-        author_name: str = "Humberto Dominguez, Chief Executive Officer",
-        author_title: str = "Chief Executive Officer"
+        author_name: Optional[str] = None,
+        author_title: Optional[str] = None
     ):
         """Generates a styled executive cover page adapted to the client archetype."""
+        name = author_name or f"{self.company.primary_officer}, {self.company.officer_title}"
+
         # Top Archetype Badge
         p_top = self.doc.add_paragraph()
         p_top.alignment = WD_ALIGN_PARAGRAPH.RIGHT
@@ -172,7 +178,7 @@ class WordBuilder:
         p_title.paragraph_format.space_before = Pt(36)
         p_title.paragraph_format.space_after = Pt(8)
         
-        r_co = p_title.add_run("HWB CLEANING SERVICES LLC\n")
+        r_co = p_title.add_run(f"{self.company.legal_name.upper()}\n")
         r_co.font.size = Pt(16)
         r_co.font.bold = True
         r_co.font.color.rgb = self.style.rgb_primary
@@ -206,11 +212,11 @@ class WordBuilder:
 
         meta_lines = [
             ("PREPARED FOR:", client_name),
-            ("FACILITY:", facility_address),
+            ("FACILITY / PROJECT:", facility_address),
             ("DATE:", date_str),
-            ("PREPARED BY:", author_name),
-            ("ORGANIZATION:", "HWB Cleaning Services LLC (DFW Regional Ops)"),
-            ("DIRECT CONTACT:", "972-800-7808 | hdominguez@hwbcleaning.com")
+            ("PREPARED BY:", name),
+            ("ORGANIZATION:", f"{self.company.name} ({self.company.tagline})"),
+            ("DIRECT CONTACT:", f"{self.company.phone} | {self.company.email} | {self.company.website}")
         ]
 
         for k, v in meta_lines:
@@ -379,13 +385,14 @@ class WordBuilder:
 
         self.doc.add_paragraph() # Spacer
 
-    def add_signature_block(self, client_name: str, hwb_signer: str = "Humberto Dominguez, Chief Executive Officer"):
+    def add_signature_block(self, client_name: str, hwb_signer: Optional[str] = None):
         """Creates a clean double-column execution card."""
+        signer = hwb_signer or f"{self.company.primary_officer}, {self.company.officer_title}"
         self.doc.add_paragraph() # Spacer
         t = self.doc.add_table(rows=6, cols=2)
         t.alignment = WD_TABLE_ALIGNMENT.CENTER
 
-        headers = [f"FOR {client_name.upper()}", "FOR HWB CLEANING SERVICES LLC"]
+        headers = [f"FOR {client_name.upper()}", f"FOR {self.company.legal_name.upper()}"]
         for i, h in enumerate(headers):
             cell = t.cell(0, i)
             self._set_cell_background(cell, self.style.color_primary_hex)
@@ -397,10 +404,10 @@ class WordBuilder:
             r.font.color.rgb = RGBColor(255, 255, 255)
 
         sig_rows = [
-            ("Company: ____________________________", "Company: HWB Cleaning Services LLC"),
+            ("Company: ____________________________", f"Company: {self.company.legal_name}"),
             ("Signature: __________________________", "Signature: __________________________"),
-            ("Printed Name: _______________________", f"Printed Name: {hwb_signer.split(',')[0]}"),
-            ("Title: ______________________________", f"Title: {hwb_signer.split(',')[1].strip() if ',' in hwb_signer else 'Executive'}"),
+            ("Printed Name: _______________________", f"Printed Name: {signer.split(',')[0]}"),
+            ("Title: ______________________________", f"Title: {signer.split(',')[1].strip() if ',' in signer else self.company.officer_title}"),
             ("Date: _______________________________", "Date: _______________________________")
         ]
 

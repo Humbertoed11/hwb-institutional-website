@@ -13,13 +13,17 @@ from openpyxl.utils import get_column_letter
 from .archetypes import ClientArchetype
 from .palette import ArchetypeStyle, get_style
 
+from .company import CompanyProfile, get_company
+
 class ExcelBuilder:
     def __init__(
         self,
         sheet_title: str = "Commercial Estimate",
+        company: Any = "HWB",
         archetype: ClientArchetype = ClientArchetype.REGIONAL
     ):
         self.sheet_title = sheet_title
+        self.company: CompanyProfile = get_company(company)
         self.archetype = archetype
         self.style: ArchetypeStyle = get_style(archetype)
         
@@ -34,12 +38,12 @@ class ExcelBuilder:
         self,
         title: str,
         client_name: str,
-        project_ref: str = "HWB-EST-2026",
+        project_ref: str = "EST-2026",
         date_str: str = "October 2026"
     ):
         """Adds a branded 4-row header card at the top of the spreadsheet."""
         # Row 1: Company Name
-        c_co = self.ws.cell(row=self.current_row, column=1, value="HWB CLEANING SERVICES LLC")
+        c_co = self.ws.cell(row=self.current_row, column=1, value=self.company.legal_name.upper())
         c_co.font = Font(name=self.style.font_primary, size=11, bold=True, color=self.style.color_primary_hex)
         self.current_row += 1
 
