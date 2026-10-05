@@ -41,6 +41,31 @@ PROHIBITED_TERMS: Dict[str, Dict[str, Any]] = {
     }
 }
 
+# Institutional Systems & AI Architectural Concepts Dictionary
+ARCHITECTURAL_CONCEPTS_DICTIONARY: Dict[str, Dict[str, Any]] = {
+    "associative narrowing": {
+        "term": "Associative Narrowing",
+        "domain": "ai_systems_architecture",
+        "category": "cognitive_bias_retrieval_trapping",
+        "formal_definition": (
+            "A systemic failure mode in autonomous language and reasoning systems wherein broad, "
+            "high-level strategic inquiries become prematurely anchored to a dense, localized "
+            "historical record due to unconstrained full-text or fuzzy keyword matching. The agent's "
+            "cognitive scope collapses into the gravity well of unstructured sub-documents (e.g. jobsite notes) "
+            "that coincidentally contain ubiquitous operational vocabulary ('cost', 'systems', 'procedures'), "
+            "blinding the reasoning model to broader multi-service baselines."
+        ),
+        "mitigation_architecture": "ARCH-014 (Enterprise Dynamic Context Resolver)",
+        "governing_rules": [
+            "Rule 7 (Anti-Narrowing Mandate)",
+            "ENTERPRISE_STOP_WORDS Catalog (120+ Terms)",
+            "Deterministic ID/Trigram Decoupling"
+        ],
+        "first_identified": "2026-10-04 (Bid #39 Collin College Walkthrough bias resolution in Telegram)",
+        "poka_yoke_controls": "Strict elimination of 'notes ILIKE' scans; automatic reset to GENERAL context on corporate inquiries."
+    }
+}
+
 # Regex pattern for case-insensitive whole-word boundary matching
 BANNED_WORDS_PATTERN = re.compile(
     r'\b(cockpit)\b',
