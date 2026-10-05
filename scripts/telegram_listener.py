@@ -1396,24 +1396,71 @@ ACTIVE PROJECT: HORIZON AT PREMIER (PLANO, TX)
   * Confirm that CEO Humberto Dominguez holds approval authority for the final client proposal.
 """
 
+GENERAL_OPERATIONAL_CONTEXT = """
+ACTIVE OPERATIONAL CONTEXT (GENERAL ENTERPRISE PIPELINE):
+- Operating Entity: HWB Cleaning Services LLC (Commercial Janitorial, Healthcare Sanitation, Post-Construction & Institutional Cleaning)
+- Operational Baseline:
+  * Commercial Office, Daycare & Clinic Janitorial: $18.50 - $22.50/hr base wage floor; standard pricing $0.12 - $0.22/SF/mo depending on frequency and scope.
+  * Post-Construction Final Clean (CSI Division 01): 3-Phase Scope (Rough, Detail Prep, Final Punch) priced at $0.25 - $0.45/SF.
+  * Public Institutional & Government Solicitations: Prevailing Wage / Service Contract Act (SCA) floors enforced ($24.85 - $28.14/hr + $4.98 H&W); APPA Level 2 cleaning standards.
+  * Multi-Family Doorstep Valet Waste: $18.00 - $25.00/door/month across 5-7 nights/week.
+- Technology & Cloud Architecture:
+  * Containerized SigmaFidelity™ Microservices (Docker, PostgreSQL 13, Python/Flask/Gunicorn, Nginx Compliance Gateway, Proxy Gateway).
+  * Microsoft M365 & Azure Cloud Integration (Microsoft Graph API, Azure App Service, Azure PostgreSQL Flexible Server).
+  * Perimeter Defense & Observability: Cloudflare Anycast Strict SSL/TLS 1.3, Origin IP Whitelist, Rack 9 WORM Security Audit Ledger, Credential Expiry Sentinel.
+  * Mobile Executive Terminal: Telegram Operations Command Node (@Georgebytesbot) with 5-tier RBAC, multimodal voice/vision processing, and BuildingConnected integration.
+  * Website Capabilities: Live client portal, automated quote generation, scope builder, and customer intake engine; direct credit card / ACH merchant capture staged.
+- OPERATIONAL DIRECTIVE: Evaluate all user questions broadly and comprehensively from the full corporate perspective. NEVER artificially constrain or narrow answers to a single past project (such as Collin College or Horizon at Premier) unless the user explicitly names that specific project in their message.
+"""
+
 def get_dynamic_session_context(chat_id, incoming_text="", caption=""):
     """
-    Dynamic Project & Problem Resolver:
-    1. Identifies topic pivots from message content or user directives.
-    2. Updates and retrieves session context in UserBehavioralProfiles per user.
-    3. Dynamically queries PostgreSQL for live Commercial GC Bids, Institutional Bids, or Leads.
-    4. Seamlessly adapts system prompts without rigid hardcoded lockouts.
-    5. Falls back to Microsoft Graph API email search if the project was received via inbound email.
+    Enterprise Dynamic Project & Context Resolver:
+    1. Identifies explicit project targets vs broad operational/strategic inquiries.
+    2. Enforces Poka-Yoke anti-narrowing: General questions (costs, systems, website, company overview)
+       always resolve to the broad enterprise context.
+    3. Restricts database lookups to explicit project identifiers (e.g. 'bid #17', 'lead #82474',
+       or high-confidence project names) and strictly eliminates full-text note scans.
+    4. Automatically clears project stickiness when the user pivots to broad questions.
     """
-    combined_query = f"{incoming_text} {caption}".lower()
+    combined_query = f"{incoming_text} {caption}".strip().lower()
+
+    # 1. Comprehensive Enterprise Stop-Words Lexicon (Words that must NEVER trigger a specific project match)
+    ENTERPRISE_STOP_WORDS = {
+        "project", "projects", "clean", "cleaning", "custodial", "janitorial", "about",
+        "there", "their", "please", "george", "hello", "trash", "pickup", "frisco",
+        "plano", "college", "horizon", "what", "have", "check", "email", "emails",
+        "domain", "from", "with", "that", "this", "some", "cost", "costs", "price",
+        "prices", "pricing", "system", "systems", "used", "using", "rate", "rates",
+        "hour", "hours", "work", "works", "working", "service", "services", "payment",
+        "payments", "website", "portal", "client", "clients", "money", "lead", "leads",
+        "time", "times", "company", "hwb", "operations", "operational", "when", "where",
+        "which", "how", "much", "many", "show", "tell", "give", "find", "list", "help",
+        "answer", "question", "questions", "briefing", "status", "overview", "detail",
+        "details", "estimate", "estimates", "estimating", "proposal", "proposals",
+        "quote", "quotes", "bids", "active", "margin", "margins", "profit", "budget",
+        "federal", "state", "city", "county", "texas", "overall", "general", "broad",
+        "broadly", "all", "our", "were", "been", "was", "will", "would", "could", "should",
+        "good", "best", "last", "latest", "recent", "today", "yesterday", "tomorrow"
+    }
+
+    # 2. Broad Operational & Strategic Inquiry Detection
+    is_broad_inquiry = any(k in combined_query for k in [
+        "our cost", "what is our cost", "what do we charge", "how much do we charge",
+        "system to be used", "what is the system", "our system", "our systems", "what system",
+        "receive payments", "receive payment", "payments over", "payments on the website",
+        "website capability", "website capabilities", "capabilities", "company-wide",
+        "as a company", "broad question", "broadly", "overall", "general question",
+        "stop", "reset", "clear", "different project", "new project", "all projects"
+    ])
 
     new_context = None
-    if any(k in combined_query for k in ["horizon", "premier", "3409 premier", "valet trash", "trash pickup", "waste management", "122 home", "122 unit"]):
-        new_context = "HORIZON_PREMIER"
-    elif any(k in combined_query for k in ["collin college", "frisco campus", "rfp-005", "pritchard", "heritage hall", "founders hall"]):
-        new_context = "COLLIN_COLLEGE"
-    elif any(k in combined_query for k in ["stop", "reset", "clear project", "different project", "new project"]) and not any(k in combined_query for k in ["horizon", "collin"]):
+    if is_broad_inquiry:
         new_context = "GENERAL"
+    elif any(k in combined_query for k in ["horizon at premier", "3409 premier", "horizon premier"]):
+        new_context = "HORIZON_PREMIER"
+    elif any(k in combined_query for k in ["collin college", "frisco campus", "fy2024-rfp-005", "collin county college"]):
+        new_context = "COLLIN_COLLEGE"
 
     active_context = None
     extra_db_context = ""
@@ -1434,119 +1481,145 @@ def get_dynamic_session_context(chat_id, incoming_text="", caption=""):
                     WHERE chat_id = %s;
                 """, (chat_id,))
                 row = cur.fetchone()
-                active_context = row[0] if row and row[0] else None
+                active_context = row[0] if row and row[0] else "GENERAL"
 
-            # Dynamic database lookup across Bids and Leads
-            ignore_words = {"project", "clean", "about", "there", "their", "please", "george", "hello", "trash", "pickup", "frisco", "plano", "college", "horizon", "what", "have", "check", "email", "emails", "domain", "from", "with", "that", "this", "some"}
-            words = [w for w in re.findall(r'[A-Za-z0-9]{4,}', combined_query) if w not in ignore_words]
-            
-            matched = False
-            for w in words[:3]:
-                search_term = f"%{w}%"
-                
-                # 1. Search Commercial GC Bids (ConstructionBids)
-                try:
-                    cur.execute("""
-                        SELECT id, gc_name, project_name, project_address, city, state, zipcode,
-                               estimated_value, cleanable_sqft, bid_due_date, special_requirements, notes,
-                               rfp_url, plan_url, estimator_name, estimator_email, status,
-                               word_similarity(%s, project_name) as sim
-                        FROM "ConstructionBids"
-                        WHERE project_name ILIKE %s
-                           OR notes ILIKE %s
-                           OR word_similarity(%s, project_name) > 0.3
-                        ORDER BY sim DESC NULLS LAST
-                        LIMIT 1;
-                    """, (w, search_term, search_term, w))
-                    bid_match = cur.fetchone()
-                    if bid_match:
-                        b_id, b_gc, b_proj, b_addr, b_city, b_st, b_zip, b_val, b_sqft, b_due, b_spec, b_notes, b_rfp, b_plan, b_est_name, b_est_email, b_stat, _ = bid_match
-                        due_str = b_due.strftime("%m/%d/%Y at %I:%M %p") if b_due else "Pending"
-                        val_str = f"${float(b_val):,.2f}" if b_val else "$0.00"
-                        sqft_str = f"{int(b_sqft):,} SF" if b_sqft else "Pending"
-                        extra_db_context += (
-                            f"\n\nDATABASE MATCH FOUND (Commercial GC Bid #{b_id}):\n"
-                            f"- Project: {b_proj}\n"
-                            f"- General Contractor / Client: {b_gc}\n"
-                            f"- Location: {b_addr or ''}, {b_city or ''}, {b_st or ''} {b_zip or ''}\n"
-                            f"- Bid Due Date: {due_str}\n"
-                            f"- Cleanable Footprint / Estimated Value: {sqft_str} | {val_str}\n"
-                            f"- Scope / Special Requirements: {b_spec or b_notes or 'Standard CSI Division 01 Clean'}\n"
-                            f"- Estimator / Contact: {b_est_name or 'N/A'} ({b_est_email or 'N/A'})\n"
-                            f"- Planroom Access / URL: {b_plan or b_rfp or 'Pending'}\n"
-                            f"- Pipeline Status: {b_stat}\n"
-                        )
-                        matched = True
-                        break
-                except Exception:
-                    pass
+            # 3. High-Precision Entity Resolution (Only trigger if explicit project tokens or IDs are present)
+            # Never perform opportunistic fuzzy search for broad or general inquiries!
+            if not is_broad_inquiry:
+                # Check for explicit numeric bid / lead references
+                explicit_bid_id = None
+                m_bid = re.search(r'\bbid\s*#?\s*(\d+)\b', combined_query)
+                if m_bid:
+                    explicit_bid_id = int(m_bid.group(1))
 
-                # 2. Search Institutional Bids
-                if not matched:
-                    try:
+                m_lead = re.search(r'\blead\s*#?\s*(\d+)\b', combined_query)
+                explicit_lead_id = int(m_lead.group(1)) if m_lead else None
+
+                # Extract distinct candidate keywords (length >= 5 and NOT in enterprise stop words)
+                raw_words = re.findall(r'[A-Za-z0-9-]{5,}', combined_query)
+                candidate_words = [w for w in raw_words if w.lower() not in ENTERPRISE_STOP_WORDS]
+
+                # Only proceed to database lookup if an explicit ID or qualified candidate word exists
+                if explicit_bid_id or explicit_lead_id or candidate_words:
+                    matched = False
+
+                    # 3A. Search Commercial GC Bids (By explicit ID or high-similarity project name ONLY; NO notes scan)
+                    if explicit_bid_id:
                         cur.execute("""
-                            SELECT id, agency_name, title, solicitation_number, hwb_bid_total, cleanable_sqft, bid_due_date, status
-                            FROM "InstitutionalBids"
-                            WHERE agency_name ILIKE %s OR title ILIKE %s OR solicitation_number ILIKE %s
+                            SELECT id, gc_name, project_name, project_address, city, state, zipcode,
+                                   estimated_value, cleanable_sqft, bid_due_date, special_requirements,
+                                   plan_url, rfp_url, estimator_name, estimator_email, status
+                            FROM "ConstructionBids"
+                            WHERE id = %s
                             LIMIT 1;
-                        """, (search_term, search_term, search_term))
-                        ib_match = cur.fetchone()
-                        if ib_match:
-                            ib_due_str = ib_match[6].strftime("%m/%d/%Y at %I:%M %p") if ib_match[6] else "Pending"
+                        """, (explicit_bid_id,))
+                        bid_match = cur.fetchone()
+                        if bid_match:
+                            b_id, b_gc, b_proj, b_addr, b_city, b_st, b_zip, b_val, b_sqft, b_due, b_spec, b_plan, b_rfp, b_est_name, b_est_email, b_stat = bid_match
+                            due_str = b_due.strftime("%m/%d/%Y at %I:%M %p") if b_due else "Pending"
+                            val_str = f"${float(b_val):,.2f}" if b_val else "$0.00"
+                            sqft_str = f"{int(b_sqft):,} SF" if b_sqft else "Pending"
                             extra_db_context += (
-                                f"\n\nDATABASE MATCH FOUND (Institutional Bid #{ib_match[0]}):\n"
-                                f"- Agency: {ib_match[1]} | Title: {ib_match[2]} (Solicitation: {ib_match[3]})\n"
-                                f"- Footprint: {ib_match[5] or 'N/A'} SF | Value: ${ib_match[4] or 0:,.2f}\n"
-                                f"- Deadline: {ib_due_str} | Status: {ib_match[7]}\n"
+                                f"\n\nDATABASE MATCH FOUND (Commercial GC Bid #{b_id}):\n"
+                                f"- Project: {b_proj}\n"
+                                f"- General Contractor: {b_gc}\n"
+                                f"- Location: {b_addr or ''}, {b_city or ''}, {b_st or ''} {b_zip or ''}\n"
+                                f"- Cleanable Footprint / Estimated Value: {sqft_str} | {val_str}\n"
+                                f"- Status: {b_stat} | Due: {due_str}\n"
                             )
                             matched = True
-                            break
-                    except Exception:
-                        pass
+                    elif candidate_words:
+                        for cw in candidate_words[:2]:
+                            cur.execute("""
+                                SELECT id, gc_name, project_name, project_address, city, state, zipcode,
+                                       estimated_value, cleanable_sqft, bid_due_date, special_requirements,
+                                       plan_url, rfp_url, estimator_name, estimator_email, status,
+                                       word_similarity(%s, project_name) as sim
+                                FROM "ConstructionBids"
+                                WHERE project_name ILIKE %s
+                                   OR word_similarity(%s, project_name) > 0.65
+                                ORDER BY sim DESC NULLS LAST
+                                LIMIT 1;
+                            """, (cw, f"%{cw}%", cw))
+                            bid_match = cur.fetchone()
+                            if bid_match:
+                                b_id, b_gc, b_proj, b_addr, b_city, b_st, b_zip, b_val, b_sqft, b_due, b_spec, b_plan, b_rfp, b_est_name, b_est_email, b_stat, _ = bid_match
+                                due_str = b_due.strftime("%m/%d/%Y at %I:%M %p") if b_due else "Pending"
+                                val_str = f"${float(b_val):,.2f}" if b_val else "$0.00"
+                                sqft_str = f"{int(b_sqft):,} SF" if b_sqft else "Pending"
+                                extra_db_context += (
+                                    f"\n\nDATABASE MATCH FOUND (Commercial GC Bid #{b_id}):\n"
+                                    f"- Project: {b_proj}\n"
+                                    f"- General Contractor: {b_gc}\n"
+                                    f"- Location: {b_addr or ''}, {b_city or ''}, {b_st or ''} {b_zip or ''}\n"
+                                    f"- Cleanable Footprint / Estimated Value: {sqft_str} | {val_str}\n"
+                                    f"- Status: {b_stat} | Due: {due_str}\n"
+                                )
+                                matched = True
+                                break
 
-                # 3. Search CRM Leads
-                if not matched:
-                    cur.execute("""
-                        SELECT id, center_name, address, city, notes, estimated_annual_value
-                        FROM "Leads"
-                        WHERE center_name ILIKE %s OR address ILIKE %s
-                        ORDER BY id DESC LIMIT 1;
-                    """, (search_term, search_term))
-                    lead_match = cur.fetchone()
-                    if lead_match:
-                        extra_db_context += (
-                            f"\n\nDATABASE MATCH FOUND (Lead #{lead_match[0]}):\n"
-                            f"- Facility: {lead_match[1]}\n"
-                            f"- Address: {lead_match[2]}, {lead_match[3]}\n"
-                            f"- Estimated Value: ${lead_match[5] or 0:,.2f}\n"
-                            f"- Recorded Notes: {lead_match[4] or 'None'}\n"
-                        )
-                        matched = True
-                        break
+                    # 3B. Search Institutional Bids (Only high-precision agency/title/solicitation)
+                    if not matched and candidate_words:
+                        for cw in candidate_words[:2]:
+                            cur.execute("""
+                                SELECT id, agency_name, title, solicitation_number, hwb_bid_total, cleanable_sqft, bid_due_date, status
+                                FROM "InstitutionalBids"
+                                WHERE solicitation_number ILIKE %s
+                                   OR (title ILIKE %s AND LENGTH(%s) >= 6)
+                                LIMIT 1;
+                            """, (f"%{cw}%", f"%{cw}%", cw))
+                            ib_match = cur.fetchone()
+                            if ib_match:
+                                ib_due_str = ib_match[6].strftime("%m/%d/%Y at %I:%M %p") if ib_match[6] else "Pending"
+                                extra_db_context += (
+                                    f"\n\nDATABASE MATCH FOUND (Institutional Bid #{ib_match[0]}):\n"
+                                    f"- Agency: {ib_match[1]} | Title: {ib_match[2]} (Solicitation: {ib_match[3]})\n"
+                                    f"- Footprint: {ib_match[5] or 'N/A'} SF | Value: ${ib_match[4] or 0:,.2f}\n"
+                                    f"- Deadline: {ib_due_str} | Status: {ib_match[7]}\n"
+                                )
+                                matched = True
+                                break
+
+                    # 3C. Search CRM Leads (By explicit lead ID or exact center name match)
+                    if not matched:
+                        if explicit_lead_id:
+                            cur.execute("""
+                                SELECT id, center_name, address, city, notes, estimated_annual_value
+                                FROM "Leads"
+                                WHERE id = %s
+                                LIMIT 1;
+                            """, (explicit_lead_id,))
+                            lead_match = cur.fetchone()
+                            if lead_match:
+                                extra_db_context += (
+                                    f"\n\nDATABASE MATCH FOUND (Lead #{lead_match[0]}):\n"
+                                    f"- Facility: {lead_match[1]}\n"
+                                    f"- Address: {lead_match[2]}, {lead_match[3]}\n"
+                                    f"- Estimated Value: ${lead_match[5] or 0:,.2f}\n"
+                                )
+                                matched = True
+
+                    # 3D. Fallback search via Microsoft Graph API if user explicitly requests email/solicitation lookup
+                    if not matched and any(k in combined_query for k in ["email", "domain", "reproconnect", "inbox", "sent", "solicitation"]):
+                        lookup_kw = "reproconnect" if "reproconnect" in combined_query else (candidate_words[0] if candidate_words else "")
+                        if lookup_kw:
+                            found_emails = search_graph_messages(lookup_kw, top=2)
+                            if found_emails:
+                                extra_db_context += "\n\nOUTLOOK INBOX MATCHES FOUND (Incoming Email Solicitations):\n"
+                                for fe in found_emails:
+                                    pd = fe["parsed_details"]
+                                    due_fmt = pd['bid_due_date'].strftime('%m/%d/%Y %I:%M %p') if pd['bid_due_date'] else 'Pending'
+                                    extra_db_context += (
+                                        f"- Project: {pd['project_name']}\n"
+                                        f"  * From: {fe['sender_name']} <{fe['sender_email']}> | Date: {fe['received_date']}\n"
+                                        f"  * Location: {pd['address']}, {pd['city']} {pd['state']}\n"
+                                        f"  * Bid Due: {due_fmt} | Prebid: {pd['prebid_date_str'] or 'None'}\n"
+                                        f"  * Scope: {pd['description'][:200]}\n"
+                                    )
         conn.close()
-
-        # 4. Fallback search via Microsoft Graph API if no DB match or user explicitly inquiries about email/domain
-        if not matched and (any(k in combined_query for k in ["email", "domain", "reproconnect", "inbox", "sent", "solicitation"]) or words):
-            lookup_kw = "reproconnect" if "reproconnect" in combined_query else (words[0] if words else "")
-            if lookup_kw:
-                found_emails = search_graph_messages(lookup_kw, top=2)
-                if found_emails:
-                    extra_db_context += "\n\nOUTLOOK INBOX MATCHES FOUND (Incoming Email Solicitations):\n"
-                    for fe in found_emails:
-                        pd = fe["parsed_details"]
-                        due_fmt = pd['bid_due_date'].strftime('%m/%d/%Y %I:%M %p') if pd['bid_due_date'] else 'Pending'
-                        extra_db_context += (
-                            f"- Project: {pd['project_name']}\n"
-                            f"  * From: {fe['sender_name']} <{fe['sender_email']}> | Date: {fe['received_date']}\n"
-                            f"  * Location: {pd['address']}, {pd['city']} {pd['state']}\n"
-                            f"  * Bid Due: {due_fmt} | Prebid: {pd['prebid_date_str'] or 'None'}\n"
-                            f"  * Scope: {pd['description'][:200]}\n"
-                            f"  * Planroom Link: {pd['plan_url'] or 'N/A'}\n"
-                        )
-
     except Exception as e:
         print(f"[DYNAMIC RESOLVER ERROR] {e}", flush=True)
-        active_context = new_context or "GENERAL"
+        active_context = "GENERAL"
         extra_db_context = ""
 
     if active_context == "HORIZON_PREMIER":
@@ -1554,17 +1627,7 @@ def get_dynamic_session_context(chat_id, incoming_text="", caption=""):
     elif active_context == "COLLIN_COLLEGE":
         return COLLIN_COLLEGE_CONTEXT + extra_db_context
     else:
-        return """
-ACTIVE OPERATIONAL CONTEXT (GENERAL PIPELINE):
-- You have unrestricted access to all active operations, leads, and bids for HWB Cleaning Services LLC.
-- Active Focus Areas:
-  * FWISD TEA 048 - Polytech Pyramid Middle School Consolidation (1101 Nashville Ave, Fort Worth - Bid #42)
-  * FWISD TEA 044 - Northside Pyramid Middle School (709 NW 21st St, Fort Worth - Bid #43)
-  * Horizon at Premier (3409 Premier Dr, Plano - 122 units, 7 days/wk valet waste removal - Lead #82474)
-  * Collin College Frisco Campus Custodial Replacement (478,418 SF, 10 buildings, RFP # FY2024-RFP-005 Replacement - Bid #17)
-  * North Texas Daycare & Commercial Pipeline (10,000+ facilities in DFW)
-- OPERATIONAL DIRECTIVE: Listen carefully to the user's project, location, or walk-through observations. Do not force them into an unrelated project. Acknowledge their exact numbers (units, square footage, frequencies, addresses), record their findings, and assist with immediate estimation and operational execution.
-""" + extra_db_context
+        return GENERAL_OPERATIONAL_CONTEXT + extra_db_context
 
 
 # --- GEMINI MULTIMODAL REASONING (VOICE & VISION) ---
@@ -1578,7 +1641,7 @@ def analyze_voice_with_gemini(audio_bytes, chat_id=None):
     
     actor_user = get_user_for_chat(chat_id) if chat_id else None
     actor_name = actor_user.get("name", "CEO Humberto Dominguez") if actor_user else "Team Member"
-    dynamic_context = get_dynamic_session_context(chat_id) if chat_id else COLLIN_COLLEGE_CONTEXT
+    dynamic_context = get_dynamic_session_context(chat_id) if chat_id else GENERAL_OPERATIONAL_CONTEXT
 
     prompt = (
         "You are George, Lead Systems Architect and Senior Estimator for HWB Cleaning Services LLC.\n"
@@ -1729,7 +1792,7 @@ def analyze_photo_with_gemini(image_bytes, caption="", chat_id=None):
     
     actor_user = get_user_for_chat(chat_id) if chat_id else None
     actor_name = actor_user.get("name", "CEO Humberto Dominguez") if actor_user else "Team Member"
-    dynamic_context = get_dynamic_session_context(chat_id, caption=caption) if chat_id else COLLIN_COLLEGE_CONTEXT
+    dynamic_context = get_dynamic_session_context(chat_id, caption=caption) if chat_id else GENERAL_OPERATIONAL_CONTEXT
 
     prompt = (
         "You are George, Lead Systems Architect and Senior Estimator for HWB Cleaning Services LLC.\n"
@@ -1814,8 +1877,8 @@ def analyze_text_with_gemini(text, chat_id):
         '  "summary": "...",\n'
         '  "bid_id": 42\n'
         "}\n"
-        "```\n"
-        f"6. MANDATORY COMPLETE BRIEFING: You MUST ALWAYS follow the JSON block with your full, thorough, detailed, high-impact operational response, strategic analysis, and executive reasoning to {actor_name}. NEVER output only a JSON block. Always provide your complete analytical findings."
+        f"6. MANDATORY COMPLETE BRIEFING: You MUST ALWAYS follow the JSON block with your full, thorough, detailed, high-impact operational response, strategic analysis, and executive reasoning to {actor_name}. NEVER output only a JSON block. Always provide your complete analytical findings.\n"
+        "7. ANTI-NARROWING & BROAD REASONING MANDATE: If the user asks an open-ended, broad, or company-wide question (e.g. regarding company pricing models, systems/software stack, payment capabilities, service offerings, or corporate strategy), you MUST respond from the overarching enterprise perspective of HWB Cleaning Services LLC. NEVER artificially constrain or narrow the answer into a single past project (such as Collin College or Horizon at Premier) unless the user explicitly mentions that specific project name in their immediate query. If the question relates to costs or systems generally, explain the broad company framework across all commercial and institutional operations."
     )
 
     payload = {

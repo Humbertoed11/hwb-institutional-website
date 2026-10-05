@@ -6,7 +6,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-9.2</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">4.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">4.1.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">8.1 (Operational Planning &amp; Control)</span></div>
     </div>
@@ -22,11 +22,11 @@
             <tbody>
                 <tr><td><strong>Document Title</strong></td><td><strong>AI Agents &amp; Specialized Automation Scripts SOP</strong></td></tr>
                 <tr><td><strong>Document ID</strong></td><td>HWB-QMS-9.2</td></tr>
-                <tr><td><strong>Version</strong></td><td>4.0.0</td></tr>
+                <tr><td><strong>Version</strong></td><td>4.1.0</td></tr>
                 <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
                 <tr><td><strong>Author</strong></td><td>George (Systems Architect)</td></tr>
                 <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
-                <tr><td><strong>Effective Date</strong></td><td>10/01/2026</td></tr>
+                <tr><td><strong>Effective Date</strong></td><td>10/05/2026</td></tr>
                 <tr><td><strong>Department</strong></td><td>IT / Artificial Intelligence Department</td></tr>
                 <tr><td><strong>ISO Standard</strong></td><td>ISO 9001:2015 Clause 8.1 &amp; Clause 7.1.3 (Infrastructure)</td></tr>
             </tbody>
@@ -75,7 +75,7 @@
                     <td><strong>telegram_listener.py</strong></td>
                     <td>Container (hwb_agent_worker)</td>
                     <td>Continuous Polling (16 Threads)</td>
-                    <td>Mobile executive command node; enforces 5-tier user permissions; handles single-use magic-link auth; gates /cmd Linux shell and Google Search.</td>
+                    <td>Mobile executive command node; enforces 5-tier user permissions; handles single-use magic-link auth; gates /cmd Linux shell; executes Enterprise Dynamic Context Resolver (ARCH-014) with 120+ stop-word filter, Poka-Yoke anti-narrowing query governance, and broad operational fallback.</td>
                 </tr>
                 <tr>
                     <td><strong>tessa_regression_suite.py</strong></td>
@@ -154,6 +154,7 @@
                     <li><strong>Tier 4:</strong> Enterprise Bot Defense Battery (6 modules) — <code>python3 scripts/bot_defense_test_suite.py</code></li>
                 </ul>
             </li>
+            <li><strong>Enterprise Context Resolver &amp; Anti-Narrowing Governance (ARCH-014):</strong> The Telegram listener and interactive assistant daemons must enforce Poka-Yoke anti-narrowing controls. Unconstrained <code>ILIKE</code> full-text matching against jobsite notes fields is strictly prohibited to prevent general business queries from binding to dense historical records (e.g. Bid #39). All inquiries must filter against the 120+ enterprise stop-word catalog, detect broad semantic phrases (<em>"our cost"</em>, <em>"system to be used"</em>, <em>"receive payments"</em>, <em>"website capabilities"</em>), fall back to <code>GENERAL_OPERATIONAL_CONTEXT</code>, and enforce Rule 7 prompt governance across all 4 core service lines.</li>
         </ol>
 
         <h2>5.0 Verification (Zero-Defect Check)</h2>
@@ -175,6 +176,12 @@
                 </tr>
             </thead>
             <tbody>
+                <tr>
+                    <td style="text-align: left;">4.1.0</td>
+                    <td style="text-align: left;">10/05/2026</td>
+                    <td style="text-align: left;">George (Systems Architect)</td>
+                    <td style="text-align: left;">Upgraded with Enterprise Dynamic Context Resolver &amp; Poka-Yoke Anti-Narrowing Architecture (ARCH-014). Decoupled full-text notes search from database lookups, added 120+ stop-word filter, embedded Rule 7 multi-service prompt governance, and certified 11/11 tests on Tessa QA daemon. Approved by Humberto Dominguez, CEO.</td>
+                </tr>
                 <tr>
                     <td style="text-align: left;">4.0.0</td>
                     <td style="text-align: left;">10/01/2026</td>

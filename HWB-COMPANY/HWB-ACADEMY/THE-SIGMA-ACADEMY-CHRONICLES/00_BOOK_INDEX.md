@@ -10,8 +10,8 @@
 - **QMS Controlled Manual:** `hwb-qms-book-01_from_mops_to_machines_the_creation_of_sigma_academy.html`
 - **Executive Authority:** Humberto Dominguez, Chief Executive Officer
 - **Systems Architect & Author:** George (Senior Software Engineer, PhD in Business, mbB)
-- **Effective Release Date:** September 19, 2026 (Updated October 02, 2026)
-- **Version:** 1.4.0 (Living Neural Edition)
+- **Effective Release Date:** September 19, 2026 (Updated October 05, 2026)
+- **Version:** 1.5.0 (Living Neural Edition)
 
 ---
 
