@@ -113,3 +113,105 @@ CORPORATE_INFO = {
         "We do what we say we are going to do. Period."
     ]
 }
+
+# --- SigmaFidelity™ Institutional Module Registry & Micro-Copy Architecture ---
+# Standard: HWB-QMS-1.0 & HWB-QMS-7.6
+# Standardized Single-Word Titles & 4-Verb Operational Descriptors
+MODULE_REGISTRY = {
+    "executive": {
+        "title": "Command",
+        "action_phrase": "Manage team accounts, track performance, review emails, and approve social posts.",
+        "sop_reference": "HWB-QMS-1.1",
+        "icon": "fas fa-crown"
+    },
+    "sales_desk": {
+        "title": "Cadence",
+        "action_phrase": "Call prospective clients, write call notes, book building walkthroughs, and set calendar appointments.",
+        "sop_reference": "HWB-CAD-WT-001",
+        "icon": "fas fa-phone-volume"
+    },
+    "leads": {
+        "title": "Leads",
+        "action_phrase": "Browse the lead pool, view building details, find decision-makers, and assign accounts to call.",
+        "sop_reference": "HWB-QMS-11.6",
+        "icon": "fas fa-building"
+    },
+    "accounts": {
+        "title": "Clients",
+        "action_phrase": "View active clients, check cleaning schedules, send monthly bills, and read customer notes.",
+        "sop_reference": "HWB-QMS-8.2",
+        "icon": "fas fa-handshake"
+    },
+    "construction_bids": {
+        "title": "Construction",
+        "action_phrase": "Check building floor plans, measure room sizes, calculate job costs, and create price quotes.",
+        "sop_reference": "HWB-QMS-7.7",
+        "icon": "fas fa-hard-hat"
+    },
+    "general_contractors": {
+        "title": "Contractors",
+        "action_phrase": "Find general contractors, save site manager phone numbers, track project questions, and review past bids.",
+        "sop_reference": "HWB-QMS-7.7",
+        "icon": "fas fa-city"
+    },
+    "institutional_bids": {
+        "title": "Institutions",
+        "action_phrase": "Find city and school cleaning jobs, check pay requirements, track bid paperwork, and submit price proposals.",
+        "sop_reference": "HWB-QMS-11.6",
+        "icon": "fas fa-landmark"
+    },
+    "programs": {
+        "title": "Certifications",
+        "action_phrase": "Track small business licenses, verify government badges, check program rules, and win special contracts.",
+        "sop_reference": "HWB-QMS-11.6",
+        "icon": "fas fa-shield-halved"
+    },
+    "workforce": {
+        "title": "Workforce",
+        "action_phrase": "Manage cleaning crew members, schedule work shifts, track clock-in times, and review finished cleaning jobs.",
+        "sop_reference": "HWB-QMS-8.1",
+        "icon": "fas fa-id-card-clip"
+    },
+    "safety": {
+        "title": "Safety",
+        "action_phrase": "Log work injuries, check cleaning chemical guides, review safety checklists, and keep workers safe.",
+        "sop_reference": "HWB-EHS-001",
+        "icon": "fas fa-shield-alt"
+    },
+    "monitor": {
+        "title": "Dispatch",
+        "action_phrase": "Send cleaners to buildings, watch work shifts live, check crew locations, and solve job problems.",
+        "sop_reference": "HWB-QMS-8.1",
+        "icon": "fas fa-clipboard-check"
+    },
+    "scope": {
+        "title": "Scopes",
+        "action_phrase": "List building rooms, pick cleaning tasks, figure out crew hours, and build work plans.",
+        "sop_reference": "HWB-QMS-7.7",
+        "icon": "fas fa-tasks"
+    },
+    "it_department": {
+        "title": "Systems",
+        "action_phrase": "Check server health, test system speed, block bad web traffic, and keep passwords fresh.",
+        "sop_reference": "HWB-QMS-7.6",
+        "icon": "fas fa-server"
+    },
+    "outbox": {
+        "title": "Outbox",
+        "action_phrase": "Check draft emails, confirm recipient names, review letter templates, and send approved emails.",
+        "sop_reference": "HWB-QMS-4.0",
+        "icon": "fas fa-envelope-open-text"
+    },
+    "social": {
+        "title": "Broadcast",
+        "action_phrase": "Read drafted social posts, review work site photos, check written text, and post online.",
+        "sop_reference": "HWB-QMS-7.5",
+        "icon": "fas fa-share-nodes"
+    },
+    "qms": {
+        "title": "Quality",
+        "action_phrase": "Read step-by-step cleaning guides, check inspection scores, fix cleaning mistakes, and keep quality high.",
+        "sop_reference": "HWB-QMS-10.1",
+        "icon": "fas fa-award"
+    }
+}

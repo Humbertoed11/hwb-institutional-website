@@ -96,6 +96,9 @@ Responsibility: George (Architect)
 | 10/01/2026 | BUG-110 | Client-Side Micro-Interaction Observability Deficit & Air-Gapped Dual-Zone Telemetry Architecture. | **RESOLVED** | HIGH |
 | 10/02/2026 | BUG-111 | White-on-White Text Cascade Deficit on Public .isc-btn-outline Elements (/work-with-us). | **RESOLVED** | HIGH |
 | 10/02/2026 | BUG-112 | Windows PowerShell 5.1 ANSI Parsing Failure on UTF-8 Scripts Without BOM (Character 0x84 Smart Quote Inversion on D:\run-backup.ps1 & D:\restore-system.ps1). | **RESOLVED** | HIGH |
+| 10/05/2026 | BUG-113 | Public Blueprint Information Leakage & Missing Unauthenticated Access Boundary on Operating Manuals (/manual). | **RESOLVED** | CRITICAL |
+| 10/05/2026 | BUG-114 | CWE-285 Authorization Vulnerability: Custom Module Permissions Bypassed via Query Parameter Tampering (?view=...) in Backoffice Operations. | **RESOLVED** | CRITICAL |
+| 10/05/2026 | BUG-115 | Werkzeug Default 403 Error Screen & Persistent QMS Manual Navigation Exposure for Restricted User Accounts. | **RESOLVED** | HIGH |
 
 
 ## BUG-096: Telegram Inbound Message Drop & Unhandled ValueError on Multi-User Comma-Separated TELEGRAM_CHAT_ID String
@@ -1881,5 +1884,105 @@ CEO Humberto Dominguez attempting to log into `https://www.hwbcleaning.com/login
 **Preventative & Evolutionary Learning:**
 1. All Windows PowerShell (`.ps1`) scripts deployed to host environments must be authored in pure 7-bit ASCII and saved with a UTF-8 BOM (`\xef\xbb\xbf`) to prevent code page ambiguity across diverse Windows installations.
 2. Never rely on non-ASCII symbols inside PowerShell double quotes without BOM validation, as multibyte sequences containing `0x84`, `0x93`, or `0x94` trigger typographical quote collision in the PowerShell tokenizer.
+
+## BUG-113: Public Blueprint Information Leakage & Missing Unauthenticated Access Boundary on Operating Manuals (/manual)
+**Detected:** 10/05/2026
+**Status:** **RESOLVED** (10/05/2026)
+**Symptoms:**
+1. A SOC 2 Type II audit revealed that the Technical Operating Manual (`/manual`) and underlying documentation files (`/manual/<path:filename>`) were registered under the public blueprint (`blueprints/public.py`) without authentication or role-based access checks.
+2. Unauthenticated external visitors could access internal operational procedures, Azure cost forecasts (`HWB-ACC-AZR-2026-01`), server credential management playbooks, and AI architectural prompts.
+3. In addition, `/signature` and `/my-signature` (Executive Email Signature portal) were accessible to anonymous web visitors without authentication.
+4. The manual catalog (`qms_index.json`) lacked explicit `access_tier` metadata, preventing automated role-based access control (RBAC) partitioning.
+**Root Causes:**
+1. `/manual` was historically created as a public transparency showpiece on the company marketing website.
+2. As internal SOPs, financial forecasts, and IT infrastructure guides were created, they were added to `static/qms` and indexed without establishing a strict security perimeter.
+3. Automated regression scanners only tested authenticated admin blueprints (`/admin/*`, `/api/*`), assuming public blueprint routes were intentionally open.
+**Solution:**
+1. **Authentication Boundary Enforcement (`blueprints/public.py`):**
+   - Wrapped `/manual`, `/manual/<path:filename>`, `/signature`, and `/my-signature` with `@login_required`.
+   - Unauthenticated requests are immediately redirected to `/login` with an absolute return URL parameter.
+2. **Role-Based Access Control (RBAC):**
+   - Enforced role partitioning: Non-executive users (such as cleaning technicians and operators) attempting to access `ACCOUNTING` department or `EXECUTIVE` tier documents are blocked with HTTP 403 Forbidden and logged to `SecurityAuditLogs` (`UNAUTHORIZED_MANUAL_ACCESS`).
+3. **Public Trust Center Separation (`blueprints/public.py`, `templates/trust_center.html`):**
+   - Created `/trust-center` to expose public compliance credentials (ISO 9001 registration, EMR .43 safety rating, $2M general liability, Texas Charter #802920409) without exposing internal technical manuals.
+4. **Catalog Governance (`qms_index.json`):**
+   - Enriched all 227 catalog documents with explicit `access_tier` classifications (`EXECUTIVE`, `AUDITOR`, `ESTIMATOR`, `STAFF`, `PUBLIC`).
+   - Corrected legacy filename mismatch on `HWB-QMS-8.9`.
+5. **Continuous SOC 2 Sentinel (`scripts/check_soc2_data_leakage.py`):**
+   - Deployed automated data leakage scanner verifying unauthenticated redirects, path traversal defense, RBAC role boundaries, and zero secret leakage across 16 public routes.
+   - Wired verification directly into `scripts/yamamoto_bid_test_suite.py` as `test_09_soc2_data_leakage_and_route_isolation`.
+**Preventative & Evolutionary Learning:**
+1. Every new route registered in any blueprint must undergo automated authentication and data classification review before deployment.
+2. Public transparency collateral must always live in a dedicated Trust Center (`/trust-center`), completely separated from internal operational SOPs and technical manuals.
+3. Automated SOC 2 scanners must crawl both public and private blueprints to detect accidental information exposure.
+
+## BUG-114: CWE-285 Authorization Vulnerability: Custom Module Permissions Bypassed via Query Parameter Tampering (?view=...) in Backoffice Operations
+**Detected:** 10/05/2026
+**Status:** **RESOLVED** (10/05/2026)
+**Symptoms:**
+1. A restricted user account (`mrondinella`, User ID: 3, role: `Operator`) configured with access restricted exclusively to `leads: view=true` was able to navigate to and inspect unauthorized backoffice operational modules (`accounts`, `bids`, `institutional_bids`, `workforce`, `marketing`, `monitor`, `dispatch`, `safety`, `it_department`).
+2. When the user edited another user's fine-grained access settings in HR User Management, saved changes were inadvertently overwritten upon container reboot.
+3. The top navigation ribbon continued to display unauthorized section markers in the DOM.
+4. Security test suites produced false-positive passes because previous tests only checked authentication rather than granular Attribute-Based Access Control (ABAC) query-parameter tampering.
+**Root Causes:**
+1. **Controller Layer Authorization Bypass:** In `blueprints/operations.py`, the main route `/admin/operations` checked only that `current_user.is_authenticated` and `current_user.has_role(...)`, but completely omitted checking `current_user.has_permission(module, 'view')` against the requested `?view=` query parameter.
+2. **Container Boot Seeder Overwrite:** In `main_app.py`, container initialization ran `seed_db()`, executing `ON CONFLICT (id) DO UPDATE SET custom_permissions = EXCLUDED.custom_permissions;`. This clobbered live database edits with stale default values from `scripts/seed_data.json` upon every Docker restart.
+3. **Data Type Rigidity in Permission Model:** `User.has_permission()` assumed `custom_permissions[module]` was always a dictionary, triggering runtime errors on users configured with list permissions (e.g., `["view", "edit", "audit"]`).
+4. **Visual Ribbon DOM Exposure:** In `templates/components/backend_nav.html`, navigation elements lacked conditional ABAC checks, exposing restricted module buttons.
+**Solution:**
+1. **Model Layer Hardening (`core/models/user.py`):**
+   - Refactored `User.has_permission(module, action='view')` to defensively support dictionary, list/sequence, and boolean permissions with automated `DEFAULT_ROLE_PERMISSIONS` fallback.
+2. **Controller Layer ABAC View Protection (`blueprints/operations.py`):**
+   - Created `VIEW_AUTHORIZATION_MAP` governing all 14 internal operations views to their respective required permission modules.
+   - Enforced fail-closed access verification on `/admin/operations`: any unauthorized `?view=` request returns HTTP 403 Forbidden and writes forensic `UNAUTHORIZED_VIEW_BLOCKED` events to `SecurityAuditLogs`.
+   - Implemented dynamic default view routing: if no view parameter is supplied, redirects to the user's first authorized module rather than defaulting to `leads`.
+   - Enforced permission checks across `/sales-desk`, `edit_lead`, `add_manual_lead`, and `add_account`.
+3. **DOM Navigation Ribbon Hardening (`templates/components/backend_nav.html`):**
+   - Wrapped navigation tabs (`#tab-leads-container`, `#tab-accounts-container`, `#tab-gcbids-container`, `#tab-instbids-container`, `#tab-programs-container`, `#tab-marketing-btn`, `#tab-workforce-container`, `#tab-dispatch-container`, `#tab-execit-container`) and quick action modals in granular permission checks.
+4. **Database Boot Seeder Protection (`main_app.py` & `scripts/seed_data.json`):**
+   - Replaced overwrite statement with `COALESCE("Users".custom_permissions, EXCLUDED.custom_permissions)` to preserve runtime administrative updates across restarts.
+   - Updated `scripts/seed_data.json` baseline to enforce `leads: view=true` for restricted operator.
+5. **Continuous SOC 2 Sentinel Battery Expansion (`scripts/check_soc2_data_leakage.py`):**
+   - Implemented Check 6 covering DOM tab stripping, 12 unauthorized view tampering probes (all returning HTTP 403 Forbidden), and unrestricted executive access verification.
+   - Total test coverage expanded from 29 to 57 automated security checks (100% pass rate).
+6. **Yamamoto Moto AI Estimator Suite Certification:**
+   - Certified complete test suite (`scripts/yamamoto_bid_test_suite.py`) with 9/9 passing tests (Grade A+ Enterprise Mature).
+**Preventative & Evolutionary Learning:**
+1. Every internal backoffice view accepting dynamic query parameters or state switches must be gated with an explicit server-side authorization mapping (ABAC/RBAC) returning HTTP 403 Forbidden on violation.
+2. Database seed scripts must never unconditionally overwrite operational tables on container boot without `COALESCE` protection for mutable configuration fields.
+3. Automated security sentinels must test both visual DOM rendering (stripping elements) and raw HTTP endpoint tampering (fuzzing query parameters) across multiple user personas.
+
+## BUG-115: Werkzeug Default 403 Forbidden Error Screen & Persistent QMS Manual Navigation Exposure for Restricted User Accounts
+**Detected:** 10/05/2026
+**Status:** **RESOLVED** (10/05/2026)
+**Symptoms:**
+1. When a user account lacking QMS view permissions (such as `mrondinella`, assigned the `Custom` role with only leads permission) navigated to `/manual` or individual SOP files, Flask/Werkzeug returned an unstyled, default browser error screen ("403 Forbidden: You don't have the permission to access the requested resource...").
+2. The QMS Manual button remained visible in the top utility bar (`.top-utility-bar` in `templates/components/mega_bar.html`), the desktop mega-menu Compliance column, and the mobile drawer navigation for restricted authenticated users, creating visual confusion and unnecessary staff support overhead.
+3. No dedicated `@app.errorhandler(403)` existed in `main_app.py`, leaving forbidden state transitions unbranded and lacking clear return-to-safety action buttons.
+**Root Causes:**
+1. **Unconditional Utility Bar Rendering:** In `templates/components/mega_bar.html`, the `.top-utility-bar` rendered `#utility-qms-manual-btn` for any authenticated user without validating `current_user.has_permission('qms', 'view')`.
+2. **Missing Application 403 Error Handler:** Flask lacked an explicit `@app.errorhandler(403)` registration in `main_app.py`, causing Werkzeug's default plain-text exception renderer to intercept `abort(403)` calls.
+**Solution:**
+1. **Poka-Yoke Navigation Gating Across All Layouts (`templates/components/mega_bar.html`, `templates/components/admin_header.html`, `templates/components/backend_nav.html`, `templates/academy_catalog.html`):**
+   - Wrapped `#utility-qms-manual-btn` in `mega_bar.html` (line 37), the Compliance mega-column (line 189), and the mobile drawer SOP link (line 256) behind:
+     `{% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('qms', 'view')) %}`.
+   - Verified complete physical omission of QMS Manual links from the DOM for restricted users.
+2. **Official Branded 403 Error Template (`templates/403.html`):**
+   - Created official HWB 403 Forbidden page adhering to the Everyday Words Standard (8th-grade level) and Clinical Material Depth design standards.
+   - Heading: "Access Restricted".
+   - Clear Message: "You do not have permission to view this section or document. This area is reserved for specific team roles. If you need access to this page for your daily tasks, please contact your administrator or supervisor."
+   - Action Pathways: "Back to Operations Workspace" (`/admin/operations?view=leads`), "Return Home" (`/`), "Log Out" (`/logout`), and direct office contact details.
+3. **Application Error Handler Registration (`main_app.py`):**
+   - Registered `@app.errorhandler(403)` returning `templates/403.html` for browser navigation and structured JSON (`{"error": "Forbidden", ...}`) for API endpoints.
+4. **Automated SOC 2 Sentinel Battery Expansion (`scripts/check_soc2_data_leakage.py`):**
+   - Expanded test battery from 62 to 64 verified checks, adding explicit DOM assertions for `#utility-qms-manual-btn` omission and HTTP 403 payload verification.
+5. **Lead AI Estimator Suite Certification:**
+   - Yamamoto Moto verified all 9 bidding modules and SOC 2 route isolation tests (Exit Code 0, Grade A+ Enterprise Mature).
+**Preventative & Evolutionary Learning:**
+1. Every standard error code (401, 403, 404, 500) must have a dedicated, branded HTML error template with clear, everyday-words user pathways.
+2. Navigation elements must never be conditionally hidden solely via client-side CSS; elements must be strictly omitted from the DOM via Jinja2 server-side ABAC evaluation to prevent user confusion and unnecessary support requests.
+
+
+
 
 

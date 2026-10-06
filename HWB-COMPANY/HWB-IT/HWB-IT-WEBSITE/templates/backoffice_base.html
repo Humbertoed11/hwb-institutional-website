@@ -645,6 +645,7 @@
  } else {
  statusBadge.className = 'bo-status-badge';
  statusText.textContent = ' STATE: ACTIVE';
+ fetch('/heartbeat').catch(() => {});
  }
  } else {
  throw new Error();

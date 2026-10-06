@@ -33,7 +33,7 @@ from core.services.sanitizer import clean_phone, clean_currency, clean_sqft, cle
 from core.services.search import parse_advanced_search
 from core.services.email_service import transmit_email
 from core.security import roles_required, log_security_violation
-from core.constants import FACILITY_TYPES, LEAD_SOURCES, PRIORITY_LEVELS, CORPORATE_INFO
+from core.constants import FACILITY_TYPES, LEAD_SOURCES, PRIORITY_LEVELS, CORPORATE_INFO, MODULE_REGISTRY
 from core.utils import format_to_mdy
 from core.services.bot_defense import generate_form_security_token
 from database.schema_engine import apply_system_migrations
@@ -120,7 +120,7 @@ def load_user(user_id):
             u = cur.fetchone()
             if u:
                 role = u.get('role') or ('Executive' if u.get('username') in ['admin', 'hdominguez'] else 'Operator')
-                return User(u['id'], u['username'], role, u.get('full_name'), u.get('custom_permissions'))
+                return User(u['id'], u['username'], role, u.get('full_name'), u.get('custom_permissions'), email=u.get('email'))
     except Exception as e:
         print(f"[GUARD] load_user failed: {e}", flush=True)
     finally:
@@ -294,7 +294,7 @@ with app.app_context():
                                                     role = EXCLUDED.role,
                                                     status = EXCLUDED.status,
                                                     force_pwd_reset = EXCLUDED.force_pwd_reset,
-                                                    custom_permissions = EXCLUDED.custom_permissions;
+                                                    custom_permissions = COALESCE("Users".custom_permissions, EXCLUDED.custom_permissions);
                                             ''', (
                                                 u.get('id'), u.get('username'), u.get('password_hash'), u.get('full_name'), u.get('email'), u.get('role'),
                                                 u.get('status', 'Active'), u.get('force_pwd_reset', False), u.get('custom_permissions')
@@ -455,7 +455,33 @@ def inject_security_utilities():
         'get_form_security_token': generate_form_security_token
     }
 
+@app.context_processor
+def inject_module_registry():
+    """Injects authoritative single-word module titles and 4-verb action descriptors."""
+    def get_module_meta(view_name):
+        return MODULE_REGISTRY.get(view_name, {
+            "title": (view_name or "Operations").replace("_", " ").title(),
+            "action_phrase": "Manage operations, review records, and maintain standards.",
+            "sop_reference": "HWB-QMS-7.6",
+            "icon": "fas fa-cube"
+        })
+    return {
+        'MODULE_REGISTRY': MODULE_REGISTRY,
+        'get_module_meta': get_module_meta
+    }
+
 # --- Standardized Error Handlers ---
+@app.errorhandler(403)
+def forbidden_error(e):
+    if request.path.startswith('/api/') or request.headers.get('Accept') == 'application/json' or request.is_json:
+        return jsonify({
+            'status': 'error',
+            'error': 'Forbidden',
+            'message': 'Access restricted. You do not have permission to view this resource.',
+            'status_code': 403
+        }), 403
+    return render_template('403.html', error_description=getattr(e, 'description', None)), 403
+
 @app.errorhandler(500)
 def internal_error(error):
     return "The system is currently busy or updating. Please refresh in a moment.", 500

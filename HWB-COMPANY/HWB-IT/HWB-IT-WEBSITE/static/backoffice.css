@@ -181,6 +181,36 @@
     color: var(--slate-900) !important;
 }
 
+/* Ensure outline buttons in dark CTA sections maintain dark background */
+.executive-cta .isc-btn-outline,
+.cta-banner .isc-btn-outline,
+.services-hero.dark-variant .isc-btn-outline {
+    background: transparent !important;
+    border-color: rgba(255,255,255,0.4) !important;
+    color: white !important;
+}
+
+.executive-cta .isc-btn-outline:hover,
+.cta-banner .isc-btn-outline:hover,
+.services-hero.dark-variant .isc-btn-outline:hover {
+    background: rgba(255,255,255,0.15) !important;
+    border-color: rgba(255,255,255,0.7) !important;
+    color: white !important;
+}
+
+.isc-btn-secondary {
+    background: white !important;
+    border: 1px solid var(--slate-300) !important;
+    color: var(--slate-700) !important;
+    font-weight: 600 !important;
+}
+
+.isc-btn-secondary:hover {
+    background: var(--slate-50) !important;
+    border-color: var(--slate-400) !important;
+    color: var(--slate-900) !important;
+}
+
 .isc-btn-primary {
     background: var(--brand) !important;
     color: white !important;

@@ -181,7 +181,7 @@ def generate_sba_waiver_justification_memo(profile: Dict[str, Any]) -> str:
     strictly adhering to 13 CFR § 124.107(b).
     """
     company_name = profile.get('company_name', 'HWB Cleaning Services LLC')
-    owner_name = profile.get('owner_name', 'Humberto Dominguez')
+    owner_name = profile.get('owner_name') or profile.get('officer_name', 'Chief Executive Officer')
     operating_months = profile.get('operating_months', 18)
     capital_reserves = profile.get('capital_reserves', '$150,000+')
 

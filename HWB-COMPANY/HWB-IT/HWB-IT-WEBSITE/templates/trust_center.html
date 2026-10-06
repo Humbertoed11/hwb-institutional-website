@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+
+{% block title %}Institutional Trust Center & Compliance | HWB Cleaning Services LLC{% endblock %}
+
+{% block head %}
+<style>
+    .trust-hero {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        color: #ffffff;
+        padding: 4rem 1.5rem 3rem 1.5rem;
+        text-align: center;
+        border-bottom: 2px solid #2563eb;
+    }
+    .trust-badge-row {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        margin-top: 2rem;
+    }
+    .trust-pill {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        padding: 0.5rem 1rem;
+        border-radius: 9999px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #93c5fd;
+    }
+    .trust-card-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 2rem;
+        max-width: 1200px;
+        margin: -2rem auto 4rem auto;
+        padding: 0 1.5rem;
+        position: relative;
+        z-index: 10;
+    }
+    .trust-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    .trust-card h3 {
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin: 0.75rem 0 0.5rem 0;
+    }
+    .trust-card p {
+        font-size: 0.88rem;
+        color: #475569;
+        line-height: 1.6;
+        margin-bottom: 1.5rem;
+    }
+    .trust-stat-box {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        justify-content: space-around;
+        text-align: center;
+    }
+    .trust-stat-num {
+        font-size: 1.35rem;
+        font-weight: 900;
+        color: #2563eb;
+    }
+    .trust-stat-lbl {
+        font-size: 0.68rem;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    .btn-trust {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        background: #2563eb;
+        color: #ffffff;
+        font-weight: 700;
+        font-size: 0.85rem;
+        padding: 0.75rem 1.25rem;
+        border-radius: 6px;
+        text-decoration: none;
+        transition: all 0.2s;
+        border: 1px solid #1d4ed8;
+    }
+    .btn-trust:hover {
+        background: #1d4ed8;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="trust-hero">
+    <div style="max-width: 800px; margin: 0 auto;">
+        <span style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.15em; color: #60a5fa; margin-bottom: 0.5rem; display: block;">
+            Institutional Compliance &amp; Verification
+        </span>
+        <h1 style="font-size: 2.25rem; font-weight: 900; letter-spacing: -0.03em; margin: 0 0 1rem 0;">
+            HWB Commercial Trust Center
+        </h1>
+        <p style="font-size: 1rem; color: #94a3b8; line-height: 1.6; margin: 0;">
+            Empirical safety certifications, ISO 9001 compliance standards, insurance coverage, and corporate charters for facility directors, general contractors, and public institutions across Texas.
+        </p>
+
+        <div class="trust-badge-row">
+            <span class="trust-pill"><i class="fas fa-check-circle"></i> ISO 9001 Compliant</span>
+            <span class="trust-pill"><i class="fas fa-shield-alt"></i> Commercial EMR: .43</span>
+            <span class="trust-pill"><i class="fas fa-file-contract"></i> $2,000,000 Insurance</span>
+            <span class="trust-pill"><i class="fas fa-id-badge"></i> Texas Charter #802920409</span>
+            <span class="trust-pill"><i class="fas fa-landmark"></i> CAGE: #082830635</span>
+        </div>
+    </div>
+</section>
+
+<section class="trust-card-grid">
+    <!-- Card 1: Safety & OSHA Compliance -->
+    <div class="trust-card">
+        <div>
+            <div style="width: 40px; height: 40px; border-radius: 8px; background: #eff6ff; color: #2563eb; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">
+                <i class="fas fa-hard-hat"></i>
+            </div>
+            <h3>Safety &amp; Risk Mitigation</h3>
+            <p>
+                Our commercial operations enforce zero-defect job safety standards. We maintain full OSHA compliance across crystalline silica dust control, bloodborne pathogen handling, and chemical SDS registries.
+            </p>
+            <div class="trust-stat-box">
+                <div>
+                    <div class="trust-stat-num">.43</div>
+                    <div class="trust-stat-lbl">Experience Mod (EMR)</div>
+                </div>
+                <div>
+                    <div class="trust-stat-num">0.00</div>
+                    <div class="trust-stat-lbl">TRIR Recordables</div>
+                </div>
+                <div>
+                    <div class="trust-stat-num">100%</div>
+                    <div class="trust-stat-lbl">OSHA Trained</div>
+                </div>
+            </div>
+        </div>
+        <a href="/services/commercial-cleaning" class="btn-trust">
+            <i class="fas fa-check-circle"></i> Review Safety Protocols
+        </a>
+    </div>
+
+    <!-- Card 2: Quality & ISO 9001 Standard -->
+    <div class="trust-card">
+        <div>
+            <div style="width: 40px; height: 40px; border-radius: 8px; background: #f0fdf4; color: #16a34a; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">
+                <i class="fas fa-award"></i>
+            </div>
+            <h3>ISO 9001 Quality Framework</h3>
+            <p>
+                Every cleaning scope operates under strict quality planning, digital supervisor inspection checklists, and documented corrective action procedures (CAR). No guesswork; verifiable cleanliness scores.
+            </p>
+            <div class="trust-stat-box">
+                <div>
+                    <div class="trust-stat-num">Clause 8</div>
+                    <div class="trust-stat-lbl">Execution Control</div>
+                </div>
+                <div>
+                    <div class="trust-stat-num">WORM</div>
+                    <div class="trust-stat-lbl">Digital Audit Trail</div>
+                </div>
+                <div>
+                    <div class="trust-stat-num">24h</div>
+                    <div class="trust-stat-lbl">CAPA Resolution</div>
+                </div>
+            </div>
+        </div>
+        <a href="/about" class="btn-trust" style="background: #16a34a; border-color: #15803d;">
+            <i class="fas fa-book"></i> Read Quality Policy
+        </a>
+    </div>
+
+    <!-- Card 3: Commercial Capabilities & Contracting -->
+    <div class="trust-card">
+        <div>
+            <div style="width: 40px; height: 40px; border-radius: 8px; background: #faf5ff; color: #9333ea; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">
+                <i class="fas fa-building"></i>
+            </div>
+            <h3>Commercial Capability Statement</h3>
+            <p>
+                Download our official Texas institutional capability dossier, detailing North Texas coverage, commercial general contractor references, NAICS codes, and bonding capacity.
+            </p>
+            <div class="trust-stat-box">
+                <div>
+                    <div class="trust-stat-num">561720</div>
+                    <div class="trust-stat-lbl">Primary NAICS</div>
+                </div>
+                <div>
+                    <div class="trust-stat-num">$2.0M</div>
+                    <div class="trust-stat-lbl">General Liability</div>
+                </div>
+                <div>
+                    <div class="trust-stat-num">DFW</div>
+                    <div class="trust-stat-lbl">Regional Coverage</div>
+                </div>
+            </div>
+        </div>
+        <a href="/get-quote" class="btn-trust" style="background: #9333ea; border-color: #7e22ce;">
+            <i class="fas fa-calendar-check"></i> Schedule Walkthrough
+        </a>
+    </div>
+</section>
+
+<section style="background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 3rem 1.5rem; text-align: center;">
+    <div style="max-width: 700px; margin: 0 auto;">
+        <h4 style="font-size: 1.1rem; font-weight: 800; color: #0f172a; margin: 0 0 0.5rem 0;">Authorized Backoffice Access</h4>
+        <p style="font-size: 0.85rem; color: #64748b; line-height: 1.6; margin-bottom: 1.5rem;">
+            Company staff, registered estimators, and compliance officers may access internal operational procedures via the secure login portal.
+        </p>
+        <a href="{{ url_for('auth.login') }}" style="display: inline-flex; align-items: center; gap: 0.5rem; background: #0f172a; color: #ffffff; padding: 0.65rem 1.25rem; border-radius: 6px; text-decoration: none; font-weight: 700; font-size: 0.8rem;">
+            <i class="fas fa-lock"></i> Staff Login to Operating Manual
+        </a>
+    </div>
+</section>
+{% endblock %}

@@ -212,8 +212,9 @@
 <div class="workspace-stage">
     <div class="sigma-nav-ribbon">
         <!-- 1. Leads Tab (Salesforce-Tier Split Dropdown) -->
+        {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('leads', 'view')) %}
         <div class="sigma-split-tab {% if request.endpoint == 'admin_operations' and active_view == 'leads' %}active{% endif %}" id="tab-leads-container">
-            <a href="{{ url_for('admin_operations', view='leads') }}" class="sigma-split-main" title="Open Leads Pipeline">
+            <a href="{{ url_for('admin_operations', view='leads') }}" class="sigma-split-main" title="Browse the lead pool, view building details, find decision-makers, and assign accounts to call.">
                 <i class="fas fa-building" style="margin-right: 6px; font-size: 0.75rem;"></i> Leads
             </a>
             <button type="button" class="sigma-split-chevron" onclick="toggleSigmaJump('menu-jump-leads', event)" title="Recent Leads & Quick Views" aria-label="Recent Leads & Quick Views">
@@ -255,106 +256,117 @@
                 </a>
                 <div class="sigma-jump-divider"></div>
                 <div class="sigma-jump-header">
-                    <span>Field Operations</span>
-                    <i class="fas fa-mobile-alt"></i>
+                    <span>Calling Operations</span>
+                    <i class="fas fa-phone-volume"></i>
                 </div>
-                <a href="{{ url_for('sales_desk') }}" class="sigma-jump-item">
-                    <span><i class="fas fa-mobile-alt" style="color: #2563eb;"></i> Field Sales Desk</span>
-                    <span class="sigma-jump-badge" style="background: #eff6ff; color: #1e3a8a;">Mobile CRM</span>
+                <a href="{{ url_for('sales_desk') }}" class="sigma-jump-item" title="Call prospective clients, write call notes, book building walkthroughs, and set calendar appointments.">
+                    <span><i class="fas fa-phone-volume" style="color: #2563eb;"></i> Calling Desk</span>
+                    <span class="sigma-jump-badge" style="background: #eff6ff; color: #1e3a8a;">Calling</span>
                 </a>
+                {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('leads', 'edit')) %}
                 <div class="sigma-jump-divider"></div>
                 <button type="button" onclick="openAddForm('lead')" class="sigma-jump-action">
                     <i class="fas fa-plus-circle" style="margin-right: 0.5rem; font-size: 0.85rem;"></i> + New Lead Entry
                 </button>
+                {% endif %}
             </div>
         </div>
+        {% endif %}
 
-        <!-- 2. Accounts Tab (Salesforce-Tier Split Dropdown) -->
+        <!-- 2. Clients Tab (Salesforce-Tier Split Dropdown) -->
+        {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('accounts', 'view')) %}
         <div class="sigma-split-tab {% if request.endpoint == 'admin_operations' and active_view == 'accounts' %}active{% endif %}" id="tab-accounts-container">
-            <a href="{{ url_for('admin_operations', view='accounts') }}" class="sigma-split-main" title="Open Client Accounts">
-                <i class="fas fa-handshake" style="margin-right: 6px; font-size: 0.75rem;"></i> Accounts
+            <a href="{{ url_for('admin_operations', view='accounts') }}" class="sigma-split-main" title="View active clients, check cleaning schedules, send monthly bills, and read customer notes.">
+                <i class="fas fa-handshake" style="margin-right: 6px; font-size: 0.75rem;"></i> Clients
             </a>
-            <button type="button" class="sigma-split-chevron" onclick="toggleSigmaJump('menu-jump-accounts', event)" title="Recent Accounts & Quick Actions" aria-label="Recent Accounts & Quick Actions">
+            <button type="button" class="sigma-split-chevron" onclick="toggleSigmaJump('menu-jump-accounts', event)" title="Recent Clients & Quick Actions" aria-label="Recent Clients & Quick Actions">
                 <i class="fas fa-chevron-down"></i>
             </button>
             <div id="menu-jump-accounts" class="sigma-jump-menu">
                 <div class="sigma-jump-header">
-                    <span>Recent Accounts</span>
+                    <span>Client Contracts</span>
                     <i class="fas fa-history"></i>
                 </div>
                 <a href="{{ url_for('admin_operations', view='accounts') }}" class="sigma-jump-item">
-                    <span><i class="fas fa-briefcase"></i> Active Service Contracts</span>
+                    <span><i class="fas fa-briefcase"></i> Active Contracts</span>
                     <span class="sigma-jump-badge">Verified</span>
                 </a>
                 <a href="{{ url_for('admin_operations', view='accounts') }}" class="sigma-jump-item">
-                    <span><i class="fas fa-shield-virus" style="color: #ef4444;"></i> Quality Risk Monitor</span>
+                    <span><i class="fas fa-shield-virus" style="color: #ef4444;"></i> Retention Risk Monitor</span>
                     <span class="sigma-jump-badge" style="background:#fee2e2; color:#991b1b;">Audit Req</span>
                 </a>
+                {% if current_user.role in ['Executive', 'Admin'] %}
                 <a href="/portal/bosanna/portal" target="_blank" class="sigma-jump-item">
                     <span><i class="fas fa-landmark" style="color: #063333;"></i> Bosanna Prime Portal</span>
                     <span class="sigma-jump-badge" style="background: #eef7f2; color: #063333; font-weight: 800;">TIPS #260102</span>
                 </a>
+                {% endif %}
+                {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('accounts', 'edit')) %}
                 <div class="sigma-jump-divider"></div>
                 <button type="button" onclick="openAddForm('account')" class="sigma-jump-action">
-                    <i class="fas fa-plus-circle" style="margin-right: 0.5rem; font-size: 0.85rem;"></i> + New Account Entry
+                    <i class="fas fa-plus-circle" style="margin-right: 0.5rem; font-size: 0.85rem;"></i> + New Client Account
                 </button>
+                {% endif %}
             </div>
         </div>
+        {% endif %}
 
-        <!-- Outside Sales Dedicated Fast-Bridge (Only displayed for Sales Rep Role) -->
-        {% if current_user.role == 'Sales' %}
-        <a href="{{ url_for('sales_desk') }}" class="sigma-nav-btn {% if request.endpoint == 'sales_desk' %}active{% endif %}" style="background: #eff6ff; color: #1e3a8a; border-color: #bfdbfe;">
-            <i class="fas fa-mobile-alt" style="color: #2563eb;"></i> Field Sales Desk
+        <!-- Dedicated Fast-Bridge (Only displayed for Sales Rep Role) -->
+        {% if current_user.role == 'Sales' and (current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('sales_desk', 'view'))) %}
+        <a href="{{ url_for('sales_desk') }}" class="sigma-nav-btn {% if request.endpoint == 'sales_desk' %}active{% endif %}" style="background: #eff6ff; color: #1e3a8a; border-color: #bfdbfe;" title="Call prospective clients, write call notes, book building walkthroughs, and set calendar appointments.">
+            <i class="fas fa-phone-volume" style="color: #2563eb;"></i> Calling
         </a>
         {% endif %}
 
         {% if current_user.role != 'Sales' %}
-            <!-- 3. Commercial GC Tab (Split Dropdown: Active Takeoffs + General Contractors Directory) -->
-            {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('bids', 'view')) or not current_user.custom_permissions %}
+            <!-- 3. Commercial Construction Tab (Split Dropdown: Active Construction + General Contractors Directory) -->
+            {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('bids', 'view')) %}
             <div class="sigma-split-tab {% if request.endpoint == 'admin_operations' and active_view in ['construction_bids', 'general_contractors'] %}active{% endif %}" id="tab-gcbids-container">
-                <a href="{{ url_for('admin_operations', view='construction_bids') }}" class="sigma-split-main" title="Active Commercial GC Bids &amp; SigmaEstimator™ Takeoffs">
-                    <i class="fas fa-hard-hat" style="color: #f59e0b; margin-right: 6px; font-size: 0.75rem;"></i> GC Bids
+                <a href="{{ url_for('admin_operations', view='construction_bids') }}" class="sigma-split-main" title="Check building floor plans, measure room sizes, calculate job costs, and create price quotes.">
+                    <i class="fas fa-hard-hat" style="color: #f59e0b; margin-right: 6px; font-size: 0.75rem;"></i> Construction
                 </a>
-                <button type="button" class="sigma-split-chevron" onclick="toggleSigmaJump('menu-jump-gcbids', event)" title="GC Pipeline &amp; Directory Views" aria-label="GC Pipeline &amp; Directory Views">
+                <button type="button" class="sigma-split-chevron" onclick="toggleSigmaJump('menu-jump-gcbids', event)" title="Construction &amp; Contractors Directory" aria-label="Construction &amp; Contractors Directory">
                     <i class="fas fa-chevron-down"></i>
                 </button>
                 <div id="menu-jump-gcbids" class="sigma-jump-menu">
                     <div class="sigma-jump-header">
-                        <span>Commercial Estimating</span>
+                        <span>Commercial Construction</span>
                         <i class="fas fa-calculator"></i>
                     </div>
                     <a href="{{ url_for('admin_operations', view='construction_bids') }}" class="sigma-jump-item">
-                        <span><i class="fas fa-hard-hat" style="color: #f59e0b;"></i> Active GC Bids &amp; Takeoffs</span>
+                        <span><i class="fas fa-hard-hat" style="color: #f59e0b;"></i> Active Construction</span>
                         <span class="sigma-jump-badge">ISSA 612</span>
                     </a>
-                    <a href="{{ url_for('admin_operations', view='general_contractors') }}" class="sigma-jump-item" title="General Contractors Directory &amp; 4-Point Vetting Registry">
-                        <span><i class="fas fa-city" style="color: #0284c7;"></i> General Contractors</span>
+                    <a href="{{ url_for('admin_operations', view='general_contractors') }}" class="sigma-jump-item" title="Find general contractors, save site manager phone numbers, track project questions, and review past bids.">
+                        <span><i class="fas fa-city" style="color: #0284c7;"></i> Contractors</span>
                         <span class="sigma-jump-badge">4-Point Vetted</span>
                     </a>
+                    {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('bids', 'edit')) %}
                     <div class="sigma-jump-divider"></div>
                     <button type="button" onclick="openAddForm('bid')" class="sigma-jump-action">
-                        <i class="fas fa-plus-circle" style="margin-right: 0.5rem; font-size: 0.85rem;"></i> + New GC Bid Entry
+                        <i class="fas fa-plus-circle" style="margin-right: 0.5rem; font-size: 0.85rem;"></i> + New Construction Bid
                     </button>
+                    {% endif %}
                 </div>
             </div>
             {% endif %}
 
-            <!-- 4. Institutional Bids Tab (Split Dropdown: Solicitations Desk + Cooperatives + Charters) -->
-            {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('institutional_bids', 'view')) or not current_user.custom_permissions %}
+            <!-- 4. Institutions Tab (Split Dropdown: Solicitations Desk + Cooperatives + Charters) -->
+            {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('bids', 'view')) %}
             <div class="sigma-split-tab {% if request.endpoint == 'admin_operations' and active_view == 'institutional_bids' %}active{% endif %}" id="tab-instbids-container">
-                <a href="{{ url_for('admin_operations', view='institutional_bids') }}" class="sigma-split-main" title="Public Sector &amp; Purchasing Cooperatives Solicitations Desk">
-                    <i class="fas fa-landmark" style="color: #6366f1; margin-right: 6px; font-size: 0.75rem;"></i> Institutional Bids
+                <a href="{{ url_for('admin_operations', view='institutional_bids') }}" class="sigma-split-main" title="Find city and school cleaning jobs, check pay requirements, track bid paperwork, and submit price proposals.">
+                    <i class="fas fa-landmark" style="color: #6366f1; margin-right: 6px; font-size: 0.75rem;"></i> Institutions
                 </a>
-                <button type="button" class="sigma-split-chevron" onclick="toggleSigmaJump('menu-jump-instbids', event)" title="Cooperatives &amp; Charter Pipeline" aria-label="Cooperatives &amp; Charter Pipeline">
+                <button type="button" class="sigma-split-chevron" onclick="toggleSigmaJump('menu-jump-instbids', event)" title="Institutions &amp; Cooperatives" aria-label="Institutions &amp; Cooperatives">
                     <i class="fas fa-chevron-down"></i>
                 </button>
                 <div id="menu-jump-instbids" class="sigma-jump-menu">
                     <div class="sigma-jump-header">
-                        <span>Public Procurement</span>
+                        <span>Public &amp; Institutional</span>
                         <i class="fas fa-file-contract"></i>
                     </div>
                     <a href="{{ url_for('admin_operations', view='institutional_bids') }}" class="sigma-jump-item">
-                        <span><i class="fas fa-landmark" style="color: #6366f1;"></i> Solicitations Desk</span>
+                        <span><i class="fas fa-landmark" style="color: #6366f1;"></i> Active Institutions</span>
                         <span class="sigma-jump-badge">Statewide</span>
                     </a>
                     <a href="{{ url_for('admin_operations', view='leads', q='Charter') }}" class="sigma-jump-item">
@@ -365,22 +377,26 @@
                         <span><i class="fas fa-certificate" style="color: #f59e0b;"></i> Purchasing Cooperatives (TIPS/BuyBoard)</span>
                         <span class="sigma-jump-badge">7 Co-ops</span>
                     </a>
+                    {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('bids', 'edit')) %}
                     <div class="sigma-jump-divider"></div>
                     <button type="button" onclick="openAddForm('institutional_bid')" class="sigma-jump-action">
-                        <i class="fas fa-plus-circle" style="margin-right: 0.5rem; font-size: 0.85rem;"></i> + New Institutional Bid
+                        <i class="fas fa-plus-circle" style="margin-right: 0.5rem; font-size: 0.85rem;"></i> + New Institution Bid
                     </button>
+                    {% endif %}
+                    {% if current_user.role in ['Executive', 'Admin'] %}
                     <button type="button" onclick="openAddForm('institutional_partner')" class="sigma-jump-action" style="color: #064e3b;">
                         <i class="fas fa-handshake-angle" style="margin-right: 0.5rem; font-size: 0.85rem; color: #059669;"></i> + New Model C Partner
                     </button>
+                    {% endif %}
                 </div>
             </div>
             {% endif %}
 
-            <!-- 5. Government Programs & Certifications Tab (Split Dropdown: SBA 8(a) + Texas HUB + NCTRCA) -->
-            {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('institutional_bids', 'view')) or not current_user.custom_permissions %}
+            <!-- 5. Government Certifications Tab (Split Dropdown: SBA 8(a) + Texas HUB + NCTRCA) -->
+            {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('bids', 'view')) %}
             <div class="sigma-split-tab {% if request.endpoint == 'admin_operations' and active_view == 'programs' %}active{% endif %}" id="tab-programs-container">
-                <a href="{{ url_for('admin_operations', view='programs') }}" class="sigma-split-main" title="SBA 8(a), Texas HUB, NCTRCA Diversity Certifications & Compliance Desk">
-                    <i class="fas fa-stamp" style="color: #0d9488; margin-right: 6px; font-size: 0.75rem;"></i> Gov Programs
+                <a href="{{ url_for('admin_operations', view='programs') }}" class="sigma-split-main" title="Track small business licenses, verify government badges, check program rules, and win special contracts.">
+                    <i class="fas fa-stamp" style="color: #0d9488; margin-right: 6px; font-size: 0.75rem;"></i> Certifications
                 </a>
                 <button type="button" class="sigma-split-chevron" onclick="toggleSigmaJump('menu-jump-programs', event)" title="Certifications & Compliance Programs" aria-label="Certifications & Compliance Programs">
                     <i class="fas fa-chevron-down"></i>
@@ -391,7 +407,7 @@
                         <i class="fas fa-award"></i>
                     </div>
                     <a href="{{ url_for('admin_operations', view='programs') }}" class="sigma-jump-item">
-                        <span><i class="fas fa-stamp" style="color: #0d9488;"></i> All Programs & Status</span>
+                        <span><i class="fas fa-stamp" style="color: #0d9488;"></i> All Certifications</span>
                         <span class="sigma-jump-badge">{{ gov_programs_count or 6 }} Active</span>
                     </a>
                     <a href="{{ url_for('admin_operations', view='programs', q='8(a)') }}" class="sigma-jump-item">
@@ -406,26 +422,28 @@
                         <span><i class="fas fa-building-columns" style="color: #7c3aed;"></i> NCTRCA MBE / SBE</span>
                         <span class="sigma-jump-badge">23.8% Carve-Out</span>
                     </a>
+                    {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('qms', 'view')) %}
                     <div class="sigma-jump-divider"></div>
                     <a href="/manual" class="sigma-jump-action" style="color: #0d9488;">
                         <i class="fas fa-book-open" style="margin-right: 0.5rem; font-size: 0.85rem;"></i> HWB-QMS-8.9 Playbook SOP
                     </a>
+                    {% endif %}
                 </div>
             </div>
             {% endif %}
 
             <!-- 6. Marketing Tab -->
-            {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('marketing', 'view')) or not current_user.custom_permissions %}
-            <a href="{{ url_for('admin_operations', view='marketing') }}" class="sigma-nav-btn {% if request.endpoint == 'admin_operations' and active_view == 'marketing' %}active{% endif %}">
+            {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and (current_user.has_permission('outbox', 'view') or current_user.has_permission('marketing', 'view'))) %}
+            <a href="{{ url_for('admin_operations', view='marketing') }}" id="tab-marketing-btn" class="sigma-nav-btn {% if request.endpoint == 'admin_operations' and active_view == 'marketing' %}active{% endif %}">
                 <i class="fas fa-bullhorn" style="color: #ec4899;"></i> Marketing
             </a>
             {% endif %}
 
-            <!-- 6. Workforce & HR Tab (Split Dropdown: W-2 Roster + ATS + Safety & EHSQ) -->
-            {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and (current_user.has_permission('workforce', 'view') or current_user.has_permission('safety', 'view'))) or not current_user.custom_permissions %}
+            <!-- 6. Workforce Tab (Split Dropdown: W-2 Roster + ATS + Safety) -->
+            {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('workforce', 'view')) %}
             <div class="sigma-split-tab {% if request.endpoint == 'admin_operations' and active_view in ['workforce', 'safety'] %}active{% endif %}" id="tab-workforce-container">
-                <a href="{{ url_for('admin_operations', view='workforce') }}" class="sigma-split-main" title="Internal W-2 Personnel, Applicants, Academy Training &amp; Payroll">
-                    <i class="fas fa-id-card-clip" style="color: #10b981; margin-right: 6px; font-size: 0.75rem;"></i> Workforce &amp; HR
+                <a href="{{ url_for('admin_operations', view='workforce') }}" class="sigma-split-main" title="Manage cleaning crew members, schedule work shifts, track clock-in times, and review finished cleaning jobs.">
+                    <i class="fas fa-id-card-clip" style="color: #10b981; margin-right: 6px; font-size: 0.75rem;"></i> Workforce
                 </a>
                 <button type="button" class="sigma-split-chevron" onclick="toggleSigmaJump('menu-jump-workforce', event)" title="Workforce &amp; Safety Modules" aria-label="Workforce &amp; Safety Modules">
                     <i class="fas fa-chevron-down"></i>
@@ -443,8 +461,8 @@
                         <span><i class="fas fa-user-plus" style="color: #0284c7;"></i> Applicant Tracking (ATS)</span>
                         <span class="sigma-jump-badge">Intake</span>
                     </a>
-                    <a href="{{ url_for('admin_operations', view='safety') }}" class="sigma-jump-item" title="OSHA 1910 Compliance, Incident Logs &amp; Job Hazard Analyses">
-                        <span><i class="fas fa-shield-alt" style="color: #059669;"></i> Safety &amp; EHSQ (OSHA 1910)</span>
+                    <a href="{{ url_for('admin_operations', view='safety') }}" class="sigma-jump-item" title="Log work injuries, check cleaning chemical guides, review safety checklists, and keep workers safe.">
+                        <span><i class="fas fa-shield-alt" style="color: #059669;"></i> Safety &amp; EHSQ</span>
                         <span class="sigma-jump-badge">Zero-Incident</span>
                     </a>
                     <div class="sigma-jump-divider"></div>
@@ -464,11 +482,11 @@
             </div>
             {% endif %}
 
-            <!-- 7. Dispatch & Mobile Split Tab -->
-            {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('monitor', 'view')) or not current_user.custom_permissions %}
+            <!-- 7. Dispatch Tab (Split Dropdown: Live Monitor + Mobile App + Scopes) -->
+            {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('monitor', 'view')) %}
             <div class="sigma-split-tab {% if (request.endpoint == 'admin_operations' and active_view in ['monitor', 'scope']) or request.path == '/mobile' %}active{% endif %}" id="tab-dispatch-container">
-                <a href="{{ url_for('admin_operations', view='monitor') }}" class="sigma-split-main" title="Internal Work Order Dispatch &amp; Shift Execution Monitor">
-                    <i class="fas fa-clipboard-check" style="color: #06b6d4; margin-right: 6px; font-size: 0.75rem;"></i> Dispatch Hub
+                <a href="{{ url_for('admin_operations', view='monitor') }}" class="sigma-split-main" title="Send cleaners to buildings, watch work shifts live, check crew locations, and solve job problems.">
+                    <i class="fas fa-clipboard-check" style="color: #06b6d4; margin-right: 6px; font-size: 0.75rem;"></i> Dispatch
                 </a>
                 <button type="button" class="sigma-split-chevron" onclick="toggleSigmaJump('menu-jump-dispatch', event)" title="Dispatch, Mobile &amp; Field Operations" aria-label="Dispatch, Mobile &amp; Field Operations">
                     <i class="fas fa-chevron-down"></i>
@@ -486,10 +504,11 @@
                         <span><i class="fas fa-mobile-alt" style="color: #10b981;"></i> Technician Mobile App</span>
                         <span class="sigma-jump-badge" style="background:#ecfdf5; color:#065f46; font-weight:800;">PWA / Live</span>
                     </a>
-                    <a href="{{ url_for('admin_operations', view='scope') }}" class="sigma-jump-item" title="Detailed Facility Scope Builder &amp; ISSA 612 Task Matrix">
-                        <span><i class="fas fa-tasks" style="color: #f59e0b;"></i> Scope of Work Builder</span>
+                    <a href="{{ url_for('admin_operations', view='scope') }}" class="sigma-jump-item" title="List building rooms, pick cleaning tasks, figure out crew hours, and build work plans.">
+                        <span><i class="fas fa-tasks" style="color: #f59e0b;"></i> Scopes Matrix</span>
                         <span class="sigma-jump-badge">ISSA 612</span>
                     </a>
+                    {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('monitor', 'edit')) %}
                     <div class="sigma-jump-divider"></div>
                     <div class="sigma-jump-header">
                         <span>Integrity &amp; Quick Dispatch</span>
@@ -498,6 +517,7 @@
                     <button type="button" onclick="openDispatchModal()" class="sigma-jump-action">
                         <i class="fas fa-calendar-plus" style="margin-right: 0.5rem; font-size: 0.85rem;"></i> + Create Shift Dispatch
                     </button>
+                    {% endif %}
                     <a href="/mobile?simulate=true" target="_blank" class="sigma-jump-item" title="Open Mobile Simulator in New Window">
                         <span><i class="fas fa-laptop-code" style="color: #6366f1;"></i> Mobile Engine Simulator</span>
                         <span class="sigma-jump-badge">Preview</span>
@@ -506,13 +526,13 @@
             </div>
             {% endif %}
 
-            <!-- 8. Executive & IT Tab (Split Dropdown: Executive Warchest + IT Command Hub + Lab) -->
+            <!-- 8. Command Tab (Split Dropdown: Command Deck + Systems Hub + Lab) -->
             {% if current_user.role in ['Executive', 'Admin'] %}
             <div class="sigma-split-tab {% if request.endpoint in ['sigma_executive', 'sigmajan_lab'] or (request.endpoint == 'admin_operations' and active_view == 'it_department') %}active{% endif %}" id="tab-execit-container">
-                <a href="{{ url_for('sigma_executive') }}" class="sigma-split-main" title="Executive Command &amp; IT Infrastructure">
-                    <i class="fas fa-crown" style="color: #d97706; margin-right: 6px; font-size: 0.75rem;"></i> Executive &amp; IT
+                <a href="{{ url_for('sigma_executive') }}" class="sigma-split-main" title="Manage team accounts, track performance, review emails, and approve social posts.">
+                    <i class="fas fa-crown" style="color: #d97706; margin-right: 6px; font-size: 0.75rem;"></i> Command
                 </a>
-                <button type="button" class="sigma-split-chevron" onclick="toggleSigmaJump('menu-jump-execit', event)" title="Executive, IT &amp; Lab Modules" aria-label="Executive, IT &amp; Lab Modules">
+                <button type="button" class="sigma-split-chevron" onclick="toggleSigmaJump('menu-jump-execit', event)" title="Command, Systems &amp; Lab Modules" aria-label="Command, Systems &amp; Lab Modules">
                     <i class="fas fa-chevron-down"></i>
                 </button>
                 <div id="menu-jump-execit" class="sigma-jump-menu sigma-jump-menu-right">
@@ -520,13 +540,13 @@
                         <span>Strategic Command</span>
                         <i class="fas fa-sitemap"></i>
                     </div>
-                    <a href="{{ url_for('sigma_executive') }}" class="sigma-jump-item">
-                        <span><i class="fas fa-crown" style="color: #d97706;"></i> Executive Warchest</span>
+                    <a href="{{ url_for('sigma_executive') }}" class="sigma-jump-item" title="Manage team accounts, track performance, review emails, and approve social posts.">
+                        <span><i class="fas fa-crown" style="color: #d97706;"></i> Command Deck</span>
                         <span class="sigma-jump-badge">C-Suite</span>
                     </a>
-                    <a href="{{ url_for('admin_operations', view='it_department') }}" class="sigma-jump-item" title="SigmaFidelity™ IT Command Hub &amp; Parity Center">
-                        <span><i class="fas fa-server" style="color: #6366f1;"></i> IT Command Hub &amp; Parity</span>
-                        <span class="sigma-jump-badge">7-Rack</span>
+                    <a href="{{ url_for('admin_operations', view='it_department') }}" class="sigma-jump-item" title="Check server health, test system speed, block bad web traffic, and keep passwords fresh.">
+                        <span><i class="fas fa-server" style="color: #6366f1;"></i> Systems Hub</span>
+                        <span class="sigma-jump-badge">11-Rack</span>
                     </a>
                     <a href="{{ url_for('sigmajan_lab') }}" class="sigma-jump-item" title="Experimental Sandbox &amp; Algorithm Testing">
                         <span><i class="fas fa-flask" style="color: #8b5cf6;"></i> SigmaJan Lab &amp; Sandbox</span>
@@ -539,25 +559,39 @@
         
         <!-- 5. Instant Create Action Dropdown -->
         <div style="flex-grow: 1; text-align: right; position: relative;">
-            <button onclick="toggleAddMenu()" class="sigma-nav-btn" id="btn-add-main" style="background: var(--brand); color: #ffffff; border-color: var(--brand); font-weight: 800; margin-left: auto;">
+            <button onclick="toggleAddMenu()" class="sigma-nav-btn" id="btn-add-main" style="background: var(--brand); color: #ffffff; border-color: var(--brand); font-weight: 800; margin-left: auto;" title="Quick Create: Add a new lead, client account, or work order">
                 <i class="fas fa-plus"></i> Add New
                 <i class="fas fa-chevron-down" style="font-size: 0.6rem; transition: transform 0.2s;" id="add-arrow"></i>
             </button>
             <div id="add-menu" style="display: none; position: absolute; right: 0; top: calc(100% + 6px); background: #ffffff; border: 1px solid var(--slate-200); border-radius: 8px; box-shadow: 0 14px 30px -4px rgba(15,23,42,0.18); padding: 0.5rem; z-index: 2000; min-width: 220px; text-align: left;">
+                {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('leads', 'edit')) %}
                 <button onclick="openAddForm('lead')" class="isc-dropdown-btn"><i class="fas fa-building" style="margin-right: 0.5rem; color: var(--brand);"></i> New Lead</button>
+                {% endif %}
+                {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('accounts', 'edit')) %}
                 <button onclick="openAddForm('account')" class="isc-dropdown-btn"><i class="fas fa-handshake" style="margin-right: 0.5rem; color: #10b981;"></i> New Account</button>
+                {% endif %}
+                {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('monitor', 'edit')) %}
                 <a href="{{ url_for('admin_operations', view='monitor') }}" class="isc-dropdown-btn" style="text-decoration: none; display: flex; align-items: center; color: #0284c7; font-weight: 700;"><i class="fas fa-calendar-check" style="margin-right: 0.5rem; color: #0284c7;"></i> + New Shift Dispatch</a>
+                {% endif %}
                 {% if current_user.role != 'Sales' %}
+                    {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('bids', 'edit')) %}
                     <button onclick="openAddForm('bid')" class="isc-dropdown-btn" style="color: #b45309; font-weight: 700;"><i class="fas fa-hard-hat" style="margin-right: 0.5rem; color: #f59e0b;"></i> + New GC Bid</button>
                     <button onclick="openAddForm('institutional_bid')" class="isc-dropdown-btn" style="color: #4338ca; font-weight: 700;"><i class="fas fa-landmark" style="margin-right: 0.5rem; color: #6366f1;"></i> + New Institutional Bid</button>
+                    {% endif %}
+                    {% if current_user.role in ['Executive', 'Admin'] %}
                     <button onclick="openAddForm('institutional_partner')" class="isc-dropdown-btn" style="color: #064e3b; font-weight: 700;"><i class="fas fa-handshake-angle" style="margin-right: 0.5rem; color: #059669;"></i> + New Model C Partner</button>
                     <a href="/portal/bosanna/portal" target="_blank" class="isc-dropdown-btn" style="text-decoration: none; display: flex; align-items: center; color: #063333; font-weight: 700;"><i class="fas fa-chalkboard-user" style="margin-right: 0.5rem; color: #063333;"></i> Bosanna Prime Portal</a>
                     <a href="/onboard/bosanna" target="_blank" class="isc-dropdown-btn" style="text-decoration: none; display: flex; align-items: center; color: #059669; font-weight: 700;"><i class="fas fa-user-check" style="margin-right: 0.5rem; color: #059669;"></i> Bosanna Cleaner Intake</a>
+                    {% endif %}
+                    {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('workforce', 'view')) %}
                     <a href="/work-with-us" target="_blank" class="isc-dropdown-btn" style="text-decoration: none; display: flex; align-items: center; color: #059669; font-weight: 700;"><i class="fas fa-user-plus" style="margin-right: 0.5rem; color: #10b981;"></i> Workforce Intake Portal</a>
+                    {% endif %}
+                    {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('qms', 'view')) %}
                     <div style="height: 1px; background: var(--slate-100); margin: 0.35rem 0;"></div>
                     <a href="{{ url_for('manual_index') }}" class="isc-dropdown-btn" style="text-decoration: none; display: block; color: var(--slate-700); font-weight: 700;"><i class="fas fa-book" style="margin-right: 0.5rem; color: var(--brand);"></i> ISO 9001 QMS Manual</a>
                     <a href="/manual/hwb-qms-7.6_backend_architecture.html" class="isc-dropdown-btn" style="text-decoration: none; display: block; color: var(--brand); font-weight: 800;"><i class="fas fa-file-code" style="margin-right: 0.5rem;"></i> 7.6 Backend Architecture</a>
                     <a href="/manual/hwb-qms-7.7_backend_web_system.html" class="isc-dropdown-btn" style="text-decoration: none; display: block; color: var(--brand); font-weight: 800;"><i class="fas fa-network-wired" style="margin-right: 0.5rem;"></i> 7.7 Commercial Takeoff</a>
+                    {% endif %}
                 {% endif %}
             </div>
         </div>

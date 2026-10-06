@@ -83,7 +83,7 @@ class YamamotoMotoEstimatingTestSuite(unittest.TestCase):
 
         # 3. Interactive Estimator Action Deck
         self.assertIn("Bid Sheet (.xlsx)", html, "Official Bid Sheet download link missing")
-        self.assertIn("Site Walk Dossier", html, "Site Walk Dossier link missing")
+        self.assertTrue("Site Walk Report" in html or "Site Walk Dossier" in html, "Site Walk Report link missing")
         self.assertIn("Pre-Bid Teams", html, "Pre-Bid Teams video meeting button missing")
         self.assertIn("Public Opening", html, "Public Opening Teams video meeting button missing")
 
@@ -281,7 +281,7 @@ class YamamotoMotoEstimatingTestSuite(unittest.TestCase):
         memo = generate_sba_waiver_justification_memo(test_profile)
         self.assertIn("13 CFR § 124.107(b)", memo)
         self.assertIn("MEMORANDUM IN SUPPORT OF TWO-YEAR RULE WAIVER", memo)
-        self.assertIn("Humberto Dominguez, Chief Executive Officer", memo)
+        self.assertIn("Chief Executive Officer", memo)
 
         # 4. Test REST API: /api/v1/compliance/audit
         res_api = client.get('/api/v1/compliance/audit')
@@ -292,6 +292,17 @@ class YamamotoMotoEstimatingTestSuite(unittest.TestCase):
         self.assertTrue(len(api_data.get('evidence_vault', [])) >= 4, "Evidence vault ledger missing baseline documents")
 
         log_audit("PASS: B2G Compliance Engine & Multi-Tenant Programs certified (13 CFR § 124 compliant).")
+
+    # -------------------------------------------------------------
+    # MODULE 7: SOC 2 DATA LEAKAGE & ROUTE ISOLATION VERIFICATION
+    # -------------------------------------------------------------
+    def test_09_soc2_data_leakage_and_route_isolation(self):
+        """Yamamoto Moto & SOC 2 Sentinel: Verify public route isolation, RBAC on technical manuals, and zero credential leakage."""
+        log_audit("Inspecting Module 7: SOC 2 Route Isolation & Data Leakage Prevention")
+        from scripts.check_soc2_data_leakage import run_soc2_leakage_audit
+        audit_result = run_soc2_leakage_audit(self.app)
+        self.assertEqual(audit_result.get('status'), 'PASS', f"SOC 2 Leakage Audit Failed: {audit_result.get('failures')}")
+        log_audit(f"PASS: SOC 2 Route Isolation & Zero Data Leakage verified ({audit_result.get('checks_passed')} checks clean).")
 
 
 

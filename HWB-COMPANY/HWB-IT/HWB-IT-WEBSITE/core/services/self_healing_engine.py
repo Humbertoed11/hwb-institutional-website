@@ -571,8 +571,11 @@ def get_web_analytics_telemetry(db_url: Optional[str] = None) -> Dict[str, Any]:
     gsc_token = os.environ.get('GOOGLE_SITE_VERIFICATION') or 'VERIFIED_ACTIVE'
 
     quote_leads_24h = 0
-    phone_taps_24h = 8
+    phone_taps_24h = 0
     calibrations_24h = 0
+    pdf_downloads_24h = 0
+    quote_views_count = 0
+    visitors_count = 0
 
     if target_url:
         try:
@@ -580,7 +583,8 @@ def get_web_analytics_telemetry(db_url: Optional[str] = None) -> Dict[str, Any]:
             with conn.cursor() as cur:
                 cur.execute("""
                     SELECT COUNT(*) FROM "Leads" 
-                    WHERE input_date >= CURRENT_DATE - INTERVAL '1 day';
+                    WHERE (lead_source ILIKE 'Website Quote Form%' OR input_date >= CURRENT_DATE - INTERVAL '1 day')
+                      AND center_name NOT ILIKE '%TEST%';
                 """)
                 row = cur.fetchone()
                 if row:
@@ -588,16 +592,44 @@ def get_web_analytics_telemetry(db_url: Optional[str] = None) -> Dict[str, Any]:
 
                 cur.execute("""
                     SELECT COUNT(*) FROM "Leads" 
-                    WHERE input_date >= CURRENT_DATE - INTERVAL '1 day'
-                    AND (sqf > 0 OR notes ILIKE '%calibration%' OR notes ILIKE '%frequency%');
+                    WHERE lead_source ILIKE 'Website Quote Form%'
+                      AND (sqf > 0 OR notes ILIKE '%calibration%' OR notes ILIKE '%frequency%')
+                      AND center_name NOT ILIKE '%TEST%';
                 """)
                 row_calib = cur.fetchone()
                 if row_calib:
                     calibrations_24h = row_calib[0] if isinstance(row_calib, (tuple, list)) else row_calib.get('count', 0)
+
+                try:
+                    cur.execute("""
+                        SELECT COUNT(*) FROM "ClientBreadcrumbs"
+                        WHERE element_id ILIKE '%tel%' OR (element_tag='a' AND element_text ILIKE '%(%');
+                    """)
+                    row_p = cur.fetchone()
+                    if row_p:
+                        phone_taps_24h = row_p[0]
+
+                    cur.execute("""
+                        SELECT COUNT(*) FROM "ClientBreadcrumbs"
+                        WHERE page_url = '/get-quote';
+                    """)
+                    row_qv = cur.fetchone()
+                    if row_qv:
+                        quote_views_count = row_qv[0]
+
+                    cur.execute("""
+                        SELECT COUNT(*) FROM "ClientBreadcrumbs"
+                        WHERE event_type = 'PAGE_VIEW';
+                    """)
+                    row_pv = cur.fetchone()
+                    if row_pv:
+                        visitors_count = row_pv[0]
+                except Exception:
+                    pass
             conn.close()
         except Exception:
-            quote_leads_24h = 14
-            calibrations_24h = 9
+            quote_leads_24h = 0
+            calibrations_24h = 0
 
     public_surface_count = 22
     instrumented_count = 22
@@ -644,11 +676,11 @@ def get_web_analytics_telemetry(db_url: Optional[str] = None) -> Dict[str, Any]:
             ]
         },
         "conversions_24h": {
-            "quote_leads_24h": max(quote_leads_24h, 14),
-            "calibrations_24h": max(calibrations_24h, 9),
+            "quote_leads_24h": quote_leads_24h,
+            "calibrations_24h": calibrations_24h,
             "phone_taps_24h": phone_taps_24h,
-            "pdf_downloads_24h": 5,
-            "total_conversions_24h": max(quote_leads_24h, 14) + phone_taps_24h + 5
+            "pdf_downloads_24h": pdf_downloads_24h,
+            "total_conversions_24h": quote_leads_24h + phone_taps_24h + pdf_downloads_24h
         },
         "anti_pollution_gate": {
             "status": "ARMED",
@@ -656,13 +688,13 @@ def get_web_analytics_telemetry(db_url: Optional[str] = None) -> Dict[str, Any]:
             "rule": "Staff login session blocks gtag() injection"
         },
         "funnel_velocity": {
-            "stage_1_visitors": 1420,
-            "stage_2_quote_views": 165,
-            "stage_2_pct": 11.6,
-            "stage_3_leads_submitted": max(quote_leads_24h, 19),
-            "stage_3_pct": 11.5,
-            "stage_4_calibrated": max(calibrations_24h, 11),
-            "stage_4_pct": 57.9
+            "stage_1_visitors": max(visitors_count, 1),
+            "stage_2_quote_views": quote_views_count,
+            "stage_2_pct": round((quote_views_count / max(visitors_count, 1)) * 100, 1),
+            "stage_3_leads_submitted": quote_leads_24h,
+            "stage_3_pct": round((quote_leads_24h / max(quote_views_count, 1)) * 100, 1) if quote_views_count else 0.0,
+            "stage_4_calibrated": calibrations_24h,
+            "stage_4_pct": round((calibrations_24h / max(quote_leads_24h, 1)) * 100, 1) if quote_leads_24h else 0.0
         }
     }
 

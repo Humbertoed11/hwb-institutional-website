@@ -127,7 +127,7 @@
         <p>View cleaning standards or start a custom plan today. The team is ready to deliver professional cleaning services.</p>
         <div style="display: flex; gap: 1.5rem; justify-content: center;">
             <a href="{{ url_for('get_quote') }}" class="isc-btn isc-btn-primary" style="height: 52px; padding: 0 3rem; font-weight: 800; border-radius: 50px;">Start a plan</a>
-            <a href="{{ url_for('compliance') }}" class="isc-btn isc-btn-outline" style="height: 52px; padding: 0 3rem; font-weight: 800; border-radius: 50px;">View Standards</a>
+            <a href="{{ url_for('compliance') }}" class="isc-btn isc-btn-outline" style="height: 52px; padding: 0 3rem; font-weight: 800; border-radius: 50px; color: #ffffff !important; border: 1.5px solid rgba(255,255,255,0.4) !important; background: transparent !important;" onmouseover="this.style.background='rgba(255,255,255,0.15)'; this.style.borderColor='rgba(255,255,255,0.7)';" onmouseout="this.style.background='transparent'; this.style.borderColor='rgba(255,255,255,0.4)';">View Standards</a>
         </div>
     </div>
 </section>
@@ -150,7 +150,7 @@
     setTimeout(() => span.innerText = "Syncing Field Ops...", 700);
  };
 
- // Google Analytics 4 (GA4) Service Card Telemetry (Rack 10)
+ // Google Analytics 4 (GA4) Service Card Event Tracking (Rack 10)
  document.querySelectorAll('.service-card').forEach(function(card) {
     card.addEventListener('click', function() {
        const titleEl = this.querySelector('h3');

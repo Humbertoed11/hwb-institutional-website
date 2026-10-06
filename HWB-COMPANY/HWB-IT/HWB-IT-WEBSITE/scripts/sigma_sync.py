@@ -104,9 +104,9 @@ def sync_system_state():
         conn = psycopg2.connect(DB_URL)
         with conn.cursor() as cur:
             cur.execute("""
-                INSERT INTO "SigmaSystemCore" (session_id, state_data)
-                VALUES (%s, %s)
-                ON CONFLICT (session_id) DO UPDATE SET state_data = EXCLUDED.state_data;
+                INSERT INTO "SigmaSystemCore" (session_id, state_data, updated_at)
+                VALUES (%s, %s, CURRENT_TIMESTAMP)
+                ON CONFLICT (session_id) DO UPDATE SET state_data = EXCLUDED.state_data, updated_at = CURRENT_TIMESTAMP;
             """, ("ACTIVE-SESSION", Json(state_json)))
         conn.commit()
         conn.close()
@@ -226,6 +226,16 @@ def sync_problems_to_solve():
     
     try:
         conn = psycopg2.connect(DB_URL)
+        has_vector = False
+        with conn.cursor() as cur:
+            try:
+                cur.execute("SELECT '[1,2,3]'::vector;")
+                conn.commit()
+                has_vector = True
+            except Exception:
+                conn.rollback()
+                has_vector = False
+
         with conn.cursor() as cur:
             for item in parsed:
                 iid = item["issue_id"]
@@ -251,33 +261,62 @@ def sync_problems_to_solve():
                 
                 if row:
                     db_id = row[0]
-                    print(f"[SYNC] Updating mistake log & embedding: {iid}")
-                    cur.execute("""
-                        UPDATE "SigmaKnowledgeScars"
-                        SET description = %s, category = %s, status = %s, impact_level = %s,
-                            root_cause = %s, implemented_fix = %s, preventative_rule = %s,
-                            resolved_at = COALESCE(resolved_at, %s),
-                            embedding = %s,
-                            search_vector = to_tsvector('english', %s)
-                        WHERE id = %s;
-                    """, (
-                        desc_val, item["category"], item["status"], item["impact_level"],
-                        item["root_cause"], item["implemented_fix"], item["preventative_rule"],
-                        resolved_dt, embed_vector, full_text, db_id
-                    ))
+                    if has_vector:
+                        print(f"[SYNC] Updating mistake log & embedding: {iid}")
+                        cur.execute("""
+                            UPDATE "SigmaKnowledgeScars"
+                            SET description = %s, category = %s, status = %s, impact_level = %s,
+                                root_cause = %s, implemented_fix = %s, preventative_rule = %s,
+                                resolved_at = COALESCE(resolved_at, %s),
+                                embedding = %s,
+                                search_vector = to_tsvector('english', %s)
+                            WHERE id = %s;
+                        """, (
+                            desc_val, item["category"], item["status"], item["impact_level"],
+                            item["root_cause"], item["implemented_fix"], item["preventative_rule"],
+                            resolved_dt, embed_vector, full_text, db_id
+                        ))
+                    else:
+                        print(f"[SYNC] Updating mistake log: {iid}")
+                        cur.execute("""
+                            UPDATE "SigmaKnowledgeScars"
+                            SET description = %s, category = %s, status = %s, impact_level = %s,
+                                root_cause = %s, implemented_fix = %s, preventative_rule = %s,
+                                resolved_at = COALESCE(resolved_at, %s),
+                                search_vector = to_tsvector('english', %s)
+                            WHERE id = %s;
+                        """, (
+                            desc_val, item["category"], item["status"], item["impact_level"],
+                            item["root_cause"], item["implemented_fix"], item["preventative_rule"],
+                            resolved_dt, full_text, db_id
+                        ))
                 else:
-                    print(f"[SYNC] Inserting new mistake log & embedding: {iid}")
-                    cur.execute("""
-                        INSERT INTO "SigmaKnowledgeScars" (
-                            description, category, status, impact_level, root_cause,
-                            implemented_fix, preventative_rule, created_at, resolved_at,
-                            embedding, search_vector
-                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, to_tsvector('english', %s));
-                    """, (
-                        desc_val, item["category"], item["status"], item["impact_level"],
-                        item["root_cause"], item["implemented_fix"], item["preventative_rule"],
-                        created_dt or datetime.now(), resolved_dt, embed_vector, full_text
-                    ))
+                    if has_vector:
+                        print(f"[SYNC] Inserting new mistake log & embedding: {iid}")
+                        cur.execute("""
+                            INSERT INTO "SigmaKnowledgeScars" (
+                                description, category, status, impact_level, root_cause,
+                                implemented_fix, preventative_rule, created_at, resolved_at,
+                                embedding, search_vector
+                            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, to_tsvector('english', %s));
+                        """, (
+                            desc_val, item["category"], item["status"], item["impact_level"],
+                            item["root_cause"], item["implemented_fix"], item["preventative_rule"],
+                            created_dt or datetime.now(), resolved_dt, embed_vector, full_text
+                        ))
+                    else:
+                        print(f"[SYNC] Inserting new mistake log: {iid}")
+                        cur.execute("""
+                            INSERT INTO "SigmaKnowledgeScars" (
+                                description, category, status, impact_level, root_cause,
+                                implemented_fix, preventative_rule, created_at, resolved_at,
+                                search_vector
+                            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, to_tsvector('english', %s));
+                        """, (
+                            desc_val, item["category"], item["status"], item["impact_level"],
+                            item["root_cause"], item["implemented_fix"], item["preventative_rule"],
+                            created_dt or datetime.now(), resolved_dt, full_text
+                        ))
         conn.commit()
         conn.close()
     except Exception as e:

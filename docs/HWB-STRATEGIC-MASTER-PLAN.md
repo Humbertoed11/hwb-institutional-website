@@ -124,6 +124,19 @@ flowchart TD
      - Active Booking URL: `https://bookings.cloud.microsoft/book/FacilityWalkthroughquote@NETORGFT3163094.onmicrosoft.com/` (15-min discovery walkthroughs with Humberto Dominguez).
      - Integrated with Poka-Yoke legacy click intercept in `blueprints/telemetry.py` and `PendingOutbox` marketing pipeline.
 
+#### 2.6 Application User Support Technical Manual (Chapters 1–6) [Top Priority Tomorrow 10/06/2026]
+- **Objective:** Create, build, and deploy the comprehensive, role-gated Application User Support Technical Manual to empower team members to operate the web platform with zero training friction and eliminate support phone calls.
+- **Master Chapter Architecture:**
+  - **Chapter 1: Personal Account, Login & Security Settings:** Logging in, session timeouts (30-min auto-logout), password recovery, and personal security hygiene.
+  - **Chapter 2: CRM & Leads Pipeline:** Navigating the lead table, column customizer presets, territory filtering, manual lead intake, and facility specifications.
+  - **Chapter 3: Commercial Bidding, Takeoffs & Public Sector Programs:** Commercial GC pipeline, Yamamoto Moto AI Estimator, area takeoff calculations, ISSA 612 production rates, Dallas Living Wage compliance, and proposal generation.
+  - **Chapter 4: Marketing Campaigns, Daycare Outreach & Email Delivery:** Childcare targeting, automated cadence sequences, Microsoft Graph API delivery, and CAN-SPAM opt-out handling.
+  - **Chapter 5: Field Operations, Dispatch, Workforce & Safety:** Shift dispatching, cleaner W-2 & subcontractor 1099 management, safety standards (HWB-EHS), and inspection logs.
+  - **Chapter 6: IT Command Hub, System Administration & Data Integrity:** 11-Rack monitoring, user permission governance (Custom zero-trust role), database backups, and SOC 2 / ISO 27001 audit controls.
+- **In-App Delivery Architecture:**
+  - Dedicated contextual in-app view or slide-out drawer opening directly to the user's active screen.
+  - Role-filtered visibility: Users only see chapters and sections matching their active role permissions.
+
 ---
 
 ### Phase 3: Field Operations & Standalone Mobile App [2026-03-21 Mandate]
@@ -155,14 +168,13 @@ flowchart TD
 
 ---
 
-### 4.1 Phase 2 Implementation & Automation Planning Table
-
 | Priority | Feature / Module | Target Date | Executive Owner | Unit Cost Floor | Operational Impact | Automation Status |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **P0** | **Corporate Umbrella & Parent Entity Data Architecture** | **Tomorrow (10/04/2026)** | Silas Sync (CRM) & George (Architect) | In-house ($0.00) | Hierarchical multi-unit clustering, corporate parent IDs, and procurement decision routing | **STAGED FOR TOMORROW** |
-| **P0** | **Twilio WebRTC Softphone & Calling Console** | 10/05/2026 | Hunter Vance (Sales) & Silas Sync (CRM) | $0.0180/min + $1.15/mo | 50 calls/hr inside browser; zero manual dialing | Staged |
-| **P1** | **ARCH-006 Frontier 2: Automated Addenda Tracker** | 10/06/2026 | Yamamoto Moto (Lead Estimator) | In-house ($0.00) | Auto-diffing bid specs & deadline drift alerts | Queued |
-| **P1** | **ARCH-006 Frontier 3: Prime Contractor Radar** | 10/08/2026 | George (Systems Architect) | In-house ($0.00) | Harvesting planholder lists & JV teaming proposals | Queued |
+| **P0** | **Application User Support Technical Manual (Chapters 1–6)** | **Tomorrow (10/06/2026)** | George (Architect) & Yamamoto Moto (Estimator) | In-house ($0.00) | End-to-end user manual across all 6 modules (Personal Settings, CRM Leads, Commercial Bidding, Marketing Campaigns, Operations/Safety, IT Command Hub) with in-app slide-out drawer | **STAGED FOR TOMORROW (TOP PRIORITY)** |
+| **P0** | **Corporate Umbrella & Parent Entity Data Architecture** | 10/06/2026 | Silas Sync (CRM) & George (Architect) | In-house ($0.00) | Hierarchical multi-unit clustering, corporate parent IDs, and procurement decision routing | Staged |
+| **P1** | **Twilio WebRTC Softphone & Calling Console** | 10/07/2026 | Hunter Vance (Sales) & Silas Sync (CRM) | $0.0180/min + $1.15/mo | 50 calls/hr inside browser; zero manual dialing | Staged |
+| **P1** | **ARCH-006 Frontier 2: Automated Addenda Tracker** | 10/08/2026 | Yamamoto Moto (Lead Estimator) | In-house ($0.00) | Auto-diffing bid specs & deadline drift alerts | Queued |
+| **P1** | **ARCH-006 Frontier 3: Prime Contractor Radar** | 10/09/2026 | George (Systems Architect) | In-house ($0.00) | Harvesting planholder lists & JV teaming proposals | Queued |
 | **P2** | **Texas Statewide CCL & GIS Sync Daemon** | 10/10/2026 | Silas Sync (VP of CRM) | State Open Data ($0.00) | Statewide expansion across Austin, Houston, DFW | Queued |
 | **P2** | **Standalone Mobile App for Cleaning Techs** | Phase 3 | Engineering & Peter (Recovery) | In-house ($0.00) | Offline-first React Scope of Work engine | Active Branch |
 

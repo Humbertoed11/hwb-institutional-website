@@ -22,7 +22,7 @@
                 </a>
             </div>
         {% elif current_user.is_authenticated %}
-            <!-- Clinical Admin Header Look -->
+            <!-- Clean Admin Header Look -->
             <div style="display: flex; align-items: center; gap: 1rem;">
                 <img src="{{ url_for('static', filename='logo_standard.png') }}" alt="HWB" style="height: 28px;">
                 <span style="font-weight: 900; color: var(--slate-900); font-size: 0.75rem; text-transform: uppercase; border-left: 2px solid var(--slate-100); padding-left: 1rem; letter-spacing: 0.1em;">
@@ -34,9 +34,11 @@
                 </span>
             </div>
             <div style="display: flex; align-items: center; gap: 1.5rem;">
-                <a href="{{ url_for('manual_index') }}" class="isc-btn isc-btn-outline" style="height: 32px; font-size: 0.75rem; font-weight: 700; color: var(--slate-700); border-color: var(--slate-300); display: inline-flex; align-items: center; gap: 0.45rem; padding: 0 0.85rem; border-radius: 6px; text-decoration: none;" title="ISO 9001:2015 Quality Management System Manual">
+                {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('qms', 'view')) %}
+                <a href="{{ url_for('manual_index') }}" id="utility-qms-manual-btn" class="isc-btn isc-btn-outline" style="height: 32px; font-size: 0.75rem; font-weight: 700; color: var(--slate-700); border-color: var(--slate-300); display: inline-flex; align-items: center; gap: 0.45rem; padding: 0 0.85rem; border-radius: 6px; text-decoration: none;" title="ISO 9001:2015 Quality Management System Manual">
                     <i class="fas fa-book" style="color: var(--brand);"></i> QMS Manual
                 </a>
+                {% endif %}
                 <div style="display: flex; flex-direction: column; text-align: right;">
                     <span style="font-size: 0.7rem; font-weight: 800; color: var(--brand); text-transform: uppercase;">{{ current_user.username }}</span>
                     <span style="font-size: 0.65rem; color: var(--slate-400); font-weight: 700;">HWB Authorized Session</span>
@@ -184,6 +186,7 @@
                             {% endif %}
                         </div>
                         <!-- Column 4: Compliance -->
+                        {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('qms', 'view')) %}
                         <div class="mega-column">
                             <div style="font-size: 0.7rem; font-weight: 900; color: var(--hwb-blue); text-transform: uppercase; margin-bottom: 1.5rem; letter-spacing: 0.1em;">Compliance</div>
                             <a href="{{ url_for('manual_index') }}" class="mega-option" style="padding: 1rem 0;">
@@ -191,6 +194,7 @@
                                 <span class="desc">Full ISO 9001 SOP Library.</span>
                             </a>
                         </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -249,7 +253,9 @@
             <a href="{{ url_for('sigma_executive') }}" class="sub-link" onclick="toggleMobileMenu()">Executive Pulse</a>
             <a href="{{ url_for('sigmajan_lab') }}" class="sub-link" onclick="toggleMobileMenu()">The Lab</a>
             {% endif %}
+            {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('qms', 'view')) %}
             <a href="{{ url_for('manual_index') }}" class="sub-link" onclick="toggleMobileMenu()">SOP Manual</a>
+            {% endif %}
             <a href="{{ url_for('logout') }}" class="sub-link" style="color: #ef4444;" onclick="toggleMobileMenu()">Log Out</a>
         {% elif nav_access.is_sales %}
             <div class="mobile-menu-section-label">Outside Sales</div>
@@ -296,7 +302,7 @@
      document.body.style.overflow = isOpening ? 'hidden' : 'auto';
   }
 
-  // Google Analytics 4 (GA4) Navigation & Menu Telemetry (Rack 10)
+  // Google Analytics 4 (GA4) Navigation & Menu Event Tracking (Rack 10)
   document.addEventListener('DOMContentLoaded', function() {
      const navLinks = document.querySelectorAll('.desktop-nav a, #mobile-overlay a');
      navLinks.forEach(function(link) {

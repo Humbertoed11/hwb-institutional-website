@@ -16,8 +16,13 @@ from core.services.database import get_db
 
 
 def extract_client_ip() -> str:
-    """Extracts client IP, respecting proxy forwarding headers."""
+    """Extracts client IP, respecting proxy forwarding headers (Cloudflare, Azure, Reverse Proxies)."""
     if has_request_context():
+        # Cloudflare Anycast Origin Header (Pincer Shield Priority)
+        if request.headers.get('CF-Connecting-IP'):
+            return request.headers['CF-Connecting-IP'].strip()
+        if request.headers.get('X-Real-IP'):
+            return request.headers['X-Real-IP'].strip()
         if request.headers.get('X-Forwarded-For'):
             return request.headers['X-Forwarded-For'].split(',')[0].strip()
         return request.remote_addr or '127.0.0.1'
@@ -195,7 +200,7 @@ def synthesize_audit_event_context(rd: Dict[str, Any]) -> Dict[str, Any]:
         assigned_role = details.get('assigned_role', 'Operator')
         description = f"User account created: '{created_user}' assigned operational role '{assigned_role}'."
         action_taken = "Record Committed: Created new user profile with salted password hash and assigned permissions."
-        action_to_be_taken = "Governance Sign-off: Confirm account creation was authorized by CEO Humberto Dominguez."
+        action_to_be_taken = "Governance Sign-off: Confirm account creation was authorized by Executive Leadership."
         playbook_status = "VERIFY"
 
     elif action == 'USER_ROLE_CHANGED':

@@ -78,8 +78,8 @@ try:
     req = urllib.request.Request('https://www.hwbcleaning.com/api/v1/db-audit', headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
     with urllib.request.urlopen(req, timeout=10) as resp:
         data = json.loads(resp.read().decode('utf-8'))
-        print(f'AZURE PROD DB HOST: {data.get("database_host")}')
-        print(f'AZURE PROD LEADS COUNT: {data.get("total_leads_count")} Total Live Leads')
+        print(f'AZURE PROD DB HOST: {data.get(\"database_host\")}')
+        print(f'AZURE PROD LEADS COUNT: {data.get(\"total_leads_count\")} Total Live Leads')
 except Exception as e:
     print(f'WARNING: Could not reach Live VNet DB audit endpoint: {e}')
 "

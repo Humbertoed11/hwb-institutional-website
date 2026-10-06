@@ -66,7 +66,7 @@
             border-right: 1px solid rgba(255, 255, 255, 0.08);
         }
 
-        /* Top Sticky Telemetry Bar */
+        /* Top Sticky Status Bar */
         .telemetry-header {
             background-color: #0f172a;
             color: #ffffff;
@@ -304,7 +304,7 @@
             border: 1px solid #bfdbfe;
         }
 
-        /* Sequential Task Cards (Poka-Yoke) */
+        /* Sequential Task Cards (Mistake-Proof) */
         .task-card {
             background: #ffffff;
             border: 1px solid var(--border-subtle);
@@ -508,7 +508,7 @@
 <body>
 
     <div class="mobile-shell">
-        <!-- Telemetry Header -->
+        <!-- App Header -->
         <header class="telemetry-header">
             <div class="telemetry-row">
                 <div class="brand-badge">
@@ -522,7 +522,7 @@
             </div>
         </header>
 
-        <!-- GPS Centroid Telemetry Strip -->
+        <!-- GPS Location Strip -->
         <div class="gps-status-strip">
             <div class="gps-status-indicator locked" id="gps-indicator">
                 <i class="fas fa-crosshairs"></i>
@@ -761,7 +761,7 @@
             }
         }
 
-        // Render Sequential Tasks (Poka-Yoke)
+        // Render Sequential Tasks (Mistake-Proof)
         function renderTasks() {
             const rack = document.getElementById('tasks-rack');
             rack.innerHTML = '';

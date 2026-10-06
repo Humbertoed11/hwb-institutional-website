@@ -61,6 +61,29 @@ except ImportError:
 
 
 
+def log_and_abort_abac(module: str, action: str):
+    """Logs forensic security event to SecurityAuditLogs and returns standard HTTP 403."""
+    log_security_event(
+        event_category='AUTHORIZATION',
+        event_action='UNAUTHORIZED_API_MUTATION_BLOCKED',
+        severity='WARNING',
+        status_code=403,
+        details={
+            'module': module,
+            'action': action,
+            'endpoint': request.path,
+            'method': request.method,
+            'username': getattr(current_user, 'username', 'anonymous'),
+            'role': getattr(current_user, 'role', 'None')
+        }
+    )
+    return jsonify({
+        'status': 'error',
+        'error': 'Forbidden',
+        'message': f'Forbidden: You do not have permission to {action} {module}.'
+    }), 403
+
+
 # --- Accounts REST Endpoints ---
 
 @crm_api_bp.route('/api/v1/accounts/<int:id>', methods=['GET', 'PUT', 'PATCH', 'DELETE'])
@@ -70,6 +93,8 @@ def api_account_hub(id):
     try:
         with conn.cursor() as cur:
             if request.method == 'GET':
+                if not current_user.has_permission('accounts', 'view'):
+                    return log_and_abort_abac('accounts', 'view')
                 cur.execute('SELECT * FROM "Customers" WHERE customer_id = %s', (id,))
                 acc = cur.fetchone()
                 cur.execute('SELECT * FROM "Contacts" WHERE account_id = %s', (id,))
@@ -84,6 +109,8 @@ def api_account_hub(id):
                 })
 
             elif request.method in ['PUT', 'PATCH']:
+                if not current_user.has_permission('accounts', 'edit'):
+                    return log_and_abort_abac('accounts', 'edit')
                 data = request.json or {}
                 cur.execute('SELECT * FROM "Customers" WHERE customer_id = %s', (id,))
                 current_acc = cur.fetchone()
@@ -242,6 +269,8 @@ def api_account_hub(id):
                 })
 
             elif request.method == 'DELETE':
+                if not current_user.has_permission('accounts', 'delete'):
+                    return log_and_abort_abac('accounts', 'delete')
                 if current_user.role == 'Sales':
                     return jsonify({'status': 'error', 'message': 'Deleting customer accounts is restricted for Sales personnel.'}), 403
                 cur.execute('DELETE FROM "Customers" WHERE customer_id = %s', (id,))
@@ -267,9 +296,13 @@ def api_batch_account_action():
     try:
         with conn.cursor() as cur:
             if action == 'delete':
+                if not current_user.has_permission('accounts', 'delete'):
+                    return log_and_abort_abac('accounts', 'delete')
                 cur.execute('DELETE FROM "Customers" WHERE customer_id = ANY(%s);', (account_ids,))
                 cur.execute('DELETE FROM "Contacts" WHERE account_id = ANY(%s);', (account_ids,))
             elif action == 'update_status':
+                if not current_user.has_permission('accounts', 'edit'):
+                    return log_and_abort_abac('accounts', 'edit')
                 new_status = params.get('status', 'Active')
                 cur.execute('UPDATE "Customers" SET status = %s WHERE customer_id = ANY(%s);', (new_status, account_ids))
             else:
@@ -287,6 +320,9 @@ def api_batch_account_action():
 @crm_api_bp.route('/api/v1/accounts/export-selected', methods=['POST'])
 @login_required
 def api_export_selected_accounts():
+    if not current_user.has_permission('accounts', 'view'):
+        return log_and_abort_abac('accounts', 'view')
+
     account_ids_raw = request.form.get('account_ids', '[]')
     try:
         account_ids = json.loads(account_ids_raw)
@@ -331,6 +367,8 @@ def api_export_selected_accounts():
 @crm_api_bp.route('/api/v1/accounts/<int:id>/contacts', methods=['POST'])
 @login_required
 def api_account_add_contact(id):
+    if not current_user.has_permission('accounts', 'edit'):
+        return log_and_abort_abac('accounts', 'edit')
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
         with conn.cursor() as cur:
@@ -356,6 +394,8 @@ def api_lead_hub(id):
     try:
         with conn.cursor() as cur:
             if request.method == 'GET':
+                if not current_user.has_permission('leads', 'view'):
+                    return log_and_abort_abac('leads', 'view')
                 cur.execute('SELECT * FROM "Leads" WHERE id = %s', (id,))
                 lead = cur.fetchone()
                 cur.execute('SELECT * FROM "Contacts" WHERE lead_id = %s', (id,))
@@ -381,6 +421,8 @@ def api_lead_hub(id):
                 })
 
             elif request.method in ['PUT', 'PATCH']:
+                if not current_user.has_permission('leads', 'edit'):
+                    return log_and_abort_abac('leads', 'edit')
                 data = request.json or {}
                 cur.execute('SELECT * FROM "Leads" WHERE id = %s', (id,))
                 current_lead = cur.fetchone()
@@ -411,6 +453,20 @@ def api_lead_hub(id):
                 cleaning_model_val = resolve('cleaning_delivery_model', current_lead['cleaning_delivery_model'])
                 acquisition_tier_val = resolve('acquisition_tier', current_lead['acquisition_tier'])
                 ownership_type_val = resolve('ownership_type', current_lead['ownership_type'])
+                website_val = resolve('website', current_lead.get('website'))
+                county_val = resolve('county', current_lead.get('county'))
+                enrollment_val = data.get('student_enrollment') if 'student_enrollment' in data else current_lead.get('student_enrollment')
+                if enrollment_val == '' or enrollment_val is None:
+                    enrollment_val = None
+                else:
+                    try:
+                        enrollment_val = int(enrollment_val)
+                    except (ValueError, TypeError):
+                        enrollment_val = None
+                verification_val = resolve('owner_verification_status', current_lead.get('owner_verification_status'))
+                pref_date_val = resolve('preferred_date', current_lead.get('preferred_date'))
+                pref_time_val = resolve('preferred_time', current_lead.get('preferred_time'))
+                budget_val = resolve('budget_range', current_lead.get('budget_range'))
 
                 owner_id_val = current_lead['owner_id']
                 if 'owner_id' in data:
@@ -431,6 +487,9 @@ def api_lead_hub(id):
                         facility_type = %s, lead_source = %s, service_interest = %s, priority_level = %s, traffic_cycle = %s,
                         capacity = %s, umbrella_name = %s, cleaning_delivery_model = %s,
                         acquisition_tier = %s, ownership_type = %s, owner_id = %s,
+                        website = %s, county = %s, student_enrollment = %s,
+                        owner_verification_status = %s, preferred_date = %s, preferred_time = %s,
+                        budget_range = %s,
                         updated_at = CURRENT_TIMESTAMP
                     WHERE id = %s
                 ''', (resolve('company_name', current_lead['center_name']), 
@@ -452,7 +511,10 @@ def api_lead_hub(id):
                       resolve('priority_level', current_lead['priority_level']), 
                       resolve('traffic_cycle', current_lead['traffic_cycle']), 
                       capacity_val, umbrella_val, cleaning_model_val,
-                      acquisition_tier_val, ownership_type_val, owner_id_val, id))
+                      acquisition_tier_val, ownership_type_val, owner_id_val,
+                      website_val, county_val, enrollment_val,
+                      verification_val, pref_date_val, pref_time_val,
+                      budget_val, id))
 
                 if 'cleaning_delivery_model' in data and (umbrella_val or current_lead['umbrella_name']):
                     eff_umbrella = umbrella_val or current_lead['umbrella_name']
@@ -474,6 +536,8 @@ def api_lead_hub(id):
                 return jsonify({'status': 'success'})
 
             elif request.method == 'DELETE':
+                if not current_user.has_permission('leads', 'delete'):
+                    return log_and_abort_abac('leads', 'delete')
                 if current_user.role == 'Sales':
                     return jsonify({'status': 'error', 'message': 'Deleting lead records is restricted for Sales personnel.'}), 403
                 cur.execute('DELETE FROM "Leads" WHERE id = %s', (id,))
@@ -489,7 +553,9 @@ def api_lead_hub(id):
 @crm_api_bp.route('/api/v1/leads/<int:id>/cadence-save', methods=['POST'])
 @login_required
 def api_lead_cadence_save(id):
-    """Saves live contact corrections, notes, and activity outcomes in a single transaction."""
+    """Saves live contact corrections, notes, walkthrough dates, and activity outcomes in a single transaction."""
+    if not current_user.has_permission('leads', 'edit'):
+        return log_and_abort_abac('leads', 'edit')
     data = request.get_json() or {}
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
@@ -510,9 +576,18 @@ def api_lead_cadence_save(id):
             raw_next_date = data.get('next_action_date')
             next_date = raw_next_date if raw_next_date and str(raw_next_date).strip() != '' else current_lead['next_action_date']
             
+            # Walkthrough specific fields
+            pref_date = data.get('preferred_date') or data.get('walkthrough_date') or current_lead['preferred_date']
+            pref_time = data.get('preferred_time') or data.get('walkthrough_time') or current_lead['preferred_time']
+
             priority = data.get('priority_level') if 'priority_level' in data else current_lead['priority_level']
             note_text = (data.get('note') or '').strip()
             activity_type = data.get('activity_type') or 'Phone Call'
+
+            conductor = (data.get('conductor') or 'Humberto Dominguez').strip()
+            rep_email_raw = data.get('rep_email') or ''
+            rep_email = clean_email(rep_email_raw) or (rep_email_raw.strip() if '@' in rep_email_raw else '')
+            rep_name = (data.get('rep_name') or '').strip()
 
             cur.execute('''
                 UPDATE "Leads" SET 
@@ -522,20 +597,117 @@ def api_lead_cadence_save(id):
                     email = %s,
                     status = %s,
                     next_action_date = %s,
+                    preferred_date = %s,
+                    preferred_time = %s,
                     priority_level = %s,
                     updated_at = CURRENT_TIMESTAMP
                 WHERE id = %s
-            ''', (dm, title, phone, email, status, next_date, priority, id))
+            ''', (dm, title, phone, email, status, next_date, pref_date, pref_time, priority, id))
+
+            calendar_created = False
+            calendar_message = None
+
+            # Schedule on Microsoft Outlook Calendar if requested
+            if data.get('sync_calendar') and pref_date:
+                try:
+                    from core.services.calendar_service import create_calendar_event
+                    t_hour, t_min = 10, 0
+                    if pref_time:
+                        pt = str(pref_time).strip().upper()
+                        try:
+                            if "AM" in pt or "PM" in pt:
+                                parsed_t = dt_cls.strptime(pt, "%I:%M %p").time()
+                            else:
+                                parsed_t = dt_cls.strptime(pt, "%H:%M").time()
+                            t_hour, t_min = parsed_t.hour, parsed_t.minute
+                        except Exception:
+                            t_hour, t_min = 10, 0
+                    
+                    try:
+                        start_dt = dt_cls.strptime(str(pref_date).strip()[:10], "%Y-%m-%d").replace(hour=t_hour, minute=t_min, second=0)
+                        end_dt = start_dt + datetime.timedelta(minutes=45)
+                        start_iso = start_dt.strftime("%Y-%m-%dT%H:%M:%S")
+                        end_iso = end_dt.strftime("%Y-%m-%dT%H:%M:%S")
+
+                        center_name = current_lead['center_name'] or 'Commercial Facility'
+                        address = current_lead['address'] or ''
+                        city = current_lead['city'] or ''
+                        state = current_lead['state'] or 'TX'
+                        zipcode = current_lead['zipcode'] or ''
+                        location_text = f"{address}, {city}, {state} {zipcode}".strip(', ') or "DFW Metroplex"
+                        sqf_val = current_lead['sqf'] or 0
+                        cap_val = current_lead['capacity'] or 0
+
+                        is_rep_conductor = (conductor != 'Humberto Dominguez')
+                        conductor_display = f"{rep_name or 'Local Sales Representative'} (HWB Cleaning Services)" if is_rep_conductor else "Humberto Dominguez (CEO - HWB Cleaning Services)"
+
+                        subject_tag = f" [Conductor: {rep_name or 'Rep'}]" if is_rep_conductor else ""
+                        subject = f"Facility Walkthrough & Scope Assessment - {center_name}{subject_tag}"
+                        
+                        body_html = f"""
+                        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #1e293b; line-height: 1.5;">
+                            <h2 style="color: #0f172a; margin-bottom: 12px; border-bottom: 2px solid #2563eb; padding-bottom: 6px;">Facility Walkthrough & Proposal Assessment</h2>
+                            <p><strong>Facility:</strong> {center_name}</p>
+                            <p><strong>Address:</strong> {location_text}</p>
+                            <p><strong>Host / Director:</strong> {dm or 'Center Director'} ({title or 'Director'})</p>
+                            <p><strong>Direct Phone:</strong> {phone or 'Not listed'}</p>
+                            <p><strong>Email:</strong> {email or 'Not listed'}</p>
+                            <p><strong>Cleanable SF:</strong> {sqf_val:,} SF | <strong>Capacity:</strong> {cap_val} Children</p>
+                            <p><strong>Walkthrough Conductor:</strong> {conductor_display}</p>
+                            {f'<p><strong>Booking Sales Representative:</strong> {rep_name} ({rep_email})</p>' if (rep_email and not is_rep_conductor) else ''}
+                            {f'<div style="background: #f8fafc; border-left: 3px solid #2563eb; padding: 8px 12px; margin: 12px 0;"><strong>Caller Notes:</strong> {note_text}</div>' if note_text else ''}
+                            <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 16px 0;">
+                            <p style="font-size: 12px; color: #64748b;"><em>Standard 10-15 minute walk: measure cleanable square footage, inspect restrooms, carpeted classrooms, entry glass, and custodial supply closet.</em></p>
+                        </div>
+                        """
+
+                        additional_atts = []
+                        if rep_email and '@' in rep_email:
+                            additional_atts.append({
+                                "email": rep_email,
+                                "name": rep_name or "Sales Representative",
+                                "type": "required"
+                            })
+
+                        ok, msg, _ = create_calendar_event(
+                            subject=subject,
+                            start_iso=start_iso,
+                            end_iso=end_iso,
+                            body_html=body_html,
+                            location_text=location_text,
+                            attendee_email=email if (email and '@' in email) else None,
+                            attendee_name=dm,
+                            additional_attendees=additional_atts
+                        )
+                        calendar_created = ok
+                        calendar_message = msg
+                    except Exception as cal_parse_err:
+                        calendar_message = f"Date parsing error: {cal_parse_err}"
+                except Exception as cal_err:
+                    calendar_message = f"Calendar integration error: {cal_err}"
 
             if note_text or activity_type:
-                log_desc = note_text if note_text else f"Call outcome: {activity_type}"
+                cal_suffix = " (Outlook Calendar Event Confirmed)" if calendar_created else ""
+                is_rep_cond = (conductor != 'Humberto Dominguez')
+                rep_tag = f" [Conductor: {rep_name or 'Rep'}]" if is_rep_cond else (f" [Rep: {rep_name or rep_email}]" if rep_email else "")
+                if activity_type == 'Walkthrough Booked' and pref_date:
+                    log_desc = f"🎉 Walkthrough Booked for {pref_date} at {pref_time or '10:00 AM'} with {dm or 'Director'}{rep_tag}. {note_text}{cal_suffix}".strip()
+                else:
+                    log_desc = f"{note_text}{cal_suffix}" if note_text else f"Call outcome: {activity_type}{cal_suffix}"
                 cur.execute('''
                     INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
                     VALUES (%s, 'Lead', %s, %s)
                 ''', (id, activity_type, log_desc))
 
             conn.commit()
-            return jsonify({'status': 'success', 'message': 'Lead cadence recorded successfully.'})
+            return jsonify({
+                'status': 'success', 
+                'message': 'Lead cadence recorded successfully.',
+                'calendar_created': calendar_created,
+                'calendar_message': calendar_message,
+                'preferred_date': pref_date,
+                'preferred_time': pref_time
+            })
     except Exception as e:
         if 'conn' in locals() and conn: conn.rollback()
         return jsonify({'status': 'error', 'message': str(e)}), 500
@@ -549,33 +721,39 @@ def api_batch_lead_action():
     data = request.get_json() or {}
     action = data.get('action')
     lead_ids = data.get('lead_ids', [])
+    recipient_ids = data.get('recipient_ids', [])
     params = data.get('params', {})
 
-    if not lead_ids:
-        return jsonify({'status': 'error', 'message': 'No lead IDs provided'}), 400
+    if not lead_ids and not recipient_ids:
+        return jsonify({'status': 'error', 'message': 'No lead IDs or recipient IDs provided'}), 400
 
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
         with conn.cursor() as cur:
             if action == 'delete':
+                if not current_user.has_permission('leads', 'delete'):
+                    return log_and_abort_abac('leads', 'delete')
                 cur.execute('DELETE FROM "Leads" WHERE id = ANY(%s);', (lead_ids,))
                 cur.execute('DELETE FROM "GlobalActivities" WHERE parent_id = ANY(%s) AND parent_type = %s;', (lead_ids, "Lead"))
-            elif action == 'update_status':
-                new_status = params.get('status', 'NEW')
-                is_dnc_flag = True if new_status == 'Do Not Call (DNC)' else False
-                cur.execute('UPDATE "Leads" SET status = %s, is_dnc = %s, updated_at = CURRENT_DATE WHERE id = ANY(%s);', (new_status, is_dnc_flag, lead_ids))
-            elif action == 'mark_dnc':
-                cur.execute('UPDATE "Leads" SET status = %s, is_dnc = TRUE, updated_at = CURRENT_DATE WHERE id = ANY(%s);', ('Do Not Call (DNC)', lead_ids))
-            elif action == 'assign_owner':
-                raw_owner_id = params.get('owner_id')
-                if raw_owner_id in (None, '', 'null', 'None'):
-                    new_owner_id = None
-                else:
-                    try:
-                        new_owner_id = int(raw_owner_id)
-                    except (ValueError, TypeError):
+            elif action in ['update_status', 'mark_dnc', 'assign_owner', 'dismiss_duplicates', 'auto_merge', 'remove_from_campaign']:
+                if not current_user.has_permission('leads', 'edit'):
+                    return log_and_abort_abac('leads', 'edit')
+                if action == 'update_status':
+                    new_status = params.get('status', 'NEW')
+                    is_dnc_flag = True if new_status == 'Do Not Call (DNC)' else False
+                    cur.execute('UPDATE "Leads" SET status = %s, is_dnc = %s, updated_at = CURRENT_DATE WHERE id = ANY(%s);', (new_status, is_dnc_flag, lead_ids))
+                elif action == 'mark_dnc':
+                    cur.execute('UPDATE "Leads" SET status = %s, is_dnc = TRUE, updated_at = CURRENT_DATE WHERE id = ANY(%s);', ('Do Not Call (DNC)', lead_ids))
+                elif action == 'assign_owner':
+                    raw_owner_id = params.get('owner_id')
+                    if raw_owner_id in (None, '', 'null', 'None'):
                         new_owner_id = None
-                cur.execute('UPDATE "Leads" SET owner_id = %s, updated_at = CURRENT_DATE WHERE id = ANY(%s);', (new_owner_id, lead_ids))
+                    else:
+                        try:
+                            new_owner_id = int(raw_owner_id)
+                        except (ValueError, TypeError):
+                            new_owner_id = None
+                    cur.execute('UPDATE "Leads" SET owner_id = %s, updated_at = CURRENT_DATE WHERE id = ANY(%s);', (new_owner_id, lead_ids))
             elif action == 'dismiss_duplicates':
                 cur.execute('UPDATE "Leads" SET is_duplicate = FALSE, duplicate_group_id = NULL WHERE id = ANY(%s);', (lead_ids,))
             elif action == 'auto_merge':
@@ -591,6 +769,82 @@ def api_batch_lead_action():
                     pri_id = r[1] if isinstance(r, tuple) else r['primary_id']
                     cur.execute('DELETE FROM "Leads" WHERE duplicate_group_id = %s AND id != %s AND id = ANY(%s);', (gid, pri_id, lead_ids))
                     cur.execute('UPDATE "Leads" SET is_duplicate = FALSE, duplicate_group_id = NULL WHERE id = %s;', (pri_id,))
+            elif action == 'remove_from_campaign':
+                resolved_lead_ids = [int(x) for x in lead_ids if x is not None]
+                raw_recip_ids = [int(x) for x in recipient_ids if x is not None]
+
+                target_recips = []
+                if resolved_lead_ids:
+                    cur.execute('''
+                        SELECT id, campaign_id, lead_id
+                        FROM "CampaignRecipients"
+                        WHERE lead_id = ANY(%s);
+                    ''', (resolved_lead_ids,))
+                    target_recips.extend(cur.fetchall())
+
+                if raw_recip_ids:
+                    cur.execute('''
+                        SELECT id, campaign_id, lead_id
+                        FROM "CampaignRecipients"
+                        WHERE id = ANY(%s);
+                    ''', (raw_recip_ids,))
+                    for r in cur.fetchall():
+                        target_recips.append(r)
+                        lid = r[2] if isinstance(r, tuple) else r.get('lead_id')
+                        if lid and lid not in resolved_lead_ids:
+                            resolved_lead_ids.append(lid)
+
+                recip_ids = list(set([r[0] if isinstance(r, tuple) else r.get('id') for r in target_recips]))
+                affected_cids = list(set([r[1] if isinstance(r, tuple) else r.get('campaign_id') for r in target_recips if (r[1] if isinstance(r, tuple) else r.get('campaign_id'))]))
+
+                # 1. Purge or Cancel unsent drafts in PendingOutbox
+                if recip_ids:
+                    cur.execute('''
+                        DELETE FROM "PendingOutbox"
+                        WHERE recipient_id = ANY(%s) 
+                          AND UPPER(status) IN ('PENDING', 'AWAITING_APPROVAL', 'STAGED', 'QUEUED');
+                    ''', (recip_ids,))
+
+                # 2. Delete recipient enrollment records
+                if recip_ids:
+                    cur.execute('''
+                        DELETE FROM "CampaignRecipients"
+                        WHERE id = ANY(%s);
+                    ''', (recip_ids,))
+
+                # 3. Reset lead status back to 'New' (only if currently 'In Campaign')
+                if resolved_lead_ids:
+                    cur.execute('''
+                        UPDATE "Leads"
+                        SET status = 'New', updated_at = CURRENT_TIMESTAMP
+                        WHERE id = ANY(%s) AND status = 'In Campaign';
+                    ''', (resolved_lead_ids,))
+
+                # 4. Recalculate target and staged tallies for all affected campaigns
+                for cid in affected_cids:
+                    cur.execute('''
+                        UPDATE "MarketingCampaigns"
+                        SET total_targets = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s),
+                            staged_count = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s AND status = 'STAGED'),
+                            updated_at = CURRENT_TIMESTAMP
+                        WHERE id = %s;
+                    ''', (cid, cid, cid))
+
+                # 5. Insert permanent ISO 9001 audit record in GlobalActivities
+                user_label = getattr(current_user, 'full_name', None) or getattr(current_user, 'username', 'Operator')
+                for lid in resolved_lead_ids:
+                    cur.execute('''
+                        INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
+                        VALUES (%s, 'Lead', 'Marketing Outreach', %s);
+                    ''', (lid, f"Removed from marketing sequence by {user_label}. Unsent email drafts canceled."))
+
+                conn.commit()
+                count_done = len(resolved_lead_ids) or len(recip_ids)
+                return jsonify({
+                    'status': 'success',
+                    'affected_count': count_done,
+                    'message': f"Removed {count_done} lead(s) from campaign sequences."
+                })
             else:
                 return jsonify({'status': 'error', 'message': f'Unknown action: {action}'}), 400
             
@@ -606,6 +860,8 @@ def api_batch_lead_action():
 @crm_api_bp.route('/api/v1/leads/export-selected', methods=['POST'])
 @login_required
 def api_export_selected_leads():
+    if not current_user.has_permission('leads', 'view'):
+        return log_and_abort_abac('leads', 'view')
     if current_user.role == 'Sales':
         return jsonify({'status': 'error', 'message': 'Exporting lead data is restricted for Sales personnel.'}), 403
 
@@ -653,6 +909,8 @@ def api_export_selected_leads():
 @crm_api_bp.route('/api/v1/leads/<int:id>/promote', methods=['POST'])
 @login_required
 def api_lead_promote(id):
+    if not current_user.has_permission('leads', 'edit'):
+        return log_and_abort_abac('leads', 'edit')
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
         with conn.cursor() as cur:
@@ -698,6 +956,8 @@ def api_lead_promote(id):
 @crm_api_bp.route('/api/v1/leads/<int:id>/contacts', methods=['POST'])
 @login_required
 def api_lead_add_contact(id):
+    if not current_user.has_permission('leads', 'edit'):
+        return log_and_abort_abac('leads', 'edit')
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
         with conn.cursor() as cur:
@@ -773,6 +1033,10 @@ def api_quick_log_activity():
 
     if not parent_id or not note_text:
         return jsonify({'status': 'error', 'message': 'Missing parent ID or note'}), 400
+
+    target_module = 'leads' if parent_type.lower() == 'lead' else 'accounts'
+    if not current_user.has_permission(target_module, 'edit'):
+        return log_and_abort_abac(target_module, 'edit')
 
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
@@ -3042,6 +3306,233 @@ def api_marketing_campaign_create():
         return jsonify({'status': 'error', 'message': str(e)}), 500
     finally:
         if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/marketing/campaign/<int:campaign_id>/toggle-status', methods=['POST'])
+@login_required
+def api_marketing_campaign_toggle_status(campaign_id):
+    """
+    Toggles marketing campaign status between Active and Paused.
+    """
+    db_url = current_app.config.get('DATABASE_URL')
+    conn = None
+    try:
+        conn = get_db(db_url)
+        with conn.cursor() as cur:
+            cur.execute('SELECT id, campaign_code, status FROM "MarketingCampaigns" WHERE id = %s', (campaign_id,))
+            campaign = cur.fetchone()
+            if not campaign:
+                return jsonify({'status': 'error', 'message': 'Campaign not found.'}), 404
+
+            cur_status = campaign.get('status') or 'Active'
+            new_status = 'Paused' if cur_status.strip().lower() == 'active' else 'Active'
+
+            cur.execute('''
+                UPDATE "MarketingCampaigns"
+                SET status = %s, updated_at = CURRENT_TIMESTAMP
+                WHERE id = %s;
+            ''', (new_status, campaign_id))
+            conn.commit()
+
+            return jsonify({
+                'status': 'success',
+                'new_status': new_status,
+                'message': f"Campaign {campaign.get('campaign_code')} is now {new_status}."
+            })
+    except Exception as e:
+        if conn: conn.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/marketing/campaign/<int:campaign_id>/template', methods=['GET'])
+@login_required
+def api_marketing_get_campaign_template(campaign_id):
+    """
+    Retrieves campaign copy templates, sender persona, and authenticated user email.
+    """
+    db_url = current_app.config.get('DATABASE_URL')
+    conn = None
+    try:
+        conn = get_db(db_url)
+        with conn.cursor() as cur:
+            cur.execute('''
+                SELECT id, campaign_code, name, target_sector, target_geo, cadence_type,
+                       sender_persona, status, email_subject_template, email_body_template
+                FROM "MarketingCampaigns"
+                WHERE id = %s;
+            ''', (campaign_id,))
+            campaign = cur.fetchone()
+            if not campaign:
+                return jsonify({'status': 'error', 'message': 'Campaign not found.'}), 404
+
+            user_email = getattr(current_user, 'email', None)
+            if not user_email and hasattr(current_user, 'id'):
+                cur.execute('SELECT email FROM "Users" WHERE id = %s', (current_user.id,))
+                urow = cur.fetchone()
+                if urow and urow['email']:
+                    user_email = urow['email']
+
+            return jsonify({
+                'status': 'success',
+                'campaign': serialize_row(campaign),
+                'current_user_email': user_email or 'info@hwbcleaning.com'
+            })
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/marketing/campaign/<int:campaign_id>/save-template', methods=['POST'])
+@login_required
+def api_marketing_save_campaign_template(campaign_id):
+    """
+    Saves campaign subject and body copy, with optional mass-recalibration of queued drafts.
+    """
+    data = request.get_json() or request.form
+    subject_tmpl = (data.get('email_subject_template') or '').strip()
+    body_tmpl = (data.get('email_body_template') or '').strip()
+    recalibrate_outbox = bool(data.get('recalibrate_outbox', False))
+
+    if not subject_tmpl or not body_tmpl:
+        return jsonify({'status': 'error', 'message': 'Both Subject Line and Body copy are required.'}), 400
+
+    db_url = current_app.config.get('DATABASE_URL')
+    conn = None
+    try:
+        conn = get_db(db_url)
+        with conn.cursor() as cur:
+            cur.execute('SELECT id, campaign_code, name FROM "MarketingCampaigns" WHERE id = %s', (campaign_id,))
+            campaign = cur.fetchone()
+            if not campaign:
+                return jsonify({'status': 'error', 'message': 'Campaign not found.'}), 404
+
+            cur.execute('''
+                UPDATE "MarketingCampaigns"
+                SET email_subject_template = %s, email_body_template = %s, updated_at = CURRENT_TIMESTAMP
+                WHERE id = %s;
+            ''', (subject_tmpl, body_tmpl, campaign_id))
+
+            recalibrated_count = 0
+            if recalibrate_outbox:
+                cur.execute('''
+                    SELECT po.id, po.recipient_id, po.tracking_token,
+                           cr.recipient_email, cr.recipient_name, cr.facility_name, cr.city, cr.county, cr.capacity, cr.sqf,
+                           l.director, l.center_name
+                    FROM "PendingOutbox" po
+                    LEFT JOIN "CampaignRecipients" cr ON po.recipient_id = cr.id OR po.tracking_token = cr.tracking_token
+                    LEFT JOIN "Leads" l ON cr.lead_id = l.id
+                    WHERE po.campaign_id = %s AND UPPER(po.status) = 'PENDING';
+                ''', (campaign_id,))
+                pending_drafts = cur.fetchall()
+
+                for draft in pending_drafts:
+                    recip_dict = {
+                        'recipient_name': draft.get('recipient_name') or draft.get('director') or '',
+                        'recipient_email': draft.get('recipient_email') or '',
+                        'facility_name': draft.get('facility_name') or draft.get('center_name') or 'your facility',
+                        'city': draft.get('city') or 'Texas',
+                        'county': draft.get('county') or 'Texas',
+                        'capacity': draft.get('capacity'),
+                        'sqf': draft.get('sqf')
+                    }
+                    tok = draft.get('tracking_token')
+                    new_subj = replace_email_tokens(subject_tmpl, recip_dict, tok)
+                    new_body_rendered = replace_email_tokens(body_tmpl, recip_dict, tok)
+                    new_letterhead = format_marketing_letterhead(new_body_rendered, tok)
+
+                    cur.execute('''
+                        UPDATE "PendingOutbox"
+                        SET subject = %s, body = %s
+                        WHERE id = %s;
+                    ''', (new_subj, new_letterhead, draft['id']))
+                    recalibrated_count += 1
+
+                if recalibrated_count > 0:
+                    cur.execute('''
+                        INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
+                        VALUES (%s, 'Campaign', 'Copy Recalibration', %s);
+                    ''', (campaign_id, f"Campaign '{campaign['campaign_code']}' copy updated and mass-applied across {recalibrated_count} queued outbox drafts."))
+
+            conn.commit()
+            msg = f"Campaign {campaign.get('campaign_code')} master copy saved."
+            if recalibrate_outbox:
+                msg += f" Successfully recalibrated {recalibrated_count} queued outbox drafts."
+
+            return jsonify({
+                'status': 'success',
+                'campaign_id': campaign_id,
+                'recalibrated_count': recalibrated_count,
+                'message': msg
+            })
+    except Exception as e:
+        if conn: conn.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/marketing/campaign/<int:campaign_id>/test-send', methods=['POST'])
+@login_required
+def api_marketing_test_send_proof(campaign_id):
+    """
+    Sends an immediate live test proof via Microsoft Graph API to whoever is logged in (or specified).
+    """
+    data = request.get_json() or request.form
+    target_email = (data.get('recipient_email') or '').strip()
+    subject_tmpl = (data.get('email_subject_template') or '').strip()
+    body_tmpl = (data.get('email_body_template') or '').strip()
+
+    if not target_email:
+        target_email = getattr(current_user, 'email', None)
+
+    if not target_email:
+        db_url = current_app.config.get('DATABASE_URL')
+        try:
+            with get_db(db_url).cursor() as cur:
+                cur.execute('SELECT email FROM "Users" WHERE id = %s', (current_user.id,))
+                urow = cur.fetchone()
+                if urow and urow['email']:
+                    target_email = urow['email']
+        except Exception:
+            pass
+
+    if not target_email:
+        target_email = 'hdominguez@hwbcleaning.com'
+
+    if not subject_tmpl or not body_tmpl:
+        return jsonify({'status': 'error', 'message': 'Subject and Body copy required to send test proof.'}), 400
+
+    test_token = f"TEST-{uuid.uuid4().hex[:8]}"
+    sample_recip = {
+        'recipient_name': getattr(current_user, 'full_name', 'Operations Director'),
+        'recipient_email': target_email,
+        'facility_name': 'Commercial Facility (Proof Sample)',
+        'city': 'McKinney',
+        'county': 'Collin',
+        'capacity': 150,
+        'sqf': 14500
+    }
+
+    rendered_subject = f"[TEST PROOF] " + replace_email_tokens(subject_tmpl, sample_recip, test_token)
+    rendered_body = replace_email_tokens(body_tmpl, sample_recip, test_token)
+    full_letterhead = format_marketing_letterhead(rendered_body, test_token)
+
+    ok, reason = transmit_email(target_email, rendered_subject, full_letterhead)
+    if ok:
+        return jsonify({
+            'status': 'success',
+            'recipient': target_email,
+            'message': f"Test proof successfully delivered to {target_email} via Microsoft Graph API."
+        })
+    else:
+        return jsonify({
+            'status': 'error',
+            'recipient': target_email,
+            'message': f"Test send failed: {reason}"
+        }), 502
 
 
 @crm_api_bp.route('/api/v1/marketing/campaign/<int:campaign_id>/generate-drafts', methods=['POST'])

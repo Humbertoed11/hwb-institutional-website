@@ -19,7 +19,7 @@ fi
 ACR_URL="hwbprodacr.azurecr.io"
 CURRENT_HASH=$(git rev-parse --short HEAD)
 CURRENT_DATE=$(date +%Y-%m-%d)
-IMAGE_TAG="v5.2-$CURRENT_DATE-$CURRENT_HASH"
+IMAGE_TAG="v5.3-$CURRENT_DATE-$CURRENT_HASH"
 FULL_IMAGE="$ACR_URL/sigmafidelity-web:$IMAGE_TAG"
 
 echo "--- SigmaFidelity: Starting Zero-Touch Production Deploy (Tag: $IMAGE_TAG) ---"

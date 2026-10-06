@@ -2,7 +2,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-9.6</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">4.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">4.1.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">ISO/IEC 27001:2022 &amp; SOC 2 Type II</span></div>
     </div>
@@ -26,7 +26,7 @@
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>Version</strong></td>
-                    <td style="text-align: left;">4.0.0</td>
+                    <td style="text-align: left;">4.1.0</td>
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>Status</strong></td>
@@ -42,7 +42,7 @@
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>Effective Date</strong></td>
-                    <td style="text-align: left;">10/01/2026</td>
+                    <td style="text-align: left;">10/05/2026</td>
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>Regulatory Standards</strong></td>
@@ -119,12 +119,23 @@
             </tbody>
         </table>
 
+        <h3 id="35-abac-and-access-governance">3.5 Attribute-Based Access Control (ABAC), Zero-Baseline Roles &amp; QMS Isolation (SOC 2 Type II CWE-285 Hardening)</h3>
+        <p>To eliminate authorization vulnerabilities (CWE-285) and ensure strict least-privilege access across operational and administrative surfaces, the SigmaFidelity™ platform enforces granular view isolation and zero-baseline role governance:</p>
+        <ol>
+            <li><strong>Controller-Level ABAC View Isolation (<code>VIEW_AUTHORIZATION_MAP</code>):</strong> All 14 operations hub views (<code>leads</code>, <code>accounts</code>, <code>construction_bids</code>, <code>institutional_bids</code>, <code>general_contractors</code>, <code>programs</code>, <code>marketing</code>, <code>workforce</code>, <code>safety</code>, <code>monitor</code>, <code>dispatch</code>, <code>scope</code>, <code>it_department</code>, <code>it_telemetry</code>) are governed by server-side permission checks. Tampering with URL query parameters (e.g., <code>?view=construction_bids</code>) by unauthorized personnel triggers an immediate <strong>HTTP 403 Forbidden</strong> and records a <code>UNAUTHORIZED_VIEW_BLOCKED</code> audit event in <code>SecurityAuditLogs</code>.</li>
+            <li><strong>Zero-Baseline "Custom" Role Architecture:</strong> Users assigned the <code>Custom</code> role possess an empty baseline (<code>'Custom': {}</code> in <code>DEFAULT_ROLE_PERMISSIONS</code>). Custom users inherit zero default rights, evaluating access strictly through verified records in <code>custom_permissions</code>. If a permission is unassigned or false, access evaluates strictly to <code>False</code>.</li>
+            <li><strong>Confidential Operating Manual (QMS) ABAC Security Gate:</strong> The company operating manual (<code>/manual</code> and <code>/manual/&lt;path:filename&gt;</code>) contains proprietary workflows, internal accounting practices (<code>HWB-ACC-001</code>), and infrastructure configurations. Non-executive personnel must possess explicit <code>qms: view=true</code> permission. Unauthorized attempts are rejected with <strong>HTTP 403 Forbidden</strong>. Web handlers must never swallow <code>HTTPException(403)</code> within broad exception catch blocks.</li>
+            <li><strong>Physical DOM Boundary Enforcement:</strong> Unauthorized navigation tabs, creation buttons, and the top-bar <code>#header-qms-manual-btn</code> are conditionally stripped from the HTML DOM before delivery to the browser, eliminating visual leakage.</li>
+            <li><strong>Automated SOC 2 Continuous Sentinel:</strong> Continuous test suites (<code>scripts/check_soc2_data_leakage.py</code>) execute 62 automated checks validating zero unauthenticated data leaks, role isolation, and path traversal defense prior to every deployment.</li>
+        </ol>
+
         <h2>4.0 Verification &amp; Compliance Audit</h2>
         <ul>
             <li><strong>Automated Regression Testing:</strong> <code>scripts/tessa_regression_suite.py</code> verifies RBAC gates, PostgreSQL connection pool latency, and security audit integrity.</li>
             <li><strong>Cryptographic Verification:</strong> Direct SQL queries confirm that all SSN and banking columns contain exclusively AES-256 ciphertext blobs with zero plaintext leaks.</li>
             <li><strong>Air-Gap Verification:</strong> Automated browser tests confirm third-party script tags do not exist in the DOM on <code>/admin/*</code> and <code>/login</code> routes.</li>
             <li><strong>WORM Immutability Verification:</strong> Direct SQL tests confirm that attempts to mutate <code>SecurityAuditLogs</code> are rejected with PostgreSQL exception <code>SECURITY AUDIT LOG IS IMMUTABLE (WORM)</code>.</li>
+            <li><strong>Granular Authorization Verification:</strong> <code>scripts/check_soc2_data_leakage.py</code> verifies that restricted Custom users are blocked (HTTP 403) from all unassigned views and direct QMS manual routes.</li>
         </ul>
 
         <h2>5.0 Notes and Cautions</h2>
@@ -145,6 +156,12 @@
                 </tr>
             </thead>
             <tbody>
+                <tr>
+                    <td style="text-align: left;">4.1.0</td>
+                    <td style="text-align: left;">10/05/2026</td>
+                    <td style="text-align: left;">George (Systems Architect)</td>
+                    <td style="text-align: left;">Major security upgrade: Codified Section 3.5 documenting Attribute-Based Access Control (ABAC), CWE-285 Mitigation, VIEW_AUTHORIZATION_MAP across 14 operational views, dedicated zero-trust "Custom" role architecture, confidential operating manual (QMS) ABAC gates, DOM navigation pruning, and 62-check automated SOC 2 sentinel. Approved by Humberto Dominguez, CEO.</td>
+                </tr>
                 <tr>
                     <td style="text-align: left;">4.0.0</td>
                     <td style="text-align: left;">10/01/2026</td>

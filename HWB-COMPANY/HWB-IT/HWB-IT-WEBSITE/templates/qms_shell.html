@@ -94,7 +94,7 @@
             </a>
         </div>
         <div>
-            <button id="qms-pin-toggle" class="qms-nav-btn" style="height: 32px; padding: 0 0.75rem; font-size: 0.75rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.35rem; cursor: pointer; background: #fff; border: 1px solid #cbd5e1; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+            <button id="qms-pin-toggle" class="qms-nav-btn" style="height: 32px; padding: 0 0.75rem; font-size: 0.75rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.35rem; cursor: pointer; background: #fff; border: 1px solid #cbd5e1; color: #334155; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
                 <svg id="qms-pin-star" style="width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 2; transition: all 0.2s;" viewBox="0 0 24 24">
                     <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                 </svg>
@@ -170,6 +170,7 @@
                     pinStar.style.stroke = '#ca8a04';
                     pinText.textContent = 'Pinned in Active Queue';
                     pinText.style.color = '#ca8a04';
+                    pinBtn.style.color = '#ca8a04';
                     pinBtn.style.background = '#fef8e6';
                     pinBtn.style.borderColor = '#fde68a';
                 } else {
@@ -177,6 +178,7 @@
                     pinStar.style.stroke = 'currentColor';
                     pinText.textContent = 'Pin to Active Queue';
                     pinText.style.color = '#334155';
+                    pinBtn.style.color = '#334155';
                     pinBtn.style.background = '#fff';
                     pinBtn.style.borderColor = '#cbd5e1';
                 }

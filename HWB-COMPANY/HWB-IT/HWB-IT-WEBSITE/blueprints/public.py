@@ -10,12 +10,15 @@ import json
 import requests
 from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, current_app, send_from_directory, jsonify
+from werkzeug.exceptions import HTTPException
+from flask_login import login_required, current_user
 from core.services.database import get_db
 from core.services.sanitizer import clean_phone, clean_email
 from core.services.rate_limiter import rate_limit
 from core.services.bot_defense import evaluate_bot_defense
 from core.services.task_queue import task_queue
 from core.services.notification_service import dispatch_lead_notifications
+from core.services.security_logger import log_security_event, extract_client_ip
 
 public_bp = Blueprint('public', __name__)
 
@@ -348,45 +351,152 @@ def capability_statement():
 
 @public_bp.route('/signature', endpoint='signature_vault')
 @public_bp.route('/my-signature')
+@login_required
 def signature_vault():
-    """Official 2026 Executive Email Signature portal for Outlook & mobile clients."""
+    """Official 2026 Executive Email Signature portal for Outlook & mobile clients (SOC 2 Protected)."""
     return render_template('executive_signature.html')
 
 @public_bp.route('/manual', endpoint='manual_index')
+@login_required
 def manual_index():
+    """
+    Controlled Operating Manual Index (SOC 2 & ISO 9001 Protected).
+    Enforces authentication and role-based department visibility.
+    """
+    user_role = getattr(current_user, 'role', 'Operator')
+    user_name = getattr(current_user, 'username', '')
+    is_exec = user_role in ['Executive', 'Admin'] or user_name == 'admin'
+
+    # Granular ABAC: Non-executives must have explicit qms view permission
+    if not is_exec and hasattr(current_user, 'has_permission') and not current_user.has_permission('qms', 'view'):
+        log_security_event(
+            event_category='ACCESS_CONTROL',
+            event_action='UNAUTHORIZED_MANUAL_ACCESS',
+            severity='WARNING',
+            user_id=getattr(current_user, 'id', None),
+            username=user_name,
+            endpoint=request.path,
+            status_code=403,
+            details={'role': user_role, 'reason': 'qms_view_permission_denied'}
+        )
+        abort(403)
+
     try:
         index_path = os.path.join(current_app.root_path, 'qms_index.json')
         if not os.path.exists(index_path):
             index_path = 'qms_index.json'
         with open(index_path, 'r', encoding='utf-8') as f:
             sops = json.load(f)
+
         sops_by_dept = {}
         today_date = datetime.now().strftime("%m-%d-%Y")
         today_sops = []
+
         for sop in sops:
             dept = sop['dept']
+            tier = sop.get('access_tier', 'STAFF')
+
+            # Role Partitioning: Non-executives cannot view Executive Tier or Accounting docs
+            if (dept == 'ACCOUNTING' or tier == 'EXECUTIVE') and not is_exec:
+                continue
+
             if dept not in sops_by_dept:
                 sops_by_dept[dept] = []
             sops_by_dept[dept].append(sop)
             if sop.get('date') == today_date:
                 today_sops.append(sop)
+
         for dept in sops_by_dept:
             sops_by_dept[dept].sort(key=lambda x: x.get('title', '').lower())
+
         return render_template('qms_manual_index.html', sops_by_dept=sops_by_dept, today_sops=today_sops)
+    except HTTPException:
+        raise
     except Exception as e:
         return f"QMS Index Error: {e}"
 
+
 @public_bp.route('/manual/<path:filename>', endpoint='view_sop')
+@login_required
 def view_sop(filename):
+    """
+    Controlled Document Reader (SOC 2 & ISO 9001 Protected).
+    Enforces authentication, single-origin containment, and role-based authorization.
+    """
+    user_role = getattr(current_user, 'role', 'Operator')
+    user_name = getattr(current_user, 'username', '')
+    is_exec = user_role in ['Executive', 'Admin'] or user_name == 'admin'
+
+    # Granular ABAC: Non-executives must have explicit qms view permission
+    if not is_exec and hasattr(current_user, 'has_permission') and not current_user.has_permission('qms', 'view'):
+        log_security_event(
+            event_category='ACCESS_CONTROL',
+            event_action='UNAUTHORIZED_MANUAL_ACCESS',
+            severity='WARNING',
+            user_id=getattr(current_user, 'id', None),
+            username=user_name,
+            endpoint=request.path,
+            status_code=403,
+            details={'attempted_file': filename, 'role': user_role, 'reason': 'qms_view_permission_denied'}
+        )
+        abort(403)
+
+    # Security Guardrail: Prevent directory traversal
+    if '..' in filename or filename.startswith('/'):
+        log_security_event(
+            event_category='ACCESS_CONTROL',
+            event_action='PATH_TRAVERSAL_ATTEMPT',
+            severity='WARNING',
+            user_id=getattr(current_user, 'id', None),
+            username=user_name,
+            endpoint=request.path,
+            status_code=400,
+            details={'attempted_file': filename}
+        )
+        abort(400)
+
+    # Check document classification in qms_index.json
+    index_path = os.path.join(current_app.root_path, 'qms_index.json')
+    if not os.path.exists(index_path):
+        index_path = 'qms_index.json'
+    
+    doc_entry = None
+    try:
+        with open(index_path, 'r', encoding='utf-8') as f:
+            sops = json.load(f)
+            for s in sops:
+                if s.get('file', '').lower() == filename.lower():
+                    doc_entry = s
+                    break
+    except Exception:
+        pass
+
+    if doc_entry:
+        dept = doc_entry.get('dept', '')
+        tier = doc_entry.get('access_tier', 'STAFF')
+        if (dept == 'ACCOUNTING' or tier == 'EXECUTIVE') and not is_exec:
+            log_security_event(
+                event_category='ACCESS_CONTROL',
+                event_action='UNAUTHORIZED_MANUAL_ACCESS',
+                severity='WARNING',
+                user_id=getattr(current_user, 'id', None),
+                username=user_name,
+                ip_address=extract_client_ip(),
+                endpoint=request.path,
+                status_code=403,
+                details={'attempted_file': filename, 'document_id': doc_entry.get('id'), 'required_tier': 'EXECUTIVE'}
+            )
+            abort(403)
+
     try:
         content = None
-        # 1. Direct local filesystem read (Azure single-container production & high-velocity local access)
+        # 1. Direct local filesystem read
         local_qms_path = os.path.join(current_app.root_path, 'static', 'qms', filename)
         if os.path.exists(local_qms_path):
             with open(local_qms_path, 'r', encoding='utf-8', errors='replace') as f:
                 content = f.read()
         else:
-            # 2. Network microservice fallback (Docker Compose multi-container environment)
+            # 2. Network microservice fallback
             try:
                 response = requests.get(f"http://compliance/qms/{filename}", timeout=2)
                 if response.status_code == 200:
@@ -399,13 +509,13 @@ def view_sop(filename):
 
         sops_by_dept = {}
         try:
-            index_path = os.path.join(current_app.root_path, 'qms_index.json')
-            if not os.path.exists(index_path):
-                index_path = 'qms_index.json'
             with open(index_path, 'r', encoding='utf-8') as f:
                 sops = json.load(f)
             for sop in sops:
                 dept = sop['dept']
+                tier = sop.get('access_tier', 'STAFF')
+                if (dept == 'ACCOUNTING' or tier == 'EXECUTIVE') and not is_exec:
+                    continue
                 if dept not in sops_by_dept:
                     sops_by_dept[dept] = []
                 sops_by_dept[dept].append(sop)
@@ -417,6 +527,16 @@ def view_sop(filename):
         return render_template('qms_shell.html', content=content, sops_by_dept=sops_by_dept, active_file=filename)
     except Exception as e:
         return f"QMS Connectivity Error: {e}", 500
+
+
+@public_bp.route('/trust-center', endpoint='trust_center')
+def trust_center():
+    """
+    Public Institutional Trust Center (SOC 2 & ISO 9001 Showcase).
+    Exposes verified public credentials, capabilities, and safety ratings
+    without exposing internal operational procedures.
+    """
+    return render_template('trust_center.html')
 
 @public_bp.route('/locations/<city>', endpoint='location_page')
 def location_page(city):

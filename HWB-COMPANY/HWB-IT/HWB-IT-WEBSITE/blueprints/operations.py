@@ -1,7 +1,7 @@
 """
 SigmaFidelity™ Operations, Backoffice & Executive Management Blueprint
 Standard: HWB-QMS-7.6 Enterprise Architecture Standards
-Custodians: George (Systems Architect) & Humberto Dominguez (CEO)
+Custodians: George (Systems Architect) & Executive Leadership
 """
 
 import os
@@ -27,15 +27,74 @@ from core.services.security_logger import get_site_security_telemetry, log_secur
 
 operations_bp = Blueprint('operations', __name__)
 
+VIEW_AUTHORIZATION_MAP = {
+    'leads': 'leads',
+    'accounts': 'accounts',
+    'construction_bids': 'bids',
+    'general_contractors': 'bids',
+    'institutional_bids': 'bids',
+    'programs': 'bids',
+    'marketing': 'outbox',
+    'workforce': 'workforce',
+    'safety': 'workforce',
+    'monitor': 'monitor',
+    'dispatch': 'monitor',
+    'scope': 'monitor',
+    'it_department': 'users',
+    'it_telemetry': 'users',
+}
+
 
 # --- Admin Operations Unified Hub ---
 
 @operations_bp.route('/admin/operations', endpoint='admin_operations')
 @login_required
-@roles_required('Executive', 'Admin', 'Manager', 'Operator', 'Sales')
+@roles_required('Executive', 'Admin', 'Manager', 'Operator', 'Sales', 'Custom')
 def admin_operations():
     """The Single-Source Dashboard for Management Dashboard."""
-    active_view = request.args.get('view', 'leads')
+    requested_view = request.args.get('view')
+    if requested_view:
+        req_module = VIEW_AUTHORIZATION_MAP.get(requested_view, requested_view)
+        if not current_user.has_permission(req_module, 'view'):
+            log_security_event(
+                event_category='AUTHORIZATION',
+                event_action='UNAUTHORIZED_VIEW_BLOCKED',
+                severity='WARNING',
+                status_code=403,
+                details={
+                    'requested_view': requested_view,
+                    'required_module': req_module,
+                    'username': getattr(current_user, 'username', 'anonymous'),
+                    'role': getattr(current_user, 'role', 'unknown')
+                }
+            )
+            abort(403)
+        active_view = requested_view
+    else:
+        # Default view resolution: prefer 'leads' if permitted, else first permitted view
+        if current_user.has_permission('leads', 'view'):
+            active_view = 'leads'
+        else:
+            permitted_view = None
+            for v, mod in VIEW_AUTHORIZATION_MAP.items():
+                if current_user.has_permission(mod, 'view'):
+                    permitted_view = v
+                    break
+            if permitted_view:
+                return redirect(url_for('admin_operations', view=permitted_view))
+            else:
+                log_security_event(
+                    event_category='AUTHORIZATION',
+                    event_action='NO_AUTHORIZED_VIEWS_AVAILABLE',
+                    severity='WARNING',
+                    status_code=403,
+                    details={
+                        'username': getattr(current_user, 'username', 'anonymous'),
+                        'role': getattr(current_user, 'role', 'unknown')
+                    }
+                )
+                abort(403)
+
     if current_user.role == 'Sales' and active_view not in ['leads', 'accounts']:
         return redirect(url_for('admin_operations', view='leads'))
     page = request.args.get('page', 1, type=int)
@@ -49,6 +108,8 @@ def admin_operations():
     leads, clients, work_orders, services, activities, system_users = [], [], [], [], [], []
     leads_count, bids_count, total_pages, portfolio_total = 0, 0, 1, 0
     dup_count = 0
+    in_campaign_count = 0
+    opened_leads_count = 0
     lib = {'area': [], 'task': [], 'item': []}
     applicants, subcontractors = [], []
     applicants_count, subcontractors_count = 0, 0
@@ -57,6 +118,7 @@ def admin_operations():
     institutional_bids, inst_bids_count = [], 0
     government_programs, gov_programs_count = [], 0
     marketing_campaigns, mkt_campaigns_count = [], 0
+    marketing_pipeline_value = 0.0
     campaign_recipients = []
     pending_outbox_items, pending_outbox_count = [], 0
     job_positions = []
@@ -243,11 +305,11 @@ def admin_operations():
 
                 campaign_filter = request.args.get('campaign_filter', '').strip()
                 if campaign_filter == 'in_campaign' and active_view == 'leads':
-                    lead_where_clauses.append("EXISTS (SELECT 1 FROM \"CampaignRecipients\" cr WHERE cr.lead_id = l.id)")
+                    lead_where_clauses.append("(EXISTS (SELECT 1 FROM \"CampaignRecipients\" cr WHERE cr.lead_id = l.id) OR l.status = 'In Campaign')")
                 elif campaign_filter == 'opened' and active_view == 'leads':
                     lead_where_clauses.append("EXISTS (SELECT 1 FROM \"CampaignRecipients\" cr WHERE cr.lead_id = l.id AND COALESCE(cr.open_count, 0) > 0)")
                 elif campaign_filter == 'no_campaign' and active_view == 'leads':
-                    lead_where_clauses.append("NOT EXISTS (SELECT 1 FROM \"CampaignRecipients\" cr WHERE cr.lead_id = l.id)")
+                    lead_where_clauses.append("(NOT EXISTS (SELECT 1 FROM \"CampaignRecipients\" cr WHERE cr.lead_id = l.id) AND (l.status IS NULL OR l.status != 'In Campaign'))")
 
                 if search_q and active_view == 'leads':
                     s_clauses, s_params = parse_advanced_search(search_q, 'leads')
@@ -266,6 +328,30 @@ def admin_operations():
                 except Exception:
                     conn.rollback()
                     dup_count = 0
+
+                try:
+                    cur.execute('''
+                        SELECT COUNT(DISTINCT l.id) 
+                        FROM "Leads" l 
+                        WHERE (EXISTS (SELECT 1 FROM "CampaignRecipients" cr WHERE cr.lead_id = l.id) OR l.status = 'In Campaign');
+                    ''')
+                    in_camp_row = cur.fetchone()
+                    in_campaign_count = in_camp_row[0] if in_camp_row else 0
+                except Exception:
+                    conn.rollback()
+                    in_campaign_count = 0
+
+                try:
+                    cur.execute('''
+                        SELECT COUNT(DISTINCT l.id) 
+                        FROM "Leads" l 
+                        WHERE EXISTS (SELECT 1 FROM "CampaignRecipients" cr WHERE cr.lead_id = l.id AND COALESCE(cr.open_count, 0) > 0);
+                    ''')
+                    opened_row = cur.fetchone()
+                    opened_leads_count = opened_row[0] if opened_row else 0
+                except Exception:
+                    conn.rollback()
+                    opened_leads_count = 0
 
                 lead_sql_base = f'''
                     SELECT l.*, 
@@ -554,11 +640,25 @@ def admin_operations():
                     conn.rollback()
                     pending_outbox_items = []
                     pending_outbox_count = 0
+
+                # Empirical targeted annual pipeline calculation (Empirical Integrity Mandate)
+                try:
+                    cur.execute('''
+                        SELECT COALESCE(SUM(l.estimated_annual_value), 0)
+                        FROM "CampaignRecipients" cr
+                        LEFT JOIN "Leads" l ON cr.lead_id = l.id
+                    ''')
+                    pipe_row = cur.fetchone()
+                    marketing_pipeline_value = float(pipe_row[0]) if pipe_row and pipe_row[0] else 0.0
+                except Exception:
+                    conn.rollback()
+                    marketing_pipeline_value = 0.0
         except Exception as mkt_err:
             conn.rollback()
             current_app.logger.warning(f"[OPERATIONS] Marketing campaigns fetch warning: {mkt_err}")
             marketing_campaigns = []
             mkt_campaigns_count = 0
+            marketing_pipeline_value = 0.0
             campaign_recipients = []
             pending_outbox_items = []
             pending_outbox_count = 0
@@ -864,6 +964,7 @@ def admin_operations():
 
     return render_template('backoffice_operations.html', 
                          active_view=active_view, leads=leads, leads_count=leads_count, dup_count=dup_count,
+                         in_campaign_count=in_campaign_count, opened_leads_count=opened_leads_count,
                          campaign_filter=campaign_filter,
                          page=page, total_pages=total_pages, search_q=search_q,
                          sort_by=sort_by or '', sort_dir=sort_dir, active_cols=active_cols,
@@ -875,6 +976,7 @@ def admin_operations():
                          government_programs=government_programs, gov_programs_count=gov_programs_count,
                          general_contractors=general_contractors, general_contractors_count=general_contractors_count,
                          marketing_campaigns=marketing_campaigns, mkt_campaigns_count=mkt_campaigns_count,
+                         marketing_pipeline_value=marketing_pipeline_value,
                          campaign_recipients=campaign_recipients, active_campaign_id=active_campaign_id,
                          pending_outbox_items=pending_outbox_items, pending_outbox_count=pending_outbox_count,
                          employees=employees, employees_count=employees_count, active_employees_count=active_employees_count,
@@ -937,9 +1039,20 @@ def sales_desk():
     if not current_user.is_authenticated:
         return redirect(url_for('login', next=request.url))
 
-    if current_user.role not in ['Sales', 'Executive', 'Admin', 'Manager']:
-        flash("Restricted area. Sales access is required.")
-        return redirect(url_for('admin_operations', view='leads'))
+    if not (current_user.role in ['Executive', 'Admin'] or current_user.has_permission('sales_desk', 'view')):
+        log_security_event(
+            event_category='AUTHORIZATION',
+            event_action='UNAUTHORIZED_VIEW_BLOCKED',
+            severity='WARNING',
+            status_code=403,
+            details={
+                'requested_view': 'sales_desk',
+                'required_module': 'sales_desk',
+                'username': getattr(current_user, 'username', 'anonymous'),
+                'role': getattr(current_user, 'role', 'unknown')
+            }
+        )
+        abort(403)
 
     search_q = request.args.get('q', '').strip()
     status_filter = request.args.get('status', '').strip()
@@ -1042,6 +1155,14 @@ def sales_desk():
 @operations_bp.route('/admin/edit-lead/<int:id>', methods=['GET', 'POST'], endpoint='crm_edit_lead')
 @login_required
 def edit_lead(id):
+    if request.method == 'POST':
+        if not current_user.has_permission('leads', 'edit'):
+            log_security_event('AUTHORIZATION', 'UNAUTHORIZED_ACTION_BLOCKED', severity='WARNING', status_code=403, details={'action': 'edit_lead', 'lead_id': id, 'username': getattr(current_user, 'username', 'anonymous')})
+            abort(403)
+    else:
+        if not current_user.has_permission('leads', 'view'):
+            log_security_event('AUTHORIZATION', 'UNAUTHORIZED_VIEW_BLOCKED', severity='WARNING', status_code=403, details={'view': 'edit_lead', 'lead_id': id, 'username': getattr(current_user, 'username', 'anonymous')})
+            abort(403)
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
         with conn.cursor() as cur:
@@ -1096,6 +1217,9 @@ def edit_lead(id):
 @operations_bp.route('/admin/add-lead', methods=['POST'], endpoint='add_manual_lead')
 @login_required
 def add_manual_lead():
+    if not current_user.has_permission('leads', 'edit'):
+        log_security_event('AUTHORIZATION', 'UNAUTHORIZED_ACTION_BLOCKED', severity='WARNING', status_code=403, details={'action': 'add_lead', 'username': getattr(current_user, 'username', 'anonymous')})
+        abort(403)
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
         with conn.cursor() as cur:
@@ -1145,6 +1269,9 @@ def add_manual_lead():
 @operations_bp.route('/admin/add-account', methods=['POST'], endpoint='add_account')
 @login_required
 def add_account():
+    if not current_user.has_permission('accounts', 'edit'):
+        log_security_event('AUTHORIZATION', 'UNAUTHORIZED_ACTION_BLOCKED', severity='WARNING', status_code=403, details={'action': 'add_account', 'username': getattr(current_user, 'username', 'anonymous')})
+        abort(403)
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
         with conn.cursor() as cur:
@@ -1508,11 +1635,31 @@ def sigma_executive():
                             success, reason = transmit_email(msg['recipient'], msg['subject'], msg['body'])
                             if success:
                                 cur.execute('UPDATE "PendingOutbox" SET status = \'SENT\' WHERE id = %s', (email_id,))
-                                flash("Message sent successfully.")
+                                cur.execute('''
+                                    UPDATE "CampaignRecipients"
+                                    SET status = 'SENT', sent_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+                                    WHERE outbox_id = %s OR tracking_token = %s
+                                    RETURNING lead_id, facility_name;
+                                ''', (email_id, msg.get('tracking_token')))
+                                ret_recip = cur.fetchone()
+                                if ret_recip and ret_recip['lead_id']:
+                                    cur.execute('''
+                                        INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
+                                        VALUES (%s, 'Lead', 'Email Sent', %s);
+                                    ''', (ret_recip['lead_id'], f"Marketing outreach email sent to {msg['recipient']}: '{msg['subject']}'"))
+                                flash("Message sent successfully.", "success")
                             else:
                                 flash(f"Transmission Failed: {reason}", "error")
                     elif action == "reject_email":
-                        cur.execute('UPDATE "PendingOutbox" SET status = \'REJECTED\' WHERE id = %s', (request.form.get('email_id'),))
+                        email_id = request.form.get('email_id')
+                        cur.execute('UPDATE "PendingOutbox" SET status = \'REJECTED\' WHERE id = %s RETURNING tracking_token', (email_id,))
+                        ret_msg = cur.fetchone()
+                        cur.execute('''
+                            UPDATE "CampaignRecipients"
+                            SET status = 'REJECTED', updated_at = CURRENT_TIMESTAMP
+                            WHERE outbox_id = %s OR (tracking_token = %s AND %s IS NOT NULL);
+                        ''', (email_id, ret_msg['tracking_token'] if ret_msg else None, ret_msg['tracking_token'] if ret_msg else None))
+                        flash("Queued email rejected.", "warning")
                     
                     conn.commit()
                 except Exception as e:
@@ -1539,7 +1686,21 @@ def sigma_executive():
             analytics = {'cpk': '6.67', 'dpmo': '1,785', 'rty': '97.0%'}
             cur.execute('SELECT * FROM "KPIVs"')
             kpivs = cur.fetchall()
-            cur.execute('SELECT * FROM "Users"')
+            cur.execute('''
+                SELECT 
+                    id, username, full_name, email, role, status, 
+                    force_pwd_reset, custom_permissions, telegram_chat_id, 
+                    last_login_at, last_logout_at, last_heartbeat_at, last_login_ip, login_count,
+                    CASE 
+                        WHEN last_logout_at IS NOT NULL AND last_login_at IS NOT NULL AND last_logout_at >= last_login_at THEN 'LOGGED_OUT'
+                        WHEN last_heartbeat_at IS NOT NULL AND last_heartbeat_at >= (NOW() - INTERVAL '15 minutes') THEN 'ONLINE'
+                        WHEN last_login_at IS NOT NULL AND last_login_at >= (NOW() - INTERVAL '15 minutes') THEN 'ONLINE'
+                        WHEN last_login_at IS NOT NULL THEN 'OFFLINE_EXPIRED'
+                        ELSE 'NO_SESSION'
+                    END AS session_state
+                FROM "Users"
+                ORDER BY id ASC
+            ''')
             users = cur.fetchall()
             cur.execute('SELECT * FROM "RolePermissions" ORDER BY role ASC, module ASC')
             role_permissions = cur.fetchall()
@@ -1580,6 +1741,9 @@ def calculator():
 @operations_bp.route('/admin/scope-builder', methods=['POST'], endpoint='scope_builder')
 @login_required
 def scope_builder():
+    if not current_user.has_permission('monitor', 'edit'):
+        log_security_event('AUTHORIZATION', 'UNAUTHORIZED_ACTION_BLOCKED', severity='WARNING', status_code=403, details={'action': 'scope_builder', 'username': getattr(current_user, 'username', 'anonymous')})
+        abort(403)
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
         with conn.cursor() as cur:
@@ -1662,8 +1826,8 @@ def linkedin_callback():
         data = resp.json()
         access_token = data.get('access_token')
 
-        member_urn = "urn:li:person:69t5uGn1nH"
-        user_name = "Humberto Dominguez"
+        member_urn = None
+        user_name = getattr(current_user, 'full_name', None) or getattr(current_user, 'username', 'Executive')
         try:
             u_resp = requests.get('https://api.linkedin.com/v2/userinfo', headers={'Authorization': f'Bearer {access_token}'}, timeout=10)
             if u_resp.status_code == 200:
@@ -1710,8 +1874,8 @@ def linkedin_direct_token():
         flash("Direct token cannot be empty.", "error")
         return redirect(url_for('operations.sigma_executive') + '#social')
 
-    member_urn = "urn:li:person:69t5uGn1nH"
-    user_name = "Humberto Dominguez"
+    member_urn = None
+    user_name = getattr(current_user, 'full_name', None) or getattr(current_user, 'username', 'Executive')
     try:
         # Check token validity against LinkedIn
         u_resp = requests.get('https://api.linkedin.com/v2/userinfo', headers={'Authorization': f'Bearer {token}'}, timeout=10)
@@ -2053,6 +2217,64 @@ def api_generate_telegram_magic_link(user_id):
             return jsonify({'status': 'success', 'token': token, 'magic_link': magic_link})
     except Exception as e:
         if 'conn' in locals() and conn: conn.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        if 'conn' in locals() and conn: conn.close()
+
+
+@operations_bp.route('/api/v1/users/<username>/audit-trail', methods=['GET'])
+@login_required
+@roles_required('Executive', 'Admin')
+def api_user_audit_trail(username):
+    """Fetches forensic audit logs for a specific user from SecurityAuditLogs."""
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            cur.execute('''
+                SELECT id, timestamp, event_category, event_action, username, user_role,
+                       ip_address, endpoint, http_method, status_code, severity, details
+                FROM "SecurityAuditLogs"
+                WHERE LOWER(username) = LOWER(%s)
+                ORDER BY timestamp DESC
+                LIMIT 50;
+            ''', (username,))
+            rows = cur.fetchall()
+            events = []
+            for r in rows:
+                if isinstance(r, dict):
+                    ts = r['timestamp'].strftime('%m/%d/%Y %I:%M:%S %p CST') if r.get('timestamp') else '--'
+                    events.append({
+                        'id': r['id'],
+                        'timestamp': ts,
+                        'category': r.get('event_category'),
+                        'action': r.get('event_action'),
+                        'username': r.get('username'),
+                        'role': r.get('user_role'),
+                        'ip': r.get('ip_address'),
+                        'endpoint': r.get('endpoint'),
+                        'method': r.get('http_method'),
+                        'status_code': r.get('status_code'),
+                        'severity': r.get('severity'),
+                        'details': r.get('details')
+                    })
+                else:
+                    ts = r[1].strftime('%m/%d/%Y %I:%M:%S %p CST') if r[1] else '--'
+                    events.append({
+                        'id': r[0],
+                        'timestamp': ts,
+                        'category': r[2],
+                        'action': r[3],
+                        'username': r[4],
+                        'role': r[5],
+                        'ip': r[6],
+                        'endpoint': r[7],
+                        'method': r[8],
+                        'status_code': r[9],
+                        'severity': r[10],
+                        'details': r[11]
+                    })
+            return jsonify({'status': 'success', 'username': username, 'events': events})
+    except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
     finally:
         if 'conn' in locals() and conn: conn.close()

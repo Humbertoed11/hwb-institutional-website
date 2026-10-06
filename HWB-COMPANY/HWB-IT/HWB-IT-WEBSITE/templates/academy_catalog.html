@@ -388,7 +388,9 @@
             <span class="nav-tag">Compliance Engine</span>
         </a>
         <div class="nav-links">
+            {% if current_user.is_authenticated and (current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('qms', 'view'))) %}
             <a href="/manual" class="nav-link"><i class="fas fa-book"></i> QMS Manual</a>
+            {% endif %}
             <a href="/backoffice" class="nav-link"><i class="fas fa-lock"></i> Operations Login</a>
         </div>
     </nav>

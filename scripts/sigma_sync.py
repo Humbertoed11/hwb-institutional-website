@@ -104,9 +104,9 @@ def sync_system_state():
         conn = psycopg2.connect(DB_URL)
         with conn.cursor() as cur:
             cur.execute("""
-                INSERT INTO "SigmaSystemCore" (session_id, state_data)
-                VALUES (%s, %s)
-                ON CONFLICT (session_id) DO UPDATE SET state_data = EXCLUDED.state_data;
+                INSERT INTO "SigmaSystemCore" (session_id, state_data, updated_at)
+                VALUES (%s, %s, CURRENT_TIMESTAMP)
+                ON CONFLICT (session_id) DO UPDATE SET state_data = EXCLUDED.state_data, updated_at = CURRENT_TIMESTAMP;
             """, ("ACTIVE-SESSION", Json(state_json)))
         conn.commit()
         conn.close()

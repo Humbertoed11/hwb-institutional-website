@@ -63,7 +63,7 @@ with app.app_context():
         print("[BOOT] SigmaFidelity™ High-Fidelity Startup Sequence Initiated.", flush=True)
         sync_db_sequences(app.config['DATABASE_URL'])
         
-        # --- SigmaFidelity™ Poka-Yoke Schema Migrator (BUG-005/008) ---
+        # --- SigmaFidelity™ Mistake-Proof Schema Migrator (BUG-005/008) ---
         conn = get_db(app.config['DATABASE_URL'])
         with conn.cursor() as cur:
             # 1. Hardening "Services" Table
