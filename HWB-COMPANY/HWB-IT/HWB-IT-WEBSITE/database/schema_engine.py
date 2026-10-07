@@ -132,11 +132,32 @@ def apply_system_migrations(conn: Any, db_url: Optional[str] = None) -> None:
                 ALTER TABLE "Users" ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'Operator';
                 ALTER TABLE "Users" ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'Active';
                 ALTER TABLE "Users" ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+                ALTER TABLE "Users" ADD COLUMN IF NOT EXISTS last_logout_at TIMESTAMP;
+                ALTER TABLE "Users" ADD COLUMN IF NOT EXISTS last_heartbeat_at TIMESTAMP;
+                ALTER TABLE "Users" ADD COLUMN IF NOT EXISTS last_login_ip VARCHAR(100);
+                ALTER TABLE "Users" ADD COLUMN IF NOT EXISTS login_count INTEGER DEFAULT 0;
                 ALTER TABLE "Users" ADD COLUMN IF NOT EXISTS force_pwd_reset BOOLEAN DEFAULT FALSE;
                 ALTER TABLE "Users" ADD COLUMN IF NOT EXISTS custom_permissions TEXT;
                 ALTER TABLE "Users" ADD COLUMN IF NOT EXISTS telegram_chat_id VARCHAR(50);
                 UPDATE "Users" SET status = 'Active' WHERE status IS NULL;
                 UPDATE "Users" SET role = 'Executive' WHERE username IN ('admin', 'hdominguez') AND (role IS NULL OR role = 'Operator');
+
+                CREATE TABLE IF NOT EXISTS "ClientBreadcrumbs" (
+                    id SERIAL PRIMARY KEY,
+                    timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                    session_id VARCHAR(100) NOT NULL,
+                    page_url VARCHAR(255) NOT NULL,
+                    event_type VARCHAR(50) NOT NULL,
+                    element_tag VARCHAR(50) NULL,
+                    element_id VARCHAR(100) NULL,
+                    element_class VARCHAR(150) NULL,
+                    element_text VARCHAR(150) NULL,
+                    details JSONB NULL,
+                    ip_address VARCHAR(45) NOT NULL DEFAULT '127.0.0.1',
+                    user_agent TEXT NULL
+                );
+                CREATE INDEX IF NOT EXISTS idx_client_bc_ts ON "ClientBreadcrumbs" (timestamp DESC);
+                CREATE INDEX IF NOT EXISTS idx_client_bc_session ON "ClientBreadcrumbs" (session_id);
 
                 ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS is_commercial BOOLEAN DEFAULT TRUE;
                 ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS is_dnc BOOLEAN DEFAULT FALSE;

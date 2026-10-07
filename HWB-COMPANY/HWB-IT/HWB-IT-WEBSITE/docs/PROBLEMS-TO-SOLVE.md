@@ -101,6 +101,7 @@ Responsibility: George (Architect)
 | 10/05/2026 | BUG-115 | Werkzeug Default 403 Error Screen & Persistent QMS Manual Navigation Exposure for Restricted User Accounts. | **RESOLVED** | HIGH |
 | 10/05/2026 | BUG-116 | CWE-285 / Broken Object-Level Authorization: REST API Endpoints Lack ABAC Checks Permitting Unauthorized Write/Delete Actions. | **RESOLVED** | CRITICAL |
 | 10/07/2026 | BUG-117 | Session Inactivity Timeout Defeated by Automated Frontend Background Heartbeat / Health Pings (/api/v1/health). | **RESOLVED** | HIGH |
+| 10/07/2026 | BUG-118 | Missing Users Telemetry Columns & ClientBreadcrumbs in Baseline Parity Triggering HTTP 500 on /admin/executive. | **RESOLVED** | CRITICAL |
 
 
 ## BUG-096: Telegram Inbound Message Drop & Unhandled ValueError on Multi-User Comma-Separated TELEGRAM_CHAT_ID String
@@ -2069,4 +2070,34 @@ CEO Humberto Dominguez attempting to log into `https://www.hwbcleaning.com/login
 **Preventative & Evolutionary Learning:**
 1. Machine-to-machine polling (health probes, status badges, telemetry pings) must NEVER be conflated with human user interaction. Automated requests must always be exempt from extending session activity timers.
 2. Inactivity guards must be enforced symmetrically: client-side timers should preemptively redirect idle users, while server-side before-request hooks act as an immutable fail-closed boundary.
+ 
+ 
+## BUG-118: Missing Users Telemetry Columns & ClientBreadcrumbs in Baseline Parity Triggering HTTP 500 on /admin/executive
+**Detected:** 10/07/2026
+**Status:** **RESOLVED** (10/07/2026)
+**Symptoms:**
+1. Navigating to `https://www.hwbcleaning.com/admin/executive` as an authenticated Executive user triggered an immediate HTTP 500 internal server error ("A system error occurred. Our team has been notified.").
+2. Live Azure container logs revealed fatal SQL exception:
+   `[FATAL] System Exception: column "last_logout_at" does not exist`
+   `LINE 5: last_login_at, last_logout_at, last_heartbeat_at...`
+   and auth warnings:
+   `[AUTH] Failed to update user login telemetry: column "login_count" does not exist`
+   and breadcrumbs insertion failure:
+   `relation "ClientBreadcrumbs" does not exist`
+**Root Causes:**
+1. In `database/schema_engine.py`, the baseline schema parity hardening block provisioned `Users` table columns (`full_name`, `email`, `role`, `status`, `last_login_at`, `force_pwd_reset`, `custom_permissions`, `telegram_chat_id`), but omitted `last_logout_at`, `last_heartbeat_at`, `last_login_ip`, and `login_count`.
+2. In `blueprints/operations.py`, `sigma_executive()` executed a raw SQL query selecting these columns without defensive exception handling. When Azure PostgreSQL encountered the missing columns, it aborted the transaction and triggered the global 500 error handler.
+3. `scripts/migrate_036_client_breadcrumbs.py` had been authored but omitted from the automated baseline parity hardening, causing `/api/v1/telemetry/breadcrumbs` to fail on unprovisioned cloud environments.
+**Solution & Implementation:**
+1. **Baseline Parity Hardening (`database/schema_engine.py`):**
+   - Added `ALTER TABLE "Users" ADD COLUMN IF NOT EXISTS last_logout_at TIMESTAMP;`
+   - Added `ALTER TABLE "Users" ADD COLUMN IF NOT EXISTS last_heartbeat_at TIMESTAMP;`
+   - Added `ALTER TABLE "Users" ADD COLUMN IF NOT EXISTS last_login_ip VARCHAR(100);`
+   - Added `ALTER TABLE "Users" ADD COLUMN IF NOT EXISTS login_count INTEGER DEFAULT 0;`
+   - Added idempotent table creation and indexing for `"ClientBreadcrumbs"`.
+2. **Defensive Endpoint Fallback (`blueprints/operations.py`):**
+   - Wrapped `Users`, `Leads`, `KPIVs`, and `RolePermissions` queries in `sigma_executive()` with dedicated `try...except` isolation and safe fallback defaults. If telemetry columns are absent or undergoing migration, the view falls back cleanly to active status defaults without crashing.
+**Preventative & Evolutionary Learning:**
+1. All administrative views querying extended telemetry columns must implement defensive query fallbacks.
+2. Every column referenced in authentication or administrative roster queries must be explicitly codified in `database/schema_engine.py` baseline parity.
 

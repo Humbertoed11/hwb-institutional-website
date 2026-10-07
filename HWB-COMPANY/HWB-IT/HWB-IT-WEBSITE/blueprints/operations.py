@@ -1678,32 +1678,73 @@ def sigma_executive():
                 elif action and "kpiv" in action: redirect_tab = "#tools"
                 return redirect(url_for("sigma_executive") + redirect_tab)
 
-            cur.execute('SELECT COUNT(*) FROM "Leads"')
-            leads_count = cur.fetchone()[0]
-            cur.execute('SELECT * FROM "Leads" ORDER BY input_date DESC LIMIT 5')
-            recent_leads = cur.fetchall()
+            try:
+                cur.execute('SELECT COUNT(*) FROM "Leads"')
+                leads_count = cur.fetchone()[0]
+            except Exception:
+                conn.rollback()
+                leads_count = 0
+
+            try:
+                cur.execute('SELECT * FROM "Leads" ORDER BY input_date DESC LIMIT 5')
+                recent_leads = cur.fetchall()
+            except Exception:
+                conn.rollback()
+                recent_leads = []
+
             uptime = {'status': 'ACTIVE'}
             analytics = {'cpk': '6.67', 'dpmo': '1,785', 'rty': '97.0%'}
-            cur.execute('SELECT * FROM "KPIVs"')
-            kpivs = cur.fetchall()
-            cur.execute('''
-                SELECT 
-                    id, username, full_name, email, role, status, 
-                    force_pwd_reset, custom_permissions, telegram_chat_id, 
-                    last_login_at, last_logout_at, last_heartbeat_at, last_login_ip, login_count,
-                    CASE 
-                        WHEN last_logout_at IS NOT NULL AND last_login_at IS NOT NULL AND last_logout_at >= last_login_at THEN 'LOGGED_OUT'
-                        WHEN last_heartbeat_at IS NOT NULL AND last_heartbeat_at >= (NOW() - INTERVAL '15 minutes') THEN 'ONLINE'
-                        WHEN last_login_at IS NOT NULL AND last_login_at >= (NOW() - INTERVAL '15 minutes') THEN 'ONLINE'
-                        WHEN last_login_at IS NOT NULL THEN 'OFFLINE_EXPIRED'
-                        ELSE 'NO_SESSION'
-                    END AS session_state
-                FROM "Users"
-                ORDER BY id ASC
-            ''')
-            users = cur.fetchall()
-            cur.execute('SELECT * FROM "RolePermissions" ORDER BY role ASC, module ASC')
-            role_permissions = cur.fetchall()
+
+            try:
+                cur.execute('SELECT * FROM "KPIVs"')
+                kpivs = cur.fetchall()
+            except Exception:
+                conn.rollback()
+                kpivs = []
+
+            try:
+                cur.execute('''
+                    SELECT 
+                        id, username, full_name, email, role, status, 
+                        force_pwd_reset, custom_permissions, telegram_chat_id, 
+                        last_login_at, last_logout_at, last_heartbeat_at, last_login_ip, login_count,
+                        CASE 
+                            WHEN last_logout_at IS NOT NULL AND last_login_at IS NOT NULL AND last_logout_at >= last_login_at THEN 'LOGGED_OUT'
+                            WHEN last_heartbeat_at IS NOT NULL AND last_heartbeat_at >= (NOW() - INTERVAL '15 minutes') THEN 'ONLINE'
+                            WHEN last_login_at IS NOT NULL AND last_login_at >= (NOW() - INTERVAL '15 minutes') THEN 'ONLINE'
+                            WHEN last_login_at IS NOT NULL THEN 'OFFLINE_EXPIRED'
+                            ELSE 'NO_SESSION'
+                        END AS session_state
+                    FROM "Users"
+                    ORDER BY id ASC
+                ''')
+                users = cur.fetchall()
+            except Exception as u_err:
+                conn.rollback()
+                try:
+                    cur.execute('''
+                        SELECT 
+                            id, username, full_name, email, role, 
+                            COALESCE(status, 'Active') as status, 
+                            COALESCE(force_pwd_reset, FALSE) as force_pwd_reset, 
+                            custom_permissions, telegram_chat_id, 
+                            last_login_at, NULL as last_logout_at, NULL as last_heartbeat_at, 
+                            NULL as last_login_ip, 0 as login_count,
+                            'ONLINE' as session_state
+                        FROM "Users"
+                        ORDER BY id ASC
+                    ''')
+                    users = cur.fetchall()
+                except Exception:
+                    conn.rollback()
+                    users = []
+
+            try:
+                cur.execute('SELECT * FROM "RolePermissions" ORDER BY role ASC, module ASC')
+                role_permissions = cur.fetchall()
+            except Exception:
+                conn.rollback()
+                role_permissions = []
             
             system_errors, total_waste, linkedin_authorized, pending_social, pending_emails = 0, "0.00", False, [], []
             
