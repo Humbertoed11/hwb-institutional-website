@@ -3807,7 +3807,7 @@
                         <thead>
                             <tr>
                                 <th style="min-width: 140px;">Work Order &amp; Shift</th>
-                                <th style="min-width: 220px;">Facility &amp; Ingress</th>
+                                <th style="min-width: 220px;">Facility &amp; Entrance Access</th>
                                 <th style="min-width: 180px;">Service Scope</th>
                                 <th style="min-width: 240px;">Assigned Technician</th>
                                 <th style="min-width: 130px;">Shift Status</th>
@@ -4075,8 +4075,8 @@
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                         <div>
-                            <label style="font-size: 0.75rem; font-weight: 800; color: var(--slate-700); text-transform: uppercase; display: block; margin-bottom: 0.35rem;">Dock &amp; Loading Ingress Instructions</label>
-                            <textarea id="dispatch-dock-ingress" rows="2" class="sigma-input" style="width: 100%; resize: vertical;" placeholder="e.g. Access loading bay via 9700 Wade Blvd. Must wear Bosanna / TIPS photo ID badge.">Dock Ingress: Access loading bay via 9700 Wade Blvd, Frisco, TX 75035. Must wear Bosanna / TIPS photo ID badge at all times.</textarea>
+                            <label style="font-size: 0.75rem; font-weight: 800; color: var(--slate-700); text-transform: uppercase; display: block; margin-bottom: 0.35rem;">Dock &amp; Loading Entrance Instructions</label>
+                            <textarea id="dispatch-dock-ingress" rows="2" class="sigma-input" style="width: 100%; resize: vertical;" placeholder="e.g. Access loading bay via 9700 Wade Blvd. Must wear Bosanna / TIPS photo ID badge.">Dock Entrance: Access loading bay via 9700 Wade Blvd, Frisco, TX 75035. Must wear Bosanna / TIPS photo ID badge at all times.</textarea>
                         </div>
                         <div>
                             <label style="font-size: 0.75rem; font-weight: 800; color: var(--slate-700); text-transform: uppercase; display: block; margin-bottom: 0.35rem;">Security Access Code / Key Fob</label>
@@ -4359,7 +4359,7 @@
                             <strong style="color: var(--slate-800); font-family: monospace; font-size: 0.7rem;">{{ it_telemetry.cloud_gateway.azure_db_host if it_telemetry and it_telemetry.cloud_gateway else 'sigmajan-server.postgres' }}</strong>
                         </div>
                         <div>
-                            <span style="color: var(--slate-400); display: block; font-size: 0.65rem;">Azure Latency</span>
+                            <span style="color: var(--slate-400); display: block; font-size: 0.65rem;">Azure Response Speed</span>
                             <strong style="color: #10b981;">{{ it_telemetry.cloud_gateway.azure_db_latency_ms if it_telemetry and it_telemetry.cloud_gateway else '9.85' }} ms</strong>
                         </div>
                         <div>
@@ -4507,7 +4507,7 @@
                     </div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.78rem; flex: 1;">
                         <div style="background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 6px; padding: 0.5rem 0.65rem;">
-                            <span style="font-size: 0.68rem; color: var(--slate-500); font-weight: 700; text-transform: uppercase;">Schema Migrations</span>
+                            <span style="font-size: 0.68rem; color: var(--slate-500); font-weight: 700; text-transform: uppercase;">Database Version Migrations</span>
                             <div style="display: flex; align-items: baseline; gap: 0.4rem; margin-top: 0.15rem;">
                                 <strong style="font-size: 1.1rem; color: var(--slate-900);">{{ it_telemetry.parity.schema_version_count if it_telemetry and it_telemetry.parity else 31 }}</strong>
                                 <span style="font-size: 0.7rem; color: #059669; font-weight: 700;">100% Verified</span>
@@ -4665,7 +4665,7 @@
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; margin-top: 0.4rem;">
                         <button type="button" onclick="runFixAllDataHealth(true)" class="sigma-nav-btn" style="grid-column: span 2; background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%); color: #ffffff; border: 1px solid #4338ca; font-size: 0.72rem; padding: 0.45rem 0.5rem; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 0.4rem; box-shadow: 0 1px 2px rgba(79, 70, 229, 0.2);">
-                            <i class="fas fa-bolt-lightning"></i> Remediate All Data Health Defects (Fix All)
+                            <i class="fas fa-bolt-lightning"></i> Fix All Data Health Defects (Fix All)
                         </button>
                         <button type="button" onclick="runCasingAutoHeal(false)" class="sigma-nav-btn" style="background: #2563eb; color: #ffffff; border-color: #2563eb; font-size: 0.68rem; padding: 0.35rem 0.5rem; font-weight: 700;">
                             <i class="fas fa-font"></i> Heal Casing (Live)
@@ -4967,9 +4967,9 @@
 
                     <!-- Secondary Telemetry Bar (5 Pillars) -->
                     <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.5rem; font-size: 0.7rem; color: var(--slate-500); margin-bottom: 0.65rem; background: #f8fafc; padding: 0.4rem 0.65rem; border-radius: 6px; border: 1px solid var(--slate-100);">
-                        <div>Anycast Ingress: <strong style="color: #059669;">{{ it_telemetry.cloudflare_edge.five_pillars.anycast_ip if it_telemetry and it_telemetry.cloudflare_edge and it_telemetry.cloudflare_edge.five_pillars else '104.21.70.180 (Anycast)' }}</strong></div>
+                        <div>Anycast Inbound Traffic: <strong style="color: #059669;">{{ it_telemetry.cloudflare_edge.five_pillars.anycast_ip if it_telemetry and it_telemetry.cloudflare_edge and it_telemetry.cloudflare_edge.five_pillars else '104.21.70.180 (Anycast)' }}</strong></div>
                         <div>Datacenter PoP: <strong style="color: #2563eb;">{{ it_telemetry.cloudflare_edge.edge_probe.pop if it_telemetry and it_telemetry.cloudflare_edge and it_telemetry.cloudflare_edge.edge_probe else 'DFW' }} (Dallas-Fort Worth)</strong></div>
-                        <div>Edge Latency: <strong style="color: #059669;">{{ it_telemetry.cloudflare_edge.edge_latency_ms if it_telemetry and it_telemetry.cloudflare_edge else 210.0 }} ms (TTFB)</strong></div>
+                        <div>Edge Response Speed: <strong style="color: #059669;">{{ it_telemetry.cloudflare_edge.edge_latency_ms if it_telemetry and it_telemetry.cloudflare_edge else 210.0 }} ms (TTFB)</strong></div>
                         <div>Origin Firewall: <strong style="color: #7c3aed;">15 Cloudflare CIDRs</strong></div>
                         <div>Direct Bypass: <strong style="color: #059669;">BLOCKED (403 Forbidden)</strong></div>
                     </div>
@@ -4978,7 +4978,7 @@
                     <div style="background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 6px; padding: 0.65rem 0.85rem; margin-bottom: 0.65rem;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem; font-size: 0.68rem;">
                             <span style="font-weight: 800; color: var(--slate-700); text-transform: uppercase;">
-                                <i class="fas fa-gauge-high" style="color: #f38020; margin-right: 0.3rem;"></i> Edge Ingress Speed Spectrum
+                                <i class="fas fa-gauge-high" style="color: #f38020; margin-right: 0.3rem;"></i> Edge Inbound Speed Spectrum
                             </span>
                             <span style="font-size: 0.65rem; color: var(--slate-500);">
                                 <span style="color: #10b981; font-weight: 700;">&lt;50ms (Cache)</span> • 
@@ -8391,7 +8391,7 @@
             <div>
                 <h2 style="font-weight: 900; font-size: 1.5rem; color: var(--slate-900); letter-spacing: -0.01em; margin: 0;">Provision Model C Institutional Partner</h2>
                 <p style="color: var(--slate-500); font-size: 0.825rem; font-weight: 500; margin: 0.25rem 0 0 0;">
-                    White-label ingress, Academy LMS workspace, and campus shift dispatch.
+                    White-label portal access, Academy LMS workspace, and campus shift dispatch.
                 </p>
             </div>
             <button type="button" onclick="closeModal('modal-add-partner')" class="isc-btn isc-btn-outline" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; padding: 0;" aria-label="Close Add Partner Modal">
@@ -8463,7 +8463,7 @@
                         <input type="text" name="facility_name" required placeholder="e.g. Collin College Frisco Campus" class="sigma-input">
                     </div>
                     <div class="sigma-field">
-                        <label>Designated Loading Dock Ingress Address</label>
+                        <label>Designated Loading Dock Entrance Address</label>
                         <input type="text" name="facility_address" placeholder="e.g. 9700 Wade Blvd, Frisco, TX 75035" class="sigma-input">
                     </div>
                     <div class="sigma-row sigma-row-60-40">
@@ -9004,7 +9004,7 @@ Click here to book a 5-minute walkthrough: [Calendar Link]"></textarea>
                 </div>
                 <div>
                     <h3 style="margin: 0; color: #ffffff; font-size: 1.05rem; font-weight: 800; letter-spacing: -0.01em;">Change Account Password</h3>
-                    <div style="font-size: 0.68rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">SOC 2 / NIST SP 800-63B Authentication Desk</div>
+                    <div style="font-size: 0.68rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">SOC 2 / NIST SP 800-63B Sign-In Security Desk</div>
                 </div>
             </div>
             <button type="button" onclick="closeModal('modal-change-password')" style="background: none; border: none; color: #94a3b8; font-size: 1.25rem; cursor: pointer; padding: 0.25rem; line-height: 1;">&times;</button>
