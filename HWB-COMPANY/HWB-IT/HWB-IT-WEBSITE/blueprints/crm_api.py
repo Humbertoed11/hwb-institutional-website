@@ -1247,37 +1247,55 @@ def api_kb_preflight():
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
         with conn.cursor() as cur:
-            cur.execute("""
-                WITH vector_matches AS (
-                    SELECT id, RANK() OVER (ORDER BY embedding <=> %s::vector) AS v_rank
-                    FROM "SigmaKnowledgeScars"
-                    WHERE embedding IS NOT NULL
-                    ORDER BY embedding <=> %s::vector LIMIT 10
-                ),
-                lexical_matches AS (
-                    SELECT id, RANK() OVER (ORDER BY ts_rank(search_vector, plainto_tsquery('english', %s)) DESC) AS l_rank
-                    FROM "SigmaKnowledgeScars"
+            try:
+                cur.execute("""
+                    WITH vector_matches AS (
+                        SELECT id, RANK() OVER (ORDER BY embedding <=> %s::vector) AS v_rank
+                        FROM "SigmaKnowledgeScars"
+                        WHERE embedding IS NOT NULL
+                        ORDER BY embedding <=> %s::vector LIMIT 10
+                    ),
+                    lexical_matches AS (
+                        SELECT id, RANK() OVER (ORDER BY ts_rank(search_vector, plainto_tsquery('english', %s)) DESC) AS l_rank
+                        FROM "SigmaKnowledgeScars"
+                        WHERE search_vector @@ plainto_tsquery('english', %s)
+                        LIMIT 10
+                    )
+                    SELECT 
+                        s.id,
+                        s.description,
+                        s.category,
+                        s.status,
+                        s.impact_level,
+                        s.root_cause,
+                        s.implemented_fix,
+                        s.preventative_rule,
+                        COALESCE(1.0 / (60 + v.v_rank), 0.0) + COALESCE(1.0 / (60 + l.l_rank), 0.0) AS rrf_score
+                    FROM "SigmaKnowledgeScars" s
+                    LEFT JOIN vector_matches v ON s.id = v.id
+                    LEFT JOIN lexical_matches l ON s.id = l.id
+                    WHERE v.id IS NOT NULL OR l.id IS NOT NULL
+                    ORDER BY rrf_score DESC LIMIT 5;
+                """, (embed_str, embed_str, query_str, query_str))
+                rows = cur.fetchall()
+            except Exception:
+                conn.rollback()
+                cur.execute("""
+                    SELECT 
+                        s.id,
+                        s.description,
+                        s.category,
+                        s.status,
+                        s.impact_level,
+                        s.root_cause,
+                        s.implemented_fix,
+                        s.preventative_rule,
+                        ts_rank(search_vector, plainto_tsquery('english', %s)) AS rrf_score
+                    FROM "SigmaKnowledgeScars" s
                     WHERE search_vector @@ plainto_tsquery('english', %s)
-                    LIMIT 10
-                )
-                SELECT 
-                    s.id,
-                    s.description,
-                    s.category,
-                    s.status,
-                    s.impact_level,
-                    s.root_cause,
-                    s.implemented_fix,
-                    s.preventative_rule,
-                    COALESCE(1.0 / (60 + v.v_rank), 0.0) + COALESCE(1.0 / (60 + l.l_rank), 0.0) AS rrf_score
-                FROM "SigmaKnowledgeScars" s
-                LEFT JOIN vector_matches v ON s.id = v.id
-                LEFT JOIN lexical_matches l ON s.id = l.id
-                WHERE v.id IS NOT NULL OR l.id IS NOT NULL
-                ORDER BY rrf_score DESC LIMIT 5;
-            """, (embed_str, embed_str, query_str, query_str))
-            
-            rows = cur.fetchall()
+                    ORDER BY rrf_score DESC LIMIT 5;
+                """, (query_str, query_str))
+                rows = cur.fetchall()
             scars = []
             max_impact = 1
             guardrails = []
@@ -3030,7 +3048,8 @@ def format_marketing_letterhead(body_html: str, tracking_token: str = None) -> s
         Texas Charter #802920409 • CAGE (SAM) #082830635 • Commercial EMR: .43 • ISO 9001:2015 Registered<br>
         <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #cbd5e1; font-size: 10.5px; color: #94a3b8;">
             You are receiving this commercial communication as an operational facility contact in Texas.<br>
-            To stop receiving future marketing messages, you may <a href="{unsub_url}" style="color: #2563eb; text-decoration: underline; font-weight: 600;">Unsubscribe Instantly</a> or email <a href="mailto:info@hwbcleaning.com?subject=Unsubscribe" style="color: #2563eb; text-decoration: underline;">info@hwbcleaning.com</a>.
+            To stop receiving future marketing messages, you may <a href="{unsub_url}" style="color: #2563eb; text-decoration: underline; font-weight: 600;">Unsubscribe Instantly</a> or email <a href="mailto:info@hwbcleaning.com?subject=Unsubscribe" style="color: #2563eb; text-decoration: underline;">info@hwbcleaning.com</a>.<br>
+            <span style="font-size: 9.5px; color: #94a3b8; display: inline-block; margin-top: 4px;">Notice: This communication contains standard commercial delivery confirmation beacons. We respect your digital privacy.</span>
         </div>
     </div>
     {tracking_pixel_html}
@@ -3188,6 +3207,8 @@ def api_marketing_campaign_create():
     sender_persona = (data.get('sender_persona') or 'Humberto Dominguez (Owner & Operator)').strip()
     daily_throttle = int(data.get('daily_throttle_limit') or 50)
     subject_tmpl = (data.get('email_subject_template') or '').strip()
+    if not subject_tmpl:
+        subject_tmpl = "Commercial Cleaning Proposal & Facility Walkthrough | HWB Cleaning Services"
     body_tmpl = (data.get('email_body_template') or '').strip()
     stage_leads = data.get('stage_leads', True)
     stage_limit = int(data.get('stage_limit') or 100)
@@ -3223,7 +3244,10 @@ def api_marketing_campaign_create():
                     "email IS NOT NULL",
                     "POSITION('@' IN email) > 0",
                     "COALESCE(is_dnc, FALSE) = FALSE",
-                    "COALESCE(is_converted, FALSE) = FALSE"
+                    "COALESCE(is_converted, FALSE) = FALSE",
+                    "(state IS NULL OR UPPER(state) NOT IN ('CA', 'WA'))",
+                    "LOWER(email) NOT LIKE '%.ca'",
+                    "LOWER(email) NOT LIKE '%.ca.gov'"
                 ]
                 params = []
                 if 'child' in target_sector.lower() or 'daycare' in target_sector.lower():
@@ -3551,7 +3575,7 @@ def api_marketing_generate_drafts(campaign_id):
             if not campaign:
                 return jsonify({'status': 'error', 'message': 'Campaign not found.'}), 404
 
-            subject_tmpl = campaign.get('email_subject_template') or "Quick question regarding after-hours cleaning for your facility"
+            subject_tmpl = campaign.get('email_subject_template') or "Commercial Cleaning Proposal & Facility Walkthrough | HWB Cleaning Services"
             body_tmpl = campaign.get('email_body_template') or """<p>Hi {first_name},</p>
 
 <p>You probably already have a regular cleaning crew or an active contract in place—and if you are happy with their service, that is wonderful.</p>
@@ -3605,6 +3629,24 @@ Owner &amp; Operator | HWB Cleaning Services LLC<br />
 
             drafts_created = 0
             for recip in recipients:
+                recip_email = (recip.get('recipient_email') or '').strip().lower()
+                if not recip_email or '@' not in recip_email:
+                    continue
+
+                # Geofence Exclusion Shield: Block cold emails to CA (§ 17529.5), WA (RCW 19.190), and Canada (CASL)
+                if recip_email.endswith('.ca') or recip_email.endswith('.ca.gov'):
+                    cur.execute("UPDATE \"CampaignRecipients\" SET status = 'GEOFENCE_BLOCKED', updated_at = CURRENT_TIMESTAMP WHERE id = %s", (recip['id'],))
+                    continue
+
+                lid = recip.get('lead_id')
+                if lid:
+                    cur.execute('SELECT state FROM "Leads" WHERE id = %s', (lid,))
+                    lrow = cur.fetchone()
+                    lstate = (lrow.get('state') or 'TX').strip().upper() if lrow else 'TX'
+                    if lstate in ('CA', 'WA'):
+                        cur.execute("UPDATE \"CampaignRecipients\" SET status = 'GEOFENCE_BLOCKED', updated_at = CURRENT_TIMESTAMP WHERE id = %s", (recip['id'],))
+                        continue
+
                 token = recip.get('tracking_token') or uuid.uuid4().hex
                 if not recip.get('tracking_token'):
                     cur.execute('UPDATE "CampaignRecipients" SET tracking_token = %s WHERE id = %s', (token, recip['id']))

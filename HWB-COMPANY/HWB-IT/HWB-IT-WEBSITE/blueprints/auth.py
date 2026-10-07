@@ -192,6 +192,8 @@ def login():
             details={'attempted_username': u, 'reason': 'Invalid credentials'}
         )
         flash('Invalid credentials.')
+    if request.method == 'GET' and request.args.get('reason') == 'inactivity':
+        flash('Your session expired due to inactivity. Please log in again to continue.')
     return render_template('login.html')
 
 @auth_bp.route('/logout', endpoint='logout')
@@ -230,9 +232,7 @@ def logout():
 @auth_bp.route('/heartbeat', endpoint='heartbeat')
 @login_required
 def heartbeat():
-    """Keeps the active user session alive and updates presence heartbeat."""
-    session['last_activity'] = time.time()
-    session.modified = True
+    """Updates presence heartbeat without overriding session activity timestamp."""
     u_id = getattr(current_user, 'id', None)
     if u_id:
         try:

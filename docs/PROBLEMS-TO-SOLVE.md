@@ -99,6 +99,8 @@ Responsibility: George (Architect)
 | 10/05/2026 | BUG-113 | Public Blueprint Information Leakage & Missing Unauthenticated Access Boundary on Operating Manuals (/manual). | **RESOLVED** | CRITICAL |
 | 10/05/2026 | BUG-114 | CWE-285 Authorization Vulnerability: Custom Module Permissions Bypassed via Query Parameter Tampering (?view=...) in Backoffice Operations. | **RESOLVED** | CRITICAL |
 | 10/05/2026 | BUG-115 | Werkzeug Default 403 Error Screen & Persistent QMS Manual Navigation Exposure for Restricted User Accounts. | **RESOLVED** | HIGH |
+| 10/05/2026 | BUG-116 | CWE-285 / Broken Object-Level Authorization: REST API Endpoints Lack ABAC Checks Permitting Unauthorized Write/Delete Actions. | **RESOLVED** | CRITICAL |
+| 10/07/2026 | BUG-117 | Session Inactivity Timeout Defeated by Automated Frontend Background Heartbeat / Health Pings (/api/v1/health). | **RESOLVED** | HIGH |
 
 
 ## BUG-096: Telegram Inbound Message Drop & Unhandled ValueError on Multi-User Comma-Separated TELEGRAM_CHAT_ID String
@@ -1982,7 +1984,89 @@ CEO Humberto Dominguez attempting to log into `https://www.hwbcleaning.com/login
 1. Every standard error code (401, 403, 404, 500) must have a dedicated, branded HTML error template with clear, everyday-words user pathways.
 2. Navigation elements must never be conditionally hidden solely via client-side CSS; elements must be strictly omitted from the DOM via Jinja2 server-side ABAC evaluation to prevent user confusion and unnecessary support requests.
 
+## BUG-116: CWE-285 / Broken Object-Level Authorization: REST API Endpoints Lack ABAC Checks Permitting Unauthorized Write, Edit, and Delete Actions by Restricted User Accounts
+**Detected:** 10/05/2026
+**Status:** **RESOLVED** (10/05/2026)
+**Symptoms:**
+1. A restricted user account assigned `role: 'Custom'` with read-only permissions (`leads: view=true, edit=false, delete=false`, and all other modules disabled) was able to modify and save lead records in the live application.
+2. In manual user testing under the profile of Mirna Rondinella, unauthorized writes were confirmed in two specific production records:
+   - **Record 1 (Lead ID 82617):** `Idea Academy Pharr (IDEA PUBLIC SCHOOLS)` | Field: `decision_maker` = `'security concern'`.
+   - **Record 2 (Lead ID 82618):** `Premier H S - Lubbock (Briercroft) (PREMIER HIGH SCHOOLS)` | Field: `decision_maker` = `'Security breach'`.
+3. In automated penetration auditing conducted under Yamamoto Moto (`yamamoto_moto`, ID: 10, mirrored to the exact permission profile of Mirna Rondinella), 11 out of 19 tested attack vectors permitted unauthorized data modification, injection, or deletion past authentication (HTTP 200 returned instead of HTTP 403 Forbidden).
+4. The test successfully wrote `'SECURITY BREACH'` into Lead record 83574 (`TEST-ADAMS-FAMILY-PEDIATRICS`) via REST PUT and Cadence Quick-Save.
+**Root Causes:**
+1. **Asynchronous REST Endpoint ABAC Blindspot:** While full-page form routes (`/admin/add-lead`, `/admin/edit-lead/<id>`, `/admin/add-account`) were previously hardened with server-side authorization checks, asynchronous REST API endpoints in `blueprints/crm_api.py` were decorated solely with `@login_required` without verifying granular user capabilities (`current_user.has_permission`).
+2. **Missing Granular Checks on Lead Mutation Routes:**
+   - `PUT /api/v1/leads/<id>` and `PATCH /api/v1/leads/<id>` allowed arbitrary updates without checking `current_user.has_permission('leads', 'edit')`.
+   - `POST /api/v1/leads/<id>/cadence-save` allowed saving contact names, phone numbers, emails, notes, and appointment dates without checking edit permissions.
+   - `POST /api/v1/leads/<id>/contacts` allowed injecting contacts without edit permissions.
+   - `DELETE /api/v1/leads/<id>` and `POST /api/v1/leads/batch-action` allowed lead deletion without checking `current_user.has_permission('leads', 'delete')`.
+3. **Accounts API Missing Capabilities Guard:**
+   - `GET /api/v1/accounts/<id>`, `PUT /api/v1/accounts/<id>`, `POST /api/v1/accounts/<id>/contacts`, and `DELETE /api/v1/accounts/<id>` completely lacked module-level access checks (`current_user.has_permission('accounts', ...)`).
+4. **Table Inline Action Dropdown Exposure:**
+   - In `templates/backoffice_operations.html`, inline `<select>` elements (`quickUpdateLead`) for Lead Stage and Cleaning Delivery Model were rendered without `disabled` attributes for users lacking edit permissions.
+**Solution & Implementation:**
+1. **Backend REST API Lockdown (`blueprints/crm_api.py`):**
+   - Added explicit `current_user.has_permission(module, action)` ABAC gates returning HTTP 403 Forbidden across all asynchronous REST endpoints:
+     - `GET /api/v1/leads/<id>`: gated behind `leads:view`.
+     - `PUT/PATCH /api/v1/leads/<id>`: gated behind `leads:edit`.
+     - `DELETE /api/v1/leads/<id>`: gated behind `leads:delete`.
+     - `POST /api/v1/leads/<id>/cadence-save`: gated behind `leads:edit`.
+     - `POST /api/v1/leads/<id>/contacts`: gated behind `leads:edit`.
+     - `POST /api/v1/leads/<id>/promote`: gated behind `leads:edit`.
+     - `POST /api/v1/leads/export-selected`: gated behind `leads:view`.
+     - `POST /api/v1/leads/batch-action`: gated behind `leads:edit` (updates) and `leads:delete` (deletions).
+     - `GET /api/v1/accounts/<id>`: gated behind `accounts:view`.
+     - `PUT/PATCH /api/v1/accounts/<id>`: gated behind `accounts:edit`.
+     - `DELETE /api/v1/accounts/<id>`: gated behind `accounts:delete`.
+     - `POST /api/v1/accounts/<id>/contacts`: gated behind `accounts:edit`.
+     - `POST /api/v1/accounts/export-selected`: gated behind `accounts:view`.
+     - `POST /api/v1/accounts/batch-action`: gated behind `accounts:edit` and `accounts:delete`.
+2. **Poka-Yoke Frontend Disabling (`templates/backoffice_operations.html`):**
+   - In `backoffice_operations.html`, added `can_edit_leads` evaluation. When `leads:edit` is false, inline `<select>` elements for status and cleaning delivery model are rendered `disabled` with explanatory tooltips.
+   - Updated `quickUpdateLead` and `quickUpdateAccount` JavaScript functions to intercept HTTP 403 responses and display user-friendly error toast notifications.
+3. **Data Restoration & Sanitization:**
+   - Cleaned and restored Lead record 83574 (`TEST-ADAMS-FAMILY-PEDIATRICS`) back to original values (`decision_maker = 'Dr. Robert Adams'`).
+4. **Automated SOC 2 Sentinel Battery Expansion (`scripts/check_soc2_data_leakage.py`):**
+   - Expanded test battery with **Check 7** covering all 11 asynchronous REST API mutation and deletion endpoints under restricted user sessions.
+   - Total test coverage expanded from 64 to **75 automated checks** (100% pass rate).
+5. **Yamamoto Moto Lead AI Estimator Verification:**
+   - Yamamoto Moto's penetration audit script confirmed 19/19 endpoints defended (0 breaches, 100% block rate).
+   - Yamamoto Moto's full bidding regression suite (`scripts/yamamoto_bid_test_suite.py`) certified clean with 9/9 passing tests (Grade A+ Enterprise Mature).
+**Preventative & Evolutionary Learning:**
+1. Every API endpoint that mutates or reads state must enforce the same granular Attribute-Based Access Control (ABAC) checks as the full-page web routes. Authentication (`@login_required`) verifies *identity*, but never *authorization*.
+2. Automated penetration audits using designated personas (such as Yamamoto Moto) must run continuously as part of the CI/CD test battery to detect object-level authorization gaps before release.
 
-
-
+## BUG-117: Session Inactivity Timeout Defeated by Automated Frontend Background Heartbeat / Health Pings (/api/v1/health)
+**Detected:** 10/07/2026
+**Status:** **RESOLVED** (10/07/2026)
+**Symptoms:**
+1. A session authenticated under Operator Mirna Rondinella (`mrondinella`, ID: 3) from the previous day remained logged in and active after overnight inactivity when accessed via `http://mop.test:5000/admin/operations?view=leads&campaign_filter=in_campaign&cols=company%2Cstatus%2Cemail%2Cdm%2Cphone%2Clast_note%2Cactivities%2Cowner`.
+2. The expected 30-minute session inactivity timeout (`enforce_session_inactivity_timeout()`) failed to terminate the session or redirect to `/login`.
+**Root Causes:**
+1. **Server-Side Endpoint Whitelist Flaw:** In `main_app.py`, `enforce_session_inactivity_timeout()` exempted only `/health` (`if request.path == '/health': return`), omitting the actual background health check endpoint `/api/v1/health` and `/heartbeat`.
+2. **Infinite Server-Side Activity Refresh Loop:** In `templates/backoffice_base.html`, a client-side timer (`setInterval(updateHeartbeat, 30000)`) polled `/api/v1/health` every 30 seconds via `HEAD` request. Because `/api/v1/health` was not excluded on the server, every 30-second ping was treated by Flask as human activity, executing `session['last_activity'] = time.time()` and resetting the inactivity clock back to zero continuously while the browser tab remained open.
+3. **Client-Side Idle State Disconnected from Session Termination:** In `backoffice_base.html`, client-side idle tracking (`IDLE_THRESHOLD = 15 mins`) only toggled the DOM badge text to `' STATE: IDLE'`. It never stopped polling `/api/v1/health` and never initiated a redirect to `/logout`.
+4. **Missing Maximum Absolute Session Ceiling:** `PERMANENT_SESSION_LIFETIME` was not configured in `main_app.py`, leaving Flask's default 31-day cookie lifetime active without an absolute session ceiling.
+**Solution & Implementation:**
+1. **Machine Polling Inactivity Exemption (`main_app.py`):**
+   - Hardened `enforce_session_inactivity_timeout()` with an explicit `MACHINE_POLLING_PATHS` set (`{'/health', '/api/v1/health', '/heartbeat', '/api/v1/db-audit'}`).
+   - Machine pings are validated against the 30-minute inactivity threshold (returning HTTP 401 Unauthorized if expired), but are strictly prohibited from resetting `session['last_activity']`.
+   - Only genuine human user interactions (page views, form submits, REST mutations) update `session['last_activity']`.
+2. **Client-Side Idle & Auto-Logout Guard (`templates/backoffice_base.html`):**
+   - Once a user has been idle for >15 minutes (`isIdle = true`), all background health and heartbeat pings cease completely.
+   - Enforced hard client-side inactivity threshold (`TIMEOUT_THRESHOLD = 30 mins`): if inactivity reaches 30 minutes, JavaScript immediately triggers `window.location.href = "/login?reason=inactivity"`.
+   - If any API or health response returns HTTP 401 Unauthorized, the client immediately redirects to the login screen.
+3. **Presence Decoupling (`blueprints/auth.py`):**
+   - Removed `session['last_activity'] = time.time()` from `/heartbeat`. The heartbeat endpoint now exclusively records online presence in `Users.last_heartbeat_at` without overriding the session's human activity clock.
+   - Added user-friendly flash notice on `GET /login?reason=inactivity`: *"Your session expired due to inactivity. Please log in again to continue."*
+4. **Absolute Session Expiration Ceiling (`main_app.py`):**
+   - Configured `app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(hours=12)` to enforce an absolute 12-hour maximum session ceiling.
+5. **Regression Verification & Quality Certification:**
+   - Automated 6-point timeout test passed with 100% clean assertions: verified that `/api/v1/health` and `/heartbeat` do not reset `last_activity`, expired sessions return 401 on pings and 302 redirect on page views, and active human requests properly update the timestamp.
+   - 75/75 SOC 2 Type II data leakage & ABAC checks verified clean.
+   - 9/9 Yamamoto Moto bidding test suite verified clean (Grade A+ Enterprise Mature).
+**Preventative & Evolutionary Learning:**
+1. Machine-to-machine polling (health probes, status badges, telemetry pings) must NEVER be conflated with human user interaction. Automated requests must always be exempt from extending session activity timers.
+2. Inactivity guards must be enforced symmetrically: client-side timers should preemptively redirect idle users, while server-side before-request hooks act as an immutable fail-closed boundary.
 

@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Accessibility Statement | HWB Cleaning Services LLC{% endblock %}
+
+{% block content %}
+<section class="section-white" style="padding: 4rem 0 6rem 0; background: #ffffff;">
+    <div class="content-wrapper" style="max-width: 900px; margin: 0 auto; padding: 0 1.5rem;">
+        
+        <div class="section-header" style="text-align: left; margin-bottom: 3rem; border-bottom: 2px solid var(--slate-200); padding-bottom: 1.5rem;">
+            <div style="display: inline-flex; align-items: center; gap: 0.5rem; background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; padding: 0.35rem 0.85rem; border-radius: 999px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.85rem;">
+                <i class="fas fa-universal-access"></i> Universal Access &amp; Inclusion
+            </div>
+            <h1 style="font-size: 2.5rem; font-weight: 900; color: #0f172a; margin-bottom: 0.75rem;">Accessibility Statement</h1>
+            <p style="font-size: 1.1rem; color: #475569; font-weight: 500;">Commitment to digital accessibility under ADA Title III and WCAG 2.2 Level AA standards.</p>
+            <p style="font-size: 0.85rem; color: #64748b; margin-top: 0.5rem;">Last Reviewed &amp; Certified: 10/07/2026</p>
+        </div>
+
+        <div class="accessibility-body" style="font-size: 1.05rem; line-height: 1.8; color: #334155;">
+            <h2 style="font-size: 1.5rem; font-weight: 800; color: #0f172a; margin: 2rem 0 1rem 0;">1. Our Commitment</h2>
+            <p>HWB Cleaning Services LLC is dedicated to ensuring digital accessibility for people with disabilities. We continually improve the user experience for everyone and apply the relevant accessibility standards to guarantee universal access across all public web interfaces, customer portals, and commercial quote tools.</p>
+
+            <h2 style="font-size: 1.5rem; font-weight: 800; color: #0f172a; margin: 2rem 0 1rem 0;">2. Conformance Standard</h2>
+            <p>We target full conformance with the <strong>Web Content Accessibility Guidelines (WCAG) 2.2 Level AA</strong>. These guidelines explain how to make web content more accessible to people with a wide range of disabilities, including visual, auditory, cognitive, and motor impairments.</p>
+            <p>Our digital infrastructure adheres to the following core engineering practices:</p>
+            <ul style="margin: 1rem 0 1.5rem 1.5rem; list-style-type: disc;">
+                <li><strong>Native Semantic HTML:</strong> Meaningful document structure utilizing semantic landmarks (<code>&lt;header&gt;</code>, <code>&lt;nav&gt;</code>, <code>&lt;main&gt;</code>, <code>&lt;footer&gt;</code>) and hierarchical headings (<code>&lt;h1&gt;</code> through <code>&lt;h6&gt;</code>).</li>
+                <li><strong>Keyboard Operability:</strong> All interactive elements, quote builders, and navigation menus can be operated entirely using standard keyboard controls (<code>Tab</code>, <code>Shift+Tab</code>, <code>Enter</code>, <code>Space</code>, and <code>Escape</code>) with visible focus indicators.</li>
+                <li><strong>Screen Reader Compatibility:</strong> Form fields, controls, and informational images are explicitly associated with programmatically determinable labels and alternative text attributes.</li>
+                <li><strong>High Contrast:</strong> Text and essential user interface components meet or exceed the minimum 4.5:1 color contrast ratio against adjacent backgrounds.</li>
+                <li><strong>Zero Intrusive Overlays:</strong> We reject cosmetic third-party overlay widgets in favor of clean, native, production-grade accessibility baked directly into our source code.</li>
+            </ul>
+
+            <h2 style="font-size: 1.5rem; font-weight: 800; color: #0f172a; margin: 2rem 0 1rem 0;">3. Feedback &amp; Assistance</h2>
+            <p>We welcome your feedback on the accessibility of the HWB platform. If you encounter any accessibility barriers, have difficulty accessing any part of our website, or require assistance requesting a quote, please contact our support team:</p>
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0;">
+                <p style="margin: 0 0 0.5rem 0;"><strong>Accessibility Coordinator:</strong> Super George / IT Operations</p>
+                <p style="margin: 0 0 0.5rem 0;"><strong>Phone:</strong> <a href="tel:2145860257" style="color: #00796b; font-weight: 600;">(214)-586-0257</a></p>
+                <p style="margin: 0 0 0.5rem 0;"><strong>Email:</strong> <a href="mailto:support@hwbcleaning.com" style="color: #00796b; font-weight: 600;">support@hwbcleaning.com</a></p>
+                <p style="margin: 0;"><strong>Mailing Address:</strong> 3342 FM 1827 Ste 8d, McKinney, TX 75071</p>
+            </div>
+            <p>We commit to reviewing and responding to accessibility inquiries within <strong>48 business hours</strong>.</p>
+        </div>
+
+    </div>
+</section>
+{% endblock %}

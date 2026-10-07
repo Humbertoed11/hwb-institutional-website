@@ -112,6 +112,18 @@ def methodology():
 def privacy_policy():
     return render_template('privacy_policy.html')
 
+@public_bp.route('/accessibility', endpoint='accessibility_statement')
+@public_bp.route('/accessibility.html')
+def accessibility_statement():
+    """Official ADA Title III & WCAG 2.2 AA Accessibility Statement."""
+    return render_template('accessibility.html')
+
+@public_bp.route('/contact', endpoint='contact')
+@public_bp.route('/contact-us')
+def contact():
+    """Contact entry point routing to commercial quote intake."""
+    return redirect(url_for('public.get_quote'))
+
 @public_bp.route('/terms', endpoint='terms_of_service')
 @public_bp.route('/terms-of-service')
 def terms_of_service():

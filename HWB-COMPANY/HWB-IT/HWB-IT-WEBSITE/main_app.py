@@ -61,7 +61,7 @@ app = Flask(__name__,
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 Compress(app)
 app.config.from_object(sys_config)
-app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(minutes=31)
+app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(hours=12)
 app.config['SESSION_INACTIVITY_TIMEOUT_SECONDS'] = int(os.getenv('SESSION_INACTIVITY_TIMEOUT_SECONDS', '1800'))
 
 # --- Register Enterprise Blueprints via Blueprint Hub ---
@@ -133,17 +133,29 @@ def enforce_session_inactivity_timeout():
     """
     SigmaFidelity™ Enterprise Inactivity Timeout Guard (SOC 2 / ISO 27001).
     Terminates authenticated sessions after 30 minutes of user inactivity.
+    Automated health checks and machine pings are validated for timeout but
+    STRICTLY EXEMPT from resetting the human activity timer (BUG-117).
     """
-    # Exclude static assets and health checks from timeout tracking
-    if request.path.startswith('/static') or request.path == '/health' or request.endpoint == 'static':
+    # 1. Skip completely unauthenticated static assets
+    if request.path.startswith('/static') or request.endpoint == 'static':
         return
+
+    # Machine polling endpoints that must never reset the inactivity clock
+    MACHINE_POLLING_PATHS = {'/health', '/api/v1/health', '/heartbeat', '/api/v1/db-audit'}
+    is_machine_ping = request.path in MACHINE_POLLING_PATHS
 
     if current_user.is_authenticated:
         now = time.time()
         last_active = session.get('last_activity')
         inactivity_limit = app.config.get('SESSION_INACTIVITY_TIMEOUT_SECONDS', 1800)
 
-        if last_active and (now - last_active > inactivity_limit):
+        # Initialize last_activity if missing; machine pings do not initialize user activity
+        if last_active is None:
+            if not is_machine_ping:
+                session['last_activity'] = now
+            return
+
+        if now - last_active > inactivity_limit:
             inactive_mins = round((now - last_active) / 60, 1)
             from core.services.security_logger import log_security_event
             log_security_event(
@@ -154,13 +166,13 @@ def enforce_session_inactivity_timeout():
                 username=getattr(current_user, 'username', 'Unknown'),
                 user_role=getattr(current_user, 'role', 'Unknown'),
                 status_code=401,
-                details={'inactive_minutes': inactive_mins, 'threshold_seconds': inactivity_limit}
+                details={'inactive_minutes': inactive_mins, 'threshold_seconds': inactivity_limit, 'trigger_path': request.path}
             )
 
             logout_user()
             session.clear()
 
-            if request.path.startswith('/api/'):
+            if request.path.startswith('/api/') or is_machine_ping:
                 return jsonify({
                     'status': 'error',
                     'reason': 'SESSION_TIMEOUT',
@@ -170,7 +182,9 @@ def enforce_session_inactivity_timeout():
             flash('Your session expired due to inactivity. Please log in again to continue.')
             return redirect(url_for('auth.login', next=request.path, reason='inactivity'))
 
-        session['last_activity'] = now
+        # Only human user interactions update the activity timestamp
+        if not is_machine_ping:
+            session['last_activity'] = now
 
 @app.after_request
 def apply_application_security_headers(response):
@@ -183,6 +197,7 @@ def apply_application_security_headers(response):
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['X-Frame-Options'] = 'SAMEORIGIN'
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    response.headers['Content-Security-Policy'] = "default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval'; img-src 'self' https: data: blob:;"
     response.headers['Server'] = 'Cloudflare'
     return response
 

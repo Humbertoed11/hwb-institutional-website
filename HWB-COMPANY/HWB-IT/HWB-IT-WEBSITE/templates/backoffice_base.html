@@ -625,41 +625,72 @@
  }, 1200);
  }
 
- // --- Sigmaquality™ Heartbeat Monitor ---
+ // --- SigmaFidelity™ Heartbeat & Inactivity Monitor (BUG-117) ---
  let lastActivity = Date.now();
  const IDLE_THRESHOLD = 15 * 60 * 1000; // 15 Minutes
+ const TIMEOUT_THRESHOLD = 30 * 60 * 1000; // 30 Minutes
  const statusBadge = document.querySelector('.bo-status-badge');
- const statusText = statusBadge.childNodes[statusBadge.childNodes.length - 1];
+ const statusText = statusBadge && statusBadge.childNodes.length > 0 ? statusBadge.childNodes[statusBadge.childNodes.length - 1] : null;
 
  function updateHeartbeat() {
  const now = Date.now();
- const isIdle = (now - lastActivity) > IDLE_THRESHOLD;
+ const idleElapsed = now - lastActivity;
 
- // Check Connectivity
- fetch('/api/v1/health', { method: 'HEAD' })
- .then(res => {
- if (res.ok) {
+ // 1. Hard client-side inactivity logout at 30 minutes
+ if (idleElapsed >= TIMEOUT_THRESHOLD) {
+ window.location.href = "/login?reason=inactivity";
+ return;
+ }
+
+ const isIdle = idleElapsed > IDLE_THRESHOLD;
+
+ // 2. When user has been idle for >15 minutes, stop background pings
  if (isIdle) {
+ if (statusBadge && statusText) {
  statusBadge.className = 'bo-status-badge idle';
  statusText.textContent = ' STATE: IDLE';
- } else {
+ }
+ return;
+ }
+
+ // 3. Check Connectivity & Validate Active Session
+ fetch('/api/v1/health', { method: 'HEAD' })
+ .then(res => {
+ if (res.status === 401) {
+ window.location.href = "/login?reason=inactivity";
+ return;
+ }
+ if (res.ok) {
+ if (statusBadge && statusText) {
  statusBadge.className = 'bo-status-badge';
  statusText.textContent = ' STATE: ACTIVE';
- fetch('/heartbeat').catch(() => {});
  }
+ fetch('/heartbeat').then(hbRes => {
+ if (hbRes.status === 401) {
+ window.location.href = "/login?reason=inactivity";
+ }
+ }).catch(() => {});
  } else {
  throw new Error();
  }
  })
  .catch(() => {
+ if (statusBadge && statusText) {
  statusBadge.className = 'bo-status-badge disconnected';
  statusText.textContent = ' STATE: OFFLINE';
+ }
  });
  }
 
  // Track Activity
  ['mousedown', 'keydown', 'scroll', 'touchstart'].forEach(evt => {
- window.addEventListener(evt, () => { lastActivity = Date.now(); }, { passive: true });
+ window.addEventListener(evt, () => {
+ const wasIdle = (Date.now() - lastActivity) > IDLE_THRESHOLD;
+ lastActivity = Date.now();
+ if (wasIdle) {
+ updateHeartbeat();
+ }
+ }, { passive: true });
  });
 
  // Start Heartbeat (Every 30 seconds)
