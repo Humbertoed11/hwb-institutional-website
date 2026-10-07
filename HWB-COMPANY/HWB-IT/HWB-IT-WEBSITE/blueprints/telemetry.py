@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 from flask import Blueprint, jsonify, current_app, Response, request, redirect
 from core.services.database import get_db, get_pool_status
 from core.services.task_queue import task_queue
+from core.services.version_service import get_version_info
 
 telemetry_bp = Blueprint('telemetry', __name__)
 
@@ -20,6 +21,15 @@ def ping():
         "status": "ok",
         "service": "hwb_web_app",
         "timestamp": time.time()
+    }), 200
+
+@telemetry_bp.route('/api/v1/version')
+def version_endpoint():
+    """Authoritative API endpoint for version, commit hash, and deployment environment verification."""
+    ver = get_version_info()
+    return jsonify({
+        "status": "ok",
+        **ver
     }), 200
 
 @telemetry_bp.route('/api/v1/health')
@@ -34,8 +44,14 @@ def health_check():
             cur.execute('SELECT 1;')
             cur.fetchone()
         latency_ms = round((time.time() - start_t) * 1000, 2)
+        ver = get_version_info()
         return jsonify({
             "status": "healthy",
+            "version": ver["app_version"],
+            "commit": ver["commit"],
+            "build_tag": ver["build_tag"],
+            "environment": ver["environment"],
+            "display_version": ver["display_version"],
             "database": "connected",
             "db_host": urlparse(db_url).hostname if db_url else "unknown",
             "latency_ms": latency_ms,

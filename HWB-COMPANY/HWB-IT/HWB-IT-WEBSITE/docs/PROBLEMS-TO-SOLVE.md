@@ -102,6 +102,7 @@ Responsibility: George (Architect)
 | 10/05/2026 | BUG-116 | CWE-285 / Broken Object-Level Authorization: REST API Endpoints Lack ABAC Checks Permitting Unauthorized Write/Delete Actions. | **RESOLVED** | CRITICAL |
 | 10/07/2026 | BUG-117 | Session Inactivity Timeout Defeated by Automated Frontend Background Heartbeat / Health Pings (/api/v1/health). | **RESOLVED** | HIGH |
 | 10/07/2026 | BUG-118 | Missing Users Telemetry Columns & ClientBreadcrumbs in Baseline Parity Triggering HTTP 500 on /admin/executive. | **RESOLVED** | CRITICAL |
+| 10/07/2026 | BUG-119 | White-on-White Text Invisibility on QMS Manual Button & Navigation Discrepancies Across Public Pages. | **RESOLVED** | HIGH |
 
 
 ## BUG-096: Telegram Inbound Message Drop & Unhandled ValueError on Multi-User Comma-Separated TELEGRAM_CHAT_ID String
@@ -2100,4 +2101,38 @@ CEO Humberto Dominguez attempting to log into `https://www.hwbcleaning.com/login
 **Preventative & Evolutionary Learning:**
 1. All administrative views querying extended telemetry columns must implement defensive query fallbacks.
 2. Every column referenced in authentication or administrative roster queries must be explicitly codified in `database/schema_engine.py` baseline parity.
+
+
+## BUG-119: White-on-White Text Invisibility on Entire QMS Manual Button & Navigation Discrepancies Across Public Pages
+**Detected:** 10/07/2026
+**Status:** **RESOLVED** (10/07/2026)
+**Symptoms:**
+1. When an authenticated operator logged into the backoffice, the QMS buttons in the header displayed properly.
+2. When the user navigated to any public-facing page (such as clicking the Home link, the company logo, Services, Locations, or About), the "Entire QMS Manual" button in the top utility bar turned invisible: white text on a white background.
+3. Hovering over the invisible button failed to restore visible text color.
+4. The top utility bar displayed the label "Backoffice Control" while viewing public customer-facing marketing pages.
+5. Standard cleaning technicians or staff members who navigated to public pages had no "Operations Center" button to return to their backoffice workspace.
+6. The mobile drawer menu locked out standard cleaning technicians and cleaners from accessing the App Manual and Logging Out, as those links were trapped behind an executive clearance check.
+**Root Cause:**
+1. **Undefined Core CSS Variables:** `--slate-700` (`#334155`) and `--slate-800` (`#1e293b`) were missing from `:root` in `HWB-WEB Style.css`, `backoffice_base.html`, and `sop_base.html`.
+2. **Inherited Parent Color Collision:** In `mega_bar.html`, `#utility-qms-manual-btn` used `color: var(--slate-700);`. Because `--slate-700` was undefined in the public stylesheet, the browser fell back to the inherited text color from `.top-utility-bar` (`color: white;` in `HWB-WEB Style.css`), which sat atop an inline `background: white;`. The text rendered pure white on a white background.
+3. **Inline Specificity Trap on Hover:** Because `color: var(--slate-700);` was applied inline on the `<a>` element, it held higher specificity than the stylesheet's `.isc-btn-outline:hover` rule, keeping the text white even when hovered.
+4. **Missing "Return to Operations" Navigation:** On public pages, authenticated operators lacked a dedicated return button in the utility bar to navigate back to `/admin/operations`.
+5. **Mobile Navigation Drawer RBAC Gating Error:** In `mega_bar.html`, `App Manual` and `Logout` links were conditionally wrapped inside `can_view_command_hub`, locking out non-management staff on mobile devices.
+**Solution:**
+1. **Design System `:root` Variables Restored:** Added `--slate-700: #334155;` and `--slate-800: #1e293b;` across `HWB-WEB Style.css`, `backoffice_base.html`, and `sop_base.html`.
+2. **Button Hardening (`HWB-WEB Style.css`):** Codified `.isc-btn-outline` with default `background: #ffffff; border: 1px solid var(--slate-300); color: var(--slate-700); box-shadow: 0 1px 2px rgba(0,0,0,0.04);`.
+3. **Explicit High-Contrast Utility Bar Styling (`mega_bar.html`):**
+   - Enforced `color: #0f172a;` on `.top-utility-bar` for authenticated users.
+   - Styled `#utility-qms-manual-btn` with concrete, high-contrast values: `color: #334155; border-color: #cbd5e1; background: #ffffff;`.
+   - Styled `#utility-app-manual-btn` with `color: #2563eb; border-color: #93c5fd; background: #eff6ff;`.
+4. **Operations Center Quick-Return Button:** Added `#utility-backoffice-btn` (`/admin/operations`) with an arrow icon on public pages so staff can instantly return to their work center.
+5. **Context-Aware Header Labeling & Logo Routing:** Left-hand badge dynamically shows "Operations Session" on public pages, "Institutional Manual" on QMS, and "Backoffice Control" on admin routes. Clicking the small logo in the bar returns backoffice users directly to operations.
+6. **Mobile Drawer Universal Access:** Added a dedicated "Staff Work Center" section in the mobile drawer for non-management staff providing direct links to Operations Center, App Manual, Entire QMS Manual (if cleared), and Logout.
+7. **Outside Sales Desk Alignment:** Added `App Manual` button to the Outside Sales top bar.
+**Preventative:**
+1. Color variables in utility buttons must never rely on unverified CSS variables without explicit hex fallbacks.
+2. Background color and text color of interactive buttons must always be styled together as a unit to prevent white-on-white text collisions across varying page templates.
+3. Authenticated sessions on public marketing pages must always provide a prominent return path to the employee work center.
+
 

@@ -1,49 +1,68 @@
 <!-- 2026 Official Company Menu (Sigmaquality Standard) -->
-<div class="top-utility-bar" {% if current_user.is_authenticated %}style="background: white; border-bottom: 1px solid var(--slate-200); padding: 0.5rem 40px; width: 100%; box-sizing: border-box;"{% endif %}>
+<div class="top-utility-bar" {% if current_user.is_authenticated %}style="background: #ffffff; border-bottom: 1px solid var(--slate-200); padding: 0.5rem 40px; width: 100%; box-sizing: border-box; color: #0f172a;"{% endif %}>
     <div class="{% if current_user.is_authenticated %}utility-fluid-container{% else %}header-container{% endif %}" style="display: flex; justify-content: space-between; align-items: center;">
         {% if nav_access.is_sales %}
             <!-- Outside Sales Desk Utility Bar -->
             <div style="display: flex; align-items: center; gap: 1rem;">
-                <img src="{{ url_for('static', filename='logo_standard.png') }}" alt="HWB" style="height: 28px;">
-                <span style="font-weight: 900; color: var(--slate-900); font-size: 0.75rem; text-transform: uppercase; border-left: 2px solid var(--slate-100); padding-left: 1rem; letter-spacing: 0.1em;">
-                    Outside Sales Desk
-                </span>
+                <a href="{{ url_for('sales_desk') }}" style="display: flex; align-items: center; text-decoration: none;">
+                    <img src="{{ url_for('static', filename='logo_standard.png') }}" alt="HWB" style="height: 28px;">
+                    <span style="font-weight: 900; color: #0f172a; font-size: 0.75rem; text-transform: uppercase; border-left: 2px solid var(--slate-200); padding-left: 1rem; margin-left: 1rem; letter-spacing: 0.1em;">
+                        Outside Sales Desk
+                    </span>
+                </a>
             </div>
-            <div style="display: flex; align-items: center; gap: 1.5rem;">
-                <a href="{{ url_for('sales_desk') }}" style="font-size: 0.75rem; font-weight: 800; color: #1e3a8a; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <a href="{{ url_for('sales_desk') }}" style="font-size: 0.75rem; font-weight: 800; color: #1e3a8a; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; padding: 0.35rem 0.75rem; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px;">
                     <i class="fas fa-th-large"></i> My Territory Queue
+                </a>
+                <a href="{{ url_for('public.application_manual') }}" id="utility-sales-app-manual-btn" class="isc-btn isc-btn-outline" style="height: 32px; font-size: 0.75rem; font-weight: 700; color: #2563eb; border-color: #93c5fd; background: #eff6ff; display: inline-flex; align-items: center; gap: 0.45rem; padding: 0 0.85rem; border-radius: 6px; text-decoration: none;" title="Software & Backoffice Application Operating Guide">
+                    <i class="fas fa-desktop" style="color: #2563eb;"></i> App Manual
                 </a>
                 <div style="display: flex; flex-direction: column; text-align: right;">
                     <span style="font-size: 0.7rem; font-weight: 800; color: var(--brand); text-transform: uppercase;">{{ current_user.username }}</span>
-                    <span style="font-size: 0.65rem; color: var(--slate-400); font-weight: 700;">Outside Sales</span>
+                    <span style="font-size: 0.65rem; color: #64748b; font-weight: 700;">Outside Sales</span>
                 </div>
-                <a href="{{ url_for('logout') }}" class="isc-btn isc-btn-outline" style="height: 32px; border-color: #fca5a5; color: #ef4444 !important; font-size: 0.7rem; padding: 0 1rem; border-radius: 6px; text-decoration: none; font-weight: 800;">
+                <a href="{{ url_for('logout') }}" class="isc-btn isc-btn-outline" style="height: 32px; border-color: #fca5a5; color: #ef4444 !important; font-size: 0.7rem; padding: 0 1rem; border-radius: 6px; text-decoration: none; font-weight: 800; background: #ffffff;">
                     <i class="fas fa-power-off" style="margin-right: 6px;"></i> Logout
                 </a>
             </div>
         {% elif current_user.is_authenticated %}
             <!-- Clean Admin Header Look -->
+            {% set is_in_backoffice = (request.path.startswith('/admin') or 'operations.' in (request.endpoint or '') or request.endpoint in ['sales_desk', 'calculator', 'csi_map', 'sigmajan_lab']) %}
+            {% set is_in_manual = ('manual' in (request.endpoint or '') or 'sop' in (request.endpoint or '')) %}
             <div style="display: flex; align-items: center; gap: 1rem;">
-                <img src="{{ url_for('static', filename='logo_standard.png') }}" alt="HWB" style="height: 28px;">
-                <span style="font-weight: 900; color: var(--slate-900); font-size: 0.75rem; text-transform: uppercase; border-left: 2px solid var(--slate-100); padding-left: 1rem; letter-spacing: 0.1em;">
-                    {% if request.endpoint == 'manual_index' or request.endpoint == 'view_sop' or request.endpoint == 'design_system' %}
-                        Institutional Manual
-                    {% else %}
-                        Backoffice Control
-                    {% endif %}
-                </span>
+                <a href="{{ url_for('admin_operations') if is_in_backoffice else '/' }}" style="display: flex; align-items: center; text-decoration: none;">
+                    <img src="{{ url_for('static', filename='logo_standard.png') }}" alt="HWB" style="height: 28px;">
+                    <span style="font-weight: 900; color: #0f172a; font-size: 0.75rem; text-transform: uppercase; border-left: 2px solid var(--slate-200); padding-left: 1rem; margin-left: 1rem; letter-spacing: 0.1em;">
+                        {% if is_in_manual %}
+                            Institutional Manual
+                        {% elif is_in_backoffice %}
+                            Backoffice Control
+                        {% else %}
+                            Operations Session
+                        {% endif %}
+                    </span>
+                </a>
             </div>
-            <div style="display: flex; align-items: center; gap: 1.5rem;">
-                {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('qms', 'view')) %}
-                <a href="{{ url_for('manual_index') }}" id="utility-qms-manual-btn" class="isc-btn isc-btn-outline" style="height: 32px; font-size: 0.75rem; font-weight: 700; color: var(--slate-700); border-color: var(--slate-300); display: inline-flex; align-items: center; gap: 0.45rem; padding: 0 0.85rem; border-radius: 6px; text-decoration: none;" title="ISO 9001:2015 Quality Management System Manual">
-                    <i class="fas fa-book" style="color: var(--brand);"></i> QMS Manual
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                {% if not is_in_backoffice %}
+                <a href="{{ url_for('admin_operations') }}" id="utility-backoffice-btn" class="isc-btn isc-btn-outline" style="height: 32px; font-size: 0.75rem; font-weight: 700; color: #0f172a; border-color: #cbd5e1; background: #ffffff; display: inline-flex; align-items: center; gap: 0.45rem; padding: 0 0.85rem; border-radius: 6px; text-decoration: none;" title="Return to Backoffice Operations Control">
+                    <i class="fas fa-arrow-left" style="color: var(--brand);"></i> Operations Center
                 </a>
                 {% endif %}
-                <div style="display: flex; flex-direction: column; text-align: right;">
+                <a href="{{ url_for('public.application_manual') }}" id="utility-app-manual-btn" class="isc-btn isc-btn-outline" style="height: 32px; font-size: 0.75rem; font-weight: 700; color: #2563eb; border-color: #93c5fd; background: #eff6ff; display: inline-flex; align-items: center; gap: 0.45rem; padding: 0 0.85rem; border-radius: 6px; text-decoration: none;" title="Software & Backoffice Application Operating Guide">
+                    <i class="fas fa-desktop" style="color: #2563eb;"></i> App Manual
+                </a>
+                {% if has_master_qms %}
+                <a href="{{ url_for('public.manual_index') }}" id="utility-qms-manual-btn" class="isc-btn isc-btn-outline" style="height: 32px; font-size: 0.75rem; font-weight: 700; color: #334155; border-color: #cbd5e1; background: #ffffff; display: inline-flex; align-items: center; gap: 0.45rem; padding: 0 0.85rem; border-radius: 6px; text-decoration: none;" title="Master ISO 9001 Quality Management System Manual (Full Library)">
+                    <i class="fas fa-book-bookmark" style="color: #64748b;"></i> Entire QMS Manual
+                </a>
+                {% endif %}
+                <div style="display: flex; flex-direction: column; text-align: right; margin-left: 0.5rem;">
                     <span style="font-size: 0.7rem; font-weight: 800; color: var(--brand); text-transform: uppercase;">{{ current_user.username }}</span>
-                    <span style="font-size: 0.65rem; color: var(--slate-400); font-weight: 700;">HWB Authorized Session</span>
+                    <span style="font-size: 0.65rem; color: #64748b; font-weight: 700;">HWB Authorized Session</span>
                 </div>
-                <a href="{{ url_for('logout') }}" class="isc-btn isc-btn-outline" style="height: 32px; border-color: #fca5a5; color: #ef4444 !important; font-size: 0.7rem; padding: 0 1rem; border-radius: 6px; text-decoration: none; font-weight: 800;">
+                <a href="{{ url_for('logout') }}" class="isc-btn isc-btn-outline" style="height: 32px; border-color: #fca5a5; color: #ef4444 !important; font-size: 0.7rem; padding: 0 1rem; border-radius: 6px; text-decoration: none; font-weight: 800; background: #ffffff;">
                     <i class="fas fa-power-off" style="margin-right: 6px;"></i> Logout
                 </a>
             </div>
@@ -62,7 +81,7 @@
 <header class="main-header">
     <div class="header-container">
         <div class="logo-container">
-            <a href="/">
+            <a href="{% if current_user.is_authenticated and (request.path.startswith('/admin') or 'operations.' in (request.endpoint or '')) %}{{ url_for('admin_operations') }}{% else %}/{% endif %}">
                 <img src="{{ url_for('static', filename='logo_standard.png') }}" alt="HWB Cleaning Official Logo" class="header-logo" style="height: 64px;">
             </a>
         </div>
@@ -185,16 +204,20 @@
                             </a>
                             {% endif %}
                         </div>
-                        <!-- Column 4: Compliance -->
-                        {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('qms', 'view')) %}
+                        <!-- Column 4: Guides & Compliance -->
                         <div class="mega-column">
-                            <div style="font-size: 0.7rem; font-weight: 900; color: var(--hwb-blue); text-transform: uppercase; margin-bottom: 1.5rem; letter-spacing: 0.1em;">Compliance</div>
-                            <a href="{{ url_for('manual_index') }}" class="mega-option" style="padding: 1rem 0;">
-                                <span class="title">Institutional Manual</span>
+                            <div style="font-size: 0.7rem; font-weight: 900; color: var(--hwb-blue); text-transform: uppercase; margin-bottom: 1.5rem; letter-spacing: 0.1em;">Guides &amp; Compliance</div>
+                            <a href="{{ url_for('public.application_manual') }}" class="mega-option" style="padding: 0.75rem 0;">
+                                <span class="title">Application Manual</span>
+                                <span class="desc">Software &amp; Backoffice Guide.</span>
+                            </a>
+                            {% if has_master_qms %}
+                            <a href="{{ url_for('public.manual_index') }}" class="mega-option" style="padding: 0.75rem 0;">
+                                <span class="title">Entire QMS Manual</span>
                                 <span class="desc">Full ISO 9001 SOP Library.</span>
                             </a>
+                            {% endif %}
                         </div>
-                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -253,13 +276,23 @@
             <a href="{{ url_for('sigma_executive') }}" class="sub-link" onclick="toggleMobileMenu()">Executive Pulse</a>
             <a href="{{ url_for('sigmajan_lab') }}" class="sub-link" onclick="toggleMobileMenu()">The Lab</a>
             {% endif %}
-            {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('qms', 'view')) %}
-            <a href="{{ url_for('manual_index') }}" class="sub-link" onclick="toggleMobileMenu()">SOP Manual</a>
+            <a href="{{ url_for('public.application_manual') }}" class="sub-link" onclick="toggleMobileMenu()">App Manual</a>
+            {% if has_master_qms %}
+            <a href="{{ url_for('public.manual_index') }}" class="sub-link" onclick="toggleMobileMenu()">Entire QMS Manual</a>
             {% endif %}
             <a href="{{ url_for('logout') }}" class="sub-link" style="color: #ef4444;" onclick="toggleMobileMenu()">Log Out</a>
         {% elif nav_access.is_sales %}
             <div class="mobile-menu-section-label">Outside Sales</div>
             <a href="{{ url_for('sales_desk') }}" class="sub-link" style="font-weight: 800; color: #1e3a8a;" onclick="toggleMobileMenu()"><i class="fas fa-briefcase"></i> Field Sales Desk</a>
+            <a href="{{ url_for('public.application_manual') }}" class="sub-link" onclick="toggleMobileMenu()">App Manual</a>
+            <a href="{{ url_for('logout') }}" class="sub-link" style="color: #ef4444;" onclick="toggleMobileMenu()">Log Out</a>
+        {% elif current_user.is_authenticated %}
+            <div class="mobile-menu-section-label">Staff Work Center</div>
+            <a href="{{ url_for('admin_operations') }}" class="sub-link" onclick="toggleMobileMenu()">Operations Center</a>
+            <a href="{{ url_for('public.application_manual') }}" class="sub-link" onclick="toggleMobileMenu()">App Manual</a>
+            {% if has_master_qms %}
+            <a href="{{ url_for('public.manual_index') }}" class="sub-link" onclick="toggleMobileMenu()">Entire QMS Manual</a>
+            {% endif %}
             <a href="{{ url_for('logout') }}" class="sub-link" style="color: #ef4444;" onclick="toggleMobileMenu()">Log Out</a>
         {% endif %}
 

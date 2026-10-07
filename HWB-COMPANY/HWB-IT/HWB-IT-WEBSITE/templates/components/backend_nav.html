@@ -586,9 +586,10 @@
                     {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('workforce', 'view')) %}
                     <a href="/work-with-us" target="_blank" class="isc-dropdown-btn" style="text-decoration: none; display: flex; align-items: center; color: #059669; font-weight: 700;"><i class="fas fa-user-plus" style="margin-right: 0.5rem; color: #10b981;"></i> Workforce Intake Portal</a>
                     {% endif %}
-                    {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('qms', 'view')) %}
                     <div style="height: 1px; background: var(--slate-100); margin: 0.35rem 0;"></div>
-                    <a href="{{ url_for('manual_index') }}" class="isc-dropdown-btn" style="text-decoration: none; display: block; color: var(--slate-700); font-weight: 700;"><i class="fas fa-book" style="margin-right: 0.5rem; color: var(--brand);"></i> ISO 9001 QMS Manual</a>
+                    <a href="{{ url_for('public.application_manual') }}" class="isc-dropdown-btn" style="text-decoration: none; display: block; color: var(--brand); font-weight: 700;"><i class="fas fa-desktop" style="margin-right: 0.5rem; color: var(--brand);"></i> Application Manual</a>
+                    {% if has_master_qms %}
+                    <a href="{{ url_for('public.manual_index') }}" class="isc-dropdown-btn" style="text-decoration: none; display: block; color: #334155; font-weight: 700;"><i class="fas fa-book" style="margin-right: 0.5rem; color: var(--brand);"></i> Entire QMS Manual</a>
                     <a href="/manual/hwb-qms-7.6_backend_architecture.html" class="isc-dropdown-btn" style="text-decoration: none; display: block; color: var(--brand); font-weight: 800;"><i class="fas fa-file-code" style="margin-right: 0.5rem;"></i> 7.6 Backend Architecture</a>
                     <a href="/manual/hwb-qms-7.7_backend_web_system.html" class="isc-dropdown-btn" style="text-decoration: none; display: block; color: var(--brand); font-weight: 800;"><i class="fas fa-network-wired" style="margin-right: 0.5rem;"></i> 7.7 Commercial Takeoff</a>
                     {% endif %}

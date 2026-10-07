@@ -36,6 +36,7 @@ from core.security import roles_required, log_security_violation
 from core.constants import FACILITY_TYPES, LEAD_SOURCES, PRIORITY_LEVELS, CORPORATE_INFO, MODULE_REGISTRY
 from core.utils import format_to_mdy
 from core.services.bot_defense import generate_form_security_token
+from core.services.version_service import get_version_info
 from database.schema_engine import apply_system_migrations
 from blueprints import (
     telemetry_bp,
@@ -446,13 +447,30 @@ def inject_enterprise_nav():
     is_mgmt = role in ['Executive', 'Admin', 'Manager', 'Operator']
     is_sales = (role == 'Sales')
 
+    has_master_qms = is_exec
+    if not has_master_qms:
+        custom_perms = getattr(current_user, 'custom_permissions', {})
+        if isinstance(custom_perms, str):
+            try:
+                custom_perms = json.loads(custom_perms)
+            except Exception:
+                custom_perms = {}
+        if isinstance(custom_perms, dict):
+            qms_perm = custom_perms.get('qms')
+            if isinstance(qms_perm, dict):
+                has_master_qms = bool(qms_perm.get('master') or qms_perm.get('all') or qms_perm.get('entire'))
+            elif isinstance(qms_perm, (list, tuple, set)):
+                has_master_qms = any(k in qms_perm for k in ['master', 'all', 'entire'])
+
     return {
+        'has_master_qms': has_master_qms,
         'nav_access': {
             'is_authenticated': True,
             'can_view_command_hub': is_mgmt,
             'is_executive': is_exec,
             'is_manager': is_mgmt,
             'is_sales': is_sales,
+            'has_master_qms': has_master_qms,
             'role_name': role,
             'sales_desk_url': url_for('sales_desk') if (is_sales or is_mgmt) else None
         }
@@ -462,6 +480,11 @@ def inject_enterprise_nav():
 def inject_corporate_info():
     """Injects verified empirical corporate identity across all templates."""
     return {'corp_info': CORPORATE_INFO}
+
+@app.context_processor
+def inject_version_telemetry():
+    """Injects authoritative application version, git commit, and deployment environment."""
+    return {'app_version_info': get_version_info()}
 
 @app.context_processor
 def inject_security_utilities():

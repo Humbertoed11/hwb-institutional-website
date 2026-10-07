@@ -1,51 +1,97 @@
 {% extends "sop_base.html" %}
 
-{% block title %}Institutional Manual Index | HWB QMS{% endblock %}
+{% block title %}
+    {% if has_master_qms %}
+        Institutional Master QMS Manual | HWB Quality Management System
+    {% else %}
+        Application Operating Manual | HWB Cleaning Services
+    {% endif %}
+{% endblock %}
 
 {% block content %}
 <div class="sop-card">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <!-- Header Section -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
         <div>
-            <h1 style="font-size: 2.25rem; font-weight: 900; color: #0f172a; margin: 0 0 0.5rem 0; letter-spacing: -0.03em;">Institutional Operating Manual</h1>
-            <p style="font-size: 0.95rem; color: #64748b; margin: 0;">Controlled Documented Information | ISO 9001 Compliance Tracker</p>
+            <div style="display: flex; align-items: center; gap: 0.65rem; margin-bottom: 0.35rem;">
+                <span style="font-size: 0.68rem; font-weight: 800; color: #ffffff; background: #2563eb; padding: 0.2rem 0.55rem; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.05em;">
+                    {% if has_master_qms %}ISO 9001:2026 Master Repository{% else %}Authorized Employee Guide{% endif %}
+                </span>
+                <span style="font-size: 0.72rem; color: #64748b; font-weight: 600;">SOC 2 Type II Controlled</span>
+            </div>
+            <h1 style="font-size: 2.15rem; font-weight: 900; color: #0f172a; margin: 0 0 0.4rem 0; letter-spacing: -0.03em;">
+                {% if has_master_qms %}
+                    Institutional Master QMS Manual
+                {% else %}
+                    Application Operating Manual
+                {% endif %}
+            </h1>
+            <p style="font-size: 0.92rem; color: #64748b; margin: 0;">
+                {% if has_master_qms %}
+                    Controlled Documented Information | Master ISO 9001 Quality Catalog &amp; Enterprise Standards
+                {% else %}
+                    Official Employee Guide: Software Navigation, Operations Desks, and Daily Task Execution
+                {% endif %}
+            </p>
         </div>
         <div style="display: flex; gap: 1rem; align-items: center;">
-            <div style="text-align: right; margin-right: 1rem;">
+            {% if has_master_qms %}
+            <div style="text-align: right; margin-right: 0.5rem;">
                 <div style="font-size: 0.65rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">Compliance Status</div>
-                <div style="display: flex; gap: 0.75rem;">
+                <div style="display: flex; gap: 0.5rem;">
                     <span style="font-size: 0.7rem; font-weight: 800; color: #137333; background: #e6f4ea; padding: 0.15rem 0.5rem; border-radius: 10px;">UPDATED</span>
                     <span style="font-size: 0.7rem; font-weight: 800; color: #b06000; background: #fef7e0; padding: 0.15rem 0.5rem; border-radius: 10px;">OUTDATED</span>
                 </div>
             </div>
-            <!-- Compressed utility buttons (36px high, sharp 6px border-radius, 600 weight text) -->
-            <button onclick="window.print()" class="isc-btn" style="height: 36px; padding: 0 1.25rem; border-radius: 6px; border: 1px solid #cbd5e1; background: #ffffff; color: #334155; font-size: 0.8rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05);" onmouseover="this.style.background='#f1f5f9'; this.style.color='#0f172a'; this.style.borderColor='#94a3b8';" onmouseout="this.style.background='#ffffff'; this.style.color='#334155'; this.style.borderColor='#cbd5e1';">
+            {% endif %}
+            <button onclick="window.print()" class="isc-btn" style="height: 36px; padding: 0 1.15rem; border-radius: 6px; border: 1px solid #cbd5e1; background: #ffffff; color: #334155; font-size: 0.8rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.45rem; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.04);" onmouseover="this.style.background='#f1f5f9'; this.style.color='#0f172a'; this.style.borderColor='#94a3b8';" onmouseout="this.style.background='#ffffff'; this.style.color='#334155'; this.style.borderColor='#cbd5e1';">
                 <svg style="width: 14px; height: 14px; fill: currentColor;" viewBox="0 0 24 24"><path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z"/></svg>
-                Print Index
+                Print Manual
             </button>
         </div>
     </div>
 
-    <!-- Today's In-Session Releases Card (Conspicuous High-Density Panel) -->
-    {% if today_sops %}
-    <div class="sigma-form-container" style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #2563eb; border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem;">
+    <!-- Security Level Callout for Standard Employees -->
+    {% if not has_master_qms %}
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #2563eb; border-radius: 8px; padding: 1.1rem 1.35rem; margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+        <div style="display: flex; align-items: center; gap: 0.85rem;">
+            <div style="width: 36px; height: 36px; border-radius: 8px; background: #eff6ff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid #bfdbfe;">
+                <svg style="width: 18px; height: 18px; fill: #2563eb;" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+            </div>
+            <div>
+                <div style="font-size: 0.88rem; font-weight: 700; color: #0f172a; margin-bottom: 0.15rem;">Standard Employee Clearance Level</div>
+                <div style="font-size: 0.8rem; color: #64748b;">
+                    By corporate security policy, your account is provisioned for the <strong>Application Operating Manual</strong>. Access to executive financial forecasts, legal charters, and master ISO auditing registries requires an elevated QMS security clearance.
+                </div>
+            </div>
+        </div>
+        <span style="font-size: 0.7rem; font-weight: 800; color: #2563eb; background: #eff6ff; padding: 0.25rem 0.65rem; border-radius: 4px; border: 1px solid #dbeafe; white-space: nowrap;">
+            STANDARD ACCESS
+        </span>
+    </div>
+    {% endif %}
+
+    <!-- Today's In-Session Releases Card (If applicable) -->
+    {% if today_sops and has_master_qms %}
+    <div class="sigma-form-container" style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #2563eb; border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 2rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.03);">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.85rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.65rem;">
             <div style="display: flex; align-items: center; gap: 0.5rem;">
                 <span style="position: relative; display: flex; height: 8px; width: 8px;">
                     <span style="animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite; position: absolute; display: inline-block; height: 100%; width: 100%; border-radius: 9999px; background-color: #10b981; opacity: 0.75;"></span>
                     <span style="position: relative; display: inline-block; border-radius: 9999px; height: 8px; width: 8px; background-color: #10b981;"></span>
                 </span>
-                <h2 style="font-size: 0.95rem; font-weight: 800; color: #0f172a; margin: 0; text-transform: uppercase; letter-spacing: 0.05em;">Today's Active Releases</h2>
+                <h2 style="font-size: 0.9rem; font-weight: 800; color: #0f172a; margin: 0; text-transform: uppercase; letter-spacing: 0.05em;">Today's Active Releases</h2>
             </div>
-            <span style="font-size: 0.75rem; font-weight: 700; color: #2563eb; background: #eff6ff; padding: 0.15rem 0.5rem; border-radius: 4px; border: 1px solid #dbeafe;">{{ today_sops|length }} UPDATES</span>
+            <span style="font-size: 0.72rem; font-weight: 700; color: #2563eb; background: #eff6ff; padding: 0.15rem 0.5rem; border-radius: 4px; border: 1px solid #dbeafe;">{{ today_sops|length }} UPDATES</span>
         </div>
         <div style="display: flex; flex-direction: column; gap: 0.5rem;">
             {% for sop in today_sops %}
-            <div class="sop-today-row" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.75rem 1rem; display: flex; justify-content: space-between; align-items: center; transition: all 0.15s ease-in-out;" onmouseover="this.style.borderColor='#3b82f6'; this.style.background='#f1f5f9';" onmouseout="this.style.borderColor='#e2e8f0'; this.style.background='#ffffff';">
+            <div class="sop-today-row" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.65rem 1rem; display: flex; justify-content: space-between; align-items: center; transition: all 0.15s ease-in-out;">
                 <div style="display: flex; align-items: center; gap: 0.75rem; flex-grow: 1; min-width: 0;">
                     <span style="font-size: 0.65rem; font-weight: 800; color: #ffffff; background: #2563eb; padding: 0.15rem 0.4rem; border-radius: 3px; white-space: nowrap;">{{ sop.id }}</span>
                     <span style="font-size: 0.85rem; font-weight: 600; color: #1e293b; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">{{ sop.title.replace('Standard Operating Procedure: ', '') }}</span>
                 </div>
-                <a href="{{ url_for('view_sop', filename=sop.file) }}" style="height: 30px; line-height: 28px; padding: 0 0.85rem; border-radius: 4px; border: 1px solid #2563eb; background: #2563eb; color: #ffffff; font-size: 0.75rem; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 0.25rem; transition: all 0.15s; white-space: nowrap;" onmouseover="this.style.background='#1d4ed8'; this.style.borderColor='#1d4ed8';" onmouseout="this.style.background='#2563eb'; this.style.borderColor='#2563eb';">
+                <a href="{{ url_for('public.view_sop', filename=sop.file) }}" style="height: 28px; line-height: 26px; padding: 0 0.8rem; border-radius: 4px; border: 1px solid #2563eb; background: #2563eb; color: #ffffff; font-size: 0.72rem; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 0.25rem; transition: all 0.15s; white-space: nowrap;">
                     View SOP
                     <svg style="width: 12px; height: 12px; fill: currentColor;" viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
                 </a>
@@ -61,7 +107,73 @@
     </style>
     {% endif %}
 
-    <!-- Enterprise Tab Rack -->
+    <!-- 🔍 Enterprise Search Command Bar -->
+    <div class="qms-search-container" style="margin-bottom: 2rem;">
+        <div style="position: relative; display: flex; align-items: center; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.03); transition: all 0.2s ease-in-out;">
+            <svg style="position: absolute; left: 1rem; width: 18px; height: 18px; fill: #64748b; pointer-events: none;" viewBox="0 0 24 24">
+                <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+            </svg>
+            <input type="text" id="qms-main-search" 
+                   placeholder="{% if has_master_qms %}Search all 227 controlled SOPs, IDs, or topics... (e.g. CRM, 7.5, safety, dispatch, bidding){% else %}Search the Application Manual by desk, function, or keyword... (e.g. CRM, leads, accounts, dispatch){% endif %}" 
+                   style="width: 100%; height: 46px; border: none; background: transparent; padding: 0 5.75rem 0 3rem; font-size: 0.92rem; font-weight: 500; color: #0f172a; outline: none;" 
+                   autocomplete="off" spellcheck="false" />
+            <div style="position: absolute; right: 0.75rem; display: flex; align-items: center; gap: 0.45rem;">
+                <button type="button" id="qms-clear-search" style="display: none; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; padding: 0.2rem 0.5rem; font-size: 0.72rem; font-weight: 700; color: #64748b; cursor: pointer; transition: all 0.15s;" onmouseover="this.style.background='#e2e8f0'; this.style.color='#0f172a';" onmouseout="this.style.background='#f1f5f9'; this.style.color='#64748b';">
+                    ✕ Clear
+                </button>
+                <kbd style="padding: 2px 6px; font-size: 0.68rem; font-weight: 700; color: #64748b; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; letter-spacing: 0.05em;">Ctrl+K</kbd>
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.65rem; padding: 0 0.25rem; flex-wrap: wrap; gap: 0.5rem;">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <span id="qms-result-counter" style="font-size: 0.78rem; font-weight: 700; color: #64748b;">
+                    Showing documents
+                </span>
+                {% if has_master_qms %}
+                <button type="button" id="qms-compliance-toggle" style="background: none; border: 1px solid #cbd5e1; border-radius: 4px; padding: 0.15rem 0.5rem; font-size: 0.7rem; font-weight: 700; color: #475569; cursor: pointer; transition: all 0.15s;" data-filter="all">
+                    Filter: All Statuses
+                </button>
+                {% endif %}
+            </div>
+            
+            {% if has_master_qms %}
+            <div id="qms-quick-tags" style="display: flex; gap: 0.35rem; align-items: center; flex-wrap: wrap;">
+                <span style="font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase;">Quick Jump:</span>
+                <button type="button" class="qms-tag-pill" data-query="crm">CRM &amp; App</button>
+                <button type="button" class="qms-tag-pill" data-query="safety">Safety &amp; EHSQ</button>
+                <button type="button" class="qms-tag-pill" data-query="bids">Bidding &amp; GC</button>
+                <button type="button" class="qms-tag-pill" data-query="monitor">Dispatch</button>
+                <button type="button" class="qms-tag-pill" data-query="workforce">Workforce</button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Cross-Department Match Alert (Shows if a query has matches in other departments) -->
+    <div id="qms-cross-dept-alert" style="display: none; background: #fffbeb; border: 1px solid #fef3c7; border-left: 4px solid #f59e0b; border-radius: 6px; padding: 0.75rem 1rem; margin-bottom: 1.5rem; justify-content: space-between; align-items: center;">
+        <span id="qms-cross-dept-msg" style="font-size: 0.82rem; color: #92400e; font-weight: 600;"></span>
+        <button type="button" id="qms-switch-all-btn" style="background: #f59e0b; color: #ffffff; border: none; border-radius: 4px; padding: 0.25rem 0.65rem; font-size: 0.72rem; font-weight: 700; cursor: pointer;">
+            Switch to All Departments
+        </button>
+    </div>
+
+    <!-- Empty Search State -->
+    <div id="qms-empty-state" style="display: none; text-align: center; padding: 4rem 2rem; background: #ffffff; border: 1px dashed #cbd5e1; border-radius: 10px; margin: 2rem 0;">
+        <div style="width: 48px; height: 48px; border-radius: 50%; background: #f1f5f9; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
+            <svg style="width: 24px; height: 24px; fill: #94a3b8;" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+        </div>
+        <h3 id="qms-empty-title" style="font-size: 1.15rem; font-weight: 800; color: #0f172a; margin: 0 0 0.5rem 0;">No matching manuals found</h3>
+        <p id="qms-empty-desc" style="font-size: 0.88rem; color: #64748b; max-width: 450px; margin: 0 auto 1.5rem auto;">
+            We could not find any controlled documents matching your search term. Check for typos or search by broad topic.
+        </p>
+        <button type="button" id="qms-reset-search-btn" style="height: 36px; padding: 0 1.25rem; border-radius: 6px; border: 1px solid #2563eb; background: #2563eb; color: #ffffff; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: all 0.15s;">
+            Clear Search &amp; Show All
+        </button>
+    </div>
+
+    <!-- Enterprise Tab Rack (Rendered only if multiple departments exist) -->
+    {% if has_master_qms and sops_by_dept.keys()|length > 1 %}
     <div class="sigma-tab-rack" style="display: flex; gap: 0.25rem; margin-bottom: 2.5rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0px; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none;">
         <button class="sigma-tab active" data-dept="all" style="background: none; border: none; padding: 0.75rem 1.25rem; font-size: 0.85rem; font-weight: 600; color: #2563eb; cursor: pointer; border-bottom: 3px solid #2563eb; transition: all 0.2s; white-space: nowrap;">
             All Departments
@@ -72,6 +184,7 @@
         </button>
         {% endfor %}
     </div>
+    {% endif %}
 
     <!-- SOP list divided by department -->
     <div id="qms-manual-list" style="display: flex; flex-direction: column; gap: 2.5rem;">
@@ -83,14 +196,23 @@
             </h2>
             <div style="display: flex; flex-direction: column; gap: 0.75rem;">
                 {% for sop in sops %}
-                <div class="sop-item-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.25rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.02); transition: all 0.2s ease-in-out; cursor: pointer;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 10px 20px -5px rgba(0,0,0,0.05), 0 2px 4px rgba(0,0,0,0.02)'; this.style.borderColor='#3b82f6';" onmouseout="this.style.transform='none'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.02)'; this.style.borderColor='#e2e8f0';">
-                    <a href="{{ url_for('view_sop', filename=sop.file) }}" style="text-decoration: none; display: flex; flex-grow: 1; justify-content: space-between; align-items: center; color: inherit;">
+                <div class="sop-item-card" 
+                     data-id="{{ sop.id|lower }}"
+                     data-title="{{ sop.title|lower }}"
+                     data-dept="{{ dept|lower }}"
+                     data-file="{{ sop.file|lower }}"
+                     data-compliance="{{ sop.compliance|lower }}"
+                     data-version="{{ sop.version|lower }}"
+                     style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.25rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.02); transition: all 0.2s ease-in-out; cursor: pointer;" 
+                     onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 10px 20px -5px rgba(0,0,0,0.05), 0 2px 4px rgba(0,0,0,0.02)'; this.style.borderColor='#3b82f6';" 
+                     onmouseout="this.style.transform='none'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.02)'; this.style.borderColor='#e2e8f0';">
+                    <a href="{{ url_for('public.view_sop', filename=sop.file) }}" style="text-decoration: none; display: flex; flex-grow: 1; justify-content: space-between; align-items: center; color: inherit;">
                         <div style="flex-grow: 1; padding-right: 1.5rem;">
                             <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.25rem;">
                                 <span class="sop-id-badge" style="font-size: 0.7rem; font-weight: 800; color: #2563eb; background: #eff6ff; padding: 0.15rem 0.5rem; border-radius: 4px; border: 1px solid #dbeafe;">{{ sop.id }}</span>
                                 <h3 style="font-size: 0.95rem; font-weight: 700; color: #0f172a; margin: 0; line-height: 1.3;">{{ sop.title.replace('Standard Operating Procedure: ', '') }}</h3>
                             </div>
-                            <span style="font-size: 0.75rem; color: #64748b; font-weight: 500;">Version: {{ sop.version }} | Date: {{ sop.date }}</span>
+                            <span style="font-size: 0.75rem; color: #64748b; font-weight: 500;">Version: {{ sop.version }} | Date: {{ sop.date }} | Department: {{ dept }}</span>
                         </div>
                         <div style="display: flex; align-items: center; gap: 1rem;">
                             <span class="status-pill {% if sop.compliance == 'UPDATED' %}status-updated{% else %}status-outdated{% endif %}" style="
@@ -119,30 +241,300 @@
     </div>
 </div>
 
+<style>
+    .qms-tag-pill {
+        background: #f1f5f9;
+        border: 1px solid #cbd5e1;
+        border-radius: 12px;
+        padding: 0.15rem 0.55rem;
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: #475569;
+        cursor: pointer;
+        transition: all 0.15s ease-in-out;
+    }
+    .qms-tag-pill:hover {
+        background: #2563eb;
+        border-color: #2563eb;
+        color: #ffffff;
+    }
+</style>
+
 <script>
-    document.querySelectorAll('.sigma-tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-            document.querySelectorAll('.sigma-tab').forEach(t => {
-                t.classList.remove('active');
-                t.style.color = '#64748b';
-                t.style.borderBottomColor = 'transparent';
+    (function() {
+        const searchInput = document.getElementById('qms-main-search');
+        const clearBtn = document.getElementById('qms-clear-search');
+        const counter = document.getElementById('qms-result-counter');
+        const emptyState = document.getElementById('qms-empty-state');
+        const emptyDesc = document.getElementById('qms-empty-desc');
+        const resetBtn = document.getElementById('qms-reset-search-btn');
+        const complianceBtn = document.getElementById('qms-compliance-toggle');
+        const crossDeptAlert = document.getElementById('qms-cross-dept-alert');
+        const crossDeptMsg = document.getElementById('qms-cross-dept-msg');
+        const switchAllBtn = document.getElementById('qms-switch-all-btn');
+
+        let activeDept = 'all';
+        let complianceFilter = 'all'; // 'all' or 'updated'
+
+        const allCards = Array.from(document.querySelectorAll('.sop-item-card'));
+        const allGroups = Array.from(document.querySelectorAll('.qms-index-group'));
+        const allTabs = Array.from(document.querySelectorAll('.sigma-tab'));
+
+        const totalDocuments = allCards.length;
+
+        // Synonym Dictionary for everyday cleaning and operations search
+        const SYNONYMS = {
+            'app': ['backoffice', 'crm', 'software', 'desk', 'portal', '7.5'],
+            'crm': ['backoffice', 'leads', 'accounts', 'customer', 'pipeline', '7.5'],
+            'software': ['backoffice', 'crm', 'architecture', 'web'],
+            'safety': ['ehs', 'hazard', 'jha', 'osha', 'injury', 'ppe'],
+            'clean': ['janitorial', 'sow', 'shift', 'technician', 'workorder'],
+            'bids': ['bidding', 'estimating', 'takeoff', 'gc', 'contractor'],
+            'dispatch': ['monitor', 'shift', 'access', 'gate', 'order'],
+            'hire': ['workforce', 'applicant', 'ats', 'w-2', 'cleaner']
+        };
+
+        function filterCatalog() {
+            const rawQuery = (searchInput.value || '').trim().toLowerCase();
+            const tokens = rawQuery.split(/\s+/).filter(Boolean);
+
+            if (rawQuery.length > 0) {
+                clearBtn.style.display = 'inline-block';
+            } else {
+                clearBtn.style.display = 'none';
+            }
+
+            // Sync URL query state smoothly without reloading
+            const currentUrl = new URL(window.location.href);
+            if (rawQuery) {
+                currentUrl.searchParams.set('q', rawQuery);
+            } else {
+                currentUrl.searchParams.delete('q');
+            }
+            window.history.replaceState({}, '', currentUrl.toString());
+
+            let visibleCount = 0;
+            let otherDeptMatches = 0;
+            let otherDeptNames = new Set();
+
+            allCards.forEach(card => {
+                const id = card.getAttribute('data-id') || '';
+                const title = card.getAttribute('data-title') || '';
+                const dept = card.getAttribute('data-dept') || '';
+                const file = card.getAttribute('data-file') || '';
+                const compliance = card.getAttribute('data-compliance') || '';
+                const version = card.getAttribute('data-version') || '';
+
+                const searchableText = `${id} ${title} ${dept} ${file} ${version}`.toLowerCase();
+
+                // Check tokens
+                let matchesQuery = true;
+                for (const token of tokens) {
+                    let tokenMatch = searchableText.includes(token);
+                    
+                    // Check synonyms if direct match fails
+                    if (!tokenMatch && SYNONYMS[token]) {
+                        tokenMatch = SYNONYMS[token].some(syn => searchableText.includes(syn));
+                    }
+
+                    if (!tokenMatch) {
+                        matchesQuery = false;
+                        break;
+                    }
+                }
+
+                // Check compliance filter
+                let matchesCompliance = true;
+                if (complianceFilter === 'updated' && compliance !== 'updated') {
+                    matchesCompliance = false;
+                }
+
+                const passesFilters = matchesQuery && matchesCompliance;
+
+                // Department filter
+                const cardDeptSlug = dept.replace(/\s+/g, '-');
+                const matchesDept = (activeDept === 'all' || cardDeptSlug === activeDept);
+
+                if (passesFilters) {
+                    if (matchesDept) {
+                        card.style.display = 'flex';
+                        visibleCount++;
+                    } else {
+                        card.style.display = 'none';
+                        otherDeptMatches++;
+                        otherDeptNames.add(dept.toUpperCase());
+                    }
+                } else {
+                    card.style.display = 'none';
+                }
             });
-            
-            tab.classList.add('active');
-            tab.style.color = '#2563eb';
-            tab.style.borderBottomColor = '#2563eb';
-            
-            const targetDept = tab.getAttribute('data-dept');
-            
-            document.querySelectorAll('.qms-index-group').forEach(group => {
+
+            // Update Department Group Headers
+            allGroups.forEach(group => {
                 const groupDept = group.getAttribute('data-dept-group');
-                if (targetDept === 'all' || groupDept === targetDept) {
+                const visibleInGroup = group.querySelectorAll('.sop-item-card[style*="display: flex"]');
+                
+                if (activeDept !== 'all' && groupDept !== activeDept) {
+                    group.style.display = 'none';
+                } else if (visibleInGroup.length > 0) {
                     group.style.display = 'block';
                 } else {
                     group.style.display = 'none';
                 }
             });
+
+            // Update Counter
+            if (rawQuery.length > 0 || complianceFilter !== 'all') {
+                counter.textContent = `Showing ${visibleCount} of ${totalDocuments} controlled documents`;
+            } else if (activeDept !== 'all') {
+                counter.textContent = `Showing ${visibleCount} documents in ${activeDept.toUpperCase()}`;
+            } else {
+                counter.textContent = `Showing all ${totalDocuments} controlled documents`;
+            }
+
+            // Cross-Department Alert
+            if (visibleCount === 0 && otherDeptMatches > 0 && activeDept !== 'all') {
+                crossDeptAlert.style.display = 'flex';
+                const deptList = Array.from(otherDeptNames).join(', ');
+                crossDeptMsg.textContent = `0 matches in ${activeDept.toUpperCase()}. Found ${otherDeptMatches} match${otherDeptMatches > 1 ? 'es' : ''} in ${deptList}.`;
+            } else {
+                crossDeptAlert.style.display = 'none';
+            }
+
+            // Empty State
+            if (visibleCount === 0 && otherDeptMatches === 0) {
+                emptyState.style.display = 'block';
+                emptyDesc.textContent = rawQuery ? `No manuals found matching "${rawQuery}". Check your spelling or try searching by department.` : 'No documents match the active filter criteria.';
+            } else {
+                emptyState.style.display = 'none';
+            }
+        }
+
+        // Input listener
+        searchInput.addEventListener('input', () => {
+            filterCatalog();
+            
+            // Bidirectional sync to sidebar search
+            const sidebarSearch = document.getElementById('qms-sidebar-search');
+            if (sidebarSearch && sidebarSearch.value !== searchInput.value) {
+                sidebarSearch.value = searchInput.value;
+                sidebarSearch.dispatchEvent(new Event('input', { bubbles: true }));
+            }
         });
-    });
+
+        // Clear button
+        clearBtn.addEventListener('click', () => {
+            searchInput.value = '';
+            filterCatalog();
+            searchInput.focus();
+            
+            const sidebarSearch = document.getElementById('qms-sidebar-search');
+            if (sidebarSearch) {
+                sidebarSearch.value = '';
+                sidebarSearch.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        });
+
+        // Reset button in empty state
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => {
+                searchInput.value = '';
+                complianceFilter = 'all';
+                if (complianceBtn) complianceBtn.textContent = 'Filter: All Statuses';
+                
+                // Reset active tab to 'all'
+                allTabs.forEach(t => {
+                    t.classList.remove('active');
+                    t.style.color = '#64748b';
+                    t.style.borderBottomColor = 'transparent';
+                });
+                const allTab = document.querySelector('.sigma-tab[data-dept="all"]');
+                if (allTab) {
+                    allTab.classList.add('active');
+                    allTab.style.color = '#2563eb';
+                    allTab.style.borderBottomColor = '#2563eb';
+                }
+                activeDept = 'all';
+                filterCatalog();
+            });
+        }
+
+        // Switch to all departments button
+        if (switchAllBtn) {
+            switchAllBtn.addEventListener('click', () => {
+                allTabs.forEach(t => {
+                    t.classList.remove('active');
+                    t.style.color = '#64748b';
+                    t.style.borderBottomColor = 'transparent';
+                });
+                const allTab = document.querySelector('.sigma-tab[data-dept="all"]');
+                if (allTab) {
+                    allTab.classList.add('active');
+                    allTab.style.color = '#2563eb';
+                    allTab.style.borderBottomColor = '#2563eb';
+                }
+                activeDept = 'all';
+                filterCatalog();
+            });
+        }
+
+        // Compliance toggle button
+        if (complianceBtn) {
+            complianceBtn.addEventListener('click', () => {
+                if (complianceFilter === 'all') {
+                    complianceFilter = 'updated';
+                    complianceBtn.textContent = 'Filter: Updated Only';
+                    complianceBtn.style.background = '#e6f4ea';
+                    complianceBtn.style.borderColor = '#34a853';
+                    complianceBtn.style.color = '#137333';
+                } else {
+                    complianceFilter = 'all';
+                    complianceBtn.textContent = 'Filter: All Statuses';
+                    complianceBtn.style.background = 'none';
+                    complianceBtn.style.borderColor = '#cbd5e1';
+                    complianceBtn.style.color = '#475569';
+                }
+                filterCatalog();
+            });
+        }
+
+        // Quick tags
+        document.querySelectorAll('.qms-tag-pill').forEach(pill => {
+            pill.addEventListener('click', () => {
+                const q = pill.getAttribute('data-query');
+                searchInput.value = q;
+                filterCatalog();
+                searchInput.focus();
+            });
+        });
+
+        // Tab Rack Switching
+        allTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                allTabs.forEach(t => {
+                    t.classList.remove('active');
+                    t.style.color = '#64748b';
+                    t.style.borderBottomColor = 'transparent';
+                });
+                
+                tab.classList.add('active');
+                tab.style.color = '#2563eb';
+                tab.style.borderBottomColor = '#2563eb';
+                
+                activeDept = tab.getAttribute('data-dept') || 'all';
+                filterCatalog();
+            });
+        });
+
+        // Read query parameter from URL on initial page load
+        const urlParams = new URLSearchParams(window.location.search);
+        const initialQuery = urlParams.get('q');
+        if (initialQuery) {
+            searchInput.value = initialQuery;
+        }
+
+        // Initial filter run
+        filterCatalog();
+    })();
 </script>
 {% endblock %}

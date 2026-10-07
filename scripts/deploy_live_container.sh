@@ -24,10 +24,37 @@ FULL_IMAGE="$ACR_URL/sigmafidelity-web:$IMAGE_TAG"
 
 echo "--- SigmaFidelity: Starting Zero-Touch Production Deploy (Tag: $IMAGE_TAG) ---"
 
+VERSION_FILE="$PROJECT_ROOT/HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/version.json"
+
+# Write production version stamp for container compilation
+cat <<EOF > "$VERSION_FILE"
+{
+  "version": "v5.4.1",
+  "commit": "$CURRENT_HASH",
+  "build_date": "$(date '+%Y-%m-%d %I:%M %p')",
+  "build_tag": "$IMAGE_TAG",
+  "environment": "AZURE_PRODUCTION"
+}
+EOF
+echo "Authoritative production version.json generated (commit: $CURRENT_HASH, env: AZURE_PRODUCTION)."
+
 # 2. Local Container Compilation
 echo "Compiling web application image..."
 docker build -t "$FULL_IMAGE" -f "$PROJECT_ROOT/HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/Dockerfile" "$PROJECT_ROOT/HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE"
-if [ $? -ne 0 ]; then
+BUILD_STATUS=$?
+
+# Immediately restore local development version stamp for local container parity
+cat <<EOF > "$VERSION_FILE"
+{
+  "version": "v5.4.1",
+  "commit": "$CURRENT_HASH",
+  "build_date": "$(date '+%Y-%m-%d %I:%M %p')",
+  "build_tag": "v5.4.1-$CURRENT_HASH",
+  "environment": "LOCAL_DEV"
+}
+EOF
+
+if [ $BUILD_STATUS -ne 0 ]; then
     echo "ERROR: Local Docker build failed."
     exit 1
 fi
@@ -109,4 +136,43 @@ else:
     print(f'FAILED: Azure restart returned {res_restart.status_code}')
 "
 
-echo "--- SigmaFidelity: Deploy Completed Successfully ---"
+# 5. Live Azure Production Deployment Sentinel & Health Verification
+echo "--- Polling Azure Live Production Endpoint to Certify Deployment (Max 120s) ---"
+MAX_ATTEMPTS=24
+SLEEP_SECS=5
+CERTIFIED=false
+
+for i in $(seq 1 $MAX_ATTEMPTS); do
+    echo "Check $i/$MAX_ATTEMPTS: Querying https://www.hwbcleaning.com/api/v1/version..."
+    RESP=$(curl -s --max-time 10 "https://www.hwbcleaning.com/api/v1/version" 2>/dev/null)
+    
+    if [ -n "$RESP" ]; then
+        STATUS=$(echo "$RESP" | python3 -c "import sys, json; data=json.load(sys.stdin); print(data.get('status',''))" 2>/dev/null)
+        LIVE_COMMIT=$(echo "$RESP" | python3 -c "import sys, json; data=json.load(sys.stdin); print(data.get('commit',''))" 2>/dev/null)
+        LIVE_ENV=$(echo "$RESP" | python3 -c "import sys, json; data=json.load(sys.stdin); print(data.get('env_label',''))" 2>/dev/null)
+        LIVE_DISPLAY=$(echo "$RESP" | python3 -c "import sys, json; data=json.load(sys.stdin); print(data.get('display_version',''))" 2>/dev/null)
+
+        if [ "$STATUS" = "ok" ] && [ "$LIVE_COMMIT" = "$CURRENT_HASH" ]; then
+            echo "=========================================================="
+            echo " SUCCESS: Live Azure Production Swapped & Certified!"
+            echo " Version Stamp: $LIVE_DISPLAY"
+            echo " Commit Hash:   $LIVE_COMMIT"
+            echo " Environment:   $LIVE_ENV"
+            echo "=========================================================="
+            CERTIFIED=true
+            break
+        else
+            echo "   Warmup in progress... (Azure is serving commit: $LIVE_COMMIT / waiting for $CURRENT_HASH)"
+        fi
+    else
+        echo "   Waiting for Azure container initialization..."
+    fi
+    sleep $SLEEP_SECS
+done
+
+if [ "$CERTIFIED" = false ]; then
+    echo "WARNING: Live container swap did not report matching hash within timeout."
+    echo "Check Azure Container Logs: https://portal.azure.com"
+else
+    echo "--- SigmaFidelity: Deploy Completed & Verified Successfully ---"
+fi

@@ -19,6 +19,8 @@
  --slate-400: #94a3b8;
  --slate-500: #64748b;
  --slate-600: #475569;
+ --slate-700: #334155;
+ --slate-800: #1e293b;
  --slate-900: #0f172a;
  --white: #ffffff;
  --muted-coral: #f87171;
@@ -514,13 +516,19 @@
  </div>
  </main>
 
- <footer style="padding: 4rem 40px; border-top: 1px solid var(--slate-200); background: var(--white); margin-top: 8rem;">
- <div style="max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center;" id="footer-container">
- <div style="font-size: 0.85rem; color: var(--slate-500); font-weight: 600;">
+ <footer style="padding: 2.5rem 40px; border-top: 1px solid var(--slate-200); background: var(--white); margin-top: 6rem;">
+ <div style="max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;" id="footer-container">
+ <div style="display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap;">
+ <span style="font-size: 0.85rem; color: var(--slate-500); font-weight: 600;">
  &copy; 2026 HWB Cleaning Services LLC. Main Work Center.
+ </span>
+ <div style="display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.25rem 0.7rem; border-radius: 9999px; font-size: 0.72rem; font-weight: 700; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; {% if app_version_info.is_azure %}background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0;{% else %}background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe;{% endif %}">
+ <span style="width: 6px; height: 6px; border-radius: 50%; {% if app_version_info.is_azure %}background: #10b981; box-shadow: 0 0 0 2px #d1fae5;{% else %}background: #3b82f6; box-shadow: 0 0 0 2px #dbeafe;{% endif %}"></span>
+ <span>{{ app_version_info.app_version }} ({{ app_version_info.commit }}) &middot; {{ app_version_info.env_label }}</span>
  </div>
- <div style="display: flex; align-items: center; gap: 2rem;">
- <div style="display: flex; align-items: center; gap: 0.75rem; background: var(--slate-50); padding: 0.5rem 1.25rem; border-radius: 6px; border: 1px solid var(--slate-200);">
+ </div>
+ <div style="display: flex; align-items: center; gap: 1.5rem;">
+ <div style="display: flex; align-items: center; gap: 0.75rem; background: var(--slate-50); padding: 0.4rem 1rem; border-radius: 6px; border: 1px solid var(--slate-200);">
  <i class="fas fa-certificate" style="color: var(--brand);"></i>
  <span style="font-size: 0.7rem; font-weight: 900; color: var(--slate-900); text-transform: uppercase; letter-spacing: 0.05em;">ISO 9001:2015 COMPLIANT</span>
  </div>

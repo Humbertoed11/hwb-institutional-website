@@ -291,7 +291,7 @@
                     </ul>
                 </div>
 
-                <!-- Column 4: Contact -->
+                <!-- Column 5: Contact -->
                 <div class="footer-column">
                     <h4>Contact</h4>
                     <div class="footer-contact-info">
@@ -305,7 +305,13 @@
 
             <div class="footer-bottom">
                 <div class="footer-bottom-container">
-                    <span>&copy; 2026 HWB Cleaning Services LLC. All Rights Reserved.</span>
+                    <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                        <span>&copy; 2026 HWB Cleaning Services LLC. All Rights Reserved.</span>
+                        <div style="display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.2rem 0.65rem; border-radius: 9999px; font-size: 0.72rem; font-weight: 700; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; {% if app_version_info.is_azure %}background: rgba(16, 185, 129, 0.15); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.3);{% else %}background: rgba(59, 130, 246, 0.15); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.3);{% endif %}">
+                            <span style="width: 6px; height: 6px; border-radius: 50%; {% if app_version_info.is_azure %}background: #10b981; box-shadow: 0 0 6px #10b981;{% else %}background: #3b82f6; box-shadow: 0 0 6px #3b82f6;{% endif %}"></span>
+                            <span>{{ app_version_info.app_version }} ({{ app_version_info.commit }}) &middot; {{ app_version_info.env_label }}</span>
+                        </div>
+                    </div>
                     <div class="footer-legal">
                         <a href="{{ url_for('public.accessibility_statement') }}">Accessibility Statement</a>
                         <a href="{{ url_for('public.privacy_policy') }}#opt-out">Do Not Sell or Share My Personal Information</a>

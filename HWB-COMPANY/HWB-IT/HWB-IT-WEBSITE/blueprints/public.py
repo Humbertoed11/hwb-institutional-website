@@ -368,30 +368,66 @@ def signature_vault():
     """Official 2026 Executive Email Signature portal for Outlook & mobile clients (SOC 2 Protected)."""
     return render_template('executive_signature.html')
 
+APPLICATION_MANUAL_FILE = 'hwb-qms-7.5_backoffice_and_crm_management_sop.html'
+
+def user_has_master_qms_clearance(user) -> bool:
+    """
+    Evaluates whether the user is authorized to view the full ISO 9001 QMS master catalog.
+    By default, standard staff/operators are strictly restricted to the Application Manual.
+    Master QMS access requires Executive/Admin role or explicit 'qms:master'/'qms:all' permission.
+    """
+    if not user or not getattr(user, 'is_authenticated', False):
+        return False
+    user_role = getattr(user, 'role', '')
+    user_name = getattr(user, 'username', '')
+    if user_role in ['Executive', 'Admin'] or user_name == 'admin':
+        return True
+    
+    custom_perms = getattr(user, 'custom_permissions', {})
+    if isinstance(custom_perms, str):
+        try:
+            custom_perms = json.loads(custom_perms)
+        except Exception:
+            custom_perms = {}
+            
+    if isinstance(custom_perms, dict):
+        qms_perm = custom_perms.get('qms')
+        if isinstance(qms_perm, dict):
+            return bool(qms_perm.get('master') or qms_perm.get('all') or qms_perm.get('entire'))
+        if isinstance(qms_perm, (list, tuple, set)):
+            return any(k in qms_perm for k in ['master', 'all', 'entire'])
+            
+    return False
+
+
+@public_bp.route('/manual/app', endpoint='application_manual')
+@public_bp.route('/manual/application', endpoint='application_manual_alias')
+@login_required
+def application_manual():
+    """
+    Direct endpoint for the Application Manual.
+    Authorized for all active employees to access their backoffice software operating instructions.
+    """
+    return redirect(url_for('public.view_sop', filename=APPLICATION_MANUAL_FILE))
+
+
 @public_bp.route('/manual', endpoint='manual_index')
 @login_required
 def manual_index():
     """
     Controlled Operating Manual Index (SOC 2 & ISO 9001 Protected).
-    Enforces authentication and role-based department visibility.
+    By default, employees without master QMS security level only see the Application Manual.
+    Users with master QMS clearance see the entire company catalog.
     """
     user_role = getattr(current_user, 'role', 'Operator')
     user_name = getattr(current_user, 'username', '')
     is_exec = user_role in ['Executive', 'Admin'] or user_name == 'admin'
+    has_master_qms = user_has_master_qms_clearance(current_user)
 
-    # Granular ABAC: Non-executives must have explicit qms view permission
+    # Basic QMS access: all authenticated users or users with qms view permission
     if not is_exec and hasattr(current_user, 'has_permission') and not current_user.has_permission('qms', 'view'):
-        log_security_event(
-            event_category='ACCESS_CONTROL',
-            event_action='UNAUTHORIZED_MANUAL_ACCESS',
-            severity='WARNING',
-            user_id=getattr(current_user, 'id', None),
-            username=user_name,
-            endpoint=request.path,
-            status_code=403,
-            details={'role': user_role, 'reason': 'qms_view_permission_denied'}
-        )
-        abort(403)
+        if not getattr(current_user, 'is_authenticated', False):
+            abort(403)
 
     try:
         index_path = os.path.join(current_app.root_path, 'qms_index.json')
@@ -407,6 +443,13 @@ def manual_index():
         for sop in sops:
             dept = sop['dept']
             tier = sop.get('access_tier', 'STAFF')
+            sop_file = sop.get('file', '')
+
+            # Default Employee Restriction:
+            # If user does not have master QMS clearance, only the Application Manual is visible.
+            if not has_master_qms:
+                if sop_file.lower() != APPLICATION_MANUAL_FILE.lower():
+                    continue
 
             # Role Partitioning: Non-executives cannot view Executive Tier or Accounting docs
             if (dept == 'ACCOUNTING' or tier == 'EXECUTIVE') and not is_exec:
@@ -421,7 +464,13 @@ def manual_index():
         for dept in sops_by_dept:
             sops_by_dept[dept].sort(key=lambda x: x.get('title', '').lower())
 
-        return render_template('qms_manual_index.html', sops_by_dept=sops_by_dept, today_sops=today_sops)
+        return render_template(
+            'qms_manual_index.html',
+            sops_by_dept=sops_by_dept,
+            today_sops=today_sops,
+            has_master_qms=has_master_qms,
+            app_manual_file=APPLICATION_MANUAL_FILE
+        )
     except HTTPException:
         raise
     except Exception as e:
@@ -434,13 +483,19 @@ def view_sop(filename):
     """
     Controlled Document Reader (SOC 2 & ISO 9001 Protected).
     Enforces authentication, single-origin containment, and role-based authorization.
+    Standard employees are strictly authorized for the Application Manual.
+    Master QMS documents require elevated clearance.
     """
     user_role = getattr(current_user, 'role', 'Operator')
     user_name = getattr(current_user, 'username', '')
     is_exec = user_role in ['Executive', 'Admin'] or user_name == 'admin'
+    has_master_qms = user_has_master_qms_clearance(current_user)
 
-    # Granular ABAC: Non-executives must have explicit qms view permission
-    if not is_exec and hasattr(current_user, 'has_permission') and not current_user.has_permission('qms', 'view'):
+    is_app_manual = filename.lower() == APPLICATION_MANUAL_FILE.lower()
+
+    # Default Employee Isolation: Non-executives without elevated master QMS clearance
+    # are strictly restricted to the Application Manual.
+    if not has_master_qms and not is_app_manual:
         log_security_event(
             event_category='ACCESS_CONTROL',
             event_action='UNAUTHORIZED_MANUAL_ACCESS',
@@ -449,7 +504,7 @@ def view_sop(filename):
             username=user_name,
             endpoint=request.path,
             status_code=403,
-            details={'attempted_file': filename, 'role': user_role, 'reason': 'qms_view_permission_denied'}
+            details={'attempted_file': filename, 'role': user_role, 'reason': 'master_qms_security_level_required'}
         )
         abort(403)
 
@@ -526,6 +581,13 @@ def view_sop(filename):
             for sop in sops:
                 dept = sop['dept']
                 tier = sop.get('access_tier', 'STAFF')
+                sop_file = sop.get('file', '')
+
+                # Default Employee Restriction for sidebar
+                if not has_master_qms:
+                    if sop_file.lower() != APPLICATION_MANUAL_FILE.lower():
+                        continue
+
                 if (dept == 'ACCOUNTING' or tier == 'EXECUTIVE') and not is_exec:
                     continue
                 if dept not in sops_by_dept:
@@ -536,7 +598,14 @@ def view_sop(filename):
         except Exception:
             pass
 
-        return render_template('qms_shell.html', content=content, sops_by_dept=sops_by_dept, active_file=filename)
+        return render_template(
+            'qms_shell.html',
+            content=content,
+            sops_by_dept=sops_by_dept,
+            active_file=filename,
+            has_master_qms=has_master_qms,
+            app_manual_file=APPLICATION_MANUAL_FILE
+        )
     except Exception as e:
         return f"QMS Connectivity Error: {e}", 500
 
