@@ -1819,9 +1819,33 @@ def api_get_or_create_subcontractors():
             else:
                 cur.execute('SELECT * FROM "SubcontractorPartners" ORDER BY created_at DESC;')
             rows = [serialize_row(r) for r in cur.fetchall()]
-            return jsonify({'status': 'success', 'count': len(rows), 'subcontractors': rows})
+            from core.services.labor_market_analytics import analyze_subcontractor_rates
+            labor_rate_metrics = analyze_subcontractor_rates(rows)
+            return jsonify({
+                'status': 'success',
+                'count': len(rows),
+                'subcontractors': rows,
+                'labor_rate_metrics': labor_rate_metrics
+            })
     finally:
         if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/workforce/subcontractors/labor-rate-intelligence', methods=['GET'])
+@login_required
+def api_subcontractor_labor_rate_intelligence():
+    """Enterprise intelligence endpoint returning live 1099 subcontractor wage analytics."""
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            cur.execute('SELECT * FROM "SubcontractorPartners" ORDER BY created_at DESC;')
+            rows = [serialize_row(r) for r in cur.fetchall()]
+            from core.services.labor_market_analytics import analyze_subcontractor_rates
+            metrics = analyze_subcontractor_rates(rows)
+            return jsonify({'status': 'success', 'metrics': metrics})
+    finally:
+        if conn: conn.close()
+
 
 
 @crm_api_bp.route('/api/v1/workforce/subcontractors/<int:id>', methods=['GET', 'PATCH', 'DELETE'])

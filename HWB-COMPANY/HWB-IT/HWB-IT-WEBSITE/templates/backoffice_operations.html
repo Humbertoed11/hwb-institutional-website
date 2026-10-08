@@ -3449,6 +3449,65 @@
 
                 <!-- SUBTAB 2: SUBCONTRACTOR PARTNERS (1099) -->
                 <div id="subtab-panel-subcontractors" style="display: none;">
+                    <!-- Subcontractor Labor Rate & Wage Intelligence Ribbon (HWB-QMS-7.6) -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1.25rem;">
+                        <!-- Card 1: Baseline Anchor -->
+                        <div class="isc-card" style="padding: 1rem; border-left: 4px solid #2563eb; background: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: var(--slate-500); letter-spacing: 0.05em;">Market Baseline Anchor</span>
+                                <i class="fas fa-anchor" style="color: #2563eb; font-size: 0.85rem;"></i>
+                            </div>
+                            <div style="font-size: 1.45rem; font-weight: 900; color: var(--slate-900); margin-top: 0.35rem;">
+                                $22 - $28 <span style="font-size: 0.8rem; font-weight: 700; color: var(--slate-400);">/ hr</span>
+                            </div>
+                            <div style="font-size: 0.72rem; color: #1e40af; font-weight: 700; margin-top: 0.25rem;">
+                                <i class="fas fa-check-circle"></i> {{ subcontractor_rate_metrics.baseline_pct or 0 }}% Acceptance ({{ subcontractor_rate_metrics.baseline_count or 0 }} of {{ subcontractor_rate_metrics.total_partners or subcontractors|length }} crews)
+                            </div>
+                        </div>
+
+                        <!-- Card 2: Custom Asking Average -->
+                        <div class="isc-card" style="padding: 1rem; border-left: 4px solid #7c3aed; background: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: var(--slate-500); letter-spacing: 0.05em;">Avg Custom Asking Rate</span>
+                                <i class="fas fa-hand-holding-dollar" style="color: #7c3aed; font-size: 0.85rem;"></i>
+                            </div>
+                            <div style="font-size: 1.45rem; font-weight: 900; color: #6d28d9; margin-top: 0.35rem;">
+                                ${{ "{:,.2f}".format(subcontractor_rate_metrics.custom_avg_rate or 22.25) }} <span style="font-size: 0.8rem; font-weight: 700; color: var(--slate-400);">/ hr</span>
+                            </div>
+                            <div style="font-size: 0.72rem; color: #7c3aed; font-weight: 700; margin-top: 0.25rem;">
+                                <i class="fas fa-user-edit"></i> {{ subcontractor_rate_metrics.custom_count or 0 }} Explicit Requests ({{ subcontractor_rate_metrics.custom_pct or 0 }}%)
+                            </div>
+                        </div>
+
+                        <!-- Card 3: Stated Market Spread -->
+                        <div class="isc-card" style="padding: 1rem; border-left: 4px solid #f59e0b; background: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: var(--slate-500); letter-spacing: 0.05em;">Stated Market Spread</span>
+                                <i class="fas fa-arrows-alt-h" style="color: #d97706; font-size: 0.85rem;"></i>
+                            </div>
+                            <div style="font-size: 1.45rem; font-weight: 900; color: #b45309; margin-top: 0.35rem;">
+                                {{ subcontractor_rate_metrics.spread_display or '$15.00 — $29.50/hr' }}
+                            </div>
+                            <div style="font-size: 0.72rem; color: #b45309; font-weight: 700; margin-top: 0.25rem;">
+                                <i class="fas fa-chart-line"></i> Min: ${{ "{:,.2f}".format(subcontractor_rate_metrics.market_min_rate or 15.0) }} · Max: ${{ "{:,.2f}".format(subcontractor_rate_metrics.market_max_rate or 29.5) }}
+                            </div>
+                        </div>
+
+                        <!-- Card 4: Estimating Benchmark Index -->
+                        <div class="isc-card" style="padding: 1rem; border-left: 4px solid {{ subcontractor_rate_metrics.status_color or '#059669' }}; background: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: var(--slate-500); letter-spacing: 0.05em;">Estimating Benchmark</span>
+                                <i class="fas fa-shield-halved" style="color: {{ subcontractor_rate_metrics.status_color or '#059669' }}; font-size: 0.85rem;"></i>
+                            </div>
+                            <div style="font-size: 1.35rem; font-weight: 900; color: {{ subcontractor_rate_metrics.status_color or '#059669' }}; margin-top: 0.35rem;">
+                                {{ subcontractor_rate_metrics.status_label or 'Stable / In Budget' }}
+                            </div>
+                            <div style="font-size: 0.72rem; color: var(--slate-600); font-weight: 700; margin-top: 0.25rem;">
+                                <i class="fas fa-calculator"></i> vs ${{ "{:,.2f}".format(subcontractor_rate_metrics.estimating_benchmark or 25.0) }}/hr Post-Construction Bid Baseline
+                            </div>
+                        </div>
+                    </div>
+
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
                         <div style="display: flex; gap: 0.5rem; align-items: center;">
                             <input type="text" id="filter-subs-search" onkeyup="filterSubcontractorsTable()" placeholder="Search crews by company, contact, city, trade..." style="height: 34px; padding: 0 0.85rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.8rem; width: 280px; font-weight: 600;">
@@ -3543,7 +3602,15 @@
                                             {% endif %}
                                         </td>
                                         <td style="padding: 0.65rem 0.85rem; font-size: 0.78rem; font-weight: 700; color: var(--slate-700);">
-                                            {{ sub.hourly_rate_range or 'Negotiable' }}
+                                            {% set is_default = (not sub.hourly_rate_range or '$22 - $28' in sub.hourly_rate_range or sub.hourly_rate_range == '22-28') %}
+                                            <div style="display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap;">
+                                                <span>{{ sub.hourly_rate_range or '$22 - $28/hr' }}</span>
+                                                {% if is_default %}
+                                                <span style="font-size: 0.65rem; color: #475569; background: #f1f5f9; padding: 1px 5px; border-radius: 4px; font-weight: 800;" title="Standard market baseline ($22 - $28/hr)">Default</span>
+                                                {% else %}
+                                                <span style="font-size: 0.65rem; color: #065f46; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 1px 5px; border-radius: 4px; font-weight: 800;" title="Applicant specified custom rate">Custom</span>
+                                                {% endif %}
+                                            </div>
                                         </td>
                                         <td style="padding: 0.65rem 0.85rem;">
                                             <select onchange="updateSubcontractorField({{ sub.id }}, 'status', this.value, this)" style="height: 28px; padding: 0 0.5rem; font-size: 0.72rem; font-weight: 800; border-radius: 4px; border: 1px solid var(--slate-300); background: {% if sub.status == 'Active Partner' %}#ecfdf5{% elif sub.status == 'Do Not Use' %}#fee2e2{% elif sub.status == 'On Standby' %}#f8fafc{% else %}#eff6ff{% endif %}; color: {% if sub.status == 'Active Partner' %}#065f46{% elif sub.status == 'Do Not Use' %}#991b1b{% elif sub.status == 'On Standby' %}#64748b{% else %}#1e40af{% endif %}; cursor: pointer;">

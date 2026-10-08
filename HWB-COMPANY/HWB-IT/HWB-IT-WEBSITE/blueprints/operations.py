@@ -113,6 +113,7 @@ def admin_operations():
     lib = {'area': [], 'task': [], 'item': []}
     applicants, subcontractors = [], []
     applicants_count, subcontractors_count = 0, 0
+    subcontractor_rate_metrics = {}
     safety_manuals, safety_jhas, safety_incidents = [], [], []
     construction_bids = []
     institutional_bids, inst_bids_count = [], 0
@@ -721,11 +722,15 @@ def admin_operations():
                 cur.execute(f'SELECT * FROM "SubcontractorPartners" {sub_where_str} ORDER BY created_at DESC', tuple(sub_params))
                 subcontractors = cur.fetchall()
                 subcontractors_count = len(subcontractors)
+                from core.services.labor_market_analytics import analyze_subcontractor_rates
+                subcontractor_rate_metrics = analyze_subcontractor_rates(subcontractors)
         except Exception as wf_err:
             conn.rollback()
             current_app.logger.warning(f"[OPERATIONS] Workforce fetch warning: {wf_err}")
             applicants, subcontractors = [], []
             applicants_count, subcontractors_count = 0, 0
+            from core.services.labor_market_analytics import analyze_subcontractor_rates
+            subcontractor_rate_metrics = analyze_subcontractor_rates([])
 
         # 6b. JOB POSITIONS & DESCRIPTIONS (HWB-FORM-7.2-001)
         try:
@@ -845,6 +850,7 @@ def admin_operations():
                 'lead_sources': LEAD_SOURCES,
                 'priority_levels': PRIORITY_LEVELS,
                 'counts': {'leads': leads_count or 0, 'accounts': len(clients) if clients else 0, 'work_orders': len(work_orders) if work_orders else 0, 'bids': len(construction_bids) if construction_bids else 0, 'institutional_bids': inst_bids_count, 'programs': gov_programs_count, 'campaigns': mkt_campaigns_count, 'pending_outbox': pending_outbox_count, 'employees': employees_count, 'applicants': applicants_count, 'subcontractors': subcontractors_count},
+                'subcontractor_rate_metrics': subcontractor_rate_metrics,
                 'active_view': active_view
             })
         except Exception as e:
@@ -983,6 +989,7 @@ def admin_operations():
                          total_weekly_labor_hours=total_weekly_labor_hours, total_biweekly_payroll=total_biweekly_payroll,
                          applicants=applicants, applicants_count=applicants_count,
                          subcontractors=subcontractors, subcontractors_count=subcontractors_count,
+                         subcontractor_rate_metrics=subcontractor_rate_metrics,
                          safety_manuals=safety_manuals, safety_manuals_count=len(safety_manuals),
                          safety_jhas=safety_jhas, safety_incidents=safety_incidents,
                          job_positions=job_positions, it_telemetry=it_telemetry,

@@ -304,6 +304,44 @@ class YamamotoMotoEstimatingTestSuite(unittest.TestCase):
         self.assertEqual(audit_result.get('status'), 'PASS', f"SOC 2 Leakage Audit Failed: {audit_result.get('failures')}")
         log_audit(f"PASS: SOC 2 Route Isolation & Zero Data Leakage verified ({audit_result.get('checks_passed')} checks clean).")
 
+    # -------------------------------------------------------------
+    # MODULE 8: SUBCONTRACTOR LABOR RATE & WAGE INTELLIGENCE
+    # -------------------------------------------------------------
+    def test_10_subcontractor_labor_rate_market_intelligence(self):
+        """Yamamoto Moto tests 1099 subcontractor wage analytics and bid margin pressure calculations."""
+        log_audit("Inspecting Module 8: Subcontractor Labor Rate & Wage Intelligence")
+        client = self.get_authenticated_client()
+
+        # 1. Test dedicated labor rate intelligence endpoint
+        resp = client.get('/api/v1/workforce/subcontractors/labor-rate-intelligence')
+        self.assertEqual(resp.status_code, 200, f"Labor rate endpoint failed: {resp.status_code}")
+        data = resp.get_json() or {}
+        self.assertEqual(data.get('status'), 'success')
+        metrics = data.get('metrics', {})
+
+        self.assertIn('total_partners', metrics)
+        self.assertIn('baseline_count', metrics)
+        self.assertIn('baseline_pct', metrics)
+        self.assertIn('custom_avg_rate', metrics)
+        self.assertIn('market_min_rate', metrics)
+        self.assertIn('market_max_rate', metrics)
+        self.assertIn('margin_pressure_status', metrics)
+        self.assertIn(metrics.get('margin_pressure_status'), ['STABLE', 'WATCH', 'ALERT'])
+
+        # 2. Test analytics service directly with edge cases
+        from core.services.labor_market_analytics import parse_rate_entry, analyze_subcontractor_rates
+        self.assertTrue(parse_rate_entry('$22 - $28/hr')['is_baseline'])
+        self.assertTrue(parse_rate_entry('')['is_baseline'])
+        self.assertTrue(parse_rate_entry(None)['is_baseline'])
+
+        custom_case = parse_rate_entry('29.5 / H ')
+        self.assertFalse(custom_case['is_baseline'])
+        self.assertEqual(custom_case['mid_rate'], 29.5)
+
+        log_audit(f"PASS: Subcontractor Wage Intelligence Engine certified (Status: {metrics.get('margin_pressure_status')}, Custom Avg: ${metrics.get('custom_avg_rate')}/hr).")
+
+
+
 
 
 def run_yamamoto_audit():
