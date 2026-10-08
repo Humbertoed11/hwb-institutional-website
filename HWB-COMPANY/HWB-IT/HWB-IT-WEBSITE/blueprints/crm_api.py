@@ -1522,7 +1522,13 @@ def api_workforce_apply():
                     job_position_id = pos_row['id']
                 else:
                     role_lower = (desired_role or '').lower()
-                    if 'floor' in role_lower:
+                    if any(k in role_lower for k in ['account executive', 'enterprise', 'commercial account']):
+                        cur.execute('SELECT id FROM "JobPositions" WHERE position_code = %s LIMIT 1;', ('HWB-POS-007',))
+                    elif any(k in role_lower for k in ['outside sales', 'outside', 'field sales', 'commercial sales']):
+                        cur.execute('SELECT id FROM "JobPositions" WHERE position_code = %s LIMIT 1;', ('HWB-POS-006',))
+                    elif any(k in role_lower for k in ['remote', 'inside sales', 'telemarketing', 'appointment setter', 'sales']):
+                        cur.execute('SELECT id FROM "JobPositions" WHERE position_code = %s LIMIT 1;', ('HWB-POS-005',))
+                    elif 'floor' in role_lower:
                         cur.execute('SELECT id FROM "JobPositions" WHERE position_code = %s LIMIT 1;', ('HWB-POS-002',))
                     elif any(k in role_lower for k in ['lead', 'custodian', 'supervisor']):
                         cur.execute('SELECT id FROM "JobPositions" WHERE position_code = %s LIMIT 1;', ('HWB-POS-003',))
@@ -1545,13 +1551,16 @@ def api_workforce_apply():
             new_id = cur.fetchone()[0]
 
             # Stage official email alert in PendingOutbox
+            is_sales = any(k in (desired_role or '').lower() for k in ['sales', 'account executive', 'business development', 'growth', 'appointment setter'])
+            applicant_type = "Sales & Revenue Applicant" if is_sales else "Technician Applicant"
+            notes_str = f" Notes / Portfolio: {notes}." if notes else ""
             cur.execute('''
                 INSERT INTO "PendingOutbox" (recipient, subject, body, status, created_at)
                 VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP)
             ''', (
                 'hdominguez@hwbcleaning.com, sales@hwbcleaning.com',
-                f"ACTION REQUIRED: New Technician Applicant - {full_name} ({desired_role})",
-                f"Candidate {full_name} applied for {desired_role} ({desired_shift} shift) in {city}, TX. Phone: {phone}, Email: {email}, Experience: {experience}.",
+                f"ACTION REQUIRED: New {applicant_type} - {full_name} ({desired_role})",
+                f"Candidate {full_name} applied for {desired_role} ({desired_shift} shift) in {city}, TX. Phone: {phone}, Email: {email}, Experience: {experience}.{notes_str}",
                 'SENT'
             ))
 

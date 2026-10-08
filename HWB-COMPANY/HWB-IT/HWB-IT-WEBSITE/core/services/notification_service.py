@@ -260,9 +260,11 @@ def send_applicant_telegram_alert(applicant_data: Dict[str, Any]) -> Tuple[bool,
     language = applicant_data.get("preferred_language") or "English"
     notes = applicant_data.get("notes") or "Submitted via online application."
     applicant_id = applicant_data.get("applicant_id") or "NEW"
+    is_sales = any(k in (desired_role or '').lower() for k in ['sales', 'account executive', 'b2b', 'representative'])
+    alert_header = "💼 *NEW COMMERCIAL SALES APPLICANT*" if is_sales else "🚨 *NEW CLEANING TECHNICIAN APPLICANT*"
 
     message = (
-        "🚨 *NEW CLEANING TECHNICIAN APPLICANT*\n"
+        f"{alert_header}\n"
         "━━━━━━━━━━━━━━━━━━\n"
         f"👤 *Candidate:* {full_name}\n"
         f"📞 *Phone:* `{phone}`\n"
@@ -326,32 +328,46 @@ def send_applicant_email_alert(applicant_data: Dict[str, Any]) -> Tuple[bool, st
     language = applicant_data.get("preferred_language") or "English"
     notes = applicant_data.get("notes") or "Submitted via online application."
     applicant_id = applicant_data.get("applicant_id") or "NEW"
+    is_sales = any(k in (desired_role or '').lower() for k in ['sales', 'account executive', 'b2b', 'representative'])
 
     recipients = ["hdominguez@hwbcleaning.com", "sales@hwbcleaning.com"]
     personal_inbox = os.environ.get("CEO_PERSONAL_EMAIL", "humbertoed@gmail.com")
     if personal_inbox and personal_inbox not in recipients:
         recipients.append(personal_inbox)
 
-    subject = f"🔥 ACTION REQUIRED: New Technician Applicant - {full_name} ({desired_role})"
+    if is_sales:
+        subject = f"💼 ACTION REQUIRED: New Sales & Revenue Applicant - {full_name} ({desired_role})"
+        badge_label = "Sales & Growth Team"
+        badge_bg = "#eff6ff"
+        badge_color = "#1e40af"
+        header_color = "#2563eb"
+        title_header = "Commercial Sales Candidate Details"
+    else:
+        subject = f"🔥 ACTION REQUIRED: New Technician Applicant - {full_name} ({desired_role})"
+        badge_label = "W-2 Candidate"
+        badge_bg = "#d1fae5"
+        badge_color = "#065f46"
+        header_color = "#059669"
+        title_header = "Technician Applicant Details"
 
     body_html = f"""
     <div style="font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; padding: 30px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; max-width: 620px; margin: 0 auto; color: #0f172a;">
-        <div style="border-bottom: 3px solid #059669; padding-bottom: 16px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
+        <div style="border-bottom: 3px solid {header_color}; padding-bottom: 16px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
             <div>
                 <div style="font-weight: 900; font-size: 20px; color: #0f172a; letter-spacing: -0.02em;">HWB CLEANING SERVICES</div>
                 <div style="font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.12em; margin-top: 4px; font-weight: 700;">Workforce Intake Gateway</div>
             </div>
-            <div style="background-color: #d1fae5; color: #065f46; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 9999px;">
-                W-2 Candidate
+            <div style="background-color: {badge_bg}; color: {badge_color}; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 9999px;">
+                {badge_label}
             </div>
         </div>
 
         <div style="background-color: #ffffff; padding: 24px; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 24px;">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; margin-bottom: 16px;">
                 <h2 style="font-size: 16px; font-weight: 800; color: #0f172a; margin: 0;">
-                    Technician Applicant Details
+                    {title_header}
                 </h2>
-                <span style="font-size: 12px; font-weight: 800; color: #059669; background: #ecfdf5; padding: 2px 8px; border-radius: 4px;">APP-#{applicant_id}</span>
+                <span style="font-size: 12px; font-weight: 800; color: {header_color}; background: {badge_bg}; padding: 2px 8px; border-radius: 4px;">APP-#{applicant_id}</span>
             </div>
             <table style="width: 100%; border-collapse: collapse; font-size: 14px; line-height: 1.6;">
                 <tr>

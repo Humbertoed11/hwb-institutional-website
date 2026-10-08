@@ -145,6 +145,31 @@
 .btn-workforce-apply:hover {
     background: #1d4ed8 !important;
 }
+.filter-pill {
+    padding: 0.4rem 0.95rem;
+    border-radius: 9999px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    border: 1.5px solid #cbd5e1;
+    background: #ffffff;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+.filter-pill:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+    border-color: #94a3b8;
+}
+.filter-pill.active {
+    background: var(--brand) !important;
+    color: #ffffff !important;
+    border-color: var(--brand) !important;
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+}
 </style>
 
 <!-- Hero Section -->
@@ -163,7 +188,7 @@
         <!-- Track Switcher -->
         <div class="workforce-toggle-bar" role="tablist" aria-label="Workforce Opportunities Pathway">
             <button type="button" class="workforce-toggle-btn active" id="btn-tab-technician" role="tab" aria-selected="true" aria-controls="panel-technician" onclick="switchWorkforceTab('technician')">
-                <i class="fas fa-user-check"></i> Cleaning Technician (W-2)
+                <i class="fas fa-briefcase"></i> Direct Careers (W-2)
             </button>
             <button type="button" class="workforce-toggle-btn" id="btn-tab-subcontractor" role="tab" aria-selected="false" aria-controls="panel-subcontractor" onclick="switchWorkforceTab('subcontractor')">
                 <i class="fas fa-users-cog"></i> Subcontractor Crew (1099)
@@ -177,22 +202,22 @@
     <div class="content-wrapper" style="max-width: 860px; margin: 0 auto;">
         
         <!-- ================================================================= -->
-        <!-- Track 1: Direct Technician Application (W-2) -->
+        <!-- Track 1: Direct Operations & Sales Careers Application (W-2) -->
         <!-- ================================================================= -->
         <div id="panel-technician" class="workforce-panel active">
             <div class="isc-card" style="padding: 2.5rem; border-radius: 12px; border: 1px solid #e2e8f0; background: #ffffff; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);">
                 <div style="margin-bottom: 1.75rem;">
                     <h2 style="font-size: 1.5rem; font-weight: 900; color: #0f172a; margin-bottom: 0.35rem;">
-                        Commercial Cleaning Technician Application
+                        Commercial Operations & Sales Careers Application
                     </h2>
                     <p style="font-size: 0.9rem; color: #64748b;">
-                        Join our permanent crew for steady evening, night, and weekend shifts across Dallas-Fort Worth. Competitive pay, respectful management, and safety equipment provided.
+                        Join our team for steady cleaning operations or commercial sales and account management across Dallas-Fort Worth. Competitive pay, respectful management, and long-term career growth.
                     </p>
                 </div>
 
                 <div class="sigma-doc-notice">
                     <strong style="color: #0f172a;"><i class="fas fa-info-circle" style="color: var(--brand);"></i> Hiring Requirements:</strong>
-                    Direct technicians must be legally authorized to work in the United States and pass a basic background check upon job offer.
+                    Direct applicants must be legally authorized to work in the United States and pass a basic background check upon job offer.
                 </div>
 
                 <!-- Available Positions -->
@@ -201,20 +226,40 @@
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
                         <div>
                             <h3 style="font-size: 1.1rem; font-weight: 800; color: #0f172a; margin: 0;">Open Positions & Job Opportunities</h3>
-                            <p style="font-size: 0.8rem; color: #64748b; margin: 0.15rem 0 0 0;">Steady hours, respectful management, and safe working environments.</p>
+                            <p style="font-size: 0.8rem; color: #64748b; margin: 0.15rem 0 0 0;">Steady hours, respectful management, and professional career pathways.</p>
                         </div>
                         <span style="font-size: 0.72rem; font-weight: 800; background: #eff6ff; color: var(--brand); padding: 0.25rem 0.65rem; border-radius: 999px; border: 1px solid #bfdbfe;">
                             <i class="fas fa-check-circle"></i> Competitive Pay + Bonuses
                         </span>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem;">
+                    <!-- Department Filter Pills -->
+                    <div style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem; flex-wrap: wrap;" id="dept-filter-rack">
+                        <button type="button" class="filter-pill active" data-dept="all" onclick="filterPositionsByDept('all')">
+                            All Opportunities ({{ job_positions|length }})
+                        </button>
+                        <button type="button" class="filter-pill" data-dept="operations" onclick="filterPositionsByDept('operations')">
+                            🧹 Cleaning Operations
+                        </button>
+                        <button type="button" class="filter-pill" data-dept="sales" onclick="filterPositionsByDept('sales')">
+                            💼 Sales & Account Executives
+                        </button>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem;" id="public-positions-grid">
                         {% for pos in job_positions %}
-                        <div class="isc-card" style="padding: 1.2rem; border-radius: 8px; border: 1px solid #e2e8f0; background: #f8fafc; display: flex; flex-direction: column; justify-content: space-between; transition: all 0.2s;" onmouseover="this.style.borderColor='var(--brand)'; this.style.background='#ffffff';" onmouseout="this.style.borderColor='#e2e8f0'; this.style.background='#f8fafc';">
+                        {% set is_sales_pos = 'sales' in (pos.department|lower) or 'sales' in (pos.title|lower) or 'account' in (pos.title|lower) %}
+                        <div class="isc-card public-job-card" data-pos-dept="{{ 'sales' if is_sales_pos else 'operations' }}" style="padding: 1.2rem; border-radius: 8px; border: 1px solid #e2e8f0; background: #f8fafc; display: flex; flex-direction: column; justify-content: space-between; transition: all 0.2s;" onmouseover="this.style.borderColor='var(--brand)'; this.style.background='#ffffff';" onmouseout="this.style.borderColor='#e2e8f0'; this.style.background='#f8fafc';">
                             <div>
-                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
-                                    <span style="font-size: 0.68rem; font-weight: 800; background: #f1f5f9; color: #475569; padding: 0.15rem 0.45rem; border-radius: 4px;">{{ pos.department }}</span>
-                                    <span style="font-size: 0.78rem; font-weight: 800; color: #16a34a; background: #f0fdf4; padding: 0.15rem 0.5rem; border-radius: 4px; border: 1px solid #bbf7d0;">Competitive Pay</span>
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem; gap: 0.35rem;">
+                                    <span style="font-size: 0.68rem; font-weight: 800; background: {% if is_sales_pos %}#eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;{% else %}#f1f5f9; color: #475569;{% endif %} padding: 0.15rem 0.45rem; border-radius: 4px;">{{ pos.department }}</span>
+                                    <span style="font-size: 0.76rem; font-weight: 800; color: #16a34a; background: #f0fdf4; padding: 0.15rem 0.5rem; border-radius: 4px; border: 1px solid #bbf7d0;">
+                                        {% if is_sales_pos %}
+                                            Base + Commission
+                                        {% else %}
+                                            Competitive Pay
+                                        {% endif %}
+                                    </span>
                                 </div>
                                 <h4 style="font-size: 0.95rem; font-weight: 800; color: #0f172a; margin: 0 0 0.35rem 0;">{{ pos.title }}</h4>
                                 <p style="font-size: 0.78rem; color: #64748b; line-height: 1.45; margin: 0 0 0.75rem 0;">{{ pos.summary }}</p>
@@ -278,14 +323,18 @@
 
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; margin-bottom: 1.25rem;">
                         <div>
-                            <label for="tech-desired-role" style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Position Desired</label>
+                            <label for="tech-desired-role" style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Position Desired *</label>
                             <select name="desired_role" id="tech-desired-role" onchange="onRoleSelectionChange(this)" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem; background: #fff;">
                                 {% if job_positions %}
                                     {% for pos in job_positions %}
-                                    <option value="{{ pos.title }}" data-pos-id="{{ pos.id }}">{{ pos.title }} (Competitive Pay)</option>
+                                    {% set is_sales_pos = 'sales' in (pos.department|lower) or 'sales' in (pos.title|lower) or 'account' in (pos.title|lower) %}
+                                    <option value="{{ pos.title }}" data-pos-id="{{ pos.id }}">{{ pos.title }} ({{ 'Base + Commission' if is_sales_pos else 'Competitive Pay' }})</option>
                                     {% endfor %}
                                 {% else %}
                                     <option value="Commercial Cleaning Technician" selected>Commercial Cleaning Technician (Competitive Pay)</option>
+                                    <option value="Remote B2B Sales Representative">Remote B2B Sales Representative (Base + Commission)</option>
+                                    <option value="Outside Commercial Sales Representative">Outside Commercial Sales Representative (Base + Commission)</option>
+                                    <option value="Commercial Account Executive">Commercial Account Executive (Base + Commission)</option>
                                     <option value="Floor Care & Heavy Equipment Specialist">Floor Care & Heavy Equipment Specialist (Competitive Pay)</option>
                                     <option value="Lead Cleaning Site Supervisor">Lead Cleaning Site Supervisor (Competitive Pay)</option>
                                     <option value="Cleanroom & Sanitization Technician">Cleanroom & Sanitization Technician (Competitive Pay)</option>
@@ -293,33 +342,41 @@
                             </select>
                         </div>
                         <div>
-                            <label for="tech-desired-shift" style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Preferred Shift</label>
+                            <label for="tech-desired-shift" style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Preferred Shift / Schedule</label>
                             <select name="desired_shift" id="tech-desired-shift" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem; background: #fff;">
                                 <option value="Night">Evening / Night (Standard Janitorial)</option>
-                                <option value="Day">Day Porter / Facility Maintenance</option>
+                                <option value="Day">Day Business Hours (Sales / Porters / Walkthroughs)</option>
                                 <option value="Weekend">Weekends Only</option>
                                 <option value="Flexible">Flexible / Any Shift</option>
                             </select>
                         </div>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; margin-bottom: 1.25rem;">
                         <div>
-                            <label for="tech-experience-level" style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Commercial Cleaning Experience</label>
+                            <label for="tech-experience-level" style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Relevant Experience Level</label>
                             <select name="experience_level" id="tech-experience-level" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem; background: #fff;">
                                 <option value="Entry">Entry Level (Paid training provided)</option>
                                 <option value="1-2 Years">1 - 2 Years Commercial Experience</option>
-                                <option value="3+ Years / Supervisor">3+ Years / Crew Lead Experience</option>
+                                <option value="3+ Years / Supervisor">3+ Years / Senior Experience</option>
                             </select>
                         </div>
                         <div>
                             <label for="tech-preferred-language" style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Language Preference</label>
                             <select name="preferred_language" id="tech-preferred-language" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem; background: #fff;">
                                 <option value="Bilingual">Bilingual (English & Spanish)</option>
-                                <option value="Spanish">Español</option>
                                 <option value="English">English</option>
+                                <option value="Spanish">Español</option>
                             </select>
                         </div>
+                    </div>
+
+                    <!-- Resume, LinkedIn, or Experience Summary (Optional for Sales & Management) -->
+                    <div style="margin-bottom: 1.5rem;">
+                        <label for="tech-notes" style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">
+                            Resume / LinkedIn Link or Experience Highlights <span style="font-weight: 500; color: #64748b;">(Optional / Encouraged for Sales & Supervision)</span>
+                        </label>
+                        <input type="text" id="tech-notes" name="notes" placeholder="Paste your LinkedIn URL, online resume link, or a brief note on your sales / operations background" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.88rem;">
                     </div>
 
                     <!-- Qualifications & FCRA Authorization (SOC 2 Privacy P3.2) -->
@@ -742,9 +799,30 @@ function viewJobDescription(id) {
     }
     document.getElementById('pjd-title').innerText = pos.title || 'Position Title';
     document.getElementById('pjd-department').innerText = pos.department || 'Operations';
-    document.getElementById('pjd-reports-to').innerText = pos.reports_to || 'Site Supervisor';
-    document.getElementById('pjd-pay').innerText = 'Competitive Pay + Bonuses';
-    document.getElementById('pjd-hours').innerText = 'Full-Time & Part-Time Shifts';
+    document.getElementById('pjd-reports-to').innerText = pos.reports_to || 'Department Head';
+
+    const deptStr = (pos.department || '').toLowerCase();
+    const titleStr = (pos.title || '').toLowerCase();
+    const isSalesRole = deptStr.includes('sales') || titleStr.includes('sales') || titleStr.includes('account');
+
+    if (isSalesRole) {
+        if (pos.position_code === 'HWB-POS-005') {
+            document.getElementById('pjd-pay').innerText = '$18.00 – $22.00 / hr + Appointment Bonuses';
+            document.getElementById('pjd-hours').innerText = 'Full-Time (Remote / M–F Business Hours)';
+        } else if (pos.position_code === 'HWB-POS-006') {
+            document.getElementById('pjd-pay').innerText = '$45,000 – $55,000 Base + Recurring Commission';
+            document.getElementById('pjd-hours').innerText = 'Full-Time (Field Sales Walkthroughs)';
+        } else if (pos.position_code === 'HWB-POS-007') {
+            document.getElementById('pjd-pay').innerText = '$65,000 – $75,000 Base + Tiered Contract Commission';
+            document.getElementById('pjd-hours').innerText = 'Full-Time (Enterprise & Institutional Accounts)';
+        } else {
+            document.getElementById('pjd-pay').innerText = 'Competitive Base + Commission';
+            document.getElementById('pjd-hours').innerText = 'Full-Time';
+        }
+    } else {
+        document.getElementById('pjd-pay').innerText = 'Competitive Pay + Bonuses';
+        document.getElementById('pjd-hours').innerText = 'Full-Time & Part-Time Shifts';
+    }
     document.getElementById('pjd-summary').innerText = pos.summary || '';
 
     // Responsibilities
@@ -791,6 +869,27 @@ function closePublicJobDescModal() {
     const modal = document.getElementById('modal-view-public-job-desc');
     if (modal) modal.style.display = 'none';
 }
+
+function filterPositionsByDept(dept) {
+    const pills = document.querySelectorAll('#dept-filter-rack .filter-pill');
+    pills.forEach(p => {
+        if (p.getAttribute('data-dept') === dept) {
+            p.classList.add('active');
+        } else {
+            p.classList.remove('active');
+        }
+    });
+
+    const cards = document.querySelectorAll('.public-job-card');
+    cards.forEach(c => {
+        const cardDept = c.getAttribute('data-pos-dept');
+        if (dept === 'all' || cardDept === dept) {
+            c.style.display = 'flex';
+        } else {
+            c.style.display = 'none';
+        }
+    });
+}
 </script>
 
 <!-- Modal: Digital Job Description Viewer (HWB-FORM-7.2-001) -->
@@ -803,7 +902,7 @@ function closePublicJobDescModal() {
                 </div>
                 <h2 id="pjd-title" style="font-size: 1.4rem; font-weight: 900; color: #0f172a; margin: 0;">Position Title</h2>
                 <div style="font-size: 0.8rem; color: #64748b; font-weight: 600; margin-top: 0.2rem;">
-                    Department: <strong id="pjd-department" style="color: #0f172a;">Operations</strong> &bull; Reports To: <span id="pjd-reports-to">Site Supervisor</span>
+                    Department: <strong id="pjd-department" style="color: #0f172a;">Operations</strong> &bull; Reports To: <span id="pjd-reports-to">Department Head</span>
                 </div>
             </div>
             <button type="button" onclick="closePublicJobDescModal()" aria-label="Close Job Description" title="Close" style="background: #f8fafc; border: 1px solid #e2e8f0; width: 32px; height: 32px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #64748b;">

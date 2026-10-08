@@ -3323,8 +3323,13 @@
                 <!-- SUBTAB 2: TECHNICIAN APPLICANTS (CANDIDATE POOL ATS) -->
                 <div id="subtab-panel-technicians" style="display: none;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
-                        <div style="display: flex; gap: 0.5rem; align-items: center;">
-                            <input type="text" id="filter-applicants-search" onkeyup="filterApplicantsTable()" placeholder="Search applicants by name, city, phone..." style="height: 34px; padding: 0 0.85rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.8rem; width: 280px; font-weight: 600;">
+                        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                            <input type="text" id="filter-applicants-search" onkeyup="filterApplicantsTable()" placeholder="Search applicants by name, city, phone..." style="height: 34px; padding: 0 0.85rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.8rem; width: 260px; font-weight: 600;">
+                            <select id="filter-applicants-department" onchange="filterApplicantsTable()" style="height: 34px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.8rem; font-weight: 700; background: white; color: var(--slate-700);">
+                                <option value="">All Departments</option>
+                                <option value="operations">🧹 Operations & Cleaning</option>
+                                <option value="sales">💼 Sales & Growth</option>
+                            </select>
                             <select id="filter-applicants-status" onchange="filterApplicantsTable()" style="height: 34px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.8rem; font-weight: 700; background: white; color: var(--slate-700);">
                                 <option value="">All Statuses</option>
                                 <option value="New">New</option>
@@ -3346,7 +3351,7 @@
                                     <th style="min-width: 180px; text-align: left; padding: 0.65rem 0.85rem; font-size: 0.75rem; font-weight: 800; color: var(--slate-600); text-transform: uppercase;">Candidate</th>
                                     <th style="min-width: 140px; text-align: left; padding: 0.65rem 0.85rem; font-size: 0.75rem; font-weight: 800; color: var(--slate-600); text-transform: uppercase;">Phone & Contact</th>
                                     <th style="min-width: 130px; text-align: left; padding: 0.65rem 0.85rem; font-size: 0.75rem; font-weight: 800; color: var(--slate-600); text-transform: uppercase;">Location</th>
-                                    <th style="min-width: 140px; text-align: left; padding: 0.65rem 0.85rem; font-size: 0.75rem; font-weight: 800; color: var(--slate-600); text-transform: uppercase;">Role & Shift</th>
+                                    <th style="min-width: 150px; text-align: left; padding: 0.65rem 0.85rem; font-size: 0.75rem; font-weight: 800; color: var(--slate-600); text-transform: uppercase;">Role & Shift</th>
                                     <th style="min-width: 130px; text-align: left; padding: 0.65rem 0.85rem; font-size: 0.75rem; font-weight: 800; color: var(--slate-600); text-transform: uppercase;">Experience</th>
                                     <th style="min-width: 130px; text-align: left; padding: 0.65rem 0.85rem; font-size: 0.75rem; font-weight: 800; color: var(--slate-600); text-transform: uppercase;">Compliance</th>
                                     <th style="min-width: 150px; text-align: left; padding: 0.65rem 0.85rem; font-size: 0.75rem; font-weight: 800; color: var(--slate-600); text-transform: uppercase;">Pipeline Status</th>
@@ -3357,7 +3362,9 @@
                             <tbody>
                                 {% if applicants %}
                                     {% for app in applicants %}
-                                    <tr id="applicant-row-{{ app.id }}" class="applicant-data-row" data-status="{{ app.status }}" data-search="{{ (app.full_name ~ ' app-#' ~ app.id ~ ' #' ~ app.id ~ ' ' ~ app.city ~ ' ' ~ app.phone ~ ' ' ~ (app.email or ''))|lower }}" style="border-bottom: 1px solid var(--slate-100);">
+                                    {% set role_lower = (app.desired_role or '')|lower %}
+                                    {% set is_sales_cand = 'sales' in role_lower or 'account' in role_lower or 'growth' in role_lower or 'executive' in role_lower %}
+                                    <tr id="applicant-row-{{ app.id }}" class="applicant-data-row" data-status="{{ app.status }}" data-dept="{{ 'sales' if is_sales_cand else 'operations' }}" data-search="{{ (app.full_name ~ ' app-#' ~ app.id ~ ' #' ~ app.id ~ ' ' ~ app.city ~ ' ' ~ app.phone ~ ' ' ~ (app.desired_role or '') ~ ' ' ~ (app.notes or '') ~ ' ' ~ (app.email or ''))|lower }}" style="border-bottom: 1px solid var(--slate-100);">
                                         <td style="padding: 0.65rem 0.85rem;">
                                             <div style="display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap;">
                                                 <span class="sigma-id-badge" onclick="copySigmaId(event, 'APP-#{{ '%03d'|format(app.id) }}')" title="Click to copy APP-#{{ '%03d'|format(app.id) }}">
@@ -3377,8 +3384,18 @@
                                             <div style="font-weight: 700; font-size: 0.82rem; color: var(--slate-800);"><i class="fas fa-map-marker-alt" style="color: #ef4444; font-size: 0.72rem; margin-right: 3px;"></i> {{ app.city or 'DFW Area' }}, {{ app.state or 'TX' }}</div>
                                         </td>
                                         <td style="padding: 0.65rem 0.85rem;">
-                                            <div style="font-weight: 700; font-size: 0.82rem; color: var(--slate-800);">{{ app.desired_role }}</div>
+                                            <div style="display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap;">
+                                                {% if is_sales_cand %}
+                                                <span style="font-size: 0.65rem; font-weight: 800; background: #eff6ff; color: #1d4ed8; padding: 0.1rem 0.4rem; border-radius: 4px; border: 1px solid #bfdbfe;">SALES</span>
+                                                {% endif %}
+                                                <span style="font-weight: 700; font-size: 0.82rem; color: var(--slate-800);">{{ app.desired_role }}</span>
+                                            </div>
                                             <div style="font-size: 0.72rem; color: var(--slate-500); font-weight: 600;"><i class="fas fa-clock" style="font-size: 0.68rem; margin-right: 3px;"></i> {{ app.desired_shift }} Shift</div>
+                                            {% if app.notes %}
+                                            <div style="font-size: 0.7rem; color: var(--slate-500); margin-top: 0.2rem; max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ app.notes }}">
+                                                <i class="fas fa-paperclip" style="color: var(--brand);"></i> {{ app.notes }}
+                                            </div>
+                                            {% endif %}
                                         </td>
                                         <td style="padding: 0.65rem 0.85rem;">
                                             <span style="font-size: 0.75rem; font-weight: 700; padding: 0.2rem 0.55rem; border-radius: 4px; background: #f1f5f9; color: var(--slate-700);">
@@ -14274,16 +14291,19 @@ Click here to book a 5-minute walkthrough: [Calendar Link]"></textarea>
     function filterApplicantsTable() {
         const q = (document.getElementById('filter-applicants-search')?.value || '').toLowerCase().trim();
         const status = document.getElementById('filter-applicants-status')?.value || '';
+        const dept = document.getElementById('filter-applicants-department')?.value || '';
         const rows = document.querySelectorAll('#table-workforce-applicants .applicant-data-row');
         let visibleCount = 0;
 
         rows.forEach(r => {
             const rowSearch = r.getAttribute('data-search') || '';
             const rowStatus = r.getAttribute('data-status') || '';
+            const rowDept = r.getAttribute('data-dept') || '';
             const matchQ = !q || rowSearch.includes(q);
             const matchStatus = !status || rowStatus === status;
+            const matchDept = !dept || rowDept === dept;
 
-            if (matchQ && matchStatus) {
+            if (matchQ && matchStatus && matchDept) {
                 r.style.display = '';
                 visibleCount++;
             } else {
