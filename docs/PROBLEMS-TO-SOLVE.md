@@ -103,9 +103,97 @@ Responsibility: George (Architect)
 | 10/07/2026 | BUG-117 | Session Inactivity Timeout Defeated by Automated Frontend Background Heartbeat / Health Pings (/api/v1/health). | **RESOLVED** | HIGH |
 | 10/07/2026 | BUG-118 | Missing Users Telemetry Columns & ClientBreadcrumbs in Baseline Parity Triggering HTTP 500 on /admin/executive. | **RESOLVED** | CRITICAL |
 | 10/07/2026 | BUG-119 | White-on-White Text Invisibility on QMS Manual Button & Navigation Discrepancies Across Public Pages. | **RESOLVED** | HIGH |
+| 10/07/2026 | BUG-120 | User Account Settings Role Presets Fail to Apply Defaults When Switching Roles. | **RESOLVED** | HIGH |
+| 10/07/2026 | BUG-121 | App Manual Button Displays Formal ISO 9001 Compliance SOP (HWB-QMS-7.5) Instead of End-User Application Help Guide. | **RESOLVED** | HIGH |
+| 10/07/2026 | BUG-122 | App Manual Static Routing Deficit (Lacks Automatic Active Workspace Detection & Deep-Link Chapter Navigation). | **RESOLVED** | HIGH |
+| 10/07/2026 | BUG-123 | Synthetic UI Mockups in Application Manual & Documentation Fidelity Deficit (Absence of Empirical Screenshots and Enterprise Microsoft/IBM-Tier Feature Specifications). | **RESOLVED** | HIGH |
+| 10/08/2026 | BUG-124 | Missing Telegram and Email Alerts on Workforce/Subcontractor Form Intake & Missing Apply Date Column in Operations View. | **RESOLVED** | HIGH |
 
 
-## BUG-096: Telegram Inbound Message Drop & Unhandled ValueError on Multi-User Comma-Separated TELEGRAM_CHAT_ID String
+## BUG-122: App Manual Static Routing Deficit (Lacks Automatic Active Workspace Detection & Deep-Link Chapter Navigation)
+**Detected:** 10/07/2026
+**Status:** **RESOLVED** (10/07/2026)
+**Symptoms:**
+1. Clicking the "App Manual" button from any workspace (e.g. Leads, Commercial Bids, Workforce, Calling Desk, or Settings) routed the user to the very top of the general manual, forcing manual searching and scrolling.
+2. The platform did not detect where the operator was actively working.
+**Root Causes:**
+1. App Manual navigation links in `admin_header.html`, `mega_bar.html`, and `backend_nav.html` statically referenced `/manual/app` without passing workspace topic parameters or chapter anchors.
+2. The `/manual/app` backend route in `blueprints/public.py` did not parse query arguments or inspect `request.referrer` to resolve the originating workspace.
+3. The `application_manual.html` view lacked smooth auto-scroll, section highlight animations, and contextual confirmation banners.
+**Solution:**
+1. Engineered **Contextual In-App Help (Deep-Link Workspace Routing)**:
+   - Defined `WORKSPACE_CHAPTER_MAP` in `blueprints/public.py` mapping all backoffice views (`leads`, `accounts`, `construction_bids`, `general_contractors`, `institutional_bids`, `programs`, `marketing`, `workforce`, `safety`, `monitor`, `scope`, `it_department`, `settings`, `executive`, `sales_desk`, `calculator`) to their corresponding manual chapters (Chapters 1 to 6).
+   - Augmented `application_manual()` in `blueprints/public.py` to inspect query parameters (`topic`, `view`, `from_view`, `chapter`) and fallback to `request.referrer`, automatically redirecting to the explicit chapter anchor.
+   - Built global context processor `inject_app_manual_context` in `main_app.py` delivering authoritative `active_manual_url` across all Jinja templates and includes.
+   - Enhanced `templates/application_manual.html` with smooth auto-scroll (`handleContextualRouting`), dynamic glowing blue focus pulse (`chapterFocusPulse`), and a dismissible top banner indicating the active workspace chapter.
+   - Added client-side real-time link synchronizer `syncAppManualHelpLinks(id)` in `backoffice_base.html` and `switchView(id)` in `backoffice_operations.html` to update manual links on live tab transitions.
+2. Verified with automated test suite `scripts/test_contextual_help_routing.py` (8/8 passed), Yamamoto Moto Estimator suite (9/9 passed, Grade A+), and SOC 2 data leakage suite (75/75 checks clean).
+
+## BUG-123: Synthetic UI Mockups in Application Manual & Documentation Fidelity Deficit (Absence of Empirical Screenshots and Enterprise Microsoft/IBM-Tier Feature Specifications)
+**Detected:** 10/07/2026
+**Status:** **RESOLVED** (10/07/2026)
+**Symptoms:**
+1. The initial implementation of `templates/application_manual.html` used synthetic styled HTML mockups (`<div>` elements with simulated form inputs and dummy tables) rather than authentic, empirical screen captures of the live application.
+2. CEO Humberto Dominguez audited the manual and correctly identified the snapshots as synthetic, requiring full replacement with empirical screenshots and elevation to Fortune 500 enterprise documentation standards (Microsoft Docs & IBM Knowledge Center tier).
+3. The chapter documentation lacked structured technical components: system feature purpose, prerequisite access roles, numbered visual callout maps, field-by-field reference tables, step-by-step everyday-words procedures with expected outputs, and poka-yoke safeguards.
+**Root Causes:**
+1. Rapid scaffolding of the visual guide initially utilized CSS-simulated frames as a quick layout placeholder instead of orchestrating headless browser automated screenshot capture against the running application container.
+2. Absence of an automated Playwright headless screenshot capture pipeline tied to live database states and authenticated sessions.
+**Solution:**
+1. **Automated Live Screenshot Capture Engine (`scripts/capture_live_manual_screenshots.py`):**
+   - Engineered automated Playwright capture script that authenticates into `http://127.0.0.1:5000` and generates 10 empirical, pixel-perfect PNG captures saved in `static/images/manual_screenshots/`:
+     - `chapter1_login.png` (Live login screen)
+     - `chapter1_timeout.png` (Live session security & logout modal)
+     - `chapter2_leads_pipeline.png` (Live commercial leads table & Texas CRM)
+     - `chapter2_column_drawer.png` (Live custom column drawer with quick presets)
+     - `chapter3_bidding_pipeline.png` (Live GC bidding pipeline)
+     - `chapter3_calculator.png` (Live commercial cleaning calculator & takeoff engine)
+     - `chapter4_marketing_outbox.png` (Live marketing outbox & staging queue)
+     - `chapter5_workforce_roster.png` (Live HR workforce roster)
+     - `chapter5_shift_dispatch.png` (Live shift dispatch & work monitor)
+     - `chapter6_user_permissions.png` (Live user edit dialog with "Reset to Role Defaults" button and 11-module matrix)
+2. **Microsoft / IBM Enterprise Documentation Elevation (`templates/application_manual.html`):**
+   - Completely replaced all synthetic HTML mockups with genuine empirical `<img>` elements wrapped in zero-crop browser framing containers with click-to-zoom modal support.
+   - For all 6 chapters, authored comprehensive enterprise documentation sections:
+     - **Feature Overview & Purpose:** Clear explanation of why the tool exists and business impact.
+     - **Access & Prerequisites:** User roles required and granular permissions (View/Edit/Delete).
+     - **Visual Callout Maps:** Explicitly numbered pins (`[1]`, `[2]`, `[3]`, `[4]`) keyed directly to interface components in each screenshot.
+     - **Field-by-Field Reference Tables:** IBM-style specification tables defining element codes, input types, allowed values, and operational impacts.
+     - **Step-by-Step Task Guides:** Everyday Words (8th-grade reading level) procedures with verified expected system responses.
+     - **Poka-Yoke Safeguards & Troubleshooting:** Explaining automated error prevention and self-recovery steps.
+3. **Automated Regression Verification:**
+   - `scripts/test_contextual_help_routing.py`: 8/8 tests passed.
+   - `scripts/check_soc2_data_leakage.py`: 75/75 checks clean (0 unauthenticated data leaks).
+   - `scripts/yamamoto_bid_test_suite.py`: 9/9 modules verified Grade A+ Enterprise Mature.
+4. **Ingestion & Persistence:** Synchronized all code, documentation, and telemetry into PostgreSQL via `scripts/sigma_sync.py`.
+
+## BUG-124: Missing Telegram & Email Alerts on Workforce/Subcontractor Form Intake & Missing Apply Date Column in Operations View
+**Detected:** 10/08/2026
+**Status:** **RESOLVED** (10/08/2026)
+**Symptoms:**
+1. Prospective cleaning technicians submitted applications via `/work-with-us` (stored in `JobApplicants`), and trade crews registered via the 1099 subcontractor portal (stored in `SubcontractorPartners`), but management and executive leadership received neither Telegram push alerts nor Microsoft Graph email notifications.
+2. In the Backoffice Operations Workforce Hub (`/admin/operations?view=workforce`), the Subcontractor Partners data table omitted the application date (`created_at`) column, preventing dispatchers from seeing when trade partners applied.
+3. The lack of real-time alerts caused operational delays and communication friction between applicants and management.
+**Root Causes:**
+1. `api_workforce_apply()` and `api_workforce_subcontractor()` in `blueprints/crm_api.py` executed database inserts into `JobApplicants` and `SubcontractorPartners`, but lacked notification dispatchers and did not queue entries in `PendingOutbox` or `SigmaInteractionLog`.
+2. In `templates/backoffice_operations.html`, the Subcontractor Partners grid header and row cells lacked the `Apply Date` column, whereas the Job Applicants table included an `Applied` column.
+**Solution:**
+1. **Engineered Workforce Notification Dispatchers (`core/services/notification_service.py`):**
+   - Implemented `send_applicant_telegram_alert()` and `send_applicant_email_alert()` alongside master coordinator `dispatch_applicant_notifications()`. Sends structured Markdown alerts to authorized Telegram recipients and high-fidelity branded HTML emails to `hdominguez@hwbcleaning.com`, `sales@hwbcleaning.com`, and personal redundancy inboxes with direct click-to-call and deep links.
+   - Implemented `send_subcontractor_telegram_alert()` and `send_subcontractor_email_alert()` alongside master coordinator `dispatch_subcontractor_notifications()`. Transmits trade partner details (company, contact, phone, email, hub, crew size, specialties, hourly rate, and Texas DWC-83 status).
+2. **Integrated Intake Gates in `blueprints/crm_api.py`:**
+   - Updated `api_workforce_apply()` and `api_workforce_subcontractor()` to record staged alerts in `PendingOutbox` and audit records in `SigmaInteractionLog` inside atomic transactions.
+   - Enqueued real-time dual dispatch (`task_queue.enqueue`) with synchronous defensive fallback to ensure applicant HTTP 201 responses are never interrupted.
+3. **Enhanced Subcontractor Table & Modal in `templates/backoffice_operations.html`:**
+   - Added `Apply Date` column header and `{{ sub.created_at.strftime('%m/%d/%Y') if sub.created_at else '--' }}` data cells to `#table-workforce-subcontractors`.
+   - Updated `data-search` to index formatted application dates for instant searching and adjusted empty table `colspan` to 11.
+   - Added dynamic `edit-sub-apply-date-badge` in the Trade Partner Profile edit modal header to display the registration date upon inspection.
+4. **Verification & Testing:**
+   - Restarted `hwb_web_app` container and verified zero compilation or runtime errors.
+   - Executed full test regression suite: `test_contextual_help_routing.py` (8/8 pass), `check_soc2_data_leakage.py` (75/75 pass), and `yamamoto_bid_test_suite.py` (9/9 pass, Grade A+).
+   - Ingested all documentation and code into the SQL Brain via `scripts/sigma_sync.py`.
+
+
 **Detected:** 09/27/2026
 **Status:** **RESOLVED** (09/27/2026)
 **Symptoms:**
@@ -2133,6 +2221,77 @@ CEO Humberto Dominguez attempting to log into `https://www.hwbcleaning.com/login
 **Preventative:**
 1. Color variables in utility buttons must never rely on unverified CSS variables without explicit hex fallbacks.
 2. Background color and text color of interactive buttons must always be styled together as a unit to prevent white-on-white text collisions across varying page templates.
-3. Authenticated sessions on public marketing pages must always provide a prominent return path to the employee work center.
+## BUG-120: User Account Settings Role Presets Fail to Apply Defaults When Switching Roles
+**Detected:** 10/07/2026
+**Status:** **RESOLVED** (10/07/2026)
+**Symptoms:**
+1. In the Executive Pulse User Management tab (`/admin/executive#users`), opening the "Edit User Account" modal (`#modal-edit-user`) and choosing a different role from the "System Role" dropdown (`#edit_user_role`) failed to update the module access rights checkboxes (View, Edit, Delete) to that role's standard default settings.
+2. All 11 module access rights checkboxes remained either frozen on their prior values or became completely unchecked.
+3. If an administrator saved the user account after selecting a role whose checkboxes failed to populate, the form submitted unchecked values for all modules, writing `{"leads": {"view": false, "edit": false, "delete": false}, ...}` into `custom_permissions` in PostgreSQL. This inadvertently locked out the employee or stripped all module access rights (confirmed on User ID 5, `Bwiley`).
+4. An uncaught console error (`ReferenceError: switchMatrixRole is not defined`) fired on initial page load in `HWB-WEB Sigma Executive.html` due to a legacy function call in `window.onload`.
+**Root Causes:**
+1. **psycopg2 DictRow JSON Serialization Bug:** In `blueprints/operations.py`, `role_permissions = cur.fetchall()` returns a list of psycopg2 `DictRow` objects. Because `DictRow` inherits from Python's built-in `list`, `flask_json.dumps()` and Jinja's `| tojson` filter serialize each row as a flat JSON array `[id, role, module, can_view, can_edit, can_delete]` rather than an associative JSON object `{"role": "...", "module": "...", ...}`. In the client-side script in `templates/HWB-WEB Sigma Executive.html`, `rolePermissionsData.find(p => p.role === roleName && p.module === mod)` inspected `p.role` on an array, evaluating to `undefined` on every check. No matches were ever found, causing `vCheck.checked`, `eCheck.checked`, and `dCheck.checked` to always evaluate to `false`.
+2. **Corrupted Database Records in `RolePermissions`:** The database table `"RolePermissions"` contained legacy inverted records (e.g., `Sales` had `leads` and `accounts` marked with `can_view = FALSE`, `can_edit = TRUE`, `can_delete = TRUE`), and lacked records for the `Estimator` role.
+3. **Dead Legacy Script in `window.onload`:** `HWB-WEB Sigma Executive.html` called `switchMatrixRole('Sales')` on page load, but `switchMatrixRole` was removed during previous UI modernization, causing a browser JavaScript execution exception.
+4. **Missing Estimator Option in Role Dropdowns:** Neither `#modal-edit-user` nor `#modal-add-user` included `Estimator (GC Bids & Takeoff)` in their `<select>` elements despite `Estimator` being a recognized institutional role in `User.DEFAULT_ROLE_PERMISSIONS`.
+**Solution:**
+1. **Single Source of Truth Codification (`core/models/user.py`):**
+   - Codified `ROLE_MODULE_PRESETS` in Python defining the exact, verified View, Edit, and Delete access rights for all 8 institutional roles (`Executive`, `Admin`, `Manager`, `Operator`, `Sales`, `Estimator`, `Technician`, `Custom`).
+   - Attached `User.ROLE_MODULE_PRESETS = ROLE_MODULE_PRESETS`.
+   - Hardened `User.has_permission()` so that non-custom users with non-module custom permissions (e.g., telegram only) cleanly fall back to `role_defaults` instead of returning false.
+2. **Controller Pass-Through & Object Serialization (`blueprints/operations.py`):**
+   - Explicitly converted PostgreSQL `RolePermissions` rows into Python dictionaries: `role_permissions = [dict(r) for r in raw_perms]`.
+   - Passed `role_presets=ROLE_MODULE_PRESETS` to `render_template('HWB-WEB Sigma Executive.html', ...)`.
+3. **Client-Side Event Handler Refactor (`templates/HWB-WEB Sigma Executive.html`):**
+   - Refactored `updateModalPermsFromRole(roleName)` to read directly from `rolePresets[roleName]`, with secondary fallback to `rolePermissionsData`.
+   - Implemented `resetPermsToRoleDefaults()` with a one-click button in the Module Access Rights header: "Reset to Role Defaults".
+   - Removed the dead `switchMatrixRole('Sales')` call from `window.onload`, restoring clean browser startup.
+   - Added `<option value="Estimator">Estimator (GC Bids & Takeoff)</option>` to both `#modal-edit-user` and `#modal-add-user`.
+4. **Database Parity & Staff Profile Repair:**
+   - Synchronized all 77 rows of `"RolePermissions"` in PostgreSQL to match `ROLE_MODULE_PRESETS` across all 7 roles.
+   - Updated `scripts/seed_data.json` to prevent database seed clobbering.
+   - Restored User ID 5 (`Bwiley`) and User ID 11 (`test_worker_1790785562`) by resetting corrupted all-false `custom_permissions` to `NULL`, immediately reinstating verified Sales Desk and Operational access.
+5. **Regression Verification:**
+   - **Lead AI Estimator Suite (`scripts/yamamoto_bid_test_suite.py`):** 9/9 test modules passed with 100% score (Grade A+ Enterprise Mature).
+   - **SOC 2 & Route Isolation Battery (`scripts/check_soc2_data_leakage.py`):** 75/75 automated security and route checks verified clean.
+   - **Targeted Role Presets Suite:** 4/4 unit tests passed verifying dictionary structure, role permission evaluations, fallback logic, and DOM element existence.
+**Preventative & Evolutionary Learning:**
+1. Database rows queried via psycopg2 `DictCursor` must always be explicitly converted via `dict(row)` or a dictionary comprehension before passing into Jinja2 templates or serializing with `tojson`.
+2. Interactive admin dialogs that configure permissions must always provide a one-click "Reset to Role Defaults" button to eliminate administrative lockout risks and visual ambiguity.
+3. Every recognized role in `User.DEFAULT_ROLE_PERMISSIONS` must exist across all frontend select inputs, database reference tables, and security test batteries.
+
+
+## BUG-121: App Manual Button Renders Formal ISO 9001 Compliance SOP (HWB-QMS-7.5) Instead of Plain-Spoken Application Help Guide
+**Detected:** 10/07/2026
+**Status:** **RESOLVED** (10/07/2026)
+**Symptoms:**
+1. When authenticated as standard operational staff (such as Mirna Rondinella, User ID 3, `mrondinella`, role `Custom`), clicking the `App Manual` button in the navigation header, mega bar, or outside sales bar directed to `/manual/app`.
+2. The endpoint redirected to `/manual/view/hwb-qms-7.5_backoffice_and_crm_management_sop.html`.
+3. The browser displayed the formal ISO 9001 compliance document: `HWB-QMS-7.5-BO-CRM: Backoffice Operations & CRM Management SOP`, featuring ISO 9001 Clause 7.5 & 8.1 controls, relational PostgreSQL schema specifications, WORM audit logging procedures, and quality failure mode forms.
+4. The page failed to present the dedicated, plain-spoken **Application User Support Technical Manual / Help Guide** (Chapters 1–6) designed to instruct team members on daily software operation (navigating leads, filtering lists, editing lead status, managing passwords).
+**Root Causes:**
+1. **Fallback Pointer in Route Handler:** In `blueprints/public.py`, `APPLICATION_MANUAL_FILE` was pointed to `hwb-qms-7.5_backoffice_and_crm_management_sop.html` during the v5.4.1 release as a temporary placeholder while the 6-chapter end-user manual remained staged in the strategic master plan.
+2. **QMS Clearance Filtering:** Because non-executive users lack master QMS clearance (`user_has_master_qms_clearance` evaluates to `False`), the QMS shell intentionally filters out the master catalogue and only rendered `hwb-qms-7.5`, displaying an ISO audit document instead of a user manual.
+3. **Pending Compilation of Dedicated Help Manual:** The dedicated 6-chapter end-user Help Manual codified in Section 2.6 of `docs/HWB-STRATEGIC-MASTER-PLAN.md` had not yet been rendered into a dedicated application template view or in-app drawer.
+**Solution:**
+1. **Dedicated Application User Guide View (`templates/application_manual.html`):**
+   - Built a comprehensive, responsive 6-chapter operating guide written strictly in Everyday Words (8th-grade reading level).
+   - Chapters cover: Chapter 1 (Getting Started, Login & Security), Chapter 2 (Finding and Managing Commercial Leads - Mirna's workspace), Chapter 3 (Commercial Bidding & Price Estimating), Chapter 4 (Customer Outreach & Email Introductions), Chapter 5 (Cleaning Staff, Schedules & Jobsite Safety), and Chapter 6 (User Accounts, Roles & System Backups).
+   - Integrated live in-page search filtering (`#guide-live-search`) for instantaneous keyword lookups, visual step lists, and return navigation directly to the operations hub.
+2. **Controller Decoupling & Direct Rendering (`blueprints/public.py`):**
+   - Refactored `application_manual()` (`/manual/app` and `/manual/application`) to render `application_manual.html` directly for all authenticated users, eliminating the redirect to the ISO compliance SOP.
+   - Preserved master QMS catalog gating: Non-executive staff without `qms: view` remain strictly blocked from confidential executive SOPs (`/manual` returns 403 Forbidden), while universal access to the Application Manual is guaranteed.
+3. **Sidebar Alignment (`templates/sop_base.html`):**
+   - Highlighted the "Application Manual" navigation link whenever viewing the application manual.
+4. **Verification:**
+   - Certified with automated test client: Unauthenticated users get 302 redirect to `/login`; Mirna (`mrondinella`, Custom role) receives HTTP 200 OK and views the complete Application User Guide; Mirna remains 403-blocked from confidential QMS catalogs; Executives receive HTTP 200 OK with full sidebar navigation intact.
+   - Yamamoto Moto Bidding Suite (`scripts/yamamoto_bid_test_suite.py`): 9/9 modules passed (Grade A+ Enterprise Mature).
+   - SOC 2 Route Isolation Battery (`scripts/check_soc2_data_leakage.py`): 75/75 checks clean.
+**Preventative & Evolutionary Learning:**
+1. End-user software help manuals must never be conflated with regulatory ISO 9001/ISO 27001 compliance standard operating procedures.
+2. Software application guides must be authored under the Everyday Words Standard and be universally accessible to all authenticated employees regardless of elevated compliance security clearances.
+
+
+
 
 

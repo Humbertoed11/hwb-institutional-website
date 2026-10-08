@@ -1,0 +1,1574 @@
+{% extends "sop_base.html" %}
+
+{% block title %}Application User Guide | HWB Cleaning Services Platform Manual{% endblock %}
+
+{% block content %}
+<style>
+    /* Enterprise Documentation System (Microsoft Docs & IBM Knowledge Center Standard) */
+    .app-guide-container {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        color: #1e293b;
+        line-height: 1.6;
+    }
+    
+    /* Document Header */
+    .app-guide-header {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 2rem 2.25rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+    .app-guide-header h1 {
+        font-size: 1.85rem !important;
+        font-weight: 800 !important;
+        color: #0f172a !important;
+        margin: 0.5rem 0 0.5rem 0 !important;
+        border: none !important;
+        padding: 0 !important;
+        letter-spacing: -0.02em;
+    }
+
+    /* Meta Badges */
+    .doc-meta-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+    .doc-badge {
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 0.2rem 0.65rem;
+        border-radius: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+    .doc-badge-blue { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+    .doc-badge-green { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+    .doc-badge-slate { background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; }
+    
+    /* Quick Jump Chapter Rack */
+    .chapter-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.25rem;
+        margin-bottom: 2.5rem;
+    }
+    .chapter-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 1.35rem;
+        text-decoration: none;
+        color: inherit;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        transition: all 0.2s ease-in-out;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+    .chapter-card:hover {
+        transform: translateY(-2px);
+        border-color: #2563eb;
+        box-shadow: 0 10px 20px -5px rgba(37, 99, 235, 0.1);
+    }
+    .chapter-card-num {
+        font-size: 0.72rem;
+        font-weight: 800;
+        color: #2563eb;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.35rem;
+    }
+    .chapter-card-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin: 0 0 0.45rem 0;
+        line-height: 1.35;
+    }
+    .chapter-card-desc {
+        font-size: 0.82rem;
+        color: #64748b;
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    /* Section Container */
+    .guide-section {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 2.25rem;
+        margin-bottom: 3rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+    .guide-section h2 {
+        font-size: 1.45rem !important;
+        font-weight: 800 !important;
+        color: #0f172a !important;
+        margin: 0 0 1.25rem 0 !important;
+        padding-bottom: 0.85rem !important;
+        border-bottom: 2px solid #f1f5f9 !important;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        letter-spacing: -0.01em;
+    }
+    .guide-section h3 {
+        font-size: 1.1rem !important;
+        font-weight: 700 !important;
+        color: #0f172a !important;
+        margin: 2rem 0 0.75rem 0 !important;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .guide-section p {
+        font-size: 0.92rem;
+        color: #334155;
+        line-height: 1.65;
+        margin: 0 0 1.25rem 0;
+    }
+
+    /* Enterprise Callout / Alert Banners */
+    .doc-callout {
+        border-radius: 8px;
+        padding: 1rem 1.25rem;
+        margin: 1.25rem 0;
+        font-size: 0.88rem;
+        display: flex;
+        gap: 0.75rem;
+        align-items: flex-start;
+        line-height: 1.5;
+    }
+    .doc-callout-info {
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-left: 4px solid #2563eb;
+        color: #1e3a8a;
+    }
+    .doc-callout-warning {
+        background: #fffbeb;
+        border: 1px solid #fde68a;
+        border-left: 4px solid #d97706;
+        color: #92400e;
+    }
+    .doc-callout-success {
+        background: #ecfdf5;
+        border: 1px solid #a7f3d0;
+        border-left: 4px solid #059669;
+        color: #065f46;
+    }
+
+    /* Field Reference Table (IBM Style) */
+    .field-table-wrapper {
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        overflow: hidden;
+        margin: 1.25rem 0 1.75rem 0;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+    }
+    .field-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.84rem;
+        text-align: left;
+    }
+    .field-table th {
+        background: #f8fafc;
+        color: #475569;
+        font-weight: 700;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #cbd5e1;
+        text-transform: uppercase;
+        font-size: 0.72rem;
+        letter-spacing: 0.05em;
+    }
+    .field-table td {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #f1f5f9;
+        color: #334155;
+        vertical-align: top;
+    }
+    .field-table tr:last-child td {
+        border-bottom: none;
+    }
+    .field-table tr:hover td {
+        background: #fbfcfe;
+    }
+    .element-code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #0f172a;
+        background: #f1f5f9;
+        padding: 0.15rem 0.4rem;
+        border-radius: 4px;
+        border: 1px solid #e2e8f0;
+        display: inline-block;
+    }
+
+    /* 📸 Visual Snapshot Framing Container (Zero-Crop Architecture) */
+    .snapshot-frame {
+        background: #f8fafc;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        overflow: hidden;
+        margin: 1.5rem 0 2rem 0;
+        box-shadow: 0 4px 10px -2px rgba(0,0,0,0.06), 0 2px 4px -2px rgba(0,0,0,0.04);
+    }
+    .snapshot-top-bar {
+        background: #0f172a;
+        color: #94a3b8;
+        padding: 0.6rem 1.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 0.75rem;
+        font-weight: 600;
+        border-bottom: 1px solid #1e293b;
+    }
+    .snapshot-dot-group {
+        display: flex;
+        gap: 6px;
+    }
+    .snapshot-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+    }
+    .snapshot-dot.red { background: #ef4444; }
+    .snapshot-dot.yellow { background: #f59e0b; }
+    .snapshot-dot.green { background: #10b981; }
+    
+    .snapshot-body {
+        padding: 0;
+        background: #0b1120;
+        position: relative;
+        text-align: center;
+    }
+    .snapshot-img {
+        width: 100%;
+        height: auto;
+        display: block;
+        cursor: zoom-in;
+        transition: opacity 0.2s;
+    }
+    .snapshot-img:hover {
+        opacity: 0.98;
+    }
+    .snapshot-caption {
+        padding: 0.75rem 1.25rem;
+        background: #f8fafc;
+        border-top: 1px solid #e2e8f0;
+        font-size: 0.8rem;
+        color: #475569;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    /* Visual Callout Pins */
+    .callout-pin {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        background: #2563eb;
+        color: #ffffff;
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 0.2rem 0.55rem;
+        border-radius: 4px;
+        box-shadow: 0 2px 4px rgba(37,99,235,0.3);
+    }
+    .callout-pin.amber {
+        background: #d97706;
+        box-shadow: 0 2px 4px rgba(217,119,6,0.3);
+    }
+    .callout-pin.green {
+        background: #059669;
+        box-shadow: 0 2px 4px rgba(5,150,105,0.3);
+    }
+    .callout-pin.purple {
+        background: #7c3aed;
+        box-shadow: 0 2px 4px rgba(124,58,237,0.3);
+    }
+
+    /* Numbered Callout Legend Box */
+    .callout-legend {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 1rem 1.25rem;
+        margin-top: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+    .callout-legend-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 0.75rem 1.25rem;
+    }
+    .callout-legend-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.6rem;
+        font-size: 0.82rem;
+    }
+    .callout-num {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: #2563eb;
+        color: #ffffff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.72rem;
+        font-weight: 800;
+        flex-shrink: 0;
+        margin-top: 1px;
+    }
+    .callout-num.amber { background: #d97706; }
+    .callout-num.green { background: #059669; }
+    .callout-num.purple { background: #7c3aed; }
+
+    /* Step-by-Step Task Guide */
+    .procedure-box {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 1.25rem 1.5rem;
+        margin: 1.25rem 0;
+    }
+    .procedure-steps {
+        margin: 0;
+        padding-left: 1.25rem;
+    }
+    .procedure-steps li {
+        margin-bottom: 0.75rem;
+        font-size: 0.88rem;
+        color: #334155;
+    }
+    .procedure-steps li:last-child {
+        margin-bottom: 0;
+    }
+    .expected-result {
+        margin-top: 0.4rem;
+        font-size: 0.8rem;
+        color: #059669;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+    /* 🧼 7 Cleaning Steps Photo Grid */
+    .cleaning-photo-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 1.25rem;
+        margin: 1.5rem 0 2rem 0;
+    }
+    .cleaning-photo-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .cleaning-photo-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px -2px rgba(0,0,0,0.08);
+    }
+    .cleaning-photo-img {
+        width: 100%;
+        height: 170px;
+        object-fit: cover;
+        background: #f1f5f9;
+        cursor: pointer;
+    }
+    .cleaning-photo-body {
+        padding: 1rem;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    .step-tag {
+        font-size: 0.68rem;
+        font-weight: 800;
+        color: #2563eb;
+        background: #eff6ff;
+        padding: 0.15rem 0.45rem;
+        border-radius: 4px;
+        align-self: flex-start;
+        margin-bottom: 0.4rem;
+        border: 1px solid #dbeafe;
+    }
+    .cleaning-photo-title {
+        font-size: 0.92rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin: 0 0 0.25rem 0;
+    }
+    .cleaning-photo-desc {
+        font-size: 0.8rem;
+        color: #64748b;
+        margin: 0;
+        line-height: 1.45;
+    }
+
+    /* Lightbox Modal for Photo Zoom */
+    #image-lightbox {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(15, 23, 42, 0.9);
+        z-index: 10000;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        box-sizing: border-box;
+    }
+    #lightbox-img {
+        max-width: 92vw;
+        max-height: 88vh;
+        border-radius: 8px;
+        box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7);
+        object-fit: contain;
+    }
+
+    /* Live Search */
+    .manual-search-box {
+        position: relative;
+        margin-bottom: 2rem;
+    }
+    .manual-search-input {
+        width: 100%;
+        height: 48px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        padding: 0 1rem 0 2.85rem;
+        font-size: 0.95rem;
+        color: #0f172a;
+        background: #ffffff;
+        outline: none;
+        transition: all 0.2s;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+        box-sizing: border-box;
+    }
+    .manual-search-input:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+    /* Contextual Deep-Link Focus Pulse */
+    @keyframes chapterFocusPulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.45);
+            border-color: #2563eb;
+        }
+        50% {
+            box-shadow: 0 0 0 10px rgba(37, 99, 235, 0.2);
+            border-color: #2563eb;
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
+            border-color: #cbd5e1;
+        }
+    }
+    .guide-section.context-highlight {
+        border: 2px solid #2563eb !important;
+        border-radius: 12px;
+        padding: 2rem !important;
+        background: #f8faff !important;
+        animation: chapterFocusPulse 2.5s ease-out 2;
+        transition: all 0.5s ease;
+    }
+</style>
+
+<div class="sop-card app-guide-container">
+    <!-- Header Block -->
+    <div class="app-guide-header">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <div class="doc-meta-bar">
+                    <span class="doc-badge doc-badge-blue">Official Application Manual</span>
+                    <span class="doc-badge doc-badge-green">● Release 3.4.0-Enterprise</span>
+                    <span class="doc-badge doc-badge-slate">ISO 9001:2015 &amp; SOC 2 Type II</span>
+                    <span class="doc-badge doc-badge-slate">Updated October 2026</span>
+                </div>
+                <h1>HWB Application Operating Manual</h1>
+                <p style="color: #64748b; font-size: 0.95rem; margin: 0; max-width: 820px;">
+                    Enterprise user documentation and technical procedures for commercial sales, bidding, cleaning staff, and system administrators. Click any application snapshot to enlarge.
+                </p>
+            </div>
+            <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
+                <a href="{{ url_for('operations.admin_operations') }}" class="isc-btn" style="height: 38px; padding: 0 1.25rem; border-radius: 6px; background: #2563eb; color: #ffffff; font-size: 0.82rem; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 0.45rem; box-shadow: 0 1px 2px rgba(37,99,235,0.2);">
+                    <svg style="width: 14px; height: 14px; fill: currentColor;" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+                    Return to Operations
+                </a>
+                <button onclick="window.print()" class="isc-btn" style="height: 38px; padding: 0 1.25rem; border-radius: 6px; border: 1px solid #cbd5e1; background: #ffffff; color: #334155; font-size: 0.82rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.45rem;">
+                    <svg style="width: 14px; height: 14px; fill: currentColor;" viewBox="0 0 24 24"><path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z"/></svg>
+                    Print Manual
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contextual In-App Help Banner (Auto-shown when user clicks App Manual from any workspace) -->
+    <div id="contextual-help-banner" style="display: {% if target_chapter %}flex{% else %}none{% endif %}; align-items: center; justify-content: space-between; background: #eff6ff; border: 1px solid #bfdbfe; border-left: 4px solid #2563eb; padding: 1rem 1.25rem; border-radius: 8px; margin-bottom: 2rem; gap: 1rem; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <span style="display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; background: #2563eb; color: #ffffff; border-radius: 50%; font-size: 0.85rem; flex-shrink: 0;">
+                <svg style="width: 16px; height: 16px; fill: currentColor;" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+            </span>
+            <div>
+                <div style="font-size: 0.9rem; font-weight: 800; color: #1e3a8a;">
+                    Showing help for: <span id="context-section-name">{{ target_chapter_title or 'Your Active Workspace' }}</span>
+                </div>
+                <div style="font-size: 0.8rem; color: #3b82f6;">
+                    The system opened this chapter automatically based on your active screen.
+                </div>
+            </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <button type="button" onclick="showAllChapters()" class="isc-btn" style="height: 32px; font-size: 0.75rem; font-weight: 700; background: #ffffff; border: 1px solid #93c5fd; color: #1e40af; border-radius: 6px; padding: 0 0.85rem; cursor: pointer;">
+                Show All Chapters
+            </button>
+            <button type="button" onclick="dismissContextBanner()" style="background: none; border: none; font-size: 1.25rem; color: #64748b; cursor: pointer; padding: 0 0.35rem; line-height: 1;" title="Dismiss notice">&times;</button>
+        </div>
+    </div>
+
+    <!-- Quick In-Page Search -->
+    <div class="manual-search-box">
+        <svg style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; fill: #64748b;" viewBox="0 0 24 24">
+            <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+        </svg>
+        <input type="text" id="guide-live-search" class="manual-search-input" placeholder="Search features, tools, or procedures (e.g., column customizer, lead status, calculator, shift dispatch, reset defaults)..." onkeyup="filterGuideTopics()" />
+    </div>
+
+    <!-- Quick Jump Chapter Rack -->
+    <div class="chapter-grid" id="chapter-rack">
+        <a href="#chapter-1" class="chapter-card">
+            <div>
+                <div class="chapter-card-num">Chapter 1</div>
+                <div class="chapter-card-title">🔑 Getting Started, Login &amp; Security Alerts</div>
+                <div class="chapter-card-desc">User sign-in card, password security, session timeout safeguards, and single sign-on.</div>
+            </div>
+            <div style="font-size: 0.78rem; color: #2563eb; font-weight: 700; margin-top: 1rem;">View Chapter &rarr;</div>
+        </a>
+
+        <a href="#chapter-2" class="chapter-card">
+            <div>
+                <div class="chapter-card-num">Chapter 2</div>
+                <div class="chapter-card-title">🏢 Commercial Leads &amp; CRM Pipeline</div>
+                <div class="chapter-card-desc">Texas facility search, custom column manager, personal view saving, and call notes logging.</div>
+            </div>
+            <div style="font-size: 0.78rem; color: #2563eb; font-weight: 700; margin-top: 1rem;">View Chapter &rarr;</div>
+        </a>
+
+        <a href="#chapter-3" class="chapter-card">
+            <div>
+                <div class="chapter-card-num">Chapter 3</div>
+                <div class="chapter-card-title">📐 Bidding Pipeline &amp; Price Estimating</div>
+                <div class="chapter-card-desc">Commercial GC pipeline, square footage calculator, production rates, and client quotes.</div>
+            </div>
+            <div style="font-size: 0.78rem; color: #2563eb; font-weight: 700; margin-top: 1rem;">View Chapter &rarr;</div>
+        </a>
+
+        <a href="#chapter-4" class="chapter-card">
+            <div>
+                <div class="chapter-card-num">Chapter 4</div>
+                <div class="chapter-card-title">✉️ Marketing Outbox &amp; Calendar Walkthroughs</div>
+                <div class="chapter-card-desc">B2B email campaigns, CEO approval queue, and Microsoft Bookings calendar integration.</div>
+            </div>
+            <div style="font-size: 0.78rem; color: #2563eb; font-weight: 700; margin-top: 1rem;">View Chapter &rarr;</div>
+        </a>
+
+        <a href="#chapter-5" class="chapter-card">
+            <div>
+                <div class="chapter-card-num">Chapter 5</div>
+                <div class="chapter-card-title">🧹 Cleaning Operations &amp; Shift Dispatch</div>
+                <div class="chapter-card-desc">Workforce roster, work monitor, quality checklists, and real photos of the 7 Cleaning Steps.</div>
+            </div>
+            <div style="font-size: 0.78rem; color: #2563eb; font-weight: 700; margin-top: 1rem;">View Chapter &rarr;</div>
+        </a>
+
+        <a href="#chapter-6" class="chapter-card">
+            <div>
+                <div class="chapter-card-num">Chapter 6</div>
+                <div class="chapter-card-title">⚙️ User Accounts &amp; Role Permissions</div>
+                <div class="chapter-card-desc">Role assignment, 11-module access matrix, and one-click Reset to Role Defaults button.</div>
+            </div>
+            <div style="font-size: 0.78rem; color: #2563eb; font-weight: 700; margin-top: 1rem;">View Chapter &rarr;</div>
+        </a>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- CHAPTER 1: LOGIN & ACCOUNTS -->
+    <!-- ================================================================= -->
+    <section class="guide-section guide-topic" id="chapter-1">
+        <h2>
+            <span style="color: #2563eb;">1.0</span>
+            Chapter 1: Getting Started, Login &amp; Security Alerts
+        </h2>
+        
+        <h3>1.1 Feature Overview &amp; System Purpose</h3>
+        <p>
+            The Login and Authentication subsystem provides encrypted entry into the HWB Operations Platform. Every team member signs in with their assigned username and password. The system enforces strict SOC 2 Type II security measures, including automatic inactivity logouts and single-session locks to protect commercial client records and proprietary cleaning contracts.
+        </p>
+
+        <div class="doc-callout doc-callout-info">
+            <svg style="width: 20px; height: 20px; fill: #2563eb; flex-shrink: 0;" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+            <div>
+                <strong>Security Standard:</strong> To prevent unauthorized access on shared office computers or jobsite tablets, the platform automatically logs out any session after 30 minutes of no mouse or keyboard activity.
+            </div>
+        </div>
+
+        <h3>1.2 User Access &amp; Role Requirements</h3>
+        <p>All active employees with an assigned account can access the login gateway. Role assignment occurs upon user creation by an Administrator.</p>
+
+        <!-- Visual Snapshot 1.1: Live Login Screen -->
+        <div class="snapshot-frame">
+            <div class="snapshot-top-bar">
+                <div class="snapshot-dot-group">
+                    <span class="snapshot-dot red"></span>
+                    <span class="snapshot-dot yellow"></span>
+                    <span class="snapshot-dot green"></span>
+                </div>
+                <span>Figure 1.1: Live Application Login Interface (Empirical Platform Capture)</span>
+                <span class="callout-pin green">Live Host 127.0.0.1:5000</span>
+            </div>
+            <div class="snapshot-body">
+                <img src="{{ url_for('static', filename='images/manual_screenshots/chapter1_login.png') }}" class="snapshot-img" alt="HWB Operations Login Screen" onclick="openLightbox(this.src)" />
+            </div>
+            <div class="snapshot-caption">
+                <span><strong>Figure 1.1:</strong> Sign in with your assigned company username and encrypted password.</span>
+                <span class="doc-badge doc-badge-blue">TLS 1.3 Encrypted</span>
+            </div>
+        </div>
+
+        <div class="callout-legend">
+            <div style="font-size: 0.8rem; font-weight: 800; color: #0f172a; margin-bottom: 0.5rem; text-transform: uppercase;">Interface Callout Map:</div>
+            <div class="callout-legend-grid">
+                <div class="callout-legend-item">
+                    <span class="callout-num">1</span>
+                    <div><strong>Username Field:</strong> Enter your unique platform username (e.g., <code>mrondinella</code>).</div>
+                </div>
+                <div class="callout-legend-item">
+                    <span class="callout-num">2</span>
+                    <div><strong>Password Field:</strong> Enter your confidential password. Characters are masked for privacy.</div>
+                </div>
+                <div class="callout-legend-item">
+                    <span class="callout-num">3</span>
+                    <div><strong>Sign In Button:</strong> Authenticates your session and opens your assigned home workspace.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visual Snapshot 1.2: Session Inactivity & Termination Modal -->
+        <div class="snapshot-frame">
+            <div class="snapshot-top-bar">
+                <div class="snapshot-dot-group">
+                    <span class="snapshot-dot red"></span>
+                    <span class="snapshot-dot yellow"></span>
+                    <span class="snapshot-dot green"></span>
+                </div>
+                <span>Figure 1.2: Automatic Session Security &amp; Logout Safeguard</span>
+                <span class="callout-pin amber">Security Sentinel</span>
+            </div>
+            <div class="snapshot-body">
+                <img src="{{ url_for('static', filename='images/manual_screenshots/chapter1_timeout.png') }}" class="snapshot-img" alt="Session Security Modal" onclick="openLightbox(this.src)" />
+            </div>
+            <div class="snapshot-caption">
+                <span><strong>Figure 1.2:</strong> Session termination dialog preventing unauthorized access on inactive devices.</span>
+                <span class="doc-badge doc-badge-green">Poka-Yoke Active</span>
+            </div>
+        </div>
+
+        <h3>1.3 Field-by-Field Reference</h3>
+        <div class="field-table-wrapper">
+            <table class="field-table">
+                <thead>
+                    <tr>
+                        <th style="width: 25%;">Interface Element</th>
+                        <th style="width: 20%;">Type</th>
+                        <th style="width: 25%;">Allowed Values</th>
+                        <th style="width: 30%;">Operational Function</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="element-code">username</span></td>
+                        <td>Text Input</td>
+                        <td>Alphanumeric (3-50 chars)</td>
+                        <td>Identifies the employee account in the institutional database.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="element-code">password</span></td>
+                        <td>Password Input</td>
+                        <td>Minimum 8 characters</td>
+                        <td>Validates user credentials using salted Argon2/PBKDF2 hashing.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="element-code">Sign In</span></td>
+                        <td>Submit Button</td>
+                        <td>Click Action</td>
+                        <td>Initiates authorization check and redirects to Operations Control.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="element-code">modal-logout-confirm</span></td>
+                        <td>Security Dialog</td>
+                        <td>Stay or Log Out</td>
+                        <td>Confirms intentional exit and flushes session tokens from the browser.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>1.4 Step-by-Step Procedure: Logging In Safely</h3>
+        <div class="procedure-box">
+            <ol class="procedure-steps">
+                <li>Open your web browser and navigate to <code>https://hwbcleaning.com/login</code>.</li>
+                <li>Enter your assigned username into the <strong>Username or Email</strong> field.</li>
+                <li>Enter your password into the <strong>Password</strong> field.</li>
+                <li>Click <strong>Sign In</strong>.</li>
+            </ol>
+            <div class="expected-result">
+                &check; <strong>Expected Result:</strong> The platform validates your credentials, opens the Operations Control Hub, and displays your active role badge in the upper right navigation rack.
+            </div>
+        </div>
+
+        <h3>1.5 Troubleshooting &amp; Common Inquiries</h3>
+        <ul>
+            <li><strong>Forgotten Password:</strong> Contact an Administrator or Executive to trigger a temporary password reset. You will be prompted to set a new password on your next login.</li>
+            <li><strong>Session Inactivity Warning:</strong> If the screen dims and displays the security dialog, click <strong>Stay</strong> to resume working without losing unsaved changes.</li>
+        </ul>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- CHAPTER 2: COMMERCIAL LEADS & CRM PIPELINE -->
+    <!-- ================================================================= -->
+    <section class="guide-section guide-topic" id="chapter-2">
+        <h2>
+            <span style="color: #2563eb;">2.0</span>
+            Chapter 2: Commercial Leads &amp; CRM Pipeline
+        </h2>
+        
+        <h3>2.1 Feature Overview &amp; System Purpose</h3>
+        <p>
+            The Commercial Leads Workspace is the central engine for outside sales and telemarketing operations. It provides verified commercial property data across the state of Texas, specifically optimized for licensed childcare centers, private schools, and commercial facilities. Sales callers use this view to review building size, verify key decision makers, place phone calls, and log real-time progress notes.
+        </p>
+
+        <div class="doc-callout doc-callout-success">
+            <svg style="width: 20px; height: 20px; fill: #059669; flex-shrink: 0;" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            <div>
+                <strong>Texas Statewide Mandate:</strong> In accordance with Executive Mandate 2026-07-22, lead queries and GIS synchronizers load commercial facilities statewide across all Texas metropolitan areas without geographic restrictions.
+            </div>
+        </div>
+
+        <h3>2.2 User Access &amp; Permissions</h3>
+        <p>
+            Requires <strong>Sales</strong>, <strong>Manager</strong>, <strong>Executive</strong>, or <strong>Admin</strong> role with <code>perm_leads_view = true</code>. Editing call records requires <code>perm_leads_edit = true</code>.
+        </p>
+
+        <!-- Visual Snapshot 2.1: Live Leads Table -->
+        <div class="snapshot-frame">
+            <div class="snapshot-top-bar">
+                <div class="snapshot-dot-group">
+                    <span class="snapshot-dot red"></span>
+                    <span class="snapshot-dot yellow"></span>
+                    <span class="snapshot-dot green"></span>
+                </div>
+                <span>Figure 2.1: Commercial Leads Pipeline &amp; Texas CRM Table (Empirical Platform Capture)</span>
+                <span class="callout-pin green">Live Host 127.0.0.1:5000</span>
+            </div>
+            <div class="snapshot-body">
+                <img src="{{ url_for('static', filename='images/manual_screenshots/chapter2_leads_pipeline.png') }}" class="snapshot-img" alt="Commercial Leads Pipeline" onclick="openLightbox(this.src)" />
+            </div>
+            <div class="snapshot-caption">
+                <span><strong>Figure 2.1:</strong> Live commercial leads table showing KPI counters, search bar, state filter, and row records.</span>
+                <span class="doc-badge doc-badge-blue">24,000+ Texas Records</span>
+            </div>
+        </div>
+
+        <div class="callout-legend">
+            <div style="font-size: 0.8rem; font-weight: 800; color: #0f172a; margin-bottom: 0.5rem; text-transform: uppercase;">Interface Callout Map:</div>
+            <div class="callout-legend-grid">
+                <div class="callout-legend-item">
+                    <span class="callout-num">1</span>
+                    <div><strong>Global Search Input:</strong> Real-time filtering by facility name, address, city, or phone number.</div>
+                </div>
+                <div class="callout-legend-item">
+                    <span class="callout-num">2</span>
+                    <div><strong>City &amp; County Filters:</strong> Narrow down property lists to specific local calling territories.</div>
+                </div>
+                <div class="callout-legend-item">
+                    <span class="callout-num">3</span>
+                    <div><strong>Columns Button:</strong> Opens the Column Customizer to pick which data fields to display.</div>
+                </div>
+                <div class="callout-legend-item">
+                    <span class="callout-num">4</span>
+                    <div><strong>Lead Row / Action Button:</strong> Click any lead to open call notes, square footage, and walkthrough tools.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visual Snapshot 2.2: Live Column Customizer Drawer -->
+        <div class="snapshot-frame">
+            <div class="snapshot-top-bar">
+                <div class="snapshot-dot-group">
+                    <span class="snapshot-dot red"></span>
+                    <span class="snapshot-dot yellow"></span>
+                    <span class="snapshot-dot green"></span>
+                </div>
+                <span>Figure 2.2: Column Customizer Drawer with Preset Quick-Bars (Empirical Platform Capture)</span>
+                <span class="callout-pin purple">Personal View System</span>
+            </div>
+            <div class="snapshot-body">
+                <img src="{{ url_for('static', filename='images/manual_screenshots/chapter2_column_drawer.png') }}" class="snapshot-img" alt="Column Customizer Drawer" onclick="openLightbox(this.src)" />
+            </div>
+            <div class="snapshot-caption">
+                <span><strong>Figure 2.2:</strong> Customize which columns appear on your screen or load one-click role presets.</span>
+                <span class="doc-badge doc-badge-green">Instant LocalStorage Sync</span>
+            </div>
+        </div>
+
+        <h3>2.3 Field-by-Field Reference</h3>
+        <div class="field-table-wrapper">
+            <table class="field-table">
+                <thead>
+                    <tr>
+                        <th style="width: 25%;">Field / Button</th>
+                        <th style="width: 15%;">Type</th>
+                        <th style="width: 25%;">Options / Formats</th>
+                        <th style="width: 35%;">Operational Impact</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="element-code">Search Leads</span></td>
+                        <td>Text Search</td>
+                        <td>Free text query</td>
+                        <td>Instantly filters rows as you type without page reload.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="element-code">Calling Sprint Preset</span></td>
+                        <td>Action Button</td>
+                        <td>One-click layout</td>
+                        <td>Shows phone, contact person, status, and quick call log fields.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="element-code">Building Facts Preset</span></td>
+                        <td>Action Button</td>
+                        <td>One-click layout</td>
+                        <td>Shows square feet, student capacity, yearly contract value, and address.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="element-code">⭐ My View</span></td>
+                        <td>Action Button</td>
+                        <td>Saved personal layout</td>
+                        <td>Loads your custom-saved column checkmarks from your browser.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="element-code">💾 Save My View</span></td>
+                        <td>Action Button</td>
+                        <td>Browser commit</td>
+                        <td>Permanently saves your active column preferences for future logins.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="element-code">Call Notes</span></td>
+                        <td>Text Area</td>
+                        <td>Multi-line notes</td>
+                        <td>Records notes from conversations with facility directors.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>2.4 Step-by-Step Procedure: Conducting a Daily Calling Sprint</h3>
+        <div class="procedure-box">
+            <ol class="procedure-steps">
+                <li>From the top navigation bar, select <strong>Commercial Leads</strong>.</li>
+                <li>Click <strong>Columns</strong> and select the <strong>📞 Calling Sprint</strong> quick preset.</li>
+                <li>Use the search bar or city dropdown to focus on your designated territory (e.g., Dallas, Plano, Fort Worth).</li>
+                <li>Click the phone number or row for the target facility to review recent notes.</li>
+                <li>After completing the phone call, update the status dropdown (e.g., <em>Contacted</em>, <em>Walkthrough Scheduled</em>).</li>
+                <li>Type your call summary into the <strong>Call Notes</strong> box and click <strong>Save Changes</strong>.</li>
+            </ol>
+            <div class="expected-result">
+                &check; <strong>Expected Result:</strong> The record updates in real time, the green confirmation toast appears, and the call is logged into the audit history.
+            </div>
+        </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- CHAPTER 3: BIDDING & PRICE ESTIMATING -->
+    <!-- ================================================================= -->
+    <section class="guide-section guide-topic" id="chapter-3">
+        <h2>
+            <span style="color: #2563eb;">3.0</span>
+            Chapter 3: Bidding Pipeline &amp; Price Estimating
+        </h2>
+        
+        <h3>3.1 Feature Overview &amp; System Purpose</h3>
+        <p>
+            The Bidding Pipeline and Estimating Calculator converts physical building footprints, cleaning frequencies, and special floor-care requirements into accurate, profitable service proposals. The module safeguards operating margins by applying calibrated production rates (square feet cleaned per labor hour) and labor burdens.
+        </p>
+
+        <div class="doc-callout doc-callout-warning">
+            <svg style="width: 20px; height: 20px; fill: #d97706; flex-shrink: 0;" viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+            <div>
+                <strong>Takeoff Verification Mandate (2026-09-04):</strong> If an architectural drawing lacks a room finish schedule or relies on an estimator heuristic, the bid must be tagged with <code>[DATA DISCREPANCY: Field Verification Required]</code> prior to contract execution.
+            </div>
+        </div>
+
+        <h3>3.2 User Access &amp; Permissions</h3>
+        <p>
+            Requires <strong>Estimator</strong>, <strong>Manager</strong>, <strong>Executive</strong>, or <strong>Admin</strong> role with <code>perm_bids_view = true</code>. Submitting bids requires <code>perm_bids_edit = true</code>.
+        </p>
+
+        <!-- Visual Snapshot 3.1: Live Construction Bids Pipeline -->
+        <div class="snapshot-frame">
+            <div class="snapshot-top-bar">
+                <div class="snapshot-dot-group">
+                    <span class="snapshot-dot red"></span>
+                    <span class="snapshot-dot yellow"></span>
+                    <span class="snapshot-dot green"></span>
+                </div>
+                <span>Figure 3.1: Commercial GC &amp; Construction Bidding Pipeline (Empirical Platform Capture)</span>
+                <span class="callout-pin green">Live Host 127.0.0.1:5000</span>
+            </div>
+            <div class="snapshot-body">
+                <img src="{{ url_for('static', filename='images/manual_screenshots/chapter3_bidding_pipeline.png') }}" class="snapshot-img" alt="Bidding Pipeline" onclick="openLightbox(this.src)" />
+            </div>
+            <div class="snapshot-caption">
+                <span><strong>Figure 3.1:</strong> General contractor bidding pipeline tracking projects, square footage, and estimating status.</span>
+                <span class="doc-badge doc-badge-blue">Yamamoto Verified</span>
+            </div>
+        </div>
+
+        <!-- Visual Snapshot 3.2: Live Calculator Tool -->
+        <div class="snapshot-frame">
+            <div class="snapshot-top-bar">
+                <div class="snapshot-dot-group">
+                    <span class="snapshot-dot red"></span>
+                    <span class="snapshot-dot yellow"></span>
+                    <span class="snapshot-dot green"></span>
+                </div>
+                <span>Figure 3.2: Commercial Cleaning Price Calculator &amp; Takeoff Engine (Empirical Platform Capture)</span>
+                <span class="callout-pin purple">Estimator Desk</span>
+            </div>
+            <div class="snapshot-body">
+                <img src="{{ url_for('static', filename='images/manual_screenshots/chapter3_calculator.png') }}" class="snapshot-img" alt="Cleaning Calculator" onclick="openLightbox(this.src)" />
+            </div>
+            <div class="snapshot-caption">
+                <span><strong>Figure 3.2:</strong> Real-time calculator determining labor hours, chemical costs, and monthly contract pricing.</span>
+                <span class="doc-badge doc-badge-green">Instant Quote Generation</span>
+            </div>
+        </div>
+
+        <h3>3.3 Field-by-Field Reference</h3>
+        <div class="field-table-wrapper">
+            <table class="field-table">
+                <thead>
+                    <tr>
+                        <th style="width: 25%;">Calculator Field</th>
+                        <th style="width: 20%;">Type</th>
+                        <th style="width: 25%;">Standard Values</th>
+                        <th style="width: 30%;">Operational Impact</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="element-code">Facility Type</span></td>
+                        <td>Dropdown</td>
+                        <td>Childcare, Office, Medical, Bank, School</td>
+                        <td>Selects the baseline cleaning difficulty and sanitation protocol.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="element-code">Cleanable Square Footage</span></td>
+                        <td>Numeric Input</td>
+                        <td>1,000 to 250,000 SF</td>
+                        <td>Primary calculation base for labor hours and consumable costs.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="element-code">Cleaning Frequency</span></td>
+                        <td>Dropdown</td>
+                        <td>1x to 7x per week</td>
+                        <td>Calculates total monthly visits and staffing requirements.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="element-code">Flooring Distribution</span></td>
+                        <td>Percentage / Area</td>
+                        <td>% Carpet vs. % Hard Floor</td>
+                        <td>Adjusts production rate based on vacuuming vs. damp mopping time.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="element-code">Monthly Price Output</span></td>
+                        <td>Calculated Display</td>
+                        <td>USD ($)</td>
+                        <td>Final customer-ready monthly billing amount.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>3.4 Step-by-Step Procedure: Generating a Client Cleaning Proposal</h3>
+        <div class="procedure-box">
+            <ol class="procedure-steps">
+                <li>Open the <strong>Bidding &amp; Estimating</strong> workspace from the top navigation.</li>
+                <li>Enter the customer's total cleanable square footage into the <strong>Square Footage</strong> field.</li>
+                <li>Select the property type (e.g., <em>Childcare / School</em>).</li>
+                <li>Select the service frequency (e.g., <em>5 Nights per Week (M-F)</em>).</li>
+                <li>Review the estimated monthly labor hours and supplies budget.</li>
+                <li>Click <strong>Generate Proposal Document</strong> to stage the official quote in Microsoft Word (.docx) format.</li>
+            </ol>
+            <div class="expected-result">
+                &check; <strong>Expected Result:</strong> The calculation locks into the proposal draft, and the bid record moves to <em>Proposal Ready</em> in the GC pipeline.
+            </div>
+        </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- CHAPTER 4: OUTREACH & EMAIL OUTBOX -->
+    <!-- ================================================================= -->
+    <section class="guide-section guide-topic" id="chapter-4">
+        <h2>
+            <span style="color: #2563eb;">4.0</span>
+            Chapter 4: Marketing Outbox &amp; Calendar Walkthroughs
+        </h2>
+        
+        <h3>4.1 Feature Overview &amp; System Purpose</h3>
+        <p>
+            The Marketing Outbox manages automated email sequences, marketing flyers, and customer correspondence. Under the institutional Outbox Protocol (HWB-COM-001), automated marketing emails are held in a review staging queue. This allows executive management to review copy, inspect recipient addresses, and verify alignment before emails are sent via the Microsoft Graph API.
+        </p>
+
+        <div class="doc-callout doc-callout-info">
+            <svg style="width: 20px; height: 20px; fill: #2563eb; flex-shrink: 0;" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+            <div>
+                <strong>Single Outbound Gateway:</strong> All transactional and marketing emails route exclusively through the official Microsoft 365 Exchange tenant. Third-party marketing tools or personal inboxes are prohibited.
+            </div>
+        </div>
+
+        <h3>4.2 User Access &amp; Permissions</h3>
+        <p>
+            Reviewing and releasing queued emails requires <strong>Manager</strong>, <strong>Executive</strong>, or <strong>Admin</strong> privileges (<code>perm_outbox_view = true</code> and <code>perm_outbox_edit = true</code>).
+        </p>
+
+        <!-- Visual Snapshot 4.1: Live Marketing Outbox -->
+        <div class="snapshot-frame">
+            <div class="snapshot-top-bar">
+                <div class="snapshot-dot-group">
+                    <span class="snapshot-dot red"></span>
+                    <span class="snapshot-dot yellow"></span>
+                    <span class="snapshot-dot green"></span>
+                </div>
+                <span>Figure 4.1: Marketing Outbox &amp; Email Staging Queue (Empirical Platform Capture)</span>
+                <span class="callout-pin green">Live Host 127.0.0.1:5000</span>
+            </div>
+            <div class="snapshot-body">
+                <img src="{{ url_for('static', filename='images/manual_screenshots/chapter4_marketing_outbox.png') }}" class="snapshot-img" alt="Marketing Outbox" onclick="openLightbox(this.src)" />
+            </div>
+            <div class="snapshot-caption">
+                <span><strong>Figure 4.1:</strong> Outbound email queue displaying staging logs, email content reviews, and dispatch status.</span>
+                <span class="doc-badge doc-badge-blue">Microsoft Graph API</span>
+            </div>
+        </div>
+
+        <h3>4.3 Field-by-Field Reference</h3>
+        <div class="field-table-wrapper">
+            <table class="field-table">
+                <thead>
+                    <tr>
+                        <th style="width: 25%;">Outbox Element</th>
+                        <th style="width: 15%;">Type</th>
+                        <th style="width: 25%;">Values</th>
+                        <th style="width: 35%;">Operational Function</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="element-code">Recipient Field</span></td>
+                        <td>Email Address</td>
+                        <td>Valid commercial email</td>
+                        <td>Displays destination contact address verified from Texas license data.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="element-code">Status Badge</span></td>
+                        <td>Status Tag</td>
+                        <td>Pending, Sent, Failed, Scheduled</td>
+                        <td>Indicates current queue status in the delivery pipeline.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="element-code">Approve &amp; Send</span></td>
+                        <td>Action Button</td>
+                        <td>Single click action</td>
+                        <td>Releases the staged message for immediate delivery via Microsoft Graph.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="element-code">Bookings Link</span></td>
+                        <td>URL Link</td>
+                        <td>Microsoft Bookings URL</td>
+                        <td>Automated link allowing directors to pick an in-person walkthrough date.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>4.4 Step-by-Step Procedure: Releasing a Walkthrough Confirmation Email</h3>
+        <div class="procedure-box">
+            <ol class="procedure-steps">
+                <li>Navigate to <strong>Marketing Outbox</strong> from the Operations rack.</li>
+                <li>Locate the staged email in the <strong>Pending Outbox</strong> list.</li>
+                <li>Click <strong>Preview Message</strong> to verify letterhead formatting and walkthrough appointment time.</li>
+                <li>Confirm that the client's email address matches the authorized contact record.</li>
+                <li>Click <strong>Approve &amp; Send</strong>.</li>
+            </ol>
+            <div class="expected-result">
+                &check; <strong>Expected Result:</strong> The message status transitions to <em>Sent</em>, Microsoft 365 returns a valid message ID, and the calendar invite syncs automatically to leadership calendars.
+            </div>
+        </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- CHAPTER 5: CLEANING STAFF & JOB-SITE PHOTOS -->
+    <!-- ================================================================= -->
+    <section class="guide-section guide-topic" id="chapter-5">
+        <h2>
+            <span style="color: #2563eb;">5.0</span>
+            Chapter 5: Cleaning Staff, Operations &amp; Real Field Photos
+        </h2>
+        
+        <h3>5.1 Feature Overview &amp; System Purpose</h3>
+        <p>
+            The Workforce and Operations Monitoring module coordinates our cleaning technicians, team supervisors, and field routes. This view tracks clock-ins, checklist submissions, and shift completion. Below, photographic documentation demonstrates our <strong>7 Standard Cleaning Steps</strong> applied across commercial buildings.
+        </p>
+
+        <!-- Visual Snapshot 5.1: Live Workforce Roster -->
+        <div class="snapshot-frame">
+            <div class="snapshot-top-bar">
+                <div class="snapshot-dot-group">
+                    <span class="snapshot-dot red"></span>
+                    <span class="snapshot-dot yellow"></span>
+                    <span class="snapshot-dot green"></span>
+                </div>
+                <span>Figure 5.1: Commercial Workforce &amp; Staff Roster (Empirical Platform Capture)</span>
+                <span class="callout-pin green">Live Host 127.0.0.1:5000</span>
+            </div>
+            <div class="snapshot-body">
+                <img src="{{ url_for('static', filename='images/manual_screenshots/chapter5_workforce_roster.png') }}" class="snapshot-img" alt="Workforce Roster" onclick="openLightbox(this.src)" />
+            </div>
+            <div class="snapshot-caption">
+                <span><strong>Figure 5.1:</strong> Cleaning staff directory showing assigned roles, phone numbers, and active employment status.</span>
+                <span class="doc-badge doc-badge-blue">HR Operations</span>
+            </div>
+        </div>
+
+        <!-- Visual Snapshot 5.2: Live Shift Dispatch & Work Monitor -->
+        <div class="snapshot-frame">
+            <div class="snapshot-top-bar">
+                <div class="snapshot-dot-group">
+                    <span class="snapshot-dot red"></span>
+                    <span class="snapshot-dot yellow"></span>
+                    <span class="snapshot-dot green"></span>
+                </div>
+                <span>Figure 5.2: Shift Dispatch &amp; Live Work Monitor (Empirical Platform Capture)</span>
+                <span class="callout-pin purple">Operations Desk</span>
+            </div>
+            <div class="snapshot-body">
+                <img src="{{ url_for('static', filename='images/manual_screenshots/chapter5_shift_dispatch.png') }}" class="snapshot-img" alt="Shift Dispatch Monitor" onclick="openLightbox(this.src)" />
+            </div>
+            <div class="snapshot-caption">
+                <span><strong>Figure 5.2:</strong> Real-time dispatch monitor tracking active cleaning routes and facility checklist sign-offs.</span>
+                <span class="doc-badge doc-badge-green">Live Quality Tracking</span>
+            </div>
+        </div>
+
+        <h3>5.2 Photographic Field Evidence: The 7 Standard Cleaning Steps</h3>
+        <p>
+            Every cleaning technician follows our systematic 7-step sequence in commercial buildings. Tap any photo below to inspect full-size field quality:
+        </p>
+
+        <!-- The 7 Cleaning Steps Photo Grid -->
+        <div class="cleaning-photo-grid">
+            <!-- Step 1: Refill -->
+            <div class="cleaning-photo-card">
+                <img src="{{ url_for('static', filename='img/industrial_restroom_sanitation.png') }}" class="cleaning-photo-img" alt="Step 1: Refill Restrooms" onclick="openLightbox(this.src)" />
+                <div class="cleaning-photo-body">
+                    <span class="step-tag">Step 1: Refill</span>
+                    <div class="cleaning-photo-title">Restock Dispensers</div>
+                    <p class="cleaning-photo-desc">Restock foaming hand soap, paper towels, and toilet paper rolls in every restroom first.</p>
+                </div>
+            </div>
+
+            <!-- Step 2: Empty -->
+            <div class="cleaning-photo-card">
+                <img src="{{ url_for('static', filename='img/janitorial_staff.png') }}" class="cleaning-photo-img" alt="Step 2: Empty Waste" onclick="openLightbox(this.src)" />
+                <div class="cleaning-photo-body">
+                    <span class="step-tag">Step 2: Empty</span>
+                    <div class="cleaning-photo-title">Trash &amp; Recycling</div>
+                    <p class="cleaning-photo-desc">Empty all bins, wipe dirty bin lids, and tie fresh trash liners securely around rims.</p>
+                </div>
+            </div>
+
+            <!-- Step 3: Dust -->
+            <div class="cleaning-photo-card">
+                <img src="{{ url_for('static', filename='img/janitorial_breakroom.png') }}" class="cleaning-photo-img" alt="Step 3: Dust" onclick="openLightbox(this.src)" />
+                <div class="cleaning-photo-body">
+                    <span class="step-tag">Step 3: Dust</span>
+                    <div class="cleaning-photo-title">High &amp; Low Dusting</div>
+                    <p class="cleaning-photo-desc">Dust window sills, baseboards, picture frames, and HVAC vents using microfiber wands.</p>
+                </div>
+            </div>
+
+            <!-- Step 4: Polish -->
+            <div class="cleaning-photo-card">
+                <img src="{{ url_for('static', filename='img/bank_window_cleaning.png') }}" class="cleaning-photo-img" alt="Step 4: Clean and Polish" onclick="openLightbox(this.src)" />
+                <div class="cleaning-photo-body">
+                    <span class="step-tag">Step 4: Clean &amp; Polish</span>
+                    <div class="cleaning-photo-title">Glass &amp; Countertops</div>
+                    <p class="cleaning-photo-desc">Polish entry glass doors, wipe desk surfaces clean, and shine stainless steel sinks.</p>
+                </div>
+            </div>
+
+            <!-- Step 5: Mop -->
+            <div class="cleaning-photo-card">
+                <img src="{{ url_for('static', filename='img/janitorial_hallway.png') }}" class="cleaning-photo-img" alt="Step 5: Mop Floors" onclick="openLightbox(this.src)" />
+                <div class="cleaning-photo-body">
+                    <span class="step-tag">Step 5: Mop</span>
+                    <div class="cleaning-photo-title">Damp Mop Hard Floors</div>
+                    <p class="cleaning-photo-desc">Post yellow caution signs. Damp mop tile and vinyl floors with neutral pH cleaner.</p>
+                </div>
+            </div>
+
+            <!-- Step 6: Vacuum -->
+            <div class="cleaning-photo-card">
+                <img src="{{ url_for('static', filename='img/daycare_rug_extractor.png') }}" class="cleaning-photo-img" alt="Step 6: Vacuum" onclick="openLightbox(this.src)" />
+                <div class="cleaning-photo-body">
+                    <span class="step-tag">Step 6: Vacuum</span>
+                    <div class="cleaning-photo-title">Carpets &amp; Classroom Rugs</div>
+                    <p class="cleaning-photo-desc">Vacuum carpets wall-to-wall. Clean under desks, tables, and entrance walk-off mats.</p>
+                </div>
+            </div>
+
+            <!-- Step 7: Disinfect -->
+            <div class="cleaning-photo-card">
+                <img src="{{ url_for('static', filename='img/electrostatic_clean.png') }}" class="cleaning-photo-img" alt="Step 7: Disinfect" onclick="openLightbox(this.src)" />
+                <div class="cleaning-photo-body">
+                    <span class="step-tag">Step 7: Disinfect</span>
+                    <div class="cleaning-photo-title">High-Touch Disinfection</div>
+                    <p class="cleaning-photo-desc">Sanitize door handles, light switches, push plates, and water coolers with hospital disinfectant.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- CHAPTER 6: USER ACCOUNTS & ROLE PERMISSIONS -->
+    <!-- ================================================================= -->
+    <section class="guide-section guide-topic" id="chapter-6">
+        <h2>
+            <span style="color: #2563eb;">6.0</span>
+            Chapter 6: User Accounts, Roles &amp; Administration
+        </h2>
+        
+        <h3>6.1 Feature Overview &amp; System Purpose</h3>
+        <p>
+            The User Accounts and Security module manages employee login credentials, role assignments, and granular permissions across 11 distinct platform areas. To eliminate setup errors and ensure consistent compliance, the system introduces a one-click <strong>Reset to Role Defaults</strong> button that instantly restores standard corporate access permissions for any chosen role.
+        </p>
+
+        <div class="doc-callout doc-callout-info">
+            <svg style="width: 20px; height: 20px; fill: #2563eb; flex-shrink: 0;" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+            <div>
+                <strong>Poka-Yoke Error Safeguard (BUG-120):</strong> When an administrator selects a role from the dropdown, all 11 module checkboxes auto-fill to corporate standards. If an administrator accidentally checks or unchecks permission boxes, clicking <strong>Reset to Role Defaults</strong> immediately restores the correct preset.
+            </div>
+        </div>
+
+        <!-- Visual Snapshot 6.1: Live User Permissions Modal -->
+        <div class="snapshot-frame">
+            <div class="snapshot-top-bar">
+                <div class="snapshot-dot-group">
+                    <span class="snapshot-dot red"></span>
+                    <span class="snapshot-dot yellow"></span>
+                    <span class="snapshot-dot green"></span>
+                </div>
+                <span>Figure 6.1: User Account Permissions &amp; Reset to Role Defaults Button (Empirical Platform Capture)</span>
+                <span class="callout-pin green">Live Host 127.0.0.1:5000</span>
+            </div>
+            <div class="snapshot-body">
+                <img src="{{ url_for('static', filename='images/manual_screenshots/chapter6_user_permissions.png') }}" class="snapshot-img" alt="User Management Modal" onclick="openLightbox(this.src)" />
+            </div>
+            <div class="snapshot-caption">
+                <span><strong>Figure 6.1:</strong> User account editing dialog displaying the 11-module permission matrix and the Reset to Role Defaults button.</span>
+                <span class="doc-badge doc-badge-blue">Automated Role Presets</span>
+            </div>
+        </div>
+
+        <div class="callout-legend">
+            <div style="font-size: 0.8rem; font-weight: 800; color: #0f172a; margin-bottom: 0.5rem; text-transform: uppercase;">Interface Callout Map:</div>
+            <div class="callout-legend-grid">
+                <div class="callout-legend-item">
+                    <span class="callout-num">1</span>
+                    <div><strong>System Role Dropdown:</strong> Selects the employee's title (Operator, Sales, Estimator, Manager, Executive, Admin, Technician).</div>
+                </div>
+                <div class="callout-legend-item">
+                    <span class="callout-num green">2</span>
+                    <div><strong>Reset to Role Defaults:</strong> Restores all 11 module checkboxes to match the selected role's standard preset.</div>
+                </div>
+                <div class="callout-legend-item">
+                    <span class="callout-num">3</span>
+                    <div><strong>Module Matrix:</strong> Granular View, Edit, and Delete access rights for CRM, Bidding, HR, QMS, and Admin tools.</div>
+                </div>
+                <div class="callout-legend-item">
+                    <span class="callout-num amber">4</span>
+                    <div><strong>Require Password Reset:</strong> Forces the user to establish a fresh confidential password upon their next sign-in.</div>
+                </div>
+            </div>
+        </div>
+
+        <h3>6.2 Corporate Role Standards &amp; Permission Matrix</h3>
+        <div class="field-table-wrapper">
+            <table class="field-table">
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">Role Title</th>
+                        <th style="width: 35%;">Standard Module Access</th>
+                        <th style="width: 20%;">Write / Edit Rights</th>
+                        <th style="width: 25%;">Primary Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Sales</strong></td>
+                        <td>Leads (CRM), Accounts, Sales Desk, Outreach Outbox</td>
+                        <td>Leads, Accounts, Call Notes</td>
+                        <td>Texas daycare calling sprints, lead updates, and walkthrough booking.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Estimator</strong></td>
+                        <td>GC Bids, Calculator, Takeoff, Accounts</td>
+                        <td>Bids, Takeoff, Proposals</td>
+                        <td>Commercial blueprint takeoffs, estimating rates, and proposal bids.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Operator</strong></td>
+                        <td>Leads, Accounts, QMS Library</td>
+                        <td>Call Notes, Contacts</td>
+                        <td>General backoffice data management and phone support.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Manager</strong></td>
+                        <td>Leads, Accounts, Bids, Workforce, Monitor, Outbox</td>
+                        <td>All Operations &amp; HR</td>
+                        <td>Team oversight, route scheduling, shift supervision, and bid review.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Admin</strong></td>
+                        <td>All 11 Modules (Full Access)</td>
+                        <td>Full View, Edit &amp; Delete</td>
+                        <td>System setup, user account provisioning, IT telemetry, and global settings.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Technician</strong></td>
+                        <td>Work Monitor, Scope of Work</td>
+                        <td>Checklist completion</td>
+                        <td>Mobile field app clock-ins, checklist submissions, and room sign-offs.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>6.3 Step-by-Step Procedure: Creating a User &amp; Restoring Role Defaults</h3>
+        <div class="procedure-box">
+            <ol class="procedure-steps">
+                <li>Sign in with an <strong>Admin</strong> or <strong>Executive</strong> account and open <strong>User Accounts</strong>.</li>
+                <li>To modify an existing user, click the blue <strong>Edit</strong> button next to their name in the user roster.</li>
+                <li>In the <strong>System Role</strong> dropdown, pick the employee's designated role (e.g., <em>Sales</em>).</li>
+                <li>Notice that the 11 module checkboxes immediately adjust to match that role's standard permissions.</li>
+                <li>If you test or alter any checkbox and want to return to standard corporate configuration, click <strong>Reset to Role Defaults</strong>.</li>
+                <li>Click <strong>Save User Account</strong> to commit the changes to the PostgreSQL database.</li>
+            </ol>
+            <div class="expected-result">
+                &check; <strong>Expected Result:</strong> The account updates immediately, the changes are written to the database, and the user's next page request enforces their updated permissions.
+            </div>
+        </div>
+
+        <h3>6.4 Security Governance &amp; Poka-Yoke Protections</h3>
+        <ul>
+            <li><strong>Tamper-Proof Role Presets:</strong> Custom changes are allowed for edge cases, but clicking <strong>Reset to Role Defaults</strong> instantly reverts checkboxes to verified corporate policy.</li>
+            <li><strong>Audit Logging:</strong> Every user role change and password reset event is written to immutable database logs with the administrator's timestamp and IP address.</li>
+        </ul>
+    </section>
+</div>
+
+<!-- Enlarged Image Lightbox Modal -->
+<div id="image-lightbox" onclick="closeLightbox()">
+    <img id="lightbox-img" src="" alt="Enlarged photo" />
+</div>
+
+<script>
+    // Contextual Deep-Link Auto-Scroll & Highlighting
+    function handleContextualRouting() {
+        let targetId = '{{ target_chapter or "" }}';
+
+        if (!targetId && window.location.hash) {
+            targetId = window.location.hash.replace('#', '').trim();
+        }
+
+        if (!targetId) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const topic = (urlParams.get('topic') || urlParams.get('view') || urlParams.get('from_view') || urlParams.get('chapter') || '').toLowerCase().trim();
+            if (topic) {
+                const topicMap = {
+                    'leads': 'chapter-2',
+                    'lead': 'chapter-2',
+                    'accounts': 'chapter-2',
+                    'clients': 'chapter-2',
+                    'sales_desk': 'chapter-2',
+                    'sales-desk': 'chapter-2',
+                    'crm': 'chapter-2',
+                    'bids': 'chapter-3',
+                    'construction_bids': 'chapter-3',
+                    'general_contractors': 'chapter-3',
+                    'institutional_bids': 'chapter-3',
+                    'programs': 'chapter-3',
+                    'calculator': 'chapter-3',
+                    'capability_statement': 'chapter-3',
+                    'capability-statement': 'chapter-3',
+                    'takeoff': 'chapter-3',
+                    'outreach': 'chapter-4',
+                    'marketing': 'chapter-4',
+                    'outbox': 'chapter-4',
+                    'campaigns': 'chapter-4',
+                    'walkthroughs': 'chapter-4',
+                    'bookings': 'chapter-4',
+                    'cleaning': 'chapter-5',
+                    'workforce': 'chapter-5',
+                    'safety': 'chapter-5',
+                    'monitor': 'chapter-5',
+                    'dispatch': 'chapter-5',
+                    'scope': 'chapter-5',
+                    'mobile': 'chapter-5',
+                    'users': 'chapter-6',
+                    'user': 'chapter-6',
+                    'settings': 'chapter-6',
+                    'executive': 'chapter-6',
+                    'it_department': 'chapter-6',
+                    'it_telemetry': 'chapter-6',
+                    'lab': 'chapter-6',
+                    'sigmajan_lab': 'chapter-6',
+                    'admin_master': 'chapter-6',
+                    'general': 'chapter-1',
+                    'login': 'chapter-1'
+                };
+                targetId = topicMap[topic] || (topic.startsWith('chapter-') ? topic : '');
+            }
+        }
+
+        if (targetId) {
+            if (!targetId.startsWith('chapter-') && document.getElementById('chapter-' + targetId)) {
+                targetId = 'chapter-' + targetId;
+            }
+            const targetElement = document.getElementById(targetId);
+            if (targetElement) {
+                targetElement.classList.add('context-highlight');
+
+                const banner = document.getElementById('contextual-help-banner');
+                if (banner) {
+                    banner.style.display = 'flex';
+                    const heading = targetElement.querySelector('h2');
+                    if (heading) {
+                        const cleanTitle = heading.innerText.replace(/^\d+(\.\d+)?\s*/, '').trim();
+                        const nameSpan = document.getElementById('context-section-name');
+                        if (nameSpan) nameSpan.innerText = cleanTitle;
+                    }
+                }
+
+                setTimeout(() => {
+                    const yOffset = -90;
+                    const y = targetElement.getBoundingClientRect().top + window.pageYOffset + yOffset;
+                    window.scrollTo({ top: y, behavior: 'smooth' });
+                }, 180);
+
+                setTimeout(() => {
+                    targetElement.style.borderColor = '#cbd5e1';
+                    targetElement.style.background = '#ffffff';
+                }, 7000);
+            }
+        }
+    }
+
+    function showAllChapters() {
+        const banner = document.getElementById('contextual-help-banner');
+        if (banner) banner.style.display = 'none';
+        document.querySelectorAll('.guide-section').forEach(sec => {
+            sec.classList.remove('context-highlight');
+            sec.style.border = '';
+            sec.style.background = '';
+            sec.style.display = 'block';
+        });
+        document.querySelectorAll('.chapter-card').forEach(c => c.style.display = 'flex');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function dismissContextBanner() {
+        const banner = document.getElementById('contextual-help-banner');
+        if (banner) banner.style.display = 'none';
+    }
+
+    window.addEventListener('DOMContentLoaded', handleContextualRouting);
+
+    // Live Search Filter for Topics
+    function filterGuideTopics() {
+        const query = document.getElementById('guide-live-search').value.toLowerCase().trim();
+        const sections = document.querySelectorAll('.guide-topic');
+        const cards = document.querySelectorAll('.chapter-card');
+        
+        sections.forEach(sec => {
+            const text = sec.innerText.toLowerCase();
+            if (!query || text.includes(query)) {
+                sec.style.display = 'block';
+            } else {
+                sec.style.display = 'none';
+            }
+        });
+
+        cards.forEach(card => {
+            const cardText = card.innerText.toLowerCase();
+            if (!query || cardText.includes(query)) {
+                card.style.display = 'flex';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+
+    // Photo Lightbox Zoom
+    function openLightbox(src) {
+        const lb = document.getElementById('image-lightbox');
+        const img = document.getElementById('lightbox-img');
+        img.src = src;
+        lb.style.display = 'flex';
+    }
+
+    function closeLightbox() {
+        const lb = document.getElementById('image-lightbox');
+        lb.style.display = 'none';
+    }
+</script>
+{% endblock %}

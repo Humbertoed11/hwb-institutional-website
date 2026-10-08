@@ -469,7 +469,7 @@
 
         <div class="qms-nav-group">
             <span class="qms-nav-label">Operating Guides</span>
-            <a href="{{ url_for('public.application_manual') }}" class="qms-nav-link {% if active_file == 'hwb-qms-7.5_backoffice_and_crm_management_sop.html' %}active{% endif %}" id="nav-app-manual">
+            <a href="{{ url_for('public.application_manual') }}" class="qms-nav-link {% if active_file == 'application_manual' or active_file == 'hwb-qms-7.5_backoffice_and_crm_management_sop.html' or is_app_manual %}active{% endif %}" id="nav-app-manual">
                 <svg class="nav-icon" viewBox="0 0 24 24"><path d="M20 18c1.1 0 1.99-.9 1.99-2L22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z"/></svg>
                 Application Manual
             </a>

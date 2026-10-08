@@ -508,6 +508,40 @@ def inject_module_registry():
         'get_module_meta': get_module_meta
     }
 
+@app.context_processor
+def inject_app_manual_context():
+    """Injects contextual active workspace topic, chapter anchor, and deep-link URL for the App Manual."""
+    active_view = request.args.get('view', '').lower().strip()
+    endpoint = request.endpoint or ''
+    path = request.path.lower()
+
+    topic = 'general'
+    chapter = 'chapter-1'
+
+    if active_view in ['leads', 'accounts'] or endpoint in ['sales_desk', 'admin_sales_desk'] or 'sales-desk' in path:
+        topic = 'leads'
+        chapter = 'chapter-2'
+    elif active_view in ['construction_bids', 'general_contractors', 'institutional_bids', 'programs'] or endpoint == 'calculator' or 'calculator' in path:
+        topic = 'bids'
+        chapter = 'chapter-3'
+    elif active_view == 'marketing':
+        topic = 'outreach'
+        chapter = 'chapter-4'
+    elif active_view in ['workforce', 'safety', 'monitor', 'dispatch', 'scope'] or 'mobile' in path:
+        topic = 'cleaning'
+        chapter = 'chapter-5'
+    elif active_view in ['it_department', 'it_telemetry'] or endpoint in ['sigma_executive', 'sigmajan_lab', 'admin_master'] or any(p in path for p in ['executive', 'lab', 'master']):
+        topic = 'users'
+        chapter = 'chapter-6'
+
+    manual_url = f"/manual/app?topic={topic}#{chapter}"
+
+    return {
+        'active_manual_topic': topic,
+        'active_manual_chapter': chapter,
+        'active_manual_url': manual_url
+    }
+
 # --- Standardized Error Handlers ---
 @app.errorhandler(403)
 def forbidden_error(e):

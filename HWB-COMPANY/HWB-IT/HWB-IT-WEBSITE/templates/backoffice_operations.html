@@ -3489,13 +3489,14 @@
                                     <th style="min-width: 110px; text-align: left; padding: 0.65rem 0.85rem; font-size: 0.75rem; font-weight: 800; color: var(--slate-600); text-transform: uppercase;">TX DWC-83</th>
                                     <th style="min-width: 130px; text-align: left; padding: 0.65rem 0.85rem; font-size: 0.75rem; font-weight: 800; color: var(--slate-600); text-transform: uppercase;">Rate / Hr</th>
                                     <th style="min-width: 140px; text-align: left; padding: 0.65rem 0.85rem; font-size: 0.75rem; font-weight: 800; color: var(--slate-600); text-transform: uppercase;">Status</th>
+                                    <th style="min-width: 110px; text-align: left; padding: 0.65rem 0.85rem; font-size: 0.75rem; font-weight: 800; color: var(--slate-600); text-transform: uppercase;">Apply Date</th>
                                     <th style="min-width: 90px; text-align: right; padding: 0.65rem 0.85rem; font-size: 0.75rem; font-weight: 800; color: var(--slate-600); text-transform: uppercase;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% if subcontractors %}
                                     {% for sub in subcontractors %}
-                                    <tr id="subcontractor-row-{{ sub.id }}" class="sub-data-row" data-status="{{ sub.status }}" data-coi="{{ sub.coi_status }}" data-search="{{ (sub.company_name ~ ' ' ~ sub.contact_name ~ ' ' ~ sub.city ~ ' ' ~ (sub.specialties or ''))|lower }}" style="border-bottom: 1px solid var(--slate-100);">
+                                    <tr id="subcontractor-row-{{ sub.id }}" class="sub-data-row" data-status="{{ sub.status }}" data-coi="{{ sub.coi_status }}" data-search="{{ (sub.company_name ~ ' ' ~ sub.contact_name ~ ' ' ~ sub.city ~ ' ' ~ (sub.specialties or '') ~ ' ' ~ (sub.created_at.strftime('%m/%d/%Y') if sub.created_at else ''))|lower }}" style="border-bottom: 1px solid var(--slate-100);">
                                         <td style="padding: 0.65rem 0.85rem;">
                                             <div style="font-weight: 800; font-size: 0.85rem;">
                                                 <a href="javascript:void(0)" onclick="openSubcontractorEditModal({{ sub.id }})" style="color: var(--slate-900); text-decoration: none;" onmouseover="this.style.color='#7c3aed'" onmouseout="this.style.color='var(--slate-900)'">
@@ -3552,6 +3553,9 @@
                                                 <option value="Do Not Use" {% if sub.status == 'Do Not Use' %}selected{% endif %}>Do Not Use</option>
                                             </select>
                                         </td>
+                                        <td style="padding: 0.65rem 0.85rem; font-size: 0.75rem; color: var(--slate-500); font-weight: 600;">
+                                            {{ sub.created_at.strftime('%m/%d/%Y') if sub.created_at else '--' }}
+                                        </td>
                                         <td style="padding: 0.65rem 0.85rem; text-align: right;">
                                             <div style="display: inline-flex; gap: 0.35rem;">
                                                 <button type="button" onclick="openAssignTrainingModal('1099_SUBCONTRACTOR', {{ sub.id }}, '{{ sub.contact_name or sub.company_name }}', '{{ sub.email or '' }}')" title="Assign Training / FastPass" class="sigma-mini-btn" style="color: #6366f1; background: #ede9fe; border-color: #c7d2fe;">
@@ -3575,7 +3579,7 @@
                                     {% endfor %}
                                 {% else %}
                                     <tr>
-                                        <td colspan="10" style="text-align: center; padding: 2.5rem; color: var(--slate-400); font-weight: 600;">
+                                        <td colspan="11" style="text-align: center; padding: 2.5rem; color: var(--slate-400); font-weight: 600;">
                                             <i class="fas fa-truck" style="font-size: 2rem; margin-bottom: 0.75rem; display: block; opacity: 0.4;"></i>
                                             No subcontractor partners registered yet. Have trade crews register via the <a href="/work-with-us" target="_blank" style="color: var(--brand); font-weight: 700;">portal</a>.
                                         </td>
@@ -5953,6 +5957,7 @@
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
                     <span id="edit-sub-badge" style="font-size: 0.7rem; font-weight: 800; background: #ede9fe; color: #6d28d9; padding: 0.2rem 0.6rem; border-radius: 4px; text-transform: uppercase;">Trade Partner Profile</span>
                     <span id="edit-sub-id-badge" style="font-size: 0.7rem; font-weight: 800; color: #7c3aed;">SUB #0</span>
+                    <span id="edit-sub-apply-date-badge" style="font-size: 0.7rem; font-weight: 700; color: var(--slate-500); background: #f1f5f9; padding: 0.2rem 0.6rem; border-radius: 4px; display: none;"></span>
                 </div>
                 <h2 id="edit-sub-header-name" style="font-weight: 900; font-size: 1.35rem; color: var(--slate-900); margin: 0.35rem 0 0 0;">Edit Subcontractor Partner</h2>
                 <p style="font-size: 0.78rem; color: var(--slate-500); font-weight: 600; margin-top: 0.2rem;">Modify trade rates, crew capacity, insurance policies, and compliance records.</p>
@@ -9911,6 +9916,9 @@ Click here to book a 5-minute walkthrough: [Calendar Link]"></textarea>
         const url = new URL(window.location); url.searchParams.set('view', id); window.history.pushState({}, '', url);
         const bTab = document.getElementById('breadcrumb-tab');
         if (bTab) bTab.innerText = id.charAt(0).toUpperCase() + id.slice(1);
+        if (typeof window.syncAppManualHelpLinks === 'function') {
+            window.syncAppManualHelpLinks(id);
+        }
     }
 
     function iscTab(id) {
@@ -14570,6 +14578,16 @@ Click here to book a 5-minute walkthrough: [Calendar Link]"></textarea>
             const s = data.subcontractor;
             document.getElementById('edit-sub-id').value = s.id;
             document.getElementById('edit-sub-id-badge').innerText = `SUB #${s.id}`;
+            const applyBadge = document.getElementById('edit-sub-apply-date-badge');
+            if (applyBadge) {
+                if (s.created_at) {
+                    const dStr = s.created_at.length >= 10 ? s.created_at.substring(0, 10) : s.created_at;
+                    applyBadge.innerText = `Applied: ${dStr}`;
+                    applyBadge.style.display = 'inline-block';
+                } else {
+                    applyBadge.style.display = 'none';
+                }
+            }
             document.getElementById('edit-sub-header-name').innerText = s.company_name;
             document.getElementById('edit-sub-company').value = s.company_name || '';
             document.getElementById('edit-sub-status').value = s.status || 'Active Partner';

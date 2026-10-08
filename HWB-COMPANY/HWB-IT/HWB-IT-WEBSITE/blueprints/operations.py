@@ -16,7 +16,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, jsonif
 from flask_login import login_required, current_user, login_user
 from werkzeug.security import generate_password_hash
 
-from core.models.user import User
+from core.models.user import User, ROLE_MODULE_PRESETS
 from core.constants import FACILITY_TYPES, LEAD_SOURCES, PRIORITY_LEVELS
 from core.security import roles_required
 from core.services.database import get_db
@@ -1740,8 +1740,9 @@ def sigma_executive():
                     users = []
 
             try:
-                cur.execute('SELECT * FROM "RolePermissions" ORDER BY role ASC, module ASC')
-                role_permissions = cur.fetchall()
+                cur.execute('SELECT role, module, can_view, can_edit, can_delete FROM "RolePermissions" ORDER BY role ASC, module ASC')
+                raw_perms = cur.fetchall()
+                role_permissions = [dict(r) for r in raw_perms]
             except Exception:
                 conn.rollback()
                 role_permissions = []
@@ -1768,6 +1769,7 @@ def sigma_executive():
                          leads_count=leads_count, recent_leads=recent_leads,
                          total_waste=total_waste, uptime=uptime, analytics=analytics,
                          kpivs=kpivs, users=users, role_permissions=role_permissions,
+                         role_presets=ROLE_MODULE_PRESETS,
                          system_errors=system_errors, linkedin_authorized=linkedin_authorized,
                          pending_social=pending_social, pending_emails=pending_emails)
 

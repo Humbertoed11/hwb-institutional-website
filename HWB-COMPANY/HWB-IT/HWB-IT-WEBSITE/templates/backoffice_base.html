@@ -713,6 +713,56 @@
  link.addEventListener('click', triggerLogoutConfirmation);
  }
  });
+
+ // Dynamic App Manual Deep-Link Synchronizer
+ window.syncAppManualHelpLinks = function(activeView) {
+     const viewToTopic = {
+         'leads': { topic: 'leads', chapter: 'chapter-2' },
+         'accounts': { topic: 'leads', chapter: 'chapter-2' },
+         'construction_bids': { topic: 'bids', chapter: 'chapter-3' },
+         'general_contractors': { topic: 'bids', chapter: 'chapter-3' },
+         'institutional_bids': { topic: 'bids', chapter: 'chapter-3' },
+         'programs': { topic: 'bids', chapter: 'chapter-3' },
+         'marketing': { topic: 'outreach', chapter: 'chapter-4' },
+         'workforce': { topic: 'cleaning', chapter: 'chapter-5' },
+         'safety': { topic: 'cleaning', chapter: 'chapter-5' },
+         'monitor': { topic: 'cleaning', chapter: 'chapter-5' },
+         'dispatch': { topic: 'cleaning', chapter: 'chapter-5' },
+         'scope': { topic: 'cleaning', chapter: 'chapter-5' },
+         'it_department': { topic: 'users', chapter: 'chapter-6' },
+         'it_telemetry': { topic: 'users', chapter: 'chapter-6' }
+     };
+
+     let target = null;
+     if (activeView && viewToTopic[activeView]) {
+         target = viewToTopic[activeView];
+     } else {
+         const urlParams = new URLSearchParams(window.location.search);
+         const qView = urlParams.get('view');
+         if (qView && viewToTopic[qView]) {
+             target = viewToTopic[qView];
+         } else {
+             const path = window.location.pathname.toLowerCase();
+             if (path.includes('sales-desk')) target = { topic: 'leads', chapter: 'chapter-2' };
+             else if (path.includes('calculator')) target = { topic: 'bids', chapter: 'chapter-3' };
+             else if (path.includes('executive') || path.includes('lab') || path.includes('master')) target = { topic: 'users', chapter: 'chapter-6' };
+             else if (path.includes('mobile')) target = { topic: 'cleaning', chapter: 'chapter-5' };
+         }
+     }
+
+     if (target) {
+         const manualUrl = `/manual/app?topic=${target.topic}#${target.chapter}`;
+         document.querySelectorAll('.hwb-app-manual-link, #header-app-manual-btn, #utility-app-manual-btn, #utility-sales-app-manual-btn').forEach(btn => {
+             btn.setAttribute('href', manualUrl);
+         });
+     }
+ };
+
+ window.addEventListener('DOMContentLoaded', () => {
+     if (window.syncAppManualHelpLinks) {
+         window.syncAppManualHelpLinks();
+     }
+ });
  </script>
  {% block scripts %}{% endblock %}
 </body>

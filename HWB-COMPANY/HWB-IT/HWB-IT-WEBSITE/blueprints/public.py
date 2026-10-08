@@ -7,6 +7,7 @@ Custodians: George (Systems Architect) & Lauri Tells (VP of Marketing)
 import os
 import re
 import json
+import urllib.parse
 import requests
 from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, current_app, send_from_directory, jsonify
@@ -383,6 +384,9 @@ def user_has_master_qms_clearance(user) -> bool:
     if user_role in ['Executive', 'Admin'] or user_name == 'admin':
         return True
     
+    if hasattr(user, 'has_permission') and user.has_permission('qms', 'view'):
+        return True
+    
     custom_perms = getattr(user, 'custom_permissions', {})
     if isinstance(custom_perms, str):
         try:
@@ -393,11 +397,69 @@ def user_has_master_qms_clearance(user) -> bool:
     if isinstance(custom_perms, dict):
         qms_perm = custom_perms.get('qms')
         if isinstance(qms_perm, dict):
-            return bool(qms_perm.get('master') or qms_perm.get('all') or qms_perm.get('entire'))
+            return bool(qms_perm.get('master') or qms_perm.get('all') or qms_perm.get('entire') or qms_perm.get('view'))
         if isinstance(qms_perm, (list, tuple, set)):
-            return any(k in qms_perm for k in ['master', 'all', 'entire'])
+            return any(k in qms_perm for k in ['master', 'all', 'entire', 'view'])
             
     return False
+
+
+WORKSPACE_CHAPTER_MAP = {
+    # Chapter 1: Login & Getting Started
+    'login': ('chapter-1', 'Getting Started & Login', 'general'),
+    'session': ('chapter-1', 'Session Security & Getting Started', 'general'),
+    'general': ('chapter-1', 'Getting Started & General Help', 'general'),
+    'home': ('chapter-1', 'Getting Started & Login', 'general'),
+
+    # Chapter 2: Leads & CRM
+    'leads': ('chapter-2', 'Commercial Leads & CRM', 'leads'),
+    'lead': ('chapter-2', 'Commercial Leads & CRM', 'leads'),
+    'accounts': ('chapter-2', 'Client Accounts & CRM', 'leads'),
+    'clients': ('chapter-2', 'Client Accounts & CRM', 'leads'),
+    'sales_desk': ('chapter-2', 'Calling Desk & CRM', 'leads'),
+    'sales-desk': ('chapter-2', 'Calling Desk & CRM', 'leads'),
+    'crm': ('chapter-2', 'Commercial Leads & CRM', 'leads'),
+
+    # Chapter 3: Bidding & Price Estimating
+    'construction_bids': ('chapter-3', 'Commercial Construction Bids', 'bids'),
+    'general_contractors': ('chapter-3', 'General Contractors Directory', 'bids'),
+    'institutional_bids': ('chapter-3', 'Institutional Bidding & Cooperatives', 'bids'),
+    'programs': ('chapter-3', 'Certifications & Programs', 'bids'),
+    'bids': ('chapter-3', 'Bidding & Price Estimating', 'bids'),
+    'calculator': ('chapter-3', 'Estimating Calculator', 'bids'),
+    'capability_statement': ('chapter-3', 'Commercial Capability Statement', 'bids'),
+    'capability-statement': ('chapter-3', 'Commercial Capability Statement', 'bids'),
+    'takeoff': ('chapter-3', 'Commercial Takeoffs', 'bids'),
+
+    # Chapter 4: Customer Outreach & Calendar Walkthroughs
+    'marketing': ('chapter-4', 'Marketing & Email Outreach', 'outreach'),
+    'outbox': ('chapter-4', 'Customer Outreach & Pending Outbox', 'outreach'),
+    'campaigns': ('chapter-4', 'Marketing Campaigns', 'outreach'),
+    'walkthroughs': ('chapter-4', 'Walkthroughs & Bookings', 'outreach'),
+    'bookings': ('chapter-4', 'Calendar Bookings', 'outreach'),
+    'email': ('chapter-4', 'Customer Outreach & Emailing', 'outreach'),
+
+    # Chapter 5: Cleaning Staff, Schedules & Safety
+    'workforce': ('chapter-5', 'Workforce & Field Operations', 'cleaning'),
+    'safety': ('chapter-5', 'Jobsite Safety & EHSQ', 'cleaning'),
+    'monitor': ('chapter-5', 'Live Shift Dispatch & Monitoring', 'cleaning'),
+    'dispatch': ('chapter-5', 'Live Shift Dispatch & Monitoring', 'cleaning'),
+    'scope': ('chapter-5', 'Scopes of Work Matrix', 'cleaning'),
+    'mobile': ('chapter-5', 'Technician Mobile App & Field Work', 'cleaning'),
+    'cleaning': ('chapter-5', 'Cleaning Steps & Field Standards', 'cleaning'),
+    'technician': ('chapter-5', 'Technician Mobile App & Field Work', 'cleaning'),
+
+    # Chapter 6: User Accounts & System Administration
+    'users': ('chapter-6', 'User Accounts & Administration', 'users'),
+    'user': ('chapter-6', 'User Accounts & Administration', 'users'),
+    'settings': ('chapter-6', 'System Administration & Settings', 'users'),
+    'executive': ('chapter-6', 'Executive Command & Administration', 'users'),
+    'it_department': ('chapter-6', 'Systems Hub & IT Administration', 'users'),
+    'it_telemetry': ('chapter-6', 'Systems Telemetry & Architecture', 'users'),
+    'lab': ('chapter-6', 'Systems Sandbox & Lab', 'users'),
+    'sigmajan_lab': ('chapter-6', 'Systems Sandbox & Lab', 'users'),
+    'admin_master': ('chapter-6', 'Master Administration', 'users'),
+}
 
 
 @public_bp.route('/manual/app', endpoint='application_manual')
@@ -407,8 +469,88 @@ def application_manual():
     """
     Direct endpoint for the Application Manual.
     Authorized for all active employees to access their backoffice software operating instructions.
+    Detects the user's active workspace and deep-links directly to the relevant chapter.
     """
-    return redirect(url_for('public.view_sop', filename=APPLICATION_MANUAL_FILE))
+    user_role = getattr(current_user, 'role', 'Operator')
+    user_name = getattr(current_user, 'username', '')
+    is_exec = user_role in ['Executive', 'Admin'] or user_name == 'admin'
+    has_master_qms = user_has_master_qms_clearance(current_user)
+
+    target_chapter = None
+    target_chapter_title = None
+    canonical_topic = None
+
+    # 1. Direct query parameter inspection
+    topic_param = (
+        request.args.get('topic') or 
+        request.args.get('view') or 
+        request.args.get('from_view') or 
+        request.args.get('chapter')
+    )
+    if topic_param:
+        key = topic_param.strip().lower()
+        if key in WORKSPACE_CHAPTER_MAP:
+            target_chapter, target_chapter_title, canonical_topic = WORKSPACE_CHAPTER_MAP[key]
+        elif key.startswith('chapter-'):
+            target_chapter = key
+            for v in WORKSPACE_CHAPTER_MAP.values():
+                if v[0] == key:
+                    target_chapter_title = v[1]
+                    canonical_topic = v[2]
+                    break
+
+    # 2. Referrer detection fallback if no query param provided
+    if not target_chapter and request.referrer:
+        try:
+            parsed = urllib.parse.urlparse(request.referrer)
+            q_params = urllib.parse.parse_qs(parsed.query)
+            view_val = q_params.get('view', [None])[0]
+            if view_val and view_val.strip().lower() in WORKSPACE_CHAPTER_MAP:
+                target_chapter, target_chapter_title, canonical_topic = WORKSPACE_CHAPTER_MAP[view_val.strip().lower()]
+            else:
+                path = parsed.path.lower()
+                for k, v in WORKSPACE_CHAPTER_MAP.items():
+                    if f"/{k}" in path:
+                        target_chapter, target_chapter_title, canonical_topic = v
+                        break
+            
+            # If detected from referrer, redirect with explicit anchor so the browser scrolls smoothly
+            if target_chapter:
+                return redirect(url_for('public.application_manual', topic=canonical_topic, _anchor=target_chapter))
+        except Exception:
+            pass
+
+    sops_by_dept = {}
+    if has_master_qms:
+        try:
+            index_path = os.path.join(current_app.root_path, 'qms_index.json')
+            if os.path.exists(index_path):
+                with open(index_path, 'r', encoding='utf-8') as f:
+                    sops = json.load(f)
+                for sop in sops:
+                    dept = sop['dept']
+                    tier = sop.get('access_tier', 'STAFF')
+                    if (dept == 'ACCOUNTING' or tier == 'EXECUTIVE') and not is_exec:
+                        continue
+                    if dept not in sops_by_dept:
+                        sops_by_dept[dept] = []
+                    sops_by_dept[dept].append(sop)
+                for dept in sops_by_dept:
+                    sops_by_dept[dept].sort(key=lambda x: x.get('title', '').lower())
+        except Exception:
+            pass
+
+    return render_template(
+        'application_manual.html',
+        has_master_qms=has_master_qms,
+        is_exec=is_exec,
+        is_app_manual=True,
+        active_file='application_manual',
+        sops_by_dept=sops_by_dept,
+        target_chapter=target_chapter,
+        target_chapter_title=target_chapter_title,
+        canonical_topic=canonical_topic
+    )
 
 
 @public_bp.route('/manual', endpoint='manual_index')
@@ -424,10 +566,19 @@ def manual_index():
     is_exec = user_role in ['Executive', 'Admin'] or user_name == 'admin'
     has_master_qms = user_has_master_qms_clearance(current_user)
 
-    # Basic QMS access: all authenticated users or users with qms view permission
+    # Basic QMS access: non-executives must have explicit qms view permission
     if not is_exec and hasattr(current_user, 'has_permission') and not current_user.has_permission('qms', 'view'):
-        if not getattr(current_user, 'is_authenticated', False):
-            abort(403)
+        log_security_event(
+            event_category='ACCESS_CONTROL',
+            event_action='UNAUTHORIZED_MANUAL_ACCESS',
+            severity='WARNING',
+            user_id=getattr(current_user, 'id', None),
+            username=user_name,
+            endpoint=request.path,
+            status_code=403,
+            details={'role': user_role, 'reason': 'qms_view_permission_denied'}
+        )
+        abort(403)
 
     try:
         index_path = os.path.join(current_app.root_path, 'qms_index.json')

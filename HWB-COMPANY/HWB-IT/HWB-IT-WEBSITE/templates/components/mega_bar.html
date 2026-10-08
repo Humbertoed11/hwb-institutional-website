@@ -15,7 +15,7 @@
                 <a href="{{ url_for('sales_desk') }}" style="font-size: 0.75rem; font-weight: 800; color: #1e3a8a; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; padding: 0.35rem 0.75rem; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px;">
                     <i class="fas fa-th-large"></i> My Territory Queue
                 </a>
-                <a href="{{ url_for('public.application_manual') }}" id="utility-sales-app-manual-btn" class="isc-btn isc-btn-outline" style="height: 32px; font-size: 0.75rem; font-weight: 700; color: #2563eb; border-color: #93c5fd; background: #eff6ff; display: inline-flex; align-items: center; gap: 0.45rem; padding: 0 0.85rem; border-radius: 6px; text-decoration: none;" title="Software & Backoffice Application Operating Guide">
+                <a href="{{ url_for('public.application_manual', topic='leads', _anchor='chapter-2') }}" id="utility-sales-app-manual-btn" class="isc-btn isc-btn-outline hwb-app-manual-link" style="height: 32px; font-size: 0.75rem; font-weight: 700; color: #2563eb; border-color: #93c5fd; background: #eff6ff; display: inline-flex; align-items: center; gap: 0.45rem; padding: 0 0.85rem; border-radius: 6px; text-decoration: none;" title="Software & Backoffice Application Operating Guide">
                     <i class="fas fa-desktop" style="color: #2563eb;"></i> App Manual
                 </a>
                 <div style="display: flex; flex-direction: column; text-align: right;">
@@ -50,7 +50,7 @@
                     <i class="fas fa-arrow-left" style="color: var(--brand);"></i> Operations Center
                 </a>
                 {% endif %}
-                <a href="{{ url_for('public.application_manual') }}" id="utility-app-manual-btn" class="isc-btn isc-btn-outline" style="height: 32px; font-size: 0.75rem; font-weight: 700; color: #2563eb; border-color: #93c5fd; background: #eff6ff; display: inline-flex; align-items: center; gap: 0.45rem; padding: 0 0.85rem; border-radius: 6px; text-decoration: none;" title="Software & Backoffice Application Operating Guide">
+                <a href="{{ active_manual_url }}" id="utility-app-manual-btn" class="isc-btn isc-btn-outline hwb-app-manual-link" style="height: 32px; font-size: 0.75rem; font-weight: 700; color: #2563eb; border-color: #93c5fd; background: #eff6ff; display: inline-flex; align-items: center; gap: 0.45rem; padding: 0 0.85rem; border-radius: 6px; text-decoration: none;" title="Software & Backoffice Application Operating Guide">
                     <i class="fas fa-desktop" style="color: #2563eb;"></i> App Manual
                 </a>
                 {% if has_master_qms %}
@@ -276,7 +276,7 @@
             <a href="{{ url_for('sigma_executive') }}" class="sub-link" onclick="toggleMobileMenu()">Executive Pulse</a>
             <a href="{{ url_for('sigmajan_lab') }}" class="sub-link" onclick="toggleMobileMenu()">The Lab</a>
             {% endif %}
-            <a href="{{ url_for('public.application_manual') }}" class="sub-link" onclick="toggleMobileMenu()">App Manual</a>
+            <a href="{{ active_manual_url }}" class="sub-link hwb-app-manual-link" onclick="toggleMobileMenu()">App Manual</a>
             {% if has_master_qms %}
             <a href="{{ url_for('public.manual_index') }}" class="sub-link" onclick="toggleMobileMenu()">Entire QMS Manual</a>
             {% endif %}
@@ -284,12 +284,12 @@
         {% elif nav_access.is_sales %}
             <div class="mobile-menu-section-label">Outside Sales</div>
             <a href="{{ url_for('sales_desk') }}" class="sub-link" style="font-weight: 800; color: #1e3a8a;" onclick="toggleMobileMenu()"><i class="fas fa-briefcase"></i> Field Sales Desk</a>
-            <a href="{{ url_for('public.application_manual') }}" class="sub-link" onclick="toggleMobileMenu()">App Manual</a>
+            <a href="/manual/app?topic=leads#chapter-2" class="sub-link hwb-app-manual-link" onclick="toggleMobileMenu()">App Manual</a>
             <a href="{{ url_for('logout') }}" class="sub-link" style="color: #ef4444;" onclick="toggleMobileMenu()">Log Out</a>
         {% elif current_user.is_authenticated %}
             <div class="mobile-menu-section-label">Staff Work Center</div>
             <a href="{{ url_for('admin_operations') }}" class="sub-link" onclick="toggleMobileMenu()">Operations Center</a>
-            <a href="{{ url_for('public.application_manual') }}" class="sub-link" onclick="toggleMobileMenu()">App Manual</a>
+            <a href="{{ active_manual_url }}" class="sub-link hwb-app-manual-link" onclick="toggleMobileMenu()">App Manual</a>
             {% if has_master_qms %}
             <a href="{{ url_for('public.manual_index') }}" class="sub-link" onclick="toggleMobileMenu()">Entire QMS Manual</a>
             {% endif %}

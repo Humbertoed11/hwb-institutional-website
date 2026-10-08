@@ -1543,7 +1543,60 @@ def api_workforce_apply():
                 RETURNING id;
             ''', (full_name, phone, email, city, desired_role, desired_shift, experience, has_transport, authorized_us, language, status, notes, job_position_id))
             new_id = cur.fetchone()[0]
+
+            # Stage official email alert in PendingOutbox
+            cur.execute('''
+                INSERT INTO "PendingOutbox" (recipient, subject, body, status, created_at)
+                VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP)
+            ''', (
+                'hdominguez@hwbcleaning.com, sales@hwbcleaning.com',
+                f"ACTION REQUIRED: New Technician Applicant - {full_name} ({desired_role})",
+                f"Candidate {full_name} applied for {desired_role} ({desired_shift} shift) in {city}, TX. Phone: {phone}, Email: {email}, Experience: {experience}.",
+                'SENT'
+            ))
+
+            cur.execute('''
+                INSERT INTO "SigmaInteractionLog" (user_prompt, agent_explanation, tools_used, status)
+                VALUES (%s, %s, %s, %s)
+            ''', (
+                'Workforce Applicant Intake Gate',
+                f"Captured job application from {full_name} for {desired_role} (APP-#{new_id})",
+                '["web_workforce_form", "task_queue", "telegram", "graph_email"]',
+                'SUCCESS'
+            ))
             conn.commit()
+
+            # Enqueue asynchronous real-time dispatch (Telegram + Graph Email)
+            applicant_payload = {
+                'applicant_id': new_id,
+                'full_name': full_name,
+                'phone': phone,
+                'email': email,
+                'city': city,
+                'desired_role': desired_role,
+                'desired_shift': desired_shift,
+                'experience_level': experience,
+                'has_transportation': has_transport,
+                'authorized_to_work_us': authorized_us,
+                'preferred_language': language,
+                'notes': notes
+            }
+            try:
+                from core.services.task_queue import task_queue
+                from core.services.notification_service import dispatch_applicant_notifications
+                task_queue.enqueue(
+                    dispatch_applicant_notifications,
+                    applicant_payload,
+                    name=f"applicant_notify_{new_id}"
+                )
+            except Exception as queue_err:
+                current_app.logger.warning(f"[WORKFORCE_WARN] Async task enqueue error: {queue_err}")
+                try:
+                    from core.services.notification_service import dispatch_applicant_notifications
+                    dispatch_applicant_notifications(applicant_payload)
+                except Exception as sync_err:
+                    current_app.logger.error(f"[WORKFORCE_ERROR] Sync notification fallback error: {sync_err}")
+
             return jsonify({'status': 'success', 'applicant_id': new_id, 'job_position_id': job_position_id, 'message': 'Application received.'}), 201
     except Exception as e:
         conn.rollback()
@@ -1588,7 +1641,60 @@ def api_workforce_subcontractor():
                 RETURNING id;
             ''', (company_name, contact_name, phone, email, city, crew_size, specialties, coi_status, hourly_rate, dwc83_signed, notes))
             new_id = cur.fetchone()[0]
+
+            # Stage official email alert in PendingOutbox
+            cur.execute('''
+                INSERT INTO "PendingOutbox" (recipient, subject, body, status, created_at)
+                VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP)
+            ''', (
+                'hdominguez@hwbcleaning.com, sales@hwbcleaning.com',
+                f"ACTION REQUIRED: New 1099 Subcontractor Crew - {company_name} ({crew_size} Cleaners)",
+                f"Subcontractor {company_name} (Contact: {contact_name}) registered in {city}, TX. Phone: {phone}, Email: {email}, Crew Size: {crew_size}, Hourly Rate: {hourly_rate}.",
+                'SENT'
+            ))
+
+            cur.execute('''
+                INSERT INTO "SigmaInteractionLog" (user_prompt, agent_explanation, tools_used, status)
+                VALUES (%s, %s, %s, %s)
+            ''', (
+                'Subcontractor Intake Gate',
+                f"Captured 1099 subcontractor registration from {company_name} (SUB-#{new_id})",
+                '["web_subcontractor_form", "task_queue", "telegram", "graph_email"]',
+                'SUCCESS'
+            ))
             conn.commit()
+
+            # Enqueue asynchronous real-time dispatch (Telegram + Graph Email)
+            partner_payload = {
+                'partner_id': new_id,
+                'company_name': company_name,
+                'contact_name': contact_name,
+                'phone': phone,
+                'email': email,
+                'city': city,
+                'crew_size': crew_size,
+                'specialties': specialties,
+                'hourly_rate_range': hourly_rate,
+                'dwc83_agreed': dwc83_signed,
+                'dwc83_signed': dwc83_signed,
+                'notes': notes
+            }
+            try:
+                from core.services.task_queue import task_queue
+                from core.services.notification_service import dispatch_subcontractor_notifications
+                task_queue.enqueue(
+                    dispatch_subcontractor_notifications,
+                    partner_payload,
+                    name=f"subcontractor_notify_{new_id}"
+                )
+            except Exception as queue_err:
+                current_app.logger.warning(f"[WORKFORCE_WARN] Async task enqueue error: {queue_err}")
+                try:
+                    from core.services.notification_service import dispatch_subcontractor_notifications
+                    dispatch_subcontractor_notifications(partner_payload)
+                except Exception as sync_err:
+                    current_app.logger.error(f"[WORKFORCE_ERROR] Sync notification fallback error: {sync_err}")
+
             return jsonify({'status': 'success', 'partner_id': new_id, 'message': 'Subcontractor partner registered.'}), 201
     except Exception as e:
         conn.rollback()

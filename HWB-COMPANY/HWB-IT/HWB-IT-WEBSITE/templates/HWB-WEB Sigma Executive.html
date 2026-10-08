@@ -483,6 +483,7 @@
                     <select name="user_role" required style="width: 100%; height: 38px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-200); background: white; font-weight: 600; font-size: 0.875rem;">
                         <option value="Operator">Operator (Standard Access)</option>
                         <option value="Sales">Sales (Leads & Marketing)</option>
+                        <option value="Estimator">Estimator (GC Bids & Takeoff)</option>
                         <option value="Admin">Admin (Full System Access)</option>
                         <option value="Executive">Executive (Reports & Dashboard)</option>
                         <option value="Manager">Manager (Operations & Team Oversight)</option>
@@ -634,6 +635,7 @@
                     <select id="edit_user_role" name="user_role" onchange="updateModalPermsFromRole(this.value)" required style="width: 100%; height: 38px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-200); background: white; font-weight: 600; font-size: 0.875rem;">
                         <option value="Operator">Operator (Standard Access)</option>
                         <option value="Sales">Sales (Leads & Marketing)</option>
+                        <option value="Estimator">Estimator (GC Bids & Takeoff)</option>
                         <option value="Admin">Admin (Full System Access)</option>
                         <option value="Executive">Executive (Reports & Dashboard)</option>
                         <option value="Manager">Manager (Operations & Team Oversight)</option>
@@ -661,7 +663,12 @@
                 <div style="grid-column: span 2; border-top: 1px solid var(--slate-200); padding-top: 1rem; margin-top: 0.5rem;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
                         <h4 style="font-size: 0.85rem; font-weight: 800; color: var(--slate-900); margin: 0;">Module Access Rights & Permissions</h4>
-                        <span style="font-size: 0.75rem; color: var(--slate-500); font-weight: 600;">Pre-filled by role defaults (customizable)</span>
+                        <div style="display: flex; align-items: center; gap: 0.6rem;">
+                            <span style="font-size: 0.75rem; color: var(--slate-500); font-weight: 600;">Pre-filled by role defaults (customizable)</span>
+                            <button type="button" onclick="resetPermsToRoleDefaults()" class="isc-btn isc-btn-outline" style="height: 28px; padding: 0 0.6rem; font-size: 0.72rem; color: #2563eb; border-color: #bfdbfe; background: #eff6ff; font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem;" title="Reset all checkboxes to match the selected role's standard defaults">
+                                <i class="fas fa-undo-alt"></i> Reset to Role Defaults
+                            </button>
+                        </div>
                     </div>
                     <table class="isc-grid" style="width: 100%; font-size: 0.8rem;">
                         <thead>
@@ -975,7 +982,8 @@ function openExecutiveTab(tabId) {
     window.location.hash = tabId;
 }
 
-const rolePermissionsData = {{ role_permissions | tojson }};
+const rolePresets = {{ (role_presets or {}) | tojson }};
+const rolePermissionsData = {{ (role_permissions or []) | tojson }};
 
 function updateModalPermsFromRole(roleName) {
     const modules = ['leads', 'accounts', 'sales_desk', 'bids', 'workforce', 'monitor', 'qms', 'social', 'outbox', 'users', 'tools'];
@@ -1006,17 +1014,40 @@ function updateModalPermsFromRole(roleName) {
         if (tgBriefing) tgBriefing.checked = false;
         return;
     }
+    const preset = rolePresets[roleName] || {};
     modules.forEach(mod => {
-        const perm = rolePermissionsData.find(p => p.role === roleName && p.module === mod);
+        const modPreset = preset[mod];
+        let canV = false, canE = false, canD = false;
+        if (modPreset) {
+            canV = Boolean(modPreset.view);
+            canE = Boolean(modPreset.edit);
+            canD = Boolean(modPreset.delete);
+        } else if (rolePermissionsData && rolePermissionsData.length > 0) {
+            const perm = rolePermissionsData.find(p => p.role === roleName && p.module === mod);
+            if (perm) {
+                canV = perm.can_view === true || perm.can_view === 'true' || perm.can_view === 1;
+                canE = perm.can_edit === true || perm.can_edit === 'true' || perm.can_edit === 1;
+                canD = perm.can_delete === true || perm.can_delete === 'true' || perm.can_delete === 1;
+            }
+        }
         const vCheck = document.getElementById(`edit_perm_${mod}_v`);
         const eCheck = document.getElementById(`edit_perm_${mod}_e`);
         const dCheck = document.getElementById(`edit_perm_${mod}_d`);
         
-        if (vCheck) vCheck.checked = perm ? (perm.can_view === true || perm.can_view === 'true' || perm.can_view === 1) : false;
-        if (eCheck) eCheck.checked = perm ? (perm.can_edit === true || perm.can_edit === 'true' || perm.can_edit === 1) : false;
-        if (dCheck) dCheck.checked = perm ? (perm.can_delete === true || perm.can_delete === 'true' || perm.can_delete === 1) : false;
+        if (vCheck) vCheck.checked = canV;
+        if (eCheck) eCheck.checked = canE;
+        if (dCheck) dCheck.checked = canD;
     });
     applyRoleTgDefaults(roleName);
+}
+
+function resetPermsToRoleDefaults() {
+    const roleSelect = document.getElementById('edit_user_role');
+    const roleName = roleSelect ? roleSelect.value : 'Operator';
+    updateModalPermsFromRole(roleName);
+    if (typeof showToast === 'function') {
+        showToast(`Permissions reset to standard ${roleName} defaults.`, 'info');
+    }
 }
 
 function openEditUserModalFromRow(btn) {
@@ -1082,9 +1113,6 @@ window.onload = function() {
         if (document.getElementById(tab)) {
             openExecutiveTab(tab);
         }
-    }
-    if (typeof rolePermissionsData !== 'undefined' && rolePermissionsData.length > 0) {
-        switchMatrixRole('Sales');
     }
 };
 
