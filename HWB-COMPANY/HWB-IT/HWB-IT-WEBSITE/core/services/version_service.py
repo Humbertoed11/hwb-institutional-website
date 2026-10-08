@@ -75,11 +75,11 @@ def get_version_info() -> Dict[str, Any]:
     build_date = file_data.get("build_date", "2026-10-07")
     build_tag = file_data.get("build_tag", f"{app_version}-{commit}")
 
-    # Determine environment
+    # Determine environment (anonymized for public Cloudflare origin shielding)
     env_override = file_data.get("environment")
     is_azure = (env_override == "AZURE_PRODUCTION") or _is_running_on_azure()
     
-    env_label = "LIVE AZURE" if is_azure else "LOCAL DEV"
+    env_label = "PRODUCTION" if is_azure else "LOCAL DEV"
     env_code = "AZURE_PRODUCTION" if is_azure else "LOCAL_DEV"
     
     # Option A: Semantic & Git Hash

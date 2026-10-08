@@ -121,6 +121,9 @@ url_settings_list = f'https://management.azure.com/subscriptions/{SUBSCRIPTION_I
 res_settings_list = requests.post(url_settings_list, headers=headers)
 settings = res_settings_list.json().get('properties', {})
 settings['WEBSITES_PORT'] = '5000'
+settings['TELEGRAM_BOT_TOKEN'] = '8690678270:AAHWXbs6bnh84-htoIE3F9gy1YgqefN2vA0'
+settings['TELEGRAM_CHAT_ID'] = '8564340073,8443354512'
+settings['CEO_PERSONAL_EMAIL'] = 'humbertoed@gmail.com'
 
 url_settings_put = f'https://management.azure.com/subscriptions/{SUBSCRIPTION_ID}/resourceGroups/{RG}/providers/Microsoft.Web/sites/{APP_NAME}/config/appsettings?api-version=2022-03-01'
 res_settings_put = requests.put(url_settings_put, headers=headers, json={'properties': settings})
