@@ -29,7 +29,7 @@ VERSION_FILE="$PROJECT_ROOT/HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/version.json"
 # Write production version stamp for container compilation
 cat <<EOF > "$VERSION_FILE"
 {
-  "version": "v5.4.1",
+  "version": "v5.4.2",
   "commit": "$CURRENT_HASH",
   "build_date": "$(date '+%Y-%m-%d %I:%M %p')",
   "build_tag": "$IMAGE_TAG",
@@ -46,10 +46,10 @@ BUILD_STATUS=$?
 # Immediately restore local development version stamp for local container parity
 cat <<EOF > "$VERSION_FILE"
 {
-  "version": "v5.4.1",
+  "version": "v5.4.2",
   "commit": "$CURRENT_HASH",
   "build_date": "$(date '+%Y-%m-%d %I:%M %p')",
-  "build_tag": "v5.4.1-$CURRENT_HASH",
+  "build_tag": "v5.4.2-$CURRENT_HASH",
   "environment": "LOCAL_DEV"
 }
 EOF
