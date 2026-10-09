@@ -1501,9 +1501,12 @@ def api_workforce_apply():
     experience = data.get('experience_level') or '1-2 Years'
     has_transport = str(data.get('has_transportation', 'true')).lower() in ('true', '1', 'yes')
     authorized_us = str(data.get('authorized_to_work_us', 'true')).lower() in ('true', '1', 'yes')
+    at_will_agreed = str(data.get('at_will_consent', 'true')).lower() in ('true', '1', 'yes')
     language = data.get('preferred_language') or 'English'
     status = data.get('status') or 'New'
-    notes = (data.get('notes') or '').strip()
+    raw_notes = (data.get('notes') or '').strip()
+    consent_tag = "[At-Will / No-Guarantee Agreed: True]" if at_will_agreed else "[At-Will / No-Guarantee Agreed: False]"
+    notes = f"{consent_tag} {raw_notes}".strip() if consent_tag not in raw_notes else raw_notes
     raw_pos_id = data.get('job_position_id')
     job_position_id = None
     if raw_pos_id:
@@ -1636,7 +1639,10 @@ def api_workforce_subcontractor():
     coi_status = data.get('coi_status') or 'Pending'
     hourly_rate = data.get('hourly_rate_range') or '$22 - $28/hr'
     dwc83_signed = str(data.get('dwc83_agreed', 'true')).lower() in ('true', '1', 'yes')
-    notes = data.get('notes') or 'Registered via subcontractor portal.'
+    no_guarantee_agreed = str(data.get('sub_no_guarantee_agreed', 'true')).lower() in ('true', '1', 'yes')
+    raw_notes = data.get('notes') or 'Registered via subcontractor portal.'
+    sub_tag = "[DWC-83 & No-Guarantee Terms Agreed: True]" if (dwc83_signed and no_guarantee_agreed) else "[DWC-83 & No-Guarantee Terms Agreed: Incomplete]"
+    notes = f"{sub_tag} {raw_notes}".strip() if sub_tag not in raw_notes else raw_notes
 
     conn = get_db(current_app.config['DATABASE_URL'])
     try:

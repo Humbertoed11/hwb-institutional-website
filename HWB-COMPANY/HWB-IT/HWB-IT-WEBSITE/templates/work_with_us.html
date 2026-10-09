@@ -393,6 +393,10 @@
                             <input type="checkbox" name="fcra_consent" value="true" required checked style="accent-color: var(--brand); width: 16px; height: 16px; margin-top: 2px;">
                             <span><strong style="color: #0f172a;">FCRA Screening Consent:</strong> I acknowledge and authorize HWB Cleaning Services LLC to obtain a consumer report / criminal background screening for employment evaluation purposes in accordance with the Fair Credit Reporting Act (15 U.S.C. § 1681 et seq.).</span>
                         </label>
+                        <label style="display: flex; align-items: flex-start; gap: 0.65rem; font-size: 0.82rem; font-weight: 500; color: #334155; cursor: pointer; line-height: 1.45; padding-top: 0.5rem; border-top: 1px dashed #cbd5e1;">
+                            <input type="checkbox" name="at_will_consent" value="true" required checked style="accent-color: var(--brand); width: 16px; height: 16px; margin-top: 2px;">
+                            <span><strong style="color: #0f172a;">Application Acknowledgment & At-Will Notice (No Guarantee of Hire):</strong> I understand that submitting this application is an expression of interest and does not guarantee an interview, a job offer, or employment with HWB Cleaning Services LLC. I understand that employment with HWB Cleaning Services LLC is at-will, meaning either I or the company may end employment at any time, with or without cause or advance notice.</span>
+                        </label>
                     </div>
 
                     <button type="submit" id="btn-submit-tech" class="isc-btn isc-btn-primary" style="width: 100%; height: 46px; border-radius: 6px; font-size: 0.95rem; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
@@ -400,7 +404,7 @@
                     </button>
 
                     <div style="margin-top: 1.25rem; font-size: 0.78rem; color: #64748b; line-height: 1.5; text-align: center;">
-                        <strong style="color: #475569;">Equal Opportunity Employer:</strong> HWB Cleaning Services LLC provides equal employment opportunities to all employees and applicants without regard to race, color, religion, sex, national origin, age, disability, or veteran status.
+                        <strong style="color: #475569;">Equal Opportunity Employer & Accommodations:</strong> HWB Cleaning Services LLC provides equal employment opportunities to all employees and applicants without regard to race, color, religion, sex, pregnancy, national origin, age (40+), disability, genetic information, or veteran status. Applicants needing reasonable accommodations under the ADA or PWFA for any part of the application or interview process may contact HR operations at (214)-586-0257 or hr@hwbcleaning.com.
                     </div>
                 </form>
             </div>
@@ -531,11 +535,18 @@
                     </div>
 
                     <div style="padding: 1rem; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 1.75rem;">
-                        <label style="display: flex; align-items: flex-start; gap: 0.6rem; font-size: 0.82rem; font-weight: 600; color: #334155; cursor: pointer;">
+                        <label style="display: flex; align-items: flex-start; gap: 0.6rem; font-size: 0.82rem; font-weight: 600; color: #334155; cursor: pointer; margin-bottom: 0.75rem;">
                             <input type="checkbox" name="dwc83_agreed" value="true" required checked style="accent-color: var(--brand); width: 18px; height: 18px; margin-top: 2px;">
                             <span>
-                                <strong>Independent Subcontractor Agreement:</strong>
-                                We operate as an independent commercial cleaning business. We maintain our own tools, equipment, and business insurance, and agree to standard project subcontract terms before dispatch.
+                                <strong>Independent Subcontractor Agreement (Texas DWC-83 Affirmation):</strong>
+                                We operate as an independent commercial cleaning trade business. We maintain our own tools, equipment, and commercial general liability insurance, and agree to standard project subcontract terms before dispatch.
+                            </span>
+                        </label>
+                        <label style="display: flex; align-items: flex-start; gap: 0.6rem; font-size: 0.82rem; font-weight: 500; color: #475569; cursor: pointer; padding-top: 0.65rem; border-top: 1px dashed #cbd5e1;">
+                            <input type="checkbox" name="sub_no_guarantee_agreed" value="true" required checked style="accent-color: var(--brand); width: 18px; height: 18px; margin-top: 2px;">
+                            <span>
+                                <strong style="color: #0f172a;">No Guarantee of Project Award or Minimum Hours:</strong>
+                                Registration on our pre-qualified subcontractor roster does not guarantee project awards, minimum billable hours, or contract assignment. Subcontracts are awarded on a project-by-project basis upon mutual execution of a formal Scope of Work agreement.
                             </span>
                         </label>
                     </div>
@@ -955,9 +966,14 @@ function filterPositionsByDept(dept) {
         </div>
 
         <!-- Physical Demands & Work Environment -->
-        <div style="margin-bottom: 1.75rem; background: #f8fafc; border-radius: 8px; padding: 1rem; border: 1px solid #e2e8f0; font-size: 0.82rem; color: #64748b; line-height: 1.5;">
+        <div style="margin-bottom: 1.5rem; background: #f8fafc; border-radius: 8px; padding: 1rem; border: 1px solid #e2e8f0; font-size: 0.82rem; color: #64748b; line-height: 1.5;">
             <p style="margin: 0 0 0.5rem 0;"><strong style="color: #334155;">Physical Demands:</strong> <span id="pjd-physical"></span></p>
             <p style="margin: 0;"><strong style="color: #334155;">Work Environment:</strong> <span id="pjd-environment"></span></p>
+        </div>
+
+        <!-- Legal Notice & EOE / Accommodation Statement -->
+        <div style="margin-bottom: 1.5rem; padding: 0.85rem 1rem; background: #f8fafc; border: 1px solid #e2e8f0; border-left: 3px solid var(--brand); border-radius: 6px; font-size: 0.78rem; color: #64748b; line-height: 1.45;">
+            <strong style="color: #334155;">Notice to Applicants:</strong> This job posting is an invitation to apply and does not constitute an offer of employment or an employment contract. Employment with HWB Cleaning Services LLC is at-will. HWB is an Equal Opportunity Employer. Reasonable accommodations under the ADA and PWFA are available upon request for applicants with disabilities or pregnancy-related conditions.
         </div>
 
         <!-- Action Footer -->
