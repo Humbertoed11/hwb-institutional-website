@@ -9,7 +9,7 @@ import json
 import subprocess
 from typing import Dict, Any
 
-APP_SEMANTIC_VERSION = "v5.4.1"
+APP_SEMANTIC_VERSION = "v5.4.2"
 
 def _detect_git_commit() -> str:
     """Safely retrieves short git commit hash from repository or environment."""
