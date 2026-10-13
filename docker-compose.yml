@@ -23,6 +23,7 @@ services:
       dockerfile: Dockerfile
     container_name: hwb_web_app
     restart: always
+    command: gunicorn --bind 0.0.0.0:5000 --workers 3 --threads 4 --worker-class gthread --timeout 120 --keep-alive 5 main_app:app
     ports:
       - "127.0.0.1:5000:5000"
     env_file:

@@ -218,7 +218,7 @@
                                             </div>
                                             <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.4rem;">
                                                 <label class="sigma-col-label" title="Always visible: Center name, street address, and email badge"><input type="checkbox" checked disabled> 🏢 Center / Name</label>
-                                                <label class="sigma-col-label" title="Sales status (New, In Campaign, Engaged, Contacted, Qualified, etc.)"><input type="checkbox" name="cols" value="status" {% if 'status' in active_cols %}checked{% endif %}> Status</label>
+                                                <label class="sigma-col-label" title="Sales status (New, In Email Outreach, Engaged, Contacted, Qualified, etc.)"><input type="checkbox" name="cols" value="status" {% if 'status' in active_cols %}checked{% endif %}> Status</label>
                                                 <label class="sigma-col-label" title="Director or manager who hires cleaning services"><input type="checkbox" name="cols" value="dm" {% if 'dm' in active_cols %}checked{% endif %}> 👤 Decision Maker</label>
                                                 <label class="sigma-col-label" title="Assigned sales rep or account owner"><input type="checkbox" name="cols" value="owner" {% if 'owner' in active_cols %}checked{% endif %}> Lead Owner</label>
                                                 <label class="sigma-col-label" title="Lead priority level (High, Medium, Low)"><input type="checkbox" name="cols" value="priority" {% if 'priority' in active_cols %}checked{% endif %}> Priority</label>
@@ -329,7 +329,7 @@
                         <!-- Specialized Status Filter Pills (State-Preserving Toggles) -->
                         <div style="display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap;">
                             <button type="button" onclick="toggleLeadFilter('campaign_filter', 'in_campaign')" style="display: inline-flex; align-items: center; gap: 0.4rem; background: {% if request.args.get('campaign_filter') == 'in_campaign' %}#eff6ff{% else %}var(--white){% endif %}; border: 1px solid {% if request.args.get('campaign_filter') == 'in_campaign' %}#3b82f6{% else %}var(--slate-300){% endif %}; padding: 0 0.75rem; border-radius: 6px; height: 36px; cursor: pointer; user-select: none;" title="Filter leads currently queued or active in email sequences">
-                                <span style="font-size: 0.72rem; font-weight: 800; color: {% if request.args.get('campaign_filter') == 'in_campaign' %}#1d4ed8{% else %}var(--slate-700){% endif %}; text-transform: uppercase;">📬 In Campaign ({{ in_campaign_count }})</span>
+                                <span style="font-size: 0.72rem; font-weight: 800; color: {% if request.args.get('campaign_filter') == 'in_campaign' %}#1d4ed8{% else %}var(--slate-700){% endif %}; text-transform: uppercase;">📬 In Email Outreach ({{ in_campaign_count }})</span>
                             </button>
                             <button type="button" onclick="toggleLeadFilter('campaign_filter', 'opened')" style="display: inline-flex; align-items: center; gap: 0.4rem; background: {% if request.args.get('campaign_filter') == 'opened' %}#ecfdf5{% else %}var(--white){% endif %}; border: 1px solid {% if request.args.get('campaign_filter') == 'opened' %}#10b981{% else %}var(--slate-300){% endif %}; padding: 0 0.75rem; border-radius: 6px; height: 36px; cursor: pointer; user-select: none;" title="Filter leads who opened our email - hot prospects to call">
                                 <span style="font-size: 0.72rem; font-weight: 800; color: {% if request.args.get('campaign_filter') == 'opened' %}#047857{% else %}var(--slate-700){% endif %}; text-transform: uppercase;">🔥 Opened Email ({{ opened_leads_count }})</span>
@@ -365,9 +365,9 @@
                         <button type="button" onclick="toggleBulkDropdown('bulk-status-menu')" class="isc-btn isc-btn-outline" style="padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.75rem; height: 36px; display: flex; align-items: center; gap: 0.5rem; font-weight: 700;" title="Bulk update: Change sales stage for all checked leads at once">
                             Status <i class="fas fa-chevron-down" style="font-size: 0.65rem;"></i>
                         </button>
-                        <div id="bulk-status-menu" class="bulk-dropdown-menu" style="display: none; position: absolute; left: 0; top: 110%; background: white; border: 1px solid var(--slate-200); border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 1000; width: 160px; padding: 0.5rem;">
+                        <div id="bulk-status-menu" class="bulk-dropdown-menu" style="display: none; position: absolute; left: 0; top: 110%; background: white; border: 1px solid var(--slate-200); border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 1000; width: 180px; padding: 0.5rem;">
                             <button type="button" onclick="executeBulkAction('update_status', {status: 'NEW'})" class="isc-dropdown-btn" style="text-align: left; width: 100%;"><i class="fas fa-plus-circle" style="margin-right: 0.5rem;"></i> New</button>
-                            <button type="button" onclick="executeBulkAction('update_status', {status: 'In Campaign'})" class="isc-dropdown-btn" style="text-align: left; width: 100%;"><i class="fas fa-bullhorn" style="margin-right: 0.5rem; color: #4f46e5;"></i> In Campaign</button>
+                            <button type="button" onclick="executeBulkAction('update_status', {status: 'In Campaign'})" class="isc-dropdown-btn" style="text-align: left; width: 100%;"><i class="fas fa-bullhorn" style="margin-right: 0.5rem; color: #4f46e5;"></i> Send to Campaign</button>
                             <button type="button" onclick="executeBulkAction('update_status', {status: 'Engaged'})" class="isc-dropdown-btn" style="text-align: left; width: 100%;"><i class="fas fa-fire" style="margin-right: 0.5rem; color: #16a34a;"></i> Engaged</button>
                             <button type="button" onclick="executeBulkAction('update_status', {status: 'CONTACTED'})" class="isc-dropdown-btn" style="text-align: left; width: 100%;"><i class="fas fa-phone" style="margin-right: 0.5rem;"></i> Contacted</button>
                             <button type="button" onclick="executeBulkAction('update_status', {status: 'QUALIFIED'})" class="isc-dropdown-btn" style="text-align: left; width: 100%;"><i class="fas fa-check-circle" style="margin-right: 0.5rem;"></i> Qualified</button>
@@ -498,8 +498,8 @@
                                                             ✉️ Sent • {{ c_name }}
                                                         </span>
                                                     {% elif c_status == 'AWAITING_APPROVAL' or c_status == 'STAGED' %}
-                                                        <span style="background: #f8fafc; color: #475569; border: 1px solid #cbd5e1; font-size: 0.65rem; font-weight: 700; padding: 1px 6px; border-radius: 4px;" title="Queued in marketing campaign">
-                                                            📬 In Campaign • {{ c_name }}
+                                                        <span style="background: #f8fafc; color: #475569; border: 1px solid #cbd5e1; font-size: 0.65rem; font-weight: 700; padding: 1px 6px; border-radius: 4px;" title="Active in email outreach campaign">
+                                                            📬 In Email Outreach • {{ c_name }}
                                                         </span>
                                                     {% endif %}
                                                 </div>
@@ -510,7 +510,7 @@
                                       <td class="sticky-2" onclick="event.stopPropagation();">
                                           <select {% if not can_edit_leads %}disabled title="Editing lead status is restricted for your role" style="cursor: not-allowed; opacity: 0.85; {% else %}onchange="quickUpdateLead({{ lead.id }}, 'status', this.value, this)" title="Lead Stage: Click to update status" style="{% endif %}{% if lead.status == 'Do Not Call (DNC)' or lead.is_dnc %}background:#fee2e2; color:#991b1b; border-color:#fca5a5;{% elif lead.status == 'Active' %}background:#dcfce7; color:#15803d; border-color:#86efac;{% elif lead.status == 'In Campaign' %}background:#e0e7ff; color:#3730a3; border-color:#c7d2fe;{% elif lead.status == 'Engaged' %}background:#d1fae5; color:#065f46; border-color:#6ee7b7;{% elif lead.status == 'New' or lead.status == 'NEW' %}background:#e0f2fe; color:#0369a1; border-color:#7dd3fc;{% elif lead.status == 'Contacted' %}background:#f3e8ff; color:#7e22ce; border-color:#d8b4fe;{% elif lead.status == 'Qualified' %}background:#ccfbf1; color:#0f766e; border-color:#5eead4;{% elif lead.status == 'Trained' %}background:#fef3c7; color:#b45309; border-color:#fde047;{% else %}background:#f1f5f9; color:#64748b; border-color:#cbd5e1;{% endif %}" class="sigma-pill-select">
                                               <option value="New" title="New lead in pool - needs first phone call" {% if lead.status == 'New' or lead.status == 'NEW' %}selected{% endif %}>New</option>
-                                              <option value="In Campaign" title="In email sequence - waiting for customer response" {% if lead.status == 'In Campaign' %}selected{% endif %}>In Campaign</option>
+                                              <option value="In Campaign" title="Active in email outreach - waiting for customer response" {% if lead.status == 'In Campaign' %}selected{% endif %}>In Email Outreach</option>
                                               <option value="Engaged" title="Customer opened email or replied - hot lead ready to call" {% if lead.status == 'Engaged' %}selected{% endif %}>Engaged 🔥</option>
                                               <option value="Active" title="Signed customer receiving regular cleaning service" {% if lead.status == 'Active' %}selected{% endif %}>Active</option>
                                               <option value="Contacted" title="Spoke with gatekeeper or manager - follow-up needed" {% if lead.status == 'Contacted' %}selected{% endif %}>Contacted</option>
@@ -2596,51 +2596,65 @@
                 {% set ns_mkt.opened_targets = ns_mkt.opened_targets + (c.opened_count or 0) %}
             {% endfor %}
 
-            <!-- Marketing Department KPI Header (Rivaling Apollo / HubSpot) -->
+            <!-- Plain-Language Console Description Banner -->
+            <div style="margin-bottom: 1.5rem; padding: 1.25rem 1.5rem; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; border-left: 4px solid #ec4899; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <div style="display: flex; align-items: center; gap: 0.65rem;">
+                    <i class="fas fa-bullhorn" style="font-size: 1.25rem; color: #ec4899;"></i>
+                    <h2 style="margin: 0; font-size: 1.25rem; font-weight: 800; color: #0f172a;">Email Marketing &amp; Customer Outreach</h2>
+                </div>
+                <p style="margin: 0.4rem 0 0 0; font-size: 0.85rem; color: #475569; line-height: 1.5;">
+                    Send introduction emails to commercial facilities across Texas. Every email is saved in the Outbox below for review and approval before anything is sent. If a campaign was started by mistake, you can cancel single drafts or clear the whole queue with one click.
+                </p>
+            </div>
+
+            <!-- Marketing Overview KPI Cards -->
             <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; margin-bottom: 2rem;">
                 <div class="isc-card" style="padding: 1.15rem; border-left: 4px solid #ec4899; background: #ffffff;">
                     <div style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: var(--slate-500); letter-spacing: 0.05em;">Marketing Campaigns</div>
-                    <div style="font-size: 1.6rem; font-weight: 900; color: var(--slate-900); margin-top: 0.25rem;">{{ marketing_campaigns|length }} <span style="font-size: 0.8rem; font-weight: 700; color: var(--slate-400);">Schedules</span></div>
-                    <div style="font-size: 0.7rem; color: #db2777; font-weight: 700; margin-top: 0.35rem;"><i class="fas fa-bullhorn"></i> Autonomous Outreach</div>
+                    <div style="font-size: 1.6rem; font-weight: 900; color: var(--slate-900); margin-top: 0.25rem;">{{ marketing_campaigns|length }} <span style="font-size: 0.8rem; font-weight: 700; color: var(--slate-400);">Active</span></div>
+                    <div style="font-size: 0.7rem; color: #db2777; font-weight: 700; margin-top: 0.35rem;"><i class="fas fa-bullhorn"></i> Outreach Campaigns</div>
                 </div>
                 <div class="isc-card" style="padding: 1.15rem; border-left: 4px solid #f59e0b; background: #ffffff;">
-                    <div style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: var(--slate-500); letter-spacing: 0.05em;">Executive Outbox Queue</div>
+                    <div style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: var(--slate-500); letter-spacing: 0.05em;">Outbox Waiting Review</div>
                     <div style="font-size: 1.6rem; font-weight: 900; color: #d97706; margin-top: 0.25rem;">{{ ns_mkt.pending_outbox }} <span style="font-size: 0.8rem; font-weight: 700; color: var(--slate-400);">Queued</span></div>
-                    <div style="font-size: 0.7rem; color: #b45309; font-weight: 700; margin-top: 0.35rem;"><i class="fas fa-lock"></i> CEO Approval Gate</div>
+                    <div style="font-size: 0.7rem; color: #b45309; font-weight: 700; margin-top: 0.35rem;"><i class="fas fa-lock"></i> Needs Approval</div>
                 </div>
                 <div class="isc-card" style="padding: 1.15rem; border-left: 4px solid #10b981; background: #ffffff;">
-                    <div style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: var(--slate-500); letter-spacing: 0.05em;">Customer Opens &amp; Views</div>
-                    <div style="font-size: 1.6rem; font-weight: 900; color: #047857; margin-top: 0.25rem;">{{ ns_mkt.opened_targets }} <span style="font-size: 0.8rem; font-weight: 700; color: #059669;">Verified Reads</span></div>
-                    <div style="font-size: 0.7rem; color: #059669; font-weight: 700; margin-top: 0.35rem;"><i class="fas fa-eye"></i> Real-Time Read Tracking</div>
+                    <div style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: var(--slate-500); letter-spacing: 0.05em;">Customer Opens</div>
+                    <div style="font-size: 1.6rem; font-weight: 900; color: #047857; margin-top: 0.25rem;">{{ ns_mkt.opened_targets }} <span style="font-size: 0.8rem; font-weight: 700; color: #059669;">Reads</span></div>
+                    <div style="font-size: 0.7rem; color: #059669; font-weight: 700; margin-top: 0.35rem;"><i class="fas fa-eye"></i> Verified Reads</div>
                 </div>
                 <div class="isc-card" style="padding: 1.15rem; border-left: 4px solid #0284c7; background: #ffffff;">
-                    <div style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: var(--slate-500); letter-spacing: 0.05em;">Active Targets Staged</div>
+                    <div style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: var(--slate-500); letter-spacing: 0.05em;">Enrolled Businesses</div>
                     <div style="font-size: 1.6rem; font-weight: 900; color: var(--slate-900); margin-top: 0.25rem;">{{ ns_mkt.staged_targets }} <span style="font-size: 0.8rem; font-weight: 700; color: var(--slate-400);">Facilities</span></div>
-                    <div style="font-size: 0.7rem; color: #0284c7; font-weight: 700; margin-top: 0.35rem;"><i class="fas fa-school"></i> Texas Verified Leads</div>
+                    <div style="font-size: 0.7rem; color: #0284c7; font-weight: 700; margin-top: 0.35rem;"><i class="fas fa-school"></i> Texas Business Leads</div>
                 </div>
                 <div class="isc-card" style="padding: 1.15rem; border-left: 4px solid #6366f1; background: #ffffff;">
-                    <div style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: var(--slate-500); letter-spacing: 0.05em;">Targeted Annual Pipeline</div>
+                    <div style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: var(--slate-500); letter-spacing: 0.05em;">Estimated Yearly Value</div>
                     <div style="font-size: 1.6rem; font-weight: 900; color: #4338ca; margin-top: 0.25rem;">${{ "{:,.0f}".format(marketing_pipeline_value or 0) }} <span style="font-size: 0.8rem; font-weight: 700; color: var(--slate-400);">Est.</span></div>
-                    <div style="font-size: 0.7rem; color: #4f46e5; font-weight: 700; margin-top: 0.35rem;"><i class="fas fa-chart-line"></i> Empirical Staged Scope</div>
+                    <div style="font-size: 0.7rem; color: #4f46e5; font-weight: 700; margin-top: 0.35rem;"><i class="fas fa-chart-line"></i> Potential New Business</div>
                 </div>
             </div>
 
-            <!-- Executive Outbox Approval Gate (Mistake-Proof Mandate) -->
+            <!-- Outbox Review and Approval Section -->
             {% if pending_outbox_items %}
             <div class="isc-card fluid-data" style="margin-bottom: 2rem; border-left: 4px solid #f59e0b; background: #fffdfa;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
                     <div>
                         <h3 style="margin: 0; font-size: 1.15rem; font-weight: 900; color: #92400e; display: flex; align-items: center; gap: 0.5rem;">
-                            <i class="fas fa-shield-alt" style="color: #f59e0b;"></i> Executive Outbox Staging Queue (CEO Approval Gate)
+                            <i class="fas fa-shield-alt" style="color: #f59e0b;"></i> Outbox Waiting for Review (CEO Approval)
                         </h3>
                         <p style="margin: 0.2rem 0 0 0; font-size: 0.78rem; color: #78350f; font-weight: 600;">
-                            Zero synthetic or unauthorized messages leave this server. Each email is verified against official letterhead HWB-COM-001.
+                            Review and approve each message before it leaves. No email sends without your sign-off.
                         </p>
                     </div>
                     <div style="display: flex; gap: 0.5rem; align-items: center;">
                         <span class="isc-badge" style="background: #fef3c7; color: #92400e; border: 1px solid #fde68a; font-weight: 800; font-size: 0.75rem; padding: 0.35rem 0.65rem;">
                             {{ pending_outbox_items|length }} Messages Queued
                         </span>
+                        <button type="button" onclick="executeOutboxBatch('reject', 500)" class="isc-btn isc-btn-outline" style="height: 32px; padding: 0 0.85rem; font-size: 0.75rem; font-weight: 800; color: #dc2626; border-color: #fca5a5; background: #ffffff; border-radius: 6px;" title="Cancel all queued drafts immediately">
+                            <i class="fas fa-trash-alt"></i> Cancel All Queued
+                        </button>
                         <button type="button" onclick="executeOutboxBatch('approve', 10)" class="isc-btn isc-btn-primary" style="height: 32px; padding: 0 0.85rem; font-size: 0.75rem; font-weight: 800; background: #10b981; border-color: #059669; border-radius: 6px;">
                             <i class="fas fa-paper-plane"></i> Batch Release Next 10
                         </button>
@@ -2687,6 +2701,21 @@
                     </table>
                 </div>
             </div>
+            {% else %}
+            <div class="isc-card fluid-data" style="margin-bottom: 2rem; border-left: 4px solid #10b981; background: #f0fdf4; padding: 1.25rem 1.5rem;">
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <i class="fas fa-check-circle" style="font-size: 1.35rem; color: #10b981;"></i>
+                        <div>
+                            <h4 style="margin: 0; font-size: 1rem; font-weight: 800; color: #065f46;">Executive Outbox Queue is Clear</h4>
+                            <p style="margin: 0.2rem 0 0 0; font-size: 0.8rem; color: #047857;">All outbound messages have been approved, sent, or cancelled. No drafts are pending review.</p>
+                        </div>
+                    </div>
+                    <span class="isc-badge" style="background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; font-weight: 800; font-size: 0.75rem; padding: 0.35rem 0.65rem;">
+                        0 Pending Approval
+                    </span>
+                </div>
+            </div>
             {% endif %}
 
             <!-- Active Campaigns Master Grid -->
@@ -2694,15 +2723,20 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem;">
                     <div>
                         <h2 style="font-size: 1.25rem; font-weight: 900; color: var(--slate-900); margin: 0; display: flex; align-items: center; gap: 0.65rem;">
-                            <i class="fas fa-bullhorn" style="color: #ec4899;"></i> Marketing Campaigns Registry
+                            <i class="fas fa-bullhorn" style="color: #ec4899;"></i> Marketing Campaigns
                         </h2>
                         <p style="font-size: 0.8rem; color: var(--slate-500); margin: 0.25rem 0 0 0; font-weight: 600;">
-                            Autonomous B2B outbound campaigns operating under HWB-SAL-2026-001 Zero-Caller Architecture.
+                            Create and manage email outreach campaigns for commercial facilities across Texas.
                         </p>
                     </div>
-                    <button type="button" onclick="openModal('modal-create-campaign')" class="isc-btn isc-btn-primary" style="height: 36px; padding: 0 1.15rem; font-size: 0.8rem; font-weight: 800; background: #ec4899; border-color: #db2777; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.45rem;">
-                        <i class="fas fa-plus-circle"></i> Create Marketing Campaign
-                    </button>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <button type="button" onclick="resetAllMarketingSuite()" class="isc-btn isc-btn-outline" style="height: 36px; padding: 0 0.85rem; font-size: 0.78rem; font-weight: 700; color: #dc2626; border-color: #fca5a5; background: #ffffff; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.4rem;" title="Reset all campaigns, drafts, and return leads to New">
+                            <i class="fas fa-redo-alt"></i> Reset All Campaigns
+                        </button>
+                        <button type="button" onclick="openModal('modal-create-campaign')" class="isc-btn isc-btn-primary" style="height: 36px; padding: 0 1.15rem; font-size: 0.8rem; font-weight: 800; background: #ec4899; border-color: #db2777; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.45rem;">
+                            <i class="fas fa-plus-circle"></i> Create Marketing Campaign
+                        </button>
+                    </div>
                 </div>
 
                 <div style="overflow-x: auto;">
@@ -2710,11 +2744,11 @@
                         <thead>
                             <tr style="background: #f8fafc; border-bottom: 1.5px solid var(--slate-200); text-align: left;">
                                 <th style="padding: 0.75rem 1rem; font-weight: 800; color: var(--slate-600); font-size: 0.72rem; text-transform: uppercase;">Campaign Code & Name</th>
-                                <th style="padding: 0.75rem 1rem; font-weight: 800; color: var(--slate-600); font-size: 0.72rem; text-transform: uppercase;">Target Sector & Geo</th>
-                                <th style="padding: 0.75rem 1rem; font-weight: 800; color: var(--slate-600); font-size: 0.72rem; text-transform: uppercase;">Schedule Type</th>
-                                <th style="padding: 0.75rem 1rem; font-weight: 800; color: var(--slate-600); font-size: 0.72rem; text-transform: uppercase;">Sender Persona</th>
+                                <th style="padding: 0.75rem 1rem; font-weight: 800; color: var(--slate-600); font-size: 0.72rem; text-transform: uppercase;">Target Business & Area</th>
+                                <th style="padding: 0.75rem 1rem; font-weight: 800; color: var(--slate-600); font-size: 0.72rem; text-transform: uppercase;">Email Schedule</th>
+                                <th style="padding: 0.75rem 1rem; font-weight: 800; color: var(--slate-600); font-size: 0.72rem; text-transform: uppercase;">Sender Name</th>
                                 <th style="padding: 0.75rem 1rem; font-weight: 800; color: var(--slate-600); font-size: 0.72rem; text-transform: uppercase;">Customer Opens</th>
-                                <th style="padding: 0.75rem 1rem; font-weight: 800; color: var(--slate-600); font-size: 0.72rem; text-transform: uppercase;">Volume & Throttle</th>
+                                <th style="padding: 0.75rem 1rem; font-weight: 800; color: var(--slate-600); font-size: 0.72rem; text-transform: uppercase;">Daily Limit</th>
                                 <th style="padding: 0.75rem 1rem; font-weight: 800; color: var(--slate-600); font-size: 0.72rem; text-transform: uppercase;">Status</th>
                                 <th style="padding: 0.75rem 1rem; font-weight: 800; color: var(--slate-600); font-size: 0.72rem; text-transform: uppercase; text-align: right;">Actions</th>
                             </tr>
@@ -2783,8 +2817,11 @@
                                     <a href="{{ url_for('admin_operations', view='marketing', campaign_id=c.id) }}" class="isc-btn isc-btn-outline" style="height: 28px; padding: 0 0.65rem; font-size: 0.72rem; border-radius: 4px; text-decoration: none; display: inline-flex; align-items: center; gap: 0.3rem; margin-right: 0.35rem; {% if active_campaign_id == c.id %}background: #eff6ff; border-color: #3b82f6; color: #1d4ed8; font-weight: 800;{% endif %}">
                                         <i class="fas fa-list"></i> Targets ({{ c.staged_count or 0 }})
                                     </a>
-                                    <button type="button" onclick="generateCampaignDrafts({{ c.id }}, '{{ c.campaign_code }}')" class="isc-btn isc-btn-primary" style="height: 28px; padding: 0 0.65rem; font-size: 0.72rem; border-radius: 4px; background: #0284c7; border-color: #0369a1;" title="Generate personalized HWB-COM-001 letterhead drafts for Outbox review">
+                                    <button type="button" onclick="generateCampaignDrafts({{ c.id }}, '{{ c.campaign_code }}')" class="isc-btn isc-btn-primary" style="height: 28px; padding: 0 0.65rem; font-size: 0.72rem; border-radius: 4px; background: #0284c7; border-color: #0369a1; margin-right: 0.35rem;" title="Generate personalized HWB-COM-001 letterhead drafts for Outbox review">
                                         <i class="fas fa-file-signature"></i> Stage Drafts
+                                    </button>
+                                    <button type="button" onclick="deleteCampaign({{ c.id }}, '{{ c.campaign_code }}')" class="isc-btn isc-btn-outline" style="height: 28px; padding: 0 0.55rem; font-size: 0.72rem; border-radius: 4px; color: #dc2626; border-color: #fca5a5;" title="Delete Campaign and Return Leads to New">
+                                        <i class="fas fa-trash-alt"></i>
                                     </button>
                                 </td>
                             </tr>
@@ -2792,7 +2829,8 @@
                             <tr>
                                 <td colspan="8" style="text-align: center; padding: 3rem; color: var(--slate-400);">
                                     <i class="fas fa-bullhorn" style="font-size: 2rem; margin-bottom: 0.5rem; opacity: 0.4;"></i>
-                                    <div>No marketing campaigns configured yet.</div>
+                                    <div style="font-weight: 700; font-size: 0.95rem; color: var(--slate-600);">No marketing campaigns configured yet.</div>
+                                    <div style="font-size: 0.8rem; margin-top: 0.35rem; color: var(--slate-400);">Click "Create Marketing Campaign" above to stage your outreach sequence.</div>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -2807,10 +2845,10 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
                     <div>
                         <h3 style="font-size: 1.15rem; font-weight: 900; color: var(--slate-900); margin: 0;">
-                            <i class="fas fa-users" style="color: #0284c7;"></i> Staged Campaign Recipients (Verified Facilities)
+                            <i class="fas fa-users" style="color: #0284c7;"></i> Campaign Recipients (Selected Facilities)
                         </h3>
                         <p style="font-size: 0.78rem; color: var(--slate-500); margin: 0.2rem 0 0 0; font-weight: 600;">
-                            High-capacity commercial facilities staged for outreach sequence with live customer read-receipt tracking.
+                            Commercial facilities chosen for this campaign. You can see email delivery and read status below.
                         </p>
                     </div>
                     <div style="display: flex; align-items: center; gap: 0.65rem; flex-wrap: wrap;">
@@ -2822,7 +2860,7 @@
                             <i class="fas fa-trash-alt"></i> Remove Selected (<span id="selected-recipients-count">0</span>)
                         </button>
                         <span class="isc-badge" style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; font-weight: 800; font-size: 0.75rem; height: 32px; display: inline-flex; align-items: center; padding: 0 0.75rem; border-radius: 6px;">
-                            <span id="staged-recipients-total-badge">{{ campaign_recipients|length }}</span>&nbsp;Verified Recipients
+                            <span id="staged-recipients-total-badge">{{ campaign_recipients|length }}</span>&nbsp;Selected Facilities
                         </span>
                     </div>
                 </div>
@@ -2839,7 +2877,7 @@
                                 <th style="padding: 0.65rem 0.85rem; font-weight: 800; color: var(--slate-600); font-size: 0.72rem; text-transform: uppercase;">Location</th>
                                 <th style="padding: 0.65rem 0.85rem; font-weight: 800; color: var(--slate-600); font-size: 0.72rem; text-transform: uppercase;">Capacity / SF</th>
                                 <th style="padding: 0.65rem 0.85rem; font-weight: 800; color: var(--slate-600); font-size: 0.72rem; text-transform: uppercase;">Estimated Value</th>
-                                <th style="padding: 0.65rem 0.85rem; font-weight: 800; color: var(--slate-600); font-size: 0.72rem; text-transform: uppercase;">Delivery & Customer Opens</th>
+                                <th style="padding: 0.65rem 0.85rem; font-weight: 800; color: var(--slate-600); font-size: 0.72rem; text-transform: uppercase;">Email Status & Opens</th>
                                 <th style="padding: 0.65rem 0.85rem; font-weight: 800; color: var(--slate-600); font-size: 0.72rem; text-transform: uppercase; text-align: right;">Action</th>
                             </tr>
                         </thead>
@@ -8213,7 +8251,7 @@
                                 <label style="font-weight: 600; font-size: 0.75rem; color: var(--slate-700); margin-bottom: 4px;">Lead Status</label>
                                 <select id="edit-lead-status" name="status" class="sigma-input" style="height: 36px;">
                                     <option value="New">New</option>
-                                    <option value="In Campaign">In Campaign</option>
+                                    <option value="In Campaign">In Email Outreach</option>
                                     <option value="Engaged">Engaged 🔥</option>
                                     <option value="Active">Active</option>
                                     <option value="Contacted">Contacted</option>
@@ -8730,10 +8768,10 @@
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--slate-200); padding-bottom: 1.25rem; margin-bottom: 1.5rem;">
             <div>
                 <h2 style="font-size: 1.35rem; font-weight: 900; color: var(--slate-900); margin: 0; display: flex; align-items: center; gap: 0.65rem;">
-                    <i class="fas fa-bullhorn" style="color: #ec4899;"></i> Create Marketing Campaign &amp; Audience Sequence
+                    <i class="fas fa-bullhorn" style="color: #ec4899;"></i> Create Marketing Campaign
                 </h2>
                 <p style="font-size: 0.78rem; color: var(--slate-500); margin: 0.25rem 0 0 0; font-weight: 600;">
-                    Stage an autonomous B2B outbound campaign powered by verified Texas commercial records &amp; Microsoft Graph API.
+                    Set up an email campaign to reach commercial facilities across Texas.
                 </p>
             </div>
             <button type="button" onclick="closeModal('modal-create-campaign')" class="isc-btn isc-btn-outline" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; padding: 0;" aria-label="Close Create Campaign Modal">
@@ -8742,7 +8780,7 @@
         </div>
 
         <form id="form-create-campaign" onsubmit="event.preventDefault(); submitNewCampaign();" class="sigma-form-container">
-            <!-- Row 1: Identification & Persona -->
+            <!-- Row 1: Identification & Sender -->
             <div style="display: grid; grid-template-columns: 1fr 2fr 1.5fr; gap: 1rem; margin-bottom: 1.25rem;">
                 <div>
                     <label style="display: block; font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: var(--slate-600); margin-bottom: 0.35rem;">Campaign Code</label>
@@ -8753,7 +8791,7 @@
                     <input type="text" id="mkt-name" class="sigma-input" placeholder="e.g. North Texas Commercial Childcare Safety & Health Outreach" required />
                 </div>
                 <div>
-                    <label style="display: block; font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: var(--slate-600); margin-bottom: 0.35rem;">Sender Persona</label>
+                    <label style="display: block; font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: var(--slate-600); margin-bottom: 0.35rem;">Sender Name</label>
                     <select id="mkt-persona" class="sigma-input">
                         <option value="Humberto Dominguez (Owner &amp; Operator)">Humberto Dominguez (Owner &amp; Operator)</option>
                         <option value="Lauri Tells (VP of Marketing)">Lauri Tells (VP of Marketing)</option>
@@ -8761,14 +8799,14 @@
                 </div>
             </div>
 
-            <!-- Row 2: Audience Targeting & Geo Radar -->
+            <!-- Row 2: Audience Targeting -->
             <div style="background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 10px; padding: 1.25rem; margin-bottom: 1.25rem;">
                 <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--slate-700); margin-bottom: 0.85rem; display: flex; align-items: center; gap: 0.45rem;">
-                    <i class="fas fa-filter" style="color: #0284c7;"></i> Lead Targeting &amp; Segmentation Radar (37,466 Texas Database)
+                    <i class="fas fa-filter" style="color: #0284c7;"></i> Choose Your Audience (Texas Database)
                 </div>
                 <div style="display: grid; grid-template-columns: 1.2fr 1.2fr 1fr 1fr; gap: 1rem;">
                     <div>
-                        <label style="display: block; font-size: 0.7rem; font-weight: 700; color: var(--slate-600); margin-bottom: 0.3rem;">Target Sector</label>
+                        <label style="display: block; font-size: 0.7rem; font-weight: 700; color: var(--slate-600); margin-bottom: 0.3rem;">Business Type</label>
                         <select id="mkt-sector" class="sigma-input" onchange="updateAudiencePreview()">
                             <option value="Licensed Childcare">Licensed Childcare &amp; Early Education</option>
                             <option value="Commercial Office">Commercial Real Estate &amp; Offices</option>
@@ -8776,10 +8814,10 @@
                         </select>
                     </div>
                     <div>
-                        <label style="display: block; font-size: 0.7rem; font-weight: 700; color: var(--slate-600); margin-bottom: 0.3rem;">Geographic Scope</label>
+                        <label style="display: block; font-size: 0.7rem; font-weight: 700; color: var(--slate-600); margin-bottom: 0.3rem;">Location / Area</label>
                         <select id="mkt-geo" class="sigma-input" onchange="updateAudiencePreview()">
                             <option value="North Texas Core">North Texas Core (Collin, Dallas, Denton, Tarrant)</option>
-                            <option value="Statewide Texas">Statewide Texas (Expansion Mandate)</option>
+                            <option value="Statewide Texas">Statewide Texas (All Counties)</option>
                             <option value="Collin">Collin County Only</option>
                             <option value="Dallas">Dallas County Only</option>
                             <option value="Tarrant">Tarrant County Only</option>
@@ -8787,11 +8825,11 @@
                         </select>
                     </div>
                     <div>
-                        <label style="display: block; font-size: 0.7rem; font-weight: 700; color: var(--slate-600); margin-bottom: 0.3rem;">Min. Capacity / Size</label>
+                        <label style="display: block; font-size: 0.7rem; font-weight: 700; color: var(--slate-600); margin-bottom: 0.3rem;">Minimum Size / Capacity</label>
                         <input type="number" id="mkt-min-capacity" class="sigma-input" value="75" placeholder="e.g. 75" onchange="updateAudiencePreview()" oninput="updateAudiencePreview()" />
                     </div>
                     <div>
-                        <label style="display: block; font-size: 0.7rem; font-weight: 700; color: var(--slate-600); margin-bottom: 0.3rem;">Daily Sending Throttle</label>
+                        <label style="display: block; font-size: 0.7rem; font-weight: 700; color: var(--slate-600); margin-bottom: 0.3rem;">Daily Sending Limit</label>
                         <select id="mkt-throttle" class="sigma-input">
                             <option value="25">25 / day (Safe)</option>
                             <option value="50" selected>50 / day (Standard)</option>
@@ -8802,22 +8840,22 @@
 
                 <!-- Live Audience Counter -->
                 <div id="mkt-audience-counter" style="margin-top: 1rem; background: #eff6ff; border: 1px solid #bfdbfe; padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.8rem; color: #1e40af; font-weight: 700; display: flex; align-items: center; gap: 0.5rem;">
-                    <i class="fas fa-radar fa-spin"></i> Querying Texas verified database...
+                    <i class="fas fa-radar fa-spin"></i> Checking Texas database...
                 </div>
             </div>
 
-            <!-- Row 3: Sequence Message Template & Tokens -->
+            <!-- Row 3: Email Subject & Body Template -->
             <div style="margin-bottom: 1.5rem;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                    <label style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--slate-700);">Email Subject Template *</label>
-                    <span style="font-size: 0.7rem; color: var(--slate-400);">Tokens supported: {director_name}, {facility_name}, {city}</span>
+                    <label style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--slate-700);">Email Subject Line *</label>
+                    <span style="font-size: 0.7rem; color: var(--slate-400);">Fill-in tags: {director_name}, {facility_name}, {city}</span>
                 </div>
                 <input type="text" id="mkt-subject-tmpl" class="sigma-input" value="Quick question regarding after-hours cleaning for your facility" required style="margin-bottom: 1rem;" />
 
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                    <label style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--slate-700);">Email Body Template (HTML / Plain Text) *</label>
+                    <label style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--slate-700);">Email Message *</label>
                     <div style="display: flex; gap: 0.35rem; align-items: center;">
-                        <span style="font-size: 0.7rem; font-weight: 700; color: var(--slate-500); margin-right: 0.25rem;">Insert Token:</span>
+                        <span style="font-size: 0.7rem; font-weight: 700; color: var(--slate-500); margin-right: 0.25rem;">Insert Tag:</span>
                         <button type="button" onclick="insertMarketingToken('{first_name}')" class="isc-badge" style="cursor: pointer; background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; font-size: 0.68rem; font-weight: 700;">+ First Name</button>
                         <button type="button" onclick="insertMarketingToken('{city}')" class="isc-badge" style="cursor: pointer; background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; font-size: 0.68rem; font-weight: 700;">+ City</button>
                         <button type="button" onclick="insertMarketingToken('{booking_link}')" class="isc-badge" style="cursor: pointer; background: #fef3c7; color: #92400e; border: 1px solid #fde68a; font-size: 0.68rem; font-weight: 700;">+ Calendar Link</button>
@@ -8868,7 +8906,7 @@ Owner &amp;amp; Operator | HWB Cleaning Services LLC&lt;br /&gt;
                 <input type="hidden" id="mkt-cadence" value="1-Step Intro with Calendar Link" />
                 <button type="button" onclick="closeModal('modal-create-campaign')" class="isc-btn isc-btn-outline" style="height: 38px; padding: 0 1.25rem; font-size: 0.8rem;" aria-label="Close Create Campaign Modal">Cancel</button>
                 <button type="submit" class="isc-btn isc-btn-primary" style="height: 38px; padding: 0 1.5rem; font-size: 0.8rem; font-weight: 800; background: #ec4899; border-color: #db2777;">
-                    <i class="fas fa-rocket"></i> Launch &amp; Stage Campaign
+                    <i class="fas fa-paper-plane"></i> Save &amp; Start Campaign
                 </button>
             </div>
         </form>
@@ -9486,6 +9524,10 @@ Click here to book a 5-minute walkthrough: [Calendar Link]"></textarea>
         },
         applyColumns: function(e) {
             e.preventDefault();
+            const submitBtn = e.target ? (e.submitter || e.target.querySelector('button[type="submit"]')) : null;
+            if (submitBtn && window.spinAndLock) {
+                window.spinAndLock(submitBtn, 'Applying View...');
+            }
             const formData = new FormData(e.target);
             const cols = formData.getAll('cols').join(',');
             const url = new URL(window.location);
@@ -9852,6 +9894,9 @@ Click here to book a 5-minute walkthrough: [Calendar Link]"></textarea>
         const confirmBtn = document.getElementById('btn-decision-confirm');
         if(!modal) return;
         
+        // Restore button state in case it was previously locked
+        if (window.restoreButton) window.restoreButton(confirmBtn);
+
         title.innerText = options.title || 'Are you sure?';
         text.innerText = options.text || 'Please confirm to proceed.';
         confirmBtn.innerText = options.confirmText || 'Confirm';
@@ -9860,8 +9905,10 @@ Click here to book a 5-minute walkthrough: [Calendar Link]"></textarea>
         icon.innerHTML = `<i class="fas ${options.icon || 'fa-question-circle'}"></i>`;
 
         confirmBtn.onclick = () => {
-            options.onConfirm();
-            closeModal('modal-decision');
+            if (window.spinAndLock) window.spinAndLock(confirmBtn);
+            if (typeof options.onConfirm === 'function') {
+                options.onConfirm(confirmBtn);
+            }
         };
         openModal('modal-decision');
     }
@@ -12374,7 +12421,7 @@ Click here to book a 5-minute walkthrough: [Calendar Link]"></textarea>
             const cadenceRemoveBtn = document.getElementById('btn-cadence-remove-campaign');
             const hasCampaign = (data.campaigns && data.campaigns.length > 0) || (activeCadenceLead.status === 'In Campaign');
             if (statusPill) {
-                statusPill.innerText = hasCampaign ? '📬 In Campaign' : (activeCadenceLead.status || 'New');
+                statusPill.innerText = hasCampaign ? '📬 In Email Outreach' : (activeCadenceLead.status || 'New');
             }
             if (cadenceRemoveBtn) {
                 cadenceRemoveBtn.style.display = hasCampaign ? 'inline-flex' : 'none';
@@ -15164,12 +15211,19 @@ Click here to book a 5-minute walkthrough: [Calendar Link]"></textarea>
     }
 
     function executeOutboxBatch(action, limit) {
+        const isCancel = (action === 'cancel' || action === 'delete' || action === 'reject');
+        const modalTitle = isCancel ? 'Cancel Queued Outbox Messages' : 'Send Next Batch';
+        const modalText = isCancel
+            ? 'Are you sure you want to cancel all queued email drafts? They will be removed from the outbox and will not be sent.'
+            : `Are you sure you want to approve and send the next ${limit} queued emails?`;
+        const confirmBtn = isCancel ? 'Yes, Cancel All' : 'Send Emails';
+
         showDecision({
-            title: `${action.toUpperCase()} Outbox Messages`,
-            text: `Are you sure you want to ${action} the next ${limit} queued messages?`,
-            confirmText: 'Execute Batch',
-            isDestructive: (action === 'cancel' || action === 'delete' || action === 'reject'),
-            icon: 'fa-mail-bulk',
+            title: modalTitle,
+            text: modalText,
+            confirmText: confirmBtn,
+            isDestructive: isCancel,
+            icon: isCancel ? 'fa-trash-alt' : 'fa-paper-plane',
             onConfirm: () => {
                 fetch('/api/v1/marketing/outbox/batch-action', {
                     method: 'POST',
@@ -15216,6 +15270,59 @@ Click here to book a 5-minute walkthrough: [Calendar Link]"></textarea>
         });
     }
 
+    function deleteCampaign(campaignId, code) {
+        if (!campaignId) return;
+        showDecision({
+            title: 'Delete Marketing Campaign',
+            text: `Are you sure you want to delete campaign ${code}? All enrolled leads will be safely returned to "New" status and unsent drafts will be removed.`,
+            confirmText: 'Yes, Delete Campaign',
+            isDestructive: true,
+            icon: 'fa-trash-alt',
+            onConfirm: () => {
+                fetch('/api/v1/marketing/campaign/' + campaignId + '/delete', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest'}
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        showToast(data.message, 'success');
+                        setTimeout(() => { location.reload(); }, 800);
+                    } else {
+                        showToast(data.message || 'Failed to delete campaign.', 'error');
+                    }
+                })
+                .catch(err => showToast('Error deleting campaign: ' + err, 'error'));
+            }
+        });
+    }
+
+    function resetAllMarketingSuite() {
+        showDecision({
+            title: 'Reset Entire Marketing Suite',
+            text: 'Are you sure you want to delete ALL marketing campaigns and unsent drafts? All enrolled leads will be returned to "New" so you can start completely fresh.',
+            confirmText: 'Yes, Reset All',
+            isDestructive: true,
+            icon: 'fa-redo-alt',
+            onConfirm: () => {
+                fetch('/api/v1/marketing/campaign/reset-all', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest'}
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        showToast(data.message, 'success');
+                        setTimeout(() => { location.reload(); }, 800);
+                    } else {
+                        showToast(data.message || 'Failed to reset marketing campaigns.', 'error');
+                    }
+                })
+                .catch(err => showToast('Error resetting marketing suite: ' + err, 'error'));
+            }
+        });
+    }
+
     function updateAudiencePreview() {
         const sector = document.getElementById('mkt-sector') ? document.getElementById('mkt-sector').value : 'Licensed Childcare';
         const geo = document.getElementById('mkt-geo') ? document.getElementById('mkt-geo').value : 'North Texas Core';
@@ -15238,8 +15345,14 @@ Click here to book a 5-minute walkthrough: [Calendar Link]"></textarea>
     }
 
     function submitNewCampaign() {
+        const submitBtn = document.querySelector('#form-create-campaign button[type="submit"]');
+        if (submitBtn && window.spinAndLock) window.spinAndLock(submitBtn, 'Starting Campaign...');
         const name = document.getElementById('mkt-name').value.trim();
-        if (!name) { showToast('Campaign Name is required.', 'error'); return; }
+        if (!name) { 
+            showToast('Campaign Name is required.', 'error'); 
+            if (submitBtn && window.restoreButton) window.restoreButton(submitBtn);
+            return; 
+        }
         const payload = {
             name: name,
             campaign_code: document.getElementById('mkt-code').value.trim(),
@@ -15267,9 +15380,13 @@ Click here to book a 5-minute walkthrough: [Calendar Link]"></textarea>
                 setTimeout(() => { window.location.href = '/admin/operations?view=marketing&campaign_id=' + data.campaign_id; }, 800);
             } else {
                 showToast(data.message || 'Creation failed.', 'error');
+                if (submitBtn && window.restoreButton) window.restoreButton(submitBtn);
             }
         })
-        .catch(err => showToast('Error creating campaign: ' + err, 'error'));
+        .catch(err => {
+            showToast('Error creating campaign: ' + err, 'error');
+            if (submitBtn && window.restoreButton) window.restoreButton(submitBtn);
+        });
     }
 
     function insertMarketingToken(tokenId) {

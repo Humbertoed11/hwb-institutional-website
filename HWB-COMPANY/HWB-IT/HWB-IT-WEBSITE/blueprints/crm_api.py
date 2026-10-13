@@ -3190,7 +3190,7 @@ def format_marketing_letterhead(body_html: str, tracking_token: str = None) -> s
     <div style="border-top: 1px solid #e2e8f0; padding-top: 16px; margin-top: 20px; text-align: center; font-size: 11px; color: #64748b; line-height: 1.6;">
         <strong style="color: #0f172a; letter-spacing: 0.05em;">FIDELITY. SAFETY. RESPECT.</strong><br>
         HWB Cleaning Services LLC • 3342 FM 1827 Ste 8d, McKinney, TX 75071 • Phone: (214) 586-0257<br>
-        Texas Charter #802920409 • CAGE (SAM) #082830635 • Commercial EMR: .43 • ISO 9001:2015 Registered<br>
+        Texas Charter #802920409 • CAGE (SAM) #082830635 • Commercial EMR: .43 • Insured & Bonded<br>
         <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #cbd5e1; font-size: 10.5px; color: #94a3b8;">
             You are receiving this commercial communication as an operational facility contact in Texas.<br>
             To stop receiving future marketing messages, you may <a href="{unsub_url}" style="color: #2563eb; text-decoration: underline; font-weight: 600;">Unsubscribe Instantly</a> or email <a href="mailto:info@hwbcleaning.com?subject=Unsubscribe" style="color: #2563eb; text-decoration: underline;">info@hwbcleaning.com</a>.<br>
@@ -3507,6 +3507,131 @@ def api_marketing_campaign_toggle_status(campaign_id):
                 'status': 'success',
                 'new_status': new_status,
                 'message': f"Campaign {campaign.get('campaign_code')} is now {new_status}."
+            })
+    except Exception as e:
+        if conn: conn.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/marketing/campaign/<int:campaign_id>/delete', methods=['POST', 'DELETE'])
+@login_required
+def api_marketing_campaign_delete(campaign_id):
+    """
+    Deletes a marketing campaign, removes associated unsent drafts, and reverts
+    enrolled leads with status 'In Campaign' back to 'New'.
+    """
+    db_url = current_app.config.get('DATABASE_URL')
+    conn = None
+    try:
+        conn = get_db(db_url)
+        with conn.cursor() as cur:
+            cur.execute('SELECT id, campaign_code, name FROM "MarketingCampaigns" WHERE id = %s', (campaign_id,))
+            campaign = cur.fetchone()
+            if not campaign:
+                return jsonify({'status': 'error', 'message': 'Campaign not found.'}), 404
+
+            code = campaign['campaign_code'] if isinstance(campaign, dict) else campaign[1]
+            name = campaign['name'] if isinstance(campaign, dict) else campaign[2]
+
+            # 1. Identify enrolled leads for this campaign
+            cur.execute('''
+                SELECT DISTINCT lead_id 
+                FROM "CampaignRecipients" 
+                WHERE campaign_id = %s AND lead_id IS NOT NULL;
+            ''', (campaign_id,))
+            lead_rows = cur.fetchall()
+            lead_ids = [r[0] if isinstance(r, tuple) else r['lead_id'] for r in lead_rows]
+
+            # 2. Reset lead status back to 'New' if currently 'In Campaign'
+            reset_count = 0
+            if lead_ids:
+                cur.execute('''
+                    UPDATE "Leads"
+                    SET status = 'New', updated_at = CURRENT_TIMESTAMP
+                    WHERE id = ANY(%s) AND status = 'In Campaign';
+                ''', (lead_ids,))
+                reset_count = cur.rowcount
+
+            # 3. Purge unsent drafts from PendingOutbox
+            cur.execute('''
+                DELETE FROM "PendingOutbox"
+                WHERE campaign_id = %s;
+            ''', (campaign_id,))
+            purged_drafts = cur.rowcount
+
+            # 4. Delete the campaign (cascades to CampaignRecipients automatically)
+            cur.execute('DELETE FROM "MarketingCampaigns" WHERE id = %s;', (campaign_id,))
+
+            # 5. Insert audit log
+            user_label = getattr(current_user, 'full_name', None) or getattr(current_user, 'username', 'Operator')
+            cur.execute('''
+                INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
+                VALUES (1, 'System', 'Marketing Campaign Deleted', %s);
+            ''', (f"Campaign '{name}' ({code}) deleted by {user_label}. {reset_count} leads returned to 'New', {purged_drafts} drafts removed.",))
+
+            conn.commit()
+            return jsonify({
+                'status': 'success',
+                'campaign_id': campaign_id,
+                'campaign_code': code,
+                'leads_reset': reset_count,
+                'drafts_purged': purged_drafts,
+                'message': f"Campaign {code} was deleted successfully. {reset_count} leads were returned to 'New'."
+            })
+    except Exception as e:
+        if conn: conn.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/marketing/campaign/reset-all', methods=['POST'])
+@login_required
+def api_marketing_campaign_reset_all():
+    """
+    Deletes all marketing campaigns, purges all campaign drafts, and resets all
+    enrolled leads back to 'New' status for a clean slate.
+    """
+    db_url = current_app.config.get('DATABASE_URL')
+    conn = None
+    try:
+        conn = get_db(db_url)
+        with conn.cursor() as cur:
+            # 1. Reset all leads with status 'In Campaign' back to 'New'
+            cur.execute('''
+                UPDATE "Leads"
+                SET status = 'New', updated_at = CURRENT_TIMESTAMP
+                WHERE status = 'In Campaign';
+            ''')
+            leads_reset = cur.rowcount
+
+            # 2. Purge all campaign drafts from PendingOutbox
+            cur.execute('''
+                DELETE FROM "PendingOutbox"
+                WHERE campaign_id IS NOT NULL;
+            ''')
+            drafts_purged = cur.rowcount
+
+            # 3. Delete all campaigns (cascades to CampaignRecipients)
+            cur.execute('DELETE FROM "MarketingCampaigns";')
+            campaigns_deleted = cur.rowcount
+
+            # 4. Insert audit log in GlobalActivities
+            user_label = getattr(current_user, 'full_name', None) or getattr(current_user, 'username', 'Operator')
+            cur.execute('''
+                INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
+                VALUES (1, 'System', 'Marketing Suite Reset', %s);
+            ''', (f"Marketing suite reset by {user_label}: {campaigns_deleted} campaigns deleted, {drafts_purged} drafts purged, {leads_reset} leads returned to 'New'.",))
+
+            conn.commit()
+            return jsonify({
+                'status': 'success',
+                'campaigns_deleted': campaigns_deleted,
+                'leads_reset': leads_reset,
+                'drafts_purged': drafts_purged,
+                'message': f"Marketing suite reset complete: {campaigns_deleted} campaigns deleted, {leads_reset} leads returned to 'New'."
             })
     except Exception as e:
         if conn: conn.rollback()
@@ -3964,23 +4089,24 @@ def api_marketing_outbox_batch():
                         success_count += 1
                     else:
                         error_count += 1
-                elif action == 'reject':
-                    cur.execute("UPDATE \"PendingOutbox\" SET status = 'REJECTED' WHERE id = %s", (eid,))
+                elif action in ('reject', 'cancel'):
+                    cur.execute("UPDATE \"PendingOutbox\" SET status = 'CANCELLED' WHERE id = %s", (eid,))
                     cur.execute('''
                         UPDATE "CampaignRecipients"
-                        SET status = 'REJECTED', updated_at = CURRENT_TIMESTAMP
+                        SET status = 'CANCELLED', updated_at = CURRENT_TIMESTAMP
                         WHERE outbox_id = %s OR tracking_token = %s;
                     ''', (eid, msg.get('tracking_token')))
                     success_count += 1
 
             conn.commit()
+            action_desc = "cancelled" if action in ('reject', 'cancel') else "processed"
             return jsonify({
                 'status': 'success',
                 'action': action,
                 'processed': len(pending_msgs),
                 'successful': success_count,
                 'errors': error_count,
-                'message': f"Batch {action} completed: {success_count} messages processed successfully."
+                'message': f"Batch completed: {success_count} queued messages {action_desc} successfully."
             })
     except Exception as e:
         if conn: conn.rollback()

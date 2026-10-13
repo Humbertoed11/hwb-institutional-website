@@ -279,6 +279,42 @@
  .fa-cog { transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
  .isc-btn:hover .fa-cog { transform: rotate(90deg); }
 
+ /* --- Enterprise Button Spin & Lock (Phase 3 UX Standard) --- */
+ .isc-btn, .sigma-mini-btn, button[type="submit"] {
+     position: relative;
+     transition: transform 0.1s ease, filter 0.15s ease, opacity 0.15s ease;
+     -webkit-tap-highlight-color: transparent;
+ }
+ .isc-btn:active, .sigma-mini-btn:active, button[type="submit"]:active {
+     transform: scale(0.97) !important;
+ }
+ .is-spinning-lock, button.is-spinning-lock, .isc-btn.is-spinning-lock {
+     pointer-events: none !important;
+     cursor: wait !important;
+     opacity: 0.75 !important;
+     filter: grayscale(15%) !important;
+     user-select: none !important;
+ }
+ .sigma-spin-circle {
+     display: inline-block;
+     width: 13px;
+     height: 13px;
+     border: 2px solid rgba(255, 255, 255, 0.35);
+     border-radius: 50%;
+     border-top-color: #ffffff;
+     animation: sigma-spin-anim 0.65s linear infinite;
+     margin-right: 0.45rem;
+     vertical-align: middle;
+ }
+ .isc-btn-outline .sigma-spin-circle,
+ .isc-btn-secondary .sigma-spin-circle {
+     border-color: rgba(37, 99, 235, 0.25);
+     border-top-color: var(--brand, #2563eb);
+ }
+ @keyframes sigma-spin-anim {
+     to { transform: rotate(360deg); }
+ }
+
  .status-pulse {
  animation: heartbeat 2s infinite ease-in-out;
  display: inline-flex;
@@ -463,6 +499,9 @@
           </div>
       </div>
   </div>
+
+  <!-- SigmaFidelity™ Global Top-Edge Progress Bar (Technique A / YouTube Standard) -->
+  <div id="sigma-top-progress" class="sigma-top-progress" aria-hidden="true"></div>
 
   <div class="backoffice-container">
  {% include "components/mega_bar.html" %}
@@ -764,6 +803,8 @@
      }
  });
  </script>
+ <!-- SigmaFidelity™ Enterprise Button Spin & Lock Engine (Phase 3 UX Standard) -->
+ <script src="{{ url_for('static', filename='js/sigma_button_lock.js') }}"></script>
  {% block scripts %}{% endblock %}
 </body>
 </html>

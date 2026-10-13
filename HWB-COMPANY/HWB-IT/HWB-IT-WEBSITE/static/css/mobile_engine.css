@@ -984,6 +984,45 @@
     }
 }
 
+/* ==========================================================================
+   SigmaFidelity™ Enterprise Button Spin & Lock Standard (Phase 3 UX / 2026)
+   ========================================================================== */
+.btn-touch-action, .btn-task-complete, button[type="submit"] {
+    position: relative;
+    transition: transform 0.1s ease, filter 0.15s ease, opacity 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.btn-touch-action:active, .btn-task-complete:active, button[type="submit"]:active {
+    transform: scale(0.97) !important;
+}
+
+.is-spinning-lock, button.is-spinning-lock, .btn-touch-action.is-spinning-lock {
+    pointer-events: none !important;
+    cursor: wait !important;
+    opacity: 0.78 !important;
+    filter: grayscale(12%) !important;
+    user-select: none !important;
+}
+
+.sigma-spin-circle {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    border-radius: 50%;
+    border-top-color: #ffffff;
+    animation: sigma-mobile-spin 0.65s linear infinite;
+    margin-right: 0.5rem;
+    vertical-align: middle;
+}
+
+@keyframes sigma-mobile-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+
 
 
 

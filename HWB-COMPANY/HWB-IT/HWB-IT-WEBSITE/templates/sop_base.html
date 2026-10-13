@@ -453,6 +453,9 @@
     </style>
 </head>
 <body class="qms-clinical-shell">
+    <!-- SigmaFidelity™ Global Top-Edge Progress Bar (Technique A / YouTube Standard) -->
+    <div id="sigma-top-progress" class="sigma-top-progress" aria-hidden="true"></div>
+
     <div style="position: fixed; top: 0; left: 0; width: 100%; z-index: 5000;">
         {% include "components/mega_bar.html" %}
     </div>
@@ -907,5 +910,7 @@
         })();
     </script>
     {% endif %}
+    <!-- SigmaFidelity™ Enterprise Button Spin & Lock Engine (Phase 3 UX Standard) -->
+    <script src="{{ url_for('static', filename='js/sigma_button_lock.js') }}" defer></script>
 </body>
 </html>

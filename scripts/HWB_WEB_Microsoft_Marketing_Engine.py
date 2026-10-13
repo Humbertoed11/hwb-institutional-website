@@ -124,7 +124,7 @@ class MicrosoftMarketingEngine:
                 <div class="footer">
                     <div class="motto">FIDELITY. SAFETY. RESPECT.</div>
                     © {datetime.now().year} HWB Cleaning Services LLC. All Rights Reserved.<br>
-                    ISO 9001:2015 Compliant | Operational Excellence Guaranteed.
+                    Commercial Cleaning & Facility Services | Professional Standards Guaranteed.
                 </div>
             </div>
         </body>

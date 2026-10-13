@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Company Access | Sigmaquality™ Portal{% endblock %}
+{% block title %}Company Access | SigmaFidelity™ Portal{% endblock %}
 
 {% block head %}
 <style>
@@ -76,7 +76,7 @@
 
  .vault-btn {
  width: 100%;
- padding: 1.25rem;
+ padding: 1.15rem;
  background: var(--hwb-blue);
  color: white;
  border: none;
@@ -85,13 +85,31 @@
  text-transform: uppercase;
  letter-spacing: 0.1em;
  cursor: pointer;
- transition: all 0.3s;
+ transition: all 0.2s ease;
  margin-top: 1rem;
+ display: inline-flex;
+ align-items: center;
+ justify-content: center;
+ gap: 0.5rem;
+ box-sizing: border-box;
+ -webkit-tap-highlight-color: transparent;
+ user-select: none;
  }
 
  .vault-btn:hover {
  transform: translateY(-2px);
  box-shadow: 0 10px 30px var(--hwb-blue-glow);
+ }
+
+ .vault-btn:active {
+ transform: scale(0.97) !important;
+ }
+
+ .vault-btn.is-spinning-lock {
+ pointer-events: none !important;
+ cursor: wait !important;
+ opacity: 0.78 !important;
+ filter: grayscale(12%) !important;
  }
 
  .status-reel {
@@ -145,8 +163,17 @@
 
  <div id="status-reel" class="status-reel">Setting up Connection...</div>
 
- <div style="margin-top: 3rem; text-align: center;">
- <a href="/" style="color: rgba(255,255,255,0.3); text-decoration: none; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;">← Exit to Terminal</a>
+ <div style="font-size: 0.72rem; color: rgba(255,255,255,0.45); line-height: 1.45; text-align: center; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.08);">
+     Authorized personnel only. System activity is logged and monitored. Unauthorized access or use is prohibited by law (18 U.S.C. § 1030 &amp; Texas Penal Code § 33.02).
+ </div>
+
+ <div style="margin-top: 2rem; text-align: center; display: flex; flex-direction: column; gap: 0.75rem; align-items: center;">
+     <a href="/" style="color: rgba(255,255,255,0.4); text-decoration: none; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;">← Exit to Home</a>
+     <div style="display: flex; gap: 0.75rem; font-size: 0.72rem; color: rgba(255,255,255,0.35);">
+         <a href="{{ url_for('public.privacy_policy') }}" style="color: inherit; text-decoration: none;" onmouseover="this.style.color='#93c5fd'" onmouseout="this.style.color='rgba(255,255,255,0.35)'">Privacy Policy</a>
+         <span>&bull;</span>
+         <a href="{{ url_for('public.terms_of_service') }}" style="color: inherit; text-decoration: none;" onmouseover="this.style.color='#93c5fd'" onmouseout="this.style.color='rgba(255,255,255,0.35)'">Terms of Service</a>
+     </div>
  </div>
  </div>
 </div>
@@ -165,8 +192,9 @@
 
  form.onsubmit = function() {
  btn.disabled = true;
- btn.innerHTML = "Authenticating...";
- btn.style.opacity = "0.5";
+ btn.classList.add('is-spinning-lock');
+ btn.innerHTML = '<span class="sigma-spin-circle" style="vertical-align: middle; margin-right: 0.5rem;"></span><span>Logging In...</span>';
+ btn.style.opacity = "0.75";
  reel.style.opacity = "1";
  
  let i = 0;

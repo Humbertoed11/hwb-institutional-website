@@ -149,7 +149,7 @@ def stage_outbox_letter(sol_num: str, title: str, recipient: str, address: str, 
     <p><strong>Humberto Dominguez</strong><br>
     Chief Executive Officer<br>
     HWB Cleaning Services LLC<br>
-    <em>Approved by Executive Authority (ISO 9001 / Lean Six Sigma MBB Governance)</em></p>
+    <em>Approved by Executive Authority (HWB Operational Standards)</em></p>
   </div>
 </body>
 </html>"""

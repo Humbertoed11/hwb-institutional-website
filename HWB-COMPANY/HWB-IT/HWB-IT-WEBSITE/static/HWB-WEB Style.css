@@ -3402,3 +3402,137 @@ select.sigma-input {
     color: #ffffff !important;
 }
 
+/* ==========================================================================
+   SigmaFidelity™ Enterprise Button Spin & Lock Standard (Phase 3 UX / 2026)
+   ========================================================================== */
+.isc-btn, .sigma-btn, .vault-btn, button[type="submit"], input[type="submit"] {
+    position: relative;
+    transition: transform 0.1s ease, filter 0.15s ease, opacity 0.15s ease, background 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Mobile & Touch Tactile Press: 2% compression on active touch */
+.isc-btn:active, .sigma-btn:active, .vault-btn:active, button[type="submit"]:active, input[type="submit"]:active {
+    transform: scale(0.97) !important;
+}
+
+/* Lock state: prevents accidental double-tap/clicks and indicates active processing */
+.is-spinning-lock,
+button.is-spinning-lock,
+.isc-btn.is-spinning-lock,
+.vault-btn.is-spinning-lock {
+    pointer-events: none !important;
+    cursor: wait !important;
+    opacity: 0.78 !important;
+    filter: grayscale(12%) !important;
+    user-select: none !important;
+}
+
+.sigma-spin-circle {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    border-radius: 50%;
+    border-top-color: #ffffff;
+    animation: sigma-spin-turn 0.65s linear infinite;
+    margin-right: 0.5rem;
+    vertical-align: middle;
+}
+
+/* For light/outline buttons, use brand blue spinner */
+.isc-btn-outline .sigma-spin-circle,
+.isc-btn-secondary .sigma-spin-circle,
+.btn-outline .sigma-spin-circle {
+    border-color: rgba(37, 99, 235, 0.25);
+    border-top-color: #2563eb;
+}
+
+@keyframes sigma-spin-turn {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* ==========================================================================
+   SigmaFidelity™ Navigation Menu Ribbon & Top Tracker Standard (Technique A)
+   ========================================================================== */
+
+/* Top-Edge Progress Bar (YouTube / GitHub Standard) */
+.sigma-top-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    width: 0%;
+    background: linear-gradient(90deg, #2563eb, #38bdf8, #60a5fa);
+    z-index: 999999;
+    pointer-events: none;
+    transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
+    opacity: 0;
+    box-shadow: 0 0 10px rgba(37, 99, 235, 0.8), 0 0 4px #38bdf8;
+}
+
+.sigma-top-progress.is-active {
+    opacity: 1;
+    width: 68%;
+    animation: sigmaTopGlide 1.6s ease-in-out infinite alternate;
+}
+
+.sigma-top-progress.is-completed {
+    opacity: 0;
+    width: 100%;
+}
+
+@keyframes sigmaTopGlide {
+    0% { width: 60%; }
+    100% { width: 85%; }
+}
+
+/* Nav Tab Loading Highlight & Spinner (Technique A) */
+.sigma-split-tab.tab-is-loading {
+    background: #2563eb !important;
+    border-color: #2563eb !important;
+    box-shadow: 0 0 12px rgba(37, 99, 235, 0.35) !important;
+    pointer-events: none !important;
+    cursor: wait !important;
+}
+
+.sigma-split-tab.tab-is-loading .sigma-split-main {
+    color: #ffffff !important;
+    background: transparent !important;
+}
+
+.sigma-split-tab.tab-is-loading .sigma-split-chevron {
+    color: #ffffff !important;
+    opacity: 0.6;
+}
+
+.sigma-nav-btn.tab-is-loading {
+    background: #2563eb !important;
+    color: #ffffff !important;
+    pointer-events: none !important;
+    cursor: wait !important;
+    box-shadow: 0 0 12px rgba(37, 99, 235, 0.35) !important;
+}
+
+.sigma-spin-circle.nav-spin {
+    width: 12px;
+    height: 12px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #ffffff;
+    margin-right: 6px;
+    display: inline-block;
+    vertical-align: middle;
+    animation: sigma-spin-turn 0.65s linear infinite;
+}
+
+/* Soft-dim existing table while new view loads */
+.table-view-fading {
+    opacity: 0.45 !important;
+    transition: opacity 0.25s ease !important;
+    pointer-events: none !important;
+}
+
+
+

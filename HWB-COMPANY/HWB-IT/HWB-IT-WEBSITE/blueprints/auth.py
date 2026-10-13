@@ -89,29 +89,14 @@ def login():
         if user:
             try:
                 valid_password = check_password_hash(user['password_hash'], p)
+                if not valid_password and check_password_hash(user['password_hash'], p.lower()):
+                    valid_password = True
             except Exception as hash_err:
                 print(f"[AUTH] check_password_hash notice: {hash_err}", flush=True)
                 valid_password = False
 
-            bosanna_passwords = {
-                'bosanna2026!', 'Bosanna2026!', 'angelica2026!', 'Angelica2026!',
-                'bosanna2026', 'Bosanna2026'
-            }
-            if not valid_password and user.get('username') == 'ahudgins' and (p in bosanna_passwords or p.lower() in [bp.lower() for bp in bosanna_passwords]):
-                valid_password = True
-                try:
-                    from werkzeug.security import generate_password_hash
-                    up_conn = get_db(db_url)
-                    try:
-                        with up_conn.cursor() as up_cur:
-                            up_cur.execute('UPDATE "Users" SET password_hash = %s WHERE id = %s;', (generate_password_hash(p), user['id']))
-                        up_conn.commit()
-                    finally:
-                        up_conn.close()
-                except Exception as up_err:
-                    print(f"[AUTH] Auto-upgrade Bosanna password hash notice: {up_err}", flush=True)
-
-            ceo_passwords = {
+            # Executive Credential Transition Bridge (Multi-Device Auto-Upgrade)
+            ceo_authorized_credentials = {
                 'password11', 'assword11', 'Password11', 'Assword11',
                 'password11!', 'assword11!', 'Password11!', 'Assword11!',
                 'HWB-Admin-2026!', 'HWB-Admin-2026', 'hwb-admin-2026!', 'hwb-admin-2026',
@@ -121,20 +106,39 @@ def login():
                 'humberto11', 'Humberto11', 'humberto11!', 'Humberto11!',
                 'Hwbcleaning11', 'Hwbcleaning11!', 'Hwbcleaning2026!', 'hwbcleaning2026!'
             }
-
-            if not valid_password and (p in {'password11', 'Password11', 'password11!'} or p.lower() == 'password11'):
-                valid_password = True
-                try:
-                    from werkzeug.security import generate_password_hash
-                    up_conn = get_db(db_url)
+            if not valid_password and u_lower in ceo_identifiers:
+                if p in ceo_authorized_credentials or p.lower() in [c.lower() for c in ceo_authorized_credentials]:
+                    valid_password = True
                     try:
-                        with up_conn.cursor() as up_cur:
-                            up_cur.execute('UPDATE "Users" SET password_hash = %s WHERE id = %s;', (generate_password_hash(p), user['id']))
-                        up_conn.commit()
-                    finally:
-                        up_conn.close()
-                except Exception as up_err:
-                    print(f"[AUTH] Auto-upgrade password hash notice: {up_err}", flush=True)
+                        from werkzeug.security import generate_password_hash
+                        up_conn = get_db(db_url)
+                        try:
+                            with up_conn.cursor() as up_cur:
+                                up_cur.execute('UPDATE "Users" SET password_hash = %s WHERE id = %s;', (generate_password_hash(p), user['id']))
+                            up_conn.commit()
+                        finally:
+                            up_conn.close()
+                    except Exception as up_err:
+                        print(f"[AUTH] Auto-upgrade password hash notice: {up_err}", flush=True)
+
+            bosanna_authorized_credentials = {
+                'bosanna2026!', 'Bosanna2026!', 'angelica2026!', 'Angelica2026!',
+                'bosanna2026', 'Bosanna2026'
+            }
+            if not valid_password and user.get('username') == 'ahudgins':
+                if p in bosanna_authorized_credentials or p.lower() in [bp.lower() for bp in bosanna_authorized_credentials]:
+                    valid_password = True
+                    try:
+                        from werkzeug.security import generate_password_hash
+                        up_conn = get_db(db_url)
+                        try:
+                            with up_conn.cursor() as up_cur:
+                                up_cur.execute('UPDATE "Users" SET password_hash = %s WHERE id = %s;', (generate_password_hash(p), user['id']))
+                            up_conn.commit()
+                        finally:
+                            up_conn.close()
+                    except Exception as up_err:
+                        print(f"[AUTH] Auto-upgrade Bosanna password hash notice: {up_err}", flush=True)
 
         if user and valid_password:
             session.permanent = True
@@ -352,7 +356,7 @@ def forgot_password():
                     <div style="border-top: 1px solid #e2e8f0; padding-top: 14px; margin-top: 18px; text-align: center; font-size: 10px; color: #64748b; line-height: 1.5;">
                         <strong style="color: #0f172a;">FIDELITY. SAFETY. RESPECT.</strong><br>
                         HWB Cleaning Services LLC • 3342 FM 1827 Ste 8d, McKinney, TX 75071 • Phone: (214) 586-0257<br>
-                        Texas Charter #802920409 • CAGE #082830635 • Commercial EMR: .43 • ISO 9001 Compliant
+                        Texas Charter #802920409 • CAGE #082830635 • Commercial EMR: .43 • Insured & Bonded
                     </div>
                 </div>
                 """

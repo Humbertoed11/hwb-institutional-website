@@ -207,6 +207,47 @@
     border-color: var(--brand);
     color: #ffffff !important;
 }
+
+/* Technique A: Instant Active Tab Spinner & Loading State */
+.sigma-split-tab.tab-is-loading {
+    background: var(--brand, #2563eb) !important;
+    border-color: var(--brand, #2563eb) !important;
+    box-shadow: 0 0 12px rgba(37, 99, 235, 0.4) !important;
+    pointer-events: none !important;
+    cursor: wait !important;
+}
+.sigma-split-tab.tab-is-loading .sigma-split-main {
+    color: #ffffff !important;
+    background: transparent !important;
+}
+.sigma-split-tab.tab-is-loading .sigma-split-chevron {
+    color: #ffffff !important;
+    opacity: 0.6;
+}
+.sigma-nav-btn.tab-is-loading {
+    background: var(--brand, #2563eb) !important;
+    border-color: var(--brand, #2563eb) !important;
+    color: #ffffff !important;
+    pointer-events: none !important;
+    cursor: wait !important;
+    box-shadow: 0 0 12px rgba(37, 99, 235, 0.4) !important;
+}
+.sigma-spin-circle.nav-spin {
+    width: 12px;
+    height: 12px;
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    border-radius: 50%;
+    border-top-color: #ffffff;
+    margin-right: 6px;
+    display: inline-block;
+    vertical-align: middle;
+    animation: sigma-spin-turn 0.65s linear infinite;
+}
+.table-view-fading {
+    opacity: 0.45 !important;
+    transition: opacity 0.25s ease !important;
+    pointer-events: none !important;
+}
 </style>
 
 <div class="workspace-stage">
