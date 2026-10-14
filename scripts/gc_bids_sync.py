@@ -18,7 +18,13 @@ from psycopg2.extras import RealDictCursor
 import requests
 import msal
 from dotenv import load_dotenv
-from core.services.gc_vetting_engine import GCVettingEngine
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'HWB-COMPANY', 'HWB-IT', 'HWB-IT-WEBSITE'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+try:
+    from core.services.gc_vetting_engine import GCVettingEngine
+except ImportError:
+    from HWB_COMPANY.HWB_IT.HWB_IT_WEBSITE.core.services.gc_vetting_engine import GCVettingEngine
 
 # Load Environment Secrets
 load_dotenv('.env')
