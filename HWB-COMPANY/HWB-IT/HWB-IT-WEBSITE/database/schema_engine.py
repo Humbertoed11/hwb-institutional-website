@@ -692,6 +692,23 @@ def apply_system_migrations(conn: Any, db_url: Optional[str] = None) -> None:
                 ("039_sales_and_account_executive_positions", "scripts.migrate_039_sales_and_account_executive_positions", "Digital job positions and descriptions for Remote Sales, Outside Sales, and Account Executives")
             ]
 
+            # --- Migration 040: High-Speed Scalability Indexes ---
+            if "040_high_speed_scalability_indexes" not in applied:
+                print("[MIGRATION] Applying 040_high_speed_scalability_indexes...", flush=True)
+                cur.execute('CREATE INDEX IF NOT EXISTS idx_leads_city_status ON "Leads" (city, status);')
+                cur.execute('CREATE INDEX IF NOT EXISTS idx_leads_facility_type ON "Leads" (facility_type);')
+                cur.execute('CREATE INDEX IF NOT EXISTS idx_leads_input_date ON "Leads" (input_date DESC);')
+                cur.execute('CREATE INDEX IF NOT EXISTS idx_construction_bids_status ON "ConstructionBids" (status);')
+                cur.execute('CREATE INDEX IF NOT EXISTS idx_institutional_bids_status ON "InstitutionalBids" (status);')
+                cur.execute("""
+                    INSERT INTO "schema_migrations" (version, description)
+                    VALUES ('040_high_speed_scalability_indexes', 'High-speed B-Tree indexes on Leads, ConstructionBids, and InstitutionalBids for zero-cost scalability')
+                    ON CONFLICT (version) DO NOTHING;
+                """)
+                conn.commit()
+                applied.add("040_high_speed_scalability_indexes")
+                print("[MIGRATION] 040_high_speed_scalability_indexes successfully applied and recorded.", flush=True)
+
             for v_tag, mod_path, v_desc in modular_migrations:
                 if v_tag not in applied:
                     print(f"[MIGRATION] Applying modular migration {v_tag} ({mod_path})...", flush=True)

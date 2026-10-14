@@ -21,7 +21,7 @@ _POOLS = {}
 _POOLS_LOCK = threading.Lock()
 
 MIN_POOL_CONNECTIONS = int(os.environ.get('DB_POOL_MIN', 2))
-MAX_POOL_CONNECTIONS = int(os.environ.get('DB_POOL_MAX', 20))
+MAX_POOL_CONNECTIONS = int(os.environ.get('DB_POOL_MAX', 28))
 
 
 class PooledConnection:

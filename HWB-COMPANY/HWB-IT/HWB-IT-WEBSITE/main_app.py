@@ -62,6 +62,7 @@ app = Flask(__name__,
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 Compress(app)
 app.config.from_object(sys_config)
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 604800  # 7-day browser & edge cache for static files
 app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(hours=12)
 app.config['SESSION_INACTIVITY_TIMEOUT_SECONDS'] = int(os.getenv('SESSION_INACTIVITY_TIMEOUT_SECONDS', '1800'))
 
@@ -200,6 +201,18 @@ def apply_application_security_headers(response):
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     response.headers['Content-Security-Policy'] = "default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval'; img-src 'self' https: data: blob:;"
     response.headers['Server'] = 'Cloudflare'
+
+    # Static Assets: 7-day immutable edge caching (Cloudflare absorbs 100% of asset requests)
+    if request.path.startswith('/static/'):
+        response.headers['Cache-Control'] = 'public, max-age=604800, immutable'
+    # Public Marketing Pages: 10-minute edge shield for anonymous guests
+    elif request.method == 'GET' and not session.get('user_id') and not request.path.startswith(('/admin', '/api', '/auth')):
+        response.headers['Cache-Control'] = 'public, max-age=600, s-maxage=600'
+    # Backoffice Desks, APIs, and Auth Routes: Strict zero-cache protection
+    elif request.path.startswith(('/admin', '/api', '/auth')):
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, private, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+
     return response
 
 # --- Boot & Infrastructure Handshake Sequence ---

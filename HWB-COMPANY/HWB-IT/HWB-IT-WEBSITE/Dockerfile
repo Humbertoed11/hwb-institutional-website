@@ -35,4 +35,4 @@ RUN mkdir -p /app/logs
 EXPOSE 5000
 
 # Start the application using Gunicorn for commercial reliability
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "3", "--threads", "4", "--worker-class", "gthread", "--timeout", "120", "--keep-alive", "5", "main_app:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "3", "--threads", "8", "--worker-class", "gthread", "--timeout", "45", "--keep-alive", "5", "--max-requests", "1000", "--max-requests-jitter", "100", "main_app:app"]
