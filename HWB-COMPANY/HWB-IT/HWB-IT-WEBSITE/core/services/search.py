@@ -2,23 +2,27 @@
 SigmaFidelity™ Advanced Query Engine
 Standard: HWB-QMS-11.2 / BUG-065
 Custodians: George (Systems Architect) & Silas Sync (VP of CRM)
+Enterprise Boolean Logic: AND, OR, NOT, Parentheses, Quoted Phrases, Field Targeting, Numeric & Date Ranges
 """
 
 import re
-from typing import List, Tuple, Any
+from typing import List, Tuple, Any, Optional, Dict
 
 
 def parse_advanced_search(search_q: str, view: str = 'leads') -> Tuple[List[str], List[Any]]:
     """
-    Parses advanced search query strings into SQL WHERE clauses and parameters.
+    Parses advanced search query strings into SQL WHERE clauses and parameters with full enterprise boolean logic.
     Supports:
+    - Boolean operators: AND, OR, NOT, &&, ||, ! (case-insensitive, e.g. 'plano and child care center', 'plano or frisco')
+    - Grouped expressions: (plano OR frisco) AND "child care center"
+    - Exact phrases: "Child Care Center", "North Texas"
     - Field targeting: city:Plano, industry:Child, status:New, rep:Wiley
     - Numeric comparisons & ranges: sqf:>=10000, sqf:<20000, value:>50000
-    - Negative exclusions: -Church, -"School District"
-    - Exact phrases: "North Texas"
+    - Negative exclusions: -Church, -"School District", NOT Church
     - Wildcards: Pla*
     - American dates: 04/10/2026 -> 2026-04-10
-    - General keywords across primary text columns
+    - Entity Shorthand format: GC-#014, GC-14, IB-#001, ACC-#003, LD-#1842, #14
+    - Fault-tolerant parsing: unclosed quotes and unbalanced parentheses auto-balance safely without 500 errors
     """
     if not search_q or not search_q.strip():
         return [], []
@@ -32,6 +36,7 @@ def parse_advanced_search(search_q: str, view: str = 'leads') -> Tuple[List[str]
             return f'{year}-{int(month):02d}-{int(day):02d}'
         return val
 
+    # Configure field maps and general search columns by view
     if view in ('leads', 'sales_desk'):
         field_map = {
             'city': ('city', 'text'),
@@ -76,32 +81,92 @@ def parse_advanced_search(search_q: str, view: str = 'leads') -> Tuple[List[str]
 
     elif view == 'accounts':
         field_map = {
-            'city': ('city', 'text'),
-            'state': ('state', 'text'),
-            'zip': ('zip', 'text'),
-            'company': ('company_name', 'text'),
-            'name': ('company_name', 'text'),
-            'phone': ('phone', 'text'),
-            'email': ('email', 'text'),
-            'address': ('company_address', 'text'),
-            'revenue': ('annual_revenue', 'num'),
-            'value': ('annual_revenue', 'num'),
-            'status': ('status', 'text'),
-            'industry': ('facility_type', 'text'),
-            'facility': ('facility_type', 'text'),
-            'building': ('facility_type', 'text'),
-            'contact': ('contact_person_name', 'text'),
+            'city': ('c.city', 'text'),
+            'state': ('c.state', 'text'),
+            'zip': ('c.zip', 'text'),
+            'company': ('c.company_name', 'text'),
+            'name': ('c.company_name', 'text'),
+            'phone': ('c.phone', 'text'),
+            'email': ('c.email', 'text'),
+            'address': ('c.company_address', 'text'),
+            'revenue': ('c.annual_revenue', 'num'),
+            'value': ('c.annual_revenue', 'num'),
+            'status': ('c.status', 'text'),
+            'sqf': ('c.sqf', 'num'),
+            'contact': ('c.contact_person_name', 'text'),
             'umbrella': ('c.umbrella_name', 'text'),
+            'notes': ('c.notes', 'text'),
             'rep': ('c.assigned_rep_id', 'user_ref'),
             'owner': ('c.assigned_rep_id', 'user_ref'),
-            'id': ('customer_id', 'num'),
-            'acc': ('customer_id', 'num'),
+            'id': ('c.customer_id', 'num'),
+            'acc': ('c.customer_id', 'num'),
         }
         general_cols = [
-            'company_name', 'company_address', 'city', 'state', 'zip',
-            'phone', 'email', 'contact_person_name', 'facility_type', 'c.umbrella_name'
+            'c.company_name', 'c.company_address', 'c.city', 'c.state', 'c.zip',
+            'c.phone', 'c.email', 'c.contact_person_name', 'c.umbrella_name', 'c.notes'
         ]
         user_table_fk = 'c.assigned_rep_id'
+
+    elif view == 'institutional_bids':
+        field_map = {
+            'solicitation': ('ib.solicitation_number', 'text'),
+            'number': ('ib.solicitation_number', 'text'),
+            'title': ('ib.title', 'text'),
+            'project': ('ib.title', 'text'),
+            'name': ('ib.title', 'text'),
+            'agency': ('ib.agency_name', 'text'),
+            'officer': ('ib.procurement_officer', 'text'),
+            'status': ('ib.status', 'text'),
+            'value': ('ib.published_budget', 'num'),
+            'budget': ('ib.published_budget', 'num'),
+            'due': ('ib.bid_due_date', 'date'),
+            'date': ('ib.bid_due_date', 'date'),
+            'id': ('ib.id', 'num'),
+            'ib': ('ib.id', 'num'),
+        }
+        general_cols = [
+            'ib.solicitation_number', 'ib.title', 'ib.agency_name', 'ib.procurement_officer', 'ib.status'
+        ]
+        user_table_fk = None
+
+    elif view == 'general_contractors':
+        field_map = {
+            'company': ('gc.company_name', 'text'),
+            'name': ('gc.company_name', 'text'),
+            'estimator': ('gc.lead_estimator_name', 'text'),
+            'city': ('gc.city', 'text'),
+            'state': ('gc.state', 'text'),
+            'zip': ('gc.zipcode', 'text'),
+            'market': ('gc.primary_market', 'text'),
+            'phone': ('gc.lead_estimator_phone', 'text'),
+            'email': ('gc.lead_estimator_email', 'text'),
+            'status': ('gc.sos_status', 'text'),
+            'tier': ('gc.vetting_tier', 'text'),
+            'score': ('gc.vetting_score', 'num'),
+            'id': ('gc.id', 'num'),
+            'gc': ('gc.id', 'num'),
+        }
+        general_cols = [
+            'gc.company_name', 'gc.city', 'gc.primary_market', 'gc.lead_estimator_name', 'gc.lead_estimator_email', 'gc.lead_estimator_phone'
+        ]
+        user_table_fk = None
+
+    elif view == 'programs':
+        field_map = {
+            'code': ('program_code', 'text'),
+            'name': ('program_name', 'text'),
+            'program': ('program_name', 'text'),
+            'agency': ('sponsoring_agency', 'text'),
+            'jurisdiction': ('jurisdiction', 'text'),
+            'status': ('status', 'text'),
+            'naics': ('primary_naics', 'text'),
+            'score': ('readiness_score', 'num'),
+            'id': ('id', 'num'),
+        }
+        general_cols = [
+            'program_code', 'program_name', 'sponsoring_agency', 'jurisdiction', 'status', 'primary_naics'
+        ]
+        user_table_fk = None
 
     else:  # construction_bids
         field_map = {
@@ -131,119 +196,251 @@ def parse_advanced_search(search_q: str, view: str = 'leads') -> Tuple[List[str]
         ]
         user_table_fk = None
 
-    pattern = r'(?P<field>[a-zA-Z_]+):(?P<op>>=|<=|>|<|=)?(?P<fval>\"[^\"]+\"|[^\s]+)|-(?P<neg>\"[^\"]+\"|[^\s]+)|\"(?P<exact>[^\"]+)\"|(?P<word>[^\s]+)'
-    
-    where_clauses: List[str] = []
-    params: List[Any] = []
-
-    for m in re.finditer(pattern, search_q):
-        d = m.groupdict()
-        if d['field']:
-            f_key = d['field'].lower()
-            op = d['op'] or '='
-            val = d['fval'].strip('\"')
-            
+    def compile_leaf(token_str: str) -> Tuple[Optional[str], List[Any]]:
+        # 1. Field Targeting (field:op?val)
+        m_field = re.match(r'^([a-zA-Z_]+):(>=|<=|>|<|=)?(\"[^\"]*\"?|[^\s]+)$', token_str)
+        if m_field:
+            f_key = m_field.group(1).lower()
+            op = m_field.group(2) or '='
+            raw_val = m_field.group(3).strip('\"')
             if f_key in field_map:
                 col, col_type = field_map[f_key]
                 if col_type == 'num':
-                    clean_val = re.sub(r'[^0-9.]', '', val)
+                    clean_val = re.sub(r'[^0-9.]', '', raw_val)
                     if clean_val:
                         valid_op = op if op in ['>=', '<=', '>', '<', '='] else '='
-                        where_clauses.append(f'{col} {valid_op} %s')
-                        params.append(float(clean_val))
+                        return f'{col} {valid_op} %s', [float(clean_val)]
+                    return None, []
                 elif col_type == 'date':
-                    norm_date = normalize_date(val)
+                    norm_date = normalize_date(raw_val)
                     if '*' in norm_date:
-                        where_clauses.append(f'{col}::text LIKE %s')
-                        params.append(norm_date.replace('*', '%'))
-                    else:
-                        valid_op = op if op in ['>=', '<=', '>', '<', '='] else '='
-                        where_clauses.append(f'{col}::date {valid_op} %s::date')
-                        params.append(norm_date)
+                        return f'{col}::text LIKE %s', [norm_date.replace('*', '%')]
+                    valid_op = op if op in ['>=', '<=', '>', '<', '='] else '='
+                    return f'{col}::date {valid_op} %s::date', [norm_date]
                 elif col_type == 'user_ref' and user_table_fk:
-                    if val.isdigit():
-                        where_clauses.append(f'{user_table_fk} = %s')
-                        params.append(int(val))
-                    else:
-                        pat = f'%{val}%'
-                        where_clauses.append(f'{user_table_fk} IN (SELECT id FROM "Users" WHERE full_name ILIKE %s OR username ILIKE %s)')
-                        params.extend([pat, pat])
+                    if raw_val.isdigit():
+                        return f'{user_table_fk} = %s', [int(raw_val)]
+                    pat = f'%{raw_val}%'
+                    return f'{user_table_fk} IN (SELECT id FROM "Users" WHERE full_name ILIKE %s OR username ILIKE %s)', [pat, pat]
                 elif f_key in ('phone', 'estimator_phone'):
-                    digits = re.sub(r'\D', '', val)
+                    digits = re.sub(r'\D', '', raw_val)
                     if len(digits) >= 4:
-                        where_clauses.append(f"({col} ILIKE %s OR regexp_replace(COALESCE({col}, ''), '\\D', '', 'g') ILIKE %s)")
-                        params.extend([f"%{val}%", f"%{digits}%"])
-                    else:
-                        pat = val.replace('*', '%') if '*' in val else f'%{val}%'
-                        where_clauses.append(f'{col} ILIKE %s')
-                        params.append(pat)
+                        return f"({col} ILIKE %s OR regexp_replace(COALESCE({col}, ''), '\\D', '', 'g') ILIKE %s)", [f"%{raw_val}%", f"%{digits}%"]
+                    pat = raw_val.replace('*', '%') if '*' in raw_val else f'%{raw_val}%'
+                    return f'{col} ILIKE %s', [pat]
                 else:
-                    pat = val.replace('*', '%') if '*' in val else f'%{val}%'
-                    where_clauses.append(f'{col} ILIKE %s')
-                    params.append(pat)
+                    pat = raw_val.replace('*', '%') if '*' in raw_val else f'%{raw_val}%'
+                    return f'{col} ILIKE %s', [pat]
             else:
-                full_token = m.group(0)
-                pat = full_token.replace('*', '%') if '*' in full_token else f'%{full_token}%'
+                pat = token_str.replace('*', '%') if '*' in token_str else f'%{token_str}%'
                 sub = ' OR '.join([f'{c} ILIKE %s' for c in general_cols])
-                where_clauses.append(f'({sub})')
-                params.extend([pat] * len(general_cols))
-                
-        elif d['neg']:
-            neg_val = d['neg'].strip('\"')
+                return f'({sub})', [pat] * len(general_cols)
+
+        # 2. Negation (-val or -"phrase")
+        if token_str.startswith('-') and len(token_str) > 1:
+            neg_val = token_str[1:].strip('\"')
             neg_pat = f'%{neg_val}%'
             sub = ' AND '.join([f'COALESCE({c}::text, \'\') NOT ILIKE %s' for c in general_cols])
-            where_clauses.append(f'({sub})')
-            params.extend([neg_pat] * len(general_cols))
-            
-        elif d['exact']:
-            exact_val = d['exact']
-            exact_pat = rf'\y{re.escape(exact_val)}\y'
-            sub = ' OR '.join([f'{c} ~* %s' for c in general_cols])
-            where_clauses.append(f'({sub})')
-            params.extend([exact_pat] * len(general_cols))
-            
-        elif d['word']:
-            w = d['word']
-            norm_date = normalize_date(w)
+            return f'({sub})', [neg_pat] * len(general_cols)
 
-            # Check for Entity Shorthand format: GC-#014, GC-14, IB-#001, ACC-#003, LD-#1842, #14, etc.
-            id_prefix_match = re.match(r'^(?:(?:gc|ib|acc|ld|app|cand|wo|vet)[-#]*)(\d+)$', w, re.I)
-            raw_hash_match = re.match(r'^#(\d+)$', w)
-            target_id = None
-            if id_prefix_match:
-                target_id = int(id_prefix_match.group(1))
-            elif raw_hash_match:
-                target_id = int(raw_hash_match.group(1))
+        # 3. Exact Quoted Phrase ("phrase")
+        if token_str.startswith('\"'):
+            exact_val = token_str.strip('\"')
+            if exact_val:
+                exact_pat = rf'\y{re.escape(exact_val)}\y'
+                sub = ' OR '.join([f'{c} ~* %s' for c in general_cols])
+                return f'({sub})', [exact_pat] * len(general_cols)
+            return None, []
 
-            if target_id is not None:
-                if view in ('leads', 'sales_desk'):
-                    where_clauses.append('id = %s')
-                    params.append(target_id)
-                elif view == 'accounts':
-                    where_clauses.append('customer_id = %s')
-                    params.append(target_id)
-                elif view == 'construction_bids':
-                    where_clauses.append('cb.id = %s')
-                    params.append(target_id)
-            elif norm_date != w:
-                sub = ' OR '.join([f'{c}::text ILIKE %s' for c in general_cols])
-                where_clauses.append(f'({sub})')
-                params.extend([f'%{norm_date}%'] * len(general_cols))
-            elif re.search(r'^\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}$', w) or (w.isdigit() and len(w) >= 7):
-                digits = re.sub(r'\D', '', w)
-                phone_cols = [c for c in general_cols if 'phone' in c]
-                sub_parts = [f'{c} ILIKE %s' for c in general_cols]
-                if phone_cols:
-                    sub_parts.extend([f"regexp_replace(COALESCE({c}, ''), '\\D', '', 'g') ILIKE %s" for c in phone_cols])
-                    where_clauses.append(f"({' OR '.join(sub_parts)})")
-                    params.extend([f'%{w}%'] * len(general_cols) + [f'%{digits}%'] * len(phone_cols))
+        # 4. Entity Shorthand ID (GC-#014, GC-14, IB-#001, ACC-#003, LD-#1842, #14)
+        id_prefix_match = re.match(r'^(?:(?:gc|ib|acc|ld|app|cand|wo|vet)[-#]*)(\d+)$', token_str, re.I)
+        raw_hash_match = re.match(r'^#(\d+)$', token_str)
+        target_id = None
+        if id_prefix_match:
+            target_id = int(id_prefix_match.group(1))
+        elif raw_hash_match:
+            target_id = int(raw_hash_match.group(1))
+
+        if target_id is not None:
+            if view in ('leads', 'sales_desk'):
+                return 'id = %s', [target_id]
+            elif view == 'accounts':
+                return 'customer_id = %s', [target_id]
+            elif view == 'construction_bids':
+                return 'cb.id = %s', [target_id]
+            elif view == 'institutional_bids':
+                return 'ib.id = %s', [target_id]
+            elif view == 'general_contractors':
+                return 'gc.id = %s', [target_id]
+            elif view == 'programs':
+                return 'id = %s', [target_id]
+
+        # 5. Date formatted keyword (e.g. 04/10/2026)
+        norm_date = normalize_date(token_str)
+        if norm_date != token_str:
+            sub = ' OR '.join([f'{c}::text ILIKE %s' for c in general_cols])
+            return f'({sub})', [f'%{norm_date}%'] * len(general_cols)
+
+        # 6. Phone pattern
+        if re.search(r'^\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}$', token_str) or (token_str.isdigit() and len(token_str) >= 7):
+            digits = re.sub(r'\D', '', token_str)
+            phone_cols = [c for c in general_cols if 'phone' in c]
+            sub_parts = [f'{c} ILIKE %s' for c in general_cols]
+            if phone_cols:
+                sub_parts.extend([f"regexp_replace(COALESCE({c}, ''), '\\D', '', 'g') ILIKE %s" for c in phone_cols])
+                return f"({' OR '.join(sub_parts)})", [f'%{token_str}%'] * len(general_cols) + [f'%{digits}%'] * len(phone_cols)
+            return f"({' OR '.join(sub_parts)})", [f'%{token_str}%'] * len(general_cols)
+
+        # 7. Standard keyword across general columns
+        w_pat = token_str.replace('*', '%') if '*' in token_str else f'%{token_str}%'
+        sub = ' OR '.join([f'{c} ILIKE %s' for c in general_cols])
+        return f'({sub})', [w_pat] * len(general_cols)
+
+    # Tokenize input string
+    raw_pattern = r'(\(|\)|\"[^\"]*\"?|-[a-zA-Z0-9_\"]+|[a-zA-Z_]+:(?:>=|<=|>|<|=)?(?:\"[^\"]*\"?|[^\s()]+)|[^\s()]+)'
+    raw_matches = re.finditer(raw_pattern, search_q)
+    tokens = []
+    for m in raw_matches:
+        text = m.group(1).strip()
+        if not text:
+            continue
+        upper = text.upper()
+        if text == '(':
+            tokens.append(('LPAREN', '('))
+        elif text == ')':
+            tokens.append(('RPAREN', ')'))
+        elif upper in ('AND', '&&'):
+            tokens.append(('AND', 'AND'))
+        elif upper in ('OR', '||'):
+            tokens.append(('OR', 'OR'))
+        elif upper in ('NOT', '!') and not text.startswith('-'):
+            tokens.append(('NOT', 'NOT'))
+        else:
+            tokens.append(('TERM', text))
+
+    # Insert implicit AND between adjacent operands
+    tokens_with_and = []
+    for i, tok in enumerate(tokens):
+        tokens_with_and.append(tok)
+        if i + 1 < len(tokens):
+            next_tok = tokens[i + 1]
+            curr_can_end = tok[0] in ('TERM', 'RPAREN')
+            next_can_start = next_tok[0] in ('TERM', 'LPAREN', 'NOT')
+            if curr_can_end and next_can_start:
+                tokens_with_and.append(('AND', 'AND'))
+
+    # Recursive-Descent Parser
+    class QueryParser:
+        def __init__(self, tok_list):
+            self.tokens = tok_list
+            self.pos = 0
+
+        def peek(self):
+            if self.pos < len(self.tokens):
+                return self.tokens[self.pos]
+            return None
+
+        def consume(self):
+            tok = self.peek()
+            if tok:
+                self.pos += 1
+            return tok
+
+        def parse(self):
+            if not self.tokens:
+                return None
+            return self.parse_or()
+
+        def parse_or(self):
+            left = self.parse_and()
+            while True:
+                tok = self.peek()
+                if tok and tok[0] == 'OR':
+                    self.consume()
+                    right = self.parse_and()
+                    if right and left:
+                        left = ('OR', left, right)
+                    elif right:
+                        left = right
                 else:
-                    where_clauses.append(f"({' OR '.join(sub_parts)})")
-                    params.extend([f'%{w}%'] * len(general_cols))
-            else:
-                w_pat = w.replace('*', '%') if '*' in w else f'%{w}%'
-                sub = ' OR '.join([f'{c} ILIKE %s' for c in general_cols])
-                where_clauses.append(f'({sub})')
-                params.extend([w_pat] * len(general_cols))
+                    break
+            return left
 
-    return where_clauses, params
+        def parse_and(self):
+            left = self.parse_not()
+            while True:
+                tok = self.peek()
+                if tok and tok[0] == 'AND':
+                    self.consume()
+                    right = self.parse_not()
+                    if right and left:
+                        left = ('AND', left, right)
+                    elif right:
+                        left = right
+                else:
+                    break
+            return left
+
+        def parse_not(self):
+            tok = self.peek()
+            if tok and tok[0] == 'NOT':
+                self.consume()
+                operand = self.parse_not()
+                if operand:
+                    return ('NOT', operand)
+                return None
+            return self.parse_primary()
+
+        def parse_primary(self):
+            tok = self.peek()
+            if not tok:
+                return None
+            if tok[0] == 'LPAREN':
+                self.consume()
+                sub = self.parse_or()
+                if self.peek() and self.peek()[0] == 'RPAREN':
+                    self.consume()
+                return sub
+            elif tok[0] == 'TERM':
+                self.consume()
+                return ('TERM', tok[1])
+            else:
+                self.consume()
+                return self.parse_primary()
+
+    parser = QueryParser(tokens_with_and)
+    root = parser.parse()
+    if not root:
+        return [], []
+
+    def compile_node(node) -> Tuple[Optional[str], List[Any]]:
+        if not node:
+            return None, []
+        ntype = node[0]
+        if ntype == 'TERM':
+            return compile_leaf(node[1])
+        elif ntype == 'NOT':
+            sql, params = compile_node(node[1])
+            if sql:
+                if 'NOT ILIKE' in sql and not sql.startswith('(NOT'):
+                    return sql, params
+                return f'(NOT ({sql}))', params
+            return None, []
+        elif ntype == 'AND':
+            l_sql, l_p = compile_node(node[1])
+            r_sql, r_p = compile_node(node[2])
+            if l_sql and r_sql:
+                return f'({l_sql} AND {r_sql})', l_p + r_p
+            return l_sql or r_sql, l_p + r_p
+        elif ntype == 'OR':
+            l_sql, l_p = compile_node(node[1])
+            r_sql, r_p = compile_node(node[2])
+            if l_sql and r_sql:
+                return f'({l_sql} OR {r_sql})', l_p + r_p
+            return l_sql or r_sql, l_p + r_p
+        return None, []
+
+    sql, params = compile_node(root)
+    if sql:
+        return [sql], params
+    return [], []

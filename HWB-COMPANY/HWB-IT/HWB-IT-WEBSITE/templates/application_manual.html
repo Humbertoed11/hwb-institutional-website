@@ -576,7 +576,7 @@
             <div>
                 <div class="chapter-card-num">Chapter 2</div>
                 <div class="chapter-card-title">🏢 Commercial Leads &amp; CRM Pipeline</div>
-                <div class="chapter-card-desc">Texas facility search, custom column manager, personal view saving, and call notes logging.</div>
+                <div class="chapter-card-desc">Texas facility search with enterprise boolean logic (AND, OR, NOT, parentheses), custom column manager, and call notes logging.</div>
             </div>
             <div style="font-size: 0.78rem; color: #2563eb; font-weight: 700; margin-top: 1rem;">View Chapter &rarr;</div>
         </a>
@@ -862,9 +862,9 @@
                 <tbody>
                     <tr>
                         <td><span class="element-code">Search Leads</span></td>
-                        <td>Text Search</td>
-                        <td>Free text query</td>
-                        <td>Instantly filters rows as you type without page reload.</td>
+                        <td>Boolean Search</td>
+                        <td>Text, AND, OR, NOT, Quotes, Columns</td>
+                        <td>Filters rows instantly with enterprise boolean logic, exact phrase quotes, and column targeting.</td>
                     </tr>
                     <tr>
                         <td><span class="element-code">Calling Sprint Preset</span></td>
@@ -895,6 +895,64 @@
                         <td>Text Area</td>
                         <td>Multi-line notes</td>
                         <td>Records notes from conversations with facility directors.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>2.3.1 Enterprise Search Operators &amp; Boolean Logic</h3>
+        <p style="color: #475569; font-size: 0.9rem; line-height: 1.6; margin-bottom: 1rem;">
+            The search bars across the Operations Command Center (Leads, Accounts, General Contractors, Institutional Bids, and Programs) use an enterprise query engine that recognizes natural connecting words, alternative choices, and grouped rules.
+        </p>
+        <div class="field-table-wrapper" style="margin-bottom: 1.75rem;">
+            <table class="field-table">
+                <thead>
+                    <tr>
+                        <th style="width: 25%;">Search Capability</th>
+                        <th style="width: 35%;">Example Query</th>
+                        <th style="width: 40%;">Operational Result</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Connecting Words (AND)</strong></td>
+                        <td><code>Plano and "Child Care Center"</code></td>
+                        <td>Finds records containing both requirements. Works with everyday lowercase "and" as well as uppercase "AND".</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Alternative Choices (OR)</strong></td>
+                        <td><code>Plano OR Frisco</code> &nbsp;or&nbsp; <code>Daycare OR "Learning Center"</code></td>
+                        <td>Pulls records from either city or matching either facility description in a single search.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Logical Grouping</strong></td>
+                        <td><code>(Plano OR Frisco) and "Child Care Center"</code></td>
+                        <td>Groups alternatives inside parentheses so the final filter applies cleanly across both cities.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Negative Exclusions</strong></td>
+                        <td><code>Daycare NOT Church</code> &nbsp;or&nbsp; <code>Daycare -Church</code></td>
+                        <td>Excludes unwanted records, hiding churches or unwanted facilities from your calling sprint.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Exact Quoted Phrases</strong></td>
+                        <td><code>"North Texas"</code></td>
+                        <td>Looks for the exact phrase with words in that precise order.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Field Targeting</strong></td>
+                        <td><code>city:Plano industry:Child status:New</code></td>
+                        <td>Restricts the search term strictly to designated database columns for surgical precision.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Numeric Comparisons</strong></td>
+                        <td><code>sqf:>=10000 sqf:&lt;25000</code> &nbsp;or&nbsp; <code>value:>50000</code></td>
+                        <td>Filters buildings by square footage or estimated annual contract value using mathematical operators.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>American Dates</strong></td>
+                        <td><code>04/10/2026</code> &nbsp;or&nbsp; <code>04/10/*</code></td>
+                        <td>Automatically translates standard American dates into database calendar dates.</td>
                     </tr>
                 </tbody>
             </table>

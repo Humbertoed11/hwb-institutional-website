@@ -1728,9 +1728,12 @@
                         </p>
                     </div>
                     <div style="display: flex; gap: 0.75rem; align-items: center;">
-                        <form method="GET" action="{{ url_for('admin_operations') }}" style="display: flex; gap: 0.5rem; margin: 0;">
+                        <form method="GET" action="{{ url_for('admin_operations') }}" style="display: flex; gap: 0.5rem; margin: 0; align-items: center;">
                             <input type="hidden" name="view" value="general_contractors">
-                            <input type="text" name="q" value="{{ search_q or '' }}" placeholder="Search GC company, city, market, estimator..." class="sigma-cell-input" style="height: 36px; min-width: 280px; font-size: 0.8rem;">
+                            <div style="position: relative;">
+                                <input type="text" name="q" value="{{ search_q or '' }}" placeholder="Search GC company, city, market, estimator..." class="sigma-cell-input" style="height: 36px; min-width: 280px; font-size: 0.8rem; padding-right: 2rem;">
+                                <button type="button" onclick="openModal('modal-search-help')" style="position: absolute; right: 0.6rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--slate-400); cursor: pointer; font-size: 0.8rem;" title="Search tips and boolean filters">ⓘ</button>
+                            </div>
                             <button type="submit" class="isc-btn isc-btn-primary" style="height: 36px; padding: 0 1rem; font-size: 0.78rem;" aria-label="Search General Contractors" title="Search general contractors by company name, city, market, or estimator">
                                 <i class="fas fa-search"></i>
                             </button>
@@ -1939,9 +1942,12 @@
                         </p>
                     </div>
                     <div style="display: flex; gap: 0.75rem; align-items: center;">
-                        <form method="GET" action="{{ url_for('admin_operations') }}" style="display: flex; gap: 0.5rem; margin: 0;">
+                        <form method="GET" action="{{ url_for('admin_operations') }}" style="display: flex; gap: 0.5rem; margin: 0; align-items: center;">
                             <input type="hidden" name="view" value="institutional_bids">
-                            <input type="text" name="q" value="{{ search_q or '' }}" placeholder="Search solicitations, agency, officer..." class="sigma-cell-input" style="height: 36px; min-width: 260px; font-size: 0.8rem;">
+                            <div style="position: relative;">
+                                <input type="text" name="q" value="{{ search_q or '' }}" placeholder="Search solicitations, agency, officer..." class="sigma-cell-input" style="height: 36px; min-width: 260px; font-size: 0.8rem; padding-right: 2rem;">
+                                <button type="button" onclick="openModal('modal-search-help')" style="position: absolute; right: 0.6rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--slate-400); cursor: pointer; font-size: 0.8rem;" title="Search tips and boolean filters">ⓘ</button>
+                            </div>
                             <button type="submit" class="isc-btn isc-btn-primary" style="height: 36px; padding: 0 1rem; font-size: 0.78rem;" aria-label="Search Institutional Bids" title="Search institutions by school district, government agency, or bid title">
                                 <i class="fas fa-search"></i>
                             </button>
@@ -2224,7 +2230,10 @@
                         </button>
                         <form method="GET" action="{{ url_for('admin_operations') }}" style="display: flex; gap: 0.5rem; align-items: center;">
                             <input type="hidden" name="view" value="programs">
-                            <input type="text" name="q" value="{{ search_q if active_view == 'programs' else '' }}" placeholder="Search program, agency, jurisdiction..." style="height: 36px; padding: 0 1rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.82rem; width: 280px;">
+                            <div style="position: relative;">
+                                <input type="text" name="q" value="{{ search_q if active_view == 'programs' else '' }}" placeholder="Search program, agency, jurisdiction..." style="height: 36px; padding: 0 2rem 0 1rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.82rem; width: 280px;">
+                                <button type="button" onclick="openModal('modal-search-help')" style="position: absolute; right: 0.6rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--slate-400); cursor: pointer; font-size: 0.8rem;" title="Search tips and boolean filters">ⓘ</button>
+                            </div>
                             <button type="submit" class="isc-btn isc-btn-primary" style="height: 36px; padding: 0 1rem; font-size: 0.78rem;" title="Filter certification badges and government contract programs">Filter</button>
                             {% if search_q and active_view == 'programs' %}
                             <a href="{{ url_for('admin_operations', view='programs') }}" class="isc-btn isc-btn-outline" style="height: 36px; font-size: 0.78rem;">Reset</a>
@@ -8733,27 +8742,84 @@
     </div>
 </div>
 
-<div id="modal-search-help" class="isc-modal-overlay" style="display:none;">
-    <div class="isc-modal" style="max-width: 800px;">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem;">
+<div id="modal-search-help" class="isc-modal-overlay" style="display:none; z-index: 1300;">
+    <div class="isc-modal" style="max-width: 820px; max-height: 90vh; overflow-y: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; position: sticky; top: 0; background: #ffffff; z-index: 10; padding-bottom: 0.5rem; border-bottom: 1px solid var(--slate-100);">
             <div>
-                <h2 style="font-weight: 900; font-size: 1.5rem; color: var(--slate-900); letter-spacing: -0.01em; margin: 0;">Search Tips &amp; Filters</h2>
-                <p style="color: var(--slate-500); font-size: 0.825rem; font-weight: 500; margin: 0.25rem 0 0 0;">
-                    Use search operators to filter leads, clients, and commercial bids quickly.
+                <h2 style="font-weight: 900; font-size: 1.4rem; color: var(--slate-900); letter-spacing: -0.01em; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-search" style="color: var(--brand); font-size: 1.1rem;"></i> Search Tips &amp; Filters
+                </h2>
+                <p style="color: var(--slate-500); font-size: 0.8rem; font-weight: 500; margin: 0.25rem 0 0 0;">
+                    Use boolean words, isolate exact phrases, and combine choices across all Operations desks.
                 </p>
             </div>
             <button type="button" onclick="closeModal('modal-search-help')" class="isc-btn isc-btn-outline" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; padding: 0;" aria-label="Close Search Help Modal">
                 <i class="fas fa-times" style="font-size: 0.85rem;"></i>
             </button>
         </div>
-        <div style="display: flex; flex-direction: column; gap: 1.25rem;">
-            <div class="isc-list-item" style="padding: 1.25rem;"><div style="font-weight: 900; color: var(--brand); font-size: 0.7rem; margin-bottom: 0.5rem; text-transform: uppercase;">EXACT PHRASE</div><code style="background: var(--slate-100); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem; font-weight: 700;">"North Texas"</code><p style="font-size: 0.8rem; color: var(--slate-600); margin-top: 0.5rem;">Finds literal text matches within quotes.</p></div>
-            <div class="isc-list-item" style="padding: 1.25rem;"><div style="font-weight: 900; color: var(--brand); font-size: 0.7rem; margin-bottom: 0.5rem; text-transform: uppercase;">WILDCARDS</div><code style="background: var(--slate-100); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem; font-weight: 700;">Dist*</code><p style="font-size: 0.8rem; color: var(--slate-600); margin-top: 0.5rem;">The asterisk matches any following characters.</p></div>
-            <div class="isc-list-item" style="padding: 1.25rem;"><div style="font-weight: 900; color: var(--brand); font-size: 0.7rem; margin-bottom: 0.5rem; text-transform: uppercase;">EXCLUSION</div><code style="background: var(--slate-100); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem; font-weight: 700;">Lobby -Main</code><p style="font-size: 0.8rem; color: var(--slate-600); margin-top: 0.5rem;">Use the minus sign to hide specific results.</p></div>
-            <div class="isc-list-item" style="padding: 1.25rem;"><div style="font-weight: 900; color: var(--brand); font-size: 0.7rem; margin-bottom: 0.5rem; text-transform: uppercase;">FIELD TARGETING</div><code style="background: var(--slate-100); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem; font-weight: 700;">city:Plano industry:Medical</code><p style="font-size: 0.8rem; color: var(--slate-600); margin-top: 0.5rem;">Search specific columns directly.</p></div>
-            <div class="isc-list-item" style="padding: 1.25rem;"><div style="font-weight: 900; color: var(--brand); font-size: 0.7rem; margin-bottom: 0.5rem; text-transform: uppercase;">AMERICAN DATES</div><code style="background: var(--slate-100); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem; font-weight: 700;">04/10/2026 or 04/10/*</code><p style="font-size: 0.8rem; color: var(--slate-600); margin-top: 0.5rem;">The system automatically flips American dates to match the database engine.</p></div>
-            <div class="isc-list-item" style="padding: 1.25rem;"><div style="font-weight: 900; color: var(--brand); font-size: 0.7rem; margin-bottom: 0.5rem; text-transform: uppercase;">NUMERIC PRECISION</div><code style="background: var(--slate-100); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem; font-weight: 700;">sqf:>=10000</code><p style="font-size: 0.8rem; color: var(--slate-600); margin-top: 0.5rem;">Use <span style="color:var(--brand); font-weight:800;">&gt;, &lt;, &gt;=, &lt;=, =</span> for mathematical comparisons.</p></div>
-            <div class="isc-list-item" style="padding: 1.25rem;"><div style="font-weight: 900; color: var(--brand); font-size: 0.7rem; margin-bottom: 0.5rem; text-transform: uppercase;">RANGE SEARCH</div><code style="background: var(--slate-100); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem; font-weight: 700;">sqf:>10000 sqf:<20000</code><p style="font-size: 0.8rem; color: var(--slate-600); margin-top: 0.5rem;">Combine operators to isolate a specific data range.</p></div>
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <!-- Intelligent Card 1: Connecting Conditions (AND) -->
+            <div class="isc-list-item" style="padding: 1.15rem; border-left: 4px solid #2563eb; background: #f8fafc;">
+                <div style="font-weight: 900; color: #2563eb; font-size: 0.72rem; margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.04em;">CONNECTING CONDITIONS (AND)</div>
+                <code style="background: #ffffff; border: 1px solid var(--slate-200); padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.85rem; font-weight: 700; color: #1e40af;">Plano and "Child Care Center"</code> &nbsp;or&nbsp; <code style="background: #ffffff; border: 1px solid var(--slate-200); padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.85rem; font-weight: 700; color: #1e40af;">Plano AND Daycare</code>
+                <p style="font-size: 0.8rem; color: var(--slate-600); margin: 0.4rem 0 0 0;">Finds records that match both terms. Works with everyday lowercase "and" as well as uppercase "AND".</p>
+            </div>
+
+            <!-- Intelligent Card 2: Alternative Choices (OR) -->
+            <div class="isc-list-item" style="padding: 1.15rem; border-left: 4px solid #059669; background: #f8fafc;">
+                <div style="font-weight: 900; color: #059669; font-size: 0.72rem; margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.04em;">ALTERNATIVE CHOICES (OR)</div>
+                <code style="background: #ffffff; border: 1px solid var(--slate-200); padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.85rem; font-weight: 700; color: #065f46;">Plano OR Frisco</code> &nbsp;or&nbsp; <code style="background: #ffffff; border: 1px solid var(--slate-200); padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.85rem; font-weight: 700; color: #065f46;">Daycare OR "Learning Center"</code>
+                <p style="font-size: 0.8rem; color: var(--slate-600); margin: 0.4rem 0 0 0;">Finds records that match either one of your choices.</p>
+            </div>
+
+            <!-- Intelligent Card 3: Logical Grouping (Parentheses) -->
+            <div class="isc-list-item" style="padding: 1.15rem; border-left: 4px solid #7c3aed; background: #f8fafc;">
+                <div style="font-weight: 900; color: #7c3aed; font-size: 0.72rem; margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.04em;">LOGICAL GROUPING (PARENTHESES)</div>
+                <code style="background: #ffffff; border: 1px solid var(--slate-200); padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.85rem; font-weight: 700; color: #5b21b6;">(Plano OR Frisco) and "Child Care Center"</code>
+                <p style="font-size: 0.8rem; color: var(--slate-600); margin: 0.4rem 0 0 0;">Use parentheses to bundle options together before applying additional filters.</p>
+            </div>
+
+            <!-- Intelligent Card 4: Negative Exclusions (NOT / Minus) -->
+            <div class="isc-list-item" style="padding: 1.15rem; border-left: 4px solid #dc2626; background: #f8fafc;">
+                <div style="font-weight: 900; color: #dc2626; font-size: 0.72rem; margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.04em;">NEGATIVE EXCLUSIONS (NOT / MINUS)</div>
+                <code style="background: #ffffff; border: 1px solid var(--slate-200); padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.85rem; font-weight: 700; color: #991b1b;">Plano NOT Church</code> &nbsp;or&nbsp; <code style="background: #ffffff; border: 1px solid var(--slate-200); padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.85rem; font-weight: 700; color: #991b1b;">Plano -Church</code>
+                <p style="font-size: 0.8rem; color: var(--slate-600); margin: 0.4rem 0 0 0;">Hides specific records containing that word or phrase.</p>
+            </div>
+
+            <!-- Intelligent Card 5: Exact Phrase -->
+            <div class="isc-list-item" style="padding: 1.15rem;">
+                <div style="font-weight: 900; color: var(--brand); font-size: 0.7rem; margin-bottom: 0.4rem; text-transform: uppercase;">EXACT PHRASE</div>
+                <code style="background: var(--slate-100); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem; font-weight: 700;">"North Texas"</code>
+                <p style="font-size: 0.8rem; color: var(--slate-600); margin-top: 0.4rem;">Finds literal text matches within quotes.</p>
+            </div>
+
+            <!-- Intelligent Card 6: Wildcards -->
+            <div class="isc-list-item" style="padding: 1.15rem;">
+                <div style="font-weight: 900; color: var(--brand); font-size: 0.7rem; margin-bottom: 0.4rem; text-transform: uppercase;">WILDCARDS</div>
+                <code style="background: var(--slate-100); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem; font-weight: 700;">Dist*</code>
+                <p style="font-size: 0.8rem; color: var(--slate-600); margin-top: 0.4rem;">The asterisk matches any following characters.</p>
+            </div>
+
+            <!-- Intelligent Card 7: Field Targeting -->
+            <div class="isc-list-item" style="padding: 1.15rem;">
+                <div style="font-weight: 900; color: var(--brand); font-size: 0.7rem; margin-bottom: 0.4rem; text-transform: uppercase;">FIELD TARGETING</div>
+                <code style="background: var(--slate-100); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem; font-weight: 700;">city:Plano industry:Medical</code>
+                <p style="font-size: 0.8rem; color: var(--slate-600); margin-top: 0.4rem;">Search specific columns directly (city, industry, status, sqf, value, contact, rep).</p>
+            </div>
+
+            <!-- Intelligent Card 8: American Dates -->
+            <div class="isc-list-item" style="padding: 1.15rem;">
+                <div style="font-weight: 900; color: var(--brand); font-size: 0.7rem; margin-bottom: 0.4rem; text-transform: uppercase;">AMERICAN DATES</div>
+                <code style="background: var(--slate-100); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem; font-weight: 700;">04/10/2026 or 04/10/*</code>
+                <p style="font-size: 0.8rem; color: var(--slate-600); margin-top: 0.4rem;">The system automatically flips American dates to match the database engine.</p>
+            </div>
+
+            <!-- Intelligent Card 9: Numeric Precision & Ranges -->
+            <div class="isc-list-item" style="padding: 1.15rem;">
+                <div style="font-weight: 900; color: var(--brand); font-size: 0.7rem; margin-bottom: 0.4rem; text-transform: uppercase;">NUMERIC PRECISION &amp; RANGES</div>
+                <code style="background: var(--slate-100); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem; font-weight: 700;">sqf:>=10000 sqf:&lt;20000</code> &nbsp;or&nbsp; <code style="background: var(--slate-100); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem; font-weight: 700;">value:>50000</code>
+                <p style="font-size: 0.8rem; color: var(--slate-600); margin-top: 0.4rem;">Use &gt;, &lt;, &gt;=, &lt;=, = to isolate contract values, areas, or scores.</p>
+            </div>
         </div>
     </div>
 </div>
@@ -9883,8 +9949,46 @@ Click here to book a 5-minute walkthrough: [Calendar Link]"></textarea>
         window.location.href = url.href;
     }
 
-    function iscQuickFilter(field, value) { const url = new URL(window.location); url.searchParams.set('q', `${field}:${value}`); url.searchParams.set('page', '1'); window.location.href = url.href; }
-    function iscFilter(tid, q, cid) { const f = q.toLowerCase(); let count = 0; document.querySelectorAll(`#${tid} tbody tr`).forEach(r => { const m = r.innerText.toLowerCase().includes(f); r.style.display = m ? '' : 'none'; if(m) count++; }); if(document.getElementById(cid)) document.getElementById(cid).innerText = `${count} Records Found`; }
+    function matchBooleanQuery(text, query) {
+        if (!query || !query.trim()) return true;
+        const lowerText = (text || '').toLowerCase();
+        const orBranches = query.split(/\s+(?:OR|or|\|\|)\s+/);
+        return orBranches.some(branch => {
+            const tokens = [];
+            const regex = /(-?"[^"]*"|-?[^\s]+)/g;
+            let m;
+            while ((m = regex.exec(branch)) !== null) {
+                tokens.push(m[1]);
+            }
+            const cleanTokens = tokens.filter(t => !/^(?:AND|and|&&)$/i.test(t));
+            if (cleanTokens.length === 0) return true;
+            return cleanTokens.every(tok => {
+                let isNeg = false;
+                let term = tok;
+                if (term.startsWith('-')) {
+                    isNeg = true;
+                    term = term.slice(1);
+                } else if (/^NOT\b/i.test(term)) {
+                    isNeg = true;
+                    term = term.replace(/^NOT:?/i, '');
+                }
+                term = term.replace(/^"|"$/g, '').trim().toLowerCase();
+                if (!term) return true;
+                const contains = lowerText.includes(term);
+                return isNeg ? !contains : contains;
+            });
+        });
+    }
+
+    function iscFilter(tid, q, cid) {
+        let count = 0;
+        document.querySelectorAll(`#${tid} tbody tr`).forEach(r => {
+            const m = matchBooleanQuery(r.innerText, q);
+            r.style.display = m ? '' : 'none';
+            if(m) count++;
+        });
+        if(document.getElementById(cid)) document.getElementById(cid).innerText = `${count} Records Found`;
+    }
 
     function showDecision(options) {
         const modal = document.getElementById('modal-decision');
@@ -13494,7 +13598,7 @@ Click here to book a 5-minute walkthrough: [Calendar Link]"></textarea>
         rows.forEach(r => {
             const rowSearch = r.getAttribute('data-search') || '';
             const rowStatus = r.getAttribute('data-status') || '';
-            const matchQ = !q || rowSearch.includes(q);
+            const matchQ = matchBooleanQuery(rowSearch, q);
             const matchStatus = !status || rowStatus === status;
 
             if (matchQ && matchStatus) {
@@ -14346,7 +14450,7 @@ Click here to book a 5-minute walkthrough: [Calendar Link]"></textarea>
             const rowSearch = r.getAttribute('data-search') || '';
             const rowStatus = r.getAttribute('data-status') || '';
             const rowDept = r.getAttribute('data-dept') || '';
-            const matchQ = !q || rowSearch.includes(q);
+            const matchQ = matchBooleanQuery(rowSearch, q);
             const matchStatus = !status || rowStatus === status;
             const matchDept = !dept || rowDept === dept;
 
@@ -14372,7 +14476,7 @@ Click here to book a 5-minute walkthrough: [Calendar Link]"></textarea>
             const rowSearch = r.getAttribute('data-search') || '';
             const rowStatus = r.getAttribute('data-status') || '';
             const rowCoi = r.getAttribute('data-coi') || '';
-            const matchQ = !q || rowSearch.includes(q);
+            const matchQ = matchBooleanQuery(rowSearch, q);
             const matchStatus = !status || rowStatus === status;
             const matchCoi = !coi || rowCoi === coi;
 
@@ -15438,7 +15542,8 @@ Click here to book a 5-minute walkthrough: [Calendar Link]"></textarea>
             const director = row.getAttribute('data-director') || '';
             const email = row.getAttribute('data-email') || '';
             const city = row.getAttribute('data-city') || '';
-            if (!q || facility.includes(q) || director.includes(q) || email.includes(q) || city.includes(q)) {
+            const combined = `${facility} ${director} ${email} ${city}`;
+            if (matchBooleanQuery(combined, q)) {
                 row.style.display = '';
                 visibleCount++;
             } else {

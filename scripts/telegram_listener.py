@@ -187,25 +187,72 @@ def get_authorized_chat_map():
     return auth_map
 
 def is_chat_authorized(chat_id):
-    auth_map = get_authorized_chat_map()
-    return (chat_id in auth_map) or (str(chat_id) in auth_map)
+    """
+    Universal Access Standard: All incoming chats are authorized to interact with George,
+    ask operational questions, and search the open web.
+    Sensitive executive actions (shell execution, email approval, adding users)
+    remain strictly role-gated.
+    """
+    return True
 
-def get_user_for_chat(chat_id):
+def get_user_for_chat(chat_id, from_user=None):
+    """
+    Returns user profile dict from database or .env.
+    If unlinked, provisions a dynamic Universal Guest Profile with safe permissions.
+    """
     auth_map = get_authorized_chat_map()
-    return auth_map.get(chat_id) or auth_map.get(str(chat_id))
+    user = auth_map.get(chat_id) or auth_map.get(str(chat_id))
+    if user:
+        return user
+
+    guest_name = "Visitor"
+    guest_username = f"user_{chat_id}"
+    if from_user and isinstance(from_user, dict):
+        fn = from_user.get("first_name", "")
+        ln = from_user.get("last_name", "")
+        guest_name = f"{fn} {ln}".strip() or from_user.get("username") or "Visitor"
+        guest_username = from_user.get("username") or f"user_{chat_id}"
+
+    guest_perms = {
+        "enabled": True,
+        "can_chat": True,
+        "can_search_web": True,
+        "can_view_services": True,
+        "can_request_walkthrough": True,
+        "can_approve_outbox": False,       # Protected: Executive only
+        "can_run_terminal_cmd": False,     # Protected: CEO only
+        "can_view_margins": False,         # Protected: Executive/Estimator only
+        "can_ingest_bids": False,          # Protected: Authorized team only
+        "can_audit_photos": True,
+        "receive_daily_briefing": False
+    }
+    return {
+        "user_id": None,
+        "username": guest_username,
+        "name": guest_name,
+        "email": None,
+        "role": "Guest",
+        "telegram_perms": guest_perms
+    }
 
 def welcome_unregistered_user(chat_id, from_user):
-    sender_name = from_user.get("first_name", "Team Member")
+    sender_name = from_user.get("first_name", "Visitor") if from_user else "Visitor"
     msg = (
-        f"👋 *Welcome to HWB Cleaning Operations*, {sender_name}!\n"
+        f"👋 *Welcome to HWB Cleaning Services Operations*, {sender_name}!\n"
         f"━━━━━━━━━━━━━━━━━━\n"
-        f"This is the automated Operations Command Center for **HWB Cleaning Services LLC**.\n\n"
-        f"📱 Your Telegram Chat ID is: `{chat_id}`\n\n"
-        f"To link your account, reply:\n"
-        f"`/register mrondinella@hwbcleaning.com` (or your company email)\n\n"
-        f"Or send this Chat ID to CEO Humberto Dominguez to activate your access."
+        f"I am **George**, your autonomous systems assistant for **HWB Cleaning Services LLC**.\n\n"
+        f"🌟 *Universal Access Enabled:*\n"
+        f"You have direct access to ask questions, explore our commercial cleaning solutions, search the live web, or request facility walkthroughs.\n\n"
+        f"⚡ *Quick Capabilities:*\n"
+        f"• 💬 *Chat Naturally:* Ask about commercial cleaning, daycares, medical offices, or floor care.\n"
+        f"• 🌐 */web <query>:* Real-time open internet search with verified web sources.\n"
+        f"• 🔍 */search <query>:* Universal search across knowledge base, leads, and web.\n"
+        f"• 🎙️ *Voice Notes:* Send spoken questions or facility notes.\n"
+        f"• 📷 *Photos:* Send floor or jobsite photos for instant analysis.\n\n"
+        f"📱 *Your Chat ID:* `{chat_id}`\n"
+        f"_(HWB Staff: Reply `/register email@hwbcleaning.com` to link your employee profile.)_"
     )
-    send_telegram_message(chat_id, msg)
+    send_telegram_message(chat_id, msg, reply_markup=get_main_menu_keyboard(chat_id))
 
 def handle_user_registration(chat_id, text, from_user):
     parts = text.split()
@@ -830,10 +877,10 @@ def get_main_menu_keyboard(chat_id=None):
         [{"text": "📊 Active GC Bids", "callback_data": "cmd_bids"}, {"text": "📈 System Pulse", "callback_data": "cmd_status"}],
         [{"text": "📬 Staged Approvals", "callback_data": "cmd_pending"}, {"text": "🎯 Texas CRM Leads", "callback_data": "cmd_leads"}],
         [{"text": "📐 Scope Configurator", "callback_data": "cmd_scope_menu"}, {"text": "🌅 Morning Brief", "callback_data": "cmd_briefing"}],
+        [{"text": "🌐 Open Web Search", "callback_data": "cmd_web_prompt"}, {"text": "🔍 Universal Search", "callback_data": "cmd_search_prompt"}],
         [{"text": "🧠 Behavioral Insights", "callback_data": "cmd_behavior"}, {"text": "📡 Mirror Status", "callback_data": "cmd_mirror"}],
         [{"text": "🛡️ Security Posture", "callback_data": "cmd_security"}, {"text": "🥋 Yamamoto Audit", "callback_data": "cmd_pentest"}],
-        [{"text": "🌱 HexGrowth Shield", "callback_data": "cmd_hex_security"}, {"text": "🧠 Brain Sync", "callback_data": "cmd_sync"}],
-        [{"text": "🔍 Universal Search", "callback_data": "cmd_search_prompt"}]
+        [{"text": "🌱 HexGrowth Shield", "callback_data": "cmd_hex_security"}, {"text": "🧠 Brain Sync", "callback_data": "cmd_sync"}]
     ]
     return {"inline_keyboard": custom_rows + default_keyboard}
 
@@ -1880,7 +1927,8 @@ def analyze_text_with_gemini(text, chat_id):
         '  "bid_id": 42\n'
         "}\n"
         f"6. MANDATORY COMPLETE BRIEFING: You MUST ALWAYS follow the JSON block with your full, thorough, detailed, high-impact operational response, strategic analysis, and executive reasoning to {actor_name}. NEVER output only a JSON block. Always provide your complete analytical findings.\n"
-        "7. ANTI-NARROWING & BROAD REASONING MANDATE: If the user asks an open-ended, broad, or company-wide question (e.g. regarding company pricing models, systems/software stack, payment capabilities, service offerings, or corporate strategy), you MUST respond from the overarching enterprise perspective of HWB Cleaning Services LLC. NEVER artificially constrain or narrow the answer into a single past project (such as Collin College or Horizon at Premier) unless the user explicitly mentions that specific project name in their immediate query. If the question relates to costs or systems generally, explain the broad company framework across all commercial and institutional operations."
+        "7. ANTI-NARROWING & BROAD REASONING MANDATE: If the user asks an open-ended, broad, or company-wide question (e.g. regarding company pricing models, systems/software stack, payment capabilities, service offerings, or corporate strategy), you MUST respond from the overarching enterprise perspective of HWB Cleaning Services LLC. NEVER artificially constrain or narrow the answer into a single past project (such as Collin College or Horizon at Premier) unless the user explicitly mentions that specific project name in their immediate query. If the question relates to costs or systems generally, explain the broad company framework across all commercial and institutional operations.\n"
+        "8. REAL-TIME OPEN INTERNET SEARCH: You have live internet search via Google Search grounding enabled. Whenever asked about current news, weather, contractor profiles, municipal records, local regulations, industry standards, competitor pricing, or vendor contact info, proactively search the live web and provide factual, real-time answers."
     )
 
     payload = {
@@ -1888,20 +1936,35 @@ def analyze_text_with_gemini(text, chat_id):
             "parts": [
                 {"text": f"{system_prompt}\n\n{actor_name} ({actor_role}) says:\n\"{text}\""}
             ]
-        }]
+        }],
+        "tools": [{"google_search": {}}]
     }
-
-    actor_perms = actor_user.get("telegram_perms", {}) if actor_user else {}
-    if actor_perms.get("can_search_web", True):
-        payload["tools"] = [{"google_search": {}}]
 
     try:
         res = session.post(url, json=payload, timeout=35)
         if res.status_code == 200:
             candidates = res.json().get("candidates", [])
             if candidates:
-                parts = candidates[0].get("content", {}).get("parts", [])
+                candidate = candidates[0]
+                parts = candidate.get("content", {}).get("parts", [])
                 gemini_reply = "\n\n".join(p.get("text", "") for p in parts if p.get("text")).strip()
+
+                # Extract live web grounding citations
+                gm = candidate.get("groundingMetadata", {})
+                chunks = gm.get("groundingChunks", [])
+                if chunks:
+                    web_sources = []
+                    seen_urls = set()
+                    for ch in chunks:
+                        w = ch.get("web", {})
+                        u = w.get("uri")
+                        t = w.get("title") or "Source"
+                        if u and u not in seen_urls:
+                            seen_urls.add(u)
+                            web_sources.append(f"• [{t}]({u})")
+                    if web_sources:
+                        gemini_reply += "\n\n━━━━━━━━━━━━━━━━━━━━━\n🌐 *Verified Web Sources:*\n" + "\n".join(web_sources[:4])
+
                 return gemini_reply, None
             return "⚠️ Empty response generated by Gemini.", None
         return f"⚠️ Gemini API returned HTTP {res.status_code}", None
@@ -2624,7 +2687,8 @@ def handle_cmd_help(chat_id):
         "👁️ */preview <ID>* — Inspect staged email body & financials\n"
         "🚀 */dispatch <ID>* — Immediate Microsoft Graph API transmission\n"
         "🎯 */leads* — Real-time Texas CRM lead pipeline\n"
-        "🔍 */search <query>* — Universal cross-table database search\n"
+        "🌐 */web <query>* — Open internet search with live web sources\n"
+        "🔍 */search <query>* — Universal search across internal database & open web\n"
         "📑 */proposal <ID>* — Receive Excel proposal file directly in chat\n"
         "🧠 */sync* — Trigger neural persistence handshake\n"
         "🛡️ */security* — Live SOC 2 audit, credential countdown & security posture\n"
@@ -3628,7 +3692,17 @@ def handle_cmd_search(chat_id, query):
                 buttons.append([{"text": f"📥 Ingest {p_title[:22]}...", "callback_data": f"ingest_msg_{em['id']}"}])
 
         if not bids and not leads and not docs and not found_emails:
-            lines.append(f"❌ No matching records found for `{query.strip()}`.")
+            send_telegram_chat_action(chat_id, "typing")
+            web_ans, web_srcs = search_open_web(clean_term, chat_id=chat_id)
+            lines.append(f"🌐 *Live Internet Search Results for \"{clean_term}\":*")
+            lines.append(web_ans)
+            if web_srcs:
+                lines.append("\n🔗 *Verified Sources:*")
+                for s in web_srcs:
+                    lines.append(f"• [{s['title']}]({s['url']})")
+        else:
+            # Also offer open web search button
+            buttons.append([{"text": f"🌐 Search Web for '{clean_term[:20]}'", "callback_data": f"web_{clean_term[:30]}"}])
 
         lines.append("━━━━━━━━━━━━━━━━━━━━━")
         markup = {"inline_keyboard": buttons[:8]} if buttons else get_main_menu_keyboard()
@@ -3638,6 +3712,94 @@ def handle_cmd_search(chat_id, query):
     finally:
         if conn:
             conn.close()
+
+def search_open_web(query: str, chat_id: int = None) -> tuple:
+    """
+    Executes real-time open internet search via Gemini 2.5 Flash with Google Search grounding.
+    Returns (summary_text, list_of_sources).
+    """
+    if not GEMINI_API_KEY:
+        return "⚠️ Web search unavailable: GEMINI_API_KEY is not configured.", []
+
+    clean_q = query.strip()
+    if not clean_q:
+        return "⚠️ Please provide a search term (e.g. `/web Frisco ISD superintendent`).", []
+
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
+    prompt_text = (
+        f"Search the open internet and provide an authoritative, factual, up-to-date answer for: \"{clean_q}\".\n"
+        "Use everyday words, concise bullet points, and highlight key names, dates, phone numbers, or figures where applicable."
+    )
+
+    payload = {
+        "contents": [{
+            "parts": [{"text": prompt_text}]
+        }],
+        "tools": [{"google_search": {}}]
+    }
+
+    try:
+        res = session.post(url, json=payload, timeout=25)
+        if res.status_code != 200:
+            return f"⚠️ Web search service returned error HTTP {res.status_code}.", []
+
+        data = res.json()
+        candidate = data.get("candidates", [{}])[0]
+        parts = candidate.get("content", {}).get("parts", [])
+        answer = "\n\n".join(p.get("text", "") for p in parts if p.get("text")).strip()
+
+        sources = []
+        gm = candidate.get("groundingMetadata", {})
+        for chunk in gm.get("groundingChunks", []):
+            web = chunk.get("web", {})
+            uri = web.get("uri")
+            title = web.get("title") or "Web Source"
+            if uri:
+                sources.append({"title": title, "url": uri})
+
+        seen_urls = set()
+        deduped = []
+        for s in sources:
+            if s["url"] not in seen_urls:
+                seen_urls.add(s["url"])
+                deduped.append(s)
+
+        return answer, deduped[:5]
+    except Exception as e:
+        return f"⚠️ Error executing open web search: {e}", []
+
+def handle_cmd_web(chat_id, query):
+    """Executes an open internet search and returns grounded results with live web sources."""
+    if not query or len(query.strip()) < 2:
+        send_telegram_message(
+            chat_id,
+            "🌐 *Open Web Search Usage:*\n"
+            "━━━━━━━━━━━━━━━━━━━━━\n"
+            "Query the live internet for any topic, news, contractor, or business data:\n"
+            "• `/web Frisco ISD superintendent`\n"
+            "• `/web Texas sales tax rate McKinney`\n"
+            "• `/web Collin College academic calendar 2026`\n"
+            "• `/web Weather forecast Dallas TX`"
+        )
+        return
+
+    send_telegram_chat_action(chat_id, "typing")
+    answer, sources = search_open_web(query, chat_id=chat_id)
+
+    lines = [
+        f"🌐 *Open Internet Search:* `{query.strip()}`",
+        "━━━━━━━━━━━━━━━━━━━━━",
+        answer,
+        "━━━━━━━━━━━━━━━━━━━━━"
+    ]
+
+    if sources:
+        lines.append("🔗 *Verified Web Sources:*")
+        for s in sources:
+            lines.append(f"• [{s['title']}]({s['url']})")
+
+    msg = "\n".join(lines)
+    send_telegram_message(chat_id, msg, reply_markup=get_main_menu_keyboard(chat_id))
 
 def handle_cmd_leads(chat_id):
     conn = None
@@ -3835,7 +3997,23 @@ def process_callback_query(callback_query):
         handle_scope_adjust_ui(chat_id, 4)
     elif data == "cmd_search_prompt":
         answer_callback_query(query_id)
-        send_telegram_message(chat_id, "🔍 To search, type `/search <keyword>` (e.g. `/search UTSW` or `/search Bosanna`).")
+        send_telegram_message(chat_id, "🔍 To search, type `/search <keyword>` (e.g. `/search UTSW` or `/search Daycare`) or `/web <topic>` for open internet search.")
+    elif data == "cmd_web_prompt":
+        answer_callback_query(query_id)
+        send_telegram_message(
+            chat_id,
+            "🌐 *Open Web Search Active*\n"
+            "━━━━━━━━━━━━━━━━━━━━━\n"
+            "Query the live internet for any topic, news, contractor, or business data:\n\n"
+            "• `/web Texas commercial cleaning license requirements`\n"
+            "• `/web Frisco ISD superintendent update`\n"
+            "• `/web Current weather in Dallas TX`\n\n"
+            "Or ask George directly in natural text!"
+        )
+    elif data.startswith("web_"):
+        web_q = data.replace("web_", "")
+        answer_callback_query(query_id, "Searching open internet...")
+        handle_cmd_web(chat_id, web_q)
     elif data.startswith("approve_"):
         handle_cmd_approve(chat_id, data.replace("approve_", ""), callback_id=query_id)
     elif data.startswith("preview_"):
@@ -3917,10 +4095,10 @@ def process_message(message):
     chat = message.get("chat", {})
     chat_id = chat.get("id")
 
-    auth_user = get_user_for_chat(chat_id)
+    from_user = message.get("from", {})
+    auth_user = get_user_for_chat(chat_id, from_user=from_user)
     text = message.get("text", "").strip()
 
-    from_user = message.get("from", {})
     print(f"[TELEGRAM] >>> INCOMING MESSAGE from chat_id={chat_id}, user={from_user.get('first_name')} (@{from_user.get('username')}): '{text}'", flush=True)
 
     # Check for Forwarded Messages (Effortless User & Group ID Detection)
@@ -3986,31 +4164,12 @@ def process_message(message):
         handle_magic_link_auth(chat_id, token, from_user)
         return
 
-    if not auth_user:
-        chat_type = chat.get("type", "private")
-        record_and_mirror_activity(chat_id, from_user, "unregistered_contact", f"Incoming text from unlinked account: \"{text}\"", friction_flag=True, detected_intent="onboarding")
-
-        if chat_type in ["group", "supergroup"]:
-            chat_title = chat.get("title", "Group")
-            msg = (
-                f"👋 *Hello {chat_title}!* I am George, your autonomous operations assistant.\n\n"
-                f"🏢 *Group Chat ID:* `{chat_id}`\n\n"
-                f"To register this group for real-time alerts, CEO Humberto Dominguez can link it using:\n"
-                f"`/linkuser hdominguez {chat_id}`"
-            )
-            send_telegram_message(chat_id, msg)
-            return
-
-        if text.startswith("/register"):
-            handle_user_registration(chat_id, text, from_user)
-            return
-        elif text in ["/start", "/id", "/myid", "/help"]:
-            welcome_unregistered_user(chat_id, from_user)
-            return
-        else:
-            print(f"[TELEGRAM] Unregistered message from chat_id {chat_id}, sending onboarding prompt.", flush=True)
-            welcome_unregistered_user(chat_id, from_user)
-            return
+    if text.startswith("/register"):
+        handle_user_registration(chat_id, text, from_user)
+        return
+    elif text in ["/start", "/id", "/myid", "/help"] and auth_user.get("role") == "Guest":
+        welcome_unregistered_user(chat_id, from_user)
+        return
 
     # Check for Voice Directives (Frontier 3)
     voice = message.get("voice") or message.get("audio")
@@ -4125,6 +4284,8 @@ def process_message(message):
                 send_telegram_message(chat_id, "⚠️ Usage: `/proposal <BID_ID>`")
         elif cmd in ["/search", "/find"]:
             handle_cmd_search(chat_id, arg)
+        elif cmd in ["/web", "/google", "/internet"]:
+            handle_cmd_web(chat_id, arg)
         elif cmd in ["/sync"]:
             handle_cmd_sync(chat_id)
         elif cmd in ["/adduser", "/linkuser"]:

@@ -501,16 +501,9 @@ def admin_operations():
                 inst_where_clauses = []
                 inst_params = []
                 if search_q and active_view == 'institutional_bids':
-                    id_match = re.search(r'^(?:ib[-#\s]*)?(\d+)$', search_q.strip(), re.I)
-                    if id_match:
-                        target_id = int(id_match.group(1))
-                        inst_where_clauses.append("(ib.id = %s OR ib.solicitation_number ILIKE %s OR ib.title ILIKE %s OR ib.agency_name ILIKE %s)")
-                        param_v = f"%{search_q}%"
-                        inst_params.extend([target_id, param_v, param_v, param_v])
-                    else:
-                        inst_where_clauses.append("(ib.solicitation_number ILIKE %s OR ib.title ILIKE %s OR ib.agency_name ILIKE %s OR ib.procurement_officer ILIKE %s OR ib.status ILIKE %s)")
-                        param_v = f"%{search_q}%"
-                        inst_params.extend([param_v, param_v, param_v, param_v, param_v])
+                    s_clauses, s_params = parse_advanced_search(search_q, 'institutional_bids')
+                    inst_where_clauses.extend(s_clauses)
+                    inst_params.extend(s_params)
                 inst_where_str = ("WHERE " + " AND ".join(inst_where_clauses)) if inst_where_clauses else ""
 
                 cur.execute(f'SELECT COUNT(*) FROM "InstitutionalBids" ib {inst_where_str}', tuple(inst_params))
@@ -564,9 +557,9 @@ def admin_operations():
                 gc_where_clauses = []
                 gc_params = []
                 if search_q and active_view == 'general_contractors':
-                    gc_where_clauses.append("(gc.company_name ILIKE %s OR gc.city ILIKE %s OR gc.primary_market ILIKE %s OR gc.lead_estimator_name ILIKE %s)")
-                    param_gc = f"%{search_q}%"
-                    gc_params.extend([param_gc, param_gc, param_gc, param_gc])
+                    s_clauses, s_params = parse_advanced_search(search_q, 'general_contractors')
+                    gc_where_clauses.extend(s_clauses)
+                    gc_params.extend(s_params)
                 gc_where_str = ("WHERE " + " AND ".join(gc_where_clauses)) if gc_where_clauses else ""
 
                 cur.execute(f'''
@@ -797,9 +790,9 @@ def admin_operations():
                 prog_where_clauses = []
                 prog_params = []
                 if search_q and active_view == 'programs':
-                    prog_where_clauses.append("(program_code ILIKE %s OR program_name ILIKE %s OR sponsoring_agency ILIKE %s OR jurisdiction ILIKE %s OR status ILIKE %s)")
-                    param_p = f"%{search_q}%"
-                    prog_params.extend([param_p, param_p, param_p, param_p, param_p])
+                    s_clauses, s_params = parse_advanced_search(search_q, 'programs')
+                    prog_where_clauses.extend(s_clauses)
+                    prog_params.extend(s_params)
                 prog_where_str = ("WHERE " + " AND ".join(prog_where_clauses)) if prog_where_clauses else ""
 
                 cur.execute(f'SELECT COUNT(*) FROM "GovernmentPrograms" {prog_where_str}', tuple(prog_params))

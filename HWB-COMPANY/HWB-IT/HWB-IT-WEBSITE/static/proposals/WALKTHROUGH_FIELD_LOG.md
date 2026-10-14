@@ -103,3 +103,6 @@
 
 ### [2026-09-22 15:13:19] Library & Learning Resource Center (Code L)
 - **Note:** Status on http://www.hwbcleaning.com/academy
+
+### [2026-10-14 08:31:29] Library & Learning Resource Center (Code L)
+- **Note:** Prepare an email for the email campaing. It needs to be only 5 sentences long. And the first sentence needs to be like this. In a meeting that actually matters, when parents are evaluating your operation, how do you check for cleaninless with the same scrutiny as the persons about to spend money on the safety and health of their kids
