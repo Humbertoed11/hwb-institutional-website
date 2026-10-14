@@ -205,8 +205,14 @@ def apply_application_security_headers(response):
     # Static Assets: 7-day immutable edge caching (Cloudflare absorbs 100% of asset requests)
     if request.path.startswith('/static/'):
         response.headers['Cache-Control'] = 'public, max-age=604800, immutable'
+        if 'Vary' in response.headers:
+            vary_tokens = [v.strip() for v in response.headers['Vary'].split(',') if v.strip().lower() != 'cookie']
+            if vary_tokens:
+                response.headers['Vary'] = ', '.join(vary_tokens)
+            else:
+                del response.headers['Vary']
     # Public Marketing Pages: 10-minute edge shield for anonymous guests
-    elif request.method == 'GET' and not session.get('user_id') and not request.path.startswith(('/admin', '/api', '/auth')):
+    elif request.method in ('GET', 'HEAD') and not session.get('user_id') and not request.path.startswith(('/admin', '/api', '/auth')):
         response.headers['Cache-Control'] = 'public, max-age=600, s-maxage=600'
     # Backoffice Desks, APIs, and Auth Routes: Strict zero-cache protection
     elif request.path.startswith(('/admin', '/api', '/auth')):
