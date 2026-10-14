@@ -2,7 +2,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-9.3</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">4.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">4.2.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.1.3 (Infrastructure) &amp; ISO 27001 A.12.1</span></div>
     </div>
@@ -26,7 +26,7 @@
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>Version</strong></td>
-                    <td style="text-align: left;">4.0.0</td>
+                    <td style="text-align: left;">4.2.0</td>
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>Status</strong></td>
@@ -42,7 +42,7 @@
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>Effective Date</strong></td>
-                    <td style="text-align: left;">10/01/2026</td>
+                    <td style="text-align: left;">10/14/2026</td>
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>ISO Standard</strong></td>
@@ -104,10 +104,11 @@
         </table>
 
         <h2>4.0 System Dependencies &amp; Cryptographic Vault Configuration</h2>
-        <p>The system infrastructure relies on the following core dependencies (updated October 01, 2026):</p>
+        <p>The system infrastructure relies on the following core dependencies (updated October 14, 2026):</p>
         <ul>
             <li><strong>Operating System:</strong> Linux / WSL2 Ubuntu 22.04 LTS.</li>
-            <li><strong>Container Fleet:</strong> Docker 26+ running containers: <code>hwb_web_app</code> (Gunicorn Flask, Port 5000), <code>hwb_postgres_dev</code> (PostgreSQL 13, Port 5432), <code>hwb_compliance_engine</code> (Nginx static QMS, Port 80), <code>hwb_traffic_director</code> (Port 8000), and <code>hwb_agent_worker</code> (Autonomous Worker Container).</li>
+            <li><strong>Container Fleet:</strong> Docker 26+ running containers: <code>hwb_web_app</code> (Gunicorn Flask, Port 5000, 24 concurrency slots via 3 workers &times; 8 threads, 45s timeout, 1,000 max requests auto-recycle with 100 jitter), <code>hwb_postgres_dev</code> (PostgreSQL 13, Port 5432), <code>hwb_compliance_engine</code> (Nginx static QMS, Port 80), <code>hwb_traffic_director</code> (Port 8000), and <code>hwb_agent_worker</code> (Autonomous Worker Container).</li>
+            <li><strong>Database Connection Pool:</strong> PostgreSQL <code>ThreadedConnectionPool</code> expanded to min=2, max=28 connections in <code>core/services/database.py</code> to ensure 100% thread coverage across all 24 web request channels.</li>
             <li><strong>Autonomous Worker Browser Engine:</strong> <code>playwright 1.63.0</code> and <strong>Chrome Headless Shell (v1243)</strong> installed natively in <code>hwb_agent_worker</code> for portal crawling.</li>
             <li><strong>Statewide Hunter Crawler Fleet:</strong> <code>scripts/hunter_portal_crawler.py</code> continuously scouts 35 Texas municipal and ISD procurement portals on an autonomous 6-hour cycle.</li>
             <li><strong>Python Cryptography Core:</strong> <code>cryptography 48.0.0</code> installed in <code>hwb_web_app</code> for deterministic AES-256 Fernet ciphers.</li>
@@ -118,14 +119,16 @@
                     <li><code>AZURE_CLIENT_SECRET</code>: Microsoft Graph API OAuth secret. <em>Institutional Alert: Secret rotation required prior to expiration on <strong>03/02/2027</strong>.</em></li>
                 </ul>
             </li>
-            <li><strong>Database Schema State (Migration 036 Baseline):</strong> Unified relational schema up to <strong>Migration 036</strong> (<code>scripts/migrate_036_client_breadcrumbs.py</code>), providing:
+            <li><strong>Database Schema State (Migration 040 Baseline):</strong> Unified relational schema up to <strong>Migration 040</strong> (<code>database/schema_engine.py</code>), providing:
                 <ul>
+                    <li>Five high-speed B-Tree indexes: <code>idx_leads_city_status</code>, <code>idx_leads_facility_type</code>, <code>idx_leads_input_date</code>, <code>idx_construction_bids_status</code>, and <code>idx_institutional_bids_status</code>.</li>
                     <li><code>ClientBreadcrumbs</code>: Client DOM telemetry with session ID, event type, and target selectors.</li>
                     <li><code>SecurityAuditLogs</code>: Protected by Write-Once-Read-Many (WORM) trigger <code>prevent_security_audit_mutation()</code> blocking all updates and deletes.</li>
                     <li><code>GovernmentPrograms</code>, <code>RackTelemetryHistory</code>, <code>GeneralContractors</code>, <code>InstitutionalBids</code>, <code>ConstructionBids</code>, and <code>SCA_WageDeterminations</code>.</li>
                     <li>AES-256 encrypted PII vaulting on <code>Employees</code>.</li>
                 </ul>
             </li>
+            <li><strong>Cloudflare Edge Caching &amp; Azure Origin Lockdown:</strong> Static assets (<code>/static/</code>) served with 7-day immutable cache (<code>Cache-Control: public, max-age=604800, immutable</code>), unauthenticated public marketing pages served with 10-minute cache (<code>public, max-age=600, s-maxage=600</code>), and Azure App Service ARR Affinity disabled (<code>clientAffinityEnabled: False</code>). All authenticated operations desks strictly guarded with fail-closed zero-caching rules (<code>no-cache, no-store, must-revalidate, private, max-age=0</code>).</li>
             <li><strong>Automated Data Retention:</strong> Native PostgreSQL stored function <code>purge_expired_client_breadcrumbs(retention_days=30)</code> automatically purges telemetry logs older than 30 days to enforce ISO 27001 Control A.8.10 data minimization.</li>
             <li><strong>Timezone Standard:</strong> All system timestamps, database audit columns, and telemetry records are strictly pinned to Texas Central Time (<code>America/Chicago</code> / CDT/CST).</li>
             <li><strong>Session Timeout Standard:</strong> All authenticated administrative, backoffice, and executive web sessions automatically invalidate after 30 minutes of inactivity.</li>
@@ -159,6 +162,14 @@
         <h3 id="53-panic-button-reset">5.3 The Panic Button (Working Tree Clean Reset)</h3>
         <p>If local uncommitted code disrupts container execution: <code>git reset --hard HEAD &amp;&amp; git clean -fd</code> followed by <code>docker restart hwb_web_app</code>.</p>
 
+        <h3 id="54-sovereign-grab-and-go">5.4 Sovereign Weather Catastrophe Recovery Appliance (Drive D:\ Grab-and-Go)</h3>
+        <p>In accordance with CEO Humberto Dominguez's executive directive for catastrophic weather events (tornadoes, hurricanes, freezes, floods, or hardware destruction), physical Drive <code>D:\</code> operates as an air-gapped, sovereign <strong>Grab-and-Go Recovery Appliance</strong>:</p>
+        <ul>
+            <li><strong>Drive Inventory:</strong> Contains <code>ubuntu-ext4.vhdx</code> (82 GiB raw virtual disk with full OS, <code>/gemini_projects</code>, <code>/hexgrowth</code>, and <code>.env</code> keys), <code>database_snapshots/hwb_dev_db.dump</code> (47.1 MB), <code>database_snapshots/hex_dev_db.dump</code> (21.2 MB), 1-click launcher <code>restore-system.bat</code>, and emergency documentation (<code>README.html</code> and <code>EMERGENCY_RESTORE_INSTRUCTIONS.txt</code>).</li>
+            <li><strong>Foreign Machine Recovery:</strong> Plug into ANY Windows 10/11 computer, right-click <code>restore-system.bat</code>, select "Run as administrator", and type <code>RESTORE</code>. In under 5 minutes, both HWB (<code>:5000</code>) and HexGrowth (<code>:5100</code>) are 100% operational with all 27,984 leads and PostGIS GIS layers intact.</li>
+            <li><strong>Pre-Storm Refresh Routine:</strong> Run <code>D:\run-backup.ps1</code> on primary workstation before major weather events to capture the latest relational database freeze and sync the virtual disk.</li>
+        </ul>
+
         <h2>6.0 Verification &amp; Continuity Sign-Off</h2>
         <ul>
             <li>Web application responds with HTTP 200 at <code>http://mop.test:5000</code>.</li>
@@ -180,6 +191,18 @@
                 </tr>
             </thead>
             <tbody>
+                <tr>
+                    <td style="text-align: left;">4.2.0</td>
+                    <td style="text-align: left;">10/14/2026</td>
+                    <td style="text-align: left;">Peter &amp; George</td>
+                    <td style="text-align: left;">Upgraded per Continuous Recovery Mandate following Zero-Cost Scalability Upgrade and Concurrency Multiplier: doubled Gunicorn request slots to 24 (3 workers &times; 8 threads, 45s timeout, 1,000 max requests auto-recycle with 100 jitter), expanded PostgreSQL ThreadedConnectionPool to 28 connections in core/services/database.py, codified Migration 040 (five high-speed B-Tree indexes), activated 7-day immutable Cloudflare edge caching for static assets, and disabled Azure App Service ARR Affinity (clientAffinityEnabled: False) with strict private operations desk air-gapping. Approved by Humberto Dominguez, CEO.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">4.1.0</td>
+                    <td style="text-align: left;">10/02/2026</td>
+                    <td style="text-align: left;">Peter &amp; George</td>
+                    <td style="text-align: left;">Codified Section 5.4 Sovereign Weather Catastrophe Recovery Appliance (Drive D:\ Grab-and-Go architecture), enabling bare-metal 1-click restoration of both HWB Cleaning Services LLC and HexGrowth on any foreign Windows machine via restore-system.bat/ps1. Automated 68.3 MB dual-database freeze (hwb_dev_db.dump and hex_dev_db.dump) resolving Docker Desktop volume segregation and storage capacity constraints on Drive D. Approved by Humberto Dominguez, CEO.</td>
+                </tr>
                 <tr>
                     <td style="text-align: left;">4.0.0</td>
                     <td style="text-align: left;">10/01/2026</td>
