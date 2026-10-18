@@ -696,7 +696,8 @@ def apply_system_migrations(conn: Any, db_url: Optional[str] = None) -> None:
                 ("034_sync_dev_to_production", "scripts.migrate_034_sync_dev_to_production", "Full production sync: 1,231 mined leads, corporate umbrellas, coops, gov programs, and institutional bids"),
                 ("035_site_security_rack_09", "scripts.migrate_035_site_security_rack_09", "Site Security Rack #9 immutable audit ledger with database-level WORM trigger and high-density indexing"),
                 ("036_user_custom_scripts", "scripts.migrate_036_user_custom_scripts", "User custom calling scripts and personal profile script library"),
-                ("039_sales_and_account_executive_positions", "scripts.migrate_039_sales_and_account_executive_positions", "Digital job positions and descriptions for Remote Sales, Outside Sales, and Account Executives")
+                ("039_sales_and_account_executive_positions", "scripts.migrate_039_sales_and_account_executive_positions", "Digital job positions and descriptions for Remote Sales, Outside Sales, and Account Executives"),
+                ("043_enterprise_campaign_readiness", "scripts.migrate_043_enterprise_campaign_readiness", "Enterprise 5-Pillar Marketing Campaign Readiness, DNS MX Health, Suppression Ledger, and 2,998 Enriched Childcare Sync")
             ]
 
             # --- Migration 040: High-Speed Scalability Indexes ---
@@ -762,10 +763,20 @@ def apply_system_migrations(conn: Any, db_url: Optional[str] = None) -> None:
                 cur.execute("""
                     ALTER TABLE "ConstructionBids" ADD COLUMN IF NOT EXISTS assigned_rep_id INTEGER;
                     CREATE INDEX IF NOT EXISTS idx_construction_bids_assigned_rep ON "ConstructionBids"(assigned_rep_id);
-                    UPDATE "user_scripts"
-                    SET script_body = REPLACE(script_body, 'Humberto Dominguez, CEO and founder of', '{Caller} with'),
-                        updated_at = CURRENT_TIMESTAMP
-                    WHERE script_body LIKE '%Humberto Dominguez, CEO and founder of%';
+                    DO $$
+                    BEGIN
+                        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'user_scripts' AND column_name = 'content') THEN
+                            UPDATE "user_scripts"
+                            SET content = REPLACE(content, 'Humberto Dominguez, CEO and founder of', '{Caller} with'),
+                                updated_at = CURRENT_TIMESTAMP
+                            WHERE content LIKE '%Humberto Dominguez, CEO and founder of%';
+                        ELSIF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'user_scripts' AND column_name = 'script_body') THEN
+                            UPDATE "user_scripts"
+                            SET script_body = REPLACE(script_body, 'Humberto Dominguez, CEO and founder of', '{Caller} with'),
+                                updated_at = CURRENT_TIMESTAMP
+                            WHERE script_body LIKE '%Humberto Dominguez, CEO and founder of%';
+                        END IF;
+                    END $$;
                     INSERT INTO "schema_migrations" (version, description)
                     VALUES ('042_sales_territory_and_caller_tags', 'Add assigned_rep_id to ConstructionBids and replace hardcoded founder name in shared user_scripts with dynamic {Caller} tag')
                     ON CONFLICT (version) DO NOTHING;

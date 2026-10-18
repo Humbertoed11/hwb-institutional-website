@@ -3638,18 +3638,33 @@ def replace_email_tokens(template: str, recipient: dict, tracking_token: str = N
         booking_link = booking_dest
         unsub_link = "https://www.hwbcleaning.com/unsubscribe"
 
-    raw_name = recipient.get('recipient_name') or recipient.get('director') or ""
-    parts = raw_name.strip().split()
-    if parts:
-        first = parts[0]
-        if first.lower().replace('.', '') in ['mr', 'ms', 'mrs', 'dr'] and len(parts) > 1:
-            first = parts[1]
-        first_name = first
+    raw_name = (recipient.get('recipient_name') or recipient.get('director') or "").strip()
+    fac_name = (recipient.get('facility_name') or recipient.get('center_name') or "your facility").strip()
+    raw_lower = raw_name.lower()
+    biz_tokens = ('llc', 'inc', 'corp', 'school', 'academy', 'child', 'daycare', 'learning', 'center', 'montessori', 'kids', 'preschool', 'ministry', 'church', 'facility director', 'owner', 'none', 'unknown', 'n/a', '--')
+    is_generic_or_biz = (
+        not raw_name
+        or raw_lower in ('facility director', 'director', 'owner', 'manager', 'none', 'unknown', 'there')
+        or raw_lower == fac_name.lower()
+        or any(bt in raw_lower for bt in biz_tokens)
+    )
+    if not is_generic_or_biz:
+        parts = raw_name.replace(',', ' ').split()
+        if parts:
+            first = parts[0]
+            if first.lower().replace('.', '') in ['mr', 'ms', 'mrs', 'dr', 'miss', 'pastor', 'rev'] and len(parts) > 1:
+                first = parts[1]
+            first_name = first.title() if first.isupper() or first.islower() else first
+            director_display = raw_name
+        else:
+            first_name = "there"
+            director_display = "Facility Director"
     else:
         first_name = "there"
+        director_display = "Facility Director"
 
     city = recipient.get('city') or "North Texas"
-    county = recipient.get('county') or "Texas"
+    county = (recipient.get('county') or "Texas").title()
     cap = recipient.get('capacity')
     capacity_str = f"{cap} enrolled students" if cap else "your student body"
     sqf = recipient.get('sqf')
@@ -3659,11 +3674,11 @@ def replace_email_tokens(template: str, recipient: dict, tracking_token: str = N
     replacements = {
         "{first_name}": first_name,
         "{director_first_name}": first_name,
-        "{director_name}": first_name,
-        "{recipient_name}": first_name,
-        "{facility_name}": "your facility",
-        "{center_name}": "your facility",
-        "{facility}": "your facility",
+        "{director_name}": director_display,
+        "{recipient_name}": director_display,
+        "{facility_name}": fac_name,
+        "{center_name}": fac_name,
+        "{facility}": fac_name,
         "{city}": city,
         "{county}": county,
         "{capacity}": capacity_str,
@@ -3684,31 +3699,36 @@ def replace_email_tokens(template: str, recipient: dict, tracking_token: str = N
 @login_required
 def api_marketing_leads_preview_count():
     """
-    Returns live count of verified commercial leads matching target filter criteria.
+    Returns live count of verified campaign-ready commercial leads matching target filter criteria,
+    deduplicated by email address so multi-site owners receive one email per campaign batch.
     """
     sector = (request.args.get('sector') or 'all').strip().lower()
-    geo = (request.args.get('geo') or 'north_texas').strip()
+    geo = (request.args.get('geo') or 'north_texas').strip().lower()
     min_capacity = request.args.get('min_capacity', type=int) or 0
     min_sqf = request.args.get('min_sqf', type=int) or 0
 
     where_clauses = [
+        "COALESCE(campaign_ready, FALSE) = TRUE",
+        "COALESCE(is_commercial, TRUE) = TRUE",
         "email IS NOT NULL",
-        "POSITION('@' IN email) > 0",
+        "POSITION('@' IN email) > 1",
         "COALESCE(is_dnc, FALSE) = FALSE",
-        "COALESCE(is_converted, FALSE) = FALSE"
+        "COALESCE(is_converted, FALSE) = FALSE",
+        "COALESCE(is_duplicate, FALSE) = FALSE",
+        "NOT EXISTS (SELECT 1 FROM \"EmailSuppressionList\" esl WHERE esl.email_lower = LOWER(TRIM(email)))"
     ]
     params = []
 
-    if sector in ['child care', 'childcare', 'daycare']:
+    if sector in ['child care', 'childcare', 'daycare', 'licensed childcare']:
         where_clauses.append("(industry ILIKE %s OR facility_type ILIKE %s)")
         params.extend(['%child%', '%child%'])
     elif sector in ['commercial', 'office', 'corporate']:
         where_clauses.append("(industry ILIKE %s OR facility_type ILIKE %s)")
         params.extend(['%commercial%', '%commercial%'])
 
-    if geo == 'north_texas':
-        where_clauses.append("county IN ('Collin', 'Dallas', 'Denton', 'Tarrant')")
-    elif geo and geo != 'all_texas' and geo != 'all':
+    if geo in ('north_texas', 'north texas', 'north texas core'):
+        where_clauses.append("UPPER(TRIM(COALESCE(county, ''))) IN ('COLLIN', 'DALLAS', 'DENTON', 'TARRANT')")
+    elif geo and geo not in ('all_texas', 'all', 'statewide', 'texas'):
         where_clauses.append("county ILIKE %s")
         params.append(f"%{geo}%")
 
@@ -3728,18 +3748,25 @@ def api_marketing_leads_preview_count():
         conn = get_db(db_url)
         with conn.cursor() as cur:
             cur.execute(f'''
-                SELECT COUNT(*), COALESCE(SUM(estimated_annual_value), 0)
+                SELECT COUNT(*), COALESCE(SUM(estimated_annual_value), 0),
+                       COUNT(DISTINCT LOWER(TRIM(email)))
                 FROM "Leads"
                 {where_sql}
             ''', tuple(params))
             row = cur.fetchone()
-            count = row[0] if row else 0
+            total_facilities = row[0] if row else 0
             est_value = float(row[1]) if row and row[1] else 0.0
+            unique_inboxes = row[2] if row and len(row) > 2 else total_facilities
 
             cur.execute(f'''
-                SELECT center_name, director, city, county, capacity, sqf, email
-                FROM "Leads"
-                {where_sql}
+                SELECT center_name, director, city, county, capacity, sqf, email, email_inbox_type
+                FROM (
+                    SELECT DISTINCT ON (LOWER(TRIM(email)))
+                        id, center_name, director, city, county, capacity, sqf, email, email_inbox_type
+                    FROM "Leads"
+                    {where_sql}
+                    ORDER BY LOWER(TRIM(email)), capacity DESC NULLS LAST, id ASC
+                ) deduped
                 ORDER BY capacity DESC NULLS LAST, id ASC
                 LIMIT 5
             ''', tuple(params))
@@ -3747,7 +3774,9 @@ def api_marketing_leads_preview_count():
 
             return jsonify({
                 'status': 'success',
-                'count': count,
+                'count': unique_inboxes,
+                'total_matching_facilities': total_facilities,
+                'unique_inboxes': unique_inboxes,
                 'estimated_annual_value': est_value,
                 'samples': samples
             })
@@ -3761,7 +3790,7 @@ def api_marketing_leads_preview_count():
 @login_required
 def api_marketing_campaign_create():
     """
-    Creates a new marketing campaign and optionally stages matching leads.
+    Creates a new marketing campaign and stages deduplicated campaign-ready commercial leads.
     """
     data = request.get_json() or request.form
     name = (data.get('name') or '').strip()
@@ -3806,13 +3835,17 @@ def api_marketing_campaign_create():
             staged_count = 0
             if stage_leads:
                 where_clauses = [
+                    "COALESCE(campaign_ready, FALSE) = TRUE",
+                    "COALESCE(is_commercial, TRUE) = TRUE",
                     "email IS NOT NULL",
-                    "POSITION('@' IN email) > 0",
+                    "POSITION('@' IN email) > 1",
                     "COALESCE(is_dnc, FALSE) = FALSE",
                     "COALESCE(is_converted, FALSE) = FALSE",
+                    "COALESCE(is_duplicate, FALSE) = FALSE",
                     "(state IS NULL OR UPPER(state) NOT IN ('CA', 'WA'))",
                     "LOWER(email) NOT LIKE '%.ca'",
-                    "LOWER(email) NOT LIKE '%.ca.gov'"
+                    "LOWER(email) NOT LIKE '%.ca.gov'",
+                    "NOT EXISTS (SELECT 1 FROM \"EmailSuppressionList\" esl WHERE esl.email_lower = LOWER(TRIM(email)))"
                 ]
                 params = []
                 if 'child' in target_sector.lower() or 'daycare' in target_sector.lower():
@@ -3822,10 +3855,10 @@ def api_marketing_campaign_create():
                     where_clauses.append("(industry ILIKE %s OR facility_type ILIKE %s)")
                     params.extend(['%commercial%', '%commercial%'])
 
-                if 'statewide' in target_geo.lower() or 'texas' in target_geo.lower():
-                    pass # all Texas
-                elif 'north' in target_geo.lower():
-                    where_clauses.append("county IN ('Collin', 'Dallas', 'Denton', 'Tarrant')")
+                if 'north' in target_geo.lower():
+                    where_clauses.append("UPPER(TRIM(COALESCE(county, ''))) IN ('COLLIN', 'DALLAS', 'DENTON', 'TARRANT')")
+                elif 'statewide' in target_geo.lower() or 'texas' in target_geo.lower() or 'all' in target_geo.lower():
+                    pass  # Statewide across all of Texas
 
                 if min_capacity > 0:
                     where_clauses.append("capacity >= %s")
@@ -3836,8 +3869,13 @@ def api_marketing_campaign_create():
 
                 cur.execute(f'''
                     SELECT id, center_name, director, email, city, county, capacity, sqf
-                    FROM "Leads"
-                    {where_sql}
+                    FROM (
+                        SELECT DISTINCT ON (LOWER(TRIM(email)))
+                            id, center_name, director, email, city, county, capacity, sqf
+                        FROM "Leads"
+                        {where_sql}
+                        ORDER BY LOWER(TRIM(email)), capacity DESC NULLS LAST, id ASC
+                    ) deduped
                     ORDER BY capacity DESC NULLS LAST, id ASC
                     LIMIT %s;
                 ''', tuple(params))
@@ -3846,14 +3884,15 @@ def api_marketing_campaign_create():
                 for lead in matched_leads:
                     lid, center, director, email, city, county, cap, sqf = lead
                     token = uuid.uuid4().hex
-                    director_name = director.strip() if director and director.strip() else "Facility Director"
+                    director_name = director.strip() if director and director.strip() and director.strip().lower() not in ('none', 'unknown', '--') else "Facility Director"
+                    clean_addr = email.strip().lower()
                     cur.execute('''
                         INSERT INTO "CampaignRecipients" (
                             campaign_id, lead_id, recipient_email, recipient_name,
                             facility_name, city, county, capacity, sqf,
                             current_step, status, tracking_token
                         ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 1, 'STAGED', %s);
-                    ''', (campaign_id, lid, email.strip(), director_name, center, city, county, cap or 0, sqf or 0, token))
+                    ''', (campaign_id, lid, clean_addr, director_name, center, city, county, cap or 0, sqf or 0, token))
                     staged_count += 1
 
                     if lid:
@@ -3862,18 +3901,19 @@ def api_marketing_campaign_create():
                             VALUES (%s, 'Lead', 'Marketing Outreach', %s);
                         ''', (lid, f"Enrolled in marketing campaign: '{name}' ({campaign_code}) - Status: STAGED"))
 
-                        # Option 2 Smart Status Automation: Advance 'New' leads to 'In Campaign' while protecting active sales stages
                         cur.execute('''
                             UPDATE "Leads"
-                            SET status = 'In Campaign', updated_at = CURRENT_TIMESTAMP
-                            WHERE id = %s AND (status ILIKE 'new' OR status IS NULL)
-                            RETURNING id;
+                            SET last_campaigned_at = CURRENT_TIMESTAMP,
+                                status = CASE WHEN status ILIKE 'new' OR status IS NULL THEN 'In Campaign' ELSE status END,
+                                updated_at = CURRENT_TIMESTAMP
+                            WHERE id = %s
+                            RETURNING (status = 'In Campaign');
                         ''', (lid,))
                         if cur.fetchone():
                             cur.execute('''
                                 INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
                                 VALUES (%s, 'Lead', 'Status Change', %s);
-                            ''', (lid, f"Status advanced from 'New' to 'In Campaign' via '{name}' ({campaign_code})"))
+                            ''', (lid, f"Status advanced to 'In Campaign' via '{name}' ({campaign_code})"))
 
                 cur.execute('''
                     UPDATE "MarketingCampaigns"

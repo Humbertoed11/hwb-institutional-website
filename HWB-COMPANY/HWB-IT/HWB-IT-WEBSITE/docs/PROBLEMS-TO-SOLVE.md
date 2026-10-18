@@ -114,6 +114,7 @@ Responsibility: George (Architect)
 | 10/17/2026 | BUG-128 | Hardcoded Caller Name ("Humberto") & Placeholder "[Your Name]" in Commercial Lead Calling Workstation Scripts. | **RESOLVED** | HIGH |
 | 10/17/2026 | BUG-129 | Commercial Leads Tab & Calling Desk Exposing Entire 23,604 Unassigned Lead Pool to Sales Profiles Instead of Assigned Territory Only (Option 1). | **RESOLVED** | HIGH |
 | 10/17/2026 | BUG-130 | Commercial Bidding Page Exposing All 65 Unassigned GC Bids to Sales Profiles, Missing `assigned_rep_id`, and `Enrich` Button Event/JSON Crash. | **RESOLVED** | HIGH |
+| 10/17/2026 | BUG-131 | Live Leads Table Marketing Campaign Readiness Desync (0 North Texas Childcare Emails, $375M Legacy Car Lot Distortion, 70 Dead Domains, & Missing Miner Closure Safeguards). | **RESOLVED** | CRITICAL |
 
 
 ## BUG-122: App Manual Static Routing Deficit (Lacks Automatic Active Workspace Detection & Deep-Link Chapter Navigation)
@@ -2457,3 +2458,28 @@ CEO Humberto Dominguez attempting to log into `https://www.hwbcleaning.com/login
    - Updated `onclick="enrichGCBid(event, {{ bid.id }}, this)"` to explicitly stop event propagation, safely lock/restore the button, check `content-type: application/json`, and display a toast summary for `enrichAllGCBids()` instead of a blocking browser `alert()`.
    - Updated `/api/v1/gc-vetting/<int:bid_id>/enrich`, `/api/v1/gc-vetting/enrich-all`, and `/api/v1/bids/<int:bid_id>/commit-estimate` in `blueprints/bids.py` to enforce `_has_bids_perm('edit')` and `_verify_bid_ownership` and always return JSON responses.
    - Updated `GCVettingEngine.enrich_single_bid` in `core/services/gc_vetting_engine.py` to normalize phone numbers via `clean_phone(...)` and preserve existing non-null columns via `COALESCE(%s, ...)`.
+
+
+## BUG-131: Live Leads Table Marketing Campaign Readiness Desync (0 North Texas Childcare Emails, $375M Legacy Car Lot Distortion, 70 Dead Domains, & Missing Miner Closure Safeguards)
+**Detected:** 10/17/2026
+**Status:** **RESOLVED** (10/17/2026)
+**Symptoms:**
+1. On live production (`sigmajan-server` / `www.hwbcleaning.com`), creating a Childcare email campaign for North Texas (`Collin`, `Dallas`, `Denton`, `Tarrant`) matched **`0` leads**, and statewide Childcare matched only **`3` leads** (`backgroundchecks@claytonyouth.org`).
+2. `16,853` legacy non-childcare `Texas Commercial Registry` rows (`Automotive` car lots and `Commercial Property` rows with `capacity = 0`) were still flagged `is_commercial = TRUE` on Azure, inflating the commercial lead count to `25,358` and distorting pipeline valuation to `$375,551,772.00`.
+3. `blueprints/crm_api.py` used a case-sensitive `county IN ('Collin', 'Dallas', 'Denton', 'Tarrant')` check while `county` in `"Leads"` is stored uppercase (`'COLLIN'`, `'DALLAS'`, `'DENTON'`, `'TARRANT'`), and did not deduplicate recipient emails (`DISTINCT ON (LOWER(TRIM(email)))`), risking sending multiple identical emails to multi-location daycare owners.
+4. `70` unique email domains in `"Leads"` were expired/dead (`NXDOMAIN` / zero `MX` records), and `daycare_registry_sync.py` lacked permanent closure reconciliation and circuit-breaker safeguards.
+**Root Causes:**
+1. The `2,998` website-mined Childcare emails and the `is_commercial = FALSE` quarantine of the `16,853` non-childcare `Texas Commercial Registry` rows in `hwb_postgres_dev` had not yet been synchronized into `sigmajan-server` via an automated boot migration.
+2. `"Leads"` lacked a self-maintaining database trigger (`trg_leads_campaign_readiness`), a DNS mail-server health table (`"EmailDomainHealth"`), and a permanent global suppression ledger (`"EmailSuppressionList"`).
+**Solution:**
+1. **Pillar 1 — Self-Maintaining PostgreSQL Trigger (`fn_leads_compute_campaign_readiness` & `trg_leads_campaign_readiness`):**
+   - Installed `BEFORE INSERT OR UPDATE ON "Leads"` trigger that automatically sanitizes `email` and `phone` (`(###)-###-####`), classifies `email_inbox_type` (`DIRECT_PERSONAL`, `ROLE_INBOX`, `NONE`), and evaluates the 6-gate readiness check to set `campaign_ready`, `email_mx_verified`, and `email_hygiene_status` (`CAMPAIGN_READY`, `PHONE_ONLY`, `DO_NOT_EMAIL`, `DEAD_DOMAIN_NO_MX`, `INVALID_OR_SUPPRESSED`, `SUPPRESSED`, `DUPLICATE_RECORD`, `FACILITY_CLOSED`, `NON_COMMERCIAL`).
+2. **Pillar 2 & 3 — Live DNS `MX` Verification (`"EmailDomainHealth"`) & Global Suppression (`"EmailSuppressionList"`):**
+   - Verified all `5,061` unique email domains via TCP + UDP DNS `MX` (`QTYPE=15`) queries (`4,991` live domains; `70` dead/expired `NXDOMAIN` domains quarantined as `DEAD_DOMAIN_NO_MX`).
+   - Created `"EmailSuppressionList"` and wired it into `/unsubscribe` (`blueprints/public.py`) and the outbound Microsoft Graph gateway (`core/services/email_service.py`).
+3. **Pillar 4 & 5 — Campaign Audience Hardening & UI Filter (`blueprints/crm_api.py`, `blueprints/operations.py`, `templates/backoffice_operations.html`):**
+   - Updated `api_marketing_leads_preview_count` and `api_marketing_campaign_create` to require `campaign_ready = TRUE`, match North Texas counties case-insensitively (`UPPER(TRIM(COALESCE(county, ''))) IN ('COLLIN', 'DALLAS', 'DENTON', 'TARRANT')`), and deduplicate by `LOWER(TRIM(email))` (`DISTINCT ON`).
+   - Added the **`✅ Campaign Ready (3,353)`** filter pill (`campaign_filter=campaign_ready`) and row-level **`✅ Campaign Ready`** badge on `/admin/operations?view=leads`.
+4. **4-Safeguard Daycare Registry Miner (`scripts/daycare_registry_sync.py` & `scripts/enrich_daycare_contacts.py`):**
+   - Added paginated Socrata ingestion, Circuit-Breaker (`>= 7,500` active records), explicit `operation_status = 'N'` closure check, Active-Deal Protection (`Active`, `Qualified`, `Trained`, `Engaged`, `is_converted`), and Self-Healing Re-Activation & Outbox Draft Cancellation.
+

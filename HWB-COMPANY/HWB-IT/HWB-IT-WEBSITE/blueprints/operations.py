@@ -108,6 +108,7 @@ def admin_operations():
     dup_count = 0
     in_campaign_count = 0
     opened_leads_count = 0
+    campaign_ready_count = 0
     lib = {'area': [], 'task': [], 'item': []}
     applicants, subcontractors = [], []
     applicants_count, subcontractors_count = 0, 0
@@ -316,7 +317,9 @@ def admin_operations():
                     lead_where_clauses.append("(SELECT COUNT(*) FROM \"GlobalActivities\" WHERE parent_id = l.id AND parent_type = 'Lead') > 0")
 
                 campaign_filter = request.args.get('campaign_filter', '').strip()
-                if campaign_filter == 'in_campaign' and active_view == 'leads':
+                if campaign_filter == 'campaign_ready' and active_view == 'leads':
+                    lead_where_clauses.append("COALESCE(l.campaign_ready, FALSE) = TRUE")
+                elif campaign_filter == 'in_campaign' and active_view == 'leads':
                     lead_where_clauses.append("(EXISTS (SELECT 1 FROM \"CampaignRecipients\" cr WHERE cr.lead_id = l.id) OR l.status = 'In Campaign')")
                 elif campaign_filter == 'opened' and active_view == 'leads':
                     lead_where_clauses.append("EXISTS (SELECT 1 FROM \"CampaignRecipients\" cr WHERE cr.lead_id = l.id AND COALESCE(cr.open_count, 0) > 0)")
@@ -343,6 +346,17 @@ def admin_operations():
                 except Exception:
                     conn.rollback()
                     dup_count = 0
+
+                try:
+                    if is_sales_lead_scope:
+                        cur.execute('SELECT COUNT(*) FROM "Leads" l WHERE l.owner_id = %s AND COALESCE(l.campaign_ready, FALSE) = TRUE AND COALESCE(l.is_commercial, TRUE) = TRUE AND COALESCE(l.is_duplicate, FALSE) = FALSE;', (current_user.id,))
+                    else:
+                        cur.execute('SELECT COUNT(*) FROM "Leads" l WHERE COALESCE(l.campaign_ready, FALSE) = TRUE AND COALESCE(l.is_commercial, TRUE) = TRUE AND COALESCE(l.is_duplicate, FALSE) = FALSE;')
+                    cr_row = cur.fetchone()
+                    campaign_ready_count = cr_row[0] if cr_row else 0
+                except Exception:
+                    conn.rollback()
+                    campaign_ready_count = 0
 
                 try:
                     if is_sales_lead_scope:
@@ -998,6 +1012,7 @@ def admin_operations():
     return render_template('backoffice_operations.html', 
                          active_view=active_view, leads=leads, leads_count=leads_count, dup_count=dup_count,
                          in_campaign_count=in_campaign_count, opened_leads_count=opened_leads_count,
+                         campaign_ready_count=campaign_ready_count,
                          campaign_filter=campaign_filter,
                          page=page, total_pages=total_pages, search_q=search_q,
                          sort_by=sort_by or '', sort_dir=sort_dir, active_cols=active_cols,

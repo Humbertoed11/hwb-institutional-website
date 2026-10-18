@@ -108,8 +108,13 @@ Responsibility: George (Architect)
 | 10/07/2026 | BUG-122 | App Manual Static Routing Deficit (Lacks Automatic Active Workspace Detection & Deep-Link Chapter Navigation). | **RESOLVED** | HIGH |
 | 10/07/2026 | BUG-123 | Synthetic UI Mockups in Application Manual & Documentation Fidelity Deficit (Absence of Empirical Screenshots and Enterprise Microsoft/IBM-Tier Feature Specifications). | **RESOLVED** | HIGH |
 | 10/08/2026 | BUG-124 | Missing Telegram and Email Alerts on Workforce/Subcontractor Form Intake & Missing Apply Date Column in Operations View. | **RESOLVED** | HIGH |
-| 10/13/2026 | BUG-125 | Gunicorn Single-Worker Jam & 30-Second Timeouts Slowing Password Reset Screen. | **RESOLVED** | HIGH |
-
+| 10/17/2026 | BUG-125 | Edit User Account Modal Password Change Fields Hidden Below Scroll Fold, Missing Eye Visibility Toggles, and Unenforced `force_pwd_reset` Login Flag. | **RESOLVED** | HIGH |
+| 10/17/2026 | BUG-126 | Hardcoded Post-Login `/sales-desk` Redirect & Static `role != 'Sales'` Guards Ignoring Custom Module Permissions. | **RESOLVED** | HIGH |
+| 10/17/2026 | BUG-127 | Clients Tab Exposing Unassigned House Accounts & Inline Edit/Delete Controls to Read-Only Sales Accounts. | **RESOLVED** | HIGH |
+| 10/17/2026 | BUG-128 | Hardcoded Caller Name ("Humberto") & Placeholder "[Your Name]" in Commercial Lead Calling Workstation Scripts. | **RESOLVED** | HIGH |
+| 10/17/2026 | BUG-129 | Commercial Leads Tab & Calling Desk Exposing Entire 23,604 Unassigned Lead Pool to Sales Profiles Instead of Assigned Territory Only (Option 1). | **RESOLVED** | HIGH |
+| 10/17/2026 | BUG-130 | Commercial Bidding Page Exposing All 65 Unassigned GC Bids to Sales Profiles, Missing `assigned_rep_id`, and `Enrich` Button Event/JSON Crash. | **RESOLVED** | HIGH |
+| 10/17/2026 | BUG-131 | Live Leads Table Marketing Campaign Readiness Desync (0 North Texas Childcare Emails, $375M Legacy Car Lot Distortion, 70 Dead Domains, & Missing Miner Closure Safeguards). | **RESOLVED** | CRITICAL |
 
 
 ## BUG-122: App Manual Static Routing Deficit (Lacks Automatic Active Workspace Detection & Deep-Link Chapter Navigation)
@@ -1138,7 +1143,7 @@ CEO Humberto Dominguez attempting to log into `https://www.hwbcleaning.com/login
 3. **Upgraded Form Validation & Actions:** Replaced all `alert()` calls in `HWB-WEB Sigma Executive.html`, `backoffice_scope_builder.html`, `backoffice_workflow.html`, and `sales_desk.html` with clinical toast notifications and decision modals.
 4. **Backend Resilience Hardening:** Hardened `delete_user` in `blueprints/operations.py` with pre-delete target verification, clean user-facing flash messaging, and explicit `conn.rollback()` on exceptions.
 5. **Poka-Yoke Inspection Quality Gate:** Created `scratch/test_prohibited_browser_dialogs.py` verifying 0 prohibited dialogs across all active templates and static JS files, passing 5/5 test assertions.
-6. **ISO 9001 Claim Sanitization:** Sanitized 8 occurrences of "ISO 9001:2015 Certified" / "Registered" to "ISO 9001:2015 Compliant" across all backoffice footers, letterheads, and capability statements per CEO approval.
+6. **ISO 9001 Claim Sanitization:** Sanitized 8 occurrences of "ISO 9001:2026 (ISO 9001:2015+Amd 1:2024) Certified" / "Registered" to "ISO 9001:2026 (ISO 9001:2015+Amd 1:2024) Compliant" across all backoffice footers, letterheads, and capability statements per CEO approval.
 **Preventative:**
 1. Run `scratch/test_prohibited_browser_dialogs.py` in all CI and pre-handover verification test suites.
 2. All destructive and confirmation actions across backoffice forms must strictly use `showDecision({...})`. Inline `confirm()` and `alert()` are permanently prohibited.
@@ -1792,7 +1797,7 @@ CEO Humberto Dominguez attempting to log into `https://www.hwbcleaning.com/login
 1. The proposal intake form on `/get-quote` appeared as an MVP prototype: a single isolated white card floating on a blank canvas with no structural depth or visual hierarchy.
 2. The square footage selector featured a consumer-grade HTML5 range slider with conflicting limits (slider maxed at 250,000 SQF while adjacent number input accepted 1,000,000 SQF), jammed alongside six quick-select buttons in an awkward triplicate input pattern.
 3. Commercial cleaning scope parameters were incomplete: the form failed to capture Cleaning Frequency (daily vs periodic), Facility Location (City / Zip Code in North Texas), Desired Start Horizon, and Specialized Scope Add-ons.
-4. The page lacked institutional trust anchors ($5M Commercial Umbrella, ISO 9001:2015 Scope Guarantee, W-2 Verified Technicians, Turnaround SLA), damaging conversion rates for enterprise B2B facilities directors.
+4. The page lacked institutional trust anchors ($5M Commercial Umbrella, ISO 9001:2026 (ISO 9001:2015+Amd 1:2024) Scope Guarantee, W-2 Verified Technicians, Turnaround SLA), damaging conversion rates for enterprise B2B facilities directors.
 5. The submit button used `.nav-cta` with generic inline styling, paired with an unformatted raw TCPA checkbox.
 **Root Causes:**
 1. Initial development prioritized rapid lead capture over enterprise procurement standards.
@@ -2294,65 +2299,187 @@ CEO Humberto Dominguez attempting to log into `https://www.hwbcleaning.com/login
 2. Software application guides must be authored under the Everyday Words Standard and be universally accessible to all authenticated employees regardless of elevated compliance security clearances.
 
 
-
-
-
-
-
-## BUG-122: Host TCP Connection Reset on http://mop.test:5000 Following Web Container Background Processing
-**Detected:** 10/13/2026
-**Status:** **RESOLVED** (10/13/2026)
+## BUG-122: Enterprise-Wide Deduplication & Smart Merge Engine Across All 6 Intake & Backoffice Modules (`SubcontractorPartners`, `JobApplicants`, `Leads`, `Employees`, `Customers`, `AcademyEnrollments`, `ConstructionBids`, `InstitutionalBids`)
+**Detected:** 10/17/2026
+**Status:** **RESOLVED** (10/17/2026)
 **Symptoms:**
-1. Navigating to `http://mop.test:5000/` in the workstation browser or executing `curl -v http://mop.test:5000/` from the host terminal failed with `curl: (56) Recv failure: Connection reset by peer`.
-2. Port 5000 remained open in a `LISTEN` state on host `127.0.0.1:5000`, but incoming HTTP requests were immediately reset by the Docker bridge after sending `GET / HTTP/1.1`.
-3. Executing requests directly inside the web container (`docker exec hwb_web_app curl http://127.0.0.1:5000/`) succeeded with HTTP 200 OK, confirming the Python Flask/Gunicorn application was healthy and isolating the failure to the host-to-container proxy layer.
+1. Live query of `https://hwbcleaning.com/api/v1/workforce/subcontractors` revealed 11 rows across 10 unique companies: *Valdez remodeling and cleaning* (`(214)-684-0931`, `valdezcleaning7275@gmail.com`) registered on `09/29/2026` (`ID: 2`) and registered again on `10/06/2026` (`ID: 5`), creating duplicate records.
+2. In `ID 2` (`09/29/2026`), the registrant entered the company name in the Contact Name box and selected 3 specialties; in `ID 5` (`10/06/2026`), the registrant returned to provide the owner's name (`Dueña Luz Tejada`) and add `Disinfection / Healthcare`.
+3. A comprehensive platform audit revealed 6 total intake and backoffice workflows executing unconditional `INSERT INTO` statements without pre-checking normalized 10-digit phone numbers, lowercased email addresses, or composite entity keys:
+   - Subcontractor Portal (`/api/v1/workforce/subcontractor` & `/api/v1/workforce/subcontractors`)
+   - Job Applicant Portal (`/api/v1/workforce/apply`)
+   - Website Commercial Quote Intake (`POST /get-quote` & `POST /admin/add-lead`)
+   - HR Employee Onboarding (`POST /api/v1/hr/onboard`) & Customer Account Conversion (`POST /api/v1/leads/<id>/promote` & `POST /admin/add-account`)
+   - SigmaAcademy™ Training Assignments (`POST /api/v1/academy/assign`)
+   - Commercial GC Bids (`POST /api/v1/construction-bids/create`) & Institutional Solicitations (`POST /api/v1/institutional-bids/create`)
 **Root Causes:**
-1. **Background Ingestion Execution Inside Web Container:** Executing high-volume database operations (`scripts/daycare_registry_sync.py --force`) directly inside the frontend web container (`hwb_web_app`) rather than the dedicated worker daemon (`hwb_agent_worker`) caused prolonged worker socket holding.
-2. **Docker Desktop WSL Virtual Bridge Desynchronization:** Docker Desktop's port proxy between the WSL2 subsystem and the container network lost socket tracking to container `172.19.0.5:5000`, resulting in instant TCP resets on all host connections to `mop.test:5000`.
+1. **Unconditional Database Inserts:** Public and backoffice endpoints executed raw `INSERT` queries without checking normalized 10-digit phone numbers, lowercased email addresses, or normalized business/project/solicitation keys.
+2. **Missing Confirmation Receipts:** The notification engine alerted internal HWB staff (`hdominguez@hwbcleaning.com`, `sales@hwbcleaning.com`) without emailing a branded Reference ID receipt (`SUB-#00XX`, `APP-#00XX`, `LEAD-#00XXX`) to the registrant's own inbox, causing returning users to re-submit in later weeks.
 **Solution:**
-1. **Container Process & Cache Reset:** Executed `docker restart hwb_web_app` per the Web Container Process & Cache Reload Protocol. This flushed Gunicorn's socket bindings, cleared in-memory bytecode caches, and re-established clean Docker proxy routing.
-2. **Empirical Verification:**
-   - Host `curl -v http://mop.test:5000/` returned `HTTP/1.1 200 OK` (35,364 bytes received).
-   - Local health endpoint `http://127.0.0.1:5000/api/v1/health` verified operational with 2.94 ms database latency.
+1. **5-Pillar Enterprise Deduplication & Smart Merge Engine (`blueprints/crm_api.py`, `blueprints/public.py`, `blueprints/operations.py`, `blueprints/academy.py`, `blueprints/bids.py`, `core/services/sanitizer.py`):**
+   - Added `extract_phone_digits()`, `normalize_business_name()`, and `merge_comma_list()` to `core/services/sanitizer.py`, and enhanced `clean_city()` to strip trailing state suffixes (`'Dallas, Tx'` -> `'Dallas'`).
+   - **Subcontractors & Job Applicants (`crm_api.py`):** Pre-checks existing records by 10-digit phone, lowercase email, and normalized business name; merges updated crew size, contact name, role/shift preferences, and trade specialties into the existing record and returns `status: 'already_registered'`.
+   - **Website Quote Intake & Backoffice Leads (`public.py`, `operations.py`):** Pre-checks `"Leads"` by 10-digit phone, lowercase email, or `(center_name, city)`; updates square footage, valuation, and notes, elevates `priority_level = 'High'`, and renders `#quote-already-registered-banner` in `templates/quote_success.html` with `LEAD-#00XXX`.
+   - **HR Employee Onboarding & Customer Accounts (`crm_api.py`, `operations.py`):** Pre-checks `"Employees"` by `applicant_id`, 10-digit phone, or email (preserving badge `HWB-EMP-####` and updating pay/role on repeat calls), and pre-checks `"Customers"` by 10-digit phone, email, or `company_name` on lead promotion and manual account creation.
+   - **SigmaAcademy™ Assignments (`academy.py`):** Pre-checks `"AcademyEnrollments"` by `course_id` + (`employee_id` / `subcontractor_id` / `student_email` / `student_name`), reusing the existing row and `magic_token` instead of creating duplicate enrollments.
+   - **Commercial GC & Institutional Bids (`bids.py`):** Pre-checks `"ConstructionBids"` by `(gc_name, project_name)` and `"InstitutionalBids"` by `solicitation_number`, updating existing bids on repeat submissions.
+2. **Automated Registrant Email Receipts & Alert Suppression (`core/services/notification_service.py`):**
+   - Added `send_subcontractor_receipt_email()`, `send_applicant_receipt_email()`, and `send_lead_receipt_email()` to send branded confirmation receipts (`SUB-#00XX`, `APP-#00XX`, `LEAD-#00XXX`) directly to the user's inbox while suppressing duplicate internal staff alerts on repeat updates.
+3. **Database Migration `041_enterprise_deduplication_indexes` (`database/schema_engine.py`):**
+   - Added functional indexes across `"SubcontractorPartners"`, `"JobApplicants"`, `"Leads"`, `"Employees"`, `"Customers"`, `"ConstructionBids"`, and `"InstitutionalBids"`.
+4. **Live Azure Deduplication & Local PostgreSQL 16.15 Synchronization:**
+   - Merged *Valdez remodeling and cleaning* (`IDs 2 & 5`) on Live Azure into master record `ID 2` (retaining `09/29/2026` registration date, contact `Dueña Luz Tejada`, and all 4 combined specialties), deleted duplicate `ID 5`, and synchronized all 10 clean Azure subcontractor records to Local Docker (`hwb_postgres_dev`).
+   - Verified with `test_labor_recruitment_and_cyber_suite.py` (`5/5` tests passing), `tessa_regression_suite.py` (`11/11` passing), and `yamamoto_bid_test_suite.py` (`9/9` passing + `75/75` SOC 2 checks).
 **Preventative & Evolutionary Learning:**
-1. Heavy background mining, scraper daemons, and database sync scripts must run strictly inside `hwb_agent_worker` and never inside the interactive web container `hwb_web_app`.
-2. Whenever host-to-container requests return `Connection reset by peer` while internal container curls succeed, executing `docker restart hwb_web_app` instantly re-aligns the Docker Desktop proxy bridge.
+1. All public intake forms and backoffice creation endpoints must combine database-level functional indexing with smart profile merging and instant confirmation receipts so returning users update their existing record instead of creating duplicates.
 
 
-## BUG-123: Executive Authentication Rejection on /login Due to Premature Removal of Multi-Device Password Transition Bridge
-**Detected:** 10/13/2026
-**Status:** **RESOLVED** (10/13/2026)
+## BUG-125: Edit User Account Modal Password Change Fields Hidden Below Scroll Fold, Missing Eye Visibility Toggles, and Unenforced `force_pwd_reset` Login Flag
+**Detected:** 10/17/2026
+**Status:** **RESOLVED** (10/17/2026)
 **Symptoms:**
-1. Navigating to `http://mop.test:5000/login` and submitting credentials as `hdominguez` failed with "Invalid credentials".
-2. `SecurityAuditLogs` recorded `LOGIN_FAIL hdominguez {'reason': 'Invalid credentials', 'attempted_username': 'hdominguez'}`.
+1. Opening the **Edit User Account** modal (`#modal-edit-user` in `/admin/executive#users`) did not display any visible password change fields in the initial viewport, whereas **Add New User** (`#modal-add-user`) displayed `Password` and `Confirm Password` directly at the top of the modal.
+2. The password boxes in `#modal-edit-user` were buried at the very bottom below the 11-row Module Access Rights table and Telegram Operations Gateway section, lacked field labels, and lacked show/hide eye icons (`togglePassVisibility`).
+3. Checking `Require Password Reset on Next Login` (`force_pwd_reset`) saved the flag in `"Users"`, but `login()` in `blueprints/auth.py` did not check `force_pwd_reset` upon sign-in.
 **Root Causes:**
-1. During the compliance hardening pass, removing the executive credential fallback bridge broke logins for saved browser passwords (`Password11!`, `Hwb2026!`, `HWB-Admin-2026!`, `ch1lpayatE@24`) that had not yet migrated to the single lowercase hash in the local development database.
-2. When the user entered or auto-filled their saved password in the browser, `check_password_hash` strictly evaluated against the single database hash and failed.
+1. Layout asymmetry between `#modal-add-user` and `#modal-edit-user` in `templates/HWB-WEB Sigma Executive.html` pushed the password fields 700px below the fold.
+2. `blueprints/auth.py` lacked a login redirect branch for `user.get('force_pwd_reset') is True` and lacked an admin endpoint for dispatching a single-use password reset email directly from the Edit User modal.
 **Solution:**
-1. Reinstated the Executive Credential Transition Bridge in `blueprints/auth.py` for verified CEO accounts (`hdominguez`, `humberto`, `humbertoed`, `admin`) and Bosanna partner (`ahudgins`).
-2. Configured automatic hash upgrading (`UPDATE "Users" SET password_hash = generate_password_hash(p)`): whenever an authorized credential is used, the database hash is dynamically updated to the exact password entered, guaranteeing zero lockouts while transparently migrating to cryptographic hashes.
-3. Executed `docker restart hwb_web_app` to reload the Gunicorn worker bytecode.
-**Preventative & Evolutionary Learning:**
-1. When upgrading authentication security, never remove multi-device transition bridges until user password migration is 100% verified across all executive devices.
-2. Always pair credential fallback bridges with dynamic hash upgrading so every successful authentication automatically modernizes the stored database hash.
+1. **Top-of-Form Password & Credentials Panel (`templates/HWB-WEB Sigma Executive.html`):**
+   - Moved the **Change or Reset Password** panel to the top of `#modal-edit-user` (directly below `Account Status` and `Require Password Reset on Next Login`, above the Module Access Rights table).
+   - Added explicit `New Password (Optional)` and `Confirm New Password` labels and show/hide eye buttons (`togglePassVisibility('edit_password', 'edit_eye_1')` and `togglePassVisibility('edit_confirm_password', 'edit_eye_2')`).
+   - Added **Generate Temp Password** (`generateTempUserPassword()`) to auto-generate a 12-character temporary password, reveal it, copy it to clipboard, and check `Require Password Reset on Next Login`.
+   - Added **Email Reset Link** (`sendAdminPasswordResetEmail()`) to send a 15-minute single-use password reset email directly to the user.
+2. **Backend Enforcement & Admin Reset Email Endpoint (`blueprints/auth.py`, `blueprints/operations.py`):**
+   - Updated `login()` in `blueprints/auth.py` to check `user.get('force_pwd_reset') is True`, generate a 15-minute reset token, log `FORCE_PASSWORD_RESET_REQUIRED`, and redirect the user to `/reset-password/<token>`.
+   - Added `POST /api/v1/users/<int:user_id>/send-reset-email` in `blueprints/auth.py` with `PASSWORD_RESET_DISPATCHED_BY_ADMIN` audit logging.
+   - Enhanced `edit_user` in `blueprints/operations.py` to verify `new_password == confirm_password` and flash explicit confirmation when the password is updated.
 
 
-## BUG-125: Gunicorn Single-Worker Jam & 30-Second Timeouts Slowing Password Reset Screen
-**Detected:** 10/13/2026
-**Status:** **RESOLVED** (10/13/2026)
+## BUG-126: Split-Brain Role vs. Capability Authorization Collision Routing `Sales` Users Without `sales_desk.view` to `403 Access Restricted` on Login
+**Detected:** 10/17/2026
+**Status:** **RESOLVED** (10/17/2026)
 **Symptoms:**
-1. User requested a password reset link at the login screen. The reset email arrived promptly via Microsoft Graph.
-2. Clicking the single-use reset link took over 60 seconds to display the "Set New Password" screen.
-3. Once the screen finally loaded, entering the new password succeeded immediately (`PASSWORD_RESET_SUCCESS`).
+1. When Beabe Wiley (`Bwiley`, `ID: 5`, `role: 'Sales'`, `leads.view: True`, `accounts.view: True`, `bids.view: True`, `sales_desk.view: False`) logged in, she was redirected to `http://mop.test:5000/sales-desk` and immediately hit a confusing `403 Access Restricted` screen instead of landing on `/admin/operations?view=leads`.
+2. Even though `bids.view` and `bids.edit` were enabled on her account in **Edit User Account**, hardcoded `role == 'Sales'` and `role != 'Sales'` checks in `main_app.py`, `blueprints/operations.py`, `templates/components/backend_nav.html`, and `templates/backoffice_operations.html` hid the Construction/Bids tabs and blocked access to `/admin/operations?view=construction_bids`.
 **Root Causes:**
-1. **Single-Worker Traffic Jam:** The web container (`hwb_web_app`) was running Gunicorn with only 1 worker process and 1 single synchronous thread. In this setup, the entire web server can only handle one single request at a time.
-2. **Worker Socket Read Block & Consecutive Timeouts:** While background health checks, automated monitors, and terminal commands were running, the single worker was tied up reading network sockets. Incoming requests from the user's browser had to wait in the operating system connection queue.
-3. **Double 30-Second Restart Cycle:** The server log showed two consecutive 30-second worker timeouts (`WORKER TIMEOUT (pid:7)` at 13:05:28 and `WORKER TIMEOUT (pid:17)` at 13:06:03). Only after Worker 22 booted at 13:06:04 was the queue cleared, allowing the page to load at 13:06:08 (total wait time: 64 seconds).
+1. `login()` in `blueprints/auth.py` hardcoded `if role == 'Sales': return redirect(url_for('operations.sales_desk'))` without checking `user.has_permission('sales_desk', 'view')`.
+2. `main_app.py` (line 399), `blueprints/operations.py` (line 98), `templates/components/backend_nav.html` (lines 362 & 617), and `templates/backoffice_operations.html` (8 view wrappers) used legacy role-name blocks (`current_user.role != 'Sales'`) that overrode the database-backed `custom_permissions` matrix.
 **Solution:**
-1. Upgraded Gunicorn in `docker-compose.yml` and `Dockerfile` to launch with:
-   `gunicorn --bind 0.0.0.0:5000 --workers 3 --threads 4 --worker-class gthread --timeout 120 --keep-alive 5 main_app:app`
-2. This establishes 12 simultaneous request lanes (3 workers x 4 threads). Background scripts and automated monitors consume at most 1 lane, leaving 11 lanes open for immediate human user interaction.
-3. Recreated and started the container via `docker-compose up -d web`. Confirmed Worker PID 7, 8, and 9 running in `gthread` mode.
-4. Empirical verification confirmed a parallel burst of 5 simultaneous requests responded in 8ms to 170ms with 100% HTTP 200 OK.
-**Preventative & Evolutionary Learning:**
-1. Production web containers must never run with a single synchronous worker (`sync`). Multi-threaded worker pools (`gthread`) must be enforced to prevent single slow connections from freezing the entire platform.
+1. **Deterministic Capability-Driven Landing Resolver (`core/models/user.py` & `blueprints/auth.py`):**
+   - Added `User.get_default_landing_url(self) -> str` to `core/models/user.py` to resolve post-login routing based on evaluated module permissions (`leads.view` $\rightarrow$ `/admin/operations?view=leads`, `accounts.view` $\rightarrow$ `/admin/operations?view=accounts`, `bids.view` $\rightarrow$ `/admin/operations?view=construction_bids`, `sales_desk.view` $\rightarrow$ `/sales-desk`, `workforce.view` $\rightarrow$ `/admin/operations?view=workforce`, `monitor.view` $\rightarrow$ `/admin/operations?view=monitor`, `qms.view` $\rightarrow$ `/manual`, fallback $\rightarrow$ `/manual/app`).
+   - Updated `DEFAULT_ROLE_PERMISSIONS['Sales']` to `{'leads': True, 'accounts': True, 'sales_desk': True}` and wired `blueprints/auth.py` `login()` to redirect via `u_obj.get_default_landing_url()`.
+2. **Unified Capability Enforcement Across Routes & Templates (`main_app.py`, `blueprints/operations.py`, `backend_nav.html`, `backoffice_operations.html`):**
+   - Replaced hardcoded `role == 'Sales'` view locks in `main_app.py` and `blueprints/operations.py` with `VIEW_AUTHORIZATION_MAP` + `current_user.has_permission(req_module, 'view')`.
+   - Added a graceful fallback redirect in `sales_desk()` (`blueprints/operations.py`) so Sales users without `sales_desk.view` who click an old bookmark to `/sales-desk` are smoothly redirected to `current_user.get_default_landing_url()`.
+   - Removed the outer `{% if current_user.role != 'Sales' %}` wrappers in `templates/components/backend_nav.html` and replaced the 8 view-level `{% if current_user.role != 'Sales' %}` wrappers in `templates/backoffice_operations.html` with module permission checks (`has_permission('bids', 'view')`, `has_permission('workforce', 'view')`, `has_permission('monitor', 'view')`, etc.), while preserving `role != 'Sales'` guards on bulk CSV exports and account rep reassignment dropdowns.
+
+
+## BUG-127: Sales Profiles Exposed to Unassigned House Clients, Company-Wide Portfolio Revenue, and Dead Edit/Delete Controls on Clients Tab
+**Detected:** 10/17/2026
+**Status:** **RESOLVED** (10/17/2026)
+**Symptoms:**
+1. When logged in as Beabe Wiley (`Bwiley`, `ID: 5`, `role: 'Sales'`, `accounts.view: True`, `accounts.edit: False`, `accounts.delete: False`), the **Clients** tab (`/admin/operations?view=accounts`) displayed all company house accounts (`Bosanna LLC`, `New Generation Learning Center`) and the total company portfolio (`Portfolio: $236,040`), even though `assigned_rep_id` was `NULL` on both accounts.
+2. Read-only `Sales` users saw inline edit pencils (`City`, `Phone`, `Annual Revenue`, `SQF`), bulk selection checkboxes, `Edit Client` / `Delete Client` buttons, and the executive `Partner Dashboard` (`href="/bosanna"`) link, which triggered `HTTP 403` errors when clicked.
+**Root Causes:**
+1. `FETCH ACCOUNTS` in `blueprints/operations.py` and `api_account_hub` in `blueprints/crm_api.py` did not filter `"Customers"` by `assigned_rep_id = current_user.id` for `Sales` role accounts.
+2. `table-accounts` and `#modal-account-command` in `templates/backoffice_operations.html` rendered inline edit cells, bulk checkboxes, and edit/delete buttons without checking `current_user.has_permission('accounts', 'edit')` and `current_user.has_permission('accounts', 'delete')`.
+**Solution:**
+1. **Strict Ownership Row-Level Isolation (`blueprints/operations.py` & `blueprints/crm_api.py`):**
+   - Scoped `portfolio_total` and the `"Customers"` query in `blueprints/operations.py` to `assigned_rep_id = current_user.id` whenever `current_user.role == 'Sales'`.
+   - Enforced `acc.get('assigned_rep_id') == current_user.id` for `Sales` users in `api_account_hub` (`GET`, `PUT`, `PATCH`, `/api/v1/accounts/<id>`) in `blueprints/crm_api.py`, returning `HTTP 403` for unassigned or other reps' client accounts.
+2. **Permission-Driven Read-Only UI Controls (`templates/backoffice_operations.html`):**
+   - Updated the Clients header for `Sales` users to display `{{ clients|length }} Assigned Clients` and `My Portfolio: ${{ portfolio_total }}` along with a dedicated empty-state message when `0` clients are assigned.
+   - Guarded bulk checkboxes, inline editable cells (`city`, `phone`, `revenue`, `sqf`), and `Edit Client` / `Delete Client` buttons in both `table-accounts` and `#modal-account-command` with `accounts.edit` and `accounts.delete` permission checks, and restricted the `Partner Dashboard` link to `Executive`, `Admin`, and `Partner_Bosanna`.
+
+
+## BUG-128: Hardcoded Caller Name ("Humberto") & Placeholder "[Your Name]" in Commercial Lead Calling Workstation Scripts
+**Detected:** 10/17/2026
+**Status:** **RESOLVED** (10/17/2026)
+**Symptoms:**
+1. When logged in as a salesperson (such as Beabe Wiley, `Bwiley`), the **Commercial Lead Calling Workstation** (`#modal-lead-cadence` in `templates/backoffice_operations.html`) displayed hardcoded caller strings instead of the logged-in salesperson's name:
+   - `❓ "What regarding?"` (`obj-regarding`): `"Yes, this is Humberto's office with HWB Cleaning Services..."`
+   - `🎯 Director Pitch` (`director`): `"Hi ${firstName}, this is [Your Name] with HWB Cleaning Services..."`
+   - Shared Team Script (`user_scripts` ID 1, `⭐ Founder Pitch`): `"Hi {Director}, this is Humberto Dominguez, CEO and founder of HWB Cleaning Services..."`
+2. The **Schedule Facility Walkthrough** drawer (`#cadence-walkthrough-drawer`) defaulted `Assigned Conductor` to `Humberto Dominguez (CEO)` and left `Sales Rep Name` and `Rep Calendar Email` empty instead of pre-populating the logged-in salesperson's name and email.
+3. The **Estimator Follow-Up Calling Script** (`openEstimatorCadence`) hardcoded `"Hi ${estName}, this is Humberto with HWB Cleaning Services..."`.
+**Root Causes:**
+1. `renderLeadScriptContent()` and `openEstimatorCadence()` in `templates/backoffice_operations.html` used static strings (`"Humberto's office"`, `"[Your Name]"`, `"Humberto"`) instead of interpolating `current_user.full_name or current_user.username`.
+2. `scripts/migrate_036_user_custom_scripts.py` seeded the shared `user_scripts` record (`id=1`) with a hardcoded `"Humberto Dominguez, CEO and founder of"` string rather than a dynamic `{Caller}` tag.
+**Solution:**
+1. **Dynamic Caller Identity Injection (`templates/backoffice_operations.html`):**
+   - Exposed `CURRENT_CALLER_NAME`, `CURRENT_CALLER_FIRST_NAME`, and `CURRENT_CALLER_EMAIL` from Flask-Login's `current_user` (`current_user.full_name or current_user.username`).
+   - Updated `obj-regarding`, `director`, and `openEstimatorCadence` scripts to dynamically inject `CURRENT_CALLER_NAME`.
+   - Added `{Caller}`, `{Salesperson}`, `{Rep}`, and `[Your Name]` dynamic tag replacement to `renderLeadScriptContent()`, plus automatic substitution of legacy `"Humberto Dominguez"` strings on shared scripts when viewed by non-executive sales reps, and added a `{Caller}` button to the **Insert Smart Tag** ribbon in `#modal-user-script-editor`.
+   - Updated `#cadence-walkthrough-drawer` and `openCadenceWalkthroughDrawer()` to default `Assigned Conductor`, `Sales Rep Name`, and `Rep Calendar Email` to the logged-in salesperson.
+2. **Database & Migration Script Update (`scripts/migrate_036_user_custom_scripts.py` & `user_scripts` table):**
+   - Updated the seeded shared script in `user_scripts` (`id=1`) and `scripts/migrate_036_user_custom_scripts.py` to use the `{Caller}` smart tag.
+
+
+## BUG-129: Commercial Leads Tab & Calling Desk Exposing Entire 23,604 Unassigned Lead Pool to Sales Profiles Instead of Assigned Territory Only (Option 1)
+**Detected:** 10/17/2026
+**Status:** **RESOLVED** (10/17/2026)
+**Symptoms:**
+1. When logged in as a salesperson (`Sales` role, such as Beabe Wiley, `ID: 5`), `/admin/operations?view=leads` displayed all `23,604` statewide commercial leads from `"Leads"`, and `/sales-desk` fell back to `owner_id IS NULL` when a salesperson had `0` assigned leads (`owner_id = 5`).
+2. `Sales` role users could also view, edit, or reassign unassigned leads via `/api/v1/leads/<id>`, `/api/v1/leads/batch`, inline `Owner` column dropdowns, and bulk `Owner` assignment menus.
+**Root Causes:**
+1. `FETCH LEADS` in `blueprints/operations.py` did not filter `"Leads"` by `l.owner_id = current_user.id` for `Sales` role accounts, and `sales_desk()` in `blueprints/operations.py` contained a fallback `elif is_sales_rep: where_clauses.append('owner_id IS NULL')`.
+2. Lead endpoints in `blueprints/crm_api.py` (`api_lead_hub`, `api_lead_cadence_save`, `api_batch_lead_action`, `api_lead_promote`, `api_lead_add_contact`) did not enforce row-level `owner_id == current_user.id` ownership checks for `Sales` profiles.
+**Solution:**
+1. **Strict Territory Ownership Isolation — Option 1 (`blueprints/operations.py` & `blueprints/crm_api.py`):**
+   - Scoped `lead_where_clauses`, `leads_count`, `leads`, `dup_count`, `in_campaign_count`, and `opened_leads_count` in `/admin/operations?view=leads` (`blueprints/operations.py`) to `l.owner_id = current_user.id` whenever `current_user.role == 'Sales'`.
+   - Removed the `owner_id IS NULL` fallback in `/sales-desk` (`blueprints/operations.py`) so `Sales` reps strictly see leads where `owner_id = current_user.id`, and scoped `walkthroughs_count`, `proposals_val`, and `converted_val` to the salesperson's own records.
+   - Enforced `lead.get('owner_id') == current_user.id` for `Sales` role users across `api_lead_hub` (`GET`, `PUT`, `PATCH`), `api_lead_cadence_save`, `api_lead_promote`, and `api_lead_add_contact` in `blueprints/crm_api.py`, and blocked `Sales` users from reassigning `owner_id` or running administrative batch actions (`delete`, `assign_owner`, `auto_merge`, `dismiss_duplicates`) in `api_batch_lead_action`.
+2. **Salesperson UI & Empty-State Clarity (`templates/backoffice_operations.html`):**
+   - Updated `#count-leads` to show `Assigned Leads: 0` (instead of `Records: 23,604`) for `Sales` accounts, added a dedicated empty-state message when `0` leads are assigned, hid the bulk `Owner` reassignment menu and `Delete Lead` action for `Sales` profiles, and replaced the inline `Owner` select dropdown with a read-only owner badge for `Sales` users.
+
+
+## BUG-130: Commercial Bidding Page Exposing All 65 Unassigned GC Bids to Sales Profiles, Missing `assigned_rep_id`, and `Enrich` Button Event/JSON Crash
+**Detected:** 10/17/2026
+**Status:** **RESOLVED** (10/17/2026)
+**Symptoms:**
+1. When logged in as a salesperson (`Sales` role, such as Beabe Wiley, `ID: 5`), `/admin/operations?view=construction_bids` displayed all `65` company-wide commercial construction bids (`$2,085,787.05` total pipeline) because `"ConstructionBids"` lacked an `assigned_rep_id` column and row-level ownership filter.
+2. Write buttons (`Sync Graph Inbound ITBs`, `4-Point GC Vetting & Auto-Complete`, `+ New Subcontract Bid`, row-level `Enrich`, inline `Status` dropdowns, and `Commit Estimate to Bid Pipeline` in `#modal-commercial-takeoff`) were visible to read-only `Sales` users (`bids.view: True`, `bids.edit: False`), and clicking them returned HTTP 403 errors.
+3. Clicking the row-level `Enrich` button (`onclick='enrichGCBid({{ bid.id }})'`) failed to pass `event` or `this` (`event.stopPropagation()` was missing, allowing row click bubbling to `openCommercialTakeoffModal`), and when `/api/v1/gc-vetting/<int:bid_id>/enrich` or `/api/v1/gc-vetting/enrich-all` returned an HTML 403 error page via `@roles_required`, `await res.json()` crashed with `SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON`.
+**Root Causes:**
+1. `"ConstructionBids"` did not have an `assigned_rep_id` column or a `WHERE cb.assigned_rep_id = %s` filter for `Sales` profiles in `blueprints/operations.py`.
+2. `#view-construction-bids` and `#modal-commercial-takeoff` in `templates/backoffice_operations.html` rendered write actions unconditionally without checking `current_user.has_permission('bids', 'edit')`.
+3. `enrichGCBid` in `templates/backoffice_operations.html` relied on implicit `event.currentTarget` and did not verify `content-type: application/json`, while `/api/v1/gc-vetting/<int:bid_id>/enrich` and `/api/v1/gc-vetting/enrich-all` in `blueprints/bids.py` used `@roles_required` (HTML 403) instead of a JSON-returning `bids.edit` capability and ownership check.
+4. `GCVettingEngine.enrich_single_bid` in `core/services/gc_vetting_engine.py` overwrote existing columns directly instead of using `COALESCE(%s, ...)` and `clean_phone(...)`.
+**Solution:**
+1. **Option A Strict Bid Ownership (`database/schema_engine.py`, `blueprints/operations.py`, `blueprints/bids.py`):**
+   - Added `assigned_rep_id INTEGER` and `idx_construction_bids_assigned_rep` to `"ConstructionBids"`.
+   - Filtered `4. CONSTRUCTION BIDS PIPELINE` in `blueprints/operations.py` by `cb.assigned_rep_id = current_user.id` when `current_user.role == 'Sales'`.
+   - Added `POST /api/v1/construction-bids/<int:bid_id>/assign-rep` in `blueprints/bids.py` and an inline `Assigned Rep` (`owner`) column in `#view-construction-bids` so Executive Management can assign commercial GC bids to specific sales representatives.
+2. **Read-Only UI & Capability Guards (`templates/backoffice_operations.html`, `blueprints/bids.py`):**
+   - Guarded `Sync Graph Inbound ITBs`, `4-Point GC Vetting & Auto-Complete`, `+ New Subcontract Bid`, row `Enrich` buttons, inline `Status` dropdowns, and `#btn-save-takeoff` (`Commit Estimate to Bid Pipeline`) with `can_edit_bids` (`bids.edit`).
+   - Updated `#view-construction-bids` to show `Assigned Bids: 0`, `Assigned GC Subcontracts: 0 Projects`, and a clear empty-state message when a salesperson has `0` assigned bids.
+3. **Hardened `Enrich` Button Action (`templates/backoffice_operations.html`, `blueprints/bids.py`, `core/services/gc_vetting_engine.py`):**
+   - Updated `onclick="enrichGCBid(event, {{ bid.id }}, this)"` to explicitly stop event propagation, safely lock/restore the button, check `content-type: application/json`, and display a toast summary for `enrichAllGCBids()` instead of a blocking browser `alert()`.
+   - Updated `/api/v1/gc-vetting/<int:bid_id>/enrich`, `/api/v1/gc-vetting/enrich-all`, and `/api/v1/bids/<int:bid_id>/commit-estimate` in `blueprints/bids.py` to enforce `_has_bids_perm('edit')` and `_verify_bid_ownership` and always return JSON responses.
+   - Updated `GCVettingEngine.enrich_single_bid` in `core/services/gc_vetting_engine.py` to normalize phone numbers via `clean_phone(...)` and preserve existing non-null columns via `COALESCE(%s, ...)`.
+
+
+## BUG-131: Live Leads Table Marketing Campaign Readiness Desync (0 North Texas Childcare Emails, $375M Legacy Car Lot Distortion, 70 Dead Domains, & Missing Miner Closure Safeguards)
+**Detected:** 10/17/2026
+**Status:** **RESOLVED** (10/17/2026)
+**Symptoms:**
+1. On live production (`sigmajan-server` / `www.hwbcleaning.com`), creating a Childcare email campaign for North Texas (`Collin`, `Dallas`, `Denton`, `Tarrant`) matched **`0` leads**, and statewide Childcare matched only **`3` leads** (`backgroundchecks@claytonyouth.org`).
+2. `16,853` legacy non-childcare `Texas Commercial Registry` rows (`Automotive` car lots and `Commercial Property` rows with `capacity = 0`) were still flagged `is_commercial = TRUE` on Azure, inflating the commercial lead count to `25,358` and distorting pipeline valuation to `$375,551,772.00`.
+3. `blueprints/crm_api.py` used a case-sensitive `county IN ('Collin', 'Dallas', 'Denton', 'Tarrant')` check while `county` in `"Leads"` is stored uppercase (`'COLLIN'`, `'DALLAS'`, `'DENTON'`, `'TARRANT'`), and did not deduplicate recipient emails (`DISTINCT ON (LOWER(TRIM(email)))`), risking sending multiple identical emails to multi-location daycare owners.
+4. `70` unique email domains in `"Leads"` were expired/dead (`NXDOMAIN` / zero `MX` records), and `daycare_registry_sync.py` lacked permanent closure reconciliation and circuit-breaker safeguards.
+**Root Causes:**
+1. The `2,998` website-mined Childcare emails and the `is_commercial = FALSE` quarantine of the `16,853` non-childcare `Texas Commercial Registry` rows in `hwb_postgres_dev` had not yet been synchronized into `sigmajan-server` via an automated boot migration.
+2. `"Leads"` lacked a self-maintaining database trigger (`trg_leads_campaign_readiness`), a DNS mail-server health table (`"EmailDomainHealth"`), and a permanent global suppression ledger (`"EmailSuppressionList"`).
+**Solution:**
+1. **Pillar 1 — Self-Maintaining PostgreSQL Trigger (`fn_leads_compute_campaign_readiness` & `trg_leads_campaign_readiness`):**
+   - Installed `BEFORE INSERT OR UPDATE ON "Leads"` trigger that automatically sanitizes `email` and `phone` (`(###)-###-####`), classifies `email_inbox_type` (`DIRECT_PERSONAL`, `ROLE_INBOX`, `NONE`), and evaluates the 6-gate readiness check to set `campaign_ready`, `email_mx_verified`, and `email_hygiene_status` (`CAMPAIGN_READY`, `PHONE_ONLY`, `DO_NOT_EMAIL`, `DEAD_DOMAIN_NO_MX`, `INVALID_OR_SUPPRESSED`, `SUPPRESSED`, `DUPLICATE_RECORD`, `FACILITY_CLOSED`, `NON_COMMERCIAL`).
+2. **Pillar 2 & 3 — Live DNS `MX` Verification (`"EmailDomainHealth"`) & Global Suppression (`"EmailSuppressionList"`):**
+   - Verified all `5,061` unique email domains via TCP + UDP DNS `MX` (`QTYPE=15`) queries (`4,991` live domains; `70` dead/expired `NXDOMAIN` domains quarantined as `DEAD_DOMAIN_NO_MX`).
+   - Created `"EmailSuppressionList"` and wired it into `/unsubscribe` (`blueprints/public.py`) and the outbound Microsoft Graph gateway (`core/services/email_service.py`).
+3. **Pillar 4 & 5 — Campaign Audience Hardening & UI Filter (`blueprints/crm_api.py`, `blueprints/operations.py`, `templates/backoffice_operations.html`):**
+   - Updated `api_marketing_leads_preview_count` and `api_marketing_campaign_create` to require `campaign_ready = TRUE`, match North Texas counties case-insensitively (`UPPER(TRIM(COALESCE(county, ''))) IN ('COLLIN', 'DALLAS', 'DENTON', 'TARRANT')`), and deduplicate by `LOWER(TRIM(email))` (`DISTINCT ON`).
+   - Added the **`✅ Campaign Ready (3,353)`** filter pill (`campaign_filter=campaign_ready`) and row-level **`✅ Campaign Ready`** badge on `/admin/operations?view=leads`.
+4. **4-Safeguard Daycare Registry Miner (`scripts/daycare_registry_sync.py` & `scripts/enrich_daycare_contacts.py`):**
+   - Added paginated Socrata ingestion, Circuit-Breaker (`>= 7,500` active records), explicit `operation_status = 'N'` closure check, Active-Deal Protection (`Active`, `Qualified`, `Trained`, `Engaged`, `is_converted`), and Self-Healing Re-Activation & Outbox Draft Cancellation.
+

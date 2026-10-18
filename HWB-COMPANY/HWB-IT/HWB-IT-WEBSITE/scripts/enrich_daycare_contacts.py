@@ -66,15 +66,66 @@ def init_billing_tracker(conn):
     conn.commit()
 
 def verify_mx_record(email_address):
-    """Verifies recipient domain has valid mail exchangers to prevent cold email bounces."""
+    """Verifies recipient domain has valid DNS MX or mail host records and records status in EmailDomainHealth."""
     if not email_address or "@" not in email_address:
         return False
     domain = email_address.split('@')[-1].strip().lower()
+    if not domain or '.' not in domain:
+        return False
+
+    has_mx = False
+    status_str = "DEAD_DOMAIN_NO_MX"
+
+    # 1. Fast TCP/A record lookup
     try:
         socket.getaddrinfo(domain, 25)
-        return True
+        has_mx = True
+        status_str = "VALID_MX_HOST"
     except Exception:
-        return False
+        pass
+
+    # 2. Pure UDP DNS MX (QTYPE=15) query to rescue domains with MX records but no apex A record
+    if not has_mx:
+        try:
+            import struct
+            import random
+            tid = random.randint(1, 65534)
+            header = struct.pack(">HHHHHH", tid, 0x0100, 1, 0, 0, 0)
+            qname = b"".join(struct.pack("B", len(p)) + p.encode("ascii") for p in domain.split(".") if p) + b"\x00"
+            question = qname + struct.pack(">HH", 15, 1)  # QTYPE=15 (MX), QCLASS=1 (IN)
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sock.settimeout(2.5)
+            sock.sendto(header + question, ("8.8.8.8", 53))
+            data, _ = sock.recvfrom(512)
+            sock.close()
+            if len(data) >= 12:
+                _, flags, _, ancount, _, _ = struct.unpack(">HHHHHH", data[:12])
+                rcode = flags & 0x000F
+                if rcode == 0 and ancount > 0:
+                    has_mx = True
+                    status_str = "VALID_MX_RECORD"
+                elif rcode == 3:
+                    status_str = "NXDOMAIN"
+        except Exception:
+            pass
+
+    try:
+        conn = psycopg2.connect(DB_URL)
+        with conn.cursor() as cur:
+            cur.execute("""
+                INSERT INTO "EmailDomainHealth" (domain, has_mx, mx_status, checked_at)
+                VALUES (%s, %s, %s, CURRENT_TIMESTAMP)
+                ON CONFLICT (domain) DO UPDATE SET
+                    has_mx = EXCLUDED.has_mx,
+                    mx_status = EXCLUDED.mx_status,
+                    checked_at = CURRENT_TIMESTAMP;
+            """, (domain, has_mx, status_str))
+        conn.commit()
+        conn.close()
+    except Exception:
+        pass
+
+    return has_mx
 
 def is_valid_website(url):
     """Checks if URL is an official domain rather than an aggregator or directory listing."""

@@ -332,6 +332,9 @@
 
                         <!-- Specialized Status Filter Pills (State-Preserving Toggles) -->
                         <div style="display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap;">
+                            <button type="button" onclick="toggleLeadFilter('campaign_filter', 'campaign_ready')" style="display: inline-flex; align-items: center; gap: 0.4rem; background: {% if request.args.get('campaign_filter') == 'campaign_ready' %}#ecfdf5{% else %}var(--white){% endif %}; border: 1px solid {% if request.args.get('campaign_filter') == 'campaign_ready' %}#10b981{% else %}var(--slate-300){% endif %}; padding: 0 0.75rem; border-radius: 6px; height: 36px; cursor: pointer; user-select: none;" title="Show verified commercial leads with live email addresses and active mail servers ready for email outreach">
+                                <span style="font-size: 0.72rem; font-weight: 800; color: {% if request.args.get('campaign_filter') == 'campaign_ready' %}#047857{% else %}var(--slate-700){% endif %}; text-transform: uppercase;">✅ Campaign Ready ({{ campaign_ready_count | default(0) }})</span>
+                            </button>
                             <button type="button" onclick="toggleLeadFilter('campaign_filter', 'in_campaign')" style="display: inline-flex; align-items: center; gap: 0.4rem; background: {% if request.args.get('campaign_filter') == 'in_campaign' %}#eff6ff{% else %}var(--white){% endif %}; border: 1px solid {% if request.args.get('campaign_filter') == 'in_campaign' %}#3b82f6{% else %}var(--slate-300){% endif %}; padding: 0 0.75rem; border-radius: 6px; height: 36px; cursor: pointer; user-select: none;" title="Filter leads currently queued or active in email sequences">
                                 <span style="font-size: 0.72rem; font-weight: 800; color: {% if request.args.get('campaign_filter') == 'in_campaign' %}#1d4ed8{% else %}var(--slate-700){% endif %}; text-transform: uppercase;">📬 In Email Outreach ({{ in_campaign_count }})</span>
                             </button>
@@ -506,6 +509,12 @@
                                                             📬 In Email Outreach • {{ c_name }}
                                                         </span>
                                                     {% endif %}
+                                                </div>
+                                            {% elif lead.campaign_ready %}
+                                                <div style="margin-top: 4px; display: flex; align-items: center; gap: 4px; flex-wrap: wrap;" onclick="event.stopPropagation();">
+                                                    <span style="background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; font-size: 0.65rem; font-weight: 700; padding: 1px 6px; border-radius: 4px;" title="Verified email address and active mail server ({{ lead.email_inbox_type | default('VERIFIED') }})">
+                                                        ✅ Campaign Ready
+                                                    </span>
                                                 </div>
                                             {% endif %}
                                         </div>

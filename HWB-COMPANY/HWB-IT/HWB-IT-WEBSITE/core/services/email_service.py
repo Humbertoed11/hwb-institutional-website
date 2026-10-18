@@ -110,6 +110,26 @@ def transmit_email(*args, **kwargs):
         print("[GRAPH] API Error: Missing configuration (Tenant/Client/Secret)", flush=True)
         return False, "Missing Credentials"
 
+    # Enterprise Outbound Suppression Gate: Check permanent EmailSuppressionList
+    try:
+        db_url = (config.get("DATABASE_URL") if hasattr(config, 'get') else None) or os.environ.get("DATABASE_URL")
+        if db_url and recipient:
+            import psycopg2
+            raw_addrs = recipient if isinstance(recipient, list) else str(recipient).split(',')
+            clean_addrs = [str(r).strip().lower() for r in raw_addrs if r and '@' in str(r)]
+            if clean_addrs:
+                s_conn = psycopg2.connect(db_url)
+                with s_conn.cursor() as s_cur:
+                    s_cur.execute('SELECT email_lower, reason FROM "EmailSuppressionList" WHERE email_lower = ANY(%s) LIMIT 1;', (clean_addrs,))
+                    sup_row = s_cur.fetchone()
+                    if sup_row:
+                        s_conn.close()
+                        print(f"[GRAPH SUPPRESSION GATE] Blocked outbound email to {sup_row[0]} ({sup_row[1]})", flush=True)
+                        return False, f"Suppressed ({sup_row[1]}): {sup_row[0]}"
+                s_conn.close()
+    except Exception as sup_err:
+        print(f"[GRAPH SUPPRESSION CHECK NOTICE] {sup_err}", flush=True)
+
     authority = f"https://login.microsoftonline.com/{tenant_id}" 
     app_msal = msal.ConfidentialClientApplication(client_id, authority=authority, client_credential=client_secret)
     
