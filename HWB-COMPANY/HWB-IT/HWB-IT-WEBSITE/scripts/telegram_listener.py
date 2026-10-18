@@ -1679,14 +1679,220 @@ def get_dynamic_session_context(chat_id, incoming_text="", caption=""):
         return GENERAL_OPERATIONAL_CONTEXT + extra_db_context
 
 
+# --- GEMINI 4-TIER MODEL ROUTING & FINOPS ENGINE (HWB-QMS-11.11) ---
+
+HWB_MODEL_TIERS = {
+    "TIER_0_DETERMINISTIC": {
+        "model": "deterministic-python-engine",
+        "input_cost_per_1m": 0.00,
+        "output_cost_per_1m": 0.00,
+        "context_cap": 0,
+        "fallback": None,
+    },
+    "TIER_1_FLASH_LITE": {
+        "model": "gemini-2.5-flash-lite",
+        "input_cost_per_1m": 0.10,
+        "output_cost_per_1m": 0.40,
+        "context_cap": 4096,
+        "fallback": "gemini-2.5-flash",
+    },
+    "TIER_2_FLASH": {
+        "model": "gemini-2.5-flash",
+        "input_cost_per_1m": 0.30,
+        "output_cost_per_1m": 2.50,
+        "context_cap": 32768,
+        "fallback": "gemini-2.5-flash",
+    },
+    "TIER_3_PRO": {
+        "model": "gemini-2.5-pro",
+        "input_cost_per_1m": 1.25,
+        "output_cost_per_1m": 10.00,
+        "context_cap": 128000,
+        "fallback": "gemini-2.5-flash",
+    },
+}
+
+EXECUTIVE_PRO_KEYWORDS = (
+    "margin",
+    "pricing",
+    "contract",
+    "clause",
+    "liquidated",
+    "strategy",
+    "blueprint",
+    "takeoff",
+    "estimate",
+    "bid model",
+    "subcontractor rate",
+    "prevailing wage",
+    "collin college",
+    "horizon",
+    "architecture",
+    "audit",
+    "soc 2",
+    "iso 9001",
+    "proforma",
+    "warchest",
+    "cogs",
+)
+
+
+def route_hwb_gemini_model(
+    task_type: str,
+    text: str = "",
+    actor_role: str = "Team Member",
+    has_image: bool = False,
+) -> dict:
+    """
+    Routes HWB operational workloads across the 4-Tier Model Matrix (HWB-QMS-11.11).
+    Returns a dict with tier_key, primary_model, fallback_model, and reason.
+    """
+    t_type = (task_type or "TEXT_REASONING").upper()
+    clean_text = (text or "").strip().lower()
+
+    if has_image or t_type == "BLUEPRINT_VISION":
+        tier_cfg = HWB_MODEL_TIERS["TIER_3_PRO"]
+        return {
+            "tier": "TIER_3_PRO",
+            "primary_model": tier_cfg["model"],
+            "fallback_model": tier_cfg["fallback"],
+            "reason": "Multimodal construction blueprint / jobsite photo vision takeoff",
+        }
+
+    if t_type == "BEHAVIORAL_SYNTHESIS":
+        tier_cfg = HWB_MODEL_TIERS["TIER_1_FLASH_LITE"]
+        return {
+            "tier": "TIER_1_FLASH_LITE",
+            "primary_model": tier_cfg["model"],
+            "fallback_model": tier_cfg["fallback"],
+            "reason": "Behavioral telemetry JSON synthesis",
+        }
+
+    if t_type in ("VOICE_TRANSCRIPTION", "OPEN_WEB_SEARCH"):
+        tier_cfg = HWB_MODEL_TIERS["TIER_2_FLASH"]
+        return {
+            "tier": "TIER_2_FLASH",
+            "primary_model": tier_cfg["model"],
+            "fallback_model": tier_cfg["fallback"],
+            "reason": f"Standard Tier 2 workload ({t_type})",
+        }
+
+    # TEXT_REASONING dynamic triage
+    is_exec = (actor_role or "").lower() in ("executive", "admin", "ceo")
+    has_pro_kw = any(kw in clean_text for kw in EXECUTIVE_PRO_KEYWORDS)
+    if has_pro_kw or (is_exec and len(clean_text) > 180):
+        tier_cfg = HWB_MODEL_TIERS["TIER_3_PRO"]
+        return {
+            "tier": "TIER_3_PRO",
+            "primary_model": tier_cfg["model"],
+            "fallback_model": tier_cfg["fallback"],
+            "reason": "Complex executive strategy, pricing, margin, or contract analysis",
+        }
+
+    if 0 < len(clean_text) < 45:
+        tier_cfg = HWB_MODEL_TIERS["TIER_1_FLASH_LITE"]
+        return {
+            "tier": "TIER_1_FLASH_LITE",
+            "primary_model": tier_cfg["model"],
+            "fallback_model": tier_cfg["fallback"],
+            "reason": "Short conversational triage (<45 chars)",
+        }
+
+    tier_cfg = HWB_MODEL_TIERS["TIER_2_FLASH"]
+    return {
+        "tier": "TIER_2_FLASH",
+        "primary_model": tier_cfg["model"],
+        "fallback_model": tier_cfg["fallback"],
+        "reason": "Standard operational conversational reasoning",
+    }
+
+
+def extract_hwb_gemini_usage(resp_json: dict, model_name: str) -> dict:
+    """
+    Extracts empirical usageMetadata from a Gemini API response and computes exact USD cost.
+    Complies with Mandate 1 (Zero Synthetic Data).
+    """
+    usage = (resp_json or {}).get("usageMetadata", {}) if isinstance(resp_json, dict) else {}
+    prompt_tokens = int(usage.get("promptTokenCount", 0) or 0)
+    candidate_tokens = int(usage.get("candidatesTokenCount", 0) or 0)
+    total_tokens = int(usage.get("totalTokenCount", prompt_tokens + candidate_tokens) or 0)
+
+    in_rate = 0.30
+    out_rate = 2.50
+    for tier_info in HWB_MODEL_TIERS.values():
+        if tier_info["model"] == model_name:
+            in_rate = tier_info["input_cost_per_1m"]
+            out_rate = tier_info["output_cost_per_1m"]
+            break
+
+    estimated_cost_usd = round(
+        (prompt_tokens / 1_000_000.0) * in_rate + (candidate_tokens / 1_000_000.0) * out_rate,
+        8,
+    )
+    usage_record = {
+        "model_used": model_name,
+        "promptTokenCount": prompt_tokens,
+        "candidatesTokenCount": candidate_tokens,
+        "totalTokenCount": total_tokens,
+        "estimated_cost_usd": estimated_cost_usd,
+    }
+    print(
+        f"[FINOPS TELEMETRY] model={model_name} | in={prompt_tokens} | out={candidate_tokens} | cost=${estimated_cost_usd:.6f}",
+        flush=True,
+    )
+    return usage_record
+
+
+def post_gemini_with_failover(
+    primary_model: str,
+    fallback_model: str,
+    payload: dict,
+    timeout: int = 35,
+) -> tuple:
+    """
+    Calls Gemini generateContent endpoint with primary_model and automatically
+    fails over to fallback_model (gemini-2.5-flash) on non-200 HTTP status or timeout.
+    Returns (response_obj_or_None, active_model_used, usage_dict, error_str_or_None).
+    """
+    primary_url = f"https://generativelanguage.googleapis.com/v1beta/models/{primary_model}:generateContent?key={GEMINI_API_KEY}"
+    try:
+        res = session.post(primary_url, json=payload, timeout=timeout)
+        if res.status_code == 200:
+            data = res.json()
+            usage = extract_hwb_gemini_usage(data, primary_model)
+            return res, primary_model, usage, None
+        primary_err = f"HTTP {res.status_code}"
+    except Exception as exc:
+        res = None
+        primary_err = str(exc)
+
+    if fallback_model and fallback_model != primary_model:
+        print(
+            f"[FINOPS FAILOVER] Primary model {primary_model} failed ({primary_err}); failing over to {fallback_model}",
+            flush=True,
+        )
+        fallback_url = f"https://generativelanguage.googleapis.com/v1beta/models/{fallback_model}:generateContent?key={GEMINI_API_KEY}"
+        try:
+            res_fb = session.post(fallback_url, json=payload, timeout=timeout)
+            if res_fb.status_code == 200:
+                data_fb = res_fb.json()
+                usage_fb = extract_hwb_gemini_usage(data_fb, fallback_model)
+                return res_fb, fallback_model, usage_fb, None
+            return res_fb, fallback_model, {}, f"Gemini API Error: {res_fb.status_code} (after failover from {primary_model})"
+        except Exception as fb_exc:
+            return None, fallback_model, {}, f"Failover error ({fallback_model}): {fb_exc}"
+
+    return res, primary_model, {}, f"Gemini API Error: {primary_err}"
+
+
 # --- GEMINI MULTIMODAL REASONING (VOICE & VISION) ---
 
 def analyze_voice_with_gemini(audio_bytes, chat_id=None):
-    """Uses Gemini 2.5 Flash to transcribe and parse executive intent from voice notes."""
+    """Uses Gemini 2.5 Flash (Tier 2) to transcribe and parse executive intent from voice notes."""
     if not GEMINI_API_KEY:
         return None, "GEMINI_API_KEY not configured."
     b64_audio = base64.b64encode(audio_bytes).decode("utf-8")
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
+    route = route_hwb_gemini_model("VOICE_TRANSCRIPTION")
     
     actor_user = get_user_for_chat(chat_id) if chat_id else None
     actor_name = actor_user.get("name", "Executive Leadership") if actor_user else "Team Member"
@@ -1718,18 +1924,20 @@ def analyze_voice_with_gemini(audio_bytes, chat_id=None):
             ]
         }]
     }
-    try:
-        res = session.post(url, json=payload, timeout=35)
-        if res.status_code == 200:
-            candidates = res.json().get("candidates", [])
-            if candidates:
-                parts = candidates[0].get("content", {}).get("parts", [])
-                text_content = "\n\n".join(p.get("text", "") for p in parts if p.get("text")).strip()
-                return text_content, None
-            return None, "Empty candidates returned by Gemini Speech AI"
-        return None, f"Gemini API Error: {res.status_code}"
-    except Exception as e:
-        return None, str(e)
+    res, used_model, usage, err = post_gemini_with_failover(
+        route["primary_model"],
+        route["fallback_model"],
+        payload,
+        timeout=35,
+    )
+    if res is not None and res.status_code == 200:
+        candidates = res.json().get("candidates", [])
+        if candidates:
+            parts = candidates[0].get("content", {}).get("parts", [])
+            text_content = "\n\n".join(p.get("text", "") for p in parts if p.get("text")).strip()
+            return text_content, None
+        return None, "Empty candidates returned by Gemini Speech AI"
+    return None, err or "Gemini Speech API failure"
 
 
 # ==============================================================================
@@ -1829,7 +2037,7 @@ def validate_prompt_safety(text: str, chat_id=None) -> tuple[bool, str]:
     return True, ""
 
 def analyze_photo_with_gemini(image_bytes, caption="", chat_id=None):
-    """Uses Gemini 2.5 Flash Vision to extract blueprints, finish schedules, and site conditions."""
+    """Uses Tier 3 Gemini 2.5 Pro Vision (with automatic failover to Gemini 2.5 Flash) to extract blueprints, finish schedules, and site conditions."""
     if caption:
         is_safe, refusal_msg = validate_prompt_safety(caption, chat_id=chat_id)
         if not is_safe:
@@ -1837,7 +2045,7 @@ def analyze_photo_with_gemini(image_bytes, caption="", chat_id=None):
     if not GEMINI_API_KEY:
         return None, "GEMINI_API_KEY not configured."
     b64_img = base64.b64encode(image_bytes).decode("utf-8")
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
+    route = route_hwb_gemini_model("BLUEPRINT_VISION", caption, has_image=True)
     
     actor_user = get_user_for_chat(chat_id) if chat_id else None
     actor_name = actor_user.get("name", "Executive Leadership") if actor_user else "Team Member"
@@ -1867,22 +2075,24 @@ def analyze_photo_with_gemini(image_bytes, caption="", chat_id=None):
             ]
         }]
     }
-    try:
-        res = session.post(url, json=payload, timeout=40)
-        if res.status_code == 200:
-            candidates = res.json().get("candidates", [])
-            if candidates:
-                parts = candidates[0].get("content", {}).get("parts", [])
-                text_content = "\n\n".join(p.get("text", "") for p in parts if p.get("text")).strip()
-                return text_content, None
-            return None, "Empty candidates returned by Gemini Vision AI"
-        return None, f"Gemini Vision Error: {res.status_code}"
-    except Exception as e:
-        return None, str(e)
+    res, used_model, usage, err = post_gemini_with_failover(
+        route["primary_model"],
+        route["fallback_model"],
+        payload,
+        timeout=40,
+    )
+    if res is not None and res.status_code == 200:
+        candidates = res.json().get("candidates", [])
+        if candidates:
+            parts = candidates[0].get("content", {}).get("parts", [])
+            text_content = "\n\n".join(p.get("text", "") for p in parts if p.get("text")).strip()
+            return text_content, None
+        return None, "Empty candidates returned by Gemini Vision AI"
+    return None, err or "Gemini Vision Error"
 
 
 def analyze_text_with_gemini(text, chat_id):
-    """Conversational field intelligence for team members on Telegram with Dynamic Resolver & Episodic Memory."""
+    """Conversational field intelligence for team members on Telegram with Dynamic 4-Tier Routing, Resolver & Episodic Memory."""
     # 0. Prompt-Injection & Adversarial Jailbreak Guardrail (OWASP LLM01 - SO-COM-001-DIR-04)
     is_safe, refusal_msg = validate_prompt_safety(text, chat_id=chat_id)
     if not is_safe:
@@ -1903,7 +2113,7 @@ def analyze_text_with_gemini(text, chat_id):
     # Dynamic Resolver Context Capsule
     dynamic_context = get_dynamic_session_context(chat_id, incoming_text=text)
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
+    route = route_hwb_gemini_model("TEXT_REASONING", text, actor_role=actor_role)
     system_prompt = (
         "You are George, Lead Autonomous Systems Architect, Senior Estimator, Senior ISO 9001 Auditor, and Certified Lean Six Sigma Master Black Belt for HWB Cleaning Services LLC.\n"
         f"You are conversing directly in real-time with {actor_name} ({actor_role}) via Telegram during mobile operations and facility walkthroughs.\n\n"
@@ -1940,36 +2150,38 @@ def analyze_text_with_gemini(text, chat_id):
         "tools": [{"google_search": {}}]
     }
 
-    try:
-        res = session.post(url, json=payload, timeout=35)
-        if res.status_code == 200:
-            candidates = res.json().get("candidates", [])
-            if candidates:
-                candidate = candidates[0]
-                parts = candidate.get("content", {}).get("parts", [])
-                gemini_reply = "\n\n".join(p.get("text", "") for p in parts if p.get("text")).strip()
+    res, used_model, usage, err = post_gemini_with_failover(
+        route["primary_model"],
+        route["fallback_model"],
+        payload,
+        timeout=35,
+    )
+    if res is not None and res.status_code == 200:
+        candidates = res.json().get("candidates", [])
+        if candidates:
+            candidate = candidates[0]
+            parts = candidate.get("content", {}).get("parts", [])
+            gemini_reply = "\n\n".join(p.get("text", "") for p in parts if p.get("text")).strip()
 
-                # Extract live web grounding citations
-                gm = candidate.get("groundingMetadata", {})
-                chunks = gm.get("groundingChunks", [])
-                if chunks:
-                    web_sources = []
-                    seen_urls = set()
-                    for ch in chunks:
-                        w = ch.get("web", {})
-                        u = w.get("uri")
-                        t = w.get("title") or "Source"
-                        if u and u not in seen_urls:
-                            seen_urls.add(u)
-                            web_sources.append(f"• [{t}]({u})")
-                    if web_sources:
-                        gemini_reply += "\n\n━━━━━━━━━━━━━━━━━━━━━\n🌐 *Verified Web Sources:*\n" + "\n".join(web_sources[:4])
+            # Extract live web grounding citations
+            gm = candidate.get("groundingMetadata", {})
+            chunks = gm.get("groundingChunks", [])
+            if chunks:
+                web_sources = []
+                seen_urls = set()
+                for ch in chunks:
+                    w = ch.get("web", {})
+                    u = w.get("uri")
+                    t = w.get("title") or "Source"
+                    if u and u not in seen_urls:
+                        seen_urls.add(u)
+                        web_sources.append(f"• [{t}]({u})")
+                if web_sources:
+                    gemini_reply += "\n\n━━━━━━━━━━━━━━━━━━━━━\n🌐 *Verified Web Sources:*\n" + "\n".join(web_sources[:4])
 
-                return gemini_reply, None
-            return "⚠️ Empty response generated by Gemini.", None
-        return f"⚠️ Gemini API returned HTTP {res.status_code}", None
-    except Exception as e:
-        return f"⚠️ Error communicating with Gemini: {e}", None
+            return gemini_reply, None
+        return "⚠️ Empty response generated by Gemini.", None
+    return f"⚠️ {err or 'Error communicating with Gemini'}", None
 
 def handle_text_conversation(text, chat_id):
     """Frontier 7: Two-Way Real-Time Conversational AI with George."""
@@ -3715,7 +3927,7 @@ def handle_cmd_search(chat_id, query):
 
 def search_open_web(query: str, chat_id: int = None) -> tuple:
     """
-    Executes real-time open internet search via Gemini 2.5 Flash with Google Search grounding.
+    Executes real-time open internet search via Gemini 2.5 Flash (Tier 2) with Google Search grounding.
     Returns (summary_text, list_of_sources).
     """
     if not GEMINI_API_KEY:
@@ -3725,7 +3937,7 @@ def search_open_web(query: str, chat_id: int = None) -> tuple:
     if not clean_q:
         return "⚠️ Please provide a search term (e.g. `/web Frisco ISD superintendent`).", []
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
+    route = route_hwb_gemini_model("OPEN_WEB_SEARCH", clean_q)
     prompt_text = (
         f"Search the open internet and provide an authoritative, factual, up-to-date answer for: \"{clean_q}\".\n"
         "Use everyday words, concise bullet points, and highlight key names, dates, phone numbers, or figures where applicable."
@@ -3739,9 +3951,14 @@ def search_open_web(query: str, chat_id: int = None) -> tuple:
     }
 
     try:
-        res = session.post(url, json=payload, timeout=25)
-        if res.status_code != 200:
-            return f"⚠️ Web search service returned error HTTP {res.status_code}.", []
+        res, used_model, usage, err = post_gemini_with_failover(
+            route["primary_model"],
+            route["fallback_model"],
+            payload,
+            timeout=25,
+        )
+        if res is None or res.status_code != 200:
+            return f"⚠️ Web search service returned error ({err or 'HTTP error'}).", []
 
         data = res.json()
         candidate = data.get("candidates", [{}])[0]

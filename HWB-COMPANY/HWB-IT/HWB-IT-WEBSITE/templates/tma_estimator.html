@@ -184,6 +184,7 @@
     </style>
 </head>
 <body>
+    <a href="#main-content" class="sigma-skip-link" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;">Skip to main content</a>
     <div class="header">
         <h1>📐 Takeoff & Scope Configurator</h1>
         <p>HWB Cleaning Services LLC • SigmaFidelity™ Estimating Node</p>
@@ -194,7 +195,7 @@
         <div class="label-row">
             <span>Project Name / RFP</span>
         </div>
-        <input type="text" id="projectName" value="Commercial Scope Estimate" placeholder="e.g. UTSW Lab Remodel">
+        <input type="text" id="projectName" value="Commercial Scope Estimate" placeholder="e.g. UTSW Lab Remodel" aria-label="Project or Scope Estimate Name">
     </div>
 
     <!-- Footprint Slider -->
@@ -203,7 +204,7 @@
             <span>Cleanable Footprint</span>
             <span class="val-badge" id="sqftDisplay">15,000 SF</span>
         </div>
-        <input type="range" id="sqftSlider" min="1000" max="250000" step="500" value="15000" oninput="calculate()">
+        <input type="range" id="sqftSlider" min="1000" max="250000" step="500" value="15000" oninput="calculate()" aria-label="Cleanable Square Footage Slider">
     </div>
 
     <!-- Facility Type & Margin -->
@@ -211,7 +212,7 @@
         <div class="grid-2">
             <div>
                 <div class="label-row"><span>Classification</span></div>
-                <select id="facilityType" onchange="calculate()">
+                <select id="facilityType" onchange="calculate()" aria-label="Facility Classification Type">
                     <option value="standard">Commercial Standard</option>
                     <option value="clinical">Medical Clinic / Biosafety Lab</option>
                     <option value="industrial">Industrial Warehouse</option>
@@ -223,7 +224,7 @@
                     <span>Target Margin</span>
                     <span id="marginDisplay" style="color: #60a5fa;">35%</span>
                 </div>
-                <input type="range" id="marginSlider" min="20" max="50" step="1" value="35" oninput="calculate()">
+                <input type="range" id="marginSlider" min="20" max="50" step="1" value="35" oninput="calculate()" aria-label="Target Gross Margin Slider">
             </div>
         </div>
     </div>

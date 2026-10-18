@@ -915,6 +915,7 @@
     </style>
 </head>
 <body>
+    <a href="#main-content" class="sigma-skip-link" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;">Skip to main content</a>
 
     <!-- 1.0 BOSANNA EXACT HEADER -->
     <header class="bosanna-header">
@@ -998,28 +999,28 @@
                 <div class="form-grid">
                     <div class="form-group">
                         <label class="form-label" id="t-f-fullname">Full Legal Name *</label>
-                        <input type="text" class="form-input" id="full_name" placeholder="e.g. Maria Rodriguez" required>
+                        <input type="text" class="form-input" id="full_name" placeholder="e.g. Maria Rodriguez" required aria-label="Full Legal Name">
                     </div>
                     
                     <div class="form-group">
                         <label class="form-label" id="t-f-phone">Mobile Phone (SMS Notifications) *</label>
-                        <input type="tel" class="form-input" id="phone" placeholder="(###) ###-####" maxlength="14" oninput="maskPhone(this)" required>
+                        <input type="tel" class="form-input" id="phone" placeholder="(###) ###-####" maxlength="14" oninput="maskPhone(this)" required aria-label="Mobile Phone Number">
                     </div>
 
                     <div class="form-group">
                         <label class="form-label" id="t-f-email">Email Address *</label>
-                        <input type="email" class="form-input" id="email" placeholder="maria.rodriguez@example.com" required>
+                        <input type="email" class="form-input" id="email" placeholder="maria.rodriguez@example.com" required aria-label="Email Address">
                     </div>
 
                     <div class="form-group">
                         <label class="form-label" id="t-f-city">City of Residence *</label>
-                        <input type="text" class="form-input" id="city" placeholder="e.g. Frisco, Plano, McKinney" required>
+                        <input type="text" class="form-input" id="city" placeholder="e.g. Frisco, Plano, McKinney" required aria-label="City of Residence">
                     </div>
 
                     <!-- Enhanced Driver License & State ID Section -->
                     <div class="form-group">
                         <label class="form-label" id="t-f-state-origin">Issuing State (Driver License / ID) *</label>
-                        <select class="form-select" id="id_state">
+                        <select class="form-select" id="id_state" aria-label="Issuing State for ID">
                             <option value="TX" selected>Texas (TX)</option>
                             <option value="OK">Oklahoma (OK)</option>
                             <option value="LA">Louisiana (LA)</option>
@@ -1031,17 +1032,17 @@
 
                     <div class="form-group">
                         <label class="form-label" id="t-f-id">Driver's License or State ID # *</label>
-                        <input type="text" class="form-input" id="state_id" placeholder="e.g. 24891024" style="text-transform: uppercase;" required minlength="7" maxlength="16">
+                        <input type="text" class="form-input" id="state_id" placeholder="e.g. 24891024" style="text-transform: uppercase;" required minlength="7" maxlength="16" aria-label="Driver License or State ID Number">
                     </div>
 
                     <div class="form-group">
                         <label class="form-label" id="t-f-id-exp">ID Expiration Date *</label>
-                        <input type="month" class="form-input" id="id_expiration" required>
+                        <input type="month" class="form-input" id="id_expiration" required aria-label="ID Expiration Month and Year">
                     </div>
 
                     <div class="form-group">
                         <label class="form-label" id="t-f-role">Desired Role / Classification</label>
-                        <select class="form-select" id="desired_role">
+                        <select class="form-select" id="desired_role" aria-label="Desired Position">
                             <option value="Commercial Cleaning Technician" data-position-id="1" selected id="opt-role-1">Commercial Cleaning Technician</option>
                             <option value="Lead Campus Custodian" data-position-id="3" id="opt-role-2">Lead Campus Custodian</option>
                             <option value="Commercial Floor Care Specialist" data-position-id="2" id="opt-role-3">Commercial Floor Care Specialist</option>
@@ -1051,7 +1052,7 @@
 
                     <div class="form-group">
                         <label class="form-label" id="t-f-shift">Shift Availability</label>
-                        <select class="form-select" id="desired_shift">
+                        <select class="form-select" id="desired_shift" aria-label="Preferred Shift Availability">
                             <option value="Night (6:00 PM - 2:30 AM)" selected id="opt-shift-1">Night Shift (6:00 PM - 2:30 AM)</option>
                             <option value="Day Porter (7:00 AM - 3:30 PM)" id="opt-shift-2">Day Shift (7:00 AM - 3:30 PM)</option>
                             <option value="Weekend Flexible" id="opt-shift-3">Weekend Flexible</option>
@@ -1060,7 +1061,7 @@
 
                     <div class="form-group">
                         <label class="form-label" id="t-f-facility">Primary Facility Assignment</label>
-                        <select class="form-select" id="target_facility">
+                        <select class="form-select" id="target_facility" aria-label="Target Campus Facility">
                             <option value="Collin College Frisco Campus" selected id="opt-fac-1">Collin College Frisco Campus (TIPS Prime)</option>
                             <option value="Sundance Square Commercial Network" id="opt-fac-2">Sundance Square Commercial Network</option>
                             <option value="TIPS Regional Member Facilities" id="opt-fac-3">TIPS Regional Member Facilities</option>
@@ -1122,7 +1123,7 @@
                 <div class="form-grid">
                     <div class="form-group-full">
                         <label class="form-label" id="t-f-signature">Electronic Legal Signature (Type Full Legal Name) *</label>
-                        <input type="text" class="form-input" id="legal_signature" placeholder="Type your full legal name as digital signature" required>
+                        <input type="text" class="form-input" id="legal_signature" placeholder="Type your full legal name as digital signature" required aria-label="Digital Legal Signature">
                     </div>
                 </div>
 

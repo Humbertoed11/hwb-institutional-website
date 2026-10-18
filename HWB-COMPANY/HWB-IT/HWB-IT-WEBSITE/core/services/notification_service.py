@@ -211,24 +211,87 @@ def send_lead_email_alert(lead_data: Dict[str, Any]) -> Tuple[bool, str]:
     return transmit_email(recipients, subject, body_html)
 
 
+def send_lead_receipt_email(lead_data: Dict[str, Any], is_repeat: bool = False) -> Tuple[bool, str]:
+    """
+    Sends an automated quote confirmation receipt email to the prospective client
+    with their Reference Code (LEAD-#00XXX).
+    """
+    client_email = clean_email(lead_data.get("email"))
+    if not client_email or client_email.endswith((".test", ".local", ".invalid", "@example.com")):
+        return False, "No routable client email provided"
+
+    company = lead_data.get("company") or "Your Facility"
+    contact = lead_data.get("name") or "Facility Manager"
+    ref_code = lead_data.get("reference_code") or f"LEAD-#{int(lead_data.get('lead_id') or 0):05d}"
+    frequency = lead_data.get("frequency") or "Custom Cleaning Schedule"
+    city = lead_data.get("city") or "DFW Metroplex"
+
+    if is_repeat:
+        subject = f"HWB Cleaning Services — Quote Request Updated ({ref_code})"
+        headline = "Your Existing Quote Request Has Been Updated"
+        intro = (
+            f"Hello {contact}, we already had an active commercial cleaning request on file for "
+            f"<strong>{company}</strong>. We have updated your existing record with your latest building details."
+        )
+    else:
+        subject = f"HWB Cleaning Services — Quote Request Received ({ref_code})"
+        headline = "We Have Received Your Commercial Cleaning Request"
+        intro = (
+            f"Hello {contact}, thank you for requesting a commercial cleaning quote for "
+            f"<strong>{company}</strong>. Our estimating team has logged your facility details and is preparing your options."
+        )
+
+    body_html = f"""
+    <div style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
+        <div style="border-bottom: 3px solid #2563eb; padding-bottom: 16px; margin-bottom: 24px;">
+            <div style="font-size: 11px; font-weight: 800; color: #2563eb; text-transform: uppercase; letter-spacing: 0.1em;">HWB Cleaning Services LLC &bull; Commercial Estimating</div>
+            <h2 style="margin: 6px 0 0 0; font-size: 20px; font-weight: 800; color: #0f172a;">{headline}</h2>
+        </div>
+        <p style="font-size: 14px; line-height: 1.6; color: #334155;">{intro}</p>
+        <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin: 20px 0;">
+            <div style="font-size: 12px; color: #64748b; font-weight: 700; text-transform: uppercase;">Quote Reference Number</div>
+            <div style="font-size: 18px; font-weight: 900; color: #0f172a; margin-top: 4px;">{ref_code}</div>
+            <div style="font-size: 13px; color: #475569; margin-top: 8px;">
+                <strong>Facility:</strong> {company} ({city})<br>
+                <strong>Requested Schedule:</strong> {frequency}
+            </div>
+        </div>
+        <p style="font-size: 13px; line-height: 1.6; color: #475569;">
+            Need immediate assistance or want to schedule a site walkthrough right away? Call our commercial desk directly at <strong>(214)-586-0257</strong>.
+        </p>
+    </div>
+    """
+    return transmit_email([client_email], subject, body_html)
+
+
 def dispatch_lead_notifications(lead_data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Master dispatch coordinator. Executes direct email transmission
-    and Telegram push notifications. Designed to run synchronously or
-    inside the EnterpriseTaskQueue background worker.
+    and Telegram push notifications. Suppresses duplicate internal alerts
+    when a repeat submission updates an existing lead, while still sending
+    the client an updated confirmation receipt.
     """
     results = {}
-    print(f"[NOTIFY] Initiating dual-channel lead dispatch for: {lead_data.get('company')}", flush=True)
+    is_repeat = bool(lead_data.get("is_repeat", False))
+    print(f"[NOTIFY] Initiating lead dispatch for: {lead_data.get('company')} (is_repeat={is_repeat})", flush=True)
 
-    # Channel 1: Telegram Push Alert
-    tg_ok, tg_msg = send_lead_telegram_alert(lead_data)
-    results["telegram"] = {"success": tg_ok, "detail": tg_msg}
+    if not is_repeat:
+        # Channel 1: Telegram Push Alert
+        tg_ok, tg_msg = send_lead_telegram_alert(lead_data)
+        results["telegram"] = {"success": tg_ok, "detail": tg_msg}
 
-    # Channel 2: Microsoft Graph Email Transmission
-    em_ok, em_msg = send_lead_email_alert(lead_data)
-    results["email"] = {"success": em_ok, "detail": em_msg}
+        # Channel 2: Microsoft Graph Email Transmission to Staff
+        em_ok, em_msg = send_lead_email_alert(lead_data)
+        results["email"] = {"success": em_ok, "detail": em_msg}
+    else:
+        results["telegram"] = {"success": True, "detail": "Suppressed duplicate staff alert on repeat lead update"}
+        results["email"] = {"success": True, "detail": "Suppressed duplicate staff email on repeat lead update"}
 
-    print(f"[NOTIFY] Dual-channel dispatch finished. Telegram: {tg_ok}, Email: {em_ok}", flush=True)
+    # Channel 3: Confirmation Receipt to Prospective Client
+    rec_ok, rec_msg = send_lead_receipt_email(lead_data, is_repeat=is_repeat)
+    results["client_receipt"] = {"success": rec_ok, "detail": rec_msg}
+
+    print(f"[NOTIFY] Lead dispatch finished. Results: {results}", flush=True)
     return results
 
 
@@ -438,21 +501,101 @@ def send_applicant_email_alert(applicant_data: Dict[str, Any]) -> Tuple[bool, st
     return transmit_email(recipients, subject, body_html)
 
 
+def send_applicant_receipt_email(applicant_data: Dict[str, Any], is_repeat: bool = False) -> Tuple[bool, str]:
+    """
+    Sends an automated confirmation receipt directly to the job applicant's inbox
+    so they have proof of application and do not submit duplicate forms.
+    """
+    email = clean_email(applicant_data.get("email"))
+    if not email or email.endswith((".test", ".local", ".invalid", "@example.com")):
+        return False, "Skipped non-routable or missing applicant email"
+
+    full_name = applicant_data.get("full_name") or "Applicant"
+    desired_role = applicant_data.get("desired_role") or "Commercial Cleaning Technician"
+    desired_shift = applicant_data.get("desired_shift") or "Night"
+    city = applicant_data.get("city") or "DFW Metroplex"
+    applicant_id = applicant_data.get("applicant_id") or "0001"
+    registered_date = applicant_data.get("registered_date") or "Today"
+    ref_code = f"APP-#{int(applicant_id):04d}" if str(applicant_id).isdigit() else f"APP-#{applicant_id}"
+
+    if is_repeat:
+        subject = f"HWB Cleaning Services — Application Already on File & Updated ({ref_code})"
+        banner_title = "Existing Application Recognized & Updated"
+        intro_text = (
+            f"We already have your application on file as of <strong>{registered_date}</strong> "
+            f"(Reference <strong>{ref_code}</strong>). Instead of creating a duplicate record, "
+            "we have updated your existing candidate profile with your latest information."
+        )
+    else:
+        subject = f"HWB Cleaning Services — Job Application Received ({ref_code})"
+        banner_title = "Application Received & On File"
+        intro_text = (
+            f"Thank you for applying with <strong>HWB Cleaning Services LLC</strong>. "
+            f"Your candidate profile has been saved in our hiring system under Reference <strong>{ref_code}</strong>."
+        )
+
+    body_html = f"""
+    <div style="font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; padding: 30px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; max-width: 600px; margin: 0 auto; color: #0f172a;">
+        <div style="border-bottom: 3px solid #059669; padding-bottom: 16px; margin-bottom: 24px;">
+            <div style="font-weight: 900; font-size: 20px; color: #0f172a;">HWB CLEANING SERVICES LLC</div>
+            <div style="font-size: 12px; color: #059669; font-weight: 700; margin-top: 4px;">{banner_title} • {ref_code}</div>
+        </div>
+        <div style="background-color: #ffffff; padding: 24px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 20px; font-size: 14px; line-height: 1.6;">
+            <p style="margin-top: 0;">Hello <strong>{full_name}</strong>,</p>
+            <p>{intro_text}</p>
+            <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin: 16px 0;">
+                <tr>
+                    <td style="padding: 6px 0; color: #64748b; width: 42%; font-weight: 600;">Reference Number:</td>
+                    <td style="padding: 6px 0; color: #0f172a; font-weight: 800;">{ref_code}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Position Applied For:</td>
+                    <td style="padding: 6px 0; color: #0f172a; font-weight: 700;">{desired_role}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Preferred Shift & City:</td>
+                    <td style="padding: 6px 0; color: #0f172a; font-weight: 600;">{desired_shift} Shift • {city}, TX</td>
+                </tr>
+                <tr>
+                    <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Application Status:</td>
+                    <td style="padding: 6px 0; color: #059669; font-weight: 700;">Active / In Hiring Review</td>
+                </tr>
+            </table>
+            <p style="margin-bottom: 0; color: #475569;">
+                <strong>What happens next:</strong> You do not need to submit another application. Our hiring supervisors review active profiles as routes open in your area and will reach out to you directly if a matching shift is available.
+            </p>
+        </div>
+        <div style="font-size: 12px; color: #64748b; text-align: center;">
+            HWB Cleaning Services LLC • (214)-586-0257 • sales@hwbcleaning.com
+        </div>
+    </div>
+    """
+    return transmit_email([email], subject, body_html)
+
+
 def dispatch_applicant_notifications(applicant_data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Master dispatch coordinator for technician job applicants.
-    Executes email transmission and Telegram push notifications.
+    Executes email transmission, Telegram push notifications, and candidate confirmation receipt.
     """
     results = {}
-    print(f"[NOTIFY] Initiating dual-channel applicant dispatch for: {applicant_data.get('full_name')}", flush=True)
+    is_repeat = bool(applicant_data.get("is_repeat", False))
+    print(f"[NOTIFY] Initiating applicant dispatch for: {applicant_data.get('full_name')} (repeat={is_repeat})", flush=True)
 
-    tg_ok, tg_msg = send_applicant_telegram_alert(applicant_data)
-    results["telegram"] = {"success": tg_ok, "detail": tg_msg}
+    if not is_repeat:
+        tg_ok, tg_msg = send_applicant_telegram_alert(applicant_data)
+        results["telegram"] = {"success": tg_ok, "detail": tg_msg}
 
-    em_ok, em_msg = send_applicant_email_alert(applicant_data)
-    results["email"] = {"success": em_ok, "detail": em_msg}
+        em_ok, em_msg = send_applicant_email_alert(applicant_data)
+        results["email"] = {"success": em_ok, "detail": em_msg}
+    else:
+        results["telegram"] = {"success": True, "detail": "Suppressed duplicate alert for existing applicant"}
+        results["email"] = {"success": True, "detail": "Suppressed duplicate internal alert for existing applicant"}
 
-    print(f"[NOTIFY] Applicant dispatch finished. Telegram: {tg_ok}, Email: {em_ok}", flush=True)
+    rc_ok, rc_msg = send_applicant_receipt_email(applicant_data, is_repeat=is_repeat)
+    results["applicant_receipt"] = {"success": rc_ok, "detail": rc_msg}
+
+    print(f"[NOTIFY] Applicant dispatch finished. Repeat: {is_repeat}, Receipt: {rc_ok}", flush=True)
     return results
 
 
@@ -639,19 +782,109 @@ def send_subcontractor_email_alert(partner_data: Dict[str, Any]) -> Tuple[bool, 
     return transmit_email(recipients, subject, body_html)
 
 
+def send_subcontractor_receipt_email(partner_data: Dict[str, Any], is_repeat: bool = False) -> Tuple[bool, str]:
+    """
+    Sends an automated confirmation receipt directly to the subcontractor's inbox
+    with their Partner Reference ID and W-9 / COI submission instructions.
+    """
+    email = clean_email(partner_data.get("email"))
+    if not email or email.endswith((".test", ".local", ".invalid", "@example.com")):
+        return False, "Skipped non-routable or missing partner email"
+
+    company_name = partner_data.get("company_name") or "Trade Partner"
+    contact_name = partner_data.get("contact_name") or "Partner"
+    city = partner_data.get("city") or "Texas"
+    crew_size = partner_data.get("crew_size") or 2
+    specialties = partner_data.get("specialties") or "Post-Construction Cleaning"
+    partner_id = partner_data.get("partner_id") or "0001"
+    registered_date = partner_data.get("registered_date") or "Today"
+    partner_status = partner_data.get("partner_status") or "Vetting / In Review"
+    ref_code = f"SUB-#{int(partner_id):04d}" if str(partner_id).isdigit() else f"SUB-#{partner_id}"
+
+    if is_repeat:
+        subject = f"HWB Cleaning Services — Subcontractor Profile Already Registered & Updated ({ref_code})"
+        banner_title = "Existing Partner Profile Recognized & Updated"
+        intro_text = (
+            f"Your company (<strong>{company_name}</strong>) is already registered in the "
+            f"HWB Cleaning Services Subcontractor Partner Network as of <strong>{registered_date}</strong> "
+            f"(Partner Reference <strong>{ref_code}</strong>). Instead of creating a duplicate entry, "
+            "we have merged your latest crew capacity and specialty selections into your active partner record."
+        )
+    else:
+        subject = f"HWB Cleaning Services — Subcontractor Partner Registration Confirmed ({ref_code})"
+        banner_title = "Subcontractor Partner Registration Confirmed"
+        intro_text = (
+            f"Thank you for registering <strong>{company_name}</strong> with the "
+            f"<strong>HWB Cleaning Services LLC</strong> Subcontractor Partner Network. "
+            f"Your business is now on file under Partner Reference <strong>{ref_code}</strong>."
+        )
+
+    body_html = f"""
+    <div style="font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; padding: 30px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; max-width: 600px; margin: 0 auto; color: #0f172a;">
+        <div style="border-bottom: 3px solid #2563eb; padding-bottom: 16px; margin-bottom: 24px;">
+            <div style="font-weight: 900; font-size: 20px; color: #0f172a;">HWB CLEANING SERVICES LLC</div>
+            <div style="font-size: 12px; color: #2563eb; font-weight: 700; margin-top: 4px;">{banner_title} • {ref_code}</div>
+        </div>
+        <div style="background-color: #ffffff; padding: 24px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 20px; font-size: 14px; line-height: 1.6;">
+            <p style="margin-top: 0;">Hello <strong>{contact_name}</strong>,</p>
+            <p>{intro_text}</p>
+            <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin: 16px 0;">
+                <tr>
+                    <td style="padding: 6px 0; color: #64748b; width: 42%; font-weight: 600;">Partner Reference ID:</td>
+                    <td style="padding: 6px 0; color: #2563eb; font-weight: 800;">{ref_code}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Company Name:</td>
+                    <td style="padding: 6px 0; color: #0f172a; font-weight: 700;">{company_name}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Base City & Crew Size:</td>
+                    <td style="padding: 6px 0; color: #0f172a; font-weight: 600;">{city}, TX • {crew_size} Crew Members</td>
+                </tr>
+                <tr>
+                    <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Trade Specialties:</td>
+                    <td style="padding: 6px 0; color: #0f172a; font-weight: 600;">{specialties}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Roster Status:</td>
+                    <td style="padding: 6px 0; color: #16a34a; font-weight: 700;">{partner_status}</td>
+                </tr>
+            </table>
+            <div style="background-color: #f8fafc; border-left: 4px solid #2563eb; padding: 12px 16px; border-radius: 4px; margin-top: 16px;">
+                <strong style="color: #0f172a;">Next Steps for Project Dispatch:</strong><br>
+                You do not need to submit the web form again. To complete your compliance file for upcoming bids, please reply to <a href="mailto:sales@hwbcleaning.com" style="color: #2563eb; font-weight: 700;">sales@hwbcleaning.com</a> with your <strong>W-9 Form</strong> and <strong>Certificate of Insurance (COI)</strong> referencing <strong>{ref_code}</strong>.
+            </div>
+        </div>
+        <div style="font-size: 12px; color: #64748b; text-align: center;">
+            HWB Cleaning Services LLC • (214)-586-0257 • sales@hwbcleaning.com
+        </div>
+    </div>
+    """
+    return transmit_email([email], subject, body_html)
+
+
 def dispatch_subcontractor_notifications(partner_data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Master dispatch coordinator for 1099 subcontractor cleaning crew registrations.
-    Executes email transmission and Telegram push notifications.
+    Executes email transmission, Telegram push notifications, and partner confirmation receipt.
     """
     results = {}
-    print(f"[NOTIFY] Initiating dual-channel subcontractor dispatch for: {partner_data.get('company_name')}", flush=True)
+    is_repeat = bool(partner_data.get("is_repeat", False))
+    print(f"[NOTIFY] Initiating subcontractor dispatch for: {partner_data.get('company_name')} (repeat={is_repeat})", flush=True)
 
-    tg_ok, tg_msg = send_subcontractor_telegram_alert(partner_data)
-    results["telegram"] = {"success": tg_ok, "detail": tg_msg}
+    if not is_repeat:
+        tg_ok, tg_msg = send_subcontractor_telegram_alert(partner_data)
+        results["telegram"] = {"success": tg_ok, "detail": tg_msg}
 
-    em_ok, em_msg = send_subcontractor_email_alert(partner_data)
-    results["email"] = {"success": em_ok, "detail": em_msg}
+        em_ok, em_msg = send_subcontractor_email_alert(partner_data)
+        results["email"] = {"success": em_ok, "detail": em_msg}
+    else:
+        results["telegram"] = {"success": True, "detail": "Suppressed duplicate alert for existing subcontractor"}
+        results["email"] = {"success": True, "detail": "Suppressed duplicate internal alert for existing subcontractor"}
 
-    print(f"[NOTIFY] Subcontractor dispatch finished. Telegram: {tg_ok}, Email: {em_ok}", flush=True)
+    rc_ok, rc_msg = send_subcontractor_receipt_email(partner_data, is_repeat=is_repeat)
+    results["partner_receipt"] = {"success": rc_ok, "detail": rc_msg}
+
+    print(f"[NOTIFY] Subcontractor dispatch finished. Repeat: {is_repeat}, Receipt: {rc_ok}", flush=True)
     return results
+

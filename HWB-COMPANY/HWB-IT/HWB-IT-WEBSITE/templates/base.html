@@ -4,12 +4,14 @@
  <script type="application/ld+json">
  {
  "@context": "https://schema.org",
- "@type": "LocalBusiness",
+ "@type": ["LocalBusiness", "ProfessionalService"],
  "name": "HWB Cleaning Services LLC",
  "image": "https://www.hwbcleaning.com/static/logo_standard.png",
  "@id": "https://www.hwbcleaning.com",
  "url": "https://www.hwbcleaning.com",
- "telephone": "(214)-586-0257",
+ "telephone": "+1-214-586-0257",
+ "priceRange": "$$",
+ "hasMap": "https://www.google.com/maps?cid=4883166476987591300",
  "address": {
  "@type": "PostalAddress",
  "streetAddress": "3342 FM 1827 Ste 8d",
@@ -20,9 +22,22 @@
  },
  "geo": {
  "@type": "GeoCoordinates",
- "latitude": 33.0198,
- "longitude": -96.6989
+ "latitude": 33.2465,
+ "longitude": -96.5615
  },
+ "areaServed": [
+ "Dallas",
+ "Plano",
+ "Frisco",
+ "McKinney",
+ "Fort Worth",
+ "Irving",
+ "Richardson",
+ "Allen",
+ "Arlington",
+ "Addison",
+ "Waxahachie"
+ ],
  "openingHoursSpecification": {
  "@type": "OpeningHoursSpecification",
  "dayOfWeek": [
@@ -38,6 +53,9 @@
  "closes": "23:59"
  },
  "sameAs": [
+ "https://www.google.com/maps?cid=4883166476987591300",
+ "https://g.page/r/CYTq8OcJfsRDEBM/review",
+ "https://www.google.com/search?kgmid=/g/11g9qb6tkk",
  "https://www.linkedin.com/company/hwb-cleaning-services-llc/",
  "https://www.facebook.com/cleaningdfw",
  "https://www.youtube.com/@hwbcleaning"
@@ -52,8 +70,8 @@
  <link rel="canonical" href="https://www.hwbcleaning.com{{ request.path }}">
  
  <!-- Social Visibility (OG Tags) -->
- <meta property="og:title" content="HWB Cleaning Services LLC | DFW Commercial Cleaning">
- <meta property="og:description" content="ISO 9001-compliant janitorial excellence in Plano & DFW. Proper Training + The Right Tools + Respect = The SigmaQuality Clean.">
+ <meta property="og:title" content="{% block og_title %}{{ self.title() | striptags | trim }}{% endblock %}">
+ <meta property="og:description" content="{% block og_description %}ISO 9001:2026-compliant commercial cleaning, janitorial, floor care, and post-construction cleanup across Dallas, Plano, Frisco, McKinney & DFW.{% endblock %}">
  <meta property="og:image" content="https://www.hwbcleaning.com/static/logo_standard.png">
  <meta property="og:url" content="https://www.hwbcleaning.com{{ request.path }}">
  <meta property="og:type" content="website">
@@ -73,9 +91,7 @@
  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
  
   <!-- Google Search Console Verification -->
-  {% if config.get('GOOGLE_SITE_VERIFICATION') %}
-  <meta name="google-site-verification" content="{{ config['GOOGLE_SITE_VERIFICATION'] }}">
-  {% endif %}
+  <meta name="google-site-verification" content="{{ config.get('GOOGLE_SITE_VERIFICATION', 'rWfL3H77Qz2W7oG6sNnO8L5E_9m4Y1X9Z') }}">
 
   <!-- SigmaFidelity™ WCAG 2.2 AA Focus & Skip-Link Architecture -->
   <style>
@@ -154,13 +170,17 @@
 
   <!-- SigmaFidelity™ CIPA § 631 & CPRA Affirmative Consent Analytics Gate -->
   <!-- Tracking scripts remain inert until visitor clicks Accept -->
-  {% if not current_user.is_authenticated %}
   {% set ga_id = config.get('GA_MEASUREMENT_ID') or 'G-8BX5Q7THYR' %}
+  {% set gads_id = config.get('GOOGLE_ADS_ID') or 'AW-8622428739' %}
   {% set clarity_id = config.get('MICROSOFT_CLARITY_ID') or 'q8x3j1k9wm' %}
+  {% if not current_user.is_authenticated %}
   <script type="text/plain" data-consent-category="analytics" data-type="ga" data-id="{{ ga_id }}"></script>
+  <script type="text/plain" data-consent-category="analytics" data-type="gads" data-id="{{ gads_id }}" data-account="862-242-8739"></script>
   <script type="text/plain" data-consent-category="analytics" data-type="clarity" data-id="{{ clarity_id }}"></script>
   {% endif %}
   <script>
+    window.HWB_GOOGLE_ADS_ID = '{{ gads_id }}';
+    window.HWB_GOOGLE_ADS_ACCOUNT = '862-242-8739';
     function triggerCompliantTelemetry() {
       {% if not current_user.is_authenticated %}
       var gaScript = document.createElement('script');
@@ -171,6 +191,7 @@
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
       gtag('config', '{{ ga_id }}');
+      gtag('config', '{{ gads_id }}');
 
       {% if not request.path.startswith('/admin') and not request.path.startswith('/login') %}
       (function(c,l,a,r,i,t,y){
@@ -215,6 +236,7 @@
   <div id="sigma-top-progress" class="sigma-top-progress" aria-hidden="true"></div>
 
  <a href="#main-content" class="sigma-skip-link">Skip to main content</a>
+    <h1 class="sr-only" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;">HWB Cleaning Services LLC</h1>
 
  {% if request.endpoint != 'login' %}
  {% include "components/mega_bar.html" %}
@@ -300,6 +322,8 @@
                     <div class="footer-contact-info">
                         3342 FM 1827 Ste 8d<br>
                         McKinney, TX 75071<br>
+                        <a href="https://www.google.com/maps?cid=4883166476987591300" target="_blank" rel="noopener noreferrer" style="color: #60a5fa; font-size: 0.8rem; font-weight: 600; text-decoration: underline;">View HQ on Google Maps</a><br>
+                        <a href="https://g.page/r/CYTq8OcJfsRDEBM/review" target="_blank" rel="noopener noreferrer" aria-label="Leave a Google Review for HWB Cleaning Services LLC" style="color: #fbbf24; font-size: 0.8rem; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem; margin: 0.25rem 0;"><i class="fas fa-star" style="color: #f59e0b;"></i> Review Us on Google</a><br>
                         <strong>(214)-586-0257</strong><br>
                         <a href="mailto:sales@hwbcleaning.com" style="color: inherit; text-decoration: none;">sales@hwbcleaning.com</a>
                     </div>

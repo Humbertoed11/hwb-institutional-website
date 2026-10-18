@@ -1,10 +1,37 @@
 {% extends "base.html" %}
 
 {% block title %}Daily Office Cleaning & Janitorial | Dallas, Plano & North Texas | HWB Cleaning{% endblock %}
+{% block og_description %}Reliable Daily Office Cleaning and Day Porter services for commercial buildings in Dallas, Plano, and North Texas. Professional cleaning operations with digital checklists and vetted personnel.{% endblock %}
 
 {% block head %}
  <meta name="description" content="Reliable Daily Office Cleaning and Day Porter services for commercial buildings in Dallas, Plano, and North Texas. Professional cleaning operations with digital checklists and vetted personnel.">
  <meta name="keywords" content="Daily office cleaning Dallas, janitorial services Plano, day porter North Texas, commercial cleaning DFW, office cleaning McKinney">
+ <script type="application/ld+json">
+ {
+   "@context": "https://schema.org",
+   "@graph": [
+     {
+       "@type": "Service",
+       "name": "Daily Office Cleaning & Janitorial Services",
+       "serviceType": "Commercial Janitorial Services",
+       "provider": {
+         "@type": "LocalBusiness",
+         "name": "HWB Cleaning Services LLC",
+         "@id": "https://www.hwbcleaning.com"
+       },
+       "areaServed": ["Dallas", "Plano", "Frisco", "McKinney", "Fort Worth", "Irving", "Richardson", "Allen", "Arlington", "Addison", "Waxahachie"],
+       "description": "Reliable daily office cleaning, restroom sanitization, and day porter services for commercial buildings across North Texas."
+     },
+     {
+       "@type": "BreadcrumbList",
+       "itemListElement": [
+         {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.hwbcleaning.com/"},
+         {"@type": "ListItem", "position": 2, "name": "Daily Office Cleaning & Janitorial", "item": "https://www.hwbcleaning.com/services/janitorial"}
+       ]
+     }
+   ]
+ }
+ </script>
 {% endblock %}
 
 {% block content %}

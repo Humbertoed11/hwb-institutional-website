@@ -19,7 +19,10 @@ from werkzeug.utils import secure_filename
 from flask_login import login_required, current_user
 from core.services.database import get_db
 from core.services.email_service import transmit_email
-from core.services.sanitizer import clean_phone, clean_currency, clean_sqft, clean_zip, clean_email, clean_city
+from core.services.sanitizer import (
+    clean_phone, clean_currency, clean_sqft, clean_zip, clean_email, clean_city,
+    extract_phone_digits, normalize_business_name, merge_comma_list
+)
 from core.security import (
     encrypt_pii,
     decrypt_pii,
@@ -97,6 +100,10 @@ def api_account_hub(id):
                     return log_and_abort_abac('accounts', 'view')
                 cur.execute('SELECT * FROM "Customers" WHERE customer_id = %s', (id,))
                 acc = cur.fetchone()
+                if not acc:
+                    return jsonify({'status': 'error', 'message': 'Client account not found'}), 404
+                if getattr(current_user, 'role', '') == 'Sales' and acc.get('assigned_rep_id') != current_user.id:
+                    return log_and_abort_abac('accounts', 'view')
                 cur.execute('SELECT * FROM "Contacts" WHERE account_id = %s', (id,))
                 contacts = cur.fetchall()
                 cur.execute('SELECT * FROM "GlobalActivities" WHERE parent_id = %s AND parent_type = %s ORDER BY timestamp DESC', (id, "Account"))
@@ -116,6 +123,8 @@ def api_account_hub(id):
                 current_acc = cur.fetchone()
                 if not current_acc:
                     return jsonify({'status': 'error', 'message': 'Account not found'}), 404
+                if getattr(current_user, 'role', '') == 'Sales' and current_acc.get('assigned_rep_id') != current_user.id:
+                    return log_and_abort_abac('accounts', 'edit')
 
                 def resolve(key, db_val):
                     val = data.get(key) if key in data else db_val
@@ -398,6 +407,10 @@ def api_lead_hub(id):
                     return log_and_abort_abac('leads', 'view')
                 cur.execute('SELECT * FROM "Leads" WHERE id = %s', (id,))
                 lead = cur.fetchone()
+                if not lead:
+                    return jsonify({'status': 'error', 'message': 'Lead not found'}), 404
+                if getattr(current_user, 'role', '') == 'Sales' and lead.get('owner_id') != current_user.id:
+                    return jsonify({'status': 'error', 'message': 'Access restricted: Sales representatives may only view leads assigned to their profile.'}), 403
                 cur.execute('SELECT * FROM "Contacts" WHERE lead_id = %s', (id,))
                 contacts = cur.fetchall()
                 cur.execute('SELECT * FROM "GlobalActivities" WHERE parent_id = %s AND parent_type = %s ORDER BY timestamp DESC', (id, "Lead"))
@@ -428,6 +441,8 @@ def api_lead_hub(id):
                 current_lead = cur.fetchone()
                 if not current_lead:
                     return jsonify({'status': 'error', 'message': 'Lead not found'}), 404
+                if getattr(current_user, 'role', '') == 'Sales' and current_lead.get('owner_id') != current_user.id:
+                    return jsonify({'status': 'error', 'message': 'Access restricted: Sales representatives may only update leads assigned to their profile.'}), 403
 
                 def resolve(key, db_val):
                     val = data.get(key) if key in data else db_val
@@ -469,7 +484,7 @@ def api_lead_hub(id):
                 budget_val = resolve('budget_range', current_lead.get('budget_range'))
 
                 owner_id_val = current_lead['owner_id']
-                if 'owner_id' in data:
+                if 'owner_id' in data and getattr(current_user, 'role', '') != 'Sales':
                     raw_owner = data.get('owner_id')
                     if raw_owner in ('', None, 'null', 'None'):
                         owner_id_val = None
@@ -564,6 +579,8 @@ def api_lead_cadence_save(id):
             current_lead = cur.fetchone()
             if not current_lead:
                 return jsonify({'status': 'error', 'message': 'Lead not found'}), 404
+            if getattr(current_user, 'role', '') == 'Sales' and current_lead.get('owner_id') != current_user.id:
+                return jsonify({'status': 'error', 'message': 'Access restricted: Sales representatives may only log call outcomes on leads assigned to their profile.'}), 403
 
             dm = data.get('decision_maker') if 'decision_maker' in data else current_lead['decision_maker']
             title = data.get('job_title') if 'job_title' in data else current_lead['job_title']
@@ -730,6 +747,16 @@ def api_batch_lead_action():
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
         with conn.cursor() as cur:
+            is_sales_user = (getattr(current_user, 'role', '') == 'Sales')
+            if is_sales_user and action in ('delete', 'assign_owner', 'auto_merge', 'dismiss_duplicates'):
+                return jsonify({'status': 'error', 'message': 'This bulk action is restricted for Sales personnel.'}), 403
+
+            if is_sales_user and lead_ids:
+                cur.execute('SELECT id FROM "Leads" WHERE id = ANY(%s) AND owner_id = %s;', (lead_ids, current_user.id))
+                lead_ids = [r[0] if isinstance(r, tuple) else r['id'] for r in cur.fetchall()]
+                if not lead_ids and not recipient_ids:
+                    return jsonify({'status': 'error', 'message': 'Access restricted: You may only update leads assigned to your profile.'}), 403
+
             if action == 'delete':
                 if not current_user.has_permission('leads', 'delete'):
                     return log_and_abort_abac('leads', 'delete')
@@ -920,6 +947,9 @@ def api_lead_promote(id):
             if not lead:
                 return jsonify({'status': 'error', 'message': 'Lead not found'}), 404
 
+            if getattr(current_user, 'role', '') == 'Sales' and lead.get('owner_id') != current_user.id:
+                return jsonify({'status': 'error', 'message': 'Access denied: Lead is not assigned to your account.'}), 403
+
             contact_name = (lead['director'] or lead['decision_maker'] or 'PRIMARY_CONTACT')
             
             rep_id = lead.get('owner_id')
@@ -927,12 +957,68 @@ def api_lead_promote(id):
                 rep_id = current_user.id
             
             try:
-                cur.execute('''
-                    INSERT INTO "Customers" (company_name, contact_person_name, email, phone, company_address, city, state, zip, sqf, traffic_cycle, annual_revenue, status, assigned_rep_id, umbrella_name, cleaning_delivery_model)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'Active', %s, %s, %s) RETURNING customer_id
-                ''', (lead['center_name'], contact_name, lead['email'], lead['phone'], lead['address'] or 'PENDING_ENTRY', lead['city'], lead['state'], lead['zipcode'], lead['sqf'] or 0, lead['traffic_cycle'], lead['estimated_annual_value'] or 0.0, rep_id, lead.get('umbrella_name'), lead.get('cleaning_delivery_model') or 'Model C Institutional Prime (Bosanna)'))
-                
-                new_acc_id = cur.fetchone()[0]
+                lead_phone_digits = extract_phone_digits(lead['phone'] or '')
+                lead_email = clean_email(lead['email'] or '') or (lead['email'] or '').strip()
+                lead_company = (lead['center_name'] or '').strip()
+
+                existing_cust = None
+                if lead_phone_digits and len(lead_phone_digits) == 10:
+                    cur.execute('''
+                        SELECT customer_id FROM "Customers"
+                        WHERE RIGHT(REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g'), 10) = %s
+                        ORDER BY customer_id ASC LIMIT 1;
+                    ''', (lead_phone_digits,))
+                    existing_cust = cur.fetchone()
+
+                if not existing_cust and lead_email:
+                    cur.execute('''
+                        SELECT customer_id FROM "Customers"
+                        WHERE LOWER(TRIM(COALESCE(email, ''))) = LOWER(%s)
+                        ORDER BY customer_id ASC LIMIT 1;
+                    ''', (lead_email,))
+                    existing_cust = cur.fetchone()
+
+                if not existing_cust and lead_company:
+                    cur.execute('''
+                        SELECT customer_id FROM "Customers"
+                        WHERE LOWER(TRIM(COALESCE(company_name, ''))) = LOWER(TRIM(%s))
+                        ORDER BY customer_id ASC LIMIT 1;
+                    ''', (lead_company,))
+                    existing_cust = cur.fetchone()
+
+                if existing_cust:
+                    new_acc_id = existing_cust['customer_id'] if isinstance(existing_cust, dict) else existing_cust[0]
+                    cur.execute('''
+                        UPDATE "Customers"
+                        SET contact_person_name = COALESCE(NULLIF(%s, ''), contact_person_name),
+                            email = COALESCE(NULLIF(%s, ''), email),
+                            phone = COALESCE(NULLIF(%s, ''), phone),
+                            company_address = COALESCE(NULLIF(%s, ''), company_address),
+                            city = COALESCE(NULLIF(%s, ''), city),
+                            state = COALESCE(NULLIF(%s, ''), state),
+                            zip = COALESCE(NULLIF(%s, ''), zip),
+                            sqf = CASE WHEN %s > 0 THEN %s ELSE sqf END,
+                            traffic_cycle = COALESCE(NULLIF(%s, ''), traffic_cycle),
+                            annual_revenue = CASE WHEN %s > 0 THEN %s ELSE annual_revenue END,
+                            assigned_rep_id = COALESCE(%s, assigned_rep_id),
+                            umbrella_name = COALESCE(NULLIF(%s, ''), umbrella_name)
+                        WHERE customer_id = %s;
+                    ''', (
+                        contact_name, lead_email, lead['phone'], lead['address'],
+                        lead['city'], lead['state'], lead['zipcode'],
+                        lead['sqf'] or 0, lead['sqf'] or 0, lead['traffic_cycle'],
+                        lead['estimated_annual_value'] or 0.0, lead['estimated_annual_value'] or 0.0,
+                        rep_id, lead.get('umbrella_name'), new_acc_id
+                    ))
+                    is_dup_cust = True
+                else:
+                    cur.execute('''
+                        INSERT INTO "Customers" (company_name, contact_person_name, email, phone, company_address, city, state, zip, sqf, traffic_cycle, annual_revenue, status, assigned_rep_id, umbrella_name, cleaning_delivery_model)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'Active', %s, %s, %s) RETURNING customer_id
+                    ''', (lead['center_name'], contact_name, lead['email'], lead['phone'], lead['address'] or 'PENDING_ENTRY', lead['city'], lead['state'], lead['zipcode'], lead['sqf'] or 0, lead['traffic_cycle'], lead['estimated_annual_value'] or 0.0, rep_id, lead.get('umbrella_name'), lead.get('cleaning_delivery_model') or 'Model C Institutional Prime (Bosanna)'))
+                    res_row = cur.fetchone()
+                    new_acc_id = res_row['customer_id'] if isinstance(res_row, dict) else res_row[0]
+                    is_dup_cust = False
                 
                 cur.execute('UPDATE "Leads" SET is_converted = true WHERE id = %s', (id,))
                 
@@ -940,10 +1026,10 @@ def api_lead_promote(id):
                               (id, "Lead", "CONVERTED", f"Lead moved to Account ACC-{new_acc_id} (Rep ID: {rep_id})"))
 
                 cur.execute('INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description) VALUES (%s, %s, %s, %s)', 
-                              (new_acc_id, "Account", "CONVERTED", f"Account created from Lead #{id} (Assigned Rep ID: {rep_id})"))
+                              (new_acc_id, "Account", "CONVERTED", f"Account {'merged from' if is_dup_cust else 'created from'} Lead #{id} (Assigned Rep ID: {rep_id})"))
                 
                 conn.commit()
-                return jsonify({'status': 'success', 'customer_id': new_acc_id, 'assigned_rep_id': rep_id})
+                return jsonify({'status': 'success', 'customer_id': new_acc_id, 'assigned_rep_id': rep_id, 'is_duplicate': is_dup_cust})
             except Exception as db_e:
                 conn.rollback()
                 return jsonify({'status': 'error', 'message': f"Database Error: {str(db_e)}"}), 500
@@ -961,6 +1047,11 @@ def api_lead_add_contact(id):
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
         with conn.cursor() as cur:
+            if getattr(current_user, 'role', '') == 'Sales':
+                cur.execute('SELECT owner_id FROM "Leads" WHERE id = %s', (id,))
+                lead_row = cur.fetchone()
+                if not lead_row or lead_row.get('owner_id') != current_user.id:
+                    return jsonify({'status': 'error', 'message': 'Access denied: Lead is not assigned to your account.'}), 403
             data = request.json
             cur.execute('''
                 INSERT INTO "Contacts" (lead_id, full_name, role, email, phone)
@@ -1543,6 +1634,107 @@ def api_workforce_apply():
                     if fallback_row:
                         job_position_id = fallback_row['id']
 
+            phone_digits = extract_phone_digits(phone)
+            clean_e = (clean_email(email) or '').strip().lower()
+
+            existing_app = None
+            if len(phone_digits) == 10 or clean_e:
+                cur.execute('''
+                    SELECT * FROM "JobApplicants"
+                    WHERE (
+                        (%s != '' AND REGEXP_REPLACE(COALESCE(phone, ''), '\D', '', 'g') LIKE '%%' || %s)
+                        OR (%s != '' AND LOWER(TRIM(COALESCE(email, ''))) = %s)
+                    )
+                    ORDER BY created_at ASC, id ASC
+                    LIMIT 1;
+                ''', (phone_digits, phone_digits, clean_e, clean_e))
+                existing_app = cur.fetchone()
+
+            if existing_app:
+                master_id = existing_app['id']
+                reg_dt = existing_app.get('created_at')
+                reg_date_str = reg_dt.strftime('%m/%d/%Y') if hasattr(reg_dt, 'strftime') else datetime.date.today().strftime('%m/%d/%Y')
+                today_str = datetime.date.today().strftime('%m/%d/%Y')
+                existing_notes = (existing_app.get('notes') or '').strip()
+                update_note = f"[Repeat Application Merged {today_str}: Role={desired_role}, Shift={desired_shift}]"
+                merged_notes = f"{existing_notes} | {update_note}".strip(" |") if update_note not in existing_notes else existing_notes
+                if raw_notes and raw_notes not in merged_notes:
+                    merged_notes = f"{merged_notes} | {raw_notes}".strip(" |")
+
+                cur.execute('''
+                    UPDATE "JobApplicants"
+                    SET full_name = COALESCE(NULLIF(%s, ''), full_name),
+                        phone = COALESCE(NULLIF(%s, ''), phone),
+                        email = COALESCE(NULLIF(%s, ''), email),
+                        city = COALESCE(NULLIF(%s, ''), city),
+                        desired_role = COALESCE(NULLIF(%s, ''), desired_role),
+                        desired_shift = COALESCE(NULLIF(%s, ''), desired_shift),
+                        experience_level = COALESCE(NULLIF(%s, ''), experience_level),
+                        has_transportation = %s,
+                        authorized_to_work_us = %s,
+                        preferred_language = COALESCE(NULLIF(%s, ''), preferred_language),
+                        job_position_id = COALESCE(%s, job_position_id),
+                        notes = %s,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE id = %s;
+                ''', (
+                    full_name, phone, email, city, desired_role, desired_shift,
+                    experience, has_transport, authorized_us, language,
+                    job_position_id, merged_notes, master_id
+                ))
+
+                cur.execute('''
+                    INSERT INTO "SigmaInteractionLog" (user_prompt, agent_explanation, tools_used, status)
+                    VALUES (%s, %s, %s, %s)
+                ''', (
+                    'Workforce Applicant Intake Gate (Smart Merge)',
+                    f"Merged repeat job application from {full_name} into existing record (APP-#{master_id})",
+                    '["web_workforce_form", "smart_dedup_merge", "applicant_receipt"]',
+                    'SUCCESS'
+                ))
+                conn.commit()
+
+                repeat_payload = {
+                    'applicant_id': master_id,
+                    'full_name': full_name,
+                    'phone': phone,
+                    'email': email,
+                    'city': city,
+                    'desired_role': desired_role,
+                    'desired_shift': desired_shift,
+                    'experience_level': experience,
+                    'has_transportation': has_transport,
+                    'authorized_to_work_us': authorized_us,
+                    'preferred_language': language,
+                    'notes': merged_notes,
+                    'is_repeat': True,
+                    'registered_date': reg_date_str
+                }
+                try:
+                    from core.services.task_queue import task_queue
+                    from core.services.notification_service import dispatch_applicant_notifications
+                    task_queue.enqueue(
+                        dispatch_applicant_notifications,
+                        repeat_payload,
+                        name=f"applicant_repeat_receipt_{master_id}"
+                    )
+                except Exception as queue_err:
+                    current_app.logger.warning(f"[WORKFORCE_WARN] Repeat applicant receipt enqueue error: {queue_err}")
+
+                return jsonify({
+                    'status': 'already_registered',
+                    'is_duplicate': True,
+                    'applicant_id': master_id,
+                    'job_position_id': job_position_id or existing_app.get('job_position_id'),
+                    'reference_code': f"APP-#{int(master_id):04d}",
+                    'registered_date': reg_date_str,
+                    'message': (
+                        "You already have an active job application on file with HWB Cleaning Services. "
+                        "Instead of creating a duplicate application, we have updated your existing candidate profile "
+                        "with your latest role and shift preferences and emailed your confirmation summary."
+                    )
+                }), 200
+
             cur.execute('''
                 INSERT INTO "JobApplicants" (
                     full_name, phone, email, city, state, desired_role, desired_shift,
@@ -1591,7 +1783,9 @@ def api_workforce_apply():
                 'has_transportation': has_transport,
                 'authorized_to_work_us': authorized_us,
                 'preferred_language': language,
-                'notes': notes
+                'notes': notes,
+                'is_repeat': False,
+                'registered_date': datetime.date.today().strftime('%m/%d/%Y')
             }
             try:
                 from core.services.task_queue import task_queue
@@ -1609,7 +1803,13 @@ def api_workforce_apply():
                 except Exception as sync_err:
                     current_app.logger.error(f"[WORKFORCE_ERROR] Sync notification fallback error: {sync_err}")
 
-            return jsonify({'status': 'success', 'applicant_id': new_id, 'job_position_id': job_position_id, 'message': 'Application received.'}), 201
+            return jsonify({
+                'status': 'success',
+                'applicant_id': new_id,
+                'reference_code': f"APP-#{int(new_id):04d}",
+                'job_position_id': job_position_id,
+                'message': 'Application received.'
+            }), 201
     except Exception as e:
         conn.rollback()
         return jsonify({'status': 'error', 'message': str(e)}), 500
@@ -1644,9 +1844,121 @@ def api_workforce_subcontractor():
     sub_tag = "[DWC-83 & No-Guarantee Terms Agreed: True]" if (dwc83_signed and no_guarantee_agreed) else "[DWC-83 & No-Guarantee Terms Agreed: Incomplete]"
     notes = f"{sub_tag} {raw_notes}".strip() if sub_tag not in raw_notes else raw_notes
 
+    phone_digits = extract_phone_digits(phone)
+    clean_e = (clean_email(email) or '').strip().lower()
+    norm_company = normalize_business_name(company_name)
+
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
         with conn.cursor() as cur:
+            cur.execute('''
+                SELECT * FROM "SubcontractorPartners"
+                WHERE (
+                    (%s != '' AND REGEXP_REPLACE(COALESCE(phone, ''), '\D', '', 'g') LIKE '%%' || %s)
+                    OR (%s != '' AND LOWER(TRIM(COALESCE(email, ''))) = %s)
+                    OR LOWER(TRIM(company_name)) = LOWER(TRIM(%s))
+                )
+                ORDER BY created_at ASC, id ASC;
+            ''', (phone_digits, phone_digits, clean_e, clean_e, company_name))
+            candidates = cur.fetchall()
+
+            existing_partner = candidates[0] if candidates else None
+            if not existing_partner and norm_company:
+                cur.execute('SELECT * FROM "SubcontractorPartners" ORDER BY created_at ASC, id ASC;')
+                for row in cur.fetchall():
+                    if normalize_business_name(row.get('company_name')) == norm_company:
+                        existing_partner = row
+                        break
+
+            if existing_partner:
+                master_id = existing_partner['id']
+                reg_dt = existing_partner.get('created_at')
+                reg_date_str = reg_dt.strftime('%m/%d/%Y') if hasattr(reg_dt, 'strftime') else datetime.date.today().strftime('%m/%d/%Y')
+                today_str = datetime.date.today().strftime('%m/%d/%Y')
+
+                merged_specialties = merge_comma_list(existing_partner.get('specialties'), specialties)
+                existing_contact = (existing_partner.get('contact_name') or '').strip()
+                best_contact = contact_name if (
+                    not existing_contact
+                    or normalize_business_name(existing_contact) == norm_company
+                    or contact_name
+                ) else existing_contact
+                merged_crew_size = max(int(existing_partner.get('crew_size') or 0), crew_size)
+                existing_notes = (existing_partner.get('notes') or '').strip()
+                update_stamp = f"[Repeat Portal Submission Merged {today_str}: Contact={contact_name}, Crew={crew_size}, Rate={hourly_rate}]"
+                merged_notes = f"{existing_notes} | {update_stamp}".strip(" |") if update_stamp not in existing_notes else existing_notes
+
+                cur.execute('''
+                    UPDATE "SubcontractorPartners"
+                    SET contact_name = %s,
+                        phone = COALESCE(NULLIF(%s, ''), phone),
+                        email = COALESCE(NULLIF(%s, ''), email),
+                        city = COALESCE(NULLIF(%s, ''), city),
+                        crew_size = %s,
+                        specialties = %s,
+                        hourly_rate_range = COALESCE(NULLIF(%s, ''), hourly_rate_range),
+                        dwc83_signed = (dwc83_signed OR %s),
+                        notes = %s,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE id = %s;
+                ''', (
+                    best_contact, phone, email, city, merged_crew_size,
+                    merged_specialties, hourly_rate, dwc83_signed, merged_notes, master_id
+                ))
+
+                cur.execute('''
+                    INSERT INTO "SigmaInteractionLog" (user_prompt, agent_explanation, tools_used, status)
+                    VALUES (%s, %s, %s, %s)
+                ''', (
+                    'Subcontractor Intake Gate (Smart Merge)',
+                    f"Merged repeat 1099 subcontractor submission from {company_name} into existing partner (SUB-#{master_id})",
+                    '["web_subcontractor_form", "smart_dedup_merge", "partner_receipt"]',
+                    'SUCCESS'
+                ))
+                conn.commit()
+
+                repeat_payload = {
+                    'partner_id': master_id,
+                    'company_name': existing_partner.get('company_name') or company_name,
+                    'contact_name': best_contact,
+                    'phone': phone or existing_partner.get('phone'),
+                    'email': email or existing_partner.get('email'),
+                    'city': city or existing_partner.get('city'),
+                    'crew_size': merged_crew_size,
+                    'specialties': merged_specialties,
+                    'hourly_rate_range': hourly_rate,
+                    'dwc83_agreed': dwc83_signed,
+                    'dwc83_signed': dwc83_signed,
+                    'notes': merged_notes,
+                    'is_repeat': True,
+                    'registered_date': reg_date_str,
+                    'partner_status': existing_partner.get('status') or 'Vetting'
+                }
+                try:
+                    from core.services.task_queue import task_queue
+                    from core.services.notification_service import dispatch_subcontractor_notifications
+                    task_queue.enqueue(
+                        dispatch_subcontractor_notifications,
+                        repeat_payload,
+                        name=f"subcontractor_repeat_receipt_{master_id}"
+                    )
+                except Exception as queue_err:
+                    current_app.logger.warning(f"[WORKFORCE_WARN] Repeat subcontractor receipt enqueue error: {queue_err}")
+
+                return jsonify({
+                    'status': 'already_registered',
+                    'is_duplicate': True,
+                    'partner_id': master_id,
+                    'reference_code': f"SUB-#{int(master_id):04d}",
+                    'registered_date': reg_date_str,
+                    'partner_status': existing_partner.get('status') or 'Vetting',
+                    'message': (
+                        "Your business is already registered in our Subcontractor Partner Network. "
+                        "Instead of creating a duplicate entry, we have updated your existing partner profile "
+                        "with your latest crew capacity and trade specialties, and sent a confirmation summary to your email on file."
+                    )
+                }), 200
+
             cur.execute('''
                 INSERT INTO "SubcontractorPartners" (
                     company_name, contact_name, phone, email, city, state,
@@ -1692,7 +2004,10 @@ def api_workforce_subcontractor():
                 'hourly_rate_range': hourly_rate,
                 'dwc83_agreed': dwc83_signed,
                 'dwc83_signed': dwc83_signed,
-                'notes': notes
+                'notes': notes,
+                'is_repeat': False,
+                'registered_date': datetime.date.today().strftime('%m/%d/%Y'),
+                'partner_status': 'Vetting'
             }
             try:
                 from core.services.task_queue import task_queue
@@ -1710,7 +2025,12 @@ def api_workforce_subcontractor():
                 except Exception as sync_err:
                     current_app.logger.error(f"[WORKFORCE_ERROR] Sync notification fallback error: {sync_err}")
 
-            return jsonify({'status': 'success', 'partner_id': new_id, 'message': 'Subcontractor partner registered.'}), 201
+            return jsonify({
+                'status': 'success',
+                'partner_id': new_id,
+                'reference_code': f"SUB-#{int(new_id):04d}",
+                'message': 'Subcontractor partner registered.'
+            }), 201
     except Exception as e:
         conn.rollback()
         return jsonify({'status': 'error', 'message': str(e)}), 500
@@ -1782,10 +2102,30 @@ def api_get_or_create_subcontractors():
                 company_name = (data.get('company_name') or '').strip()
                 contact_name = (data.get('contact_name') or '').strip()
                 phone = clean_phone(data.get('phone') or '')
-                email = (data.get('email') or '').strip()
+                email = (clean_email(data.get('email')) or (data.get('email') or '').strip())
 
                 if not company_name or not contact_name or not phone:
                     return jsonify({'status': 'error', 'message': 'Company name, contact name, and phone are mandatory.'}), 400
+
+                phone_digits = extract_phone_digits(phone)
+                clean_e = email.lower()
+                cur.execute('''
+                    SELECT id, company_name, created_at FROM "SubcontractorPartners"
+                    WHERE (
+                        (%s != '' AND REGEXP_REPLACE(COALESCE(phone, ''), '\D', '', 'g') LIKE '%%' || %s)
+                        OR (%s != '' AND LOWER(TRIM(COALESCE(email, ''))) = %s)
+                        OR LOWER(TRIM(company_name)) = LOWER(TRIM(%s))
+                    )
+                    ORDER BY created_at ASC, id ASC
+                    LIMIT 1;
+                ''', (phone_digits, phone_digits, clean_e, clean_e, company_name))
+                existing_sub = cur.fetchone()
+                if existing_sub:
+                    return jsonify({
+                        'status': 'already_registered',
+                        'subcontractor_id': existing_sub['id'],
+                        'message': f"Trade Partner '{existing_sub['company_name']}' is already registered (SUB-#{int(existing_sub['id']):04d}). Please edit the existing record instead of adding a duplicate."
+                    }), 409
 
                 ein_or_ssn = (data.get('ein_or_ssn') or '').strip()
                 city = clean_city(data.get('city') or '')
@@ -2071,6 +2411,85 @@ def api_hr_onboard_candidate():
                 if pos_row:
                     job_position_id = pos_row['id']
 
+            phone_digits = extract_phone_digits(phone)
+            clean_emp_email = clean_email(email) or email
+            existing_emp = None
+
+            if applicant_id:
+                cur.execute('SELECT id, employee_number, notes FROM "Employees" WHERE applicant_id = %s ORDER BY id ASC LIMIT 1;', (applicant_id,))
+                existing_emp = cur.fetchone()
+
+            if not existing_emp and phone_digits and len(phone_digits) == 10:
+                cur.execute('''
+                    SELECT id, employee_number, notes FROM "Employees"
+                    WHERE RIGHT(REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g'), 10) = %s
+                    ORDER BY id ASC LIMIT 1;
+                ''', (phone_digits,))
+                existing_emp = cur.fetchone()
+
+            if not existing_emp and clean_emp_email:
+                cur.execute('''
+                    SELECT id, employee_number, notes FROM "Employees"
+                    WHERE LOWER(TRIM(COALESCE(email, ''))) = LOWER(%s)
+                    ORDER BY id ASC LIMIT 1;
+                ''', (clean_emp_email,))
+                existing_emp = cur.fetchone()
+
+            if existing_emp:
+                emp_id = existing_emp['id']
+                emp_number = existing_emp['employee_number']
+                prev_notes = existing_emp.get('notes') or ''
+                merged_notes = f"{prev_notes}\n[PROFILE UPDATED]: {notes}".strip() if notes else prev_notes
+
+                cur.execute('''
+                    UPDATE "Employees"
+                    SET applicant_id = COALESCE(%s, applicant_id),
+                        first_name = COALESCE(NULLIF(%s, ''), first_name),
+                        last_name = COALESCE(NULLIF(%s, ''), last_name),
+                        phone = COALESCE(NULLIF(%s, ''), phone),
+                        email = COALESCE(NULLIF(%s, ''), email),
+                        employment_status = COALESCE(NULLIF(%s, ''), employment_status),
+                        employment_type = COALESCE(NULLIF(%s, ''), employment_type),
+                        primary_role = COALESCE(NULLIF(%s, ''), primary_role),
+                        pay_rate_hourly = %s,
+                        overtime_rate_hourly = %s,
+                        pay_frequency = COALESCE(NULLIF(%s, ''), pay_frequency),
+                        primary_language = COALESCE(NULLIF(%s, ''), primary_language),
+                        emergency_contact_name = COALESCE(NULLIF(%s, ''), emergency_contact_name),
+                        emergency_contact_phone = COALESCE(NULLIF(%s, ''), emergency_contact_phone),
+                        address_city = COALESCE(NULLIF(%s, ''), address_city),
+                        address_state = COALESCE(NULLIF(%s, ''), address_state),
+                        assigned_customer_id = COALESCE(%s, assigned_customer_id),
+                        weekly_hours_allocated = %s,
+                        notes = %s,
+                        job_position_id = COALESCE(%s, job_position_id),
+                        updated_at = NOW()
+                    WHERE id = %s;
+                ''', (
+                    applicant_id, first_name, last_name, phone, clean_emp_email,
+                    employment_status, employment_type, role,
+                    pay_rate, overtime_rate, pay_frequency, primary_language,
+                    emergency_name, emergency_phone, city, state,
+                    assigned_customer_id, weekly_hours, merged_notes,
+                    job_position_id, emp_id
+                ))
+
+                if applicant_id:
+                    cur.execute('''
+                        UPDATE "JobApplicants" 
+                        SET status = 'Hired', notes = COALESCE(notes, '') || E'\n[ONBOARDED] Linked to existing ' || %s || E' (' || %s || E')'
+                        WHERE id = %s;
+                    ''', (role, emp_number, applicant_id))
+
+                conn.commit()
+                return jsonify({
+                    'status': 'already_registered',
+                    'is_duplicate': True,
+                    'employee_id': emp_id,
+                    'employee_number': emp_number,
+                    'message': f"Employee {first_name} {last_name} ({emp_number}) is already onboarded — existing profile updated."
+                }), 200
+
             cur.execute('SELECT MAX(id) as max_id FROM "Employees";')
             max_row = cur.fetchone()
             next_id = (max_row['max_id'] or 0) + 1001
@@ -2093,7 +2512,7 @@ def api_hr_onboard_candidate():
                     %s, NOW()
                 ) RETURNING id, employee_number;
             ''', (
-                emp_number, applicant_id, first_name, last_name, phone, email,
+                emp_number, applicant_id, first_name, last_name, phone, clean_emp_email,
                 hire_date, employment_status, employment_type, role,
                 pay_rate, overtime_rate, pay_frequency, primary_language,
                 emergency_name, emergency_phone, city, state,
@@ -2112,6 +2531,7 @@ def api_hr_onboard_candidate():
             conn.commit()
             return jsonify({
                 'status': 'success',
+                'is_duplicate': False,
                 'employee_id': new_emp['id'],
                 'employee_number': new_emp['employee_number'],
                 'message': f"Employee {first_name} {last_name} ({new_emp['employee_number']}) onboarded successfully."

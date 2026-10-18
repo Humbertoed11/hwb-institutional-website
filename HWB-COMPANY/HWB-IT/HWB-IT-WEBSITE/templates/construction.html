@@ -1,10 +1,37 @@
 {% extends "base.html" %}
 
 {% block title %}3-Step Post-Construction Cleanup | Dallas, Plano & North Texas | HWB Cleaning{% endblock %}
+{% block og_description %}Professional 3-Step Construction Cleanup services in Dallas, Plano, and North Texas. Rapid OSHA-compliant site cleaning from Rough to Final Fluff.{% endblock %}
 
 {% block head %}
  <meta name="description" content="Professional 3-Step Construction Cleanup services in Dallas, Plano, and North Texas. Rapid OSHA-compliant site cleaning from Rough to Final Fluff.">
  <meta name="keywords" content="Construction cleanup Dallas, post-construction cleaning Plano, final clean North Texas, builder cleaning DFW, construction site porter McKinney">
+ <script type="application/ld+json">
+ {
+   "@context": "https://schema.org",
+   "@graph": [
+     {
+       "@type": "Service",
+       "name": "3-Step Post-Construction Final Cleaning",
+       "serviceType": "Post-Construction Cleaning",
+       "provider": {
+         "@type": "LocalBusiness",
+         "name": "HWB Cleaning Services LLC",
+         "@id": "https://www.hwbcleaning.com"
+       },
+       "areaServed": ["Dallas", "Plano", "Frisco", "McKinney", "Fort Worth", "Irving", "Richardson", "Allen", "Arlington", "Addison", "Waxahachie"],
+       "description": "OSHA-10/30 compliant 3-phase post-construction cleanup (Rough Clean, Final Detail Clean, and White-Glove Turnover) for commercial General Contractors."
+     },
+     {
+       "@type": "BreadcrumbList",
+       "itemListElement": [
+         {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.hwbcleaning.com/"},
+         {"@type": "ListItem", "position": 2, "name": "Post-Construction Cleanup", "item": "https://www.hwbcleaning.com/services/construction"}
+       ]
+     }
+   ]
+ }
+ </script>
 {% endblock %}
 
 {% block content %}

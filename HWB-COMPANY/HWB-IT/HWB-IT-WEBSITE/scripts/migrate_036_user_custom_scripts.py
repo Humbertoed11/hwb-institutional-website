@@ -72,13 +72,13 @@ def run_migration(db_url: str = None):
                 ''', (ceo_user_id,))
                 if not cur.fetchone():
                     starter_script = (
-                        "Hi {Director}, this is Humberto Dominguez, CEO and founder of HWB Cleaning Services right here in {City}. "
+                        "Hi {Director}, this is {Caller} with HWB Cleaning Services right here in {City}. "
                         "I am reaching out personally because our operations team is currently servicing educational and childcare facilities in your corridor. "
                         "We specialize in zero-residue hospital-grade sanitization that meets every Texas Child Care Regulation health inspection standard. "
                         "I wanted to see if I could stop by {Facility} for just 5 minutes this week to meet you, review your current cleaning scope, and leave our side-by-side pricing sheet. "
                         "Would Tuesday morning or Thursday afternoon be better for a quick 5-minute introduction?"
                     )
-                    starter_tip = "CEO Direct Introduction: Establishes immediate executive trust. Ask for a quick 5-minute walkthrough."
+                    starter_tip = "Direct Introduction: Establishes immediate trust. Ask for a quick 5-minute walkthrough."
                     cur.execute('''
                         INSERT INTO user_scripts (user_id, tab_label, scenario_type, script_text, operator_tip, is_default, is_shared)
                         VALUES (%s, '⭐ Founder Pitch', 'Director Pitch', %s, %s, FALSE, TRUE);

@@ -171,10 +171,14 @@
                     <div>
                         <div style="display: flex; align-items: baseline; gap: 1rem;">
                             <h2 style="font-weight: 900; font-size: 1.5rem; color: var(--slate-900); margin: 0;">Leads</h2>
-                            <span id="count-leads" style="font-size: 0.7rem; font-weight: 900; color: var(--brand); text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap;">Records: {{ "{:,}".format(leads_count) if leads_count else '0' }}</span>
+                            <span id="count-leads" style="font-size: 0.7rem; font-weight: 900; color: var(--brand); text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap;">{% if current_user.role == 'Sales' %}Assigned Leads: {{ "{:,}".format(leads_count) if leads_count else '0' }}{% else %}Records: {{ "{:,}".format(leads_count) if leads_count else '0' }}{% endif %}</span>
                         </div>
                         <p style="color: var(--slate-500); font-size: 0.825rem; font-weight: 500; margin: 0.25rem 0 0 0;">
+                            {% if current_user.role == 'Sales' %}
+                            Browse your assigned calling territory, view building details, find decision-makers, and log outreach.
+                            {% else %}
                             Browse the lead pool, view building details, find decision-makers, and assign accounts to call.
+                            {% endif %}
                         </p>
                     </div>
                     
@@ -386,6 +390,7 @@
                         <i class="fas fa-envelope-open-text"></i> Remove from Campaign
                     </button>
 
+                    {% if current_user.role != 'Sales' %}
                     <!-- Assign Owner Dropdown -->
                     <div style="position: relative; display: inline-block;" class="bulk-dropdown-container">
                         <button type="button" onclick="toggleBulkDropdown('bulk-owner-menu')" class="isc-btn isc-btn-outline" style="padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.75rem; height: 36px; display: flex; align-items: center; gap: 0.5rem; font-weight: 700;">
@@ -408,7 +413,6 @@
                         </div>
                     </div>
 
-                    {% if current_user.role != 'Sales' %}
                     <!-- Export Button -->
                     <button type="button" onclick="exportSelectedLeads()" class="isc-btn isc-btn-outline" style="padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.75rem; height: 36px; display: flex; align-items: center; gap: 0.5rem; font-weight: 700;">
                         <i class="fas fa-download"></i> Export
@@ -694,12 +698,16 @@
                                      </td>
                                      {% elif col_key == 'owner' %}
                                      <td onclick="event.stopPropagation();">
+                                         {% if current_user.role != 'Sales' %}
                                          <select onchange="quickUpdateLead({{ lead.id }}, 'owner_id', this.value, this)" class="sigma-inline-select">
                                              <option value="" {% if not lead.owner_id %}selected{% endif %}>-- Unassigned --</option>
                                              {% for u in system_users %}
                                              <option value="{{ u.id }}" {% if lead.owner_id == u.id %}selected{% endif %}>{{ u.full_name or u.username }} ({{ u.role }})</option>
                                              {% endfor %}
                                          </select>
+                                         {% else %}
+                                         <span style="font-size: 0.78rem; font-weight: 700; color: var(--slate-700);">{{ current_user.full_name or current_user.username }}</span>
+                                         {% endif %}
                                      </td>
                                      {% elif col_key == 'quick_log' %}
                                      <td onclick="event.stopPropagation();">
@@ -740,10 +748,23 @@
                                                 <button onclick="openLeadCommand('{{ lead.id }}', 'visit')" class="isc-dropdown-btn"><i class="fas fa-map-marker-alt" style="margin-right:0.75rem; color: #f59e0b; width: 14px;"></i> Request Visit</button>
                                                 <div style="height: 1px; background: var(--slate-100); margin: 0.5rem 0;"></div>
                                                 <button onclick="promoteLead('{{ lead.id }}')" class="isc-dropdown-btn" style="color: var(--brand); font-weight: 800;"><i class="fas fa-exchange-alt" style="margin-right:0.75rem; width: 14px;"></i> Promote to Account</button>
+                                                {% if current_user.role != 'Sales' and current_user.has_permission('leads', 'delete') %}
                                                 <button onclick="deleteLead('{{ lead.id }}')" class="isc-dropdown-btn" style="color: #ef4444;"><i class="fas fa-trash-alt" style="margin-right:0.75rem; width: 14px;"></i> Delete Lead</button>
+                                                {% endif %}
                                             </div>
                                         </div>
                                     </div>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="25" style="text-align: center; padding: 3rem 1.5rem; color: var(--slate-500);">
+                                    {% if current_user.role == 'Sales' %}
+                                    <div style="font-weight: 800; font-size: 0.95rem; color: var(--slate-700); margin-bottom: 0.35rem;">No Commercial Leads Assigned to Your Queue</div>
+                                    <div style="font-size: 0.82rem; color: var(--slate-500);">Your calling list is currently empty. Executive Management will assign target buildings to your profile when your calling territory is ready.</div>
+                                    {% else %}
+                                    <div style="font-weight: 700; font-size: 0.9rem; color: var(--slate-600);">No commercial leads match your current search or filter settings.</div>
+                                    {% endif %}
                                 </td>
                             </tr>
                             {% endfor %}
@@ -755,7 +776,7 @@
                 <div style="margin-top: 2rem; display: flex; justify-content: space-between; align-items: center; padding-top: 2rem; border-top: 1px solid var(--slate-100);">
                     <div style="font-size: 0.75rem; font-weight: 800; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.05em;">
                         {% if active_view == 'leads' %}
-                        Page {{ page }} of {{ total_pages }} • {{ "{:,}".format(leads_count) if leads_count else '0' }} Total Market Leads
+                        Page {{ page }} of {{ total_pages if total_pages > 0 else 1 }} • {{ "{:,}".format(leads_count) if leads_count else '0' }} {% if current_user.role == 'Sales' %}Assigned{% else %}Total Market{% endif %} Leads
                         {% else %}
                         Active Portfolio View • {{ clients|length }} High-Density Records
                         {% endif %}
@@ -792,8 +813,8 @@
                     <div>
                         <div style="display: flex; align-items: baseline; gap: 1rem;">
                             <h2 style="font-weight: 900; font-size: 1.5rem; color: var(--slate-900); margin: 0;">Clients</h2>
-                            <span id="count-accounts" style="font-size: 0.7rem; font-weight: 900; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap;">{{ clients|length }} Active Clients</span>
-                            <span style="font-size: 0.7rem; color: var(--brand); font-weight: 900; text-transform: uppercase; white-space: nowrap;">Portfolio: ${{ "{:,.0f}".format(portfolio_total) }}</span>
+                            <span id="count-accounts" style="font-size: 0.7rem; font-weight: 900; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap;">{{ clients|length }} {% if current_user.role == 'Sales' %}Assigned{% else %}Active{% endif %} Clients</span>
+                            <span style="font-size: 0.7rem; color: var(--brand); font-weight: 900; text-transform: uppercase; white-space: nowrap;">{% if current_user.role == 'Sales' %}My Portfolio{% else %}Portfolio{% endif %}: ${{ "{:,.0f}".format(portfolio_total) }}</span>
                         </div>
                         <p style="color: var(--slate-500); font-size: 0.825rem; font-weight: 500; margin: 0.25rem 0 0 0;">
                             View active clients, check cleaning schedules, send monthly bills, and read customer notes.
@@ -989,13 +1010,17 @@
                     {% endif %}
                 </div>
 
+                {% set can_edit_acc = (current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('accounts', 'edit'))) %}
+                {% set can_del_acc = (current_user.role != 'Sales' and (current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('accounts', 'delete')))) %}
                 <div style="overflow-x: auto; width: 100%; padding-bottom: 1rem;">
                     <table class="isc-grid isc-grid-expansive" id="table-accounts">
                         <thead>
                             <tr id="accounts-header-row">
+                                {% if can_edit_acc or can_del_acc %}
                                 <th class="no-drag sticky-cb" style="cursor: pointer;" onclick="if(event.target.id !== 'select-all-accounts') { const cb = document.getElementById('select-all-accounts'); cb.checked = !cb.checked; toggleSelectAllAccounts(cb); }">
                                     <input type="checkbox" id="select-all-accounts" onchange="toggleSelectAllAccounts(this)" style="accent-color: var(--brand); cursor: pointer; width: 16px; height: 16px;">
                                 </th>
+                                {% endif %}
                                 {% for col_key in active_cols %}
                                     {% if col_key == 'company' %}
                                     <th data-col="company" onclick="iscSortAcc('company')" class="sticky-1">Company {% if sort_by == 'company' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
@@ -1031,9 +1056,11 @@
                         <tbody>
                             {% for client in clients %}
                             <tr class="accounts-row" onclick="handleAccRowClick(event, '{{ client.customer_id }}')" style="cursor: pointer;" data-id="{{ client.customer_id }}">
+                                {% if can_edit_acc or can_del_acc %}
                                 <td onclick="event.stopPropagation();" class="sticky-cb">
                                     <input type="checkbox" class="acc-row-select" value="{{ client.customer_id }}" onchange="handleAccSelectChange()" style="accent-color: var(--brand); cursor: pointer; width: 16px; height: 16px;">
                                 </td>
+                                {% endif %}
                                 {% for col_key in active_cols %}
                                     {% if col_key == 'company' %}
                                     <td class="sticky-1">
@@ -1043,7 +1070,7 @@
                                                     ACC-#{{ "%03d"|format(client.customer_id) }} <i class="far fa-copy"></i>
                                                 </span>
                                                 <span style="font-weight: 800; color: var(--slate-900);">{{ client.company_name }}</span>
-                                                {% if client.cleaning_delivery_model and 'Model C' in client.cleaning_delivery_model %}
+                                                {% if current_user.role in ['Executive', 'Admin', 'Partner_Bosanna'] and client.cleaning_delivery_model and 'Model C' in client.cleaning_delivery_model %}
                                                 <a href="/bosanna" target="_blank" onclick="event.stopPropagation();" title="Open Partner Dashboard" style="text-decoration: none; display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.65rem; font-weight: 800; background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; padding: 0.15rem 0.45rem; border-radius: 4px;">
                                                     <i class="fas fa-chalkboard-user" style="font-size: 0.65rem; color: #059669;"></i> Partner Dashboard
                                                 </a>
@@ -1074,36 +1101,52 @@
                                     {% elif col_key == 'industry' %}<td>{{ client.industry or '--' }}</td>
                                     {% elif col_key == 'address' %}<td><small style="font-weight:600; color:var(--slate-600)">{{ client.company_address or '--' }}</small></td>
                                     {% elif col_key == 'city' %}
+                                     {% if can_edit_acc %}
                                      <td class="sigma-editable-cell" data-entity="account" data-id="{{ client.customer_id }}" data-field="city" data-type="text" data-raw="{{ client.city or '' }}" onclick="startCellEdit(event, this)">
                                          <div class="sigma-cell-content" style="display: flex; align-items: center; justify-content: space-between; gap: 0.25rem;">
                                              <span class="sigma-cell-val">{{ client.city or '--' }}</span>
                                              <i class="fas fa-pencil-alt sigma-cell-pencil" title="Edit City"></i>
                                          </div>
                                      </td>
+                                     {% else %}
+                                     <td><span class="sigma-cell-val">{{ client.city or '--' }}</span></td>
+                                     {% endif %}
                                     {% elif col_key == 'state' %}<td>{{ client.state or '--' }}</td>
                                     {% elif col_key == 'zip' %}<td>{{ client.zip or '--' }}</td>
                                     {% elif col_key == 'phone' %}
+                                     {% if can_edit_acc %}
                                      <td class="sigma-editable-cell" data-entity="account" data-id="{{ client.customer_id }}" data-field="phone" data-type="phone" data-raw="{{ client.phone or '' }}" onclick="startCellEdit(event, this)">
                                          <div class="sigma-cell-content" style="display: flex; align-items: center; justify-content: space-between; gap: 0.25rem;">
                                              <span class="sigma-cell-val"><a href="tel:{{ client.phone }}" style="color:var(--brand); text-decoration:none">{{ client.phone|format_phone }}</a></span>
                                              <i class="fas fa-pencil-alt sigma-cell-pencil" title="Edit Phone"></i>
                                          </div>
                                      </td>
+                                     {% else %}
+                                     <td><span class="sigma-cell-val"><a href="tel:{{ client.phone }}" onclick="event.stopPropagation();" style="color:var(--brand); text-decoration:none">{{ client.phone|format_phone }}</a></span></td>
+                                     {% endif %}
                                     {% elif col_key == 'email' %}<td><small>{{ client.email or '--' }}</small></td>
                                     {% elif col_key == 'revenue' %}
+                                     {% if can_edit_acc %}
                                      <td class="sigma-editable-cell" data-entity="account" data-id="{{ client.customer_id }}" data-field="annual_revenue" data-type="currency" data-raw="{{ client.annual_revenue or '' }}" onclick="startCellEdit(event, this)">
                                          <div class="sigma-cell-content" style="display: flex; align-items: center; justify-content: space-between; gap: 0.25rem;">
                                              <span class="sigma-cell-val" style="font-weight:800; color:var(--brand)">${{ "{:,.2f}".format(client.annual_revenue) if client.annual_revenue else '0.00' }}</span>
                                              <i class="fas fa-pencil-alt sigma-cell-pencil" title="Edit Annual Revenue"></i>
                                          </div>
                                      </td>
+                                     {% else %}
+                                     <td><span class="sigma-cell-val" style="font-weight:800; color:var(--brand)">${{ "{:,.2f}".format(client.annual_revenue) if client.annual_revenue else '0.00' }}</span></td>
+                                     {% endif %}
                                     {% elif col_key == 'sqf' %}
+                                     {% if can_edit_acc %}
                                      <td class="sigma-editable-cell" data-entity="account" data-id="{{ client.customer_id }}" data-field="sqf" data-type="int" data-raw="{{ client.sqf or '' }}" onclick="startCellEdit(event, this)">
                                          <div class="sigma-cell-content" style="display: flex; align-items: center; justify-content: space-between; gap: 0.25rem;">
                                              <span class="sigma-cell-val">{{ "{:,}".format(client.sqf) if client.sqf else '0' }}</span>
                                              <i class="fas fa-pencil-alt sigma-cell-pencil" title="Edit SQF"></i>
                                          </div>
                                      </td>
+                                     {% else %}
+                                     <td><span class="sigma-cell-val">{{ "{:,}".format(client.sqf) if client.sqf else '0' }}</span></td>
+                                     {% endif %}
                                     {% elif col_key == 'cycle' %}<td>{{ client.traffic_cycle or '--' }}</td>
                                     {% elif col_key == 'quote' %}<td>{{ client.quote_number or '--' }}</td>
                                     {% elif col_key == 'frequency' %}<td>{{ client.frequency or '--' }}</td>
@@ -1133,7 +1176,13 @@
                                     {% elif col_key == 'account_health' %}
                                      <td><span class="sigma-unit-pill" style="background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0; font-weight:800; font-size:0.75rem;">{{ client.target_quality_level or '🟢 Good' }}</span></td>
                                     {% elif col_key == 'quick_log_acc' %}
-                                     <td onclick="event.stopPropagation();"><button type="button" onclick="openAccountCommand('{{ client.customer_id }}', 'actions')" class="sigma-mini-btn" title="Record supervisor inspection or note" style="color: #0284c7; border-color: #7dd3fc; background: #f0f9ff; font-weight: 800; white-space: nowrap;"><i class="fas fa-clipboard-check" style="color:var(--brand)"></i> Inspect</button></td>
+                                     <td onclick="event.stopPropagation();">
+                                         {% if can_edit_acc %}
+                                         <button type="button" onclick="openAccountCommand('{{ client.customer_id }}', 'actions')" class="sigma-mini-btn" title="Record supervisor inspection or note" style="color: #0284c7; border-color: #7dd3fc; background: #f0f9ff; font-weight: 800; white-space: nowrap;"><i class="fas fa-clipboard-check" style="color:var(--brand)"></i> Inspect</button>
+                                         {% else %}
+                                         <button type="button" onclick="openAccountCommand('{{ client.customer_id }}')" class="sigma-mini-btn" title="View client details" style="color: var(--slate-600); border-color: var(--slate-200); background: #f8fafc; font-weight: 700; white-space: nowrap;"><i class="fas fa-eye"></i> View</button>
+                                         {% endif %}
+                                     </td>
                                     {% elif col_key == 'last_note' %}
                                      <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ client.last_note or 'No notes logged yet' }}"><small style="color: var(--slate-600); font-weight: 500;">{{ client.last_note or '--' }}</small></td>
                                     {% elif col_key == 'google_maps' %}
@@ -1147,13 +1196,29 @@
                                         </button>
                                         <div id="acc-menu-{{ client.customer_id }}" class="isc-row-menu" style="display: none; position: absolute; top: 100%; right: 0; background: white; border: 1px solid var(--slate-200); border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 1000; width: 240px; padding: 0.5rem;">
                                             <button onclick="openAccountCommand('{{ client.customer_id }}')" class="isc-dropdown-btn"><i class="fas fa-info-circle" style="margin-right:0.75rem; color: var(--brand); width: 14px;"></i> Client Details</button>
+                                            {% if can_edit_acc %}
                                             <button onclick="openAccountCommand('{{ client.customer_id }}', 'edit')" class="isc-dropdown-btn"><i class="fas fa-edit" style="margin-right:0.75rem; color: var(--slate-400); width: 14px;"></i> Edit Client</button>
                                             <div style="height: 1px; background: var(--slate-100); margin: 0.5rem 0;"></div>
                                             <button onclick="openAccountCommand('{{ client.customer_id }}', 'actions')" class="isc-dropdown-btn"><i class="fas fa-plus-circle" style="margin-right:0.75rem; color: #10b981; width: 14px;"></i> Add Note</button>
+                                            {% endif %}
                                             <button onclick="openAccountCommand('{{ client.customer_id }}', 'contacts')" class="isc-dropdown-btn"><i class="fas fa-users" style="margin-right:0.75rem; color: #6366f1; width: 14px;"></i> Contacts</button>
+                                            {% if can_del_acc %}
                                             <div style="height: 1px; background: var(--slate-100); margin: 0.5rem 0;"></div>
                                             <button onclick="deleteAccount('{{ client.customer_id }}')" class="isc-dropdown-btn" style="color: #ef4444;"><i class="fas fa-trash-alt" style="margin-right:0.75rem; width: 14px;"></i> Delete Client</button>
+                                            {% endif %}
                                         </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="{{ (active_cols|length) + (2 if (can_edit_acc or can_del_acc) else 1) }}" style="text-align: center; padding: 3rem 1.5rem; color: var(--slate-500);">
+                                    <i class="fas fa-handshake" style="font-size: 2rem; color: var(--slate-300); margin-bottom: 0.75rem; display: block;"></i>
+                                    <div style="font-weight: 800; font-size: 0.95rem; color: var(--slate-700); margin-bottom: 0.25rem;">
+                                        {% if current_user.role == 'Sales' %}No Client Accounts Assigned to Your Profile Yet{% else %}No Client Accounts Found{% endif %}
+                                    </div>
+                                    <div style="font-size: 0.8rem; color: var(--slate-500);">
+                                        {% if current_user.role == 'Sales' %}When a lead assigned to you is converted into an active client, or an account is assigned to your profile, it will appear here automatically.{% else %}No client records matched your current search or filter criteria.{% endif %}
                                     </div>
                                 </td>
                             </tr>
@@ -1197,7 +1262,8 @@
         </div>
 
         <!-- View: Commercial GC Bidding Pipeline (HWB-QMS-11.2) -->
-        {% if current_user.role != 'Sales' %}
+        {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('bids', 'view')) %}
+        {% set can_edit_bids = current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('bids', 'edit')) %}
         <div id="view-construction-bids" class="isc-view" style="display: {% if active_view == 'construction_bids' %}block{% else %}none{% endif %};">
             {% set ns_bids = namespace(total_val=0, total_sqft=0, active_count=0) %}
             {% for b in construction_bids %}
@@ -1211,9 +1277,9 @@
             <!-- Pipeline Metrics Header -->
             <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; margin-bottom: 2rem;">
                 <div class="isc-card" style="padding: 1.25rem; border-left: 4px solid #f59e0b; background: #ffffff;">
-                    <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--slate-500); letter-spacing: 0.05em;">Active GC Subcontracts</div>
+                    <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--slate-500); letter-spacing: 0.05em;">{% if current_user.role == 'Sales' %}Assigned GC Subcontracts{% else %}Active GC Subcontracts{% endif %}</div>
                     <div style="font-size: 1.75rem; font-weight: 900; color: var(--slate-900); margin-top: 0.25rem;">{{ ns_bids.active_count }} <span style="font-size: 0.85rem; font-weight: 700; color: var(--slate-400);">Projects</span></div>
-                    <div style="font-size: 0.72rem; color: #d97706; font-weight: 700; margin-top: 0.35rem;"><i class="fas fa-bolt"></i> DFW Commercial Pipeline</div>
+                    <div style="font-size: 0.72rem; color: #d97706; font-weight: 700; margin-top: 0.35rem;"><i class="fas fa-bolt"></i> {% if current_user.role == 'Sales' %}Assigned Calling Territory{% else %}DFW Commercial Pipeline{% endif %}</div>
                 </div>
                 <div class="isc-card" style="padding: 1.25rem; border-left: 4px solid #0284c7; background: #ffffff;">
                     <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--slate-500); letter-spacing: 0.05em;">Cleanable Area</div>
@@ -1221,7 +1287,7 @@
                     <div style="font-size: 0.72rem; color: #0284c7; font-weight: 700; margin-top: 0.35rem;"><i class="fas fa-layer-group"></i> Shell, Medical & Retail</div>
                 </div>
                 <div class="isc-card" style="padding: 1.25rem; border-left: 4px solid #10b981; background: #ffffff;">
-                    <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--slate-500); letter-spacing: 0.05em;">Subcontract Pipeline Value</div>
+                    <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--slate-500); letter-spacing: 0.05em;">{% if current_user.role == 'Sales' %}Assigned Pipeline Value{% else %}Subcontract Pipeline Value{% endif %}</div>
                     <div style="font-size: 1.75rem; font-weight: 900; color: #047857; margin-top: 0.25rem;">${{ "{:,.2f}".format(ns_bids.total_val) }}</div>
                     <div style="font-size: 0.72rem; color: #059669; font-weight: 700; margin-top: 0.35rem;"><i class="fas fa-chart-line"></i> Prime Subcontracts</div>
                 </div>
@@ -1240,11 +1306,18 @@
             <div class="isc-card {% if active_view == 'construction_bids' %}fluid-data{% endif %}">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
                     <div>
-                        <h2 style="font-weight: 900; font-size: 1.5rem; color: var(--slate-900); display: flex; align-items: center; gap: 0.75rem; margin: 0;">
-                            <i class="fas fa-hard-hat" style="color: #f59e0b;"></i> Commercial GC Bidding Pipeline
-                        </h2>
+                        <div style="display: flex; align-items: baseline; gap: 1rem;">
+                            <h2 style="font-weight: 900; font-size: 1.5rem; color: var(--slate-900); display: flex; align-items: center; gap: 0.75rem; margin: 0;">
+                                <i class="fas fa-hard-hat" style="color: #f59e0b;"></i> Commercial GC Bidding Pipeline
+                            </h2>
+                            <span id="count-bids-header" style="font-size: 0.7rem; font-weight: 900; color: var(--brand); text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap;">{% if current_user.role == 'Sales' %}Assigned Bids: {{ "{:,}".format(bids_count) if bids_count else '0' }}{% else %}Pipeline Bids: {{ "{:,}".format(bids_count) if bids_count else construction_bids|length }}{% endif %}</span>
+                        </div>
                         <p style="font-size: 0.82rem; color: var(--slate-500); font-weight: 600; margin-top: 0.25rem;">
+                            {% if current_user.role == 'Sales' %}
+                            Review your assigned commercial construction bids, inspect building scopes, and call GC lead estimators.
+                            {% else %}
                             Track inbound ITBs, plan takeoffs, 48-hour submission countdowns, and lead estimator follow-up schedule.
+                            {% endif %}
                         </p>
                     </div>
                     <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;" id="bids-normal-controls">
@@ -1287,6 +1360,7 @@
                                                 <label class="sigma-col-label" title="Prime general contractor managing the commercial job"><input type="checkbox" name="cols" value="gc" {% if 'gc' in active_cols %}checked{% endif %}> 🏢 General Contractor</label>
                                                 <label class="sigma-col-label" title="Contractor reliability score and prequalification tier"><input type="checkbox" name="cols" value="prequal" {% if 'prequal' in active_cols %}checked{% endif %}> 🛡️ Vetting &amp; Standing</label>
                                                 <label class="sigma-col-label" title="Planroom where bid files are hosted (BuildingConnected, Procore, etc.)"><input type="checkbox" name="cols" value="platform" {% if 'platform' in active_cols %}checked{% endif %}> 📂 Planroom Source</label>
+                                                <label class="sigma-col-label" title="Assigned salesperson or bid owner"><input type="checkbox" name="cols" value="owner" {% if 'owner' in active_cols %}checked{% endif %}> 👤 Assigned Rep</label>
                                             </div>
                                         </div>
 
@@ -1378,6 +1452,7 @@
                             </button>
                         </div>
 
+                        {% if can_edit_bids %}
                         <div style="height: 24px; width: 1px; background: var(--slate-200); margin: 0 0.15rem;"></div>
 
                         <!-- 4. Pipeline Actions -->
@@ -1385,13 +1460,16 @@
                             <button onclick="syncGCBids()" class="isc-btn isc-btn-outline" id="btn-sync-bids" style="padding: 0 0.85rem; font-size: 0.75rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.4rem; height: 36px; border-radius: 6px; border-color: var(--slate-300); color: var(--slate-700); background: var(--white);" title="Sync incoming commercial bid invites from Microsoft Graph email">
                                 <i class="fas fa-sync-alt" id="icon-sync-bids"></i> Sync Graph Inbound ITBs
                             </button>
+                            {% if current_user.role != 'Sales' %}
                             <button onclick="enrichAllGCBids()" class="isc-btn isc-btn-outline" id="btn-enrich-all-bids" style="padding: 0 0.85rem; font-size: 0.75rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.4rem; height: 36px; border-radius: 6px; background: #f0fdf4; color: #166534; border-color: #bbf7d0;" title="Run automated 4-point vetting and complete profile for all contractors">
                                 <i class="fas fa-shield-alt"></i> 4-Point GC Vetting &amp; Auto-Complete
                             </button>
+                            {% endif %}
                             <button onclick="openModal('modal-add-bid')" class="isc-btn isc-btn-primary" style="height: 36px; padding: 0 1.15rem; font-size: 0.78rem; font-weight: 800; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.5rem;" title="Create a new commercial construction cleaning takeoff bid">
                                 <i class="fas fa-plus"></i> New Subcontract Bid
                             </button>
                         </div>
+                        {% endif %}
                     </div>
                 </div>
 
@@ -1434,6 +1512,8 @@
                                     <th data-col="prequal" onclick="iscSortBids('prequal')" style="min-width: 130px; cursor: pointer;">Prequal Standing {% if sort_by == 'prequal' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
                                     {% elif col_key == 'special_reqs' %}
                                     <th data-col="special_reqs" style="min-width: 220px;">Special Requirements</th>
+                                    {% elif col_key == 'owner' or col_key == 'rep' %}
+                                    <th data-col="owner" onclick="iscSortBids('owner')" style="min-width: 155px; cursor: pointer;">Assigned Rep {% if sort_by == 'owner' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
                                     {% elif col_key == 'last_contact' %}
                                     <th data-col="last_contact" onclick="iscSortBids('last_contact')" style="min-width: 150px; cursor: pointer;">Last Touchpoint {% if sort_by == 'last_contact' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
                                     {% elif col_key == 'actions' %}
@@ -1466,7 +1546,8 @@
                                         {% endif %}
                                     </td>
                                     {% elif col_key == 'status' %}
-                                    <td class="sticky-2">
+                                    <td class="sticky-2" onclick="event.stopPropagation();">
+                                        {% if can_edit_bids %}
                                         <select onchange="changeBidStatus({{ bid.id }}, this.value)" class="sigma-inline-select" style="font-size: 0.74rem; font-weight: 800; padding: 0.3rem 0.5rem; border-radius: 6px; width: 140px; background: {% if bid.status == 'Awarded' %}#ecfdf5{% elif bid.status == 'Bid Submitted' %}#e0f2fe{% elif bid.status == 'Takeoff Completed' %}#fef3c7{% else %}#f8fafc{% endif %};">
                                             <option value="Invited" {% if bid.status == 'Invited' %}selected{% endif %}>📩 Invited</option>
                                             <option value="Plans Downloaded" {% if bid.status == 'Plans Downloaded' %}selected{% endif %}>📂 Plans In Hand</option>
@@ -1476,6 +1557,11 @@
                                             <option value="Awarded" {% if bid.status == 'Awarded' %}selected{% endif %}>🏆 Awarded</option>
                                             <option value="Lost" {% if bid.status == 'Lost' %}selected{% endif %}>❌ Lost</option>
                                         </select>
+                                        {% else %}
+                                        <span style="display: inline-block; font-size: 0.74rem; font-weight: 800; padding: 0.25rem 0.6rem; border-radius: 6px; border: 1px solid var(--slate-200); background: {% if bid.status == 'Awarded' %}#ecfdf5{% elif bid.status == 'Bid Submitted' %}#e0f2fe{% elif bid.status == 'Takeoff Completed' %}#fef3c7{% else %}#f8fafc{% endif %}; color: var(--slate-800);">
+                                            {{ bid.status or 'Invited' }}
+                                        </span>
+                                        {% endif %}
                                     </td>
                                     {% elif col_key == 'due_date' %}
                                     <td>
@@ -1617,6 +1703,23 @@
                                             {{ bid.special_requirements or '--' }}
                                         </div>
                                     </td>
+                                    {% elif col_key == 'owner' or col_key == 'rep' %}
+                                    <td onclick="event.stopPropagation();">
+                                        {% if current_user.role != 'Sales' and can_edit_bids %}
+                                        <select onchange="assignBidRep({{ bid.id }}, this.value, this)" class="sigma-inline-select" style="font-size: 0.74rem; font-weight: 700; width: 145px;">
+                                            <option value="" {% if not bid.assigned_rep_id %}selected{% endif %}>-- Unassigned --</option>
+                                            {% for u in system_users %}
+                                            <option value="{{ u.id }}" {% if bid.assigned_rep_id == u.id %}selected{% endif %}>{{ u.full_name or u.username }} ({{ u.role }})</option>
+                                            {% endfor %}
+                                        </select>
+                                        {% else %}
+                                            {% set bid_rep_holder = namespace(name='Unassigned') %}
+                                            {% for u in system_users %}
+                                                {% if u.id == bid.assigned_rep_id %}{% set bid_rep_holder.name = (u.full_name or u.username) %}{% endif %}
+                                            {% endfor %}
+                                            <span style="font-size: 0.76rem; font-weight: 700; color: var(--slate-700);">{{ bid_rep_holder.name }}</span>
+                                        {% endif %}
+                                    </td>
                                     {% elif col_key == 'last_contact' %}
                                     <td>
                                         <div style="font-size: 0.75rem; color: var(--slate-600); font-weight: 600;">
@@ -1624,15 +1727,17 @@
                                         </div>
                                     </td>
                                     {% elif col_key == 'actions' %}
-                                    <td style="text-align: right;">
+                                    <td style="text-align: right;" onclick="event.stopPropagation();">
                                         <div style="display: flex; gap: 0.4rem; justify-content: flex-end; align-items: center;">
-                                            <button onclick='openCommercialTakeoffModal({{ bid|tojson }})' class="sigma-mini-btn" title="Open Interactive Takeoff Calculator & Price Engine" style="color: #047857; border-color: #a7f3d0; background: #ecfdf5; font-weight: 800;">
+                                            <button type="button" onclick='openCommercialTakeoffModal({{ bid|tojson }})' class="sigma-mini-btn" title="Open Interactive Takeoff Calculator & Price Engine" style="color: #047857; border-color: #a7f3d0; background: #ecfdf5; font-weight: 800;">
                                                 <i class="fas fa-drafting-compass"></i> Takeoff
                                             </button>
-                                            <button onclick='enrichGCBid({{ bid.id }})' class="sigma-mini-btn" title="Run 4-Point Vetting & Autonomous Profile Completer" style="color: #0369a1; border-color: #bae6fd; background: #f0f9ff;">
+                                            {% if can_edit_bids %}
+                                            <button type="button" onclick='enrichGCBid(event, {{ bid.id }}, this)' class="sigma-mini-btn" title="Run 4-Point Vetting & Autonomous Profile Completer" style="color: #0369a1; border-color: #bae6fd; background: #f0f9ff;">
                                                 <i class="fas fa-magic"></i> Enrich
                                             </button>
-                                            <button onclick='openEstimatorCadence({{ bid|tojson }})' class="sigma-mini-btn" title="Open 2-Minute Estimator Follow-Up Script & Direct Dial" style="color: #b45309; border-color: #fcd34d; background: #fffbeb;">
+                                            {% endif %}
+                                            <button type="button" onclick='openEstimatorCadence({{ bid|tojson }})' class="sigma-mini-btn" title="Open 2-Minute Estimator Follow-Up Script & Direct Dial" style="color: #b45309; border-color: #fcd34d; background: #fffbeb;">
                                                 <i class="fas fa-phone-volume"></i> Call Steps
                                             </button>
                                             <a href="/prequal" target="_blank" class="sigma-mini-btn" title="View Master Prequalification Binder" style="text-decoration: none; color: #4338ca; border-color: #c7d2fe; background: #eef2ff;">
@@ -1645,9 +1750,14 @@
                             </tr>
                             {% else %}
                             <tr>
-                                <td colspan="10" style="text-align: center; padding: 3rem; color: var(--slate-400);">
-                                    <i class="fas fa-hard-hat" style="font-size: 2rem; margin-bottom: 0.5rem; opacity: 0.5;"></i>
-                                    <p style="font-weight: 700;">No commercial construction bids in pipeline.</p>
+                                <td colspan="{{ active_cols|length or 11 }}" style="text-align: center; padding: 3rem 1.5rem; color: var(--slate-500);">
+                                    <i class="fas fa-hard-hat" style="font-size: 2rem; margin-bottom: 0.65rem; color: var(--slate-300); display: block;"></i>
+                                    {% if current_user.role == 'Sales' %}
+                                    <div style="font-weight: 800; font-size: 0.95rem; color: var(--slate-700); margin-bottom: 0.35rem;">No Commercial Construction Bids Assigned to Your Queue</div>
+                                    <div style="font-size: 0.82rem; color: var(--slate-500);">Your bidding pipeline is currently empty. Executive Management will assign target GC projects to your profile when ready.</div>
+                                    {% else %}
+                                    <div style="font-weight: 700; font-size: 0.9rem; color: var(--slate-600);">No commercial construction bids in pipeline.</div>
+                                    {% endif %}
                                 </td>
                             </tr>
                             {% endfor %}
@@ -1658,7 +1768,7 @@
                 <!-- SigmaFidelity™ Navigation Architecture (Bids Pagination) -->
                 <div style="margin-top: 2rem; display: flex; justify-content: space-between; align-items: center; padding-top: 2rem; border-top: 1px solid var(--slate-100);">
                     <div style="font-size: 0.75rem; font-weight: 800; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.05em;">
-                        Page {{ page }} of {{ total_pages }} • {{ "{:,}".format(bids_count) if bids_count else construction_bids|length }} Total Pipeline Bids
+                        Page {{ page }} of {{ total_pages if total_pages > 0 else 1 }} • {{ "{:,}".format(bids_count) if bids_count else construction_bids|length }} {% if current_user.role == 'Sales' %}Assigned{% else %}Total Pipeline{% endif %} Bids
                     </div>
                     <div style="display: flex; gap: 0.75rem;">
                         {% if page > 1 %}
@@ -1678,7 +1788,7 @@
         {% endif %}
 
         <!-- View: General Contractors Master Registry (HWB-QMS-11.2 / Migration 025) -->
-        {% if current_user.role != 'Sales' %}
+        {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('bids', 'view')) %}
         <div id="view-general-contractors" class="isc-view" style="display: {% if active_view == 'general_contractors' %}block{% else %}none{% endif %};">
             {% set ns_gc = namespace(tier1_count=0, total_pipeline=0, avg_score=0, score_sum=0) %}
             {% for gc in general_contractors %}
@@ -1894,7 +2004,7 @@
         {% endif %}
 
         <!-- View: Institutional & Public Sector Solicitations (HWB-QMS-11.6) -->
-        {% if current_user.role != 'Sales' %}
+        {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('bids', 'view')) %}
         <div id="view-institutional-bids" class="isc-view" style="display: {% if active_view == 'institutional_bids' %}block{% else %}none{% endif %};">
             {% set ns_inst = namespace(total_val=0, total_monthly=0, total_sqft=0, active_count=0) %}
             {% for ib in institutional_bids %}
@@ -2191,7 +2301,7 @@
         {% endif %}
 
         <!-- View: Government Programs & Certification Compliance Registry (Migration 031 / HWB-QMS-8.9) -->
-        {% if current_user.role != 'Sales' %}
+        {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('bids', 'view')) %}
         <div id="view-programs" class="isc-view" style="display: {% if active_view == 'programs' %}block{% else %}none{% endif %};">
             <!-- Programs & Certifications KPI Bar -->
             <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem;">
@@ -2595,7 +2705,7 @@
         {% endif %}
 
         <!-- View: Marketing Department & Campaign Console (HWB-QMS-8.0 / HWB-SAL-2026-001) -->
-        {% if current_user.role != 'Sales' %}
+        {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and (current_user.has_permission('outbox', 'view') or current_user.has_permission('marketing', 'view'))) %}
         <div id="view-marketing" class="isc-view" style="display: {% if active_view == 'marketing' %}block{% else %}none{% endif %};">
             {% set ns_mkt = namespace(total_targets=0, staged_targets=0, sent_targets=0, opened_targets=0, pending_outbox=pending_outbox_count or 0) %}
             {% for c in marketing_campaigns %}
@@ -2959,7 +3069,7 @@
         {% endif %}
 
         <!-- View: Safety & EHSQ Department Console (HWB-QMS-5.5 / HWB-QMS-5.7 / ISO 45001) -->
-        {% if current_user.role != 'Sales' %}
+        {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('workforce', 'view')) %}
         <div id="view-safety" class="isc-view" style="display: {% if active_view == 'safety' %}block{% else %}none{% endif %};">
             <!-- Safety & EHSQ KPI Header -->
             <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; margin-bottom: 2rem;">
@@ -3131,7 +3241,7 @@
         {% endif %}
 
         <!-- View: Workforce & Subcontractor Network Hub (HWB-QMS-7.6) -->
-        {% if current_user.role != 'Sales' %}
+        {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('workforce', 'view')) %}
         <div id="view-workforce" class="isc-view" style="display: {% if active_view == 'workforce' %}block{% else %}none{% endif %};">
             {% set ns_wf = namespace(bench_ready=0, active_subs=0, total_crews=0, verified_coi=0) %}
             {% for a in applicants %}
@@ -3861,7 +3971,7 @@
         {% endif %}
 
         <!-- View: Internal Dispatch & Shift Execution Hub (HWB-QMS-11.2) -->
-        {% if current_user.role != 'Sales' %}
+        {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('monitor', 'view')) %}
         <div id="view-monitor" class="isc-view" style="display: {% if active_view == 'monitor' %}block{% else %}none{% endif %};">
             <div class="isc-card fluid-data">
                 <!-- Top Header & Controls -->
@@ -4259,6 +4369,7 @@
 
 
         <!-- View: Service Planner -->
+        {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('monitor', 'view')) %}
         <div id="view-scope" class="isc-view" style="display: {% if active_view == 'scope' %}block{% else %}none{% endif %};">
             <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 3rem; align-items: start;">
                 <!-- Column 1: Data Entry -->
@@ -4318,15 +4429,17 @@
                 </div>
             </div>
         </div>
+        {% endif %}
 
         <!-- View: IT Department Command Hub & 7-Rack Operations Center -->
+        {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('tools', 'view')) %}
         <div id="view-it-department" class="isc-view" style="display: {% if active_view == 'it_department' %}block{% else %}none{% endif %};">
             <!-- Executive Masthead -->
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; background: #ffffff; border: 1px solid var(--slate-200); border-radius: 8px; padding: 1.25rem 1.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
                 <div>
                     <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.25rem;">
                         <span style="font-size: 0.7rem; font-weight: 800; background: #eff6ff; color: #1e40af; padding: 0.2rem 0.6rem; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.05em;">Infrastructure Core</span>
-                        <span style="font-size: 0.7rem; font-weight: 800; background: #f0fdf4; color: #166534; padding: 0.2rem 0.6rem; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.05em;">ISO 9001:2015 &amp; HWB-QMS-7.6</span>
+                        <span style="font-size: 0.7rem; font-weight: 800; background: #f0fdf4; color: #166534; padding: 0.2rem 0.6rem; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.05em;">ISO 9001:2026 (ISO 9001:2015+Amd 1:2024) &amp; HWB-QMS-7.6</span>
                     </div>
                     <h1 style="font-size: 1.45rem; font-weight: 900; color: var(--slate-900); margin: 0;">SigmaFidelity™ IT Department Hub</h1>
                     <p style="font-size: 0.8rem; color: var(--slate-500); margin: 0.25rem 0 0 0;">Unified 6-Rack Infrastructure Monitoring, Cognitive Health, Autonomous Daemons, and Parity Bridge.</p>
@@ -5228,6 +5341,7 @@
                 [READY] IT Department Parity &amp; Data Health Engine Loaded. Awaiting executive trigger.
             </div>
         </div>
+        {% endif %}
 
 <!-- Modals -->
 <!-- Modal: Onboard Employee (HWB-QMS-7.6) -->
@@ -5812,7 +5926,7 @@
             <div>
                 <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;">
                     <span style="font-size: 0.7rem; font-weight: 800; background: #f1f5f9; color: #475569; padding: 0.2rem 0.5rem; border-radius: 4px; font-family: monospace;" id="bo-pjd-code">HWB-POS-001</span>
-                    <span style="font-size: 0.7rem; font-weight: 800; background: #ecfdf5; color: #065f46; padding: 0.2rem 0.5rem; border-radius: 4px;">ISO 9001:2015 Clause 7.2 Standard</span>
+                    <span style="font-size: 0.7rem; font-weight: 800; background: #ecfdf5; color: #065f46; padding: 0.2rem 0.5rem; border-radius: 4px;">ISO 9001:2026 (ISO 9001:2015+Amd 1:2024) Clause 7.2 Standard</span>
                 </div>
                 <h2 id="bo-pjd-title" style="font-size: 1.35rem; font-weight: 900; color: var(--slate-900); margin: 0;">Position Title</h2>
                 <div style="font-size: 0.8rem; color: var(--slate-500); font-weight: 600; margin-top: 0.2rem;">
@@ -6749,7 +6863,7 @@
                                     </span>
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 0.35rem;">
-                                    <a href="https://bookings.cloud.microsoft/book/FacilityWalkthroughquote@NETORGFT3163094.onmicrosoft.com/" target="_blank" class="sigma-mini-btn" style="background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; font-size: 0.68rem; height: 24px; padding: 0 0.5rem; text-decoration: none; font-weight: 700; display: inline-flex; align-items: center; gap: 0.3rem;" title="Open Humberto's Live Microsoft Bookings Portal">
+                                    <a href="https://bookings.cloud.microsoft/book/FacilityWalkthroughquote@NETORGFT3163094.onmicrosoft.com/" target="_blank" class="sigma-mini-btn" style="background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; font-size: 0.68rem; height: 24px; padding: 0 0.5rem; text-decoration: none; font-weight: 700; display: inline-flex; align-items: center; gap: 0.3rem;" title="Open Live Microsoft Bookings Portal">
                                         <i class="fas fa-external-link-alt"></i> MS Bookings
                                     </a>
                                     <button type="button" onclick="closeCadenceWalkthroughDrawer()" style="background: transparent; border: none; font-size: 0.85rem; color: #64748b; cursor: pointer; padding: 0 0.25rem;" aria-label="Close Walkthrough Drawer">
@@ -6810,6 +6924,8 @@
                                 </div>
 
                                 <!-- Row 4: Assigned Conductor & Remote Rep Settings (HWB-CAD-WT-002) -->
+                                {% set current_caller_name = (current_user.full_name or current_user.username or 'Sales Representative') if current_user.is_authenticated else 'Humberto Dominguez' %}
+                                {% set current_caller_email = (current_user.email or '') if current_user.is_authenticated else '' %}
                                 <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.5rem 0.65rem;">
                                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
                                         <span style="font-size: 0.65rem; font-weight: 800; color: var(--slate-700); text-transform: uppercase;">
@@ -6823,18 +6939,23 @@
                                         <div>
                                             <label style="font-size: 0.62rem; font-weight: 700; color: var(--slate-600); text-transform: uppercase; display: block; margin-bottom: 0.15rem;">Assigned Conductor</label>
                                             <select id="cadence-wt-conductor" class="sigma-input" style="height: 30px; font-weight: 700; font-size: 0.78rem; width: 100%; background: #ffffff;" onchange="handleCadenceConductorChange()">
+                                                {% if current_caller_name != 'Humberto Dominguez' %}
+                                                <option value="{{ current_caller_name }}" selected>{{ current_caller_name }} ({{ current_user.job_title or current_user.role or 'Sales' }})</option>
+                                                <option value="Humberto Dominguez">Humberto Dominguez (CEO)</option>
+                                                {% else %}
                                                 <option value="Humberto Dominguez" selected>Humberto Dominguez (CEO)</option>
+                                                {% endif %}
                                                 <option value="Remote Sales Rep">Remote Rep / Local Estimator</option>
                                             </select>
                                         </div>
                                         <div>
                                             <label style="font-size: 0.62rem; font-weight: 700; color: var(--slate-600); text-transform: uppercase; display: block; margin-bottom: 0.15rem;">Sales Rep Name</label>
-                                            <input type="text" id="cadence-wt-rep-name" class="sigma-input" style="height: 30px; font-size: 0.78rem; font-weight: 600; width: 100%;" placeholder="Rep Full Name" onchange="saveRepSettingsLocal()">
+                                            <input type="text" id="cadence-wt-rep-name" value="{{ current_caller_name }}" class="sigma-input" style="height: 30px; font-size: 0.78rem; font-weight: 600; width: 100%;" placeholder="Rep Full Name" onchange="saveRepSettingsLocal()">
                                         </div>
                                     </div>
                                     <div>
                                         <label style="font-size: 0.62rem; font-weight: 700; color: var(--slate-600); text-transform: uppercase; display: block; margin-bottom: 0.15rem;">Rep Calendar Email (Gmail / Yahoo / Outlook)</label>
-                                        <input type="email" id="cadence-wt-rep-email" class="sigma-input" style="height: 30px; font-size: 0.78rem; font-weight: 600; width: 100%;" placeholder="rep@gmail.com (receives native .ics calendar invite)" onchange="saveRepSettingsLocal()">
+                                        <input type="email" id="cadence-wt-rep-email" value="{{ current_caller_email }}" class="sigma-input" style="height: 30px; font-size: 0.78rem; font-weight: 600; width: 100%;" placeholder="rep@gmail.com (receives native .ics calendar invite)" onchange="saveRepSettingsLocal()">
                                     </div>
                                 </div>
 
@@ -7132,6 +7253,7 @@
                     <label style="font-size: 0.72rem; font-weight: 800; color: var(--slate-700); text-transform: uppercase;">Script Words *</label>
                     <div style="font-size: 0.7rem; color: var(--slate-500); display: flex; align-items: center; gap: 0.35rem;">
                         <span style="font-weight: 700;">Insert Smart Tag:</span>
+                        <button type="button" onclick="insertScriptVariable('{Caller}')" class="sigma-mini-btn" style="background: #ecfdf5; color: #047857; border-color: #a7f3d0; font-size: 0.68rem;" title="Inserts logged-in salesperson name">{Caller}</button>
                         <button type="button" onclick="insertScriptVariable('{Director}')" class="sigma-mini-btn" style="background: #eff6ff; color: #1e40af; border-color: #bfdbfe; font-size: 0.68rem;" title="Inserts director name">{Director}</button>
                         <button type="button" onclick="insertScriptVariable('{Facility}')" class="sigma-mini-btn" style="background: #eff6ff; color: #1e40af; border-color: #bfdbfe; font-size: 0.68rem;" title="Inserts center name">{Facility}</button>
                         <button type="button" onclick="insertScriptVariable('{City}')" class="sigma-mini-btn" style="background: #eff6ff; color: #1e40af; border-color: #bfdbfe; font-size: 0.68rem;" title="Inserts city">{City}</button>
@@ -7391,10 +7513,12 @@
             <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--slate-100); padding-top: 1rem;">
                 <div id="takeoff-modal-message" style="font-size: 0.78rem; font-weight: 700; color: #047857;"></div>
                 <div style="display: flex; gap: 0.75rem;">
-                    <button type="button" onclick="closeModal('modal-commercial-takeoff')" class="isc-btn isc-btn-outline" style="height: 38px; padding: 0 1.25rem; font-size: 0.8rem;" aria-label="Close Commercial Takeoff Modal">Cancel</button>
+                    <button type="button" onclick="closeModal('modal-commercial-takeoff')" class="isc-btn isc-btn-outline" style="height: 38px; padding: 0 1.25rem; font-size: 0.8rem;" aria-label="Close Commercial Takeoff Modal">Close</button>
+                    {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('bids', 'edit')) %}
                     <button type="submit" id="btn-save-takeoff" class="isc-btn isc-btn-primary" style="height: 38px; padding: 0 1.75rem; font-size: 0.82rem; font-weight: 800; background: #047857; border-color: #047857;">
                         <i class="fas fa-check-circle" style="margin-right: 0.4rem;"></i> Commit Estimate to Bid Pipeline
                     </button>
+                    {% endif %}
                 </div>
             </div>
         </form>
@@ -7421,9 +7545,11 @@
                 <button type="button" onclick="navigateAccounts(1)" class="isc-btn isc-btn-outline" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;" title="Next Client">
                     <i class="fas fa-chevron-right" style="font-size: 0.75rem;"></i>
                 </button>
+                {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('accounts', 'edit')) %}
                 <button type="button" onclick="toggleEditAccount()" class="isc-btn isc-btn-outline" style="height: 32px; font-size: 0.7rem; border-radius: 6px;">
                     <i class="fas fa-edit"></i> Edit Client
                 </button>
+                {% endif %}
                 <button type="button" onclick="closeModal('modal-account-command')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; color: var(--slate-500); transition: all 0.2s;" aria-label="Close Client Command Modal">
                     <i class="fas fa-times" style="font-size: 0.9rem;"></i>
                 </button>
@@ -7457,20 +7583,26 @@
             <button onclick="iscTab('contacts')" class="isc-tab-trigger" id="tab-btn-contacts">Contacts</button>
             <button onclick="iscTab('timeline')" class="isc-tab-trigger" id="tab-btn-timeline">History</button>
         </div>
-                <div id="pane-overview" class="isc-pane">
+        <div id="pane-overview" class="isc-pane">
             <div id="list-overview" style="display: grid; grid-template-columns: 1fr 1fr 1fr !important; gap: 1.5rem;"></div>
+            {% if (current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('accounts', 'edit'))) or (current_user.role != 'Sales' and (current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('accounts', 'delete')))) %}
             <div style="margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid var(--slate-200); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
                 <div>
+                    {% if current_user.role != 'Sales' and (current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('accounts', 'delete'))) %}
                     <button type="button" onclick="deleteAccount()" class="isc-btn isc-btn-outline" style="height: 36px; padding: 0 0.85rem; font-size: 0.75rem; border-radius: 6px; font-weight: 700; color: #dc2626; border-color: #fecaca; background: #fff5f5; display: inline-flex; align-items: center; gap: 0.4rem;" title="Permanently delete this client account">
                         <i class="fas fa-trash-alt"></i> Delete Client
                     </button>
+                    {% endif %}
                 </div>
                 <div style="display: flex; gap: 0.65rem; align-items: center; flex-wrap: wrap;">
+                    {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('accounts', 'edit')) %}
                     <button type="button" onclick="toggleEditAccount()" class="isc-btn isc-btn-primary" style="height: 36px; padding: 0 1.25rem; font-size: 0.8rem; border-radius: 6px; font-weight: 800; display: inline-flex; align-items: center; gap: 0.45rem;" title="Edit client facility, billing, and contract details">
                         <i class="fas fa-edit"></i> Edit Client
                     </button>
+                    {% endif %}
                 </div>
             </div>
+            {% endif %}
         </div>
 
         <div id="pane-activities" class="isc-pane" style="display:none; flex-direction: column;">
@@ -12007,29 +12139,82 @@ Click here to book a 5-minute walkthrough: [Calendar Link]"></textarea>
         });
     }
 
-    async function enrichGCBid(bidId) {
-        const btn = event.currentTarget;
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Vetting...';
-        btn.disabled = true;
+    async function enrichGCBid(evtOrId, maybeBidId, maybeBtn) {
+        let bidId = evtOrId;
+        let btn = maybeBtn || null;
+        if (evtOrId && typeof evtOrId === 'object') {
+            if (typeof evtOrId.stopPropagation === 'function') evtOrId.stopPropagation();
+            bidId = maybeBidId;
+            btn = maybeBtn || evtOrId.currentTarget || (evtOrId.target && evtOrId.target.closest('button'));
+        } else if (typeof event !== 'undefined' && event) {
+            if (typeof event.stopPropagation === 'function') event.stopPropagation();
+            btn = btn || event.currentTarget || (event.target && event.target.closest('button'));
+        }
+        const originalText = btn ? btn.innerHTML : '';
+        if (btn) {
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Vetting...';
+            btn.disabled = true;
+        }
         try {
             const res = await fetch(`/api/v1/gc-vetting/${bidId}/enrich`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'}
             });
-            const data = await res.json();
-            if (data.status === 'success') {
+            const data = await res.json().catch(() => ({}));
+            if (res.ok && data.status === 'success') {
                 const sc = data.scorecard || {};
-                alert(`GC Profile Completed & Vetted!\n• Contractor: ${data.gc_name}\n• Lead Estimator: ${data.estimator_name || 'N/A'}\n• Phone: ${data.estimator_phone || 'N/A'}\n• Cleanable SQFT: ${data.cleanable_sqft ? Number(data.cleanable_sqft).toLocaleString() + ' SF' : 'N/A'}\n• Subcontract Value: $${data.estimated_value ? Number(data.estimated_value).toLocaleString(undefined, {minimumFractionDigits: 2}) : '0.00'}\n• Vetting Tier: ${sc.vetting_tier || 'N/A'} (${sc.total_score || 0}/100)\n• Standing: ${sc.standing_status || 'N/A'}\n• Payment Terms: ${sc.payment_terms || 'N/A'}`);
-                window.location.reload();
+                const summaryMsg = `GC Profile Completed & Vetted: ${data.gc_name} • Estimator: ${data.estimator_name || 'N/A'} (${data.estimator_phone || 'N/A'}) • ${sc.vetting_tier || 'Vetted'} (${sc.total_score || 0}/100)`;
+                if (typeof showToast === 'function') {
+                    showToast(summaryMsg, 'success');
+                }
+                setTimeout(() => { window.location.reload(); }, 900);
             } else {
-                alert('Enrichment notice: ' + (data.message || 'Operation failed.'));
+                const errMsg = data.message || `Enrichment denied or failed (HTTP ${res.status}).`;
+                if (typeof showToast === 'function') {
+                    showToast(errMsg, 'error');
+                } else {
+                    alert('Enrichment notice: ' + errMsg);
+                }
             }
         } catch (e) {
-            alert('Network communication error: ' + e);
+            if (typeof showToast === 'function') {
+                showToast('Network communication error during GC enrichment.', 'error');
+            } else {
+                alert('Network communication error: ' + e);
+            }
         } finally {
-            btn.innerHTML = originalText;
-            btn.disabled = false;
+            if (btn) {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+    }
+
+    async function assignBidRep(bidId, repId, selectEl) {
+        try {
+            const res = await fetch(`/api/v1/construction-bids/${bidId}/assign-rep`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ assigned_rep_id: repId || null })
+            });
+            const data = await res.json().catch(() => ({}));
+            if (res.ok && data.status === 'success') {
+                if (typeof showToast === 'function') {
+                    showToast(repId ? 'Commercial bid assigned to salesperson!' : 'Commercial bid unassigned.', 'success');
+                }
+                if (selectEl) {
+                    selectEl.style.borderColor = '#10b981';
+                    setTimeout(() => { selectEl.style.borderColor = ''; }, 1500);
+                }
+            } else {
+                if (typeof showToast === 'function') {
+                    showToast(data.message || 'Failed to assign bid owner.', 'error');
+                }
+            }
+        } catch (e) {
+            if (typeof showToast === 'function') {
+                showToast('Network error assigning bid owner.', 'error');
+            }
         }
     }
 
@@ -12045,16 +12230,28 @@ Click here to book a 5-minute walkthrough: [Calendar Link]"></textarea>
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'}
             });
-            const data = await res.json();
-            if (data.status === 'success') {
+            const data = await res.json().catch(() => ({}));
+            if (res.ok && data.status === 'success') {
                 const b = data.tier_breakdown || {};
-                alert(`Autonomous 4-Point Vetting & Profile Completer Finished!\n• Processed: ${data.total_processed} Bids\n• Enriched: ${data.enriched_count} Profiles\n\nTier Breakdown:\n• Tier 1 (Preferred Prime): ${b['Tier 1 - Preferred Prime'] || 0}\n• Tier 2 (National Retail): ${b['Tier 2 - National Retail'] || 0}\n• Tier 3 (Planroom Broadcast): ${b['Tier 3 - Planroom Broadcast'] || 0}\n• Needs Review: ${b['Needs Review / Flagged'] || 0}`);
-                window.location.reload();
+                const msg = `4-Point Vetting Complete: ${data.enriched_count}/${data.total_processed} Bids Enriched (Tier 1: ${b['Tier 1 - Preferred Prime'] || 0}, Tier 2: ${b['Tier 2 - National Retail'] || 0}, Tier 3: ${b['Tier 3 - Planroom Broadcast'] || 0})`;
+                if (typeof showToast === 'function') {
+                    showToast(msg, 'success');
+                }
+                setTimeout(() => { window.location.reload(); }, 1000);
             } else {
-                alert('Vetting error: ' + (data.message || 'Operation failed.'));
+                const errMsg = data.message || `Batch vetting failed (HTTP ${res.status}).`;
+                if (typeof showToast === 'function') {
+                    showToast(errMsg, 'error');
+                } else {
+                    alert('Vetting error: ' + errMsg);
+                }
             }
         } catch (e) {
-            alert('Network error: ' + e);
+            if (typeof showToast === 'function') {
+                showToast('Network error during batch GC vetting.', 'error');
+            } else {
+                alert('Network error: ' + e);
+            }
         } finally {
             if (btn) {
                 btn.innerHTML = orig;
@@ -12092,7 +12289,8 @@ Click here to book a 5-minute walkthrough: [Calendar Link]"></textarea>
         // Personalized Script (Industrial Precision)
         const estName = (bid.estimator_name && bid.estimator_name.split(' ')[0]) || 'Estimating Team';
         const projName = bid.project_name || 'the project';
-        const script = `"Hi ${estName}, this is Humberto with HWB Cleaning Services here in DFW. I'm following up on our CSI 01 74 23 final cleaning bid package for ${projName}. We've thoroughly reviewed all addenda and confirmed our local Arlington crews for mobilization. Our complete prequalification binder—including $2M Commercial Liability COI, W-9, EMR 0.43, and OSHA safety verification—is active and pre-approved at mop.hwbcleaning.com/prequal. I wanted to verify you received our breakout pricing and ask how our number sits on your master bid tab?"`;
+        const callerDisplayName = (typeof CURRENT_CALLER_NAME !== 'undefined' && CURRENT_CALLER_NAME) ? CURRENT_CALLER_NAME : {{ ((current_user.full_name or current_user.username or 'Sales Representative') if current_user.is_authenticated else 'Humberto Dominguez')|tojson }};
+        const script = `"Hi ${estName}, this is ${callerDisplayName} with HWB Cleaning Services here in DFW. I'm following up on our CSI 01 74 23 final cleaning bid package for ${projName}. We've thoroughly reviewed all addenda and confirmed our local Arlington crews for mobilization. Our complete prequalification binder—including $2M Commercial Liability COI, W-9, EMR 0.43, and OSHA safety verification—is active and pre-approved at mop.hwbcleaning.com/prequal. I wanted to verify you received our breakout pricing and ask how our number sits on your master bid tab?"`;
         
         document.getElementById('cadence-script-text').innerText = script;
         document.getElementById('script-copied-alert').style.display = 'none';
@@ -12627,6 +12825,10 @@ Click here to book a 5-minute walkthrough: [Calendar Link]"></textarea>
         renderLeadScriptContent();
     }
 
+    const CURRENT_CALLER_NAME = {{ ((current_user.full_name or current_user.username or 'Sales Representative') if current_user.is_authenticated else 'Humberto Dominguez')|tojson }};
+    const CURRENT_CALLER_FIRST_NAME = (CURRENT_CALLER_NAME.split(' ')[0]) || CURRENT_CALLER_NAME;
+    const CURRENT_CALLER_EMAIL = {{ ((current_user.email or '') if current_user.is_authenticated else '')|tojson }};
+
     function renderLeadScriptContent() {
         const box = document.getElementById('lead-script-content');
         if (!box || !activeCadenceLead) return;
@@ -12637,6 +12839,7 @@ Click here to book a 5-minute walkthrough: [Calendar Link]"></textarea>
         const city = activeCadenceLead.city || 'DFW';
         const phone = activeCadenceLead.phone || '';
         const state = activeCadenceLead.state || 'TX';
+        const callerName = CURRENT_CALLER_NAME;
 
         let html = '';
         if (activeLeadScriptTab && activeLeadScriptTab.startsWith('user_')) {
@@ -12644,6 +12847,15 @@ Click here to book a 5-minute walkthrough: [Calendar Link]"></textarea>
             const s = loadedUserScripts.find(x => x.id === scriptId);
             if (s) {
                 let body = escapeUserScriptHtml(s.script_text || '');
+                body = body.replace(/\{Caller\}/gi, `<b>${escapeUserScriptHtml(callerName)}</b>`);
+                body = body.replace(/\{Salesperson\}/gi, `<b>${escapeUserScriptHtml(callerName)}</b>`);
+                body = body.replace(/\{Rep\}/gi, `<b>${escapeUserScriptHtml(callerName)}</b>`);
+                body = body.replace(/\[Your Name\]/gi, `<b>${escapeUserScriptHtml(callerName)}</b>`);
+                if (callerName !== 'Humberto Dominguez') {
+                    body = body.replace(/Humberto Dominguez,\s*CEO and founder of/gi, `<b>${escapeUserScriptHtml(callerName)}</b> with`);
+                    body = body.replace(/Humberto Dominguez/gi, `<b>${escapeUserScriptHtml(callerName)}</b>`);
+                    body = body.replace(/Humberto(?:&apos;|&#039;|')s office/gi, `<b>${escapeUserScriptHtml(callerName)}</b>`);
+                }
                 body = body.replace(/\{Director\}/gi, `<b style="color: var(--brand);">${escapeUserScriptHtml(dm)}</b>`);
                 body = body.replace(/\{Facility\}/gi, `<b>${escapeUserScriptHtml(center)}</b>`);
                 body = body.replace(/\{City\}/gi, `<b>${escapeUserScriptHtml(city)}</b>`);
@@ -12688,7 +12900,7 @@ Click here to book a 5-minute walkthrough: [Calendar Link]"></textarea>
         } else if (activeLeadScriptTab === 'obj-regarding') {
             html = `<div>
                 <div style="font-size: 0.92rem; color: var(--slate-900); line-height: 1.55;">
-                    "Yes, this is Humberto's office with HWB Cleaning Services here in <b>${city}</b>. We provide nightly after-hours cleaning for local childcare centers so your teachers don't have to stay late mopping floors and cleaning bathrooms. I just have a quick 30-second question for <b style="color: var(--brand);">${dm}</b>—are they available for just a moment?"
+                    "Yes, this is <b>${escapeUserScriptHtml(callerName)}</b> with HWB Cleaning Services here in <b>${city}</b>. We provide nightly after-hours cleaning for local childcare centers so your teachers don't have to stay late mopping floors and cleaning bathrooms. I just have a quick 30-second question for <b style="color: var(--brand);">${dm}</b>—are they available for just a moment?"
                 </div>
             </div>`;
         } else if (activeLeadScriptTab === 'obj-cleaner') {
@@ -12724,7 +12936,7 @@ Click here to book a 5-minute walkthrough: [Calendar Link]"></textarea>
         } else if (activeLeadScriptTab === 'director') {
             html = `<div>
                 <div style="font-size: 0.92rem; color: var(--slate-900); line-height: 1.55;">
-                    "Hi <b style="color: #047857;">${firstName}</b>, this is [Your Name] with HWB Cleaning Services here in <b>${city}</b>. I know you're busy running the school—I'm just calling because we specialize in after-hours nightly cleaning for local childcare centers. We handle the heavy cleaning after 6:30 PM so your teachers don't have to stay late vacuuming rugs and scrubbing bathrooms. On top of that, we include your twice-a-year floor stripping, waxing, and carpet cleaning right into one flat monthly price with no surprise charges. I'd love to stop by for a quick 5-minute walkthrough of <b>${center}</b> this week to see your layout and drop off our 1-page price comparison. Would Tuesday morning or Thursday afternoon work better for a quick 5-minute visit?"
+                    "Hi <b style="color: #047857;">${firstName}</b>, this is <b>${escapeUserScriptHtml(callerName)}</b> with HWB Cleaning Services here in <b>${city}</b>. I know you're busy running the school—I'm just calling because we specialize in after-hours nightly cleaning for local childcare centers. We handle the heavy cleaning after 6:30 PM so your teachers don't have to stay late vacuuming rugs and scrubbing bathrooms. On top of that, we include your twice-a-year floor stripping, waxing, and carpet cleaning right into one flat monthly price with no surprise charges. I'd love to stop by for a quick 5-minute walkthrough of <b>${center}</b> this week to see your layout and drop off our 1-page price comparison. Would Tuesday morning or Thursday afternoon work better for a quick 5-minute visit?"
                 </div>
             </div>`;
         } else if (activeLeadScriptTab === 'walkthrough-close') {
@@ -12813,17 +13025,22 @@ Click here to book a 5-minute walkthrough: [Calendar Link]"></textarea>
             const border = isActive ? '1px solid #b45309' : '1px solid var(--slate-200)';
             const weight = isActive ? '800' : '700';
 
+            let displayLabel = s.tab_label || 'Custom Pitch';
+            if (!s.is_mine && CURRENT_CALLER_NAME !== 'Humberto Dominguez' && displayLabel.includes('Founder Pitch')) {
+                displayLabel = displayLabel.replace('Founder Pitch', 'Direct Intro');
+            }
+
             let icon = '⭐';
-            let titleAttr = `${escapeUserScriptHtml(s.tab_label)} (${escapeUserScriptHtml(s.scenario_type || 'Pitch')})`;
+            let titleAttr = `${escapeUserScriptHtml(displayLabel)} (${escapeUserScriptHtml(s.scenario_type || 'Pitch')})`;
             if (!s.is_mine) {
                 icon = '👥';
-                titleAttr = `Shared by ${escapeUserScriptHtml(s.author_name)} - ${escapeUserScriptHtml(s.tab_label)}`;
+                titleAttr = `Shared by ${escapeUserScriptHtml(s.author_name)} - ${escapeUserScriptHtml(displayLabel)}`;
             } else if (s.is_default) {
                 icon = '⭐ Default:';
             }
 
             return `<button type="button" onclick="switchLeadScriptTab('${tabKey}')" id="tab-script-${tabKey}" class="lead-script-tab" style="padding: 0.3rem 0.55rem; border-radius: 5px; font-size: 0.72rem; font-weight: ${weight}; cursor: pointer; border: ${border}; background: ${bg}; color: ${color};" title="${titleAttr}">
-                ${icon} ${escapeUserScriptHtml(s.tab_label)}
+                ${icon} ${escapeUserScriptHtml(displayLabel)}
             </button>`;
         }).join(' ');
     }
@@ -13157,10 +13374,10 @@ Click here to book a 5-minute walkthrough: [Calendar Link]"></textarea>
         const emailEl = document.getElementById('cadence-wt-email');
         if (emailEl) emailEl.value = email;
 
-        // Restore remote sales rep preferences from localStorage if available
-        const repNameSaved = localStorage.getItem('hwb_cadence_rep_name') || '';
-        const repEmailSaved = localStorage.getItem('hwb_cadence_rep_email') || '';
-        const repConductorSaved = localStorage.getItem('hwb_cadence_rep_conductor') || 'Humberto Dominguez';
+        // Restore remote sales rep preferences from localStorage if available, defaulting to logged-in user
+        const repNameSaved = localStorage.getItem('hwb_cadence_rep_name') || CURRENT_CALLER_NAME;
+        const repEmailSaved = localStorage.getItem('hwb_cadence_rep_email') || CURRENT_CALLER_EMAIL;
+        const repConductorSaved = localStorage.getItem('hwb_cadence_rep_conductor') || CURRENT_CALLER_NAME;
 
         const repNameEl = document.getElementById('cadence-wt-rep-name');
         if (repNameEl && !repNameEl.value) repNameEl.value = repNameSaved;
@@ -13251,9 +13468,9 @@ Click here to book a 5-minute walkthrough: [Calendar Link]"></textarea>
         const syncCal = document.getElementById('cadence-wt-sync-cal') ? document.getElementById('cadence-wt-sync-cal').checked : true;
         const notes = document.getElementById('cadence-lead-notes') ? document.getElementById('cadence-lead-notes').value.trim() : '';
 
-        const conductor = document.getElementById('cadence-wt-conductor') ? document.getElementById('cadence-wt-conductor').value : 'Humberto Dominguez';
-        const repName = document.getElementById('cadence-wt-rep-name') ? document.getElementById('cadence-wt-rep-name').value.trim() : '';
-        const repEmail = document.getElementById('cadence-wt-rep-email') ? document.getElementById('cadence-wt-rep-email').value.trim() : '';
+        const conductor = document.getElementById('cadence-wt-conductor') ? document.getElementById('cadence-wt-conductor').value : CURRENT_CALLER_NAME;
+        const repName = document.getElementById('cadence-wt-rep-name') ? document.getElementById('cadence-wt-rep-name').value.trim() : CURRENT_CALLER_NAME;
+        const repEmail = document.getElementById('cadence-wt-rep-email') ? document.getElementById('cadence-wt-rep-email').value.trim() : CURRENT_CALLER_EMAIL;
         saveRepSettingsLocal();
 
         if (!wtDate) {

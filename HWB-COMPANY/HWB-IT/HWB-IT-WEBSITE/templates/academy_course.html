@@ -485,6 +485,7 @@
     </style>
 </head>
 <body>
+    <a href="#main-content" class="sigma-skip-link" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;">Skip to main content</a>
 
     <!-- Header Navigation -->
     <header class="header-bar">
@@ -513,20 +514,20 @@
                     <input type="hidden" id="magic_token" value="{{ magic_token or '' }}">
 
                     <label>Technician / Student Name</label>
-                    <input type="text" id="student_name" placeholder="Full Legal Name" value="{{ prefill_student or 'Carlos E. Mendoza' }}" required>
+                    <input type="text" id="student_name" placeholder="Full Legal Name" value="{{ prefill_student or 'Carlos E. Mendoza' }}" required aria-label="Student Full Legal Name">
                     
                     <label>Email Address</label>
-                    <input type="email" id="student_email" placeholder="student@example.com" value="{{ prefill_email or 'carlos@hwbcleaning.com' }}">
+                    <input type="email" id="student_email" placeholder="student@example.com" value="{{ prefill_email or 'carlos@hwbcleaning.com' }}" aria-label="Student Email Address">
 
                     <label>Worker Classification</label>
-                    <select id="worker_type">
+                    <select id="worker_type" aria-label="Worker Classification Type">
                         <option value="W2_EMPLOYEE" {% if prefill_worker_type == 'W2_EMPLOYEE' %}selected{% endif %}>W-2 Commercial Technician</option>
                         <option value="1099_SUBCONTRACTOR" {% if prefill_worker_type == '1099_SUBCONTRACTOR' %}selected{% endif %}>1099 Subcontractor Trade Partner</option>
                         <option value="CLIENT_STAFF" {% if prefill_worker_type == 'CLIENT_STAFF' %}selected{% endif %}>Client Facility Staff</option>
                     </select>
 
                     <label>Employer / Organization</label>
-                    <select id="tenant_slug">
+                    <select id="tenant_slug" aria-label="Assigned Organization Tenant">
                         <option value="hwb" {% if prefill_tenant_slug == 'hwb' %}selected{% endif %}>HWB Cleaning Services LLC</option>
                         <option value="collin-college" {% if prefill_tenant_slug == 'collin-college' %}selected{% endif %}>Collin College Facilities</option>
                         <option value="bright-horizons" {% if prefill_tenant_slug == 'bright-horizons' %}selected{% endif %}>Bright Horizons Academy</option>
@@ -635,7 +636,7 @@
                             <i class="fas fa-certificate"></i>
                         </div>
                         <div class="cert-header">CERTIFICATE OF COMPETENCE</div>
-                        <div class="cert-sub">SigmaAcademy™ Institutional Quality System &bull; ISO 9001:2015 Clause 7.2</div>
+                        <div class="cert-sub">SigmaAcademy™ Institutional Quality System &bull; ISO 9001:2026 (ISO 9001:2015+Amd 1:2024) Clause 7.2</div>
 
                         <p style="font-size: 0.9rem; color: #64748b; margin: 0;">This certifies that</p>
                         <div class="cert-student-name" id="cert-display-name">Carlos E. Mendoza</div>

@@ -14,7 +14,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from werkzeug.exceptions import HTTPException
 from flask_login import login_required, current_user
 from core.services.database import get_db
-from core.services.sanitizer import clean_phone, clean_email
+from core.services.sanitizer import clean_phone, clean_email, clean_city, extract_phone_digits
 from core.services.rate_limiter import rate_limit
 from core.services.bot_defense import evaluate_bot_defense
 from core.services.task_queue import task_queue
@@ -65,6 +65,41 @@ LOCATIONS_DATA = {
         'h1': 'Commercial Cleaning & Janitorial Services in McKinney',
         'meta_desc': 'HWB Cleaning Services LLC provides OSHA-compliant commercial cleaning and janitorial services in McKinney, TX. Request a custom quote today.',
         'desc': 'Focus on business operations rather than cleaning issues. The team identifies gaps in current setups and provides reliable plans for facilities in McKinney and surrounding North Texas corridors.'
+    },
+    'irving': {
+        'name': 'Irving',
+        'title': 'Commercial Cleaning & Janitorial Services in Irving & Las Colinas | HWB Cleaning',
+        'h1': 'Commercial Cleaning & Janitorial Services in Irving & Las Colinas',
+        'meta_desc': 'ISO 9001:2026 & OSHA-compliant commercial cleaning, corporate janitorial, and post-construction cleanup in Irving and Las Colinas, TX. Get a quote today.',
+        'desc': 'Delivering clinical-grade nightly janitorial, day porter staffing, and specialty floor care for corporate headquarters, medical plazas, and logistics hubs across Irving, Las Colinas, and DFW Airport corridors.'
+    },
+    'richardson': {
+        'name': 'Richardson',
+        'title': 'Commercial Cleaning & Janitorial Services in Richardson | HWB Cleaning',
+        'h1': 'Commercial Cleaning & Janitorial Services in Richardson',
+        'meta_desc': 'ISO 9001:2026 commercial cleaning, data center sanitation, and office janitorial services in Richardson and the Telecom Corridor, TX. Request a quote.',
+        'desc': 'Supporting technology campuses, defense contractors, and Class-A office buildings across Richardson, the Telecom Corridor, and CityLine with vetted, badged cleaning technicians.'
+    },
+    'allen': {
+        'name': 'Allen',
+        'title': 'Commercial Cleaning & Janitorial Services in Allen | HWB Cleaning',
+        'h1': 'Commercial Cleaning & Janitorial Services in Allen',
+        'meta_desc': 'Reliable commercial office cleaning, educational facility sanitization, and floor care in Allen, TX along US-75 & SH-121. Request a custom quote today.',
+        'desc': 'Providing dependable nightly office cleaning, daycare and school sanitization, and post-construction final cleans throughout Allen, Watters Creek, and the US-75 commercial corridor.'
+    },
+    'arlington': {
+        'name': 'Arlington',
+        'title': 'Commercial & Industrial Cleaning Services in Arlington | HWB Cleaning',
+        'h1': 'Commercial & Industrial Cleaning Services in Arlington',
+        'meta_desc': 'Heavy-duty industrial warehouse scrubbing, commercial janitorial, and post-construction cleanup in Arlington, TX. OSHA-trained crews. Request a quote.',
+        'desc': 'Engineered for high-volume manufacturing plants, distribution centers, medical offices, and commercial venues across Arlington and the Mid-Cities industrial corridor.'
+    },
+    'addison': {
+        'name': 'Addison',
+        'title': 'Commercial Office Cleaning & Janitorial Services in Addison | HWB Cleaning',
+        'h1': 'Commercial Office Cleaning & Janitorial Services in Addison',
+        'meta_desc': 'Executive office cleaning, commercial floor care, and day porter services in Addison and the Dallas North Tollway corridor, TX. Request a free quote.',
+        'desc': 'Maintaining pristine executive suites, financial institutions, and multi-tenant commercial buildings throughout Addison, Quorum Drive, and the Dallas North Tollway corridor.'
     }
 }
 
@@ -895,25 +930,97 @@ def get_quote():
             
             db_url = current_app.config['DATABASE_URL']
             conn = get_db(db_url)
+            is_repeat_lead = False
             try:
                 with conn.cursor() as cur:
                     actual_source = 'Website Quote Form (Mobile Express)' if form_version == 'mobile_express' else f'Website Quote Form ({form_version})'
-                    cur.execute('''
-                        INSERT INTO "Leads" (
-                            center_name, decision_maker, email, phone, facility_type, sqf,
-                            estimated_annual_value, status, lead_source, traffic_cycle, notes,
-                            city, zipcode, job_title
-                        )
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                        RETURNING id
-                    ''', (
-                        company, name, clean_e, clean_p, facility_type,
-                        int(sqf), annual_value, 'New', actual_source,
-                        frequency, full_notes, city, zipcode, job_title
-                    ))
-                    inserted_row = cur.fetchone()
-                    lead_id = inserted_row[0] if inserted_row else None
+                    phone_digits = extract_phone_digits(clean_p)
+                    existing_lead = None
+
+                    if phone_digits and len(phone_digits) == 10:
+                        cur.execute('''
+                            SELECT id, sqf, estimated_annual_value, notes
+                            FROM "Leads"
+                            WHERE COALESCE(is_duplicate, FALSE) = FALSE
+                              AND RIGHT(REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g'), 10) = %s
+                            ORDER BY id ASC LIMIT 1;
+                        ''', (phone_digits,))
+                        existing_lead = cur.fetchone()
+
+                    if not existing_lead and clean_e:
+                        cur.execute('''
+                            SELECT id, sqf, estimated_annual_value, notes
+                            FROM "Leads"
+                            WHERE COALESCE(is_duplicate, FALSE) = FALSE
+                              AND LOWER(TRIM(COALESCE(email, ''))) = LOWER(%s)
+                            ORDER BY id ASC LIMIT 1;
+                        ''', (clean_e,))
+                        existing_lead = cur.fetchone()
+
+                    if not existing_lead and company and city and city != 'Pending Walkthrough / Discovery':
+                        cur.execute('''
+                            SELECT id, sqf, estimated_annual_value, notes
+                            FROM "Leads"
+                            WHERE COALESCE(is_duplicate, FALSE) = FALSE
+                              AND LOWER(TRIM(COALESCE(center_name, ''))) = LOWER(TRIM(%s))
+                              AND LOWER(TRIM(COALESCE(city, ''))) = LOWER(TRIM(%s))
+                            ORDER BY id ASC LIMIT 1;
+                        ''', (company, city))
+                        existing_lead = cur.fetchone()
+
+                    if existing_lead:
+                        is_repeat_lead = True
+                        lead_id = existing_lead[0]
+                        prev_sqf = int(existing_lead[1] or 0)
+                        prev_val = float(existing_lead[2] or 0.0)
+                        prev_notes = existing_lead[3] or ''
+                        merged_sqf = int(sqf) if int(sqf) > 0 else prev_sqf
+                        merged_val = float(annual_value) if float(annual_value) > 0 else prev_val
+                        stamp = datetime.now().strftime('%Y-%m-%d')
+                        merged_notes = f"{prev_notes}\n[REPEAT REQUEST {stamp}]: {full_notes}".strip()
+
+                        cur.execute('''
+                            UPDATE "Leads"
+                            SET center_name = COALESCE(NULLIF(%s, ''), center_name),
+                                decision_maker = COALESCE(NULLIF(%s, ''), decision_maker),
+                                email = COALESCE(NULLIF(%s, ''), email),
+                                phone = COALESCE(NULLIF(%s, ''), phone),
+                                facility_type = COALESCE(NULLIF(%s, ''), facility_type),
+                                sqf = %s,
+                                estimated_annual_value = %s,
+                                traffic_cycle = COALESCE(NULLIF(%s, ''), traffic_cycle),
+                                notes = %s,
+                                city = CASE WHEN %s != 'Pending Walkthrough / Discovery' AND %s != '' THEN %s ELSE city END,
+                                zipcode = COALESCE(NULLIF(%s, ''), zipcode),
+                                job_title = COALESCE(NULLIF(%s, ''), job_title),
+                                priority_level = 'High'
+                            WHERE id = %s;
+                        ''', (
+                            company, name, clean_e, clean_p, facility_type,
+                            merged_sqf, merged_val, frequency, merged_notes,
+                            city, city, city, zipcode, job_title, lead_id
+                        ))
+                    else:
+                        cur.execute('''
+                            INSERT INTO "Leads" (
+                                center_name, decision_maker, email, phone, facility_type, sqf,
+                                estimated_annual_value, status, lead_source, traffic_cycle, notes,
+                                city, zipcode, job_title
+                            )
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                            RETURNING id
+                        ''', (
+                            company, name, clean_e, clean_p, facility_type,
+                            int(sqf), annual_value, 'New', actual_source,
+                            frequency, full_notes, city, zipcode, job_title
+                        ))
+                        inserted_row = cur.fetchone()
+                        lead_id = inserted_row[0] if inserted_row else None
+
+                    ref_code = f"LEAD-#{int(lead_id or 0):05d}"
                     data_dict['lead_id'] = lead_id
+                    data_dict['already_registered'] = is_repeat_lead
+                    data_dict['reference_code'] = ref_code
                     
                     request_type = "Quick Registration" if form_version == "v2" else "Full Cleaning Plan"
                     email_body = f"""
@@ -921,11 +1028,11 @@ def get_quote():
                         <div style="display: flex; justify-content: space-between; border-bottom: 3px solid #2563eb; padding-bottom: 20px; margin-bottom: 30px;">
                             <div>
                                 <div style="font-weight: 900; font-size: 18px; color: #2563eb;">HWB NOTIFICATION</div>
-                                <div style="font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em; margin-top: 5px;">Request Type: {request_type}</div>
+                                <div style="font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em; margin-top: 5px;">Request Type: {request_type} ({ref_code})</div>
                             </div>
                         </div>
                         <div style="line-height: 1.8; color: #1e293b; font-size: 14px;">
-                            <h2 style="font-size: 18px; font-weight: 800; margin-bottom: 20px;">New Commercial Lead Intake</h2>
+                            <h2 style="font-size: 18px; font-weight: 800; margin-bottom: 20px;">{'Updated Commercial Lead Request' if is_repeat_lead else 'New Commercial Lead Intake'}</h2>
                             <p><strong>Organization:</strong> {data.get('company')}</p>
                             <p><strong>Contact:</strong> {data.get('name')}{f" ({job_title})" if job_title else ""}</p>
                             <p><strong>Email Address:</strong> {clean_e}</p>
@@ -942,6 +1049,9 @@ def get_quote():
                     </div>
                     """
                     notification_payload = {
+                        'lead_id': lead_id,
+                        'reference_code': ref_code,
+                        'is_repeat': is_repeat_lead,
                         'company': data.get('company'),
                         'name': data.get('name'),
                         'job_title': job_title,
@@ -958,17 +1068,18 @@ def get_quote():
                         'form_version': form_version
                     }
                     
-                    cur.execute('''
-                        INSERT INTO "PendingOutbox" (recipient, subject, body, status, created_at)
-                        VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP)
-                    ''', ('hdominguez@hwbcleaning.com, sales@hwbcleaning.com', f"ACTION REQUIRED: New Lead Ingested ({data.get('company')})", email_body, 'SENT'))
+                    if not is_repeat_lead:
+                        cur.execute('''
+                            INSERT INTO "PendingOutbox" (recipient, subject, body, status, created_at)
+                            VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP)
+                        ''', ('hdominguez@hwbcleaning.com, sales@hwbcleaning.com', f"ACTION REQUIRED: New Lead Ingested ({data.get('company')})", email_body, 'SENT'))
                     
                     cur.execute('''
                         INSERT INTO "SigmaInteractionLog" (user_prompt, agent_explanation, tools_used, status)
                         VALUES (%s, %s, %s, %s)
                     ''', (
                         'Lead Ingestion Webhook',
-                        f"Captured {form_version} lead from {data.get('company')}",
+                        f"{'Updated existing' if is_repeat_lead else 'Captured'} {form_version} lead from {data.get('company')} ({ref_code})",
                         '["web_quote_form", "task_queue", "telegram", "graph_email"]',
                         'SUCCESS'
                     ))

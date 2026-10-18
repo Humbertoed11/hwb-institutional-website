@@ -7,7 +7,7 @@ Custodians: George (Systems Architect) & Natalie Navy (CDO)
 import os
 import subprocess
 from flask import Blueprint, request, jsonify, render_template, redirect, url_for, current_app, abort, send_from_directory
-from flask_login import login_required
+from flask_login import login_required, current_user
 from core.services.database import get_db
 from core.services.sanitizer import clean_phone, clean_email
 from core.security import roles_required
@@ -23,6 +23,29 @@ from core.services.gc_vetting_engine import GCVettingEngine
 from core.services.security_logger import log_security_event
 
 bids_bp = Blueprint('bids', __name__)
+
+
+def _has_bids_perm(action: str = 'view') -> bool:
+    if not current_user.is_authenticated:
+        return False
+    if getattr(current_user, 'role', '') in ('Executive', 'Admin'):
+        return True
+    if hasattr(current_user, 'has_permission'):
+        return bool(current_user.has_permission('bids', action))
+    return False
+
+
+def _verify_bid_ownership(cur, bid_id: int) -> bool:
+    """Returns True if current_user is allowed to access this ConstructionBid row."""
+    if getattr(current_user, 'role', '') != 'Sales':
+        return True
+    cur.execute('SELECT assigned_rep_id FROM "ConstructionBids" WHERE id = %s', (bid_id,))
+    row = cur.fetchone()
+    if not row:
+        return False
+    rep_id = row['assigned_rep_id'] if isinstance(row, dict) else row[0]
+    return rep_id == current_user.id
+
 
 @bids_bp.route('/prequal', endpoint='prequal')
 def prequal():
@@ -41,14 +64,17 @@ def tma_estimator():
 
 @bids_bp.route('/admin/construction-bids', endpoint='admin_construction_bids')
 @login_required
-@roles_required('Executive', 'Admin', 'Manager', 'Estimator')
 def admin_construction_bids():
+    if not _has_bids_perm('view'):
+        abort(403)
     return redirect(url_for('admin_operations', view='construction_bids'))
 
 @bids_bp.route('/api/v1/construction-bids/create', methods=['POST'])
 @login_required
 def api_bid_create():
     """API Endpoint to create a new commercial construction bid record."""
+    if not _has_bids_perm('edit'):
+        return jsonify({'status': 'error', 'message': 'Access denied: You do not have permission to create commercial bids.'}), 403
     data = request.get_json() or {}
     gc_name = data.get('gc_name', '').strip()
     project_name = data.get('project_name', '').strip()
@@ -59,34 +85,84 @@ def api_bid_create():
     conn = get_db(db_url)
     try:
         with conn.cursor() as cur:
+            cleaned_est_phone = clean_phone(data.get('estimator_phone')) or data.get('estimator_phone')
+            cleaned_est_email = clean_email(data.get('estimator_email')) or data.get('estimator_email')
+
+            cur.execute('''
+                SELECT id FROM "ConstructionBids"
+                WHERE LOWER(TRIM(COALESCE(gc_name, ''))) = LOWER(TRIM(%s))
+                  AND LOWER(TRIM(COALESCE(project_name, ''))) = LOWER(TRIM(%s))
+                ORDER BY id ASC LIMIT 1;
+            ''', (gc_name, project_name))
+            existing_bid = cur.fetchone()
+
+            if existing_bid:
+                existing_id = existing_bid[0] if not isinstance(existing_bid, dict) else existing_bid['id']
+                cur.execute('''
+                    UPDATE "ConstructionBids"
+                    SET project_address = COALESCE(NULLIF(%s, ''), project_address),
+                        city = COALESCE(NULLIF(%s, ''), city),
+                        state = COALESCE(NULLIF(%s, ''), state),
+                        bid_due_date = COALESCE(NULLIF(%s, '')::timestamptz, bid_due_date),
+                        cleanable_sqft = CASE WHEN COALESCE(NULLIF(%s, '')::numeric, 0) > 0 THEN COALESCE(NULLIF(%s, '')::numeric, 0) ELSE cleanable_sqft END,
+                        estimated_value = CASE WHEN COALESCE(NULLIF(%s, '')::numeric, 0) > 0 THEN COALESCE(NULLIF(%s, '')::numeric, 0) ELSE estimated_value END,
+                        estimator_name = COALESCE(NULLIF(%s, ''), estimator_name),
+                        estimator_phone = COALESCE(NULLIF(%s, ''), estimator_phone),
+                        estimator_email = COALESCE(NULLIF(%s, ''), estimator_email),
+                        special_requirements = COALESCE(NULLIF(%s, ''), special_requirements)
+                    WHERE id = %s;
+                ''', (
+                    data.get('project_address'), data.get('city'), data.get('state', 'TX'),
+                    data.get('bid_due_date'),
+                    data.get('cleanable_sqft'), data.get('cleanable_sqft'),
+                    data.get('estimated_value'), data.get('estimated_value'),
+                    data.get('estimator_name'), cleaned_est_phone, cleaned_est_email,
+                    data.get('special_requirements'), existing_id
+                ))
+                conn.commit()
+                return jsonify({
+                    'status': 'already_registered',
+                    'is_duplicate': True,
+                    'bid_id': existing_id,
+                    'message': f"Bid for {project_name} ({gc_name}) is already registered (#{existing_id}) — existing bid updated."
+                })
+
+            assigned_rep = data.get('assigned_rep_id')
+            if assigned_rep in ('', None):
+                assigned_rep = current_user.id if getattr(current_user, 'role', '') == 'Sales' else None
+            else:
+                assigned_rep = int(assigned_rep)
+
             cur.execute('''
                 INSERT INTO "ConstructionBids" (
                     gc_name, project_name, project_address, city, state,
                     bid_due_date, cleanable_sqft, estimated_value,
                     estimator_name, estimator_phone, estimator_email,
-                    special_requirements, status, prequal_status
+                    special_requirements, status, prequal_status, assigned_rep_id
                 ) VALUES (
                     %s, %s, %s, %s, %s,
                     NULLIF(%s, '')::timestamptz,
                     COALESCE(NULLIF(%s, '')::numeric, 0),
                     COALESCE(NULLIF(%s, '')::numeric, 0),
-                    %s, %s, %s, %s, 'Invited', 'Ready'
+                    %s, %s, %s, %s, 'Invited', 'Ready', %s
                 ) RETURNING id
             ''', (
                 gc_name, project_name, data.get('project_address'), data.get('city'), data.get('state', 'TX'),
                 data.get('bid_due_date'), data.get('cleanable_sqft'), data.get('estimated_value'),
                 data.get('estimator_name'), 
-                clean_phone(data.get('estimator_phone')) or data.get('estimator_phone'), 
-                clean_email(data.get('estimator_email')) or data.get('estimator_email'),
-                data.get('special_requirements')
+                cleaned_est_phone, 
+                cleaned_est_email,
+                data.get('special_requirements'),
+                assigned_rep
             ))
-            new_id = cur.fetchone()[0]
+            new_row = cur.fetchone()
+            new_id = new_row['id'] if isinstance(new_row, dict) else new_row[0]
             cur.execute('''
                 INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
                 VALUES (%s, 'ConstructionBid', 'Created', %s)
             ''', (new_id, f"Subcontract bid created for {project_name} ({gc_name})."))
             conn.commit()
-            return jsonify({'status': 'success', 'bid_id': new_id, 'message': 'Bid created successfully.'})
+            return jsonify({'status': 'success', 'is_duplicate': False, 'bid_id': new_id, 'message': 'Bid created successfully.'})
     except Exception as e:
         conn.rollback()
         return jsonify({'status': 'error', 'message': str(e)}), 500
@@ -103,6 +179,8 @@ def _run_gc_bids_sync():
 @login_required
 def api_sync_construction_bids():
     """Enqueues background synchronization for GC planroom bids via managed task queue."""
+    if not _has_bids_perm('edit'):
+        return jsonify({'status': 'error', 'message': 'Access denied: Bid synchronization requires edit permissions.'}), 403
     task_id = task_queue.enqueue(_run_gc_bids_sync, name="GC Planroom Bids Sync", max_retries=2)
     return jsonify({
         'status': 'success',
@@ -113,6 +191,8 @@ def api_sync_construction_bids():
 @bids_bp.route('/api/v1/construction-bids/<int:bid_id>/status', methods=['POST'])
 @login_required
 def api_update_bid_status(bid_id):
+    if not _has_bids_perm('edit'):
+        return jsonify({'status': 'error', 'message': 'Access denied: You do not have permission to update bid status.'}), 403
     data = request.get_json() or {}
     new_status = data.get('status')
     notes = data.get('notes', '').strip()
@@ -121,6 +201,8 @@ def api_update_bid_status(bid_id):
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
         with conn.cursor() as cur:
+            if not _verify_bid_ownership(cur, bid_id):
+                return jsonify({'status': 'error', 'message': 'Access denied: Bid is not assigned to your profile.'}), 403
             cur.execute('''
                 UPDATE "ConstructionBids"
                 SET status = %s, notes = COALESCE(NULLIF(%s, ''), notes), updated_at = CURRENT_TIMESTAMP
@@ -138,9 +220,36 @@ def api_update_bid_status(bid_id):
     finally:
         if 'conn' in locals() and conn: conn.close()
 
+@bids_bp.route('/api/v1/construction-bids/<int:bid_id>/assign-rep', methods=['POST'])
+@login_required
+def api_assign_bid_rep(bid_id):
+    """Assigns or unassigns a commercial GC construction bid to a salesperson."""
+    if getattr(current_user, 'role', '') == 'Sales' or not _has_bids_perm('edit'):
+        return jsonify({'status': 'error', 'message': 'Access denied: Only management can assign bid ownership.'}), 403
+    data = request.get_json() or {}
+    raw_rep = data.get('assigned_rep_id')
+    rep_id = int(raw_rep) if raw_rep not in (None, '', 'null') else None
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            cur.execute('''
+                UPDATE "ConstructionBids"
+                SET assigned_rep_id = %s, updated_at = CURRENT_TIMESTAMP
+                WHERE id = %s
+            ''', (rep_id, bid_id))
+            conn.commit()
+            return jsonify({'status': 'success', 'bid_id': bid_id, 'assigned_rep_id': rep_id})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        if 'conn' in locals() and conn: conn.close()
+
 @bids_bp.route('/api/v1/construction-bids/<int:bid_id>/activity', methods=['POST'])
 @login_required
 def api_bid_log_activity(bid_id):
+    if not _has_bids_perm('view'):
+        return jsonify({'status': 'error', 'message': 'Access denied.'}), 403
     data = request.get_json() or {}
     note = data.get('note', '').strip()
     activity_type = data.get('activity_type', 'Phone Call')
@@ -149,6 +258,8 @@ def api_bid_log_activity(bid_id):
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
         with conn.cursor() as cur:
+            if not _verify_bid_ownership(cur, bid_id):
+                return jsonify({'status': 'error', 'message': 'Access denied: Bid is not assigned to your profile.'}), 403
             cur.execute('''
                 INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
                 VALUES (%s, 'ConstructionBid', %s, %s)
@@ -169,6 +280,8 @@ def api_bid_log_activity(bid_id):
 @bids_bp.route('/api/v1/construction-bids/<int:bid_id>/edit', methods=['POST'])
 @login_required
 def api_bid_edit(bid_id):
+    if not _has_bids_perm('edit'):
+        return jsonify({'status': 'error', 'message': 'Access denied: You do not have permission to edit commercial bids.'}), 403
     data = request.get_json() or {}
     cleanable_sqft = data.get('cleanable_sqft')
     estimated_value = data.get('estimated_value')
@@ -182,6 +295,8 @@ def api_bid_edit(bid_id):
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
         with conn.cursor() as cur:
+            if not _verify_bid_ownership(cur, bid_id):
+                return jsonify({'status': 'error', 'message': 'Access denied: Bid is not assigned to your profile.'}), 403
             cur.execute('''
                 UPDATE "ConstructionBids"
                 SET cleanable_sqft = COALESCE(%s, cleanable_sqft),
@@ -208,19 +323,29 @@ def api_bid_edit(bid_id):
 
 @bids_bp.route('/api/v1/gc-vetting/<int:bid_id>/enrich', methods=['POST'])
 @login_required
-@roles_required('Executive', 'Admin', 'Manager', 'Estimator')
 def api_enrich_single_bid(bid_id):
     """Executes on-demand autonomous profile enrichment and 4-point vetting for a bid."""
+    if not _has_bids_perm('edit'):
+        return jsonify({'status': 'error', 'message': 'Access denied: Profile enrichment requires bid edit permissions.'}), 403
     db_url = current_app.config['DATABASE_URL']
+    if getattr(current_user, 'role', '') == 'Sales':
+        conn = get_db(db_url)
+        try:
+            with conn.cursor() as cur:
+                if not _verify_bid_ownership(cur, bid_id):
+                    return jsonify({'status': 'error', 'message': 'Access denied: Bid is not assigned to your profile.'}), 403
+        finally:
+            conn.close()
     res = GCVettingEngine.enrich_single_bid(bid_id, db_url)
     status_code = 200 if res.get('status') == 'success' else 500
     return jsonify(res), status_code
 
 @bids_bp.route('/api/v1/gc-vetting/enrich-all', methods=['POST'])
 @login_required
-@roles_required('Executive', 'Admin', 'Manager')
 def api_enrich_all_bids():
     """Executes batch autonomous profile completion across all commercial construction bids."""
+    if getattr(current_user, 'role', '') == 'Sales' or not _has_bids_perm('edit'):
+        return jsonify({'status': 'error', 'message': 'Access denied: Batch GC vetting requires management edit permissions.'}), 403
     db_url = current_app.config['DATABASE_URL']
     summary = GCVettingEngine.enrich_all_bids(db_url)
     return jsonify(summary)
@@ -273,6 +398,67 @@ def api_inst_bid_create():
     conn = get_db(db_url)
     try:
         with conn.cursor() as cur:
+            cleaned_off_email = clean_email(data.get('officer_email')) or data.get('officer_email', '')
+            cleaned_off_phone = clean_phone(data.get('officer_phone')) or data.get('officer_phone', '')
+
+            cur.execute('''
+                SELECT id FROM "InstitutionalBids"
+                WHERE LOWER(TRIM(COALESCE(solicitation_number, ''))) = LOWER(TRIM(%s))
+                ORDER BY id ASC LIMIT 1;
+            ''', (solicitation_number,))
+            existing_inst = cur.fetchone()
+
+            if existing_inst:
+                existing_id = existing_inst[0] if not isinstance(existing_inst, dict) else existing_inst['id']
+                cur.execute('''
+                    UPDATE "InstitutionalBids"
+                    SET title = COALESCE(NULLIF(%s, ''), title),
+                        agency_name = COALESCE(NULLIF(%s, ''), agency_name),
+                        sector = COALESCE(NULLIF(%s, ''), sector),
+                        portal_name = COALESCE(NULLIF(%s, ''), portal_name),
+                        portal_doc_id = COALESCE(NULLIF(%s, ''), portal_doc_id),
+                        procurement_officer = COALESCE(NULLIF(%s, ''), procurement_officer),
+                        officer_email = COALESCE(NULLIF(%s, ''), officer_email),
+                        officer_phone = COALESCE(NULLIF(%s, ''), officer_phone),
+                        contract_term_months = %s,
+                        cleanable_sqft = CASE WHEN %s > 0 THEN %s ELSE cleanable_sqft END,
+                        facilities_count = %s,
+                        published_budget = CASE WHEN %s > 0 THEN %s ELSE published_budget END,
+                        hwb_bid_total = CASE WHEN %s > 0 THEN %s ELSE hwb_bid_total END,
+                        monthly_base_rate = CASE WHEN %s > 0 THEN %s ELSE monthly_base_rate END,
+                        annual_base_rate = CASE WHEN %s > 0 THEN %s ELSE annual_base_rate END,
+                        hourly_porter_rate = CASE WHEN %s > 0 THEN %s ELSE hourly_porter_rate END,
+                        rfp_url = COALESCE(NULLIF(%s, ''), rfp_url),
+                        notes = COALESCE(NULLIF(%s, ''), notes)
+                    WHERE id = %s;
+                ''', (
+                    title, agency_name,
+                    data.get('sector', 'Public Authority'),
+                    data.get('portal_name', ''),
+                    data.get('portal_doc_id', ''),
+                    data.get('procurement_officer', ''),
+                    cleaned_off_email,
+                    cleaned_off_phone,
+                    int(data.get('contract_term_months', 24) or 24),
+                    float(data.get('cleanable_sqft', 0) or 0), float(data.get('cleanable_sqft', 0) or 0),
+                    int(data.get('facilities_count', 1) or 1),
+                    float(data.get('published_budget', 0) or 0), float(data.get('published_budget', 0) or 0),
+                    float(data.get('hwb_bid_total', 0) or 0), float(data.get('hwb_bid_total', 0) or 0),
+                    float(data.get('monthly_base_rate', 0) or 0), float(data.get('monthly_base_rate', 0) or 0),
+                    float(data.get('annual_base_rate', 0) or 0), float(data.get('annual_base_rate', 0) or 0),
+                    float(data.get('hourly_porter_rate', 0) or 0), float(data.get('hourly_porter_rate', 0) or 0),
+                    data.get('rfp_url', ''),
+                    data.get('notes', ''),
+                    existing_id
+                ))
+                conn.commit()
+                return jsonify({
+                    'status': 'already_registered',
+                    'is_duplicate': True,
+                    'id': existing_id,
+                    'message': f"Solicitation {solicitation_number} is already registered (#{existing_id}) — existing record updated."
+                }), 200
+
             cur.execute('''
                 INSERT INTO "InstitutionalBids" (
                     solicitation_number, title, agency_name, sector, portal_name, portal_doc_id,
@@ -293,8 +479,8 @@ def api_inst_bid_create():
                 data.get('portal_name', ''),
                 data.get('portal_doc_id', ''),
                 data.get('procurement_officer', ''),
-                clean_email(data.get('officer_email')) or data.get('officer_email', ''),
-                clean_phone(data.get('officer_phone')) or data.get('officer_phone', ''),
+                cleaned_off_email,
+                cleaned_off_phone,
                 int(data.get('contract_term_months', 24) or 24),
                 float(data.get('cleanable_sqft', 0) or 0),
                 int(data.get('facilities_count', 1) or 1),
@@ -310,7 +496,7 @@ def api_inst_bid_create():
             ))
             new_id = cur.fetchone()[0]
             conn.commit()
-            return jsonify({'status': 'success', 'message': 'Institutional solicitation created.', 'id': new_id}), 201
+            return jsonify({'status': 'success', 'is_duplicate': False, 'message': 'Institutional solicitation created.', 'id': new_id}), 201
     except Exception as e:
         conn.rollback()
         return jsonify({'status': 'error', 'message': str(e)}), 500
@@ -694,9 +880,10 @@ def api_bid_download_file():
 
 @bids_bp.route('/api/v1/bids/<int:bid_id>/commit-estimate', methods=['POST'])
 @login_required
-@roles_required('Executive', 'Admin')
 def api_bid_commit_estimate(bid_id):
     """Commits recalculated takeoff values, square footage, and pricing to ConstructionBids."""
+    if not _has_bids_perm('edit'):
+        return jsonify({'status': 'error', 'message': 'Access denied: You do not have permission to commit bid estimates.'}), 403
     payload = request.get_json() or {}
     cleanable_sqft = float(payload.get('cleanable_sqft', 0))
     estimated_value = float(payload.get('estimated_value', 0))
@@ -708,6 +895,8 @@ def api_bid_commit_estimate(bid_id):
     conn = get_db(db_url)
     try:
         with conn.cursor() as cur:
+            if not _verify_bid_ownership(cur, bid_id):
+                return jsonify({'status': 'error', 'message': 'Access denied: Bid is not assigned to your profile.'}), 403
             cur.execute('''
                 UPDATE "ConstructionBids"
                 SET cleanable_sqft = %s,

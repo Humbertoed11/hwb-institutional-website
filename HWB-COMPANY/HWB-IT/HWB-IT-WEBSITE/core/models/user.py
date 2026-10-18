@@ -123,7 +123,7 @@ class User(UserMixin):
         'Admin': {'*': True},
         'Manager': {'leads': True, 'accounts': True, 'sales_desk': True, 'bids': True, 'workforce': True, 'monitor': True, 'qms': True},
         'Operator': {'leads': True, 'accounts': True, 'bids': True, 'workforce': True, 'monitor': True, 'qms': True},
-        'Sales': {'leads': True, 'accounts': True, 'sales_desk': True, 'bids': True},
+        'Sales': {'leads': True, 'accounts': True, 'sales_desk': True},
         'Estimator': {'bids': True},
         'Technician': {'monitor': True, 'qms': True},
         'Custom': {}
@@ -175,6 +175,29 @@ class User(UserMixin):
             return True
         return False
 
+    def get_default_landing_url(self) -> str:
+        """
+        Deterministically resolves the primary landing screen after login based on
+        the user's evaluated module permissions (Single Source of Truth).
+        """
+        if self.role in ['Partner', 'Partner_Bosanna']:
+            return '/portal/bosanna/portal'
+        if self.has_permission('leads', 'view'):
+            return '/admin/operations?view=leads'
+        if self.has_permission('accounts', 'view'):
+            return '/admin/operations?view=accounts'
+        if self.has_permission('bids', 'view'):
+            return '/admin/operations?view=construction_bids'
+        if self.has_permission('sales_desk', 'view'):
+            return '/sales-desk'
+        if self.has_permission('workforce', 'view'):
+            return '/admin/operations?view=workforce'
+        if self.has_permission('monitor', 'view'):
+            return '/admin/operations?view=monitor'
+        if self.has_permission('qms', 'view'):
+            return '/manual'
+        return '/manual/app'
+
     def has_telegram_permission(self, action: str) -> bool:
         """Evaluates whether the user has granular permission for Telegram operations."""
         if self.role in ['Executive', 'Admin']:
@@ -189,4 +212,5 @@ class User(UserMixin):
 
     def __repr__(self):
         return f"<User id={self.id} username='{self.username}' role='{self.role}'>"
+
 

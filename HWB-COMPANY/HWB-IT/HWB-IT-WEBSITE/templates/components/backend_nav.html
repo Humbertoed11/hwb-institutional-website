@@ -295,6 +295,7 @@
                 <a href="{{ url_for('admin_operations', view='leads', duplicates_only='true') }}" class="sigma-jump-item">
                     <span><i class="fas fa-exclamation-triangle" style="color: #f59e0b;"></i> Duplicates Review</span>
                 </a>
+                {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('sales_desk', 'view')) %}
                 <div class="sigma-jump-divider"></div>
                 <div class="sigma-jump-header">
                     <span>Calling Operations</span>
@@ -304,6 +305,7 @@
                     <span><i class="fas fa-phone-volume" style="color: #2563eb;"></i> Calling Desk</span>
                     <span class="sigma-jump-badge" style="background: #eff6ff; color: #1e3a8a;">Calling</span>
                 </a>
+                {% endif %}
                 {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('leads', 'edit')) %}
                 <div class="sigma-jump-divider"></div>
                 <button type="button" onclick="openAddForm('lead')" class="sigma-jump-action">
@@ -352,14 +354,13 @@
         </div>
         {% endif %}
 
-        <!-- Dedicated Fast-Bridge (Only displayed for Sales Rep Role) -->
+        <!-- Dedicated Fast-Bridge (Only displayed for Sales Rep Role with sales_desk permission) -->
         {% if current_user.role == 'Sales' and (current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('sales_desk', 'view'))) %}
-        <a href="{{ url_for('sales_desk') }}" class="sigma-nav-btn {% if request.endpoint == 'sales_desk' %}active{% endif %}" style="background: #eff6ff; color: #1e3a8a; border-color: #bfdbfe;" title="Call prospective clients, write call notes, book building walkthroughs, and set calendar appointments.">
+        <a href="{{ url_for('sales_desk') }}" class="sigma-nav-btn {% if request.endpoint == 'sales_desk' %}active{% endif %}" style="background: #eff6ff; color: #1e3a8a; border-color: #bfdbfe;" title="Field Sales Desk: Call prospective clients, write call notes, book building walkthroughs, and set calendar appointments.">
             <i class="fas fa-phone-volume" style="color: #2563eb;"></i> Calling
         </a>
         {% endif %}
 
-        {% if current_user.role != 'Sales' %}
             <!-- 3. Commercial Construction Tab (Split Dropdown: Active Construction + General Contractors Directory) -->
             {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('bids', 'view')) %}
             <div class="sigma-split-tab {% if request.endpoint == 'admin_operations' and active_view in ['construction_bids', 'general_contractors'] %}active{% endif %}" id="tab-gcbids-container">
@@ -596,7 +597,6 @@
                 </div>
             </div>
             {% endif %}
-        {% endif %}
         
         <!-- 5. Instant Create Action Dropdown -->
         <div style="flex-grow: 1; text-align: right; position: relative;">
@@ -614,25 +614,23 @@
                 {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('monitor', 'edit')) %}
                 <a href="{{ url_for('admin_operations', view='monitor') }}" class="isc-dropdown-btn" style="text-decoration: none; display: flex; align-items: center; color: #0284c7; font-weight: 700;"><i class="fas fa-calendar-check" style="margin-right: 0.5rem; color: #0284c7;"></i> + New Shift Dispatch</a>
                 {% endif %}
-                {% if current_user.role != 'Sales' %}
-                    {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('bids', 'edit')) %}
-                    <button onclick="openAddForm('bid')" class="isc-dropdown-btn" style="color: #b45309; font-weight: 700;"><i class="fas fa-hard-hat" style="margin-right: 0.5rem; color: #f59e0b;"></i> + New GC Bid</button>
-                    <button onclick="openAddForm('institutional_bid')" class="isc-dropdown-btn" style="color: #4338ca; font-weight: 700;"><i class="fas fa-landmark" style="margin-right: 0.5rem; color: #6366f1;"></i> + New Institutional Bid</button>
-                    {% endif %}
-                    {% if current_user.role in ['Executive', 'Admin'] %}
-                    <button onclick="openAddForm('institutional_partner')" class="isc-dropdown-btn" style="color: #064e3b; font-weight: 700;"><i class="fas fa-handshake-angle" style="margin-right: 0.5rem; color: #059669;"></i> + New Model C Partner</button>
-                    <a href="/portal/bosanna/portal" target="_blank" class="isc-dropdown-btn" style="text-decoration: none; display: flex; align-items: center; color: #063333; font-weight: 700;"><i class="fas fa-chalkboard-user" style="margin-right: 0.5rem; color: #063333;"></i> Bosanna Prime Portal</a>
-                    <a href="/onboard/bosanna" target="_blank" class="isc-dropdown-btn" style="text-decoration: none; display: flex; align-items: center; color: #059669; font-weight: 700;"><i class="fas fa-user-check" style="margin-right: 0.5rem; color: #059669;"></i> Bosanna Cleaner Intake</a>
-                    {% endif %}
-                    {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('workforce', 'view')) %}
-                    <a href="/work-with-us" target="_blank" class="isc-dropdown-btn" style="text-decoration: none; display: flex; align-items: center; color: #059669; font-weight: 700;"><i class="fas fa-user-plus" style="margin-right: 0.5rem; color: #10b981;"></i> Workforce Intake Portal</a>
-                    {% endif %}
-                    <a href="{{ active_manual_url }}" class="isc-dropdown-btn hwb-app-manual-link" style="text-decoration: none; display: block; color: var(--brand); font-weight: 700;"><i class="fas fa-desktop" style="margin-right: 0.5rem; color: var(--brand);"></i> Application Manual</a>
-                    {% if has_master_qms %}
-                    <a href="{{ url_for('public.manual_index') }}" class="isc-dropdown-btn" style="text-decoration: none; display: block; color: #334155; font-weight: 700;"><i class="fas fa-book" style="margin-right: 0.5rem; color: var(--brand);"></i> Entire QMS Manual</a>
-                    <a href="/manual/hwb-qms-7.6_backend_architecture.html" class="isc-dropdown-btn" style="text-decoration: none; display: block; color: var(--brand); font-weight: 800;"><i class="fas fa-file-code" style="margin-right: 0.5rem;"></i> 7.6 Backend Architecture</a>
-                    <a href="/manual/hwb-qms-7.7_backend_web_system.html" class="isc-dropdown-btn" style="text-decoration: none; display: block; color: var(--brand); font-weight: 800;"><i class="fas fa-network-wired" style="margin-right: 0.5rem;"></i> 7.7 Commercial Takeoff</a>
-                    {% endif %}
+                {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('bids', 'edit')) %}
+                <button onclick="openAddForm('bid')" class="isc-dropdown-btn" style="color: #b45309; font-weight: 700;"><i class="fas fa-hard-hat" style="margin-right: 0.5rem; color: #f59e0b;"></i> + New GC Bid</button>
+                <button onclick="openAddForm('institutional_bid')" class="isc-dropdown-btn" style="color: #4338ca; font-weight: 700;"><i class="fas fa-landmark" style="margin-right: 0.5rem; color: #6366f1;"></i> + New Institutional Bid</button>
+                {% endif %}
+                {% if current_user.role in ['Executive', 'Admin'] %}
+                <button onclick="openAddForm('institutional_partner')" class="isc-dropdown-btn" style="color: #064e3b; font-weight: 700;"><i class="fas fa-handshake-angle" style="margin-right: 0.5rem; color: #059669;"></i> + New Model C Partner</button>
+                <a href="/portal/bosanna/portal" target="_blank" class="isc-dropdown-btn" style="text-decoration: none; display: flex; align-items: center; color: #063333; font-weight: 700;"><i class="fas fa-chalkboard-user" style="margin-right: 0.5rem; color: #063333;"></i> Bosanna Prime Portal</a>
+                <a href="/onboard/bosanna" target="_blank" class="isc-dropdown-btn" style="text-decoration: none; display: flex; align-items: center; color: #059669; font-weight: 700;"><i class="fas fa-user-check" style="margin-right: 0.5rem; color: #059669;"></i> Bosanna Cleaner Intake</a>
+                {% endif %}
+                {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('workforce', 'view')) %}
+                <a href="/work-with-us" target="_blank" class="isc-dropdown-btn" style="text-decoration: none; display: flex; align-items: center; color: #059669; font-weight: 700;"><i class="fas fa-user-plus" style="margin-right: 0.5rem; color: #10b981;"></i> Workforce Intake Portal</a>
+                {% endif %}
+                <a href="{{ active_manual_url }}" class="isc-dropdown-btn hwb-app-manual-link" style="text-decoration: none; display: block; color: var(--brand); font-weight: 700;"><i class="fas fa-desktop" style="margin-right: 0.5rem; color: var(--brand);"></i> Application Manual</a>
+                {% if has_master_qms %}
+                <a href="{{ url_for('public.manual_index') }}" class="isc-dropdown-btn" style="text-decoration: none; display: block; color: #334155; font-weight: 700;"><i class="fas fa-book" style="margin-right: 0.5rem; color: var(--brand);"></i> Entire QMS Manual</a>
+                <a href="/manual/hwb-qms-7.6_backend_architecture.html" class="isc-dropdown-btn" style="text-decoration: none; display: block; color: var(--brand); font-weight: 800;"><i class="fas fa-file-code" style="margin-right: 0.5rem;"></i> 7.6 Backend Architecture</a>
+                <a href="/manual/hwb-qms-7.7_backend_web_system.html" class="isc-dropdown-btn" style="text-decoration: none; display: block; color: var(--brand); font-weight: 800;"><i class="fas fa-network-wired" style="margin-right: 0.5rem;"></i> 7.7 Commercial Takeoff</a>
                 {% endif %}
             </div>
         </div>

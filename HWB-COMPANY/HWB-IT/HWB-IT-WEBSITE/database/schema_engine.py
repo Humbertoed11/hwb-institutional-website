@@ -244,9 +244,11 @@ def apply_system_migrations(conn: Any, db_url: Optional[str] = None) -> None:
                     next_action_date DATE,
                     notes TEXT,
                     email_id VARCHAR(255) UNIQUE,
+                    assigned_rep_id INTEGER,
                     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                 );
+                ALTER TABLE "ConstructionBids" ADD COLUMN IF NOT EXISTS assigned_rep_id INTEGER;
 
                 -- Contacts Table Parity
                 CREATE TABLE IF NOT EXISTS "Contacts" (
@@ -374,6 +376,11 @@ def apply_system_migrations(conn: Any, db_url: Optional[str] = None) -> None:
                     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                 );
+                CREATE UNIQUE INDEX IF NOT EXISTS idx_subcontractors_unique_phone_digits
+                ON "SubcontractorPartners" ((REGEXP_REPLACE(COALESCE(phone, ''), '\D', '', 'g')))
+                WHERE LENGTH(REGEXP_REPLACE(COALESCE(phone, ''), '\D', '', 'g')) = 10;
+                CREATE INDEX IF NOT EXISTS idx_jobapplicants_phone_digits
+                ON "JobApplicants" ((REGEXP_REPLACE(COALESCE(phone, ''), '\D', '', 'g')));
 
                 -- Employees Table Parity
                 CREATE TABLE IF NOT EXISTS "Employees" (
@@ -708,6 +715,64 @@ def apply_system_migrations(conn: Any, db_url: Optional[str] = None) -> None:
                 conn.commit()
                 applied.add("040_high_speed_scalability_indexes")
                 print("[MIGRATION] 040_high_speed_scalability_indexes successfully applied and recorded.", flush=True)
+
+            # --- Migration 041: Enterprise Deduplication & Smart Merge Indexes ---
+            if "041_enterprise_deduplication_indexes" not in applied:
+                print("[MIGRATION] Applying 041_enterprise_deduplication_indexes...", flush=True)
+                cur.execute('''
+                    CREATE UNIQUE INDEX IF NOT EXISTS idx_subcontractors_unique_phone_digits
+                    ON "SubcontractorPartners" (RIGHT(REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g'), 10))
+                    WHERE LENGTH(REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g')) >= 10;
+                ''')
+                cur.execute('''
+                    CREATE INDEX IF NOT EXISTS idx_jobapplicants_phone_digits
+                    ON "JobApplicants" (RIGHT(REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g'), 10));
+                ''')
+                cur.execute('''
+                    CREATE INDEX IF NOT EXISTS idx_leads_phone_digits
+                    ON "Leads" (RIGHT(REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g'), 10))
+                    WHERE COALESCE(is_duplicate, FALSE) = FALSE;
+                ''')
+                cur.execute('''
+                    CREATE INDEX IF NOT EXISTS idx_employees_phone_digits
+                    ON "Employees" (RIGHT(REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g'), 10));
+                ''')
+                cur.execute('''
+                    CREATE INDEX IF NOT EXISTS idx_customers_phone_digits
+                    ON "Customers" (RIGHT(REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g'), 10));
+                ''')
+                cur.execute('''
+                    CREATE INDEX IF NOT EXISTS idx_construction_bids_gc_project
+                    ON "ConstructionBids" (LOWER(TRIM(COALESCE(gc_name, ''))), LOWER(TRIM(COALESCE(project_name, ''))));
+                ''')
+                cur.execute('''
+                    CREATE INDEX IF NOT EXISTS idx_institutional_bids_solicitation
+                    ON "InstitutionalBids" (LOWER(TRIM(COALESCE(solicitation_number, ''))));
+                ''')
+                cur.execute("""
+                    INSERT INTO "schema_migrations" (version, description)
+                    VALUES ('041_enterprise_deduplication_indexes', 'Enterprise deduplication functional indexes across SubcontractorPartners, JobApplicants, Leads, Employees, Customers, ConstructionBids, and InstitutionalBids')
+                    ON CONFLICT (version) DO NOTHING;
+                """)
+                conn.commit()
+                applied.add("041_enterprise_deduplication_indexes")
+                print("[MIGRATION] 041_enterprise_deduplication_indexes successfully applied and recorded.", flush=True)
+
+            if "042_sales_territory_and_caller_tags" not in applied:
+                cur.execute("""
+                    ALTER TABLE "ConstructionBids" ADD COLUMN IF NOT EXISTS assigned_rep_id INTEGER;
+                    CREATE INDEX IF NOT EXISTS idx_construction_bids_assigned_rep ON "ConstructionBids"(assigned_rep_id);
+                    UPDATE "user_scripts"
+                    SET script_body = REPLACE(script_body, 'Humberto Dominguez, CEO and founder of', '{Caller} with'),
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE script_body LIKE '%Humberto Dominguez, CEO and founder of%';
+                    INSERT INTO "schema_migrations" (version, description)
+                    VALUES ('042_sales_territory_and_caller_tags', 'Add assigned_rep_id to ConstructionBids and replace hardcoded founder name in shared user_scripts with dynamic {Caller} tag')
+                    ON CONFLICT (version) DO NOTHING;
+                """)
+                conn.commit()
+                applied.add("042_sales_territory_and_caller_tags")
+                print("[MIGRATION] 042_sales_territory_and_caller_tags successfully applied and recorded.", flush=True)
 
             for v_tag, mod_path, v_desc in modular_migrations:
                 if v_tag not in applied:

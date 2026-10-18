@@ -21,7 +21,7 @@ from core.constants import FACILITY_TYPES, LEAD_SOURCES, PRIORITY_LEVELS
 from core.security import roles_required
 from core.services.database import get_db
 from core.services.search import parse_advanced_search
-from core.services.sanitizer import clean_phone, clean_currency, clean_sqft, clean_zip, clean_email, clean_city
+from core.services.sanitizer import clean_phone, clean_currency, clean_sqft, clean_zip, clean_email, clean_city, extract_phone_digits
 from core.services.email_service import transmit_email
 from core.services.security_logger import get_site_security_telemetry, log_security_event
 
@@ -95,8 +95,6 @@ def admin_operations():
                 )
                 abort(403)
 
-    if current_user.role == 'Sales' and active_view not in ['leads', 'accounts']:
-        return redirect(url_for('admin_operations', view='leads'))
     page = request.args.get('page', 1, type=int)
     search_q = request.args.get('q', '').strip()
     active_only = request.args.get('active_only') == 'true'
@@ -130,7 +128,7 @@ def admin_operations():
     # --- Dynamic Column Architecture ---
     default_cols_leads = 'company,status,sqf,value,priority,activities'
     default_cols_accounts = 'company,city,phone,revenue,rep,activities'
-    default_cols_bids = 'project,status,due_date,created,sqf,value,scope,estimator,phone,actions'
+    default_cols_bids = 'project,status,due_date,created,sqf,value,scope,estimator,phone,owner,actions'
     
     if active_view == 'leads':
         session_key = 'leads_custom_cols'
@@ -202,7 +200,7 @@ def admin_operations():
         'scope': 'cb.scope_phase', 'location': 'cb.city', 'address': 'cb.project_address',
         'platform': 'cb.platform', 'estimator': 'cb.estimator_name', 'phone': 'cb.estimator_phone',
         'email': 'cb.estimator_email', 'dates': 'cb.estimated_start_date', 'prequal': 'cb.prequal_status',
-        'special_reqs': 'cb.special_requirements',
+        'special_reqs': 'cb.special_requirements', 'owner': 'cb.assigned_rep_id', 'rep': 'cb.assigned_rep_id',
         'activities': '(SELECT COUNT(*) FROM "GlobalActivities" WHERE parent_id = cb.id AND parent_type = \'ConstructionBid\')',
         'last_contact': 'last_contact', 'last_note': 'last_note', 'created': 'cb.created_at'
     }
@@ -245,7 +243,11 @@ def admin_operations():
         # 1. FETCH ACCOUNTS
         try:
             with conn.cursor() as cur:
-                cur.execute('SELECT SUM(annual_revenue) FROM "Customers"')
+                is_sales_account_scope = (getattr(current_user, 'role', '') == 'Sales')
+                if is_sales_account_scope:
+                    cur.execute('SELECT SUM(annual_revenue) FROM "Customers" WHERE assigned_rep_id = %s', (current_user.id,))
+                else:
+                    cur.execute('SELECT SUM(annual_revenue) FROM "Customers"')
                 portfolio_total_row = cur.fetchone()
                 portfolio_total = portfolio_total_row[0] if portfolio_total_row and portfolio_total_row[0] is not None else 0
 
@@ -260,6 +262,10 @@ def admin_operations():
                 
                 where_clauses = []
                 params = []
+
+                if is_sales_account_scope:
+                    where_clauses.append("c.assigned_rep_id = %s")
+                    params.append(current_user.id)
 
                 if active_only:
                     where_clauses.append("(SELECT COUNT(*) FROM \"GlobalActivities\" WHERE parent_id = c.customer_id AND parent_type = 'Account') > 0")
@@ -285,6 +291,11 @@ def admin_operations():
             with conn.cursor() as cur:
                 lead_where_clauses = []
                 lead_params = []
+                is_sales_lead_scope = (getattr(current_user, 'role', '') == 'Sales')
+
+                if is_sales_lead_scope:
+                    lead_where_clauses.append("l.owner_id = %s")
+                    lead_params.append(current_user.id)
 
                 include_archived = request.args.get('include_archived') == 'true'
                 duplicates_only = request.args.get('duplicates_only') == 'true'
@@ -323,7 +334,10 @@ def admin_operations():
                 leads_count = cur.fetchone()[0]
 
                 try:
-                    cur.execute('SELECT COUNT(*) FROM "Leads" WHERE is_duplicate = TRUE;')
+                    if is_sales_lead_scope:
+                        cur.execute('SELECT COUNT(*) FROM "Leads" WHERE is_duplicate = TRUE AND owner_id = %s;', (current_user.id,))
+                    else:
+                        cur.execute('SELECT COUNT(*) FROM "Leads" WHERE is_duplicate = TRUE;')
                     dup_count_row = cur.fetchone()
                     dup_count = dup_count_row[0] if dup_count_row else 0
                 except Exception:
@@ -331,11 +345,19 @@ def admin_operations():
                     dup_count = 0
 
                 try:
-                    cur.execute('''
-                        SELECT COUNT(DISTINCT l.id) 
-                        FROM "Leads" l 
-                        WHERE (EXISTS (SELECT 1 FROM "CampaignRecipients" cr WHERE cr.lead_id = l.id) OR l.status = 'In Campaign');
-                    ''')
+                    if is_sales_lead_scope:
+                        cur.execute('''
+                            SELECT COUNT(DISTINCT l.id) 
+                            FROM "Leads" l 
+                            WHERE l.owner_id = %s
+                              AND (EXISTS (SELECT 1 FROM "CampaignRecipients" cr WHERE cr.lead_id = l.id) OR l.status = 'In Campaign');
+                        ''', (current_user.id,))
+                    else:
+                        cur.execute('''
+                            SELECT COUNT(DISTINCT l.id) 
+                            FROM "Leads" l 
+                            WHERE (EXISTS (SELECT 1 FROM "CampaignRecipients" cr WHERE cr.lead_id = l.id) OR l.status = 'In Campaign');
+                        ''')
                     in_camp_row = cur.fetchone()
                     in_campaign_count = in_camp_row[0] if in_camp_row else 0
                 except Exception:
@@ -343,11 +365,19 @@ def admin_operations():
                     in_campaign_count = 0
 
                 try:
-                    cur.execute('''
-                        SELECT COUNT(DISTINCT l.id) 
-                        FROM "Leads" l 
-                        WHERE EXISTS (SELECT 1 FROM "CampaignRecipients" cr WHERE cr.lead_id = l.id AND COALESCE(cr.open_count, 0) > 0);
-                    ''')
+                    if is_sales_lead_scope:
+                        cur.execute('''
+                            SELECT COUNT(DISTINCT l.id) 
+                            FROM "Leads" l 
+                            WHERE l.owner_id = %s
+                              AND EXISTS (SELECT 1 FROM "CampaignRecipients" cr WHERE cr.lead_id = l.id AND COALESCE(cr.open_count, 0) > 0);
+                        ''', (current_user.id,))
+                    else:
+                        cur.execute('''
+                            SELECT COUNT(DISTINCT l.id) 
+                            FROM "Leads" l 
+                            WHERE EXISTS (SELECT 1 FROM "CampaignRecipients" cr WHERE cr.lead_id = l.id AND COALESCE(cr.open_count, 0) > 0);
+                        ''')
                     opened_row = cur.fetchone()
                     opened_leads_count = opened_row[0] if opened_row else 0
                 except Exception:
@@ -452,8 +482,12 @@ def admin_operations():
         # 4. CONSTRUCTION BIDS PIPELINE
         try:
             with conn.cursor() as cur:
+                is_sales_bid_scope = (getattr(current_user, 'role', '') == 'Sales')
                 bid_where_clauses = []
                 bid_params = []
+                if is_sales_bid_scope:
+                    bid_where_clauses.append("cb.assigned_rep_id = %s")
+                    bid_params.append(current_user.id)
                 if search_q and active_view == 'construction_bids':
                     s_clauses, s_params = parse_advanced_search(search_q, 'construction_bids')
                     bid_where_clauses.extend(s_clauses)
@@ -1052,6 +1086,9 @@ def sales_desk():
                 'role': getattr(current_user, 'role', 'unknown')
             }
         )
+        if getattr(current_user, 'role', '') == 'Sales':
+            flash("Field Sales Desk is not enabled on your profile. Redirected to your workspace.", "info")
+            return redirect(current_user.get_default_landing_url())
         abort(403)
 
     search_q = request.args.get('q', '').strip()
@@ -1069,11 +1106,9 @@ def sales_desk():
             where_clauses = ['is_converted = FALSE']
             params = []
             
-            if is_sales_rep and user_assigned_count > 0:
+            if is_sales_rep:
                 where_clauses.append('owner_id = %s')
                 params.append(user_id)
-            elif is_sales_rep:
-                where_clauses.append('owner_id IS NULL')
                 
             if status_filter == 'walkthrough':
                 where_clauses.append("status ILIKE '%walkthrough%'")
@@ -1120,21 +1155,28 @@ def sales_desk():
                 ''', tuple(params))
                 leads = cur.fetchall()
             
-            if is_sales_rep and user_assigned_count > 0:
+            if is_sales_rep:
                 cur.execute('SELECT COUNT(*) FROM "Leads" WHERE is_converted = FALSE AND owner_id = %s', (user_id,))
-            elif is_sales_rep:
-                cur.execute('SELECT COUNT(*) FROM "Leads" WHERE is_converted = FALSE AND owner_id IS NULL')
             else:
                 cur.execute('SELECT COUNT(*) FROM "Leads" WHERE is_converted = FALSE')
             assigned_count = cur.fetchone()[0]
             
-            cur.execute("SELECT COUNT(*) FROM \"Leads\" WHERE status ILIKE '%walkthrough%'")
+            if is_sales_rep:
+                cur.execute("SELECT COUNT(*) FROM \"Leads\" WHERE status ILIKE '%%walkthrough%%' AND owner_id = %s", (user_id,))
+            else:
+                cur.execute("SELECT COUNT(*) FROM \"Leads\" WHERE status ILIKE '%walkthrough%'")
             walkthroughs_count = cur.fetchone()[0]
             
-            cur.execute("SELECT COALESCE(SUM(estimated_annual_value), 0) FROM \"Leads\" WHERE status ILIKE '%quote%' OR status ILIKE '%proposal%'")
+            if is_sales_rep:
+                cur.execute("SELECT COALESCE(SUM(estimated_annual_value), 0) FROM \"Leads\" WHERE (status ILIKE '%%quote%%' OR status ILIKE '%%proposal%%') AND owner_id = %s", (user_id,))
+            else:
+                cur.execute("SELECT COALESCE(SUM(estimated_annual_value), 0) FROM \"Leads\" WHERE status ILIKE '%quote%' OR status ILIKE '%proposal%'")
             proposals_val = cur.fetchone()[0] or 0.0
             
-            cur.execute("SELECT COALESCE(SUM(annual_revenue), 0) FROM \"Customers\" WHERE status = 'Active'")
+            if is_sales_rep:
+                cur.execute("SELECT COALESCE(SUM(annual_revenue), 0) FROM \"Customers\" WHERE status = 'Active' AND assigned_rep_id = %s", (user_id,))
+            else:
+                cur.execute("SELECT COALESCE(SUM(annual_revenue), 0) FROM \"Customers\" WHERE status = 'Active'")
             converted_val = cur.fetchone()[0] or 0.0
             
     finally:
@@ -1238,27 +1280,105 @@ def add_manual_lead():
 
             user_attribution = (current_user.full_name or current_user.username) if (current_user.is_authenticated and (current_user.full_name or current_user.username)) else 'Operations System'
 
-            cur.execute('''
-                INSERT INTO "Leads" (
-                    center_name, decision_maker, job_title, email, phone, address, 
-                    city, state, zipcode, industry, facility_type, sqf, 
-                    traffic_cycle, service_interest, lead_source, priority_level, 
-                    estimated_annual_value, status, notes, input_date, last_contacted_by,
-                    owner_id, umbrella_name
-                )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            ''', (
-                data.get('company_name'), data.get('decision_maker'), data.get('job_title'),
-                clean_email(data.get('email')) or data.get('email'), 
-                clean_phone(data.get('phone')) or data.get('phone'), data.get('address'),
-                clean_city(data.get('city')) or data.get('city'), data.get('state'), clean_zip(data.get('zipcode')), data.get('industry'),
-                data.get('facility_type'), sqf, traffic, data.get('service_interest'), 
-                data.get('lead_source'), data.get('priority_level'), annual_value,
-                'New', data.get('notes'), datetime.date.today().isoformat(), user_attribution,
-                owner_id, data.get('umbrella_name') or None
-            ))
-            conn.commit()
-            flash("Lead saved successfully.")
+            company_name = (data.get('company_name') or '').strip()
+            cleaned_email = clean_email(data.get('email')) or (data.get('email') or '').strip()
+            cleaned_phone = clean_phone(data.get('phone')) or (data.get('phone') or '').strip()
+            cleaned_city = clean_city(data.get('city')) or (data.get('city') or '').strip()
+            phone_digits = extract_phone_digits(cleaned_phone)
+
+            existing_lead_id = None
+            if phone_digits and len(phone_digits) == 10:
+                cur.execute('''
+                    SELECT id FROM "Leads"
+                    WHERE COALESCE(is_duplicate, FALSE) = FALSE
+                      AND RIGHT(REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g'), 10) = %s
+                    ORDER BY id ASC LIMIT 1;
+                ''', (phone_digits,))
+                row = cur.fetchone()
+                if row:
+                    existing_lead_id = row[0]
+
+            if not existing_lead_id and cleaned_email:
+                cur.execute('''
+                    SELECT id FROM "Leads"
+                    WHERE COALESCE(is_duplicate, FALSE) = FALSE
+                      AND LOWER(TRIM(COALESCE(email, ''))) = LOWER(%s)
+                    ORDER BY id ASC LIMIT 1;
+                ''', (cleaned_email,))
+                row = cur.fetchone()
+                if row:
+                    existing_lead_id = row[0]
+
+            if not existing_lead_id and company_name and cleaned_city:
+                cur.execute('''
+                    SELECT id FROM "Leads"
+                    WHERE COALESCE(is_duplicate, FALSE) = FALSE
+                      AND LOWER(TRIM(COALESCE(center_name, ''))) = LOWER(TRIM(%s))
+                      AND LOWER(TRIM(COALESCE(city, ''))) = LOWER(TRIM(%s))
+                    ORDER BY id ASC LIMIT 1;
+                ''', (company_name, cleaned_city))
+                row = cur.fetchone()
+                if row:
+                    existing_lead_id = row[0]
+
+            if existing_lead_id:
+                cur.execute('''
+                    UPDATE "Leads"
+                    SET center_name = COALESCE(NULLIF(%s, ''), center_name),
+                        decision_maker = COALESCE(NULLIF(%s, ''), decision_maker),
+                        job_title = COALESCE(NULLIF(%s, ''), job_title),
+                        email = COALESCE(NULLIF(%s, ''), email),
+                        phone = COALESCE(NULLIF(%s, ''), phone),
+                        address = COALESCE(NULLIF(%s, ''), address),
+                        city = COALESCE(NULLIF(%s, ''), city),
+                        state = COALESCE(NULLIF(%s, ''), state),
+                        zipcode = COALESCE(NULLIF(%s, ''), zipcode),
+                        industry = COALESCE(NULLIF(%s, ''), industry),
+                        facility_type = COALESCE(NULLIF(%s, ''), facility_type),
+                        sqf = CASE WHEN %s > 0 THEN %s ELSE sqf END,
+                        traffic_cycle = COALESCE(NULLIF(%s, ''), traffic_cycle),
+                        service_interest = COALESCE(NULLIF(%s, ''), service_interest),
+                        lead_source = COALESCE(NULLIF(%s, ''), lead_source),
+                        priority_level = COALESCE(NULLIF(%s, ''), priority_level),
+                        estimated_annual_value = CASE WHEN %s > 0 THEN %s ELSE estimated_annual_value END,
+                        notes = CASE WHEN %s IS NOT NULL AND %s != '' THEN COALESCE(notes, '') || E'\n[UPDATED]: ' || %s ELSE notes END,
+                        last_contacted_by = COALESCE(%s, last_contacted_by),
+                        owner_id = COALESCE(%s, owner_id),
+                        umbrella_name = COALESCE(NULLIF(%s, ''), umbrella_name)
+                    WHERE id = %s;
+                ''', (
+                    company_name, data.get('decision_maker'), data.get('job_title'),
+                    cleaned_email, cleaned_phone, data.get('address'),
+                    cleaned_city, data.get('state'), clean_zip(data.get('zipcode')), data.get('industry'),
+                    data.get('facility_type'), sqf, sqf, traffic, data.get('service_interest'),
+                    data.get('lead_source'), data.get('priority_level'), annual_value, annual_value,
+                    data.get('notes'), data.get('notes'), data.get('notes'),
+                    user_attribution, owner_id, data.get('umbrella_name') or None,
+                    existing_lead_id
+                ))
+                conn.commit()
+                flash(f"Existing lead recognized (LEAD-#{existing_lead_id:05d}) — profile updated without creating a duplicate.")
+            else:
+                cur.execute('''
+                    INSERT INTO "Leads" (
+                        center_name, decision_maker, job_title, email, phone, address, 
+                        city, state, zipcode, industry, facility_type, sqf, 
+                        traffic_cycle, service_interest, lead_source, priority_level, 
+                        estimated_annual_value, status, notes, input_date, last_contacted_by,
+                        owner_id, umbrella_name
+                    )
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ''', (
+                    company_name, data.get('decision_maker'), data.get('job_title'),
+                    cleaned_email, cleaned_phone, data.get('address'),
+                    cleaned_city, data.get('state'), clean_zip(data.get('zipcode')), data.get('industry'),
+                    data.get('facility_type'), sqf, traffic, data.get('service_interest'), 
+                    data.get('lead_source'), data.get('priority_level'), annual_value,
+                    'New', data.get('notes'), datetime.date.today().isoformat(), user_attribution,
+                    owner_id, data.get('umbrella_name') or None
+                ))
+                conn.commit()
+                flash("Lead saved successfully.")
     except Exception as e:
         flash(f"Error: {e}")
     finally:
@@ -1285,37 +1405,108 @@ def add_account():
             if not assigned_rep_id and current_user.is_authenticated and current_user.role == 'Sales':
                 assigned_rep_id = current_user.id
 
-            cur.execute('''
-                INSERT INTO "Customers" (
-                    company_name, contact_person_name, email, phone, 
-                    company_address, city, state, zip, website, sqf, annual_revenue, 
-                    traffic_cycle, quote_number, frequency, notes, status, assigned_rep_id,
-                    umbrella_name
-                )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'Active', %s, %s) RETURNING customer_id
-            ''', (data.get('company_name'), data.get('contact_person_name'), 
-                  clean_email(data.get('email')) or data.get('email'), 
-                  clean_phone(data.get('phone')) or data.get('phone'), 
-                  data.get('company_address'), clean_city(data.get('city')) or data.get('city'), data.get('state'), clean_zip(data.get('zip')), 
-                  data.get('website'), sqf, revenue, 
-                  data.get('traffic_cycle'), data.get('quote_number'),
-                  data.get('frequency'), data.get('notes'), assigned_rep_id,
-                  data.get('umbrella_name') or None))
-            customer_id = cur.fetchone()[0]
+            company_name = (data.get('company_name') or '').strip()
+            cleaned_email = clean_email(data.get('email')) or (data.get('email') or '').strip()
+            cleaned_phone = clean_phone(data.get('phone')) or (data.get('phone') or '').strip()
+            cleaned_city = clean_city(data.get('city')) or (data.get('city') or '').strip()
+            phone_digits = extract_phone_digits(cleaned_phone)
 
-            cur.execute('''
-                INSERT INTO "Services" (
-                    customer_id, service_requested, total_square_footage, extended_yearly_estimate, 
-                    traffic_cycle, quote_number, frequency, notes, status
-                )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-            ''', (customer_id, 'Managed Janitorial', sqf, 
-                  revenue, data.get('traffic_cycle'),
-                  data.get('quote_number'), data.get('frequency'), 
-                  data.get('notes'), 'Active'))
-            
-            conn.commit()
-            flash("Account added successfully.", "success")
+            existing_customer_id = None
+            if phone_digits and len(phone_digits) == 10:
+                cur.execute('''
+                    SELECT customer_id FROM "Customers"
+                    WHERE RIGHT(REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g'), 10) = %s
+                    ORDER BY customer_id ASC LIMIT 1;
+                ''', (phone_digits,))
+                row = cur.fetchone()
+                if row:
+                    existing_customer_id = row[0]
+
+            if not existing_customer_id and cleaned_email:
+                cur.execute('''
+                    SELECT customer_id FROM "Customers"
+                    WHERE LOWER(TRIM(COALESCE(email, ''))) = LOWER(%s)
+                    ORDER BY customer_id ASC LIMIT 1;
+                ''', (cleaned_email,))
+                row = cur.fetchone()
+                if row:
+                    existing_customer_id = row[0]
+
+            if not existing_customer_id and company_name:
+                cur.execute('''
+                    SELECT customer_id FROM "Customers"
+                    WHERE LOWER(TRIM(COALESCE(company_name, ''))) = LOWER(TRIM(%s))
+                    ORDER BY customer_id ASC LIMIT 1;
+                ''', (company_name,))
+                row = cur.fetchone()
+                if row:
+                    existing_customer_id = row[0]
+
+            if existing_customer_id:
+                cur.execute('''
+                    UPDATE "Customers"
+                    SET company_name = COALESCE(NULLIF(%s, ''), company_name),
+                        contact_person_name = COALESCE(NULLIF(%s, ''), contact_person_name),
+                        email = COALESCE(NULLIF(%s, ''), email),
+                        phone = COALESCE(NULLIF(%s, ''), phone),
+                        company_address = COALESCE(NULLIF(%s, ''), company_address),
+                        city = COALESCE(NULLIF(%s, ''), city),
+                        state = COALESCE(NULLIF(%s, ''), state),
+                        zip = COALESCE(NULLIF(%s, ''), zip),
+                        website = COALESCE(NULLIF(%s, ''), website),
+                        sqf = CASE WHEN %s > 0 THEN %s ELSE sqf END,
+                        annual_revenue = CASE WHEN %s > 0 THEN %s ELSE annual_revenue END,
+                        traffic_cycle = COALESCE(NULLIF(%s, ''), traffic_cycle),
+                        quote_number = COALESCE(NULLIF(%s, ''), quote_number),
+                        frequency = COALESCE(NULLIF(%s, ''), frequency),
+                        notes = CASE WHEN %s IS NOT NULL AND %s != '' THEN COALESCE(notes, '') || E'\n[UPDATED]: ' || %s ELSE notes END,
+                        assigned_rep_id = COALESCE(%s, assigned_rep_id),
+                        umbrella_name = COALESCE(NULLIF(%s, ''), umbrella_name)
+                    WHERE customer_id = %s;
+                ''', (
+                    company_name, data.get('contact_person_name'),
+                    cleaned_email, cleaned_phone,
+                    data.get('company_address'), cleaned_city, data.get('state'), clean_zip(data.get('zip')),
+                    data.get('website'), sqf, sqf, revenue, revenue,
+                    data.get('traffic_cycle'), data.get('quote_number'),
+                    data.get('frequency'), data.get('notes'), data.get('notes'), data.get('notes'),
+                    assigned_rep_id, data.get('umbrella_name') or None,
+                    existing_customer_id
+                ))
+                conn.commit()
+                flash(f"Existing account recognized (ACC-#{existing_customer_id:04d}) — profile updated without creating a duplicate.", "success")
+            else:
+                cur.execute('''
+                    INSERT INTO "Customers" (
+                        company_name, contact_person_name, email, phone, 
+                        company_address, city, state, zip, website, sqf, annual_revenue, 
+                        traffic_cycle, quote_number, frequency, notes, status, assigned_rep_id,
+                        umbrella_name
+                    )
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'Active', %s, %s) RETURNING customer_id
+                ''', (company_name, data.get('contact_person_name'), 
+                      cleaned_email, 
+                      cleaned_phone, 
+                      data.get('company_address'), cleaned_city, data.get('state'), clean_zip(data.get('zip')), 
+                      data.get('website'), sqf, revenue, 
+                      data.get('traffic_cycle'), data.get('quote_number'),
+                      data.get('frequency'), data.get('notes'), assigned_rep_id,
+                      data.get('umbrella_name') or None))
+                customer_id = cur.fetchone()[0]
+
+                cur.execute('''
+                    INSERT INTO "Services" (
+                        customer_id, service_requested, total_square_footage, extended_yearly_estimate, 
+                        traffic_cycle, quote_number, frequency, notes, status
+                    )
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ''', (customer_id, 'Managed Janitorial', sqf, 
+                      revenue, data.get('traffic_cycle'),
+                      data.get('quote_number'), data.get('frequency'), 
+                      data.get('notes'), 'Active'))
+                
+                conn.commit()
+                flash("Account added successfully.", "success")
     except Exception as e:
         print(f"Account Creation Error: {e}")
         flash(f"Account Onboarding Failed: {e}", "error")
@@ -1470,8 +1661,13 @@ def sigma_executive():
                         urole = request.form.get('user_role', 'Operator')
                         ustatus = request.form.get('status', 'Active')
                         force_pwd = True if request.form.get('force_pwd_reset') == 'true' else False
-                        new_pass = request.form.get('new_password')
+                        new_pass = (request.form.get('new_password') or '').strip()
+                        conf_pass = (request.form.get('confirm_password') or '').strip()
                         telegram_cid = (request.form.get('telegram_chat_id') or '').strip() or None
+
+                        if new_pass and conf_pass and new_pass != conf_pass:
+                            flash("New Password and Confirm New Password do not match.", "error")
+                            return redirect(url_for("sigma_executive") + "#users")
                         
                         cur.execute('SELECT role, custom_permissions FROM "Users" WHERE id = %s', (uid,))
                         existing_row = cur.fetchone()
@@ -1528,7 +1724,10 @@ def sigma_executive():
                                 'role_changed': role_changed
                             }
                         )
-                        flash("User account updated successfully.")
+                        if new_pass:
+                            flash("User account and password updated successfully.", "success")
+                        else:
+                            flash("User account updated successfully.", "success")
                     elif action == 'delete_user':
                         uid = request.form.get('user_id')
                         if str(uid) != str(current_user.id):

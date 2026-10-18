@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   db:
-    image: postgres:13
+    image: pgvector/pgvector:pg16
     container_name: hwb_postgres_dev
     restart: always
     environment:
@@ -13,7 +13,7 @@ services:
     ports:
       - "127.0.0.1:5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data_pg16:/var/lib/postgresql/data
     networks:
       - hwb-net
 
@@ -96,3 +96,4 @@ networks:
 
 volumes:
   postgres_data:
+  postgres_data_pg16:

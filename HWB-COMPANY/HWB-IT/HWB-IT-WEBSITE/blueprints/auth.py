@@ -141,13 +141,46 @@ def login():
                         print(f"[AUTH] Auto-upgrade Bosanna password hash notice: {up_err}", flush=True)
 
         if user and valid_password:
+            client_ip = extract_client_ip()
+            role = user.get('role') or ('Executive' if user.get('username') in ['admin', 'hdominguez', 'humberto', 'humbertoed'] else 'Operator')
+
+            # Enforce Require Password Reset on Next Login (force_pwd_reset)
+            if user.get('force_pwd_reset') is True:
+                raw_token = secrets.token_urlsafe(32)
+                token_hash = hashlib.sha256(raw_token.encode('utf-8')).hexdigest()
+                expires_at = datetime.datetime.utcnow() + datetime.timedelta(minutes=15)
+                try:
+                    up_conn = get_db(db_url)
+                    with up_conn.cursor() as up_cur:
+                        up_cur.execute('''
+                            UPDATE "Users"
+                            SET reset_token_hash = %s,
+                                reset_token_expires_at = %s
+                            WHERE id = %s;
+                        ''', (token_hash, expires_at, user['id']))
+                        up_conn.commit()
+                    up_conn.close()
+                except Exception as fp_err:
+                    print(f"[AUTH] Failed to issue force_pwd_reset token: {fp_err}", flush=True)
+
+                log_security_event(
+                    event_category='AUTH',
+                    event_action='FORCE_PASSWORD_RESET_REQUIRED',
+                    severity='INFO',
+                    user_id=user['id'],
+                    username=user['username'],
+                    user_role=role,
+                    ip_address=client_ip,
+                    status_code=302,
+                    details={'reason': 'force_pwd_reset flag active on account'}
+                )
+                flash('Please set a new personal password to complete your sign-in.', 'info')
+                return redirect(url_for('auth.reset_password', token=raw_token))
+
             session.permanent = True
             session['last_activity'] = time.time()
-            role = user.get('role') or ('Executive' if user.get('username') in ['admin', 'hdominguez', 'humberto', 'humbertoed'] else 'Operator')
             u_obj = User(user['id'], user['username'], role, user.get('full_name'), user.get('custom_permissions'))
             login_user(u_obj)
-
-            client_ip = extract_client_ip()
 
             # Atomically update live user roster telemetry
             try:
@@ -181,11 +214,7 @@ def login():
             next_page = request.args.get('next')
             if next_page and not next_page.startswith('/login'):
                 return redirect(next_page)
-            if role in ['Partner', 'Partner_Bosanna']:
-                return redirect(url_for('partner.bosanna_portal'))
-            if role == 'Sales':
-                return redirect(url_for('operations.sales_desk'))
-            return redirect(url_for('admin_operations'))
+            return redirect(u_obj.get_default_landing_url())
 
         log_security_event(
             event_category='AUTH',
@@ -579,4 +608,90 @@ def api_change_password():
         return jsonify({"status": "error", "message": f"Server error: {str(e)}"}), 500
     finally:
         conn.close()
+
+
+@auth_bp.route('/api/v1/users/<int:user_id>/send-reset-email', methods=['POST'], endpoint='api_admin_send_reset_email')
+@login_required
+def api_admin_send_reset_email(user_id: int):
+    """
+    Allows an Executive, Admin, or authorized Manager to send a 15-minute single-use
+    password reset link directly to a user from the Edit User Account modal.
+    """
+    role = getattr(current_user, 'role', '')
+    has_user_edit = role in ['Executive', 'Admin', 'Manager'] or (
+        hasattr(current_user, 'has_permission') and current_user.has_permission('users', 'edit')
+    )
+    if not has_user_edit:
+        return jsonify({"status": "error", "message": "Insufficient permissions to dispatch password reset links."}), 403
+
+    data = request.get_json(silent=True) or {}
+    override_email = (data.get('email') or '').strip()
+    client_ip = extract_client_ip()
+    db_url = current_app.config['DATABASE_URL']
+
+    conn = get_db(db_url)
+    try:
+        with conn.cursor() as cur:
+            cur.execute('SELECT id, username, email, full_name FROM "Users" WHERE id = %s LIMIT 1;', (user_id,))
+            target_user = cur.fetchone()
+            if not target_user:
+                return jsonify({"status": "error", "message": "User account not found."}), 404
+
+            target_email = override_email or (target_user.get('email') or '').strip()
+            if not target_email:
+                return jsonify({"status": "error", "message": "No email address on file for this user."}), 400
+
+            raw_token = secrets.token_urlsafe(32)
+            token_hash = hashlib.sha256(raw_token.encode('utf-8')).hexdigest()
+            expires_at = datetime.datetime.utcnow() + datetime.timedelta(minutes=15)
+
+            cur.execute('''
+                UPDATE "Users"
+                SET reset_token_hash = %s,
+                    reset_token_expires_at = %s
+                WHERE id = %s;
+            ''', (token_hash, expires_at, user_id))
+            conn.commit()
+
+        proto = request.headers.get('X-Forwarded-Proto', 'https' if request.is_secure else 'http')
+        host = request.headers.get('X-Forwarded-Host') or request.host
+        reset_url = f"{proto}://{host}/reset-password/{raw_token}"
+        full_name = target_user.get('full_name') or target_user.get('username')
+
+        letterhead_body = f"""
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 24px; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff; color: #1e293b; max-width: 600px; margin: 0 auto;">
+            <div style="border-bottom: 2px solid #0f172a; padding-bottom: 12px; margin-bottom: 18px;">
+                <div style="font-weight: 800; font-size: 13px; color: #0f172a;">HWB CLEANING SERVICES LLC</div>
+                <div style="font-weight: 700; font-size: 9.5px; color: #2563eb; text-transform: uppercase;">Corporate Security • Account Password Reset</div>
+            </div>
+            <div style="padding: 10px 0 20px 0; line-height: 1.6; color: #1e293b; font-size: 14px;">
+                <h2 style="font-size: 16px; color: #0f172a; margin-top: 0;">Set Your New Account Password</h2>
+                <p>Hello <strong>{full_name}</strong>,</p>
+                <p>An administrator has sent you a link to set a new password for your HWB Cleaning Services backoffice account (Username: <strong>{target_user['username']}</strong>).</p>
+                <p>Click the button below to choose your new password. This link is single-use and expires in <strong>15 minutes</strong>:</p>
+                <div style="text-align: center; margin: 25px 0;">
+                    <a href="{reset_url}" style="background: #2563eb; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 700; font-size: 14px; display: inline-block;">Set New Password</a>
+                </div>
+            </div>
+        </div>
+        """
+        transmit_email(target_email, "HWB Security: Set Your New Account Password", letterhead_body)
+
+        log_security_event(
+            event_category='USER_ADMIN',
+            event_action='PASSWORD_RESET_DISPATCHED_BY_ADMIN',
+            severity='INFO',
+            user_id=current_user.id,
+            username=current_user.username,
+            ip_address=client_ip,
+            status_code=200,
+            details={'target_user_id': user_id, 'target_username': target_user['username'], 'target_email': target_email}
+        )
+        return jsonify({"status": "success", "message": f"Password reset link sent to {target_email}."}), 200
+    except Exception as e:
+        print(f"[AUTH ERROR] Admin password reset email dispatch failed: {e}", flush=True)
+        return jsonify({"status": "error", "message": f"Failed to send reset link: {str(e)}"}), 500
+    finally:
+        conn.close()
+
 

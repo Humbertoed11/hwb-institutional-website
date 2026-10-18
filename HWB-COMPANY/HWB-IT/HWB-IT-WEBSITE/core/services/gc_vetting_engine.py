@@ -410,8 +410,8 @@ class GCVettingEngine:
                 final_est_name = parsed["estimator_name"] or bid.get("estimator_name") or (master_gc.get("lead_estimator_name") if master_gc else None)
                 final_est_title = parsed["estimator_title"] or bid.get("estimator_title") or (master_gc.get("lead_estimator_title") if master_gc else None)
                 final_est_email = parsed["estimator_email"] or bid.get("estimator_email") or (master_gc.get("lead_estimator_email") if master_gc else None)
-                final_est_phone = parsed["estimator_phone"] or bid.get("estimator_phone") or (master_gc.get("lead_estimator_phone") if master_gc else None)
-                final_est_phone = clean_phone(final_est_phone)
+                raw_est_phone = parsed["estimator_phone"] or bid.get("estimator_phone") or (master_gc.get("lead_estimator_phone") if master_gc else None)
+                final_est_phone = clean_phone(raw_est_phone) or raw_est_phone
 
                 final_addr = parsed["project_address"] or bid.get("project_address")
                 final_city = parsed["city"] or bid.get("city")
@@ -449,13 +449,13 @@ class GCVettingEngine:
                 # Persist updates to ConstructionBids
                 cur.execute('''
                     UPDATE "ConstructionBids"
-                    SET gc_id = %s,
-                        gc_name = %s,
-                        estimator_name = %s,
-                        estimator_title = %s,
-                        estimator_email = %s,
-                        estimator_phone = %s,
-                        project_address = %s,
+                    SET gc_id = COALESCE(%s, gc_id),
+                        gc_name = COALESCE(%s, gc_name),
+                        estimator_name = COALESCE(%s, estimator_name),
+                        estimator_title = COALESCE(%s, estimator_title),
+                        estimator_email = COALESCE(%s, estimator_email),
+                        estimator_phone = COALESCE(%s, estimator_phone),
+                        project_address = COALESCE(%s, project_address),
                         city = COALESCE(%s, city),
                         zipcode = COALESCE(%s, zipcode),
                         bid_due_date = COALESCE(%s, bid_due_date),
@@ -519,27 +519,27 @@ class GCVettingEngine:
     def enrich_all_bids(db_url: Optional[str] = None) -> Dict[str, Any]:
         """Runs autonomous profile enrichment and 4-point vetting across all ConstructionBids."""
         target_url = db_url or DB_URL
-        conn = psycopg2.connect(target_url)
         enriched_count = 0
         tier_counts = {"Tier 1 - Preferred Prime": 0, "Tier 2 - National Retail": 0, "Tier 3 - Planroom Broadcast": 0, "Needs Review / Flagged": 0}
 
+        conn = psycopg2.connect(target_url)
         try:
             with conn.cursor() as cur:
                 cur.execute('SELECT id FROM "ConstructionBids" ORDER BY id ASC;')
                 bid_ids = [r[0] for r in cur.fetchall()]
-
-            for bid_id in bid_ids:
-                res = GCVettingEngine.enrich_single_bid(bid_id, target_url)
-                if res.get("status") == "success":
-                    enriched_count += 1
-                    tier = res["scorecard"]["vetting_tier"]
-                    tier_counts[tier] = tier_counts.get(tier, 0) + 1
-
-            return {
-                "status": "success",
-                "total_processed": len(bid_ids),
-                "enriched_count": enriched_count,
-                "tier_breakdown": tier_counts
-            }
         finally:
             conn.close()
+
+        for bid_id in bid_ids:
+            res = GCVettingEngine.enrich_single_bid(bid_id, target_url)
+            if res.get("status") == "success":
+                enriched_count += 1
+                tier = res["scorecard"]["vetting_tier"]
+                tier_counts[tier] = tier_counts.get(tier, 0) + 1
+
+        return {
+            "status": "success",
+            "total_processed": len(bid_ids),
+            "enriched_count": enriched_count,
+            "tier_breakdown": tier_counts
+        }

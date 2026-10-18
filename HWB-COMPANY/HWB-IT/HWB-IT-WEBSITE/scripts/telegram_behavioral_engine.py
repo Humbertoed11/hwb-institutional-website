@@ -45,13 +45,15 @@ def get_db_connection():
 
 def synthesize_with_gemini(user_meta: dict, stats: dict, recent_samples: list) -> dict:
     """
-    Sends aggregated behavioral telemetry to Gemini 2.5 Flash
-    to extract qualitative insights and system evolution directives.
+    Sends aggregated behavioral telemetry to Tier 1 (gemini-2.5-flash-lite)
+    with automatic failover to Tier 2 (gemini-2.5-flash) per HWB-QMS-11.11,
+    extracting empirical usageMetadata and qualitative insights.
     """
     if not GEMINI_API_KEY:
         return fallback_rule_based_synthesis(user_meta, stats)
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
+    primary_model = "gemini-2.5-flash-lite"
+    fallback_model = "gemini-2.5-flash"
     
     prompt = f"""
 You are the SigmaFidelity™ Behavioral Analytics Engine for HWB Cleaning Services LLC.
@@ -94,18 +96,44 @@ Output a strict JSON object with NO markdown or commentary outside the JSON bloc
         "contents": [{"parts": [{"text": prompt}]}]
     }
 
-    try:
-        res = session.post(url, json=payload, timeout=25)
-        if res.status_code == 200:
-            text = res.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
-            # Clean possible markdown block
-            if "```json" in text:
-                text = text.split("```json")[1].split("```")[0].strip()
-            elif "```" in text:
-                text = text.split("```")[1].split("```")[0].strip()
-            return json.loads(text)
-    except Exception as e:
-        print(f"[BEHAVIORAL ENGINE] Gemini synthesis error: {e}", flush=True)
+    for model_name, in_rate, out_rate in (
+        (primary_model, 0.10, 0.40),
+        (fallback_model, 0.30, 2.50),
+    ):
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={GEMINI_API_KEY}"
+        try:
+            res = session.post(url, json=payload, timeout=25)
+            if res.status_code == 200:
+                resp_json = res.json()
+                usage = resp_json.get("usageMetadata", {})
+                in_tok = int(usage.get("promptTokenCount", 0) or 0)
+                out_tok = int(usage.get("candidatesTokenCount", 0) or 0)
+                est_cost = round((in_tok / 1_000_000.0) * in_rate + (out_tok / 1_000_000.0) * out_rate, 8)
+                print(
+                    f"[BEHAVIORAL FINOPS] model={model_name} | in={in_tok} | out={out_tok} | cost=${est_cost:.6f}",
+                    flush=True,
+                )
+                text = resp_json["candidates"][0]["content"]["parts"][0]["text"].strip()
+                # Clean possible markdown block
+                if "```json" in text:
+                    text = text.split("```json")[1].split("```")[0].strip()
+                elif "```" in text:
+                    text = text.split("```")[1].split("```")[0].strip()
+                parsed = json.loads(text)
+                if isinstance(parsed, dict):
+                    parsed["usageMetadata"] = {
+                        "model_used": model_name,
+                        "promptTokenCount": in_tok,
+                        "candidatesTokenCount": out_tok,
+                        "estimated_cost_usd": est_cost,
+                    }
+                return parsed
+            print(
+                f"[BEHAVIORAL ENGINE] Model {model_name} returned HTTP {res.status_code}; attempting failover if available.",
+                flush=True,
+            )
+        except Exception as e:
+            print(f"[BEHAVIORAL ENGINE] Gemini synthesis error ({model_name}): {e}", flush=True)
 
     return fallback_rule_based_synthesis(user_meta, stats)
 

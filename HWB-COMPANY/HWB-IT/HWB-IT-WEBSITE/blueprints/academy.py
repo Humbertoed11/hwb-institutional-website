@@ -354,6 +354,72 @@ def api_assign_training():
             due_date = datetime.date.today() + datetime.timedelta(days=due_days)
 
             assigned_courses = []
+            reused_count = 0
+
+            def _upsert_enrollment(c_id, pkg_code):
+                nonlocal magic_token, reused_count
+                existing_enr = None
+                if employee_id:
+                    cur.execute('''
+                        SELECT id, magic_token, status FROM "AcademyEnrollments"
+                        WHERE course_id = %s AND employee_id = %s
+                        ORDER BY id ASC LIMIT 1;
+                    ''', (c_id, employee_id))
+                    existing_enr = cur.fetchone()
+                elif subcontractor_id:
+                    cur.execute('''
+                        SELECT id, magic_token, status FROM "AcademyEnrollments"
+                        WHERE course_id = %s AND subcontractor_id = %s
+                        ORDER BY id ASC LIMIT 1;
+                    ''', (c_id, subcontractor_id))
+                    existing_enr = cur.fetchone()
+                elif student_email:
+                    cur.execute('''
+                        SELECT id, magic_token, status FROM "AcademyEnrollments"
+                        WHERE course_id = %s AND LOWER(TRIM(COALESCE(student_email, ''))) = LOWER(TRIM(%s))
+                        ORDER BY id ASC LIMIT 1;
+                    ''', (c_id, student_email))
+                    existing_enr = cur.fetchone()
+                elif student_name:
+                    cur.execute('''
+                        SELECT id, magic_token, status FROM "AcademyEnrollments"
+                        WHERE course_id = %s AND LOWER(TRIM(COALESCE(student_name, ''))) = LOWER(TRIM(%s))
+                        ORDER BY id ASC LIMIT 1;
+                    ''', (c_id, student_name))
+                    existing_enr = cur.fetchone()
+
+                if existing_enr:
+                    reused_count += 1
+                    enr_id, prev_token, _ = existing_enr
+                    if prev_token:
+                        magic_token = prev_token
+                    cur.execute('''
+                        UPDATE "AcademyEnrollments"
+                        SET magic_token = %s,
+                            assigned_package_code = COALESCE(%s, assigned_package_code),
+                            assigned_by = %s,
+                            due_date = %s,
+                            student_name = COALESCE(NULLIF(%s, ''), student_name),
+                            student_email = COALESCE(NULLIF(%s, ''), student_email),
+                            updated_at = CURRENT_TIMESTAMP
+                        WHERE id = %s;
+                    ''', (magic_token, pkg_code, assigned_by, due_date, student_name, student_email, enr_id))
+                else:
+                    enrollment_uuid = f"cert-{uuid.uuid4().hex[:12]}"
+                    cur.execute('''
+                        INSERT INTO "AcademyEnrollments" (
+                            enrollment_uuid, magic_token, tenant_id, course_id, worker_type,
+                            employee_id, subcontractor_id, student_name, student_email,
+                            assigned_package_code, assigned_by, due_date, status, progress_pct
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'ENROLLED', 0)
+                        RETURNING id;
+                    ''', (
+                        enrollment_uuid, magic_token, tenant_id, c_id, worker_type,
+                        employee_id if employee_id else None,
+                        subcontractor_id if subcontractor_id else None,
+                        student_name, student_email,
+                        pkg_code, assigned_by, due_date
+                    ))
 
             if assignment_type == 'PACKAGE':
                 cur.execute('''
@@ -369,21 +435,7 @@ def api_assign_training():
                     return jsonify({'status': 'error', 'message': f'Package {target_code} has no courses assigned.'}), 404
 
                 for c_id, c_code, c_title in course_rows:
-                    enrollment_uuid = f"cert-{uuid.uuid4().hex[:12]}"
-                    cur.execute('''
-                        INSERT INTO "AcademyEnrollments" (
-                            enrollment_uuid, magic_token, tenant_id, course_id, worker_type,
-                            employee_id, subcontractor_id, student_name, student_email,
-                            assigned_package_code, assigned_by, due_date, status, progress_pct
-                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'ENROLLED', 0)
-                        RETURNING id;
-                    ''', (
-                        enrollment_uuid, magic_token, tenant_id, c_id, worker_type,
-                        employee_id if employee_id else None,
-                        subcontractor_id if subcontractor_id else None,
-                        student_name, student_email,
-                        target_code, assigned_by, due_date
-                    ))
+                    _upsert_enrollment(c_id, target_code)
                     assigned_courses.append({'id': c_id, 'code': c_code, 'title': c_title})
 
             else:
@@ -393,31 +445,23 @@ def api_assign_training():
                 if not c_row:
                     return jsonify({'status': 'error', 'message': f'Course {target_code} not found.'}), 404
                 c_id, c_code, c_title = c_row
-                enrollment_uuid = f"cert-{uuid.uuid4().hex[:12]}"
-                cur.execute('''
-                    INSERT INTO "AcademyEnrollments" (
-                        enrollment_uuid, magic_token, tenant_id, course_id, worker_type,
-                        employee_id, subcontractor_id, student_name, student_email,
-                        assigned_package_code, assigned_by, due_date, status, progress_pct
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NULL, %s, %s, 'ENROLLED', 0)
-                    RETURNING id;
-                ''', (
-                    enrollment_uuid, magic_token, tenant_id, c_id, worker_type,
-                    employee_id if employee_id else None,
-                    subcontractor_id if subcontractor_id else None,
-                    student_name, student_email,
-                    assigned_by, due_date
-                ))
+                _upsert_enrollment(c_id, None)
                 assigned_courses.append({'id': c_id, 'code': c_code, 'title': c_title})
 
             conn.commit()
 
         magic_url = f"/academy/learn?token={magic_token}"
         full_url = f"https://www.hwbcleaning.com{magic_url}"
+        is_dup_enr = reused_count == len(assigned_courses) and len(assigned_courses) > 0
 
         return jsonify({
-            'status': 'success',
-            'message': f"Successfully assigned {target_code} ({len(assigned_courses)} courses) to {student_name}.",
+            'status': 'already_registered' if is_dup_enr else 'success',
+            'is_duplicate': is_dup_enr,
+            'message': (
+                f"{student_name} is already enrolled in {target_code} — existing training link and due date updated."
+                if is_dup_enr else
+                f"Successfully assigned {target_code} ({len(assigned_courses)} courses) to {student_name}."
+            ),
             'magic_token': magic_token,
             'magic_url': magic_url,
             'full_url': full_url,

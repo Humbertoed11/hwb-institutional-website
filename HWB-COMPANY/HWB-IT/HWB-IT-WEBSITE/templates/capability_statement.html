@@ -5,13 +5,59 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Capability Statement 2026 | HWB Cleaning Services LLC</title>
     <link rel="canonical" href="https://www.hwbcleaning.com/capability-statement">
-    <meta name="description" content="Official 2026 Commercial Capability Statement for HWB Cleaning Services LLC. North Texas janitorial, commercial, and industrial cleaning.">
+    <meta name="description" content="Official 2026 Commercial & Institutional Capability Statement for HWB Cleaning Services LLC. NAICS 561720 North Texas janitorial and post-construction cleaning.">
+    <meta property="og:title" content="Capability Statement 2026 | HWB Cleaning Services LLC">
+    <meta property="og:description" content="Official 2026 Commercial & Institutional Capability Statement for HWB Cleaning Services LLC. NAICS 561720 North Texas janitorial and post-construction cleaning.">
+    <meta property="og:image" content="https://www.hwbcleaning.com/static/logo_standard.png">
+    <meta property="og:url" content="https://www.hwbcleaning.com/capability-statement">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="google-site-verification" content="{{ config.get('GOOGLE_SITE_VERIFICATION', 'rWfL3H77Qz2W7oG6sNnO8L5E_9m4Y1X9Z') }}">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": ["LocalBusiness", "ProfessionalService"],
+      "name": "HWB Cleaning Services LLC",
+      "image": "https://www.hwbcleaning.com/static/logo_standard.png",
+      "@id": "https://www.hwbcleaning.com",
+      "url": "https://www.hwbcleaning.com/capability-statement",
+      "telephone": "+1-214-586-0257",
+      "priceRange": "$$",
+      "hasMap": "https://www.google.com/maps?cid=4883166476987591300",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "3342 FM 1827 Ste 8d",
+        "addressLocality": "McKinney",
+        "addressRegion": "TX",
+        "postalCode": "75071",
+        "addressCountry": "US"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 33.2465,
+        "longitude": -96.5615
+      },
+      "areaServed": ["Dallas", "Plano", "Frisco", "McKinney", "Fort Worth", "Irving", "Richardson", "Allen", "Arlington", "Addison", "Waxahachie"],
+      "sameAs": [
+        "https://www.google.com/maps?cid=4883166476987591300",
+        "https://g.page/r/CYTq8OcJfsRDEBM/review",
+        "https://www.google.com/search?kgmid=/g/11g9qb6tkk",
+        "https://www.linkedin.com/company/hwb-cleaning-services-llc/",
+        "https://www.facebook.com/cleaningdfw",
+        "https://www.youtube.com/@hwbcleaning"
+      ]
+    }
+    </script>
     <!-- SigmaFidelity™ CIPA § 631 & CPRA Affirmative Consent Analytics Gate -->
     {% if not current_user.is_authenticated %}
     {% set ga_id = config.get('GA_MEASUREMENT_ID') or 'G-8BX5Q7THYR' %}
+    {% set gads_id = config.get('GOOGLE_ADS_ID') or 'AW-8622428739' %}
     <script type="text/plain" data-consent-category="analytics" data-type="ga" data-id="{{ ga_id }}"></script>
+    <script type="text/plain" data-consent-category="analytics" data-type="gads" data-id="{{ gads_id }}" data-account="862-242-8739"></script>
     <script>
-      if (localStorage.getItem('sigma_cookie_consent') === 'accepted') {
+      window.HWB_GOOGLE_ADS_ID = '{{ gads_id }}';
+      window.HWB_GOOGLE_ADS_ACCOUNT = '862-242-8739';
+      if (localStorage.getItem('sigma_cookie_consent') === 'accepted' || localStorage.getItem('hwb_telemetry_consent') === 'granted') {
         var gaScript = document.createElement('script');
         gaScript.async = true;
         gaScript.src = "https://www.googletagmanager.com/gtag/js?id={{ ga_id }}";
@@ -20,6 +66,7 @@
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
         gtag('config', '{{ ga_id }}');
+        gtag('config', '{{ gads_id }}');
       }
     </script>
     {% endif %}

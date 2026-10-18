@@ -466,6 +466,7 @@
     </style>
 </head>
 <body>
+    <a href="#main-content" class="sigma-skip-link" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;">Skip to main content</a>
 
     <div style="width: 100%; max-width: 850px;">
 
@@ -783,7 +784,7 @@
                         <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 0.35rem;">
                             Full Legal Name *
                         </label>
-                        <input type="text" id="edit_full_name" required value="{{ candidate.full_name }}" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; box-sizing: border-box;">
+                        <input type="text" id="edit_full_name" required value="{{ candidate.full_name }}" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; box-sizing: border-box;" aria-label="Edit Candidate Full Legal Name">
                     </div>
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
@@ -791,13 +792,13 @@
                             <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 0.35rem;">
                                 Mobile Phone *
                             </label>
-                            <input type="tel" id="edit_phone" required maxlength="14" oninput="maskPhone(this)" value="{{ candidate.phone }}" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; box-sizing: border-box;">
+                            <input type="tel" id="edit_phone" required maxlength="14" oninput="maskPhone(this)" value="{{ candidate.phone }}" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; box-sizing: border-box;" aria-label="Edit Candidate Mobile Phone">
                         </div>
                         <div>
                             <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 0.35rem;">
                                 Email Address
                             </label>
-                            <input type="email" id="edit_email" value="{{ candidate.email if candidate.email != 'N/A' else '' }}" placeholder="e.g. maria@example.com" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; box-sizing: border-box;">
+                            <input type="email" id="edit_email" value="{{ candidate.email if candidate.email != 'N/A' else '' }}" placeholder="e.g. maria@example.com" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; box-sizing: border-box;" aria-label="Edit Candidate Email Address">
                         </div>
                     </div>
 
@@ -806,13 +807,13 @@
                             <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 0.35rem;">
                                 City of Residence
                             </label>
-                            <input type="text" id="edit_city" value="{{ candidate.city if candidate.city != 'N/A' else '' }}" placeholder="e.g. Frisco, Plano" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; box-sizing: border-box;">
+                            <input type="text" id="edit_city" value="{{ candidate.city if candidate.city != 'N/A' else '' }}" placeholder="e.g. Frisco, Plano" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; box-sizing: border-box;" aria-label="Edit Candidate City of Residence">
                         </div>
                         <div>
                             <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 0.35rem;">
                                 Assigned Campus Facility
                             </label>
-                            <select id="edit_facility" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.82rem; background: #ffffff; box-sizing: border-box;">
+                            <select id="edit_facility" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.82rem; background: #ffffff; box-sizing: border-box;" aria-label="Edit Assigned Target Facility">
                                 <option value="Collin College Frisco Campus" {% if 'Frisco' in candidate.facility %}selected{% endif %}>Collin College Frisco Campus (Preston Ridge)</option>
                                 <option value="Collin College McKinney Campus" {% if 'McKinney' in candidate.facility %}selected{% endif %}>Collin College McKinney Campus (Central Park)</option>
                                 <option value="Collin College Plano Campus" {% if 'Plano' in candidate.facility %}selected{% endif %}>Collin College Plano Campus (Spring Creek)</option>
@@ -830,13 +831,13 @@
                             <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 0.35rem;">
                                 Texas DL / State ID Number
                             </label>
-                            <input type="text" id="edit_state_id" value="{{ candidate.state_id }}" placeholder="e.g. TX-24891024" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; font-family: monospace; box-sizing: border-box;">
+                            <input type="text" id="edit_state_id" value="{{ candidate.state_id }}" placeholder="e.g. TX-24891024" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; font-family: monospace; box-sizing: border-box;" aria-label="Edit State ID or Driver License Number">
                         </div>
                         <div>
                             <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 0.35rem;">
                                 ID Expiration Date
                             </label>
-                            <input type="text" id="edit_id_expiration" value="{{ candidate.id_expiration if candidate.id_expiration != 'N/A' else '' }}" placeholder="e.g. 08/2028" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; box-sizing: border-box;">
+                            <input type="text" id="edit_id_expiration" value="{{ candidate.id_expiration if candidate.id_expiration != 'N/A' else '' }}" placeholder="e.g. 08/2028" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; box-sizing: border-box;" aria-label="Edit ID Expiration Date">
                         </div>
                     </div>
 
@@ -845,7 +846,7 @@
                             <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 0.35rem;">
                                 Primary Contract Role
                             </label>
-                            <select id="edit_desired_role" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.82rem; background: #ffffff; box-sizing: border-box;">
+                            <select id="edit_desired_role" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.82rem; background: #ffffff; box-sizing: border-box;" aria-label="Edit Assigned Operational Role">
                                 <option value="Commercial Cleaning Technician" {% if candidate.desired_role == 'Commercial Cleaning Technician' %}selected{% endif %}>Commercial Cleaning Technician</option>
                                 <option value="Day Porter" {% if candidate.desired_role == 'Day Porter' %}selected{% endif %}>Day Porter</option>
                                 <option value="Floor Care Specialist" {% if candidate.desired_role == 'Floor Care Specialist' %}selected{% endif %}>Floor Care Specialist</option>
@@ -856,7 +857,7 @@
                             <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 0.35rem;">
                                 Authorized Shift
                             </label>
-                            <select id="edit_desired_shift" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.82rem; background: #ffffff; box-sizing: border-box;">
+                            <select id="edit_desired_shift" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.82rem; background: #ffffff; box-sizing: border-box;" aria-label="Edit Assigned Shift Window">
                                 <option value="Evening Janitorial" {% if candidate.desired_shift == 'Evening Janitorial' %}selected{% endif %}>Evening Janitorial (5PM - 10PM)</option>
                                 <option value="Day Porter" {% if candidate.desired_shift == 'Day Porter' %}selected{% endif %}>Day Porter (8AM - 2PM)</option>
                                 <option value="Weekend Custodial" {% if candidate.desired_shift == 'Weekend Custodial' %}selected{% endif %}>Weekend Custodial (Sat/Sun)</option>

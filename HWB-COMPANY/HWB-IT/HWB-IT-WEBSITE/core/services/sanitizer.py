@@ -120,6 +120,9 @@ def clean_city(raw_city: Optional[str]) -> Optional[str]:
     # Replace multiple spaces with a single space
     city = re.sub(r'\s+', ' ', city)
 
+    # Strip trailing state suffix like ', TX' or ' TX' if accidentally typed in city box
+    city = re.sub(r'[,\s]+tx\.?$', '', city, flags=re.IGNORECASE).strip()
+
     # Specific common metropolitan Texas abbreviation mappings
     city_lower = city.lower()
     known_mappings = {
@@ -127,6 +130,8 @@ def clean_city(raw_city: Optional[str]) -> Optional[str]:
         "ft. worth": "Fort Worth",
         "ft.worth": "Fort Worth",
         "ftworth": "Fort Worth",
+        "arlignton": "Arlington",
+        "arlington tx": "Arlington",
         "n richland hills": "North Richland Hills",
         "n. richland hills": "North Richland Hills",
         "n.richland hills": "North Richland Hills",
@@ -166,4 +171,49 @@ def clean_city(raw_city: Optional[str]) -> Optional[str]:
     res = re.sub(r"\bO'([a-z])", lambda m: "O'" + m.group(1).upper(), res)
     res = re.sub(r'-([a-z])', lambda m: '-' + m.group(1).upper(), res)
     return res
+
+
+def extract_phone_digits(raw_phone: Optional[Union[str, int]]) -> str:
+    """
+    Extracts canonical 10-digit North American phone digits for deduplication lookups.
+    """
+    if not raw_phone:
+        return ""
+    digits = re.sub(r'\D', '', str(raw_phone))
+    if len(digits) == 11 and digits.startswith('1'):
+        digits = digits[1:]
+    return digits[:10] if len(digits) >= 10 else digits
+
+
+def normalize_business_name(raw_name: Optional[str]) -> str:
+    """
+    Normalizes a business or entity name for deduplication by lowercasing,
+    removing punctuation, and stripping trailing corporate entity suffixes.
+    """
+    if not raw_name:
+        return ""
+    cleaned = re.sub(r'[^\w\s]', ' ', str(raw_name).lower())
+    cleaned = re.sub(
+        r'\b(llc|l l c|inc|incorporated|corp|corporation|co|company|ltd|lp|llp)\b',
+        ' ',
+        cleaned
+    )
+    return re.sub(r'\s+', ' ', cleaned).strip()
+
+
+def merge_comma_list(existing_csv: Optional[str], new_csv: Optional[str]) -> str:
+    """
+    Combines two comma-separated specialty or tag strings without duplicates,
+    preserving the original item casing and order.
+    """
+    seen = set()
+    merged = []
+    for source in (existing_csv or "", new_csv or ""):
+        for item in str(source).split(","):
+            val = item.strip()
+            if val and val.lower() not in seen:
+                seen.add(val.lower())
+                merged.append(val)
+    return ", ".join(merged)
+
 

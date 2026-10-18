@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}Work With Us & Subcontractor Opportunities | HWB Cleaning Services LLC{% endblock %}
+{% block og_description %}Apply for commercial cleaning technician jobs or register your 1099 cleaning crew as a certified HWB subcontractor partner across Dallas-Fort Worth.{% endblock %}
 
 {% block head %}
 <meta name="description" content="Apply for commercial cleaning technician jobs or register your 1099 cleaning crew as a certified subcontractor partner with HWB Cleaning Services LLC in Dallas, Fort Worth, and Plano TX.">
@@ -285,8 +286,24 @@
                         Thank you for applying to HWB Cleaning Services. Our operations supervisor will reach out via phone or text message within 24–48 hours for a quick 5-minute phone interview.
                     </p>
                     <div style="margin-top: 1.5rem;">
-                        <button type="button" onclick="resetTechForm()" class="btn-workforce-details" style="flex: initial; height: 38px; padding: 0 1.25rem; font-size: 0.85rem; font-weight: 700; border: 1.5px solid #16a34a !important; color: #166534 !important; background: #ffffff !important;">
+                        <button type="button" onclick="resetTechForm()" aria-label="Submit another job application" title="Submit another job application" class="btn-workforce-details" style="flex: initial; height: 38px; padding: 0 1.25rem; font-size: 0.85rem; font-weight: 700; border: 1.5px solid #16a34a !important; color: #166534 !important; background: #ffffff !important;">
                             <i class="fas fa-redo"></i> Submit Another Application
+                        </button>
+                    </div>
+                </div>
+
+                <div id="tech-already-registered-message" style="display: none; padding: 2rem; background: #eff6ff; border: 1px solid #93c5fd; border-radius: 8px; text-align: center; margin-bottom: 2rem;">
+                    <div style="font-size: 2.5rem; color: #2563eb; margin-bottom: 0.5rem;"><i class="fas fa-user-check"></i></div>
+                    <h3 style="font-size: 1.25rem; font-weight: 800; color: #1e3a8a; margin-bottom: 0.5rem;">You Are Already Registered — Profile Updated!</h3>
+                    <p id="tech-already-registered-text" style="color: #1e40af; font-size: 0.9rem; max-width: 540px; margin: 0 auto; line-height: 1.5;">
+                        We already have your job application on file. Instead of creating a duplicate application, we have updated your existing candidate profile with your latest role and shift preferences and sent a confirmation receipt to your email on file.
+                    </p>
+                    <div style="margin-top: 1rem; font-size: 0.84rem; color: #334155; font-weight: 600;">
+                        Reference ID: <span id="tech-already-ref" style="color: #2563eb; font-weight: 800;">On File</span> &bull; Original Application Date: <span id="tech-already-date" style="color: #0f172a; font-weight: 700;">On File</span>
+                    </div>
+                    <div style="margin-top: 1.5rem;">
+                        <button type="button" onclick="resetTechForm()" aria-label="Return to job application form" title="Return to job application form" class="btn-workforce-details" style="flex: initial; height: 38px; padding: 0 1.25rem; font-size: 0.85rem; font-weight: 700; border: 1.5px solid #2563eb !important; color: #1e3a8a !important; background: #ffffff !important;">
+                            <i class="fas fa-arrow-left"></i> Back to Application Form
                         </button>
                     </div>
                 </div>
@@ -439,8 +456,27 @@
                         Your business entity has been added to our pre-qualified subcontractor bench. Our estimating and operations desk will contact you with Scope of Work details as relevant project bids are awarded.
                     </p>
                     <div style="margin-top: 1.5rem;">
-                        <button type="button" onclick="resetSubForm()" class="btn-workforce-details" style="flex: initial; height: 38px; padding: 0 1.25rem; font-size: 0.85rem; font-weight: 700; border: 1.5px solid #16a34a !important; color: #166534 !important; background: #ffffff !important;">
+                        <button type="button" onclick="resetSubForm()" aria-label="Register another subcontractor crew" title="Register another subcontractor crew" class="btn-workforce-details" style="flex: initial; height: 38px; padding: 0 1.25rem; font-size: 0.85rem; font-weight: 700; border: 1.5px solid #16a34a !important; color: #166534 !important; background: #ffffff !important;">
                             <i class="fas fa-redo"></i> Register Another Crew
+                        </button>
+                    </div>
+                </div>
+
+                <div id="sub-already-registered-message" style="display: none; padding: 2rem; background: #eff6ff; border: 1px solid #93c5fd; border-radius: 8px; text-align: center; margin-bottom: 2rem;">
+                    <div style="font-size: 2.5rem; color: #2563eb; margin-bottom: 0.5rem;"><i class="fas fa-building"></i></div>
+                    <h3 style="font-size: 1.25rem; font-weight: 800; color: #1e3a8a; margin-bottom: 0.5rem;">Your Crew Is Already Registered — Profile Updated!</h3>
+                    <p id="sub-already-registered-text" style="color: #1e40af; font-size: 0.9rem; max-width: 560px; margin: 0 auto; line-height: 1.5;">
+                        Your business is already registered in our Subcontractor Partner Network. Instead of creating a duplicate entry, we have updated your existing partner record with your latest crew capacity and trade specialties, and emailed a confirmation receipt to your address on file.
+                    </p>
+                    <div style="margin-top: 1rem; font-size: 0.84rem; color: #334155; font-weight: 600;">
+                        Partner Reference ID: <span id="sub-already-ref" style="color: #2563eb; font-weight: 800;">On File</span> &bull; Original Registration Date: <span id="sub-already-date" style="color: #0f172a; font-weight: 700;">On File</span>
+                    </div>
+                    <div style="margin-top: 0.75rem; font-size: 0.82rem; color: #475569;">
+                        Need to send your <strong>W-9</strong> or <strong>Certificate of Insurance (COI)</strong>? Email <a href="mailto:sales@hwbcleaning.com" style="color: #2563eb; font-weight: 700;">sales@hwbcleaning.com</a> or call <strong>(214)-586-0257</strong>.
+                    </div>
+                    <div style="margin-top: 1.5rem;">
+                        <button type="button" onclick="resetSubForm()" aria-label="Return to subcontractor registration form" title="Return to subcontractor registration form" class="btn-workforce-details" style="flex: initial; height: 38px; padding: 0 1.25rem; font-size: 0.85rem; font-weight: 700; border: 1.5px solid #2563eb !important; color: #1e3a8a !important; background: #ffffff !important;">
+                            <i class="fas fa-arrow-left"></i> Back to Subcontractor Form
                         </button>
                     </div>
                 </div>
@@ -601,12 +637,19 @@ function clearFormError(type) {
 function resetTechForm() {
     const form = document.getElementById('form-tech-application');
     const success = document.getElementById('tech-success-message');
+    const already = document.getElementById('tech-already-registered-message');
+    const btn = document.getElementById('btn-submit-tech');
     clearFormError('tech');
     if (form) {
         form.reset();
         form.style.display = 'block';
     }
     if (success) success.style.display = 'none';
+    if (already) already.style.display = 'none';
+    if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Job Application';
+    }
     const phoneInput = document.getElementById('tech-phone');
     if (phoneInput) phoneInput.classList.remove('has-error');
     window.scrollTo({top: 250, behavior: 'smooth'});
@@ -615,12 +658,19 @@ function resetTechForm() {
 function resetSubForm() {
     const form = document.getElementById('form-sub-application');
     const success = document.getElementById('sub-success-message');
+    const already = document.getElementById('sub-already-registered-message');
+    const btn = document.getElementById('btn-submit-sub');
     clearFormError('sub');
     if (form) {
         form.reset();
         form.style.display = 'block';
     }
     if (success) success.style.display = 'none';
+    if (already) already.style.display = 'none';
+    if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-handshake"></i> Register Subcontractor Crew for Project Bids';
+    }
     const phoneInput = document.getElementById('sub-phone');
     if (phoneInput) phoneInput.classList.remove('has-error');
     window.scrollTo({top: 250, behavior: 'smooth'});
@@ -690,6 +740,16 @@ async function submitTechnicianApp(e) {
             document.getElementById('form-tech-application').style.display = 'none';
             document.getElementById('tech-success-message').style.display = 'block';
             window.scrollTo({top: 250, behavior: 'smooth'});
+        } else if (res.ok && result.status === 'already_registered') {
+            document.getElementById('form-tech-application').style.display = 'none';
+            const refEl = document.getElementById('tech-already-ref');
+            const dateEl = document.getElementById('tech-already-date');
+            const textEl = document.getElementById('tech-already-registered-text');
+            if (refEl && result.reference_code) refEl.innerText = result.reference_code;
+            if (dateEl && result.registered_date) dateEl.innerText = result.registered_date;
+            if (textEl && result.message) textEl.innerText = result.message;
+            document.getElementById('tech-already-registered-message').style.display = 'block';
+            window.scrollTo({top: 250, behavior: 'smooth'});
         } else {
             showFormError('tech', result.message || 'Submission error. Please check your entries or call our office at (214)-586-0257.');
             btn.disabled = false;
@@ -739,6 +799,16 @@ async function submitSubcontractorApp(e) {
         if (res.ok && result.status === 'success') {
             document.getElementById('form-sub-application').style.display = 'none';
             document.getElementById('sub-success-message').style.display = 'block';
+            window.scrollTo({top: 250, behavior: 'smooth'});
+        } else if (res.ok && result.status === 'already_registered') {
+            document.getElementById('form-sub-application').style.display = 'none';
+            const refEl = document.getElementById('sub-already-ref');
+            const dateEl = document.getElementById('sub-already-date');
+            const textEl = document.getElementById('sub-already-registered-text');
+            if (refEl && result.reference_code) refEl.innerText = result.reference_code;
+            if (dateEl && result.registered_date) dateEl.innerText = result.registered_date;
+            if (textEl && result.message) textEl.innerText = result.message;
+            document.getElementById('sub-already-registered-message').style.display = 'block';
             window.scrollTo({top: 250, behavior: 'smooth'});
         } else {
             showFormError('sub', result.message || 'Registration error. Please check your entries or call our estimating desk at (214)-586-0257.');

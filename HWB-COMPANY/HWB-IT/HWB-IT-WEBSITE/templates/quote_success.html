@@ -17,15 +17,33 @@
                 </div>
                 <div style="text-align: right;">
                     <div style="font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; color: rgba(255,255,255,0.4); margin-bottom: 0.5rem;">Status</div>
+                    {% if data.get('already_registered') %}
+                    <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 900; color: #38bdf8;">
+                        <span style="width: 8px; height: 8px; background: #38bdf8; border-radius: 50%;"></span>
+                        EXISTING REQUEST UPDATED ({{ data.get('reference_code', 'ON FILE') }})
+                    </div>
+                    {% else %}
                     <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 900; color: #10b981;">
                         <span style="width: 8px; height: 8px; background: #10b981; border-radius: 50%;"></span>
-                        RECEIVED
+                        RECEIVED {% if data.get('reference_code') %}({{ data.get('reference_code') }}){% endif %}
                     </div>
+                    {% endif %}
                 </div>
             </div>
 
             <!-- Card Body: Summary -->
             <div style="padding: 4rem 3rem;">
+                {% if data.get('already_registered') %}
+                <div id="quote-already-registered-banner" style="margin-bottom: 3.5rem; text-align: center;">
+                    <div style="width: 64px; height: 64px; background: #eff6ff; color: #1d4ed8; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; font-size: 1.5rem; border: 1px solid #bfdbfe;">
+                        <i class="fas fa-sync-alt"></i>
+                    </div>
+                    <h2 style="font-size: 2rem; font-weight: 900; color: #0f172a; letter-spacing: -0.02em;">You Are Already Registered — Request Updated</h2>
+                    <p style="color: #475569; font-size: 1.05rem; font-weight: 500; max-width: 580px; margin: 0.5rem auto 0;">
+                        Thank you, {{ data['name'] }}. We already had an active request on file for <strong>{{ data['company'] }}</strong> ({{ data.get('reference_code', 'Active File') }}), so we updated your existing profile with your latest details instead of creating a duplicate entry.
+                    </p>
+                </div>
+                {% else %}
                 <div style="margin-bottom: 3.5rem; text-align: center;">
                     <div style="width: 64px; height: 64px; background: #f0fdf4; color: #166534; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; font-size: 1.5rem; border: 1px solid #bbf7d0;">
                         <i class="fas fa-check"></i>
@@ -33,6 +51,7 @@
                     <h2 style="font-size: 2rem; font-weight: 900; color: #0f172a; letter-spacing: -0.02em;">Success. We have your info.</h2>
                     <p style="color: #64748b; font-size: 1.1rem; font-weight: 500;">Thank you, {{ data['name'] }}. We have added your business to our list.</p>
                 </div>
+                {% endif %}
 
                 <!-- Simple Data Grid -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; background: #f8fafc; padding: 2.5rem; border-radius: 12px; border: 1px solid #e2e8f0;">
@@ -149,8 +168,11 @@
             </div>
 
             <!-- Card Footer -->
-            <div style="padding: 1.5rem 3rem; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; font-size: 0.65rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em;">
+            <div style="padding: 1.5rem 3rem; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; font-size: 0.65rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em;">
                 <span>© 2026 HWB Cleaning Services LLC</span>
+                <a href="https://g.page/r/CYTq8OcJfsRDEBM/review" target="_blank" rel="noopener noreferrer" aria-label="Leave a Google Review for HWB Cleaning Services LLC" style="color: #0f172a; background: #ffffff; border: 1px solid #cbd5e1; padding: 0.35rem 0.75rem; border-radius: 999px; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.04em;">
+                    <i class="fas fa-star" style="color: #f59e0b;"></i> Verified on Google Maps &bull; Leave a Review
+                </a>
                 <span>ID: {{ range(1000, 9999) | random }}</span>
             </div>
         </div>
@@ -165,17 +187,23 @@
 {% endblock %}
 
 {% block scripts %}
-<!-- Google Analytics 4: Official Lead Generation Conversion Event -->
+<!-- Google Analytics 4 & Google Ads (AW-8622428739 / 862-242-8739): Official Lead Generation Conversion Event -->
 <script>
   window.addEventListener('load', function() {
     if (typeof gtag === 'function') {
+      var gadsTarget = window.HWB_GOOGLE_ADS_ID || 'AW-8622428739';
       gtag('event', 'generate_lead', {
         'event_category': 'Engagement',
         'event_label': '{{ data.get("company", "Commercial Cleaning") | escape }}',
         'value': 150.00,
         'currency': 'USD'
       });
-      console.log('[GA4] Dispatched generate_lead conversion event.');
+      gtag('event', 'conversion', {
+        'send_to': gadsTarget,
+        'value': 150.00,
+        'currency': 'USD'
+      });
+      console.log('[GA4 + Google Ads ' + gadsTarget + '] Dispatched generate_lead conversion event.');
     }
   });
 
@@ -245,6 +273,7 @@
                   document.getElementById('disp-frequency').innerText = freqVal;
               }
               if (typeof gtag === 'function') {
+                  var gadsTarget = window.HWB_GOOGLE_ADS_ID || 'AW-8622428739';
                   gtag('event', 'pricing_calibrated', {
                       'event_category': 'Calibration',
                       'event_label': cityVal || 'DFW',
@@ -253,7 +282,12 @@
                       'frequency': freqVal,
                       'sqft': sqftVal
                   });
-                  console.log('[GA4] Dispatched pricing_calibrated conversion event.');
+                  gtag('event', 'conversion', {
+                      'send_to': gadsTarget,
+                      'value': 250.00,
+                      'currency': 'USD'
+                  });
+                  console.log('[GA4 + Google Ads ' + gadsTarget + '] Dispatched pricing_calibrated conversion event.');
               }
           }).catch(err => {
               calibForm.submit();

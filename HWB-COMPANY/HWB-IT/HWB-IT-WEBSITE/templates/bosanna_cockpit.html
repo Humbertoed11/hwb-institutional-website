@@ -704,6 +704,7 @@
     </style>
 </head>
 <body>
+    <a href="#main-content" class="sigma-skip-link" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;">Skip to main content</a>
 
     <!-- 1.0 TOP ENTERPRISE NAVIGATION -->
     <header class="portal-header">
@@ -805,17 +806,17 @@
             <div class="filter-group">
                 <div class="search-box">
                     <i class="fas fa-search"></i>
-                    <input type="text" name="q" value="{{ search_q }}" placeholder="Search by name, phone, or badge #...">
+                    <input type="text" name="q" value="{{ search_q }}" placeholder="Search by name, phone, or badge #..." aria-label="Search records">
                 </div>
 
-                <select name="facility" class="select-filter">
+                <select name="facility" class="select-filter" aria-label="Filter by facility">
                     <option value="">All Facilities</option>
                     <option value="Collin College Frisco Campus" {% if facility_filter == 'Collin College Frisco Campus' %}selected{% endif %}>Collin College Frisco Campus</option>
                     <option value="Plano Technical Center" {% if facility_filter == 'Plano Technical Center' %}selected{% endif %}>Plano Technical Center</option>
                     <option value="Carrollton Medical" {% if facility_filter == 'Carrollton Medical' %}selected{% endif %}>Carrollton Medical Facility</option>
                 </select>
 
-                <select name="status" class="select-filter">
+                <select name="status" class="select-filter" aria-label="Filter by status">
                     <option value="">All Statuses</option>
                     <option value="Bench Ready" {% if status_filter == 'Bench Ready' %}selected{% endif %}>Bench Ready</option>
                     <option value="Active On-Site" {% if status_filter == 'Active On-Site' %}selected{% endif %}>Active On-Site</option>
@@ -1061,16 +1062,16 @@
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 0.5rem;">
                         <div>
                             <label style="display: block; font-size: 0.7rem; color: #64748b; margin-bottom: 0.2rem;">Candidate Name</label>
-                            <input type="text" id="shareCandidateName" placeholder="e.g. Maria Rodriguez" oninput="updateShareUrl()" style="width: 100%; padding: 0.45rem 0.65rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.8rem; box-sizing: border-box;">
+                            <input type="text" id="shareCandidateName" placeholder="e.g. Maria Rodriguez" oninput="updateShareUrl()" style="width: 100%; padding: 0.45rem 0.65rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.8rem; box-sizing: border-box;" aria-label="Candidate Full Name">
                         </div>
                         <div>
                             <label style="display: block; font-size: 0.7rem; color: #64748b; margin-bottom: 0.2rem;">Mobile Phone (SMS)</label>
-                            <input type="tel" id="shareCandidatePhone" placeholder="(469) 555-0199" oninput="updateShareUrl()" style="width: 100%; padding: 0.45rem 0.65rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.8rem; box-sizing: border-box;">
+                            <input type="tel" id="shareCandidatePhone" placeholder="(469) 555-0199" oninput="updateShareUrl()" style="width: 100%; padding: 0.45rem 0.65rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.8rem; box-sizing: border-box;" aria-label="Candidate Phone Number">
                         </div>
                     </div>
                     <div>
                         <label style="display: block; font-size: 0.7rem; color: #64748b; margin-bottom: 0.2rem;">Preferred Portal Language</label>
-                        <select id="shareCandidateLang" onchange="updateShareUrl()" style="width: 100%; padding: 0.45rem 0.65rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.8rem; background: #ffffff; box-sizing: border-box;">
+                        <select id="shareCandidateLang" onchange="updateShareUrl()" style="width: 100%; padding: 0.45rem 0.65rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.8rem; background: #ffffff; box-sizing: border-box;" aria-label="Candidate Preferred Language">
                             <option value="es" selected>Español (Recomendado para contratistas de limpieza)</option>
                             <option value="en">English (Official TIPS &amp; Collin College Specifications)</option>
                         </select>
@@ -1083,7 +1084,7 @@
                         Onboarding URL to Send
                     </label>
                     <div style="display: flex; gap: 0.4rem;">
-                        <input type="text" id="shareUrlInput" readonly style="flex: 1; padding: 0.55rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.82rem; font-family: monospace; background: #f8fafc; color: #0f172a;" value="https://hwbcleaning.com/onboard/bosanna">
+                        <input type="text" id="shareUrlInput" readonly style="flex: 1; padding: 0.55rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.82rem; font-family: monospace; background: #f8fafc; color: #0f172a;" value="https://hwbcleaning.com/onboard/bosanna" aria-label="Onboarding Share URL">
                         <button type="button" id="btnCopyGenerated" onclick="copyShareUrl()" style="background: #063333; color: #ffffff; border: none; padding: 0.55rem 1rem; border-radius: 6px; font-weight: 700; font-size: 0.82rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem; white-space: nowrap; transition: background 0.2s;">
                             <i class="fas fa-copy"></i> <span id="copyBtnText">Copy Link</span>
                         </button>
@@ -1135,7 +1136,7 @@
                         <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 0.35rem;">
                             Full Legal Name *
                         </label>
-                        <input type="text" id="cockpit_edit_full_name" required style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; box-sizing: border-box;">
+                        <input type="text" id="cockpit_edit_full_name" required style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; box-sizing: border-box;" aria-label="Candidate Full Legal Name">
                     </div>
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
@@ -1143,13 +1144,13 @@
                             <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 0.35rem;">
                                 Mobile Phone *
                             </label>
-                            <input type="tel" id="cockpit_edit_phone" required maxlength="14" oninput="maskPhone(this)" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; box-sizing: border-box;">
+                            <input type="tel" id="cockpit_edit_phone" required maxlength="14" oninput="maskPhone(this)" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; box-sizing: border-box;" aria-label="Candidate Mobile Phone">
                         </div>
                         <div>
                             <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 0.35rem;">
                                 Email Address
                             </label>
-                            <input type="email" id="cockpit_edit_email" placeholder="e.g. maria@example.com" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; box-sizing: border-box;">
+                            <input type="email" id="cockpit_edit_email" placeholder="e.g. maria@example.com" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; box-sizing: border-box;" aria-label="Candidate Email Address">
                         </div>
                     </div>
 
@@ -1158,13 +1159,13 @@
                             <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 0.35rem;">
                                 City of Residence
                             </label>
-                            <input type="text" id="cockpit_edit_city" placeholder="e.g. Frisco, Plano" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; box-sizing: border-box;">
+                            <input type="text" id="cockpit_edit_city" placeholder="e.g. Frisco, Plano" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; box-sizing: border-box;" aria-label="Candidate City of Residence">
                         </div>
                         <div>
                             <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 0.35rem;">
                                 Assigned Campus Facility
                             </label>
-                            <select id="cockpit_edit_facility" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.82rem; background: #ffffff; box-sizing: border-box;">
+                            <select id="cockpit_edit_facility" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.82rem; background: #ffffff; box-sizing: border-box;" aria-label="Assigned Target Facility">
                                 <option value="Collin College Frisco Campus">Collin College Frisco Campus (Preston Ridge)</option>
                                 <option value="Collin College McKinney Campus">Collin College McKinney Campus (Central Park)</option>
                                 <option value="Collin College Plano Campus">Collin College Plano Campus (Spring Creek)</option>
@@ -1182,13 +1183,13 @@
                             <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 0.35rem;">
                                 Texas DL / State ID Number
                             </label>
-                            <input type="text" id="cockpit_edit_state_id" placeholder="e.g. TX-24891024" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; font-family: monospace; box-sizing: border-box;">
+                            <input type="text" id="cockpit_edit_state_id" placeholder="e.g. TX-24891024" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; font-family: monospace; box-sizing: border-box;" aria-label="State ID or Driver License Number">
                         </div>
                         <div>
                             <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 0.35rem;">
                                 ID Expiration Date
                             </label>
-                            <input type="text" id="cockpit_edit_id_expiration" placeholder="e.g. 08/2028" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; box-sizing: border-box;">
+                            <input type="text" id="cockpit_edit_id_expiration" placeholder="e.g. 08/2028" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; box-sizing: border-box;" aria-label="ID Expiration Date">
                         </div>
                     </div>
 
@@ -1197,7 +1198,7 @@
                             <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 0.35rem;">
                                 Primary Contract Role
                             </label>
-                            <select id="cockpit_edit_desired_role" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.82rem; background: #ffffff; box-sizing: border-box;">
+                            <select id="cockpit_edit_desired_role" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.82rem; background: #ffffff; box-sizing: border-box;" aria-label="Assigned Operational Role">
                                 <option value="Commercial Cleaning Technician">Commercial Cleaning Technician</option>
                                 <option value="Day Porter">Day Porter</option>
                                 <option value="Floor Care Specialist">Floor Care Specialist</option>
@@ -1208,7 +1209,7 @@
                             <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 0.35rem;">
                                 Authorized Shift
                             </label>
-                            <select id="cockpit_edit_desired_shift" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.82rem; background: #ffffff; box-sizing: border-box;">
+                            <select id="cockpit_edit_desired_shift" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.82rem; background: #ffffff; box-sizing: border-box;" aria-label="Assigned Shift Window">
                                 <option value="Evening Janitorial">Evening Janitorial (5PM - 10PM)</option>
                                 <option value="Day Porter">Day Porter (8AM - 2PM)</option>
                                 <option value="Weekend Custodial">Weekend Custodial (Sat/Sun)</option>

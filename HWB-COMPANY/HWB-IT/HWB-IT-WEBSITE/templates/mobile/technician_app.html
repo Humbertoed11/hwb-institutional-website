@@ -506,6 +506,7 @@
     </style>
 </head>
 <body>
+    <a href="#main-content" class="sigma-skip-link" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;">Skip to main content</a>
 
     <div class="mobile-shell">
         <!-- App Header -->
@@ -621,7 +622,7 @@
     </div>
 
     <!-- Hidden file input for camera evidence capture -->
-    <input type="file" id="camera-file-input" accept="image/*" capture="environment" style="display: none;" onchange="handleEvidenceCaptured(event)">
+    <input type="file" id="camera-file-input" accept="image/*" capture="environment" style="display: none;" onchange="handleEvidenceCaptured(event)" aria-label="Upload Photo Evidence from Camera">
 
     <script>
         // PWA Service Worker Registration

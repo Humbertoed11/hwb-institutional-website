@@ -1,10 +1,44 @@
 {% extends "base.html" %}
 
 {% block title %}{{ data.title }}{% endblock %}
+{% block og_description %}{{ data.meta_desc }}{% endblock %}
 
 {% block head %}
   <meta name="description" content="{{ data.meta_desc }}">
   <meta name="keywords" content="commercial cleaning {{ data.name | lower }}, janitorial services {{ data.name | lower }}, office cleaning {{ data.name | lower }}, floor care {{ data.name | lower }}">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Service",
+        "name": {{ data.h1 | tojson }},
+        "serviceType": "Commercial Cleaning & Janitorial Services",
+        "provider": {
+          "@type": "LocalBusiness",
+          "name": "HWB Cleaning Services LLC",
+          "@id": "https://www.hwbcleaning.com"
+        },
+        "areaServed": {
+          "@type": "City",
+          "name": {{ data.name | tojson }},
+          "containedInPlace": {
+            "@type": "State",
+            "name": "Texas"
+          }
+        },
+        "description": {{ data.meta_desc | tojson }}
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.hwbcleaning.com/"},
+          {"@type": "ListItem", "position": 2, "name": {{ data.name | tojson }}, "item": "https://www.hwbcleaning.com{{ request.path }}"}
+        ]
+      }
+    ]
+  }
+  </script>
 {% endblock %}
 
 {% block content %}

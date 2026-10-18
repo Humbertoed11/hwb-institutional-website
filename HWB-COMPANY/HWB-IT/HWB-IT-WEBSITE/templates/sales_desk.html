@@ -587,6 +587,8 @@
     </style>
 </head>
 <body>
+    <a href="#main-content" class="sigma-skip-link" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;">Skip to main content</a>
+    <h1 class="sr-only" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;">HWB Outside Sales Calling Schedule Desk</h1>
 
     <!-- Header Strip -->
     <header class="top-navbar">
@@ -654,8 +656,8 @@
                     <div style="display: flex; gap: 8px; align-items: center;">
                         <form method="GET" action="{{ url_for('sales_desk') }}" class="search-box">
                             <i class="fas fa-search" style="color: var(--slate-400); font-size: 0.75rem;"></i>
-                            <input type="text" name="q" value="{{ search_q }}" placeholder="Search company, address, city...">
-                            {% if status_filter %}<input type="hidden" name="status" value="{{ status_filter }}">{% endif %}
+                            <input type="text" name="q" value="{{ search_q }}" placeholder="Search company, address, city..." aria-label="Search records">
+                            {% if status_filter %}<input type="hidden" name="status" value="{{ status_filter }}" aria-label="Filter by status">{% endif %}
                         </form>
 
                         <div class="filter-controls">
@@ -756,12 +758,12 @@
 
                 <div class="calc-field">
                     <label class="calc-label">Cleanable Square Footage</label>
-                    <input type="number" id="calc-sqft" class="calc-input" value="12000" oninput="recalculate()">
+                    <input type="number" id="calc-sqft" class="calc-input" value="12000" oninput="recalculate()" aria-label="Facility Cleanable Square Footage">
                 </div>
 
                 <div class="calc-field">
                     <label class="calc-label">Service Frequency</label>
-                    <select id="calc-freq" class="calc-select" onchange="recalculate()">
+                    <select id="calc-freq" class="calc-select" onchange="recalculate()" aria-label="Cleaning Service Frequency">
                         <option value="5" selected>5 Nights / Week (Standard)</option>
                         <option value="6">6 Nights / Week</option>
                         <option value="7">7 Nights / Week (Medical/24-7)</option>
@@ -771,7 +773,7 @@
 
                 <div class="calc-field">
                     <label class="calc-label">Primary Floor Substrate</label>
-                    <select id="calc-floor" class="calc-select" onchange="recalculate()">
+                    <select id="calc-floor" class="calc-select" onchange="recalculate()" aria-label="Primary Flooring Surface Type">
                         <option value="vct" selected>VCT Tile & Commercial Carpet</option>
                         <option value="rubber">Mondo Athletic Rubber Floor</option>
                         <option value="terrazzo">Polished Terrazzo / Marble</option>
@@ -817,7 +819,7 @@
         <div class="modal-card">
             <h3><i class="fas fa-sticky-note" style="color: var(--brand-blue);"></i> Log Field Note</h3>
             <p>Record touchpoint notes for <strong id="note-company-name">Facility Name</strong>:</p>
-            <textarea id="field-note-text" class="calc-input" style="height: 90px; padding: 8px; resize: none; font-size: 0.85rem;" placeholder="e.g., Met with Director. Scheduled walkthrough for Tuesday 10 AM..."></textarea>
+            <textarea id="field-note-text" class="calc-input" style="height: 90px; padding: 8px; resize: none; font-size: 0.85rem;" placeholder="e.g., Met with Director. Scheduled walkthrough for Tuesday 10 AM..." aria-label="Field Discovery and Walkthrough Notes"></textarea>
             <div class="modal-actions">
                 <button type="button" class="btn-cancel" onclick="closeModal('noteModal')">Cancel</button>
                 <button type="button" class="btn-confirm" style="background: var(--brand-blue);" onclick="submitFieldNote()">Save Note</button>

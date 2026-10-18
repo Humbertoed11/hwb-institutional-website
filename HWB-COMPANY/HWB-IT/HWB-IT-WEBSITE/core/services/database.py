@@ -145,6 +145,7 @@ def db_cursor(db_url: str):
 
 def sync_db_sequences(db_url: str):
     """Ensures all Postgres sequences are aligned with current record counts."""
+    conn = None
     try:
         conn = get_db(db_url)
         with conn.cursor() as cur:
@@ -159,9 +160,19 @@ def sync_db_sequences(db_url: str):
                 END $$;
             """)
             conn.commit()
-        conn.close()
     except Exception as e:
+        if conn:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
         print(f"[DB] Sequence Sync Skipped: {e}", flush=True)
+    finally:
+        if conn:
+            try:
+                conn.close()
+            except Exception:
+                pass
 
 
 def get_pool_status(db_url: str = None) -> dict:
