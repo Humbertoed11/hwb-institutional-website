@@ -115,6 +115,9 @@ Responsibility: George (Architect)
 | 10/17/2026 | BUG-129 | Commercial Leads Tab & Calling Desk Exposing Entire 23,604 Unassigned Lead Pool to Sales Profiles Instead of Assigned Territory Only (Option 1). | **RESOLVED** | HIGH |
 | 10/17/2026 | BUG-130 | Commercial Bidding Page Exposing All 65 Unassigned GC Bids to Sales Profiles, Missing `assigned_rep_id`, and `Enrich` Button Event/JSON Crash. | **RESOLVED** | HIGH |
 | 10/17/2026 | BUG-131 | Live Leads Table Marketing Campaign Readiness Desync (0 North Texas Childcare Emails, $375M Legacy Car Lot Distortion, 70 Dead Domains, & Missing Miner Closure Safeguards). | **RESOLVED** | CRITICAL |
+| 10/19/2026 | BUG-132 | Public Website & Origin Worker Latency Stalls (Duplicate Boot Daemon Spawning on Every Gunicorn Worker Recycle, Synchronous Cloudflare Cache-Bypass, & Uncompressed Assets). | **RESOLVED** | HIGH |
+| 10/19/2026 | BUG-133 | Backoffice Operations (`/admin/operations`) Multi-Second Tab Switching Latency (`2,440ms–9,050ms`) Due to Monolithic 12-Department SQL Execution, Live 11-Rack Self-Healing Queries, & 940KB Unpruned Jinja DOM. | **RESOLVED** | CRITICAL |
+| 10/19/2026 | BUG-134 | Unclosed `#view-monitor` Container (`display: none`) During Jinja Active-View Pruning Trapping Downstream Views & Modals (`#modal-lead-command`) and Preventing Lead Row Click Display. | **RESOLVED** | HIGH |
 
 
 ## BUG-122: App Manual Static Routing Deficit (Lacks Automatic Active Workspace Detection & Deep-Link Chapter Navigation)
@@ -2482,4 +2485,49 @@ CEO Humberto Dominguez attempting to log into `https://www.hwbcleaning.com/login
    - Added the **`✅ Campaign Ready (3,353)`** filter pill (`campaign_filter=campaign_ready`) and row-level **`✅ Campaign Ready`** badge on `/admin/operations?view=leads`.
 4. **4-Safeguard Daycare Registry Miner (`scripts/daycare_registry_sync.py` & `scripts/enrich_daycare_contacts.py`):**
    - Added paginated Socrata ingestion, Circuit-Breaker (`>= 7,500` active records), explicit `operation_status = 'N'` closure check, Active-Deal Protection (`Active`, `Qualified`, `Trained`, `Engaged`, `is_converted`), and Self-Healing Re-Activation & Outbox Draft Cancellation.
+
+
+## BUG-132: Public Website & Origin Worker Latency Stalls (Duplicate Boot Daemon Spawning on Every Gunicorn Worker Recycle, Synchronous Cloudflare Cache-Bypass, & Uncompressed Assets)
+**Detected:** 10/19/2026
+**Status:** **RESOLVED** (10/19/2026)
+**Symptoms:**
+1. Public website routes (`https://hwbcleaning.com/`) exhibited periodic `500ms–2,500ms` latency stalls whenever Gunicorn recycled a worker after `max-requests=500`.
+2. Every request to public marketing pages returned `Cache-Control: no-store, no-cache`, forcing Cloudflare edge PoPs (`DFW`) to bypass edge caching and hit the Azure container origin on every visit.
+**Root Causes:**
+1. `main_app.py` executed `init_db()` (`340` DDL checks) and spawned background daemon threads inside every Gunicorn worker on import without a cross-process file lock.
+2. `database/__init__.py` executed a synchronous `SET TIME ZONE 'America/Chicago';` round-trip on every pooled connection checkout instead of passing `options="-c timezone=America/Chicago"` at socket creation.
+3. `main_app.py` applied `no-store` cache headers globally to all routes instead of splitting anonymous public marketing pages (`s-maxage=3600`) from authenticated routes.
+**Solution:**
+1. Implemented an atomic OS file lock (`/tmp/sigma_boot_init.lock` via `fcntl.LOCK_EX | fcntl.LOCK_NB`) in `main_app.py` so only the primary process runs boot migrations and background threads (`0ms` worker recycle overhead).
+2. Embedded `options="-c timezone=America/Chicago"` directly in `ThreadedConnectionPool` initialization (`0ms` checkout overhead).
+3. Configured `Flask-Compress` (Brotli/Gzip), 7-day immutable static asset caching, and split `Cache-Control` headers (`public, max-age=300, s-maxage=3600, stale-while-revalidate=86400` on anonymous public GET pages vs `private, no-store` on `/admin`, `/api`, `/portal`, `/academy`).
+
+
+## BUG-133: Backoffice Operations (`/admin/operations`) Multi-Second Tab Switching Latency (`2,440ms–9,050ms`) Due to Monolithic 12-Department SQL Execution, Live 11-Rack Self-Healing Queries, & 940KB Unpruned Jinja DOM
+**Detected:** 10/19/2026
+**Status:** **RESOLVED** (10/19/2026)
+**Symptoms:**
+1. Switching tabs in `/admin/operations` took `2,440ms` to `9,050ms` even on tabs with only a few rows.
+2. Every page load transferred `890 KB – 1,024 KB` of HTML containing `391 KB` of inline JavaScript and all 12 department tables and modals simultaneously.
+**Root Causes:**
+1. `blueprints/operations.py` executed all 12 department SQL queries and called `SelfHealingEngine.get_rack_telemetry(conn)` (`55+` unindexed diagnostic queries across 11 racks) synchronously on every tab click.
+2. Correlated subqueries in `"Leads"` and `"Employees"` scanned `"GlobalActivities"`, `"CampaignRecipients"`, and `"EmployeeDocuments"` row-by-row without composite covering indexes.
+**Solution:**
+1. Added 300-second background-refreshed memory caches (`_TELEMETRY_CACHE` and `_CREDENTIAL_CACHE`) in `core/services/self_healing_engine.py` and `core/services/credential_sentinel.py`.
+2. Deployed `Migration 043` composite covering indexes (`idx_global_activities_parent_lookup`, `idx_campaign_recipients_lead_lookup`, `idx_leads_assigned_rep_status`, `idx_employee_documents_employee_id`) and rewrote correlated subqueries as set-based `LEFT JOIN` / `WITH paged_leads` CTEs.
+3. Refactored `blueprints/operations.py` to enforce Active-View CQRS SQL Isolation (running only the active tab's SQL query plus 30s cached sidebar counts) and extracted `391 KB` of inline JS to `/static/js/backoffice_operations_core.js`, cutting warm tab switching latency to **`4.38ms–28.01ms` (`98.9%–99.8%` faster)**.
+
+
+## BUG-134: Unclosed `#view-monitor` Container (`display: none`) During Jinja Active-View Pruning Trapping Downstream Views & Modals (`#modal-lead-command`) and Preventing Lead Row Click Display
+**Detected:** 10/19/2026
+**Status:** **RESOLVED** (10/19/2026)
+**Symptoms:**
+1. Clicking on any lead row on `/admin/operations?view=leads` appeared to do nothing visually, even though `handleRowClick(event, id)` and `GET /api/v1/leads/<id>` succeeded (`HTTP 200 OK`) and set `#modal-lead-command` to `display: flex`.
+2. Downstream views (`#view-scope`, `#view-it-department`) and bottom-of-page modals (`#modal-lead-command`, `#modal-account-command`, `#modal-commercial-takeoff`, etc.) were invisible when `active_view` was not `monitor`/`dispatch`.
+**Root Causes:**
+1. In `templates/backoffice_operations.html` (line 4002), `<div id="view-monitor" class="isc-view" style="display: {% if active_view in ['monitor', 'dispatch'] %}block{% else %}none{% endif %};">` was opened outside `{% if active_view in ['monitor', 'dispatch'] %}`, while its matching closing `</div>` (line 4272) was placed inside the `{% if active_view in ['monitor', 'dispatch'] %}` block.
+2. When `active_view` was `'leads'` (or any tab other than `'monitor'`/`'dispatch'`), Jinja rendered the opening `<div id="view-monitor" style="display: none;">` tag but skipped its closing `</div>` tag, causing `#view-monitor` (`display: none`) to remain open and wrap all subsequent views and modals in the DOM tree.
+**Solution:**
+1. Corrected the Jinja block boundaries in `templates/backoffice_operations.html` (lines 4269–4398) so `{% if active_view in ['monitor', 'dispatch'] %}` closes inside `#view-monitor` before `#view-monitor`'s closing `</div>`, and wrapped `#modal-dispatch-create` and `#modal-dispatch-detail` in their own balanced `{% if active_view in ['monitor', 'dispatch'] %} ... {% endif %}` block outside `#view-monitor`.
+2. Added `test_11_backoffice_modal_dom_isolation_and_lead_click` to `scripts/test_web_performance_rack_14.py` using `HTMLParser` stack inspection across backoffice views to permanently verify that no `view-*` or `modal-*` element is ever nested inside a hidden `view-*` container and that clicking a lead row resolves `GET /api/v1/leads/<id>` with `HTTP 200 OK`.
 

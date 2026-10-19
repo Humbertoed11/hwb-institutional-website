@@ -2391,11 +2391,14 @@
 
     function initLibrary() { /* Library logic */ }
     function openAddForm(type) { 
-        document.getElementById('add-menu').style.display = 'none'; 
+        const addMenu = document.getElementById('add-menu');
+        if (addMenu) addMenu.style.display = 'none'; 
         if (type === 'account') {
             openModal('modal-add-account');
         } else if (type === 'institutional_partner') {
             openModal('modal-add-partner');
+        } else if (type === 'bid' || type === 'institutional_bid') {
+            openModal('modal-add-bid');
         } else {
             openModal('modal-add-lead');
         }
@@ -2560,12 +2563,14 @@
             }); 
         }
 
-        // --- SigmaFidelity™ Client Details Deep-Link Engine ---
+        // --- SigmaFidelity™ Client Details & Dispatch Deep-Link Engine ---
         const urlParams = new URLSearchParams(window.location.search);
         const autoAccId = urlParams.get('account_id');
         const autoAction = urlParams.get('action') || 'overview';
         if (autoAccId) {
             openAccountCommand(autoAccId, autoAction);
+        } else if (urlParams.get('action') === 'new_dispatch') {
+            openDispatchModal();
         }
     });
 
@@ -5872,6 +5877,11 @@
 
     // --- SigmaFidelity™ Work Order Dispatch Console Controller (HWB-QMS-11.2) ---
     function openDispatchModal() {
+        const modalEl = document.getElementById('modal-dispatch-create');
+        if (!modalEl) {
+            window.location.href = '/admin/operations?view=monitor&action=new_dispatch';
+            return;
+        }
         const today = new Date().toISOString().split('T')[0];
         const dateInput = document.getElementById('dispatch-scheduled-date');
         if (dateInput && !dateInput.value) {

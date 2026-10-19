@@ -4269,9 +4269,11 @@
                     </table>
                 </div>
             </div>
+            {% endif %}
         </div>
         {% endif %}
 
+        {% if active_view in ['monitor', 'dispatch'] %}
         <!-- Modal: Create Shift Dispatch (HWB-QMS-11.2) -->
         <div id="modal-dispatch-create" class="isc-modal-overlay" style="display:none; z-index: 1100;">
             <div class="isc-modal" style="max-width: 680px; max-height: 90vh; overflow-y: auto; padding: 2.25rem; border-radius: 12px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);">
@@ -4393,8 +4395,8 @@
                     <!-- Populated dynamically -->
                 </div>
             </div>
-            {% endif %}
         </div>
+        {% endif %}
 
 
         <!-- View: Service Planner -->
@@ -8159,7 +8161,7 @@
 </div>
 {% endif %}
 
-{% if active_view == 'leads' %}
+{% if active_view in ['leads', 'marketing'] %}
 <div id="modal-lead-command" class="isc-modal-overlay" style="display:none;">
     <div class="isc-modal">
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.75rem; gap: 1.5rem;">

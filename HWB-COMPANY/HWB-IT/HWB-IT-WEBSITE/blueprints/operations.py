@@ -695,17 +695,23 @@ def admin_operations():
                         SELECT cb.*,
                                COALESCE(ga.activity_count, 0) as activity_count,
                                ga.last_contact,
-                               ga.last_note
+                               ga_last.description as last_note
                         FROM "ConstructionBids" cb
                         LEFT JOIN (
                             SELECT parent_id,
                                    COUNT(*) as activity_count,
-                                   MAX(timestamp) as last_contact,
-                                   (ARRAY_AGG(description ORDER BY timestamp DESC))[1] as last_note
+                                   MAX(timestamp) as last_contact
                             FROM "GlobalActivities"
                             WHERE parent_type = 'ConstructionBid'
                             GROUP BY parent_id
                         ) ga ON ga.parent_id = cb.id
+                        LEFT JOIN LATERAL (
+                            SELECT description
+                            FROM "GlobalActivities"
+                            WHERE parent_type = 'ConstructionBid' AND parent_id = cb.id
+                            ORDER BY timestamp DESC
+                            LIMIT 1
+                        ) ga_last ON TRUE
                         {bid_where_str}
                         ORDER BY {b_sort} {b_dir} {nulls_clause}, cb.id DESC
                         LIMIT %s OFFSET %s

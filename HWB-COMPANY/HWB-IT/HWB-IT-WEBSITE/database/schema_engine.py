@@ -1007,11 +1007,43 @@ def sync_bug_132_133_five_tables(conn: Any) -> dict:
             RETURNING id;
         """)
         receipt["sigma_knowledge_scars"]["BUG-133"] = cur.fetchone()[0]
-        cur.execute('SELECT setval(pg_get_serial_sequence(\'"SigmaKnowledgeScars"\', \'id\'), GREATEST((SELECT MAX(id) FROM "SigmaKnowledgeScars"), 225));')
+
+        cur.execute("""
+            INSERT INTO "SigmaKnowledgeScars" (
+                id, description, category, status, impact_level,
+                root_cause, implemented_fix, preventative_rule,
+                created_at, resolved_at, resolution_notes
+            ) VALUES (
+                226,
+                'BUG-134: Unclosed #view-monitor Container (display: none) During Jinja Active-View Pruning Trapping Downstream Views & Modals (#modal-lead-command) and Preventing Lead Row Click Display.',
+                'UI / DOM Integrity',
+                'RESOLVED',
+                4,
+                'In templates/backoffice_operations.html (line 4002), <div id="view-monitor" style="display: none;"> was opened outside {% if active_view in ["monitor", "dispatch"] %}, while its closing </div> (line 4272) was placed inside the conditional block. When active_view was "leads", Jinja skipped the closing </div>, wrapping all downstream views and modals (#modal-lead-command) inside a hidden parent.',
+                'Closed {% if active_view in ["monitor", "dispatch"] %} inside #view-monitor before its closing </div>, wrapped #modal-dispatch-create and #modal-dispatch-detail in a balanced conditional block outside #view-monitor, and added test_11_backoffice_modal_dom_isolation_and_lead_click in scripts/test_web_performance_rack_14.py.',
+                'Every {% if active_view == ... %} pruning block inside a <div id="view-..."> container must close before the container closing </div>, verified by automated HTMLParser DOM nesting checks across all views.',
+                NOW(),
+                NOW(),
+                'Verified 2026-10-19 (v5.4.4): Zero views or modals trapped inside hidden view-* containers across all 12 backoffice views; lead row click opens #modal-lead-command immediately.'
+            )
+            ON CONFLICT (id) DO UPDATE SET
+                description = EXCLUDED.description,
+                category = EXCLUDED.category,
+                status = EXCLUDED.status,
+                impact_level = EXCLUDED.impact_level,
+                root_cause = EXCLUDED.root_cause,
+                implemented_fix = EXCLUDED.implemented_fix,
+                preventative_rule = EXCLUDED.preventative_rule,
+                resolved_at = NOW(),
+                resolution_notes = EXCLUDED.resolution_notes
+            RETURNING id;
+        """)
+        receipt["sigma_knowledge_scars"]["BUG-134"] = cur.fetchone()[0]
+        cur.execute('SELECT setval(pg_get_serial_sequence(\'"SigmaKnowledgeScars"\', \'id\'), GREATEST((SELECT MAX(id) FROM "SigmaKnowledgeScars"), 226));')
         cur.execute('SELECT COUNT(*) FROM "SigmaKnowledgeScars";')
         receipt["total_sigma_knowledge_scars"] = cur.fetchone()[0]
 
-        # 2. GlobalActivities ([AUTO-HEALED-PERFORMANCE-BUG-132] & [AUTO-HEALED-PERFORMANCE-BUG-133])
+        # 2. GlobalActivities ([AUTO-HEALED-PERFORMANCE-BUG-132], [AUTO-HEALED-PERFORMANCE-BUG-133] & [AUTO-HEALED-DOM-BUG-134])
         for bug_code, act_type, desc_text in [
             (
                 "BUG-132",
@@ -1022,6 +1054,11 @@ def sync_bug_132_133_five_tables(conn: Any) -> dict:
                 "BUG-133",
                 "[AUTO-HEALED-PERFORMANCE-BUG-133]",
                 "HWB-QMS-11.14 v1.1.0 (Release v5.4.4): Remediated BUG-133 post-login backoffice tab-switching latency (2.44s-9.05s -> 4.4ms-28.0ms warm) via Active-View CQRS SQL isolation, 4 covering composite indexes (Migration 043), 300s background telemetry cache, and server-side Jinja DOM pruning."
+            ),
+            (
+                "BUG-134",
+                "[AUTO-HEALED-DOM-BUG-134]",
+                "HWB-QMS-11.14 v1.1.0 (Release v5.4.4): Remediated BUG-134 unclosed #view-monitor container during Jinja active_view pruning that trapped #modal-lead-command inside a display:none parent on /admin/operations?view=leads; added Test 11 HTMLParser DOM isolation verification."
             ),
         ]:
             cur.execute('SELECT activity_id FROM "GlobalActivities" WHERE activity_type = %s ORDER BY activity_id DESC LIMIT 1;', (act_type,))
@@ -1036,7 +1073,7 @@ def sync_bug_132_133_five_tables(conn: Any) -> dict:
                 """, (act_type, desc_text))
                 receipt["global_activities"][bug_code] = cur.fetchone()[0]
 
-        # 3. Incidents (BUG-132 & BUG-133)
+        # 3. Incidents (BUG-132, BUG-133 & BUG-134)
         for bug_code, sev, inc_desc in [
             (
                 "BUG-132",
@@ -1047,6 +1084,11 @@ def sync_bug_132_133_five_tables(conn: Any) -> dict:
                 "BUG-133",
                 "Critical",
                 "BUG-133: Post-login Backoffice Operations (/admin/operations) experienced 2.44s-9.05s tab-switching latency and 2.6 MB-3.3 MB HTML payloads due to 22-query monolithic controller, correlated subqueries, uncached 11-Rack telemetry, and unpruned DOM views. | VERIFIED RESOLVED (v5.4.4 / HWB-QMS-11.14 v1.1): Active-View CQRS SQL isolation, Migration 043 covering indexes, 300s async telemetry cache, and Jinja DOM pruning deployed (4.4ms-28.0ms warm)."
+            ),
+            (
+                "BUG-134",
+                "High",
+                "BUG-134: Unclosed #view-monitor container (display: none) during Jinja active_view pruning trapped downstream views and modals (#modal-lead-command) on /admin/operations?view=leads. | VERIFIED RESOLVED (v5.4.4): Balanced #view-monitor Jinja closing tags and added Test 11 HTMLParser DOM isolation assertion in scripts/test_web_performance_rack_14.py."
             ),
         ]:
             cur.execute('SELECT id FROM "Incidents" WHERE description LIKE %s ORDER BY id DESC LIMIT 1;', (f"{bug_code}:%",))

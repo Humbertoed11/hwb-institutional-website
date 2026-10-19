@@ -206,6 +206,62 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
         finally:
             conn.close()
 
+    def test_11_backoffice_modal_dom_isolation_and_lead_click(self):
+        """BUG-134 Guard: Verifies modals (#modal-lead-command, etc.) are never trapped inside hidden view-* containers and lead row click API resolves 200 OK."""
+        from html.parser import HTMLParser
+        import re
+
+        class DomNestingChecker(HTMLParser):
+            def __init__(self):
+                super().__init__()
+                self.stack = []
+                self.trapped_elements = {}
+
+            def handle_starttag(self, tag, attrs):
+                d = dict(attrs)
+                el_id = d.get("id", "")
+                if el_id.startswith("view-") or el_id.startswith("modal-"):
+                    hidden_view_parents = [
+                        x[1] for x in self.stack if x[1].startswith("view-") and "display: none" in x[2]
+                    ]
+                    if hidden_view_parents:
+                        self.trapped_elements[el_id] = hidden_view_parents
+                if tag not in (
+                    "br", "hr", "img", "input", "meta", "link", "source",
+                    "col", "area", "base", "embed", "param", "track", "wbr",
+                ):
+                    self.stack.append((tag, el_id, d.get("style", "")))
+
+            def handle_endtag(self, tag):
+                for i in range(len(self.stack) - 1, -1, -1):
+                    if self.stack[i][0] == tag:
+                        self.stack = self.stack[:i]
+                        break
+
+        auth_client = self.get_auth_client()
+
+        for v in ["leads", "accounts", "construction_bids", "workforce", "scope", "it_department"]:
+            r = auth_client.get(f"/admin/operations?view={v}")
+            self.assertEqual(r.status_code, 200)
+            html = r.data.decode("utf-8")
+            checker = DomNestingChecker()
+            checker.feed(html)
+            self.assertEqual(
+                checker.trapped_elements,
+                {},
+                f"View {v} has views/modals trapped inside hidden view-* containers: {checker.trapped_elements}",
+            )
+            if v == "leads":
+                self.assertIn('id="modal-lead-command"', html)
+                m = re.search(r"handleRowClick\(event,\s*'(\d+)'\)", html)
+                self.assertIsNotNone(m, "Expected at least one clickable lead row on view=leads")
+                lead_id = m.group(1)
+                r_lead = auth_client.get(f"/api/v1/leads/{lead_id}")
+                self.assertEqual(r_lead.status_code, 200)
+                payload = r_lead.get_json()
+                self.assertIsNotNone(payload.get("lead"))
+
 
 if __name__ == "__main__":
     unittest.main()
+
