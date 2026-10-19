@@ -316,7 +316,18 @@
         toggleMenu: function(menuId, e) {
             if (e) e.stopPropagation();
             const m = document.getElementById(menuId);
-            if (m) m.style.display = (m.style.display === 'none' || !m.style.display) ? 'block' : 'none';
+            if (!m) return;
+            const isOpening = (m.style.display === 'none' || !m.style.display);
+            m.style.display = isOpening ? 'block' : 'none';
+            if (isOpening && window.innerWidth > 1024) {
+                m.style.left = '0';
+                m.style.right = 'auto';
+                const rect = m.getBoundingClientRect();
+                if (rect.right > window.innerWidth - 12) {
+                    const shift = rect.right - (window.innerWidth - 12);
+                    m.style.left = Math.max(-rect.left + 12, -shift) + 'px';
+                }
+            }
         },
         applyColumns: function(e) {
             e.preventDefault();
@@ -915,7 +926,28 @@
         else if (window.event && typeof window.event.stopPropagation === 'function') window.event.stopPropagation();
         const m = document.getElementById(id);
         document.querySelectorAll('.isc-row-menu').forEach(x => { if(x.id !== id) x.style.display = 'none'; });
-        if(m) m.style.display = m.style.display === 'block' ? 'none' : 'block';
+        if (!m) return;
+        const isOpening = (m.style.display !== 'block');
+        m.style.display = isOpening ? 'block' : 'none';
+        if (isOpening) {
+            const btn = (evt && evt.currentTarget) ? evt.currentTarget : m.previousElementSibling;
+            if (btn && typeof btn.getBoundingClientRect === 'function') {
+                const bRect = btn.getBoundingClientRect();
+                m.style.position = 'fixed';
+                m.style.zIndex = '3500';
+                const menuHeight = m.offsetHeight || 290;
+                const menuWidth = m.offsetWidth || 240;
+                let topPos = bRect.bottom + 4;
+                if (topPos + menuHeight > window.innerHeight - 12) {
+                    topPos = Math.max(12, bRect.top - menuHeight - 4);
+                }
+                let leftPos = bRect.right - menuWidth;
+                leftPos = Math.min(Math.max(12, leftPos), window.innerWidth - menuWidth - 12);
+                m.style.top = topPos + 'px';
+                m.style.left = leftPos + 'px';
+                m.style.right = 'auto';
+            }
+        }
     }
 
     const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = val || ''; };
@@ -1595,7 +1627,7 @@
             } else if (col === 'next_action') {
                 rowHtml += `<td>${lead.next_action_date || '--'}</td>`;
             } else if (col === 'activities') {
-                rowHtml += `<td style="text-align:center; font-weight:800">${lead.activity_count || 0}</td>`;
+                rowHtml += `<td style="text-align:center; font-weight:800; cursor:pointer;" onclick="event.stopPropagation(); showActivityHoverCard(${lead.id}, 'Lead', event, this);" onmouseenter="showActivityHoverCard(${lead.id}, 'Lead', event, this)" onmouseleave="hideActivityHoverCard()"><span class="sigma-unit-pill" style="background:#f1f5f9; color:#0f172a; font-weight:800; border:1px solid #cbd5e1;">${lead.activity_count || 0}</span></td>`;
             } else if (col === 'source') {
                 rowHtml += `<td>${lead.lead_source || '--'}</td>`;
             } else if (col === 'interest') {
@@ -1672,7 +1704,7 @@
             } else if (col === 'frequency') {
                 rowHtml += `<td>${client.frequency || '--'}</td>`;
             } else if (col === 'activities') {
-                rowHtml += `<td style="text-align:center; font-weight:800">${client.activity_count || 0}</td>`;
+                rowHtml += `<td style="text-align:center; font-weight:800; cursor:pointer;" onclick="event.stopPropagation(); showActivityHoverCard('${client.customer_id}', 'Account', event, this);" onmouseenter="showActivityHoverCard('${client.customer_id}', 'Account', event, this)" onmouseleave="hideActivityHoverCard()"><span class="sigma-unit-pill" style="background:#f1f5f9; color:#0f172a; font-weight:800; border:1px solid #cbd5e1;">${client.activity_count || 0}</span></td>`;
             } else if (col === 'start_date') {
                 rowHtml += `<td>${client.start_date || '--'}</td>`;
             } else if (col === 'website') {
@@ -2528,6 +2560,8 @@
         if (lHeader) { 
             new Sortable(lHeader, { 
                 animation: 150,
+                delay: 200,
+                delayOnTouchOnly: true,
                 filter: '.no-drag',
                 preventOnFilter: false,
                 onEnd: (evt) => {
@@ -2541,6 +2575,8 @@
         if (aHeader) { 
             new Sortable(aHeader, { 
                 animation: 150,
+                delay: 200,
+                delayOnTouchOnly: true,
                 filter: '.no-drag',
                 preventOnFilter: false,
                 onEnd: (evt) => {
@@ -2554,6 +2590,8 @@
         if (bHeader) { 
             new Sortable(bHeader, { 
                 animation: 150,
+                delay: 200,
+                delayOnTouchOnly: true,
                 filter: '.no-drag',
                 preventOnFilter: false,
                 onEnd: (evt) => {
@@ -2583,6 +2621,10 @@
         const colMenuBids = document.getElementById('col-mgr-menu-bids');
         if (colMenuBids && !colMenuBids.contains(e.target) && !e.target.closest('#bids-cols-btn')) colMenuBids.style.display = 'none';
         document.querySelectorAll('.isc-row-menu').forEach(m => { if(!m.contains(e.target) && !e.target.closest('button')) m.style.display = 'none'; });
+        const hoverCard = document.getElementById('sigma-hover-card-popover');
+        if (hoverCard && hoverCard.style.display === 'block' && !hoverCard.contains(e.target)) {
+            hoverCard.style.display = 'none';
+        }
     });
 
     let currentCompareGroupId = null;

@@ -94,11 +94,20 @@
  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
  padding: 2.5rem;
  position: relative;
- overflow: hidden;
+ overflow-x: hidden;
+ overflow-y: auto;
+ -webkit-overflow-scrolling: touch;
  display: flex;
  flex-direction: column;
  animation: imaxFloat 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
  border: 1px solid var(--slate-200);
+ }
+
+ @media (max-width: 1024px) {
+ .bo-main { padding: 1.5rem 16px; }
+ .isc-card, .isc-card.fluid-data { padding: 1.25rem 1rem; }
+ .isc-modal-overlay { padding: 0.75rem; }
+ .isc-modal { padding: 1.25rem; max-height: 92vh; }
  }
 
  @keyframes imaxFloat {

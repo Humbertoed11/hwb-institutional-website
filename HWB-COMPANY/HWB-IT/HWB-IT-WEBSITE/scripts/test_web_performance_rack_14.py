@@ -318,8 +318,29 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
         finally:
             conn.close()
 
+    def test_13_tablet_popover_and_modal_viewport_safety(self):
+        """BUG-135: Verifies Customize Columns popovers (#col-mgr-menu*), .isc-modal touch scroll, sticky column unpinning, and SortableJS touch delay."""
+        auth_client = self.get_auth_client()
+
+        for v, menu_id in [("leads", "col-mgr-menu"), ("accounts", "col-mgr-menu-acc"), ("construction_bids", "col-mgr-menu-bids")]:
+            r = auth_client.get(f"/admin/operations?view={v}")
+            self.assertEqual(r.status_code, 200)
+            html = r.data.decode("utf-8")
+            self.assertIn(f'id="{menu_id}"', html)
+            self.assertIn("sigma-col-mgr-menu", html)
+            self.assertIn("max-width: calc(100vw - 24px)", html)
+            self.assertIn("-webkit-overflow-scrolling: touch", html)
+            self.assertIn("@media (max-width: 1024px)", html)
+
+        js_resp = auth_client.get("/static/js/backoffice_operations_core.js")
+        self.assertEqual(js_resp.status_code, 200)
+        js_text = js_resp.data.decode("utf-8")
+        self.assertIn("delayOnTouchOnly: true", js_text)
+        self.assertIn("m.style.position = 'fixed'", js_text)
+
 
 if __name__ == "__main__":
     unittest.main()
+
 
 

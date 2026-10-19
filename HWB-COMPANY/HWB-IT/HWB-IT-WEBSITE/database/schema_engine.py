@@ -1210,11 +1210,43 @@ def sync_bug_132_133_five_tables(conn: Any) -> dict:
             RETURNING id;
         """)
         receipt["sigma_knowledge_scars"]["BUG-134"] = cur.fetchone()[0]
-        cur.execute('SELECT setval(pg_get_serial_sequence(\'"SigmaKnowledgeScars"\', \'id\'), GREATEST((SELECT MAX(id) FROM "SigmaKnowledgeScars"), 226));')
+
+        cur.execute("""
+            INSERT INTO "SigmaKnowledgeScars" (
+                id, description, category, status, impact_level,
+                root_cause, implemented_fix, preventative_rule,
+                created_at, resolved_at, resolution_notes
+            ) VALUES (
+                227,
+                'BUG-135: Tablet Off-Screen Column Popover Clipping (#col-mgr-menu right: 0; width: 640px;), Unscrollable .isc-modal (overflow: hidden), Multi-Sticky Column Overlap, & Touch Header Drag Collision.',
+                'UI / Tablet Responsiveness',
+                'RESOLVED',
+                4,
+                'Three column manager popovers (#col-mgr-menu, #col-mgr-menu-acc, #col-mgr-menu-bids) used position: absolute; right: 0; width: 640px; inside left-aligned toolbar buttons, causing 545px of the 640px popover to paint off the left edge of the table and tablet viewport. Additionally, .isc-modal used overflow: hidden (clipping bottom form buttons on tablets), .isc-row-menu was clipped by overflow-x: auto table wrappers, 3 sticky columns froze 410px+ of tablet screens, and SortableJS headers lacked touch delay.',
+                'Anchored #col-mgr-menu, #col-mgr-menu-acc, and #col-mgr-menu-bids to left: 0 with .sigma-col-mgr-menu responsive fixed tablet viewport bounds (@media max-width: 1024px) and dynamic viewport clamping in SigmaGridEngine.toggleMenu; enabled vertical touch scrolling on .isc-modal (overflow-y: auto; -webkit-overflow-scrolling: touch;); switched toggleRowMenu to fixed viewport-clamped coordinates; unpinned sticky-2/sticky-3 on tablets <= 1024px; and added delay: 200, delayOnTouchOnly: true to SortableJS headers plus touch-tap support on Calls & Notes badges.',
+                'All dropdowns and column popovers must anchor inside viewport bounds with responsive max-width: calc(100vw - 24px) and fixed viewport clamping on tablets (<= 1024px); modals must never use overflow: hidden without an internally scrollable flex child.',
+                NOW(),
+                NOW(),
+                'Verified 2026-10-19 (v5.4.4): Customize Lead/Client/Bid Columns forms, row menus, and modals render 100% inside tablet and desktop viewports.'
+            )
+            ON CONFLICT (id) DO UPDATE SET
+                description = EXCLUDED.description,
+                category = EXCLUDED.category,
+                status = EXCLUDED.status,
+                impact_level = EXCLUDED.impact_level,
+                root_cause = EXCLUDED.root_cause,
+                implemented_fix = EXCLUDED.implemented_fix,
+                preventative_rule = EXCLUDED.preventative_rule,
+                resolved_at = NOW(),
+                resolution_notes = EXCLUDED.resolution_notes
+            RETURNING id;
+        """)
+        receipt["sigma_knowledge_scars"]["BUG-135"] = cur.fetchone()[0]
+        cur.execute('SELECT setval(pg_get_serial_sequence(\'"SigmaKnowledgeScars"\', \'id\'), GREATEST((SELECT MAX(id) FROM "SigmaKnowledgeScars"), 227));')
         cur.execute('SELECT COUNT(*) FROM "SigmaKnowledgeScars";')
         receipt["total_sigma_knowledge_scars"] = cur.fetchone()[0]
 
-        # 2. GlobalActivities ([AUTO-HEALED-PERFORMANCE-BUG-132], [AUTO-HEALED-PERFORMANCE-BUG-133] & [AUTO-HEALED-DOM-BUG-134])
+        # 2. GlobalActivities ([AUTO-HEALED-PERFORMANCE-BUG-132], [AUTO-HEALED-PERFORMANCE-BUG-133], [AUTO-HEALED-DOM-BUG-134] & [AUTO-HEALED-TABLET-UI-BUG-135])
         for bug_code, act_type, desc_text in [
             (
                 "BUG-132",
@@ -1231,6 +1263,11 @@ def sync_bug_132_133_five_tables(conn: Any) -> dict:
                 "[AUTO-HEALED-DOM-BUG-134]",
                 "HWB-QMS-11.14 v1.1.0 (Release v5.4.4): Remediated BUG-134 unclosed #view-monitor container during Jinja active_view pruning that trapped #modal-lead-command inside a display:none parent on /admin/operations?view=leads; added Test 11 HTMLParser DOM isolation verification."
             ),
+            (
+                "BUG-135",
+                "[AUTO-HEALED-TABLET-UI-BUG-135]",
+                "HWB-QMS-11.14 v1.1.0 (Release v5.4.4): Remediated BUG-135 tablet off-screen column popover clipping (#col-mgr-menu left:0 + .sigma-col-mgr-menu responsive tablet viewport bounds), enabled .isc-modal vertical touch scrolling, clamped .isc-row-menu to fixed viewport coordinates, unpinned sticky-2/sticky-3 on tablets <= 1024px, and added 200ms touch delay on SortableJS headers."
+            ),
         ]:
             cur.execute('SELECT activity_id FROM "GlobalActivities" WHERE activity_type = %s ORDER BY activity_id DESC LIMIT 1;', (act_type,))
             row = cur.fetchone()
@@ -1244,7 +1281,7 @@ def sync_bug_132_133_five_tables(conn: Any) -> dict:
                 """, (act_type, desc_text))
                 receipt["global_activities"][bug_code] = cur.fetchone()[0]
 
-        # 3. Incidents (BUG-132, BUG-133 & BUG-134)
+        # 3. Incidents (BUG-132, BUG-133, BUG-134 & BUG-135)
         for bug_code, sev, inc_desc in [
             (
                 "BUG-132",
@@ -1260,6 +1297,11 @@ def sync_bug_132_133_five_tables(conn: Any) -> dict:
                 "BUG-134",
                 "High",
                 "BUG-134: Unclosed #view-monitor container (display: none) during Jinja active_view pruning trapped downstream views and modals (#modal-lead-command) on /admin/operations?view=leads. | VERIFIED RESOLVED (v5.4.4): Balanced #view-monitor Jinja closing tags and added Test 11 HTMLParser DOM isolation assertion in scripts/test_web_performance_rack_14.py."
+            ),
+            (
+                "BUG-135",
+                "High",
+                "BUG-135: Tablet off-screen column popover clipping (#col-mgr-menu right: 0; width: 640px;), unscrollable .isc-modal (overflow: hidden), multi-sticky column overlap, and touch header drag collision reported by remote sales rep Beabe Wiley. | VERIFIED RESOLVED (v5.4.4): Anchored column menus left: 0 with .sigma-col-mgr-menu tablet fixed viewport clamping, enabled .isc-modal touch scrolling, unpinned sticky-2/sticky-3 on tablets <= 1024px, and added Test 13 tablet UI regression verification."
             ),
         ]:
             cur.execute('SELECT id FROM "Incidents" WHERE description LIKE %s ORDER BY id DESC LIMIT 1;', (f"{bug_code}:%",))

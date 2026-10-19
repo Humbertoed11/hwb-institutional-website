@@ -189,7 +189,7 @@
                             <button type="button" id="leads-cols-btn" onclick="toggleColumnMenu(event)" class="isc-btn isc-btn-outline" style="height: 36px; padding: 0 1rem; border-radius: 6px; border-color: var(--slate-300); color: var(--slate-700); background: var(--white); font-size: 0.8rem; font-weight: 700; display: inline-flex; align-items: center;" title="Customize columns: Choose which lead data fields to show or hide">
                                 <i class="fas fa-columns" style="margin-right: 0.4rem; font-size: 0.75rem;"></i> Columns
                             </button>
-                            <div id="col-mgr-menu" style="display: none; position: absolute; right: 0; top: 110%; background: var(--white); border: 1px solid var(--slate-200); border-radius: 8px; box-shadow: 0 20px 40px -5px rgba(0,0,0,0.15); padding: 1.25rem; z-index: 1000; width: 640px;">
+                            <div id="col-mgr-menu" class="sigma-col-mgr-menu" style="display: none; position: absolute; left: 0; top: 110%; background: var(--white); border: 1px solid var(--slate-200); border-radius: 8px; box-shadow: 0 20px 40px -5px rgba(0,0,0,0.15); padding: 1.25rem; z-index: 1050; width: 640px; max-width: calc(100vw - 24px);">
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; border-bottom: 1px solid var(--slate-100); padding-bottom: 0.5rem;">
                                     <div>
                                         <h4 style="font-size: 0.75rem; font-weight: 900; color: var(--slate-700); text-transform: uppercase; margin: 0; letter-spacing: 0.05em;">Customize Lead Columns</h4>
@@ -686,7 +686,7 @@
                                          </div>
                                      </td>
                                      {% elif col_key == 'activities' %}
-                                     <td style="text-align:center; font-weight:800; cursor:pointer;" onclick="event.stopPropagation();" onmouseenter="showActivityHoverCard({{ lead.id }}, 'Lead', event, this)" onmouseleave="hideActivityHoverCard()">
+                                     <td style="text-align:center; font-weight:800; cursor:pointer;" onclick="event.stopPropagation(); showActivityHoverCard({{ lead.id }}, 'Lead', event, this);" onmouseenter="showActivityHoverCard({{ lead.id }}, 'Lead', event, this)" onmouseleave="hideActivityHoverCard()">
                                          <span class="sigma-unit-pill" style="background:#f1f5f9; color:#0f172a; font-weight:800; border:1px solid #cbd5e1;">{{ lead.activity_count or 0 }}</span>
                                      </td>
                                      {% elif col_key == 'source' %}
@@ -839,7 +839,7 @@
                             <button type="button" id="acc-cols-btn" onclick="toggleColumnMenuAcc(event)" class="isc-btn isc-btn-outline" style="height: 36px; padding: 0 1rem; border-radius: 6px; border-color: var(--slate-300); color: var(--slate-700); background: var(--white); font-size: 0.8rem; font-weight: 700; display: inline-flex; align-items: center;" title="Customize columns: Choose which client data fields to show or hide">
                                 <i class="fas fa-columns" style="margin-right: 0.4rem; font-size: 0.75rem;"></i> Columns
                             </button>
-                            <div id="col-mgr-menu-acc" style="display: none; position: absolute; right: 0; top: 110%; background: var(--white); border: 1px solid var(--slate-200); border-radius: 8px; box-shadow: 0 20px 40px -5px rgba(0,0,0,0.15); padding: 1.25rem; z-index: 1000; width: 640px;">
+                            <div id="col-mgr-menu-acc" class="sigma-col-mgr-menu" style="display: none; position: absolute; left: 0; top: 110%; background: var(--white); border: 1px solid var(--slate-200); border-radius: 8px; box-shadow: 0 20px 40px -5px rgba(0,0,0,0.15); padding: 1.25rem; z-index: 1050; width: 640px; max-width: calc(100vw - 24px);">
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; border-bottom: 1px solid var(--slate-100); padding-bottom: 0.5rem;">
                                     <div>
                                         <h4 style="font-size: 0.75rem; font-weight: 900; color: var(--slate-700); text-transform: uppercase; margin: 0; letter-spacing: 0.05em;">Customize Client Columns</h4>
@@ -1163,7 +1163,7 @@
                                     {% elif col_key == 'quote' %}<td>{{ client.quote_number or '--' }}</td>
                                     {% elif col_key == 'frequency' %}<td>{{ client.frequency or '--' }}</td>
                                     {% elif col_key == 'activities' %}
-                                     <td style="text-align:center; font-weight:800; cursor:pointer;" onclick="event.stopPropagation();" onmouseenter="showActivityHoverCard({{ client.customer_id }}, 'Account', event, this)" onmouseleave="hideActivityHoverCard()">
+                                     <td style="text-align:center; font-weight:800; cursor:pointer;" onclick="event.stopPropagation(); showActivityHoverCard({{ client.customer_id }}, 'Account', event, this);" onmouseenter="showActivityHoverCard({{ client.customer_id }}, 'Account', event, this)" onmouseleave="hideActivityHoverCard()">
                                          <span class="sigma-unit-pill" style="background:#f1f5f9; color:#0f172a; font-weight:800; border:1px solid #cbd5e1;">{{ client.activity_count or 0 }}</span>
                                      </td>
                                     {% elif col_key == 'start_date' %}<td>{{ client.start_date or '--' }}</td>
@@ -1340,7 +1340,7 @@
                             <button type="button" id="bids-cols-btn" onclick="toggleColumnMenuBids(event)" class="isc-btn isc-btn-outline" style="height: 36px; padding: 0 1rem; border-radius: 6px; border-color: var(--slate-300); color: var(--slate-700); background: var(--white); font-size: 0.8rem; font-weight: 700; display: inline-flex; align-items: center;" title="Customize columns: Choose which takeoff data fields to show or hide">
                                 <i class="fas fa-columns" style="margin-right: 0.4rem; font-size: 0.75rem;"></i> Columns
                             </button>
-                            <div id="col-mgr-menu-bids" style="display: none; position: absolute; right: 0; top: 110%; background: var(--white); border: 1px solid var(--slate-200); border-radius: 8px; box-shadow: 0 20px 40px -5px rgba(0,0,0,0.15); padding: 1.25rem; z-index: 1000; width: 640px;">
+                            <div id="col-mgr-menu-bids" class="sigma-col-mgr-menu" style="display: none; position: absolute; left: 0; top: 110%; background: var(--white); border: 1px solid var(--slate-200); border-radius: 8px; box-shadow: 0 20px 40px -5px rgba(0,0,0,0.15); padding: 1.25rem; z-index: 1050; width: 640px; max-width: calc(100vw - 24px);">
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; border-bottom: 1px solid var(--slate-100); padding-bottom: 0.5rem;">
                                     <div>
                                         <h4 style="font-size: 0.75rem; font-weight: 900; color: var(--slate-700); text-transform: uppercase; margin: 0; letter-spacing: 0.05em;">Customize Bidding Pipeline View</h4>
@@ -6745,11 +6745,11 @@
             </div>
         </div>
 
-        <!-- Workstation Fixed Height Body Wrapper (Matches 700px Body Height of Lead Detail File) -->
-        <div style="height: 700px; overflow-y: auto; scrollbar-width: thin; padding-right: 0.35rem;">
+        <!-- Workstation Responsive Body Wrapper (Scrolls smoothly on desktop & touch tablets) -->
+        <div style="max-height: calc(85vh - 90px); height: auto; overflow-y: auto; -webkit-overflow-scrolling: touch; scrollbar-width: thin; padding-right: 0.35rem;">
             
             <!-- Two-Column Calling Workstation -->
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 1.25rem; align-items: start;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); gap: 1.25rem; align-items: start;">
                 
                 <!-- Column 1: Facility Information & Calling Script -->
                 <div style="display: flex; flex-direction: column; gap: 1rem;">
@@ -9527,14 +9527,16 @@ Click here to book a 5-minute walkthrough: [Calendar Link]"></textarea>
     .isc-tab-trigger { background: none; border: none; padding: 1.25rem 0; font-weight: 800; font-size: 0.85rem; color: var(--slate-400); cursor: pointer; text-transform: uppercase; border-bottom: 4px solid transparent; transition: all 0.2s; letter-spacing: 0.05em; }
     .isc-tab-trigger.active { color: var(--brand); border-color: var(--brand); }
     
-    /* --- SigmaFidelity™ Layout Continuity (BUG-006 Hardening) --- */
+    /* --- SigmaFidelity™ Layout Continuity (BUG-006 & BUG-135 Tablet Hardening) --- */
     .isc-pane, .isc-lead-pane { 
         display: flex;
         flex-direction: column; 
         gap: 2rem; 
         padding: 2.5rem 0; 
-        height: 600px; /* Rigid Footprint */
+        max-height: 600px;
+        height: auto;
         overflow-y: auto; 
+        -webkit-overflow-scrolling: touch;
         scrollbar-width: thin;
     }
     .timeline-node { position: relative; padding-bottom: 2rem; border-left: 2px solid var(--slate-100); padding-left: 2.5rem; margin-left: 1rem; }
@@ -9586,10 +9588,64 @@ Click here to book a 5-minute walkthrough: [Calendar Link]"></textarea>
         border: none;
     }
 
+    @media (max-width: 1024px) {
+        .isc-grid th.sticky-2, .isc-grid td.sticky-2,
+        .isc-grid th.sticky-3, .isc-grid td.sticky-3,
+        #table-construction-bids th.sticky-2, #table-construction-bids td.sticky-2 {
+            position: static !important;
+            left: auto !important;
+            box-shadow: none !important;
+        }
+        .isc-grid th.sticky-1, .isc-grid td.sticky-1 {
+            max-width: 220px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .sigma-col-mgr-menu {
+            position: fixed !important;
+            left: 12px !important;
+            right: 12px !important;
+            top: 72px !important;
+            width: auto !important;
+            max-width: calc(100vw - 24px) !important;
+            max-height: calc(100vh - 96px) !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch;
+            z-index: 3500 !important;
+        }
+        .sigma-col-mgr-menu [style*="grid-template-columns: 1fr 1fr 1fr"] {
+            grid-template-columns: 1fr 1fr !important;
+        }
+        #lead-list-overview {
+            grid-template-columns: 1fr 1fr !important;
+        }
+        #lead-modal-profile-banner {
+            grid-template-columns: 1fr 1fr !important;
+            gap: 1rem !important;
+        }
+        .isc-pane, .isc-lead-pane {
+            max-height: none !important;
+            height: auto !important;
+            padding: 1.25rem 0 !important;
+        }
+    }
+
     @media (max-width: 768px) {
+        .isc-grid th.sticky-cb, .isc-grid td.sticky-cb,
+        .isc-grid th.sticky-1, .isc-grid td.sticky-1,
+        #table-construction-bids th.sticky-1, #table-construction-bids td.sticky-1 {
+            position: static !important;
+            left: auto !important;
+            max-width: none !important;
+        }
+        .sigma-col-mgr-menu [style*="grid-template-columns: 1fr 1fr 1fr"] {
+            grid-template-columns: 1fr !important;
+        }
+        #lead-list-overview,
+        #lead-modal-profile-banner,
         .isc-pane, .isc-lead-pane, [style*="grid-template-columns: 1fr 1fr"], [style*="grid-template-columns: 1fr 1.5fr"] {
             grid-template-columns: 1fr !important;
-            gap: 2rem !important;
+            gap: 1.25rem !important;
         }
     }
 </style>

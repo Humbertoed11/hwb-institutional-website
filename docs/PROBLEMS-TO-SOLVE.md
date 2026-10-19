@@ -118,6 +118,7 @@ Responsibility: George (Architect)
 | 10/19/2026 | BUG-132 | Public Website & Origin Worker Latency Stalls (Duplicate Boot Daemon Spawning on Every Gunicorn Worker Recycle, Synchronous Cloudflare Cache-Bypass, & Uncompressed Assets). | **RESOLVED** | HIGH |
 | 10/19/2026 | BUG-133 | Backoffice Operations (`/admin/operations`) Multi-Second Tab Switching Latency (`2,440ms–9,050ms`) Due to Monolithic 12-Department SQL Execution, Live 11-Rack Self-Healing Queries, & 940KB Unpruned Jinja DOM. | **RESOLVED** | CRITICAL |
 | 10/19/2026 | BUG-134 | Unclosed `#view-monitor` Container (`display: none`) During Jinja Active-View Pruning Trapping Downstream Views & Modals (`#modal-lead-command`) and Preventing Lead Row Click Display. | **RESOLVED** | HIGH |
+| 10/19/2026 | BUG-135 | Tablet Off-Screen Column Popover Clipping (`#col-mgr-menu` `right: 0; width: 640px;`), Unscrollable `.isc-modal` (`overflow: hidden`), Multi-Sticky Column Overlap, & Touch Header Drag Collision. | **RESOLVED** | HIGH |
 
 
 ## BUG-122: App Manual Static Routing Deficit (Lacks Automatic Active Workspace Detection & Deep-Link Chapter Navigation)
@@ -2530,4 +2531,27 @@ CEO Humberto Dominguez attempting to log into `https://www.hwbcleaning.com/login
 **Solution:**
 1. Corrected the Jinja block boundaries in `templates/backoffice_operations.html` (lines 4269–4398) so `{% if active_view in ['monitor', 'dispatch'] %}` closes inside `#view-monitor` before `#view-monitor`'s closing `</div>`, and wrapped `#modal-dispatch-create` and `#modal-dispatch-detail` in their own balanced `{% if active_view in ['monitor', 'dispatch'] %} ... {% endif %}` block outside `#view-monitor`.
 2. Added `test_11_backoffice_modal_dom_isolation_and_lead_click` to `scripts/test_web_performance_rack_14.py` using `HTMLParser` stack inspection across backoffice views to permanently verify that no `view-*` or `modal-*` element is ever nested inside a hidden `view-*` container and that clicking a lead row resolves `GET /api/v1/leads/<id>` with `HTTP 200 OK`.
+
+
+## BUG-135: Tablet Off-Screen Column Popover Clipping (`#col-mgr-menu` `right: 0; width: 640px;`), Unscrollable `.isc-modal` (`overflow: hidden`), Multi-Sticky Column Overlap, & Touch Header Drag Collision
+**Detected:** 10/19/2026
+**Status:** **RESOLVED** (10/19/2026)
+**Symptoms:**
+1. Remote sales representative Beabe Wiley (`Bwiley`) logged into `/admin/operations?view=leads` using a tablet (`2:28 PM – 3:17 PM CDT`) and reported that several forms—specifically the **Customize Lead Columns** form (`#col-mgr-menu`)—were painted outside the table and cut off on the left/bottom edges of her tablet screen.
+2. Opening the Lead Details (`#modal-lead-command`) or Calling Workstation (`#modal-lead-cadence`) on a tablet or with an on-screen touch keyboard clipped the bottom action buttons (`Save Activity`, `Save Lead Changes`, `Move to Clients`).
+3. Three pinned sticky columns (`sticky-1`, `sticky-2`, `sticky-3`) froze `410px+` of a `768px` tablet screen and overlapped horizontally when company names exceeded `240px`.
+4. Tapping column headers on a touch screen triggered SortableJS column dragging before registering the sort click, and the `Calls & Notes` count badge only listened to `onmouseenter` (mouse hover).
+**Root Causes:**
+1. `#col-mgr-menu`, `#col-mgr-menu-acc`, and `#col-mgr-menu-bids` in `templates/backoffice_operations.html` used `position: absolute; right: 0; width: 640px;` inside the left-most toolbar button (`#leads-cols-btn`, ~`95px` wide), forcing `545px` of the `640px` popover to extend to the **left** of the button—off the left edge of the table and tablet viewport.
+2. `.isc-modal` in `templates/backoffice_base.html` used `max-height: 90vh; overflow: hidden;`, preventing vertical touch scrolling when modal headers and banners consumed `260px` above a `600px`/`700px` body pane.
+3. `.isc-row-menu` in `templates/backoffice_operations.html` used `position: absolute; top: 100%; right: 0;` inside `<div style="overflow-x: auto;">`, causing row menus near the bottom of the table to be clipped by the scroll wrapper.
+**Solution:**
+1. **Viewport-Clamped Column Manager Popovers (`templates/backoffice_operations.html`, `static/js/backoffice_operations_core.js`):**
+   - Changed `#col-mgr-menu`, `#col-mgr-menu-acc`, and `#col-mgr-menu-bids` from `right: 0` to `left: 0; max-width: calc(100vw - 24px);` with class `.sigma-col-mgr-menu`.
+   - Added `@media (max-width: 1024px)` fixed viewport centering (`position: fixed; left: 12px; right: 12px; top: 72px; max-height: calc(100vh - 96px); overflow-y: auto;`) and responsive `2-column` / `1-column` checkbox grids, plus dynamic right-edge clamping in `SigmaGridEngine.toggleMenu`.
+2. **Touch-Scrollable Modals & Fixed Viewport Row Menus (`templates/backoffice_base.html`, `templates/backoffice_operations.html`, `static/js/backoffice_operations_core.js`):**
+   - Updated `.isc-modal` to `overflow-x: hidden; overflow-y: auto; -webkit-overflow-scrolling: touch;`, changed `.isc-pane, .isc-lead-pane` from rigid `height: 600px` to `max-height: 600px; height: auto;`, and changed `#modal-lead-cadence` from `height: 700px` to `max-height: calc(85vh - 90px); height: auto;`.
+   - Updated `toggleRowMenu` to position `.isc-row-menu` with `position: fixed` clamped within `[12px, window.innerHeight - 12px]` so row menus never clip inside `overflow-x: auto` table wrappers.
+3. **Tablet Sticky Column Unpinning & Touch Gesture Hardening (`templates/backoffice_operations.html`, `static/js/backoffice_operations_core.js`):**
+   - Unpinned `sticky-2` and `sticky-3` at `@media (max-width: 1024px)` (`position: static !important`), added `delay: 200, delayOnTouchOnly: true` to all `new Sortable(...)` table headers, and added `onclick="event.stopPropagation(); showActivityHoverCard(...)"` to all `Calls & Notes` badges.
 
