@@ -368,6 +368,43 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
         js_text = self.client.get("/static/js/backoffice_operations_core.js").data.decode("utf-8")
         self.assertIn("scrollIntoView({ block: 'center', behavior: 'smooth' })", js_text)
 
+    def test_15_full_site_phone_tablet_and_table_enterprise_architecture(self) -> None:
+        """
+        Verify permanent full-site Phone (<= 768px), Tablet (<= 1024px), and Adaptive
+        Data-Table (Card/Table Switcher + MutationObserver) architecture across all
+        public pages, QMS manuals, and backend modules (BUG-137).
+        """
+        # 1. Verify SigmaResponsiveTableEngine static module & MutationObserver auto-hydration
+        eng_resp = self.client.get("/static/js/sigma_responsive_engine.js")
+        self.assertEqual(eng_resp.status_code, 200)
+        eng_js = eng_resp.data.decode("utf-8")
+        self.assertIn("SigmaResponsiveTableEngine", eng_js)
+        self.assertIn("MutationObserver", eng_js)
+        self.assertIn("sigma-phone-card-mode", eng_js)
+        self.assertIn("data-sigma-responsive", eng_js)
+        self.assertIn("initQmsManualDrawer", eng_js)
+
+        # 2. Verify HWB-WEB Style.css contains adaptive table-to-card CSS rules
+        css_text = self.client.get("/static/HWB-WEB%20Style.css").data.decode("utf-8")
+        self.assertIn('body.sigma-phone-card-mode table[data-sigma-responsive="true"]', css_text)
+        self.assertIn("sigma-card-primary-cell", css_text)
+
+        # 3. Verify Public Routes & Compliance Pages automatically load sigma_responsive_engine.js
+        for pub_route in ["/", "/get-quote", "/work-with-us", "/capability-statement", "/prequal", "/login"]:
+            resp = self.client.get(pub_route)
+            self.assertEqual(resp.status_code, 200, f"Public route {pub_route} failed")
+            html = resp.data.decode("utf-8")
+            self.assertIn("sigma_responsive_engine.js", html, f"{pub_route} missing sigma_responsive_engine.js")
+
+        # 4. Verify Authenticated Backoffice & QMS Manual Routes load responsive engine & KPI grid rules
+        auth_client = self.get_auth_client()
+        if auth_client:
+            for bo_route in ["/admin/operations?view=leads", "/admin/operations?view=general_contractors", "/manual/app"]:
+                resp = auth_client.get(bo_route)
+                self.assertEqual(resp.status_code, 200, f"Backoffice route {bo_route} failed")
+                html = resp.data.decode("utf-8")
+                self.assertIn("sigma_responsive_engine.js", html, f"{bo_route} missing sigma_responsive_engine.js")
+
 
 if __name__ == "__main__":
     unittest.main()

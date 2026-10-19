@@ -1,17 +1,17 @@
 <!-- 2026 Official Company Menu (Sigmaquality Standard) -->
-<div class="top-utility-bar" {% if current_user.is_authenticated %}style="background: #ffffff; border-bottom: 1px solid var(--slate-200); padding: 0.5rem 40px; width: 100%; box-sizing: border-box; color: #0f172a;"{% endif %}>
-    <div class="{% if current_user.is_authenticated %}utility-fluid-container{% else %}header-container{% endif %}" style="display: flex; justify-content: space-between; align-items: center;">
+<div class="top-utility-bar" {% if current_user.is_authenticated %}style="background: #ffffff; border-bottom: 1px solid var(--slate-200); padding: 0.5rem clamp(12px, 3vw, 40px); width: 100%; max-width: 100vw; overflow-x: auto; box-sizing: border-box; color: #0f172a;"{% endif %}>
+    <div class="{% if current_user.is_authenticated %}utility-fluid-container{% else %}header-container{% endif %}" style="display: flex; justify-content: space-between; align-items: center; gap: 0.75rem;">
         {% if nav_access.is_sales %}
             <!-- Outside Sales Desk Utility Bar -->
-            <div style="display: flex; align-items: center; gap: 1rem;">
+            <div style="display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0;">
                 <a href="{{ url_for('sales_desk') }}" style="display: flex; align-items: center; text-decoration: none;">
                     <img src="{{ url_for('static', filename='logo_standard.png') }}" alt="HWB" style="height: 28px;">
-                    <span style="font-weight: 900; color: #0f172a; font-size: 0.75rem; text-transform: uppercase; border-left: 2px solid var(--slate-200); padding-left: 1rem; margin-left: 1rem; letter-spacing: 0.1em;">
+                    <span style="font-weight: 900; color: #0f172a; font-size: 0.75rem; text-transform: uppercase; border-left: 2px solid var(--slate-200); padding-left: 0.75rem; margin-left: 0.75rem; letter-spacing: 0.08em; white-space: nowrap;">
                         Outside Sales Desk
                     </span>
                 </a>
             </div>
-            <div style="display: flex; align-items: center; gap: 1rem;">
+            <div style="display: flex; align-items: center; gap: 0.65rem; flex-shrink: 0;">
                 <a href="{{ url_for('sales_desk') }}" style="font-size: 0.75rem; font-weight: 800; color: #1e3a8a; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; padding: 0.35rem 0.75rem; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px;">
                     <i class="fas fa-th-large"></i> My Territory Queue
                 </a>

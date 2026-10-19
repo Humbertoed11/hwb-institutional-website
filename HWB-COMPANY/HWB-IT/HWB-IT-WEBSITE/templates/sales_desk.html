@@ -1014,5 +1014,17 @@
             }
         }
     </script>
+    <style>
+        @media (max-width: 1024px) {
+            .kpi-rack { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 12px !important; }
+            .workspace-grid { grid-template-columns: 1fr !important; }
+        }
+        @media (max-width: 768px) {
+            .top-navbar { height: auto !important; min-height: 54px; padding: 8px 12px !important; flex-wrap: wrap; gap: 8px; }
+            .page-container { padding: 12px 10px !important; }
+            .search-box { width: 100% !important; flex: 1 1 100% !important; }
+        }
+    </style>
+    <script src="{{ url_for('static', filename='js/sigma_responsive_engine.js') }}" defer></script>
 </body>
 </html>

@@ -101,9 +101,29 @@
     left: auto;
     right: 0;
 }
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
+    .sigma-nav-ribbon {
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding-bottom: 0.5rem !important;
+        margin-bottom: 0.85rem !important;
+        gap: 0.45rem !important;
+        max-width: 100%;
+    }
+    .sigma-nav-ribbon::-webkit-scrollbar {
+        display: none;
+    }
+    .sigma-split-tab,
+    .sigma-nav-btn {
+        flex: 0 0 auto !important;
+        white-space: nowrap !important;
+    }
     .sigma-jump-menu,
-    .sigma-jump-menu.sigma-jump-menu-right {
+    .sigma-jump-menu.sigma-jump-menu-right,
+    #add-menu {
         position: fixed !important;
         left: 12px !important;
         right: 12px !important;
@@ -111,10 +131,10 @@
         width: auto !important;
         min-width: 0 !important;
         max-width: calc(100vw - 24px) !important;
-        max-height: 80dvh !important;
+        max-height: 78dvh !important;
         overflow-y: auto !important;
         -webkit-overflow-scrolling: touch;
-        z-index: 3500 !important;
+        z-index: 4500 !important;
     }
 }
 @keyframes sigmaMenuIn {
@@ -658,6 +678,7 @@
     function toggleSigmaJump(menuId, evt) {
         if (evt) evt.stopPropagation();
         const targetMenu = document.getElementById(menuId);
+        if (!targetMenu) return;
         const isOpen = targetMenu.style.display === 'block';
         
         // Close all jump menus first
@@ -666,6 +687,10 @@
         if (addMenu) addMenu.style.display = 'none';
 
         if (!isOpen) {
+            if (window.innerWidth <= 1024 && evt && evt.currentTarget) {
+                const rect = evt.currentTarget.getBoundingClientRect();
+                targetMenu.style.top = Math.min(window.innerHeight - 240, Math.max(54, Math.round(rect.bottom + 6))) + 'px';
+            }
             targetMenu.style.display = 'block';
         }
     }
@@ -673,10 +698,16 @@
     function toggleAddMenu() {
         const menu = document.getElementById('add-menu');
         const arrow = document.getElementById('add-arrow');
+        const btn = document.getElementById('btn-add-main');
+        if (!menu) return;
         // Close jump menus
         document.querySelectorAll('.sigma-jump-menu').forEach(m => m.style.display = 'none');
         
         if (menu.style.display === 'none' || menu.style.display === '') {
+            if (window.innerWidth <= 1024 && btn) {
+                const rect = btn.getBoundingClientRect();
+                menu.style.top = Math.min(window.innerHeight - 260, Math.max(54, Math.round(rect.bottom + 6))) + 'px';
+            }
             menu.style.display = 'block';
             if (arrow) arrow.style.transform = 'rotate(180deg)';
         } else {

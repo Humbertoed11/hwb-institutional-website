@@ -448,5 +448,19 @@
 
 </div>
 
+<style>
+    @media screen and (max-width: 768px) {
+        body { padding: 10px !important; }
+        .binder-sheet { padding: 18px 14px !important; }
+        .header-row, .sig-block, .top-toolbar {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            text-align: left !important;
+            gap: 10px !important;
+        }
+        .info-grid { grid-template-columns: 1fr !important; }
+    }
+</style>
+<script src="{{ url_for('static', filename='js/sigma_responsive_engine.js') }}" defer></script>
 </body>
 </html>

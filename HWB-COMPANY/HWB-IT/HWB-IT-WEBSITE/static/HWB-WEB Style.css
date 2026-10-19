@@ -3595,4 +3595,89 @@ button.is-spinning-lock,
         width: 100%;
         justify-content: center;
     }
+
+    /* 4. Universal Adaptive Table-to-Card Mode on Smartphones (BUG-137) */
+    body.sigma-phone-card-mode table[data-sigma-responsive="true"] {
+        display: block !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        border: none !important;
+        background: transparent !important;
+    }
+    body.sigma-phone-card-mode table[data-sigma-responsive="true"] thead {
+        display: none !important;
+    }
+    body.sigma-phone-card-mode table[data-sigma-responsive="true"] tbody {
+        display: block !important;
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+    body.sigma-phone-card-mode table[data-sigma-responsive="true"] tbody tr {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 0.5rem 0.75rem !important;
+        background: #ffffff !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 12px !important;
+        padding: 0.85rem 0.95rem !important;
+        margin-bottom: 0.75rem !important;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05) !important;
+        height: auto !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    body.sigma-phone-card-mode table[data-sigma-responsive="true"] tbody td {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        justify-content: flex-start !important;
+        padding: 0.2rem 0 !important;
+        border: none !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+        white-space: normal !important;
+        word-break: break-word !important;
+        position: static !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        text-align: left !important;
+        font-size: 0.84rem !important;
+    }
+    body.sigma-phone-card-mode table[data-sigma-responsive="true"] tbody td[data-label]::before {
+        content: attr(data-label);
+        font-size: 0.64rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #64748b;
+        margin-bottom: 0.15rem;
+        display: block;
+        line-height: 1.2;
+    }
+    body.sigma-phone-card-mode table[data-sigma-responsive="true"] tbody td.sigma-card-primary-cell,
+    body.sigma-phone-card-mode table[data-sigma-responsive="true"] tbody td[data-col-title="true"],
+    body.sigma-phone-card-mode table[data-sigma-responsive="true"] tbody td[colspan] {
+        grid-column: 1 / -1 !important;
+        border-bottom: 1px solid #f1f5f9 !important;
+        padding-bottom: 0.45rem !important;
+        margin-bottom: 0.1rem !important;
+        font-size: 0.94rem !important;
+    }
+    body.sigma-phone-card-mode table[data-sigma-responsive="true"] tbody td.sigma-card-actions-cell,
+    body.sigma-phone-card-mode table[data-sigma-responsive="true"] tbody td[data-col-actions="true"] {
+        grid-column: 1 / -1 !important;
+        border-top: 1px solid #f1f5f9 !important;
+        padding-top: 0.5rem !important;
+        margin-top: 0.15rem !important;
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+        align-items: center !important;
+        justify-content: flex-end !important;
+        gap: 0.45rem !important;
+    }
+    body.sigma-phone-card-mode table[data-sigma-responsive="true"] tbody td[data-cell-empty="true"] {
+        display: none !important;
+    }
 }
+

@@ -435,5 +435,20 @@
 
     </div>
 
+    <style>
+        @media screen and (max-width: 768px) {
+            body { padding: 10px !important; }
+            .sheet-card { padding: 18px 14px !important; }
+            .header-grid, .header-brand, .leadership-box, .action-bar {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                text-align: left !important;
+                gap: 10px !important;
+            }
+            .header-meta, .officer-unit { text-align: left !important; width: 100% !important; }
+            .two-col-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
+        }
+    </style>
+    <script src="{{ url_for('static', filename='js/sigma_responsive_engine.js') }}" defer></script>
 </body>
 </html>

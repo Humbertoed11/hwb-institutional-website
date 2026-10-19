@@ -424,6 +424,50 @@
             padding-left: 1rem !important;
         }
 
+        /* 📱 TABLET & SMARTPHONE RESPONSIVE MANUAL ARCHITECTURE (BUG-137) */
+        @media screen and (max-width: 1024px) {
+            body.qms-clinical-shell .main-header {
+                display: none !important;
+            }
+            .qms-sidebar {
+                top: 48px !important;
+                height: calc(100dvh - 48px) !important;
+                width: min(310px, 86vw) !important;
+                transform: translateX(-105%);
+                transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+                z-index: 4800 !important;
+            }
+            body.qms-clinical-shell.qms-drawer-open .qms-sidebar {
+                transform: translateX(0) !important;
+            }
+            .qms-main {
+                margin-left: 0 !important;
+                margin-top: 52px !important;
+                padding: 1.25rem clamp(12px, 3vw, 24px) !important;
+                grid-template-columns: 1fr !important;
+                gap: 1.5rem !important;
+                width: 100% !important;
+                max-width: 100vw !important;
+                box-sizing: border-box !important;
+            }
+            .qms-toc-container {
+                display: none !important;
+            }
+            .sop-card {
+                padding: 1.5rem 1.25rem !important;
+            }
+        }
+        @media screen and (max-width: 768px) {
+            .sop-card {
+                padding: 1.15rem 0.95rem !important;
+                border-radius: 0.85rem !important;
+            }
+            .sop-header-meta {
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                gap: 0.75rem !important;
+            }
+        }
+
         /* 🖨️ PRINT & PDF STANDARDS (ISO 9001) */
         @media print {
             .qms-sidebar, .isc-btn, button, .sandbox-label, #preview-overlay, .top-utility-bar, .main-header, .qms-toc-container {
@@ -914,5 +958,7 @@
     {% endif %}
     <!-- SigmaFidelity™ Enterprise Button Spin & Lock Engine (Phase 3 UX Standard) -->
     <script src="{{ url_for('static', filename='js/sigma_button_lock.js') }}" defer></script>
+    <!-- SigmaFidelity™ Universal Phone, Tablet & Adaptive Data-Table Engine (BUG-137) -->
+    <script src="{{ url_for('static', filename='js/sigma_responsive_engine.js') }}" defer></script>
 </body>
 </html>

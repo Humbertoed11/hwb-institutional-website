@@ -250,6 +250,23 @@ def apply_application_security_headers(response):
         response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, private, max-age=0'
         response.headers['Pragma'] = 'no-cache'
 
+    # Permanent Enterprise Responsive & Adaptive Table Guardrail (BUG-137):
+    # Guarantees that any future HTML page or standalone module added to the website
+    # automatically loads sigma_responsive_engine.js even if a template omits the script tag.
+    if (
+        response.mimetype == 'text/html'
+        and not response.direct_passthrough
+        and response.status_code == 200
+        and not request.path.startswith('/api/')
+    ):
+        try:
+            body_bytes = response.get_data()
+            if b'sigma_responsive_engine.js' not in body_bytes and b'</body>' in body_bytes:
+                inject_tag = b'<script src="/static/js/sigma_responsive_engine.js" defer></script>\n</body>'
+                response.set_data(body_bytes.replace(b'</body>', inject_tag, 1))
+        except Exception:
+            pass
+
     return response
 
 # --- Boot & Infrastructure Handshake Sequence (HWB-QMS-11.14 Single-Execution Guard) ---
