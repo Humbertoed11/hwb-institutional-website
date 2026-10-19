@@ -540,6 +540,17 @@
             .kpi-rack { grid-template-columns: repeat(2, 1fr); }
         }
 
+        @media (max-width: 640px) {
+            .top-navbar { height: auto; padding: 10px 14px; flex-wrap: wrap; gap: 8px; }
+            .page-container { padding: 14px 10px; }
+            .kpi-rack { grid-template-columns: 1fr; gap: 10px; }
+            .panel-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .panel-controls { width: 100%; flex-wrap: wrap; }
+            .search-box { width: 100%; }
+            .search-box input, select, textarea, input { font-size: 16px !important; }
+            .panel-card { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        }
+
         /* SigmaFidelity™ Fast-Reference Standard Badge (2026) */
         .sigma-id-badge {
             display: inline-flex;

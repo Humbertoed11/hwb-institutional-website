@@ -7405,4 +7405,22 @@ Owner &amp; Operator | HWB Cleaning Services LLC<br />
         if (document.getElementById('mkt-audience-counter')) {
             updateAudiencePreview();
         }
+
+        // Enterprise Virtual Keyboard Auto-Centering (Apple iPhone iOS Safari & Google Pixel 9 Android Chrome)
+        document.addEventListener('focusin', (e) => {
+            if (window.innerWidth > 1024) return;
+            const target = e.target;
+            if (!target || !target.matches('input:not([type="checkbox"]):not([type="radio"]), select, textarea')) return;
+            const modal = target.closest('.isc-modal');
+            if (modal) {
+                setTimeout(() => {
+                    try {
+                        target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                    } catch (_) {
+                        target.scrollIntoView();
+                    }
+                }, 180);
+            }
+        });
     });
+

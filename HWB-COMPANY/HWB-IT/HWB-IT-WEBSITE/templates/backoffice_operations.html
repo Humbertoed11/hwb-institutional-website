@@ -9643,9 +9643,31 @@ Click here to book a 5-minute walkthrough: [Calendar Link]"></textarea>
         }
         #lead-list-overview,
         #lead-modal-profile-banner,
-        .isc-pane, .isc-lead-pane, [style*="grid-template-columns: 1fr 1fr"], [style*="grid-template-columns: 1fr 1.5fr"] {
+        .isc-pane,
+        .isc-lead-pane,
+        .isc-modal [style*="grid-template-columns"],
+        [style*="grid-template-columns: 1fr 1fr"],
+        [style*="grid-template-columns: 1fr 1.5fr"],
+        [style*="grid-template-columns: 2fr 1fr"] {
             grid-template-columns: 1fr !important;
-            gap: 1.25rem !important;
+            gap: 1rem !important;
+        }
+        #leads-bulk-controls {
+            height: auto !important;
+            flex-wrap: wrap !important;
+            padding: 0.65rem 0.85rem !important;
+            gap: 0.5rem !important;
+            max-width: calc(100vw - 24px) !important;
+            box-sizing: border-box !important;
+        }
+        .bulk-dropdown-menu {
+            position: fixed !important;
+            left: 12px !important;
+            right: 12px !important;
+            top: auto !important;
+            width: auto !important;
+            max-width: calc(100vw - 24px) !important;
+            z-index: 3500 !important;
         }
     }
 </style>

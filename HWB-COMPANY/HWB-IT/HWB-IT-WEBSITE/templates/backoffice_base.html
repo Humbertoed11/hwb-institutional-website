@@ -90,6 +90,7 @@
  width: 100%;
  max-width: 1100px;
  max-height: 90vh;
+ max-height: 90dvh;
  border-radius: 1.25rem;
  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
  padding: 2.5rem;
@@ -101,13 +102,51 @@
  flex-direction: column;
  animation: imaxFloat 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
  border: 1px solid var(--slate-200);
+ box-sizing: border-box;
  }
 
  @media (max-width: 1024px) {
  .bo-main { padding: 1.5rem 16px; }
  .isc-card, .isc-card.fluid-data { padding: 1.25rem 1rem; }
  .isc-modal-overlay { padding: 0.75rem; }
- .isc-modal { padding: 1.25rem; max-height: 92vh; }
+ .isc-modal { padding: 1.25rem !important; max-height: 92vh; max-height: 92dvh !important; }
+ }
+
+ @media (max-width: 768px), (pointer: coarse) {
+ /* Prevent iOS Safari WebKit automatic viewport zoom on form input focus */
+ input:not([type="checkbox"]):not([type="radio"]),
+ select,
+ textarea,
+ .sigma-input,
+ .sigma-inline-select,
+ .sigma-inline-date {
+ font-size: max(16px, 1rem) !important;
+ }
+ }
+
+ @media (max-width: 768px) {
+ .bo-main { padding: 1rem 10px; }
+ .bo-command-bar { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+ .isc-modal-overlay { padding: 0.5rem; align-items: flex-start; padding-top: 0.75rem; }
+ .isc-modal {
+ padding: 1.15rem !important;
+ padding-bottom: max(1.15rem, env(safe-area-inset-bottom)) !important;
+ max-height: 92vh !important;
+ max-height: 92dvh !important;
+ border-radius: 0.85rem;
+ }
+ /* Universal Enterprise Form Grid Collapse for Apple iPhone (390px) & Google Pixel 9 (412px) */
+ .isc-modal [style*="grid-template-columns"],
+ form [style*="grid-template-columns"] {
+ grid-template-columns: 1fr !important;
+ gap: 0.85rem !important;
+ }
+ .isc-toast {
+ left: 12px;
+ right: 12px;
+ bottom: max(1rem, env(safe-area-inset-bottom));
+ padding: 1rem 1.25rem;
+ }
  }
 
  @keyframes imaxFloat {

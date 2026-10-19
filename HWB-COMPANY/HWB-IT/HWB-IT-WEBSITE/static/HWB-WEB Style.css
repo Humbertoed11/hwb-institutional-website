@@ -3534,5 +3534,65 @@ button.is-spinning-lock,
     pointer-events: none !important;
 }
 
+/* ==========================================================================
+   SigmaFidelity™ Enterprise Smartphone & Touch Form Standard (BUG-136 / 2026)
+   Target Profiles: Apple iPhone (390px-430px iOS WebKit) & Google Pixel 9 (412px)
+   ========================================================================== */
+@media (max-width: 768px), (pointer: coarse) {
+    /* 1. iOS Safari WebKit Auto-Zoom Prevention: Enforce >=16px (1rem) on all form controls */
+    input:not([type="checkbox"]):not([type="radio"]),
+    select,
+    textarea,
+    .sigma-input,
+    .vault-input,
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        font-size: max(16px, 1rem) !important;
+    }
 
+    input.sigma-input,
+    select.sigma-input {
+        min-height: 42px;
+        height: auto;
+    }
+}
 
+@media (max-width: 768px) {
+    /* 2. Universal Form Row & Asymmetric Grid Collapse on Smartphones */
+    .sigma-row,
+    .sigma-row-75-25,
+    .sigma-row-60-40,
+    .sigma-row-50-50,
+    .sigma-form-row-2,
+    .sigma-form-row-asym,
+    .scope-addons-grid,
+    .facility-chips-container {
+        grid-template-columns: 1fr !important;
+        gap: 1rem !important;
+    }
+
+    .sigma-form-row-3 {
+        flex-direction: column !important;
+        gap: 1rem !important;
+    }
+
+    /* 3. Smartphone Form Container Gutter Compression */
+    .sigma-form-container,
+    .form-container,
+    .sigma-quote-card {
+        padding: 1.35rem 1.15rem !important;
+    }
+
+    .sigma-form-actions {
+        flex-direction: column-reverse;
+        gap: 0.75rem;
+        padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+    }
+
+    .sigma-form-actions button,
+    .sigma-form-actions .isc-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}

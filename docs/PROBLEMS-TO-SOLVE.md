@@ -119,6 +119,7 @@ Responsibility: George (Architect)
 | 10/19/2026 | BUG-133 | Backoffice Operations (`/admin/operations`) Multi-Second Tab Switching Latency (`2,440ms–9,050ms`) Due to Monolithic 12-Department SQL Execution, Live 11-Rack Self-Healing Queries, & 940KB Unpruned Jinja DOM. | **RESOLVED** | CRITICAL |
 | 10/19/2026 | BUG-134 | Unclosed `#view-monitor` Container (`display: none`) During Jinja Active-View Pruning Trapping Downstream Views & Modals (`#modal-lead-command`) and Preventing Lead Row Click Display. | **RESOLVED** | HIGH |
 | 10/19/2026 | BUG-135 | Tablet Off-Screen Column Popover Clipping (`#col-mgr-menu` `right: 0; width: 640px;`), Unscrollable `.isc-modal` (`overflow: hidden`), Multi-Sticky Column Overlap, & Touch Header Drag Collision. | **RESOLVED** | HIGH |
+| 10/19/2026 | BUG-136 | Smartphone (`390px` Apple iPhone iOS Safari & `412px` Google Pixel 9 Android Chrome) Public & Backend Form Ergonomics: `<16px` Input Auto-Zoom, Uncollapsed Multi-Column Form Grids (`2fr 1fr 1fr`), Heavy Vault Paddings (`4rem`), Static `100vh` vs `100dvh` Keyboard Clipping, & Flyout/Bulk Bar Overflow. | **RESOLVED** | HIGH |
 
 
 ## BUG-122: App Manual Static Routing Deficit (Lacks Automatic Active Workspace Detection & Deep-Link Chapter Navigation)
@@ -2555,3 +2556,26 @@ CEO Humberto Dominguez attempting to log into `https://www.hwbcleaning.com/login
 3. **Tablet Sticky Column Unpinning & Touch Gesture Hardening (`templates/backoffice_operations.html`, `static/js/backoffice_operations_core.js`):**
    - Unpinned `sticky-2` and `sticky-3` at `@media (max-width: 1024px)` (`position: static !important`), added `delay: 200, delayOnTouchOnly: true` to all `new Sortable(...)` table headers, and added `onclick="event.stopPropagation(); showActivityHoverCard(...)"` to all `Calls & Notes` badges.
 
+
+## BUG-136: Smartphone (`390px` Apple iPhone iOS Safari & `412px` Google Pixel 9 Android Chrome) Public & Backend Form Ergonomics: `<16px` Input Auto-Zoom, Uncollapsed Multi-Column Form Grids (`2fr 1fr 1fr`), Heavy Vault Paddings (`4rem`), Static `100vh` vs `100dvh` Keyboard Clipping, & Flyout/Bulk Bar Overflow
+**Detected:** 10/19/2026
+**Status:** **RESOLVED** (10/19/2026)
+**Symptoms:**
+1. On **Apple iPhone (`390x844` to `430x932` iOS Safari/WebKit)**, tapping any public quote input (`.sigma-input` `font-size: 0.9rem` / `14.4px`), password recovery input (`.vault-input` `font-size: 0.95rem` / `15.2px`), or backoffice lead/account/bid input (`0.82rem–0.9rem`) triggered iOS Safari's mandatory `<16px` viewport auto-zoom, shifting the right side of the form and Save/Close buttons off-screen.
+2. On both **Apple iPhone (`390px`)** and **Google Pixel 9 (`412x915` Android Chrome)**, public authentication vaults (`login.html`, `forgot_password.html`, `reset_password.html`) used hardcoded `padding: 4rem` (`128px` horizontal padding), crushing input boxes down to `230px` wide.
+3. Multi-column form grids in `.sigma-row-75-25`, `.sigma-row-60-40`, `.sigma-row-50-50`, and inline modal grids (`2fr 1fr 1fr`, `2fr 1fr 1fr 1fr`, `1fr 1fr 1fr`, `2fr 1fr`) did not collapse at `<= 768px`, squeezing City/State/Zip and account fields to `75px` wide.
+4. `16` backend `.isc-modal` dialogs used inline `padding: 2.25rem` / `3rem` (overriding non-`!important` media rules) and static `vh` units instead of dynamic viewport height (`92dvh`) and `env(safe-area-inset-bottom)`, while `.sigma-jump-menu` flyouts and `#leads-bulk-controls` overflowed `390px–412px` screens horizontally.
+**Root Causes:**
+1. WebKit on iOS automatically zooms the viewport whenever a focused `<input>`, `<select>`, or `<textarea>` has a computed `font-size` below `16px` (`1rem`).
+2. Backoffice modal forms relied on partial substring selectors (`[style*="grid-template-columns: 1fr 1fr"]`) rather than a universal `.isc-modal [style*="grid-template-columns"], form [style*="grid-template-columns"]` collapse rule and standardized `.sigma-row-*` mobile rules.
+3. Modal overlays lacked `dvh` (`dynamic viewport height`), `env(safe-area-inset-bottom)`, and a `focusin` virtual-keyboard `scrollIntoView({ block: 'center' })` listener.
+**Solution:**
+1. **Universal iOS Safari `16px` Auto-Zoom Prevention & Touch Ergonomics (`static/HWB-WEB Style.css`, `templates/backoffice_base.html`, `templates/forgot_password.html`, `templates/reset_password.html`, `templates/sales_desk.html`):**
+   - Enforced `font-size: max(16px, 1rem) !important` across all public and backoffice `input:not([type="checkbox"]):not([type="radio"])`, `select`, `textarea`, `.sigma-input`, `.vault-input`, `.sigma-inline-select`, and `.sigma-inline-date` at `@media (max-width: 768px), (pointer: coarse)`.
+2. **Universal Smartphone Form Grid Collapse & Vault Gutter Scaling (`static/HWB-WEB Style.css`, `templates/backoffice_base.html`, `templates/backoffice_operations.html`, `templates/login.html`, `templates/quote_success.html`, `templates/work_with_us.html`):**
+   - Collapsed `.sigma-row`, `.sigma-row-75-25`, `.sigma-row-60-40`, `.sigma-row-50-50`, `.sigma-form-row-2`, `.sigma-form-row-asym`, `.isc-modal [style*="grid-template-columns"]`, and `form [style*="grid-template-columns"]` to `grid-template-columns: 1fr !important` on screens `<= 768px`.
+   - Upgraded `.login-vault-container` to fluid `padding: clamp(1.75rem, 6vw, 4rem)` (`1.75rem 1.25rem` on `<= 640px`) and added smartphone responsive stacking to `quote_success.html`, `work_with_us.html`, and `sales_desk.html`.
+3. **Dynamic Viewport (`92dvh`), Safe-Area Insets, Virtual Keyboard Auto-Centering, & Flyout Clamping (`templates/backoffice_base.html`, `templates/components/backend_nav.html`, `templates/backoffice_operations.html`, `static/js/backoffice_operations_core.js`):**
+   - Upgraded `.isc-modal` to `max-height: 92dvh !important; padding: 1.15rem !important; padding-bottom: max(1.15rem, env(safe-area-inset-bottom)) !important;` on phones, added a `focusin` listener in `backoffice_operations_core.js` to center focused inputs above the virtual keyboard (`scrollIntoView({ block: 'center', behavior: 'smooth' })`), clamped `.sigma-jump-menu` and `.bulk-dropdown-menu` to `left: 12px; right: 12px; position: fixed;`, and made `#leads-bulk-controls` wrap cleanly.
+4. **Automated CI/CD Gate (`scripts/test_web_performance_rack_14.py`):**
+   - Added `test_14_smartphone_iphone_and_pixel9_form_ergonomics` (`14/14` tests passing).

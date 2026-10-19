@@ -101,6 +101,22 @@
     left: auto;
     right: 0;
 }
+@media (max-width: 768px) {
+    .sigma-jump-menu,
+    .sigma-jump-menu.sigma-jump-menu-right {
+        position: fixed !important;
+        left: 12px !important;
+        right: 12px !important;
+        top: 64px !important;
+        width: auto !important;
+        min-width: 0 !important;
+        max-width: calc(100vw - 24px) !important;
+        max-height: 80dvh !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+        z-index: 3500 !important;
+    }
+}
 @keyframes sigmaMenuIn {
     from { opacity: 0; transform: translateY(-4px); }
     to { opacity: 1; transform: translateY(0); }

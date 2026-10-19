@@ -338,9 +338,36 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
         self.assertIn("delayOnTouchOnly: true", js_text)
         self.assertIn("m.style.position = 'fixed'", js_text)
 
+    def test_14_smartphone_iphone_and_pixel9_form_ergonomics(self) -> None:
+        """
+        Verify Apple iPhone (390px iOS Safari) and Google Pixel 9 (412px Android Chrome)
+        form ergonomics across both public and backend forms (BUG-136).
+        """
+        # 1. Public CSS: 16px iOS zoom prevention & universal row collapse
+        css_resp = self.client.get("/static/HWB-WEB%20Style.css")
+        self.assertEqual(css_resp.status_code, 200)
+        css_text = css_resp.data.decode("utf-8")
+        self.assertIn("font-size: max(16px, 1rem) !important", css_text)
+        self.assertIn(".sigma-row-75-25", css_text)
+        self.assertIn("env(safe-area-inset-bottom)", css_text)
+
+        # 2. Public Login & Forgot Password Vaults: fluid clamp padding & 1rem inputs
+        login_html = self.client.get("/login").data.decode("utf-8")
+        self.assertIn("padding: clamp(1.75rem, 6vw, 4rem)", login_html)
+        forgot_html = self.client.get("/forgot-password").data.decode("utf-8")
+        self.assertIn("font-size: 1rem", forgot_html)
+
+        # 3. Backend Operations Hub: 92dvh dynamic viewport, universal modal grid collapse, & keyboard scrollIntoView
+        auth_client = self.get_auth_client()
+        if auth_client:
+            ops_html = auth_client.get("/admin/operations?view=leads").data.decode("utf-8")
+            self.assertIn("max-height: 92dvh !important", ops_html)
+            self.assertIn('.isc-modal [style*="grid-template-columns"]', ops_html)
+            self.assertIn("font-size: max(16px, 1rem) !important", ops_html)
+
+        js_text = self.client.get("/static/js/backoffice_operations_core.js").data.decode("utf-8")
+        self.assertIn("scrollIntoView({ block: 'center', behavior: 'smooth' })", js_text)
+
 
 if __name__ == "__main__":
     unittest.main()
-
-
-
