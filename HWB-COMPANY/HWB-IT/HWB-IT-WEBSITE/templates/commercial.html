@@ -28,6 +28,35 @@
          {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.hwbcleaning.com/"},
          {"@type": "ListItem", "position": 2, "name": "Commercial Cleaning & Floor Care", "item": "https://www.hwbcleaning.com/services/commercial"}
        ]
+     },
+     {
+       "@type": "FAQPage",
+       "mainEntity": [
+         {
+           "@type": "Question",
+           "name": "Who provides three-phase post-construction final cleaning (Rough, Final, and Touch-Up) in Dallas-Fort Worth and Texas?",
+           "acceptedAnswer": {
+             "@type": "Answer",
+             "text": "HWB Cleaning Services LLC (HWB Enterprises, headquartered at 3342 FM 1827 Ste 8d, McKinney, TX 75071, telephone +1-214-586-0257) provides OSHA-10/30 compliant three-phase post-construction final cleaning—Phase 1 Rough Clean and debris clearing, Phase 2 Final Detail Clean and surface restoration, and Phase 3 White-Glove Touch-Up and turnover—across Dallas, Plano, Frisco, McKinney, Fort Worth, Irving, Richardson, Allen, Arlington, Addison, Waxahachie, and statewide across Texas."
+           }
+         },
+         {
+           "@type": "Question",
+           "name": "How does HWB Commercial Cleaning calculate commercial janitorial and post-construction cleaning bids?",
+           "acceptedAnswer": {
+             "@type": "Answer",
+             "text": "HWB Commercial Cleaning calculates commercial janitorial, specialty floor care (VCT strip and wax, terrazzo, carpet extraction), and post-construction cleaning bids using deterministic ISSA 612 production-rate engineering (3,000–3,500 sq. ft./hr for clinical and childcare facilities; 4,500–5,500 sq. ft./hr for standard commercial offices), blueprint and finish-schedule square-footage takeoffs, loaded W-2/1099 labor matrices, and transparent CSI Division 01 74 23 scope itemization."
+           }
+         },
+         {
+           "@type": "Question",
+           "name": "Is HWB Enterprises insured, OSHA-compliant, and qualified for commercial, industrial, medical, and government prevailing-wage facilities?",
+           "acceptedAnswer": {
+             "@type": "Answer",
+             "text": "Yes. HWB Cleaning Services LLC operates under an ISO 9001:2026, ISO 14001:2015, and ISO 45001:2018 integrated quality and safety management system with a 0.00 TRIR safety record, full commercial general liability and workers' compensation insurance, EPA hospital-grade 4-color microfiber cross-contamination controls, and vetted personnel qualified for commercial, industrial, medical, educational, and government prevailing-wage contracts."
+           }
+         }
+       ]
      }
    ]
  }
@@ -37,7 +66,7 @@
 {% block content %}
 <section class="services-view">
     <!-- High-Fidelity Commercial Hero (Church Variant) -->
-    <div class="services-hero dark-variant" style="background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('/static/img/commercial_church_vacuuming.png');">
+    <div class="services-hero dark-variant" style="background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('/static/img/commercial_church_vacuuming.webp');">
         <div class="content-wrapper" style="max-width: 1000px; margin: 0 auto; text-align: center;">
             <h1>Commercial Cleaning & Floor Care</h1>
             <p class="subtitle">From corporate headquarters to local institutions, the team specializes in deep cleaning and high-quality floor and surface care that keeps the environment professional and inviting.</p>
@@ -52,7 +81,7 @@
             <!-- Professional Surface Management Section -->
             <div class="split-feature image-left" style="margin-bottom: 8rem;">
                 <div class="sigma-image-frame" style="border-radius: 12px; overflow: hidden; height: 450px;">
-                    <img src="/static/img/commercial_marble_polishing.png" alt="HWB Professional Marble Polishing" style="width: 100%; height: 100%; object-fit: cover;">
+                    <img src="/static/img/commercial_marble_polishing.webp" alt="HWB Professional Marble Polishing" loading="lazy" decoding="async" style="width: 100%; height: 100%; object-fit: cover;">
                 </div>
                 <div class="split-content">
                     <span style="font-size: 0.75rem; font-weight: 900; color: var(--hwb-blue); text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 1rem; display: block;">Surface Excellence</span>
@@ -76,7 +105,7 @@
                 <div class="service-grid">
                     <!-- Electrostatic Disinfection -->
                     <div class="service-card">
-                        <div class="card-image" style="background-image: url('/static/img/electrostatic_clean.png');"></div>
+                        <div class="card-image" style="background-image: url('/static/img/electrostatic_clean.webp');"></div>
                         <div class="card-content">
                             <div class="card-badge">Sanitization</div>
                             <h3>Electrostatic Disinfection</h3>
@@ -86,7 +115,7 @@
 
                     <!-- Window Washing -->
                     <div class="service-card">
-                        <div class="card-image" style="background-image: url('/static/img/bank_window_cleaning.png');"></div>
+                        <div class="card-image" style="background-image: url('/static/img/bank_window_cleaning.webp');"></div>
                         <div class="card-content">
                             <div class="card-badge">Exterior & Interior</div>
                             <h3>Window Washing</h3>
@@ -96,7 +125,7 @@
 
                     <!-- Carpet & Rug Care -->
                     <div class="service-card">
-                        <div class="card-image" style="background-image: url('/static/img/daycare_rug_extractor.png');"></div>
+                        <div class="card-image" style="background-image: url('/static/img/daycare_rug_extractor.webp');"></div>
                         <div class="card-content">
                             <div class="card-badge">Textiles</div>
                             <h3>Carpet and Rug Care</h3>
@@ -106,7 +135,7 @@
 
                     <!-- Strip and Wax -->
                     <div class="service-card">
-                        <div class="card-image" style="background-image: url('/static/img/vct_floor_waxing.png');"></div>
+                        <div class="card-image" style="background-image: url('/static/img/vct_floor_waxing.webp');"></div>
                         <div class="card-content">
                             <div class="card-badge">Hard Floors</div>
                             <h3>Strip and Wax</h3>

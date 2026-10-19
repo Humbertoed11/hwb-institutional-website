@@ -6,10 +6,11 @@ Custodians: George (Systems Architect) & Peter (Recovery Specialist)
 
 import os
 import json
+import functools
 import subprocess
 from typing import Dict, Any
 
-APP_SEMANTIC_VERSION = "v5.4.2"
+APP_SEMANTIC_VERSION = "v5.4.3"
 
 def _detect_git_commit() -> str:
     """Safely retrieves short git commit hash from repository or environment."""
@@ -50,10 +51,11 @@ def _is_running_on_azure() -> bool:
     return False
 
 
+@functools.lru_cache(maxsize=1)
 def get_version_info() -> Dict[str, Any]:
     """
-    Returns unified version and deployment telemetry.
-    Format adheres to Option A: Semantic & Git Hash (e.g. v5.4.1 (ba53a5f)).
+    Returns unified version and deployment telemetry cached in process memory (HWB-QMS-11.14).
+    Format adheres to Option A: Semantic & Git Hash (e.g. v5.4.3 (ba53a5f)).
     """
     search_paths = [
         os.path.join(os.path.dirname(__file__), "..", "..", "version.json"),
@@ -72,7 +74,7 @@ def get_version_info() -> Dict[str, Any]:
 
     app_version = file_data.get("version", APP_SEMANTIC_VERSION)
     commit = file_data.get("commit") or _detect_git_commit()
-    build_date = file_data.get("build_date", "2026-10-07")
+    build_date = file_data.get("build_date", "2026-10-19")
     build_tag = file_data.get("build_tag", f"{app_version}-{commit}")
 
     # Determine environment (anonymized for public Cloudflare origin shielding)
@@ -95,3 +97,8 @@ def get_version_info() -> Dict[str, Any]:
         "is_azure": is_azure,
         "display_version": display_version
     }
+
+
+def clear_version_cache() -> None:
+    """Clears the in-memory version telemetry cache."""
+    get_version_info.cache_clear()

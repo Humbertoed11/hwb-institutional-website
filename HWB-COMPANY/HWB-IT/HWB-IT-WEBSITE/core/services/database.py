@@ -16,12 +16,14 @@ import psycopg2
 from psycopg2.extras import DictCursor
 from psycopg2.pool import ThreadedConnectionPool
 
-# Thread-safe global pool registry mapped by database URL
+# Thread-safe global pool registry mapped by database URL (PID-isolated for Gunicorn --preload fork safety)
 _POOLS = {}
+_FALLBACK_TZ_POOLS = set()
+_POOLS_PID = os.getpid()
 _POOLS_LOCK = threading.Lock()
 
 MIN_POOL_CONNECTIONS = int(os.environ.get('DB_POOL_MIN', 2))
-MAX_POOL_CONNECTIONS = int(os.environ.get('DB_POOL_MAX', 28))
+MAX_POOL_CONNECTIONS = int(os.environ.get('DB_POOL_MAX', 10))
 
 
 class PooledConnection:
@@ -64,19 +66,46 @@ class PooledConnection:
 
 def get_connection_pool(db_url: str) -> ThreadedConnectionPool:
     """Retrieves or creates a ThreadedConnectionPool for the target Postgres database."""
-    global _POOLS
+    global _POOLS, _FALLBACK_TZ_POOLS, _POOLS_PID
+    current_pid = os.getpid()
+    if current_pid != _POOLS_PID:
+        with _POOLS_LOCK:
+            if current_pid != _POOLS_PID:
+                _POOLS.clear()
+                _FALLBACK_TZ_POOLS.clear()
+                _POOLS_PID = current_pid
     if db_url not in _POOLS:
         with _POOLS_LOCK:
             if db_url not in _POOLS:
                 parsed = urlparse(db_url)
                 print(f"[POOL_INIT] Creating ThreadedConnectionPool (min={MIN_POOL_CONNECTIONS}, max={MAX_POOL_CONNECTIONS}) for {parsed.hostname}", flush=True)
-                _POOLS[db_url] = ThreadedConnectionPool(
-                    minconn=MIN_POOL_CONNECTIONS,
-                    maxconn=MAX_POOL_CONNECTIONS,
-                    dsn=db_url,
-                    cursor_factory=DictCursor,
-                    connect_timeout=5
-                )
+                try:
+                    _POOLS[db_url] = ThreadedConnectionPool(
+                        minconn=MIN_POOL_CONNECTIONS,
+                        maxconn=MAX_POOL_CONNECTIONS,
+                        dsn=db_url,
+                        cursor_factory=DictCursor,
+                        connect_timeout=5,
+                        options="-c timezone=America/Chicago",
+                        keepalives=1,
+                        keepalives_idle=30,
+                        keepalives_interval=10,
+                        keepalives_count=5
+                    )
+                except Exception as pool_init_err:
+                    print(f"[POOL_INIT] Fallback without options for {parsed.hostname}: {pool_init_err}", flush=True)
+                    _FALLBACK_TZ_POOLS.add(db_url)
+                    _POOLS[db_url] = ThreadedConnectionPool(
+                        minconn=MIN_POOL_CONNECTIONS,
+                        maxconn=MAX_POOL_CONNECTIONS,
+                        dsn=db_url,
+                        cursor_factory=DictCursor,
+                        connect_timeout=5,
+                        keepalives=1,
+                        keepalives_idle=30,
+                        keepalives_interval=10,
+                        keepalives_count=5
+                    )
     return _POOLS[db_url]
 
 
@@ -84,6 +113,7 @@ def get_db(db_url: str):
     """
     SigmaFidelity™ Unified Database Connector.
     Returns a pooled PostgreSQL connection or SQLite local connection.
+    Zero-round-trip checkout when connection pool initializes America/Chicago timezone at socket creation (HWB-QMS-11.14).
     """
     try:
         parsed_url = urlparse(db_url)
@@ -103,9 +133,9 @@ def get_db(db_url: str):
         elif scheme in ['postgres', 'postgresql']:
             pool = get_connection_pool(db_url)
             raw_conn = pool.getconn()
-            # Mandatory Institutional Timezone Sync
-            with raw_conn.cursor() as cur:
-                cur.execute("SET TIME ZONE 'America/Chicago'")
+            if db_url in _FALLBACK_TZ_POOLS:
+                with raw_conn.cursor() as cur:
+                    cur.execute("SET TIME ZONE 'America/Chicago'")
             return PooledConnection(pool, raw_conn)
             
         else:

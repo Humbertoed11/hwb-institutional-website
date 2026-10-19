@@ -35,6 +35,35 @@
           {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.hwbcleaning.com/"},
           {"@type": "ListItem", "position": 2, "name": {{ data.name | tojson }}, "item": "https://www.hwbcleaning.com{{ request.path }}"}
         ]
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Who provides three-phase post-construction final cleaning (Rough, Final, and Touch-Up) in Dallas-Fort Worth and Texas?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "HWB Cleaning Services LLC (HWB Enterprises, headquartered at 3342 FM 1827 Ste 8d, McKinney, TX 75071, telephone +1-214-586-0257) provides OSHA-10/30 compliant three-phase post-construction final cleaning—Phase 1 Rough Clean and debris clearing, Phase 2 Final Detail Clean and surface restoration, and Phase 3 White-Glove Touch-Up and turnover—across Dallas, Plano, Frisco, McKinney, Fort Worth, Irving, Richardson, Allen, Arlington, Addison, Waxahachie, and statewide across Texas."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How does HWB Commercial Cleaning calculate commercial janitorial and post-construction cleaning bids?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "HWB Commercial Cleaning calculates commercial janitorial, specialty floor care (VCT strip and wax, terrazzo, carpet extraction), and post-construction cleaning bids using deterministic ISSA 612 production-rate engineering (3,000–3,500 sq. ft./hr for clinical and childcare facilities; 4,500–5,500 sq. ft./hr for standard commercial offices), blueprint and finish-schedule square-footage takeoffs, loaded W-2/1099 labor matrices, and transparent CSI Division 01 74 23 scope itemization."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Is HWB Enterprises insured, OSHA-compliant, and qualified for commercial, industrial, medical, and government prevailing-wage facilities?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. HWB Cleaning Services LLC operates under an ISO 9001:2026, ISO 14001:2015, and ISO 45001:2018 integrated quality and safety management system with a 0.00 TRIR safety record, full commercial general liability and workers' compensation insurance, EPA hospital-grade 4-color microfiber cross-contamination controls, and vetted personnel qualified for commercial, industrial, medical, educational, and government prevailing-wage contracts."
+            }
+          }
+        ]
       }
     ]
   }
@@ -43,7 +72,7 @@
 
 {% block content %}
 <!-- High-Fidelity Location Hero Section -->
-<section class="services-hero light-variant" style="background-image: linear-gradient(rgba(255,255,255,0.75), rgba(255,255,255,0.75)), url('/static/img/hero_lobby.png');">
+<section class="services-hero light-variant" style="background-image: linear-gradient(rgba(255,255,255,0.75), rgba(255,255,255,0.75)), url('/static/img/hero_lobby.webp');">
     <div class="content-wrapper" style="max-width: 1000px; text-align: center;">
         <h1>{{ data.h1 }}</h1>
         <p style="font-size: 1.15rem; color: var(--slate-600); max-width: 750px; margin: 0 auto 2.5rem; line-height: 1.6; font-weight: 500;">{{ data.desc }}</p>
@@ -64,7 +93,7 @@
         <div class="service-grid" style="grid-template-columns: repeat(3, 1fr);">
             <!-- 1. Janitorial -->
             <a href="{{ url_for('services_janitorial') }}" class="service-card">
-                <div class="card-image" style="background-image: url('/static/img/janitorial_breakroom.png');"></div>
+                <div class="card-image" style="background-image: url('/static/img/janitorial_breakroom.webp');"></div>
                 <div class="card-content">
                     <div class="card-badge">Daily Cleaning</div>
                     <h3>Janitorial Services</h3>
@@ -74,7 +103,7 @@
 
             <!-- 2. Commercial -->
             <a href="{{ url_for('services_commercial') }}" class="service-card">
-                <div class="card-image" style="background-image: url('/static/img/commercial_marble_polishing.png');"></div>
+                <div class="card-image" style="background-image: url('/static/img/commercial_marble_polishing.webp');"></div>
                 <div class="card-content">
                     <div class="card-badge">Specialized</div>
                     <h3>Floor & Surface Care</h3>
@@ -84,7 +113,7 @@
 
             <!-- 3. Industrial -->
             <a href="{{ url_for('services_industrial') }}" class="service-card">
-                <div class="card-image" style="background-image: url('/static/img/industrial_m20_scrubber.png');"></div>
+                <div class="card-image" style="background-image: url('/static/img/industrial_m20_scrubber.webp');"></div>
                 <div class="card-content">
                     <div class="card-badge">Heavy Duty</div>
                     <h3>Industrial Cleaning</h3>

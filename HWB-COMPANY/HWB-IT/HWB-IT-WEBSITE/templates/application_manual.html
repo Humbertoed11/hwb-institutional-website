@@ -896,6 +896,18 @@
                         <td>Multi-line notes</td>
                         <td>Records notes from conversations with facility directors.</td>
                     </tr>
+                    <tr>
+                        <td><span class="element-code">✅ Campaign Ready</span></td>
+                        <td>Filter Pill &amp; Badge</td>
+                        <td><code>✅ Campaign Ready</code> / <code>📞 Phone Only</code></td>
+                        <td>Filters the leads table to show only commercial facilities with DNS-verified email servers and zero opt-outs, ready for email blasts.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="element-code">{Caller} Script Tag</span></td>
+                        <td>Dynamic Placeholder</td>
+                        <td>Auto-fills Rep First Name</td>
+                        <td>Automatically inserts the logged-in representative's first name into calling scripts on both the Leads Desk and Calling Workstation (<code>/sales-desk</code>).</td>
+                    </tr>
                 </tbody>
             </table>
         </div>
@@ -961,10 +973,10 @@
         <h3>2.4 Step-by-Step Procedure: Conducting a Daily Calling Sprint</h3>
         <div class="procedure-box">
             <ol class="procedure-steps">
-                <li>From the top navigation bar, select <strong>Commercial Leads</strong>.</li>
-                <li>Click <strong>Columns</strong> and select the <strong>📞 Calling Sprint</strong> quick preset.</li>
+                <li>From the top navigation bar, select <strong>Commercial Leads</strong> (or open the <strong>Calling Workstation</strong> at <code>/sales-desk</code>). Note: Representatives with the <strong>Sales</strong> role automatically see only leads and active clients explicitly assigned to their territory.</li>
+                <li>Click <strong>Columns</strong> and select the <strong>📞 Calling Sprint</strong> quick preset, or click <strong>✅ Campaign Ready</strong> to view facilities verified for email outreach.</li>
                 <li>Use the search bar or city dropdown to focus on your designated territory (e.g., Dallas, Plano, Fort Worth).</li>
-                <li>Click the phone number or row for the target facility to review recent notes.</li>
+                <li>Click the phone number or row for the target facility to review recent notes and your personalized calling script (where <code>{Caller}</code> automatically shows your first name).</li>
                 <li>After completing the phone call, update the status dropdown (e.g., <em>Contacted</em>, <em>Walkthrough Scheduled</em>).</li>
                 <li>Type your call summary into the <strong>Call Notes</strong> box and click <strong>Save Changes</strong>.</li>
             </ol>
@@ -997,7 +1009,7 @@
 
         <h3>3.2 User Access &amp; Permissions</h3>
         <p>
-            Requires <strong>Estimator</strong>, <strong>Manager</strong>, <strong>Executive</strong>, or <strong>Admin</strong> role with <code>perm_bids_view = true</code>. Submitting bids requires <code>perm_bids_edit = true</code>.
+            Requires <strong>Estimator</strong>, <strong>Sales</strong>, <strong>Manager</strong>, <strong>Executive</strong>, or <strong>Admin</strong> role with <code>perm_bids_view = true</code>. Submitting bids requires <code>perm_bids_edit = true</code>. Accounts with the <strong>Sales</strong> role view and manage only Commercial Construction Bids explicitly assigned to their user ID in the <strong>Assigned Rep</strong> column (<code>assigned_rep_id</code>).
         </p>
 
         <!-- Visual Snapshot 3.1: Live Construction Bids Pipeline -->
@@ -1082,6 +1094,18 @@
                         <td>USD ($)</td>
                         <td>Final customer-ready monthly billing amount.</td>
                     </tr>
+                    <tr>
+                        <td><span class="element-code">Assigned Rep</span></td>
+                        <td>Inline Dropdown</td>
+                        <td>Active Sales / Executive Users</td>
+                        <td>Assigns ownership of a Commercial Construction Bid to a specific representative and isolates territory visibility for Sales profiles.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="element-code">🔍 Enrich Button</span></td>
+                        <td>Action Button</td>
+                        <td>1-Click GC Contact Lookup</td>
+                        <td>Queries the General Contractors directory and public web records to populate estimator phone numbers, email addresses, and project contacts.</td>
+                    </tr>
                 </tbody>
             </table>
         </div>
@@ -1119,7 +1143,7 @@
         <div class="doc-callout doc-callout-info">
             <svg style="width: 20px; height: 20px; fill: #2563eb; flex-shrink: 0;" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
             <div>
-                <strong>Single Outbound Gateway:</strong> All transactional and marketing emails route exclusively through the official Microsoft 365 Exchange tenant. Third-party marketing tools or personal inboxes are prohibited.
+                <strong>Single Outbound Gateway &amp; 5-Pillar Campaign Readiness (BUG-131):</strong> All transactional and marketing emails route exclusively through the official Microsoft 365 Exchange tenant. Every campaign batch automatically filters for <code>campaign_ready = TRUE</code> and DNS-verified mail servers (<code>email_mx_verified = TRUE</code>), checks the permanent <code>"EmailSuppressionList"</code>, deduplicates multi-location owners so each email address receives at most one message per blast, and applies smart greeting fallbacks (<code>"Hi there"</code> / <code>"Facility Director"</code>).
             </div>
         </div>
 
@@ -1394,7 +1418,7 @@
                 </div>
                 <div class="callout-legend-item">
                     <span class="callout-num amber">4</span>
-                    <div><strong>Require Password Reset:</strong> Forces the user to establish a fresh confidential password upon their next sign-in.</div>
+                    <div><strong>Password Controls &amp; Require Password Reset:</strong> Includes New Password and Confirm Password fields with visibility eye toggles, plus the <strong>Require Password Reset on Next Login</strong> checkbox (<code>force_pwd_reset</code>).</div>
                 </div>
             </div>
         </div>
@@ -1413,9 +1437,9 @@
                 <tbody>
                     <tr>
                         <td><strong>Sales</strong></td>
-                        <td>Leads (CRM), Accounts, Sales Desk, Outreach Outbox</td>
-                        <td>Leads, Accounts, Call Notes</td>
-                        <td>Texas daycare calling sprints, lead updates, and walkthrough booking.</td>
+                        <td>Assigned Leads (CRM), Assigned Clients, Calling Workstation (<code>/sales-desk</code>), Assigned GC Bids</td>
+                        <td>Assigned Leads, Clients, Bids, Call Notes</td>
+                        <td>Strict territory-isolated calling sprints, lead updates, construction bid follow-up, and walkthrough booking.</td>
                     </tr>
                     <tr>
                         <td><strong>Estimator</strong></td>
@@ -1469,6 +1493,7 @@
         <h3>6.4 Security Governance &amp; Poka-Yoke Protections</h3>
         <ul>
             <li><strong>Tamper-Proof Role Presets:</strong> Custom changes are allowed for edge cases, but clicking <strong>Reset to Role Defaults</strong> instantly reverts checkboxes to verified corporate policy.</li>
+            <li><strong>Strict Sales Territory Isolation (BUG-126–BUG-130):</strong> Accounts with the <code>Sales</code> role are automatically routed on login to their permitted workspace and strictly restricted at the database query level to leads (<code>owner_id</code>), clients (<code>assigned_rep_id</code>), and construction bids (<code>assigned_rep_id</code>) explicitly assigned to their user ID.</li>
             <li><strong>Audit Logging:</strong> Every user role change and password reset event is written to immutable database logs with the administrator's timestamp and IP address.</li>
         </ul>
     </section>

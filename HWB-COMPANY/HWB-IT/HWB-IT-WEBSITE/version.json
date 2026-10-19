@@ -1,7 +1,7 @@
 {
-  "version": "v5.4.2",
-  "commit": "a059601",
-  "build_date": "2026-10-17 10:16 PM",
-  "build_tag": "v5.4.2-a059601",
+  "version": "v5.4.3",
+  "commit": "142e642",
+  "build_date": "2026-10-19 11:35 AM",
+  "build_tag": "v5.4.3-2026-10-19",
   "environment": "LOCAL_DEV"
 }

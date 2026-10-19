@@ -188,12 +188,25 @@ def enforce_session_inactivity_timeout():
         if not is_machine_ping:
             session['last_activity'] = now
 
+_orig_save_session = app.session_interface.save_session
+def _edge_safe_save_session(app_obj, sess, response):
+    if getattr(request, '_is_anonymous_public_cacheable', False) and not sess.modified:
+        if 'Vary' in response.headers:
+            vary_tokens = [v.strip() for v in response.headers['Vary'].split(',') if v.strip().lower() != 'cookie']
+            if vary_tokens:
+                response.headers['Vary'] = ', '.join(vary_tokens)
+            else:
+                del response.headers['Vary']
+        return
+    return _orig_save_session(app_obj, sess, response)
+app.session_interface.save_session = _edge_safe_save_session
+
 @app.after_request
 def apply_application_security_headers(response):
     """
-    Direct Application Security Headers (SO-COM-001-DIR-05).
+    Direct Application Security Headers (SO-COM-001-DIR-05 & HWB-QMS-11.14).
     Enforces HSTS, MIME sniffing protection, clickjacking defense, referrer policy,
-    and masks backend server headers to prevent Gunicorn disclosure.
+    masks backend server headers, and enforces Split Cloudflare Edge Caching.
     """
     response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains; preload'
     response.headers['X-Content-Type-Options'] = 'nosniff'
@@ -205,23 +218,42 @@ def apply_application_security_headers(response):
     # Static Assets: 7-day immutable edge caching (Cloudflare absorbs 100% of asset requests)
     if request.path.startswith('/static/'):
         response.headers['Cache-Control'] = 'public, max-age=604800, immutable'
+        if not session.modified:
+            request._is_anonymous_public_cacheable = True
         if 'Vary' in response.headers:
             vary_tokens = [v.strip() for v in response.headers['Vary'].split(',') if v.strip().lower() != 'cookie']
             if vary_tokens:
                 response.headers['Vary'] = ', '.join(vary_tokens)
             else:
                 del response.headers['Vary']
-    # Public Marketing Pages: 10-minute edge shield for anonymous guests
-    elif request.method in ('GET', 'HEAD') and not session.get('user_id') and not request.path.startswith(('/admin', '/api', '/auth')):
-        response.headers['Cache-Control'] = 'public, max-age=600, s-maxage=600'
+    # Public Marketing Pages: Split Cloudflare Edge Caching for anonymous guests (HWB-QMS-11.14)
+    elif (
+        request.method in ('GET', 'HEAD')
+        and response.status_code == 200
+        and not session.modified
+        and not session.get('user_id')
+        and not session.get('_user_id')
+        and not current_user.is_authenticated
+        and not request.path.startswith(('/admin', '/api', '/auth', '/sales-desk', '/login', '/logout', '/partner', '/academy', '/manual'))
+    ):
+        response.headers['Cache-Control'] = 'public, max-age=300, s-maxage=3600, stale-while-revalidate=86400'
+        request._is_anonymous_public_cacheable = True
+        response.headers.pop('Set-Cookie', None)
+        if 'Vary' in response.headers:
+            vary_tokens = [v.strip() for v in response.headers['Vary'].split(',') if v.strip().lower() != 'cookie']
+            if vary_tokens:
+                response.headers['Vary'] = ', '.join(vary_tokens)
+            else:
+                del response.headers['Vary']
     # Backoffice Desks, APIs, and Auth Routes: Strict zero-cache protection
-    elif request.path.startswith(('/admin', '/api', '/auth')):
+    elif request.path.startswith(('/admin', '/api', '/auth', '/sales-desk', '/login', '/logout')):
         response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, private, max-age=0'
         response.headers['Pragma'] = 'no-cache'
 
     return response
 
-# --- Boot & Infrastructure Handshake Sequence ---
+# --- Boot & Infrastructure Handshake Sequence (HWB-QMS-11.14 Single-Execution Guard) ---
+_BOOT_LOCK_FD = None
 with app.app_context():
     try:
         print("[BOOT] SigmaFidelity™ High-Fidelity Startup Sequence Initiated.", flush=True)
@@ -229,6 +261,7 @@ with app.app_context():
         # Unified Async Background Startup Thread (Zero-Lock Contention, Instant Gunicorn Port Binding)
         def run_async_infrastructure_boot(db_url, seed_path):
             try:
+                time.sleep(1.0)  # Allow preloaded Gunicorn worker fork to complete before opening DB pool sockets
                 print("[BOOT] Unified async infrastructure boot thread started.", flush=True)
                 sync_db_sequences(db_url)
                 
@@ -377,8 +410,16 @@ with app.app_context():
                     print(f"[DEAL SYNC DAEMON] Error: {loop_err}", flush=True)
 
         seed_path = os.path.join(os.path.dirname(__file__), 'scripts', 'seed_data.json')
-        threading.Thread(target=run_async_infrastructure_boot, args=(app.config['DATABASE_URL'], seed_path), daemon=True).start()
-        threading.Thread(target=run_autonomous_deal_sync_daemon, args=(app.config['DATABASE_URL'],), daemon=True).start()
+        try:
+            import fcntl
+            _BOOT_LOCK_FD = open('/tmp/hwb_enterprise_boot.lock', 'w')
+            fcntl.flock(_BOOT_LOCK_FD, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            _BOOT_LOCK_FD.write(str(os.getpid()))
+            _BOOT_LOCK_FD.flush()
+            threading.Thread(target=run_async_infrastructure_boot, args=(app.config['DATABASE_URL'], seed_path), daemon=True).start()
+            threading.Thread(target=run_autonomous_deal_sync_daemon, args=(app.config['DATABASE_URL'],), daemon=True).start()
+        except (BlockingIOError, IOError):
+            print(f"[BOOT] Single-execution boot lock held by primary process; worker PID {os.getpid()} skipping duplicate boot threads (0ms).", flush=True)
     except Exception as e:
         print(f"[BOOT] Startup Handshake Warning: {e}", flush=True)
 
@@ -398,7 +439,7 @@ def enforce_enterprise_role_quarantine():
     # Sales Role Scope (Option B: Leads, Accounts & Field Sales Desk)
     if role == 'Sales':
         if path == '/':
-            return redirect(url_for('admin_operations', view='leads'))
+            return redirect(current_user.get_default_landing_url())
 
         if path.startswith('/api/v1/leads/export') or path.startswith('/api/v1/accounts/export'):
             log_security_violation(current_user.id, current_user.username, role, path, request.method)
@@ -406,10 +447,12 @@ def enforce_enterprise_role_quarantine():
 
         if path == '/admin/operations':
             active_view = request.args.get('view', 'leads')
-            if active_view not in ['leads', 'accounts']:
+            from blueprints.operations import VIEW_AUTHORIZATION_MAP
+            req_mod = VIEW_AUTHORIZATION_MAP.get(active_view, active_view)
+            if not current_user.has_permission(req_mod, 'view'):
                 log_security_violation(current_user.id, current_user.username, role, f"{path}?view={active_view}", request.method)
-                flash("Restricted area. Sales access is scoped to Leads and Accounts.")
-                return redirect(url_for('admin_operations', view='leads'))
+                flash("Restricted area. Redirected to your primary workspace.")
+                return redirect(current_user.get_default_landing_url())
             return None
 
         sales_whitelist = (
@@ -428,8 +471,8 @@ def enforce_enterprise_role_quarantine():
 
         if path.startswith('/admin') and not any(path.startswith(w) for w in sales_whitelist):
             log_security_violation(current_user.id, current_user.username, role, path, request.method)
-            flash("Restricted area. Sales access is limited to Leads, Accounts, and Field Sales Desk.")
-            return redirect(url_for('admin_operations', view='leads'))
+            flash("Restricted area. Redirected to your primary workspace.")
+            return redirect(current_user.get_default_landing_url())
 
     # Executive & Admin Sensitive Zone Protection
     if path.startswith('/admin/executive'):
