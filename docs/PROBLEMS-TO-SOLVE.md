@@ -120,6 +120,7 @@ Responsibility: George (Architect)
 | 10/19/2026 | BUG-134 | Unclosed `#view-monitor` Container (`display: none`) During Jinja Active-View Pruning Trapping Downstream Views & Modals (`#modal-lead-command`) and Preventing Lead Row Click Display. | **RESOLVED** | HIGH |
 | 10/19/2026 | BUG-135 | Tablet Off-Screen Column Popover Clipping (`#col-mgr-menu` `right: 0; width: 640px;`), Unscrollable `.isc-modal` (`overflow: hidden`), Multi-Sticky Column Overlap, & Touch Header Drag Collision. | **RESOLVED** | HIGH |
 | 10/19/2026 | BUG-136 | Smartphone (`390px` Apple iPhone iOS Safari & `412px` Google Pixel 9 Android Chrome) Public & Backend Form Ergonomics: `<16px` Input Auto-Zoom, Uncollapsed Multi-Column Form Grids (`2fr 1fr 1fr`), Heavy Vault Paddings (`4rem`), Static `100vh` vs `100dvh` Keyboard Clipping, & Flyout/Bulk Bar Overflow. | **RESOLVED** | HIGH |
+| 10/19/2026 | BUG-137 | Full-Site Public & Backend Phone (`390px–430px`), Tablet (`768px–1024px`), & Data-Table Display Deficits: `.top-utility-bar` `720px` Viewport Blowout, Uncollapsed `repeat(4, 1fr)` KPI Scorecards, 28 Wide Data Tables Without Phone CRM Card Mode, & Fixed `320px` QMS Manual Sidebar Crushing Mobile Text. | **RESOLVED** | HIGH |
 
 
 ## BUG-122: App Manual Static Routing Deficit (Lacks Automatic Active Workspace Detection & Deep-Link Chapter Navigation)
@@ -2579,3 +2580,26 @@ CEO Humberto Dominguez attempting to log into `https://www.hwbcleaning.com/login
    - Upgraded `.isc-modal` to `max-height: 92dvh !important; padding: 1.15rem !important; padding-bottom: max(1.15rem, env(safe-area-inset-bottom)) !important;` on phones, added a `focusin` listener in `backoffice_operations_core.js` to center focused inputs above the virtual keyboard (`scrollIntoView({ block: 'center', behavior: 'smooth' })`), clamped `.sigma-jump-menu` and `.bulk-dropdown-menu` to `left: 12px; right: 12px; position: fixed;`, and made `#leads-bulk-controls` wrap cleanly.
 4. **Automated CI/CD Gate (`scripts/test_web_performance_rack_14.py`):**
    - Added `test_14_smartphone_iphone_and_pixel9_form_ergonomics` (`14/14` tests passing).
+
+
+## BUG-137: Full-Site Public & Backend Phone (`390px–430px`), Tablet (`768px–1024px`), & Data-Table Display Deficits: `.top-utility-bar` `720px` Viewport Blowout, Uncollapsed `repeat(4, 1fr)` KPI Scorecards, 28 Wide Data Tables Without Phone CRM Card Mode, & Fixed `320px` QMS Manual Sidebar Crushing Mobile Text
+**Detected:** 10/19/2026
+**Status:** **RESOLVED** (10/19/2026)
+**Symptoms:**
+1. On a **Google Pixel 9 (`412px`)** and **Apple iPhone (`390px`)**, the authenticated `.top-utility-bar` (`padding: 0.5rem 40px` + 5 horizontal buttons) forced the layout viewport to `720px`, causing the entire backoffice and public pages to drift sideways ("displaying all over"), while stacking 3 headers + a 4-row wrapped `.sigma-nav-ribbon` consumed `420px` (`55%`) of vertical height before any module content appeared.
+2. Nine backend modules in `backoffice_operations.html`, `HWB-WEB Sigma Executive.html`, `sales_desk.html`, and `bosanna_cockpit.html` used inline `grid-template-columns: repeat(4, 1fr)` for KPI scorecards and `min-width: 260px–280px` search bars, squeezing 4 KPI cards into `85px` strips on phones.
+3. Across all 28 public and backend data tables (`.isc-grid`, `.isc-grid-expansive`, `.sigma-table`, `.leads-table`, `.field-table`), phones required 4 screen-widths of horizontal scrolling (`1,500px`) where users lost sight of the company name while viewing right-hand columns.
+4. On `/manual/app` and `/manual` (`sop_base.html`), a fixed `320px` `.qms-sidebar` + `margin-left: 320px` + `padding: 4rem 5rem` + `280px` right TOC had zero mobile/tablet media queries, crushing manual text off-screen on phones and tablets. Similarly, `capability_statement.html` only had `@media print` rules and no mobile screen breakpoints.
+**Root Causes:**
+1. Lack of a unified, self-healing responsive table and grid engine across `base.html`, `backoffice_base.html`, `sop_base.html`, and standalone templates (`sales_desk.html`, `bosanna_cockpit.html`, `bosanna_dossier.html`, `capability_statement.html`, `prequal.html`).
+2. Inline `grid-template-columns: repeat(4, 1fr)` styles on KPI scorecards and `min-width: 280px` on toolbar search inputs were not targeted by tablet (`<= 1024px`) and phone (`<= 768px`) responsive selectors.
+**Solution:**
+1. **Universal Self-Healing Phone, Tablet & Adaptive Data-Table Engine (`static/js/sigma_responsive_engine.js` & `static/HWB-WEB Style.css`):**
+   - Engineered `SigmaResponsiveTableEngine` with a `MutationObserver` that automatically hydrates every current and future `<table>` (`<thead><th> -> td[data-label]`), tags primary identity cells (`.sigma-card-primary-cell`), action cells (`.sigma-card-actions-cell`), and empty `--` cells (`data-cell-empty="true"`), and renders tables as **2-Column CRM Touch Cards** on phones (`<= 768px`) with a persistent **`[Cards | Table]`** mode switcher (`localStorage: sigma_mobile_table_mode`) and smooth touch-scroll on tablets (`768px–1024px`).
+2. **Global App-Shell Consolidation & Single-Row Touch-Swipe Navigation (`mega_bar.html`, `backend_nav.html`, `backoffice_base.html`):**
+   - Made `.top-utility-bar` fluid (`clamp(12px, 3vw, 40px)`), hid the duplicate marketing `.main-header` inside `body.backoffice-body` on phones (`<= 768px`), converted `.sigma-nav-ribbon` and filter bars (`#leads-category-bar`, `#leads-stage-bar`) into single-row horizontal touch-swipe rails with auto-centered active tabs, and positioned `.sigma-jump-menu` and `#add-menu` via `position: fixed` below tapped buttons on `<= 1024px`.
+3. **Universal Multi-Tier KPI & Split Grid Breakpoints (`1024px` Tablet & `768px` Phone) + QMS Off-Canvas Drawer (`sop_base.html`, `capability_statement.html`, `prequal.html`, `sales_desk.html`, `bosanna_cockpit.html`, `bosanna_dossier.html`):**
+   - Collapsed all `repeat(4, 1fr)` and `repeat(3, 1fr)` KPI scorecards into `2 columns` on tablets (`<= 1024px`) and `2x2 compact cards` on phones (`<= 768px`), collapsed split workspaces (`2fr 1fr`, `1.5fr 1fr`, `1fr 380px`) to `1fr`, and converted `.qms-sidebar` on `/manual/app` and `/manual` into an off-canvas slide-out drawer (`[☰ Manual Sections & Search]`) on `<= 1024px`.
+4. **Permanent Runtime Auto-Injection & CI/CD Gate (`main_app.py` & `scripts/test_web_performance_rack_14.py`):**
+   - Added an `@app.after_request` safeguard in `main_app.py` that automatically injects `<script src="/static/js/sigma_responsive_engine.js" defer></script>` into any HTML response if omitted by a future template, codified the Permanent Universal Phone, Tablet & Adaptive Data-Table Standard in `GEMINI.md`, and added `test_15_full_site_phone_tablet_and_table_enterprise_architecture` (`15/15` Rack 14 tests passing).
+
