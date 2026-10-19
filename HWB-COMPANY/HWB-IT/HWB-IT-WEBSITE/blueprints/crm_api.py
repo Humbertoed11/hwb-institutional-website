@@ -1074,19 +1074,19 @@ def get_recent_activities(parent_type, parent_id):
     try:
         with conn.cursor() as cur:
             ptype_lower = parent_type.lower()
-            if ptype_lower == 'lead':
+            if ptype_lower in ('lead', 'leads'):
                 cur.execute('''
                     SELECT activity_type, description, timestamp 
                     FROM "GlobalActivities" 
-                    WHERE parent_id = %s AND LOWER(parent_type) = 'lead'
+                    WHERE parent_type = 'Lead' AND parent_id = %s
                     ORDER BY timestamp DESC 
                     LIMIT 10
                 ''', (parent_id,))
-            elif ptype_lower in ('constructionbid', 'construction_bid', 'bid'):
+            elif ptype_lower in ('constructionbid', 'construction_bid', 'bid', 'gc_bid'):
                 cur.execute('''
                     SELECT activity_type, description, timestamp 
                     FROM "GlobalActivities" 
-                    WHERE parent_id = %s AND LOWER(parent_type) = 'constructionbid'
+                    WHERE parent_type = 'ConstructionBid' AND parent_id = %s
                     ORDER BY timestamp DESC 
                     LIMIT 10
                 ''', (parent_id,))
@@ -1094,7 +1094,7 @@ def get_recent_activities(parent_type, parent_id):
                 cur.execute('''
                     SELECT activity_type, description, timestamp 
                     FROM "GlobalActivities" 
-                    WHERE parent_id = %s AND (LOWER(parent_type) = 'account' OR LOWER(parent_type) = 'client')
+                    WHERE parent_type = 'Account' AND parent_id = %s
                     ORDER BY timestamp DESC 
                     LIMIT 10
                 ''', (parent_id,))

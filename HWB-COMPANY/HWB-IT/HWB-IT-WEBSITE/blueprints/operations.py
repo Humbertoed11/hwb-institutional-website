@@ -703,12 +703,15 @@ def admin_operations():
                                    MAX(timestamp) as last_contact
                             FROM "GlobalActivities"
                             WHERE parent_type = 'ConstructionBid'
+                              AND activity_type != 'Autonomous Vetting & Enrichment'
                             GROUP BY parent_id
                         ) ga ON ga.parent_id = cb.id
                         LEFT JOIN LATERAL (
                             SELECT description
                             FROM "GlobalActivities"
-                            WHERE parent_type = 'ConstructionBid' AND parent_id = cb.id
+                            WHERE parent_type = 'ConstructionBid'
+                              AND parent_id = cb.id
+                              AND activity_type != 'Autonomous Vetting & Enrichment'
                             ORDER BY timestamp DESC
                             LIMIT 1
                         ) ga_last ON TRUE

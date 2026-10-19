@@ -492,11 +492,39 @@ class GCVettingEngine:
                     bid_id
                 ))
 
-                # Log activity if enriched
+                # Log activity only on initial enrichment or when key profile fields/scorecard change (Idempotent Guard)
+                enrichment_desc = (
+                    f"Profile completed: GC '{final_gc_name}', Estimator '{final_est_name}', "
+                    f"Phone '{final_est_phone}', Score {scorecard['total_score']}/100 ({scorecard['vetting_tier']})."
+                )
+                profile_changed = (
+                    (bid.get("gc_name") or "") != (final_gc_name or "") or
+                    (bid.get("estimator_name") or "") != (final_est_name or "") or
+                    (bid.get("estimator_phone") or "") != (final_est_phone or "") or
+                    int(bid.get("vetting_score") or 0) != int(scorecard["total_score"] or 0) or
+                    (bid.get("enrichment_status") or "") != "Auto-Enriched"
+                )
                 cur.execute('''
-                    INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
-                    VALUES (%s, 'ConstructionBid', 'Autonomous Vetting & Enrichment', %s);
-                ''', (bid_id, f"Profile completed: GC '{final_gc_name}', Estimator '{final_est_name}', Phone '{final_est_phone}', Score {scorecard['total_score']}/100 ({scorecard['vetting_tier']})."))
+                    SELECT activity_id, description
+                    FROM "GlobalActivities"
+                    WHERE parent_type = 'ConstructionBid'
+                      AND parent_id = %s
+                      AND activity_type = 'Autonomous Vetting & Enrichment'
+                    ORDER BY timestamp DESC
+                    LIMIT 1;
+                ''', (bid_id,))
+                existing_enrichment = cur.fetchone()
+                if not existing_enrichment:
+                    cur.execute('''
+                        INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
+                        VALUES (%s, 'ConstructionBid', 'Autonomous Vetting & Enrichment', %s);
+                    ''', (bid_id, enrichment_desc))
+                elif profile_changed and existing_enrichment.get("description") != enrichment_desc:
+                    cur.execute('''
+                        UPDATE "GlobalActivities"
+                        SET description = %s, timestamp = CURRENT_TIMESTAMP
+                        WHERE activity_id = %s;
+                    ''', (enrichment_desc, existing_enrichment["activity_id"]))
 
                 conn.commit()
                 return {

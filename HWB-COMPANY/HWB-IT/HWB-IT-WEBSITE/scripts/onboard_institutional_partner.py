@@ -348,7 +348,7 @@ Phone: (214) 862-2300 | Web: mop.hwbcleaning.com
 
             cur.execute("""
                 INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description, timestamp)
-                VALUES (%s, 'Customer', 'PARTNER_PROVISIONED', %s, CURRENT_TIMESTAMP);
+                VALUES (%s, 'Account', 'PARTNER_PROVISIONED', %s, CURRENT_TIMESTAMP);
             """, (
                 customer_id,
                 f"{company_name} Model C partner infrastructure provisioned with {contract_number} {facility_name} schedule."

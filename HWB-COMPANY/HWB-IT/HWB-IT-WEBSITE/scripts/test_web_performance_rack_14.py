@@ -261,7 +261,65 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
                 payload = r_lead.get_json()
                 self.assertIsNotNone(payload.get("lead"))
 
+    def test_12_global_activities_enterprise_idempotency_and_canonical_guard(self):
+        """Enterprise Standards #1 & #5: Verifies GlobalActivities deduplication, BEFORE INSERT trigger idempotency, and canonical parent_type CHECK constraint."""
+        import psycopg2
+
+        conn = get_db(self.db_url)
+        try:
+            with conn.cursor() as cur:
+                # 1. Verify no duplicate Autonomous Vetting & Enrichment rows per bid
+                cur.execute("""
+                    SELECT MAX(cnt) FROM (
+                        SELECT COUNT(*) AS cnt
+                        FROM "GlobalActivities"
+                        WHERE activity_type = 'Autonomous Vetting & Enrichment'
+                        GROUP BY parent_type, parent_id
+                    ) sub;
+                """)
+                max_dup = cur.fetchone()[0] or 0
+                self.assertLessEqual(max_dup, 1, f"Expected <= 1 Autonomous Vetting & Enrichment row per bid, found {max_dup}")
+
+                # 2. Verify BEFORE INSERT trigger suppresses duplicate automated enrichment inserts
+                cur.execute("""
+                    SELECT parent_id, description
+                    FROM "GlobalActivities"
+                    WHERE parent_type = 'ConstructionBid'
+                      AND activity_type = 'Autonomous Vetting & Enrichment'
+                    LIMIT 1;
+                """)
+                sample = cur.fetchone()
+                if sample:
+                    pid, desc = sample
+                    cur.execute(
+                        'SELECT COUNT(*) FROM "GlobalActivities" WHERE parent_type = %s AND parent_id = %s AND activity_type = %s;',
+                        ("ConstructionBid", pid, "Autonomous Vetting & Enrichment"),
+                    )
+                    before_cnt = cur.fetchone()[0]
+                    cur.execute(
+                        'INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description) VALUES (%s, %s, %s, %s);',
+                        (pid, "ConstructionBid", "Autonomous Vetting & Enrichment", desc),
+                    )
+                    cur.execute(
+                        'SELECT COUNT(*) FROM "GlobalActivities" WHERE parent_type = %s AND parent_id = %s AND activity_type = %s;',
+                        ("ConstructionBid", pid, "Autonomous Vetting & Enrichment"),
+                    )
+                    after_cnt = cur.fetchone()[0]
+                    self.assertEqual(before_cnt, after_cnt, "Trigger must suppress duplicate Autonomous Vetting & Enrichment insert")
+                    conn.commit()
+
+                # 3. Verify canonical parent_type CHECK constraint rejects invalid entity names
+                with self.assertRaises(psycopg2.Error):
+                    cur.execute(
+                        'INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description) VALUES (1, %s, %s, %s);',
+                        ("InvalidNonCanonicalEntity", "Test", "Should be rejected by CHECK constraint"),
+                    )
+                conn.rollback()
+        finally:
+            conn.close()
+
 
 if __name__ == "__main__":
     unittest.main()
+
 

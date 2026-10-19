@@ -844,6 +844,30 @@ def apply_system_migrations(conn: Any, db_url: Optional[str] = None) -> None:
                     except Exception as adb_err:
                         print(f"[MIGRATION NOTICE] Sibling sigmajan-adb sync skipped: {adb_err}", flush=True)
 
+            if "045_enterprise_global_activities_guard_and_dedup" not in applied:
+                apply_migration_045_global_activities_guard(conn)
+                cur.execute("""
+                    INSERT INTO "schema_migrations" (version, description)
+                    VALUES ('045_enterprise_global_activities_guard_and_dedup', 'Purge 206K duplicate Autonomous Vetting & Enrichment rows in GlobalActivities, normalize parent_type values, and install BEFORE INSERT idempotency trigger + canonical parent_type CHECK constraint')
+                    ON CONFLICT (version) DO NOTHING;
+                """)
+                conn.commit()
+                applied.add("045_enterprise_global_activities_guard_and_dedup")
+                print("[MIGRATION] 045_enterprise_global_activities_guard_and_dedup successfully applied and recorded.", flush=True)
+
+                if target_db_url and "sigmajan-server" in target_db_url and "/sigmajan-db" in target_db_url:
+                    try:
+                        import psycopg2
+                        adb_url = target_db_url.replace("/sigmajan-db", "/sigmajan-adb")
+                        adb_conn = psycopg2.connect(adb_url, connect_timeout=5)
+                        try:
+                            apply_migration_045_global_activities_guard(adb_conn)
+                            print("[MIGRATION] 045 synchronized to sibling Azure database sigmajan-adb.", flush=True)
+                        finally:
+                            adb_conn.close()
+                    except Exception as adb_err:
+                        print(f"[MIGRATION NOTICE] Sibling sigmajan-adb 045 sync skipped: {adb_err}", flush=True)
+
             for v_tag, mod_path, v_desc in modular_migrations:
                 if v_tag not in applied:
                     print(f"[MIGRATION] Applying modular migration {v_tag} ({mod_path})...", flush=True)
@@ -867,6 +891,153 @@ def apply_system_migrations(conn: Any, db_url: Optional[str] = None) -> None:
         conn.rollback()
         print(f"[MIGRATION ERROR] Failed to apply schema migrations: {e}", file=sys.stderr, flush=True)
         raise e
+
+
+def apply_migration_045_global_activities_guard(conn: Any) -> dict:
+    """
+    Enterprise Standard #1 & #5:
+    1. Purges duplicate 'Autonomous Vetting & Enrichment' rows in GlobalActivities,
+       retaining only the single most recent row per (parent_type, parent_id).
+    2. Normalizes legacy parent_type strings ('Customer' -> 'Account', 'SYSTEM' -> 'System').
+    3. Installs BEFORE INSERT trigger (trg_global_activities_enterprise_guard) on GlobalActivities
+       to auto-normalize known parent_type aliases and suppress duplicate automated daemon entries.
+    4. Adds PostgreSQL CHECK constraint (chk_global_activities_canonical_parent_type) enforcing
+       canonical parent_type values at the database kernel level.
+    """
+    stats = {"purged_duplicate_enrichment_rows": 0, "normalized_parent_type_rows": 0}
+    with conn.cursor() as cur:
+        # 1. Purge duplicate Autonomous Vetting & Enrichment rows keeping latest 1 per (parent_type, parent_id)
+        cur.execute("""
+            WITH latest_enrichment AS (
+                SELECT DISTINCT ON (parent_type, parent_id) activity_id
+                FROM "GlobalActivities"
+                WHERE activity_type = 'Autonomous Vetting & Enrichment'
+                ORDER BY parent_type, parent_id, timestamp DESC NULLS LAST, activity_id DESC
+            )
+            DELETE FROM "GlobalActivities" ga
+            WHERE ga.activity_type = 'Autonomous Vetting & Enrichment'
+              AND NOT EXISTS (
+                  SELECT 1 FROM latest_enrichment le WHERE le.activity_id = ga.activity_id
+              );
+        """)
+        stats["purged_duplicate_enrichment_rows"] = cur.rowcount
+
+        # 2. Normalize existing parent_type values to canonical domain names
+        cur.execute("""
+            UPDATE "GlobalActivities"
+            SET parent_type = CASE
+                WHEN UPPER(TRIM(COALESCE(parent_type, ''))) IN ('CUSTOMER', 'CUSTOMERS', 'CLIENT', 'CLIENTS', 'ACCOUNT', 'ACCOUNTS') THEN 'Account'
+                WHEN UPPER(TRIM(COALESCE(parent_type, ''))) IN ('LEAD', 'LEADS') THEN 'Lead'
+                WHEN UPPER(TRIM(COALESCE(parent_type, ''))) IN ('CONSTRUCTIONBID', 'CONSTRUCTION_BID', 'GC_BID', 'BID') THEN 'ConstructionBid'
+                WHEN UPPER(TRIM(COALESCE(parent_type, ''))) IN ('INSTITUTIONALBID', 'INSTITUTIONAL_BID') THEN 'InstitutionalBid'
+                WHEN UPPER(TRIM(COALESCE(parent_type, ''))) IN ('GENERALCONTRACTOR', 'GENERAL_CONTRACTOR', 'GC') THEN 'GeneralContractor'
+                WHEN UPPER(TRIM(COALESCE(parent_type, ''))) IN ('WORKORDER', 'WORK_ORDER', 'WORKORDERS') THEN 'WorkOrder'
+                WHEN UPPER(TRIM(COALESCE(parent_type, ''))) IN ('EMPLOYEE', 'EMPLOYEES') THEN 'Employee'
+                WHEN UPPER(TRIM(COALESCE(parent_type, ''))) IN ('SUBCONTRACTOR', 'SUBCONTRACTORS') THEN 'Subcontractor'
+                WHEN UPPER(TRIM(COALESCE(parent_type, ''))) IN ('APPLICANT', 'APPLICANTS') THEN 'Applicant'
+                WHEN UPPER(TRIM(COALESCE(parent_type, ''))) IN ('PENDINGOUTBOX', 'PENDING_OUTBOX') THEN 'PendingOutbox'
+                WHEN UPPER(TRIM(COALESCE(parent_type, ''))) IN ('CAMPAIGN', 'CAMPAIGNS') THEN 'Campaign'
+                WHEN UPPER(TRIM(COALESCE(parent_type, ''))) IN ('USER', 'USERS') THEN 'User'
+                WHEN UPPER(TRIM(COALESCE(parent_type, ''))) IN ('AGENT', 'AGENTS') THEN 'Agent'
+                ELSE 'System'
+            END
+            WHERE parent_type IS NULL
+               OR parent_type NOT IN (
+                   'Lead', 'Account', 'ConstructionBid', 'InstitutionalBid',
+                   'GeneralContractor', 'WorkOrder', 'Employee', 'Subcontractor',
+                   'Applicant', 'PendingOutbox', 'Campaign', 'User', 'Agent', 'System'
+               );
+        """)
+        stats["normalized_parent_type_rows"] = cur.rowcount
+
+        # 3. Create PostgreSQL BEFORE INSERT trigger function & trigger for normalization + idempotent deduplication
+        cur.execute("""
+            CREATE OR REPLACE FUNCTION fn_global_activities_enterprise_guard()
+            RETURNS TRIGGER AS $$
+            DECLARE
+                v_existing_id INTEGER;
+                v_norm_type TEXT;
+            BEGIN
+                v_norm_type := UPPER(TRIM(COALESCE(NEW.parent_type, 'SYSTEM')));
+                IF v_norm_type IN ('CUSTOMER', 'CUSTOMERS', 'CLIENT', 'CLIENTS', 'ACCOUNT', 'ACCOUNTS') THEN
+                    NEW.parent_type := 'Account';
+                ELSIF v_norm_type IN ('LEAD', 'LEADS') THEN
+                    NEW.parent_type := 'Lead';
+                ELSIF v_norm_type IN ('CONSTRUCTIONBID', 'CONSTRUCTION_BID', 'GC_BID', 'BID') THEN
+                    NEW.parent_type := 'ConstructionBid';
+                ELSIF v_norm_type IN ('INSTITUTIONALBID', 'INSTITUTIONAL_BID') THEN
+                    NEW.parent_type := 'InstitutionalBid';
+                ELSIF v_norm_type IN ('GENERALCONTRACTOR', 'GENERAL_CONTRACTOR', 'GC') THEN
+                    NEW.parent_type := 'GeneralContractor';
+                ELSIF v_norm_type IN ('WORKORDER', 'WORK_ORDER', 'WORKORDERS') THEN
+                    NEW.parent_type := 'WorkOrder';
+                ELSIF v_norm_type IN ('EMPLOYEE', 'EMPLOYEES') THEN
+                    NEW.parent_type := 'Employee';
+                ELSIF v_norm_type IN ('SUBCONTRACTOR', 'SUBCONTRACTORS') THEN
+                    NEW.parent_type := 'Subcontractor';
+                ELSIF v_norm_type IN ('APPLICANT', 'APPLICANTS') THEN
+                    NEW.parent_type := 'Applicant';
+                ELSIF v_norm_type IN ('PENDINGOUTBOX', 'PENDING_OUTBOX') THEN
+                    NEW.parent_type := 'PendingOutbox';
+                ELSIF v_norm_type IN ('CAMPAIGN', 'CAMPAIGNS') THEN
+                    NEW.parent_type := 'Campaign';
+                ELSIF v_norm_type IN ('USER', 'USERS') THEN
+                    NEW.parent_type := 'User';
+                ELSIF v_norm_type IN ('AGENT', 'AGENTS') THEN
+                    NEW.parent_type := 'Agent';
+                ELSIF v_norm_type = 'SYSTEM' THEN
+                    NEW.parent_type := 'System';
+                END IF;
+
+                -- Database-level idempotent deduplication for background daemon telemetry
+                IF NEW.activity_type IN ('Autonomous Vetting & Enrichment', 'Autonomous Ingress') AND NEW.parent_id IS NOT NULL THEN
+                    SELECT activity_id INTO v_existing_id
+                    FROM "GlobalActivities"
+                    WHERE parent_type = NEW.parent_type
+                      AND parent_id = NEW.parent_id
+                      AND activity_type = NEW.activity_type
+                      AND COALESCE(description, '') = COALESCE(NEW.description, '')
+                    ORDER BY timestamp DESC
+                    LIMIT 1;
+
+                    IF v_existing_id IS NOT NULL THEN
+                        UPDATE "GlobalActivities"
+                        SET timestamp = COALESCE(NEW.timestamp, CURRENT_TIMESTAMP)
+                        WHERE activity_id = v_existing_id;
+                        RETURN NULL;
+                    END IF;
+                END IF;
+
+                RETURN NEW;
+            END;
+            $$ LANGUAGE plpgsql;
+
+            DROP TRIGGER IF EXISTS trg_global_activities_enterprise_guard ON "GlobalActivities";
+            CREATE TRIGGER trg_global_activities_enterprise_guard
+            BEFORE INSERT ON "GlobalActivities"
+            FOR EACH ROW
+            EXECUTE FUNCTION fn_global_activities_enterprise_guard();
+        """)
+
+        # 4. Enforce canonical parent_type CHECK constraint at the PostgreSQL kernel level
+        cur.execute("""
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM pg_constraint WHERE conname = 'chk_global_activities_canonical_parent_type'
+                ) THEN
+                    ALTER TABLE "GlobalActivities"
+                    ADD CONSTRAINT chk_global_activities_canonical_parent_type
+                    CHECK (parent_type IN (
+                        'Lead', 'Account', 'ConstructionBid', 'InstitutionalBid',
+                        'GeneralContractor', 'WorkOrder', 'Employee', 'Subcontractor',
+                        'Applicant', 'PendingOutbox', 'Campaign', 'User', 'Agent', 'System'
+                    ));
+                END IF;
+            END $$;
+        """)
+    conn.commit()
+    return stats
 
 
 def sync_bug_132_133_five_tables(conn: Any) -> dict:
