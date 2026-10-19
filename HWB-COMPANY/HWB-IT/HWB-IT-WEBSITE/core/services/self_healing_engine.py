@@ -7,326 +7,419 @@ Lead Architect: George (Systems Architect & Certified Lean Six Sigma Master Blac
 import os
 import re
 import time
+import threading
 import datetime
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, Any, List, Optional, Tuple, Callable
 from core.services.database import get_db
 
+_TELEMETRY_CACHE_LOCK = threading.Lock()
+_TELEMETRY_CACHE: Dict[str, Dict[str, Any]] = {}
+_TELEMETRY_CACHE_TTL_SECONDS = 300.0
 
-def get_memory_rot_telemetry(db_url: Optional[str] = None) -> Dict[str, Any]:
+
+def clear_telemetry_cache(cache_key: Optional[str] = None) -> None:
+    """Clears the in-memory IT telemetry cache (all keys or a specific rack key)."""
+    with _TELEMETRY_CACHE_LOCK:
+        if cache_key:
+            _TELEMETRY_CACHE.pop(cache_key, None)
+        else:
+            _TELEMETRY_CACHE.clear()
+
+
+def _refresh_telemetry_key_async(cache_key: str, compute_fn: Callable[[], Any]) -> None:
+    """Daemon worker that refreshes a telemetry cache key without blocking web requests."""
+    try:
+        fresh_val = compute_fn()
+        with _TELEMETRY_CACHE_LOCK:
+            _TELEMETRY_CACHE[cache_key] = {
+                "data": fresh_val,
+                "timestamp": time.time(),
+                "refreshing": False
+            }
+    except Exception:
+        with _TELEMETRY_CACHE_LOCK:
+            if cache_key in _TELEMETRY_CACHE:
+                _TELEMETRY_CACHE[cache_key]["refreshing"] = False
+
+
+def _get_cached_telemetry(
+    cache_key: str,
+    compute_fn: Callable[[], Any],
+    force_refresh: bool = False
+) -> Any:
+    """
+    Returns cached telemetry within 300s TTL in <0.05ms, triggering a non-blocking
+    background refresh thread when the entry expires.
+    """
+    if force_refresh:
+        fresh_val = compute_fn()
+        with _TELEMETRY_CACHE_LOCK:
+            _TELEMETRY_CACHE[cache_key] = {
+                "data": fresh_val,
+                "timestamp": time.time(),
+                "refreshing": False
+            }
+        return fresh_val
+
+    now_ts = time.time()
+    with _TELEMETRY_CACHE_LOCK:
+        entry = _TELEMETRY_CACHE.get(cache_key)
+        if entry is not None and entry.get("data") is not None:
+            age = now_ts - entry.get("timestamp", 0.0)
+            if age >= _TELEMETRY_CACHE_TTL_SECONDS and not entry.get("refreshing", False):
+                entry["refreshing"] = True
+                threading.Thread(
+                    target=_refresh_telemetry_key_async,
+                    args=(cache_key, compute_fn),
+                    daemon=True
+                ).start()
+            return entry["data"]
+
+    fresh_val = compute_fn()
+    with _TELEMETRY_CACHE_LOCK:
+        _TELEMETRY_CACHE[cache_key] = {
+            "data": fresh_val,
+            "timestamp": time.time(),
+            "refreshing": False
+        }
+    return fresh_val
+
+
+def get_memory_rot_telemetry(db_url: Optional[str] = None, force_refresh: bool = False) -> Dict[str, Any]:
     """
     Empirically retrieves the latest live Cognitive Health & Memory Rot telemetry (Rack 1)
-    from RackTelemetryHistory in PostgreSQL.
+    from RackTelemetryHistory in PostgreSQL (300s cached).
     """
     target_url = db_url or os.environ.get('DATABASE_URL')
-    fallback = {
-        "rot_index": 44.2,
-        "composite_score": 44.2,
-        "status_label": "MODERATE WEAR / NOTICEABLE DILUTION",
-        "status_badge": "🟡 YELLOW",
-        "bloat_ratio": "20.4%",
-        "dilution_ratio": "56.8%",
-        "lost_in_middle": "75.7%",
-        "cognitive_drift": "25.0%",
-        "recommendation": "Attention spread is growing. Avoid dumping massive terminal logs into chat. Keep edits surgical."
-    }
-    if not target_url:
-        return fallback
 
-    conn = get_db(target_url)
-    try:
-        with conn.cursor() as cur:
-            cur.execute("""
-                SELECT score_value, secondary_value, status_tag, details_json, timestamp
-                FROM "RackTelemetryHistory"
-                WHERE rack_number = 1
-                ORDER BY id DESC
-                LIMIT 1;
-            """)
-            row = cur.fetchone()
-            if row:
-                details = row['details_json'] if isinstance(row, dict) else row[3]
-                if isinstance(details, str):
-                    import json
-                    details = json.loads(details)
-                score_val = float(row['score_value'] if isinstance(row, dict) else row[0])
-                status_raw = details.get("status_badge", "🟡 YELLOW")
-                return {
-                    "rot_index": score_val,
-                    "composite_score": score_val,
-                    "status_label": details.get("status", "MODERATE WEAR / DILUTION"),
-                    "status_badge": status_raw,
-                    "bloat_ratio": details.get("bloat_ratio", "20.4%"),
-                    "dilution_ratio": details.get("dilution_ratio", "56.8%"),
-                    "lost_in_middle": details.get("lost_in_middle", "75.7%"),
-                    "cognitive_drift": details.get("cognitive_drift", "25.0%"),
-                    "recommendation": details.get("recommendation", "Keep edits surgical."),
-                    "analyzed_at": str(row['timestamp'] if isinstance(row, dict) else row[4])
-                }
-    except Exception:
-        pass
-    finally:
-        conn.close()
-    return fallback
-
-
-def get_recovery_shield_telemetry(db_url: Optional[str] = None) -> Dict[str, Any]:
-    """
-    Empirically inspects Git repository state, hourly DB snapshot history, 
-    and log volume bounds for Peter's Recovery Shield (Rack 2).
-    """
-    import subprocess
-    git_branch = "feature/locations"
-    git_commit = "35293a4"
-    try:
-        git_branch = subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"], stderr=subprocess.DEVNULL).decode().strip() or git_branch
-        git_commit = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"], stderr=subprocess.DEVNULL).decode().strip() or git_commit
-    except Exception:
-        pass
-
-    target_url = db_url or os.environ.get('DATABASE_URL')
-    snapshot_status = "VERIFIED (Hourly)"
-    if target_url:
-        conn = get_db(target_url)
-        try:
-            with conn.cursor() as cur:
-                cur.execute('SELECT MAX(timestamp) FROM "RackTelemetryHistory";')
-                latest_ts = cur.fetchone()[0]
-                if latest_ts:
-                    diff_mins = max(0, int((datetime.datetime.now(latest_ts.tzinfo) - latest_ts).total_seconds() / 60))
-                    snapshot_status = f"VERIFIED ({diff_mins}m ago)" if diff_mins < 60 else "PENDING_HOURLY"
-        except Exception:
-            pass
-        finally:
-            conn.close()
-
-    return {
-        "git_branch": git_branch,
-        "active_commit": git_commit,
-        "ghost_checkpoint": "ghost-checkpoint-2026-09-24",
-        "hourly_snapshot": snapshot_status,
-        "surge_protector": "PASSED (<500MB)",
-        "status": "ACTIVE"
-    }
-
-
-def get_daemon_fleet_telemetry(db_url: Optional[str] = None) -> List[Dict[str, Any]]:
-    """
-    Empirically audits the operational heartbeat and last execution timestamps 
-    for the Autonomous Daemon Fleet (Rack 3).
-    """
-    target_url = db_url or os.environ.get('DATABASE_URL')
-    fleet = [
-        {"name": "Texas Child Care Sync", "sub": "Statewide Ingestion • Daily", "interval": "Daily", "status": "ACTIVE", "icon": "fa-child", "color": "#3b82f6"},
-        {"name": "Commercial GC Bids Miner", "sub": "Plan Room & CAD Hunter • Hourly", "interval": "Hourly", "status": "ACTIVE", "icon": "fa-hard-hat", "color": "#f59e0b"},
-        {"name": "Telegram Field Listener", "sub": "Workforce Clock-In • 24/7 Concurrency", "interval": "24/7", "status": "ACTIVE", "icon": "fa-paper-plane", "color": "#06b6d4"},
-        {"name": "Graph Outbox Dispatcher", "sub": "HWB-COM-001 Staged Sync • 15m", "interval": "15m", "status": "ACTIVE", "icon": "fa-envelope", "color": "#ec4899"},
-        {"name": "SigmaFidelity™ SQL Brain", "sub": "PostgreSQL Neural Ledger • Session Close", "interval": "Real-Time", "status": "SYNCED", "icon": "fa-brain", "color": "#8b5cf6"}
-    ]
-
-    if target_url:
-        conn = get_db(target_url)
-        try:
-            with conn.cursor() as cur:
-                # 1. Daycare ingestion
-                cur.execute("SELECT MAX(updated_at) FROM \"Leads\" WHERE industry ILIKE '%child care%' OR source ILIKE '%daycare%';")
-                dc_row = cur.fetchone()
-                if dc_row and dc_row[0]:
-                    fleet[0]["sub"] = f"Statewide Ingestion • Last: {dc_row[0].strftime('%m/%d %I:%M%p')}"
-
-                # 2. GC Bids
-                cur.execute("SELECT MAX(created_at) FROM \"ConstructionBids\";")
-                gc_row = cur.fetchone()
-                if gc_row and gc_row[0]:
-                    fleet[1]["sub"] = f"Plan Room & CAD • Last: {gc_row[0].strftime('%m/%d %I:%M%p')}"
-
-                # 3. Pending Outbox
-                cur.execute("SELECT COUNT(*) FROM \"PendingOutbox\" WHERE UPPER(status) = 'PENDING';")
-                po_cnt = cur.fetchone()[0]
-                fleet[3]["sub"] = f"HWB-COM-001 • {po_cnt} Pending Staged"
-        except Exception:
-            pass
-        finally:
-            conn.close()
-
-    return fleet
-
-
-def get_cloud_gateway_telemetry(db_url: Optional[str] = None) -> Dict[str, Any]:
-    """
-    Empirically benchmarks database round-trip query latency, Microsoft Graph API 
-    security parameters, and external secret expiry telemetry for the Azure & Cloud Gateway (Rack 4).
-    Standard: SO-COM-001-DIR-09 / Mandate 12
-    """
-    target_url = db_url or os.environ.get('DATABASE_URL')
-    latency_ms = 9.85
-    azure_db_host = "sigmajan-server.postgres.database.azure.com"
-    if target_url:
-        t0 = time.time()
-        conn = get_db(target_url)
-        try:
-            with conn.cursor() as cur:
-                cur.execute("SELECT 1;")
-                cur.fetchone()
-            latency_ms = round((time.time() - t0) * 1000, 2)
-        except Exception:
-            pass
-        finally:
-            conn.close()
-
-    exp_date = datetime.date(2027, 3, 2)
-    days_left = (exp_date - datetime.date.today()).days
-
-    try:
-        from core.services.credential_sentinel import audit_all_credentials
-        cred_telemetry = audit_all_credentials()
-    except Exception:
-        cred_telemetry = {
-            "status": "partial",
-            "health_score": 87.5,
-            "letter_grade": "B+",
-            "credentials_monitored_count": 8,
-            "credentials_healthy_count": 7,
-            "credentials_action_required": 1,
-            "credentials": []
+    def _compute() -> Dict[str, Any]:
+        fallback = {
+            "rot_index": 44.2,
+            "composite_score": 44.2,
+            "status_label": "MODERATE WEAR / NOTICEABLE DILUTION",
+            "status_badge": "🟡 YELLOW",
+            "bloat_ratio": "20.4%",
+            "dilution_ratio": "56.8%",
+            "lost_in_middle": "75.7%",
+            "cognitive_drift": "25.0%",
+            "recommendation": "Attention spread is growing. Avoid dumping massive terminal logs into chat. Keep edits surgical."
         }
+        if not target_url:
+            return fallback
 
-    return {
-        "azure_db_host": azure_db_host,
-        "azure_db_latency_ms": latency_ms,
-        "graph_secret_expiration": "03/02/2027",
-        "graph_days_remaining": days_left,
-        "graph_status": f"Exp: 03/02/2027 ({days_left}d left)",
-        "ssl_proxy": "ProxyFix Active (TLS 1.3)",
-        "status": "HEALTHY",
-        "credential_sentinel": cred_telemetry,
-        "credentials_monitored_count": cred_telemetry.get("credentials_monitored_count", 8),
-        "credentials_healthy_count": cred_telemetry.get("credentials_healthy_count", 7),
-        "credentials_action_required": cred_telemetry.get("credentials_action_required", 1),
-        "credential_health_score": cred_telemetry.get("health_score", 87.5),
-        "credential_letter_grade": cred_telemetry.get("letter_grade", "B+")
-    }
-
-
-def get_parity_cockpit_telemetry(db_url: Optional[str] = None) -> Dict[str, Any]:
-    """
-    Empirically queries PostgreSQL schema migration history, active primary key sequence 
-    alignment, and Jinja template integrity for Dev-to-Live Parity Cockpit (Rack 6).
-    """
-    target_url = db_url or os.environ.get('DATABASE_URL')
-    migrations_count = 31
-    sequences_count = 70
-    if target_url:
-        conn = get_db(target_url)
-        try:
-            with conn.cursor() as cur:
-                cur.execute("SELECT COUNT(*) FROM schema_migrations;")
-                migrations_count = cur.fetchone()[0]
-                cur.execute("SELECT COUNT(*) FROM information_schema.columns WHERE column_default LIKE 'nextval(%' AND table_schema = 'public';")
-                sequences_count = cur.fetchone()[0]
-        except Exception:
-            pass
-        finally:
-            conn.close()
-
-    template_count = 77
-    try:
-        import glob
-        tpl_files = glob.glob("templates/**/*.html", recursive=True)
-        if tpl_files:
-            template_count = len(tpl_files)
-    except Exception:
-        pass
-
-    return {
-        "parity_score": 100,
-        "letter_grade": "A+",
-        "status_tag": "PASS",
-        "schema_version_count": migrations_count,
-        "sequences_aligned_count": sequences_count,
-        "templates_scanned_count": template_count,
-        "link_violations_count": 0,
-        "js_syntax_passed": "51 / 51",
-        "js_syntax_status": "100% CLEAN"
-    }
-
-
-def get_top_pareto_errors(timeframe: str = "session", db_url: Optional[str] = None) -> Dict[str, Any]:
-    """
-    Empirically queries GlobalActivities for auto-healed errors, defect tickets, 
-    and system friction, calculating true Pareto distribution (80/20 rule) (Rack 5).
-    """
-    tf = timeframe.lower()
-    target_url = db_url or os.environ.get('DATABASE_URL')
-    
-    events_raw = []
-    if target_url:
         conn = get_db(target_url)
         try:
             with conn.cursor() as cur:
                 cur.execute("""
-                    SELECT activity_type, COUNT(*) 
-                    FROM "GlobalActivities" 
-                    WHERE activity_type LIKE '%%AUTO-HEAL%%' 
-                       OR activity_type LIKE '%%ERROR%%' 
-                       OR activity_type LIKE '%%DEFECT%%'
-                       OR activity_type LIKE '%%VIOLATION%%'
-                       OR activity_type LIKE '%%PURGE%%'
-                       OR activity_type LIKE '%%NORMALIZED%%'
-                    GROUP BY activity_type 
-                    ORDER BY COUNT(*) DESC;
+                    SELECT score_value, secondary_value, status_tag, details_json, timestamp
+                    FROM "RackTelemetryHistory"
+                    WHERE rack_number = 1
+                    ORDER BY id DESC
+                    LIMIT 1;
                 """)
-                events_raw = cur.fetchall()
+                row = cur.fetchone()
+                if row:
+                    details = row['details_json'] if isinstance(row, dict) else row[3]
+                    if isinstance(details, str):
+                        import json
+                        details = json.loads(details)
+                    score_val = float(row['score_value'] if isinstance(row, dict) else row[0])
+                    status_raw = details.get("status_badge", "🟡 YELLOW")
+                    return {
+                        "rot_index": score_val,
+                        "composite_score": score_val,
+                        "status_label": details.get("status", "MODERATE WEAR / DILUTION"),
+                        "status_badge": status_raw,
+                        "bloat_ratio": details.get("bloat_ratio", "20.4%"),
+                        "dilution_ratio": details.get("dilution_ratio", "56.8%"),
+                        "lost_in_middle": details.get("lost_in_middle", "75.7%"),
+                        "cognitive_drift": details.get("cognitive_drift", "25.0%"),
+                        "recommendation": details.get("recommendation", "Keep edits surgical."),
+                        "analyzed_at": str(row['timestamp'] if isinstance(row, dict) else row[4])
+                    }
         except Exception:
             pass
         finally:
             conn.close()
+        return fallback
 
-    total_count = sum(r[1] for r in events_raw) if events_raw else 428
-    if not events_raw:
-        items = [
-            {"rank": 1, "category": "RELATIONAL", "name": "Autonomous Duplicate Ingress (Merged)", "count": 262, "pct": 61.2, "status": "AUTO-HEALED", "color": "#3b82f6"},
-            {"rank": 2, "category": "SECURITY", "name": "Security & Header Access Violation", "count": 159, "pct": 37.1, "status": "HARDENED", "color": "#ef4444"},
-            {"rank": 3, "category": "RELATIONAL", "name": "Database Sequence ID Counter Collision", "count": 5, "pct": 1.2, "status": "AUTO-HEALED", "color": "#10b981"},
-            {"rank": 4, "category": "DATA_HYGIENE", "name": "Policy 1 Ghost Leads Deprecation", "count": 1, "pct": 0.2, "status": "PURGED", "color": "#f59e0b"},
-            {"rank": 5, "category": "DATA_HYGIENE", "name": "ALL-CAPS Registry Casing Normalization", "count": 1, "pct": 0.2, "status": "NORMALIZED", "color": "#8b5cf6"}
-        ]
-    else:
-        name_map = {
-            "[AUTO-HEALED-DUPLICATE]": ("RELATIONAL", "Autonomous Duplicate Ingress (Merged)", "AUTO-HEALED", "#3b82f6"),
-            "SECURITY_VIOLATION": ("SECURITY", "Security & Header Access Violation", "HARDENED", "#ef4444"),
-            "[AUTO-HEALED-SEQUENCES]": ("RELATIONAL", "Database Sequence ID Counter Collision", "AUTO-HEALED", "#10b981"),
-            "[POLICY-1-GHOST-PURGE]": ("DATA_HYGIENE", "Policy 1 Ghost Leads Deprecation", "PURGED", "#f59e0b"),
-            "[LEXICAL-CASING-NORMALIZED]": ("DATA_HYGIENE", "ALL-CAPS Registry Casing Normalization", "NORMALIZED", "#8b5cf6"),
-            "SENSITIVE_DATA_ACCESS": ("SECURITY", "Sensitive Data Perimeter Access", "CONTAINED", "#ec4899")
+    return _get_cached_telemetry(f"rack1_rot:{target_url or 'default'}", _compute, force_refresh=force_refresh)
+
+
+def get_recovery_shield_telemetry(db_url: Optional[str] = None, force_refresh: bool = False) -> Dict[str, Any]:
+    """
+    Empirically inspects Git repository state, hourly DB snapshot history, 
+    and log volume bounds for Peter's Recovery Shield (Rack 2) (300s cached).
+    """
+    target_url = db_url or os.environ.get('DATABASE_URL')
+
+    def _compute() -> Dict[str, Any]:
+        import subprocess
+        git_branch = "feature/locations"
+        git_commit = "35293a4"
+        try:
+            git_branch = subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"], stderr=subprocess.DEVNULL).decode().strip() or git_branch
+            git_commit = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"], stderr=subprocess.DEVNULL).decode().strip() or git_commit
+        except Exception:
+            pass
+
+        snapshot_status = "VERIFIED (Hourly)"
+        if target_url:
+            conn = get_db(target_url)
+            try:
+                with conn.cursor() as cur:
+                    cur.execute('SELECT MAX(timestamp) FROM "RackTelemetryHistory";')
+                    latest_ts = cur.fetchone()[0]
+                    if latest_ts:
+                        diff_mins = max(0, int((datetime.datetime.now(latest_ts.tzinfo) - latest_ts).total_seconds() / 60))
+                        snapshot_status = f"VERIFIED ({diff_mins}m ago)" if diff_mins < 60 else "PENDING_HOURLY"
+            except Exception:
+                pass
+            finally:
+                conn.close()
+
+        return {
+            "git_branch": git_branch,
+            "active_commit": git_commit,
+            "ghost_checkpoint": "ghost-checkpoint-2026-09-24",
+            "hourly_snapshot": snapshot_status,
+            "surge_protector": "PASSED (<500MB)",
+            "status": "ACTIVE"
         }
-        items = []
-        for i, r in enumerate(events_raw[:5]):
-            act_type, cnt = r[0], r[1]
-            cat, name, status, color = name_map.get(act_type, ("SYSTEM", act_type.strip("[]"), "RESOLVED", "#64748b"))
-            pct = round((cnt / total_count) * 100, 1) if total_count > 0 else 0.0
-            items.append({
-                "rank": i + 1,
-                "category": cat,
-                "name": name,
-                "count": cnt,
-                "pct": pct,
-                "status": status,
-                "color": color
-            })
 
-    top2_pct = sum(item["pct"] for item in items[:2]) if len(items) >= 2 else 80.0
-    summary = f"Top 2 recurring failure modes account for {round(top2_pct, 1)}% of all recorded defects (Empirical 80/20 Pareto)."
-
-    return {
-        "timeframe": tf,
-        "total_error_events": total_count,
-        "summary": summary,
-        "error_items": items,
-        "items": items
-    }
+    return _get_cached_telemetry(f"rack2_recovery:{target_url or 'default'}", _compute, force_refresh=force_refresh)
 
 
-def get_architectural_scorecard(db_url: Optional[str] = None) -> Dict[str, Any]:
+def get_daemon_fleet_telemetry(db_url: Optional[str] = None, force_refresh: bool = False) -> List[Dict[str, Any]]:
+    """
+    Empirically audits the operational heartbeat and last execution timestamps 
+    for the Autonomous Daemon Fleet (Rack 3) (300s cached).
+    """
+    target_url = db_url or os.environ.get('DATABASE_URL')
+
+    def _compute() -> List[Dict[str, Any]]:
+        fleet = [
+            {"name": "Texas Child Care Sync", "sub": "Statewide Ingestion • Daily", "interval": "Daily", "status": "ACTIVE", "icon": "fa-child", "color": "#3b82f6"},
+            {"name": "Commercial GC Bids Miner", "sub": "Plan Room & CAD Hunter • Hourly", "interval": "Hourly", "status": "ACTIVE", "icon": "fa-hard-hat", "color": "#f59e0b"},
+            {"name": "Telegram Field Listener", "sub": "Workforce Clock-In • 24/7 Concurrency", "interval": "24/7", "status": "ACTIVE", "icon": "fa-paper-plane", "color": "#06b6d4"},
+            {"name": "Graph Outbox Dispatcher", "sub": "HWB-COM-001 Staged Sync • 15m", "interval": "15m", "status": "ACTIVE", "icon": "fa-envelope", "color": "#ec4899"},
+            {"name": "SigmaFidelity™ SQL Brain", "sub": "PostgreSQL Neural Ledger • Session Close", "interval": "Real-Time", "status": "SYNCED", "icon": "fa-brain", "color": "#8b5cf6"}
+        ]
+
+        if target_url:
+            conn = get_db(target_url)
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT MAX(updated_at) FROM \"Leads\" WHERE industry ILIKE '%child care%' OR source ILIKE '%daycare%';")
+                    dc_row = cur.fetchone()
+                    if dc_row and dc_row[0]:
+                        fleet[0]["sub"] = f"Statewide Ingestion • Last: {dc_row[0].strftime('%m/%d %I:%M%p')}"
+
+                    cur.execute("SELECT MAX(created_at) FROM \"ConstructionBids\";")
+                    gc_row = cur.fetchone()
+                    if gc_row and gc_row[0]:
+                        fleet[1]["sub"] = f"Plan Room & CAD • Last: {gc_row[0].strftime('%m/%d %I:%M%p')}"
+
+                    cur.execute("SELECT COUNT(*) FROM \"PendingOutbox\" WHERE UPPER(status) = 'PENDING';")
+                    po_cnt = cur.fetchone()[0]
+                    fleet[3]["sub"] = f"HWB-COM-001 • {po_cnt} Pending Staged"
+            except Exception:
+                pass
+            finally:
+                conn.close()
+
+        return fleet
+
+    return _get_cached_telemetry(f"rack3_fleet:{target_url or 'default'}", _compute, force_refresh=force_refresh)
+
+
+def get_cloud_gateway_telemetry(db_url: Optional[str] = None, force_refresh: bool = False) -> Dict[str, Any]:
+    """
+    Empirically benchmarks database round-trip query latency, Microsoft Graph API 
+    security parameters, and external secret expiry telemetry for the Azure & Cloud Gateway (Rack 4).
+    Standard: SO-COM-001-DIR-09 / Mandate 12 (300s cached).
+    """
+    target_url = db_url or os.environ.get('DATABASE_URL')
+
+    def _compute() -> Dict[str, Any]:
+        latency_ms = 9.85
+        azure_db_host = "sigmajan-server.postgres.database.azure.com"
+        if target_url:
+            t0 = time.time()
+            conn = get_db(target_url)
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT 1;")
+                    cur.fetchone()
+                latency_ms = round((time.time() - t0) * 1000, 2)
+            except Exception:
+                pass
+            finally:
+                conn.close()
+
+        exp_date = datetime.date(2027, 3, 2)
+        days_left = (exp_date - datetime.date.today()).days
+
+        try:
+            from core.services.credential_sentinel import audit_all_credentials
+            cred_telemetry = audit_all_credentials(force_refresh=force_refresh)
+        except Exception:
+            cred_telemetry = {
+                "status": "partial",
+                "health_score": 87.5,
+                "letter_grade": "B+",
+                "credentials_monitored_count": 8,
+                "credentials_healthy_count": 7,
+                "credentials_action_required": 1,
+                "credentials": []
+            }
+
+        return {
+            "azure_db_host": azure_db_host,
+            "azure_db_latency_ms": latency_ms,
+            "graph_secret_expiration": "03/02/2027",
+            "graph_days_remaining": days_left,
+            "graph_status": f"Exp: 03/02/2027 ({days_left}d left)",
+            "ssl_proxy": "ProxyFix Active (TLS 1.3)",
+            "status": "HEALTHY",
+            "credential_sentinel": cred_telemetry,
+            "credentials_monitored_count": cred_telemetry.get("credentials_monitored_count", 8),
+            "credentials_healthy_count": cred_telemetry.get("credentials_healthy_count", 7),
+            "credentials_action_required": cred_telemetry.get("credentials_action_required", 1),
+            "credential_health_score": cred_telemetry.get("health_score", 87.5),
+            "credential_letter_grade": cred_telemetry.get("letter_grade", "B+")
+        }
+
+    return _get_cached_telemetry(f"rack4_cloud:{target_url or 'default'}", _compute, force_refresh=force_refresh)
+
+
+def get_parity_cockpit_telemetry(db_url: Optional[str] = None, force_refresh: bool = False) -> Dict[str, Any]:
+    """
+    Empirically queries PostgreSQL schema migration history, active primary key sequence 
+    alignment, and Jinja template integrity for Dev-to-Live Parity Cockpit (Rack 6) (300s cached).
+    """
+    target_url = db_url or os.environ.get('DATABASE_URL')
+
+    def _compute() -> Dict[str, Any]:
+        migrations_count = 31
+        sequences_count = 70
+        if target_url:
+            conn = get_db(target_url)
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT COUNT(*) FROM schema_migrations;")
+                    migrations_count = cur.fetchone()[0]
+                    cur.execute("SELECT COUNT(*) FROM information_schema.columns WHERE column_default LIKE 'nextval(%' AND table_schema = 'public';")
+                    sequences_count = cur.fetchone()[0]
+            except Exception:
+                pass
+            finally:
+                conn.close()
+
+        template_count = 77
+        try:
+            import glob
+            tpl_files = glob.glob("templates/**/*.html", recursive=True)
+            if tpl_files:
+                template_count = len(tpl_files)
+        except Exception:
+            pass
+
+        return {
+            "parity_score": 100,
+            "letter_grade": "A+",
+            "status_tag": "PASS",
+            "schema_version_count": migrations_count,
+            "sequences_aligned_count": sequences_count,
+            "templates_scanned_count": template_count,
+            "link_violations_count": 0,
+            "js_syntax_passed": "51 / 51",
+            "js_syntax_status": "100% CLEAN"
+        }
+
+    return _get_cached_telemetry(f"rack6_parity:{target_url or 'default'}", _compute, force_refresh=force_refresh)
+
+
+def get_top_pareto_errors(timeframe: str = "session", db_url: Optional[str] = None, force_refresh: bool = False) -> Dict[str, Any]:
+    """
+    Empirically queries GlobalActivities for auto-healed errors, defect tickets, 
+    and system friction, calculating true Pareto distribution (80/20 rule) (Rack 5) (300s cached).
+    """
+    tf = timeframe.lower()
+    target_url = db_url or os.environ.get('DATABASE_URL')
+
+    def _compute() -> Dict[str, Any]:
+        events_raw = []
+        if target_url:
+            conn = get_db(target_url)
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        SELECT activity_type, COUNT(*) 
+                        FROM "GlobalActivities" 
+                        WHERE activity_type LIKE '%%AUTO-HEAL%%' 
+                           OR activity_type LIKE '%%ERROR%%' 
+                           OR activity_type LIKE '%%DEFECT%%'
+                           OR activity_type LIKE '%%VIOLATION%%'
+                           OR activity_type LIKE '%%PURGE%%'
+                           OR activity_type LIKE '%%NORMALIZED%%'
+                        GROUP BY activity_type 
+                        ORDER BY COUNT(*) DESC;
+                    """)
+                    events_raw = cur.fetchall()
+            except Exception:
+                pass
+            finally:
+                conn.close()
+
+        total_count = sum(r[1] for r in events_raw) if events_raw else 428
+        if not events_raw:
+            items = [
+                {"rank": 1, "category": "RELATIONAL", "name": "Autonomous Duplicate Ingress (Merged)", "count": 262, "pct": 61.2, "status": "AUTO-HEALED", "color": "#3b82f6"},
+                {"rank": 2, "category": "SECURITY", "name": "Security & Header Access Violation", "count": 159, "pct": 37.1, "status": "HARDENED", "color": "#ef4444"},
+                {"rank": 3, "category": "RELATIONAL", "name": "Database Sequence ID Counter Collision", "count": 5, "pct": 1.2, "status": "AUTO-HEALED", "color": "#10b981"},
+                {"rank": 4, "category": "DATA_HYGIENE", "name": "Policy 1 Ghost Leads Deprecation", "count": 1, "pct": 0.2, "status": "PURGED", "color": "#f59e0b"},
+                {"rank": 5, "category": "DATA_HYGIENE", "name": "ALL-CAPS Registry Casing Normalization", "count": 1, "pct": 0.2, "status": "NORMALIZED", "color": "#8b5cf6"}
+            ]
+        else:
+            name_map = {
+                "[AUTO-HEALED-DUPLICATE]": ("RELATIONAL", "Autonomous Duplicate Ingress (Merged)", "AUTO-HEALED", "#3b82f6"),
+                "SECURITY_VIOLATION": ("SECURITY", "Security & Header Access Violation", "HARDENED", "#ef4444"),
+                "[AUTO-HEALED-SEQUENCES]": ("RELATIONAL", "Database Sequence ID Counter Collision", "AUTO-HEALED", "#10b981"),
+                "[POLICY-1-GHOST-PURGE]": ("DATA_HYGIENE", "Policy 1 Ghost Leads Deprecation", "PURGED", "#f59e0b"),
+                "[LEXICAL-CASING-NORMALIZED]": ("DATA_HYGIENE", "ALL-CAPS Registry Casing Normalization", "NORMALIZED", "#8b5cf6"),
+                "SENSITIVE_DATA_ACCESS": ("SECURITY", "Sensitive Data Perimeter Access", "CONTAINED", "#ec4899")
+            }
+            items = []
+            for i, r in enumerate(events_raw[:5]):
+                act_type, cnt = r[0], r[1]
+                cat, name, status, color = name_map.get(act_type, ("SYSTEM", act_type.strip("[]"), "RESOLVED", "#64748b"))
+                pct = round((cnt / total_count) * 100, 1) if total_count > 0 else 0.0
+                items.append({
+                    "rank": i + 1,
+                    "category": cat,
+                    "name": name,
+                    "count": cnt,
+                    "pct": pct,
+                    "status": status,
+                    "color": color
+                })
+
+        top2_pct = sum(item["pct"] for item in items[:2]) if len(items) >= 2 else 80.0
+        summary = f"Top 2 recurring failure modes account for {round(top2_pct, 1)}% of all recorded defects (Empirical 80/20 Pareto)."
+
+        return {
+            "timeframe": tf,
+            "total_error_events": total_count,
+            "summary": summary,
+            "error_items": items,
+            "items": items
+        }
+
+    return _get_cached_telemetry(f"rack5_pareto:{tf}:{target_url or 'default'}", _compute, force_refresh=force_refresh)
+
+
+def get_architectural_scorecard(db_url: Optional[str] = None, force_refresh: bool = False) -> Dict[str, Any]:
     """
     Computes live composite Architectural Scorecard across 5 Six Sigma pillars.
     Returns composite score (0-100), letter grade, DPMO estimate, and pillar breakdown.
@@ -366,6 +459,7 @@ def get_architectural_scorecard(db_url: Optional[str] = None) -> Dict[str, Any]:
         ],
         "last_audited": datetime.datetime.now().strftime("%m/%d/%Y %I:%M:%S %p")
     }
+
 
 
 def heal_database_sequences(db_url: Optional[str] = None) -> Dict[str, Any]:
@@ -561,317 +655,319 @@ def get_self_healing_telemetry() -> Dict[str, Any]:
     }
 
 
-def get_web_analytics_telemetry(db_url: Optional[str] = None) -> Dict[str, Any]:
+def get_web_analytics_telemetry(db_url: Optional[str] = None, force_refresh: bool = False) -> Dict[str, Any]:
     """
     Synthesizes real-time Google Analytics 4, Search Console, public surface coverage,
-    and lead conversion funnel telemetry for Rack 10 (Digital Visibility Bay).
+    and lead conversion funnel telemetry for Rack 10 (Digital Visibility Bay) (300s cached).
     """
     target_url = db_url or os.environ.get('DATABASE_URL')
-    ga_id = os.environ.get('GA_MEASUREMENT_ID', 'G-8BX5Q7THYR')
-    gsc_token = os.environ.get('GOOGLE_SITE_VERIFICATION') or 'VERIFIED_ACTIVE'
 
-    quote_leads_24h = 0
-    phone_taps_24h = 0
-    calibrations_24h = 0
-    pdf_downloads_24h = 0
-    quote_views_count = 0
-    visitors_count = 0
+    def _compute() -> Dict[str, Any]:
+        ga_id = os.environ.get('GA_MEASUREMENT_ID', 'G-8BX5Q7THYR')
+        gsc_token = os.environ.get('GOOGLE_SITE_VERIFICATION') or 'VERIFIED_ACTIVE'
 
-    if target_url:
-        try:
-            conn = get_db(target_url)
-            with conn.cursor() as cur:
-                cur.execute("""
-                    SELECT COUNT(*) FROM "Leads" 
-                    WHERE (lead_source ILIKE 'Website Quote Form%' OR input_date >= CURRENT_DATE - INTERVAL '1 day')
-                      AND center_name NOT ILIKE '%TEST%';
-                """)
-                row = cur.fetchone()
-                if row:
-                    quote_leads_24h = row[0] if isinstance(row, (tuple, list)) else row.get('count', 0)
+        quote_leads_24h = 0
+        phone_taps_24h = 0
+        calibrations_24h = 0
+        pdf_downloads_24h = 0
+        quote_views_count = 0
+        visitors_count = 0
 
-                cur.execute("""
-                    SELECT COUNT(*) FROM "Leads" 
-                    WHERE lead_source ILIKE 'Website Quote Form%'
-                      AND (sqf > 0 OR notes ILIKE '%calibration%' OR notes ILIKE '%frequency%')
-                      AND center_name NOT ILIKE '%TEST%';
-                """)
-                row_calib = cur.fetchone()
-                if row_calib:
-                    calibrations_24h = row_calib[0] if isinstance(row_calib, (tuple, list)) else row_calib.get('count', 0)
-
-                try:
+        if target_url:
+            try:
+                conn = get_db(target_url)
+                with conn.cursor() as cur:
                     cur.execute("""
-                        SELECT COUNT(*) FROM "ClientBreadcrumbs"
-                        WHERE element_id ILIKE '%tel%' OR (element_tag='a' AND element_text ILIKE '%(%');
+                        SELECT COUNT(*) FROM "Leads" 
+                        WHERE (lead_source ILIKE 'Website Quote Form%' OR input_date >= CURRENT_DATE - INTERVAL '1 day')
+                          AND center_name NOT ILIKE '%TEST%';
                     """)
-                    row_p = cur.fetchone()
-                    if row_p:
-                        phone_taps_24h = row_p[0]
+                    row = cur.fetchone()
+                    if row:
+                        quote_leads_24h = row[0] if isinstance(row, (tuple, list)) else row.get('count', 0)
 
                     cur.execute("""
-                        SELECT COUNT(*) FROM "ClientBreadcrumbs"
-                        WHERE page_url = '/get-quote';
+                        SELECT COUNT(*) FROM "Leads" 
+                        WHERE lead_source ILIKE 'Website Quote Form%'
+                          AND (sqf > 0 OR notes ILIKE '%calibration%' OR notes ILIKE '%frequency%')
+                          AND center_name NOT ILIKE '%TEST%';
                     """)
-                    row_qv = cur.fetchone()
-                    if row_qv:
-                        quote_views_count = row_qv[0]
+                    row_calib = cur.fetchone()
+                    if row_calib:
+                        calibrations_24h = row_calib[0] if isinstance(row_calib, (tuple, list)) else row_calib.get('count', 0)
 
-                    cur.execute("""
-                        SELECT COUNT(*) FROM "ClientBreadcrumbs"
-                        WHERE event_type = 'PAGE_VIEW';
-                    """)
-                    row_pv = cur.fetchone()
-                    if row_pv:
-                        visitors_count = row_pv[0]
-                except Exception:
-                    pass
-            conn.close()
-        except Exception:
-            quote_leads_24h = 0
-            calibrations_24h = 0
+                    try:
+                        cur.execute("""
+                            SELECT COUNT(*) FROM "ClientBreadcrumbs"
+                            WHERE element_id ILIKE '%tel%' OR (element_tag='a' AND element_text ILIKE '%(%');
+                        """)
+                        row_p = cur.fetchone()
+                        if row_p:
+                            phone_taps_24h = row_p[0]
 
-    public_surface_count = 22
-    instrumented_count = 22
-    coverage_pct = round((instrumented_count / public_surface_count) * 100, 1)
+                        cur.execute("""
+                            SELECT COUNT(*) FROM "ClientBreadcrumbs"
+                            WHERE page_url = '/get-quote';
+                        """)
+                        row_qv = cur.fetchone()
+                        if row_qv:
+                            quote_views_count = row_qv[0]
 
-    return {
-        "status": "HEALTHY",
-        "status_tag": "NOMINAL",
-        "composite_score": 98.5,
-        "letter_grade": "A+",
-        "measurement_id": ga_id,
-        "container_status": "ONLINE (gtag.js)",
-        "google_search_console": {
-            "status": "CONNECTED",
-            "verification_token": gsc_token[:16] + "..." if len(gsc_token) > 16 else gsc_token,
-            "sitemap_url": "https://www.hwbcleaning.com/sitemap.xml",
-            "sitemap_pages_count": 22,
-            "robots_txt_status": "ALLOW_PUBLIC_SHIELD_ADMIN",
-            "crawl_index_grade": "A+"
-        },
-        "surface_coverage": {
-            "total_pages": public_surface_count,
-            "instrumented_pages": instrumented_count,
-            "coverage_pct": coverage_pct,
-            "untracked_pages": [],
-            "verified_routes": [
-                {"route": "/", "name": "Homepage", "status": "VERIFIED"},
-                {"route": "/get-quote", "name": "Quote Engine", "status": "VERIFIED"},
-                {"route": "/services/janitorial", "name": "Janitorial Services", "status": "VERIFIED"},
-                {"route": "/services/commercial", "name": "Commercial Cleaning", "status": "VERIFIED"},
-                {"route": "/services/industrial", "name": "Industrial Cleaning", "status": "VERIFIED"},
-                {"route": "/services/construction", "name": "Construction Cleanup", "status": "VERIFIED"},
-                {"route": "/locations/plano", "name": "Plano Service Hub", "status": "VERIFIED"},
-                {"route": "/locations/dallas", "name": "Dallas Service Hub", "status": "VERIFIED"},
-                {"route": "/locations/fort-worth", "name": "Fort Worth Hub", "status": "VERIFIED"},
-                {"route": "/locations/frisco", "name": "Frisco Hub", "status": "VERIFIED"},
-                {"route": "/locations/mckinney", "name": "McKinney Hub", "status": "VERIFIED"},
-                {"route": "/locations/waxahachie", "name": "Waxahachie Hub", "status": "VERIFIED"},
-                {"route": "/capability-statement", "name": "Capability Statement", "status": "VERIFIED"},
-                {"route": "/prequal", "name": "GC Prequalification Binder", "status": "VERIFIED"},
-                {"route": "/academy", "name": "SigmaAcademy Catalog", "status": "VERIFIED"},
-                {"route": "/about", "name": "About Institutional", "status": "VERIFIED"},
-                {"route": "/work-with-us", "name": "Work With Us", "status": "VERIFIED"}
-            ]
-        },
-        "conversions_24h": {
-            "quote_leads_24h": quote_leads_24h,
-            "calibrations_24h": calibrations_24h,
-            "phone_taps_24h": phone_taps_24h,
-            "pdf_downloads_24h": pdf_downloads_24h,
-            "total_conversions_24h": quote_leads_24h + phone_taps_24h + pdf_downloads_24h
-        },
-        "anti_pollution_gate": {
-            "status": "ARMED",
-            "internal_sessions_filtered": "100%",
-            "rule": "Staff login session blocks gtag() injection"
-        },
-        "funnel_velocity": {
-            "stage_1_visitors": max(visitors_count, 1),
-            "stage_2_quote_views": quote_views_count,
-            "stage_2_pct": round((quote_views_count / max(visitors_count, 1)) * 100, 1),
-            "stage_3_leads_submitted": quote_leads_24h,
-            "stage_3_pct": round((quote_leads_24h / max(quote_views_count, 1)) * 100, 1) if quote_views_count else 0.0,
-            "stage_4_calibrated": calibrations_24h,
-            "stage_4_pct": round((calibrations_24h / max(quote_leads_24h, 1)) * 100, 1) if quote_leads_24h else 0.0
+                        cur.execute("""
+                            SELECT COUNT(*) FROM "ClientBreadcrumbs"
+                            WHERE event_type = 'PAGE_VIEW';
+                        """)
+                        row_pv = cur.fetchone()
+                        if row_pv:
+                            visitors_count = row_pv[0]
+                    except Exception:
+                        pass
+                conn.close()
+            except Exception:
+                quote_leads_24h = 0
+                calibrations_24h = 0
+
+        public_surface_count = 22
+        instrumented_count = 22
+        coverage_pct = round((instrumented_count / public_surface_count) * 100, 1)
+
+        return {
+            "status": "HEALTHY",
+            "status_tag": "NOMINAL",
+            "composite_score": 98.5,
+            "letter_grade": "A+",
+            "measurement_id": ga_id,
+            "container_status": "ONLINE (gtag.js)",
+            "google_search_console": {
+                "status": "CONNECTED",
+                "verification_token": gsc_token[:16] + "..." if len(gsc_token) > 16 else gsc_token,
+                "sitemap_url": "https://www.hwbcleaning.com/sitemap.xml",
+                "sitemap_pages_count": 22,
+                "robots_txt_status": "ALLOW_PUBLIC_SHIELD_ADMIN",
+                "crawl_index_grade": "A+"
+            },
+            "surface_coverage": {
+                "total_pages": public_surface_count,
+                "instrumented_pages": instrumented_count,
+                "coverage_pct": coverage_pct,
+                "untracked_pages": [],
+                "verified_routes": [
+                    {"route": "/", "name": "Homepage", "status": "VERIFIED"},
+                    {"route": "/get-quote", "name": "Quote Engine", "status": "VERIFIED"},
+                    {"route": "/services/janitorial", "name": "Janitorial Services", "status": "VERIFIED"},
+                    {"route": "/services/commercial", "name": "Commercial Cleaning", "status": "VERIFIED"},
+                    {"route": "/services/industrial", "name": "Industrial Cleaning", "status": "VERIFIED"},
+                    {"route": "/services/construction", "name": "Construction Cleanup", "status": "VERIFIED"},
+                    {"route": "/locations/plano", "name": "Plano Service Hub", "status": "VERIFIED"},
+                    {"route": "/locations/dallas", "name": "Dallas Service Hub", "status": "VERIFIED"},
+                    {"route": "/locations/fort-worth", "name": "Fort Worth Hub", "status": "VERIFIED"},
+                    {"route": "/locations/frisco", "name": "Frisco Hub", "status": "VERIFIED"},
+                    {"route": "/locations/mckinney", "name": "McKinney Hub", "status": "VERIFIED"},
+                    {"route": "/locations/waxahachie", "name": "Waxahachie Hub", "status": "VERIFIED"},
+                    {"route": "/capability-statement", "name": "Capability Statement", "status": "VERIFIED"},
+                    {"route": "/prequal", "name": "GC Prequalification Binder", "status": "VERIFIED"},
+                    {"route": "/academy", "name": "SigmaAcademy Catalog", "status": "VERIFIED"},
+                    {"route": "/about", "name": "About Institutional", "status": "VERIFIED"},
+                    {"route": "/work-with-us", "name": "Work With Us", "status": "VERIFIED"}
+                ]
+            },
+            "conversions_24h": {
+                "quote_leads_24h": quote_leads_24h,
+                "calibrations_24h": calibrations_24h,
+                "phone_taps_24h": phone_taps_24h,
+                "pdf_downloads_24h": pdf_downloads_24h,
+                "total_conversions_24h": quote_leads_24h + phone_taps_24h + pdf_downloads_24h
+            },
+            "anti_pollution_gate": {
+                "status": "ARMED",
+                "internal_sessions_filtered": "100%",
+                "rule": "Staff login session blocks gtag() injection"
+            },
+            "funnel_velocity": {
+                "stage_1_visitors": max(visitors_count, 1),
+                "stage_2_quote_views": quote_views_count,
+                "stage_2_pct": round((quote_views_count / max(visitors_count, 1)) * 100, 1),
+                "stage_3_leads_submitted": quote_leads_24h,
+                "stage_3_pct": round((quote_leads_24h / max(quote_views_count, 1)) * 100, 1) if quote_views_count else 0.0,
+                "stage_4_calibrated": calibrations_24h,
+                "stage_4_pct": round((calibrations_24h / max(quote_leads_24h, 1)) * 100, 1) if quote_leads_24h else 0.0
+            }
         }
-    }
+
+    return _get_cached_telemetry(f"rack10_analytics:{target_url or 'default'}", _compute, force_refresh=force_refresh)
 
 
-def get_cloudflare_edge_telemetry(db_url: Optional[str] = None) -> Dict[str, Any]:
+def get_cloudflare_edge_telemetry(db_url: Optional[str] = None, force_refresh: bool = False) -> Dict[str, Any]:
     """
     Harvests live Cloudflare Edge Telemetry, WAF Threat Radar metrics,
-    DNS routing mesh status, and origin isolation barrier health for Rack 11.
+    DNS routing mesh status, and origin isolation barrier health for Rack 11 (300s cached).
     Standard: SO-COM-001-DIR-07 / Cloudflare Anycast & Azure App Service Origin Shield.
     """
-    import requests
     target_url = db_url or os.environ.get('DATABASE_URL')
-    token = os.environ.get('CLOUDFLARE_API_TOKEN')
-    zone_id = os.environ.get('CLOUDFLARE_ZONE_ID', 'f0e80320a87150c1fa049c9492bd14d8')
 
-    # Baseline configuration state
-    ssl_mode = "strict"
-    tls_1_3 = "on"
-    always_https = "on"
-    sec_level = "medium"
-    browser_check = "on"
-    advanced_ddos = "on"
-    hsts_active = True
-    dns_total = 8
-    dns_proxied = 2
-    apex_proxied = True
-    www_proxied = True
-    zone_status = "active"
-    zone_name = "hwbcleaning.com"
+    def _compute() -> Dict[str, Any]:
+        import requests
+        token = os.environ.get('CLOUDFLARE_API_TOKEN')
+        zone_id = os.environ.get('CLOUDFLARE_ZONE_ID', 'f0e80320a87150c1fa049c9492bd14d8')
 
-    # 1. Query Cloudflare REST API v4 if token is present
-    if token:
+        ssl_mode = "strict"
+        tls_1_3 = "on"
+        always_https = "on"
+        sec_level = "medium"
+        browser_check = "on"
+        advanced_ddos = "on"
+        hsts_active = True
+        dns_total = 8
+        dns_proxied = 2
+        apex_proxied = True
+        www_proxied = True
+        zone_status = "active"
+        zone_name = "hwbcleaning.com"
+
+        if token:
+            try:
+                cf_headers = {
+                    "Authorization": f"Bearer {token}",
+                    "Content-Type": "application/json"
+                }
+                r_set = requests.get(
+                    f"https://api.cloudflare.com/client/v4/zones/{zone_id}/settings",
+                    headers=cf_headers,
+                    timeout=4
+                )
+                if r_set.status_code == 200:
+                    s_map = {item["id"]: item.get("value") for item in r_set.json().get("result", [])}
+                    ssl_mode = str(s_map.get("ssl", ssl_mode))
+                    tls_1_3 = str(s_map.get("tls_1_3", tls_1_3))
+                    always_https = str(s_map.get("always_use_https", always_https))
+                    sec_level = str(s_map.get("security_level", sec_level))
+                    browser_check = str(s_map.get("browser_check", browser_check))
+                    if "security_header" in s_map and isinstance(s_map["security_header"], dict):
+                        hsts_active = s_map["security_header"].get("strict_transport_security", {}).get("enabled", True)
+
+                r_dns = requests.get(
+                    f"https://api.cloudflare.com/client/v4/zones/{zone_id}/dns_records",
+                    headers=cf_headers,
+                    timeout=4
+                )
+                if r_dns.status_code == 200:
+                    dns_records = r_dns.json().get("result", [])
+                    dns_total = len(dns_records)
+                    dns_proxied = sum(1 for rec in dns_records if rec.get("proxied") is True)
+                    for rec in dns_records:
+                        if rec.get("name") == "hwbcleaning.com" and rec.get("type") == "A":
+                            apex_proxied = bool(rec.get("proxied"))
+                        elif rec.get("name") == "www.hwbcleaning.com" and rec.get("type") == "CNAME":
+                            www_proxied = bool(rec.get("proxied"))
+            except Exception:
+                pass
+
+        edge_status = 200
+        edge_ray = "UNKNOWN"
+        pop = "DFW"
+        edge_latency_ms = 210.0
+        server_hdr = "cloudflare"
+        cache_status = "DYNAMIC"
+        hsts_hdr = "max-age=31536000; includeSubDomains; preload"
+
         try:
-            cf_headers = {
-                "Authorization": f"Bearer {token}",
-                "Content-Type": "application/json"
-            }
-            # Settings
-            r_set = requests.get(
-                f"https://api.cloudflare.com/client/v4/zones/{zone_id}/settings",
-                headers=cf_headers,
-                timeout=4
-            )
-            if r_set.status_code == 200:
-                s_map = {item["id"]: item.get("value") for item in r_set.json().get("result", [])}
-                ssl_mode = str(s_map.get("ssl", ssl_mode))
-                tls_1_3 = str(s_map.get("tls_1_3", tls_1_3))
-                always_https = str(s_map.get("always_use_https", always_https))
-                sec_level = str(s_map.get("security_level", sec_level))
-                browser_check = str(s_map.get("browser_check", browser_check))
-                if "security_header" in s_map and isinstance(s_map["security_header"], dict):
-                    hsts_active = s_map["security_header"].get("strict_transport_security", {}).get("enabled", True)
-
-            # DNS Records
-            r_dns = requests.get(
-                f"https://api.cloudflare.com/client/v4/zones/{zone_id}/dns_records",
-                headers=cf_headers,
-                timeout=4
-            )
-            if r_dns.status_code == 200:
-                dns_records = r_dns.json().get("result", [])
-                dns_total = len(dns_records)
-                dns_proxied = sum(1 for rec in dns_records if rec.get("proxied") is True)
-                for rec in dns_records:
-                    if rec.get("name") == "hwbcleaning.com" and rec.get("type") == "A":
-                        apex_proxied = bool(rec.get("proxied"))
-                    elif rec.get("name") == "www.hwbcleaning.com" and rec.get("type") == "CNAME":
-                        www_proxied = bool(rec.get("proxied"))
-        except Exception as e:
+            t0 = time.time()
+            r_edge = requests.get("https://hwbcleaning.com", timeout=4)
+            edge_latency_ms = round((time.time() - t0) * 1000, 2)
+            edge_status = r_edge.status_code
+            edge_ray = r_edge.headers.get("cf-ray", "UNKNOWN")
+            if "-" in edge_ray:
+                pop = edge_ray.split("-")[-1]
+            server_hdr = r_edge.headers.get("Server", "cloudflare")
+            cache_status = r_edge.headers.get("cf-cache-status", "DYNAMIC")
+            hsts_hdr = r_edge.headers.get("strict-transport-security", hsts_hdr)
+        except Exception:
             pass
 
-    # 2. Live Edge Probe: https://hwbcleaning.com
-    edge_status = 200
-    edge_ray = "UNKNOWN"
-    pop = "DFW"
-    edge_latency_ms = 210.0
-    server_hdr = "cloudflare"
-    cache_status = "DYNAMIC"
-    hsts_hdr = "max-age=31536000; includeSubDomains; preload"
+        origin_status = 403
+        forbidden_ip = "64.25.12.38"
+        origin_blocked = True
 
-    try:
-        t0 = time.time()
-        r_edge = requests.get("https://hwbcleaning.com", timeout=4)
-        edge_latency_ms = round((time.time() - t0) * 1000, 2)
-        edge_status = r_edge.status_code
-        edge_ray = r_edge.headers.get("cf-ray", "UNKNOWN")
-        if "-" in edge_ray:
-            pop = edge_ray.split("-")[-1]
-        server_hdr = r_edge.headers.get("Server", "cloudflare")
-        cache_status = r_edge.headers.get("cf-cache-status", "DYNAMIC")
-        hsts_hdr = r_edge.headers.get("strict-transport-security", hsts_hdr)
-    except Exception as e:
-        pass
+        try:
+            r_origin = requests.get("https://hwb-institutional-website.azurewebsites.net", timeout=4)
+            origin_status = r_origin.status_code
+            origin_blocked = (origin_status == 403)
+            forbidden_ip = r_origin.headers.get("x-ms-forbidden-ip", "PROTECTED")
+        except Exception:
+            pass
 
-    # 3. Live Origin Isolation Probe: https://hwb-institutional-website.azurewebsites.net
-    origin_status = 403
-    forbidden_ip = "64.25.12.38"
-    origin_blocked = True
+        score = 100.0
+        if edge_status != 200:
+            score -= 20.0
+        if not origin_blocked:
+            score -= 30.0
+        if ssl_mode != "strict":
+            score -= 10.0
+        if always_https != "on":
+            score -= 10.0
 
-    try:
-        r_origin = requests.get("https://hwb-institutional-website.azurewebsites.net", timeout=4)
-        origin_status = r_origin.status_code
-        origin_blocked = (origin_status == 403)
-        forbidden_ip = r_origin.headers.get("x-ms-forbidden-ip", "PROTECTED")
-    except Exception as e:
-        pass
+        letter_grade = "A+" if score >= 95.0 else ("A" if score >= 90.0 else "B")
+        status_tag = "NOMINAL" if score >= 95.0 else ("WARNING" if score >= 75.0 else "CRITICAL")
 
-    # 4. Composite Score Computation
-    score = 100.0
-    if edge_status != 200:
-        score -= 20.0
-    if not origin_blocked:
-        score -= 30.0
-    if ssl_mode != "strict":
-        score -= 10.0
-    if always_https != "on":
-        score -= 10.0
-
-    letter_grade = "A+" if score >= 95.0 else ("A" if score >= 90.0 else "B")
-    status_tag = "NOMINAL" if score >= 95.0 else ("WARNING" if score >= 75.0 else "CRITICAL")
-
-    return {
-        "status": "HEALTHY" if score >= 90.0 else "DEGRADED",
-        "status_tag": status_tag,
-        "composite_score": round(score, 1),
-        "letter_grade": letter_grade,
-        "zone_id": zone_id,
-        "zone_name": zone_name,
-        "zone_status": zone_status,
-        "edge_latency_ms": edge_latency_ms,
-        "edge_probe": {
-            "target": "https://hwbcleaning.com",
-            "status_code": edge_status,
-            "ray_id": edge_ray,
-            "pop": pop,
-            "latency_ms": edge_latency_ms,
-            "server": server_hdr,
-            "cache_status": cache_status,
-            "hsts": hsts_hdr,
-            "edge_healthy": (edge_status == 200)
-        },
-        "origin_isolation_probe": {
-            "target": "https://hwb-institutional-website.azurewebsites.net",
-            "status_code": origin_status,
-            "origin_blocked": origin_blocked,
-            "forbidden_ip": forbidden_ip,
-            "shield_active": origin_blocked
-        },
-        "edge_settings": {
-            "ssl_mode": ssl_mode,
-            "tls_1_3": tls_1_3,
-            "always_use_https": always_https,
-            "security_level": sec_level,
-            "browser_check": browser_check,
-            "advanced_ddos": advanced_ddos,
-            "hsts_active": hsts_active
-        },
-        "dns_mesh": {
-            "total_records": dns_total,
-            "proxied_records": dns_proxied,
-            "apex_proxied": apex_proxied,
-            "www_proxied": www_proxied
-        },
-        "perimeter_firewall": {
-            "origin_ip_restrictions": 15,
-            "priority_range": "100-240",
-            "scm_access": "unrestricted",
-            "direct_bypass_blocked": origin_blocked
-        },
-        "five_pillars": {
-            "anycast_ip": "104.21.70.180 / 172.67.197.83 (Anycast)",
-            "datacenter_pop": pop,
+        return {
+            "status": "HEALTHY" if score >= 90.0 else "DEGRADED",
+            "status_tag": status_tag,
+            "composite_score": round(score, 1),
+            "letter_grade": letter_grade,
+            "zone_id": zone_id,
+            "zone_name": zone_name,
+            "zone_status": zone_status,
             "edge_latency_ms": edge_latency_ms,
-            "origin_firewall_cidrs": 15,
-            "direct_bypass_status": "BLOCKED (403)" if origin_blocked else "EXPOSED"
+            "edge_probe": {
+                "target": "https://hwbcleaning.com",
+                "status_code": edge_status,
+                "ray_id": edge_ray,
+                "pop": pop,
+                "latency_ms": edge_latency_ms,
+                "server": server_hdr,
+                "cache_status": cache_status,
+                "hsts": hsts_hdr,
+                "edge_healthy": (edge_status == 200)
+            },
+            "origin_isolation_probe": {
+                "target": "https://hwb-institutional-website.azurewebsites.net",
+                "status_code": origin_status,
+                "origin_blocked": origin_blocked,
+                "forbidden_ip": forbidden_ip,
+                "shield_active": origin_blocked
+            },
+            "edge_settings": {
+                "ssl_mode": ssl_mode,
+                "tls_1_3": tls_1_3,
+                "always_use_https": always_https,
+                "security_level": sec_level,
+                "browser_check": browser_check,
+                "advanced_ddos": advanced_ddos,
+                "hsts_active": hsts_active
+            },
+            "dns_mesh": {
+                "total_records": dns_total,
+                "proxied_records": dns_proxied,
+                "apex_proxied": apex_proxied,
+                "www_proxied": www_proxied
+            },
+            "perimeter_firewall": {
+                "origin_ip_restrictions": 15,
+                "priority_range": "100-240",
+                "scm_access": "unrestricted",
+                "direct_bypass_blocked": origin_blocked
+            },
+            "five_pillars": {
+                "anycast_ip": "104.21.70.180 / 172.67.197.83 (Anycast)",
+                "datacenter_pop": pop,
+                "edge_latency_ms": edge_latency_ms,
+                "origin_firewall_cidrs": 15,
+                "direct_bypass_status": "BLOCKED (403)" if origin_blocked else "EXPOSED"
+            }
         }
-    }
+
+    return _get_cached_telemetry(f"rack11_cloudflare:{target_url or 'default'}", _compute, force_refresh=force_refresh)
+
 
 
 def record_rack_telemetry_snapshot(
@@ -1186,176 +1282,176 @@ def get_telemetry_historical_trends(days: int = 30, db_url: Optional[str] = None
         conn.close()
 
 
-def get_data_health_telemetry(db_url: Optional[str] = None) -> Dict[str, Any]:
+def get_data_health_telemetry(db_url: Optional[str] = None, force_refresh: bool = False) -> Dict[str, Any]:
     """
-    Computes live Data Health Index (DHI) and problem category metrics for Rack 8.
+    Computes live Data Health Index (DHI) and problem category metrics for Rack 8 (300s cached).
     Empirical 7-Category deduction model (100-point basis).
     """
     target_url = db_url or os.environ.get('DATABASE_URL')
-    if not target_url:
-        return {
-            "status": "error",
-            "message": "Database not configured",
-            "composite_score": 77.5,
-            "letter_grade": "B+",
-            "status_tag": "NEEDS_HYGIENE",
-            "total_leads": 25378,
-            "lead_hygiene_histogram": {
-                "total_leads": 25378,
-                "tier_1": {"name": "Tier 1: Pristine (Full Contact + Address)", "count": 17882, "pct": 70.5, "color": "#10b981"},
-                "tier_2": {"name": "Tier 2: Strong (Email + Phone)", "count": 4, "pct": 0.02, "color": "#3b82f6"},
-                "tier_3": {"name": "Tier 3: Single-Channel (Phone/Email Only)", "count": 7182, "pct": 28.3, "color": "#f59e0b"},
-                "tier_4": {"name": "Tier 4: Quarantined / Incomplete", "count": 310, "pct": 1.2, "color": "#ef4444"}
-            }
-        }
 
-    start_time = time.time()
-    conn = get_db(target_url)
-    try:
-        with conn.cursor() as cur:
-            # 1. Core Counts
-            cur.execute("""
-                SELECT 
-                    COUNT(*) as total_leads,
-                    COUNT(CASE WHEN (phone IS NULL OR phone = '' OR phone LIKE '%000-0000%') 
-                                AND (address IS NULL OR address = '' OR address LIKE '%Pending%') THEN 1 END) as ghost_leads,
-                    COUNT(CASE WHEN phone IS NULL OR phone = '' OR phone LIKE '%000-0000%' THEN 1 END) as missing_phone,
-                    COUNT(CASE WHEN decision_maker IS NULL OR decision_maker = '' THEN 1 END) as missing_dm,
-                    COUNT(CASE WHEN center_name = UPPER(center_name) AND length(center_name) > 3 THEN 1 END) as all_caps_names,
-                    COUNT(CASE WHEN address IS NULL OR address = '' OR address LIKE '%Pending%' THEN 1 END) as missing_address,
-                    COUNT(CASE WHEN email IS NULL OR email = '' THEN 1 END) as missing_email
-                FROM "Leads";
-            """)
-            stats = cur.fetchone()
-            total_leads = stats[0] or 1
-            ghost_leads = stats[1] or 0
-            missing_phone = stats[2] or 0
-            missing_dm = stats[3] or 0
-            all_caps_names = stats[4] or 0
-            missing_address = stats[5] or 0
-            missing_email = stats[6] or 0
-
-            # 2. Duplicate clusters
-            cur.execute("""
-                SELECT COUNT(*), COALESCE(SUM(cnt), 0) FROM (
-                    SELECT phone, COUNT(*) as cnt FROM "Leads" 
-                    WHERE phone IS NOT NULL AND phone != '' AND length(phone) >= 10
-                    GROUP BY phone HAVING COUNT(*) > 1
-                ) p;
-            """)
-            phone_dup_res = cur.fetchone()
-            dup_phone_clusters = int(phone_dup_res[0] or 0)
-            dup_phone_rows = int(phone_dup_res[1] or 0)
-
-            cur.execute("""
-                SELECT COUNT(*), COALESCE(SUM(cnt), 0) FROM (
-                    SELECT address, zipcode, COUNT(*) as cnt FROM "Leads" 
-                    WHERE address IS NOT NULL AND address != '' AND zipcode IS NOT NULL AND zipcode != ''
-                    GROUP BY address, zipcode HAVING COUNT(*) > 1
-                ) a;
-            """)
-            addr_dup_res = cur.fetchone()
-            dup_addr_clusters = int(addr_dup_res[0] or 0)
-            dup_addr_rows = int(addr_dup_res[1] or 0)
-
-            # 3. Quarantine table count
-            cur.execute("""
-                SELECT COUNT(*) FROM information_schema.tables 
-                WHERE table_name = 'crm_ingestion_quarantine';
-            """)
-            has_quarantine = cur.fetchone()[0] > 0
-            quarantine_count = 0
-            if has_quarantine:
-                cur.execute("SELECT COUNT(*) FROM crm_ingestion_quarantine;")
-                quarantine_count = cur.fetchone()[0]
-
-            # 4. Penalty Deductions (100.0 Max Score)
-            p1_ghost = min(15.0, round((ghost_leads / total_leads) * 100 * 20.0, 1))
-            p2_dup_phone = min(20.0, round((dup_phone_rows / total_leads) * 20.0, 1))
-            p3_dup_addr = min(15.0, round((dup_addr_rows / total_leads) * 15.0, 1))
-            p4_all_caps = min(15.0, round((all_caps_names / total_leads) * 15.0, 1))
-            p5_missing_dm = min(15.0, round((missing_dm / total_leads) * 15.0, 1))
-            p6_missing_phone = min(15.0, round((missing_phone / total_leads) * 15.0, 1))
-            p7_taxonomy = 0.0  # Clean post-Migration 029
-
-            total_penalty = round(p1_ghost + p2_dup_phone + p3_dup_addr + p4_all_caps + p5_missing_dm + p6_missing_phone + p7_taxonomy, 1)
-            composite_score = max(0.0, round(100.0 - total_penalty, 1))
-
-            letter_grade = "A+" if composite_score >= 95.0 else ("A" if composite_score >= 90.0 else ("B+" if composite_score >= 80.0 else ("B" if composite_score >= 70.0 else "C")))
-            status_tag = "OPTIMAL" if composite_score >= 90.0 else ("HEALTHY" if composite_score >= 80.0 else "NEEDS_HYGIENE")
-
-            tier_d_count = ghost_leads
-            tier_c_count = max(0, missing_phone + missing_address - ghost_leads)
-            tier_a_count = max(0, int(total_leads - missing_dm - tier_c_count - tier_d_count))
-            if tier_a_count < 100:
-                tier_a_count = int(total_leads * 0.055)
-            tier_b_count = max(0, total_leads - tier_a_count - tier_c_count - tier_d_count)
-
-            categories = [
-                {"id": "ghost_leads", "name": "1. Ghost Leads (Zero Phone & Address)", "count": ghost_leads, "pct": round(ghost_leads * 100 / total_leads, 2), "weight": 15.0, "penalty": p1_ghost, "severity": "CRITICAL", "color": "#ef4444"},
-                {"id": "dup_phone", "name": "2. Duplicate Phone Clusters", "count": dup_phone_rows, "clusters": dup_phone_clusters, "pct": round(dup_phone_rows * 100 / total_leads, 1), "weight": 20.0, "penalty": p2_dup_phone, "severity": "HIGH", "color": "#f97316"},
-                {"id": "dup_address", "name": "3. Duplicate Address + Zip Clusters", "count": dup_addr_rows, "clusters": dup_addr_clusters, "pct": round(dup_addr_rows * 100 / total_leads, 1), "weight": 15.0, "penalty": p3_dup_addr, "severity": "HIGH", "color": "#f59e0b"},
-                {"id": "all_caps", "name": "4. ALL-CAPS Registry Casing", "count": all_caps_names, "pct": round(all_caps_names * 100 / total_leads, 1), "weight": 15.0, "penalty": p4_all_caps, "severity": "MEDIUM", "color": "#3b82f6"},
-                {"id": "missing_dm", "name": "5. Missing Decision Maker", "count": missing_dm, "pct": round(missing_dm * 100 / total_leads, 1), "weight": 15.0, "penalty": p5_missing_dm, "severity": "MEDIUM", "color": "#8b5cf6"},
-                {"id": "missing_phone", "name": "6. Missing / Invalid Phone", "count": missing_phone, "pct": round(missing_phone * 100 / total_leads, 1), "weight": 15.0, "penalty": p6_missing_phone, "severity": "HIGH", "color": "#ec4899"},
-                {"id": "taxonomy", "name": "7. Taxonomy & Sector Conflicts", "count": 0, "pct": 0.0, "weight": 10.0, "penalty": 0.0, "severity": "PRISTINE", "color": "#10b981"},
-            ]
-
-            # 5. Lead Hygiene 4-Tier Distribution Histogram (SO-COM-001-DIR-08)
-            cur.execute("""
-                SELECT 
-                    COUNT(*) FILTER (WHERE email IS NOT NULL AND length(trim(email)) > 0 AND phone IS NOT NULL AND length(trim(phone)) > 0 AND address IS NOT NULL AND length(trim(address)) > 0) AS tier_1,
-                    COUNT(*) FILTER (WHERE email IS NOT NULL AND length(trim(email)) > 0 AND phone IS NOT NULL AND length(trim(phone)) > 0 AND (address IS NULL OR length(trim(address)) = 0)) AS tier_2,
-                    COUNT(*) FILTER (WHERE ((email IS NOT NULL AND length(trim(email)) > 0 AND (phone IS NULL OR length(trim(phone)) = 0)) OR (phone IS NOT NULL AND length(trim(phone)) > 0 AND (email IS NULL OR length(trim(email)) = 0)))) AS tier_3,
-                    COUNT(*) FILTER (WHERE (email IS NULL OR length(trim(email)) = 0) AND (phone IS NULL OR length(trim(phone)) = 0)) AS tier_4
-                FROM "Leads";
-            """)
-            t_row = cur.fetchone()
-            t1_cnt = t_row[0] or 0
-            t2_cnt = t_row[1] or 0
-            t3_cnt = t_row[2] or 0
-            t4_cnt = t_row[3] or 0
-            t_tot = total_leads or 1
-
-            lead_hygiene_histogram = {
-                "total_leads": total_leads,
-                "tier_1": {"name": "Tier 1: Pristine (Full Contact + Address)", "count": t1_cnt, "pct": round(t1_cnt * 100.0 / t_tot, 1), "color": "#10b981"},
-                "tier_2": {"name": "Tier 2: Strong (Email + Phone)", "count": t2_cnt, "pct": round(t2_cnt * 100.0 / t_tot, 2), "color": "#3b82f6"},
-                "tier_3": {"name": "Tier 3: Single-Channel (Phone/Email Only)", "count": t3_cnt, "pct": round(t3_cnt * 100.0 / t_tot, 1), "color": "#f59e0b"},
-                "tier_4": {"name": "Tier 4: Quarantined / Incomplete", "count": t4_cnt, "pct": round(t4_cnt * 100.0 / t_tot, 1), "color": "#ef4444"}
-            }
-
-            latency_ms = round((time.time() - start_time) * 1000, 2)
+    def _compute() -> Dict[str, Any]:
+        if not target_url:
             return {
-                "status": "success",
-                "composite_score": composite_score,
-                "letter_grade": letter_grade,
-                "status_tag": status_tag,
-                "total_leads": total_leads,
-                "total_penalty": total_penalty,
-                "quarantine_count": quarantine_count,
-                "cass_compliance_pct": 99.8,
-                "latency_ms": latency_ms,
-                "lead_hygiene_histogram": lead_hygiene_histogram,
-                "tiers": {
-                    "tier_a": {"name": "Tier A (Pristine)", "count": tier_a_count, "pct": round(tier_a_count * 100 / total_leads, 1), "color": "#10b981"},
-                    "tier_b": {"name": "Tier B (Marketable)", "count": tier_b_count, "pct": round(tier_b_count * 100 / total_leads, 1), "color": "#3b82f6"},
-                    "tier_c": {"name": "Tier C (Deficient)", "count": tier_c_count, "pct": round(tier_c_count * 100 / total_leads, 1), "color": "#f59e0b"},
-                    "tier_d": {"name": "Tier D (Ghost Lead)", "count": tier_d_count, "pct": round(tier_d_count * 100 / total_leads, 2), "color": "#ef4444"},
-                },
-                "categories": categories
+                "status": "error",
+                "message": "Database not configured",
+                "composite_score": 77.5,
+                "letter_grade": "B+",
+                "status_tag": "NEEDS_HYGIENE",
+                "total_leads": 25378,
+                "lead_hygiene_histogram": {
+                    "total_leads": 25378,
+                    "tier_1": {"name": "Tier 1: Pristine (Full Contact + Address)", "count": 17882, "pct": 70.5, "color": "#10b981"},
+                    "tier_2": {"name": "Tier 2: Strong (Email + Phone)", "count": 4, "pct": 0.02, "color": "#3b82f6"},
+                    "tier_3": {"name": "Tier 3: Single-Channel (Phone/Email Only)", "count": 7182, "pct": 28.3, "color": "#f59e0b"},
+                    "tier_4": {"name": "Tier 4: Quarantined / Incomplete", "count": 310, "pct": 1.2, "color": "#ef4444"}
+                }
             }
-    except Exception as e:
-        return {
-            "status": "error",
-            "message": str(e),
-            "composite_score": 77.5,
-            "letter_grade": "B+",
-            "status_tag": "NEEDS_HYGIENE",
-            "total_leads": 28298
-        }
-    finally:
-        conn.close()
+
+        start_time = time.time()
+        conn = get_db(target_url)
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT 
+                        COUNT(*) as total_leads,
+                        COUNT(CASE WHEN (phone IS NULL OR phone = '' OR phone LIKE '%000-0000%') 
+                                    AND (address IS NULL OR address = '' OR address LIKE '%Pending%') THEN 1 END) as ghost_leads,
+                        COUNT(CASE WHEN phone IS NULL OR phone = '' OR phone LIKE '%000-0000%' THEN 1 END) as missing_phone,
+                        COUNT(CASE WHEN decision_maker IS NULL OR decision_maker = '' THEN 1 END) as missing_dm,
+                        COUNT(CASE WHEN center_name = UPPER(center_name) AND length(center_name) > 3 THEN 1 END) as all_caps_names,
+                        COUNT(CASE WHEN address IS NULL OR address = '' OR address LIKE '%Pending%' THEN 1 END) as missing_address,
+                        COUNT(CASE WHEN email IS NULL OR email = '' THEN 1 END) as missing_email
+                    FROM "Leads";
+                """)
+                stats = cur.fetchone()
+                total_leads = stats[0] or 1
+                ghost_leads = stats[1] or 0
+                missing_phone = stats[2] or 0
+                missing_dm = stats[3] or 0
+                all_caps_names = stats[4] or 0
+                missing_address = stats[5] or 0
+                missing_email = stats[6] or 0
+
+                cur.execute("""
+                    SELECT COUNT(*), COALESCE(SUM(cnt), 0) FROM (
+                        SELECT phone, COUNT(*) as cnt FROM "Leads" 
+                        WHERE phone IS NOT NULL AND phone != '' AND length(phone) >= 10
+                        GROUP BY phone HAVING COUNT(*) > 1
+                    ) p;
+                """)
+                phone_dup_res = cur.fetchone()
+                dup_phone_clusters = int(phone_dup_res[0] or 0)
+                dup_phone_rows = int(phone_dup_res[1] or 0)
+
+                cur.execute("""
+                    SELECT COUNT(*), COALESCE(SUM(cnt), 0) FROM (
+                        SELECT address, zipcode, COUNT(*) as cnt FROM "Leads" 
+                        WHERE address IS NOT NULL AND address != '' AND zipcode IS NOT NULL AND zipcode != ''
+                        GROUP BY address, zipcode HAVING COUNT(*) > 1
+                    ) a;
+                """)
+                addr_dup_res = cur.fetchone()
+                dup_addr_clusters = int(addr_dup_res[0] or 0)
+                dup_addr_rows = int(addr_dup_res[1] or 0)
+
+                cur.execute("""
+                    SELECT COUNT(*) FROM information_schema.tables 
+                    WHERE table_name = 'crm_ingestion_quarantine';
+                """)
+                has_quarantine = cur.fetchone()[0] > 0
+                quarantine_count = 0
+                if has_quarantine:
+                    cur.execute("SELECT COUNT(*) FROM crm_ingestion_quarantine;")
+                    quarantine_count = cur.fetchone()[0]
+
+                p1_ghost = min(15.0, round((ghost_leads / total_leads) * 100 * 20.0, 1))
+                p2_dup_phone = min(20.0, round((dup_phone_rows / total_leads) * 20.0, 1))
+                p3_dup_addr = min(15.0, round((dup_addr_rows / total_leads) * 15.0, 1))
+                p4_all_caps = min(15.0, round((all_caps_names / total_leads) * 15.0, 1))
+                p5_missing_dm = min(15.0, round((missing_dm / total_leads) * 15.0, 1))
+                p6_missing_phone = min(15.0, round((missing_phone / total_leads) * 15.0, 1))
+                p7_taxonomy = 0.0
+
+                total_penalty = round(p1_ghost + p2_dup_phone + p3_dup_addr + p4_all_caps + p5_missing_dm + p6_missing_phone + p7_taxonomy, 1)
+                composite_score = max(0.0, round(100.0 - total_penalty, 1))
+
+                letter_grade = "A+" if composite_score >= 95.0 else ("A" if composite_score >= 90.0 else ("B+" if composite_score >= 80.0 else ("B" if composite_score >= 70.0 else "C")))
+                status_tag = "OPTIMAL" if composite_score >= 90.0 else ("HEALTHY" if composite_score >= 80.0 else "NEEDS_HYGIENE")
+
+                tier_d_count = ghost_leads
+                tier_c_count = max(0, missing_phone + missing_address - ghost_leads)
+                tier_a_count = max(0, int(total_leads - missing_dm - tier_c_count - tier_d_count))
+                if tier_a_count < 100:
+                    tier_a_count = int(total_leads * 0.055)
+                tier_b_count = max(0, total_leads - tier_a_count - tier_c_count - tier_d_count)
+
+                categories = [
+                    {"id": "ghost_leads", "name": "1. Ghost Leads (Zero Phone & Address)", "count": ghost_leads, "pct": round(ghost_leads * 100 / total_leads, 2), "weight": 15.0, "penalty": p1_ghost, "severity": "CRITICAL", "color": "#ef4444"},
+                    {"id": "dup_phone", "name": "2. Duplicate Phone Clusters", "count": dup_phone_rows, "clusters": dup_phone_clusters, "pct": round(dup_phone_rows * 100 / total_leads, 1), "weight": 20.0, "penalty": p2_dup_phone, "severity": "HIGH", "color": "#f97316"},
+                    {"id": "dup_address", "name": "3. Duplicate Address + Zip Clusters", "count": dup_addr_rows, "clusters": dup_addr_clusters, "pct": round(dup_addr_rows * 100 / total_leads, 1), "weight": 15.0, "penalty": p3_dup_addr, "severity": "HIGH", "color": "#f59e0b"},
+                    {"id": "all_caps", "name": "4. ALL-CAPS Registry Casing", "count": all_caps_names, "pct": round(all_caps_names * 100 / total_leads, 1), "weight": 15.0, "penalty": p4_all_caps, "severity": "MEDIUM", "color": "#3b82f6"},
+                    {"id": "missing_dm", "name": "5. Missing Decision Maker", "count": missing_dm, "pct": round(missing_dm * 100 / total_leads, 1), "weight": 15.0, "penalty": p5_missing_dm, "severity": "MEDIUM", "color": "#8b5cf6"},
+                    {"id": "missing_phone", "name": "6. Missing / Invalid Phone", "count": missing_phone, "pct": round(missing_phone * 100 / total_leads, 1), "weight": 15.0, "penalty": p6_missing_phone, "severity": "HIGH", "color": "#ec4899"},
+                    {"id": "taxonomy", "name": "7. Taxonomy & Sector Conflicts", "count": 0, "pct": 0.0, "weight": 10.0, "penalty": 0.0, "severity": "PRISTINE", "color": "#10b981"},
+                ]
+
+                cur.execute("""
+                    SELECT 
+                        COUNT(*) FILTER (WHERE email IS NOT NULL AND length(trim(email)) > 0 AND phone IS NOT NULL AND length(trim(phone)) > 0 AND address IS NOT NULL AND length(trim(address)) > 0) AS tier_1,
+                        COUNT(*) FILTER (WHERE email IS NOT NULL AND length(trim(email)) > 0 AND phone IS NOT NULL AND length(trim(phone)) > 0 AND (address IS NULL OR length(trim(address)) = 0)) AS tier_2,
+                        COUNT(*) FILTER (WHERE ((email IS NOT NULL AND length(trim(email)) > 0 AND (phone IS NULL OR length(trim(phone)) = 0)) OR (phone IS NOT NULL AND length(trim(phone)) > 0 AND (email IS NULL OR length(trim(email)) = 0)))) AS tier_3,
+                        COUNT(*) FILTER (WHERE (email IS NULL OR length(trim(email)) = 0) AND (phone IS NULL OR length(trim(phone)) = 0)) AS tier_4
+                    FROM "Leads";
+                """)
+                t_row = cur.fetchone()
+                t1_cnt = t_row[0] or 0
+                t2_cnt = t_row[1] or 0
+                t3_cnt = t_row[2] or 0
+                t4_cnt = t_row[3] or 0
+                t_tot = total_leads or 1
+
+                lead_hygiene_histogram = {
+                    "total_leads": total_leads,
+                    "tier_1": {"name": "Tier 1: Pristine (Full Contact + Address)", "count": t1_cnt, "pct": round(t1_cnt * 100.0 / t_tot, 1), "color": "#10b981"},
+                    "tier_2": {"name": "Tier 2: Strong (Email + Phone)", "count": t2_cnt, "pct": round(t2_cnt * 100.0 / t_tot, 2), "color": "#3b82f6"},
+                    "tier_3": {"name": "Tier 3: Single-Channel (Phone/Email Only)", "count": t3_cnt, "pct": round(t3_cnt * 100.0 / t_tot, 1), "color": "#f59e0b"},
+                    "tier_4": {"name": "Tier 4: Quarantined / Incomplete", "count": t4_cnt, "pct": round(t4_cnt * 100.0 / t_tot, 1), "color": "#ef4444"}
+                }
+
+                latency_ms = round((time.time() - start_time) * 1000, 2)
+                return {
+                    "status": "success",
+                    "composite_score": composite_score,
+                    "letter_grade": letter_grade,
+                    "status_tag": status_tag,
+                    "total_leads": total_leads,
+                    "total_penalty": total_penalty,
+                    "quarantine_count": quarantine_count,
+                    "cass_compliance_pct": 99.8,
+                    "latency_ms": latency_ms,
+                    "lead_hygiene_histogram": lead_hygiene_histogram,
+                    "tiers": {
+                        "tier_a": {"name": "Tier A (Pristine)", "count": tier_a_count, "pct": round(tier_a_count * 100 / total_leads, 1), "color": "#10b981"},
+                        "tier_b": {"name": "Tier B (Marketable)", "count": tier_b_count, "pct": round(tier_b_count * 100 / total_leads, 1), "color": "#3b82f6"},
+                        "tier_c": {"name": "Tier C (Deficient)", "count": tier_c_count, "pct": round(tier_c_count * 100 / total_leads, 1), "color": "#f59e0b"},
+                        "tier_d": {"name": "Tier D (Ghost Lead)", "count": tier_d_count, "pct": round(tier_d_count * 100 / total_leads, 2), "color": "#ef4444"},
+                    },
+                    "categories": categories
+                }
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": str(e),
+                "composite_score": 77.5,
+                "letter_grade": "B+",
+                "status_tag": "NEEDS_HYGIENE",
+                "total_leads": 28298
+            }
+        finally:
+            conn.close()
+
+    return _get_cached_telemetry(f"rack8_data_health:{target_url or 'default'}", _compute, force_refresh=force_refresh)
+
 
 
 def heal_all_caps_casing(db_url: Optional[str] = None, dry_run: bool = True, batch_size: int = 500) -> Dict[str, Any]:

@@ -12,11 +12,30 @@ and credentials to prevent silent key expirations.
 import os
 import socket
 import ssl
+import time
+import threading
 import datetime
 from datetime import timezone
 from typing import Dict, Any, List, Optional
 import requests
 from dotenv import load_dotenv
+
+_CREDENTIAL_CACHE_LOCK = threading.Lock()
+_CREDENTIAL_CACHE: Dict[str, Any] = {
+    "data": None,
+    "timestamp": 0.0,
+    "refreshing": False
+}
+_CREDENTIAL_CACHE_TTL_SECONDS = 300.0
+
+
+def clear_credential_cache() -> None:
+    """Clears the in-memory credential sentinel cache."""
+    with _CREDENTIAL_CACHE_LOCK:
+        _CREDENTIAL_CACHE["data"] = None
+        _CREDENTIAL_CACHE["timestamp"] = 0.0
+        _CREDENTIAL_CACHE["refreshing"] = False
+
 
 def find_env_file(explicit_path: Optional[str] = None) -> Optional[str]:
     """Resolves .env location across local host and Docker container paths."""
@@ -36,18 +55,20 @@ def find_env_file(explicit_path: Optional[str] = None) -> Optional[str]:
     return None
 
 
-def audit_all_credentials(env_path: Optional[str] = None) -> Dict[str, Any]:
+def _compute_audit_all_credentials(env_path: Optional[str] = None) -> Dict[str, Any]:
     """
-    Audits all system credentials, API tokens, SSL certificates, and client secrets.
-    Computes days remaining, probes live validity, and returns an inventory payload.
+    Internal synchronous worker that audits all system credentials, API tokens,
+    SSL certificates, and client secrets.
     """
     resolved_env = find_env_file(env_path)
     if resolved_env:
         load_dotenv(resolved_env, override=True)
 
+
     now = datetime.datetime.now(timezone.utc)
     today = datetime.date.today()
     credentials: List[Dict[str, Any]] = []
+
 
     # 1. Microsoft Graph Client Secret
     graph_val = os.environ.get("GRAPH_API_PROD_SECRET_VALUE") or os.environ.get("MICROSOFT_GRAPH_CLIENT_SECRET")
@@ -270,3 +291,54 @@ def audit_all_credentials(env_path: Optional[str] = None) -> Dict[str, Any]:
         "credentials_action_required": action_required_count,
         "credentials": credentials
     }
+
+
+def _background_refresh_credentials(env_path: Optional[str] = None) -> None:
+    """Refreshes the credential sentinel cache in a daemon thread."""
+    try:
+        fresh = _compute_audit_all_credentials(env_path)
+        with _CREDENTIAL_CACHE_LOCK:
+            _CREDENTIAL_CACHE["data"] = fresh
+            _CREDENTIAL_CACHE["timestamp"] = time.time()
+    except Exception:
+        pass
+    finally:
+        with _CREDENTIAL_CACHE_LOCK:
+            _CREDENTIAL_CACHE["refreshing"] = False
+
+
+def audit_all_credentials(env_path: Optional[str] = None, force_refresh: bool = False) -> Dict[str, Any]:
+    """
+    Audits all system credentials, API tokens, SSL certificates, and client secrets.
+    Uses a 300-second (5-minute) thread-safe cache with non-blocking background
+    refresh so user-facing web requests never block on external network probes.
+    """
+    if env_path is not None or force_refresh:
+        fresh = _compute_audit_all_credentials(env_path)
+        with _CREDENTIAL_CACHE_LOCK:
+            _CREDENTIAL_CACHE["data"] = fresh
+            _CREDENTIAL_CACHE["timestamp"] = time.time()
+            _CREDENTIAL_CACHE["refreshing"] = False
+        return fresh
+
+    now_ts = time.time()
+    with _CREDENTIAL_CACHE_LOCK:
+        cached = _CREDENTIAL_CACHE["data"]
+        age = now_ts - _CREDENTIAL_CACHE["timestamp"]
+        if cached is not None:
+            if age >= _CREDENTIAL_CACHE_TTL_SECONDS and not _CREDENTIAL_CACHE["refreshing"]:
+                _CREDENTIAL_CACHE["refreshing"] = True
+                threading.Thread(
+                    target=_background_refresh_credentials,
+                    args=(env_path,),
+                    daemon=True
+                ).start()
+            return cached
+
+    fresh = _compute_audit_all_credentials(env_path)
+    with _CREDENTIAL_CACHE_LOCK:
+        _CREDENTIAL_CACHE["data"] = fresh
+        _CREDENTIAL_CACHE["timestamp"] = time.time()
+        _CREDENTIAL_CACHE["refreshing"] = False
+    return fresh
+

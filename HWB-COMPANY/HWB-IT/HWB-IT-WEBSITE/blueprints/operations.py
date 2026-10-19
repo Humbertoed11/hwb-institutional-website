@@ -25,6 +25,9 @@ from core.services.sanitizer import clean_phone, clean_currency, clean_sqft, cle
 from core.services.email_service import transmit_email
 from core.services.security_logger import get_site_security_telemetry, log_security_event
 
+import time
+import threading
+
 operations_bp = Blueprint('operations', __name__)
 
 VIEW_AUTHORIZATION_MAP = {
@@ -44,6 +47,154 @@ VIEW_AUTHORIZATION_MAP = {
     'it_telemetry': 'users',
 }
 
+_OPS_CACHE_LOCK = threading.Lock()
+_SIDEBAR_COUNTS_CACHE = {}
+_SIDEBAR_COUNTS_TTL = 30.0
+_SYSTEM_USERS_CACHE = {"data": None, "timestamp": 0.0}
+_SYSTEM_USERS_TTL = 60.0
+
+
+def _get_active_system_users(conn) -> list:
+    """Returns active system users with a 60-second in-memory cache."""
+    now_ts = time.time()
+    with _OPS_CACHE_LOCK:
+        if _SYSTEM_USERS_CACHE["data"] is not None and (now_ts - _SYSTEM_USERS_CACHE["timestamp"]) < _SYSTEM_USERS_TTL:
+            return _SYSTEM_USERS_CACHE["data"]
+    try:
+        with conn.cursor() as cur:
+            cur.execute('SELECT id, username, full_name, role FROM "Users" WHERE status = \'Active\' ORDER BY id ASC')
+            users = cur.fetchall()
+        with _OPS_CACHE_LOCK:
+            _SYSTEM_USERS_CACHE["data"] = users
+            _SYSTEM_USERS_CACHE["timestamp"] = now_ts
+        return users
+    except Exception:
+        conn.rollback()
+        return []
+
+
+def _get_operations_sidebar_counts(conn, user_id, role: str) -> dict:
+    """
+    Computes lightweight department badge & KPI counts with a 30-second TTL cache
+    so switching tabs does not re-execute 10+ COUNT(*) queries on every request.
+    """
+    cache_key = f"{role}:{user_id}" if role == 'Sales' else "global"
+    now_ts = time.time()
+    with _OPS_CACHE_LOCK:
+        cached = _SIDEBAR_COUNTS_CACHE.get(cache_key)
+        if cached and (now_ts - cached["timestamp"]) < _SIDEBAR_COUNTS_TTL:
+            return dict(cached["data"])
+
+    counts = {
+        "portfolio_total": 0,
+        "leads_count": 0,
+        "dup_count": 0,
+        "campaign_ready_count": 0,
+        "in_campaign_count": 0,
+        "opened_leads_count": 0,
+        "bids_count": 0,
+        "inst_bids_count": 0,
+        "gov_programs_count": 6,
+        "general_contractors_count": 0,
+        "mkt_campaigns_count": 0,
+        "pending_outbox_count": 0,
+        "employees_count": 0,
+        "active_employees_count": 0,
+        "applicants_count": 0,
+        "subcontractors_count": 0,
+    }
+    is_sales = (role == 'Sales')
+    try:
+        with conn.cursor() as cur:
+            if is_sales:
+                cur.execute('SELECT COALESCE(SUM(annual_revenue), 0) FROM "Customers" WHERE assigned_rep_id = %s', (user_id,))
+            else:
+                cur.execute('SELECT COALESCE(SUM(annual_revenue), 0) FROM "Customers"')
+            r = cur.fetchone()
+            counts["portfolio_total"] = r[0] if r and r[0] is not None else 0
+
+            if is_sales:
+                cur.execute('''
+                    SELECT
+                        COUNT(*) FILTER (WHERE COALESCE(is_commercial, TRUE) = TRUE AND COALESCE(is_duplicate, FALSE) = FALSE AND COALESCE(status, '') != 'ARCHIVED') AS active_leads,
+                        COUNT(*) FILTER (WHERE is_duplicate = TRUE) AS dup_cnt,
+                        COUNT(*) FILTER (WHERE COALESCE(campaign_ready, FALSE) = TRUE AND COALESCE(is_commercial, TRUE) = TRUE AND COALESCE(is_duplicate, FALSE) = FALSE) AS cr_cnt
+                    FROM "Leads"
+                    WHERE owner_id = %s;
+                ''', (user_id,))
+            else:
+                cur.execute('''
+                    SELECT
+                        COUNT(*) FILTER (WHERE COALESCE(is_commercial, TRUE) = TRUE AND COALESCE(is_duplicate, FALSE) = FALSE AND COALESCE(status, '') != 'ARCHIVED') AS active_leads,
+                        COUNT(*) FILTER (WHERE is_duplicate = TRUE) AS dup_cnt,
+                        COUNT(*) FILTER (WHERE COALESCE(campaign_ready, FALSE) = TRUE AND COALESCE(is_commercial, TRUE) = TRUE AND COALESCE(is_duplicate, FALSE) = FALSE) AS cr_cnt
+                    FROM "Leads";
+                ''')
+            l_row = cur.fetchone()
+            if l_row:
+                counts["leads_count"] = l_row[0] or 0
+                counts["dup_count"] = l_row[1] or 0
+                counts["campaign_ready_count"] = l_row[2] or 0
+
+            try:
+                if is_sales:
+                    cur.execute('''
+                        SELECT
+                            COUNT(DISTINCT l.id) FILTER (WHERE cr.id IS NOT NULL OR l.status = 'In Campaign'),
+                            COUNT(DISTINCT l.id) FILTER (WHERE COALESCE(cr.open_count, 0) > 0)
+                        FROM "Leads" l
+                        LEFT JOIN "CampaignRecipients" cr ON cr.lead_id = l.id
+                        WHERE l.owner_id = %s;
+                    ''', (user_id,))
+                else:
+                    cur.execute('''
+                        SELECT
+                            COUNT(DISTINCT lead_id),
+                            COUNT(DISTINCT lead_id) FILTER (WHERE COALESCE(open_count, 0) > 0)
+                        FROM "CampaignRecipients";
+                    ''')
+                c_row = cur.fetchone()
+                if c_row:
+                    counts["in_campaign_count"] = c_row[0] or 0
+                    counts["opened_leads_count"] = c_row[1] or 0
+            except Exception:
+                conn.rollback()
+
+            try:
+                cur.execute('''
+                    SELECT
+                        (SELECT COUNT(*) FROM "ConstructionBids"),
+                        (SELECT COUNT(*) FROM "InstitutionalBids"),
+                        (SELECT COUNT(*) FROM "GovernmentPrograms"),
+                        (SELECT COUNT(*) FROM "GeneralContractors"),
+                        (SELECT COUNT(*) FROM "MarketingCampaigns"),
+                        (SELECT COUNT(*) FROM "PendingOutbox" WHERE UPPER(status) = 'PENDING'),
+                        (SELECT COUNT(*) FROM "Employees"),
+                        (SELECT COUNT(*) FROM "Employees" WHERE employment_status = 'Active'),
+                        (SELECT COUNT(*) FROM "JobApplicants"),
+                        (SELECT COUNT(*) FROM "SubcontractorPartners");
+                ''')
+                m_row = cur.fetchone()
+                if m_row:
+                    counts["bids_count"] = m_row[0] or 0
+                    counts["inst_bids_count"] = m_row[1] or 0
+                    counts["gov_programs_count"] = m_row[2] or 6
+                    counts["general_contractors_count"] = m_row[3] or 0
+                    counts["mkt_campaigns_count"] = m_row[4] or 0
+                    counts["pending_outbox_count"] = m_row[5] or 0
+                    counts["employees_count"] = m_row[6] or 0
+                    counts["active_employees_count"] = m_row[7] or 0
+                    counts["applicants_count"] = m_row[8] or 0
+                    counts["subcontractors_count"] = m_row[9] or 0
+            except Exception:
+                conn.rollback()
+    except Exception:
+        conn.rollback()
+
+    with _OPS_CACHE_LOCK:
+        _SIDEBAR_COUNTS_CACHE[cache_key] = {"data": dict(counts), "timestamp": now_ts}
+    return counts
+
 
 # --- Admin Operations Unified Hub ---
 
@@ -51,7 +202,7 @@ VIEW_AUTHORIZATION_MAP = {
 @login_required
 @roles_required('Executive', 'Admin', 'Manager', 'Operator', 'Sales', 'Custom')
 def admin_operations():
-    """The Single-Source Dashboard for Management Dashboard."""
+    """The Single-Source Dashboard for Management Dashboard (HWB-QMS-11.14 v1.1 CQRS)."""
     requested_view = request.args.get('view')
     if requested_view:
         req_module = VIEW_AUTHORIZATION_MAP.get(requested_view, requested_view)
@@ -71,7 +222,6 @@ def admin_operations():
             abort(403)
         active_view = requested_view
     else:
-        # Default view resolution: prefer 'leads' if permitted, else first permitted view
         if current_user.has_permission('leads', 'view'):
             active_view = 'leads'
         else:
@@ -101,7 +251,11 @@ def admin_operations():
     sort_by = request.args.get('sort')
     sort_dir = request.args.get('dir', '').upper()
     campaign_filter = request.args.get('campaign_filter', '').strip()
-    
+    is_json_export = (
+        request.args.get('format') == 'json'
+        or (request.headers.get('X-Requested-With') == 'XMLHttpRequest' and request.accept_mimetypes.best == 'application/json')
+    )
+
     # Initialization
     leads, clients, work_orders, services, activities, system_users = [], [], [], [], [], []
     leads_count, bids_count, total_pages, portfolio_total = 0, 0, 1, 0
@@ -117,20 +271,22 @@ def admin_operations():
     construction_bids = []
     institutional_bids, inst_bids_count = [], 0
     government_programs, gov_programs_count = [], 0
+    general_contractors, general_contractors_count = [], 0
     marketing_campaigns, mkt_campaigns_count = [], 0
     marketing_pipeline_value = 0.0
     campaign_recipients = []
+    active_campaign_id = None
     pending_outbox_items, pending_outbox_count = [], 0
     job_positions = []
     employees, employees_count, active_employees_count = [], 0, 0
     active_technicians = []
     total_weekly_labor_hours, total_biweekly_payroll = 0.0, 0.0
-    
+
     # --- Dynamic Column Architecture ---
     default_cols_leads = 'company,status,sqf,value,priority,activities'
     default_cols_accounts = 'company,city,phone,revenue,rep,activities'
     default_cols_bids = 'project,status,due_date,created,sqf,value,scope,estimator,phone,owner,actions'
-    
+
     if active_view == 'leads':
         session_key = 'leads_custom_cols'
         default_cols = default_cols_leads
@@ -157,11 +313,11 @@ def admin_operations():
             session[session_key] = active_cols_str
     else:
         active_cols_str = session.get(session_key) or default_cols
-    
+
     active_cols = [c.strip() for c in active_cols_str.split(',') if c.strip() and c.strip() != 'on']
     if anchor_col not in active_cols:
         active_cols.insert(0, anchor_col)
-    
+
     per_page = 50
     offset = (page - 1) * per_page
 
@@ -171,10 +327,10 @@ def admin_operations():
         'zipcode': 'zipcode', 'sqf': 'sqf', 'capacity': 'capacity', 'value': 'estimated_annual_value',
         'priority': 'priority_level', 'facility': 'facility_type', 'contact': 'decision_maker',
         'address': 'address', 'job_title': 'job_title', 'source': 'lead_source',
-        'frequency': 'traffic_cycle', 'interest': 'service_interest', 
+        'frequency': 'traffic_cycle', 'interest': 'service_interest',
         'next_action': 'next_action_date', 'owner': 'owner_id',
-        'activities': '(SELECT COUNT(*) FROM "GlobalActivities" WHERE parent_id = l.id AND parent_type = \'Lead\')', 
-        'last_contact': 'last_contact',
+        'activities': 'COALESCE(ga.activity_count, 0)',
+        'last_contact': 'ga.last_contact',
         'umbrella': 'umbrella_name',
         'cleaning_model': 'cleaning_delivery_model',
         'm_and_a': 'acquisition_tier',
@@ -190,8 +346,8 @@ def admin_operations():
         'period': 'contract_period', 'frequency': 'frequency',
         'start_date': 'start_date', 'terms': 'payment_terms',
         'rep': 'c.assigned_rep_id', 'owner': 'c.assigned_rep_id',
-        'activities': '(SELECT COUNT(*) FROM "GlobalActivities" WHERE parent_id = c.customer_id AND parent_type = \'Account\')', 
-        'last_contact': 'last_contact',
+        'activities': 'COALESCE(ga.activity_count, 0)',
+        'last_contact': 'ga.last_contact',
         'umbrella': 'c.umbrella_name',
         'cleaning_model': 'c.cleaning_delivery_model'
     }
@@ -202,8 +358,8 @@ def admin_operations():
         'platform': 'cb.platform', 'estimator': 'cb.estimator_name', 'phone': 'cb.estimator_phone',
         'email': 'cb.estimator_email', 'dates': 'cb.estimated_start_date', 'prequal': 'cb.prequal_status',
         'special_reqs': 'cb.special_requirements', 'owner': 'cb.assigned_rep_id', 'rep': 'cb.assigned_rep_id',
-        'activities': '(SELECT COUNT(*) FROM "GlobalActivities" WHERE parent_id = cb.id AND parent_type = \'ConstructionBid\')',
-        'last_contact': 'last_contact', 'last_note': 'last_note', 'created': 'cb.created_at'
+        'activities': 'COALESCE(ga.activity_count, 0)',
+        'last_contact': 'ga.last_contact', 'last_note': 'ga.last_note', 'created': 'cb.created_at'
     }
     inst_sort_map = {
         'solicitation': 'ib.solicitation_number', 'agency': 'ib.agency_name', 'title': 'ib.title',
@@ -211,7 +367,7 @@ def admin_operations():
         'value': 'ib.hwb_bid_total', 'monthly': 'ib.monthly_base_rate', 'pre_bid': 'ib.pre_bid_datetime',
         'sector': 'ib.sector', 'officer': 'ib.procurement_officer', 'created': 'ib.created_at'
     }
-    
+
     ib_sort, ib_dir = 'ib.bid_due_date', 'ASC'
     if active_view == 'leads':
         l_sort = leads_sort_map.get(sort_by, 'input_date')
@@ -241,627 +397,659 @@ def admin_operations():
 
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
-        # 1. FETCH ACCOUNTS
-        try:
-            with conn.cursor() as cur:
-                is_sales_account_scope = (getattr(current_user, 'role', '') == 'Sales')
-                if is_sales_account_scope:
-                    cur.execute('SELECT SUM(annual_revenue) FROM "Customers" WHERE assigned_rep_id = %s', (current_user.id,))
-                else:
-                    cur.execute('SELECT SUM(annual_revenue) FROM "Customers"')
-                portfolio_total_row = cur.fetchone()
-                portfolio_total = portfolio_total_row[0] if portfolio_total_row and portfolio_total_row[0] is not None else 0
+        # 0. CACHED SIDEBAR COUNTS (30s TTL) & SYSTEM USERS (60s TTL)
+        user_role = getattr(current_user, 'role', '')
+        sb_counts = _get_operations_sidebar_counts(conn, getattr(current_user, 'id', None), user_role)
+        portfolio_total = sb_counts["portfolio_total"]
+        leads_count = sb_counts["leads_count"]
+        dup_count = sb_counts["dup_count"]
+        campaign_ready_count = sb_counts["campaign_ready_count"]
+        in_campaign_count = sb_counts["in_campaign_count"]
+        opened_leads_count = sb_counts["opened_leads_count"]
+        bids_count = sb_counts["bids_count"]
+        inst_bids_count = sb_counts["inst_bids_count"]
+        gov_programs_count = sb_counts["gov_programs_count"]
+        general_contractors_count = sb_counts["general_contractors_count"]
+        mkt_campaigns_count = sb_counts["mkt_campaigns_count"]
+        pending_outbox_count = sb_counts["pending_outbox_count"]
+        employees_count = sb_counts["employees_count"]
+        active_employees_count = sb_counts["active_employees_count"]
+        applicants_count = sb_counts["applicants_count"]
+        subcontractors_count = sb_counts["subcontractors_count"]
+        system_users = _get_active_system_users(conn)
 
-                account_sql_base = '''
-                    SELECT c.*, 
-                           (SELECT COUNT(*) FROM "Contacts" WHERE account_id = c.customer_id) as contact_count,
-                           (SELECT COUNT(*) FROM "GlobalActivities" WHERE parent_id = c.customer_id AND parent_type = 'Account') as activity_count,
-                           (SELECT MAX(timestamp) FROM "GlobalActivities" WHERE parent_id = c.customer_id AND parent_type = 'Account') as last_contact,
-                           (SELECT description FROM "GlobalActivities" WHERE parent_id = c.customer_id AND parent_type = 'Account' ORDER BY timestamp DESC LIMIT 1) as last_note
-                    FROM "Customers" c
-                '''
-                
-                where_clauses = []
-                params = []
-
-                if is_sales_account_scope:
-                    where_clauses.append("c.assigned_rep_id = %s")
-                    params.append(current_user.id)
-
-                if active_only:
-                    where_clauses.append("(SELECT COUNT(*) FROM \"GlobalActivities\" WHERE parent_id = c.customer_id AND parent_type = 'Account') > 0")
-
-                if search_q and active_view == 'accounts':
-                    s_clauses, s_params = parse_advanced_search(search_q, 'accounts')
-                    where_clauses.extend(s_clauses)
-                    params.extend(s_params)
-
-                full_where = ""
-                if where_clauses:
-                    full_where = "WHERE " + " AND ".join(where_clauses)
-
-                cur.execute(f"{account_sql_base} {full_where} ORDER BY {a_sort} {a_dir}", tuple(params))
-                clients = cur.fetchall()
-        except Exception as acc_err:
-            conn.rollback()
-            current_app.logger.warning(f"[OPERATIONS] Accounts fetch warning: {acc_err}")
-            clients = []
-
-        # 2. FETCH LEADS
-        try:
-            with conn.cursor() as cur:
-                lead_where_clauses = []
-                lead_params = []
-                is_sales_lead_scope = (getattr(current_user, 'role', '') == 'Sales')
-
-                if is_sales_lead_scope:
-                    lead_where_clauses.append("l.owner_id = %s")
-                    lead_params.append(current_user.id)
-
-                include_archived = request.args.get('include_archived') == 'true'
-                duplicates_only = request.args.get('duplicates_only') == 'true'
-
-                if duplicates_only and active_view == 'leads':
-                    lead_where_clauses.append("is_duplicate = TRUE")
-                    l_sort, l_dir = "duplicate_group_id ASC, id", "ASC"
-                elif not include_archived and active_view == 'leads':
-                    lead_where_clauses.append("is_commercial = TRUE")
-                    lead_where_clauses.append("(is_duplicate = FALSE OR is_duplicate IS NULL)")
-                    lead_where_clauses.append("(status != 'ARCHIVED' OR status IS NULL)")
-
-                m_and_a_filter = request.args.get('m_and_a') == 'true'
-                if m_and_a_filter and active_view == 'leads':
-                    lead_where_clauses.append("acquisition_tier IN ('Tier 1 - Mega Institutional', 'Tier 2 - Regional Commercial')")
-
-                if active_only:
-                    lead_where_clauses.append("(SELECT COUNT(*) FROM \"GlobalActivities\" WHERE parent_id = l.id AND parent_type = 'Lead') > 0")
-
-                campaign_filter = request.args.get('campaign_filter', '').strip()
-                if campaign_filter == 'campaign_ready' and active_view == 'leads':
-                    lead_where_clauses.append("COALESCE(l.campaign_ready, FALSE) = TRUE")
-                elif campaign_filter == 'in_campaign' and active_view == 'leads':
-                    lead_where_clauses.append("(EXISTS (SELECT 1 FROM \"CampaignRecipients\" cr WHERE cr.lead_id = l.id) OR l.status = 'In Campaign')")
-                elif campaign_filter == 'opened' and active_view == 'leads':
-                    lead_where_clauses.append("EXISTS (SELECT 1 FROM \"CampaignRecipients\" cr WHERE cr.lead_id = l.id AND COALESCE(cr.open_count, 0) > 0)")
-                elif campaign_filter == 'no_campaign' and active_view == 'leads':
-                    lead_where_clauses.append("(NOT EXISTS (SELECT 1 FROM \"CampaignRecipients\" cr WHERE cr.lead_id = l.id) AND (l.status IS NULL OR l.status != 'In Campaign'))")
-
-                if search_q and active_view == 'leads':
-                    s_clauses, s_params = parse_advanced_search(search_q, 'leads')
-                    lead_where_clauses.extend(s_clauses)
-                    lead_params.extend(s_params)
-
-                lead_where_str = ("WHERE " + " AND ".join(lead_where_clauses)) if lead_where_clauses else ""
-
-                cur.execute(f'SELECT COUNT(*) FROM "Leads" l {lead_where_str}', tuple(lead_params))
-                leads_count = cur.fetchone()[0]
-
-                try:
-                    if is_sales_lead_scope:
-                        cur.execute('SELECT COUNT(*) FROM "Leads" WHERE is_duplicate = TRUE AND owner_id = %s;', (current_user.id,))
-                    else:
-                        cur.execute('SELECT COUNT(*) FROM "Leads" WHERE is_duplicate = TRUE;')
-                    dup_count_row = cur.fetchone()
-                    dup_count = dup_count_row[0] if dup_count_row else 0
-                except Exception:
-                    conn.rollback()
-                    dup_count = 0
-
-                try:
-                    if is_sales_lead_scope:
-                        cur.execute('SELECT COUNT(*) FROM "Leads" l WHERE l.owner_id = %s AND COALESCE(l.campaign_ready, FALSE) = TRUE AND COALESCE(l.is_commercial, TRUE) = TRUE AND COALESCE(l.is_duplicate, FALSE) = FALSE;', (current_user.id,))
-                    else:
-                        cur.execute('SELECT COUNT(*) FROM "Leads" l WHERE COALESCE(l.campaign_ready, FALSE) = TRUE AND COALESCE(l.is_commercial, TRUE) = TRUE AND COALESCE(l.is_duplicate, FALSE) = FALSE;')
-                    cr_row = cur.fetchone()
-                    campaign_ready_count = cr_row[0] if cr_row else 0
-                except Exception:
-                    conn.rollback()
-                    campaign_ready_count = 0
-
-                try:
-                    if is_sales_lead_scope:
-                        cur.execute('''
-                            SELECT COUNT(DISTINCT l.id) 
-                            FROM "Leads" l 
-                            WHERE l.owner_id = %s
-                              AND (EXISTS (SELECT 1 FROM "CampaignRecipients" cr WHERE cr.lead_id = l.id) OR l.status = 'In Campaign');
-                        ''', (current_user.id,))
-                    else:
-                        cur.execute('''
-                            SELECT COUNT(DISTINCT l.id) 
-                            FROM "Leads" l 
-                            WHERE (EXISTS (SELECT 1 FROM "CampaignRecipients" cr WHERE cr.lead_id = l.id) OR l.status = 'In Campaign');
-                        ''')
-                    in_camp_row = cur.fetchone()
-                    in_campaign_count = in_camp_row[0] if in_camp_row else 0
-                except Exception:
-                    conn.rollback()
-                    in_campaign_count = 0
-
-                try:
-                    if is_sales_lead_scope:
-                        cur.execute('''
-                            SELECT COUNT(DISTINCT l.id) 
-                            FROM "Leads" l 
-                            WHERE l.owner_id = %s
-                              AND EXISTS (SELECT 1 FROM "CampaignRecipients" cr WHERE cr.lead_id = l.id AND COALESCE(cr.open_count, 0) > 0);
-                        ''', (current_user.id,))
-                    else:
-                        cur.execute('''
-                            SELECT COUNT(DISTINCT l.id) 
-                            FROM "Leads" l 
-                            WHERE EXISTS (SELECT 1 FROM "CampaignRecipients" cr WHERE cr.lead_id = l.id AND COALESCE(cr.open_count, 0) > 0);
-                        ''')
-                    opened_row = cur.fetchone()
-                    opened_leads_count = opened_row[0] if opened_row else 0
-                except Exception:
-                    conn.rollback()
-                    opened_leads_count = 0
-
-                lead_sql_base = f'''
-                    SELECT l.*, 
-                           (SELECT COUNT(*) FROM "GlobalActivities" WHERE parent_id = l.id AND parent_type = 'Lead') as activity_count, 
-                           (SELECT MAX(timestamp) FROM "GlobalActivities" WHERE parent_id = l.id AND parent_type = 'Lead') as last_contact,
-                           (SELECT description FROM "GlobalActivities" WHERE parent_id = l.id AND parent_type = 'Lead' ORDER BY timestamp DESC LIMIT 1) as last_note,
-                           (SELECT cr.status || '::' || mc.name || '::' || COALESCE(cr.open_count, 0) || '::' || COALESCE(to_char(cr.opened_at, 'MM/DD HH:MI AM'), '')
-                            FROM "CampaignRecipients" cr
-                            JOIN "MarketingCampaigns" mc ON cr.campaign_id = mc.id
-                            WHERE cr.lead_id = l.id
-                            ORDER BY cr.id DESC LIMIT 1) as campaign_info
-                    FROM "Leads" l 
-                    {lead_where_str}
-                '''
-                
-                cur.execute(f'{lead_sql_base} ORDER BY {l_sort} {l_dir} NULLS LAST, id ASC LIMIT %s OFFSET %s', tuple(lead_params + [per_page, offset]))
-                leads = cur.fetchall()
-                total_pages = (leads_count + per_page - 1) // per_page
-        except Exception as lead_err:
-            conn.rollback()
-            current_app.logger.warning(f"[OPERATIONS] Leads fetch warning: {lead_err}")
+        # 1. FETCH ACCOUNTS (CQRS Active-View Gated + Set-Based LEFT JOIN)
+        if active_view in ('accounts', 'monitor', 'dispatch', 'workforce') or is_json_export:
             try:
-                with conn.cursor() as fb_cur:
-                    fb_sql_base = f'''
-                        SELECT l.*, 
-                               (SELECT COUNT(*) FROM "GlobalActivities" WHERE parent_id = l.id AND parent_type = 'Lead') as activity_count, 
-                               (SELECT MAX(timestamp) FROM "GlobalActivities" WHERE parent_id = l.id AND parent_type = 'Lead') as last_contact,
-                               (SELECT description FROM "GlobalActivities" WHERE parent_id = l.id AND parent_type = 'Lead' ORDER BY timestamp DESC LIMIT 1) as last_note,
-                               NULL as campaign_info
-                        FROM "Leads" l 
-                        {lead_where_str}
-                    '''
-                    fb_cur.execute(f'{fb_sql_base} ORDER BY {l_sort} {l_dir} NULLS LAST, id ASC LIMIT %s OFFSET %s', tuple(lead_params + [per_page, offset]))
-                    leads = fb_cur.fetchall()
-                    total_pages = (leads_count + per_page - 1) // per_page
-            except Exception as fb_err:
+                with conn.cursor() as cur:
+                    is_sales_account_scope = (user_role == 'Sales')
+                    if active_view == 'accounts' or is_json_export:
+                        account_sql_base = '''
+                            SELECT c.*,
+                                   COALESCE(cnt.contact_count, 0) as contact_count,
+                                   COALESCE(ga.activity_count, 0) as activity_count,
+                                   ga.last_contact,
+                                   ga.last_note
+                            FROM "Customers" c
+                            LEFT JOIN (
+                                SELECT account_id, COUNT(*) as contact_count
+                                FROM "Contacts"
+                                GROUP BY account_id
+                            ) cnt ON cnt.account_id = c.customer_id
+                            LEFT JOIN (
+                                SELECT parent_id,
+                                       COUNT(*) as activity_count,
+                                       MAX(timestamp) as last_contact,
+                                       (ARRAY_AGG(description ORDER BY timestamp DESC))[1] as last_note
+                                FROM "GlobalActivities"
+                                WHERE parent_type = 'Account'
+                                GROUP BY parent_id
+                            ) ga ON ga.parent_id = c.customer_id
+                        '''
+                        where_clauses = []
+                        params = []
+                        if is_sales_account_scope:
+                            where_clauses.append("c.assigned_rep_id = %s")
+                            params.append(current_user.id)
+                        if active_only:
+                            where_clauses.append("COALESCE(ga.activity_count, 0) > 0")
+                        if search_q and active_view == 'accounts':
+                            s_clauses, s_params = parse_advanced_search(search_q, 'accounts')
+                            where_clauses.extend(s_clauses)
+                            params.extend(s_params)
+                        full_where = ("WHERE " + " AND ".join(where_clauses)) if where_clauses else ""
+                        cur.execute(f"{account_sql_base} {full_where} ORDER BY {a_sort} {a_dir}", tuple(params))
+                        clients = cur.fetchall()
+                    else:
+                        # Lightweight customer lookup for Workforce/Dispatch select dropdowns
+                        cur.execute('SELECT customer_id, company_name, city, company_address FROM "Customers" ORDER BY company_name ASC')
+                        clients = cur.fetchall()
+            except Exception as acc_err:
                 conn.rollback()
-                current_app.logger.error(f"[OPERATIONS] Leads fallback fatal: {fb_err}")
+                current_app.logger.warning(f"[OPERATIONS] Accounts fetch warning: {acc_err}")
+                clients = []
+
+        # 2. FETCH LEADS (CQRS Active-View Gated + Set-Based LEFT JOIN on Paged Leads)
+        if active_view == 'leads' or is_json_export:
+            try:
+                with conn.cursor() as cur:
+                    lead_where_clauses = []
+                    lead_params = []
+                    is_sales_lead_scope = (user_role == 'Sales')
+
+                    if is_sales_lead_scope:
+                        lead_where_clauses.append("l.owner_id = %s")
+                        lead_params.append(current_user.id)
+
+                    include_archived = request.args.get('include_archived') == 'true'
+                    duplicates_only = request.args.get('duplicates_only') == 'true'
+
+                    if duplicates_only and active_view == 'leads':
+                        lead_where_clauses.append("l.is_duplicate = TRUE")
+                        l_sort, l_dir = "duplicate_group_id ASC, id", "ASC"
+                    elif not include_archived and active_view == 'leads':
+                        lead_where_clauses.append("l.is_commercial = TRUE")
+                        lead_where_clauses.append("(l.is_duplicate = FALSE OR l.is_duplicate IS NULL)")
+                        lead_where_clauses.append("(l.status != 'ARCHIVED' OR l.status IS NULL)")
+
+                    m_and_a_filter = request.args.get('m_and_a') == 'true'
+                    if m_and_a_filter and active_view == 'leads':
+                        lead_where_clauses.append("l.acquisition_tier IN ('Tier 1 - Mega Institutional', 'Tier 2 - Regional Commercial')")
+
+                    if active_only:
+                        lead_where_clauses.append("EXISTS (SELECT 1 FROM \"GlobalActivities\" ga_f WHERE ga_f.parent_id = l.id AND ga_f.parent_type = 'Lead')")
+
+                    if campaign_filter == 'campaign_ready' and active_view == 'leads':
+                        lead_where_clauses.append("COALESCE(l.campaign_ready, FALSE) = TRUE")
+                    elif campaign_filter == 'in_campaign' and active_view == 'leads':
+                        lead_where_clauses.append("(EXISTS (SELECT 1 FROM \"CampaignRecipients\" cr WHERE cr.lead_id = l.id) OR l.status = 'In Campaign')")
+                    elif campaign_filter == 'opened' and active_view == 'leads':
+                        lead_where_clauses.append("EXISTS (SELECT 1 FROM \"CampaignRecipients\" cr WHERE cr.lead_id = l.id AND COALESCE(cr.open_count, 0) > 0)")
+                    elif campaign_filter == 'no_campaign' and active_view == 'leads':
+                        lead_where_clauses.append("(NOT EXISTS (SELECT 1 FROM \"CampaignRecipients\" cr WHERE cr.lead_id = l.id) AND (l.status IS NULL OR l.status != 'In Campaign'))")
+
+                    if search_q and active_view == 'leads':
+                        s_clauses, s_params = parse_advanced_search(search_q, 'leads')
+                        lead_where_clauses.extend(s_clauses)
+                        lead_params.extend(s_params)
+
+                    lead_where_str = ("WHERE " + " AND ".join(lead_where_clauses)) if lead_where_clauses else ""
+
+                    # Only run filtered COUNT(*) if non-default filters are active; otherwise use 30s cached leads_count
+                    has_custom_lead_filters = bool(search_q or duplicates_only or include_archived or m_and_a_filter or active_only or campaign_filter)
+                    if has_custom_lead_filters:
+                        cur.execute(f'SELECT COUNT(*) FROM "Leads" l {lead_where_str}', tuple(lead_params))
+                        leads_count = cur.fetchone()[0]
+
+                    # Set-based CTE: paginate 50 leads first, then LEFT JOIN GlobalActivities & CampaignRecipients only for those 50 IDs
+                    if sort_by in ('activities', 'last_contact'):
+                        lead_sql = f'''
+                            WITH ga_all AS (
+                                SELECT parent_id,
+                                       COUNT(*) AS activity_count,
+                                       MAX(timestamp) AS last_contact,
+                                       (ARRAY_AGG(description ORDER BY timestamp DESC))[1] AS last_note
+                                FROM "GlobalActivities"
+                                WHERE parent_type = 'Lead'
+                                GROUP BY parent_id
+                            ),
+                            paged_leads AS (
+                                SELECT l.*,
+                                       COALESCE(ga.activity_count, 0) AS activity_count,
+                                       ga.last_contact,
+                                       ga.last_note
+                                FROM "Leads" l
+                                LEFT JOIN ga_all ga ON ga.parent_id = l.id
+                                {lead_where_str}
+                                ORDER BY {l_sort} {l_dir} NULLS LAST, l.id ASC
+                                LIMIT %s OFFSET %s
+                            ),
+                            cr_latest AS (
+                                SELECT DISTINCT ON (cr.lead_id)
+                                       cr.lead_id,
+                                       cr.status || '::' || mc.name || '::' || COALESCE(cr.open_count, 0) || '::' || COALESCE(to_char(cr.opened_at, 'MM/DD HH:MI AM'), '') AS campaign_info
+                                FROM "CampaignRecipients" cr
+                                JOIN "MarketingCampaigns" mc ON cr.campaign_id = mc.id
+                                WHERE cr.lead_id IN (SELECT id FROM paged_leads)
+                                ORDER BY cr.lead_id, cr.id DESC
+                            )
+                            SELECT pl.*, cr_latest.campaign_info
+                            FROM paged_leads pl
+                            LEFT JOIN cr_latest ON cr_latest.lead_id = pl.id
+                            ORDER BY {l_sort.replace('ga.', 'pl.')} {l_dir} NULLS LAST, pl.id ASC;
+                        '''
+                    else:
+                        lead_sql = f'''
+                            WITH paged_leads AS (
+                                SELECT l.*
+                                FROM "Leads" l
+                                {lead_where_str}
+                                ORDER BY {l_sort} {l_dir} NULLS LAST, l.id ASC
+                                LIMIT %s OFFSET %s
+                            ),
+                            ga_agg AS (
+                                SELECT parent_id,
+                                       COUNT(*) AS activity_count,
+                                       MAX(timestamp) AS last_contact,
+                                       (ARRAY_AGG(description ORDER BY timestamp DESC))[1] AS last_note
+                                FROM "GlobalActivities"
+                                WHERE parent_type = 'Lead'
+                                  AND parent_id IN (SELECT id FROM paged_leads)
+                                GROUP BY parent_id
+                            ),
+                            cr_latest AS (
+                                SELECT DISTINCT ON (cr.lead_id)
+                                       cr.lead_id,
+                                       cr.status || '::' || mc.name || '::' || COALESCE(cr.open_count, 0) || '::' || COALESCE(to_char(cr.opened_at, 'MM/DD HH:MI AM'), '') AS campaign_info
+                                FROM "CampaignRecipients" cr
+                                JOIN "MarketingCampaigns" mc ON cr.campaign_id = mc.id
+                                WHERE cr.lead_id IN (SELECT id FROM paged_leads)
+                                ORDER BY cr.lead_id, cr.id DESC
+                            )
+                            SELECT pl.*,
+                                   COALESCE(ga.activity_count, 0) AS activity_count,
+                                   ga.last_contact,
+                                   ga.last_note,
+                                   cr_latest.campaign_info
+                            FROM paged_leads pl
+                            LEFT JOIN ga_agg ga ON ga.parent_id = pl.id
+                            LEFT JOIN cr_latest ON cr_latest.lead_id = pl.id
+                            ORDER BY {l_sort} {l_dir} NULLS LAST, pl.id ASC;
+                        '''
+
+                    cur.execute(lead_sql, tuple(lead_params + [per_page, offset]))
+                    leads = cur.fetchall()
+                    total_pages = max(1, (leads_count + per_page - 1) // per_page)
+            except Exception as lead_err:
+                conn.rollback()
+                current_app.logger.warning(f"[OPERATIONS] Leads fetch warning: {lead_err}")
                 leads = []
                 leads_count = 0
 
-        # 3. GLOBAL DISPATCH & MONITORING (SigmaFidelity™ HWB-QMS-11.2)
-        try:
-            with conn.cursor() as cur:
-                try:
-                    cur.execute('''
-                        SELECT w.*, 
-                               c.company_name, 
-                               c.company_address as facility_address,
-                               c.city as facility_city,
-                               COALESCE(s.service_requested, w.service_type, 'Routine Nightly Custodial') as service_requested,
-                               e.first_name as tech_first_name,
-                               e.last_name as tech_last_name,
-                               e.employee_number as tech_employee_number,
-                               e.phone as tech_phone,
-                               e.dps_clearance_date as tech_dps_clearance,
-                               e.badge_status as tech_badge_status
-                        FROM "WorkOrders" w 
-                        JOIN "Customers" c ON w.customer_id = c.customer_id 
-                        LEFT JOIN "Services" s ON w.service_id = s.service_id 
-                        LEFT JOIN "Employees" e ON COALESCE(w.assigned_technician_id, w.crew_lead_id) = e.id
-                        ORDER BY w.scheduled_date DESC, w.work_order_id DESC
-                    ''')
-                    work_orders = cur.fetchall()
-                except Exception as wo_err:
-                    conn.rollback()
-                    current_app.logger.warning(f"[OPERATIONS] WorkOrders fetch warning: {wo_err}")
-                    work_orders = []
-                
-                try:
-                    cur.execute('SELECT s.*, c.company_name FROM "Services" s JOIN "Customers" c ON s.customer_id = c.customer_id')
-                    services = cur.fetchall()
-                except Exception as serv_err:
-                    conn.rollback()
-                    services = []
-                
-                try:
-                    cur.execute('SELECT category, value FROM "ScopeLibrary" ORDER BY value ASC')
-                    lib_raw = cur.fetchall()
-                    for r in lib_raw: 
-                        cat = r['category'].lower() if r['category'] else 'other'
-                        if cat not in lib: lib[cat] = []
-                        lib[cat].append(r['value'])
-                except Exception as lib_err:
-                    conn.rollback()
-                
-                try:
-                    cur.execute('SELECT * FROM "GlobalActivities" ORDER BY timestamp DESC LIMIT 50')
-                    activities = cur.fetchall()
-                except Exception as act_err:
-                    conn.rollback()
-                    activities = []
-        except Exception as dispatch_err:
-            conn.rollback()
-            current_app.logger.warning(f"[OPERATIONS] Dispatch & services section warning: {dispatch_err}")
-
-        # 4. CONSTRUCTION BIDS PIPELINE
-        try:
-            with conn.cursor() as cur:
-                is_sales_bid_scope = (getattr(current_user, 'role', '') == 'Sales')
-                bid_where_clauses = []
-                bid_params = []
-                if is_sales_bid_scope:
-                    bid_where_clauses.append("cb.assigned_rep_id = %s")
-                    bid_params.append(current_user.id)
-                if search_q and active_view == 'construction_bids':
-                    s_clauses, s_params = parse_advanced_search(search_q, 'construction_bids')
-                    bid_where_clauses.extend(s_clauses)
-                    bid_params.extend(s_params)
-                bid_where_str = ("WHERE " + " AND ".join(bid_where_clauses)) if bid_where_clauses else ""
-
-                cur.execute(f'SELECT COUNT(*) FROM "ConstructionBids" cb {bid_where_str}', tuple(bid_params))
-                bids_count_row = cur.fetchone()
-                bids_count = bids_count_row[0] if bids_count_row else 0
-
-                if active_view == 'construction_bids':
-                    total_pages = (bids_count + per_page - 1) // per_page or 1
-
-                nulls_clause = "NULLS LAST" if b_dir == 'ASC' else "NULLS FIRST"
-                cur.execute(f'''
-                    SELECT cb.*, 
-                           (SELECT COUNT(*) FROM "GlobalActivities" WHERE parent_id = cb.id AND parent_type = 'ConstructionBid') as activity_count, 
-                           (SELECT MAX(timestamp) FROM "GlobalActivities" WHERE parent_id = cb.id AND parent_type = 'ConstructionBid') as last_contact,
-                           (SELECT description FROM "GlobalActivities" WHERE parent_id = cb.id AND parent_type = 'ConstructionBid' ORDER BY timestamp DESC LIMIT 1) as last_note
-                    FROM "ConstructionBids" cb
-                    {bid_where_str}
-                    ORDER BY {b_sort} {b_dir} {nulls_clause}, cb.id DESC
-                    LIMIT %s OFFSET %s
-                ''', tuple(bid_params + [per_page, offset]))
-                raw_construction_bids = cur.fetchall()
-                processed_cb = []
-                central_tz = ZoneInfo('America/Chicago')
-                for cb_row in raw_construction_bids:
-                    cb_dict = dict(cb_row)
-                    for dk in ['bid_due_date', 'last_contact', 'created_at', 'updated_at']:
-                        v = cb_dict.get(dk)
-                        if v and hasattr(v, 'astimezone'):
-                            cb_dict[dk] = v.astimezone(central_tz)
-                    processed_cb.append(cb_dict)
-                construction_bids = processed_cb
-        except Exception as bid_err:
-            conn.rollback()
-            current_app.logger.warning(f"[OPERATIONS] ConstructionBids fetch warning: {bid_err}")
-            construction_bids = []
-            bids_count = 0
-
-        # 4b. INSTITUTIONAL BIDS PIPELINE (HWB-QMS-11.6)
-        try:
-            with conn.cursor() as cur:
-                inst_where_clauses = []
-                inst_params = []
-                if search_q and active_view == 'institutional_bids':
-                    s_clauses, s_params = parse_advanced_search(search_q, 'institutional_bids')
-                    inst_where_clauses.extend(s_clauses)
-                    inst_params.extend(s_params)
-                inst_where_str = ("WHERE " + " AND ".join(inst_where_clauses)) if inst_where_clauses else ""
-
-                cur.execute(f'SELECT COUNT(*) FROM "InstitutionalBids" ib {inst_where_str}', tuple(inst_params))
-                inst_count_row = cur.fetchone()
-                inst_bids_count = inst_count_row[0] if inst_count_row else 0
-
-                if active_view == 'institutional_bids':
-                    total_pages = (inst_bids_count + per_page - 1) // per_page or 1
-
-                inst_nulls_clause = "NULLS LAST" if ib_dir == 'ASC' else "NULLS FIRST"
-                cur.execute(f'''
-                    SELECT ib.*,
-                           (SELECT COUNT(*) FROM "GlobalActivities" WHERE parent_id = ib.id AND parent_type = 'InstitutionalBid') as activity_count,
-                           (SELECT MAX(timestamp) FROM "GlobalActivities" WHERE parent_id = ib.id AND parent_type = 'InstitutionalBid') as last_contact
-                    FROM "InstitutionalBids" ib
-                    {inst_where_str}
-                    ORDER BY {ib_sort} {ib_dir} {inst_nulls_clause}, ib.id DESC
-                    LIMIT %s OFFSET %s
-                ''', tuple(inst_params + [per_page, offset]))
-                raw_inst_bids = cur.fetchall()
-                processed_inst_bids = []
-                central_tz = ZoneInfo('America/Chicago')
-                for row in raw_inst_bids:
-                    row_dict = dict(row)
-                    raw_summary = row_dict.get('compliance_summary')
-                    parsed_compliance = None
-                    if raw_summary and isinstance(raw_summary, str) and raw_summary.strip().startswith('{'):
+        # 3. GLOBAL DISPATCH & MONITORING (CQRS Active-View Gated)
+        if active_view in ('monitor', 'dispatch', 'scope') or is_json_export:
+            try:
+                with conn.cursor() as cur:
+                    if active_view in ('monitor', 'dispatch') or is_json_export:
                         try:
-                            parsed_compliance = json.loads(raw_summary)
+                            cur.execute('''
+                                SELECT w.*, 
+                                       c.company_name, 
+                                       c.company_address as facility_address,
+                                       c.city as facility_city,
+                                       COALESCE(s.service_requested, w.service_type, 'Routine Nightly Custodial') as service_requested,
+                                       e.first_name as tech_first_name,
+                                       e.last_name as tech_last_name,
+                                       e.employee_number as tech_employee_number,
+                                       e.phone as tech_phone,
+                                       e.dps_clearance_date as tech_dps_clearance,
+                                       e.badge_status as tech_badge_status
+                                FROM "WorkOrders" w 
+                                JOIN "Customers" c ON w.customer_id = c.customer_id 
+                                LEFT JOIN "Services" s ON w.service_id = s.service_id 
+                                LEFT JOIN "Employees" e ON COALESCE(w.assigned_technician_id, w.crew_lead_id) = e.id
+                                ORDER BY w.scheduled_date DESC, w.work_order_id DESC
+                            ''')
+                            work_orders = cur.fetchall()
+                        except Exception as wo_err:
+                            conn.rollback()
+                            current_app.logger.warning(f"[OPERATIONS] WorkOrders fetch warning: {wo_err}")
+                            work_orders = []
+
+                    if active_view == 'scope' or is_json_export:
+                        try:
+                            cur.execute('SELECT s.*, c.company_name FROM "Services" s JOIN "Customers" c ON s.customer_id = c.customer_id')
+                            services = cur.fetchall()
                         except Exception:
-                            parsed_compliance = None
-                    row_dict['parsed_compliance'] = parsed_compliance
+                            conn.rollback()
+                            services = []
 
-                    # Convert timestamps to Texas Central Time (CDT/CST)
-                    for dk in ['pre_bid_datetime', 'site_walk_datetime', 'bid_due_date', 'public_opening_datetime', 'created_at', 'updated_at', 'last_contact']:
-                        v = row_dict.get(dk)
-                        if v and hasattr(v, 'astimezone'):
-                            row_dict[dk] = v.astimezone(central_tz)
+                        try:
+                            cur.execute('SELECT category, value FROM "ScopeLibrary" ORDER BY value ASC')
+                            lib_raw = cur.fetchall()
+                            for r in lib_raw:
+                                cat = r['category'].lower() if r['category'] else 'other'
+                                if cat not in lib:
+                                    lib[cat] = []
+                                lib[cat].append(r['value'])
+                        except Exception:
+                            conn.rollback()
 
-                    processed_inst_bids.append(row_dict)
-                institutional_bids = processed_inst_bids
-        except Exception as inst_err:
-            conn.rollback()
-            current_app.logger.warning(f"[OPERATIONS] InstitutionalBids fetch warning: {inst_err}")
-            institutional_bids = []
-            inst_bids_count = 0
+                    if is_json_export:
+                        try:
+                            cur.execute('SELECT * FROM "GlobalActivities" ORDER BY timestamp DESC LIMIT 50')
+                            activities = cur.fetchall()
+                        except Exception:
+                            conn.rollback()
+                            activities = []
+            except Exception as dispatch_err:
+                conn.rollback()
+                current_app.logger.warning(f"[OPERATIONS] Dispatch & services section warning: {dispatch_err}")
 
-        # 4c. GENERAL CONTRACTORS MASTER REGISTRY (Migration 025)
-        try:
-            with conn.cursor() as cur:
-                gc_where_clauses = []
-                gc_params = []
-                if search_q and active_view == 'general_contractors':
-                    s_clauses, s_params = parse_advanced_search(search_q, 'general_contractors')
-                    gc_where_clauses.extend(s_clauses)
-                    gc_params.extend(s_params)
-                gc_where_str = ("WHERE " + " AND ".join(gc_where_clauses)) if gc_where_clauses else ""
+        # 4. CONSTRUCTION BIDS PIPELINE (CQRS Active-View Gated + Set-Based LEFT JOIN)
+        if active_view in ('construction_bids', 'gc_bids') or is_json_export:
+            try:
+                with conn.cursor() as cur:
+                    is_sales_bid_scope = (user_role == 'Sales')
+                    bid_where_clauses = []
+                    bid_params = []
+                    if is_sales_bid_scope:
+                        bid_where_clauses.append("cb.assigned_rep_id = %s")
+                        bid_params.append(current_user.id)
+                    if search_q and active_view in ('construction_bids', 'gc_bids'):
+                        s_clauses, s_params = parse_advanced_search(search_q, 'construction_bids')
+                        bid_where_clauses.extend(s_clauses)
+                        bid_params.extend(s_params)
+                    bid_where_str = ("WHERE " + " AND ".join(bid_where_clauses)) if bid_where_clauses else ""
 
-                cur.execute(f'''
-                    SELECT gc.*,
-                           (SELECT COUNT(*) FROM "ConstructionBids" cb WHERE (cb.gc_id = gc.id OR cb.gc_name ILIKE gc.company_name) AND cb.status NOT IN ('Lost', 'Archived Walkthrough Photo')) as active_bids_count,
-                           (SELECT COALESCE(SUM(cb.estimated_value), 0) FROM "ConstructionBids" cb WHERE (cb.gc_id = gc.id OR cb.gc_name ILIKE gc.company_name) AND cb.status NOT IN ('Lost', 'Archived Walkthrough Photo')) as total_pipeline_value
-                    FROM "GeneralContractors" gc
-                    {gc_where_str}
-                    ORDER BY gc.vetting_score DESC, gc.id ASC
-                ''', tuple(gc_params))
-                general_contractors = cur.fetchall()
-                general_contractors_count = len(general_contractors)
-        except Exception as gc_err:
-            conn.rollback()
-            current_app.logger.warning(f"[OPERATIONS] GeneralContractors fetch warning: {gc_err}")
-            general_contractors = []
-            general_contractors_count = 0
+                    if bid_where_clauses:
+                        cur.execute(f'SELECT COUNT(*) FROM "ConstructionBids" cb {bid_where_str}', tuple(bid_params))
+                        bids_count_row = cur.fetchone()
+                        bids_count = bids_count_row[0] if bids_count_row else 0
 
-        # 4d. MARKETING DEPARTMENT & CAMPAIGNS PIPELINE (HWB-QMS-8.0 / HWB-SAL-2026-001)
-        try:
-            with conn.cursor() as cur:
-                mkt_where_clauses = []
-                mkt_params = []
-                if search_q and active_view == 'marketing':
-                    mkt_where_clauses.append("(campaign_code ILIKE %s OR name ILIKE %s OR target_sector ILIKE %s OR status ILIKE %s)")
-                    param_m = f"%{search_q}%"
-                    mkt_params.extend([param_m, param_m, param_m, param_m])
-                mkt_where_str = ("WHERE " + " AND ".join(mkt_where_clauses)) if mkt_where_clauses else ""
+                    if active_view in ('construction_bids', 'gc_bids'):
+                        total_pages = (bids_count + per_page - 1) // per_page or 1
 
-                cur.execute(f'SELECT COUNT(*) FROM "MarketingCampaigns" {mkt_where_str}', tuple(mkt_params))
-                mkt_count_row = cur.fetchone()
-                mkt_campaigns_count = mkt_count_row[0] if mkt_count_row else 0
+                    nulls_clause = "NULLS LAST" if b_dir == 'ASC' else "NULLS FIRST"
+                    cur.execute(f'''
+                        SELECT cb.*,
+                               COALESCE(ga.activity_count, 0) as activity_count,
+                               ga.last_contact,
+                               ga.last_note
+                        FROM "ConstructionBids" cb
+                        LEFT JOIN (
+                            SELECT parent_id,
+                                   COUNT(*) as activity_count,
+                                   MAX(timestamp) as last_contact,
+                                   (ARRAY_AGG(description ORDER BY timestamp DESC))[1] as last_note
+                            FROM "GlobalActivities"
+                            WHERE parent_type = 'ConstructionBid'
+                            GROUP BY parent_id
+                        ) ga ON ga.parent_id = cb.id
+                        {bid_where_str}
+                        ORDER BY {b_sort} {b_dir} {nulls_clause}, cb.id DESC
+                        LIMIT %s OFFSET %s
+                    ''', tuple(bid_params + [per_page, offset]))
+                    raw_construction_bids = cur.fetchall()
+                    processed_cb = []
+                    central_tz = ZoneInfo('America/Chicago')
+                    for cb_row in raw_construction_bids:
+                        cb_dict = dict(cb_row)
+                        for dk in ['bid_due_date', 'last_contact', 'created_at', 'updated_at']:
+                            v = cb_dict.get(dk)
+                            if v and hasattr(v, 'astimezone'):
+                                cb_dict[dk] = v.astimezone(central_tz)
+                        processed_cb.append(cb_dict)
+                    construction_bids = processed_cb
+            except Exception as bid_err:
+                conn.rollback()
+                current_app.logger.warning(f"[OPERATIONS] ConstructionBids fetch warning: {bid_err}")
+                construction_bids = []
+                bids_count = 0
 
-                cur.execute(f'''
-                    SELECT * FROM "MarketingCampaigns"
-                    {mkt_where_str}
-                    ORDER BY created_at DESC, id DESC
-                ''', tuple(mkt_params))
-                marketing_campaigns = cur.fetchall()
+        # 4b. INSTITUTIONAL BIDS PIPELINE (CQRS Active-View Gated + Set-Based LEFT JOIN)
+        if active_view == 'institutional_bids' or is_json_export:
+            try:
+                with conn.cursor() as cur:
+                    inst_where_clauses = []
+                    inst_params = []
+                    if search_q and active_view == 'institutional_bids':
+                        s_clauses, s_params = parse_advanced_search(search_q, 'institutional_bids')
+                        inst_where_clauses.extend(s_clauses)
+                        inst_params.extend(s_params)
+                    inst_where_str = ("WHERE " + " AND ".join(inst_where_clauses)) if inst_where_clauses else ""
 
-                # Active campaign selection (supports query parameter ?campaign_id=X)
-                req_campaign_id = request.args.get('campaign_id', type=int)
-                active_campaign_id = req_campaign_id or (marketing_campaigns[0]['id'] if marketing_campaigns else None)
-                if active_campaign_id:
+                    if inst_where_clauses:
+                        cur.execute(f'SELECT COUNT(*) FROM "InstitutionalBids" ib {inst_where_str}', tuple(inst_params))
+                        inst_count_row = cur.fetchone()
+                        inst_bids_count = inst_count_row[0] if inst_count_row else 0
+
+                    if active_view == 'institutional_bids':
+                        total_pages = (inst_bids_count + per_page - 1) // per_page or 1
+
+                    inst_nulls_clause = "NULLS LAST" if ib_dir == 'ASC' else "NULLS FIRST"
+                    cur.execute(f'''
+                        SELECT ib.*,
+                               COALESCE(ga.activity_count, 0) as activity_count,
+                               ga.last_contact
+                        FROM "InstitutionalBids" ib
+                        LEFT JOIN (
+                            SELECT parent_id,
+                                   COUNT(*) as activity_count,
+                                   MAX(timestamp) as last_contact
+                            FROM "GlobalActivities"
+                            WHERE parent_type = 'InstitutionalBid'
+                            GROUP BY parent_id
+                        ) ga ON ga.parent_id = ib.id
+                        {inst_where_str}
+                        ORDER BY {ib_sort} {ib_dir} {inst_nulls_clause}, ib.id DESC
+                        LIMIT %s OFFSET %s
+                    ''', tuple(inst_params + [per_page, offset]))
+                    raw_inst_bids = cur.fetchall()
+                    processed_inst_bids = []
+                    central_tz = ZoneInfo('America/Chicago')
+                    for row in raw_inst_bids:
+                        row_dict = dict(row)
+                        raw_summary = row_dict.get('compliance_summary')
+                        parsed_compliance = None
+                        if raw_summary and isinstance(raw_summary, str) and raw_summary.strip().startswith('{'):
+                            try:
+                                parsed_compliance = json.loads(raw_summary)
+                            except Exception:
+                                parsed_compliance = None
+                        row_dict['parsed_compliance'] = parsed_compliance
+
+                        for dk in ['pre_bid_datetime', 'site_walk_datetime', 'bid_due_date', 'public_opening_datetime', 'created_at', 'updated_at', 'last_contact']:
+                            v = row_dict.get(dk)
+                            if v and hasattr(v, 'astimezone'):
+                                row_dict[dk] = v.astimezone(central_tz)
+
+                        processed_inst_bids.append(row_dict)
+                    institutional_bids = processed_inst_bids
+            except Exception as inst_err:
+                conn.rollback()
+                current_app.logger.warning(f"[OPERATIONS] InstitutionalBids fetch warning: {inst_err}")
+                institutional_bids = []
+                inst_bids_count = 0
+
+        # 4c. GENERAL CONTRACTORS MASTER REGISTRY (CQRS Active-View Gated)
+        if active_view == 'general_contractors' or is_json_export:
+            try:
+                with conn.cursor() as cur:
+                    gc_where_clauses = []
+                    gc_params = []
+                    if search_q and active_view == 'general_contractors':
+                        s_clauses, s_params = parse_advanced_search(search_q, 'general_contractors')
+                        gc_where_clauses.extend(s_clauses)
+                        gc_params.extend(s_params)
+                    gc_where_str = ("WHERE " + " AND ".join(gc_where_clauses)) if gc_where_clauses else ""
+
+                    cur.execute(f'''
+                        SELECT gc.*,
+                               COALESCE(cb_agg.active_bids_count, 0) as active_bids_count,
+                               COALESCE(cb_agg.total_pipeline_value, 0) as total_pipeline_value
+                        FROM "GeneralContractors" gc
+                        LEFT JOIN (
+                            SELECT gc_inner.id as gc_id,
+                                   COUNT(cb.id) as active_bids_count,
+                                   COALESCE(SUM(cb.estimated_value), 0) as total_pipeline_value
+                            FROM "GeneralContractors" gc_inner
+                            JOIN "ConstructionBids" cb
+                              ON (cb.gc_id = gc_inner.id OR LOWER(cb.gc_name) = LOWER(gc_inner.company_name))
+                             AND cb.status NOT IN ('Lost', 'Archived Walkthrough Photo')
+                            GROUP BY gc_inner.id
+                        ) cb_agg ON cb_agg.gc_id = gc.id
+                        {gc_where_str}
+                        ORDER BY gc.vetting_score DESC, gc.id ASC
+                    ''', tuple(gc_params))
+                    general_contractors = cur.fetchall()
+                    general_contractors_count = len(general_contractors)
+            except Exception as gc_err:
+                conn.rollback()
+                current_app.logger.warning(f"[OPERATIONS] GeneralContractors fetch warning: {gc_err}")
+                general_contractors = []
+                general_contractors_count = 0
+
+        # 4d. MARKETING DEPARTMENT & CAMPAIGNS PIPELINE (CQRS Active-View Gated)
+        if active_view == 'marketing' or is_json_export:
+            try:
+                with conn.cursor() as cur:
+                    mkt_where_clauses = []
+                    mkt_params = []
+                    if search_q and active_view == 'marketing':
+                        mkt_where_clauses.append("(campaign_code ILIKE %s OR name ILIKE %s OR target_sector ILIKE %s OR status ILIKE %s)")
+                        param_m = f"%{search_q}%"
+                        mkt_params.extend([param_m, param_m, param_m, param_m])
+                    mkt_where_str = ("WHERE " + " AND ".join(mkt_where_clauses)) if mkt_where_clauses else ""
+
+                    cur.execute(f'''
+                        SELECT * FROM "MarketingCampaigns"
+                        {mkt_where_str}
+                        ORDER BY created_at DESC, id DESC
+                    ''', tuple(mkt_params))
+                    marketing_campaigns = cur.fetchall()
+                    mkt_campaigns_count = len(marketing_campaigns)
+
+                    req_campaign_id = request.args.get('campaign_id', type=int)
+                    active_campaign_id = req_campaign_id or (marketing_campaigns[0]['id'] if marketing_campaigns else None)
+                    if active_campaign_id:
+                        try:
+                            cur.execute('''
+                                SELECT cr.*, l.phone, l.address, l.estimated_annual_value
+                                FROM "CampaignRecipients" cr
+                                LEFT JOIN "Leads" l ON cr.lead_id = l.id
+                                WHERE cr.campaign_id = %s
+                                ORDER BY cr.capacity DESC NULLS LAST, cr.id ASC
+                                LIMIT 150
+                            ''', (active_campaign_id,))
+                            campaign_recipients = cur.fetchall()
+                        except Exception:
+                            conn.rollback()
+                            campaign_recipients = []
+
                     try:
                         cur.execute('''
-                            SELECT cr.*, l.phone, l.address, l.estimated_annual_value
-                            FROM "CampaignRecipients" cr
-                            LEFT JOIN "Leads" l ON cr.lead_id = l.id
-                            WHERE cr.campaign_id = %s
-                            ORDER BY cr.capacity DESC NULLS LAST, cr.id ASC
-                            LIMIT 150
-                        ''', (active_campaign_id,))
-                        campaign_recipients = cur.fetchall()
+                            SELECT id, recipient, subject, left(body, 350) as body_preview, created_at, status, tracking_token, campaign_id, recipient_id
+                            FROM "PendingOutbox"
+                            WHERE UPPER(status) = 'PENDING'
+                            ORDER BY id DESC
+                            LIMIT 100
+                        ''')
+                        pending_outbox_items = cur.fetchall()
                     except Exception:
                         conn.rollback()
-                        campaign_recipients = []
+                        pending_outbox_items = []
 
-                # PendingOutbox records awaiting CEO approval
-                try:
-                    cur.execute('''
-                        SELECT id, recipient, subject, left(body, 350) as body_preview, created_at, status, tracking_token, campaign_id, recipient_id
-                        FROM "PendingOutbox"
-                        WHERE UPPER(status) = 'PENDING'
-                        ORDER BY id DESC
-                        LIMIT 100
-                    ''')
-                    pending_outbox_items = cur.fetchall()
-                    cur.execute("SELECT COUNT(*) FROM \"PendingOutbox\" WHERE UPPER(status) = 'PENDING'")
-                    pending_outbox_count = cur.fetchone()[0]
-                except Exception:
-                    conn.rollback()
-                    pending_outbox_items = []
-                    pending_outbox_count = 0
+                    try:
+                        cur.execute('''
+                            SELECT COALESCE(SUM(l.estimated_annual_value), 0)
+                            FROM "CampaignRecipients" cr
+                            LEFT JOIN "Leads" l ON cr.lead_id = l.id
+                        ''')
+                        pipe_row = cur.fetchone()
+                        marketing_pipeline_value = float(pipe_row[0]) if pipe_row and pipe_row[0] else 0.0
+                    except Exception:
+                        conn.rollback()
+                        marketing_pipeline_value = 0.0
+            except Exception as mkt_err:
+                conn.rollback()
+                current_app.logger.warning(f"[OPERATIONS] Marketing campaigns fetch warning: {mkt_err}")
+                marketing_campaigns = []
+                marketing_pipeline_value = 0.0
+                campaign_recipients = []
+                pending_outbox_items = []
 
-                # Empirical targeted annual pipeline calculation (Empirical Integrity Mandate)
-                try:
-                    cur.execute('''
-                        SELECT COALESCE(SUM(l.estimated_annual_value), 0)
-                        FROM "CampaignRecipients" cr
-                        LEFT JOIN "Leads" l ON cr.lead_id = l.id
-                    ''')
-                    pipe_row = cur.fetchone()
-                    marketing_pipeline_value = float(pipe_row[0]) if pipe_row and pipe_row[0] else 0.0
-                except Exception:
-                    conn.rollback()
-                    marketing_pipeline_value = 0.0
-        except Exception as mkt_err:
-            conn.rollback()
-            current_app.logger.warning(f"[OPERATIONS] Marketing campaigns fetch warning: {mkt_err}")
-            marketing_campaigns = []
-            mkt_campaigns_count = 0
-            marketing_pipeline_value = 0.0
-            campaign_recipients = []
-            pending_outbox_items = []
-            pending_outbox_count = 0
+        # 4e. SAFETY & EHSQ DEPARTMENT (CQRS Active-View Gated)
+        if active_view == 'safety' or is_json_export:
+            try:
+                with conn.cursor() as cur:
+                    safety_where_clauses = []
+                    safety_params = []
+                    if search_q and active_view == 'safety':
+                        safety_where_clauses.append("(code ILIKE %s OR title ILIKE %s OR target_sector ILIKE %s OR regulatory_scope ILIKE %s)")
+                        param_s = f"%{search_q}%"
+                        safety_params.extend([param_s, param_s, param_s, param_s])
+                    safety_where_str = ("WHERE " + " AND ".join(safety_where_clauses)) if safety_where_clauses else ""
 
-        # 4e. SAFETY & EHSQ DEPARTMENT (HWB-QMS-5.5 / HWB-QMS-5.7 / ISO 45001)
-        try:
-            with conn.cursor() as cur:
-                safety_where_clauses = []
-                safety_params = []
-                if search_q and active_view == 'safety':
-                    safety_where_clauses.append("(code ILIKE %s OR title ILIKE %s OR target_sector ILIKE %s OR regulatory_scope ILIKE %s)")
-                    param_s = f"%{search_q}%"
-                    safety_params.extend([param_s, param_s, param_s, param_s])
-                safety_where_str = ("WHERE " + " AND ".join(safety_where_clauses)) if safety_where_clauses else ""
+                    cur.execute(f'SELECT * FROM "SafetyManuals" {safety_where_str} ORDER BY id ASC', tuple(safety_params))
+                    safety_manuals = cur.fetchall()
 
-                cur.execute(f'SELECT * FROM "SafetyManuals" {safety_where_str} ORDER BY id ASC', tuple(safety_params))
-                safety_manuals = cur.fetchall()
+                    cur.execute('SELECT * FROM "JobHazardAnalyses" ORDER BY inspection_date DESC, id DESC LIMIT 50')
+                    safety_jhas = cur.fetchall()
 
-                cur.execute('SELECT * FROM "JobHazardAnalyses" ORDER BY inspection_date DESC, id DESC LIMIT 50')
-                safety_jhas = cur.fetchall()
+                    cur.execute('SELECT * FROM "SafetyIncidents" ORDER BY incident_date DESC, id DESC LIMIT 50')
+                    safety_incidents = cur.fetchall()
+            except Exception as safe_err:
+                conn.rollback()
+                current_app.logger.warning(f"[OPERATIONS] Safety fetch warning: {safe_err}")
+                safety_manuals, safety_jhas, safety_incidents = [], [], []
 
-                cur.execute('SELECT * FROM "SafetyIncidents" ORDER BY incident_date DESC, id DESC LIMIT 50')
-                safety_incidents = cur.fetchall()
-        except Exception as safe_err:
-            conn.rollback()
-            current_app.logger.warning(f"[OPERATIONS] Safety fetch warning: {safe_err}")
-            safety_manuals, safety_jhas, safety_incidents = [], [], []
+        # 6. WORKFORCE & SUBCONTRACTORS (CQRS Active-View Gated)
+        if active_view == 'workforce' or is_json_export:
+            try:
+                with conn.cursor() as cur:
+                    applicant_where_clauses = []
+                    applicant_params = []
+                    if search_q and active_view == 'workforce':
+                        applicant_where_clauses.append("(full_name ILIKE %s OR city ILIKE %s OR phone ILIKE %s OR desired_role ILIKE %s)")
+                        param_val = f"%{search_q}%"
+                        applicant_params.extend([param_val, param_val, param_val, param_val])
+                    app_where_str = ("WHERE " + " AND ".join(applicant_where_clauses)) if applicant_where_clauses else ""
+                    cur.execute(f'SELECT * FROM "JobApplicants" {app_where_str} ORDER BY created_at DESC', tuple(applicant_params))
+                    applicants = cur.fetchall()
+                    applicants_count = len(applicants)
 
-        # 5. ACTIVE SYSTEM USERS
-        try:
-            with conn.cursor() as cur:
-                cur.execute('SELECT id, username, full_name, role FROM "Users" WHERE status = \'Active\' ORDER BY id ASC')
-                system_users = cur.fetchall()
-        except Exception as user_err:
-            conn.rollback()
-            current_app.logger.warning(f"[OPERATIONS] Users fetch warning: {user_err}")
-            system_users = []
-
-        # 6. WORKFORCE & SUBCONTRACTORS
-        try:
-            with conn.cursor() as cur:
-                applicant_where_clauses = []
-                applicant_params = []
-                if search_q and active_view == 'workforce':
-                    applicant_where_clauses.append("(full_name ILIKE %s OR city ILIKE %s OR phone ILIKE %s OR desired_role ILIKE %s)")
-                    param_val = f"%{search_q}%"
-                    applicant_params.extend([param_val, param_val, param_val, param_val])
-                app_where_str = ("WHERE " + " AND ".join(applicant_where_clauses)) if applicant_where_clauses else ""
-                cur.execute(f'SELECT * FROM "JobApplicants" {app_where_str} ORDER BY created_at DESC', tuple(applicant_params))
-                applicants = cur.fetchall()
-                applicants_count = len(applicants)
-
-                sub_where_clauses = []
-                sub_params = []
-                if search_q and active_view == 'workforce':
-                    sub_where_clauses.append("(company_name ILIKE %s OR contact_name ILIKE %s OR city ILIKE %s OR specialties ILIKE %s)")
-                    param_val = f"%{search_q}%"
-                    sub_params.extend([param_val, param_val, param_val, param_val])
-                sub_where_str = ("WHERE " + " AND ".join(sub_where_clauses)) if sub_where_clauses else ""
-                cur.execute(f'SELECT * FROM "SubcontractorPartners" {sub_where_str} ORDER BY created_at DESC', tuple(sub_params))
-                subcontractors = cur.fetchall()
-                subcontractors_count = len(subcontractors)
+                    sub_where_clauses = []
+                    sub_params = []
+                    if search_q and active_view == 'workforce':
+                        sub_where_clauses.append("(company_name ILIKE %s OR contact_name ILIKE %s OR city ILIKE %s OR specialties ILIKE %s)")
+                        param_val = f"%{search_q}%"
+                        sub_params.extend([param_val, param_val, param_val, param_val])
+                    sub_where_str = ("WHERE " + " AND ".join(sub_where_clauses)) if sub_where_clauses else ""
+                    cur.execute(f'SELECT * FROM "SubcontractorPartners" {sub_where_str} ORDER BY created_at DESC', tuple(sub_params))
+                    subcontractors = cur.fetchall()
+                    subcontractors_count = len(subcontractors)
+                    from core.services.labor_market_analytics import analyze_subcontractor_rates
+                    subcontractor_rate_metrics = analyze_subcontractor_rates(subcontractors)
+            except Exception as wf_err:
+                conn.rollback()
+                current_app.logger.warning(f"[OPERATIONS] Workforce fetch warning: {wf_err}")
+                applicants, subcontractors = [], []
                 from core.services.labor_market_analytics import analyze_subcontractor_rates
-                subcontractor_rate_metrics = analyze_subcontractor_rates(subcontractors)
-        except Exception as wf_err:
-            conn.rollback()
-            current_app.logger.warning(f"[OPERATIONS] Workforce fetch warning: {wf_err}")
-            applicants, subcontractors = [], []
-            applicants_count, subcontractors_count = 0, 0
-            from core.services.labor_market_analytics import analyze_subcontractor_rates
-            subcontractor_rate_metrics = analyze_subcontractor_rates([])
+                subcontractor_rate_metrics = analyze_subcontractor_rates([])
 
-        # 6b. JOB POSITIONS & DESCRIPTIONS (HWB-FORM-7.2-001)
-        try:
-            with conn.cursor() as cur:
-                cur.execute('SELECT * FROM "JobPositions" WHERE is_active = TRUE ORDER BY id ASC;')
-                job_positions_raw = cur.fetchall()
-                job_positions = [dict(jp) for jp in job_positions_raw]
-        except Exception as jp_err:
-            conn.rollback()
-            current_app.logger.warning(f"[OPERATIONS] JobPositions fetch warning: {jp_err}")
-            job_positions = []
+            # 6b. JOB POSITIONS & DESCRIPTIONS
+            try:
+                with conn.cursor() as cur:
+                    cur.execute('SELECT * FROM "JobPositions" WHERE is_active = TRUE ORDER BY id ASC;')
+                    job_positions_raw = cur.fetchall()
+                    job_positions = [dict(jp) for jp in job_positions_raw]
+            except Exception as jp_err:
+                conn.rollback()
+                current_app.logger.warning(f"[OPERATIONS] JobPositions fetch warning: {jp_err}")
+                job_positions = []
 
-        # 7. ACTIVE EMPLOYEES & WORKFORCE PERSONNEL (HWB-QMS-7.6)
-        try:
-            with conn.cursor() as cur:
-                emp_where_clauses = []
-                emp_params = []
-                if search_q and active_view == 'workforce':
-                    emp_where_clauses.append("(e.first_name ILIKE %s OR e.last_name ILIKE %s OR e.employee_number ILIKE %s OR e.primary_role ILIKE %s)")
-                    param_val = f"%{search_q}%"
-                    emp_params.extend([param_val, param_val, param_val, param_val])
-                emp_where_str = ("WHERE " + " AND ".join(emp_where_clauses)) if emp_where_clauses else ""
-                cur.execute(f'''
-                    SELECT e.*, c.company_name as assigned_facility_name,
-                           jp.position_code as job_position_code, jp.title as job_position_title,
-                           jp.reports_to as job_position_reports_to, jp.summary as job_position_summary,
-                           jp.key_responsibilities as job_position_responsibilities,
-                           jp.required_certifications as job_position_certifications,
-                           (SELECT COUNT(*) FROM "EmployeeDocuments" d WHERE d.employee_id = e.id) as document_count
-                    FROM "Employees" e
-                    LEFT JOIN "Customers" c ON e.assigned_customer_id = c.customer_id
-                    LEFT JOIN "JobPositions" jp ON e.job_position_id = jp.id
-                    {emp_where_str}
-                    ORDER BY e.created_at DESC;
-                ''', tuple(emp_params))
-                employees_raw = cur.fetchall()
-                employees = []
-                for emp in employees_raw:
-                    d = dict(emp)
-                    d['pay_rate_hourly'] = float(d['pay_rate_hourly'] or 0.0)
-                    d['overtime_rate_hourly'] = float(d['overtime_rate_hourly'] or 0.0)
-                    d['weekly_hours_allocated'] = float(d['weekly_hours_allocated'] or 0.0)
-                    d.pop('ssn_encrypted', None)
-                    d.pop('direct_deposit_account_encrypted', None)
-                    d['has_ssn'] = bool(d.get('ssn_last_four'))
-                    d['ssn_masked'] = f"***-**-{d['ssn_last_four']}" if d.get('ssn_last_four') else ''
-                    d['direct_deposit_account'] = f"••••••••{d['direct_deposit_account_last_four']}" if d.get('direct_deposit_account_last_four') else ''
-                    employees.append(d)
-                employees_count = len(employees)
-                active_employees_count = sum(1 for emp in employees if emp.get('employment_status') == 'Active')
-                active_technicians = [emp for emp in employees if emp.get('employment_status') == 'Active']
-                total_weekly_labor_hours = sum(emp['weekly_hours_allocated'] for emp in employees if emp.get('employment_status') == 'Active')
-                total_biweekly_payroll = sum(emp['weekly_hours_allocated'] * 2.0 * emp['pay_rate_hourly'] for emp in employees if emp.get('employment_status') == 'Active')
-        except Exception as emp_err:
-            conn.rollback()
-            current_app.logger.warning(f"[OPERATIONS] Employees fetch warning: {emp_err}")
-            employees, employees_count, active_employees_count = [], 0, 0
-            active_technicians = []
-            total_weekly_labor_hours, total_biweekly_payroll = 0.0, 0.0
+        # 7. ACTIVE EMPLOYEES & WORKFORCE PERSONNEL (CQRS Active-View Gated + Set-Based LEFT JOIN)
+        if active_view in ('workforce', 'monitor', 'dispatch') or is_json_export:
+            try:
+                with conn.cursor() as cur:
+                    emp_where_clauses = []
+                    emp_params = []
+                    if search_q and active_view == 'workforce':
+                        emp_where_clauses.append("(e.first_name ILIKE %s OR e.last_name ILIKE %s OR e.employee_number ILIKE %s OR e.primary_role ILIKE %s)")
+                        param_val = f"%{search_q}%"
+                        emp_params.extend([param_val, param_val, param_val, param_val])
+                    emp_where_str = ("WHERE " + " AND ".join(emp_where_clauses)) if emp_where_clauses else ""
+                    cur.execute(f'''
+                        SELECT e.*, c.company_name as assigned_facility_name,
+                               jp.position_code as job_position_code, jp.title as job_position_title,
+                               jp.reports_to as job_position_reports_to, jp.summary as job_position_summary,
+                               jp.key_responsibilities as job_position_responsibilities,
+                               jp.required_certifications as job_position_certifications,
+                               COALESCE(ed.document_count, 0) as document_count
+                        FROM "Employees" e
+                        LEFT JOIN "Customers" c ON e.assigned_customer_id = c.customer_id
+                        LEFT JOIN "JobPositions" jp ON e.job_position_id = jp.id
+                        LEFT JOIN (
+                            SELECT employee_id, COUNT(*) as document_count
+                            FROM "EmployeeDocuments"
+                            GROUP BY employee_id
+                        ) ed ON ed.employee_id = e.id
+                        {emp_where_str}
+                        ORDER BY e.created_at DESC;
+                    ''', tuple(emp_params))
+                    employees_raw = cur.fetchall()
+                    employees = []
+                    for emp in employees_raw:
+                        d = dict(emp)
+                        d['pay_rate_hourly'] = float(d['pay_rate_hourly'] or 0.0)
+                        d['overtime_rate_hourly'] = float(d['overtime_rate_hourly'] or 0.0)
+                        d['weekly_hours_allocated'] = float(d['weekly_hours_allocated'] or 0.0)
+                        d.pop('ssn_encrypted', None)
+                        d.pop('direct_deposit_account_encrypted', None)
+                        d['has_ssn'] = bool(d.get('ssn_last_four'))
+                        d['ssn_masked'] = f"***-**-{d['ssn_last_four']}" if d.get('ssn_last_four') else ''
+                        d['direct_deposit_account'] = f"••••••••{d['direct_deposit_account_last_four']}" if d.get('direct_deposit_account_last_four') else ''
+                        employees.append(d)
+                    employees_count = len(employees)
+                    active_employees_count = sum(1 for emp in employees if emp.get('employment_status') == 'Active')
+                    active_technicians = [emp for emp in employees if emp.get('employment_status') == 'Active']
+                    total_weekly_labor_hours = sum(emp['weekly_hours_allocated'] for emp in employees if emp.get('employment_status') == 'Active')
+                    total_biweekly_payroll = sum(emp['weekly_hours_allocated'] * 2.0 * emp['pay_rate_hourly'] for emp in employees if emp.get('employment_status') == 'Active')
+            except Exception as emp_err:
+                conn.rollback()
+                current_app.logger.warning(f"[OPERATIONS] Employees fetch warning: {emp_err}")
+                employees, active_technicians = [], []
+                total_weekly_labor_hours, total_biweekly_payroll = 0.0, 0.0
 
-        # 4g. GOVERNMENT PROGRAMS & CERTIFICATIONS REGISTRY (Migration 031 / HWB-QMS-8.9)
-        try:
-            with conn.cursor() as cur:
-                prog_where_clauses = []
-                prog_params = []
-                if search_q and active_view == 'programs':
-                    s_clauses, s_params = parse_advanced_search(search_q, 'programs')
-                    prog_where_clauses.extend(s_clauses)
-                    prog_params.extend(s_params)
-                prog_where_str = ("WHERE " + " AND ".join(prog_where_clauses)) if prog_where_clauses else ""
+        # 4g. GOVERNMENT PROGRAMS & CERTIFICATIONS REGISTRY (CQRS Active-View Gated)
+        if active_view == 'programs' or is_json_export:
+            try:
+                with conn.cursor() as cur:
+                    prog_where_clauses = []
+                    prog_params = []
+                    if search_q and active_view == 'programs':
+                        s_clauses, s_params = parse_advanced_search(search_q, 'programs')
+                        prog_where_clauses.extend(s_clauses)
+                        prog_params.extend(s_params)
+                    prog_where_str = ("WHERE " + " AND ".join(prog_where_clauses)) if prog_where_clauses else ""
 
-                cur.execute(f'SELECT COUNT(*) FROM "GovernmentPrograms" {prog_where_str}', tuple(prog_params))
-                prog_count_row = cur.fetchone()
-                gov_programs_count = prog_count_row[0] if prog_count_row else 0
-
-                cur.execute(f'''
-                    SELECT * FROM "GovernmentPrograms"
-                    {prog_where_str}
-                    ORDER BY readiness_score DESC, id ASC
-                ''', tuple(prog_params))
-                government_programs = cur.fetchall()
-        except Exception as prog_err:
-            conn.rollback()
-            current_app.logger.warning(f"[OPERATIONS] GovernmentPrograms fetch warning: {prog_err}")
-            government_programs = []
-            gov_programs_count = 0
+                    cur.execute(f'''
+                        SELECT * FROM "GovernmentPrograms"
+                        {prog_where_str}
+                        ORDER BY readiness_score DESC, id ASC
+                    ''', tuple(prog_params))
+                    government_programs = cur.fetchall()
+                    gov_programs_count = len(government_programs)
+            except Exception as prog_err:
+                conn.rollback()
+                current_app.logger.warning(f"[OPERATIONS] GovernmentPrograms fetch warning: {prog_err}")
+                government_programs = []
     finally:
-        if "conn" in locals() and conn: conn.close()
+        if "conn" in locals() and conn:
+            conn.close()
 
-    if request.args.get('format') == 'json' or (request.headers.get('X-Requested-With') == 'XMLHttpRequest' and request.accept_mimetypes.best == 'application/json'):
+    if is_json_export:
         try:
             def serialize_row(row):
                 d = dict(row)
@@ -898,108 +1086,111 @@ def admin_operations():
             print(f"[BOOT] JSON Serialization Error: {e}", flush=True)
             return jsonify({'status': 'error', 'message': str(e)}), 500
 
-    # IT Department 8-Rack Telemetry Synthesis
-    from core.services.self_healing_engine import (
-        get_data_health_telemetry,
-        get_memory_rot_telemetry,
-        get_recovery_shield_telemetry,
-        get_daemon_fleet_telemetry,
-        get_cloud_gateway_telemetry,
-        get_top_pareto_errors,
-        get_parity_cockpit_telemetry,
-        get_architectural_scorecard,
-        get_self_healing_telemetry,
-        get_web_analytics_telemetry,
-        get_cloudflare_edge_telemetry
-    )
-    db_url = current_app.config['DATABASE_URL']
-    try:
-        data_health_data = get_data_health_telemetry(db_url)
-    except Exception:
-        data_health_data = {'composite_score': 81.6, 'letter_grade': 'B+', 'total_leads': 27983, 'categories': []}
+    # IT Department 11-Rack Telemetry Synthesis (Pillar 1: ONLY computed on it_department / it_telemetry)
+    if active_view in ('it_department', 'it_telemetry'):
+        from core.services.self_healing_engine import (
+            get_data_health_telemetry,
+            get_memory_rot_telemetry,
+            get_recovery_shield_telemetry,
+            get_daemon_fleet_telemetry,
+            get_cloud_gateway_telemetry,
+            get_top_pareto_errors,
+            get_parity_cockpit_telemetry,
+            get_architectural_scorecard,
+            get_self_healing_telemetry,
+            get_web_analytics_telemetry,
+            get_cloudflare_edge_telemetry
+        )
+        db_url = current_app.config['DATABASE_URL']
+        try:
+            data_health_data = get_data_health_telemetry(db_url)
+        except Exception:
+            data_health_data = {'composite_score': 81.6, 'letter_grade': 'B+', 'total_leads': 27983, 'categories': []}
 
-    try:
-        memory_rot_data = get_memory_rot_telemetry(db_url)
-    except Exception:
-        memory_rot_data = {'composite_score': 44.2, 'rot_index': 44.2, 'status_label': 'MODERATE WEAR', 'bloat_ratio': '20.4%', 'dilution_ratio': '56.8%', 'lost_in_middle': '75.7%', 'cognitive_drift': '25.0%'}
+        try:
+            memory_rot_data = get_memory_rot_telemetry(db_url)
+        except Exception:
+            memory_rot_data = {'composite_score': 44.2, 'rot_index': 44.2, 'status_label': 'MODERATE WEAR', 'bloat_ratio': '20.4%', 'dilution_ratio': '56.8%', 'lost_in_middle': '75.7%', 'cognitive_drift': '25.0%'}
 
-    try:
-        recovery_shield_data = get_recovery_shield_telemetry(db_url)
-    except Exception:
-        recovery_shield_data = {'git_branch': 'feature/locations', 'active_commit': '35293a4', 'ghost_checkpoint': 'ghost-checkpoint-2026-09-24', 'hourly_snapshot': 'VERIFIED', 'surge_protector': 'PASSED (<500MB)'}
+        try:
+            recovery_shield_data = get_recovery_shield_telemetry(db_url)
+        except Exception:
+            recovery_shield_data = {'git_branch': 'feature/locations', 'active_commit': '35293a4', 'ghost_checkpoint': 'ghost-checkpoint-2026-09-24', 'hourly_snapshot': 'VERIFIED', 'surge_protector': 'PASSED (<500MB)'}
 
-    try:
-        daemon_fleet_data = get_daemon_fleet_telemetry(db_url)
-    except Exception:
-        daemon_fleet_data = [
-            {'name': 'Texas Child Care Sync', 'sub': 'Statewide Ingestion • Daily', 'interval': 'Daily', 'status': 'ACTIVE', 'icon': 'fa-child', 'color': '#3b82f6'},
-            {'name': 'Commercial GC Bids Miner', 'sub': 'Plan Room & CAD Hunter • Hourly', 'interval': 'Hourly', 'status': 'ACTIVE', 'icon': 'fa-hard-hat', 'color': '#f59e0b'},
-            {'name': 'Telegram Field Listener', 'sub': 'Workforce Clock-In • 24/7 Concurrency', 'interval': '24/7', 'status': 'ACTIVE', 'icon': 'fa-paper-plane', 'color': '#06b6d4'},
-            {'name': 'Graph Outbox Dispatcher', 'sub': 'HWB-COM-001 Staged Sync • 15m', 'interval': '15m', 'status': 'ACTIVE', 'icon': 'fa-envelope', 'color': '#ec4899'},
-            {'name': 'SigmaFidelity™ SQL Brain', 'sub': 'PostgreSQL Neural Ledger • Session Close', 'interval': 'Real-Time', 'status': 'SYNCED', 'icon': 'fa-brain', 'color': '#8b5cf6'}
-        ]
+        try:
+            daemon_fleet_data = get_daemon_fleet_telemetry(db_url)
+        except Exception:
+            daemon_fleet_data = [
+                {'name': 'Texas Child Care Sync', 'sub': 'Statewide Ingestion • Daily', 'interval': 'Daily', 'status': 'ACTIVE', 'icon': 'fa-child', 'color': '#3b82f6'},
+                {'name': 'Commercial GC Bids Miner', 'sub': 'Plan Room & CAD Hunter • Hourly', 'interval': 'Hourly', 'status': 'ACTIVE', 'icon': 'fa-hard-hat', 'color': '#f59e0b'},
+                {'name': 'Telegram Field Listener', 'sub': 'Workforce Clock-In • 24/7 Concurrency', 'interval': '24/7', 'status': 'ACTIVE', 'icon': 'fa-paper-plane', 'color': '#06b6d4'},
+                {'name': 'Graph Outbox Dispatcher', 'sub': 'HWB-COM-001 Staged Sync • 15m', 'interval': '15m', 'status': 'ACTIVE', 'icon': 'fa-envelope', 'color': '#ec4899'},
+                {'name': 'SigmaFidelity™ SQL Brain', 'sub': 'PostgreSQL Neural Ledger • Session Close', 'interval': 'Real-Time', 'status': 'SYNCED', 'icon': 'fa-brain', 'color': '#8b5cf6'}
+            ]
 
-    try:
-        cloud_gateway_data = get_cloud_gateway_telemetry(db_url)
-    except Exception:
-        cloud_gateway_data = {'azure_db_host': 'sigmajan-server.postgres.database.azure.com', 'azure_db_latency_ms': 9.85, 'graph_status': 'Exp: 03/02/2027', 'ssl_proxy': 'ProxyFix Active (TLS 1.3)'}
+        try:
+            cloud_gateway_data = get_cloud_gateway_telemetry(db_url)
+        except Exception:
+            cloud_gateway_data = {'azure_db_host': 'sigmajan-server.postgres.database.azure.com', 'azure_db_latency_ms': 9.85, 'graph_status': 'Exp: 03/02/2027', 'ssl_proxy': 'ProxyFix Active (TLS 1.3)'}
 
-    try:
-        pareto_errors_data = get_top_pareto_errors('session', db_url)
-    except Exception:
-        pareto_errors_data = {'timeframe': 'session', 'summary': 'Top 2 failure modes account for 97.7% of friction.', 'error_items': []}
+        try:
+            pareto_errors_data = get_top_pareto_errors('session', db_url)
+        except Exception:
+            pareto_errors_data = {'timeframe': 'session', 'summary': 'Top 2 failure modes account for 97.7% of friction.', 'error_items': []}
 
-    try:
-        parity_cockpit_data = get_parity_cockpit_telemetry(db_url)
-    except Exception:
-        parity_cockpit_data = {'parity_score': 100, 'schema_version_count': 31, 'sequences_aligned_count': 70, 'templates_scanned_count': 77, 'link_violations_count': 0, 'js_syntax_passed': '51 / 51'}
+        try:
+            parity_cockpit_data = get_parity_cockpit_telemetry(db_url)
+        except Exception:
+            parity_cockpit_data = {'parity_score': 100, 'schema_version_count': 31, 'sequences_aligned_count': 70, 'templates_scanned_count': 77, 'link_violations_count': 0, 'js_syntax_passed': '51 / 51'}
 
-    try:
-        scorecard_data = get_architectural_scorecard(db_url)
-    except Exception:
-        scorecard_data = {'composite_score': 98.5, 'letter_grade': 'A+', 'dpmo': 3.4, 'cpk': 1.67, 'pillars': []}
+        try:
+            scorecard_data = get_architectural_scorecard(db_url)
+        except Exception:
+            scorecard_data = {'composite_score': 98.5, 'letter_grade': 'A+', 'dpmo': 3.4, 'cpk': 1.67, 'pillars': []}
 
-    try:
-        web_analytics_data = get_web_analytics_telemetry(db_url)
-    except Exception:
-        web_analytics_data = {'composite_score': 98.5, 'letter_grade': 'A+', 'measurement_id': 'G-8BX5Q7THYR', 'status_tag': 'NOMINAL'}
+        try:
+            web_analytics_data = get_web_analytics_telemetry(db_url)
+        except Exception:
+            web_analytics_data = {'composite_score': 98.5, 'letter_grade': 'A+', 'measurement_id': 'G-8BX5Q7THYR', 'status_tag': 'NOMINAL'}
 
-    try:
-        cloudflare_edge_data = get_cloudflare_edge_telemetry(db_url)
-    except Exception:
-        cloudflare_edge_data = {
-            'composite_score': 100.0,
-            'letter_grade': 'A+',
-            'status_tag': 'NOMINAL',
-            'zone_name': 'hwbcleaning.com',
-            'edge_latency_ms': 210.0,
-            'edge_probe': {'status_code': 200, 'ray_id': 'ACTIVE-EDGE', 'pop': 'DFW', 'latency_ms': 210.0, 'server': 'cloudflare', 'cache_status': 'DYNAMIC'},
-            'origin_isolation_probe': {'status_code': 403, 'origin_blocked': True, 'forbidden_ip': 'PROTECTED'},
-            'five_pillars': {'anycast_ip': '104.21.70.180', 'datacenter_pop': 'DFW', 'edge_latency_ms': 210.0, 'origin_firewall_cidrs': 15, 'direct_bypass_status': 'BLOCKED (403)'}
+        try:
+            cloudflare_edge_data = get_cloudflare_edge_telemetry(db_url)
+        except Exception:
+            cloudflare_edge_data = {
+                'composite_score': 100.0,
+                'letter_grade': 'A+',
+                'status_tag': 'NOMINAL',
+                'zone_name': 'hwbcleaning.com',
+                'edge_latency_ms': 210.0,
+                'edge_probe': {'status_code': 200, 'ray_id': 'ACTIVE-EDGE', 'pop': 'DFW', 'latency_ms': 210.0, 'server': 'cloudflare', 'cache_status': 'DYNAMIC'},
+                'origin_isolation_probe': {'status_code': 403, 'origin_blocked': True, 'forbidden_ip': 'PROTECTED'},
+                'five_pillars': {'anycast_ip': '104.21.70.180', 'datacenter_pop': 'DFW', 'edge_latency_ms': 210.0, 'origin_firewall_cidrs': 15, 'direct_bypass_status': 'BLOCKED (403)'}
+            }
+
+        it_telemetry = {
+            'parity_score': parity_cockpit_data.get('parity_score', 100),
+            'parity_status': parity_cockpit_data.get('status_tag', 'PASS'),
+            'schema_version_count': parity_cockpit_data.get('schema_version_count', 31),
+            'sequences_aligned_count': parity_cockpit_data.get('sequences_aligned_count', 70),
+            'templates_scanned_count': parity_cockpit_data.get('templates_scanned_count', 77),
+            'link_violations_count': parity_cockpit_data.get('link_violations_count', 0),
+            'js_syntax_status': parity_cockpit_data.get('js_syntax_status', '100% CLEAN'),
+            'parity': parity_cockpit_data,
+            'data_health': data_health_data,
+            'memory_rot': memory_rot_data,
+            'peter_shield': recovery_shield_data,
+            'daemon_fleet': daemon_fleet_data,
+            'cloud_gateway': cloud_gateway_data,
+            'api_gateway': cloud_gateway_data,
+            'pareto_errors': pareto_errors_data,
+            'scorecard': scorecard_data,
+            'self_healing': get_self_healing_telemetry(),
+            'site_security': get_site_security_telemetry(db_url),
+            'web_analytics': web_analytics_data,
+            'cloudflare_edge': cloudflare_edge_data
         }
-
-    it_telemetry = {
-        'parity_score': parity_cockpit_data.get('parity_score', 100),
-        'parity_status': parity_cockpit_data.get('status_tag', 'PASS'),
-        'schema_version_count': parity_cockpit_data.get('schema_version_count', 31),
-        'sequences_aligned_count': parity_cockpit_data.get('sequences_aligned_count', 70),
-        'templates_scanned_count': parity_cockpit_data.get('templates_scanned_count', 77),
-        'link_violations_count': parity_cockpit_data.get('link_violations_count', 0),
-        'js_syntax_status': parity_cockpit_data.get('js_syntax_status', '100% CLEAN'),
-        'parity': parity_cockpit_data,
-        'data_health': data_health_data,
-        'memory_rot': memory_rot_data,
-        'peter_shield': recovery_shield_data,
-        'daemon_fleet': daemon_fleet_data,
-        'cloud_gateway': cloud_gateway_data,
-        'api_gateway': cloud_gateway_data,
-        'pareto_errors': pareto_errors_data,
-        'scorecard': scorecard_data,
-        'self_healing': get_self_healing_telemetry(),
-        'site_security': get_site_security_telemetry(db_url),
-        'web_analytics': web_analytics_data,
-        'cloudflare_edge': cloudflare_edge_data
-    }
+    else:
+        it_telemetry = {}
 
     if active_view == 'it_telemetry':
         log_security_event(
@@ -1013,6 +1204,7 @@ def admin_operations():
                          active_view=active_view, leads=leads, leads_count=leads_count, dup_count=dup_count,
                          in_campaign_count=in_campaign_count, opened_leads_count=opened_leads_count,
                          campaign_ready_count=campaign_ready_count,
+
                          campaign_filter=campaign_filter,
                          page=page, total_pages=total_pages, search_q=search_q,
                          sort_by=sort_by or '', sort_dir=sort_dir, active_cols=active_cols,

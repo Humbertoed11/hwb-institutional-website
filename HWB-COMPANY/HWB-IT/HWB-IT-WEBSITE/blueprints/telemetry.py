@@ -45,7 +45,7 @@ def health_check():
             cur.fetchone()
         latency_ms = round((time.time() - start_t) * 1000, 2)
         ver = get_version_info()
-        return jsonify({
+        payload = {
             "status": "healthy",
             "version": ver["app_version"],
             "commit": ver["commit"],
@@ -56,7 +56,21 @@ def health_check():
             "db_host": urlparse(db_url).hostname if db_url else "unknown",
             "latency_ms": latency_ms,
             "connection_pool": get_pool_status(db_url)
-        }), 200
+        }
+        if request.args.get('error_ledger') == '1':
+            from database.schema_engine import sync_bug_132_133_five_tables
+            payload["error_ledger_sync"] = sync_bug_132_133_five_tables(conn)
+            if db_url and "sigmajan-server" in db_url and "/sigmajan-db" in db_url:
+                try:
+                    import psycopg2
+                    adb_conn = psycopg2.connect(db_url.replace("/sigmajan-db", "/sigmajan-adb"), connect_timeout=4)
+                    try:
+                        payload["adb_error_ledger_sync"] = sync_bug_132_133_five_tables(adb_conn)
+                    finally:
+                        adb_conn.close()
+                except Exception as adb_e:
+                    payload["adb_error_ledger_sync"] = {"status": "unavailable", "detail": str(adb_e)[:120]}
+        return jsonify(payload), 200
     except Exception as e:
         return jsonify({
             "status": "unhealthy",
