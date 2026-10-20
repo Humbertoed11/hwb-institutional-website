@@ -232,6 +232,35 @@ def synthesize_audit_event_context(rd: Dict[str, Any]) -> Dict[str, Any]:
         action_to_be_taken = "User Confirmation: Confirm password reset was initiated by authorized account owner."
         playbook_status = "VERIFY"
 
+    elif action == 'PASSWORD_RESET_REQUESTED':
+        target_email = details.get('target_email') or details.get('identifier') or user
+        description = f"Password reset requested by '{user}' ({target_email}). Microsoft Graph verified HTTP 202 delivery."
+        action_taken = "Token Issued & Delivered: Stored SHA-256 token hash (30-min TTL) and emailed single-use link."
+        action_to_be_taken = "None Required: User can complete self-service password reset within 30 minutes."
+        playbook_status = "NOMINAL"
+
+    elif action == 'PASSWORD_RESET_DISPATCHED_BY_ADMIN':
+        target_u = details.get('target_username') or user
+        target_email = details.get('target_email') or '--'
+        description = f"Admin '{user}' dispatched a 30-minute password reset link to @{target_u} ({target_email})."
+        action_taken = "Link Delivered: Verified Microsoft Graph HTTP 202 acceptance and recorded in PasswordResetAuditLedger."
+        action_to_be_taken = "None Required: Team member notified via email."
+        playbook_status = "NOMINAL"
+
+    elif action == 'PASSWORD_RESET_DISPATCH_FAILED':
+        reason = details.get('reason') or details.get('error') or 'Unknown mail gateway error'
+        target_email = details.get('target_email') or details.get('identifier') or user
+        description = f"Password reset email delivery failed for '{target_email}': {reason}"
+        action_taken = "Alert Logged: Recorded failure in PasswordResetAuditLedger and surfaced user error notice."
+        action_to_be_taken = "Investigate Mail Gateway: Check Rack 4 Microsoft Graph credentials and user email address."
+        playbook_status = "INVESTIGATE"
+
+    elif action == 'PASSWORD_RESET_SUCCESS':
+        description = f"User '{user}' completed self-service password reset via single-use token."
+        action_taken = "Token Consumed & Destroyed: Salted password hash updated, token wiped, and confirmation receipt emailed."
+        action_to_be_taken = "None Required: Account credentials secured."
+        playbook_status = "RESOLVED"
+
     elif action == 'ROLE_PERMISSIONS_UPDATED':
         target_role = details.get('role', 'Unknown')
         perms_count = len(details.get('permissions', []))

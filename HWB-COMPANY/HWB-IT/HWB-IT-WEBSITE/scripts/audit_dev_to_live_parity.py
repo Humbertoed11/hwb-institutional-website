@@ -84,6 +84,22 @@ def audit_database_schema() -> Dict[str, Any]:
             res["connected"] = True
             res["migrations_count"] = len(rows)
             res["migrations"] = rows
+
+            # Verify mandatory IAM & Password Reset columns on "Users" and "PasswordResetAuditLedger"
+            cur.execute("""
+                SELECT column_name
+                FROM information_schema.columns
+                WHERE table_name = 'Users' AND table_schema = 'public';
+            """)
+            user_cols = {r[0] for r in cur.fetchall()}
+            required_user_cols = {
+                "reset_token_hash", "reset_token_expires_at",
+                "reset_requested_at", "reset_delivery_status",
+                "reset_delivery_error", "reset_consumed_at"
+            }
+            missing_cols = sorted(required_user_cols - user_cols)
+            res["users_iam_columns_verified"] = (len(missing_cols) == 0)
+            res["missing_user_columns"] = missing_cols
         conn.close()
         return res
     except Exception as tcp_err:

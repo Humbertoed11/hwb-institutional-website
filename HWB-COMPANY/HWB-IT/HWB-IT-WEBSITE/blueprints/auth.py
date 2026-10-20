@@ -148,14 +148,18 @@ def login():
             if user.get('force_pwd_reset') is True:
                 raw_token = secrets.token_urlsafe(32)
                 token_hash = hashlib.sha256(raw_token.encode('utf-8')).hexdigest()
-                expires_at = datetime.datetime.utcnow() + datetime.timedelta(minutes=15)
+                expires_at = datetime.datetime.utcnow() + datetime.timedelta(minutes=30)
                 try:
                     up_conn = get_db(db_url)
+                    ensure_user_password_reset_schema(up_conn)
                     with up_conn.cursor() as up_cur:
                         up_cur.execute('''
                             UPDATE "Users"
                             SET reset_token_hash = %s,
-                                reset_token_expires_at = %s
+                                reset_token_expires_at = %s,
+                                reset_requested_at = NOW(),
+                                reset_delivery_status = 'FORCE_RESET_REDIRECT',
+                                reset_delivery_error = NULL
                             WHERE id = %s;
                         ''', (token_hash, expires_at, user['id']))
                         up_conn.commit()
@@ -301,17 +305,68 @@ def validate_password_complexity(pwd: str, username: str = "") -> tuple[bool, st
     return True, "Valid"
 
 
+_USER_RESET_SCHEMA_VERIFIED = False
+
+
+def ensure_user_password_reset_schema(conn) -> None:
+    """
+    Self-healing runtime schema guard ensuring Users reset token columns and
+    PasswordResetAuditLedger table exist before any password reset operation.
+    Executes once per worker lifecycle (or on error recovery).
+    """
+    global _USER_RESET_SCHEMA_VERIFIED
+    if _USER_RESET_SCHEMA_VERIFIED:
+        return
+    try:
+        with conn.cursor() as cur:
+            cur.execute('''
+                ALTER TABLE "Users" ADD COLUMN IF NOT EXISTS reset_token_hash VARCHAR(128);
+                ALTER TABLE "Users" ADD COLUMN IF NOT EXISTS reset_token_expires_at TIMESTAMP;
+                ALTER TABLE "Users" ADD COLUMN IF NOT EXISTS reset_requested_at TIMESTAMP;
+                ALTER TABLE "Users" ADD COLUMN IF NOT EXISTS reset_delivery_status VARCHAR(50);
+                ALTER TABLE "Users" ADD COLUMN IF NOT EXISTS reset_delivery_error TEXT;
+                ALTER TABLE "Users" ADD COLUMN IF NOT EXISTS reset_consumed_at TIMESTAMP;
+                CREATE INDEX IF NOT EXISTS idx_users_reset_token_hash ON "Users" (reset_token_hash) WHERE reset_token_hash IS NOT NULL;
+
+                CREATE TABLE IF NOT EXISTS "PasswordResetAuditLedger" (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER NOT NULL,
+                    username VARCHAR(100) NOT NULL,
+                    target_email VARCHAR(255) NOT NULL,
+                    initiated_by VARCHAR(100) NOT NULL DEFAULT 'self_service',
+                    request_ip VARCHAR(64) NOT NULL DEFAULT '127.0.0.1',
+                    token_hash_prefix VARCHAR(16) NOT NULL,
+                    delivery_status VARCHAR(50) NOT NULL DEFAULT 'PENDING',
+                    delivery_reason TEXT NULL,
+                    requested_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                    expires_at TIMESTAMPTZ NOT NULL,
+                    consumed_at TIMESTAMPTZ NULL,
+                    consumed_ip VARCHAR(64) NULL
+                );
+                CREATE INDEX IF NOT EXISTS idx_pwd_reset_ledger_user ON "PasswordResetAuditLedger" (user_id, requested_at DESC);
+            ''')
+        conn.commit()
+        _USER_RESET_SCHEMA_VERIFIED = True
+    except Exception as schema_err:
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+        print(f"[AUTH SCHEMA GUARD NOTICE] {schema_err}", flush=True)
+
+
 @auth_bp.route('/forgot-password', methods=['GET', 'POST'], endpoint='forgot_password')
 @rate_limit(limit=4, period_seconds=900, scope="auth_forgot_pwd")
 def forgot_password():
     """
     SOC 2 Type II Password Reset Request Endpoint.
     Enforces:
-    - Constant-time response (prevents user enumeration).
-    - Single-use, 256-bit cryptographically secure token.
-    - Zero plaintext token storage (stores SHA-256 hash only).
-    - 15-minute ephemeral expiration.
-    - Microsoft Graph API delivery with HWB-COM-001 Letterhead.
+    - Smart Identity Resolution (matches email, username, or full_name case-insensitively).
+    - Constant-time response against external enumeration.
+    - Single-use, 256-bit cryptographically secure token (SHA-256 hash stored).
+    - 30-minute ephemeral expiration.
+    - Verified Microsoft Graph API HTTP 202 delivery with HWB-COM-001 Letterhead.
+    - Full forensic lifecycle logging in PasswordResetAuditLedger & SecurityAuditLogs.
     """
     if request.method == 'POST':
         identifier = (request.form.get('identifier') or '').strip().lower()
@@ -323,14 +378,17 @@ def forgot_password():
         if identifier:
             try:
                 conn = get_db(db_url)
+                ensure_user_password_reset_schema(conn)
                 with conn.cursor() as cur:
                     cur.execute('''
                         SELECT id, username, email, full_name, status 
                         FROM "Users" 
-                        WHERE LOWER(email) = %s 
-                           OR LOWER(username) = %s
+                        WHERE LOWER(TRIM(COALESCE(email, ''))) = %s 
+                           OR LOWER(TRIM(COALESCE(username, ''))) = %s
+                           OR LOWER(TRIM(COALESCE(full_name, ''))) = %s
+                        ORDER BY CASE WHEN status = 'Active' THEN 0 ELSE 1 END, id ASC
                         LIMIT 1;
-                    ''', (identifier, identifier))
+                    ''', (identifier, identifier, identifier))
                     user = cur.fetchone()
                 conn.close()
             except Exception as e:
@@ -340,17 +398,33 @@ def forgot_password():
         if user and user.get('status') == 'Active' and user.get('email'):
             raw_token = secrets.token_urlsafe(32)
             token_hash = hashlib.sha256(raw_token.encode('utf-8')).hexdigest()
-            expires_at = datetime.datetime.utcnow() + datetime.timedelta(minutes=15)
+            expires_at = datetime.datetime.utcnow() + datetime.timedelta(minutes=30)
+            target_email = (user['email'] or '').strip()
+            full_name = user.get('full_name') or user.get('username')
+            ledger_id = None
 
             try:
                 conn = get_db(db_url)
+                ensure_user_password_reset_schema(conn)
                 with conn.cursor() as cur:
                     cur.execute('''
                         UPDATE "Users" 
                         SET reset_token_hash = %s, 
-                            reset_token_expires_at = %s 
+                            reset_token_expires_at = %s,
+                            reset_requested_at = NOW(),
+                            reset_delivery_status = 'PENDING',
+                            reset_delivery_error = NULL
                         WHERE id = %s;
                     ''', (token_hash, expires_at, user['id']))
+                    cur.execute('''
+                        INSERT INTO "PasswordResetAuditLedger" (
+                            user_id, username, target_email, initiated_by,
+                            request_ip, token_hash_prefix, delivery_status, expires_at
+                        ) VALUES (%s, %s, %s, 'self_service', %s, %s, 'PENDING', %s)
+                        RETURNING id;
+                    ''', (user['id'], user['username'], target_email, client_ip, token_hash[:12], expires_at))
+                    l_row = cur.fetchone()
+                    ledger_id = l_row['id'] if isinstance(l_row, dict) else (l_row[0] if l_row else None)
                     conn.commit()
                 conn.close()
 
@@ -358,9 +432,6 @@ def forgot_password():
                 proto = request.headers.get('X-Forwarded-Proto', 'https' if request.is_secure else 'http')
                 host = request.headers.get('X-Forwarded-Host') or request.host
                 reset_url = f"{proto}://{host}/reset-password/{raw_token}"
-
-                full_name = user.get('full_name') or user.get('username')
-                target_email = user['email']
 
                 letterhead_body = f"""
                 <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 24px; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff; color: #1e293b; max-width: 600px; margin: 0 auto;">
@@ -373,8 +444,8 @@ def forgot_password():
                     <div style="padding: 10px 0 20px 0; line-height: 1.6; color: #1e293b; font-size: 14px;">
                         <h2 style="font-size: 16px; color: #0f172a; margin-top: 0;">Password Reset Request</h2>
                         <p>Hello <strong>{full_name}</strong>,</p>
-                        <p>A password reset request was initiated for your HWB Cleaning Services backoffice account (Username: <strong>{user['username']}</strong>).</p>
-                        <p>To choose a new password, click the button below. This link is single-use and will expire in <strong>15 minutes</strong>:</p>
+                        <p>A password reset request was received for your HWB Cleaning Services backoffice account (Username: <strong>{user['username']}</strong>).</p>
+                        <p>To choose a new password, click the button below. This link is single-use and will expire in <strong>30 minutes</strong>:</p>
                         <div style="text-align: center; margin: 25px 0;">
                             <a href="{reset_url}" style="background: #2563eb; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 700; font-size: 14px; display: inline-block;">Reset My Password</a>
                         </div>
@@ -390,20 +461,85 @@ def forgot_password():
                 </div>
                 """
 
-                transmit_email(target_email, "HWB Security: Password Reset Request", letterhead_body)
+                sent_ok, sent_reason = transmit_email(target_email, "HWB Security: Password Reset Request", letterhead_body)
+                delivery_status = 'DELIVERED' if sent_ok else 'FAILED'
 
-                log_security_event(
-                    event_category='AUTH',
-                    event_action='PASSWORD_RESET_REQUESTED',
-                    severity='INFO',
-                    user_id=user['id'],
-                    username=user['username'],
-                    ip_address=client_ip,
-                    status_code=200,
-                    details={'identifier': identifier, 'token_expires_minutes': 15}
-                )
+                try:
+                    d_conn = get_db(db_url)
+                    with d_conn.cursor() as d_cur:
+                        d_cur.execute('''
+                            UPDATE "Users"
+                            SET reset_delivery_status = %s,
+                                reset_delivery_error = %s
+                            WHERE id = %s;
+                        ''', (delivery_status, None if sent_ok else str(sent_reason)[:500], user['id']))
+                        if ledger_id:
+                            d_cur.execute('''
+                                UPDATE "PasswordResetAuditLedger"
+                                SET delivery_status = %s,
+                                    delivery_reason = %s
+                                WHERE id = %s;
+                            ''', (delivery_status, str(sent_reason)[:500], ledger_id))
+                        d_conn.commit()
+                    d_conn.close()
+                except Exception as d_err:
+                    print(f"[AUTH NOTICE] Delivery telemetry update failed: {d_err}", flush=True)
+
+                if sent_ok:
+                    log_security_event(
+                        event_category='AUTH',
+                        event_action='PASSWORD_RESET_REQUESTED',
+                        severity='INFO',
+                        user_id=user['id'],
+                        username=user['username'],
+                        ip_address=client_ip,
+                        status_code=200,
+                        details={
+                            'identifier': identifier,
+                            'target_email': target_email,
+                            'delivery_status': 'DELIVERED',
+                            'token_expires_minutes': 30
+                        }
+                    )
+                else:
+                    log_security_event(
+                        event_category='AUTH',
+                        event_action='PASSWORD_RESET_DISPATCH_FAILED',
+                        severity='WARNING',
+                        user_id=user['id'],
+                        username=user['username'],
+                        ip_address=client_ip,
+                        status_code=502,
+                        details={
+                            'identifier': identifier,
+                            'target_email': target_email,
+                            'delivery_status': 'FAILED',
+                            'reason': str(sent_reason)[:300]
+                        }
+                    )
+                    return render_template(
+                        'forgot_password.html',
+                        submitted=False,
+                        dispatch_error="We could not send the password reset email right now. Please contact your system administrator for immediate assistance."
+                    )
+
             except Exception as dispatch_err:
                 print(f"[AUTH ERROR] Failed to dispatch password reset email: {dispatch_err}", flush=True)
+                log_security_event(
+                    event_category='AUTH',
+                    event_action='PASSWORD_RESET_DISPATCH_FAILED',
+                    severity='WARNING',
+                    user_id=user.get('id'),
+                    username=user.get('username'),
+                    ip_address=client_ip,
+                    status_code=500,
+                    details={'identifier': identifier, 'error': str(dispatch_err)[:300]}
+                )
+                return render_template(
+                    'forgot_password.html',
+                    submitted=False,
+                    dispatch_error="A system error prevented sending your reset link. Our engineering team has been notified—please contact your administrator."
+                )
         else:
             # Perform dummy computation to match execution timing
             hashlib.sha256(b"dummy_token_padding_string_for_timing_safety").hexdigest()
@@ -427,8 +563,8 @@ def forgot_password():
 def reset_password(token):
     """
     SOC 2 Type II Password Reset Confirmation Endpoint.
-    Validates token SHA-256 hash, enforces 15-minute expiration, validates password complexity,
-    invalidates token atomically upon write, and revokes prior sessions.
+    Validates token SHA-256 hash, enforces 30-minute expiration, validates password complexity,
+    invalidates token atomically upon write, updates PasswordResetAuditLedger, and revokes prior sessions.
     """
     raw_token = (token or '').strip()
     if not raw_token or len(raw_token) < 20:
@@ -442,6 +578,7 @@ def reset_password(token):
     user = None
     try:
         conn = get_db(db_url)
+        ensure_user_password_reset_schema(conn)
         with conn.cursor() as cur:
             cur.execute('''
                 SELECT id, username, email, full_name, reset_token_expires_at 
@@ -484,6 +621,7 @@ def reset_password(token):
 
         try:
             conn = get_db(db_url)
+            ensure_user_password_reset_schema(conn)
             with conn.cursor() as cur:
                 # Atomically update password and immediately destroy token
                 cur.execute('''
@@ -491,9 +629,21 @@ def reset_password(token):
                     SET password_hash = %s, 
                         reset_token_hash = NULL, 
                         reset_token_expires_at = NULL, 
+                        reset_delivery_status = 'CONSUMED',
+                        reset_delivery_error = NULL,
+                        reset_consumed_at = NOW(),
                         force_pwd_reset = FALSE 
                     WHERE id = %s;
                 ''', (new_hash, user['id']))
+                cur.execute('''
+                    UPDATE "PasswordResetAuditLedger"
+                    SET delivery_status = 'CONSUMED',
+                        consumed_at = NOW(),
+                        consumed_ip = %s
+                    WHERE user_id = %s
+                      AND token_hash_prefix = %s
+                      AND consumed_at IS NULL;
+                ''', (client_ip, user['id'], token_hash[:12]))
                 conn.commit()
             conn.close()
 
@@ -572,6 +722,7 @@ def api_change_password():
     db_url = current_app.config['DATABASE_URL']
     conn = get_db(db_url)
     try:
+        ensure_user_password_reset_schema(conn)
         with conn.cursor() as cur:
             cur.execute('SELECT password_hash FROM "Users" WHERE id = %s;', (u_id,))
             row = cur.fetchone()
@@ -589,7 +740,7 @@ def api_change_password():
                 return jsonify({"status": "error", "message": "Current password is incorrect."}), 401
 
             new_hash = generate_password_hash(new_pwd)
-            cur.execute('UPDATE "Users" SET password_hash = %s, force_pwd_reset = FALSE WHERE id = %s;', (new_hash, u_id))
+            cur.execute('UPDATE "Users" SET password_hash = %s, force_pwd_reset = FALSE, reset_token_hash = NULL, reset_token_expires_at = NULL WHERE id = %s;', (new_hash, u_id))
             conn.commit()
 
         log_security_event(
@@ -614,8 +765,9 @@ def api_change_password():
 @login_required
 def api_admin_send_reset_email(user_id: int):
     """
-    Allows an Executive, Admin, or authorized Manager to send a 15-minute single-use
+    Allows an Executive, Admin, or authorized Manager to send a 30-minute single-use
     password reset link directly to a user from the Edit User Account modal.
+    Verifies Microsoft Graph API HTTP 202 acceptance and records full delivery telemetry.
     """
     role = getattr(current_user, 'role', '')
     has_user_edit = role in ['Executive', 'Admin', 'Manager'] or (
@@ -631,6 +783,7 @@ def api_admin_send_reset_email(user_id: int):
 
     conn = get_db(db_url)
     try:
+        ensure_user_password_reset_schema(conn)
         with conn.cursor() as cur:
             cur.execute('SELECT id, username, email, full_name FROM "Users" WHERE id = %s LIMIT 1;', (user_id,))
             target_user = cur.fetchone()
@@ -643,14 +796,26 @@ def api_admin_send_reset_email(user_id: int):
 
             raw_token = secrets.token_urlsafe(32)
             token_hash = hashlib.sha256(raw_token.encode('utf-8')).hexdigest()
-            expires_at = datetime.datetime.utcnow() + datetime.timedelta(minutes=15)
+            expires_at = datetime.datetime.utcnow() + datetime.timedelta(minutes=30)
 
             cur.execute('''
                 UPDATE "Users"
                 SET reset_token_hash = %s,
-                    reset_token_expires_at = %s
+                    reset_token_expires_at = %s,
+                    reset_requested_at = NOW(),
+                    reset_delivery_status = 'PENDING',
+                    reset_delivery_error = NULL
                 WHERE id = %s;
             ''', (token_hash, expires_at, user_id))
+            cur.execute('''
+                INSERT INTO "PasswordResetAuditLedger" (
+                    user_id, username, target_email, initiated_by,
+                    request_ip, token_hash_prefix, delivery_status, expires_at
+                ) VALUES (%s, %s, %s, %s, %s, %s, 'PENDING', %s)
+                RETURNING id;
+            ''', (user_id, target_user['username'], target_email, f"admin:{current_user.username}", client_ip, token_hash[:12], expires_at))
+            l_row = cur.fetchone()
+            ledger_id = l_row['id'] if isinstance(l_row, dict) else (l_row[0] if l_row else None)
             conn.commit()
 
         proto = request.headers.get('X-Forwarded-Proto', 'https' if request.is_secure else 'http')
@@ -668,14 +833,44 @@ def api_admin_send_reset_email(user_id: int):
                 <h2 style="font-size: 16px; color: #0f172a; margin-top: 0;">Set Your New Account Password</h2>
                 <p>Hello <strong>{full_name}</strong>,</p>
                 <p>An administrator has sent you a link to set a new password for your HWB Cleaning Services backoffice account (Username: <strong>{target_user['username']}</strong>).</p>
-                <p>Click the button below to choose your new password. This link is single-use and expires in <strong>15 minutes</strong>:</p>
+                <p>Click the button below to choose your new password. This link is single-use and expires in <strong>30 minutes</strong>:</p>
                 <div style="text-align: center; margin: 25px 0;">
                     <a href="{reset_url}" style="background: #2563eb; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 700; font-size: 14px; display: inline-block;">Set New Password</a>
                 </div>
             </div>
         </div>
         """
-        transmit_email(target_email, "HWB Security: Set Your New Account Password", letterhead_body)
+        sent_ok, sent_reason = transmit_email(target_email, "HWB Security: Set Your New Account Password", letterhead_body)
+        delivery_status = 'DELIVERED' if sent_ok else 'FAILED'
+
+        with conn.cursor() as cur2:
+            cur2.execute('''
+                UPDATE "Users"
+                SET reset_delivery_status = %s,
+                    reset_delivery_error = %s
+                WHERE id = %s;
+            ''', (delivery_status, None if sent_ok else str(sent_reason)[:500], user_id))
+            if ledger_id:
+                cur2.execute('''
+                    UPDATE "PasswordResetAuditLedger"
+                    SET delivery_status = %s,
+                        delivery_reason = %s
+                    WHERE id = %s;
+                ''', (delivery_status, str(sent_reason)[:500], ledger_id))
+            conn.commit()
+
+        if not sent_ok:
+            log_security_event(
+                event_category='USER_ADMIN',
+                event_action='PASSWORD_RESET_DISPATCH_FAILED',
+                severity='WARNING',
+                user_id=current_user.id,
+                username=current_user.username,
+                ip_address=client_ip,
+                status_code=502,
+                details={'target_user_id': user_id, 'target_username': target_user['username'], 'target_email': target_email, 'reason': str(sent_reason)[:300]}
+            )
+            return jsonify({"status": "error", "message": f"Email delivery failed ({sent_reason})."}), 502
 
         log_security_event(
             event_category='USER_ADMIN',
@@ -685,13 +880,14 @@ def api_admin_send_reset_email(user_id: int):
             username=current_user.username,
             ip_address=client_ip,
             status_code=200,
-            details={'target_user_id': user_id, 'target_username': target_user['username'], 'target_email': target_email}
+            details={'target_user_id': user_id, 'target_username': target_user['username'], 'target_email': target_email, 'delivery_status': 'DELIVERED'}
         )
-        return jsonify({"status": "success", "message": f"Password reset link sent to {target_email}."}), 200
+        return jsonify({"status": "success", "message": f"Password reset link delivered to {target_email} (valid for 30 minutes)."}), 200
     except Exception as e:
         print(f"[AUTH ERROR] Admin password reset email dispatch failed: {e}", flush=True)
         return jsonify({"status": "error", "message": f"Failed to send reset link: {str(e)}"}), 500
     finally:
         conn.close()
+
 
 

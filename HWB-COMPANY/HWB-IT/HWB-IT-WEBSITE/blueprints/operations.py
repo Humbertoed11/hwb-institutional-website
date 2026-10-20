@@ -1861,15 +1861,50 @@ def sigma_executive():
                         }
                         perms_json = json.dumps(custom_perms)
                         
-                        cur.execute('INSERT INTO "Users" (username, password_hash, full_name, email, role, status, force_pwd_reset, custom_permissions, telegram_chat_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)',
-                                     (request.form.get('new_username'), phash, request.form.get('full_name'), clean_email(request.form.get('user_email')) or request.form.get('user_email'), role, status, force_pwd, perms_json, telegram_cid))
+                        new_uname = (request.form.get('new_username') or '').strip()
+                        new_fname = (request.form.get('full_name') or '').strip()
+                        new_uemail = clean_email(request.form.get('user_email')) or (request.form.get('user_email') or '').strip()
+                        cur.execute('INSERT INTO "Users" (username, password_hash, full_name, email, role, status, force_pwd_reset, custom_permissions, telegram_chat_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id',
+                                     (new_uname, phash, new_fname, new_uemail, role, status, force_pwd, perms_json, telegram_cid))
+                        new_uid_row = cur.fetchone()
+                        new_uid = new_uid_row['id'] if isinstance(new_uid_row, dict) else (new_uid_row[0] if new_uid_row else None)
+
+                        # Automatically dispatch welcome onboarding email if email is provided
+                        welcome_sent = False
+                        if new_uemail and '@' in new_uemail and not current_app.config.get('TESTING') and not str(new_uname).startswith('test_'):
+                            proto = request.headers.get('X-Forwarded-Proto', 'https' if request.is_secure else 'http')
+                            host = request.headers.get('X-Forwarded-Host') or request.host
+                            login_url = f"{proto}://{host}/login"
+                            welcome_html = f"""
+                            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 24px; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff; color: #1e293b; max-width: 600px; margin: 0 auto;">
+                                <div style="border-bottom: 2px solid #0f172a; padding-bottom: 12px; margin-bottom: 18px;">
+                                    <div style="font-weight: 800; font-size: 13px; color: #0f172a;">HWB CLEANING SERVICES LLC</div>
+                                    <div style="font-weight: 700; font-size: 9.5px; color: #2563eb; text-transform: uppercase;">Team Account Onboarding • Access Credentials</div>
+                                </div>
+                                <div style="padding: 10px 0 20px 0; line-height: 1.6; color: #1e293b; font-size: 14px;">
+                                    <h2 style="font-size: 16px; color: #0f172a; margin-top: 0;">Welcome to HWB Cleaning Services</h2>
+                                    <p>Hello <strong>{new_fname or new_uname}</strong>,</p>
+                                    <p>Your HWB Cleaning Services backoffice account has been created with the role <strong>{role}</strong>.</p>
+                                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px; margin: 16px 0; font-size: 13px;">
+                                        <div><strong>Sign-In Portal:</strong> <a href="{login_url}" style="color: #2563eb;">{login_url}</a></div>
+                                        <div style="margin-top: 6px;"><strong>Username:</strong> <code>{new_uname}</code></div>
+                                        <div style="margin-top: 6px;"><strong>Temporary Password:</strong> <code>{raw_pwd}</code></div>
+                                    </div>
+                                    <div style="text-align: center; margin: 22px 0;">
+                                        <a href="{login_url}" style="background: #2563eb; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 700; font-size: 14px; display: inline-block;">Sign In to Your Account</a>
+                                    </div>
+                                </div>
+                            </div>
+                            """
+                            welcome_sent, _ = transmit_email(new_uemail, "HWB Cleaning Services: Your New Account Credentials", welcome_html)
+
                         log_security_event(
                             event_category='USER_ADMIN',
                             event_action='USER_CREATED',
                             severity='INFO',
-                            details={'created_username': request.form.get('new_username'), 'assigned_role': role, 'full_name': request.form.get('full_name')}
+                            details={'created_user_id': new_uid, 'created_username': new_uname, 'assigned_role': role, 'full_name': new_fname, 'welcome_email_delivered': welcome_sent}
                         )
-                        flash("User account created successfully.")
+                        flash(f"User account @{new_uname} created successfully" + (f" and welcome email sent to {new_uemail}." if welcome_sent else "."))
                     elif action == 'edit_user':
                         uid = request.form.get('user_id')
                         fname = request.form.get('full_name')
@@ -1885,10 +1920,11 @@ def sigma_executive():
                             flash("New Password and Confirm New Password do not match.", "error")
                             return redirect(url_for("sigma_executive") + "#users")
                         
-                        cur.execute('SELECT role, custom_permissions FROM "Users" WHERE id = %s', (uid,))
+                        cur.execute('SELECT username, role, custom_permissions FROM "Users" WHERE id = %s', (uid,))
                         existing_row = cur.fetchone()
-                        prior_role = existing_row['role'] if isinstance(existing_row, dict) else (existing_row[0] if existing_row else None)
-                        existing_perms_str = existing_row['custom_permissions'] if isinstance(existing_row, dict) else (existing_row[1] if existing_row and len(existing_row) > 1 else None)
+                        target_uname = existing_row['username'] if isinstance(existing_row, dict) else (existing_row[0] if existing_row else f"user_{uid}")
+                        prior_role = existing_row['role'] if isinstance(existing_row, dict) else (existing_row[1] if existing_row and len(existing_row) > 1 else None)
+                        existing_perms_str = existing_row['custom_permissions'] if isinstance(existing_row, dict) else (existing_row[2] if existing_row and len(existing_row) > 2 else None)
                         try:
                             custom_perms = json.loads(existing_perms_str) if existing_perms_str else {}
                         except Exception:
@@ -1919,10 +1955,50 @@ def sigma_executive():
                         perms_json = json.dumps(custom_perms)
                         
                         role_changed = (prior_role is not None and prior_role != urole)
+                        pwd_email_delivered = False
                         if new_pass:
+                            from blueprints.auth import ensure_user_password_reset_schema
+                            ensure_user_password_reset_schema(conn)
                             phash = generate_password_hash(new_pass)
-                            cur.execute('UPDATE "Users" SET full_name = %s, email = %s, role = %s, status = %s, force_pwd_reset = %s, custom_permissions = %s, telegram_chat_id = %s, password_hash = %s WHERE id = %s',
-                                         (fname, uemail, urole, ustatus, force_pwd, perms_json, telegram_cid, phash, uid))
+                            cur.execute('''
+                                UPDATE "Users"
+                                SET full_name = %s, email = %s, role = %s, status = %s,
+                                    force_pwd_reset = %s, custom_permissions = %s,
+                                    telegram_chat_id = %s, password_hash = %s,
+                                    reset_token_hash = NULL, reset_token_expires_at = NULL,
+                                    reset_delivery_status = 'ADMIN_MANUAL_RESET',
+                                    reset_consumed_at = NOW()
+                                WHERE id = %s
+                            ''', (fname, uemail, urole, ustatus, force_pwd, perms_json, telegram_cid, phash, uid))
+
+                            # Automatically dispatch password update & credential email to user
+                            if uemail and '@' in str(uemail) and not current_app.config.get('TESTING') and not str(target_uname).startswith('test_'):
+                                proto = request.headers.get('X-Forwarded-Proto', 'https' if request.is_secure else 'http')
+                                host = request.headers.get('X-Forwarded-Host') or request.host
+                                login_url = f"{proto}://{host}/login"
+                                reset_notice_html = f"""
+                                <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 24px; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff; color: #1e293b; max-width: 600px; margin: 0 auto;">
+                                    <div style="border-bottom: 2px solid #0f172a; padding-bottom: 12px; margin-bottom: 18px;">
+                                        <div style="font-weight: 800; font-size: 13px; color: #0f172a;">HWB CLEANING SERVICES LLC</div>
+                                        <div style="font-weight: 700; font-size: 9.5px; color: #2563eb; text-transform: uppercase;">Corporate Security • Account Password Updated</div>
+                                    </div>
+                                    <div style="padding: 10px 0 20px 0; line-height: 1.6; color: #1e293b; font-size: 14px;">
+                                        <h2 style="font-size: 16px; color: #0f172a; margin-top: 0;">Your Account Password Was Updated</h2>
+                                        <p>Hello <strong>{fname or target_uname}</strong>,</p>
+                                        <p>An administrator has updated the password for your HWB Cleaning Services account (Username: <strong>{target_uname}</strong>).</p>
+                                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px; margin: 16px 0; font-size: 13px;">
+                                            <div><strong>Sign-In Portal:</strong> <a href="{login_url}" style="color: #2563eb;">{login_url}</a></div>
+                                            <div style="margin-top: 6px;"><strong>Username:</strong> <code>{target_uname}</code></div>
+                                            <div style="margin-top: 6px;"><strong>New Password:</strong> <code>{new_pass}</code></div>
+                                            {"<div style='margin-top: 6px; color: #b45309; font-weight: 600;'>Note: You will be prompted to choose your own personal password when you sign in.</div>" if force_pwd else ""}
+                                        </div>
+                                        <div style="text-align: center; margin: 22px 0;">
+                                            <a href="{login_url}" style="background: #2563eb; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 700; font-size: 14px; display: inline-block;">Sign In Now</a>
+                                        </div>
+                                    </div>
+                                </div>
+                                """
+                                pwd_email_delivered, _ = transmit_email(uemail, "HWB Security: Your Account Password Has Been Updated", reset_notice_html)
                         else:
                             cur.execute('UPDATE "Users" SET full_name = %s, email = %s, role = %s, status = %s, force_pwd_reset = %s, custom_permissions = %s, telegram_chat_id = %s WHERE id = %s',
                                          (fname, uemail, urole, ustatus, force_pwd, perms_json, telegram_cid, uid))
@@ -1933,15 +2009,17 @@ def sigma_executive():
                             severity='WARNING' if (role_changed or new_pass) else 'INFO',
                             details={
                                 'target_user_id': uid,
+                                'target_username': target_uname,
                                 'prior_role': prior_role,
                                 'new_role': urole,
                                 'status': ustatus,
                                 'password_reset': bool(new_pass),
+                                'password_email_delivered': pwd_email_delivered,
                                 'role_changed': role_changed
                             }
                         )
                         if new_pass:
-                            flash("User account and password updated successfully.", "success")
+                            flash("User account and password updated successfully" + (f" (credentials emailed to {uemail})." if pwd_email_delivered else "."), "success")
                         else:
                             flash("User account updated successfully.", "success")
                     elif action == 'delete_user':
@@ -2118,11 +2196,14 @@ def sigma_executive():
                 kpivs = []
 
             try:
+                from blueprints.auth import ensure_user_password_reset_schema
+                ensure_user_password_reset_schema(conn)
                 cur.execute('''
                     SELECT 
                         id, username, full_name, email, role, status, 
                         force_pwd_reset, custom_permissions, telegram_chat_id, 
                         last_login_at, last_logout_at, last_heartbeat_at, last_login_ip, login_count,
+                        reset_requested_at, reset_token_expires_at, reset_delivery_status, reset_delivery_error, reset_consumed_at,
                         CASE 
                             WHEN last_logout_at IS NOT NULL AND last_login_at IS NOT NULL AND last_logout_at >= last_login_at THEN 'LOGGED_OUT'
                             WHEN last_heartbeat_at IS NOT NULL AND last_heartbeat_at >= (NOW() - INTERVAL '15 minutes') THEN 'ONLINE'

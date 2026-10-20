@@ -120,6 +120,8 @@ Responsibility: George (Architect)
 | 10/19/2026 | BUG-134 | Unclosed `#view-monitor` Container (`display: none`) During Jinja Active-View Pruning Trapping Downstream Views & Modals (`#modal-lead-command`) and Preventing Lead Row Click Display. | **RESOLVED** | HIGH |
 | 10/19/2026 | BUG-135 | Tablet Off-Screen Column Popover Clipping (`#col-mgr-menu` `right: 0; width: 640px;`), Unscrollable `.isc-modal` (`overflow: hidden`), Multi-Sticky Column Overlap, & Touch Header Drag Collision. | **RESOLVED** | HIGH |
 | 10/19/2026 | BUG-136 | Smartphone (`390px` Apple iPhone iOS Safari & `412px` Google Pixel 9 Android Chrome) Public & Backend Form Ergonomics: `<16px` Input Auto-Zoom, Uncollapsed Multi-Column Form Grids (`2fr 1fr 1fr`), Heavy Vault Paddings (`4rem`), Static `100vh` vs `100dvh` Keyboard Clipping, & Flyout/Bulk Bar Overflow. | **RESOLVED** | HIGH |
+| 10/19/2026 | BUG-137 | Full-Site Public & Backend Phone (`390px–430px`), Tablet (`768px–1024px`), & Data-Table Display Deficits: `.top-utility-bar` `720px` Viewport Blowout, Uncollapsed `repeat(4, 1fr)` KPI Scorecards, 28 Wide Data Tables Without Phone CRM Card Mode, & Fixed `320px` QMS Manual Sidebar Crushing Mobile Text. | **RESOLVED** | HIGH |
+| 10/20/2026 | BUG-138 | Silent Password Reset Failure on Azure Production (`Users.reset_token_hash` Missing From `schema_engine.py`), Unverified Microsoft Graph Delivery Status, Missing Full-Name Identity Resolution, & Lack of Automated Admin Password Reset Email Dispatch. | **RESOLVED** | CRITICAL |
 
 
 ## BUG-122: App Manual Static Routing Deficit (Lacks Automatic Active Workspace Detection & Deep-Link Chapter Navigation)
@@ -2579,3 +2581,52 @@ CEO Humberto Dominguez attempting to log into `https://www.hwbcleaning.com/login
    - Upgraded `.isc-modal` to `max-height: 92dvh !important; padding: 1.15rem !important; padding-bottom: max(1.15rem, env(safe-area-inset-bottom)) !important;` on phones, added a `focusin` listener in `backoffice_operations_core.js` to center focused inputs above the virtual keyboard (`scrollIntoView({ block: 'center', behavior: 'smooth' })`), clamped `.sigma-jump-menu` and `.bulk-dropdown-menu` to `left: 12px; right: 12px; position: fixed;`, and made `#leads-bulk-controls` wrap cleanly.
 4. **Automated CI/CD Gate (`scripts/test_web_performance_rack_14.py`):**
    - Added `test_14_smartphone_iphone_and_pixel9_form_ergonomics` (`14/14` tests passing).
+
+
+## BUG-137: Full-Site Public & Backend Phone (`390px–430px`), Tablet (`768px–1024px`), & Data-Table Display Deficits: `.top-utility-bar` `720px` Viewport Blowout, Uncollapsed `repeat(4, 1fr)` KPI Scorecards, 28 Wide Data Tables Without Phone CRM Card Mode, & Fixed `320px` QMS Manual Sidebar Crushing Mobile Text
+**Detected:** 10/19/2026
+**Status:** **RESOLVED** (10/19/2026)
+**Symptoms:**
+1. On a **Google Pixel 9 (`412px`)** and **Apple iPhone (`390px`)**, the authenticated `.top-utility-bar` (`padding: 0.5rem 40px` + 5 horizontal buttons) forced the layout viewport to `720px`, causing the entire backoffice and public pages to drift sideways ("displaying all over"), while stacking 3 headers + a 4-row wrapped `.sigma-nav-ribbon` consumed `420px` (`55%`) of vertical height before any module content appeared.
+2. Nine backend modules in `backoffice_operations.html`, `HWB-WEB Sigma Executive.html`, `sales_desk.html`, and `bosanna_cockpit.html` used inline `grid-template-columns: repeat(4, 1fr)` for KPI scorecards and `min-width: 260px–280px` search bars, squeezing 4 KPI cards into `85px` strips on phones.
+3. Across all 28 public and backend data tables (`.isc-grid`, `.isc-grid-expansive`, `.sigma-table`, `.leads-table`, `.field-table`), phones required 4 screen-widths of horizontal scrolling (`1,500px`) where users lost sight of the company name while viewing right-hand columns.
+4. On `/manual/app` and `/manual` (`sop_base.html`), a fixed `320px` `.qms-sidebar` + `margin-left: 320px` + `padding: 4rem 5rem` + `280px` right TOC had zero mobile/tablet media queries, crushing manual text off-screen on phones and tablets. Similarly, `capability_statement.html` only had `@media print` rules and no mobile screen breakpoints.
+**Root Causes:**
+1. Lack of a unified, self-healing responsive table and grid engine across `base.html`, `backoffice_base.html`, `sop_base.html`, and standalone templates (`sales_desk.html`, `bosanna_cockpit.html`, `bosanna_dossier.html`, `capability_statement.html`, `prequal.html`).
+2. Inline `grid-template-columns: repeat(4, 1fr)` styles on KPI scorecards and `min-width: 280px` on toolbar search inputs were not targeted by tablet (`<= 1024px`) and phone (`<= 768px`) responsive selectors.
+**Solution:**
+1. **Universal Self-Healing Phone, Tablet & Adaptive Data-Table Engine (`static/js/sigma_responsive_engine.js` & `static/HWB-WEB Style.css`):**
+   - Engineered `SigmaResponsiveTableEngine` with a `MutationObserver` that automatically hydrates every current and future `<table>` (`<thead><th> -> td[data-label]`), tags primary identity cells (`.sigma-card-primary-cell`), action cells (`.sigma-card-actions-cell`), and empty `--` cells (`data-cell-empty="true"`), and renders tables as **2-Column CRM Touch Cards** on phones (`<= 768px`) with a persistent **`[Cards | Table]`** mode switcher (`localStorage: sigma_mobile_table_mode`) and smooth touch-scroll on tablets (`768px–1024px`).
+2. **Global App-Shell Consolidation & Single-Row Touch-Swipe Navigation (`mega_bar.html`, `backend_nav.html`, `backoffice_base.html`):**
+   - Made `.top-utility-bar` fluid (`clamp(12px, 3vw, 40px)`), hid the duplicate marketing `.main-header` inside `body.backoffice-body` on phones (`<= 768px`), converted `.sigma-nav-ribbon` and filter bars (`#leads-category-bar`, `#leads-stage-bar`) into single-row horizontal touch-swipe rails with auto-centered active tabs, and positioned `.sigma-jump-menu` and `#add-menu` via `position: fixed` below tapped buttons on `<= 1024px`.
+3. **Universal Multi-Tier KPI & Split Grid Breakpoints (`1024px` Tablet & `768px` Phone) + QMS Off-Canvas Drawer (`sop_base.html`, `capability_statement.html`, `prequal.html`, `sales_desk.html`, `bosanna_cockpit.html`, `bosanna_dossier.html`):**
+   - Collapsed all `repeat(4, 1fr)` and `repeat(3, 1fr)` KPI scorecards into `2 columns` on tablets (`<= 1024px`) and `2x2 compact cards` on phones (`<= 768px`), collapsed split workspaces (`2fr 1fr`, `1.5fr 1fr`, `1fr 380px`) to `1fr`, and converted `.qms-sidebar` on `/manual/app` and `/manual` into an off-canvas slide-out drawer (`[☰ Manual Sections & Search]`) on `<= 1024px`.
+4. **Permanent Runtime Auto-Injection & CI/CD Gate (`main_app.py` & `scripts/test_web_performance_rack_14.py`):**
+   - Added an `@app.after_request` safeguard in `main_app.py` that automatically injects `<script src="/static/js/sigma_responsive_engine.js" defer></script>` into any HTML response if omitted by a future template, codified the Permanent Universal Phone, Tablet & Adaptive Data-Table Standard in `GEMINI.md`, and added `test_15_full_site_phone_tablet_and_table_enterprise_architecture` (`15/15` Rack 14 tests passing).
+
+
+## BUG-138: Silent Password Reset Failure on Azure Production (`Users.reset_token_hash` Missing From `schema_engine.py`), Unverified Microsoft Graph Delivery Status, Missing Full-Name Identity Resolution, & Lack of Automated Admin Password Reset Email Dispatch
+**Detected:** 10/20/2026
+**Status:** **RESOLVED** (10/20/2026)
+**Symptoms:**
+1. Sales Representative **Beabe Wiley** (`@Bwiley`, User ID `6`, `beabe2012@gmail.com`) submitted the self-service `/forgot-password` recovery form on `https://hwbcleaning.com`, saw the green *"Instructions Dispatched"* banner, but **never received any password reset email**.
+2. Inspecting live `SecurityAuditLogs` and Microsoft Graph Sent Items showed **zero `PASSWORD_RESET_REQUESTED` events** and **zero outbound emails** to `beabe2012@gmail.com`. CEO Humberto Dominguez had to manually reset her password at `02:33:40 PM CST` on `10/19/2026` (`Event #98`, `USER_MODIFIED`, `password_reset: True`).
+3. Probing the admin `Email Reset Link` endpoint (`/api/v1/users/2/send-reset-email`) on live Azure Production returned `HTTP 500` with: `column "reset_token_hash" of relation "Users" does not exist`.
+**Root Causes:**
+1. **Schema Drift (`database/schema_engine.py`):** `reset_token_hash` and `reset_token_expires_at` were added manually to the local dev container in an earlier session and never added to `database/schema_engine.py`. When `/forgot-password` ran on Azure Production (`blueprints/auth.py` line 350), PostgreSQL threw `UndefinedColumn: column "reset_token_hash" of relation "Users" does not exist` **before** `transmit_email()` (line 393) and `log_security_event()` (line 395) could execute.
+2. **Swallowed Exceptions & Unchecked Graph Delivery (`blueprints/auth.py`):** The `try...except` block caught the `UndefinedColumn` exception, printed only to stdout without writing a `PASSWORD_RESET_DISPATCH_FAILED` row to `SecurityAuditLogs`, and still rendered `forgot_password.html` with `submitted=True`. Additionally, `transmit_email()`'s `(sent_ok, sent_reason)` return tuple was ignored.
+3. **Full-Name Lookup Omission (`blueprints/auth.py`):** Unlike `/login` (which resolves `LOWER(username)`, `LOWER(email)`, or `LOWER(full_name)`), `/forgot-password` only checked `email` and `username`.
+4. **Manual Admin Reset Disconnected From Email Gateway (`blueprints/operations.py`):** Setting a new password or temporary password in `/admin/executive` (`action == 'edit_user'`) updated the database hash without automatically emailing the updated credentials to the team member.
+**Solution:**
+1. **5-Layer Enterprise IAM Schema & Drift Guard (`database/schema_engine.py`, `scripts/audit_dev_to_live_parity.py`, `blueprints/auth.py`):**
+   - Added `reset_token_hash`, `reset_token_expires_at`, `reset_requested_at`, `reset_delivery_status`, `reset_delivery_error`, `reset_consumed_at`, and the `PasswordResetAuditLedger` table to `database/schema_engine.py` (baseline DDL + Migration `046`) and added runtime self-healing `ensure_user_password_reset_schema(conn)` in `blueprints/auth.py`.
+   - Upgraded `scripts/audit_dev_to_live_parity.py` to verify all 6 IAM columns on `"Users"` during every pre-flight parity check.
+2. **Verified Microsoft Graph Delivery & Smart Identity Resolution (`blueprints/auth.py`, `templates/forgot_password.html`, `core/services/security_logger.py`):**
+   - Upgraded `/forgot-password` to resolve users by `LOWER(email)`, `LOWER(username)`, or `LOWER(full_name)` with a 30-minute single-use token TTL.
+   - Checked `sent_ok, sent_reason = transmit_email(...)` in both `/forgot-password` and `/api/v1/users/<id>/send-reset-email`; recorded `DELIVERED`, `FAILED`, or `CONSUMED` in both `"Users"` and `"PasswordResetAuditLedger"`; logged `PASSWORD_RESET_DISPATCH_FAILED` to `"SecurityAuditLogs"` on any DB or Graph error; and surfaced a clean `dispatch_error` banner in `forgot_password.html` if delivery fails.
+3. **Zero-Touch Admin Onboarding & Password Reset Dispatch (`blueprints/operations.py`, `templates/HWB-WEB Sigma Executive.html`):**
+   - Upgraded `add_user` and `edit_user` in `blueprints/operations.py` to automatically email branded HWB-COM-001 credentials whenever a new user is created or an administrator resets a password, and added live delivery status pills (`Reset Link Sent`, `Reset Email Failed`, `Password Updated`) to the User Accounts table.
+4. **Automated CI/CD Regression Gate (`scripts/test_web_performance_rack_14.py`):**
+   - Added `test_16_enterprise_iam_password_recovery_and_audit_ledger` (`16/16` Rack 14 tests passing).
+
+

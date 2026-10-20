@@ -121,6 +121,7 @@ Responsibility: George (Architect)
 | 10/19/2026 | BUG-135 | Tablet Off-Screen Column Popover Clipping (`#col-mgr-menu` `right: 0; width: 640px;`), Unscrollable `.isc-modal` (`overflow: hidden`), Multi-Sticky Column Overlap, & Touch Header Drag Collision. | **RESOLVED** | HIGH |
 | 10/19/2026 | BUG-136 | Smartphone (`390px` Apple iPhone iOS Safari & `412px` Google Pixel 9 Android Chrome) Public & Backend Form Ergonomics: `<16px` Input Auto-Zoom, Uncollapsed Multi-Column Form Grids (`2fr 1fr 1fr`), Heavy Vault Paddings (`4rem`), Static `100vh` vs `100dvh` Keyboard Clipping, & Flyout/Bulk Bar Overflow. | **RESOLVED** | HIGH |
 | 10/19/2026 | BUG-137 | Full-Site Public & Backend Phone (`390px–430px`), Tablet (`768px–1024px`), & Data-Table Display Deficits: `.top-utility-bar` `720px` Viewport Blowout, Uncollapsed `repeat(4, 1fr)` KPI Scorecards, 28 Wide Data Tables Without Phone CRM Card Mode, & Fixed `320px` QMS Manual Sidebar Crushing Mobile Text. | **RESOLVED** | HIGH |
+| 10/20/2026 | BUG-138 | Silent Password Reset Failure on Azure Production (`Users.reset_token_hash` Missing From `schema_engine.py`), Unverified Microsoft Graph Delivery Status, Missing Full-Name Identity Resolution, & Lack of Automated Admin Password Reset Email Dispatch. | **RESOLVED** | CRITICAL |
 
 
 ## BUG-122: App Manual Static Routing Deficit (Lacks Automatic Active Workspace Detection & Deep-Link Chapter Navigation)
@@ -2602,4 +2603,30 @@ CEO Humberto Dominguez attempting to log into `https://www.hwbcleaning.com/login
    - Collapsed all `repeat(4, 1fr)` and `repeat(3, 1fr)` KPI scorecards into `2 columns` on tablets (`<= 1024px`) and `2x2 compact cards` on phones (`<= 768px`), collapsed split workspaces (`2fr 1fr`, `1.5fr 1fr`, `1fr 380px`) to `1fr`, and converted `.qms-sidebar` on `/manual/app` and `/manual` into an off-canvas slide-out drawer (`[☰ Manual Sections & Search]`) on `<= 1024px`.
 4. **Permanent Runtime Auto-Injection & CI/CD Gate (`main_app.py` & `scripts/test_web_performance_rack_14.py`):**
    - Added an `@app.after_request` safeguard in `main_app.py` that automatically injects `<script src="/static/js/sigma_responsive_engine.js" defer></script>` into any HTML response if omitted by a future template, codified the Permanent Universal Phone, Tablet & Adaptive Data-Table Standard in `GEMINI.md`, and added `test_15_full_site_phone_tablet_and_table_enterprise_architecture` (`15/15` Rack 14 tests passing).
+
+
+## BUG-138: Silent Password Reset Failure on Azure Production (`Users.reset_token_hash` Missing From `schema_engine.py`), Unverified Microsoft Graph Delivery Status, Missing Full-Name Identity Resolution, & Lack of Automated Admin Password Reset Email Dispatch
+**Detected:** 10/20/2026
+**Status:** **RESOLVED** (10/20/2026)
+**Symptoms:**
+1. Sales Representative **Beabe Wiley** (`@Bwiley`, User ID `6`, `beabe2012@gmail.com`) submitted the self-service `/forgot-password` recovery form on `https://hwbcleaning.com`, saw the green *"Instructions Dispatched"* banner, but **never received any password reset email**.
+2. Inspecting live `SecurityAuditLogs` and Microsoft Graph Sent Items showed **zero `PASSWORD_RESET_REQUESTED` events** and **zero outbound emails** to `beabe2012@gmail.com`. CEO Humberto Dominguez had to manually reset her password at `02:33:40 PM CST` on `10/19/2026` (`Event #98`, `USER_MODIFIED`, `password_reset: True`).
+3. Probing the admin `Email Reset Link` endpoint (`/api/v1/users/2/send-reset-email`) on live Azure Production returned `HTTP 500` with: `column "reset_token_hash" of relation "Users" does not exist`.
+**Root Causes:**
+1. **Schema Drift (`database/schema_engine.py`):** `reset_token_hash` and `reset_token_expires_at` were added manually to the local dev container in an earlier session and never added to `database/schema_engine.py`. When `/forgot-password` ran on Azure Production (`blueprints/auth.py` line 350), PostgreSQL threw `UndefinedColumn: column "reset_token_hash" of relation "Users" does not exist` **before** `transmit_email()` (line 393) and `log_security_event()` (line 395) could execute.
+2. **Swallowed Exceptions & Unchecked Graph Delivery (`blueprints/auth.py`):** The `try...except` block caught the `UndefinedColumn` exception, printed only to stdout without writing a `PASSWORD_RESET_DISPATCH_FAILED` row to `SecurityAuditLogs`, and still rendered `forgot_password.html` with `submitted=True`. Additionally, `transmit_email()`'s `(sent_ok, sent_reason)` return tuple was ignored.
+3. **Full-Name Lookup Omission (`blueprints/auth.py`):** Unlike `/login` (which resolves `LOWER(username)`, `LOWER(email)`, or `LOWER(full_name)`), `/forgot-password` only checked `email` and `username`.
+4. **Manual Admin Reset Disconnected From Email Gateway (`blueprints/operations.py`):** Setting a new password or temporary password in `/admin/executive` (`action == 'edit_user'`) updated the database hash without automatically emailing the updated credentials to the team member.
+**Solution:**
+1. **5-Layer Enterprise IAM Schema & Drift Guard (`database/schema_engine.py`, `scripts/audit_dev_to_live_parity.py`, `blueprints/auth.py`):**
+   - Added `reset_token_hash`, `reset_token_expires_at`, `reset_requested_at`, `reset_delivery_status`, `reset_delivery_error`, `reset_consumed_at`, and the `PasswordResetAuditLedger` table to `database/schema_engine.py` (baseline DDL + Migration `046`) and added runtime self-healing `ensure_user_password_reset_schema(conn)` in `blueprints/auth.py`.
+   - Upgraded `scripts/audit_dev_to_live_parity.py` to verify all 6 IAM columns on `"Users"` during every pre-flight parity check.
+2. **Verified Microsoft Graph Delivery & Smart Identity Resolution (`blueprints/auth.py`, `templates/forgot_password.html`, `core/services/security_logger.py`):**
+   - Upgraded `/forgot-password` to resolve users by `LOWER(email)`, `LOWER(username)`, or `LOWER(full_name)` with a 30-minute single-use token TTL.
+   - Checked `sent_ok, sent_reason = transmit_email(...)` in both `/forgot-password` and `/api/v1/users/<id>/send-reset-email`; recorded `DELIVERED`, `FAILED`, or `CONSUMED` in both `"Users"` and `"PasswordResetAuditLedger"`; logged `PASSWORD_RESET_DISPATCH_FAILED` to `"SecurityAuditLogs"` on any DB or Graph error; and surfaced a clean `dispatch_error` banner in `forgot_password.html` if delivery fails.
+3. **Zero-Touch Admin Onboarding & Password Reset Dispatch (`blueprints/operations.py`, `templates/HWB-WEB Sigma Executive.html`):**
+   - Upgraded `add_user` and `edit_user` in `blueprints/operations.py` to automatically email branded HWB-COM-001 credentials whenever a new user is created or an administrator resets a password, and added live delivery status pills (`Reset Link Sent`, `Reset Email Failed`, `Password Updated`) to the User Accounts table.
+4. **Automated CI/CD Regression Gate (`scripts/test_web_performance_rack_14.py`):**
+   - Added `test_16_enterprise_iam_password_recovery_and_audit_ledger` (`16/16` Rack 14 tests passing).
+
 
