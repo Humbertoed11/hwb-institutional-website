@@ -852,7 +852,7 @@ def send_subcontractor_receipt_email(partner_data: Dict[str, Any], is_repeat: bo
             </table>
             <div style="background-color: #f8fafc; border-left: 4px solid #2563eb; padding: 12px 16px; border-radius: 4px; margin-top: 16px;">
                 <strong style="color: #0f172a;">Next Steps for Project Dispatch:</strong><br>
-                You do not need to submit the web form again. To complete your compliance file for upcoming bids, please reply to <a href="mailto:sales@hwbcleaning.com" style="color: #2563eb; font-weight: 700;">sales@hwbcleaning.com</a> with your <strong>W-9 Form</strong> and <strong>Certificate of Insurance (COI)</strong> referencing <strong>{ref_code}</strong>.
+                Our operations team is reviewing your initial registration. Once reviewed, you will receive a secure, pre-filled <strong>1099 Partner Onboarding Link</strong> where you can upload your <strong>Form W-9</strong> and <strong>Certificate of Insurance (COI)</strong> and sign your subcontractor agreement online.
             </div>
         </div>
         <div style="font-size: 12px; color: #64748b; text-align: center;">
@@ -863,14 +863,265 @@ def send_subcontractor_receipt_email(partner_data: Dict[str, Any], is_repeat: bo
     return transmit_email([email], subject, body_html)
 
 
+def send_subcontractor_onboarding_invite_email(partner_data: Dict[str, Any]) -> Tuple[bool, str]:
+    """
+    Sends the pre-filled 1099 Subcontractor Onboarding Portal link (/onboard/subcontractor/<token>)
+    after initial registration review (either manual executive sign-off or automated gate).
+    """
+    email = clean_email(partner_data.get("email"))
+    if not email or email.endswith((".test", ".local", ".invalid", "@example.com")):
+        return False, "Skipped non-routable or missing partner email"
+
+    company_name = partner_data.get("company_name") or "Trade Partner"
+    contact_name = partner_data.get("contact_name") or "Partner"
+    partner_id = partner_data.get("partner_id") or partner_data.get("id") or "0001"
+    ref_code = f"SUB-#{int(partner_id):04d}" if str(partner_id).isdigit() else f"SUB-#{partner_id}"
+    onboarding_url = partner_data.get("onboarding_url") or ""
+    review_mode = partner_data.get("review_mode") or "Operations Review"
+
+    subject = f"ACTION REQUIRED: Complete Your Pre-Filled 1099 Partner Onboarding ({ref_code}) — HWB Cleaning Services"
+    body_html = f"""
+    <div style="font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; padding: 30px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; max-width: 620px; margin: 0 auto; color: #0f172a;">
+        <div style="border-bottom: 3px solid #7c3aed; padding-bottom: 16px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <div style="font-weight: 900; font-size: 20px; color: #0f172a;">HWB CLEANING SERVICES LLC</div>
+                <div style="font-size: 12px; color: #7c3aed; font-weight: 700; margin-top: 4px;">1099 Subcontractor Onboarding Portal • {ref_code}</div>
+            </div>
+        </div>
+        <div style="background-color: #ffffff; padding: 24px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 20px; font-size: 14px; line-height: 1.6;">
+            <p style="margin-top: 0;">Hello <strong>{contact_name}</strong>,</p>
+            <p>
+                Your initial subcontractor registration for <strong>{company_name}</strong> (<strong>{ref_code}</strong>) has passed our initial review ({review_mode}).
+            </p>
+            <p>
+                We have prepared your <strong>pre-filled 1099 Onboarding Portal</strong>. All of your initial registration details are already filled in for you:
+            </p>
+            <ul style="color: #334155; padding-left: 20px; margin: 14px 0;">
+                <li><strong>Step 1 — Upload Your Form W-9:</strong> Our system automatically reads your W-9 to fill in your street address, ZIP code, tax classification, and EIN/SSN.</li>
+                <li><strong>Step 2 — Certificate of Insurance (COI):</strong> Upload your COI now, or submit your W-9 and signed agreement first while we hold your profile at <em>Pending COI</em> until your insurance agent sends it.</li>
+                <li><strong>Step 3 — 1-Click Digital Signature:</strong> Review and e-sign your pre-filled Master Subcontractor Agreement (MSA) and Texas DWC-83 Independent Contractor Affirmation.</li>
+            </ul>
+            <div style="text-align: center; margin: 26px 0;">
+                <a href="{onboarding_url}" style="display: inline-block; background-color: #7c3aed; color: #ffffff; padding: 14px 32px; border-radius: 8px; font-weight: 800; font-size: 15px; text-decoration: none;">
+                    Open Pre-Filled 1099 Onboarding Portal &rarr;
+                </a>
+            </div>
+            <div style="font-size: 12px; color: #64748b; background: #f8fafc; padding: 10px 14px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                Direct Link: <a href="{onboarding_url}" style="color: #2563eb; word-break: break-all;">{onboarding_url}</a>
+            </div>
+        </div>
+        <div style="font-size: 12px; color: #64748b; text-align: center;">
+            HWB Cleaning Services LLC • (214)-586-0257 • sales@hwbcleaning.com
+        </div>
+    </div>
+    """
+    return transmit_email([email], subject, body_html)
+
+
+def send_subcontractor_onboarding_completed_notifications(partner_data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Notifies executive leadership (Telegram + Email) and sends a receipt to the subcontractor
+    when they submit their W-9, signed MSA/DWC-83, and/or COI via the self-service portal.
+    """
+    results: Dict[str, Any] = {}
+    company_name = partner_data.get("company_name") or "Trade Partner"
+    contact_name = partner_data.get("contact_name") or "Partner"
+    partner_id = partner_data.get("partner_id") or partner_data.get("id") or "0001"
+    ref_code = f"SUB-#{int(partner_id):04d}" if str(partner_id).isdigit() else f"SUB-#{partner_id}"
+    street = partner_data.get("street_address") or ""
+    city = partner_data.get("city") or "TX"
+    state = partner_data.get("state") or "TX"
+    zip_code = partner_data.get("zip_code") or ""
+    tax_class = partner_data.get("tax_classification") or "Provided"
+    coi_status = partner_data.get("coi_status") or "Pending COI"
+    onboarding_status = partner_data.get("onboarding_status") or "Docs Under Review"
+    signer_name = partner_data.get("msa_signer_name") or contact_name
+
+    # 1. Telegram Alert to Executive Team
+    bot_token = os.environ.get("TELEGRAM_BOT_TOKEN")
+    chat_ids = get_active_telegram_recipients()
+    if bot_token and chat_ids:
+        tg_msg = (
+            "✅ *1099 ONBOARDING PACKET SUBMITTED*\n"
+            "━━━━━━━━━━━━━━━━━━\n"
+            f"🏢 *Company:* {company_name} (`{ref_code}`)\n"
+            f"👤 *Signed By:* {signer_name}\n"
+            f"📍 *Extracted Address:* {street}, {city}, {state} {zip_code}\n"
+            f"🏛️ *Tax Class:* {tax_class} (W-9 Uploaded ✓)\n"
+            f"🛡️ *COI Insurance:* {coi_status}\n"
+            f"📝 *MSA & TX DWC-83:* E-Signed ✓\n"
+            f"📊 *Stage:* {onboarding_status}\n"
+            "━━━━━━━━━━━━━━━━━━\n"
+            "⚡ _Review files in Backoffice -> Workforce -> 1099 Subcontractors_"
+        )
+        url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+        for cid in chat_ids:
+            try:
+                requests.post(url, json={"chat_id": cid, "text": tg_msg, "parse_mode": "Markdown"}, timeout=6)
+            except Exception:
+                pass
+        results["telegram"] = True
+
+    # 2. Internal Executive Email Alert
+    recipients = ["hdominguez@hwbcleaning.com", "sales@hwbcleaning.com"]
+    exec_subject = f"✅ 1099 Onboarding Submitted: {company_name} ({ref_code}) — {onboarding_status}"
+    exec_html = f"""
+    <div style="font-family: 'Segoe UI', Arial, sans-serif; padding: 24px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; max-width: 600px; margin: 0 auto;">
+        <h2 style="margin-top: 0; color: #0f172a;">1099 Onboarding Packet Submitted ({ref_code})</h2>
+        <p style="color: #334155; font-size: 14px;">
+            <strong>{company_name}</strong> has completed the self-service onboarding portal:
+        </p>
+        <ul style="font-size: 14px; color: #0f172a; line-height: 1.6;">
+            <li><strong>W-9 Form:</strong> Uploaded &amp; Extracted ({tax_class})</li>
+            <li><strong>Business Address:</strong> {street}, {city}, {state} {zip_code}</li>
+            <li><strong>Master Subcontractor Agreement &amp; TX DWC-83:</strong> E-Signed by {signer_name}</li>
+            <li><strong>COI Insurance Status:</strong> {coi_status}</li>
+            <li><strong>Current Onboarding Status:</strong> {onboarding_status}</li>
+        </ul>
+        <div style="margin-top: 20px;">
+            <a href="https://hwbcleaning.com/admin/operations?view=workforce" style="display: inline-block; background: #059669; color: #ffffff; padding: 10px 22px; border-radius: 6px; text-decoration: none; font-weight: 700; font-size: 14px;">
+                Review &amp; Activate in Subcontractors Vault
+            </a>
+        </div>
+    </div>
+    """
+    em_ok, em_detail = transmit_email(recipients, exec_subject, exec_html)
+    results["executive_email"] = {"success": em_ok, "detail": em_detail}
+
+    # 3. Partner Receipt Email
+    partner_email = clean_email(partner_data.get("email"))
+    if partner_email and not partner_email.endswith((".test", ".local", ".invalid", "@example.com")):
+        coi_note = (
+            "Your W-9, Certificate of Insurance (COI), and signed Master Subcontractor Agreement are now under final verification."
+            if "Pending" not in coi_status
+            else "Your W-9 and signed Master Subcontractor Agreement have been saved! Because your COI file was not uploaded yet, your profile is held at <strong>Pending COI</strong>. You can use your same onboarding link anytime to upload your COI once received from your insurance agent."
+        )
+        p_sub = f"HWB Cleaning Services — 1099 Onboarding Documents Received ({ref_code})"
+        p_html = f"""
+        <div style="font-family: 'Segoe UI', Arial, sans-serif; padding: 24px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; max-width: 600px; margin: 0 auto;">
+            <h2 style="margin-top: 0; color: #0f172a;">1099 Onboarding Packet Received ({ref_code})</h2>
+            <p style="font-size: 14px; color: #334155;">Hello <strong>{contact_name}</strong>,</p>
+            <p style="font-size: 14px; color: #334155; line-height: 1.6;">{coi_note}</p>
+            <p style="font-size: 12px; color: #64748b; margin-top: 20px;">HWB Cleaning Services LLC • (214)-586-0257 • sales@hwbcleaning.com</p>
+        </div>
+        """
+        rc_ok, rc_detail = transmit_email([partner_email], p_sub, p_html)
+        results["partner_receipt"] = {"success": rc_ok, "detail": rc_detail}
+
+    return results
+
+
+def send_subcontractor_approved_email(partner_data: Dict[str, Any]) -> Tuple[bool, str]:
+    """
+    Sends an official 'Approved for Project Dispatch' notification to a 1099 partner
+    when leadership activates their profile in the backoffice.
+    """
+    email = clean_email(partner_data.get("email"))
+    if not email or email.endswith((".test", ".local", ".invalid", "@example.com")):
+        return False, "Skipped non-routable or missing partner email"
+
+    company_name = partner_data.get("company_name") or "Trade Partner"
+    contact_name = partner_data.get("contact_name") or "Partner"
+    partner_id = partner_data.get("partner_id") or partner_data.get("id") or "0001"
+    ref_code = f"SUB-#{int(partner_id):04d}" if str(partner_id).isdigit() else f"SUB-#{partner_id}"
+
+    subject = f"APPROVED: {company_name} ({ref_code}) Active for Project Dispatch — HWB Cleaning Services"
+    body_html = f"""
+    <div style="font-family: 'Segoe UI', Arial, sans-serif; padding: 28px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; max-width: 600px; margin: 0 auto; color: #0f172a;">
+        <div style="border-bottom: 3px solid #059669; padding-bottom: 14px; margin-bottom: 20px;">
+            <div style="font-weight: 900; font-size: 19px; color: #0f172a;">HWB CLEANING SERVICES LLC</div>
+            <div style="font-size: 12px; color: #059669; font-weight: 800; margin-top: 4px;">ACTIVE 1099 TRADE PARTNER • {ref_code}</div>
+        </div>
+        <div style="background: #ffffff; padding: 22px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 14px; line-height: 1.6;">
+            <p style="margin-top: 0;">Hello <strong>{contact_name}</strong>,</p>
+            <p>
+                Congratulations — your compliance file (Form W-9, Certificate of Insurance, Master Subcontractor Agreement, and Texas DWC-83) for <strong>{company_name}</strong> has been verified and approved.
+            </p>
+            <p>
+                Your crew is now listed as an <strong>Active Partner ({ref_code})</strong> cleared for commercial post-construction and specialty cleaning project dispatch. Our operations desk will reach out directly as project scopes in your service area are scheduled.
+            </p>
+        </div>
+        <div style="font-size: 12px; color: #64748b; text-align: center; margin-top: 16px;">
+            HWB Cleaning Services LLC • (214)-586-0257 • sales@hwbcleaning.com
+        </div>
+    </div>
+    """
+    return transmit_email([email], subject, body_html)
+
+
+def send_subcontractor_coi_renewal_email(partner_data: Dict[str, Any]) -> Tuple[bool, str]:
+    """
+    Sends an automated Certificate of Insurance (COI) expiration warning or expired-policy
+    renewal link directly to the subcontractor so they can upload their updated COI PDF.
+    """
+    email = clean_email(partner_data.get("email"))
+    if not email or email.endswith((".test", ".local", ".invalid", "@example.com")):
+        return False, "Skipped non-routable or missing partner email"
+
+    company_name = partner_data.get("company_name") or "Trade Partner"
+    contact_name = partner_data.get("contact_name") or "Partner"
+    partner_id = partner_data.get("partner_id") or partner_data.get("id") or "0001"
+    ref_code = f"SUB-#{int(partner_id):04d}" if str(partner_id).isdigit() else f"SUB-#{partner_id}"
+    exp_date = partner_data.get("coi_expiration_date") or "Soon"
+    days_rem = int(partner_data.get("days_remaining") or 0)
+    onboarding_url = partner_data.get("onboarding_url") or "https://hwbcleaning.com/work-with-us"
+
+    if days_rem < 0:
+        subject = f"URGENT: Certificate of Insurance Expired ({ref_code}) — Upload Renewed COI for HWB Dispatch"
+        status_banner = f"COI Expired on {exp_date} • Dispatch Hold Active"
+        banner_color = "#dc2626"
+        lead_text = (
+            f"Our compliance records show that the Commercial General Liability Certificate of Insurance (COI) "
+            f"for <strong>{company_name}</strong> (<strong>{ref_code}</strong>) expired on <strong>{exp_date}</strong>. "
+            f"Your profile is temporarily held from new project dispatch until a renewed COI is uploaded."
+        )
+    else:
+        subject = f"REMINDER: Certificate of Insurance Expires in {days_rem} Days ({ref_code}) — HWB Cleaning Services"
+        status_banner = f"COI Expires on {exp_date} ({days_rem} Days Remaining)"
+        banner_color = "#d97706"
+        lead_text = (
+            f"This is a friendly reminder that the Certificate of Insurance (COI) on file for "
+            f"<strong>{company_name}</strong> (<strong>{ref_code}</strong>) is scheduled to expire on "
+            f"<strong>{exp_date}</strong> ({days_rem} days remaining)."
+        )
+
+    body_html = f"""
+    <div style="font-family: 'Segoe UI', Arial, sans-serif; padding: 28px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; max-width: 600px; margin: 0 auto; color: #0f172a;">
+        <div style="border-bottom: 3px solid {banner_color}; padding-bottom: 14px; margin-bottom: 20px;">
+            <div style="font-weight: 900; font-size: 19px; color: #0f172a;">HWB CLEANING SERVICES LLC</div>
+            <div style="font-size: 12px; color: {banner_color}; font-weight: 800; margin-top: 4px;">{status_banner} • {ref_code}</div>
+        </div>
+        <div style="background: #ffffff; padding: 22px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 14px; line-height: 1.6;">
+            <p style="margin-top: 0;">Hello <strong>{contact_name}</strong>,</p>
+            <p>{lead_text}</p>
+            <p>
+                Please use your pre-filled partner link below to upload your renewed Certificate of Insurance naming
+                <strong>HWB Cleaning Services LLC</strong> as Certificate Holder:
+            </p>
+            <div style="text-align: center; margin: 22px 0;">
+                <a href="{onboarding_url}" style="display: inline-block; background: #2563eb; color: #ffffff; padding: 12px 28px; border-radius: 8px; font-weight: 800; font-size: 14px; text-decoration: none;">
+                    Upload Renewed COI PDF &rarr;
+                </a>
+            </div>
+        </div>
+        <div style="font-size: 12px; color: #64748b; text-align: center; margin-top: 16px;">
+            HWB Cleaning Services LLC • (214)-586-0257 • sales@hwbcleaning.com
+        </div>
+    </div>
+    """
+    return transmit_email([email], subject, body_html)
+
+
 def dispatch_subcontractor_notifications(partner_data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Master dispatch coordinator for 1099 subcontractor cleaning crew registrations.
-    Executes email transmission, Telegram push notifications, and partner confirmation receipt.
+    Executes email transmission, Telegram push notifications, and partner confirmation receipt
+    (or automatic onboarding link invite when Auto-Review Gate is enabled and passed).
     """
     results = {}
     is_repeat = bool(partner_data.get("is_repeat", False))
-    print(f"[NOTIFY] Initiating subcontractor dispatch for: {partner_data.get('company_name')} (repeat={is_repeat})", flush=True)
+    auto_invite = bool(partner_data.get("auto_invite", False))
+    print(f"[NOTIFY] Initiating subcontractor dispatch for: {partner_data.get('company_name')} (repeat={is_repeat}, auto_invite={auto_invite})", flush=True)
 
     if not is_repeat:
         tg_ok, tg_msg = send_subcontractor_telegram_alert(partner_data)
@@ -882,9 +1133,14 @@ def dispatch_subcontractor_notifications(partner_data: Dict[str, Any]) -> Dict[s
         results["telegram"] = {"success": True, "detail": "Suppressed duplicate alert for existing subcontractor"}
         results["email"] = {"success": True, "detail": "Suppressed duplicate internal alert for existing subcontractor"}
 
-    rc_ok, rc_msg = send_subcontractor_receipt_email(partner_data, is_repeat=is_repeat)
-    results["partner_receipt"] = {"success": rc_ok, "detail": rc_msg}
+    if auto_invite and partner_data.get("onboarding_url"):
+        inv_ok, inv_msg = send_subcontractor_onboarding_invite_email(partner_data)
+        results["onboarding_invite"] = {"success": inv_ok, "detail": inv_msg}
+    else:
+        rc_ok, rc_msg = send_subcontractor_receipt_email(partner_data, is_repeat=is_repeat)
+        results["partner_receipt"] = {"success": rc_ok, "detail": rc_msg}
 
-    print(f"[NOTIFY] Subcontractor dispatch finished. Repeat: {is_repeat}, Receipt: {rc_ok}", flush=True)
+    print(f"[NOTIFY] Subcontractor dispatch finished. Repeat: {is_repeat}", flush=True)
     return results
+
 

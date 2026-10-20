@@ -122,6 +122,8 @@ Responsibility: George (Architect)
 | 10/19/2026 | BUG-136 | Smartphone (`390px` Apple iPhone iOS Safari & `412px` Google Pixel 9 Android Chrome) Public & Backend Form Ergonomics: `<16px` Input Auto-Zoom, Uncollapsed Multi-Column Form Grids (`2fr 1fr 1fr`), Heavy Vault Paddings (`4rem`), Static `100vh` vs `100dvh` Keyboard Clipping, & Flyout/Bulk Bar Overflow. | **RESOLVED** | HIGH |
 | 10/19/2026 | BUG-137 | Full-Site Public & Backend Phone (`390px–430px`), Tablet (`768px–1024px`), & Data-Table Display Deficits: `.top-utility-bar` `720px` Viewport Blowout, Uncollapsed `repeat(4, 1fr)` KPI Scorecards, 28 Wide Data Tables Without Phone CRM Card Mode, & Fixed `320px` QMS Manual Sidebar Crushing Mobile Text. | **RESOLVED** | HIGH |
 | 10/20/2026 | BUG-138 | Silent Password Reset Failure on Azure Production (`Users.reset_token_hash` Missing From `schema_engine.py`), Unverified Microsoft Graph Delivery Status, Missing Full-Name Identity Resolution, & Lack of Automated Admin Password Reset Email Dispatch. | **RESOLVED** | CRITICAL |
+| 10/20/2026 | BUG-139 | 1099 Subcontractor Post-Registration Onboarding Gap — Self-Reported COI Marked as Verified Without File, Missing Pre-Filled Self-Service Onboarding Portal (`/onboard/subcontractor/<token>`), No Automated W-9 / COI Document Extraction, & Encrypted PostgreSQL `SubcontractorDocuments` Vault. | **RESOLVED** | HIGH |
+| 10/20/2026 | BUG-140 | W-2 Employee Onboarding & HR Document Vault Parity Gap — Ephemeral Container Disk Storage on `EmployeeDocuments`, Zero Auto-Extraction on Form W-4 / I-9 / Driver License / Voided Check Uploads, Missing Pre-Filled W-2 Self-Service Portal (`/onboard/employee/<token>`), & Uncertified ISO 9001 Clause 7.2 Job Description Timestamp. | **RESOLVED** | HIGH |
 
 
 ## BUG-122: App Manual Static Routing Deficit (Lacks Automatic Active Workspace Detection & Deep-Link Chapter Navigation)
@@ -2630,3 +2632,41 @@ CEO Humberto Dominguez attempting to log into `https://www.hwbcleaning.com/login
    - Added `test_16_enterprise_iam_password_recovery_and_audit_ledger` (`16/16` Rack 14 tests passing).
 
 
+## BUG-139: 1099 Subcontractor Post-Registration Onboarding Gap — Self-Reported COI Marked as Verified Without File, Missing Pre-Filled Self-Service Onboarding Portal (`/onboard/subcontractor/<token>`), No Automated W-9 / COI Document Extraction, & Vault Upload Overwriting `coi_file_url`
+**Detected:** 10/20/2026
+**Status:** **RESOLVED** (10/20/2026)
+**Symptoms:**
+1. All 10 registered 1099 subcontractor partner crews in `"SubcontractorPartners"` remain stuck in `status = 'Vetting'` and `w9_status = 'Pending'`, while 9 of 10 display `coi_status = 'Verified'` even though `coi_file_url` is `NULL` (because `work_with_us.html` passes `value="Verified"` for self-reported insurance coverage).
+2. After initial registration on `/work-with-us`, crews are instructed to manually email W-9 and COI files to `sales@hwbcleaning.com`, requiring staff to manually download attachments from Outlook, re-type addresses and Tax IDs, and upload files by hand.
+3. In `blueprints/crm_api.py` (`api_upload_subcontractor_document`), `"SubcontractorPartners"` lacked dedicated `msa_file_url` and `dwc83_file_url` columns; uploading a Master Subcontractor Agreement fell into the `else` branch and overwrote `coi_file_url`.
+4. There was no post-review onboarding portal (`/onboard/subcontractor/<token>`) pre-filled with the partner's initial registration data, no automated W-9 / COI field extraction (Address, City/State/ZIP, EIN/SSN, Tax Classification, Carrier, Expiration Date), and no digital Master Subcontractor Agreement (MSA) + Texas DWC-83 e-signature workflow.
+**Root Causes:**
+1. Initial registration on `/work-with-us` was built as a single-step lead capture form without a Stage-2 self-service compliance onboarding portal or automated document parser.
+2. `"SubcontractorPartners"` lacked schema columns for `onboarding_token`, `onboarding_status`, `street_address`, `zip_code`, `tax_classification`, `legal_entity_name`, `coi_carrier`, `coi_policy_number`, `coi_coverage_amount`, `msa_signed`, `msa_signer_name`, `msa_signer_title`, `msa_signed_at`, `msa_signer_ip`, `msa_file_url`, and `dwc83_file_url`.
+**Solution:**
+1. **4-Stage 1099 Onboarding Schema & Self-Reported COI Recalibration (`database/schema_engine.py` / Migration `047`):**
+   - Added 19 onboarding, W-9 tax/address, COI policy, and MSA/DWC-83 e-signature columns to `"SubcontractorPartners"`, recalibrated unverified self-reported COI rows to `coi_status = 'Self-Reported'`, and generated unique `onboarding_token` links for all 10 existing partner crews.
+2. **Dual-Engine W-9 & COI Auto-Extraction (`core/services/subcontractor_doc_extractor.py`):**
+   - Built deterministic PDF AcroForm/text extraction + `google.genai` multimodal vision extraction for uploaded IRS Form W-9 (`legal_entity_name`, `company_name`, `tax_classification`, `street_address`, `city`, `state`, `zip_code`, `ein_or_ssn`, `is_signed`) and ACORD 25 COI (`coi_carrier`, `coi_policy_number`, `coi_coverage_amount`, `coi_expiration_date`, `certificate_holder_verified`).
+3. **Pre-Filled Self-Service Onboarding Portal & Digital MSA + TX DWC-83 Execution (`blueprints/public.py` & `templates/subcontractor_onboarding.html`):**
+   - Built `/onboard/subcontractor/<token>`, `/onboard/subcontractor/<token>/extract-document`, and `/onboard/subcontractor/<token>/submit`, pre-filling 100% of initial registration fields, auto-extracting W-9/COI fields on file drop, allowing W-9 + signed MSA submission first (holding at `Pending COI` if COI is not ready yet), and generating a tamper-evident signed MSA & TX DWC-83 compliance certificate in `HR_VAULT_DIR`.
+4. **Manual & Automatic Initial Registration Review Gate (`blueprints/crm_api.py`, `templates/backoffice_operations.html`, `static/js/backoffice_operations_core.js`):**
+   - Added `/api/v1/workforce/subcontractors/<id>/send-onboarding`, `/api/v1/workforce/subcontractors/<id>/approve-partner`, and `/api/v1/workforce/subcontractors/review-mode`, plus 1-click Send Onboarding Link, Copy Link, and Approve & Activate controls in the backoffice and `test_17_subcontractor_1099_onboarding_and_w9_coi_extraction` (`17/17` Rack 14 tests passing).
+
+
+## BUG-140: W-2 Employee Onboarding & HR Document Vault Parity Gap — Ephemeral Container Disk Storage on `EmployeeDocuments`, Zero Auto-Extraction on Form W-4 / I-9 / Driver License / Voided Check Uploads, Missing Pre-Filled W-2 Self-Service Portal (`/onboard/employee/<token>`), & Uncertified ISO 9001 Clause 7.2 Job Description Timestamp
+**Detected:** 10/20/2026
+**Status:** **RESOLVED** (10/20/2026)
+**Symptoms:**
+1. Uploading an employee compliance document (`Form W-4`, `Form I-9`, `Driver License / State ID`, `Direct Deposit Void Check`) via `POST /api/v1/hr/employees/<id>/documents` saved the file only to local container disk (`/app/vault/hr_documents`) without storing an encrypted `BYTEA` payload in PostgreSQL, risking `404 File missing from Vault storage` after Azure Web App container restarts.
+2. Document uploads performed zero field extraction—administrators had to read PDFs manually and re-type Street Address, City/State/ZIP, SSN, W-4 Filing Status, Step 3 Dependents, Step 4(c) Extra Withholding, Driver License Number & Expiration, and Bank Routing/Account numbers.
+3. Unlike 1099 partners (`/onboard/subcontractor/<token>`), W-2 candidates and employees had no pre-filled self-service onboarding portal (`/onboard/employee/<token>`).
+4. Clicking "Sign / Acknowledge Job Description" (`POST /api/v1/hr/employees/<id>/acknowledge-job-description`) stamped `job_description_acknowledged_at = NOW()` without generating a locked PDF with a `SHA-256` signature certificate.
+**Solution:**
+1. **Option C Tier-1 Encrypted PostgreSQL Vault on `"EmployeeDocuments"` (`database/schema_engine.py` / Migration `048`):**
+   - Added `encrypted_payload BYTEA` (`zlib` + AES-256 Fernet), `sha256_checksum`, `version_number`, `is_current`, `storage_provider`, `extracted_json`, `uploaded_by`, and `uploaded_ip` to `"EmployeeDocuments"`, plus 17 onboarding & extraction columns on `"Employees"`.
+   - Upgraded `api_upload_employee_document` and `api_download_employee_document` to encrypt/decrypt directly from PostgreSQL 16.15 and automatically heal local container disk cache on demand.
+2. **3-Stage W-2 Document Auto-Extraction Engine (`core/services/employee_doc_extractor.py`):**
+   - Built `extract_w4_fields`, `extract_state_id_fields`, `extract_direct_deposit_fields`, `extract_i9_fields`, and `apply_extracted_fields_to_employee` to automatically extract and populate Home Address, City/State/ZIP, AES-256 encrypted SSN, W-4 Filing Status/Dependents/Withholding, State ID # & Expiration, DOB, and Bank Name / ABA Routing / AES-256 encrypted Account Number.
+3. **Pre-Filled Self-Service W-2 Onboarding Portal & Locked ISO 9001 Clause 7.2 PDF Certificate (`blueprints/public.py`, `templates/employee_onboarding_portal.html`, `blueprints/crm_api.py`):**
+   - Built `/onboard/employee/<token>`, `/api/v1/employees/onboard/<token>/upload-doc`, and `/api/v1/employees/onboard/<token>/complete`, plus `generate_signed_w2_onboarding_pdf` (`ReportLab` + `SHA-256` signature hash) and `test_18_w2_employee_onboarding_and_encrypted_vault` (`18/18` Rack 14 tests passing).

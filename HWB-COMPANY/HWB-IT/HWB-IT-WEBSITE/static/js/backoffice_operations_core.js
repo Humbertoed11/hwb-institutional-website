@@ -5206,19 +5206,21 @@
                         div.style.justifyContent = 'space-between';
                         div.style.alignItems = 'center';
                         div.style.padding = '0.5rem 0.65rem';
-                        div.style.background = 'white';
+                        div.style.background = d.is_current === false ? '#f8fafc' : 'white';
                         div.style.border = '1px solid var(--slate-200)';
                         div.style.borderRadius = '6px';
                         div.style.marginBottom = '0.4rem';
 
+                        const verBadge = `<span style="font-size:0.65rem; font-weight:800; background:${d.is_current === false ? '#e2e8f0' : '#dcfce7'}; color:${d.is_current === false ? '#475569' : '#166534'}; padding:1px 5px; border-radius:4px; margin-left:4px;">v${d.version_number || 1}${d.is_current === false ? ' (Prior)' : ''}</span>`;
+                        const vaultBadge = d.has_encrypted_vault ? `<span style="font-size:0.65rem; font-weight:700; color:#1d4ed8; margin-left:4px;" title="SHA-256: ${d.sha256_checksum || ''}"><i class="fas fa-lock"></i> AES-256 Vault</span>` : '';
                         const expHtml = d.expiration_date ? `<span style="font-size:0.7rem; color:#b45309; margin-left:0.5rem;">Exp: ${d.expiration_date}</span>` : '';
                         div.innerHTML = `
                             <div>
                                 <div style="font-weight: 800; font-size: 0.8rem; color: var(--slate-900);">
                                     <i class="fas fa-file-shield" style="color: #2563eb; margin-right: 4px;"></i>
-                                    ${d.document_type} ${expHtml}
+                                    ${d.document_type} ${verBadge} ${vaultBadge} ${expHtml}
                                 </div>
-                                <div style="font-size: 0.72rem; color: var(--slate-500);">${d.file_name} • ${(d.file_size / 1024).toFixed(1)} KB</div>
+                                <div style="font-size: 0.72rem; color: var(--slate-500);">${d.file_name} • ${((d.file_size || 0) / 1024).toFixed(1)} KB ${d.notes ? '• ' + d.notes : ''}</div>
                             </div>
                             <div>
                                 <a href="/api/v1/hr/documents/${d.id}/download" target="_blank" class="sigma-mini-btn" style="color: #059669; text-decoration: none; display: inline-flex; align-items: center; gap: 3px;">
@@ -5305,6 +5307,28 @@
     function exportPayrollCsv() {
         window.location.href = '/api/v1/hr/payroll/export';
     }
+
+    async function sendEmployeeOnboardingLink(empId, empName) {
+        try {
+            const res = await fetch(`/api/v1/hr/employees/${empId}/send-onboarding-link`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await res.json();
+            if (data.status === 'success' && data.onboarding_url) {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(data.onboarding_url);
+                }
+                showToast(`W-2 Onboarding Link copied for ${empName}: ${data.onboarding_path}`, 'success');
+            } else {
+                showToast(data.message || 'Could not generate W-2 onboarding link.', 'error');
+            }
+        } catch (err) {
+            console.error(err);
+            showToast('Network error generating W-2 onboarding link.', 'error');
+        }
+    }
+    window.sendEmployeeOnboardingLink = sendEmployeeOnboardingLink;
 
     function filterApplicantsTable() {
         const q = (document.getElementById('filter-applicants-search')?.value || '').toLowerCase().trim();
@@ -5787,6 +5811,44 @@
                 const s = data.subcontractor;
                 document.getElementById('sub-doc-modal-company').innerText = s.company_name || `Subcontractor #${subId}`;
 
+                // Onboarding Link & Stage Pill
+                const onbUrlInput = document.getElementById('sub-doc-onboarding-url');
+                const onbStagePill = document.getElementById('sub-doc-onb-stage-pill');
+                if (onbUrlInput) {
+                    onbUrlInput.value = s.onboarding_token
+                        ? `${window.location.origin}/onboard/subcontractor/${s.onboarding_token}`
+                        : 'Click Send Onboarding Email to generate link';
+                }
+                if (onbStagePill) {
+                    onbStagePill.innerText = `Stage: ${s.onboarding_status || 'Initial Review'}`;
+                }
+
+                // Extracted W-9 Summary Card
+                const summaryEl = document.getElementById('sub-doc-extracted-summary');
+                const docVersions = Array.isArray(s.document_versions) ? s.document_versions : [];
+                if (summaryEl) {
+                    const addr = [s.street_address, s.city, s.state, s.zip_code].filter(Boolean).join(', ');
+                    const tinBadge = s.has_encrypted_tin
+                        ? '<span style="background:#ecfdf5; color:#065f46; padding:1px 5px; border-radius:4px; font-size:0.65rem; font-weight:800; margin-left:4px;">AES-256 Vault ✓</span>'
+                        : '';
+                    const sigHashShort = s.msa_signature_hash ? s.msa_signature_hash.substring(0, 16) + '...' : 'Pending Signature';
+                    const vaultCountBadge = `<span style="background:#eff6ff; color:#1d4ed8; padding:1px 6px; border-radius:4px; font-size:0.65rem; font-weight:800;">${docVersions.length} Encrypted File Version(s) in PostgreSQL 16.15</span>`;
+                    summaryEl.innerHTML = `
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px 14px;">
+                            <div><strong>Legal Entity:</strong> ${s.legal_entity_name || s.contact_name || '--'}</div>
+                            <div><strong>Tax Class:</strong> ${s.tax_classification || '--'}</div>
+                            <div><strong>Tax ID (EIN/SSN):</strong> ${s.ein_or_ssn || '--'} ${tinBadge}</div>
+                            <div><strong>COI Carrier:</strong> ${s.coi_carrier || '--'} ${s.coi_policy_number ? '(' + s.coi_policy_number + ')' : ''}</div>
+                            <div style="grid-column:span 2;"><strong>Extracted Address:</strong> ${addr || 'Pending W-9 Upload'}</div>
+                            <div style="grid-column:span 2; font-family:monospace; font-size:0.7rem; color:#475569;"><strong>SHA-256 Signature Hash:</strong> ${sigHashShort}</div>
+                            <div style="grid-column:span 2; display:flex; align-items:center; justify-content:space-between; padding-top:4px; border-top:1px dashed #cbd5e1;">
+                                <span><strong>Database Document Vault:</strong></span>
+                                ${vaultCountBadge}
+                            </div>
+                        </div>
+                    `;
+                }
+
                 // COI UI
                 const coiBadge = document.getElementById('sub-doc-coi-badge');
                 const coiExpText = document.getElementById('sub-doc-coi-exp-text');
@@ -5794,7 +5856,7 @@
                 
                 const coiStatus = s.coi_status || 'Pending';
                 coiBadge.innerText = coiStatus;
-                if (coiStatus === 'Verified') {
+                if (coiStatus === 'Verified' || coiStatus === 'File Uploaded (Review)') {
                     coiBadge.style.background = '#ecfdf5';
                     coiBadge.style.color = '#065f46';
                 } else if (coiStatus === 'Expired') {
@@ -5823,7 +5885,7 @@
                 
                 const w9Status = s.w9_status || 'Pending';
                 w9Badge.innerText = w9Status;
-                if (w9Status === 'Verified') {
+                if (w9Status === 'Verified' || w9Status === 'File Uploaded (Review)') {
                     w9Badge.style.background = '#ecfdf5';
                     w9Badge.style.color = '#065f46';
                 } else {
@@ -5839,6 +5901,38 @@
                     `;
                 } else {
                     w9Action.innerHTML = `<span style="font-size:0.75rem; color:var(--slate-400); font-weight:600;">No file deposited</span>`;
+                }
+
+                // MSA & TX DWC-83 UI
+                const msaBadge = document.getElementById('sub-doc-msa-badge');
+                const msaSubtext = document.getElementById('sub-doc-msa-subtext');
+                const msaAction = document.getElementById('sub-doc-msa-action');
+                if (msaBadge) {
+                    if (s.msa_signed) {
+                        msaBadge.innerText = 'E-Signed ✓';
+                        msaBadge.style.background = '#ecfdf5';
+                        msaBadge.style.color = '#065f46';
+                    } else {
+                        msaBadge.innerText = 'Pending Signature';
+                        msaBadge.style.background = '#fffbeb';
+                        msaBadge.style.color = '#92400e';
+                    }
+                }
+                if (msaSubtext) {
+                    msaSubtext.innerText = s.msa_signer_name
+                        ? `Signed by ${s.msa_signer_name} (${s.msa_signer_title || 'Owner'})`
+                        : 'Awaiting partner onboarding execution';
+                }
+                if (msaAction) {
+                    if (s.msa_file_url && s.msa_file_url !== 'None' && s.msa_file_url !== 'null') {
+                        msaAction.innerHTML = `
+                            <a href="/api/v1/workforce/subcontractors/${subId}/download/msa" target="_blank" class="sigma-mini-btn" style="color: #7c3aed; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; font-weight: 700;">
+                                <i class="fas fa-download"></i> Download MSA & DWC-83
+                            </a>
+                        `;
+                    } else {
+                        msaAction.innerHTML = `<span style="font-size:0.75rem; color:var(--slate-400); font-weight:600;">No signed certificate</span>`;
+                    }
                 }
             }
         } catch (e) {
@@ -5888,6 +5982,165 @@
             btn.innerHTML = origHtml;
         }
     }
+
+    async function sendSubcontractorOnboardingLink(subId, btn) {
+        const origHtml = btn ? btn.innerHTML : '';
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        }
+        try {
+            const res = await fetch(`/api/v1/workforce/subcontractors/${subId}/send-onboarding`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await res.json();
+            if (res.ok && data.status === 'success') {
+                if (data.onboarding_url && navigator.clipboard) {
+                    navigator.clipboard.writeText(data.onboarding_url).catch(() => {});
+                }
+                const stageEl = document.getElementById(`sub-onb-stage-${subId}`);
+                if (stageEl) {
+                    stageEl.innerText = `Stage: ${data.onboarding_status || 'Invited'}`;
+                    stageEl.style.color = '#7c3aed';
+                }
+                const urlInput = document.getElementById('sub-doc-onboarding-url');
+                if (urlInput && data.onboarding_url) urlInput.value = data.onboarding_url;
+                showToast((data.message || 'Onboarding link dispatched!') + ' (Link copied to clipboard)', 'success');
+            } else {
+                showToast('Error sending onboarding link: ' + (data.message || 'Unknown error'), 'error');
+            }
+        } catch (err) {
+            showToast('Network error sending onboarding link.', 'error');
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = origHtml;
+            }
+        }
+    }
+
+    function sendSubcontractorOnboardingFromModal(btn) {
+        const subId = document.getElementById('upload-sub-doc-id')?.value;
+        if (!subId) return;
+        sendSubcontractorOnboardingLink(subId, btn);
+    }
+
+    function copySubcontractorOnboardingLink() {
+        const urlInput = document.getElementById('sub-doc-onboarding-url');
+        if (!urlInput || !urlInput.value) return;
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(urlInput.value).then(() => {
+                showToast('Pre-filled 1099 onboarding link copied to clipboard!', 'success');
+            });
+        } else {
+            urlInput.select();
+            document.execCommand('copy');
+            showToast('Pre-filled 1099 onboarding link copied to clipboard!', 'success');
+        }
+    }
+
+    async function approveSubcontractorFromModal(btn) {
+        const subId = document.getElementById('upload-sub-doc-id')?.value;
+        if (!subId) return;
+        const origHtml = btn ? btn.innerHTML : '';
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Approving...';
+        }
+        try {
+            const res = await fetch(`/api/v1/workforce/subcontractors/${subId}/approve-partner`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await res.json();
+            if (res.ok && data.status === 'success') {
+                showToast(data.message || 'Partner verified and activated!', 'success');
+                closeModal('modal-subcontractor-doc-upload');
+                setTimeout(() => window.location.reload(), 600);
+            } else {
+                showToast('Approval failed: ' + (data.message || 'Unknown error'), 'error');
+            }
+        } catch (err) {
+            showToast('Network error approving partner.', 'error');
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = origHtml;
+            }
+        }
+    }
+
+    let _subAutoReviewMode = false;
+    async function toggleSubcontractorReviewMode(btn) {
+        const nextMode = !_subAutoReviewMode;
+        try {
+            const res = await fetch('/api/v1/workforce/subcontractors/review-mode', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ auto_review_enabled: nextMode })
+            });
+            const data = await res.json();
+            if (res.ok && data.status === 'success') {
+                _subAutoReviewMode = Boolean(data.auto_review_enabled);
+                const lbl = document.getElementById('sub-review-mode-label');
+                if (lbl) {
+                    lbl.innerText = _subAutoReviewMode ? 'Initial Review Gate: Automatic' : 'Initial Review Gate: Manual';
+                }
+                if (btn) {
+                    btn.style.background = _subAutoReviewMode ? '#ecfdf5' : '#eef2ff';
+                    btn.style.color = _subAutoReviewMode ? '#065f46' : '#3730a3';
+                    btn.style.borderColor = _subAutoReviewMode ? '#6ee7b7' : '#c7d2fe';
+                }
+                showToast(
+                    _subAutoReviewMode
+                        ? 'Automatic Initial Review Gate enabled: Validated 1099 registrations automatically receive their pre-filled onboarding link.'
+                        : 'Manual Initial Review Gate enabled: Leadership reviews registrations in the backoffice before sending the onboarding link.',
+                    'success'
+                );
+            }
+        } catch (err) {
+            showToast('Error updating review gate mode.', 'error');
+        }
+    }
+
+    async function runSubcontractorCoiWatchdog(btn) {
+        const origHtml = btn ? btn.innerHTML : '';
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Scanning COIs...';
+        }
+        try {
+            const res = await fetch('/api/v1/workforce/subcontractors/coi-watchdog', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ send_alerts: true })
+            });
+            const data = await res.json();
+            if (res.ok && data.status === 'success') {
+                showToast(data.message || 'COI Watchdog audit completed.', 'success');
+                if (data.watchdog && data.watchdog.auto_held_partner_ids && data.watchdog.auto_held_partner_ids.length > 0) {
+                    setTimeout(() => window.location.reload(), 800);
+                }
+            } else {
+                showToast('COI Watchdog error: ' + (data.message || 'Unknown error'), 'error');
+            }
+        } catch (err) {
+            showToast('Network error running COI Watchdog.', 'error');
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = origHtml;
+            }
+        }
+    }
+
+    window.sendSubcontractorOnboardingLink = sendSubcontractorOnboardingLink;
+    window.sendSubcontractorOnboardingFromModal = sendSubcontractorOnboardingFromModal;
+    window.copySubcontractorOnboardingLink = copySubcontractorOnboardingLink;
+    window.approveSubcontractorFromModal = approveSubcontractorFromModal;
+    window.toggleSubcontractorReviewMode = toggleSubcontractorReviewMode;
+    window.runSubcontractorCoiWatchdog = runSubcontractorCoiWatchdog;
 
     function copyWorkforcePortalLink(btn) {
         const url = window.location.origin + '/work-with-us';

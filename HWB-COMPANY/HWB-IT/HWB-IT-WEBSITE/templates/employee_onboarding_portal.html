@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>W-2 Employee Onboarding Portal | HWB Cleaning Services LLC</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --brand: #1e40af;
+            --brand-dark: #1e3a8a;
+            --emerald: #059669;
+            --slate-50: #f8fafc;
+            --slate-100: #f1f5f9;
+            --slate-200: #e2e8f0;
+            --slate-300: #cbd5e1;
+            --slate-500: #64748b;
+            --slate-700: #334155;
+            --slate-900: #0f172a;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--slate-50);
+            color: var(--slate-900);
+            max-width: 100vw;
+            overflow-x: hidden;
+        }
+        .portal-header {
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+            color: white;
+            padding: 1.5rem 1.25rem;
+            border-bottom: 3px solid #3b82f6;
+        }
+        .portal-container {
+            max-width: 860px;
+            margin: 1.5rem auto 3rem;
+            padding: 0 1rem;
+        }
+        .card {
+            background: white;
+            border: 1px solid var(--slate-200);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.25rem;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+        }
+        .section-title {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--slate-900);
+            margin: 0 0 0.35rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .section-sub {
+            font-size: 0.82rem;
+            color: var(--slate-500);
+            margin: 0 0 1.15rem 0;
+        }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.9rem;
+        }
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 0.9rem;
+        }
+        @media (max-width: 768px) {
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+        }
+        label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--slate-700);
+            text-transform: uppercase;
+            margin-bottom: 0.3rem;
+        }
+        .sigma-input {
+            width: 100%;
+            height: 38px;
+            padding: 0 0.75rem;
+            border: 1px solid var(--slate-300);
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--slate-900);
+            background: white;
+        }
+        .upload-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.85rem;
+        }
+        @media (max-width: 768px) {
+            .upload-grid { grid-template-columns: 1fr; }
+        }
+        .upload-box {
+            border: 1.5px dashed var(--slate-300);
+            border-radius: 8px;
+            padding: 0.9rem;
+            background: #f8fafc;
+        }
+        .btn-primary {
+            height: 40px;
+            padding: 0 1.5rem;
+            border-radius: 6px;
+            border: none;
+            background: var(--emerald);
+            color: white;
+            font-weight: 800;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <header class="portal-header">
+        <div style="max-width: 860px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+            <div>
+                <div style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: #93c5fd;">
+                    HWB Cleaning Services LLC &bull; Encrypted W-2 HR Vault
+                </div>
+                <h1 style="margin: 0.25rem 0 0 0; font-size: 1.35rem; font-weight: 900;">
+                    New Hire Onboarding &amp; Tax Packet
+                </h1>
+            </div>
+            <div style="background: rgba(255,255,255,0.12); padding: 0.4rem 0.85rem; border-radius: 6px; font-size: 0.8rem; font-weight: 800;">
+                Employee ID: {{ employee.employee_number }}
+            </div>
+        </div>
+    </header>
+
+    <main class="portal-container">
+        <!-- Step 1: Smart Document Auto-Extractor -->
+        <div class="card">
+            <h2 class="section-title">
+                <i class="fas fa-file-shield" style="color: var(--brand);"></i>
+                Step 1: Upload W-4, Photo ID, I-9 &amp; Direct Deposit (Instant Auto-Fill)
+            </h2>
+            <p class="section-sub">
+                Upload a PDF or clear phone photo. Our reader automatically fills in your address, tax withholding, ID expiration, and bank routing numbers below, and encrypts your documents in our secure vault.
+            </p>
+            <div id="extract-banner" style="display:none; margin-bottom: 0.9rem; padding: 0.75rem 1rem; border-radius: 6px; background: #ecfdf5; border: 1px solid #6ee7b7; color: #065f46; font-size: 0.82rem; font-weight: 700;"></div>
+
+            <div class="upload-grid">
+                <div class="upload-box">
+                    <label>1. IRS Form W-4 (Withholding)</label>
+                    <input type="file" accept=".pdf,.png,.jpg,.jpeg" onchange="uploadPortalDoc(this, 'Form W-4')" style="font-size: 0.8rem; width: 100%;">
+                    <div id="status-w4" style="font-size: 0.74rem; color: var(--slate-500); margin-top: 4px;">Extracts Address, SSN, Filing Status &amp; Dependents</div>
+                </div>
+                <div class="upload-box">
+                    <label>2. Driver License / State Photo ID</label>
+                    <input type="file" accept=".pdf,.png,.jpg,.jpeg" onchange="uploadPortalDoc(this, 'Driver License / State ID')" style="font-size: 0.8rem; width: 100%;">
+                    <div id="status-id" style="font-size: 0.74rem; color: var(--slate-500); margin-top: 4px;">Extracts State ID #, Expiration Date &amp; DOB</div>
+                </div>
+                <div class="upload-box">
+                    <label>3. Voided Check / Direct Deposit Form</label>
+                    <input type="file" accept=".pdf,.png,.jpg,.jpeg" onchange="uploadPortalDoc(this, 'Direct Deposit Void Check')" style="font-size: 0.8rem; width: 100%;">
+                    <div id="status-dd" style="font-size: 0.74rem; color: var(--slate-500); margin-top: 4px;">Extracts Bank Name, Routing # &amp; Account #</div>
+                </div>
+                <div class="upload-box">
+                    <label>4. Form I-9 (Work Eligibility)</label>
+                    <input type="file" accept=".pdf,.png,.jpg,.jpeg" onchange="uploadPortalDoc(this, 'Form I-9')" style="font-size: 0.8rem; width: 100%;">
+                    <div id="status-i9" style="font-size: 0.74rem; color: var(--slate-500); margin-top: 4px;">Extracts Citizenship / Work Authorization Status</div>
+                </div>
+            </div>
+        </div>
+
+        <form id="w2-onboard-form" onsubmit="submitW2Onboarding(event)">
+            <!-- Step 2: Pre-Filled Personal & Emergency Contact Info -->
+            <div class="card">
+                <h2 class="section-title">
+                    <i class="fas fa-user-check" style="color: var(--brand);"></i>
+                    Step 2: Verify Your Pre-Filled Personal &amp; Address Details
+                </h2>
+                <p class="section-sub">Pre-filled from your job application and uploaded documents. Update any field if needed.</p>
+
+                <div class="grid-2" style="margin-bottom: 0.85rem;">
+                    <div>
+                        <label>First Name *</label>
+                        <input type="text" id="emp-first-name" class="sigma-input" required value="{{ employee.first_name or '' }}">
+                    </div>
+                    <div>
+                        <label>Last Name *</label>
+                        <input type="text" id="emp-last-name" class="sigma-input" required value="{{ employee.last_name or '' }}">
+                    </div>
+                </div>
+
+                <div class="grid-2" style="margin-bottom: 0.85rem;">
+                    <div>
+                        <label>Mobile Phone *</label>
+                        <input type="text" id="emp-phone" class="sigma-input" required value="{{ employee.phone or '' }}">
+                    </div>
+                    <div>
+                        <label>Email Address</label>
+                        <input type="email" id="emp-email" class="sigma-input" value="{{ employee.email or '' }}">
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 0.85rem;">
+                    <label>Home Street Address *</label>
+                    <input type="text" id="emp-street" class="sigma-input" required value="{{ employee.address_street or '' }}" placeholder="123 Main St, Apt 4B">
+                </div>
+
+                <div class="grid-3" style="margin-bottom: 0.85rem;">
+                    <div>
+                        <label>City *</label>
+                        <input type="text" id="emp-city" class="sigma-input" required value="{{ employee.address_city or '' }}">
+                    </div>
+                    <div>
+                        <label>State *</label>
+                        <input type="text" id="emp-state" class="sigma-input" required value="{{ employee.address_state or 'TX' }}">
+                    </div>
+                    <div>
+                        <label>ZIP Code *</label>
+                        <input type="text" id="emp-zip" class="sigma-input" required value="{{ employee.address_zip or '' }}">
+                    </div>
+                </div>
+
+                <div class="grid-2">
+                    <div>
+                        <label>Emergency Contact Name *</label>
+                        <input type="text" id="emp-emg-name" class="sigma-input" required value="{{ employee.emergency_contact_name or '' }}">
+                    </div>
+                    <div>
+                        <label>Emergency Contact Phone *</label>
+                        <input type="text" id="emp-emg-phone" class="sigma-input" required value="{{ employee.emergency_contact_phone or '' }}">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: W-4 Tax Withholding, I-9 & Direct Deposit -->
+            <div class="card">
+                <h2 class="section-title">
+                    <i class="fas fa-university" style="color: var(--brand);"></i>
+                    Step 3: Tax Withholding (W-4), ID &amp; Direct Deposit
+                </h2>
+                <p class="section-sub">Your Social Security Number and Bank Account Number are encrypted with AES-256 before saving.</p>
+
+                <div class="grid-3" style="margin-bottom: 0.85rem;">
+                    <div>
+                        <label>Social Security Number (SSN)</label>
+                        <input type="text" id="emp-ssn" class="sigma-input" value="{{ ('***-**-' ~ employee.ssn_last_four) if employee.ssn_last_four else '' }}" placeholder="XXX-XX-XXXX">
+                    </div>
+                    <div>
+                        <label>Driver License / State ID #</label>
+                        <input type="text" id="emp-state-id" class="sigma-input" value="{{ employee.state_id_number or '' }}">
+                    </div>
+                    <div>
+                        <label>State ID Expiration Date</label>
+                        <input type="date" id="emp-state-id-exp" class="sigma-input" value="{{ employee.state_id_expiration.strftime('%Y-%m-%d') if employee.state_id_expiration else '' }}">
+                    </div>
+                </div>
+
+                <div class="grid-3" style="margin-bottom: 0.85rem;">
+                    <div>
+                        <label>W-4 Filing Status</label>
+                        <select id="emp-w4-status" class="sigma-input">
+                            <option value="Single" {% if employee.w4_filing_status == 'Single' %}selected{% endif %}>Single or Married filing separately</option>
+                            <option value="Married Filing Jointly" {% if employee.w4_filing_status == 'Married Filing Jointly' %}selected{% endif %}>Married filing jointly</option>
+                            <option value="Head of Household" {% if employee.w4_filing_status == 'Head of Household' %}selected{% endif %}>Head of household</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>W-4 Step 3 Dependents ($)</label>
+                        <input type="number" step="0.01" id="emp-w4-step3" class="sigma-input" value="{{ employee.w4_step3_dependents or 0 }}">
+                    </div>
+                    <div>
+                        <label>W-4 Step 4(c) Extra Withholding ($)</label>
+                        <input type="number" step="0.01" id="emp-w4-step4c" class="sigma-input" value="{{ employee.w4_step4c_extra_withholding or 0 }}">
+                    </div>
+                </div>
+
+                <div class="grid-3">
+                    <div>
+                        <label>Direct Deposit Bank Name</label>
+                        <input type="text" id="emp-bank-name" class="sigma-input" value="{{ employee.direct_deposit_bank or '' }}" placeholder="e.g. Chase Bank">
+                    </div>
+                    <div>
+                        <label>9-Digit Routing Number</label>
+                        <input type="text" id="emp-bank-routing" class="sigma-input" maxlength="9" value="{{ employee.direct_deposit_routing or '' }}">
+                    </div>
+                    <div>
+                        <label>Bank Account Number</label>
+                        <input type="text" id="emp-bank-account" class="sigma-input" value="{{ ('••••' ~ employee.direct_deposit_account_last_four) if employee.direct_deposit_account_last_four else '' }}" placeholder="Account Number">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4: ISO 9001 Clause 7.2 Job Description & E-Signature -->
+            <div class="card">
+                <h2 class="section-title">
+                    <i class="fas fa-file-signature" style="color: var(--emerald);"></i>
+                    Step 4: Official Job Description ({{ employee.job_position_code or 'HWB-POS-001' }}) &amp; Digital Signature
+                </h2>
+                <div style="background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 8px; padding: 0.9rem; margin-bottom: 1rem; font-size: 0.83rem; line-height: 1.55; color: var(--slate-700);">
+                    <strong>Position:</strong> {{ employee.job_position_title or employee.primary_role }}<br>
+                    <strong>Summary:</strong> {{ employee.job_position_summary or 'Perform commercial cleaning, sanitation, floor care, and facility lockup in compliance with HWB Cleaning Services LLC safety and quality standards.' }}
+                </div>
+
+                <div style="margin-bottom: 1rem;">
+                    <label>Type Your Full Legal Name to Sign Electronically *</label>
+                    <input type="text" id="emp-signer-name" class="sigma-input" required value="{{ (employee.first_name ~ ' ' ~ employee.last_name)|trim }}">
+                </div>
+
+                <button type="submit" id="btn-complete-w2" class="btn-primary">
+                    <i class="fas fa-lock"></i> Sign &amp; Complete W-2 Onboarding Packet
+                </button>
+                <div id="complete-result" style="display:none; margin-top: 1rem; padding: 0.9rem; border-radius: 8px; background: #ecfdf5; border: 1px solid #6ee7b7; color: #065f46; font-weight: 700; font-size: 0.85rem;"></div>
+            </div>
+        </form>
+    </main>
+
+    <script>
+        const ONBOARD_TOKEN = {{ token|tojson }};
+
+        async function uploadPortalDoc(inputEl, docType) {
+            if (!inputEl.files || !inputEl.files.length) return;
+            const fd = new FormData();
+            fd.append('document', inputEl.files[0]);
+            fd.append('document_type', docType);
+
+            const banner = document.getElementById('extract-banner');
+            banner.style.display = 'block';
+            banner.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Reading & encrypting ${docType}...`;
+
+            try {
+                const res = await fetch(`/api/v1/employees/onboard/${ONBOARD_TOKEN}/upload-doc`, {
+                    method: 'POST',
+                    body: fd
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    const ext = data.extracted_fields || {};
+                    if (ext.address_street) document.getElementById('emp-street').value = ext.address_street;
+                    if (ext.address_city) document.getElementById('emp-city').value = ext.address_city;
+                    if (ext.address_state) document.getElementById('emp-state').value = ext.address_state;
+                    if (ext.address_zip) document.getElementById('emp-zip').value = ext.address_zip;
+                    if (ext.ssn_masked) document.getElementById('emp-ssn').value = ext.ssn_masked;
+                    if (ext.w4_filing_status) document.getElementById('emp-w4-status').value = ext.w4_filing_status;
+                    if (ext.w4_step3_dependents !== undefined && ext.w4_step3_dependents > 0) {
+                        document.getElementById('emp-w4-step3').value = ext.w4_step3_dependents;
+                    }
+                    if (ext.w4_step4c_extra_withholding !== undefined && ext.w4_step4c_extra_withholding > 0) {
+                        document.getElementById('emp-w4-step4c').value = ext.w4_step4c_extra_withholding;
+                    }
+                    if (ext.state_id_number) document.getElementById('emp-state-id').value = ext.state_id_number;
+                    if (ext.state_id_expiration) document.getElementById('emp-state-id-exp').value = ext.state_id_expiration;
+                    if (ext.direct_deposit_bank) document.getElementById('emp-bank-name').value = ext.direct_deposit_bank;
+                    if (ext.direct_deposit_routing) document.getElementById('emp-bank-routing').value = ext.direct_deposit_routing;
+                    if (ext.direct_deposit_account_masked) document.getElementById('emp-bank-account').value = ext.direct_deposit_account_masked;
+
+                    const popList = (data.auto_populated_fields || []).join(', ');
+                    banner.innerHTML = `<i class="fas fa-check-circle"></i> ${data.message} ${popList ? 'Auto-filled: ' + popList : ''}`;
+                } else {
+                    banner.innerHTML = `<span style="color:#b91c1c;">Upload error: ${data.message || 'Unknown error'}</span>`;
+                }
+            } catch (e) {
+                banner.innerHTML = `<span style="color:#b91c1c;">Network error uploading document.</span>`;
+            }
+        }
+
+        async function submitW2Onboarding(ev) {
+            ev.preventDefault();
+            const btn = document.getElementById('btn-complete-w2');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Encrypting & Signing Packet...';
+
+            const payload = {
+                first_name: document.getElementById('emp-first-name').value.trim(),
+                last_name: document.getElementById('emp-last-name').value.trim(),
+                phone: document.getElementById('emp-phone').value.trim(),
+                email: document.getElementById('emp-email').value.trim(),
+                address_street: document.getElementById('emp-street').value.trim(),
+                address_city: document.getElementById('emp-city').value.trim(),
+                address_state: document.getElementById('emp-state').value.trim(),
+                address_zip: document.getElementById('emp-zip').value.trim(),
+                emergency_contact_name: document.getElementById('emp-emg-name').value.trim(),
+                emergency_contact_phone: document.getElementById('emp-emg-phone').value.trim(),
+                ssn: document.getElementById('emp-ssn').value.trim(),
+                state_id_number: document.getElementById('emp-state-id').value.trim(),
+                state_id_expiration: document.getElementById('emp-state-id-exp').value,
+                w4_filing_status: document.getElementById('emp-w4-status').value,
+                w4_step3_dependents: document.getElementById('emp-w4-step3').value,
+                w4_step4c_extra_withholding: document.getElementById('emp-w4-step4c').value,
+                direct_deposit_bank: document.getElementById('emp-bank-name').value.trim(),
+                direct_deposit_routing: document.getElementById('emp-bank-routing').value.trim(),
+                direct_deposit_account: document.getElementById('emp-bank-account').value.trim(),
+                signer_name: document.getElementById('emp-signer-name').value.trim()
+            };
+
+            try {
+                const res = await fetch(`/api/v1/employees/onboard/${ONBOARD_TOKEN}/complete`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                const resBox = document.getElementById('complete-result');
+                resBox.style.display = 'block';
+                if (data.status === 'success') {
+                    resBox.innerHTML = `<i class="fas fa-shield-check"></i> ${data.message}<br><small>SHA-256 Certificate: ${data.signature_hash}</small>`;
+                    btn.innerHTML = '<i class="fas fa-check-double"></i> Onboarding Completed';
+                } else {
+                    resBox.innerHTML = `<span style="color:#b91c1c;">${data.message || 'Submission failed.'}</span>`;
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-lock"></i> Sign & Complete W-2 Onboarding Packet';
+                }
+            } catch (err) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-lock"></i> Sign & Complete W-2 Onboarding Packet';
+            }
+        }
+    </script>
+</body>
+</html>

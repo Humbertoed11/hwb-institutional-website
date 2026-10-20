@@ -1,0 +1,491 @@
+{% extends "base.html" %}
+{% block title %}1099 Subcontractor Onboarding Portal ({{ ref_code }}) | HWB Cleaning Services{% endblock %}
+
+{% block content %}
+<section style="background: #f8fafc; min-height: 88vh; padding: 2.5rem 1rem 4rem 1rem;">
+    <div style="max-width: 860px; margin: 0 auto;">
+
+        <!-- Top Institutional Header Card -->
+        <div class="isc-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-top: 4px solid #7c3aed; border-radius: 12px; padding: 1.75rem 2rem; margin-bottom: 1.5rem; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                    <div style="display: inline-flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                        <span style="background: #ede9fe; color: #6d28d9; font-size: 0.75rem; font-weight: 800; padding: 0.25rem 0.65rem; border-radius: 6px; text-transform: uppercase;">
+                            1099 Partner Onboarding
+                        </span>
+                        <span style="background: #eff6ff; color: #1d4ed8; font-size: 0.75rem; font-weight: 800; padding: 0.25rem 0.65rem; border-radius: 6px;">
+                            {{ ref_code }}
+                        </span>
+                        <span id="portal-status-pill" style="background: {% if partner.onboarding_status == 'Approved / Active' %}#ecfdf5; color: #065f46;{% elif partner.onboarding_status == 'Pending COI' %}#fffbeb; color: #92400e;{% else %}#f1f5f9; color: #334155;{% endif %} font-size: 0.75rem; font-weight: 800; padding: 0.25rem 0.65rem; border-radius: 6px;">
+                            Status: {{ partner.onboarding_status or 'Invited' }}
+                        </span>
+                    </div>
+                    <h1 style="font-size: 1.45rem; font-weight: 900; color: #0f172a; margin: 0 0 0.35rem 0;">
+                        Welcome, {{ partner.company_name }}
+                    </h1>
+                    <p style="font-size: 0.9rem; color: #475569; margin: 0; line-height: 1.5;">
+                        Your initial registration details are pre-filled below. Upload your <strong>Form W-9</strong> first to auto-fill your address and Tax ID, upload your <strong>Certificate of Insurance (COI)</strong> (or choose to upload it later), and sign your subcontractor agreement.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Success Banner (Shown after submission) -->
+        <div id="onboarding-success-banner" style="display: {% if submitted %}block{% else %}none{% endif %}; background: #f0fdf4; border: 1.5px solid #16a34a; border-radius: 12px; padding: 1.75rem 2rem; margin-bottom: 1.5rem;">
+            <div style="display: flex; align-items: flex-start; gap: 1rem;">
+                <div style="font-size: 2rem; color: #16a34a; line-height: 1;"><i class="fas fa-check-circle"></i></div>
+                <div>
+                    <h2 id="onboarding-success-title" style="font-size: 1.2rem; font-weight: 900; color: #166534; margin: 0 0 0.35rem 0;">
+                        1099 Onboarding Packet Submitted!
+                    </h2>
+                    <p id="onboarding-success-text" style="font-size: 0.9rem; color: #15803d; margin: 0; line-height: 1.55;">
+                        Thank you. Your pre-filled profile, Form W-9, and signed Master Subcontractor Agreement &amp; Texas DWC-83 have been saved under <strong>{{ ref_code }}</strong>.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Banner -->
+        <div id="onboarding-error-banner" style="display: none; background: #fef2f2; border: 1.5px solid #dc2626; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1.25rem; color: #991b1b; font-size: 0.88rem; font-weight: 700;">
+            <i class="fas fa-exclamation-triangle" style="margin-right: 0.4rem;"></i>
+            <span id="onboarding-error-text"></span>
+        </div>
+
+        {% if token_expired %}
+        <!-- 30-Day Expired Link Renewal Banner -->
+        <div id="onboarding-expired-banner" style="background: #fffbeb; border: 1.5px solid #d97706; border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <div style="font-size: 0.95rem; font-weight: 800; color: #92400e;">
+                    <i class="fas fa-clock"></i> Your 30-Day Onboarding Link Window Has Expired
+                </div>
+                <div style="font-size: 0.82rem; color: #b45309; margin-top: 0.2rem;">
+                    For security, partner onboarding links expire after 30 days. Click Renew Link to reactivate this page for another 30 days.
+                </div>
+            </div>
+            <button type="button" onclick="renewExpiredOnboardingLink(this)" style="background: #d97706; color: #ffffff; border: none; border-radius: 8px; padding: 0.55rem 1.15rem; font-size: 0.82rem; font-weight: 800; cursor: pointer;">
+                <i class="fas fa-sync-alt"></i> Renew Link for 30 Days
+            </button>
+        </div>
+        {% endif %}
+
+        <form id="form-subcontractor-onboarding" onsubmit="submitSubcontractorOnboarding(event)" enctype="multipart/form-data">
+
+            <!-- ================================================================= -->
+            <!-- STEP 1: UPLOAD FORM W-9 (INSTANT AI / PDF AUTO-EXTRACTION)        -->
+            <!-- ================================================================= -->
+            <div class="isc-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.75rem 2rem; margin-bottom: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid #f1f5f9;">
+                    <div>
+                        <span style="font-size: 0.72rem; font-weight: 800; color: #7c3aed; text-transform: uppercase; letter-spacing: 0.05em;">Step 1 of 4 • Smart Auto-Fill</span>
+                        <h2 style="font-size: 1.15rem; font-weight: 800; color: #0f172a; margin: 0.15rem 0 0 0;">
+                            Upload IRS Form W-9 (Auto-Extracts Address &amp; Tax ID)
+                        </h2>
+                    </div>
+                    <span id="w9-status-badge" style="font-size: 0.75rem; font-weight: 800; padding: 0.25rem 0.65rem; border-radius: 6px; {% if partner.w9_file_url %}background: #ecfdf5; color: #065f46;{% else %}background: #fffbeb; color: #92400e;{% endif %}">
+                        {% if partner.w9_file_url %}W-9 File On Record ✓{% else %}W-9 Upload Required{% endif %}
+                    </span>
+                </div>
+
+                <div style="background: #f8fafc; border: 2px dashed #93c5fd; border-radius: 10px; padding: 1.25rem; text-align: center; margin-bottom: 1rem;">
+                    <label for="w9-file-input" style="cursor: pointer; display: block;">
+                        <div style="font-size: 1.75rem; color: #2563eb; margin-bottom: 0.35rem;">
+                            <i class="fas fa-file-invoice"></i>
+                        </div>
+                        <div style="font-size: 0.92rem; font-weight: 800; color: #0f172a;">
+                            Select or Drop Signed IRS Form W-9 (PDF, JPG, or PNG)
+                        </div>
+                        <div style="font-size: 0.78rem; color: #64748b; margin-top: 0.25rem;">
+                            As soon as you choose your W-9 file, we automatically fill in your street address, ZIP code, tax classification, and EIN/SSN below.
+                        </div>
+                    </label>
+                    <input type="file" id="w9-file-input" name="w9_file" accept=".pdf,.png,.jpg,.jpeg" onchange="handleDocumentAutoExtract('w9', this)" style="margin-top: 0.75rem; font-size: 0.85rem;">
+                    <div id="w9-extract-feedback" style="display: none; margin-top: 0.75rem; padding: 0.6rem 0.9rem; border-radius: 6px; font-size: 0.82rem; font-weight: 700;"></div>
+                </div>
+            </div>
+
+            <!-- ================================================================= -->
+            <!-- STEP 2: PRE-FILLED BUSINESS, TAX & ADDRESS PROFILE                -->
+            <!-- ================================================================= -->
+            <div class="isc-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.75rem 2rem; margin-bottom: 1.5rem;">
+                <div style="margin-bottom: 1.15rem; padding-bottom: 0.75rem; border-bottom: 1px solid #f1f5f9;">
+                    <span style="font-size: 0.72rem; font-weight: 800; color: #2563eb; text-transform: uppercase; letter-spacing: 0.05em;">Step 2 of 4 • Pre-Filled from Initial Registration + W-9</span>
+                    <h2 style="font-size: 1.15rem; font-weight: 800; color: #0f172a; margin: 0.15rem 0 0 0;">
+                        Verify Business Identity, Tax ID &amp; Mailing Address
+                    </h2>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                    <div>
+                        <label for="onb-company-name" style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">Business / DBA Name (Pre-Filled) *</label>
+                        <input type="text" id="onb-company-name" name="company_name" required value="{{ partner.company_name or '' }}" oninput="syncContractPreview()" class="sigma-input" style="width: 100%; height: 40px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.75rem; font-size: 0.9rem; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label for="onb-legal-name" style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">Legal Entity / Taxpayer Name (W-9 Line 1) *</label>
+                        <input type="text" id="onb-legal-name" name="legal_entity_name" required value="{{ partner.legal_entity_name or partner.contact_name or '' }}" oninput="syncContractPreview()" placeholder="Legal Name on W-9 Line 1" class="sigma-input" style="width: 100%; height: 40px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.75rem; font-size: 0.9rem; box-sizing: border-box;">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                    <div>
+                        <label for="onb-tax-class" style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">Federal Tax Classification (W-9 Line 3a) *</label>
+                        <select id="onb-tax-class" name="tax_classification" class="sigma-input" style="width: 100%; height: 40px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.75rem; font-size: 0.9rem; background: #fff; box-sizing: border-box;">
+                            {% set tc = partner.tax_classification or 'LLC' %}
+                            <option value="LLC" {% if 'llc' in tc|lower %}selected{% endif %}>Limited Liability Company (LLC)</option>
+                            <option value="Individual / Sole Proprietor" {% if 'individual' in tc|lower or 'sole' in tc|lower %}selected{% endif %}>Individual / Sole Proprietor</option>
+                            <option value="S Corporation" {% if 's corp' in tc|lower %}selected{% endif %}>S Corporation</option>
+                            <option value="C Corporation" {% if 'c corp' in tc|lower %}selected{% endif %}>C Corporation</option>
+                            <option value="Partnership" {% if 'partner' in tc|lower %}selected{% endif %}>Partnership</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="onb-ein-ssn" style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">Federal Tax ID (EIN or SSN from W-9) *</label>
+                        <input type="text" id="onb-ein-ssn" name="ein_or_ssn" required value="{{ partner.ein_or_ssn or '' }}" placeholder="XX-XXXXXXX or XXX-XX-XXXX" class="sigma-input" style="width: 100%; height: 40px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.75rem; font-size: 0.9rem; box-sizing: border-box;">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                    <div style="grid-column: span 2;">
+                        <label for="onb-street-address" style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">Street Address &amp; Suite/Unit (Auto-Filled from W-9 Line 5) *</label>
+                        <input type="text" id="onb-street-address" name="street_address" required value="{{ partner.street_address or '' }}" oninput="syncContractPreview()" placeholder="e.g. 1234 Commerce St, Suite 200" class="sigma-input" style="width: 100%; height: 40px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.75rem; font-size: 0.9rem; box-sizing: border-box;">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div>
+                        <label for="onb-city" style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">City (Pre-Filled) *</label>
+                        <input type="text" id="onb-city" name="city" required value="{{ partner.city or '' }}" oninput="syncContractPreview()" class="sigma-input" style="width: 100%; height: 40px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.75rem; font-size: 0.9rem; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label for="onb-state" style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">State *</label>
+                        <input type="text" id="onb-state" name="state" required value="{{ partner.state or 'TX' }}" maxlength="2" oninput="syncContractPreview()" class="sigma-input" style="width: 100%; height: 40px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.75rem; font-size: 0.9rem; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label for="onb-zip" style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">ZIP Code *</label>
+                        <input type="text" id="onb-zip" name="zip_code" required value="{{ partner.zip_code or '' }}" oninput="syncContractPreview()" placeholder="75201" class="sigma-input" style="width: 100%; height: 40px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.75rem; font-size: 0.9rem; box-sizing: border-box;">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem;">
+                    <div>
+                        <label for="onb-contact-name" style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">Primary Contact (Pre-Filled) *</label>
+                        <input type="text" id="onb-contact-name" name="contact_name" required value="{{ partner.contact_name or '' }}" class="sigma-input" style="width: 100%; height: 40px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.75rem; font-size: 0.9rem; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label for="onb-phone" style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">Phone (Pre-Filled) *</label>
+                        <input type="tel" id="onb-phone" name="phone" required value="{{ partner.phone or '' }}" class="sigma-input" style="width: 100%; height: 40px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.75rem; font-size: 0.9rem; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label for="onb-email" style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">Email (Pre-Filled) *</label>
+                        <input type="email" id="onb-email" name="email" required value="{{ partner.email or '' }}" class="sigma-input" style="width: 100%; height: 40px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.75rem; font-size: 0.9rem; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label for="onb-crew-size" style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">Active Crew Size</label>
+                        <input type="number" id="onb-crew-size" name="crew_size" min="1" max="100" value="{{ partner.crew_size or 2 }}" class="sigma-input" style="width: 100%; height: 40px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.75rem; font-size: 0.9rem; box-sizing: border-box;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================================================================= -->
+            <!-- STEP 3: CERTIFICATE OF INSURANCE (COI) UPLOAD OR DEFER            -->
+            <!-- ================================================================= -->
+            <div class="isc-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.75rem 2rem; margin-bottom: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid #f1f5f9;">
+                    <div>
+                        <span style="font-size: 0.72rem; font-weight: 800; color: #059669; text-transform: uppercase; letter-spacing: 0.05em;">Step 3 of 4 • General Liability Insurance ($1,000,000+)</span>
+                        <h2 style="font-size: 1.15rem; font-weight: 800; color: #0f172a; margin: 0.15rem 0 0 0;">
+                            Upload Certificate of Insurance (COI) or Hold at Pending COI
+                        </h2>
+                    </div>
+                    <span id="coi-status-badge" style="font-size: 0.75rem; font-weight: 800; padding: 0.25rem 0.65rem; border-radius: 6px; {% if partner.coi_file_url %}background: #ecfdf5; color: #065f46;{% else %}background: #fffbeb; color: #92400e;{% endif %}">
+                        {% if partner.coi_file_url %}COI File On Record ✓{% else %}COI File Pending{% endif %}
+                    </span>
+                </div>
+
+                <div style="background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 10px; padding: 1.15rem; text-align: center; margin-bottom: 1rem;">
+                    <label for="coi-file-input" style="cursor: pointer; display: block;">
+                        <div style="font-size: 1.5rem; color: #059669; margin-bottom: 0.25rem;"><i class="fas fa-shield-alt"></i></div>
+                        <div style="font-size: 0.88rem; font-weight: 800; color: #0f172a;">
+                            Upload ACORD 25 Certificate of Insurance (PDF, JPG, or PNG)
+                        </div>
+                        <div style="font-size: 0.76rem; color: #64748b; margin-top: 0.2rem;">
+                            Automatically extracts your Insurance Carrier, Policy Number, Coverage Amount, and Policy Expiration Date.
+                        </div>
+                    </label>
+                    <input type="file" id="coi-file-input" name="coi_file" accept=".pdf,.png,.jpg,.jpeg" onchange="handleDocumentAutoExtract('coi', this)" style="margin-top: 0.65rem; font-size: 0.85rem;">
+                    <div id="coi-extract-feedback" style="display: none; margin-top: 0.65rem; padding: 0.5rem 0.8rem; border-radius: 6px; font-size: 0.8rem; font-weight: 700;"></div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                    <div>
+                        <label for="onb-coi-carrier" style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">Insurance Carrier Name</label>
+                        <input type="text" id="onb-coi-carrier" name="coi_carrier" value="{{ partner.coi_carrier or '' }}" placeholder="e.g. Hiscox, Next Insurance, Hartford" class="sigma-input" style="width: 100%; height: 40px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.75rem; font-size: 0.88rem; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label for="onb-coi-policy" style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">Policy Number</label>
+                        <input type="text" id="onb-coi-policy" name="coi_policy_number" value="{{ partner.coi_policy_number or '' }}" placeholder="Policy #" class="sigma-input" style="width: 100%; height: 40px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.75rem; font-size: 0.88rem; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label for="onb-coi-exp" style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">Policy Expiration Date</label>
+                        <input type="date" id="onb-coi-exp" name="coi_expiration_date" value="{{ partner.coi_expiration_date.strftime('%Y-%m-%d') if partner.coi_expiration_date and partner.coi_expiration_date.strftime is defined else (partner.coi_expiration_date or '') }}" class="sigma-input" style="width: 100%; height: 40px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.75rem; font-size: 0.88rem; box-sizing: border-box;">
+                    </div>
+                </div>
+
+                <label style="display: flex; align-items: flex-start; gap: 0.6rem; font-size: 0.83rem; font-weight: 600; color: #475569; background: #fffbeb; border: 1px solid #fde68a; padding: 0.75rem 1rem; border-radius: 8px; cursor: pointer;">
+                    <input type="checkbox" id="onb-defer-coi" name="defer_coi" value="true" style="accent-color: #d97706; width: 17px; height: 17px; margin-top: 2px;">
+                    <span>
+                        <strong style="color: #92400e;">Waiting on Insurance Agent for COI?</strong> Check this box to submit your Form W-9 and signed Master Subcontractor Agreement right now. We will hold your status at <strong>Pending COI</strong> until you return to this link and upload your insurance certificate.
+                    </span>
+                </label>
+            </div>
+
+            <!-- ================================================================= -->
+            <!-- STEP 4: DIGITAL MASTER SUBCONTRACTOR AGREEMENT & TEXAS DWC-83     -->
+            <!-- ================================================================= -->
+            <div class="isc-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.75rem 2rem; margin-bottom: 1.5rem;">
+                <div style="margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid #f1f5f9;">
+                    <span style="font-size: 0.72rem; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.05em;">Step 4 of 4 • Electronic Execution</span>
+                    <h2 style="font-size: 1.15rem; font-weight: 800; color: #0f172a; margin: 0.15rem 0 0 0;">
+                        Master Subcontractor Agreement (MSA) &amp; Texas DWC Form-83
+                    </h2>
+                </div>
+
+                <!-- Auto-Merged Agreement Scroll Box -->
+                <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 1.25rem; max-height: 290px; overflow-y: auto; font-size: 0.84rem; color: #334155; line-height: 1.6; margin-bottom: 1.25rem;">
+                    <div style="font-weight: 900; color: #0f172a; font-size: 0.92rem; margin-bottom: 0.5rem;">
+                        HWB CLEANING SERVICES LLC — MASTER SUBCONTRACTOR AGREEMENT &amp; TEXAS DWC-83 JOINT AFFIRMATION
+                    </div>
+                    <p style="margin-top: 0;">
+                        This Master Subcontractor Agreement ("Agreement") is entered into between <strong>HWB Cleaning Services LLC</strong> ("Hiring Contractor") and
+                        <strong id="contract-preview-company" style="color: #2563eb;">{{ partner.company_name }}</strong>
+                        (Legal Entity: <strong id="contract-preview-legal">{{ partner.legal_entity_name or partner.contact_name }}</strong>),
+                        located at <strong id="contract-preview-address">{{ partner.street_address or '[Street Address]' }}, {{ partner.city or 'TX' }}, {{ partner.state or 'TX' }} {{ partner.zip_code or '' }}</strong> ("Subcontractor").
+                    </p>
+                    <p>
+                        <strong>1. Independent Contractor Status &amp; Texas DWC Form-83 Notice:</strong> Subcontractor and Hiring Contractor mutually affirm under Texas Labor Code &sect; 406.141 (DWC Form-83) that Subcontractor operates as an independent commercial business entity, supplies its own tools, equipment, and crew supervision, and is not an employee of HWB Cleaning Services LLC.
+                    </p>
+                    <p>
+                        <strong>2. Strict Client Non-Solicitation &amp; Rate Confidentiality:</strong> Subcontractor and its crew members shall never solicit direct business from, distribute business cards to, or discuss pricing, bid totals, or hourly rates with any General Contractor superintendent, property manager, or HWB client.
+                    </p>
+                    <p>
+                        <strong>3. Jobsite Safety, PPE &amp; Unbranded Attire:</strong> All crew members must wear clean unbranded shirts (or HWB-approved high-visibility safety vests), closed-toe work boots, hard hats, and required personal protective equipment on active job sites. Sub-tier subcontracting to outside crews without written approval is prohibited.
+                    </p>
+                    <p style="margin-bottom: 0;">
+                        <strong>4. Invoicing &amp; Payment in Arrears After Walkthrough Sign-Off:</strong> Payments are processed in arrears upon submission of an itemized subcontractor invoice, required before/after jobsite photos, and supervisor walkthrough sign-off confirming 100% completion of the assigned Scope of Work.
+                    </p>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.25rem;">
+                    <label style="display: flex; align-items: flex-start; gap: 0.6rem; font-size: 0.84rem; font-weight: 600; color: #0f172a; cursor: pointer;">
+                        <input type="checkbox" id="onb-msa-agreed" name="msa_agreed" value="true" required checked style="accent-color: #7c3aed; width: 17px; height: 17px; margin-top: 2px;">
+                        <span>I have read and agree to the <strong>HWB Master Subcontractor Agreement (MSA)</strong>, including strict client non-solicitation, unbranded/PPE site attire, and payment in arrears upon walkthrough verification.</span>
+                    </label>
+                    <label style="display: flex; align-items: flex-start; gap: 0.6rem; font-size: 0.84rem; font-weight: 600; color: #0f172a; cursor: pointer;">
+                        <input type="checkbox" id="onb-dwc83-agreed" name="dwc83_agreed" value="true" required checked style="accent-color: #7c3aed; width: 17px; height: 17px; margin-top: 2px;">
+                        <span>I affirm and execute the <strong>Texas DWC Form-83 Independent Contractor Agreement</strong> confirming our independent business status.</span>
+                    </label>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                    <div>
+                        <label for="onb-signer-name" style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">Type Full Legal Name to E-Sign *</label>
+                        <input type="text" id="onb-signer-name" name="msa_signer_name" required value="{{ partner.msa_signer_name or partner.contact_name or '' }}" placeholder="Full Legal Name" class="sigma-input" style="width: 100%; height: 42px; border: 1.5px solid #7c3aed; border-radius: 6px; padding: 0 0.85rem; font-size: 0.92rem; font-weight: 700; background: #faf5ff; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label for="onb-signer-title" style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">Signer Title *</label>
+                        <input type="text" id="onb-signer-title" name="msa_signer_title" required value="{{ partner.msa_signer_title or 'Owner / Authorized Principal' }}" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem; box-sizing: border-box;">
+                    </div>
+                </div>
+
+                <button type="submit" id="btn-submit-onboarding" class="isc-btn isc-btn-primary" style="width: 100%; height: 48px; border-radius: 8px; font-size: 1rem; font-weight: 800; background: #7c3aed; border-color: #7c3aed; display: flex; align-items: center; justify-content: center; gap: 0.5rem; cursor: pointer;">
+                    <i class="fas fa-file-signature"></i> Complete &amp; Submit 1099 Onboarding Packet
+                </button>
+            </div>
+
+        </form>
+    </div>
+</section>
+
+<script>
+const ONBOARDING_TOKEN = "{{ partner.onboarding_token }}";
+
+function syncContractPreview() {
+    const comp = document.getElementById('onb-company-name')?.value || '{{ partner.company_name }}';
+    const legal = document.getElementById('onb-legal-name')?.value || comp;
+    const street = document.getElementById('onb-street-address')?.value || '[Street Address]';
+    const city = document.getElementById('onb-city')?.value || '';
+    const state = document.getElementById('onb-state')?.value || 'TX';
+    const zip = document.getElementById('onb-zip')?.value || '';
+
+    const elComp = document.getElementById('contract-preview-company');
+    const elLegal = document.getElementById('contract-preview-legal');
+    const elAddr = document.getElementById('contract-preview-address');
+    if (elComp) elComp.textContent = comp;
+    if (elLegal) elLegal.textContent = legal;
+    if (elAddr) elAddr.textContent = `${street}, ${city}, ${state} ${zip}`.trim();
+}
+
+async function handleDocumentAutoExtract(docType, fileInput) {
+    if (!fileInput || !fileInput.files || !fileInput.files[0]) return;
+    const file = fileInput.files[0];
+    const feedbackEl = document.getElementById(docType === 'w9' ? 'w9-extract-feedback' : 'coi-extract-feedback');
+    const badgeEl = document.getElementById(docType === 'w9' ? 'w9-status-badge' : 'coi-status-badge');
+
+    if (feedbackEl) {
+        feedbackEl.style.display = 'block';
+        feedbackEl.style.background = '#eff6ff';
+        feedbackEl.style.color = '#1e40af';
+        feedbackEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Reading ' + (docType === 'w9' ? 'Form W-9' : 'COI Certificate') + ' and auto-filling fields...';
+    }
+
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('doc_type', docType);
+
+    try {
+        const res = await fetch(`/onboard/subcontractor/${encodeURIComponent(ONBOARDING_TOKEN)}/extract-document`, {
+            method: 'POST',
+            body: fd
+        });
+        const data = await res.json();
+        if (res.ok && data.status === 'success') {
+            const ext = data.extracted || {};
+            if (docType === 'w9') {
+                if (ext.legal_entity_name) document.getElementById('onb-legal-name').value = ext.legal_entity_name;
+                if (ext.company_name) document.getElementById('onb-company-name').value = ext.company_name;
+                if (ext.street_address) document.getElementById('onb-street-address').value = ext.street_address;
+                if (ext.city) document.getElementById('onb-city').value = ext.city;
+                if (ext.state) document.getElementById('onb-state').value = ext.state;
+                if (ext.zip_code) document.getElementById('onb-zip').value = ext.zip_code;
+                if (ext.ein_or_ssn) document.getElementById('onb-ein-ssn').value = ext.ein_or_ssn;
+                if (ext.tax_classification) {
+                    const sel = document.getElementById('onb-tax-class');
+                    for (let i = 0; i < sel.options.length; i++) {
+                        if (sel.options[i].value.toLowerCase().includes(ext.tax_classification.toLowerCase().slice(0, 4))) {
+                            sel.selectedIndex = i;
+                            break;
+                        }
+                    }
+                }
+                syncContractPreview();
+                if (badgeEl) {
+                    badgeEl.textContent = 'W-9 Uploaded & Extracted ✓';
+                    badgeEl.style.background = '#ecfdf5';
+                    badgeEl.style.color = '#065f46';
+                }
+                if (feedbackEl) {
+                    feedbackEl.style.background = '#ecfdf5';
+                    feedbackEl.style.color = '#065f46';
+                    feedbackEl.innerHTML = '<i class="fas fa-check-circle"></i> W-9 uploaded! Address, Tax Classification, and Tax ID auto-filled below.';
+                }
+            } else {
+                if (ext.coi_carrier) document.getElementById('onb-coi-carrier').value = ext.coi_carrier;
+                if (ext.coi_policy_number) document.getElementById('onb-coi-policy').value = ext.coi_policy_number;
+                if (ext.coi_expiration_date) document.getElementById('onb-coi-exp').value = ext.coi_expiration_date;
+                const deferBox = document.getElementById('onb-defer-coi');
+                if (deferBox) deferBox.checked = false;
+                if (badgeEl) {
+                    badgeEl.textContent = 'COI Uploaded & Extracted ✓';
+                    badgeEl.style.background = '#ecfdf5';
+                    badgeEl.style.color = '#065f46';
+                }
+                if (feedbackEl) {
+                    feedbackEl.style.background = '#ecfdf5';
+                    feedbackEl.style.color = '#065f46';
+                    feedbackEl.innerHTML = '<i class="fas fa-check-circle"></i> COI uploaded! Carrier and policy expiration date auto-filled.';
+                }
+            }
+        } else {
+            if (feedbackEl) {
+                feedbackEl.style.background = '#fffbeb';
+                feedbackEl.style.color = '#92400e';
+                feedbackEl.textContent = data.message || 'File attached. Please verify fields below.';
+            }
+        }
+    } catch (err) {
+        if (feedbackEl) {
+            feedbackEl.style.background = '#fffbeb';
+            feedbackEl.style.color = '#92400e';
+            feedbackEl.textContent = 'File attached. Please verify your address and Tax ID fields below.';
+        }
+    }
+}
+
+async function renewExpiredOnboardingLink(btn) {
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Renewing...';
+    }
+    try {
+        const res = await fetch(`/onboard/subcontractor/${encodeURIComponent(ONBOARDING_TOKEN)}/renew-link`, {
+            method: 'POST'
+        });
+        const data = await res.json();
+        if (res.ok && data.status === 'success') {
+            const expBanner = document.getElementById('onboarding-expired-banner');
+            if (expBanner) expBanner.style.display = 'none';
+            window.location.reload();
+        }
+    } catch (err) {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-sync-alt"></i> Renew Link for 30 Days';
+        }
+    }
+}
+
+async function submitSubcontractorOnboarding(e) {
+    e.preventDefault();
+    const errBanner = document.getElementById('onboarding-error-banner');
+    const errText = document.getElementById('onboarding-error-text');
+    const btn = document.getElementById('btn-submit-onboarding');
+    if (errBanner) errBanner.style.display = 'none';
+
+    const form = document.getElementById('form-subcontractor-onboarding');
+    const fd = new FormData(form);
+
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving Onboarding Packet & Executing Agreement...';
+    }
+
+    try {
+        const res = await fetch(`/onboard/subcontractor/${encodeURIComponent(ONBOARDING_TOKEN)}/submit`, {
+            method: 'POST',
+            body: fd
+        });
+        const data = await res.json();
+        if (res.ok && data.status === 'success') {
+            const successBanner = document.getElementById('onboarding-success-banner');
+            const successText = document.getElementById('onboarding-success-text');
+            const statusPill = document.getElementById('portal-status-pill');
+            if (successText && data.message) successText.innerHTML = data.message;
+            if (statusPill && data.onboarding_status) {
+                statusPill.textContent = 'Status: ' + data.onboarding_status;
+                statusPill.style.background = '#ecfdf5';
+                statusPill.style.color = '#065f46';
+            }
+            if (successBanner) {
+                successBanner.style.display = 'block';
+                successBanner.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        } else {
+            if (errBanner && errText) {
+                errText.textContent = data.message || 'Unable to submit onboarding packet. Please check required fields.';
+                errBanner.style.display = 'block';
+                errBanner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+    } catch (err) {
+        if (errBanner && errText) {
+            errText.textContent = 'Network error while submitting onboarding form. Please try again.';
+            errBanner.style.display = 'block';
+        }
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-file-signature"></i> Complete & Submit 1099 Onboarding Packet';
+        }
+    }
+}
+</script>
+{% endblock %}

@@ -1836,7 +1836,9 @@ def api_workforce_subcontractor():
     except (ValueError, TypeError):
         crew_size = 2
     specialties = data.get('specialties') or 'Post-Construction Cleaning'
-    coi_status = data.get('coi_status') or 'Pending'
+    raw_coi_status = data.get('coi_status') or 'Pending'
+    # Never mark COI as 'Verified' on initial public intake without an uploaded file
+    coi_status = 'Self-Reported' if raw_coi_status == 'Verified' else raw_coi_status
     hourly_rate = data.get('hourly_rate_range') or '$22 - $28/hr'
     dwc83_signed = str(data.get('dwc83_agreed', 'true')).lower() in ('true', '1', 'yes')
     no_guarantee_agreed = str(data.get('sub_no_guarantee_agreed', 'true')).lower() in ('true', '1', 'yes')
@@ -1850,6 +1852,8 @@ def api_workforce_subcontractor():
 
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
+        from database.schema_engine import ensure_subcontractor_onboarding_schema
+        ensure_subcontractor_onboarding_schema(conn)
         with conn.cursor() as cur:
             cur.execute('''
                 SELECT * FROM "SubcontractorPartners"
@@ -1959,15 +1963,36 @@ def api_workforce_subcontractor():
                     )
                 }), 200
 
+            import secrets
+            cur.execute('''
+                SELECT value FROM "SystemSettings"
+                WHERE key = 'subcontractor_auto_review_enabled'
+                LIMIT 1;
+            ''')
+            setting_row = cur.fetchone()
+            auto_review_enabled = bool(setting_row and str(setting_row.get('value') if isinstance(setting_row, dict) else setting_row[0]).lower() == 'true')
+            passes_initial_check = bool(len(phone_digits) == 10 and clean_e and '@' in clean_e and dwc83_signed and no_guarantee_agreed)
+            auto_invite_active = bool(auto_review_enabled and passes_initial_check)
+            initial_onboarding_status = 'Invited' if auto_invite_active else 'Initial Review'
+
             cur.execute('''
                 INSERT INTO "SubcontractorPartners" (
                     company_name, contact_name, phone, email, city, state,
                     crew_size, specialties, coi_status, hourly_rate_range,
-                    dwc83_signed, status, notes
-                ) VALUES (%s, %s, %s, %s, %s, 'TX', %s, %s, %s, %s, %s, 'Vetting', %s)
+                    dwc83_signed, status, onboarding_status, notes
+                ) VALUES (%s, %s, %s, %s, %s, 'TX', %s, %s, %s, %s, %s, 'Vetting', %s, %s)
                 RETURNING id;
-            ''', (company_name, contact_name, phone, email, city, crew_size, specialties, coi_status, hourly_rate, dwc83_signed, notes))
-            new_id = cur.fetchone()[0]
+            ''', (company_name, contact_name, phone, email, city, crew_size, specialties, coi_status, hourly_rate, dwc83_signed, initial_onboarding_status, notes))
+            new_row = cur.fetchone()
+            new_id = new_row['id'] if isinstance(new_row, dict) else new_row[0]
+            onboarding_token = f"sub_{new_id}_{secrets.token_urlsafe(24)}"
+            cur.execute('''
+                UPDATE "SubcontractorPartners"
+                SET onboarding_token = %s,
+                    onboarding_invited_at = CASE WHEN %s THEN CURRENT_TIMESTAMP ELSE NULL END
+                WHERE id = %s;
+            ''', (onboarding_token, auto_invite_active, new_id))
+            onboarding_url = f"{request.host_url.rstrip('/')}/onboard/subcontractor/{onboarding_token}"
 
             # Stage official email alert in PendingOutbox
             cur.execute('''
@@ -1976,7 +2001,7 @@ def api_workforce_subcontractor():
             ''', (
                 'hdominguez@hwbcleaning.com, sales@hwbcleaning.com',
                 f"ACTION REQUIRED: New 1099 Subcontractor Crew - {company_name} ({crew_size} Cleaners)",
-                f"Subcontractor {company_name} (Contact: {contact_name}) registered in {city}, TX. Phone: {phone}, Email: {email}, Crew Size: {crew_size}, Hourly Rate: {hourly_rate}.",
+                f"Subcontractor {company_name} (Contact: {contact_name}) registered in {city}, TX. Phone: {phone}, Email: {email}, Crew Size: {crew_size}, Hourly Rate: {hourly_rate}. Onboarding Stage: {initial_onboarding_status}.",
                 'SENT'
             ))
 
@@ -1985,7 +2010,7 @@ def api_workforce_subcontractor():
                 VALUES (%s, %s, %s, %s)
             ''', (
                 'Subcontractor Intake Gate',
-                f"Captured 1099 subcontractor registration from {company_name} (SUB-#{new_id})",
+                f"Captured 1099 subcontractor registration from {company_name} (SUB-#{new_id}) [Stage: {initial_onboarding_status}]",
                 '["web_subcontractor_form", "task_queue", "telegram", "graph_email"]',
                 'SUCCESS'
             ))
@@ -2006,6 +2031,9 @@ def api_workforce_subcontractor():
                 'dwc83_signed': dwc83_signed,
                 'notes': notes,
                 'is_repeat': False,
+                'auto_invite': auto_invite_active,
+                'onboarding_url': onboarding_url,
+                'review_mode': 'Automated Initial Registration Gate' if auto_invite_active else 'Manual Review Gate',
                 'registered_date': datetime.date.today().strftime('%m/%d/%Y'),
                 'partner_status': 'Vetting'
             }
@@ -2029,6 +2057,8 @@ def api_workforce_subcontractor():
                 'status': 'success',
                 'partner_id': new_id,
                 'reference_code': f"SUB-#{int(new_id):04d}",
+                'onboarding_status': initial_onboarding_status,
+                'auto_invited': auto_invite_active,
                 'message': 'Subcontractor partner registered.'
             }), 201
     except Exception as e:
@@ -2168,19 +2198,29 @@ def api_get_or_create_subcontractors():
                 }), 201
 
             # GET method
+            from database.schema_engine import ensure_subcontractor_onboarding_schema
+            from core.services.subcontractor_doc_extractor import audit_subcontractor_coi_expirations
+            ensure_subcontractor_onboarding_schema(conn)
+            coi_watchdog_summary = audit_subcontractor_coi_expirations(conn, send_alerts=False)
             status_filter = request.args.get('status')
             if status_filter:
                 cur.execute('SELECT * FROM "SubcontractorPartners" WHERE status = %s ORDER BY created_at DESC;', (status_filter,))
             else:
                 cur.execute('SELECT * FROM "SubcontractorPartners" ORDER BY created_at DESC;')
-            rows = [serialize_row(r) for r in cur.fetchall()]
+            rows = []
+            for r in cur.fetchall():
+                s_row = serialize_row(r)
+                has_enc_tin = bool(s_row.pop('w9_tin_encrypted', None))
+                s_row['has_encrypted_tin'] = has_enc_tin
+                rows.append(s_row)
             from core.services.labor_market_analytics import analyze_subcontractor_rates
             labor_rate_metrics = analyze_subcontractor_rates(rows)
             return jsonify({
                 'status': 'success',
                 'count': len(rows),
                 'subcontractors': rows,
-                'labor_rate_metrics': labor_rate_metrics
+                'labor_rate_metrics': labor_rate_metrics,
+                'coi_watchdog': coi_watchdog_summary,
             })
     finally:
         if conn: conn.close()
@@ -2194,7 +2234,11 @@ def api_subcontractor_labor_rate_intelligence():
     try:
         with conn.cursor() as cur:
             cur.execute('SELECT * FROM "SubcontractorPartners" ORDER BY created_at DESC;')
-            rows = [serialize_row(r) for r in cur.fetchall()]
+            rows = []
+            for r in cur.fetchall():
+                sr = serialize_row(r)
+                sr.pop('w9_tin_encrypted', None)
+                rows.append(sr)
             from core.services.labor_market_analytics import analyze_subcontractor_rates
             metrics = analyze_subcontractor_rates(rows)
             return jsonify({'status': 'success', 'metrics': metrics})
@@ -2209,13 +2253,19 @@ def api_manage_subcontractor(id):
     """View, update, or remove a subcontractor record."""
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
+        from database.schema_engine import ensure_subcontractor_onboarding_schema
+        ensure_subcontractor_onboarding_schema(conn)
         with conn.cursor() as cur:
             if request.method == 'GET':
+                from core.services.subcontractor_doc_extractor import list_subcontractor_document_versions
                 cur.execute('SELECT * FROM "SubcontractorPartners" WHERE id = %s;', (id,))
                 sub = cur.fetchone()
                 if not sub:
                     return jsonify({'status': 'error', 'message': 'Subcontractor not found'}), 404
-                return jsonify({'status': 'success', 'subcontractor': serialize_row(sub)})
+                s_sub = serialize_row(sub)
+                s_sub['has_encrypted_tin'] = bool(s_sub.pop('w9_tin_encrypted', None))
+                s_sub['document_versions'] = list_subcontractor_document_versions(conn, id)
+                return jsonify({'status': 'success', 'subcontractor': s_sub})
 
             elif request.method == 'DELETE':
                 cur.execute('DELETE FROM "SubcontractorPartners" WHERE id = %s;', (id,))
@@ -2273,7 +2323,7 @@ def api_manage_subcontractor(id):
 @crm_api_bp.route('/api/v1/workforce/subcontractors/<int:id>/documents', methods=['POST'])
 @login_required
 def api_upload_subcontractor_document(id):
-    """Securely uploads and deposits COI or W-9 into the HR Vault for a subcontractor."""
+    """Securely uploads and deposits COI, W-9, TX DWC-83, or MSA into the HR Vault with auto-extraction."""
     if 'document' not in request.files:
         return jsonify({'status': 'error', 'message': 'No document file provided.'}), 400
 
@@ -2284,44 +2334,123 @@ def api_upload_subcontractor_document(id):
     if file.filename == '':
         return jsonify({'status': 'error', 'message': 'Empty file selected.'}), 400
 
+    raw_bytes = file.read()
+    if not raw_bytes:
+        return jsonify({'status': 'error', 'message': 'Uploaded file is empty.'}), 400
+
     filename = secure_filename(file.filename)
     safe_name = f"sub_{id}_{doc_type.replace(' ', '_')}_{int(dt_cls.now().timestamp())}_{filename}"
+    os.makedirs(HR_VAULT_DIR, exist_ok=True)
     file_path = os.path.join(HR_VAULT_DIR, safe_name)
-    file.save(file_path)
+    with open(file_path, 'wb') as out_f:
+        out_f.write(raw_bytes)
 
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
+        from database.schema_engine import ensure_subcontractor_onboarding_schema
+        from core.services.subcontractor_doc_extractor import (
+            extract_subcontractor_document_metadata,
+            encrypt_and_mask_subcontractor_tin,
+            deposit_subcontractor_document_vault,
+        )
+        ensure_subcontractor_onboarding_schema(conn)
+        vault_receipt = deposit_subcontractor_document_vault(
+            conn=conn,
+            subcontractor_id=id,
+            doc_type=doc_type,
+            file_key=safe_name,
+            original_filename=filename,
+            raw_bytes=raw_bytes,
+            mime_type=file.mimetype or 'application/pdf',
+            uploaded_by=getattr(current_user, 'username', 'admin'),
+            uploaded_ip=extract_client_ip(),
+            vault_dir=HR_VAULT_DIR,
+        )
+        extracted = {}
         with conn.cursor() as cur:
-            if 'w-9' in doc_type.lower():
+            cur.execute('SELECT * FROM "SubcontractorPartners" WHERE id = %s;', (id,))
+            sub_row = cur.fetchone()
+            partner_dict = dict(sub_row) if sub_row else {}
+            low_type = doc_type.lower()
+
+            if 'w-9' in low_type or 'w9' in low_type:
+                extracted = extract_subcontractor_document_metadata(raw_bytes, filename, doc_type='w9', partner_row=partner_dict)
+                raw_tin = extracted.get('ein_or_ssn') or ''
+                masked_tin, last4_tin, encrypted_tin = encrypt_and_mask_subcontractor_tin(raw_tin)
                 cur.execute('''
                     UPDATE "SubcontractorPartners" 
-                    SET w9_file_url = %s, w9_status = 'Verified', updated_at = CURRENT_TIMESTAMP
+                    SET w9_file_url = %s,
+                        w9_status = 'Verified',
+                        legal_entity_name = COALESCE(NULLIF(%s, ''), legal_entity_name),
+                        tax_classification = COALESCE(NULLIF(%s, ''), tax_classification),
+                        street_address = COALESCE(NULLIF(%s, ''), street_address),
+                        city = COALESCE(NULLIF(%s, ''), city),
+                        state = COALESCE(NULLIF(%s, ''), state),
+                        zip_code = COALESCE(NULLIF(%s, ''), zip_code),
+                        ein_or_ssn = COALESCE(NULLIF(%s, ''), ein_or_ssn),
+                        w9_ein_last4 = COALESCE(NULLIF(%s, ''), w9_ein_last4),
+                        w9_tin_encrypted = COALESCE(%s, w9_tin_encrypted),
+                        w9_extracted_json = %s,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE id = %s;
+                ''', (
+                    safe_name,
+                    extracted.get('legal_entity_name') or '',
+                    extracted.get('tax_classification') or '',
+                    extracted.get('street_address') or '',
+                    extracted.get('city') or '',
+                    extracted.get('state') or '',
+                    extracted.get('zip_code') or '',
+                    masked_tin or raw_tin,
+                    last4_tin,
+                    encrypted_tin,
+                    json.dumps({**extracted, 'ein_or_ssn': masked_tin or raw_tin}),
+                    id
+                ))
+            elif 'dwc' in low_type:
+                cur.execute('''
+                    UPDATE "SubcontractorPartners" 
+                    SET dwc83_file_url = %s, dwc83_signed = TRUE, updated_at = CURRENT_TIMESTAMP
                     WHERE id = %s;
                 ''', (safe_name, id))
-            elif 'dwc' in doc_type.lower():
+            elif 'msa' in low_type or 'agreement' in low_type:
                 cur.execute('''
                     UPDATE "SubcontractorPartners" 
-                    SET dwc83_signed = TRUE, updated_at = CURRENT_TIMESTAMP
+                    SET msa_file_url = %s, msa_signed = TRUE, msa_signed_at = COALESCE(msa_signed_at, CURRENT_TIMESTAMP), updated_at = CURRENT_TIMESTAMP
                     WHERE id = %s;
-                ''', (id,))
+                ''', (safe_name, id))
             else:  # COI
-                exp_clause = ", coi_expiration_date = %s" if coi_expiration else ""
-                params = [safe_name]
-                if coi_expiration:
-                    params.append(coi_expiration)
-                params.append(id)
-                cur.execute(f'''
+                extracted = extract_subcontractor_document_metadata(raw_bytes, filename, doc_type='coi', partner_row=partner_dict)
+                final_exp = coi_expiration or extracted.get('coi_expiration_date') or None
+                cur.execute('''
                     UPDATE "SubcontractorPartners" 
-                    SET coi_file_url = %s, coi_status = 'Verified'{exp_clause}, updated_at = CURRENT_TIMESTAMP
+                    SET coi_file_url = %s,
+                        coi_status = 'Verified',
+                        coi_carrier = COALESCE(NULLIF(%s, ''), coi_carrier),
+                        coi_policy_number = COALESCE(NULLIF(%s, ''), coi_policy_number),
+                        coi_coverage_amount = COALESCE(NULLIF(%s, ''), coi_coverage_amount),
+                        coi_expiration_date = COALESCE(%s::date, coi_expiration_date),
+                        coi_extracted_json = %s,
+                        updated_at = CURRENT_TIMESTAMP
                     WHERE id = %s;
-                ''', tuple(params))
+                ''', (
+                    safe_name,
+                    extracted.get('coi_carrier') or '',
+                    extracted.get('coi_policy_number') or '',
+                    extracted.get('coi_coverage_amount') or '',
+                    final_exp,
+                    json.dumps(extracted),
+                    id
+                ))
 
             conn.commit()
             return jsonify({
                 'status': 'success',
                 'file_name': filename,
                 'document_type': doc_type,
-                'message': f"{doc_type} securely deposited into Vault."
+                'extracted': extracted,
+                'vault_receipt': vault_receipt,
+                'message': f"{doc_type} securely deposited into Encrypted Vault (v{vault_receipt['version_number']})."
             }), 201
     finally:
         if conn: conn.close()
@@ -2330,24 +2459,420 @@ def api_upload_subcontractor_document(id):
 @crm_api_bp.route('/api/v1/workforce/subcontractors/<int:id>/download/<doc_type>', methods=['GET'])
 @login_required
 def api_download_subcontractor_document(id, doc_type):
-    """Securely downloads a subcontractor compliance document from the HR Vault."""
+    """
+    Securely downloads a subcontractor compliance document (COI, W-9, MSA, or DWC-83) from the
+    Tier-1 Encrypted PostgreSQL Document Vault ("SubcontractorDocuments"), verifying the SHA-256
+    checksum and auto-healing the container disk cache if needed.
+    """
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
+        from database.schema_engine import ensure_subcontractor_onboarding_schema
+        from core.services.subcontractor_doc_extractor import (
+            retrieve_subcontractor_document_vault,
+            deposit_subcontractor_document_vault,
+        )
+        ensure_subcontractor_onboarding_schema(conn)
         with conn.cursor() as cur:
-            cur.execute('SELECT company_name, coi_file_url, w9_file_url FROM "SubcontractorPartners" WHERE id = %s;', (id,))
+            cur.execute('''
+                SELECT company_name, coi_file_url, w9_file_url, msa_file_url, dwc83_file_url
+                FROM "SubcontractorPartners" WHERE id = %s;
+            ''', (id,))
             sub = cur.fetchone()
             if not sub:
                 return jsonify({'status': 'error', 'message': 'Subcontractor not found'}), 404
 
-            file_key = sub['w9_file_url'] if doc_type.lower() == 'w9' else sub['coi_file_url']
+            dt_low = doc_type.lower()
+            if dt_low == 'w9':
+                file_key = sub.get('w9_file_url')
+            elif dt_low == 'msa':
+                file_key = sub.get('msa_file_url')
+            elif dt_low in ('dwc83', 'dwc'):
+                file_key = sub.get('dwc83_file_url') or sub.get('msa_file_url')
+            else:
+                file_key = sub.get('coi_file_url')
+
+            req_version = request.args.get('version', type=int)
+            vault_doc = retrieve_subcontractor_document_vault(
+                conn=conn,
+                subcontractor_id=id,
+                doc_type=dt_low,
+                file_key=file_key,
+                version_number=req_version,
+                vault_dir=HR_VAULT_DIR,
+            )
+
+            if vault_doc and vault_doc.get('bytes'):
+                ext = os.path.splitext(vault_doc.get('file_key') or file_key or '.pdf')[1] or '.pdf'
+                dl_name = f"{sub['company_name'].replace(' ', '_')}_{doc_type.upper()}_v{vault_doc.get('version_number', 1)}{ext}"
+                resp = send_file(
+                    io.BytesIO(vault_doc['bytes']),
+                    mimetype=vault_doc.get('mime_type') or 'application/pdf',
+                    as_attachment=True,
+                    download_name=dl_name,
+                )
+                resp.headers['X-Sigma-Vault-SHA256'] = vault_doc.get('sha256_checksum') or ''
+                resp.headers['X-Sigma-Vault-Verified'] = 'true' if vault_doc.get('checksum_verified') else 'false'
+                resp.headers['X-Sigma-Vault-Version'] = str(vault_doc.get('version_number', 1))
+                resp.headers['X-Sigma-Vault-Provider'] = vault_doc.get('storage_provider') or 'pg_encrypted_vault'
+                return resp
+
             if not file_key:
                 return jsonify({'status': 'error', 'message': f'No {doc_type.upper()} file deposited.'}), 404
 
             file_path = os.path.join(HR_VAULT_DIR, file_key)
             if not os.path.exists(file_path):
-                return jsonify({'status': 'error', 'message': 'Document file not found on disk'}), 404
+                return jsonify({'status': 'error', 'message': 'Document file not found on disk or encrypted vault'}), 404
 
-            return send_file(file_path, as_attachment=True, download_name=f"{sub['company_name'].replace(' ', '_')}_{doc_type.upper()}.pdf")
+            # Auto-backfill legacy disk-only files into "SubcontractorDocuments" encrypted vault on first read
+            try:
+                with open(file_path, 'rb') as lf:
+                    legacy_bytes = lf.read()
+                if legacy_bytes:
+                    deposit_subcontractor_document_vault(
+                        conn=conn,
+                        subcontractor_id=id,
+                        doc_type=dt_low,
+                        file_key=file_key,
+                        original_filename=file_key,
+                        raw_bytes=legacy_bytes,
+                        mime_type='application/pdf',
+                        uploaded_by='legacy_disk_backfill',
+                        uploaded_ip='127.0.0.1',
+                    )
+                    conn.commit()
+            except Exception:
+                conn.rollback()
+
+            ext = os.path.splitext(file_key)[1] or '.pdf'
+            return send_file(file_path, as_attachment=True, download_name=f"{sub['company_name'].replace(' ', '_')}_{doc_type.upper()}{ext}")
+    finally:
+        if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/workforce/subcontractors/<int:id>/send-onboarding', methods=['POST'])
+@login_required
+def api_send_subcontractor_onboarding(id):
+    """
+    Approves initial registration in the backoffice, extends the 30-day magic-link TTL,
+    and dispatches the pre-filled 1099 Subcontractor Onboarding Link (/onboard/subcontractor/<token>) via email.
+    """
+    import secrets
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        from database.schema_engine import ensure_subcontractor_onboarding_schema
+        ensure_subcontractor_onboarding_schema(conn)
+        with conn.cursor() as cur:
+            cur.execute('SELECT * FROM "SubcontractorPartners" WHERE id = %s;', (id,))
+            row = cur.fetchone()
+            if not row:
+                return jsonify({'status': 'error', 'message': 'Subcontractor not found'}), 404
+            sub = dict(row)
+            tok = sub.get('onboarding_token')
+            if not tok:
+                tok = f"sub_{id}_{secrets.token_urlsafe(24)}"
+
+            cur.execute('''
+                UPDATE "SubcontractorPartners"
+                SET onboarding_token = %s,
+                    onboarding_token_expires_at = CURRENT_TIMESTAMP + INTERVAL '30 days',
+                    onboarding_status = CASE
+                        WHEN onboarding_status IN ('Docs Under Review', 'Approved / Active', 'Pending COI') THEN onboarding_status
+                        ELSE 'Invited'
+                    END,
+                    onboarding_invited_at = CURRENT_TIMESTAMP,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = %s
+                RETURNING onboarding_status, onboarding_token_expires_at;
+            ''', (tok, id))
+            new_stage_row = cur.fetchone()
+            new_stage = new_stage_row['onboarding_status'] if isinstance(new_stage_row, dict) else new_stage_row[0]
+            exp_ts = new_stage_row['onboarding_token_expires_at'] if isinstance(new_stage_row, dict) else new_stage_row[1]
+
+            onboarding_url = f"{request.host_url.rstrip('/')}/onboard/subcontractor/{tok}"
+            cur.execute('''
+                INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description, timestamp)
+                VALUES (%s, 'Subcontractor', '1099 Onboarding Link Sent', %s, CURRENT_TIMESTAMP);
+            ''', (
+                id,
+                f"Initial registration reviewed and pre-filled 1099 onboarding link dispatched to {sub.get('company_name')} ({sub.get('email') or 'direct link'}).",
+            ))
+            conn.commit()
+
+            email_ok = False
+            email_detail = "No partner email on file — copy link below to text via SMS"
+            if sub.get('email'):
+                from core.services.notification_service import send_subcontractor_onboarding_invite_email
+                email_ok, email_detail = send_subcontractor_onboarding_invite_email({
+                    'partner_id': id,
+                    'company_name': sub.get('company_name'),
+                    'contact_name': sub.get('contact_name'),
+                    'email': sub.get('email'),
+                    'onboarding_url': onboarding_url,
+                    'review_mode': 'Operations Review Approved',
+                })
+
+            return jsonify({
+                'status': 'success',
+                'subcontractor_id': id,
+                'reference_code': f"SUB-#{int(id):04d}",
+                'onboarding_token': tok,
+                'onboarding_token_expires_at': exp_ts.isoformat() if hasattr(exp_ts, 'isoformat') else str(exp_ts or ''),
+                'onboarding_url': onboarding_url,
+                'onboarding_status': new_stage,
+                'email_sent': email_ok,
+                'email_detail': email_detail,
+                'message': (
+                    f"Pre-filled onboarding link sent to {sub.get('email')}!"
+                    if email_ok
+                    else f"Onboarding link generated for {sub.get('company_name')}. Ready to copy/text."
+                ),
+            })
+    finally:
+        if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/workforce/subcontractors/<int:id>/approve-partner', methods=['POST'])
+@login_required
+def api_approve_subcontractor_partner(id):
+    """
+    Final backoffice verification gate: marks the 1099 partner as Active Partner
+    and dispatches the official 'Approved for Project Dispatch' welcome email.
+    """
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        from database.schema_engine import ensure_subcontractor_onboarding_schema
+        ensure_subcontractor_onboarding_schema(conn)
+        with conn.cursor() as cur:
+            cur.execute('SELECT * FROM "SubcontractorPartners" WHERE id = %s;', (id,))
+            row = cur.fetchone()
+            if not row:
+                return jsonify({'status': 'error', 'message': 'Subcontractor not found'}), 404
+            sub = dict(row)
+            has_coi = bool(sub.get('coi_file_url'))
+            new_coi_status = 'Verified' if has_coi else (sub.get('coi_status') or 'Pending')
+            new_w9_status = 'Verified' if sub.get('w9_file_url') else (sub.get('w9_status') or 'Verified')
+
+            cur.execute('''
+                UPDATE "SubcontractorPartners"
+                SET status = 'Active Partner',
+                    onboarding_status = 'Approved / Active',
+                    w9_status = %s,
+                    coi_status = %s,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = %s;
+            ''', (new_w9_status, new_coi_status, id))
+
+            cur.execute('''
+                INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description, timestamp)
+                VALUES (%s, 'Subcontractor', '1099 Partner Activated', %s, CURRENT_TIMESTAMP);
+            ''', (
+                id,
+                f"1099 Partner {sub.get('company_name')} (SUB-#{int(id):04d}) verified and activated for project dispatch.",
+            ))
+            conn.commit()
+
+            email_ok = False
+            if sub.get('email'):
+                from core.services.notification_service import send_subcontractor_approved_email
+                email_ok, _ = send_subcontractor_approved_email(sub)
+
+            return jsonify({
+                'status': 'success',
+                'subcontractor_id': id,
+                'partner_status': 'Active Partner',
+                'onboarding_status': 'Approved / Active',
+                'coi_status': new_coi_status,
+                'w9_status': new_w9_status,
+                'email_sent': email_ok,
+                'message': f"{sub.get('company_name')} verified and activated as an Active Partner."
+            })
+    finally:
+        if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/workforce/subcontractors/review-mode', methods=['GET', 'POST'])
+@login_required
+def api_subcontractor_review_mode():
+    """
+    Gets or updates the Initial Registration Review Gate mode ('manual' vs 'automatic')
+    determining whether new /work-with-us registrations receive the onboarding link
+    automatically upon passing initial validation or wait for manual backoffice review.
+    """
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        from database.schema_engine import ensure_subcontractor_onboarding_schema
+        ensure_subcontractor_onboarding_schema(conn)
+        with conn.cursor() as cur:
+            if request.method == 'POST':
+                data = request.get_json() or {}
+                auto_enabled = bool(data.get('auto_review_enabled', False))
+                val_str = 'true' if auto_enabled else 'false'
+                cur.execute('''
+                    INSERT INTO "SystemSettings" (key, value)
+                    VALUES ('subcontractor_auto_review_enabled', %s)
+                    ON CONFLICT (key) DO UPDATE SET
+                        value = EXCLUDED.value;
+                ''', (val_str,))
+                conn.commit()
+                return jsonify({
+                    'status': 'success',
+                    'auto_review_enabled': auto_enabled,
+                    'mode_label': 'Automatic Initial Review Gate' if auto_enabled else 'Manual Backoffice Review Gate',
+                })
+
+            cur.execute('''
+                SELECT value FROM "SystemSettings"
+                WHERE key = 'subcontractor_auto_review_enabled'
+                LIMIT 1;
+            ''')
+            row = cur.fetchone()
+            val = str(row.get('value') if isinstance(row, dict) else (row[0] if row else 'false')).lower() == 'true'
+            return jsonify({
+                'status': 'success',
+                'auto_review_enabled': val,
+                'mode_label': 'Automatic Initial Review Gate' if val else 'Manual Backoffice Review Gate',
+            })
+    finally:
+        if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/workforce/subcontractors/coi-watchdog', methods=['GET', 'POST'])
+@login_required
+def api_subcontractor_coi_watchdog():
+    """
+    Executes the Automated Certificate of Insurance (COI) Expiration Watchdog across all
+    1099 Subcontractor Partners, automatically holding expired policies from dispatch
+    and optionally dispatching renewal magic links.
+    """
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        from database.schema_engine import ensure_subcontractor_onboarding_schema
+        from core.services.subcontractor_doc_extractor import audit_subcontractor_coi_expirations
+        ensure_subcontractor_onboarding_schema(conn)
+        send_alerts = False
+        if request.method == 'POST':
+            data = request.get_json(silent=True) or {}
+            send_alerts = bool(data.get('send_alerts', False))
+        summary = audit_subcontractor_coi_expirations(
+            conn, send_alerts=send_alerts, host_url=request.host_url.rstrip('/')
+        )
+        return jsonify({
+            'status': 'success',
+            'watchdog': summary,
+            'message': (
+                f"COI Watchdog complete: {summary['expired_count']} expired, "
+                f"{summary['expiring_7d_count']} critical (<=7d), "
+                f"{summary['expiring_30d_count']} warning (<=30d), "
+                f"{summary['healthy_count']} active."
+            ),
+        })
+    finally:
+        if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/workforce/subcontractors/export-1099-nec', methods=['GET'])
+@login_required
+def api_export_subcontractors_1099_nec():
+    """
+    Year-End IRS Form 1099-NEC Batch Exporter:
+    Decrypts AES-256 Fernet encrypted 9-digit TINs from w9_tin_encrypted for authorized
+    accounting export, logs a forensic SecurityAuditLogs event, and returns CSV or JSON.
+    """
+    if getattr(current_user, 'role', '') == 'Sales':
+        return jsonify({'status': 'error', 'message': '1099-NEC tax batch export is restricted to Executive & Finance personnel.'}), 403
+
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        from database.schema_engine import ensure_subcontractor_onboarding_schema
+        from core.services.subcontractor_doc_extractor import decrypt_subcontractor_tin
+        ensure_subcontractor_onboarding_schema(conn)
+        with conn.cursor() as cur:
+            cur.execute('''
+                SELECT id, company_name, legal_entity_name, tax_classification,
+                       ein_or_ssn, w9_ein_last4, w9_tin_encrypted,
+                       street_address, city, state, zip_code,
+                       contact_name, phone, email,
+                       w9_status, coi_status, coi_expiration_date,
+                       msa_signed, dwc83_signed, msa_signature_hash,
+                       onboarding_status, status
+                FROM "SubcontractorPartners"
+                ORDER BY id ASC;
+            ''')
+            rows = [dict(r) for r in cur.fetchall()]
+
+            user_label = getattr(current_user, 'username', 'admin')
+            cur.execute('''
+                INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description, timestamp)
+                VALUES (1, 'System', '1099-NEC Tax Batch Export', %s, CURRENT_TIMESTAMP);
+            ''', (f"Authorized 1099-NEC tax batch export ({len(rows)} partners) executed by {user_label}.",))
+            conn.commit()
+
+        log_security_event(
+            event_category='DATA_LIFECYCLE',
+            event_action='1099_NEC_TAX_BATCH_EXPORT',
+            severity='WARNING',
+            details={'row_count': len(rows), 'exported_by': getattr(current_user, 'username', 'admin')}
+        )
+
+        export_records = []
+        for r in rows:
+            decrypted_tin = decrypt_subcontractor_tin(
+                r.get('w9_tin_encrypted'),
+                fallback_tin=r.get('ein_or_ssn'),
+                last4=r.get('w9_ein_last4'),
+            )
+            export_records.append({
+                'partner_id': f"SUB-#{int(r['id']):04d}",
+                'legal_entity_name_line1': r.get('legal_entity_name') or r.get('contact_name') or '',
+                'business_name_dba_line2': r.get('company_name') or '',
+                'tax_classification': r.get('tax_classification') or 'Pending W-9',
+                'taxpayer_tin': decrypted_tin,
+                'tin_last4': r.get('w9_ein_last4') or '',
+                'street_address': r.get('street_address') or '',
+                'city': r.get('city') or '',
+                'state': r.get('state') or 'TX',
+                'zip_code': r.get('zip_code') or '',
+                'contact_name': r.get('contact_name') or '',
+                'phone': r.get('phone') or '',
+                'email': r.get('email') or '',
+                'w9_status': r.get('w9_status') or 'Pending',
+                'coi_status': r.get('coi_status') or 'Pending',
+                'coi_expiration_date': r['coi_expiration_date'].isoformat() if hasattr(r.get('coi_expiration_date'), 'isoformat') else str(r.get('coi_expiration_date') or ''),
+                'msa_dwc83_signed': 'Yes' if (r.get('msa_signed') and r.get('dwc83_signed')) else 'No',
+                'msa_signature_hash': r.get('msa_signature_hash') or '',
+                'onboarding_status': r.get('onboarding_status') or 'Initial Review',
+            })
+
+        if (request.args.get('format') or '').lower() == 'json':
+            return jsonify({
+                'status': 'success',
+                'count': len(export_records),
+                'records': export_records,
+            })
+
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow([
+            'Partner ID', 'Legal Entity Name (W-9 Line 1)', 'Business Name / DBA (W-9 Line 2)',
+            'Federal Tax Classification', 'Taxpayer ID (TIN / EIN / SSN)', 'TIN Last 4',
+            'Street Address', 'City', 'State', 'ZIP Code',
+            'Contact Name', 'Phone', 'Email',
+            'W-9 Status', 'COI Status', 'COI Expiration Date',
+            'MSA & TX DWC-83 Signed', 'SHA-256 Signature Fingerprint', 'Onboarding Stage'
+        ])
+        for rec in export_records:
+            writer.writerow([
+                rec['partner_id'], rec['legal_entity_name_line1'], rec['business_name_dba_line2'],
+                rec['tax_classification'], rec['taxpayer_tin'], rec['tin_last4'],
+                rec['street_address'], rec['city'], rec['state'], rec['zip_code'],
+                rec['contact_name'], rec['phone'], rec['email'],
+                rec['w9_status'], rec['coi_status'], rec['coi_expiration_date'],
+                rec['msa_dwc83_signed'], rec['msa_signature_hash'], rec['onboarding_status']
+            ])
+
+        response = Response(output.getvalue(), mimetype='text/csv')
+        response.headers['Content-Disposition'] = f'attachment; filename=hwb_1099_nec_batch_{datetime.datetime.now().strftime("%Y%m%d")}.csv'
+        return response
     finally:
         if conn: conn.close()
 
@@ -2404,6 +2929,9 @@ def api_hr_onboard_candidate():
 
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
+        from database.schema_engine import ensure_employee_onboarding_schema
+        from core.services.employee_doc_extractor import generate_employee_onboarding_token
+        ensure_employee_onboarding_schema(conn)
         with conn.cursor() as cur:
             if not job_position_id:
                 cur.execute('SELECT id, title FROM "JobPositions" WHERE title ILIKE %s OR position_code = %s LIMIT 1;', (role, role))
@@ -2416,12 +2944,12 @@ def api_hr_onboard_candidate():
             existing_emp = None
 
             if applicant_id:
-                cur.execute('SELECT id, employee_number, notes FROM "Employees" WHERE applicant_id = %s ORDER BY id ASC LIMIT 1;', (applicant_id,))
+                cur.execute('SELECT id, employee_number, notes, onboarding_token FROM "Employees" WHERE applicant_id = %s ORDER BY id ASC LIMIT 1;', (applicant_id,))
                 existing_emp = cur.fetchone()
 
             if not existing_emp and phone_digits and len(phone_digits) == 10:
                 cur.execute('''
-                    SELECT id, employee_number, notes FROM "Employees"
+                    SELECT id, employee_number, notes, onboarding_token FROM "Employees"
                     WHERE RIGHT(REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g'), 10) = %s
                     ORDER BY id ASC LIMIT 1;
                 ''', (phone_digits,))
@@ -2429,7 +2957,7 @@ def api_hr_onboard_candidate():
 
             if not existing_emp and clean_emp_email:
                 cur.execute('''
-                    SELECT id, employee_number, notes FROM "Employees"
+                    SELECT id, employee_number, notes, onboarding_token FROM "Employees"
                     WHERE LOWER(TRIM(COALESCE(email, ''))) = LOWER(%s)
                     ORDER BY id ASC LIMIT 1;
                 ''', (clean_emp_email,))
@@ -2438,6 +2966,7 @@ def api_hr_onboard_candidate():
             if existing_emp:
                 emp_id = existing_emp['id']
                 emp_number = existing_emp['employee_number']
+                emp_token = existing_emp.get('onboarding_token') or f"emp_{emp_id}_{generate_employee_onboarding_token()}"
                 prev_notes = existing_emp.get('notes') or ''
                 merged_notes = f"{prev_notes}\n[PROFILE UPDATED]: {notes}".strip() if notes else prev_notes
 
@@ -2463,6 +2992,8 @@ def api_hr_onboard_candidate():
                         weekly_hours_allocated = %s,
                         notes = %s,
                         job_position_id = COALESCE(%s, job_position_id),
+                        onboarding_token = %s,
+                        onboarding_token_expires_at = CURRENT_TIMESTAMP + INTERVAL '30 days',
                         updated_at = NOW()
                     WHERE id = %s;
                 ''', (
@@ -2471,7 +3002,7 @@ def api_hr_onboard_candidate():
                     pay_rate, overtime_rate, pay_frequency, primary_language,
                     emergency_name, emergency_phone, city, state,
                     assigned_customer_id, weekly_hours, merged_notes,
-                    job_position_id, emp_id
+                    job_position_id, emp_token, emp_id
                 ))
 
                 if applicant_id:
@@ -2487,6 +3018,8 @@ def api_hr_onboard_candidate():
                     'is_duplicate': True,
                     'employee_id': emp_id,
                     'employee_number': emp_number,
+                    'onboarding_token': emp_token,
+                    'onboarding_url': f"/onboard/employee/{emp_token}",
                     'message': f"Employee {first_name} {last_name} ({emp_number}) is already onboarded — existing profile updated."
                 }), 200
 
@@ -2494,6 +3027,7 @@ def api_hr_onboard_candidate():
             max_row = cur.fetchone()
             next_id = (max_row['max_id'] or 0) + 1001
             emp_number = f"HWB-EMP-{next_id}"
+            new_token = f"emp_{next_id}_{generate_employee_onboarding_token()}"
 
             cur.execute('''
                 INSERT INTO "Employees" (
@@ -2502,14 +3036,14 @@ def api_hr_onboard_candidate():
                     pay_rate_hourly, overtime_rate_hourly, pay_frequency, primary_language,
                     emergency_contact_name, emergency_contact_phone, address_city, address_state,
                     assigned_customer_id, weekly_hours_allocated, notes,
-                    job_position_id, job_description_acknowledged_at
+                    job_position_id, onboarding_token, onboarding_token_expires_at, onboarding_status
                 ) VALUES (
                     %s, %s, %s, %s, %s, %s,
                     %s, %s, %s, %s,
                     %s, %s, %s, %s,
                     %s, %s, %s, %s,
                     %s, %s, %s,
-                    %s, NOW()
+                    %s, %s, CURRENT_TIMESTAMP + INTERVAL '30 days', 'Pending Onboarding'
                 ) RETURNING id, employee_number;
             ''', (
                 emp_number, applicant_id, first_name, last_name, phone, clean_emp_email,
@@ -2517,7 +3051,7 @@ def api_hr_onboard_candidate():
                 pay_rate, overtime_rate, pay_frequency, primary_language,
                 emergency_name, emergency_phone, city, state,
                 assigned_customer_id, weekly_hours, notes,
-                job_position_id
+                job_position_id, new_token
             ))
             new_emp = cur.fetchone()
 
@@ -2534,6 +3068,8 @@ def api_hr_onboard_candidate():
                 'is_duplicate': False,
                 'employee_id': new_emp['id'],
                 'employee_number': new_emp['employee_number'],
+                'onboarding_token': new_token,
+                'onboarding_url': f"/onboard/employee/{new_token}",
                 'message': f"Employee {first_name} {last_name} ({new_emp['employee_number']}) onboarded successfully."
             }), 201
     finally:
@@ -2624,7 +3160,17 @@ def api_manage_employee(id):
                 if not emp:
                     return jsonify({'status': 'error', 'message': 'Employee not found'}), 404
                 
-                cur.execute('SELECT * FROM "EmployeeDocuments" WHERE employee_id = %s ORDER BY created_at DESC;', (id,))
+                cur.execute('''
+                    SELECT id, employee_id, applicant_id, document_type, file_name, file_path,
+                           file_size, mime_type, verification_status, expiration_date,
+                           verified_by, verified_at, notes, created_at,
+                           version_number, is_current, sha256_checksum, storage_provider,
+                           extracted_json, uploaded_by,
+                           (encrypted_payload IS NOT NULL) AS has_encrypted_vault
+                    FROM "EmployeeDocuments"
+                    WHERE employee_id = %s
+                    ORDER BY is_current DESC, created_at DESC;
+                ''', (id,))
                 docs = [serialize_row(d) for d in cur.fetchall()]
 
                 emp_data = serialize_row(emp)
@@ -2923,10 +3469,14 @@ def api_reveal_employee_ssn(id):
 @crm_api_bp.route('/api/v1/hr/employees/<int:id>/documents', methods=['POST'])
 @login_required
 def api_upload_employee_document(id):
-    """Securely uploads and attaches a compliance document to an employee record."""
+    """
+    Securely uploads, auto-extracts (Form W-4, Form I-9, State ID, Voided Check),
+    auto-populates the Employees record, and deposits the encrypted document into
+    the PostgreSQL EmployeeDocuments BYTEA Vault.
+    """
     if 'document' not in request.files:
         return jsonify({'status': 'error', 'message': 'No document file provided.'}), 400
-    
+
     file = request.files['document']
     doc_type = (request.form.get('document_type') or 'Form I-9').strip()
     notes = (request.form.get('notes') or '').strip()
@@ -2936,56 +3486,94 @@ def api_upload_employee_document(id):
         return jsonify({'status': 'error', 'message': 'Empty file selected.'}), 400
 
     filename = secure_filename(file.filename)
-    safe_name = f"emp_{id}_{int(dt_cls.now().timestamp())}_{filename}"
-    file_path = os.path.join(HR_VAULT_DIR, safe_name)
-    file.save(file_path)
-    file_size = os.path.getsize(file_path)
-    mime_type = file.mimetype or 'application/octet-stream'
+    raw_bytes = file.read()
+    if not raw_bytes:
+        return jsonify({'status': 'error', 'message': 'Uploaded file is empty.'}), 400
+    mime_type = file.mimetype or 'application/pdf'
+    client_ip = request.headers.get('X-Forwarded-For', request.remote_addr or '127.0.0.1')
+
+    from core.services.employee_doc_extractor import (
+        apply_extracted_fields_to_employee,
+        deposit_employee_document_vault,
+        extract_employee_document_auto,
+    )
+
+    extracted = extract_employee_document_auto(doc_type, raw_bytes, filename, mime_type)
+    if not expiration_date and extracted.get('state_id_expiration'):
+        expiration_date = extracted['state_id_expiration']
 
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
-        with conn.cursor() as cur:
-            cur.execute('''
-                INSERT INTO "EmployeeDocuments" (
-                    employee_id, document_type, file_name, file_path, file_size,
-                    mime_type, verification_status, expiration_date, verified_by, notes
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                RETURNING id;
-            ''', (
-                id, doc_type, filename, safe_name, file_size,
-                mime_type, 'Verified', expiration_date, 'Humberto Dominguez', notes
-            ))
-            doc_id = cur.fetchone()['id']
-            conn.commit()
-            return jsonify({
-                'status': 'success',
-                'document_id': doc_id,
-                'file_name': filename,
-                'message': f"{doc_type} securely deposited into Vault."
-            }), 201
+        updated_fields = apply_extracted_fields_to_employee(conn, id, doc_type, extracted)
+        auto_note = (
+            f"{notes} | Auto-extracted: {', '.join(updated_fields)}".strip(" |")
+            if updated_fields
+            else notes
+        )
+        vault_receipt = deposit_employee_document_vault(
+            conn=conn,
+            employee_id=id,
+            doc_type=doc_type,
+            raw_bytes=raw_bytes,
+            original_filename=filename,
+            mime_type=mime_type,
+            expiration_date=expiration_date,
+            verified_by=getattr(current_user, 'username', 'Humberto Dominguez'),
+            notes=auto_note,
+            uploaded_by=getattr(current_user, 'username', 'backoffice_admin'),
+            uploaded_ip=client_ip,
+            extracted_metadata=extracted,
+        )
+        safe_extracted = {
+            k: v for k, v in extracted.items()
+            if k not in ('ssn_raw', 'direct_deposit_account_raw')
+        }
+        msg_suffix = (
+            f" Auto-populated: {', '.join(updated_fields)}."
+            if updated_fields
+            else ""
+        )
+        return jsonify({
+            'status': 'success',
+            'document_id': vault_receipt['document_id'],
+            'file_name': filename,
+            'version_number': vault_receipt['version_number'],
+            'sha256_checksum': vault_receipt['sha256_checksum'],
+            'storage_provider': vault_receipt['storage_provider'],
+            'extracted_fields': safe_extracted,
+            'auto_populated_fields': updated_fields,
+            'message': f"{doc_type} (v{vault_receipt['version_number']}) encrypted & deposited into Vault.{msg_suffix}"
+        }), 201
     finally:
-        if conn: conn.close()
+        if conn:
+            conn.close()
 
 
 @crm_api_bp.route('/api/v1/hr/documents/<int:doc_id>/download', methods=['GET'])
 @login_required
 def api_download_employee_document(doc_id):
-    """Secure authorized download/view of an employee document from the Vault."""
+    """
+    Secure authorized download/view of an employee document from the Encrypted PostgreSQL
+    Vault (`EmployeeDocuments.encrypted_payload BYTEA`), with automatic container disk healing.
+    """
+    import io
+    from core.services.employee_doc_extractor import retrieve_employee_document_vault
+
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
-        with conn.cursor() as cur:
-            cur.execute('SELECT * FROM "EmployeeDocuments" WHERE id = %s;', (doc_id,))
-            doc = cur.fetchone()
-            if not doc:
-                return jsonify({'status': 'error', 'message': 'Document not found'}), 404
-            
-            full_path = os.path.join(HR_VAULT_DIR, doc['file_path'])
-            if not os.path.exists(full_path):
-                return jsonify({'status': 'error', 'message': 'File missing from Vault storage'}), 404
-            
-            return send_file(full_path, mimetype=doc['mime_type'], as_attachment=False, download_name=doc['file_name'])
+        doc_bundle = retrieve_employee_document_vault(conn, doc_id)
+        if not doc_bundle:
+            return jsonify({'status': 'error', 'message': 'Document not found in Vault'}), 404
+
+        return send_file(
+            io.BytesIO(doc_bundle['raw_bytes']),
+            mimetype=doc_bundle['mime_type'],
+            as_attachment=False,
+            download_name=doc_bundle['file_name'],
+        )
     finally:
-        if conn: conn.close()
+        if conn:
+            conn.close()
 
 
 @crm_api_bp.route('/api/v1/hr/payroll', methods=['GET'])
@@ -3152,36 +3740,163 @@ def api_get_job_position_detail(id):
 @login_required
 def api_acknowledge_job_description(id):
     """
-    Records official employee / supervisor acknowledgement of HWB-FORM-7.2-001 Job Description.
-    Satisfies ISO 9001:2015 Clause 7.2 (Competence) and HWB-QMS-7.2 standards.
+    Records official employee / supervisor acknowledgement of HWB-FORM-7.2-001 Job Description,
+    generates a locked SHA-256 signed PDF certificate, and deposits it into the Encrypted
+    PostgreSQL EmployeeDocuments Vault.
     """
+    import hashlib
+    from database.schema_engine import ensure_employee_onboarding_schema
+    from core.services.employee_doc_extractor import (
+        deposit_employee_document_vault,
+        generate_signed_w2_onboarding_pdf,
+    )
+
+    payload = request.get_json(silent=True) or {}
+    client_ip = request.headers.get('X-Forwarded-For', request.remote_addr or '127.0.0.1')
+
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
+        ensure_employee_onboarding_schema(conn)
         with conn.cursor() as cur:
+            cur.execute('SELECT * FROM "Employees" WHERE id = %s;', (id,))
+            emp_full = cur.fetchone()
+            if not emp_full:
+                return jsonify({'status': 'error', 'message': 'Employee not found'}), 404
+
+            job_pos = None
+            if emp_full.get('job_position_id'):
+                cur.execute('SELECT * FROM "JobPositions" WHERE id = %s;', (emp_full['job_position_id'],))
+                job_pos = cur.fetchone()
+
+            signer_name = (
+                payload.get('signer_name')
+                or f"{emp_full.get('first_name', '')} {emp_full.get('last_name', '')}".strip()
+                or getattr(current_user, 'username', 'Authorized Signer')
+            )
+            now_iso = dt_cls.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+            sig_seed = f"{id}:{emp_full.get('employee_number')}:{signer_name}:{now_iso}:{client_ip}"
+            sig_hash = hashlib.sha256(sig_seed.encode('utf-8')).hexdigest()
+
+            pdf_bytes = generate_signed_w2_onboarding_pdf(
+                employee_record=dict(emp_full),
+                signer_name=signer_name,
+                signer_ip=client_ip,
+                signed_at_iso=now_iso,
+                signature_hash=sig_hash,
+                job_position=dict(job_pos) if job_pos else None,
+            )
+
+            emp_num = emp_full.get('employee_number') or f"HWB-EMP-{id}"
+            vault_receipt = deposit_employee_document_vault(
+                conn=conn,
+                employee_id=id,
+                doc_type='ISO 9001 Job Description (HWB-FORM-7.2-001)',
+                raw_bytes=pdf_bytes,
+                original_filename=f"{emp_num}_ISO_7_2_Job_Description_Signed.pdf",
+                mime_type='application/pdf',
+                verified_by=getattr(current_user, 'username', 'Humberto Dominguez'),
+                notes=f"Signed by {signer_name} | SHA-256: {sig_hash[:16]}...",
+                uploaded_by=signer_name,
+                uploaded_ip=client_ip,
+            )
+
             cur.execute('''
                 UPDATE "Employees"
                 SET job_description_acknowledged_at = NOW(),
+                    onboarding_packet_signed = TRUE,
+                    onboarding_signer_name = %s,
+                    onboarding_signed_at = NOW(),
+                    onboarding_signer_ip = %s,
+                    onboarding_signature_hash = %s,
+                    onboarding_packet_file_url = %s,
                     updated_at = NOW()
                 WHERE id = %s
                 RETURNING id, employee_number, first_name, last_name, job_position_id, job_description_acknowledged_at;
-            ''', (id,))
+            ''', (signer_name, client_ip, sig_hash, vault_receipt['file_key'], id))
             emp = cur.fetchone()
-            if not emp:
-                return jsonify({'status': 'error', 'message': 'Employee not found'}), 404
 
             cur.execute('''
                 INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
                 VALUES (%s, 'Employee', 'Compliance', %s);
-            ''', (id, f"Job Description (HWB-FORM-7.2-001) acknowledged by {current_user.username} for {emp['first_name']} {emp['last_name']} ({emp['employee_number']})."))
+            ''', (id, f"Job Description (HWB-FORM-7.2-001) signed & encrypted into Vault (Doc #{vault_receipt['document_id']}, SHA-256 {sig_hash[:12]}) for {emp['first_name']} {emp['last_name']} ({emp['employee_number']})."))
 
             conn.commit()
             return jsonify({
                 'status': 'success',
-                'message': 'Job Description acknowledged successfully.',
+                'message': 'Job Description signed, locked as PDF, and deposited into Encrypted HR Vault.',
+                'document_id': vault_receipt['document_id'],
+                'signature_hash': sig_hash,
                 'employee': serialize_row(emp)
             })
     finally:
-        if conn: conn.close()
+        if conn:
+            conn.close()
+
+
+@crm_api_bp.route('/api/v1/hr/employees/<int:id>/send-onboarding-link', methods=['POST'])
+@login_required
+def api_send_employee_onboarding_link(id):
+    """
+    Generates or refreshes a 30-day self-service W-2 onboarding link (/onboard/employee/<token>)
+    pre-filled with the employee's application and profile information.
+    """
+    from database.schema_engine import ensure_employee_onboarding_schema
+    from core.services.employee_doc_extractor import generate_employee_onboarding_token
+
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        ensure_employee_onboarding_schema(conn)
+        with conn.cursor() as cur:
+            cur.execute('SELECT * FROM "Employees" WHERE id = %s;', (id,))
+            emp = cur.fetchone()
+            if not emp:
+                return jsonify({'status': 'error', 'message': 'Employee not found'}), 404
+
+            token = emp.get('onboarding_token')
+            if not token:
+                token = f"emp_{id}_{generate_employee_onboarding_token()}"
+
+            cur.execute('''
+                UPDATE "Employees"
+                SET onboarding_token = %s,
+                    onboarding_token_expires_at = CURRENT_TIMESTAMP + INTERVAL '30 days',
+                    onboarding_invited_at = CURRENT_TIMESTAMP,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = %s;
+            ''', (token, id))
+            conn.commit()
+
+            base_url = request.host_url.rstrip('/')
+            portal_path = f"/onboard/employee/{token}"
+            full_url = f"{base_url}{portal_path}"
+
+            return jsonify({
+                'status': 'success',
+                'employee_id': id,
+                'employee_number': emp.get('employee_number'),
+                'onboarding_token': token,
+                'onboarding_path': portal_path,
+                'onboarding_url': full_url,
+                'message': f"Pre-filled W-2 onboarding link ready for {emp.get('first_name')} {emp.get('last_name')}."
+            })
+    finally:
+        if conn:
+            conn.close()
+
+
+@crm_api_bp.route('/api/v1/hr/compliance/id-expiration-sweep', methods=['POST', 'GET'])
+@login_required
+def api_employee_id_expiration_sweep():
+    """Runs the automated State ID & Work Authorization expiration watchdog across active W-2 staff."""
+    from core.services.employee_doc_extractor import run_employee_doc_expiration_sweep
+
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        report = run_employee_doc_expiration_sweep(conn)
+        return jsonify({'status': 'success', 'report': report})
+    finally:
+        if conn:
+            conn.close()
 
 
 # -------------------------------------------------------------------------

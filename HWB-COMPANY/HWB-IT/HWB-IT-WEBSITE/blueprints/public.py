@@ -1235,6 +1235,951 @@ def bosanna_onboarding():
     """White-labeled Bosanna LLC workforce compliance and technician onboarding portal (Model C)."""
     return render_template('bosanna_onboarding.html')
 
+
+def _is_onboarding_token_expired(partner_row: dict) -> bool:
+    """Checks whether the 30-day rolling TTL on onboarding_token_expires_at has elapsed."""
+    from datetime import datetime as dt_cls, timezone
+    exp_val = partner_row.get('onboarding_token_expires_at')
+    if not exp_val:
+        return False
+    if isinstance(exp_val, str):
+        try:
+            exp_val = dt_cls.fromisoformat(exp_val.replace('Z', '+00:00'))
+        except Exception:
+            return False
+    now_ref = dt_cls.now(timezone.utc) if getattr(exp_val, 'tzinfo', None) else dt_cls.now()
+    return exp_val < now_ref
+
+
+@public_bp.route('/onboard/subcontractor/<token>', methods=['GET'], endpoint='subcontractor_onboarding')
+def subcontractor_onboarding(token: str):
+    """Pre-filled 1099 Subcontractor Partner Self-Service Onboarding Portal (HWB-QMS-7.6 / BUG-139)."""
+    from core.services.database import get_db
+    from database.schema_engine import ensure_subcontractor_onboarding_schema
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        ensure_subcontractor_onboarding_schema(conn)
+        with conn.cursor() as cur:
+            cur.execute('SELECT * FROM "SubcontractorPartners" WHERE onboarding_token = %s LIMIT 1;', (token,))
+            row = cur.fetchone()
+            if not row:
+                return render_template('404.html'), 404
+            partner = dict(row)
+            ref_code = f"SUB-#{int(partner['id']):04d}"
+            submitted = bool(request.args.get('submitted'))
+            token_expired = _is_onboarding_token_expired(partner)
+            return render_template(
+                'subcontractor_onboarding.html',
+                partner=partner,
+                ref_code=ref_code,
+                submitted=submitted,
+                token_expired=token_expired,
+            )
+    finally:
+        if conn:
+            conn.close()
+
+
+@public_bp.route('/onboard/subcontractor/<token>/renew-link', methods=['POST'], endpoint='subcontractor_onboarding_renew')
+def subcontractor_onboarding_renew(token: str):
+    """Extends an expired onboarding magic link by 30 days and emails a fresh link to the partner."""
+    from core.services.database import get_db
+    from database.schema_engine import ensure_subcontractor_onboarding_schema
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        ensure_subcontractor_onboarding_schema(conn)
+        with conn.cursor() as cur:
+            cur.execute('SELECT * FROM "SubcontractorPartners" WHERE onboarding_token = %s LIMIT 1;', (token,))
+            row = cur.fetchone()
+            if not row:
+                return jsonify({'status': 'error', 'message': 'Invalid onboarding link.'}), 404
+            partner = dict(row)
+            sub_id = partner['id']
+            cur.execute(
+                '''
+                UPDATE "SubcontractorPartners"
+                SET onboarding_token_expires_at = CURRENT_TIMESTAMP + INTERVAL '30 days',
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = %s;
+                ''',
+                (sub_id,),
+            )
+            conn.commit()
+            onboarding_url = f"{request.host_url.rstrip('/')}/onboard/subcontractor/{token}"
+            if partner.get('email'):
+                try:
+                    from core.services.notification_service import send_subcontractor_onboarding_invite_email
+                    send_subcontractor_onboarding_invite_email({
+                        'partner_id': sub_id,
+                        'company_name': partner.get('company_name'),
+                        'contact_name': partner.get('contact_name'),
+                        'email': partner.get('email'),
+                        'onboarding_url': onboarding_url,
+                        'review_mode': '30-Day Link Renewal',
+                    })
+                except Exception:
+                    pass
+            return jsonify({
+                'status': 'success',
+                'onboarding_url': onboarding_url,
+                'message': 'Your onboarding link has been renewed for 30 days.',
+            })
+    finally:
+        if conn:
+            conn.close()
+
+
+@public_bp.route('/onboard/subcontractor/<token>/extract-document', methods=['POST'], endpoint='subcontractor_onboarding_extract')
+def subcontractor_onboarding_extract(token: str):
+    """
+    Uploads and auto-extracts IRS Form W-9 or ACORD 25 COI fields in real time
+    for the pre-filled 1099 onboarding portal, protected by per-IP/token rate limiting
+    and AES-256 Fernet full-TIN encryption.
+    """
+    import json
+    from datetime import datetime as dt_cls
+    from werkzeug.utils import secure_filename
+    from core.services.database import get_db
+    from core.services.security_logger import extract_client_ip
+    from database.schema_engine import ensure_subcontractor_onboarding_schema
+    from core.services.subcontractor_doc_extractor import (
+        extract_subcontractor_document_metadata,
+        check_extraction_rate_limit,
+        encrypt_and_mask_subcontractor_tin,
+        deposit_subcontractor_document_vault,
+    )
+
+    client_ip = extract_client_ip()
+    allowed, remaining_quota = check_extraction_rate_limit(f"{token}:{client_ip}", limit=15, window_seconds=600)
+    if not allowed:
+        return jsonify({
+            'status': 'error',
+            'code': 'RATE_LIMIT_EXCEEDED',
+            'message': 'Too many document extraction requests. Please wait a few minutes and try again.',
+        }), 429
+
+    if 'file' not in request.files:
+        return jsonify({'status': 'error', 'message': 'No document file uploaded.'}), 400
+    f_obj = request.files['file']
+    if not f_obj or not f_obj.filename:
+        return jsonify({'status': 'error', 'message': 'Empty file selected.'}), 400
+
+    doc_type = (request.form.get('doc_type') or 'w9').strip().lower()
+    raw_bytes = f_obj.read()
+    if not raw_bytes:
+        return jsonify({'status': 'error', 'message': 'Uploaded file is empty.'}), 400
+
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        ensure_subcontractor_onboarding_schema(conn)
+        with conn.cursor() as cur:
+            cur.execute('SELECT * FROM "SubcontractorPartners" WHERE onboarding_token = %s LIMIT 1;', (token,))
+            row = cur.fetchone()
+            if not row:
+                return jsonify({'status': 'error', 'message': 'Invalid onboarding link.'}), 404
+            partner = dict(row)
+            if _is_onboarding_token_expired(partner):
+                return jsonify({
+                    'status': 'error',
+                    'code': 'TOKEN_EXPIRED',
+                    'message': 'This onboarding link has expired after 30 days. Click Renew Link to continue.',
+                }), 410
+            sub_id = partner['id']
+
+            vault_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'vault', 'hr_documents'))
+            os.makedirs(vault_dir, exist_ok=True)
+            clean_fn = secure_filename(f_obj.filename)
+            tag = 'W9' if 'w9' in doc_type else 'COI'
+            safe_name = f"sub_{sub_id}_{tag}_{int(dt_cls.now().timestamp())}_{clean_fn}"
+            vault_receipt = deposit_subcontractor_document_vault(
+                conn=conn,
+                subcontractor_id=sub_id,
+                doc_type='w9' if tag == 'W9' else 'coi',
+                file_key=safe_name,
+                original_filename=clean_fn,
+                raw_bytes=raw_bytes,
+                mime_type=f_obj.mimetype or 'application/pdf',
+                uploaded_by='subcontractor_portal_extract',
+                uploaded_ip=client_ip,
+                vault_dir=vault_dir,
+            )
+
+            extracted = extract_subcontractor_document_metadata(
+                raw_bytes, clean_fn, doc_type=doc_type, partner_row=partner
+            )
+
+            if tag == 'W9':
+                raw_tin = extracted.get('ein_or_ssn') or ''
+                masked_tin, last4, encrypted_tin = encrypt_and_mask_subcontractor_tin(raw_tin)
+                cur.execute(
+                    '''
+                    UPDATE "SubcontractorPartners"
+                    SET w9_file_url = %s,
+                        w9_status = 'File Uploaded (Review)',
+                        legal_entity_name = COALESCE(NULLIF(%s, ''), legal_entity_name),
+                        tax_classification = COALESCE(NULLIF(%s, ''), tax_classification),
+                        street_address = COALESCE(NULLIF(%s, ''), street_address),
+                        city = COALESCE(NULLIF(%s, ''), city),
+                        state = COALESCE(NULLIF(%s, ''), state),
+                        zip_code = COALESCE(NULLIF(%s, ''), zip_code),
+                        ein_or_ssn = COALESCE(NULLIF(%s, ''), ein_or_ssn),
+                        w9_ein_last4 = COALESCE(NULLIF(%s, ''), w9_ein_last4),
+                        w9_tin_encrypted = COALESCE(%s, w9_tin_encrypted),
+                        w9_extracted_json = %s,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE id = %s;
+                    ''',
+                    (
+                        safe_name,
+                        extracted.get('legal_entity_name') or '',
+                        extracted.get('tax_classification') or '',
+                        extracted.get('street_address') or '',
+                        extracted.get('city') or '',
+                        extracted.get('state') or '',
+                        extracted.get('zip_code') or '',
+                        masked_tin or raw_tin,
+                        last4,
+                        encrypted_tin,
+                        json.dumps({**extracted, 'ein_or_ssn': masked_tin or raw_tin}),
+                        sub_id,
+                    ),
+                )
+            else:
+                exp_val = extracted.get('coi_expiration_date') or None
+                cur.execute(
+                    '''
+                    UPDATE "SubcontractorPartners"
+                    SET coi_file_url = %s,
+                        coi_status = 'File Uploaded (Review)',
+                        coi_carrier = COALESCE(NULLIF(%s, ''), coi_carrier),
+                        coi_policy_number = COALESCE(NULLIF(%s, ''), coi_policy_number),
+                        coi_coverage_amount = COALESCE(NULLIF(%s, ''), coi_coverage_amount),
+                        coi_expiration_date = COALESCE(%s::date, coi_expiration_date),
+                        coi_extracted_json = %s,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE id = %s;
+                    ''',
+                    (
+                        safe_name,
+                        extracted.get('coi_carrier') or '',
+                        extracted.get('coi_policy_number') or '',
+                        extracted.get('coi_coverage_amount') or '',
+                        exp_val if exp_val else None,
+                        json.dumps(extracted),
+                        sub_id,
+                    ),
+                )
+            conn.commit()
+            return jsonify({
+                'status': 'success',
+                'doc_type': tag,
+                'file_name': safe_name,
+                'extracted': extracted,
+                'vault_receipt': vault_receipt,
+                'rate_limit_remaining': remaining_quota,
+            })
+    except Exception as err:
+        conn.rollback()
+        return jsonify({'status': 'error', 'message': str(err)}), 500
+    finally:
+        if conn:
+            conn.close()
+
+
+@public_bp.route('/onboard/subcontractor/<token>/submit', methods=['POST'], endpoint='subcontractor_onboarding_submit')
+def subcontractor_onboarding_submit(token: str):
+    """
+    Finalizes the pre-filled 1099 Subcontractor Onboarding submission:
+    1. Saves verified/extracted W-9 business address, encrypted 9-digit Tax ID, and classification.
+    2. Handles COI upload or holds status at 'Pending COI' per executive policy.
+    3. Generates both locked PDF and HTML tamper-evident signed Master Subcontractor Agreement (MSA)
+       + Texas DWC-83 certificates with SHA-256 cryptographic signature hash.
+    4. Dispatches executive & partner notifications.
+    """
+    import json
+    from datetime import datetime as dt_cls
+    from werkzeug.utils import secure_filename
+    from core.services.database import get_db
+    from core.services.sanitizer import clean_phone, clean_email, clean_city
+    from core.services.security_logger import extract_client_ip
+    from database.schema_engine import ensure_subcontractor_onboarding_schema
+    from core.services.subcontractor_doc_extractor import (
+        extract_subcontractor_document_metadata,
+        generate_signed_msa_dwc83_certificate_html,
+        generate_signed_msa_dwc83_certificate_pdf,
+        compute_msa_signature_hash,
+        encrypt_and_mask_subcontractor_tin,
+        deposit_subcontractor_document_vault,
+    )
+
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        ensure_subcontractor_onboarding_schema(conn)
+        with conn.cursor() as cur:
+            cur.execute('SELECT * FROM "SubcontractorPartners" WHERE onboarding_token = %s LIMIT 1;', (token,))
+            row = cur.fetchone()
+            if not row:
+                return jsonify({'status': 'error', 'message': 'Invalid onboarding link.'}), 404
+            partner = dict(row)
+            if _is_onboarding_token_expired(partner):
+                return jsonify({
+                    'status': 'error',
+                    'code': 'TOKEN_EXPIRED',
+                    'message': 'This onboarding link has expired after 30 days. Please renew your link to submit.',
+                }), 410
+            sub_id = partner['id']
+
+            vault_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'vault', 'hr_documents'))
+            os.makedirs(vault_dir, exist_ok=True)
+
+            w9_file_url = partner.get('w9_file_url')
+            coi_file_url = partner.get('coi_file_url')
+            w9_ext_data = {}
+            coi_ext_data = {}
+
+            # Handle direct file attachments if not already uploaded via AJAX
+            if 'w9_file' in request.files and request.files['w9_file'].filename:
+                wf = request.files['w9_file']
+                w_bytes = wf.read()
+                if w_bytes:
+                    clean_wfn = secure_filename(wf.filename)
+                    w9_file_url = f"sub_{sub_id}_W9_{int(dt_cls.now().timestamp())}_{clean_wfn}"
+                    deposit_subcontractor_document_vault(
+                        conn=conn,
+                        subcontractor_id=sub_id,
+                        doc_type='w9',
+                        file_key=w9_file_url,
+                        original_filename=clean_wfn,
+                        raw_bytes=w_bytes,
+                        mime_type=wf.mimetype or 'application/pdf',
+                        uploaded_by='subcontractor_portal_submit',
+                        uploaded_ip=extract_client_ip(),
+                        vault_dir=vault_dir,
+                    )
+                    w9_ext_data = extract_subcontractor_document_metadata(
+                        w_bytes, clean_wfn, doc_type='w9', partner_row=partner
+                    )
+
+            if 'coi_file' in request.files and request.files['coi_file'].filename:
+                cf = request.files['coi_file']
+                c_bytes = cf.read()
+                if c_bytes:
+                    clean_cfn = secure_filename(cf.filename)
+                    coi_file_url = f"sub_{sub_id}_COI_{int(dt_cls.now().timestamp())}_{clean_cfn}"
+                    deposit_subcontractor_document_vault(
+                        conn=conn,
+                        subcontractor_id=sub_id,
+                        doc_type='coi',
+                        file_key=coi_file_url,
+                        original_filename=clean_cfn,
+                        raw_bytes=c_bytes,
+                        mime_type=cf.mimetype or 'application/pdf',
+                        uploaded_by='subcontractor_portal_submit',
+                        uploaded_ip=extract_client_ip(),
+                        vault_dir=vault_dir,
+                    )
+                    coi_ext_data = extract_subcontractor_document_metadata(
+                        c_bytes, clean_cfn, doc_type='coi', partner_row=partner
+                    )
+
+            if not w9_file_url:
+                return jsonify({
+                    'status': 'error',
+                    'message': 'Please upload your signed IRS Form W-9 in Step 1 before submitting.'
+                }), 400
+
+            company_name = (request.form.get('company_name') or w9_ext_data.get('company_name') or partner.get('company_name') or '').strip()
+            legal_entity_name = (request.form.get('legal_entity_name') or w9_ext_data.get('legal_entity_name') or partner.get('legal_entity_name') or partner.get('contact_name') or '').strip()
+            tax_classification = (request.form.get('tax_classification') or w9_ext_data.get('tax_classification') or partner.get('tax_classification') or 'LLC').strip()
+            raw_ein_input = (request.form.get('ein_or_ssn') or w9_ext_data.get('ein_or_ssn') or partner.get('ein_or_ssn') or '').strip()
+            masked_tin, last4_tin, encrypted_tin = encrypt_and_mask_subcontractor_tin(raw_ein_input)
+            ein_or_ssn = masked_tin or raw_ein_input
+            street_address = (request.form.get('street_address') or w9_ext_data.get('street_address') or partner.get('street_address') or '').strip()
+            city = clean_city(request.form.get('city') or w9_ext_data.get('city') or partner.get('city') or '')
+            state = (request.form.get('state') or w9_ext_data.get('state') or partner.get('state') or 'TX').strip().upper()
+            zip_code = (request.form.get('zip_code') or w9_ext_data.get('zip_code') or partner.get('zip_code') or '').strip()
+            contact_name = (request.form.get('contact_name') or partner.get('contact_name') or '').strip()
+            phone = clean_phone(request.form.get('phone') or partner.get('phone') or '')
+            email = clean_email(request.form.get('email') or partner.get('email') or '')
+            try:
+                crew_size = int(request.form.get('crew_size') or partner.get('crew_size') or 2)
+            except (ValueError, TypeError):
+                crew_size = 2
+
+            coi_carrier = (request.form.get('coi_carrier') or coi_ext_data.get('coi_carrier') or partner.get('coi_carrier') or '').strip()
+            coi_policy_number = (request.form.get('coi_policy_number') or coi_ext_data.get('coi_policy_number') or partner.get('coi_policy_number') or '').strip()
+            coi_expiration_date = (request.form.get('coi_expiration_date') or coi_ext_data.get('coi_expiration_date') or None)
+            if coi_expiration_date == '':
+                coi_expiration_date = None
+
+            msa_signer_name = (request.form.get('msa_signer_name') or contact_name).strip()
+            msa_signer_title = (request.form.get('msa_signer_title') or 'Owner / Authorized Principal').strip()
+            msa_agreed = str(request.form.get('msa_agreed', 'true')).lower() in ('true', '1', 'yes', 'on')
+            dwc83_agreed = str(request.form.get('dwc83_agreed', 'true')).lower() in ('true', '1', 'yes', 'on')
+
+            if not ein_or_ssn or not street_address or not msa_signer_name:
+                return jsonify({
+                    'status': 'error',
+                    'message': 'Federal Tax ID (EIN/SSN), Street Address, and Electronic Signature Name are required.'
+                }), 400
+            if not msa_agreed or not dwc83_agreed:
+                return jsonify({
+                    'status': 'error',
+                    'message': 'You must agree to both the Master Subcontractor Agreement and the Texas DWC Form-83 affirmation.'
+                }), 400
+
+            signer_ip = extract_client_ip()
+            now_dt = dt_cls.now()
+            ts_int = int(now_dt.timestamp())
+            signed_at_display = now_dt.strftime('%m/%d/%Y %I:%M %p CST')
+
+            # Generate signed MSA & TX DWC-83 Compliance Certificate (Both Locked PDF and HTML Mirror)
+            cert_context = dict(partner)
+            cert_context.update({
+                'company_name': company_name,
+                'legal_entity_name': legal_entity_name,
+                'tax_classification': tax_classification,
+                'ein_or_ssn': ein_or_ssn,
+                'street_address': street_address,
+                'city': city,
+                'state': state,
+                'zip_code': zip_code,
+                'phone': phone,
+                'email': email,
+            })
+            sig_hash = compute_msa_signature_hash(
+                cert_context, msa_signer_name, msa_signer_title, signer_ip, signed_at_display
+            )
+            cert_html = generate_signed_msa_dwc83_certificate_html(
+                cert_context, msa_signer_name, msa_signer_title, signer_ip, signed_at_display, signature_hash=sig_hash
+            )
+            cert_pdf_bytes = generate_signed_msa_dwc83_certificate_pdf(
+                cert_context, msa_signer_name, msa_signer_title, signer_ip, signed_at_display, signature_hash=sig_hash
+            )
+            msa_html_filename = f"sub_{sub_id}_MSA_DWC83_Signed_{ts_int}.html"
+            msa_pdf_filename = f"sub_{sub_id}_MSA_DWC83_Signed_{ts_int}.pdf"
+            with open(os.path.join(vault_dir, msa_html_filename), 'w', encoding='utf-8') as cf_out:
+                cf_out.write(cert_html)
+            deposit_subcontractor_document_vault(
+                conn=conn,
+                subcontractor_id=sub_id,
+                doc_type='msa',
+                file_key=msa_pdf_filename,
+                original_filename=msa_pdf_filename,
+                raw_bytes=cert_pdf_bytes,
+                mime_type='application/pdf',
+                uploaded_by=msa_signer_name or 'subcontractor_portal_submit',
+                uploaded_ip=signer_ip,
+                vault_dir=vault_dir,
+            )
+            deposit_subcontractor_document_vault(
+                conn=conn,
+                subcontractor_id=sub_id,
+                doc_type='dwc83',
+                file_key=msa_pdf_filename,
+                original_filename=msa_pdf_filename,
+                raw_bytes=cert_pdf_bytes,
+                mime_type='application/pdf',
+                uploaded_by=msa_signer_name or 'subcontractor_portal_submit',
+                uploaded_ip=signer_ip,
+                vault_dir=vault_dir,
+            )
+
+            # Determine COI & Onboarding Status per CEO Directive A2
+            has_coi_file = bool(coi_file_url)
+            if has_coi_file:
+                new_coi_status = 'File Uploaded (Review)'
+                new_onboarding_status = 'Docs Under Review'
+                new_partner_status = 'Docs Submitted'
+                completion_msg = (
+                    f"Your Form W-9, Certificate of Insurance (COI), and signed Master Subcontractor Agreement "
+                    f"&amp; Texas DWC-83 PDF have been saved under <strong>SUB-#{int(sub_id):04d}</strong>. "
+                    f"Our operations team has been notified for final partner activation."
+                )
+            else:
+                new_coi_status = 'Pending'
+                new_onboarding_status = 'Pending COI'
+                new_partner_status = 'Pending COI'
+                completion_msg = (
+                    f"Your Form W-9, extracted address/Tax ID, and signed Master Subcontractor Agreement "
+                    f"&amp; Texas DWC-83 PDF have been saved under <strong>SUB-#{int(sub_id):04d}</strong>! "
+                    f"Because your Certificate of Insurance (COI) was not uploaded yet, your profile is held at "
+                    f"<strong>Pending COI</strong>. You can revisit this same link anytime to upload your COI."
+                )
+
+            cur.execute(
+                '''
+                UPDATE "SubcontractorPartners"
+                SET company_name = %s,
+                    legal_entity_name = %s,
+                    tax_classification = %s,
+                    ein_or_ssn = %s,
+                    w9_ein_last4 = COALESCE(NULLIF(%s, ''), w9_ein_last4),
+                    w9_tin_encrypted = COALESCE(%s, w9_tin_encrypted),
+                    street_address = %s,
+                    city = %s,
+                    state = %s,
+                    zip_code = %s,
+                    contact_name = %s,
+                    phone = %s,
+                    email = %s,
+                    crew_size = %s,
+                    w9_file_url = %s,
+                    w9_status = 'Verified',
+                    coi_file_url = %s,
+                    coi_status = %s,
+                    coi_carrier = COALESCE(NULLIF(%s, ''), coi_carrier),
+                    coi_policy_number = COALESCE(NULLIF(%s, ''), coi_policy_number),
+                    coi_expiration_date = COALESCE(%s::date, coi_expiration_date),
+                    dwc83_signed = TRUE,
+                    dwc83_file_url = %s,
+                    msa_signed = TRUE,
+                    msa_signer_name = %s,
+                    msa_signer_title = %s,
+                    msa_signed_at = CURRENT_TIMESTAMP,
+                    msa_signer_ip = %s,
+                    msa_signature_hash = %s,
+                    msa_file_url = %s,
+                    onboarding_status = %s,
+                    onboarding_completed_at = CURRENT_TIMESTAMP,
+                    status = %s,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = %s;
+                ''',
+                (
+                    company_name,
+                    legal_entity_name,
+                    tax_classification,
+                    ein_or_ssn,
+                    last4_tin,
+                    encrypted_tin,
+                    street_address,
+                    city,
+                    state,
+                    zip_code,
+                    contact_name,
+                    phone,
+                    email,
+                    crew_size,
+                    w9_file_url,
+                    coi_file_url,
+                    new_coi_status,
+                    coi_carrier,
+                    coi_policy_number,
+                    coi_expiration_date,
+                    msa_pdf_filename,
+                    msa_signer_name,
+                    msa_signer_title,
+                    signer_ip,
+                    sig_hash,
+                    msa_pdf_filename,
+                    new_onboarding_status,
+                    new_partner_status,
+                    sub_id,
+                ),
+            )
+
+            cur.execute(
+                '''
+                INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description, timestamp)
+                VALUES (%s, 'Subcontractor', '1099 Onboarding Submitted', %s, CURRENT_TIMESTAMP);
+                ''',
+                (
+                    sub_id,
+                    f"1099 Partner {company_name} (SUB-#{int(sub_id):04d}) submitted W-9 ({tax_classification}), address ({street_address}, {city}, {state} {zip_code}), and e-signed MSA + TX DWC-83 PDF by {msa_signer_name} (SHA-256: {sig_hash[:12]}...). Stage: {new_onboarding_status}.",
+                ),
+            )
+            conn.commit()
+
+            notify_payload = {
+                'partner_id': sub_id,
+                'company_name': company_name,
+                'contact_name': contact_name,
+                'email': email,
+                'phone': phone,
+                'street_address': street_address,
+                'city': city,
+                'state': state,
+                'zip_code': zip_code,
+                'tax_classification': tax_classification,
+                'coi_status': new_coi_status,
+                'onboarding_status': new_onboarding_status,
+                'msa_signer_name': msa_signer_name,
+            }
+            try:
+                from core.services.notification_service import send_subcontractor_onboarding_completed_notifications
+                send_subcontractor_onboarding_completed_notifications(notify_payload)
+            except Exception as notify_err:
+                current_app.logger.warning(f"[ONBOARDING_NOTIFY_WARN] {notify_err}")
+
+            return jsonify({
+                'status': 'success',
+                'partner_id': sub_id,
+                'reference_code': f"SUB-#{int(sub_id):04d}",
+                'onboarding_status': new_onboarding_status,
+                'coi_status': new_coi_status,
+                'msa_certificate_file': msa_pdf_filename,
+                'msa_signature_hash': sig_hash,
+                'message': completion_msg,
+            })
+    except Exception as err:
+        conn.rollback()
+        return jsonify({'status': 'error', 'message': str(err)}), 500
+    finally:
+        if conn:
+            conn.close()
+
+
+# ==============================================================================
+# W-2 EMPLOYEE SELF-SERVICE ONBOARDING PORTAL & AUTO-EXTRACTION (HWB-QMS-7.6)
+# ==============================================================================
+
+@public_bp.route('/onboard/employee/<token>', methods=['GET'])
+def employee_onboarding_portal(token: str):
+    """
+    Renders the pre-filled 4-Stage Self-Service W-2 Employee Onboarding Portal
+    (/onboard/employee/<token>) with Form W-4, Form I-9, State ID, Direct Deposit
+    auto-extraction, and ISO 9001 Clause 7.2 Job Description e-signature.
+    """
+    from database.schema_engine import ensure_employee_onboarding_schema
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        ensure_employee_onboarding_schema(conn)
+        with conn.cursor() as cur:
+            cur.execute(
+                '''
+                SELECT e.*,
+                       jp.position_code AS job_position_code,
+                       jp.title AS job_position_title,
+                       jp.summary AS job_position_summary,
+                       jp.key_responsibilities AS job_position_responsibilities
+                FROM "Employees" e
+                LEFT JOIN "JobPositions" jp ON e.job_position_id = jp.id
+                WHERE e.onboarding_token = %s
+                LIMIT 1;
+                ''',
+                (token.strip(),),
+            )
+            emp = cur.fetchone()
+            if not emp:
+                return render_template('404.html'), 404
+
+            cur.execute(
+                '''
+                SELECT id, document_type, file_name, version_number, sha256_checksum, created_at
+                FROM "EmployeeDocuments"
+                WHERE employee_id = %s AND is_current = TRUE
+                ORDER BY created_at DESC;
+                ''',
+                (emp['id'],),
+            )
+            current_docs = cur.fetchall()
+
+        return render_template(
+            'employee_onboarding_portal.html',
+            employee=emp,
+            current_docs=current_docs,
+            token=token.strip(),
+        )
+    finally:
+        if conn:
+            conn.close()
+
+
+@public_bp.route('/api/v1/employees/onboard/<token>/upload-doc', methods=['POST'])
+def api_employee_portal_upload_doc(token: str):
+    """
+    Self-service W-2 portal document upload & auto-extraction endpoint.
+    Accepts Form W-4, Driver License / State ID, Direct Deposit Void Check, or Form I-9,
+    extracts structured fields, auto-populates Employees, and stores encrypted BYTEA in EmployeeDocuments.
+    """
+    from database.schema_engine import ensure_employee_onboarding_schema
+    from core.services.employee_doc_extractor import (
+        apply_extracted_fields_to_employee,
+        deposit_employee_document_vault,
+        extract_employee_document_auto,
+    )
+
+    if 'document' not in request.files:
+        return jsonify({'status': 'error', 'message': 'No document file provided.'}), 400
+
+    f_obj = request.files['document']
+    if not f_obj or not f_obj.filename:
+        return jsonify({'status': 'error', 'message': 'Empty file selected.'}), 400
+
+    doc_type = (request.form.get('document_type') or 'Form W-4').strip()
+    raw_bytes = f_obj.read()
+    if not raw_bytes:
+        return jsonify({'status': 'error', 'message': 'Uploaded file is empty.'}), 400
+
+    clean_fn = secure_filename(f_obj.filename)
+    mime_type = f_obj.mimetype or 'application/pdf'
+    signer_ip = extract_client_ip()
+
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        ensure_employee_onboarding_schema(conn)
+        with conn.cursor() as cur:
+            cur.execute('SELECT * FROM "Employees" WHERE onboarding_token = %s LIMIT 1;', (token.strip(),))
+            emp = cur.fetchone()
+            if not emp:
+                return jsonify({'status': 'error', 'message': 'Invalid or expired onboarding token.'}), 404
+
+            emp_id = emp['id']
+            extracted = extract_employee_document_auto(doc_type, raw_bytes, clean_fn, mime_type)
+            updated_fields = apply_extracted_fields_to_employee(conn, emp_id, doc_type, extracted)
+            vault_receipt = deposit_employee_document_vault(
+                conn=conn,
+                employee_id=emp_id,
+                doc_type=doc_type,
+                raw_bytes=raw_bytes,
+                original_filename=clean_fn,
+                mime_type=mime_type,
+                expiration_date=extracted.get('state_id_expiration') or None,
+                verified_by='Self-Service Auto-Extractor',
+                notes=f"Self-service upload ({ ', '.join(updated_fields) })" if updated_fields else 'Self-service upload',
+                uploaded_by='employee_onboarding_portal',
+                uploaded_ip=signer_ip,
+                extracted_metadata=extracted,
+            )
+
+            safe_extracted = {
+                k: v for k, v in extracted.items()
+                if k not in ('ssn_raw', 'direct_deposit_account_raw')
+            }
+            return jsonify({
+                'status': 'success',
+                'document_id': vault_receipt['document_id'],
+                'document_type': doc_type,
+                'version_number': vault_receipt['version_number'],
+                'sha256_checksum': vault_receipt['sha256_checksum'],
+                'extracted_fields': safe_extracted,
+                'auto_populated_fields': updated_fields,
+                'message': f"{doc_type} encrypted in Vault (v{vault_receipt['version_number']})."
+            })
+    finally:
+        if conn:
+            conn.close()
+
+
+@public_bp.route('/api/v1/employees/onboard/<token>/complete', methods=['POST'])
+def api_employee_portal_complete(token: str):
+    """
+    Finalizes the W-2 Employee Self-Service Onboarding Packet:
+    1. Saves verified address, emergency contact, W-4 withholding, State ID, I-9, and Direct Deposit.
+    2. Encrypts SSN and Direct Deposit Account with AES-256 Fernet if provided.
+    3. Generates locked ReportLab PDF for ISO 9001 Clause 7.2 Job Description & W-2 Packet
+       with SHA-256 cryptographic signature certificate and stores it in EmployeeDocuments.
+    """
+    import hashlib
+    from core.security import encrypt_pii, mask_account
+    from database.schema_engine import ensure_employee_onboarding_schema
+    from core.services.employee_doc_extractor import (
+        deposit_employee_document_vault,
+        generate_signed_w2_onboarding_pdf,
+    )
+
+    data = request.get_json(silent=True) or request.form.to_dict() or {}
+    signer_ip = extract_client_ip()
+
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        ensure_employee_onboarding_schema(conn)
+        with conn.cursor() as cur:
+            cur.execute('SELECT * FROM "Employees" WHERE onboarding_token = %s LIMIT 1;', (token.strip(),))
+            emp = cur.fetchone()
+            if not emp:
+                return jsonify({'status': 'error', 'message': 'Invalid onboarding link.'}), 404
+
+            emp_id = emp['id']
+            first_name = (data.get('first_name') or emp.get('first_name') or '').strip()
+            last_name = (data.get('last_name') or emp.get('last_name') or '').strip()
+            phone = clean_phone(data.get('phone') or emp.get('phone') or '')
+            email = clean_email(data.get('email') or emp.get('email') or '')
+            address_street = (data.get('address_street') or emp.get('address_street') or '').strip()
+            address_city = clean_city(data.get('address_city') or emp.get('address_city') or '')
+            address_state = (data.get('address_state') or emp.get('address_state') or 'TX').strip().upper()
+            address_zip = (data.get('address_zip') or emp.get('address_zip') or '').strip()
+            emergency_name = (data.get('emergency_contact_name') or emp.get('emergency_contact_name') or '').strip()
+            emergency_phone = clean_phone(data.get('emergency_contact_phone') or emp.get('emergency_contact_phone') or '')
+
+            w4_filing_status = (data.get('w4_filing_status') or emp.get('w4_filing_status') or 'Single').strip()
+            w4_step2 = str(data.get('w4_step2_multiple_jobs', emp.get('w4_step2_multiple_jobs') or False)).lower() in ('true', '1', 'yes', 'on')
+            try:
+                w4_step3 = float(data.get('w4_step3_dependents', emp.get('w4_step3_dependents') or 0) or 0)
+            except (ValueError, TypeError):
+                w4_step3 = 0.0
+            try:
+                w4_step4c = float(data.get('w4_step4c_extra_withholding', emp.get('w4_step4c_extra_withholding') or 0) or 0)
+            except (ValueError, TypeError):
+                w4_step4c = 0.0
+
+            state_id_number = (data.get('state_id_number') or emp.get('state_id_number') or '').strip()
+            state_id_exp = (data.get('state_id_expiration') or emp.get('state_id_expiration') or None)
+            if state_id_exp == '':
+                state_id_exp = None
+            i9_citizenship = (data.get('i9_citizenship_status') or emp.get('i9_citizenship_status') or 'US Citizen').strip()
+
+            dd_bank = (data.get('direct_deposit_bank') or emp.get('direct_deposit_bank') or '').strip()
+            dd_routing = (data.get('direct_deposit_routing') or emp.get('direct_deposit_routing') or '').strip()
+
+            ssn_encrypted = emp.get('ssn_encrypted')
+            ssn_last_four = emp.get('ssn_last_four')
+            raw_ssn = (data.get('ssn') or '').strip()
+            if raw_ssn and not raw_ssn.startswith('*'):
+                digits = re.sub(r'\D', '', raw_ssn)
+                if len(digits) == 9:
+                    ssn_encrypted = encrypt_pii(f"{digits[:3]}-{digits[3:5]}-{digits[5:]}")
+                    ssn_last_four = digits[-4:]
+
+            dd_acc_encrypted = emp.get('direct_deposit_account_encrypted')
+            dd_acc_last_four = emp.get('direct_deposit_account_last_four')
+            dd_acc_masked = emp.get('direct_deposit_account')
+            raw_dda = (data.get('direct_deposit_account') or '').strip()
+            if raw_dda and not raw_dda.startswith('•') and not raw_dda.startswith('*'):
+                clean_dda = re.sub(r'\s', '', raw_dda)
+                if len(clean_dda) >= 4:
+                    dd_acc_encrypted = encrypt_pii(clean_dda)
+                    dd_acc_last_four = clean_dda[-4:]
+                    dd_acc_masked = mask_account(raw_acc=clean_dda)
+
+            signer_name = (data.get('signer_name') or f"{first_name} {last_name}").strip()
+            if not signer_name:
+                return jsonify({'status': 'error', 'message': 'Electronic signature name is required.'}), 400
+
+            job_pos = None
+            if emp.get('job_position_id'):
+                cur.execute('SELECT * FROM "JobPositions" WHERE id = %s;', (emp['job_position_id'],))
+                job_pos = cur.fetchone()
+
+            now_iso = dt_cls.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+            sig_seed = f"{emp_id}:{emp.get('employee_number')}:{signer_name}:{now_iso}:{signer_ip}"
+            sig_hash = hashlib.sha256(sig_seed.encode('utf-8')).hexdigest()
+
+            updated_emp_ctx = dict(emp)
+            updated_emp_ctx.update({
+                'first_name': first_name,
+                'last_name': last_name,
+                'phone': phone,
+                'email': email,
+                'address_street': address_street,
+                'address_city': address_city,
+                'address_state': address_state,
+                'address_zip': address_zip,
+                'w4_filing_status': w4_filing_status,
+                'w4_step3_dependents': w4_step3,
+                'w4_step4c_extra_withholding': w4_step4c,
+                'ssn_last_four': ssn_last_four,
+                'state_id_number': state_id_number,
+                'state_id_expiration': state_id_exp,
+                'direct_deposit_bank': dd_bank,
+                'direct_deposit_account_last_four': dd_acc_last_four,
+            })
+
+            pdf_bytes = generate_signed_w2_onboarding_pdf(
+                employee_record=updated_emp_ctx,
+                signer_name=signer_name,
+                signer_ip=signer_ip,
+                signed_at_iso=now_iso,
+                signature_hash=sig_hash,
+                job_position=dict(job_pos) if job_pos else None,
+            )
+
+            emp_num = emp.get('employee_number') or f"HWB-EMP-{emp_id}"
+            vault_receipt = deposit_employee_document_vault(
+                conn=conn,
+                employee_id=emp_id,
+                doc_type='ISO 9001 Job Description & W-2 Packet',
+                raw_bytes=pdf_bytes,
+                original_filename=f"{emp_num}_W2_Onboarding_Packet_Signed.pdf",
+                mime_type='application/pdf',
+                verified_by='Self-Service E-Signature Engine',
+                notes=f"Signed by {signer_name} | SHA-256: {sig_hash[:16]}...",
+                uploaded_by=signer_name,
+                uploaded_ip=signer_ip,
+            )
+
+            cur.execute(
+                '''
+                UPDATE "Employees"
+                SET first_name = %s,
+                    last_name = %s,
+                    phone = %s,
+                    email = %s,
+                    address_street = %s,
+                    address_city = %s,
+                    address_state = %s,
+                    address_zip = %s,
+                    emergency_contact_name = %s,
+                    emergency_contact_phone = %s,
+                    w4_filing_status = %s,
+                    w4_step2_multiple_jobs = %s,
+                    w4_step3_dependents = %s,
+                    w4_step4c_extra_withholding = %s,
+                    state_id_number = %s,
+                    state_id_expiration = COALESCE(%s::date, state_id_expiration),
+                    i9_citizenship_status = %s,
+                    i9_verification_date = COALESCE(i9_verification_date, CURRENT_DATE),
+                    direct_deposit_bank = %s,
+                    direct_deposit_routing = %s,
+                    direct_deposit_account = %s,
+                    direct_deposit_account_encrypted = %s,
+                    direct_deposit_account_last_four = %s,
+                    ssn_encrypted = %s,
+                    ssn_last_four = %s,
+                    job_description_acknowledged_at = CURRENT_TIMESTAMP,
+                    onboarding_packet_signed = TRUE,
+                    onboarding_signer_name = %s,
+                    onboarding_signed_at = CURRENT_TIMESTAMP,
+                    onboarding_signer_ip = %s,
+                    onboarding_signature_hash = %s,
+                    onboarding_packet_file_url = %s,
+                    onboarding_status = 'Active',
+                    onboarding_completed_at = CURRENT_TIMESTAMP,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = %s;
+                ''',
+                (
+                    first_name, last_name, phone, email,
+                    address_street, address_city, address_state, address_zip,
+                    emergency_name, emergency_phone,
+                    w4_filing_status, w4_step2, w4_step3, w4_step4c,
+                    state_id_number, state_id_exp, i9_citizenship,
+                    dd_bank, dd_routing, dd_acc_masked, dd_acc_encrypted, dd_acc_last_four,
+                    ssn_encrypted, ssn_last_four,
+                    signer_name, signer_ip, sig_hash, vault_receipt['file_key'],
+                    emp_id,
+                ),
+            )
+
+            cur.execute(
+                '''
+                INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description, timestamp)
+                VALUES (%s, 'Employee', 'W-2 Onboarding Completed', %s, CURRENT_TIMESTAMP);
+                ''',
+                (
+                    emp_id,
+                    f"W-2 Employee {first_name} {last_name} ({emp_num}) completed self-service onboarding & signed ISO 9001 Job Description PDF (SHA-256: {sig_hash[:12]}...).",
+                ),
+            )
+            conn.commit()
+
+            return jsonify({
+                'status': 'success',
+                'employee_id': emp_id,
+                'employee_number': emp_num,
+                'document_id': vault_receipt['document_id'],
+                'signature_hash': sig_hash,
+                'message': f"Welcome aboard, {first_name}! Your W-2 onboarding packet and signed Job Description have been securely encrypted under {emp_num}."
+            })
+    except Exception as err:
+        conn.rollback()
+        return jsonify({'status': 'error', 'message': str(err)}), 500
+    finally:
+        if conn:
+            conn.close()
+
+
 @public_bp.route('/sw.js', methods=['GET'], endpoint='service_worker')
 def service_worker():
     """Serves PWA service worker with root scope."""

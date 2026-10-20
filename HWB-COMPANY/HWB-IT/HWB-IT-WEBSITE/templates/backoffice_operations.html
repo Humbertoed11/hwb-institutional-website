@@ -3474,13 +3474,16 @@
                                         </td>
                                         <td style="padding: 0.65rem 0.85rem; text-align: right;">
                                             <div style="display: inline-flex; gap: 0.35rem;">
+                                                <button type="button" onclick="sendEmployeeOnboardingLink({{ emp.id }}, '{{ emp.first_name }} {{ emp.last_name }}')" title="Copy Pre-Filled W-2 Self-Service Onboarding Link" class="sigma-mini-btn" style="color: #0284c7; background: #e0f2fe; border-color: #bae6fd;">
+                                                    <i class="fas fa-link"></i>
+                                                </button>
                                                 <button type="button" onclick="openAssignTrainingModal('W2_EMPLOYEE', {{ emp.id }}, '{{ emp.first_name }} {{ emp.last_name }}', '{{ emp.email or '' }}')" title="Assign Certification Package" class="sigma-mini-btn" style="color: #6366f1; background: #ede9fe; border-color: #c7d2fe;">
                                                     <i class="fas fa-graduation-cap"></i>
                                                 </button>
                                                 <button type="button" onclick="openEmployeeEditModal({{ emp.id }})" title="Edit Employee Profile" class="sigma-mini-btn" style="color: var(--brand);">
                                                     <i class="fas fa-edit"></i>
                                                 </button>
-                                                <button type="button" onclick="openDocUploadModal({{ emp.id }}, '{{ emp.first_name }} {{ emp.last_name }}', '{{ emp.employee_number }}')" title="Upload Documents" class="sigma-mini-btn" style="color: #059669;">
+                                                <button type="button" onclick="openDocUploadModal({{ emp.id }}, '{{ emp.first_name }} {{ emp.last_name }}', '{{ emp.employee_number }}')" title="Upload Documents (Auto-Extracts W-4, I-9, ID & Direct Deposit)" class="sigma-mini-btn" style="color: #059669;">
                                                     <i class="fas fa-file-upload"></i>
                                                 </button>
                                                 <button type="button" onclick="deleteEmployeeRecord({{ emp.id }}, '{{ emp.first_name }} {{ emp.last_name }}')" title="Terminate / Remove Staff" class="sigma-mini-btn" style="color: #ef4444;">
@@ -3709,11 +3712,13 @@
                     </div>
 
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
-                        <div style="display: flex; gap: 0.5rem; align-items: center;">
-                            <input type="text" id="filter-subs-search" onkeyup="filterSubcontractorsTable()" placeholder="Search crews by company, contact, city, trade..." style="height: 34px; padding: 0 0.85rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.8rem; width: 280px; font-weight: 600;">
+                        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                            <input type="text" id="filter-subs-search" onkeyup="filterSubcontractorsTable()" placeholder="Search crews by company, contact, city, trade..." style="height: 34px; padding: 0 0.85rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.8rem; width: 260px; font-weight: 600;">
                             <select id="filter-subs-status" onchange="filterSubcontractorsTable()" style="height: 34px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.8rem; font-weight: 700; background: white; color: var(--slate-700);">
                                 <option value="">All Partner Statuses</option>
                                 <option value="Vetting">Vetting</option>
+                                <option value="Pending COI">Pending COI</option>
+                                <option value="Docs Submitted">Docs Submitted</option>
                                 <option value="Active Partner">Active Partner</option>
                                 <option value="On Standby">On Standby</option>
                                 <option value="Do Not Use">Do Not Use</option>
@@ -3721,9 +3726,20 @@
                             <select id="filter-subs-coi" onchange="filterSubcontractorsTable()" style="height: 34px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.8rem; font-weight: 700; background: white; color: var(--slate-700);">
                                 <option value="">All COI Insurance</option>
                                 <option value="Verified">COI Verified</option>
+                                <option value="File Uploaded (Review)">COI File Uploaded</option>
+                                <option value="Self-Reported">COI Self-Reported (No File)</option>
                                 <option value="Pending">COI Pending</option>
                                 <option value="Expired">COI Expired</option>
                             </select>
+                            <button type="button" id="btn-toggle-sub-review-mode" onclick="toggleSubcontractorReviewMode(this)" title="Switch between Manual Review or Automatic Review after initial registration" style="height: 34px; padding: 0 0.75rem; font-size: 0.74rem; font-weight: 800; border-radius: 6px; border: 1px solid #c7d2fe; background: #eef2ff; color: #3730a3; cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem;">
+                                <i class="fas fa-sliders-h"></i> <span id="sub-review-mode-label">Initial Review Gate: Manual</span>
+                            </button>
+                            <button type="button" onclick="runSubcontractorCoiWatchdog(this)" title="Scan all subcontractor COI expiration dates and hold expired policies from dispatch" style="height: 34px; padding: 0 0.75rem; font-size: 0.74rem; font-weight: 800; border-radius: 6px; border: 1px solid #fcd34d; background: #fffbeb; color: #92400e; cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem;">
+                                <i class="fas fa-shield-alt"></i> COI Watchdog
+                            </button>
+                            <a href="/api/v1/workforce/subcontractors/export-1099-nec" title="Export 1099-NEC Tax Batch (CSV) with decrypted W-9 TINs and addresses" style="height: 34px; padding: 0 0.75rem; font-size: 0.74rem; font-weight: 800; border-radius: 6px; border: 1px solid #a7f3d0; background: #ecfdf5; color: #065f46; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem;">
+                                <i class="fas fa-file-csv"></i> Export 1099-NEC CSV
+                            </a>
                         </div>
                         <div style="display: flex; gap: 0.75rem; align-items: center;">
                             <div style="font-size: 0.78rem; font-weight: 700; color: var(--slate-500);">
@@ -3771,7 +3787,10 @@
                                             {% endif %}
                                         </td>
                                         <td style="padding: 0.65rem 0.85rem;">
-                                            <div style="font-weight: 700; font-size: 0.82rem; color: var(--slate-800);"><i class="fas fa-map-marker-alt" style="color: #ef4444; font-size: 0.72rem; margin-right: 3px;"></i> {{ sub.city or 'DFW' }}, {{ sub.state or 'TX' }}</div>
+                                            <div style="font-weight: 700; font-size: 0.82rem; color: var(--slate-800);"><i class="fas fa-map-marker-alt" style="color: #ef4444; font-size: 0.72rem; margin-right: 3px;"></i> {{ sub.city or 'DFW' }}, {{ sub.state or 'TX' }} {{ sub.zip_code or '' }}</div>
+                                            {% if sub.street_address %}
+                                            <div style="font-size: 0.68rem; color: var(--slate-500); font-weight: 600; margin-top: 2px;">{{ sub.street_address }}</div>
+                                            {% endif %}
                                         </td>
                                         <td style="padding: 0.65rem 0.85rem; text-align: center;">
                                             <span style="display: inline-block; font-size: 0.8rem; font-weight: 800; background: #eff6ff; color: #1e40af; padding: 0.2rem 0.6rem; border-radius: 4px;">
@@ -3784,22 +3803,32 @@
                                             </div>
                                         </td>
                                         <td style="padding: 0.65rem 0.85rem;">
-                                            <select onchange="updateSubcontractorField({{ sub.id }}, 'coi_status', this.value, this)" style="height: 28px; padding: 0 0.5rem; font-size: 0.72rem; font-weight: 800; border-radius: 4px; border: 1px solid var(--slate-300); background: {% if sub.coi_status == 'Verified' %}#ecfdf5{% elif sub.coi_status == 'Expired' %}#fee2e2{% else %}#fffbeb{% endif %}; color: {% if sub.coi_status == 'Verified' %}#065f46{% elif sub.coi_status == 'Expired' %}#991b1b{% else %}#92400e{% endif %}; cursor: pointer;">
+                                            <select onchange="updateSubcontractorField({{ sub.id }}, 'coi_status', this.value, this)" style="height: 28px; padding: 0 0.5rem; font-size: 0.72rem; font-weight: 800; border-radius: 4px; border: 1px solid var(--slate-300); background: {% if sub.coi_status == 'Verified' or sub.coi_status == 'File Uploaded (Review)' %}#ecfdf5{% elif sub.coi_status == 'Expired' %}#fee2e2{% else %}#fffbeb{% endif %}; color: {% if sub.coi_status == 'Verified' or sub.coi_status == 'File Uploaded (Review)' %}#065f46{% elif sub.coi_status == 'Expired' %}#991b1b{% else %}#92400e{% endif %}; cursor: pointer;">
+                                                <option value="Self-Reported" {% if sub.coi_status == 'Self-Reported' %}selected{% endif %}>Self-Reported (No File)</option>
                                                 <option value="Pending" {% if sub.coi_status == 'Pending' %}selected{% endif %}>Pending COI</option>
+                                                <option value="File Uploaded (Review)" {% if sub.coi_status == 'File Uploaded (Review)' %}selected{% endif %}>File Uploaded (Review)</option>
                                                 <option value="Verified" {% if sub.coi_status == 'Verified' %}selected{% endif %}>Verified ✓</option>
                                                 <option value="Expired" {% if sub.coi_status == 'Expired' %}selected{% endif %}>Expired</option>
                                             </select>
                                         </td>
                                         <td style="padding: 0.65rem 0.85rem;">
-                                            {% if sub.dwc83_signed %}
-                                                 <span style="font-size: 0.72rem; font-weight: 800; color: #059669; background: #ecfdf5; padding: 0.2rem 0.5rem; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.25rem;">
-                                                    <i class="fas fa-file-signature"></i> Signed ✓
-                                                </span>
-                                            {% else %}
-                                                <span style="font-size: 0.72rem; font-weight: 700; color: #d97706; background: #fffbeb; padding: 0.2rem 0.5rem; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.25rem;">
-                                                    <i class="fas fa-clock"></i> Pending
-                                                </span>
-                                            {% endif %}
+                                            <div style="display: flex; flex-direction: column; gap: 3px;">
+                                                {% if sub.dwc83_signed %}
+                                                     <span style="font-size: 0.7rem; font-weight: 800; color: #059669; background: #ecfdf5; padding: 0.15rem 0.45rem; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.25rem; width: fit-content;">
+                                                        <i class="fas fa-file-signature"></i> DWC-83 ✓
+                                                    </span>
+                                                {% else %}
+                                                    <span style="font-size: 0.7rem; font-weight: 700; color: #d97706; background: #fffbeb; padding: 0.15rem 0.45rem; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.25rem; width: fit-content;">
+                                                        <i class="fas fa-clock"></i> Pending
+                                                    </span>
+                                                {% endif %}
+                                                {% if sub.w9_file_url %}
+                                                    <span style="font-size: 0.66rem; font-weight: 800; color: #1d4ed8; background: #eff6ff; padding: 0.1rem 0.4rem; border-radius: 4px; width: fit-content;">W-9 File ✓</span>
+                                                {% endif %}
+                                                {% if sub.msa_signed %}
+                                                    <span style="font-size: 0.66rem; font-weight: 800; color: #6d28d9; background: #ede9fe; padding: 0.1rem 0.4rem; border-radius: 4px; width: fit-content;">MSA Signed ✓</span>
+                                                {% endif %}
+                                            </div>
                                         </td>
                                         <td style="padding: 0.65rem 0.85rem; font-size: 0.78rem; font-weight: 700; color: var(--slate-700);">
                                             {% set is_default = (not sub.hourly_rate_range or '$22 - $28' in sub.hourly_rate_range or sub.hourly_rate_range == '22-28') %}
@@ -3813,25 +3842,33 @@
                                             </div>
                                         </td>
                                         <td style="padding: 0.65rem 0.85rem;">
-                                            <select onchange="updateSubcontractorField({{ sub.id }}, 'status', this.value, this)" style="height: 28px; padding: 0 0.5rem; font-size: 0.72rem; font-weight: 800; border-radius: 4px; border: 1px solid var(--slate-300); background: {% if sub.status == 'Active Partner' %}#ecfdf5{% elif sub.status == 'Do Not Use' %}#fee2e2{% elif sub.status == 'On Standby' %}#f8fafc{% else %}#eff6ff{% endif %}; color: {% if sub.status == 'Active Partner' %}#065f46{% elif sub.status == 'Do Not Use' %}#991b1b{% elif sub.status == 'On Standby' %}#64748b{% else %}#1e40af{% endif %}; cursor: pointer;">
+                                            <select onchange="updateSubcontractorField({{ sub.id }}, 'status', this.value, this)" style="height: 28px; padding: 0 0.5rem; font-size: 0.72rem; font-weight: 800; border-radius: 4px; border: 1px solid var(--slate-300); background: {% if sub.status == 'Active Partner' %}#ecfdf5{% elif sub.status == 'Do Not Use' %}#fee2e2{% elif sub.status == 'Pending COI' %}#fffbeb{% elif sub.status == 'On Standby' %}#f8fafc{% else %}#eff6ff{% endif %}; color: {% if sub.status == 'Active Partner' %}#065f46{% elif sub.status == 'Do Not Use' %}#991b1b{% elif sub.status == 'Pending COI' %}#92400e{% elif sub.status == 'On Standby' %}#64748b{% else %}#1e40af{% endif %}; cursor: pointer;">
                                                 <option value="Vetting" {% if sub.status == 'Vetting' %}selected{% endif %}>Vetting</option>
+                                                <option value="Pending COI" {% if sub.status == 'Pending COI' %}selected{% endif %}>Pending COI</option>
+                                                <option value="Docs Submitted" {% if sub.status == 'Docs Submitted' %}selected{% endif %}>Docs Submitted</option>
                                                 <option value="Active Partner" {% if sub.status == 'Active Partner' %}selected{% endif %}>Active Partner</option>
                                                 <option value="On Standby" {% if sub.status == 'On Standby' %}selected{% endif %}>On Standby</option>
                                                 <option value="Do Not Use" {% if sub.status == 'Do Not Use' %}selected{% endif %}>Do Not Use</option>
                                             </select>
+                                            <div id="sub-onb-stage-{{ sub.id }}" style="font-size: 0.65rem; font-weight: 800; color: {% if sub.onboarding_status == 'Approved / Active' %}#059669{% elif sub.onboarding_status == 'Invited' %}#7c3aed{% elif sub.onboarding_status == 'Pending COI' %}#b45309{% else %}#64748b{% endif %}; margin-top: 3px;">
+                                                Stage: {{ sub.onboarding_status or 'Initial Review' }}
+                                            </div>
                                         </td>
                                         <td style="padding: 0.65rem 0.85rem; font-size: 0.75rem; color: var(--slate-500); font-weight: 600;">
                                             {{ sub.created_at.strftime('%m/%d/%Y') if sub.created_at else '--' }}
                                         </td>
                                         <td style="padding: 0.65rem 0.85rem; text-align: right;">
                                             <div style="display: inline-flex; gap: 0.35rem;">
+                                                <button type="button" onclick="sendSubcontractorOnboardingLink({{ sub.id }}, this)" title="Review Initial Registration & Send Pre-Filled 1099 Onboarding Link" class="sigma-mini-btn" style="color: #7c3aed; background: #f3e8ff; border-color: #d8b4fe;">
+                                                    <i class="fas fa-paper-plane"></i>
+                                                </button>
                                                 <button type="button" onclick="openAssignTrainingModal('1099_SUBCONTRACTOR', {{ sub.id }}, '{{ sub.contact_name or sub.company_name }}', '{{ sub.email or '' }}')" title="Assign Training / FastPass" class="sigma-mini-btn" style="color: #6366f1; background: #ede9fe; border-color: #c7d2fe;">
                                                     <i class="fas fa-graduation-cap"></i>
                                                 </button>
                                                 <button type="button" onclick="openSubcontractorEditModal({{ sub.id }})" title="Edit Partner Profile" class="sigma-mini-btn" style="color: #7c3aed;">
                                                     <i class="fas fa-edit"></i>
                                                 </button>
-                                                <button type="button" onclick="openSubcontractorDocModal({{ sub.id }})" title="Upload / View COI & W-9 Vault" class="sigma-mini-btn" style="color: #059669;">
+                                                <button type="button" onclick="openSubcontractorDocModal({{ sub.id }})" title="Upload / View COI, W-9 & MSA Compliance Vault" class="sigma-mini-btn" style="color: #059669;">
                                                     <i class="fas fa-folder-open"></i>
                                                 </button>
                                                 <button type="button" data-name="{{ sub.company_name }}" data-notes="{{ sub.notes or '' }}" onclick="editSubcontractorNotes({{ sub.id }}, this)" title="Partner Notes" class="sigma-mini-btn" style="color: var(--brand);">
@@ -6385,6 +6422,33 @@
             </button>
         </div>
 
+        <!-- Pre-Filled 1099 Onboarding Link & Approval Gate -->
+        <div style="background: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 8px; padding: 0.9rem 1rem; margin-bottom: 1rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem;">
+                <span style="font-size: 0.72rem; font-weight: 800; color: #5b21b6; text-transform: uppercase; letter-spacing: 0.04em;">
+                    <i class="fas fa-link"></i> Pre-Filled 1099 Self-Service Onboarding Link
+                </span>
+                <span id="sub-doc-onb-stage-pill" style="font-size: 0.68rem; font-weight: 800; background: #ede9fe; color: #6d28d9; padding: 0.15rem 0.5rem; border-radius: 4px;">
+                    Stage: Initial Review
+                </span>
+            </div>
+            <div style="display: flex; gap: 0.45rem; flex-wrap: wrap;">
+                <input type="text" id="sub-doc-onboarding-url" readonly value="" placeholder="Onboarding portal link..." style="flex: 1; min-width: 220px; height: 34px; border: 1px solid #c4b5fd; border-radius: 6px; padding: 0 0.65rem; font-size: 0.76rem; color: #334155; background: #ffffff;">
+                <button type="button" onclick="copySubcontractorOnboardingLink()" class="isc-btn isc-btn-outline" style="height: 34px; padding: 0 0.75rem; font-size: 0.74rem; font-weight: 800; border-radius: 6px;">
+                    <i class="fas fa-copy"></i> Copy Link
+                </button>
+                <button type="button" onclick="sendSubcontractorOnboardingFromModal(this)" class="isc-btn isc-btn-primary" style="height: 34px; padding: 0 0.85rem; font-size: 0.74rem; font-weight: 800; border-radius: 6px; background: #7c3aed; border-color: #7c3aed;">
+                    <i class="fas fa-paper-plane"></i> Send Onboarding Email
+                </button>
+                <button type="button" onclick="approveSubcontractorFromModal(this)" class="isc-btn isc-btn-primary" style="height: 34px; padding: 0 0.85rem; font-size: 0.74rem; font-weight: 800; border-radius: 6px; background: #059669; border-color: #059669;">
+                    <i class="fas fa-user-check"></i> Approve &amp; Activate
+                </button>
+            </div>
+        </div>
+
+        <!-- Extracted W-9 Address, Tax Class & TIN Summary -->
+        <div id="sub-doc-extracted-summary" style="background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 8px; padding: 0.8rem 1rem; margin-bottom: 1rem; font-size: 0.76rem; color: var(--slate-700);"></div>
+
         <!-- Current Documents Card -->
         <div style="background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
             <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-700); margin-bottom: 0.75rem;">
@@ -6405,12 +6469,23 @@
                 <div id="sub-doc-w9-row" style="display: flex; justify-content: space-between; align-items: center; background: white; padding: 0.6rem 0.75rem; border-radius: 6px; border: 1px solid var(--slate-200);">
                     <div>
                         <div style="font-weight: 800; font-size: 0.82rem; color: var(--slate-900);">
-                            <i class="fas fa-file-invoice" style="color: #059669; margin-right: 4px;"></i> Form W-9 (Taxpayer ID)
+                            <i class="fas fa-file-invoice" style="color: #059669; margin-right: 4px;"></i> Form W-9 (Taxpayer ID &amp; Extracted Address)
                             <span id="sub-doc-w9-badge" style="font-size: 0.7rem; padding: 0.15rem 0.4rem; border-radius: 4px; margin-left: 0.4rem; font-weight: 800;"></span>
                         </div>
                         <div id="sub-doc-w9-subtext" style="font-size: 0.72rem; color: var(--slate-500); margin-top: 2px;">TIN Verification for 1099 Remittance</div>
                     </div>
                     <div id="sub-doc-w9-action"></div>
+                </div>
+
+                <div id="sub-doc-msa-row" style="display: flex; justify-content: space-between; align-items: center; background: white; padding: 0.6rem 0.75rem; border-radius: 6px; border: 1px solid var(--slate-200);">
+                    <div>
+                        <div style="font-weight: 800; font-size: 0.82rem; color: var(--slate-900);">
+                            <i class="fas fa-file-signature" style="color: #7c3aed; margin-right: 4px;"></i> Master Subcontractor Agreement (MSA) &amp; TX DWC-83
+                            <span id="sub-doc-msa-badge" style="font-size: 0.7rem; padding: 0.15rem 0.4rem; border-radius: 4px; margin-left: 0.4rem; font-weight: 800;"></span>
+                        </div>
+                        <div id="sub-doc-msa-subtext" style="font-size: 0.72rem; color: var(--slate-500); margin-top: 2px;">Digital E-Signature &amp; Independent Contractor Affirmation</div>
+                    </div>
+                    <div id="sub-doc-msa-action"></div>
                 </div>
             </div>
         </div>
