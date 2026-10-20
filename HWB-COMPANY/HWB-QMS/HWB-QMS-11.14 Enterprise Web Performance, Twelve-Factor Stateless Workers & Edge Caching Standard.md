@@ -1,10 +1,10 @@
-# Standard Operating Procedure: Enterprise Web Performance, Twelve-Factor Stateless Workers, Edge Caching & Post-Login CQRS Backoffice Standard
+# Standard Operating Procedure: Enterprise Web Performance, Twelve-Factor Stateless Workers, Edge Caching, Post-Login CQRS Backoffice & Universal Phone/Tablet Adaptive Table Standard
 
 | Document Control | Value |
 | :--- | :--- |
-| **Document Title** | **Enterprise Web Performance, Twelve-Factor Stateless Workers, Edge Caching & Post-Login CQRS Backoffice Standard** |
+| **Document Title** | **Enterprise Web Performance, Twelve-Factor Stateless Workers, Edge Caching, Post-Login CQRS Backoffice & Universal Phone/Tablet Adaptive Table Standard** |
 | **Document ID** | `HWB-QMS-11.14` |
-| **Version** | `1.1.0` (`v5.4.4`) |
+| **Version** | `1.2.0` (`v5.4.4`) |
 | **Status** | `APPROVED` |
 | **Author** | George (Systems Architect) & George Bytes (HWB Tactical Builder) |
 | **Approved By** | Humberto Dominguez (Chief Executive Officer) |
@@ -14,9 +14,10 @@
 ---
 
 ## 1.0 Purpose
-This Standard Operating Procedure (SOP) establishes the mandatory Enterprise Web & Backoffice Performance Standard for the HWB Cleaning Services LLC institutional platform (`https://www.hwbcleaning.com/`).
+This Standard Operating Procedure (SOP) establishes the mandatory Three-Part Enterprise Web, Backoffice & Universal Responsive Performance Standard for the HWB Cleaning Services LLC institutional platform (`https://www.hwbcleaning.com/`).
 - **Part I (`v1.0.0` / `v5.4.3`)** eliminates public surface cold-start stalls, Gunicorn worker recycle freezes, redundant database network round-trips, per-request disk reads, oversized static image payloads, and CDN cache bypasses.
 - **Part II (`v1.1.0` / `v5.4.4`)** establishes the **5-Pillar Enterprise Backoffice & Post-Login Workspace Architecture (`<150ms` CQRS Standard)** for `/admin/operations`, eliminating synchronous external HTTP probes on the request thread, $O(N \times M)$ correlated SQL subqueries, multi-department SQL over-fetching, and `2.6 MB – 3.3 MB` hidden DOM rendering.
+- **Part III (`v1.2.0` / `v5.4.4`)** establishes the **Permanent 5-Layer Enterprise Phone, Tablet & Adaptive Data-Table Standard (`BUG-135`–`BUG-137` / `Migration 045`)**, enforcing zero horizontal drift, single-bar phone headers, 2x2 KPI scorecard compaction, cross-device PostgreSQL column sync (`"UserUiPreferences"`), and automatic conversion of all 28 HTML tables into 2-column CRM Touch Cards on phones (`<= 768px`) with a persistent `[Cards | Table]` switcher via `/static/js/sigma_responsive_engine.js`.
 
 ## 2.0 Scope
 This procedure applies to all production and local container deployments of the HWB Web Platform (`/home/humbertoed/gemini_projects/HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE`), Microsoft Azure App Service (`hwb-institutional-website`), Azure Container Registry (`hwbprodacr`), PostgreSQL connection pools (`core/services/database.py`), telemetry services (`core/services/self_healing_engine.py`, `core/services/credential_sentinel.py`), backoffice controllers (`blueprints/operations.py`), and Jinja2 templates (`templates/backoffice_operations.html`).
@@ -79,7 +80,33 @@ This procedure applies to all production and local container deployments of the 
 
 ---
 
-## 5.0 Verification & Audit Matrix
+## 5.0 Part III: The Permanent 5-Layer Enterprise Phone, Tablet & Adaptive Data-Table Standard (`v1.2.0` / `BUG-135`–`BUG-137`)
+
+### 5.1 Layer 1: Universal App-Shell Compaction & Navigation Ribbon
+1. **Zero Horizontal Drift:** Enforce `max-width: 100vw; overflow-x: hidden;` across `html` and `body`, with fixed viewport clamping on all flyout dropdowns (`max-width: calc(100vw - 24px)`).
+2. **Single-Bar Phone Header (`<= 768px`):** Consolidate the 4-bar backoffice top chrome into a single 52px bar paired with a horizontal touch-swipe navigation ribbon (`.sigma-nav-ribbon`).
+3. **QMS Manual Off-Canvas Drawer (`<= 1024px`):** Collapse the 320px sidebar in `templates/sop_base.html` into an off-canvas slide-over drawer triggered by a floating `[☰ Manual Sections & Search]` button.
+
+### 5.2 Layer 2: Universal KPI & Multi-Column Grid Breakpoints
+1. **Automatic Scorecard Compaction:** All 4-column and 3-column KPI scorecards (`repeat(4, 1fr)`, `repeat(3, 1fr)`) automatically collapse to `2 columns` on tablets (`<= 1024px`) and `2x2 compact cards` on phones (`<= 768px`).
+2. **Workspace Split Stacking:** All split workspace and form grids (`1fr 1fr`, `2fr 1fr`, `1.5fr 1fr`) collapse into `1 column` on phones (`<= 768px`).
+
+### 5.3 Layer 3: Universal Adaptive Data-Table Engine (`SigmaResponsiveTableEngine` + `MutationObserver`)
+1. **Zero-Config Table Hydration:** `/static/js/sigma_responsive_engine.js` automatically inspects all 28 HTML tables across public, QMS, and backoffice templates, reading `<thead><th>` headers and stamping `data-label="<Header>"` onto every `<td>` cell (including dynamically filtered or AJAX-injected rows via `MutationObserver`).
+2. **Phone Mode (`<= 768px`) — 2-Column CRM Touch Cards + `[Cards | Table]` Switcher:** Converts multi-column tables into 2-column vertical CRM cards with a prominent header and full-width bottom action bar, while injecting a persistent `[Cards | Table]` segmented toggle (`localStorage: sigma_mobile_table_mode`).
+3. **Tablet Mode (`768px – 1024px`) — Momentum Scroll with Single Sticky Primary Column:** Wraps tables in `.sigma-table-scroll-viewport` with only the primary column sticky (`max-width: 190px`).
+
+### 5.4 Layer 4: Touch Form Ergonomics & Cross-Device Column Sync (`Migration 045`)
+1. **Zero iOS Auto-Zoom:** Enforce `font-size: max(16px, 1rem) !important` on all form controls (`<= 768px` / `pointer: coarse`) and `max-height: 92dvh` with `env(safe-area-inset-bottom)` on all modals.
+2. **Cross-Device Column Persistence:** Store per-user column visibility and role presets in PostgreSQL `"UserUiPreferences"` (`Migration 045`) via `GET/POST /api/v1/ui-preferences/<view_key>`.
+
+### 5.5 Layer 5: Automatic `@app.after_request` Injection & 15-Test Regression Gate
+1. **Automatic Global Injection:** `main_app.py` (`apply_application_security_headers`) automatically injects `<script src="/static/js/sigma_responsive_engine.js" defer></script>` before `</body>` on any HTML response if not already present.
+2. **15-Test Regression Gate:** `scripts/test_web_performance_rack_14.py` (Tests 1–15) verifies all public, CQRS backoffice, and 5-Layer responsive invariants prior to deployment.
+
+---
+
+## 6.0 Verification & Audit Matrix
 | Metric | Pre-Hardening Baseline | Mandatory Target | Verification Method |
 | :--- | :--- | :--- | :--- |
 | Azure Cold Start Idle Eviction | `AlwaysOn=false` (15–35s stall) | `AlwaysOn=true` (`0s` stall) | `az webapp config show` |

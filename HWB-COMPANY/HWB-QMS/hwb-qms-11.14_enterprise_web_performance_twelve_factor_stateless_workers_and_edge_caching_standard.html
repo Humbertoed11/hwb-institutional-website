@@ -7,7 +7,7 @@
 <div class='sop-card'>
     <div class='sop-meta'>
         <div class='meta-unit'><span class='meta-label'>Document ID</span><span class='meta-val'>HWB-QMS-11.14</span></div>
-        <div class='meta-unit'><span class='meta-label'>Version</span><span class='meta-val'>1.0.0 (v5.4.3)</span></div>
+        <div class='meta-unit'><span class='meta-label'>Version</span><span class='meta-val'>1.2.0 (v5.4.4)</span></div>
         <div class='meta-unit'><span class='meta-label'>Status</span><span class='meta-val' style='color: #16a34a;'>● APPROVED</span></div>
         <div class='meta-unit'><span class='meta-label'>Clause</span><span class='meta-val'>7.1.3 / 8.5.1 / 9.1.1</span></div>
     </div>
@@ -21,9 +21,9 @@
                 </tr>
             </thead>
             <tbody>
-                <tr><td><strong>Document Title</strong></td><td><strong>Enterprise Web Performance, Twelve-Factor Stateless Workers &amp; Edge Caching Standard</strong></td></tr>
+                <tr><td><strong>Document Title</strong></td><td><strong>Enterprise Web Performance, Twelve-Factor Stateless Workers, Edge Caching, CQRS Backoffice &amp; Universal Phone/Tablet Adaptive Table Standard</strong></td></tr>
                 <tr><td><strong>Document ID</strong></td><td>HWB-QMS-11.14</td></tr>
-                <tr><td><strong>Version</strong></td><td>1.0.0 (v5.4.3)</td></tr>
+                <tr><td><strong>Version</strong></td><td>1.2.0 (v5.4.4)</td></tr>
                 <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
                 <tr><td><strong>Author</strong></td><td>George (Systems Architect) &amp; George Bytes (HWB Tactical Builder)</td></tr>
                 <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
@@ -34,18 +34,36 @@
 
         <hr />
 
-        <h1>Standard Operating Procedure: <strong>Enterprise Web Performance, Twelve-Factor Stateless Workers &amp; Edge Caching Standard</strong></h1>
+        <h1>Standard Operating Procedure: <strong>Enterprise Web Performance, Twelve-Factor Stateless Workers, Edge Caching, CQRS Backoffice &amp; Universal Phone/Tablet Adaptive Table Standard</strong></h1>
 
         <h2>1.0 Purpose</h2>
-        <p>This Standard Operating Procedure (SOP) establishes the mandatory 5-Pillar Enterprise Web Performance Standard for the HWB Cleaning Services LLC institutional web application (<code>https://www.hwbcleaning.com/</code>). It eliminates cold-start stalls, Gunicorn worker recycle freezes, redundant database network round-trips, per-request disk reads, oversized static image payloads, and CDN cache bypasses.</p>
+        <p>This Standard Operating Procedure (SOP) establishes the mandatory Three-Part Enterprise Web, Backoffice &amp; Universal Responsive Standard for the HWB Cleaning Services LLC institutional web application (<code>https://www.hwbcleaning.com/</code>). It eliminates cold-start stalls, Gunicorn worker recycle freezes, redundant database network round-trips, per-request disk reads, oversized static image payloads, CDN cache bypasses, synchronous backoffice HTTP/SQL stalls, and mobile/tablet layout overflow across all 28 HTML tables.</p>
 
-        <h2>2.0 The 5-Pillar Enterprise Web Performance Standard</h2>
+        <h2>2.0 Part I: The 5-Pillar Public Surface &amp; Stateless Worker Standard (v1.0.0)</h2>
         <ul>
             <li><strong>Pillar 1 — Azure App Service Infrastructure:</strong> Enforce <code>AlwaysOn=true</code>, <code>Use32BitWorkerProcess=false</code>, and <code>HealthCheckPath="/heartbeat"</code> on <code>hwb-institutional-website</code>.</li>
             <li><strong>Pillar 2 — Twelve-Factor Stateless Web Workers:</strong> Launch Gunicorn with <code>--preload --workers 2 --threads 8</code> and guard startup migrations/seeders/daemons with an atomic non-blocking file lock (<code>/tmp/hwb_enterprise_boot.lock</code>) so worker recycles take <code>0ms</code>.</li>
             <li><strong>Pillar 3 — Zero-Round-Trip Pooled Database Connections:</strong> Configure <code>ThreadedConnectionPool</code> with <code>options="-c timezone=America/Chicago"</code> and TCP keepalives at socket creation, removing per-checkout <code>SET TIME ZONE</code> queries and right-sizing <code>DB_POOL_MAX=10</code>.</li>
             <li><strong>Pillar 4 — In-Memory Version &amp; Telemetry Cache:</strong> Decorate <code>get_version_info()</code> with <code>@functools.lru_cache(maxsize=1)</code> to eliminate per-request disk reads of <code>/app/version.json</code>.</li>
-            <li><strong>Pillar 5 — Next-Gen WebP Image Pipeline &amp; Split Cloudflare Edge Caching:</strong> Serve compressed <code>.webp</code> visuals (<code>91%</code> homepage size reduction) and emit <code>Cache-Control: public, max-age=300, s-maxage=3600, stale-while-revalidate=86400</code> with <code>Vary: Accept-Encoding</code> (stripping <code>Cookie</code>) on anonymous public marketing <code>GET</code> routes.</li>
+            <li><strong>Pillar 5 — Next-Gen WebP Image Pipeline &amp; Split Cloudflare Edge Caching:</strong> Serve compressed <code>.webp</code> visuals (<code>92.7%</code> homepage size reduction) and emit <code>Cache-Control: public, max-age=300, s-maxage=3600, stale-while-revalidate=86400</code> with <code>Vary: Accept-Encoding</code> (stripping <code>Cookie</code>) on anonymous public marketing <code>GET</code> routes.</li>
+        </ul>
+
+        <h2>3.0 Part II: The 5-Pillar Post-Login CQRS Backoffice Standard (v1.1.0)</h2>
+        <ul>
+            <li><strong>Pillar 1 — Async Background Telemetry Cache:</strong> 300s TTL thread-safe cache (<code>_TELEMETRY_CACHE</code>) in <code>core/services/self_healing_engine.py</code> and <code>core/services/credential_sentinel.py</code>; <code>it_telemetry</code> runs only on <code>it_department</code> / <code>it_telemetry</code> views.</li>
+            <li><strong>Pillar 2 — Set-Based SQL Aggregation &amp; Covering Indexes:</strong> Composite indexes <code>idx_global_activities_parent_lookup</code> and <code>idx_campaign_recipients_lead_lookup</code> with single-pass <code>LEFT JOIN</code> aggregations.</li>
+            <li><strong>Pillar 3 — Active-View CQRS SQL Gating:</strong> 30s cached sidebar counts and strict active-view query isolation in <code>blueprints/operations.py</code>.</li>
+            <li><strong>Pillar 4 — Server-Side Jinja DOM Pruning &amp; Externalized JS:</strong> Prunes inactive views via <code>{% if active_view == '...' %}</code> and externalizes <code>/static/js/backoffice_operations_core.js</code>, shrinking HTML from <code>3.3 MB</code> to <code>&lt;150 KB</code>.</li>
+            <li><strong>Pillar 5 — Sub-150ms Tab Switching:</strong> Verified across all 6 core departments (<code>23–78 ms</code> warm).</li>
+        </ul>
+
+        <h2>4.0 Part III: The Permanent 5-Layer Enterprise Phone, Tablet &amp; Adaptive Data-Table Standard (v1.2.0 / BUG-135–BUG-137)</h2>
+        <ul>
+            <li><strong>Layer 1 — App-Shell &amp; Navigation Compaction:</strong> Enforces <code>max-width: 100vw; overflow-x: hidden</code>, single-bar phone headers (<code>52px</code>), touch-swipe navigation ribbons (<code>.sigma-nav-ribbon</code>), and an off-canvas QMS Manual drawer (<code>[☰ Manual Sections &amp; Search]</code>).</li>
+            <li><strong>Layer 2 — KPI &amp; Multi-Column Grid Breakpoints:</strong> Collapses 4-column and 3-column KPI scorecards into 2 columns on tablets (<code>&lt;= 1024px</code>) and 2x2 compact cards on phones (<code>&lt;= 768px</code>), and stacks split grids into 1 column on phones.</li>
+            <li><strong>Layer 3 — Universal Adaptive Data-Table Engine (<code>SigmaResponsiveTableEngine</code> + <code>MutationObserver</code>):</strong> Global script <code>/static/js/sigma_responsive_engine.js</code> automatically binds <code>&lt;thead&gt;&lt;th&gt;</code> headers to <code>&lt;td data-label="..."&gt;</code> across all 28 tables, converting wide tables into 2-column CRM Touch Cards on phones (<code>&lt;= 768px</code>) with a persistent <code>[Cards | Table]</code> switcher and single-sticky-column momentum scroll on tablets (<code>768px–1024px</code>).</li>
+            <li><strong>Layer 4 — Touch Form Ergonomics &amp; Cross-Device Column Sync:</strong> Enforces <code>font-size: max(16px, 1rem) !important</code> on mobile inputs, <code>92dvh</code> safe-area modals, and PostgreSQL <code>"UserUiPreferences"</code> (Migration 045) cross-device column sync.</li>
+            <li><strong>Layer 5 — Permanent Auto-Injection &amp; 15-Test Regression Gate:</strong> Auto-injected on all HTML responses via <code>main_app.py</code> <code>@app.after_request</code> and verified by <code>scripts/test_web_performance_rack_14.py</code> (<code>15/15</code> passing).</li>
         </ul>
     </div>
 </div>

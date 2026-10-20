@@ -13,14 +13,14 @@
     </style>
 </head>
 <body>
-    <h1>HWB-QMS-11.14: Enterprise Web Performance, Twelve-Factor Stateless Workers, Edge Caching &amp; Post-Login CQRS Backoffice Standard</h1>
+    <h1>HWB-QMS-11.14: Enterprise Web Performance, Twelve-Factor Stateless Workers, Edge Caching, Post-Login CQRS Backoffice &amp; Universal Phone/Tablet Adaptive Table Standard</h1>
     <table>
-        <tr><th>Document ID</th><td><code>HWB-QMS-11.14</code></td><th>Version</th><td><code>1.1.0</code> (<code>v5.4.4</code>)</td></tr>
+        <tr><th>Document ID</th><td><code>HWB-QMS-11.14</code></td><th>Version</th><td><code>1.2.0</code> (<code>v5.4.4</code>)</td></tr>
         <tr><th>Status</th><td><code>APPROVED</code></td><th>Effective Date</th><td><code>10/19/2026</code></td></tr>
         <tr><th>Author</th><td>George (Systems Architect) &amp; George Bytes</td><th>Approved By</th><td>Humberto Dominguez (CEO)</td></tr>
     </table>
     <h2>1.0 Purpose &amp; Scope</h2>
-    <p>Establishes the mandatory Two-Part Enterprise Web &amp; Backoffice Performance Standard for <code>https://www.hwbcleaning.com/</code> and <code>/admin/operations</code> across Azure App Service (<code>hwb-institutional-website</code>), Gunicorn workers, PostgreSQL connection pools, covering SQL indexes, asynchronous telemetry caches, and Server-Side Jinja DOM Pruning.</p>
+    <p>Establishes the mandatory Three-Part Enterprise Web, Backoffice &amp; Universal Responsive Standard for <code>https://www.hwbcleaning.com/</code> and <code>/admin/operations</code> across Azure App Service (<code>hwb-institutional-website</code>), Gunicorn workers, PostgreSQL connection pools, covering SQL indexes, asynchronous telemetry caches, Server-Side Jinja DOM Pruning, and the 5-Layer Enterprise Phone, Tablet &amp; Adaptive Data-Table Engine (<code>/static/js/sigma_responsive_engine.js</code>).</p>
     <h2>2.0 Part I: 5-Pillar Public Surface &amp; Stateless Worker Standard (v1.0.0)</h2>
     <ul>
         <li><strong>Pillar 1 (Azure Infrastructure Hardening):</strong> <code>AlwaysOn=true</code>, <code>Use32BitWorkerProcess=false</code>, and <code>HealthCheckPath="/heartbeat"</code>.</li>
@@ -36,6 +36,14 @@
         <li><strong>Pillar 3 (Strict Active-View CQRS SQL Isolation &amp; 30s Cached Sidebar Counts):</strong> <code>_get_operations_sidebar_counts</code> (30s TTL) and active-view SQL gating in <code>blueprints/operations.py</code> so switching tabs queries only the active department.</li>
         <li><strong>Pillar 4 (Server-Side Jinja DOM Pruning &amp; Externalized JS):</strong> Inactive <code>&lt;div id="view-..."&gt;</code> trees and department modals in <code>templates/backoffice_operations.html</code> are pruned via <code>{% if active_view == '...' %}</code> and static JS is served via <code>/static/js/backoffice_operations_core.js</code>, reducing HTML payload from <code>2.6–3.3 MB</code> to <code>&lt;150 KB</code>.</li>
         <li><strong>Pillar 5 (Sub-150ms Tab Switching &amp; Regression Gate):</strong> Verified via <code>scripts/test_web_performance_rack_14.py</code> across all 6 core departments (<code>leads</code>, <code>accounts</code>, <code>construction_bids</code>, <code>marketing</code>, <code>workforce</code>, <code>it_department</code>).</li>
+    </ul>
+    <h2>4.0 Part III: Permanent 5-Layer Enterprise Phone, Tablet &amp; Adaptive Data-Table Standard (v1.2.0 / BUG-135–BUG-137)</h2>
+    <ul>
+        <li><strong>Layer 1 (Universal App-Shell &amp; Navigation Compaction):</strong> Enforces <code>max-width: 100vw; overflow-x: hidden</code>, single-row touch-swipe navigation ribbons (<code>.sigma-nav-ribbon</code>) on <code>&lt;= 1024px</code>, consolidated single-bar phone headers (<code>52px</code> height), fixed-viewport flyout clamping, and an off-canvas QMS Manual drawer (<code>[☰ Manual Sections &amp; Search]</code>) on phones.</li>
+        <li><strong>Layer 2 (Universal KPI &amp; Multi-Column Grid Breakpoints):</strong> Automatically collapses all 4-column and 3-column KPI scorecards into 2 columns on tablets (<code>&lt;= 1024px</code>) and 2x2 compact cards on phones (<code>&lt;= 768px</code>), and collapses split workspace/form grids into 1 column on phones.</li>
+        <li><strong>Layer 3 (Universal Adaptive Data-Table Engine — <code>SigmaResponsiveTableEngine</code> + <code>MutationObserver</code>):</strong> Global script <code>/static/js/sigma_responsive_engine.js</code> automatically binds <code>&lt;thead&gt;&lt;th&gt;</code> headers to <code>&lt;td data-label="..."&gt;</code> across all 28 tables, converting wide tables into 2-column CRM Touch Cards on phones (<code>&lt;= 768px</code>) with a persistent <code>[Cards | Table]</code> switcher (<code>localStorage: sigma_mobile_table_mode</code>) and single-sticky-column momentum scroll on tablets (<code>768px–1024px</code>).</li>
+        <li><strong>Layer 4 (Touch Form Ergonomics &amp; Cross-Device Column Sync):</strong> Enforces <code>font-size: max(16px, 1rem) !important</code> on all form inputs (<code>&lt;= 768px</code>) to prevent iOS Safari auto-zoom, <code>max-height: 92dvh</code> with <code>env(safe-area-inset-bottom)</code> on modals, and PostgreSQL <code>"UserUiPreferences"</code> (Migration 045) cross-device column sync.</li>
+        <li><strong>Layer 5 (Permanent Auto-Injection &amp; CI/CD Regression Gate):</strong> <code>main_app.py</code> <code>@app.after_request</code> automatically injects <code>/static/js/sigma_responsive_engine.js</code> on all HTML responses, and <code>scripts/test_web_performance_rack_14.py</code> (Tests 11–15) verifies all 15 performance and responsive invariants before deployment.</li>
     </ul>
 </body>
 </html>
