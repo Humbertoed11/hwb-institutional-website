@@ -7,7 +7,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-IT-BOOK-001</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">13.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">14.0.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.1.6 (Organizational Knowledge)</span></div>
     </div>
@@ -23,11 +23,11 @@
             <tbody>
                 <tr><td><strong>Document Title</strong></td><td><strong>Building HWB Cleaning with George: An Operator's Manual for Cleaning Services, Marketing Automation, and Systems Architecture</strong></td></tr>
                 <tr><td><strong>Document ID</strong></td><td>HWB-IT-BOOK-001</td></tr>
-                <tr><td><strong>Version</strong></td><td>13.0.0</td></tr>
+                <tr><td><strong>Version</strong></td><td>14.0.0</td></tr>
                 <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
                 <tr><td><strong>Author</strong></td><td>George (Systems Architect)</td></tr>
                 <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
-                <tr><td><strong>Date</strong></td><td>10/19/2026</td></tr>
+                <tr><td><strong>Date</strong></td><td>10/21/2026</td></tr>
                 <tr><td><strong>Department</strong></td><td>IT (Information Technology)</td></tr>
             </tbody>
         </table>
@@ -288,6 +288,30 @@
         </ul>
         </p>
 
+        <h2>Chapter 21: Enterprise IAM Recovery, 4-Stage 1099 &amp; W-2 Encrypted Onboarding Vaults, Universal Input Masking &amp; Tamper-Evident Transaction Receipts (<code>BUG-138</code>–<code>BUG-142</code> / <code>Migrations 046–050</code> / <code>Release v5.5.0</code>)</h2>
+        <p><strong>21.1 Self-Healing IAM Password Recovery &amp; Microsoft Graph 202 Delivery Audit (<code>BUG-138</code> &amp; <code>Migration 046</code>):</strong><br>
+        When remote sales representative Beabe Wiley (<code>Bwiley</code>) attempted to reset her password on <code>/forgot-password</code> by typing her full name instead of her username or email, the legacy lookup failed and Azure production lacked <code>reset_token_hash</code> columns on <code>"Users"</code>. George engineered a self-healing IAM recovery pipeline (<code>blueprints/auth.py</code> and <code>Migration 046</code>):
+        <ul>
+            <li><strong>Multi-Field Identity Lookup &amp; Self-Healing Schema:</strong> <code>/forgot-password</code> now matches <code>LOWER(username)</code>, <code>LOWER(email)</code>, or <code>LOWER(full_name)</code>, automatically repairs missing <code>reset_token_hash</code> and <code>reset_token_expires_at</code> columns if needed, and logs every request, dispatch, and completion to <code>"PasswordResetAuditLedger"</code> with Microsoft Graph HTTP <code>202 Accepted</code> verification.</li>
+        </ul>
+        </p>
+
+        <p><strong>21.2 4-Stage 1099 Subcontractor &amp; W-2 Employee Self-Service Onboarding Portals with AI Document Auto-Extraction &amp; AES-256 PostgreSQL BYTEA Vaults (<code>BUG-139</code>–<code>BUG-141</code> &amp; <code>Migrations 047–049</code>):</strong><br>
+        To eliminate paper chasing and manual data entry for both 1099 trade partners and W-2 cleaning technicians, CEO Humberto Dominguez commissioned end-to-end self-service onboarding portals:
+        <ul>
+            <li><strong>1099 Subcontractor Portal (<code>/onboard/subcontractor/&lt;token&gt;</code> &amp; <code>Migration 047</code>):</strong> Provides a 30-day rolling compliance link with AI/PDF auto-extraction for IRS Form W-9 and ACORD 25 Certificate of Insurance (<code>core/services/subcontractor_doc_extractor.py</code>), storing encrypted documents in PostgreSQL <code>"SubcontractorDocuments"</code> (<code>encrypted_payload BYTEA</code> + SHA-256 integrity hash) and generating locked ReportLab Master Subcontractor Agreement (MSA) and Texas DWC Form-83 PDF certificates upon electronic signature. Includes a Backoffice Manual vs. Auto-Approve Initial Review Gate stored in <code>"SystemSettings"</code> (protected by <code>SAVEPOINT sp_sys_settings</code> in <code>Migration 049</code> / <code>BUG-141</code>).</li>
+            <li><strong>W-2 Employee Self-Service HR Portal (<code>/onboard/employee/&lt;token&gt;</code> &amp; <code>Migration 048</code>):</strong> Mirrors the 4-stage architecture for W-2 employees with AI/PDF auto-extraction for IRS Form W-4, DHS Form I-9, Government Photo ID, and Voided Check / Direct Deposit documents (<code>core/services/employee_doc_extractor.py</code>), storing AES-256 Fernet-encrypted payloads in <code>"EmployeeDocuments"</code> and generating locked ReportLab ISO 9001 Clause 7.2 Job Description &amp; Handbook Acknowledgment PDF certificates.</li>
+        </ul>
+        </p>
+
+        <p><strong>21.3 The 5-Layer Universal Input Masking &amp; Tamper-Evident Transaction Receipt Architecture (<code>BUG-142</code> &amp; <code>Migration 050</code>):</strong><br>
+        During live testing of the 1099 onboarding form, CEO Humberto Dominguez identified two enterprise UX gaps: the Federal Tax ID field lacked a live format mask, and submitting the onboarding form left the input fields open on screen without a clear transaction receipt. George engineered a permanent 5-Layer solution across all 45 HTML templates:
+        <ul>
+            <li><strong>Universal Client-Side Input Masking Engine (<code>/static/js/sigma_input_masks.js</code>):</strong> Auto-injected globally via <code>main_app.py</code> <code>@app.after_request</code> with a self-healing <code>MutationObserver</code>. Enforces live keystroke masks and strict <code>maxlength</code> limits across all EIN (<code>XX-XXXXXXX</code>, <code>maxlength="10"</code>), SSN/ITIN (<code>XXX-XX-XXXX</code>, <code>maxlength="11"</code>), US Phone (<code>(###)-###-####</code>, <code>maxlength="14"</code>), ZIP Code (<code>#####-####</code>, <code>maxlength="10"</code>), 9-digit ABA Routing Number (<code>maxlength="9"</code>), and 2-letter State (<code>maxlength="2"</code>) inputs. Dynamically switches the 1099 Tax ID mask between EIN (<code>XX-XXXXXXX</code>) and SSN (<code>XXX-XX-XXXX</code>) when the user changes their Federal Tax Classification dropdown.</li>
+            <li><strong>Server-Side Sanitizer &amp; Tamper-Evident Transaction Receipt Cards:</strong> Paired with server-side canonical formatters (<code>clean_ein_or_ssn</code>, <code>clean_ssn</code>, <code>clean_routing_number</code> in <code>core/services/sanitizer.py</code>). Upon submitting <code>/onboard/subcontractor/&lt;token&gt;</code> or <code>/onboard/employee/&lt;token&gt;</code> (and automatically on page revisit when already completed), the active form collapses and renders a tamper-evident Transaction Receipt Card (<code>#onboarding-receipt-card</code> / <code>#w2-receipt-card</code>) displaying the deterministic Receipt ID (<code>HWB-1099-000XX-YYYYMMDD</code> / <code>HWB-W2-000XX-YYYYMMDD</code>), UTC timestamp, SHA-256 signature verification, downloadable PDF certificate buttons, and an explicit <em>"Need to Update Info or Upload New COI? Re-Open Form"</em> toggle, certified by <code>20/20</code> passing tests in <code>scripts/test_web_performance_rack_14.py</code>.</li>
+        </ul>
+        </p>
+
         <hr />
         <p style="font-style: italic; text-align: center;">Note: This manual is the official technical guide for HWB Cleaning developer-operators. 100% Alignment verified.</p>
     </div>
@@ -361,6 +385,12 @@
                     <td style="text-align: left;">10/19/2026</td>
                     <td style="text-align: left;">George (Systems Architect) &amp; George Bytes</td>
                     <td style="text-align: left;">Added Chapter 20: Sub-150ms CQRS Backoffice Performance &amp; The Permanent 5-Layer Enterprise Phone, Tablet &amp; Adaptive Data-Table Architecture (HWB-QMS-11.14 v1.2.0 / BUG-132–BUG-137 / Migration 045). Documented 300s async telemetry caching, active-view CQRS SQL isolation, Server-Side Jinja DOM pruning (&lt;150 KB HTML), UserUiPreferences cross-device column sync, SigmaResponsiveTableEngine with MutationObserver, Phone 2-column CRM Touch Cards with [Cards | Table] switcher, iOS 16px auto-zoom prevention, 92dvh virtual-keyboard centering, QMS off-canvas drawer, and main_app.py @app.after_request permanent auto-injection (commit 75e0f56). Approved by Humberto Dominguez, CEO.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">14.0.0</td>
+                    <td style="text-align: left;">10/21/2026</td>
+                    <td style="text-align: left;">George (Systems Architect) &amp; George Bytes</td>
+                    <td style="text-align: left;">Added Chapter 21: Enterprise IAM Recovery, 4-Stage 1099 &amp; W-2 Encrypted Onboarding Vaults, Universal Input Masking &amp; Tamper-Evident Transaction Receipts (BUG-138–BUG-142 / Migrations 046–050 / Release v5.5.0). Documented multi-field password recovery with PasswordResetAuditLedger, 1099 &amp; W-2 self-service onboarding portals with AI/PDF W-9/COI/W-4/I-9/ID/Voided Check auto-extraction, AES-256 BYTEA document vaults, locked ReportLab MSA/DWC-83/Job Description PDF certificates, Savepoint transaction isolation, global sigma_input_masks.js auto-injection, and tamper-evident Transaction Receipt Cards (commit 4933eb2). Approved by Humberto Dominguez, CEO.</td>
                 </tr>
             </tbody>
         </table>

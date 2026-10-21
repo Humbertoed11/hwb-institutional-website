@@ -2,7 +2,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-7.5-BO-CRM</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">4.7.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">4.8.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5 &amp; 8.1 (Operational Planning)</span></div>
     </div>
@@ -26,7 +26,7 @@
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>Version</strong></td>
-                    <td style="text-align: left;">4.7.0</td>
+                    <td style="text-align: left;">4.8.0</td>
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>Status</strong></td>
@@ -42,7 +42,7 @@
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>Effective Date</strong></td>
-                    <td style="text-align: left;">10/19/2026</td>
+                    <td style="text-align: left;">10/21/2026</td>
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>ISO Standards</strong></td>
@@ -100,6 +100,8 @@
             <li><strong>Strict Sales Role Territory Isolation &amp; Dynamic Calling Scripts (BUG-125–BUG-130 &amp; Migration 042):</strong> Users with the <code>Sales</code> role only view records explicitly assigned to their user ID across Leads (<code>owner_id</code>), Calling Workstation (<code>/sales-desk</code>), Active Clients (<code>assigned_rep_id</code>), and Commercial Construction Bids (<code>assigned_rep_id</code>), with dynamic <code>{Caller}</code> name substitution across all calling scripts.</li>
             <li><strong>Sub-150ms CQRS Backoffice Architecture &amp; Cross-Device Column Preferences (HWB-QMS-11.14 v1.1.0 &amp; Migration 045 / BUG-133–BUG-134):</strong> Enforces active-view SQL gating, 300-second background telemetry caching, composite covering indexes (<code>idx_global_activities_parent_lookup</code> and <code>idx_campaign_recipients_lead_lookup</code>), and Server-Side Jinja DOM Pruning so every backoffice view loads in <code>23–78 ms</code> warm with a <code>&lt;250 KB</code> HTML payload. Column visibility preferences sync across phones, tablets, and desktops via PostgreSQL <code>"UserUiPreferences"</code>.</li>
             <li><strong>Permanent 5-Layer Universal Phone, Tablet &amp; Adaptive Data-Table Engine (HWB-QMS-11.14 v1.2.0 / BUG-135–BUG-137):</strong> Global engine (<code>/static/js/sigma_responsive_engine.js</code> auto-injected by <code>main_app.py</code> <code>@app.after_request</code> across all HTML pages) enforces zero horizontal drift, single-bar phone headers, touch-swipe navigation ribbons (<code>.sigma-nav-ribbon</code>), automatic 2x2 KPI scorecard collapse on phones, and <code>SigmaResponsiveTableEngine</code> + <code>MutationObserver</code> converting all 28 tables into 2-column CRM Touch Cards on phones (<code>&lt;= 768px</code>) with a persistent <code>[Cards | Table]</code> switcher and single-sticky-column momentum scroll on tablets (<code>768px–1024px</code>).</li>
+            <li><strong>4-Stage 1099 Subcontractor &amp; W-2 Employee Self-Service Onboarding Portals &amp; AES-256 BYTEA Document Vaults (BUG-139–BUG-141 / Migrations 047–049):</strong> Dedicated self-service portals (<code>/onboard/subcontractor/&lt;token&gt;</code> and <code>/onboard/employee/&lt;token&gt;</code>) with AI/PDF auto-extraction for IRS Form W-9, ACORD 25 COI, Form W-4, Form I-9, Government Photo ID, and Voided Check documents, AES-256 Fernet-encrypted PostgreSQL <code>BYTEA</code> storage (<code>"SubcontractorDocuments"</code> and <code>"EmployeeDocuments"</code>), locked ReportLab PDF certificate generation (MSA, TX DWC-83, and ISO 9001 Clause 7.2 Job Descriptions), and a Manual vs. Auto-Approve Initial Review Gate in <code>"SystemSettings"</code> (protected by <code>SAVEPOINT sp_sys_settings</code>).</li>
+            <li><strong>5-Layer Universal Input Masking &amp; Tamper-Evident Transaction Receipt Cards (BUG-142 / Migration 050):</strong> Global client-side masking engine (<code>/static/js/sigma_input_masks.js</code> auto-injected via <code>main_app.py</code> <code>@app.after_request</code>) enforces live formatting and strict character ceilings across all EIN (<code>XX-XXXXXXX</code>), SSN/ITIN (<code>XXX-XX-XXXX</code>), Phone (<code>(###)-###-####</code>), ZIP (<code>#####-####</code>), 9-digit ABA Routing, and 2-letter State fields (with dynamic EIN/SSN switching on 1099 tax classification changes) paired with server-side sanitization in <code>core/services/sanitizer.py</code> and Tamper-Evident Transaction Receipt Cards (<code>#onboarding-receipt-card</code> / <code>#w2-receipt-card</code>) that collapse completed onboarding forms and prevent accidental double submissions.</li>
         </ol>
 
         <h2>5.0 Employee Master Profile &amp; PII Vault Security (SEC-001)</h2>
@@ -136,6 +138,12 @@
                 </tr>
             </thead>
             <tbody>
+                <tr>
+                    <td style="text-align: left;">4.8.0</td>
+                    <td style="text-align: left;">10/21/2026</td>
+                    <td style="text-align: left;">George (Systems Architect)</td>
+                    <td style="text-align: left;">Deployed Self-Healing IAM Password Recovery (BUG-138 / Migration 046), 4-Stage 1099 Subcontractor &amp; W-2 Employee Self-Service Onboarding Portals with AI/PDF Document Auto-Extraction, AES-256 PostgreSQL BYTEA Document Vaults, and Locked ReportLab PDF Certificates (BUG-139–BUG-141 / Migrations 047–049), and the 5-Layer Universal Input Masking &amp; Tamper-Evident Transaction Receipt Architecture (BUG-142 / Migration 050 / sigma_input_masks.js). Approved by Humberto Dominguez, CEO.</td>
+                </tr>
                 <tr>
                     <td style="text-align: left;">4.7.0</td>
                     <td style="text-align: left;">10/19/2026</td>

@@ -2,7 +2,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-7.2</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.2.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.2 (Competence) &amp; 7.5 (PII Vault)</span></div>
     </div>
@@ -26,7 +26,7 @@
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>Version</strong></td>
-                    <td style="text-align: left;">3.0.0</td>
+                    <td style="text-align: left;">3.2.0</td>
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>Status</strong></td>
@@ -42,11 +42,11 @@
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>Date</strong></td>
-                    <td style="text-align: left;">09/21/2026</td>
+                    <td style="text-align: left;">10/21/2026</td>
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>ISO Standards</strong></td>
-                    <td style="text-align: left;">ISO 9001:2015 Clause 7.2 &amp; ISO 27001:2022 / SOC 2 Type II</td>
+                    <td style="text-align: left;">ISO 9001:2026 (ISO 9001:2015+Amd 1:2024) Clause 7.2 &amp; ISO/IEC 27001:2022+Amd 1:2024 / SOC 2 Type II</td>
                 </tr>
             </tbody>
         </table>
@@ -55,25 +55,40 @@
         <h1>Standard Operating Procedure: <strong>Employee Onboarding &amp; Sensitive PII Vault Protocol</strong></h1>
 
         <h2>1.0 Purpose</h2>
-        <p>This procedure establishes the clinical standard for recruiting, screening, onboarding, and securing the personal data of all workforce personnel at HWB Cleaning Services LLC. It guarantees that technicians are verified, trained, badged, and equipped from day one, while protecting their sensitive identification and banking data under Texas Bus. &amp; Com. Code § 521.053, ISO 27001, and SOC 2 Type II regulations.</p>
+        <p>This procedure establishes the clinical standard for recruiting, screening, deduplicating, onboarding, and securing the personal data of all workforce personnel at HWB Cleaning Services LLC. It guarantees that technicians and trade partners are verified, trained, badged, and equipped from day one without duplicate database records, while protecting their sensitive identification and banking data under Texas Bus. &amp; Com. Code § 521.053, ISO 27001, and SOC 2 Type II regulations.</p>
 
         <h2>2.0 Scope</h2>
         <p>Applies to all W-2 commercial cleaning technicians, 1099 subcontractor cleaning crews, field supervisors, and administrative personnel managed within the SigmaFidelity™ Operations Hub.</p>
 
-        <h2>3.0 Public Workforce Intake Portal (/work-with-us)</h2>
-        <p>Public recruitment is routed through the central recruitment portal (<code>http://mop.test:5000/work-with-us</code>):</p>
+        <h2>3.0 Public Workforce Intake Portal (/work-with-us) &amp; Smart Deduplication</h2>
+        <p>Public recruitment is routed through the central recruitment portal (<code>https://hwbcleaning.com/work-with-us</code>):</p>
         <ol>
             <li><strong>Two-Track Intake:</strong> Candidates select either Track 1 (W-2 Commercial Cleaning Technician) or Track 2 (1099 Subcontractor Partner Crew). The portal supports direct URL deep-linking (<code>?track=subcontractor</code>).</li>
             <li><strong>Phone Number Masking (PROC-002):</strong> All applicant telephone numbers must be validated and automatically masked as <code>(###)-###-####</code> on every keystroke. Arbitrary characters, incomplete 10-digit strings, and unformatted entries are blocked before submission.</li>
             <li><strong>Zero Plaintext Collection at Intake:</strong> Public application forms strictly prohibit requesting Social Security Numbers, ITINs, or bank account numbers during initial intake. Sensitive PII is collected only after a formal conditional offer is extended.</li>
-            <li><strong>Poka-Yoke Error Handling:</strong> Native browser <code>alert()</code> popups are eradicated. All input failures produce styled, accessible error banners (<code>#tech-error-box</code> and <code>#sub-error-box</code>) with autofocus on the first invalid field.</li>
+            <li><strong>Error Handling:</strong> Native browser <code>alert()</code> popups are eradicated. All input failures produce styled, accessible error banners (<code>#tech-error-box</code> and <code>#sub-error-box</code>) with autofocus on the first invalid field.</li>
+            <li><strong>5-Pillar Enterprise Deduplication &amp; Smart Merge (BUG-122):</strong>
+                <ul>
+                    <li>When a W-2 applicant submits <code>POST /api/v1/workforce/apply</code> or a 1099 subcontractor submits <code>POST /api/v1/workforce/subcontractor</code>, the gateway checks existing records by 10-digit phone number, lowercase email address, and normalized company name.</li>
+                    <li>If an existing record is found, the system preserves the original record ID and registration date, merges any updated trade specialties, crew size, role/shift preferences, or contact details, and returns <code>status: "already_registered"</code>.</li>
+                    <li>The frontend renders the privacy-safe blue status card (<code>#tech-already-registered-message</code> or <code>#sub-already-registered-message</code>) showing the registrant's Reference ID (<code>APP-#00XX</code> or <code>SUB-#00XX</code>) and original registration date, while sending an updated confirmation receipt to their email inbox and suppressing duplicate internal staff alerts.</li>
+                </ul>
+            </li>
         </ol>
 
         <h2>4.0 Candidate Pool (ATS) &amp; Onboarding Workflow</h2>
         <ol>
-            <li><strong>Intake Ingestion:</strong> Completed applications populate the <strong>Candidate Pool (ATS)</strong> subtab in the Backoffice Operations Hub (<code>/admin/operations?view=workforce&amp;subtab=candidates</code>).</li>
+            <li><strong>Intake Ingestion:</strong> Completed applications populate the <strong>Candidate Pool (ATS)</strong> subtab in the Backoffice Operations Hub (<code>/admin/operations?view=workforce&amp;subtab=candidates</code>), while 1099 trade partners populate the <strong>Subcontractors</strong> registry (<code>10</code> verified partners synchronized across Azure and Local PostgreSQL 16.15).</li>
             <li><strong>Vetting &amp; Background Clearance:</strong> Before facility deployment, candidates undergo DPS criminal history checks, I-9 employment verification, and reference validation. DPS clearance dates and I-9 completion dates are logged in the employee profile.</li>
-            <li><strong>Promotion to Personnel Roster:</strong> Clicking the <strong>"+ Onboard"</strong> action button opens the hiring modal. Assigning an hourly pay rate, facility assignment (e.g., Collin College Frisco Campus, NTTA), and primary role automatically creates a unique employee number (<code>HWB-EMP-####</code>) in the <code>"Employees"</code> table and updates the applicant record to <code>Hired</code>.</li>
+            <li><strong>Promotion to Personnel Roster &amp; Badge Preservation:</strong> Clicking the <strong>"+ Onboard"</strong> action button opens the hiring modal (<code>POST /api/v1/hr/onboard</code>). The backend checks <code>"Employees"</code> by <code>applicant_id</code>, 10-digit phone, and email before inserting. First-time hires receive a unique employee badge (<code>HWB-EMP-####</code>) and <code>Hired</code> status; repeat onboarding calls update the existing employee's pay rate, role, and facility assignment without creating a duplicate employee row.</li>
+            <li><strong>SigmaAcademy™ Training Assignment Deduplication:</strong> Assigning safety courses or packages via <code>POST /api/v1/academy/assign</code> checks <code>"AcademyEnrollments"</code> by <code>course_id</code> and worker identifier, reusing the existing enrollment and <code>magic_token</code> rather than generating duplicate training rows.</li>
+            <li><strong>4-Stage Self-Service 1099 &amp; W-2 Onboarding Portals, AI Document Auto-Extraction &amp; Tamper-Evident Receipts (BUG-139–BUG-142 / Migrations 047–050):</strong>
+                <ul>
+                    <li><strong>1099 Subcontractor Self-Service Portal (<code>/onboard/subcontractor/&lt;token&gt;</code>):</strong> Issued automatically (in Auto-Approve mode) or upon Backoffice review (in Manual Review Gate mode via <code>SystemSettings.subcontractor_onboarding_mode</code>). Subcontractors upload IRS Form W-9 and ACORD 25 Certificate of Insurance (auto-extracted via <code>core/services/subcontractor_doc_extractor.py</code> into PostgreSQL <code>"SubcontractorDocuments"</code> as AES-256 <code>encrypted_payload BYTEA</code> + SHA-256 hash) and electronically sign the Master Subcontractor Agreement (MSA) and Texas DWC Form-83 waiver, generating locked ReportLab PDF certificates.</li>
+                    <li><strong>W-2 Employee Self-Service HR Portal (<code>/onboard/employee/&lt;token&gt;</code>):</strong> Hired technicians upload IRS Form W-4, DHS Form I-9, Government Photo ID, and a Voided Check / Direct Deposit slip (auto-extracted via <code>core/services/employee_doc_extractor.py</code> into PostgreSQL <code>"EmployeeDocuments"</code> as AES-256 <code>encrypted_payload BYTEA</code> + SHA-256 hash) and electronically sign their ISO 9001 Clause 7.2 Job Description &amp; Handbook Acknowledgment, generating a locked ReportLab PDF certificate.</li>
+                    <li><strong>5-Layer Universal Input Masking &amp; Tamper-Evident Transaction Receipt Cards:</strong> Global client-side masking engine (<code>/static/js/sigma_input_masks.js</code>) enforces live formatting across all EIN (<code>XX-XXXXXXX</code>, <code>maxlength="10"</code>), SSN/ITIN (<code>XXX-XX-XXXX</code>, <code>maxlength="11"</code>), Phone (<code>(###)-###-####</code>, <code>maxlength="14"</code>), ZIP (<code>#####-####</code>, <code>maxlength="10"</code>), 9-digit ABA Routing (<code>maxlength="9"</code>), and 2-letter State (<code>maxlength="2"</code>) fields (with dynamic EIN/SSN switching on 1099 tax classification changes). Upon form submission or page revisit, the active form collapses and displays a Tamper-Evident Transaction Receipt Card (<code>#onboarding-receipt-card</code> / <code>#w2-receipt-card</code>) showing the Receipt ID (<code>HWB-1099-000XX-YYYYMMDD</code> / <code>HWB-W2-000XX-YYYYMMDD</code>), SHA-256 signature verification, downloadable PDF certificates, and a controlled <em>"Re-Open Form"</em> toggle.</li>
+                </ul>
+            </li>
         </ol>
 
         <h2>5.0 Form W-4, Banking &amp; The Sensitive PII Vault Protocol (SEC-001)</h2>
@@ -109,7 +124,7 @@
             </tbody>
         </table>
 
-        <h2>6.0 Immutable Audit Telemetry &amp; Access Controls</h2>
+        <h2>6.0 Immutable Audit Logging &amp; Access Controls</h2>
         <ol>
             <li><strong>Audit Logging:</strong> Every unmasking of an employee's Social Security Number is logged to the <code>"GlobalActivities"</code> table with accessor user ID, username, employee ID, timestamp, and client IP address.</li>
             <li><strong>Unauthorized Access Quarantine:</strong> If an unauthorized user (such as Field Sales) attempts to access sensitive identification endpoints (<code>POST /api/v1/hr/employees/&lt;id&gt;/reveal-ssn</code>), the gateway rejects the request with HTTP 403 Forbidden and automatically generates a <code>SECURITY_VIOLATION</code> event in the security ledger.</li>
@@ -119,10 +134,10 @@
         <h2>7.0 Verification (Zero-Defect Check)</h2>
         <ul>
             <li>Employee file contains signed Form W-4, verified I-9, and state ID expiration date.</li>
-            <li>Social Security Number displays exclusively as <code>***-**-####</code> upon loading the dossier.</li>
+            <li>Social Security Number displays exclusively as <code>***-**-####</code> upon loading the employee profile.</li>
             <li>Direct deposit account displays exclusively as <code>••••••••####</code>.</li>
             <li>Clicking "Reveal" records a verifiable entry in <code>"GlobalActivities"</code>.</li>
-            <li>Exported payroll summaries contain zero plaintext Social Security or bank account numbers.</li>
+            <li>Repeat submissions to <code>/api/v1/workforce/apply</code>, <code>/api/v1/workforce/subcontractor</code>, <code>/api/v1/hr/onboard</code>, and <code>/api/v1/academy/assign</code> return <code>status: "already_registered"</code> and merge updates with zero duplicate rows.</li>
         </ul>
 
         <hr />
@@ -138,6 +153,18 @@
             </thead>
             <tbody>
                 <tr>
+                    <td style="text-align: left;">3.2.0</td>
+                    <td style="text-align: left;">10/21/2026</td>
+                    <td style="text-align: left;">George (Systems Architect)</td>
+                    <td style="text-align: left;">Deployed 4-Stage Self-Service 1099 Subcontractor (/onboard/subcontractor/&lt;token&gt;) and W-2 Employee (/onboard/employee/&lt;token&gt;) Onboarding Portals with AI/PDF Auto-Extraction (W-9, COI, W-4, I-9, Photo ID, Voided Check), AES-256 PostgreSQL BYTEA Document Vaults (SubcontractorDocuments &amp; EmployeeDocuments), Locked ReportLab PDF Certificates (MSA, TX DWC-83, ISO 9001 Clause 7.2 Job Descriptions), Universal Input Masking (sigma_input_masks.js), and Tamper-Evident Transaction Receipt Cards (BUG-139–BUG-142 / Migrations 047–050). Approved by Humberto Dominguez, CEO.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">3.1.0</td>
+                    <td style="text-align: left;">10/17/2026</td>
+                    <td style="text-align: left;">George (Systems Architect)</td>
+                    <td style="text-align: left;">Deployed 5-Pillar Enterprise Deduplication &amp; Smart Merge Engine (BUG-122) across public W-2 technician applications, 1099 subcontractor registrations, HR employee onboarding, and SigmaAcademy™ course assignments. Added automated Reference ID email receipts (APP-#00XX / SUB-#00XX), privacy-safe "Already Registered — Profile Updated" status banners on /work-with-us, and Live Azure SubcontractorPartners deduplication (10 unique partners synchronized to PostgreSQL 16.15). Approved by Humberto Dominguez, CEO.</td>
+                </tr>
+                <tr>
                     <td style="text-align: left;">3.0.0</td>
                     <td style="text-align: left;">09/21/2026</td>
                     <td style="text-align: left;">George (Systems Architect)</td>
@@ -147,7 +174,7 @@
                     <td style="text-align: left;">2.0.0</td>
                     <td style="text-align: left;">05/21/2026</td>
                     <td style="text-align: left;">George</td>
-                    <td style="text-align: left;">Total modernization. Added 2026 mandates and Tier 6 telemetry.</td>
+                    <td style="text-align: left;">Total modernization. Added 2026 mandates and Tier 6 logging.</td>
                 </tr>
                 <tr>
                     <td style="text-align: left;">1.0.0</td>
