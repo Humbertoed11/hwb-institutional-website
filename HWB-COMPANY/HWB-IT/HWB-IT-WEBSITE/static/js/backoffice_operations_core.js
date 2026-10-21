@@ -4762,9 +4762,9 @@
                 body: JSON.stringify(payload)
             });
             const data = await res.json();
-            if (data.status === 'success') {
+            if (data.status === 'success' || data.status === 'already_registered') {
                 closeModal('modal-onboard-candidate');
-                showToast(`Employee ${payload.first_name} ${payload.last_name} (${data.employee_number}) onboarded!`, 'success');
+                showToast(data.message || `Employee ${payload.first_name} ${payload.last_name} (${data.employee_number}) onboarded!`, 'success');
                 setTimeout(() => window.location.reload(), 700);
             } else {
                 showToast('Onboarding failed: ' + (data.message || 'Unknown error'), 'error');
@@ -5671,9 +5671,9 @@
                 body: JSON.stringify(payload)
             });
             const data = await res.json();
-            if (data.status === 'success') {
+            if (data.status === 'success' || data.status === 'already_registered') {
                 closeModal('modal-subcontractor-onboard');
-                showToast(`Trade Partner '${payload.company_name}' successfully onboarded!`, 'success');
+                showToast(data.message || `Trade Partner '${payload.company_name}' successfully onboarded!`, 'success');
                 setTimeout(() => window.location.reload(), 700);
             } else {
                 showToast('Onboarding failed: ' + (data.message || 'Unknown error'), 'error');

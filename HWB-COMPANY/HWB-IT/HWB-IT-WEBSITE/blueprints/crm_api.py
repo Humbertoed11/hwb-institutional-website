@@ -31,7 +31,7 @@ from core.security import (
     log_sensitive_access,
     log_security_violation
 )
-from core.services.security_logger import log_security_event
+from core.services.security_logger import log_security_event, extract_client_ip
 
 crm_api_bp = Blueprint('crm_api', __name__)
 
@@ -1579,6 +1579,10 @@ def api_workforce_apply():
     """Public submission gate for cleaning technician job applicants."""
     data = request.get_json() or request.form.to_dict() or {}
     full_name = (data.get('full_name') or '').strip()
+    if not full_name:
+        fn = (data.get('first_name') or '').strip()
+        ln = (data.get('last_name') or '').strip()
+        full_name = f"{fn} {ln}".strip()
     raw_phone = (data.get('phone') or '').strip()
 
     if not full_name or not raw_phone:
@@ -2135,6 +2139,8 @@ def api_get_or_create_subcontractors():
     """Retrieve subcontractor records with optional filtering, or onboard a new trade partner."""
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
+        from database.schema_engine import ensure_subcontractor_onboarding_schema
+        ensure_subcontractor_onboarding_schema(conn)
         with conn.cursor() as cur:
             if request.method == 'POST':
                 data = request.get_json() or {}
@@ -3038,6 +3044,23 @@ def api_hr_onboard_candidate():
             emp_number = f"HWB-EMP-{next_id}"
             new_token = f"emp_{next_id}_{generate_employee_onboarding_token()}"
 
+            raw_ssn_onboard = (
+                data.get('social_security_number')
+                or data.get('ssn')
+                or data.get('ssn_plain')
+                or ''
+            ).strip()
+            ssn_enc_onboard = None
+            ssn_l4_onboard = None
+            if raw_ssn_onboard:
+                digits_ssn = re.sub(r'\D', '', raw_ssn_onboard)
+                if len(digits_ssn) == 9:
+                    ssn_enc_onboard = encrypt_pii(f"{digits_ssn[:3]}-{digits_ssn[3:5]}-{digits_ssn[5:]}")
+                    ssn_l4_onboard = digits_ssn[-4:]
+                elif len(digits_ssn) >= 4:
+                    ssn_enc_onboard = encrypt_pii(raw_ssn_onboard)
+                    ssn_l4_onboard = digits_ssn[-4:]
+
             cur.execute('''
                 INSERT INTO "Employees" (
                     employee_number, applicant_id, first_name, last_name, phone, email,
@@ -3045,14 +3068,16 @@ def api_hr_onboard_candidate():
                     pay_rate_hourly, overtime_rate_hourly, pay_frequency, primary_language,
                     emergency_contact_name, emergency_contact_phone, address_city, address_state,
                     assigned_customer_id, weekly_hours_allocated, notes,
-                    job_position_id, onboarding_token, onboarding_token_expires_at, onboarding_status
+                    job_position_id, onboarding_token, onboarding_token_expires_at, onboarding_status,
+                    ssn_encrypted, ssn_last_four
                 ) VALUES (
                     %s, %s, %s, %s, %s, %s,
                     %s, %s, %s, %s,
                     %s, %s, %s, %s,
                     %s, %s, %s, %s,
                     %s, %s, %s,
-                    %s, %s, CURRENT_TIMESTAMP + INTERVAL '30 days', 'Pending Onboarding'
+                    %s, %s, CURRENT_TIMESTAMP + INTERVAL '30 days', 'Pending Onboarding',
+                    %s, %s
                 ) RETURNING id, employee_number;
             ''', (
                 emp_number, applicant_id, first_name, last_name, phone, clean_emp_email,
@@ -3060,7 +3085,8 @@ def api_hr_onboard_candidate():
                 pay_rate, overtime_rate, pay_frequency, primary_language,
                 emergency_name, emergency_phone, city, state,
                 assigned_customer_id, weekly_hours, notes,
-                job_position_id, new_token
+                job_position_id, new_token,
+                ssn_enc_onboard, ssn_l4_onboard
             ))
             new_emp = cur.fetchone()
 
@@ -3095,6 +3121,8 @@ def api_get_employees():
 
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
+        from database.schema_engine import ensure_employee_onboarding_schema
+        ensure_employee_onboarding_schema(conn)
         with conn.cursor() as cur:
             query = '''
                 SELECT e.*, c.company_name as assigned_facility_name,
@@ -3149,6 +3177,8 @@ def api_manage_employee(id):
     """View, update, or terminate an employee record."""
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
+        from database.schema_engine import ensure_employee_onboarding_schema
+        ensure_employee_onboarding_schema(conn)
         with conn.cursor() as cur:
             if request.method == 'GET':
                 cur.execute('''

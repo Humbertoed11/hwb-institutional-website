@@ -9,9 +9,10 @@ import re
 import json
 import urllib.parse
 import requests
-from datetime import datetime
+from datetime import datetime, datetime as dt_cls, timezone
 from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, current_app, send_from_directory, jsonify
 from werkzeug.exceptions import HTTPException
+from werkzeug.utils import secure_filename
 from flask_login import login_required, current_user
 from core.services.database import get_db
 from core.services.sanitizer import clean_phone, clean_email, clean_city, extract_phone_digits
@@ -1900,14 +1901,11 @@ def api_employee_portal_upload_doc(token: str):
         extract_employee_document_auto,
     )
 
-    if 'document' not in request.files:
+    f_obj = request.files.get('document') or request.files.get('file')
+    if not f_obj or not f_obj.filename:
         return jsonify({'status': 'error', 'message': 'No document file provided.'}), 400
 
-    f_obj = request.files['document']
-    if not f_obj or not f_obj.filename:
-        return jsonify({'status': 'error', 'message': 'Empty file selected.'}), 400
-
-    doc_type = (request.form.get('document_type') or 'Form W-4').strip()
+    doc_type = (request.form.get('document_type') or request.form.get('doc_type') or 'Form W-4').strip()
     raw_bytes = f_obj.read()
     if not raw_bytes:
         return jsonify({'status': 'error', 'message': 'Uploaded file is empty.'}), 400
@@ -1954,6 +1952,7 @@ def api_employee_portal_upload_doc(token: str):
                 'version_number': vault_receipt['version_number'],
                 'sha256_checksum': vault_receipt['sha256_checksum'],
                 'extracted_fields': safe_extracted,
+                'extracted': safe_extracted,
                 'auto_populated_fields': updated_fields,
                 'message': f"{doc_type} encrypted in Vault (v{vault_receipt['version_number']})."
             })
@@ -2052,7 +2051,7 @@ def api_employee_portal_complete(token: str):
                 cur.execute('SELECT * FROM "JobPositions" WHERE id = %s;', (emp['job_position_id'],))
                 job_pos = cur.fetchone()
 
-            now_iso = dt_cls.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+            now_iso = dt_cls.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
             sig_seed = f"{emp_id}:{emp.get('employee_number')}:{signer_name}:{now_iso}:{signer_ip}"
             sig_hash = hashlib.sha256(sig_seed.encode('utf-8')).hexdigest()
 

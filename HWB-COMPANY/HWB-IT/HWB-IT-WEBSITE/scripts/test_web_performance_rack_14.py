@@ -781,6 +781,362 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
         finally:
             conn.close()
 
+    def test_19_comprehensive_all_w2_and_1099_forms_regression(self) -> None:
+        """
+        Comprehensive end-to-end HTTP form regression suite verifying every public and
+        backoffice W-2 and 1099 form endpoint (BUG-141 / v5.4.9).
+        """
+        import io
+        import uuid
+        from unittest.mock import patch
+
+        uid = uuid.uuid4().hex[:8]
+        p_suf_1 = f"{int(uid[:4], 16) % 8000 + 1000:04d}"
+        p_suf_2 = f"{int(uid[4:], 16) % 8000 + 1000:04d}"
+        if p_suf_2 == p_suf_1:
+            p_suf_2 = f"{(int(p_suf_1) + 1) % 8000 + 1000:04d}"
+        sub_phone_1 = f"214-599-{p_suf_1}"
+        sub_phone_2 = f"972-599-{p_suf_2}"
+        w2_phone_1 = f"469-599-{p_suf_1}"
+        created_sub_ids = []
+        created_app_ids = []
+        created_emp_ids = []
+
+        with self.client.session_transaction() as sess:
+            sess["_user_id"] = "1"
+            sess["_fresh"] = True
+
+        conn = get_db(self.db_url)
+        try:
+            with (
+                patch("core.services.notification_service.dispatch_subcontractor_notifications", return_value=True),
+                patch("core.services.notification_service.dispatch_applicant_notifications", return_value=True),
+                patch("core.services.notification_service.send_subcontractor_onboarding_invite_email", return_value=(True, "mocked")),
+                patch("core.services.notification_service.send_subcontractor_onboarding_completed_notifications", return_value=True),
+                patch("core.services.notification_service.send_subcontractor_approved_email", return_value=(True, "mocked")),
+                patch("core.services.email_service.transmit_email", return_value=(True, "mocked")),
+                patch("blueprints.crm_api.transmit_email", return_value=(True, "mocked")),
+            ):
+                # =========================================================================
+                # PART A: ALL 1099 SUBCONTRACTOR FORMS & PORTAL ENDPOINTS
+                # =========================================================================
+                # 1. Public 1099 Subcontractor Network Form (POST /api/v1/workforce/subcontractor)
+                sub_email = f"reg.sub.{uid}@example.com"
+                r_pub_1099 = self.client.post(
+                    "/api/v1/workforce/subcontractor",
+                    json={
+                        "company_name": f"Regression 1099 Crew {uid} LLC",
+                        "contact_name": "Marco Vance",
+                        "email": sub_email,
+                        "phone": sub_phone_1,
+                        "city": "Dallas",
+                        "specialties": "Post-Construction Cleaning, Floor Strip & Wax",
+                        "crew_size": 7,
+                        "coi_status": "Self-Reported",
+                        "hourly_rate_range": "$25 - $32/hr",
+                        "dwc83_agreed": "true",
+                        "sub_no_guarantee_agreed": "true",
+                    },
+                )
+                self.assertEqual(r_pub_1099.status_code, 201, r_pub_1099.get_data(as_text=True))
+                d_pub_1099 = r_pub_1099.get_json()
+                self.assertEqual(d_pub_1099["status"], "success")
+                sub_id_1 = d_pub_1099["partner_id"]
+                created_sub_ids.append(sub_id_1)
+
+                # Repeat submission -> smart merge
+                r_pub_1099_2 = self.client.post(
+                    "/api/v1/workforce/subcontractor",
+                    json={
+                        "company_name": f"Regression 1099 Crew {uid} LLC",
+                        "contact_name": "Marco Vance",
+                        "email": sub_email,
+                        "phone": sub_phone_1,
+                        "city": "Dallas",
+                        "specialties": "Commercial Carpet Extraction",
+                        "crew_size": 10,
+                    },
+                )
+                self.assertEqual(r_pub_1099_2.status_code, 200)
+                self.assertTrue(r_pub_1099_2.get_json().get("is_duplicate"))
+
+                # 2. Backoffice 1099 Manual Add Modal & Edit Modal & Review Gate
+                r_gate = self.client.get("/api/v1/workforce/subcontractors/review-mode")
+                self.assertEqual(r_gate.status_code, 200)
+
+                r_bo_1099 = self.client.post(
+                    "/api/v1/workforce/subcontractors",
+                    json={
+                        "company_name": f"Backoffice 1099 Partner {uid} Inc",
+                        "contact_name": "Elena Rostova",
+                        "email": f"bo.sub.{uid}@example.com",
+                        "phone": sub_phone_2,
+                        "city": "Plano",
+                        "specialties": "Floor Strip & Wax",
+                        "crew_size": 5,
+                    },
+                )
+                self.assertEqual(r_bo_1099.status_code, 201, r_bo_1099.get_data(as_text=True))
+                sub_id_2 = r_bo_1099.get_json()["subcontractor_id"]
+                created_sub_ids.append(sub_id_2)
+
+                r_patch_1099 = self.client.patch(
+                    f"/api/v1/workforce/subcontractors/{sub_id_1}",
+                    json={
+                        "city": "Irving",
+                        "crew_size": 12,
+                        "coi_expiration_date": "2027-12-31",
+                    },
+                )
+                self.assertEqual(r_patch_1099.status_code, 200)
+
+                # 3. Backoffice 1099 Send Onboarding Link, Document Upload & Portal Flow
+                r_send_1099 = self.client.post(f"/api/v1/workforce/subcontractors/{sub_id_1}/send-onboarding")
+                self.assertEqual(r_send_1099.status_code, 200)
+                sub_token = r_send_1099.get_json()["onboarding_token"]
+
+                r_portal_1099 = self.client.get(f"/onboard/subcontractor/{sub_token}")
+                self.assertEqual(r_portal_1099.status_code, 200)
+
+                w9_bytes = (
+                    f"%PDF-1.4\n1. Name of entity/individual: Marco Vance\n"
+                    f"2. Business name: Regression 1099 Crew {uid} LLC\n"
+                    "3a. Federal tax classification: Limited Liability Company (LLC)\n"
+                    "5. Address: 1500 Marilla St\n6. City, state, and ZIP: Dallas, TX 75201\n"
+                    "Employer Identification Number: 84-9914821\n"
+                ).encode()
+                coi_bytes = (
+                    b"%PDF-1.4\nACORD CERTIFICATE OF LIABILITY INSURANCE\n"
+                    b"INSURER A: Next Insurance US Company\n"
+                    b"COMMERCIAL GENERAL LIABILITY\n"
+                    b"Policy Number: GL-88442211\n"
+                    b"Policy Eff: 01/01/2026 Policy Exp: 12/31/2027\n"
+                    b"EACH OCCURRENCE: $1,000,000\n"
+                )
+
+                r_ext_1099 = self.client.post(
+                    f"/onboard/subcontractor/{sub_token}/extract-document",
+                    data={"doc_type": "w9", "file": (io.BytesIO(w9_bytes), "w9.pdf")},
+                    content_type="multipart/form-data",
+                )
+                self.assertEqual(r_ext_1099.status_code, 200, r_ext_1099.get_data(as_text=True))
+                self.assertEqual(r_ext_1099.get_json()["extracted"]["ein_last4"], "4821")
+
+                r_sub_portal = self.client.post(
+                    f"/onboard/subcontractor/{sub_token}/submit",
+                    data={
+                        "company_name": f"Regression 1099 Crew {uid} LLC",
+                        "legal_entity_name": "Marco Vance",
+                        "contact_name": "Marco Vance",
+                        "email": sub_email,
+                        "phone": sub_phone_1,
+                        "tax_classification": "LLC",
+                        "ein_or_ssn": "84-9914821",
+                        "street_address": "1500 Marilla St",
+                        "city": "Dallas",
+                        "state": "TX",
+                        "zip_code": "75201",
+                        "coi_carrier": "Next Insurance US Company",
+                        "coi_policy_number": "GL-88442211",
+                        "coi_expiration_date": "2027-12-31",
+                        "msa_signer_name": "Marco Vance",
+                        "msa_signer_title": "Managing Member",
+                        "msa_agreed": "true",
+                        "dwc83_agreed": "true",
+                        "w9_file": (io.BytesIO(w9_bytes), "w9.pdf"),
+                        "coi_file": (io.BytesIO(coi_bytes), "coi.pdf"),
+                    },
+                    content_type="multipart/form-data",
+                )
+                self.assertEqual(r_sub_portal.status_code, 200, r_sub_portal.get_data(as_text=True))
+                self.assertEqual(r_sub_portal.get_json()["status"], "success")
+
+                r_approve_1099 = self.client.post(f"/api/v1/workforce/subcontractors/{sub_id_1}/approve-partner")
+                self.assertEqual(r_approve_1099.status_code, 200)
+                self.assertEqual(r_approve_1099.get_json()["partner_status"], "Active Partner")
+
+                # Backoffice 1099 Vault Upload & Download
+                r_bo_doc_1099 = self.client.post(
+                    f"/api/v1/workforce/subcontractors/{sub_id_1}/documents",
+                    data={"document_type": "COI", "expiration_date": "2027-12-31", "document": (io.BytesIO(coi_bytes), "coi_bo.pdf")},
+                    content_type="multipart/form-data",
+                )
+                self.assertEqual(r_bo_doc_1099.status_code, 201, r_bo_doc_1099.get_data(as_text=True))
+
+                r_dl_1099 = self.client.get(f"/api/v1/workforce/subcontractors/{sub_id_1}/download/msa")
+                self.assertEqual(r_dl_1099.status_code, 200)
+                self.assertTrue(r_dl_1099.data.startswith(b"%PDF-1.4"))
+                r_dl_1099.close()
+
+                # =========================================================================
+                # PART B: ALL W-2 JOB APPLICANT, EMPLOYEE & PORTAL ENDPOINTS
+                # =========================================================================
+                # 1. Public W-2 Job Application Form (POST /api/v1/workforce/apply)
+                app_email = f"reg.w2.{uid}@example.com"
+                r_pub_w2 = self.client.post(
+                    "/api/v1/workforce/apply",
+                    json={
+                        "full_name": f"Valeria Solis-{uid}",
+                        "email": app_email,
+                        "phone": w2_phone_1,
+                        "city": "Dallas",
+                        "desired_role": "Commercial Cleaning Technician",
+                        "desired_shift": "Night",
+                        "experience_level": "3+ Years / Supervisor",
+                        "has_transportation": "true",
+                        "authorized_to_work_us": "true",
+                        "fcra_consent": "true",
+                        "at_will_consent": "true",
+                        "notes": "Regression test candidate",
+                    },
+                )
+                self.assertEqual(r_pub_w2.status_code, 201, r_pub_w2.get_data(as_text=True))
+                app_id = r_pub_w2.get_json()["applicant_id"]
+                created_app_ids.append(app_id)
+
+                # Repeat W-2 application -> smart merge
+                r_pub_w2_2 = self.client.post(
+                    "/api/v1/workforce/apply",
+                    json={
+                        "full_name": f"Valeria Solis-{uid}",
+                        "email": app_email,
+                        "phone": w2_phone_1,
+                        "city": "Dallas",
+                        "desired_role": "Lead Cleaning Site Supervisor",
+                        "desired_shift": "Day",
+                    },
+                )
+                self.assertEqual(r_pub_w2_2.status_code, 200)
+                self.assertTrue(r_pub_w2_2.get_json().get("is_duplicate"))
+
+                # 2. Backoffice W-2 Candidate Promotion / Onboard Modal (POST /api/v1/hr/onboard)
+                r_onboard_w2 = self.client.post(
+                    "/api/v1/hr/onboard",
+                    json={
+                        "applicant_id": app_id,
+                        "first_name": "Valeria",
+                        "last_name": f"Solis-{uid}",
+                        "email": app_email,
+                        "phone": w2_phone_1,
+                        "primary_role": "Commercial Cleaning Technician",
+                        "employment_type": "W-2 Full-Time",
+                        "pay_rate_hourly": 19.00,
+                        "hire_date": "2026-10-20",
+                        "ssn_plain": "123-45-6789",
+                    },
+                )
+                self.assertEqual(r_onboard_w2.status_code, 201, r_onboard_w2.get_data(as_text=True))
+                emp_id = r_onboard_w2.get_json()["employee_id"]
+                created_emp_ids.append(emp_id)
+
+                # 3. Backoffice W-2 Employee Edit Modal, SSN Reveal, & Send Onboarding Link
+                r_patch_w2 = self.client.patch(
+                    f"/api/v1/hr/employees/{emp_id}",
+                    json={
+                        "pay_rate_hourly": 20.50,
+                        "emergency_contact_name": "Mateo Solis",
+                        "emergency_contact_phone": "469-555-0100",
+                    },
+                )
+                self.assertEqual(r_patch_w2.status_code, 200)
+
+                r_ssn_w2 = self.client.post(f"/api/v1/hr/employees/{emp_id}/reveal-ssn")
+                self.assertEqual(r_ssn_w2.status_code, 200, r_ssn_w2.get_data(as_text=True))
+                self.assertEqual(r_ssn_w2.get_json()["ssn"], "123-45-6789")
+
+                r_send_w2 = self.client.post(f"/api/v1/hr/employees/{emp_id}/send-onboarding-link")
+                self.assertEqual(r_send_w2.status_code, 200)
+                emp_token = r_send_w2.get_json()["onboarding_token"]
+
+                # 4. Public W-2 Self-Service Onboarding Portal Upload & E-Signature Completion
+                r_portal_w2 = self.client.get(f"/onboard/employee/{emp_token}")
+                self.assertEqual(r_portal_w2.status_code, 200)
+
+                w4_bytes = (
+                    f"Form W-4 Employee's Withholding Certificate\n"
+                    f"First Name: Valeria\nLast Name: Solis-{uid}\n"
+                    "Address: 2900 McKinney Ave\nCity, State, ZIP: Dallas, TX 75204\n"
+                    "Social security number: 123-45-6789\n"
+                    "Filing Status: Head of Household\n"
+                    "Total Dependents: $2,000.00\n"
+                ).encode()
+                r_up_w4 = self.client.post(
+                    f"/api/v1/employees/onboard/{emp_token}/upload-doc",
+                    data={"doc_type": "Form W-4", "file": (io.BytesIO(w4_bytes), "Valeria_W4.txt")},
+                    content_type="multipart/form-data",
+                )
+                self.assertEqual(r_up_w4.status_code, 200)
+                self.assertEqual(r_up_w4.get_json()["extracted"]["w4_filing_status"], "Head of Household")
+
+                r_comp_w2 = self.client.post(
+                    f"/api/v1/employees/onboard/{emp_token}/complete",
+                    json={
+                        "signer_name": f"Valeria Solis-{uid}",
+                        "address_street": "2900 McKinney Ave",
+                        "address_city": "Dallas",
+                        "address_state": "TX",
+                        "address_zip": "75204",
+                        "date_of_birth": "1993-08-22",
+                        "ssn_plain": "123-45-6789",
+                        "w4_filing_status": "Head of Household",
+                        "w4_step3_dependents": 2000,
+                        "w4_step4c_extra_withholding": 0,
+                        "i9_citizenship_status": "US Citizen",
+                        "direct_deposit_bank": "Wells Fargo",
+                        "direct_deposit_routing": "111900659",
+                        "direct_deposit_account_last_four": "4321",
+                        "direct_deposit_account_type": "Checking",
+                        "emergency_contact_name": "Mateo Solis",
+                        "emergency_contact_phone": "469-555-0100",
+                        "emergency_contact_relation": "Spouse",
+                    },
+                )
+                self.assertEqual(r_comp_w2.status_code, 200)
+                self.assertEqual(r_comp_w2.get_json()["status"], "success")
+
+                # 5. Backoffice W-2 Vault Upload & Download + Job Description Acknowledge
+                r_ack_w2 = self.client.post(f"/api/v1/hr/employees/{emp_id}/acknowledge-job-description")
+                self.assertEqual(r_ack_w2.status_code, 200)
+
+                r_bo_doc_w2 = self.client.post(
+                    f"/api/v1/hr/employees/{emp_id}/documents",
+                    data={"document_type": "Driver License / State ID", "document": (io.BytesIO(b"TEXAS DRIVER LICENSE\n4d DL: 88776655\n4b EXP: 05/14/2030\n"), "tx_id.txt")},
+                    content_type="multipart/form-data",
+                )
+                self.assertEqual(r_bo_doc_w2.status_code, 201, r_bo_doc_w2.get_data(as_text=True))
+                w2_doc_id = r_bo_doc_w2.get_json()["document_id"]
+
+                r_dl_w2 = self.client.get(f"/api/v1/hr/documents/{w2_doc_id}/download")
+                self.assertEqual(r_dl_w2.status_code, 200)
+                self.assertIn(b"88776655", r_dl_w2.data)
+                r_dl_w2.close()
+        finally:
+            with conn.cursor() as cur:
+                for eid in created_emp_ids:
+                    cur.execute('DELETE FROM "EmployeeDocuments" WHERE employee_id = %s;', (eid,))
+                    cur.execute('DELETE FROM "Employees" WHERE id = %s;', (eid,))
+                for aid in created_app_ids:
+                    cur.execute('DELETE FROM "JobApplicants" WHERE id = %s;', (aid,))
+                for sid in created_sub_ids:
+                    cur.execute('DELETE FROM "SubcontractorDocuments" WHERE subcontractor_id = %s;', (sid,))
+                    cur.execute('DELETE FROM "SubcontractorPartners" WHERE id = %s;', (sid,))
+                # Clean up any leftover test rows from earlier run
+                cur.execute(
+                    'DELETE FROM "SubcontractorDocuments" WHERE subcontractor_id IN (SELECT id FROM "SubcontractorPartners" WHERE company_name LIKE %s);',
+                    ("Regression 1099 Crew %",),
+                )
+                cur.execute('DELETE FROM "SubcontractorPartners" WHERE company_name LIKE %s;', ("Regression 1099 Crew %",))
+                cur.execute(
+                    'DELETE FROM "PendingOutbox" WHERE subject LIKE %s OR subject LIKE %s;',
+                    (f"%{uid}%", "%Regression 1099 Crew%"),
+                )
+                cur.execute(
+                    'DELETE FROM "SigmaInteractionLog" WHERE agent_explanation LIKE %s OR agent_explanation LIKE %s;',
+                    (f"%{uid}%", "%Regression 1099 Crew%"),
+                )
+            conn.commit()
+            conn.close()
+
 
 if __name__ == "__main__":
     unittest.main()
