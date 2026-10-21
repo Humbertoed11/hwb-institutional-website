@@ -140,8 +140,76 @@
     </header>
 
     <main class="portal-container">
+        {% set w2_submitted = (employee.onboarding_packet_signed or false) %}
+
+        <!-- Official Tamper-Evident W-2 Transaction Receipt Card (Shown after submission & on revisit) -->
+        <div id="w2-receipt-card" class="card" style="display: {% if w2_submitted %}block{% else %}none{% endif %}; border: 1.5px solid #059669; border-top: 5px solid #059669; box-shadow: 0 10px 25px rgba(5, 150, 105, 0.08);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--slate-200); margin-bottom: 1.15rem;">
+                <div style="display: flex; align-items: flex-start; gap: 0.85rem;">
+                    <div style="width: 42px; height: 42px; border-radius: 10px; background: #d1fae5; color: #065f46; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0;">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.7rem; font-weight: 800; color: #059669; text-transform: uppercase; letter-spacing: 0.06em;">
+                            Official W-2 Transaction Receipt &bull; No Need to Resubmit
+                        </div>
+                        <h2 style="font-size: 1.2rem; font-weight: 900; color: var(--slate-900); margin: 0.15rem 0 0.3rem 0;">
+                            W-2 Onboarding &amp; Job Description Packet Recorded
+                        </h2>
+                        <p id="w2-receipt-message" style="font-size: 0.86rem; color: var(--slate-700); margin: 0; line-height: 1.5;">
+                            Your verified address, W-4 withholding, encrypted SSN/Direct Deposit details, and signed Job Description have been saved under <strong>{{ employee.employee_number }}</strong>.
+                        </p>
+                    </div>
+                </div>
+                <div style="background: #ecfdf5; border: 1px solid #a7f3d0; padding: 0.4rem 0.8rem; border-radius: 8px; text-align: right;">
+                    <div style="font-size: 0.68rem; font-weight: 800; color: #065f46; text-transform: uppercase;">Employee ID</div>
+                    <div id="w2-receipt-emp-num" style="font-size: 0.92rem; font-weight: 900; color: #064e3b;">{{ employee.employee_number }}</div>
+                </div>
+            </div>
+
+            <div class="grid-3" style="margin-bottom: 1rem;">
+                <div style="background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 8px; padding: 0.7rem 0.9rem;">
+                    <div style="font-size: 0.68rem; font-weight: 800; color: var(--slate-500); text-transform: uppercase;">Employee &amp; Role</div>
+                    <div id="w2-receipt-name" style="font-size: 0.88rem; font-weight: 800; color: var(--slate-900); margin-top: 0.15rem;">{{ employee.first_name }} {{ employee.last_name }}</div>
+                    <div style="font-size: 0.76rem; color: var(--slate-700);">{{ employee.job_position_title or employee.primary_role }}</div>
+                </div>
+                <div style="background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 8px; padding: 0.7rem 0.9rem;">
+                    <div style="font-size: 0.68rem; font-weight: 800; color: var(--slate-500); text-transform: uppercase;">Electronic Signer &amp; Status</div>
+                    <div id="w2-receipt-signer" style="font-size: 0.88rem; font-weight: 800; color: var(--slate-900); margin-top: 0.15rem;">{{ employee.onboarding_signer_name or (employee.first_name ~ ' ' ~ employee.last_name) }}</div>
+                    <div id="w2-receipt-status" style="font-size: 0.76rem; font-weight: 700; color: #059669;">Status: {{ employee.onboarding_status or 'Active' }} ✓</div>
+                </div>
+                <div style="background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 8px; padding: 0.7rem 0.9rem;">
+                    <div style="font-size: 0.68rem; font-weight: 800; color: var(--slate-500); text-transform: uppercase;">Recorded Timestamp</div>
+                    <div id="w2-receipt-timestamp" style="font-size: 0.82rem; font-weight: 800; color: var(--slate-900); margin-top: 0.15rem;">
+                        {% if employee.onboarding_signed_at and employee.onboarding_signed_at.strftime is defined %}
+                            {{ employee.onboarding_signed_at.strftime('%m/%d/%Y %I:%M %p') }}
+                        {% else %}
+                            {{ employee.onboarding_signed_at or 'Encrypted in HR Vault' }}
+                        {% endif %}
+                    </div>
+                    <div style="font-size: 0.74rem; color: var(--slate-500);">AES-256 Encrypted Vault</div>
+                </div>
+            </div>
+
+            <div style="background: #f8fafc; border: 1px solid var(--slate-300); border-radius: 8px; padding: 0.65rem 0.95rem; margin-bottom: 1.15rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                <span style="font-size: 0.72rem; font-weight: 800; color: var(--slate-700); text-transform: uppercase;">
+                    <i class="fas fa-fingerprint" style="color: var(--brand); margin-right: 0.35rem;"></i> SHA-256 Digital Signature Certificate
+                </span>
+                <code id="w2-receipt-hash" style="font-size: 0.75rem; font-weight: 700; color: var(--slate-900); background: #e2e8f0; padding: 0.2rem 0.5rem; border-radius: 4px; word-break: break-all;">{{ employee.onboarding_signature_hash or 'Verified Signature Certificate on File' }}</code>
+            </div>
+
+            <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center;">
+                <button type="button" onclick="window.print()" class="btn-primary" style="height: 38px;">
+                    <i class="fas fa-print"></i> Print / Save Receipt
+                </button>
+                <button type="button" id="btn-reopen-w2-form" onclick="toggleW2FormEdit()" style="height: 38px; padding: 0 1.15rem; border-radius: 6px; border: 1px solid var(--slate-300); background: #ffffff; color: var(--slate-700); font-size: 0.84rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 0.45rem;">
+                    <i class="fas fa-edit"></i> Update Information or Upload Additional Documents
+                </button>
+            </div>
+        </div>
+
         <!-- Step 1: Smart Document Auto-Extractor -->
-        <div class="card">
+        <div id="w2-step1-card" class="card" style="display: {% if w2_submitted %}none{% else %}block{% endif %};">
             <h2 class="section-title">
                 <i class="fas fa-file-shield" style="color: var(--brand);"></i>
                 Step 1: Upload W-4, Photo ID, I-9 &amp; Direct Deposit (Instant Auto-Fill)
@@ -175,7 +243,7 @@
             </div>
         </div>
 
-        <form id="w2-onboard-form" onsubmit="submitW2Onboarding(event)">
+        <form id="w2-onboard-form" onsubmit="submitW2Onboarding(event)" style="display: {% if w2_submitted %}none{% else %}block{% endif %};">
             <!-- Step 2: Pre-Filled Personal & Emergency Contact Info -->
             <div class="card">
                 <h2 class="section-title">
@@ -198,7 +266,7 @@
                 <div class="grid-2" style="margin-bottom: 0.85rem;">
                     <div>
                         <label>Mobile Phone *</label>
-                        <input type="text" id="emp-phone" class="sigma-input" required value="{{ employee.phone or '' }}">
+                        <input type="tel" id="emp-phone" class="sigma-input" required maxlength="14" inputmode="numeric" oninput="maskPhoneInput(this)" placeholder="(214)-555-0199" value="{{ employee.phone or '' }}">
                     </div>
                     <div>
                         <label>Email Address</label>
@@ -218,11 +286,11 @@
                     </div>
                     <div>
                         <label>State *</label>
-                        <input type="text" id="emp-state" class="sigma-input" required value="{{ employee.address_state or 'TX' }}">
+                        <input type="text" id="emp-state" class="sigma-input" required maxlength="2" oninput="maskStateInput(this)" value="{{ employee.address_state or 'TX' }}">
                     </div>
                     <div>
                         <label>ZIP Code *</label>
-                        <input type="text" id="emp-zip" class="sigma-input" required value="{{ employee.address_zip or '' }}">
+                        <input type="text" id="emp-zip" class="sigma-input" required maxlength="10" inputmode="numeric" oninput="maskZipInput(this)" placeholder="75201" value="{{ employee.address_zip or '' }}">
                     </div>
                 </div>
 
@@ -233,7 +301,7 @@
                     </div>
                     <div>
                         <label>Emergency Contact Phone *</label>
-                        <input type="text" id="emp-emg-phone" class="sigma-input" required value="{{ employee.emergency_contact_phone or '' }}">
+                        <input type="tel" id="emp-emg-phone" class="sigma-input" required maxlength="14" inputmode="numeric" oninput="maskPhoneInput(this)" placeholder="(214)-555-0199" value="{{ employee.emergency_contact_phone or '' }}">
                     </div>
                 </div>
             </div>
@@ -249,7 +317,7 @@
                 <div class="grid-3" style="margin-bottom: 0.85rem;">
                     <div>
                         <label>Social Security Number (SSN)</label>
-                        <input type="text" id="emp-ssn" class="sigma-input" value="{{ ('***-**-' ~ employee.ssn_last_four) if employee.ssn_last_four else '' }}" placeholder="XXX-XX-XXXX">
+                        <input type="text" id="emp-ssn" class="sigma-input" maxlength="11" inputmode="numeric" autocomplete="off" oninput="maskSSNInput(this)" value="{{ ('***-**-' ~ employee.ssn_last_four) if employee.ssn_last_four else '' }}" placeholder="XXX-XX-XXXX">
                     </div>
                     <div>
                         <label>Driver License / State ID #</label>
@@ -287,7 +355,7 @@
                     </div>
                     <div>
                         <label>9-Digit Routing Number</label>
-                        <input type="text" id="emp-bank-routing" class="sigma-input" maxlength="9" value="{{ employee.direct_deposit_routing or '' }}">
+                        <input type="text" id="emp-bank-routing" class="sigma-input" maxlength="9" inputmode="numeric" oninput="maskRoutingInput(this)" placeholder="9-Digit Routing #" value="{{ employee.direct_deposit_routing or '' }}">
                     </div>
                     <div>
                         <label>Bank Account Number</label>
@@ -369,6 +437,23 @@
             }
         }
 
+        function toggleW2FormEdit() {
+            const step1 = document.getElementById('w2-step1-card');
+            const form = document.getElementById('w2-onboard-form');
+            const reopenBtn = document.getElementById('btn-reopen-w2-form');
+            if (!form) return;
+            if (form.style.display === 'none') {
+                if (step1) step1.style.display = 'block';
+                form.style.display = 'block';
+                if (reopenBtn) reopenBtn.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Edit Form';
+                form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } else {
+                if (step1) step1.style.display = 'none';
+                form.style.display = 'none';
+                if (reopenBtn) reopenBtn.innerHTML = '<i class="fas fa-edit"></i> Update Information or Upload Additional Documents';
+            }
+        }
+
         async function submitW2Onboarding(ev) {
             ev.preventDefault();
             const btn = document.getElementById('btn-complete-w2');
@@ -406,12 +491,37 @@
                 });
                 const data = await res.json();
                 const resBox = document.getElementById('complete-result');
-                resBox.style.display = 'block';
                 if (data.status === 'success') {
-                    resBox.innerHTML = `<i class="fas fa-shield-check"></i> ${data.message}<br><small>SHA-256 Certificate: ${data.signature_hash}</small>`;
-                    btn.innerHTML = '<i class="fas fa-check-double"></i> Onboarding Completed';
+                    const receiptCard = document.getElementById('w2-receipt-card');
+                    const step1 = document.getElementById('w2-step1-card');
+                    const form = document.getElementById('w2-onboard-form');
+                    const setTxt = (id, val) => {
+                        const el = document.getElementById(id);
+                        if (el && val) el.textContent = val;
+                    };
+                    setTxt('w2-receipt-emp-num', data.employee_number);
+                    setTxt('w2-receipt-name', `${payload.first_name} ${payload.last_name}`.trim());
+                    setTxt('w2-receipt-signer', data.signer_name || payload.signer_name);
+                    setTxt('w2-receipt-timestamp', data.receipt_timestamp || 'Recorded Just Now');
+                    setTxt('w2-receipt-hash', data.signature_hash);
+                    const msgEl = document.getElementById('w2-receipt-message');
+                    if (msgEl && data.message) msgEl.innerHTML = data.message;
+
+                    if (step1) step1.style.display = 'none';
+                    if (form) form.style.display = 'none';
+                    const reopenBtn = document.getElementById('btn-reopen-w2-form');
+                    if (reopenBtn) reopenBtn.innerHTML = '<i class="fas fa-edit"></i> Update Information or Upload Additional Documents';
+                    if (receiptCard) {
+                        receiptCard.style.display = 'block';
+                        receiptCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-lock"></i> Sign & Complete W-2 Onboarding Packet';
                 } else {
-                    resBox.innerHTML = `<span style="color:#b91c1c;">${data.message || 'Submission failed.'}</span>`;
+                    if (resBox) {
+                        resBox.style.display = 'block';
+                        resBox.innerHTML = `<span style="color:#b91c1c;">${data.message || 'Submission failed.'}</span>`;
+                    }
                     btn.disabled = false;
                     btn.innerHTML = '<i class="fas fa-lock"></i> Sign & Complete W-2 Onboarding Packet';
                 }
@@ -421,5 +531,6 @@
             }
         }
     </script>
+    <script src="/static/js/sigma_input_masks.js" defer></script>
 </body>
 </html>

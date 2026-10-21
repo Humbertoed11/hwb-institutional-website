@@ -93,7 +93,7 @@
                             </div>
                             <div class="sigma-field">
                                 <label for="quote-zipcode" class="sigma-label">Zip Code</label>
-                                <input type="text" name="zipcode" id="quote-zipcode" placeholder="75024" maxlength="5" pattern="[0-9]{5}" class="sigma-input" required autocomplete="postal-code" inputmode="numeric">
+                                <input type="text" name="zipcode" id="quote-zipcode" placeholder="75024" maxlength="10" oninput="maskZipInput(this)" class="sigma-input" required autocomplete="postal-code" inputmode="numeric">
                             </div>
                         </div>
                     </div>

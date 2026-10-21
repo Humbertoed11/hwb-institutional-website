@@ -125,6 +125,7 @@ Responsibility: George (Architect)
 | 10/20/2026 | BUG-139 | 1099 Subcontractor Post-Registration Onboarding Gap — Self-Reported COI Marked as Verified Without File, Missing Pre-Filled Self-Service Onboarding Portal (`/onboard/subcontractor/<token>`), No Automated W-9 / COI Document Extraction, & Encrypted PostgreSQL `SubcontractorDocuments` Vault. | **RESOLVED** | HIGH |
 | 10/20/2026 | BUG-140 | W-2 Employee Onboarding & HR Document Vault Parity Gap — Ephemeral Container Disk Storage on `EmployeeDocuments`, Zero Auto-Extraction on Form W-4 / I-9 / Driver License / Voided Check Uploads, Missing Pre-Filled W-2 Self-Service Portal (`/onboard/employee/<token>`), & Uncertified ISO 9001 Clause 7.2 Job Description Timestamp. | **RESOLVED** | HIGH |
 | 10/20/2026 | BUG-141 | 1099 Subcontractor Network Form Submission Error on Live Azure (`relation "SystemSettings" does not exist` at `/work-with-us?track=subcontractor` -> `POST /api/v1/workforce/subcontractors/register`). | **RESOLVED** | CRITICAL |
+| 10/20/2026 | BUG-142 | Missing Predefined Input Masks (Federal Tax ID `EIN`/`SSN`, Phone, ZIP, ABA Routing) & Missing Post-Submission Transaction Receipt State (Form Left Open After Submit Causing Duplicate Resubmissions) on `/onboard/subcontractor/<token>`, `/onboard/employee/<token>`, and Backoffice Modals. | **IN PROGRESS** | HIGH |
 
 
 ## BUG-122: App Manual Static Routing Deficit (Lacks Automatic Active Workspace Detection & Deep-Link Chapter Navigation)
@@ -2683,3 +2684,18 @@ CEO Humberto Dominguez attempting to log into `https://www.hwbcleaning.com/login
 2. When `api_workforce_subcontractor` (`blueprints/crm_api.py`) queried `SELECT value FROM "SystemSettings" WHERE key = 'subcontractor_auto_review_enabled'`, live Azure PostgreSQL 16.15 (`sigmajan-server`) threw `UndefinedTable: relation "SystemSettings" does not exist`.
 **Solution:**
 1. Added `CREATE TABLE IF NOT EXISTS "SystemSettings" (key TEXT PRIMARY KEY, value TEXT)` and default seed `('subcontractor_auto_review_enabled', 'false')` inside `ensure_subcontractor_onboarding_schema(conn)`, `api_workforce_subcontractor` (`blueprints/crm_api.py`), and Migration `049_system_settings_azure_parity_bug_141` (`database/schema_engine.py`).
+2. **Full W-2 & 1099 Form Regression Hardening (`blueprints/crm_api.py`, `blueprints/public.py`, `static/js/backoffice_operations_core.js`, `scripts/test_web_performance_rack_14.py`):**
+   - Imported `extract_client_ip` at the module level of `blueprints/crm_api.py` (preventing `NameError: name 'extract_client_ip' is not defined` on `POST /api/v1/workforce/subcontractors/<id>/documents`).
+   - Imported `secure_filename`, `dt_cls`, and `timezone` at the module level of `blueprints/public.py` (preventing `NameError` on `POST /api/v1/employees/onboard/<token>/upload-doc` and `POST /api/v1/employees/onboard/<token>/complete`).
+   - Enhanced `POST /api/v1/workforce/apply` to accept either `full_name` or `first_name` + `last_name`, and enhanced `POST /api/v1/hr/onboard` to encrypt SSN (`ssn_plain` / `social_security_number`) immediately during employee onboarding.
+   - Updated `submitHrOnboard` and `saveSubcontractorOnboard` in `static/js/backoffice_operations_core.js` to handle both `'success'` and `'already_registered'` responses cleanly.
+   - Added `test_19_comprehensive_all_w2_and_1099_forms_regression` (`19/19` tests passing).
+
+
+## BUG-142: Missing Predefined Input Masks (`EIN`/`SSN`, Phone, ZIP, Routing) & Missing Post-Submission Transaction Receipt View on 1099 & W-2 Onboarding Portals
+**Detected:** 10/20/2026
+**Status:** **IN PROGRESS** (10/20/2026)
+**Symptoms:**
+1. On `/onboard/subcontractor/<token>` (`templates/subcontractor_onboarding.html`), the Federal Tax ID field (`#onb-ein-ssn`) lacks a predefined input mask (`XX-XXXXXXX` for EIN or `XXX-XX-XXXX` for SSN based on Tax Classification), and `#onb-phone` and `#onb-zip` also lack auto-formatting masks.
+2. Similar input mask gaps exist across `/onboard/employee/<token>` (`templates/employee_onboarding_portal.html` — `#emp-ssn`, `#emp-phone`, `#emp-emg-phone`, `#emp-zip`, `#emp-bank-routing`) and the backoffice W-2 / 1099 modals in `templates/backoffice_operations.html` (`#sub-onboard-ein`, `#edit-sub-ein`, `#sub-onboard-phone`, `#edit-sub-phone`, `#onboard-phone`, `#onboard-emergency-phone`, `#edit-emp-phone`, `#edit-emp-emergency-phone`, `#edit-emp-zip`, `#edit-emp-bank-routing`).
+3. When a subcontractor submits `/onboard/subcontractor/<token>` (or an employee submits `/onboard/employee/<token>`), the form stays visible in the exact same state and the submit button re-enables in the `finally` block without transitioning to a dedicated Transaction Receipt view, causing user confusion and duplicate resubmissions.

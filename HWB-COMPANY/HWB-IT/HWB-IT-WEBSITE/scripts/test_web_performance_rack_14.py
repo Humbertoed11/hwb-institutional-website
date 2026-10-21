@@ -58,12 +58,12 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
             conn.close()
 
     def test_02_version_service_in_memory_lru_cache(self):
-        """Part I Pillar 4: Verifies get_version_info() is cached in memory with lru_cache and reports v5.4.x."""
+        """Part I Pillar 4: Verifies get_version_info() is cached in memory with lru_cache and reports v5.4.x / v5.5.x."""
         clear_version_cache()
-        self.assertTrue(APP_SEMANTIC_VERSION.startswith("v5.4."))
+        self.assertTrue(APP_SEMANTIC_VERSION.startswith(("v5.4.", "v5.5.")))
         info_1 = get_version_info()
         info_2 = get_version_info()
-        self.assertTrue(str(info_1.get("app_version", "")).startswith("v5.4."))
+        self.assertTrue(str(info_1.get("app_version", "")).startswith(("v5.4.", "v5.5.")))
         self.assertIs(info_1, info_2)
         cache_info = get_version_info.cache_info()
         self.assertGreaterEqual(cache_info.hits, 1)
@@ -1135,6 +1135,137 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
                     (f"%{uid}%", "%Regression 1099 Crew%"),
                 )
             conn.commit()
+            conn.close()
+
+    def test_20_input_masks_and_transaction_receipt_architecture(self) -> None:
+        """
+        BUG-142 Enterprise Verification Suite:
+        1. Verifies server-side sanitizers (clean_ein_or_ssn, clean_ssn, clean_routing_number).
+        2. Verifies /static/js/sigma_input_masks.js delivery and @app.after_request HTML auto-injection.
+        3. Verifies explicit mask attributes and Tamper-Evident Transaction Receipt Cards
+           (#onboarding-receipt-card and #w2-receipt-card) on 1099 & W-2 onboarding portals,
+           confirming that active forms collapse to display:none after submission and on revisit.
+        4. Verifies 5-Table Error Ledger synchronization for BUG-141 (Scar #233) & BUG-142 (Scar #234).
+        """
+        import io
+        import uuid
+        from unittest.mock import patch
+        from core.services.database import get_db
+        from core.services.sanitizer import clean_ein_or_ssn, clean_ssn, clean_routing_number
+        from database.schema_engine import sync_bug_141_142_error_ledgers
+
+        # 1. Server-side canonical sanitizers
+        self.assertEqual(clean_ein_or_ssn("849914821", "LLC"), "84-9914821")
+        self.assertEqual(clean_ein_or_ssn("123456789", "Individual / Sole Proprietor"), "123-45-6789")
+        self.assertEqual(clean_ssn("123456789"), "123-45-6789")
+        self.assertEqual(clean_routing_number("111-000-025"), "111000025")
+
+        # 2. Static JS asset & @app.after_request injection
+        r_js = self.client.get("/static/js/sigma_input_masks.js")
+        self.assertEqual(r_js.status_code, 200)
+        js_body = r_js.get_data(as_text=True)
+        self.assertIn("SigmaInputMaskEngine", js_body)
+        self.assertIn("syncTaxClassificationMask", js_body)
+        r_js.close()
+
+        r_home = self.client.get("/work-with-us?track=subcontractor")
+        self.assertEqual(r_home.status_code, 200)
+        self.assertIn("sigma_input_masks.js", r_home.get_data(as_text=True))
+
+        # 3. 1099 & W-2 Portal Mask Attributes + Post-Submission Receipt Collapse
+        conn = get_db(self.db_url)
+        created_sub_id = None
+        try:
+            receipt_5 = sync_bug_141_142_error_ledgers(conn)
+            self.assertEqual(receipt_5["scars"].get("ID-233"), 233)
+            self.assertEqual(receipt_5["scars"].get("ID-234"), 234)
+            self.assertIsNotNone(receipt_5["rack_telemetry_history_id"])
+            self.assertIsNotNone(receipt_5["security_audit_logs_id"])
+
+            uid = uuid.uuid4().hex[:6]
+            with self.client.session_transaction() as sess:
+                sess["_user_id"] = "1"
+                sess["_fresh"] = True
+
+            with (
+                patch("core.services.notification_service.send_subcontractor_onboarding_invite_email", return_value=(True, "mocked")),
+                patch("core.services.notification_service.send_subcontractor_onboarding_completed_notifications", return_value=True),
+                patch("core.services.email_service.transmit_email", return_value=(True, "mocked")),
+            ):
+                r_sub = self.client.post(
+                    "/api/v1/workforce/subcontractors",
+                    json={
+                        "company_name": f"Receipt Mask Test {uid} LLC",
+                        "contact_name": "Carlos Mendez",
+                        "email": f"receipt.{uid}@example.com",
+                        "phone": "2145550192",
+                        "city": "Dallas",
+                        "specialties": "Commercial Janitorial",
+                        "crew_size": 4,
+                    },
+                )
+                self.assertEqual(r_sub.status_code, 201)
+                created_sub_id = r_sub.get_json()["subcontractor_id"]
+
+                r_tok = self.client.post(f"/api/v1/workforce/subcontractors/{created_sub_id}/send-onboarding")
+                self.assertEqual(r_tok.status_code, 200)
+                tok = r_tok.get_json()["onboarding_token"]
+
+                # Initial unsubmitted portal view: form is visible, receipt card is hidden
+                r_get_before = self.client.get(f"/onboard/subcontractor/{tok}")
+                self.assertEqual(r_get_before.status_code, 200)
+                html_before = r_get_before.get_data(as_text=True)
+                self.assertIn('id="onboarding-receipt-card"', html_before)
+                self.assertIn('oninput="maskTaxIdInput(this)"', html_before)
+                self.assertIn('onchange="syncTaxClassificationMask(this, \'onb-ein-ssn\')"', html_before)
+                self.assertIn('id="onb-tax-id-format-badge"', html_before)
+
+                # Submit onboarding packet with unformatted 9-digit EIN
+                w9_bytes = b"%PDF-1.4\n1. Name: Carlos Mendez\nEmployer Identification Number: 84-7766554\n"
+                r_submit = self.client.post(
+                    f"/onboard/subcontractor/{tok}/submit",
+                    data={
+                        "company_name": f"Receipt Mask Test {uid} LLC",
+                        "legal_entity_name": "Carlos Mendez",
+                        "contact_name": "Carlos Mendez",
+                        "email": f"receipt.{uid}@example.com",
+                        "phone": "2145550192",
+                        "tax_classification": "LLC",
+                        "ein_or_ssn": "847766554",
+                        "street_address": "500 Commerce St",
+                        "city": "Dallas",
+                        "state": "tx",
+                        "zip_code": "752021234",
+                        "msa_signer_name": "Carlos Mendez",
+                        "msa_signer_title": "Managing Member",
+                        "msa_agreed": "true",
+                        "dwc83_agreed": "true",
+                        "w9_file": (io.BytesIO(w9_bytes), "w9.pdf"),
+                    },
+                    content_type="multipart/form-data",
+                )
+                self.assertEqual(r_submit.status_code, 200)
+                sub_json = r_submit.get_json()
+                self.assertEqual(sub_json["status"], "success")
+                self.assertIn("receipt_timestamp", sub_json)
+                self.assertIn("msa_signature_hash", sub_json)
+                self.assertTrue(sub_json["masked_tin"].endswith("6554"))
+
+                # Revisit portal after submission: receipt card is displayed (block) and form is collapsed (none)
+                r_get_after = self.client.get(f"/onboard/subcontractor/{tok}")
+                self.assertEqual(r_get_after.status_code, 200)
+                html_after = r_get_after.get_data(as_text=True)
+                self.assertIn('id="onboarding-receipt-card" style="display: block;', html_after)
+                self.assertIn('id="form-subcontractor-onboarding" onsubmit="submitSubcontractorOnboarding(event)" enctype="multipart/form-data" style="display: none;"', html_after)
+                self.assertIn(sub_json["msa_signature_hash"], html_after)
+        finally:
+            if created_sub_id:
+                with conn.cursor() as cur:
+                    cur.execute('DELETE FROM "SubcontractorDocuments" WHERE subcontractor_id = %s;', (created_sub_id,))
+                    cur.execute('DELETE FROM "SubcontractorPartners" WHERE id = %s;', (created_sub_id,))
+                    cur.execute('DELETE FROM "GlobalActivities" WHERE parent_type = \'Subcontractor\' AND parent_id = %s;', (created_sub_id,))
+                    cur.execute('DELETE FROM "PendingOutbox" WHERE subject LIKE %s;', (f"%Receipt Mask Test%",))
+                conn.commit()
             conn.close()
 
 

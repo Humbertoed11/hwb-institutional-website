@@ -5452,7 +5452,7 @@
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                 <div>
                     <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Mobile Phone *</label>
-                    <input type="tel" id="onboard-phone" required class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;" placeholder="(972) 000-0000">
+                    <input type="tel" id="onboard-phone" required maxlength="14" inputmode="numeric" oninput="maskPhoneInput(this)" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;" placeholder="(972)-000-0000">
                 </div>
                 <div>
                     <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Email Address</label>
@@ -5543,7 +5543,7 @@
                 </div>
                 <div>
                     <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Emergency Contact Phone</label>
-                    <input type="tel" id="onboard-emergency-phone" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;" placeholder="(972) 000-0000">
+                    <input type="tel" id="onboard-emergency-phone" maxlength="14" inputmode="numeric" oninput="maskPhoneInput(this)" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;" placeholder="(972)-000-0000">
                 </div>
             </div>
 
@@ -5620,7 +5620,7 @@
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                     <div>
                         <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Mobile Phone *</label>
-                        <input type="tel" id="edit-emp-phone" required class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
+                        <input type="tel" id="edit-emp-phone" required maxlength="14" inputmode="numeric" oninput="maskPhoneInput(this)" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
                     </div>
                     <div>
                         <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Email Address</label>
@@ -5639,7 +5639,7 @@
                     </div>
                     <div>
                         <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Zip Code</label>
-                        <input type="text" id="edit-emp-zip" class="sigma-input" placeholder="75034" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
+                        <input type="text" id="edit-emp-zip" maxlength="10" inputmode="numeric" oninput="maskZipInput(this)" class="sigma-input" placeholder="75034" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
                     </div>
                 </div>
 
@@ -5805,7 +5805,7 @@
                         </div>
                         <div>
                             <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Routing Number (9 Digits)</label>
-                            <input type="text" id="edit-emp-bank-routing" maxlength="9" placeholder="111000025" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
+                            <input type="text" id="edit-emp-bank-routing" maxlength="9" inputmode="numeric" oninput="maskRoutingInput(this)" placeholder="111000025" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
                         </div>
                         <div>
                             <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Account Number</label>
@@ -5962,7 +5962,7 @@
                     </div>
                     <div>
                         <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Emergency Contact Phone</label>
-                        <input type="tel" id="edit-emp-emergency-phone" class="sigma-input" placeholder="(972) 555-0199" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
+                        <input type="tel" id="edit-emp-emergency-phone" maxlength="14" inputmode="numeric" oninput="maskPhoneInput(this)" class="sigma-input" placeholder="(972)-555-0199" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
                     </div>
                 </div>
             </div>
@@ -6171,7 +6171,7 @@
                 </div>
                 <div>
                     <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Federal EIN or SSN</label>
-                    <input type="text" id="sub-onboard-ein" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;" placeholder="XX-XXXXXXX">
+                    <input type="text" id="sub-onboard-ein" maxlength="10" inputmode="numeric" oninput="maskEINInput(this)" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;" placeholder="XX-XXXXXXX">
                 </div>
             </div>
 
@@ -6182,7 +6182,7 @@
                 </div>
                 <div>
                     <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Mobile Phone *</label>
-                    <input type="tel" id="sub-onboard-phone" required class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;" placeholder="(972) 000-0000">
+                    <input type="tel" id="sub-onboard-phone" required maxlength="14" inputmode="numeric" oninput="maskPhoneInput(this)" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;" placeholder="(972)-000-0000">
                 </div>
             </div>
 
@@ -6311,7 +6311,7 @@
                 </div>
                 <div>
                     <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Phone Number *</label>
-                    <input type="tel" id="edit-sub-phone" required class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
+                    <input type="tel" id="edit-sub-phone" required maxlength="14" inputmode="numeric" oninput="maskPhoneInput(this)" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
                 </div>
                 <div>
                     <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Email Address</label>
@@ -6322,7 +6322,7 @@
             <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                 <div>
                     <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">EIN / SSN</label>
-                    <input type="text" id="edit-sub-ein" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
+                    <input type="text" id="edit-sub-ein" maxlength="10" inputmode="numeric" oninput="maskEINInput(this)" placeholder="XX-XXXXXXX" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
                 </div>
                 <div>
                     <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">City / Hub</label>

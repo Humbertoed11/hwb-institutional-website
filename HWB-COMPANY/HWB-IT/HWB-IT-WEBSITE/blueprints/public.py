@@ -1267,7 +1267,11 @@ def subcontractor_onboarding(token: str):
                 return render_template('404.html'), 404
             partner = dict(row)
             ref_code = f"SUB-#{int(partner['id']):04d}"
-            submitted = bool(request.args.get('submitted'))
+            submitted = (
+                bool(request.args.get('submitted'))
+                or bool(partner.get('msa_signed'))
+                or bool(partner.get('onboarding_completed_at'))
+            )
             token_expired = _is_onboarding_token_expired(partner)
             return render_template(
                 'subcontractor_onboarding.html',
@@ -1501,7 +1505,13 @@ def subcontractor_onboarding_submit(token: str):
     from datetime import datetime as dt_cls
     from werkzeug.utils import secure_filename
     from core.services.database import get_db
-    from core.services.sanitizer import clean_phone, clean_email, clean_city
+    from core.services.sanitizer import (
+        clean_phone,
+        clean_email,
+        clean_city,
+        clean_zip,
+        clean_ein_or_ssn,
+    )
     from core.services.security_logger import extract_client_ip
     from database.schema_engine import ensure_subcontractor_onboarding_schema
     from core.services.subcontractor_doc_extractor import (
@@ -1592,13 +1602,16 @@ def subcontractor_onboarding_submit(token: str):
             company_name = (request.form.get('company_name') or w9_ext_data.get('company_name') or partner.get('company_name') or '').strip()
             legal_entity_name = (request.form.get('legal_entity_name') or w9_ext_data.get('legal_entity_name') or partner.get('legal_entity_name') or partner.get('contact_name') or '').strip()
             tax_classification = (request.form.get('tax_classification') or w9_ext_data.get('tax_classification') or partner.get('tax_classification') or 'LLC').strip()
-            raw_ein_input = (request.form.get('ein_or_ssn') or w9_ext_data.get('ein_or_ssn') or partner.get('ein_or_ssn') or '').strip()
+            raw_ein_input = clean_ein_or_ssn(
+                request.form.get('ein_or_ssn') or w9_ext_data.get('ein_or_ssn') or partner.get('ein_or_ssn') or '',
+                tax_classification,
+            )
             masked_tin, last4_tin, encrypted_tin = encrypt_and_mask_subcontractor_tin(raw_ein_input)
             ein_or_ssn = masked_tin or raw_ein_input
             street_address = (request.form.get('street_address') or w9_ext_data.get('street_address') or partner.get('street_address') or '').strip()
             city = clean_city(request.form.get('city') or w9_ext_data.get('city') or partner.get('city') or '')
-            state = (request.form.get('state') or w9_ext_data.get('state') or partner.get('state') or 'TX').strip().upper()
-            zip_code = (request.form.get('zip_code') or w9_ext_data.get('zip_code') or partner.get('zip_code') or '').strip()
+            state = (request.form.get('state') or w9_ext_data.get('state') or partner.get('state') or 'TX').strip().upper()[:2]
+            zip_code = clean_zip(request.form.get('zip_code') or w9_ext_data.get('zip_code') or partner.get('zip_code') or '')
             contact_name = (request.form.get('contact_name') or partner.get('contact_name') or '').strip()
             phone = clean_phone(request.form.get('phone') or partner.get('phone') or '')
             email = clean_email(request.form.get('email') or partner.get('email') or '')
@@ -1817,6 +1830,14 @@ def subcontractor_onboarding_submit(token: str):
                 'status': 'success',
                 'partner_id': sub_id,
                 'reference_code': f"SUB-#{int(sub_id):04d}",
+                'company_name': company_name,
+                'legal_entity_name': legal_entity_name,
+                'tax_classification': tax_classification,
+                'masked_tin': ein_or_ssn,
+                'msa_signer_name': msa_signer_name,
+                'msa_signer_title': msa_signer_title,
+                'receipt_timestamp': signed_at_display,
+                'w9_status': 'Verified',
                 'onboarding_status': new_onboarding_status,
                 'coi_status': new_coi_status,
                 'msa_certificate_file': msa_pdf_filename,
@@ -1972,6 +1993,7 @@ def api_employee_portal_complete(token: str):
     """
     import hashlib
     from core.security import encrypt_pii, mask_account
+    from core.services.sanitizer import clean_zip, clean_routing_number
     from database.schema_engine import ensure_employee_onboarding_schema
     from core.services.employee_doc_extractor import (
         deposit_employee_document_vault,
@@ -1997,8 +2019,8 @@ def api_employee_portal_complete(token: str):
             email = clean_email(data.get('email') or emp.get('email') or '')
             address_street = (data.get('address_street') or emp.get('address_street') or '').strip()
             address_city = clean_city(data.get('address_city') or emp.get('address_city') or '')
-            address_state = (data.get('address_state') or emp.get('address_state') or 'TX').strip().upper()
-            address_zip = (data.get('address_zip') or emp.get('address_zip') or '').strip()
+            address_state = (data.get('address_state') or emp.get('address_state') or 'TX').strip().upper()[:2]
+            address_zip = clean_zip(data.get('address_zip') or emp.get('address_zip') or '')
             emergency_name = (data.get('emergency_contact_name') or emp.get('emergency_contact_name') or '').strip()
             emergency_phone = clean_phone(data.get('emergency_contact_phone') or emp.get('emergency_contact_phone') or '')
 
@@ -2020,7 +2042,7 @@ def api_employee_portal_complete(token: str):
             i9_citizenship = (data.get('i9_citizenship_status') or emp.get('i9_citizenship_status') or 'US Citizen').strip()
 
             dd_bank = (data.get('direct_deposit_bank') or emp.get('direct_deposit_bank') or '').strip()
-            dd_routing = (data.get('direct_deposit_routing') or emp.get('direct_deposit_routing') or '').strip()
+            dd_routing = clean_routing_number(data.get('direct_deposit_routing') or emp.get('direct_deposit_routing') or '')
 
             ssn_encrypted = emp.get('ssn_encrypted')
             ssn_last_four = emp.get('ssn_last_four')
@@ -2168,6 +2190,9 @@ def api_employee_portal_complete(token: str):
                 'employee_id': emp_id,
                 'employee_number': emp_num,
                 'document_id': vault_receipt['document_id'],
+                'signer_name': signer_name,
+                'receipt_timestamp': now_iso,
+                'onboarding_status': 'Active',
                 'signature_hash': sig_hash,
                 'message': f"Welcome aboard, {first_name}! Your W-2 onboarding packet and signed Job Description have been securely encrypted under {emp_num}."
             })

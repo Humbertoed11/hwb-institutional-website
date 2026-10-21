@@ -217,3 +217,55 @@ def merge_comma_list(existing_csv: Optional[str], new_csv: Optional[str]) -> str
     return ", ".join(merged)
 
 
+def clean_ein_or_ssn(
+    raw_tin: Optional[str],
+    tax_classification: Optional[str] = "LLC",
+) -> Optional[str]:
+    """
+    Formats a 9-digit Federal Tax ID into canonical EIN (XX-XXXXXXX) or
+    SSN (XXX-XX-XXXX) format based on tax classification or explicit dash pattern,
+    while preserving server-masked values (**-***0455 / ***-**-9012).
+    """
+    if not raw_tin:
+        return None
+    s = str(raw_tin).strip()
+    if not s:
+        return None
+    if "*" in s or "•" in s:
+        return s
+    digits = re.sub(r"\D", "", s)
+    if not digits:
+        return None
+    digits = digits[:9]
+    tc_low = str(tax_classification or "").lower()
+    is_ssn_mode = (
+        "individual" in tc_low
+        or "sole" in tc_low
+        or bool(re.match(r"^\d{3}-\d{2}-", s))
+    )
+    if len(digits) == 9:
+        if is_ssn_mode:
+            return f"{digits[:3]}-{digits[3:5]}-{digits[5:]}"
+        return f"{digits[:2]}-{digits[2:]}"
+    return s
+
+
+def clean_ssn(raw_ssn: Optional[str]) -> Optional[str]:
+    """
+    Formats a 9-digit Social Security Number into canonical XXX-XX-XXXX format
+    while preserving server-masked values (***-**-XXXX).
+    """
+    return clean_ein_or_ssn(raw_ssn, tax_classification="Individual")
+
+
+def clean_routing_number(raw_routing: Optional[Union[str, int]]) -> Optional[str]:
+    """
+    Standardizes a US bank ABA routing number to 9 numeric digits.
+    """
+    if not raw_routing:
+        return None
+    digits = re.sub(r"\D", "", str(raw_routing))
+    return digits[:9] if digits else None
+
+
+

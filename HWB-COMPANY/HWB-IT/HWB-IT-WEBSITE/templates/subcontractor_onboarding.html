@@ -30,18 +30,88 @@
             </div>
         </div>
 
-        <!-- Success Banner (Shown after submission) -->
-        <div id="onboarding-success-banner" style="display: {% if submitted %}block{% else %}none{% endif %}; background: #f0fdf4; border: 1.5px solid #16a34a; border-radius: 12px; padding: 1.75rem 2rem; margin-bottom: 1.5rem;">
-            <div style="display: flex; align-items: flex-start; gap: 1rem;">
-                <div style="font-size: 2rem; color: #16a34a; line-height: 1;"><i class="fas fa-check-circle"></i></div>
-                <div>
-                    <h2 id="onboarding-success-title" style="font-size: 1.2rem; font-weight: 900; color: #166534; margin: 0 0 0.35rem 0;">
-                        1099 Onboarding Packet Submitted!
-                    </h2>
-                    <p id="onboarding-success-text" style="font-size: 0.9rem; color: #15803d; margin: 0; line-height: 1.55;">
-                        Thank you. Your pre-filled profile, Form W-9, and signed Master Subcontractor Agreement &amp; Texas DWC-83 have been saved under <strong>{{ ref_code }}</strong>.
-                    </p>
+        <!-- Official Tamper-Evident 1099 Transaction Receipt Card (Shown after submission & on revisit) -->
+        <div id="onboarding-receipt-card" style="display: {% if submitted %}block{% else %}none{% endif %}; background: #ffffff; border: 1.5px solid #16a34a; border-top: 5px solid #16a34a; border-radius: 12px; padding: 1.75rem 2rem; margin-bottom: 1.5rem; box-shadow: 0 10px 25px rgba(22, 163, 74, 0.08);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; padding-bottom: 1.15rem; border-bottom: 1px solid #e2e8f0; margin-bottom: 1.25rem;">
+                <div style="display: flex; align-items: flex-start; gap: 0.9rem;">
+                    <div style="width: 44px; height: 44px; border-radius: 10px; background: #dcfce7; color: #15803d; display: flex; align-items: center; justify-content: center; font-size: 1.35rem; flex-shrink: 0;">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.72rem; font-weight: 800; color: #15803d; text-transform: uppercase; letter-spacing: 0.06em;">
+                            Official Transaction Receipt &bull; No Need to Resubmit
+                        </div>
+                        <h2 id="onboarding-success-title" style="font-size: 1.25rem; font-weight: 900; color: #0f172a; margin: 0.15rem 0 0.35rem 0;">
+                            1099 Subcontractor Onboarding Packet Recorded
+                        </h2>
+                        <p id="onboarding-success-text" style="font-size: 0.88rem; color: #334155; margin: 0; line-height: 1.55;">
+                            Thank you. Your pre-filled profile, Form W-9, and signed Master Subcontractor Agreement &amp; Texas DWC-83 have been saved under <strong>{{ ref_code }}</strong>.
+                        </p>
+                    </div>
                 </div>
+                <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 0.45rem 0.85rem; border-radius: 8px; text-align: right;">
+                    <div style="font-size: 0.68rem; font-weight: 800; color: #166534; text-transform: uppercase;">Partner ID</div>
+                    <div id="receipt-ref-code" style="font-size: 0.95rem; font-weight: 900; color: #14532d;">{{ ref_code }}</div>
+                </div>
+            </div>
+
+            <!-- Structured Transaction Summary Grid -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.85rem; margin-bottom: 1.25rem;">
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.75rem 1rem;">
+                    <div style="font-size: 0.7rem; font-weight: 800; color: #64748b; text-transform: uppercase;">Business &amp; Legal Name</div>
+                    <div id="receipt-company-name" style="font-size: 0.9rem; font-weight: 800; color: #0f172a; margin-top: 0.2rem;">{{ partner.company_name }}</div>
+                    <div id="receipt-legal-name" style="font-size: 0.78rem; color: #475569;">{{ partner.legal_entity_name or partner.contact_name or '' }}</div>
+                </div>
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.75rem 1rem;">
+                    <div style="font-size: 0.7rem; font-weight: 800; color: #64748b; text-transform: uppercase;">Federal Tax Classification &amp; TIN</div>
+                    <div id="receipt-tax-class" style="font-size: 0.9rem; font-weight: 800; color: #0f172a; margin-top: 0.2rem;">{{ partner.tax_classification or 'LLC' }}</div>
+                    <div id="receipt-masked-tin" style="font-size: 0.78rem; font-weight: 700; color: #475569;">Tax ID: {{ partner.ein_or_ssn or ('**-***' ~ partner.w9_ein_last4 if partner.w9_ein_last4 else 'Encrypted On File') }}</div>
+                </div>
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.75rem 1rem;">
+                    <div style="font-size: 0.7rem; font-weight: 800; color: #64748b; text-transform: uppercase;">Authorized Signer &amp; Timestamp</div>
+                    <div id="receipt-signer-name" style="font-size: 0.9rem; font-weight: 800; color: #0f172a; margin-top: 0.2rem;">{{ partner.msa_signer_name or partner.contact_name or '' }}</div>
+                    <div id="receipt-timestamp" style="font-size: 0.78rem; color: #475569;">
+                        {% if partner.msa_signed_at and partner.msa_signed_at.strftime is defined %}
+                            {{ partner.msa_signed_at.strftime('%m/%d/%Y %I:%M %p') }}
+                        {% else %}
+                            {{ partner.msa_signed_at or 'Recorded in Vault' }}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Document Checklist Bar -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; margin-bottom: 1.15rem;">
+                <div style="display: flex; align-items: center; gap: 0.55rem; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 0.6rem 0.85rem; border-radius: 8px; font-size: 0.8rem; font-weight: 800; color: #065f46;">
+                    <i class="fas fa-check-circle"></i>
+                    <span id="receipt-w9-badge">IRS Form W-9: Verified ✓</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.55rem; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 0.6rem 0.85rem; border-radius: 8px; font-size: 0.8rem; font-weight: 800; color: #065f46;">
+                    <i class="fas fa-file-signature"></i>
+                    <span id="receipt-msa-badge">MSA &amp; TX DWC-83: Signed ✓</span>
+                </div>
+                <div id="receipt-coi-box" style="display: flex; align-items: center; gap: 0.55rem; {% if partner.coi_file_url %}background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46;{% else %}background: #fffbeb; border: 1px solid #fde68a; color: #92400e;{% endif %} padding: 0.6rem 0.85rem; border-radius: 8px; font-size: 0.8rem; font-weight: 800;">
+                    <i class="fas fa-shield-alt"></i>
+                    <span id="receipt-coi-badge">COI: {% if partner.coi_file_url %}Uploaded ✓{% else %}Pending Upload{% endif %}</span>
+                </div>
+            </div>
+
+            <!-- Cryptographic Signature Fingerprint -->
+            <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0.7rem 1rem; margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                <span style="font-size: 0.74rem; font-weight: 800; color: #475569; text-transform: uppercase;">
+                    <i class="fas fa-fingerprint" style="color: #7c3aed; margin-right: 0.35rem;"></i> SHA-256 Digital Signature Certificate
+                </span>
+                <code id="receipt-sig-hash" style="font-size: 0.76rem; font-weight: 700; color: #0f172a; background: #e2e8f0; padding: 0.2rem 0.55rem; border-radius: 4px; word-break: break-all;">{{ partner.msa_signature_hash or 'Verified Digital Signature on File' }}</code>
+            </div>
+
+            <!-- Receipt Actions -->
+            <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center;">
+                <button type="button" onclick="window.print()" style="height: 38px; padding: 0 1.15rem; border-radius: 6px; border: 1px solid #16a34a; background: #16a34a; color: #ffffff; font-size: 0.84rem; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 0.45rem;">
+                    <i class="fas fa-print"></i> Print / Save Receipt
+                </button>
+                <button type="button" id="btn-reopen-onboarding-form" onclick="toggleSubcontractorFormEdit()" style="height: 38px; padding: 0 1.15rem; border-radius: 6px; border: 1px solid #cbd5e1; background: #ffffff; color: #334155; font-size: 0.84rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 0.45rem;">
+                    <i class="fas fa-edit"></i> Update Information or Upload Insurance Certificate (COI)
+                </button>
             </div>
         </div>
 
@@ -68,7 +138,7 @@
         </div>
         {% endif %}
 
-        <form id="form-subcontractor-onboarding" onsubmit="submitSubcontractorOnboarding(event)" enctype="multipart/form-data">
+        <form id="form-subcontractor-onboarding" onsubmit="submitSubcontractorOnboarding(event)" enctype="multipart/form-data" style="display: {% if submitted %}none{% else %}block{% endif %};">
 
             <!-- ================================================================= -->
             <!-- STEP 1: UPLOAD FORM W-9 (INSTANT AI / PDF AUTO-EXTRACTION)        -->
@@ -128,18 +198,22 @@
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
                     <div>
                         <label for="onb-tax-class" style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">Federal Tax Classification (W-9 Line 3a) *</label>
-                        <select id="onb-tax-class" name="tax_classification" class="sigma-input" style="width: 100%; height: 40px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.75rem; font-size: 0.9rem; background: #fff; box-sizing: border-box;">
-                            {% set tc = partner.tax_classification or 'LLC' %}
+                        {% set tc = partner.tax_classification or 'LLC' %}
+                        {% set is_indiv = ('individual' in tc|lower or 'sole' in tc|lower) %}
+                        <select id="onb-tax-class" name="tax_classification" onchange="syncTaxClassificationMask(this, 'onb-ein-ssn')" class="sigma-input" style="width: 100%; height: 40px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.75rem; font-size: 0.9rem; background: #fff; box-sizing: border-box;">
                             <option value="LLC" {% if 'llc' in tc|lower %}selected{% endif %}>Limited Liability Company (LLC)</option>
-                            <option value="Individual / Sole Proprietor" {% if 'individual' in tc|lower or 'sole' in tc|lower %}selected{% endif %}>Individual / Sole Proprietor</option>
+                            <option value="Individual / Sole Proprietor" {% if is_indiv %}selected{% endif %}>Individual / Sole Proprietor</option>
                             <option value="S Corporation" {% if 's corp' in tc|lower %}selected{% endif %}>S Corporation</option>
                             <option value="C Corporation" {% if 'c corp' in tc|lower %}selected{% endif %}>C Corporation</option>
                             <option value="Partnership" {% if 'partner' in tc|lower %}selected{% endif %}>Partnership</option>
                         </select>
                     </div>
                     <div>
-                        <label for="onb-ein-ssn" style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">Federal Tax ID (EIN or SSN from W-9) *</label>
-                        <input type="text" id="onb-ein-ssn" name="ein_or_ssn" required value="{{ partner.ein_or_ssn or '' }}" placeholder="XX-XXXXXXX or XXX-XX-XXXX" class="sigma-input" style="width: 100%; height: 40px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.75rem; font-size: 0.9rem; box-sizing: border-box;">
+                        <label for="onb-ein-ssn" style="display: flex; align-items: center; justify-content: space-between; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">
+                            <span>Federal Tax ID (EIN or SSN from W-9) *</span>
+                            <span id="onb-tax-id-format-badge" style="font-size: 0.68rem; font-weight: 800; color: #6d28d9; background: #ede9fe; padding: 0.1rem 0.45rem; border-radius: 4px;">{% if is_indiv %}Format: XXX-XX-XXXX (SSN){% else %}Format: XX-XXXXXXX (EIN){% endif %}</span>
+                        </label>
+                        <input type="text" id="onb-ein-ssn" name="ein_or_ssn" required value="{{ partner.ein_or_ssn or '' }}" oninput="maskTaxIdInput(this)" maxlength="{% if is_indiv %}11{% else %}10{% endif %}" inputmode="numeric" autocomplete="off" data-tax-mode="{% if is_indiv %}ssn{% else %}ein{% endif %}" placeholder="{% if is_indiv %}XXX-XX-XXXX (9-Digit SSN){% else %}XX-XXXXXXX (9-Digit EIN){% endif %}" class="sigma-input" style="width: 100%; height: 40px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.75rem; font-size: 0.9rem; font-family: monospace; letter-spacing: 0.04em; box-sizing: border-box;">
                     </div>
                 </div>
 
@@ -157,11 +231,11 @@
                     </div>
                     <div>
                         <label for="onb-state" style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">State *</label>
-                        <input type="text" id="onb-state" name="state" required value="{{ partner.state or 'TX' }}" maxlength="2" oninput="syncContractPreview()" class="sigma-input" style="width: 100%; height: 40px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.75rem; font-size: 0.9rem; box-sizing: border-box;">
+                        <input type="text" id="onb-state" name="state" required value="{{ partner.state or 'TX' }}" maxlength="2" oninput="maskStateInput(this); syncContractPreview()" class="sigma-input" style="width: 100%; height: 40px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.75rem; font-size: 0.9rem; box-sizing: border-box;">
                     </div>
                     <div>
                         <label for="onb-zip" style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">ZIP Code *</label>
-                        <input type="text" id="onb-zip" name="zip_code" required value="{{ partner.zip_code or '' }}" oninput="syncContractPreview()" placeholder="75201" class="sigma-input" style="width: 100%; height: 40px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.75rem; font-size: 0.9rem; box-sizing: border-box;">
+                        <input type="text" id="onb-zip" name="zip_code" required value="{{ partner.zip_code or '' }}" maxlength="10" inputmode="numeric" oninput="maskZipInput(this); syncContractPreview()" placeholder="75201" class="sigma-input" style="width: 100%; height: 40px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.75rem; font-size: 0.9rem; box-sizing: border-box;">
                     </div>
                 </div>
 
@@ -172,7 +246,7 @@
                     </div>
                     <div>
                         <label for="onb-phone" style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">Phone (Pre-Filled) *</label>
-                        <input type="tel" id="onb-phone" name="phone" required value="{{ partner.phone or '' }}" class="sigma-input" style="width: 100%; height: 40px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.75rem; font-size: 0.9rem; box-sizing: border-box;">
+                        <input type="tel" id="onb-phone" name="phone" required value="{{ partner.phone or '' }}" maxlength="14" inputmode="numeric" oninput="maskPhoneInput(this)" placeholder="(214)-555-0199" class="sigma-input" style="width: 100%; height: 40px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.75rem; font-size: 0.9rem; box-sizing: border-box;">
                     </div>
                     <div>
                         <label for="onb-email" style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">Email (Pre-Filled) *</label>
@@ -365,6 +439,11 @@ async function handleDocumentAutoExtract(docType, fileInput) {
                             break;
                         }
                     }
+                    if (typeof syncTaxClassificationMask === 'function') {
+                        syncTaxClassificationMask(sel, 'onb-ein-ssn');
+                    }
+                } else if (typeof maskTaxIdInput === 'function') {
+                    maskTaxIdInput(document.getElementById('onb-ein-ssn'));
                 }
                 syncContractPreview();
                 if (badgeEl) {
@@ -433,6 +512,24 @@ async function renewExpiredOnboardingLink(btn) {
     }
 }
 
+function toggleSubcontractorFormEdit() {
+    const form = document.getElementById('form-subcontractor-onboarding');
+    const reopenBtn = document.getElementById('btn-reopen-onboarding-form');
+    if (!form) return;
+    if (form.style.display === 'none') {
+        form.style.display = 'block';
+        if (reopenBtn) {
+            reopenBtn.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Edit Form';
+        }
+        form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+        form.style.display = 'none';
+        if (reopenBtn) {
+            reopenBtn.innerHTML = '<i class="fas fa-edit"></i> Update Information or Upload Insurance Certificate (COI)';
+        }
+    }
+}
+
 async function submitSubcontractorOnboarding(e) {
     e.preventDefault();
     const errBanner = document.getElementById('onboarding-error-banner');
@@ -455,7 +552,7 @@ async function submitSubcontractorOnboarding(e) {
         });
         const data = await res.json();
         if (res.ok && data.status === 'success') {
-            const successBanner = document.getElementById('onboarding-success-banner');
+            const receiptCard = document.getElementById('onboarding-receipt-card');
             const successText = document.getElementById('onboarding-success-text');
             const statusPill = document.getElementById('portal-status-pill');
             if (successText && data.message) successText.innerHTML = data.message;
@@ -464,9 +561,45 @@ async function submitSubcontractorOnboarding(e) {
                 statusPill.style.background = '#ecfdf5';
                 statusPill.style.color = '#065f46';
             }
-            if (successBanner) {
-                successBanner.style.display = 'block';
-                successBanner.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            const setTxt = (id, val) => {
+                const el = document.getElementById(id);
+                if (el && val) el.textContent = val;
+            };
+            setTxt('receipt-ref-code', data.reference_code);
+            setTxt('receipt-company-name', data.company_name || document.getElementById('onb-company-name')?.value);
+            setTxt('receipt-legal-name', data.legal_entity_name || document.getElementById('onb-legal-name')?.value);
+            setTxt('receipt-tax-class', data.tax_classification || document.getElementById('onb-tax-class')?.value);
+            if (data.masked_tin) {
+                setTxt('receipt-masked-tin', 'Tax ID: ' + data.masked_tin);
+            }
+            setTxt('receipt-signer-name', data.msa_signer_name || document.getElementById('onb-signer-name')?.value);
+            setTxt('receipt-timestamp', data.receipt_timestamp || 'Recorded Just Now');
+            setTxt('receipt-sig-hash', data.msa_signature_hash);
+
+            const coiBox = document.getElementById('receipt-coi-box');
+            const coiBadge = document.getElementById('receipt-coi-badge');
+            if (coiBadge && data.coi_status) {
+                const hasCoi = data.coi_status.toLowerCase().includes('upload') || data.coi_status.toLowerCase().includes('verified');
+                coiBadge.textContent = hasCoi ? 'COI: Uploaded ✓' : 'COI: Pending Upload';
+                if (coiBox) {
+                    coiBox.style.background = hasCoi ? '#ecfdf5' : '#fffbeb';
+                    coiBox.style.borderColor = hasCoi ? '#a7f3d0' : '#fde68a';
+                    coiBox.style.color = hasCoi ? '#065f46' : '#92400e';
+                }
+            }
+
+            // Hide form immediately to prevent confusion and duplicate submissions
+            if (form) {
+                form.style.display = 'none';
+            }
+            const reopenBtn = document.getElementById('btn-reopen-onboarding-form');
+            if (reopenBtn) {
+                reopenBtn.innerHTML = '<i class="fas fa-edit"></i> Update Information or Upload Insurance Certificate (COI)';
+            }
+            if (receiptCard) {
+                receiptCard.style.display = 'block';
+                receiptCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
         } else {
             if (errBanner && errText) {

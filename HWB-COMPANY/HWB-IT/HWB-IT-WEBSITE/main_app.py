@@ -261,9 +261,24 @@ def apply_application_security_headers(response):
     ):
         try:
             body_bytes = response.get_data()
-            if b'sigma_responsive_engine.js' not in body_bytes and b'</body>' in body_bytes:
-                inject_tag = b'<script src="/static/js/sigma_responsive_engine.js" defer></script>\n</body>'
-                response.set_data(body_bytes.replace(b'</body>', inject_tag, 1))
+            if b'</body>' in body_bytes:
+                injected = False
+                if b'sigma_responsive_engine.js' not in body_bytes:
+                    body_bytes = body_bytes.replace(
+                        b'</body>',
+                        b'<script src="/static/js/sigma_responsive_engine.js" defer></script>\n</body>',
+                        1,
+                    )
+                    injected = True
+                if b'sigma_input_masks.js' not in body_bytes:
+                    body_bytes = body_bytes.replace(
+                        b'</body>',
+                        b'<script src="/static/js/sigma_input_masks.js" defer></script>\n</body>',
+                        1,
+                    )
+                    injected = True
+                if injected:
+                    response.set_data(body_bytes)
         except Exception:
             pass
 
