@@ -1004,6 +1004,38 @@ def apply_system_migrations(conn: Any, db_url: Optional[str] = None) -> None:
                     except Exception as adb_err:
                         print(f"[MIGRATION NOTICE] Sibling sigmajan-adb 048 sync skipped: {adb_err}", flush=True)
 
+            if "049_system_settings_azure_parity_bug_141" not in applied:
+                print("[MIGRATION] Applying 049_system_settings_azure_parity_bug_141...", flush=True)
+                ensure_subcontractor_onboarding_schema(conn)
+                apply_migration_047_subcontractor_onboarding_workflow(conn)
+                apply_migration_048_employee_onboarding_vault(conn)
+                cur.execute("""
+                    INSERT INTO "schema_migrations" (version, description)
+                    VALUES (
+                        '049_system_settings_azure_parity_bug_141',
+                        'Create SystemSettings table in baseline & runtime schema engine and re-verify 047/048 onboarding migrations on Azure Production (BUG-141)'
+                    )
+                    ON CONFLICT (version) DO NOTHING;
+                """)
+                conn.commit()
+                applied.add("049_system_settings_azure_parity_bug_141")
+                print("[MIGRATION] 049_system_settings_azure_parity_bug_141 successfully applied and recorded.", flush=True)
+
+                if target_db_url and "sigmajan-server" in target_db_url and "/sigmajan-db" in target_db_url:
+                    try:
+                        import psycopg2
+                        adb_url = target_db_url.replace("/sigmajan-db", "/sigmajan-adb")
+                        adb_conn = psycopg2.connect(adb_url, connect_timeout=5)
+                        try:
+                            ensure_subcontractor_onboarding_schema(adb_conn)
+                            apply_migration_047_subcontractor_onboarding_workflow(adb_conn)
+                            apply_migration_048_employee_onboarding_vault(adb_conn)
+                            print("[MIGRATION] 049 synchronized to sibling Azure database sigmajan-adb.", flush=True)
+                        finally:
+                            adb_conn.close()
+                    except Exception as adb_err:
+                        print(f"[MIGRATION NOTICE] Sibling sigmajan-adb 049 sync skipped: {adb_err}", flush=True)
+
             for v_tag, mod_path, v_desc in modular_migrations:
                 if v_tag not in applied:
                     print(f"[MIGRATION] Applying modular migration {v_tag} ({mod_path})...", flush=True)
@@ -1772,6 +1804,14 @@ def ensure_subcontractor_onboarding_schema(conn: Any) -> None:
                 ON "SubcontractorDocuments" (subcontractor_id, doc_type, is_current);
                 CREATE INDEX IF NOT EXISTS idx_subcontractor_docs_file_key
                 ON "SubcontractorDocuments" (file_key);
+
+                CREATE TABLE IF NOT EXISTS "SystemSettings" (
+                    key TEXT PRIMARY KEY,
+                    value TEXT
+                );
+                INSERT INTO "SystemSettings" (key, value)
+                VALUES ('subcontractor_auto_review_enabled', 'false')
+                ON CONFLICT (key) DO NOTHING;
             """)
         conn.commit()
         _SUBCONTRACTOR_SCHEMA_VERIFIED = True

@@ -124,6 +124,7 @@ Responsibility: George (Architect)
 | 10/20/2026 | BUG-138 | Silent Password Reset Failure on Azure Production (`Users.reset_token_hash` Missing From `schema_engine.py`), Unverified Microsoft Graph Delivery Status, Missing Full-Name Identity Resolution, & Lack of Automated Admin Password Reset Email Dispatch. | **RESOLVED** | CRITICAL |
 | 10/20/2026 | BUG-139 | 1099 Subcontractor Post-Registration Onboarding Gap — Self-Reported COI Marked as Verified Without File, Missing Pre-Filled Self-Service Onboarding Portal (`/onboard/subcontractor/<token>`), No Automated W-9 / COI Document Extraction, & Encrypted PostgreSQL `SubcontractorDocuments` Vault. | **RESOLVED** | HIGH |
 | 10/20/2026 | BUG-140 | W-2 Employee Onboarding & HR Document Vault Parity Gap — Ephemeral Container Disk Storage on `EmployeeDocuments`, Zero Auto-Extraction on Form W-4 / I-9 / Driver License / Voided Check Uploads, Missing Pre-Filled W-2 Self-Service Portal (`/onboard/employee/<token>`), & Uncertified ISO 9001 Clause 7.2 Job Description Timestamp. | **RESOLVED** | HIGH |
+| 10/20/2026 | BUG-141 | 1099 Subcontractor Network Form Submission Error on Live Azure (`relation "SystemSettings" does not exist` at `/work-with-us?track=subcontractor` -> `POST /api/v1/workforce/subcontractors/register`). | **RESOLVED** | CRITICAL |
 
 
 ## BUG-122: App Manual Static Routing Deficit (Lacks Automatic Active Workspace Detection & Deep-Link Chapter Navigation)
@@ -2670,3 +2671,15 @@ CEO Humberto Dominguez attempting to log into `https://www.hwbcleaning.com/login
    - Built `extract_w4_fields`, `extract_state_id_fields`, `extract_direct_deposit_fields`, `extract_i9_fields`, and `apply_extracted_fields_to_employee` to automatically extract and populate Home Address, City/State/ZIP, AES-256 encrypted SSN, W-4 Filing Status/Dependents/Withholding, State ID # & Expiration, DOB, and Bank Name / ABA Routing / AES-256 encrypted Account Number.
 3. **Pre-Filled Self-Service W-2 Onboarding Portal & Locked ISO 9001 Clause 7.2 PDF Certificate (`blueprints/public.py`, `templates/employee_onboarding_portal.html`, `blueprints/crm_api.py`):**
    - Built `/onboard/employee/<token>`, `/api/v1/employees/onboard/<token>/upload-doc`, and `/api/v1/employees/onboard/<token>/complete`, plus `generate_signed_w2_onboarding_pdf` (`ReportLab` + `SHA-256` signature hash) and `test_18_w2_employee_onboarding_and_encrypted_vault` (`18/18` Rack 14 tests passing).
+
+
+## BUG-141: 1099 Subcontractor Network Form Submission Error on Live Azure (`relation "SystemSettings" does not exist` at `/work-with-us?track=subcontractor`)
+**Detected:** 10/20/2026
+**Status:** **RESOLVED** (10/20/2026)
+**Symptoms:**
+1. Submitting a new 1099 subcontractor registration on `https://www.hwbcleaning.com/work-with-us?track=subcontractor` (`POST /api/v1/workforce/subcontractor`) returned `relation "SystemSettings" does not exist`.
+**Root Causes:**
+1. `"SystemSettings"` (`key TEXT PRIMARY KEY, value TEXT`) existed in local development PostgreSQL 16.15 from an earlier manual table creation, but `CREATE TABLE IF NOT EXISTS "SystemSettings"` was omitted from `database/schema_engine.py`.
+2. When `api_workforce_subcontractor` (`blueprints/crm_api.py`) queried `SELECT value FROM "SystemSettings" WHERE key = 'subcontractor_auto_review_enabled'`, live Azure PostgreSQL 16.15 (`sigmajan-server`) threw `UndefinedTable: relation "SystemSettings" does not exist`.
+**Solution:**
+1. Added `CREATE TABLE IF NOT EXISTS "SystemSettings" (key TEXT PRIMARY KEY, value TEXT)` and default seed `('subcontractor_auto_review_enabled', 'false')` inside `ensure_subcontractor_onboarding_schema(conn)`, `api_workforce_subcontractor` (`blueprints/crm_api.py`), and Migration `049_system_settings_azure_parity_bug_141` (`database/schema_engine.py`).

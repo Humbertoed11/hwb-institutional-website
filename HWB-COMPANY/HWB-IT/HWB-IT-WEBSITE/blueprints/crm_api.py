@@ -1965,6 +1965,15 @@ def api_workforce_subcontractor():
 
             import secrets
             cur.execute('''
+                CREATE TABLE IF NOT EXISTS "SystemSettings" (
+                    key TEXT PRIMARY KEY,
+                    value TEXT
+                );
+                INSERT INTO "SystemSettings" (key, value)
+                VALUES ('subcontractor_auto_review_enabled', 'false')
+                ON CONFLICT (key) DO NOTHING;
+            ''')
+            cur.execute('''
                 SELECT value FROM "SystemSettings"
                 WHERE key = 'subcontractor_auto_review_enabled'
                 LIMIT 1;
