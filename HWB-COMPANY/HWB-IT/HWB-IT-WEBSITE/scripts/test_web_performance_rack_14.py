@@ -1268,6 +1268,66 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
                 conn.commit()
             conn.close()
 
+    def test_21_subcontractor_and_w2_receipt_breadcrumb_and_no_guarantee_notice(self):
+        """
+        Verifies the 4-Step Compliance Workflow Breadcrumb Summary ('What to Expect Next')
+        and strict No-Guarantee of Work / Project Award / Employment legal disclaimers across:
+        - /work-with-us (W-2 & 1099 registration receipts)
+        - /onboard/subcontractor/<token> (#onboarding-receipt-card)
+        - /onboard/employee/<token> (#w2-receipt-card)
+        - core/services/notification_service.py (outbound email receipts)
+        - core/services/subcontractor_doc_extractor.py (signed MSA & TX DWC-83 HTML/PDF certificates)
+        """
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+        # 1. Verify /work-with-us public page
+        r_wwu = self.client.get("/work-with-us?track=subcontractor")
+        self.assertEqual(r_wwu.status_code, 200)
+        wwu_html = r_wwu.get_data(as_text=True)
+        self.assertIn("What to Expect Next (4-Step Compliance Workflow)", wwu_html)
+        self.assertIn("What to Expect Next (4-Step Candidate Review Process)", wwu_html)
+        self.assertIn("Notice — No Guarantee of Work or Project Award:", wwu_html)
+        self.assertIn("Notice — No Guarantee of Employment or Interview:", wwu_html)
+        self.assertNotIn("within 24–48 hours for a quick 5-minute phone interview", wwu_html)
+
+        # 2. Verify subcontractor_onboarding.html template
+        with open(os.path.join(base_dir, "templates", "subcontractor_onboarding.html"), "r", encoding="utf-8") as f:
+            sub_tpl = f.read()
+        self.assertIn('id="receipt-next-steps-box"', sub_tpl)
+        self.assertIn('id="receipt-no-guarantee-box"', sub_tpl)
+        self.assertIn("Important Notice — No Promise or Guarantee of Work:", sub_tpl)
+        self.assertIn("On-File Roster Eligibility", sub_tpl)
+
+        # 3. Verify employee_onboarding_portal.html template
+        with open(os.path.join(base_dir, "templates", "employee_onboarding_portal.html"), "r", encoding="utf-8") as f:
+            emp_tpl = f.read()
+        self.assertIn('id="w2-receipt-next-steps-box"', emp_tpl)
+        self.assertIn("What to Expect Next (4-Step Onboarding Workflow)", emp_tpl)
+        self.assertIn("Important Notice — At-Will Employment &amp; No Guarantee of Hours:", emp_tpl)
+
+        # 4. Verify notification_service.py email templates
+        with open(os.path.join(base_dir, "core", "services", "notification_service.py"), "r", encoding="utf-8") as f:
+            notif_src = f.read()
+        self.assertIn("Important Notice — No Guarantee of Work or Project Award:", notif_src)
+        self.assertIn("Important Notice — No Promise or Guarantee of Work:", notif_src)
+        self.assertIn("Notice — No Guarantee of Project Award or Work Volume:", notif_src)
+        self.assertIn("Notice — No Guarantee of Employment or Interview:", notif_src)
+
+        # 5. Verify signed MSA + TX DWC-83 HTML & PDF certificates include Clause 2.4 / 3.2 No Guarantee of Work
+        from core.services.subcontractor_doc_extractor import (
+            generate_signed_msa_dwc83_certificate_html,
+            generate_signed_msa_dwc83_certificate_pdf,
+        )
+        sample_partner = {"id": 18, "company_name": "Apex Janitorial LLC", "contact_name": "Carlos Gomez"}
+        cert_html = generate_signed_msa_dwc83_certificate_html(
+            sample_partner, "Carlos Gomez", "Owner", "127.0.0.1", "10/22/2026 12:30 PM CST"
+        )
+        self.assertIn("No Guarantee of Project Award or Minimum Work Volume", cert_html)
+        cert_pdf = generate_signed_msa_dwc83_certificate_pdf(
+            sample_partner, "Carlos Gomez", "Owner", "127.0.0.1", "10/22/2026 12:30 PM CST"
+        )
+        self.assertIn(b"No Guarantee of Project Award or Minimum Work Volume", cert_pdf)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -561,9 +561,14 @@ def send_applicant_receipt_email(applicant_data: Dict[str, Any], is_repeat: bool
                     <td style="padding: 6px 0; color: #059669; font-weight: 700;">Active / In Hiring Review</td>
                 </tr>
             </table>
-            <p style="margin-bottom: 0; color: #475569;">
-                <strong>What happens next:</strong> You do not need to submit another application. Our hiring supervisors review active profiles as routes open in your area and will reach out to you directly if a matching shift is available.
+            <p style="margin-bottom: 12px; color: #475569;">
+                <strong>What to Expect Next (4-Step Candidate Review):</strong><br>
+                <code>1. Application Recorded ✓ &rarr; 2. On-File Candidate Pool &rarr; 3. Screening (If Selected) &rarr; 4. At-Will Onboarding</code><br>
+                You do not need to submit another application. Our hiring supervisors review on-file profiles as routes open in your area and will reach out if a matching shift becomes available.
             </p>
+            <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-left: 3px solid #64748b; padding: 10px 14px; border-radius: 4px; font-size: 12px; color: #475569; line-height: 1.5;">
+                <strong style="color: #0f172a;">Notice — No Guarantee of Employment or Interview:</strong> This receipt confirms only that your application is on file. Submitting an application does not guarantee an interview, a job offer, immediate or future work, or minimum hours. Employment with HWB Cleaning Services LLC is at-will.
+            </div>
         </div>
         <div style="font-size: 12px; color: #64748b; text-align: center;">
             HWB Cleaning Services LLC • (214)-586-0257 • sales@hwbcleaning.com
@@ -851,8 +856,12 @@ def send_subcontractor_receipt_email(partner_data: Dict[str, Any], is_repeat: bo
                 </tr>
             </table>
             <div style="background-color: #f8fafc; border-left: 4px solid #2563eb; padding: 12px 16px; border-radius: 4px; margin-top: 16px;">
-                <strong style="color: #0f172a;">Next Steps for Project Dispatch:</strong><br>
-                Our operations team is reviewing your initial registration. Once reviewed, you will receive a secure, pre-filled <strong>1099 Partner Onboarding Link</strong> where you can upload your <strong>Form W-9</strong> and <strong>Certificate of Insurance (COI)</strong> and sign your subcontractor agreement online.
+                <strong style="color: #0f172a;">What to Expect Next (4-Step Compliance Workflow):</strong><br>
+                <span style="font-size: 12px; font-weight: 700; color: #1e40af;">1. Registered ✓ &rarr; 2. Profile Review &rarr; 3. W-9, COI &amp; MSA File &rarr; 4. On-File Roster Eligibility</span><br>
+                If your crew profile matches our regional trade needs, our operations team will email your pre-filled <strong>1099 Partner Onboarding Link</strong> where you can upload your <strong>Form W-9</strong> and <strong>Certificate of Insurance (COI)</strong> and e-sign your Master Subcontractor Agreement.
+            </div>
+            <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-left: 3px solid #64748b; padding: 10px 14px; border-radius: 4px; margin-top: 12px; font-size: 12px; color: #475569; line-height: 1.5;">
+                <strong style="color: #0f172a;">Important Notice — No Guarantee of Work or Project Award:</strong> This receipt confirms registration of your company profile only. Registration or compliance onboarding does <strong>not</strong> guarantee immediate or future project assignments, minimum billable hours, or contract awards. Subcontracts are offered strictly on an as-needed, project-by-project basis if and when matching work becomes available.
             </div>
         </div>
         <div style="font-size: 12px; color: #64748b; text-align: center;">
@@ -992,7 +1001,7 @@ def send_subcontractor_onboarding_completed_notifications(partner_data: Dict[str
     partner_email = clean_email(partner_data.get("email"))
     if partner_email and not partner_email.endswith((".test", ".local", ".invalid", "@example.com")):
         coi_note = (
-            "Your W-9, Certificate of Insurance (COI), and signed Master Subcontractor Agreement are now under final verification."
+            "Your W-9, Certificate of Insurance (COI), and signed Master Subcontractor Agreement have been recorded and are under compliance review for on-file roster eligibility."
             if "Pending" not in coi_status
             else "Your W-9 and signed Master Subcontractor Agreement have been saved! Because your COI file was not uploaded yet, your profile is held at <strong>Pending COI</strong>. You can use your same onboarding link anytime to upload your COI once received from your insurance agent."
         )
@@ -1002,6 +1011,10 @@ def send_subcontractor_onboarding_completed_notifications(partner_data: Dict[str
             <h2 style="margin-top: 0; color: #0f172a;">1099 Onboarding Packet Received ({ref_code})</h2>
             <p style="font-size: 14px; color: #334155;">Hello <strong>{contact_name}</strong>,</p>
             <p style="font-size: 14px; color: #334155; line-height: 1.6;">{coi_note}</p>
+            <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 12px 14px; margin-top: 14px; font-size: 12px; color: #334155; line-height: 1.5;">
+                <strong>What to Expect Next:</strong> <code>1. Registered ✓ &rarr; 2. W-9 &amp; MSA Signed ✓ &rarr; 3. COI Verification &rarr; 4. On-File Roster Eligibility</code><br><br>
+                <strong>Important Notice — No Promise or Guarantee of Work:</strong> This receipt is solely an acknowledgment that your compliance documents have been received. Completion of onboarding or placement on our subcontractor roster does <strong>not</strong> guarantee immediate work, future project assignments, minimum billable hours, or any subcontract award. All work is offered strictly on an as-needed, project-by-project basis upon mutual execution of a separate project Scope of Work.
+            </div>
             <p style="font-size: 12px; color: #64748b; margin-top: 20px;">HWB Cleaning Services LLC • (214)-586-0257 • sales@hwbcleaning.com</p>
         </div>
         """
@@ -1038,8 +1051,11 @@ def send_subcontractor_approved_email(partner_data: Dict[str, Any]) -> Tuple[boo
                 Congratulations — your compliance file (Form W-9, Certificate of Insurance, Master Subcontractor Agreement, and Texas DWC-83) for <strong>{company_name}</strong> has been verified and approved.
             </p>
             <p>
-                Your crew is now listed as an <strong>Active Partner ({ref_code})</strong> cleared for commercial post-construction and specialty cleaning project dispatch. Our operations desk will reach out directly as project scopes in your service area are scheduled.
+                Your crew is now listed on our eligible <strong>On-File Partner Roster ({ref_code})</strong>. If and when commercial post-construction or specialty cleaning project scopes arise in your service area that match your crew profile, our operations desk may reach out to discuss project availability.
             </p>
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 3px solid #64748b; padding: 10px 14px; border-radius: 4px; margin-top: 12px; font-size: 12px; color: #475569; line-height: 1.5;">
+                <strong style="color: #0f172a;">Notice — No Guarantee of Project Award or Work Volume:</strong> Approval of your compliance file places your business on our eligible subcontractor roster for future consideration only and does <strong>not</strong> guarantee immediate or future project assignments, minimum billable hours, or contract awards. All work is offered strictly on an as-needed, project-by-project basis upon mutual execution of a separate project Scope of Work.
+            </div>
         </div>
         <div style="font-size: 12px; color: #64748b; text-align: center; margin-top: 16px;">
             HWB Cleaning Services LLC • (214)-586-0257 • sales@hwbcleaning.com

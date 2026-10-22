@@ -577,6 +577,10 @@ def generate_signed_msa_dwc83_certificate_html(
             <strong>2.3 Invoicing &amp; Payment in Arrears Upon Walkthrough Verification:</strong>
             All payments require an itemized subcontractor invoice referencing the assigned Scope of Work, mandatory before/after completion photos, and final site walkthrough sign-off. Payments are disbursed in arrears according to agreed Net terms.
         </div>
+        <div class="clause">
+            <strong>2.4 No Guarantee of Project Award or Minimum Work Volume:</strong>
+            Execution of this Master Subcontractor Agreement and placement on the HWB Cleaning Services LLC subcontractor roster does not guarantee immediate or future project assignments, minimum billable hours, or any subcontract award. Subcontracts are offered strictly on an as-needed, project-by-project basis upon mutual execution of a separate project Scope of Work.
+        </div>
 
         <div class="sig-block">
             <div style="font-size: 12px; font-weight: 800; color: #166534; text-transform: uppercase; margin-bottom: 6px;">
@@ -680,9 +684,10 @@ def generate_signed_msa_dwc83_certificate_pdf(
             ],
         ),
         (
-            "SECTION 3. GENERAL LIABILITY INSURANCE ($1,000,000 MINIMUM) & INDEMNIFICATION",
+            "SECTION 3. GENERAL LIABILITY INSURANCE ($1,000,000 MINIMUM) & NO GUARANTEE OF WORK",
             [
                 "3.1 Insurance Requirement: Subcontractor agrees to maintain active Commercial General Liability insurance of not less than $1,000,000 per occurrence naming HWB Cleaning Services LLC as Certificate Holder, and to indemnify HWB Cleaning Services LLC against claims arising from Subcontractor crew negligence.",
+                "3.2 No Guarantee of Project Award or Minimum Work Volume: Execution of this Agreement and placement on the subcontractor roster does NOT guarantee immediate or future project assignments, minimum billable hours, or any subcontract award. Work is offered strictly on an as-needed, project-by-project basis.",
             ],
         ),
     ]

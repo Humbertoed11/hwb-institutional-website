@@ -191,11 +191,29 @@
                 </div>
             </div>
 
-            <div style="background: #f8fafc; border: 1px solid var(--slate-300); border-radius: 8px; padding: 0.65rem 0.95rem; margin-bottom: 1.15rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+            <div style="background: #f8fafc; border: 1px solid var(--slate-300); border-radius: 8px; padding: 0.65rem 0.95rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
                 <span style="font-size: 0.72rem; font-weight: 800; color: var(--slate-700); text-transform: uppercase;">
                     <i class="fas fa-fingerprint" style="color: var(--brand); margin-right: 0.35rem;"></i> SHA-256 Digital Signature Certificate
                 </span>
                 <code id="w2-receipt-hash" style="font-size: 0.75rem; font-weight: 700; color: var(--slate-900); background: #e2e8f0; padding: 0.2rem 0.5rem; border-radius: 4px; word-break: break-all;">{{ employee.onboarding_signature_hash or 'Verified Signature Certificate on File' }}</code>
+            </div>
+
+            <div id="w2-receipt-next-steps-box" style="background: #f8fafc; border: 1px solid var(--slate-300); border-radius: 8px; padding: 0.9rem 1.1rem; margin-bottom: 1.15rem;">
+                <div style="font-size: 0.72rem; font-weight: 800; color: var(--slate-900); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">
+                    <i class="fas fa-route" style="color: var(--brand); margin-right: 0.35rem;"></i> What to Expect Next (4-Step Onboarding Workflow)
+                </div>
+                <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; font-size: 0.75rem; font-weight: 700; color: var(--slate-700); margin-bottom: 0.6rem;">
+                    <span style="background: #d1fae5; color: #065f46; padding: 0.2rem 0.55rem; border-radius: 6px; border: 1px solid #6ee7b7;">1. Tax &amp; ID Packet Recorded ✓</span>
+                    <span style="color: #94a3b8;">&rarr;</span>
+                    <span style="background: #d1fae5; color: #065f46; padding: 0.2rem 0.55rem; border-radius: 6px; border: 1px solid #6ee7b7;">2. Job Description Signed ✓</span>
+                    <span style="color: #94a3b8;">&rarr;</span>
+                    <span style="background: #eff6ff; color: #1e40af; padding: 0.2rem 0.55rem; border-radius: 6px; border: 1px solid #bfdbfe;">3. Next: HR &amp; I-9 Verification</span>
+                    <span style="color: #94a3b8;">&rarr;</span>
+                    <span style="background: #f1f5f9; color: #475569; padding: 0.2rem 0.55rem; border-radius: 6px; border: 1px solid #cbd5e1;">4. Route Scheduling (As Needed)</span>
+                </div>
+                <div style="font-size: 0.77rem; color: var(--slate-700); line-height: 1.48; background: #ffffff; border: 1px solid var(--slate-200); border-left: 3px solid #64748b; padding: 0.55rem 0.8rem; border-radius: 6px;">
+                    <strong style="color: var(--slate-900);">Important Notice — At-Will Employment &amp; No Guarantee of Hours:</strong> This receipt confirms that your onboarding documents have been recorded in our HR vault. Employment with HWB Cleaning Services LLC is strictly at-will, and completion of onboarding paperwork does not guarantee immediate shift placement, a fixed schedule, or a minimum number of weekly hours. Shift assignments are scheduled based on active client facility needs.
+                </div>
             </div>
 
             <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center;">
