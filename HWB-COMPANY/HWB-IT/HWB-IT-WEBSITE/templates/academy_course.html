@@ -513,11 +513,11 @@
                     {% endif %}
                     <input type="hidden" id="magic_token" value="{{ magic_token or '' }}">
 
-                    <label>Technician / Student Name</label>
-                    <input type="text" id="student_name" placeholder="Full Legal Name" value="{{ prefill_student or 'Carlos E. Mendoza' }}" required aria-label="Student Full Legal Name">
+                    <label for="student_name">Technician / Student Name <span style="color: #dc2626;">*</span></label>
+                    <input type="text" id="student_name" name="student_name" form="quiz-form" placeholder="Enter Full Legal Name" value="{{ prefill_student or '' }}" required aria-label="Student Full Legal Name">
                     
-                    <label>Email Address</label>
-                    <input type="email" id="student_email" placeholder="student@example.com" value="{{ prefill_email or 'carlos@hwbcleaning.com' }}" aria-label="Student Email Address">
+                    <label for="student_email">Email Address</label>
+                    <input type="email" id="student_email" name="student_email" form="quiz-form" placeholder="name@company.com" value="{{ prefill_email or '' }}" aria-label="Student Email Address">
 
                     <label>Worker Classification</label>
                     <select id="worker_type" aria-label="Worker Classification Type">
@@ -639,7 +639,7 @@
                         <div class="cert-sub">SigmaAcademy™ Institutional Quality System &bull; ISO 9001:2026 (ISO 9001:2015+Amd 1:2024) Clause 7.2</div>
 
                         <p style="font-size: 0.9rem; color: #64748b; margin: 0;">This certifies that</p>
-                        <div class="cert-student-name" id="cert-display-name">Carlos E. Mendoza</div>
+                        <div class="cert-student-name" id="cert-display-name">{{ prefill_student or 'Verified Technician' }}</div>
                         <p style="font-size: 0.95rem; color: #334155; margin: 0.5rem 0 1.5rem 0;">
                             has demonstrated technical competence and passed the practical assessment for:
                         </p>
@@ -727,14 +727,28 @@
 
         async function submitQuiz(e) {
             e.preventDefault();
+            const studentNameEl = document.getElementById('student_name');
+            const studentName = (studentNameEl?.value || '').trim();
+            const studentEmail = (document.getElementById('student_email')?.value || '').trim();
+            const workerType = document.getElementById('worker_type').value;
+            const tenantSlug = document.getElementById('tenant_slug').value;
+
+            if (!studentName) {
+                if (studentNameEl) {
+                    studentNameEl.style.borderColor = '#dc2626';
+                    studentNameEl.focus();
+                }
+                document.getElementById('quiz-fail-box').style.display = 'block';
+                document.getElementById('fail-msg-text').innerText = 'Please enter your Full Legal Name in the Student Identity box before submitting your assessment.';
+                return;
+            }
+            if (studentNameEl) {
+                studentNameEl.style.borderColor = '';
+            }
+
             const btn = document.getElementById('btn-submit-assessment');
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Scoring Assessment...';
-
-            const studentName = document.getElementById('student_name').value.trim();
-            const studentEmail = document.getElementById('student_email').value.trim();
-            const workerType = document.getElementById('worker_type').value;
-            const tenantSlug = document.getElementById('tenant_slug').value;
 
             // Collect Answers
             const answers = {};
@@ -762,7 +776,10 @@
                 });
                 const result = await res.json();
 
-                if (result.status === 'PASSED') {
+                if (!res.ok || result.status === 'error') {
+                    document.getElementById('quiz-fail-box').style.display = 'block';
+                    document.getElementById('fail-msg-text').innerText = result.message || 'Unable to process assessment submission. Please verify all fields and try again.';
+                } else if (result.status === 'PASSED') {
                     document.getElementById('quiz-form').style.display = 'none';
                     document.getElementById('quiz-fail-box').style.display = 'none';
                     

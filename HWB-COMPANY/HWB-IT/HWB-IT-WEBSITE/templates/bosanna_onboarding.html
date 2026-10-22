@@ -1004,7 +1004,7 @@
                     
                     <div class="form-group">
                         <label class="form-label" id="t-f-phone">Mobile Phone (SMS Notifications) *</label>
-                        <input type="tel" class="form-input" id="phone" placeholder="(###) ###-####" maxlength="14" oninput="maskPhone(this)" required aria-label="Mobile Phone Number">
+                        <input type="tel" class="form-input" id="phone" placeholder="(214)-555-0199" maxlength="14" inputmode="numeric" oninput="maskPhone(this)" required aria-label="Mobile Phone Number">
                     </div>
 
                     <div class="form-group">
@@ -1475,12 +1475,13 @@
             organization_id: 'bosanna'
         };
 
-        // Standardized Institutional Phone Masking: (###) ###-####
+        // Standardized Institutional Phone Masking: (###)-###-####
         const phoneInput = document.getElementById('phone');
-        phoneInput.addEventListener('input', function(e) {
-            let x = e.target.value.replace(/\D/g, '').match(/(\d{0,3})(\d{0,3})(\d{0,4})/);
-            e.target.value = !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : '');
-        });
+        if (phoneInput) {
+            phoneInput.addEventListener('input', function(e) {
+                maskPhone(e.target);
+            });
+        }
 
         function jumpToStep(stepNum) {
             if (stepNum > currentStep) return;
@@ -1605,26 +1606,34 @@
                     body: JSON.stringify(payload)
                 });
                 const json = await res.json();
-                if (!res.ok || json.status !== 'success') {
+                if (!res.ok || (json.status !== 'success' && json.status !== 'already_registered')) {
                     console.error('[ONBOARD_SYNC_FAILURE]', json);
-                    const errMsg = json.message || (document.getElementById('btn-lang-es').classList.contains('active') ? 'Error al guardar los datos de ingreso.' : 'Failed to synchronize onboarding records.');
-                    document.getElementById('t-m-err-title').textContent = document.getElementById('btn-lang-es').classList.contains('active') ? 'Error de Transmisión' : 'Transmission Error';
+                    const isEs = document.getElementById('btn-lang-es').classList.contains('active');
+                    const errMsg = json.message || (isEs ? 'Error al guardar los datos de ingreso.' : 'Failed to synchronize onboarding records.');
+                    document.getElementById('t-m-err-title').textContent = isEs ? 'Error de Transmisión' : 'Transmission Error';
                     document.getElementById('t-m-err-sub').textContent = errMsg;
                     document.getElementById('modal-quiz-score-val').textContent = 'Server Error';
-                    document.getElementById('t-m-err-act-body').textContent = document.getElementById('btn-lang-es').classList.contains('active') ? 'Ocurrió un problema de conexión con el servidor. Por favor intente enviar de nuevo.' : 'A server connection error occurred. Please tap below to retry.';
+                    document.getElementById('t-m-err-act-body').textContent = isEs ? 'Ocurrió un problema de conexión con el servidor. Por favor intente enviar de nuevo.' : 'A server connection error occurred. Please tap below to retry.';
                     document.getElementById('modal-quiz-error').style.display = 'flex';
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = isEs ? 'Verificar Puntuación y Emitir Credencial ➔' : 'Verify Score &amp; Issue Credential ➔';
                     return;
                 }
                 console.log('[ONBOARD_SYNC_SUCCESS]', json);
             } catch (err) {
                 console.error('[ONBOARD_NETWORK_ERROR]', err);
-                const errMsg = document.getElementById('btn-lang-es').classList.contains('active') ? 'Error de conexión con el servidor de operaciones.' : 'Network connection error. Unable to reach operations server.';
-                document.getElementById('t-m-err-title').textContent = document.getElementById('btn-lang-es').classList.contains('active') ? 'Fallo de Red' : 'Network Failure';
+                const isEs = document.getElementById('btn-lang-es').classList.contains('active');
+                const errMsg = isEs ? 'Error de conexión con el servidor de operaciones.' : 'Network connection error. Unable to reach operations server.';
+                document.getElementById('t-m-err-title').textContent = isEs ? 'Fallo de Red' : 'Network Failure';
                 document.getElementById('t-m-err-sub').textContent = errMsg;
                 document.getElementById('modal-quiz-score-val').textContent = 'Offline';
                 document.getElementById('modal-quiz-error').style.display = 'flex';
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = isEs ? 'Verificar Puntuación y Emitir Credencial ➔' : 'Verify Score &amp; Issue Credential ➔';
                 return;
             }
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = document.getElementById('btn-lang-es').classList.contains('active') ? 'Verificar Puntuación y Emitir Credencial ➔' : 'Verify Score &amp; Issue Credential ➔';
 
             currentStep = 4;
             showStep(4);
@@ -2138,14 +2147,22 @@
             document.getElementById('t-footer-powered').textContent = t.footerPowered;
         }
 
+        window.switchLang = setPortalLanguage;
+
         function maskPhone(input) {
-            let v = input.value.replace(/\D/g, '');
+            if (!input) return;
+            if (typeof window.maskPhoneInput === 'function') {
+                window.maskPhoneInput(input);
+                return;
+            }
+            let v = (input.value || '').replace(/\D/g, '');
+            if (v.length === 11 && v.startsWith('1')) v = v.substring(1);
             if (v.length > 10) v = v.substring(0, 10);
             let formatted = '';
             if (v.length > 6) {
-                formatted = '(' + v.substring(0, 3) + ') ' + v.substring(3, 6) + '-' + v.substring(6);
+                formatted = '(' + v.substring(0, 3) + ')-' + v.substring(3, 6) + '-' + v.substring(6);
             } else if (v.length > 3) {
-                formatted = '(' + v.substring(0, 3) + ') ' + v.substring(3);
+                formatted = '(' + v.substring(0, 3) + ')-' + v.substring(3);
             } else if (v.length > 0) {
                 formatted = '(' + v;
             }
@@ -2156,9 +2173,9 @@
             try {
                 const params = new URLSearchParams(window.location.search);
                 if (params.get('lang') === 'es') {
-                    switchLang('es');
+                    setPortalLanguage('es');
                 } else if (params.get('lang') === 'en') {
-                    switchLang('en');
+                    setPortalLanguage('en');
                 }
                 if (params.get('name')) {
                     const el = document.getElementById('full_name');
@@ -2180,7 +2197,7 @@
                     if (el) el.value = params.get('city');
                 }
                 if (params.get('facility')) {
-                    const el = document.getElementById('assigned_facility');
+                    const el = document.getElementById('target_facility') || document.getElementById('assigned_facility');
                     if (el) el.value = params.get('facility');
                 }
             } catch (e) {

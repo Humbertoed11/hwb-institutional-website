@@ -4444,7 +4444,7 @@
                 <!-- Column 1: Data Entry -->
                 <div class="isc-card">
                     <span class="sigma-form-header">Scope Intelligence</span>
-                    <form class="sigma-form-container">
+                    <form id="form-scope-intelligence" class="sigma-form-container" onsubmit="event.preventDefault(); addToScope();">
                         <div class="sigma-form-group">
                             <div class="sigma-field">
                                 <label>1. Select Client Building</label>
@@ -8715,7 +8715,7 @@
                     <div class="sigma-field"><label>DBA / Umbrella Name</label><input type="text" name="umbrella_name" placeholder="e.g. Bosanna LLC / Fractal Education Group" class="sigma-input"></div>
                     <div class="sigma-row sigma-row-60-40">
                         <div class="sigma-field"><label>Main Manager</label><input type="text" name="contact_person_name" placeholder="Full Name" class="sigma-input"></div>
-                        <div class="sigma-field"><label>Phone Number</label><input type="text" name="phone" placeholder="(000)-000-0000" class="sigma-input" oninput="maskPhone(event)"></div>
+                        <div class="sigma-field"><label>Phone Number</label><input type="tel" name="phone" maxlength="14" inputmode="numeric" placeholder="(000)-000-0000" class="sigma-input" oninput="maskPhoneInput(this)"></div>
                     </div>
                     <div class="sigma-row sigma-row-60-40">
                         <div class="sigma-field"><label>Email Address</label><input type="email" name="email" required placeholder="billing@company.com" class="sigma-input"></div>
@@ -8725,8 +8725,8 @@
                     <div class="sigma-row sigma-row-60-40">
                         <div class="sigma-field"><label>City</label><input type="text" name="city" placeholder="City" class="sigma-input"></div>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
-                            <div class="sigma-field"><label>State</label><input type="text" name="state" placeholder="TX" class="sigma-input"></div>
-                            <div class="sigma-field"><label>Zip</label><input type="text" name="zip" placeholder="75024" class="sigma-input"></div>
+                            <div class="sigma-field"><label>State</label><input type="text" name="state" maxlength="2" oninput="maskStateInput(this)" placeholder="TX" class="sigma-input"></div>
+                            <div class="sigma-field"><label>Zip</label><input type="text" name="zip" maxlength="10" inputmode="numeric" oninput="maskZipInput(this)" placeholder="75024" class="sigma-input"></div>
                         </div>
                     </div>
                 </div>
@@ -8812,7 +8812,7 @@
                         </div>
                         <div class="sigma-field">
                             <label>Phone Number</label>
-                            <input type="text" name="phone" placeholder="(214) 862-2300" class="sigma-input" oninput="maskPhone(event)">
+                            <input type="tel" name="phone" maxlength="14" inputmode="numeric" placeholder="(214)-862-2300" class="sigma-input" oninput="maskPhoneInput(this)">
                         </div>
                     </div>
                     <div class="sigma-field">
@@ -8829,8 +8829,8 @@
                             <input type="text" name="city" placeholder="Dallas" class="sigma-input">
                         </div>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
-                            <div class="sigma-field"><label>State</label><input type="text" name="state" value="TX" class="sigma-input"></div>
-                            <div class="sigma-field"><label>Zip</label><input type="text" name="zip" placeholder="75205" class="sigma-input"></div>
+                            <div class="sigma-field"><label>State</label><input type="text" name="state" maxlength="2" oninput="maskStateInput(this)" value="TX" class="sigma-input"></div>
+                            <div class="sigma-field"><label>Zip</label><input type="text" name="zip" maxlength="10" inputmode="numeric" oninput="maskZipInput(this)" placeholder="75205" class="sigma-input"></div>
                         </div>
                     </div>
                     <div class="sigma-field">
@@ -8912,14 +8912,14 @@
                     </div>
                     <div class="sigma-row sigma-row-60-40">
                         <div class="sigma-field"><label>Email Address</label><input type="email" name="email" required placeholder="client@company.com" class="sigma-input"></div>
-                        <div class="sigma-field"><label>Phone Number</label><input type="text" name="phone" placeholder="(000)-000-0000" class="sigma-input" oninput="maskPhone(event)"></div>
+                        <div class="sigma-field"><label>Phone Number</label><input type="tel" name="phone" maxlength="14" inputmode="numeric" placeholder="(000)-000-0000" class="sigma-input" oninput="maskPhoneInput(this)"></div>
                     </div>
                     <div class="sigma-field"><label>Building Address</label><input type="text" name="address" required placeholder="Street Address" class="sigma-input" oninput="smartType(this, 'results-add-lead')"><div id="results-add-lead" class="address-results"></div></div>
                     <div class="sigma-row sigma-row-60-40">
                         <div class="sigma-field"><label>City</label><input type="text" name="city" placeholder="City" class="sigma-input"></div>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
-                            <div class="sigma-field"><label>State</label><input type="text" name="state" placeholder="TX" class="sigma-input"></div>
-                            <div class="sigma-field"><label>Zip</label><input type="text" name="zipcode" placeholder="75024" class="sigma-input"></div>
+                            <div class="sigma-field"><label>State</label><input type="text" name="state" maxlength="2" oninput="maskStateInput(this)" placeholder="TX" class="sigma-input"></div>
+                            <div class="sigma-field"><label>Zip</label><input type="text" name="zipcode" maxlength="10" inputmode="numeric" oninput="maskZipInput(this)" placeholder="75024" class="sigma-input"></div>
                         </div>
                     </div>
                 </div>

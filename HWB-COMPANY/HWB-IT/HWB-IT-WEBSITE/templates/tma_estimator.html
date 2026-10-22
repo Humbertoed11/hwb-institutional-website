@@ -263,10 +263,24 @@
         </div>
     </div>
 
-    <button class="btn-submit" onclick="submitToTelegram()">💾 Lock Bid & Send to Chat</button>
+    <button type="button" class="btn-submit" id="btn-lock-bid" onclick="submitToTelegram()">💾 Lock Bid &amp; Save Estimate</button>
+
+    <!-- Enterprise On-Screen Takeoff Receipt Card (Web Browser Fallback) -->
+    <div id="tma-receipt-card" class="card" style="display: none; margin-top: 14px; border: 1.5px solid #16a34a; background: rgba(22, 163, 74, 0.12);">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.12); padding-bottom: 8px;">
+            <strong style="color: #4ade80; font-size: 0.9rem;">✓ Takeoff Estimate Locked</strong>
+            <span id="tma-receipt-ref" style="font-family: monospace; font-size: 0.78rem; color: #cbd5e1;">EST-2026</span>
+        </div>
+        <div id="tma-receipt-summary" style="font-size: 0.82rem; color: #f8fafc; line-height: 1.55; margin-bottom: 10px;"></div>
+        <div style="display: flex; gap: 8px;">
+            <button type="button" onclick="copyTakeoffSummary()" id="btn-copy-takeoff" style="flex: 1; background: #1e293b; color: #f8fafc; border: 1px solid #475569; border-radius: 6px; padding: 8px; font-size: 0.8rem; font-weight: 700; cursor: pointer;">📋 Copy Summary</button>
+            <button type="button" onclick="window.print()" style="flex: 1; background: #2563eb; color: #ffffff; border: none; border-radius: 6px; padding: 8px; font-size: 0.8rem; font-weight: 700; cursor: pointer;">🖨️ Print Estimate</button>
+        </div>
+    </div>
 
     <script>
         let phases = { p1: true, p2: true, p3: true };
+        let lastTakeoffSummaryText = "";
 
         function togglePhase(p) {
             phases[p] = !phases[p];
@@ -326,7 +340,8 @@
             const facility = document.getElementById('facilityType').value;
             const margin = document.getElementById('marginSlider').value;
             const total = document.getElementById('totalBaseBid').innerText;
-            const project = document.getElementById('projectName').value;
+            const hours = document.getElementById('prodHours').innerText;
+            const project = (document.getElementById('projectName').value || 'Commercial Scope Estimate').trim();
 
             const payload = {
                 action: "custom_takeoff_config",
@@ -338,11 +353,49 @@
                 phases: phases
             };
 
-            if (window.Telegram && window.Telegram.WebApp) {
+            const isTelegramMiniApp = Boolean(
+                window.Telegram &&
+                window.Telegram.WebApp &&
+                typeof window.Telegram.WebApp.initData === 'string' &&
+                window.Telegram.WebApp.initData.length > 0
+            );
+
+            if (isTelegramMiniApp) {
                 window.Telegram.WebApp.sendData(JSON.stringify(payload));
                 window.Telegram.WebApp.close();
             } else {
-                alert(`Takeoff Saved: ${project} - ${sqft.toLocaleString()} SF - ${total}`);
+                const refId = 'EST-' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '-' + String(sqft).slice(0, 4);
+                const activePhases = Object.entries(phases).filter(([_, v]) => v).map(([k]) => k.toUpperCase()).join(', ') || 'None';
+                lastTakeoffSummaryText = `HWB Takeoff Estimate (${refId})\nProject: ${project}\nFootprint: ${sqft.toLocaleString()} SF | Classification: ${facility.toUpperCase()}\nPhases: ${activePhases} | Est. Hours: ${hours} | Target Margin: ${margin}%\nBase Bid Valuation: ${total}`;
+                const refEl = document.getElementById('tma-receipt-ref');
+                const sumEl = document.getElementById('tma-receipt-summary');
+                const cardEl = document.getElementById('tma-receipt-card');
+                if (refEl) refEl.innerText = refId;
+                if (sumEl) {
+                    sumEl.innerHTML = `
+                        <div><strong>Project:</strong> ${project}</div>
+                        <div><strong>Cleanable Footprint:</strong> ${sqft.toLocaleString()} SF (${facility.toUpperCase()})</div>
+                        <div><strong>Active Phases:</strong> ${activePhases} &bull; <strong>Hours:</strong> ${hours} &bull; <strong>Margin:</strong> ${margin}%</div>
+                        <div style="margin-top: 4px; color: #38bdf8; font-weight: 800; font-size: 0.95rem;">Base Bid Valuation: ${total}</div>
+                    `;
+                }
+                if (cardEl) {
+                    cardEl.style.display = 'block';
+                    cardEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            }
+        }
+
+        function copyTakeoffSummary() {
+            if (!lastTakeoffSummaryText) return;
+            const btn = document.getElementById('btn-copy-takeoff');
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(lastTakeoffSummaryText).then(() => {
+                    if (btn) {
+                        btn.innerText = '✓ Copied to Clipboard';
+                        setTimeout(() => { btn.innerText = '📋 Copy Summary'; }, 2000);
+                    }
+                });
             }
         }
 

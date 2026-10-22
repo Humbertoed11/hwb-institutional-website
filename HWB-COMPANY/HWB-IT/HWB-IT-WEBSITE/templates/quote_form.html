@@ -123,7 +123,7 @@
                             </div>
                             <div class="sigma-field">
                                 <label for="phone_page" class="sigma-label">Phone <span style="font-weight: 500; color: #64748b; font-size: 0.78rem;">(Optional)</span></label>
-                                <input type="tel" name="phone" id="phone_page" autocomplete="tel" inputmode="tel" placeholder="(214) 000-0000" class="sigma-input">
+                                <input type="tel" name="phone" id="phone_page" maxlength="14" oninput="maskPhoneInput(this)" autocomplete="tel" inputmode="tel" placeholder="(214)-000-0000" class="sigma-input">
                             </div>
                         </div>
 

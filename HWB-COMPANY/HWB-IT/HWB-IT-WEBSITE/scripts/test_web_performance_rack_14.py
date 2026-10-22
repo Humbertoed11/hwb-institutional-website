@@ -1328,6 +1328,61 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
         )
         self.assertIn(b"No Guarantee of Project Award or Minimum Work Volume", cert_pdf)
 
+    def test_22_secondary_portals_and_forms_enterprise_hardening_bug_143(self):
+        """
+        Verifies BUG-143 Enterprise Hardening across all secondary portals and forms:
+        1. /onboard/bosanna: setPortalLanguage('es'/'en'), #target_facility prefill, submitBtn error recovery, (###)-###-#### mask.
+        2. /academy/course/<code>: Zero synthetic 'Carlos E. Mendoza' defaults, form="quiz-form" student_name binding, HTTP 400 error guard.
+        3. /tma/estimator: Telegram.WebApp.initData check + on-screen #tma-receipt-card (zero raw alert()).
+        4. / and /get-quote: #phone_home and #phone_page maxlength="14" oninput="maskPhoneInput(this)" and (214)-000-0000 placeholder.
+        5. /admin/operations: #form-scope-intelligence onsubmit Enter-key guard and explicit mask attributes on Add Client/Partner/Lead modals.
+        """
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+        # 1. Bosanna Onboarding Portal (/onboard/bosanna)
+        r_bos = self.client.get("/onboard/bosanna?lang=es")
+        self.assertEqual(r_bos.status_code, 200)
+        bos_html = r_bos.get_data(as_text=True)
+        self.assertIn("window.switchLang = setPortalLanguage;", bos_html)
+        self.assertIn("document.getElementById('target_facility')", bos_html)
+        self.assertIn('placeholder="(214)-555-0199"', bos_html)
+        self.assertIn("json.status !== 'already_registered'", bos_html)
+
+        # 2. SigmaAcademy Course Assessment (/academy/course/TRN-SAF-01)
+        with open(os.path.join(base_dir, "templates", "academy_course.html"), "r", encoding="utf-8") as f:
+            acad_tpl = f.read()
+        self.assertNotIn("Carlos E. Mendoza", acad_tpl)
+        self.assertNotIn("carlos@hwbcleaning.com", acad_tpl)
+        self.assertIn('id="student_name" name="student_name" form="quiz-form"', acad_tpl)
+        self.assertIn("if (!res.ok || result.status === 'error')", acad_tpl)
+
+        # 3. Takeoff & Scope Configurator (/tma/estimator)
+        r_tma = self.client.get("/tma/estimator")
+        self.assertEqual(r_tma.status_code, 200)
+        tma_html = r_tma.get_data(as_text=True)
+        self.assertIn('id="tma-receipt-card"', tma_html)
+        self.assertIn("window.Telegram.WebApp.initData", tma_html)
+        self.assertNotIn("alert(`Takeoff Saved:", tma_html)
+
+        # 4. Homepage (/) & Full Quote Form (/get-quote)
+        r_home = self.client.get("/")
+        self.assertEqual(r_home.status_code, 200)
+        home_html = r_home.get_data(as_text=True)
+        self.assertIn('id="phone_home" required maxlength="14" oninput="maskPhoneInput(this)"', home_html)
+        self.assertIn('placeholder="(214)-000-0000"', home_html)
+
+        r_quote = self.client.get("/get-quote")
+        self.assertEqual(r_quote.status_code, 200)
+        quote_html = r_quote.get_data(as_text=True)
+        self.assertIn('id="phone_page" maxlength="14" oninput="maskPhoneInput(this)"', quote_html)
+        self.assertIn('placeholder="(214)-000-0000"', quote_html)
+
+        # 5. Backoffice Operations Forms (backoffice_operations.html)
+        with open(os.path.join(base_dir, "templates", "backoffice_operations.html"), "r", encoding="utf-8") as f:
+            bo_tpl = f.read()
+        self.assertIn('id="form-scope-intelligence" class="sigma-form-container" onsubmit="event.preventDefault(); addToScope();"', bo_tpl)
+        self.assertIn('placeholder="(214)-862-2300" class="sigma-input" oninput="maskPhoneInput(this)"', bo_tpl)
+
 
 if __name__ == "__main__":
     unittest.main()
