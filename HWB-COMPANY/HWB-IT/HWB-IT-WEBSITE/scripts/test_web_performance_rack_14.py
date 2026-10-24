@@ -1383,6 +1383,174 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
         self.assertIn('id="form-scope-intelligence" class="sigma-form-container" onsubmit="event.preventDefault(); addToScope();"', bo_tpl)
         self.assertIn('placeholder="(214)-862-2300" class="sigma-input" oninput="maskPhoneInput(this)"', bo_tpl)
 
+    def test_23_closed_loop_lead_and_marketing_campaign_lifecycle_bug_144(self) -> None:
+        """
+        Verifies BUG-144 Closed-Loop Lead & Email Marketing Campaign State Machine:
+        1. Enroll 4 selected leads from Leads module via POST /api/v1/marketing/campaign/enroll-leads
+           with stage_drafts=True -> Leads.status='In Campaign', CampaignRecipients.status='AWAITING_APPROVAL',
+           PendingOutbox.status='PENDING', MarketingCampaigns.total_targets=4.
+        2. Release 3 drafts via POST /api/v1/marketing/outbox/batch-action (Leave Lead #4 unsent)
+           -> CampaignRecipients.status='SENT', MarketingCampaigns.sent_count=3.
+        3. Lead #1 opens email (/api/v1/marketing/track/open/<token>.gif)
+           -> Leads.status='Engaged', priority_level='High', CampaignRecipients.status='OPENED',
+              MarketingCampaigns.opened_count=1.
+        4. Lead #1 clicks booking link (/api/v1/marketing/track/click/<token>)
+           -> Leads.status='Qualified', CampaignRecipients.status='ENGAGED',
+              MarketingCampaigns.walkthroughs_booked=1.
+        5. Lead #2 clicks 1-click unsubscribe (/unsubscribe/<token>)
+           -> Leads.status='Unsubscribed', is_dnc=FALSE, campaign_ready=FALSE,
+              email_hygiene_status='DO_NOT_EMAIL', CampaignRecipients.status='UNSUBSCRIBED',
+              added to EmailSuppressionList.
+        6. Complete campaign via POST /api/v1/marketing/campaign/<id>/complete
+           -> Lead #3 (sent, unopened) advances from 'In Campaign' to 'Contacted',
+              Lead #4 (unsent draft) returns from 'In Campaign' to 'New',
+              Lead #1 remains 'Qualified', Lead #2 remains 'Unsubscribed',
+              MarketingCampaigns.status='Completed'.
+        """
+        import uuid
+        from unittest.mock import patch
+
+        uid = uuid.uuid4().hex[:6]
+        lead_ids = []
+        lead_emails = [f"mkt.test.{i}.{uid}@example.com" for i in range(1, 5)]
+        camp_id = None
+
+        with self.client.session_transaction() as sess:
+            sess["_user_id"] = "1"
+            sess["_fresh"] = True
+
+        conn = get_db(self.db_url)
+        try:
+            with conn.cursor() as cur:
+                for i, em in enumerate(lead_emails, start=1):
+                    cur.execute(
+                        '''
+                        INSERT INTO "Leads" (
+                            center_name, director, email, phone, city, county, state,
+                            capacity, sqf, status, is_commercial, campaign_ready, is_dnc
+                        ) VALUES (%s, %s, %s, %s, 'Plano', 'Collin', 'TX', %s, 12000, 'New', TRUE, TRUE, FALSE)
+                        RETURNING id;
+                        ''',
+                        (f"Lifecycle Test Facility {i} ({uid})", f"Director {i}", em, f"214-555-010{i}", 100 + i * 10),
+                    )
+                    lead_ids.append(cur.fetchone()["id"])
+            conn.commit()
+
+            # Step 1: Enroll 4 selected leads from Leads Module
+            r_enroll = self.client.post(
+                "/api/v1/marketing/campaign/enroll-leads",
+                json={
+                    "lead_ids": lead_ids,
+                    "campaign_name": f"Lifecycle Test Campaign {uid}",
+                    "stage_drafts": True,
+                },
+            )
+            self.assertEqual(r_enroll.status_code, 200, r_enroll.get_data(as_text=True))
+            d_enroll = r_enroll.get_json()
+            self.assertEqual(d_enroll["status"], "success")
+            self.assertEqual(d_enroll["enrolled_count"], 4)
+            self.assertEqual(d_enroll["drafts_created"], 4)
+            camp_id = d_enroll["campaign_id"]
+
+            with conn.cursor() as cur:
+                cur.execute('SELECT id, status FROM "Leads" WHERE id = ANY(%s) ORDER BY id ASC;', (lead_ids,))
+                for lrow in cur.fetchall():
+                    self.assertEqual(lrow["status"], "In Campaign")
+
+                cur.execute(
+                    'SELECT lead_id, tracking_token, outbox_id, status FROM "CampaignRecipients" WHERE campaign_id = %s ORDER BY lead_id ASC;',
+                    (camp_id,),
+                )
+                recips = {r["lead_id"]: r for r in cur.fetchall()}
+                self.assertEqual(len(recips), 4)
+                for r in recips.values():
+                    self.assertEqual(r["status"], "AWAITING_APPROVAL")
+
+            # Step 2: Approve & Release first 3 leads' drafts (leave Lead #4 unsent)
+            outbox_ids_to_send = [recips[lead_ids[0]]["outbox_id"], recips[lead_ids[1]]["outbox_id"], recips[lead_ids[2]]["outbox_id"]]
+            with patch("blueprints.crm_api.transmit_email", return_value=(True, "mocked")):
+                r_batch = self.client.post(
+                    "/api/v1/marketing/outbox/batch-action",
+                    json={"action": "approve", "email_ids": outbox_ids_to_send},
+                )
+                self.assertEqual(r_batch.status_code, 200)
+                self.assertEqual(r_batch.get_json()["successful"], 3)
+
+            with conn.cursor() as cur:
+                cur.execute('SELECT total_targets, sent_count FROM "MarketingCampaigns" WHERE id = %s;', (camp_id,))
+                mc = cur.fetchone()
+                self.assertEqual(mc["total_targets"], 4)
+                self.assertEqual(mc["sent_count"], 3)
+
+            # Step 3: Lead #1 opens the email
+            tok_1 = recips[lead_ids[0]]["tracking_token"]
+            r_open = self.client.get(f"/api/v1/marketing/track/open/{tok_1}.gif")
+            self.assertEqual(r_open.status_code, 200)
+            r_open.close()
+
+            with conn.cursor() as cur:
+                cur.execute('SELECT status, priority_level FROM "Leads" WHERE id = %s;', (lead_ids[0],))
+                l1 = cur.fetchone()
+                self.assertEqual(l1["status"], "Engaged")
+                self.assertEqual(l1["priority_level"], "High")
+
+            # Step 4: Lead #1 clicks the calendar booking link
+            r_click = self.client.get(f"/api/v1/marketing/track/click/{tok_1}")
+            self.assertIn(r_click.status_code, (301, 302))
+
+            with conn.cursor() as cur:
+                cur.execute('SELECT status FROM "Leads" WHERE id = %s;', (lead_ids[0],))
+                self.assertEqual(cur.fetchone()["status"], "Qualified")
+                cur.execute('SELECT opened_count, walkthroughs_booked FROM "MarketingCampaigns" WHERE id = %s;', (camp_id,))
+                mc_after_click = cur.fetchone()
+                self.assertEqual(mc_after_click["opened_count"], 1)
+                self.assertEqual(mc_after_click["walkthroughs_booked"], 1)
+
+            # Step 5: Lead #2 clicks 1-click Unsubscribe
+            tok_2 = recips[lead_ids[1]]["tracking_token"]
+            r_unsub = self.client.get(f"/unsubscribe/{tok_2}")
+            self.assertEqual(r_unsub.status_code, 200)
+
+            with conn.cursor() as cur:
+                cur.execute('SELECT status, is_dnc, campaign_ready, email_hygiene_status FROM "Leads" WHERE id = %s;', (lead_ids[1],))
+                l2 = cur.fetchone()
+                self.assertEqual(l2["status"], "Unsubscribed")
+                self.assertFalse(l2["is_dnc"])
+                self.assertFalse(l2["campaign_ready"])
+                self.assertEqual(l2["email_hygiene_status"], "DO_NOT_EMAIL")
+
+            # Step 6: Complete Campaign -> Lead #3 (sent, unopened) becomes 'Contacted', Lead #4 (unsent) returns to 'New'
+            r_comp = self.client.post(f"/api/v1/marketing/campaign/{camp_id}/complete")
+            self.assertEqual(r_comp.status_code, 200, r_comp.get_data(as_text=True))
+            d_comp = r_comp.get_json()
+            self.assertEqual(d_comp["status"], "success")
+            self.assertEqual(d_comp["advanced_to_contacted"], 1)
+            self.assertEqual(d_comp["reverted_to_new"], 1)
+
+            with conn.cursor() as cur:
+                cur.execute('SELECT id, status FROM "Leads" WHERE id = ANY(%s);', (lead_ids,))
+                final_statuses = {r["id"]: r["status"] for r in cur.fetchall()}
+                self.assertEqual(final_statuses[lead_ids[0]], "Qualified")
+                self.assertEqual(final_statuses[lead_ids[1]], "Unsubscribed")
+                self.assertEqual(final_statuses[lead_ids[2]], "Contacted")
+                self.assertEqual(final_statuses[lead_ids[3]], "New")
+
+                cur.execute('SELECT status FROM "MarketingCampaigns" WHERE id = %s;', (camp_id,))
+                self.assertEqual(cur.fetchone()["status"], "Completed")
+        finally:
+            with conn.cursor() as cur:
+                if camp_id:
+                    cur.execute('DELETE FROM "PendingOutbox" WHERE campaign_id = %s;', (camp_id,))
+                    cur.execute('DELETE FROM "MarketingCampaigns" WHERE id = %s;', (camp_id,))
+                if lead_emails:
+                    cur.execute('DELETE FROM "EmailSuppressionList" WHERE email_lower = ANY(%s);', (lead_emails,))
+                if lead_ids:
+                    cur.execute('DELETE FROM "GlobalActivities" WHERE parent_type = \'Lead\' AND parent_id = ANY(%s);', (lead_ids,))
+                    cur.execute('DELETE FROM "Leads" WHERE id = ANY(%s);', (lead_ids,))
+                cur.execute('DELETE FROM "GlobalActivities" WHERE description LIKE %s;', (f"%{uid}%",))
+            conn.commit()
+            conn.close()
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -2132,9 +2132,21 @@ def sigma_executive():
                                     UPDATE "CampaignRecipients"
                                     SET status = 'SENT', sent_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
                                     WHERE outbox_id = %s OR tracking_token = %s
-                                    RETURNING lead_id, facility_name;
+                                    RETURNING lead_id, facility_name, campaign_id;
                                 ''', (email_id, msg.get('tracking_token')))
                                 ret_recip = cur.fetchone()
+                                cid_to_sync = (ret_recip.get('campaign_id') if ret_recip else None) or msg.get('campaign_id')
+                                if cid_to_sync:
+                                    cur.execute('''
+                                        UPDATE "MarketingCampaigns"
+                                        SET total_targets = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s),
+                                            staged_count = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s AND status = 'STAGED'),
+                                            sent_count = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s AND (sent_at IS NOT NULL OR status IN ('SENT', 'OPENED', 'ENGAGED', 'UNSUBSCRIBED'))),
+                                            opened_count = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s AND (COALESCE(open_count, 0) > 0 OR status IN ('OPENED', 'ENGAGED'))),
+                                            walkthroughs_booked = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s AND (COALESCE(click_count, 0) > 0 OR status = 'ENGAGED')),
+                                            updated_at = CURRENT_TIMESTAMP
+                                        WHERE id = %s;
+                                    ''', (cid_to_sync, cid_to_sync, cid_to_sync, cid_to_sync, cid_to_sync, cid_to_sync))
                                 if ret_recip and ret_recip['lead_id']:
                                     cur.execute('''
                                         INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
@@ -2145,13 +2157,31 @@ def sigma_executive():
                                 flash(f"Transmission Failed: {reason}", "error")
                     elif action == "reject_email":
                         email_id = request.form.get('email_id')
-                        cur.execute('UPDATE "PendingOutbox" SET status = \'REJECTED\' WHERE id = %s RETURNING tracking_token', (email_id,))
+                        cur.execute('UPDATE "PendingOutbox" SET status = \'REJECTED\' WHERE id = %s RETURNING tracking_token, campaign_id', (email_id,))
                         ret_msg = cur.fetchone()
                         cur.execute('''
                             UPDATE "CampaignRecipients"
                             SET status = 'REJECTED', updated_at = CURRENT_TIMESTAMP
-                            WHERE outbox_id = %s OR (tracking_token = %s AND %s IS NOT NULL);
+                            WHERE outbox_id = %s OR (tracking_token = %s AND %s IS NOT NULL)
+                            RETURNING campaign_id, lead_id;
                         ''', (email_id, ret_msg['tracking_token'] if ret_msg else None, ret_msg['tracking_token'] if ret_msg else None))
+                        ret_rej = cur.fetchone()
+                        if ret_rej and ret_rej.get('lead_id'):
+                            cur.execute('''
+                                UPDATE "Leads"
+                                SET status = 'New', updated_at = CURRENT_TIMESTAMP
+                                WHERE id = %s AND status = 'In Campaign';
+                            ''', (ret_rej['lead_id'],))
+                        cid_to_sync = (ret_rej.get('campaign_id') if ret_rej else None) or (ret_msg.get('campaign_id') if ret_msg else None)
+                        if cid_to_sync:
+                            cur.execute('''
+                                UPDATE "MarketingCampaigns"
+                                SET total_targets = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s),
+                                    staged_count = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s AND status = 'STAGED'),
+                                    sent_count = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s AND (sent_at IS NOT NULL OR status IN ('SENT', 'OPENED', 'ENGAGED', 'UNSUBSCRIBED'))),
+                                    updated_at = CURRENT_TIMESTAMP
+                                WHERE id = %s;
+                            ''', (cid_to_sync, cid_to_sync, cid_to_sync, cid_to_sync))
                         flash("Queued email rejected.", "warning")
                     
                     conn.commit()

@@ -195,7 +195,10 @@ def unsubscribe(tracking_token=None):
 
                 cur.execute('''
                     UPDATE "Leads"
-                    SET is_dnc = TRUE, status = 'Do Not Call (DNC)', campaign_ready = FALSE, email_hygiene_status = 'DO_NOT_EMAIL', updated_at = CURRENT_DATE
+                    SET status = CASE WHEN status = 'Do Not Call (DNC)' OR is_dnc = TRUE THEN 'Do Not Call (DNC)' ELSE 'Unsubscribed' END,
+                        campaign_ready = FALSE,
+                        email_hygiene_status = 'DO_NOT_EMAIL',
+                        updated_at = CURRENT_DATE
                     WHERE LOWER(email) = %s;
                 ''', (raw_email,))
                 
@@ -262,15 +265,14 @@ def unsubscribe(tracking_token=None):
                 
                 if found_email:
                     cur.execute('''
-                        INSERT INTO "EmailSuppressionList" (email_lower, reason, source, lead_id)
-                        VALUES (LOWER(TRIM(%s)), 'UNSUBSCRIBED', 'ONE_CLICK_TOKEN', %s)
+                        INSERT INTO "EmailSuppressionList" (email_lower, reason, source)
+                        VALUES (LOWER(TRIM(%s)), 'UNSUBSCRIBED', 'ONE_CLICK_TOKEN')
                         ON CONFLICT (email_lower) DO NOTHING;
-                    ''', (found_email, lead_id))
+                    ''', (found_email,))
 
                     cur.execute('''
                         UPDATE "Leads"
-                        SET is_dnc = TRUE, 
-                            status = 'Unsubscribed',
+                        SET status = CASE WHEN status = 'Do Not Call (DNC)' OR is_dnc = TRUE THEN 'Do Not Call (DNC)' ELSE 'Unsubscribed' END,
                             campaign_ready = FALSE,
                             email_hygiene_status = 'DO_NOT_EMAIL',
                             notes = CASE 

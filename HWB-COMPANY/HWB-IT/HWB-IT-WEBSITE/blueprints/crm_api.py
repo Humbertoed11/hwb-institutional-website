@@ -494,6 +494,22 @@ def api_lead_hub(id):
                         except (ValueError, TypeError):
                             owner_id_val = None
 
+                resolved_status = resolve('status', current_lead['status'])
+                is_dnc_val = current_lead.get('is_dnc', False)
+                campaign_ready_val = current_lead.get('campaign_ready', False)
+                email_hygiene_val = current_lead.get('email_hygiene_status')
+                if 'status' in data:
+                    if resolved_status == 'Do Not Call (DNC)':
+                        is_dnc_val = True
+                        campaign_ready_val = False
+                        email_hygiene_val = 'DO_NOT_EMAIL'
+                    elif resolved_status == 'Unsubscribed':
+                        is_dnc_val = False
+                        campaign_ready_val = False
+                        email_hygiene_val = 'DO_NOT_EMAIL'
+                    elif current_lead.get('status') in ('Do Not Call (DNC)', 'Unsubscribed'):
+                        is_dnc_val = False
+
                 cur.execute('''
                     UPDATE "Leads" SET 
                         center_name = %s, decision_maker = %s, job_title = %s, email = %s, phone = %s, 
@@ -504,7 +520,7 @@ def api_lead_hub(id):
                         acquisition_tier = %s, ownership_type = %s, owner_id = %s,
                         website = %s, county = %s, student_enrollment = %s,
                         owner_verification_status = %s, preferred_date = %s, preferred_time = %s,
-                        budget_range = %s,
+                        budget_range = %s, is_dnc = %s, campaign_ready = %s, email_hygiene_status = %s,
                         updated_at = CURRENT_TIMESTAMP
                     WHERE id = %s
                 ''', (resolve('company_name', current_lead['center_name']), 
@@ -517,7 +533,7 @@ def api_lead_hub(id):
                       resolve('state', current_lead['state']), 
                       clean_zip(resolve('zipcode', current_lead['zipcode'])) or resolve('zipcode', current_lead['zipcode']), 
                       resolve('industry', current_lead['industry']),
-                      sqf_val, resolve('status', current_lead['status']), revenue_val, 
+                      sqf_val, resolved_status, revenue_val, 
                       resolve('next_action_date', current_lead['next_action_date']), 
                       resolve('notes', current_lead['notes']),
                       resolve('facility_type', current_lead['facility_type']), 
@@ -529,7 +545,7 @@ def api_lead_hub(id):
                       acquisition_tier_val, ownership_type_val, owner_id_val,
                       website_val, county_val, enrollment_val,
                       verification_val, pref_date_val, pref_time_val,
-                      budget_val, id))
+                      budget_val, is_dnc_val, campaign_ready_val, email_hygiene_val, id))
 
                 if 'cleaning_delivery_model' in data and (umbrella_val or current_lead['umbrella_name']):
                     eff_umbrella = umbrella_val or current_lead['umbrella_name']
@@ -767,10 +783,14 @@ def api_batch_lead_action():
                     return log_and_abort_abac('leads', 'edit')
                 if action == 'update_status':
                     new_status = params.get('status', 'NEW')
-                    is_dnc_flag = True if new_status == 'Do Not Call (DNC)' else False
-                    cur.execute('UPDATE "Leads" SET status = %s, is_dnc = %s, updated_at = CURRENT_DATE WHERE id = ANY(%s);', (new_status, is_dnc_flag, lead_ids))
+                    if new_status == 'Do Not Call (DNC)':
+                        cur.execute("UPDATE \"Leads\" SET status = %s, is_dnc = TRUE, campaign_ready = FALSE, email_hygiene_status = 'DO_NOT_EMAIL', updated_at = CURRENT_DATE WHERE id = ANY(%s);", (new_status, lead_ids))
+                    elif new_status == 'Unsubscribed':
+                        cur.execute("UPDATE \"Leads\" SET status = %s, is_dnc = FALSE, campaign_ready = FALSE, email_hygiene_status = 'DO_NOT_EMAIL', updated_at = CURRENT_DATE WHERE id = ANY(%s);", (new_status, lead_ids))
+                    else:
+                        cur.execute('UPDATE "Leads" SET status = %s, is_dnc = FALSE, updated_at = CURRENT_DATE WHERE id = ANY(%s);', (new_status, lead_ids))
                 elif action == 'mark_dnc':
-                    cur.execute('UPDATE "Leads" SET status = %s, is_dnc = TRUE, updated_at = CURRENT_DATE WHERE id = ANY(%s);', ('Do Not Call (DNC)', lead_ids))
+                    cur.execute("UPDATE \"Leads\" SET status = %s, is_dnc = TRUE, campaign_ready = FALSE, email_hygiene_status = 'DO_NOT_EMAIL', updated_at = CURRENT_DATE WHERE id = ANY(%s);", ('Do Not Call (DNC)', lead_ids))
                 elif action == 'assign_owner':
                     raw_owner_id = params.get('owner_id')
                     if raw_owner_id in (None, '', 'null', 'None'):
@@ -4691,6 +4711,366 @@ def api_marketing_campaign_create():
         if conn: conn.close()
 
 
+def sync_campaign_telemetry_counts(cur, campaign_id: int) -> None:
+    """
+    Synchronizes total_targets, staged_count, sent_count, opened_count, and walkthroughs_booked
+    on MarketingCampaigns from live CampaignRecipients records.
+    """
+    if not campaign_id:
+        return
+    cur.execute('''
+        UPDATE "MarketingCampaigns"
+        SET total_targets = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s),
+            staged_count = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s AND status = 'STAGED'),
+            sent_count = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s AND (sent_at IS NOT NULL OR status IN ('SENT', 'OPENED', 'ENGAGED', 'UNSUBSCRIBED'))),
+            opened_count = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s AND (COALESCE(open_count, 0) > 0 OR status IN ('OPENED', 'ENGAGED'))),
+            walkthroughs_booked = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s AND (COALESCE(click_count, 0) > 0 OR status = 'ENGAGED')),
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = %s;
+    ''', (campaign_id, campaign_id, campaign_id, campaign_id, campaign_id, campaign_id))
+
+
+@crm_api_bp.route('/api/v1/marketing/campaigns/list', methods=['GET'])
+@login_required
+def api_marketing_campaigns_list():
+    """
+    Returns active and paused marketing campaigns for the Enroll Selected Leads modal.
+    """
+    db_url = current_app.config.get('DATABASE_URL')
+    conn = None
+    try:
+        conn = get_db(db_url)
+        with conn.cursor() as cur:
+            cur.execute('''
+                SELECT id, campaign_code, name, target_sector, target_geo, status,
+                       total_targets, staged_count, sent_count, opened_count, walkthroughs_booked
+                FROM "MarketingCampaigns"
+                ORDER BY (CASE WHEN LOWER(status) = 'active' THEN 0 WHEN LOWER(status) = 'paused' THEN 1 ELSE 2 END),
+                         id DESC;
+            ''')
+            rows = [serialize_row(r) for r in cur.fetchall()]
+            return jsonify({'status': 'success', 'campaigns': rows})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/marketing/campaign/enroll-leads', methods=['POST'])
+@login_required
+def api_marketing_campaign_enroll_leads():
+    """
+    Enrolls specific checked lead_ids from the Leads module into an existing or newly created
+    MarketingCampaign, enforces CAN-SPAM / DNC / Geofence suppression, updates Leads.status to
+    'In Campaign', and optionally generates personalized PendingOutbox drafts immediately.
+    """
+    data = request.get_json() or {}
+    raw_lead_ids = data.get('lead_ids') or []
+    lead_ids = [int(x) for x in raw_lead_ids if str(x).isdigit()]
+    if not lead_ids:
+        return jsonify({'status': 'error', 'message': 'Please select at least one lead to enroll.'}), 400
+
+    campaign_id = data.get('campaign_id')
+    campaign_name = (data.get('campaign_name') or '').strip()
+    stage_drafts = bool(data.get('stage_drafts', True))
+
+    db_url = current_app.config.get('DATABASE_URL')
+    conn = None
+    try:
+        conn = get_db(db_url)
+        with conn.cursor() as cur:
+            user_label = getattr(current_user, 'full_name', None) or getattr(current_user, 'username', 'Executive')
+
+            if campaign_id and str(campaign_id).isdigit():
+                campaign_id = int(campaign_id)
+                cur.execute('SELECT * FROM "MarketingCampaigns" WHERE id = %s;', (campaign_id,))
+                campaign = cur.fetchone()
+                if not campaign:
+                    return jsonify({'status': 'error', 'message': 'Selected campaign not found.'}), 404
+                campaign_code = campaign['campaign_code']
+                campaign_name = campaign['name']
+            else:
+                if not campaign_name:
+                    campaign_name = f"Targeted Commercial Outreach ({datetime.datetime.now().strftime('%m/%d/%Y')})"
+                campaign_code = f"CMP-{datetime.datetime.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:4].upper()}"
+                default_subj = "Commercial Cleaning Proposal & Facility Walkthrough | HWB Cleaning Services"
+                cur.execute('''
+                    INSERT INTO "MarketingCampaigns" (
+                        campaign_code, name, target_sector, target_geo, cadence_type,
+                        sender_persona, status, daily_throttle_limit,
+                        email_subject_template, created_by
+                    ) VALUES (%s, %s, 'Selected CRM Leads', 'Texas Targeted', '1-Step Intro with Calendar Link',
+                              'Humberto Dominguez (Owner & Operator)', 'Active', 50, %s, %s)
+                    RETURNING *;
+                ''', (campaign_code, campaign_name, default_subj, user_label))
+                campaign = cur.fetchone()
+                campaign_id = campaign['id']
+
+            cur.execute('''
+                SELECT id, center_name, director, email, city, county, state, capacity, sqf,
+                       is_dnc, status, email_hygiene_status
+                FROM "Leads"
+                WHERE id = ANY(%s)
+                ORDER BY capacity DESC NULLS LAST, id ASC;
+            ''', (lead_ids,))
+            leads_rows = cur.fetchall()
+
+            enrolled_count = 0
+            skipped_count = 0
+            drafts_created = 0
+
+            subject_tmpl = (campaign.get('email_subject_template') or '').strip() or "Commercial Cleaning Proposal & Facility Walkthrough | HWB Cleaning Services"
+            body_tmpl = (campaign.get('email_body_template') or '').strip() or """<p>Hi {first_name},</p>
+<p>You probably already have a regular cleaning crew or an active contract in place—and if you are happy with their service, that is wonderful.</p>
+<p>Still, you and I know that running a successful facility and protecting your bottom line takes a team effort. HWB Cleaning Services is my company, and here are three things I will put together for you at zero cost:</p>
+<ol style="margin: 0.5rem 0 1rem 1.25rem; padding: 0; line-height: 1.6;">
+    <li><strong>A Walkthrough Plan</strong> with your total cleanable square footage and room layout.</li>
+    <li><strong>An Objective Cleanliness Score</strong> so you know exactly where your facility currently stands.</li>
+    <li><strong>A Locked-In Contract</strong> with an exact flat monthly dollar figure you can keep in your back pocket whenever you need to replace or requote your current contract.</li>
+</ol>
+<p style="font-size: 0.88rem; color: #64748b; background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px 14px; border-radius: 6px;">
+    If you don't want to continue with my sales pitch, please feel free to <a href="{unsubscribe_link}" style="color: #2563eb; text-decoration: underline; font-weight: 600;">click here to unsubscribe</a> and you will receive no further emails from me.
+</p>
+<p>Would you have 5 minutes this Tuesday morning or Thursday afternoon? Or feel free to pick a time directly on my calendar here:<br />
+<a href="{booking_link}" style="display: inline-block; background: #2563eb; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 700; margin-top: 10px;">Select a 5-Minute Time on Humberto's Calendar</a></p>
+<p>Sincerely,<br />
+<strong>Humberto Dominguez</strong><br />
+Owner &amp; Operator | HWB Cleaning Services LLC<br />
+(972) 800-7808 | hdominguez@hwbcleaning.com</p>"""
+
+            seen_emails = set()
+            cur.execute('SELECT LOWER(TRIM(recipient_email)) FROM "CampaignRecipients" WHERE campaign_id = %s;', (campaign_id,))
+            for erow in cur.fetchall():
+                val = erow[0] if isinstance(erow, tuple) else erow.get('lower')
+                if val:
+                    seen_emails.add(val)
+
+            for lrow in leads_rows:
+                lid = lrow['id']
+                raw_email = (lrow.get('email') or '').strip().lower()
+                lstate = (lrow.get('state') or 'TX').strip().upper()
+                lstatus = (lrow.get('status') or '').strip()
+
+                if (
+                    not raw_email
+                    or '@' not in raw_email
+                    or lrow.get('is_dnc')
+                    or lstatus in ('Do Not Call (DNC)', 'Unsubscribed')
+                    or (lrow.get('email_hygiene_status') or '').upper() == 'DO_NOT_EMAIL'
+                    or lstate in ('CA', 'WA')
+                    or raw_email.endswith('.ca')
+                    or raw_email.endswith('.ca.gov')
+                    or raw_email in seen_emails
+                ):
+                    skipped_count += 1
+                    continue
+
+                cur.execute('SELECT 1 FROM "EmailSuppressionList" WHERE email_lower = %s LIMIT 1;', (raw_email,))
+                if cur.fetchone():
+                    skipped_count += 1
+                    continue
+
+                seen_emails.add(raw_email)
+                token = uuid.uuid4().hex
+                director_name = (lrow.get('director') or '').strip()
+                if not director_name or director_name.lower() in ('none', 'unknown', '--'):
+                    director_name = 'Facility Director'
+                center_name = lrow.get('center_name') or 'Commercial Facility'
+                city = lrow.get('city') or 'Texas'
+                county = lrow.get('county') or 'Texas'
+                cap = lrow.get('capacity') or 0
+                sqf = lrow.get('sqf') or 0
+
+                cur.execute('''
+                    INSERT INTO "CampaignRecipients" (
+                        campaign_id, lead_id, recipient_email, recipient_name,
+                        facility_name, city, county, capacity, sqf,
+                        current_step, status, tracking_token
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 1, 'STAGED', %s)
+                    RETURNING id;
+                ''', (campaign_id, lid, raw_email, director_name, center_name, city, county, cap, sqf, token))
+                recip_id = cur.fetchone()[0]
+                enrolled_count += 1
+
+                if stage_drafts:
+                    recip_dict = {
+                        'recipient_email': raw_email,
+                        'recipient_name': director_name,
+                        'facility_name': center_name,
+                        'city': city,
+                        'county': county,
+                        'capacity': cap,
+                        'sqf': sqf
+                    }
+                    rendered_subject = replace_email_tokens(subject_tmpl, recip_dict, token)
+                    rendered_body = replace_email_tokens(body_tmpl, recip_dict, token)
+                    full_html = format_marketing_letterhead(rendered_body, token)
+
+                    cur.execute('''
+                        INSERT INTO "PendingOutbox" (
+                            recipient, subject, body, created_at, status, tracking_token, campaign_id, recipient_id
+                        ) VALUES (%s, %s, %s, CURRENT_DATE, 'PENDING', %s, %s, %s)
+                        RETURNING id;
+                    ''', (raw_email, rendered_subject, full_html, token, campaign_id, recip_id))
+                    outbox_id = cur.fetchone()[0]
+
+                    cur.execute('''
+                        UPDATE "CampaignRecipients"
+                        SET outbox_id = %s, status = 'AWAITING_APPROVAL', updated_at = CURRENT_TIMESTAMP
+                        WHERE id = %s;
+                    ''', (outbox_id, recip_id))
+                    drafts_created += 1
+
+                cur.execute('''
+                    UPDATE "Leads"
+                    SET last_campaigned_at = CURRENT_TIMESTAMP,
+                        status = CASE WHEN status IN ('New', 'NEW') OR status IS NULL THEN 'In Campaign' ELSE status END,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE id = %s;
+                ''', (lid,))
+
+                cur.execute('''
+                    INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
+                    VALUES (%s, 'Lead', 'Marketing Outreach', %s);
+                ''', (lid, f"Enrolled in marketing campaign '{campaign_name}' ({campaign_code}) by {user_label}. Status set to 'In Email Outreach'."))
+
+            sync_campaign_telemetry_counts(cur, campaign_id)
+            conn.commit()
+
+            return jsonify({
+                'status': 'success',
+                'campaign_id': campaign_id,
+                'campaign_code': campaign_code,
+                'campaign_name': campaign_name,
+                'enrolled_count': enrolled_count,
+                'drafts_created': drafts_created,
+                'skipped_count': skipped_count,
+                'message': f"Enrolled {enrolled_count} lead(s) into {campaign_code}" + (f" and staged {drafts_created} Outbox draft(s) for CEO review." if stage_drafts else ".")
+            })
+    except Exception as e:
+        if conn: conn.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/marketing/campaign/<int:campaign_id>/complete', methods=['POST'])
+@login_required
+def api_marketing_campaign_complete(campaign_id):
+    """
+    Completes an email marketing campaign:
+    1. Cancels any unsent drafts in PendingOutbox for this campaign.
+    2. Returns leads whose emails were never sent (STAGED / AWAITING_APPROVAL) back to 'New'.
+    3. Advances leads who received the email (SENT) but never opened/clicked from 'In Campaign' to 'Contacted'
+       so they enter the phone follow-up pool instead of remaining stuck in 'In Campaign'.
+    4. Preserves all leads who already advanced to 'Engaged' (opened), 'Qualified' (clicked), or 'Unsubscribed'.
+    5. Marks MarketingCampaigns.status = 'Completed' and synchronizes all counters.
+    """
+    db_url = current_app.config.get('DATABASE_URL')
+    conn = None
+    try:
+        conn = get_db(db_url)
+        with conn.cursor() as cur:
+            cur.execute('SELECT id, campaign_code, name, status FROM "MarketingCampaigns" WHERE id = %s;', (campaign_id,))
+            campaign = cur.fetchone()
+            if not campaign:
+                return jsonify({'status': 'error', 'message': 'Campaign not found.'}), 404
+
+            code = campaign['campaign_code']
+            name = campaign['name']
+            user_label = getattr(current_user, 'full_name', None) or getattr(current_user, 'username', 'Executive')
+
+            # 1. Cancel any remaining PENDING outbox drafts for this campaign
+            cur.execute('''
+                UPDATE "PendingOutbox"
+                SET status = 'CANCELLED'
+                WHERE campaign_id = %s AND UPPER(status) = 'PENDING';
+            ''', (campaign_id,))
+            cancelled_drafts = cur.rowcount
+
+            # 2. Identify recipients who were never sent an email (STAGED / AWAITING_APPROVAL)
+            cur.execute('''
+                SELECT DISTINCT lead_id
+                FROM "CampaignRecipients"
+                WHERE campaign_id = %s
+                  AND status IN ('STAGED', 'AWAITING_APPROVAL', 'CANCELLED', 'REJECTED')
+                  AND sent_at IS NULL
+                  AND lead_id IS NOT NULL;
+            ''', (campaign_id,))
+            unsent_lead_ids = [r[0] if isinstance(r, tuple) else r['lead_id'] for r in cur.fetchall()]
+
+            cur.execute('''
+                UPDATE "CampaignRecipients"
+                SET status = 'CANCELLED', updated_at = CURRENT_TIMESTAMP
+                WHERE campaign_id = %s AND status IN ('STAGED', 'AWAITING_APPROVAL') AND sent_at IS NULL;
+            ''', (campaign_id,))
+
+            reverted_to_new = 0
+            if unsent_lead_ids:
+                cur.execute('''
+                    UPDATE "Leads"
+                    SET status = 'New', updated_at = CURRENT_TIMESTAMP
+                    WHERE id = ANY(%s) AND status = 'In Campaign';
+                ''', (unsent_lead_ids,))
+                reverted_to_new = cur.rowcount
+
+            # 3. Advance leads who WERE sent the email (status='SENT' or sent_at IS NOT NULL) and are still 'In Campaign' -> 'Contacted'
+            cur.execute('''
+                SELECT DISTINCT lead_id
+                FROM "CampaignRecipients"
+                WHERE campaign_id = %s
+                  AND (status = 'SENT' OR sent_at IS NOT NULL)
+                  AND COALESCE(open_count, 0) = 0
+                  AND COALESCE(click_count, 0) = 0
+                  AND status != 'UNSUBSCRIBED'
+                  AND lead_id IS NOT NULL;
+            ''', (campaign_id,))
+            sent_unopened_lead_ids = [r[0] if isinstance(r, tuple) else r['lead_id'] for r in cur.fetchall()]
+
+            advanced_to_contacted = 0
+            if sent_unopened_lead_ids:
+                cur.execute('''
+                    UPDATE "Leads"
+                    SET status = 'Contacted', updated_at = CURRENT_TIMESTAMP
+                    WHERE id = ANY(%s) AND status = 'In Campaign';
+                ''', (sent_unopened_lead_ids,))
+                advanced_to_contacted = cur.rowcount
+                for lid in sent_unopened_lead_ids:
+                    cur.execute('''
+                        INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
+                        VALUES (%s, 'Lead', 'Status Change', %s);
+                    ''', (lid, f"Campaign '{name}' ({code}) completed. Lead advanced from 'In Email Outreach' to 'Contacted' for phone follow-up."))
+
+            # 4. Update campaign status to Completed and sync counters
+            cur.execute('''
+                UPDATE "MarketingCampaigns"
+                SET status = 'Completed', updated_at = CURRENT_TIMESTAMP
+                WHERE id = %s;
+            ''', (campaign_id,))
+            sync_campaign_telemetry_counts(cur, campaign_id)
+
+            cur.execute('''
+                INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
+                VALUES (1, 'System', 'Marketing Campaign Completed', %s);
+            ''', (f"Campaign '{name}' ({code}) completed by {user_label}. {advanced_to_contacted} sent leads advanced to 'Contacted', {reverted_to_new} unsent leads returned to 'New', {cancelled_drafts} pending drafts cancelled.",))
+
+            conn.commit()
+            return jsonify({
+                'status': 'success',
+                'campaign_id': campaign_id,
+                'campaign_code': code,
+                'advanced_to_contacted': advanced_to_contacted,
+                'reverted_to_new': reverted_to_new,
+                'cancelled_drafts': cancelled_drafts,
+                'message': f"Campaign {code} marked Completed: {advanced_to_contacted} sent lead(s) moved to 'Contacted' for phone follow-up; {reverted_to_new} unsent lead(s) returned to 'New'."
+            })
+    except Exception as e:
+        if conn: conn.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        if conn: conn.close()
+
+
 @crm_api_bp.route('/api/v1/marketing/campaign/<int:campaign_id>/toggle-status', methods=['POST'])
 @login_required
 def api_marketing_campaign_toggle_status(campaign_id):
@@ -5266,7 +5646,7 @@ def api_marketing_outbox_batch():
         with conn.cursor() as cur:
             if not email_ids:
                 cur.execute('''
-                    SELECT id, recipient, subject, body, tracking_token
+                    SELECT id, recipient, subject, body, tracking_token, campaign_id
                     FROM "PendingOutbox"
                     WHERE UPPER(status) = 'PENDING'
                     ORDER BY id ASC
@@ -5275,15 +5655,18 @@ def api_marketing_outbox_batch():
                 pending_msgs = cur.fetchall()
             else:
                 cur.execute('''
-                    SELECT id, recipient, subject, body, tracking_token
+                    SELECT id, recipient, subject, body, tracking_token, campaign_id
                     FROM "PendingOutbox"
                     WHERE id = ANY(%s) AND UPPER(status) = 'PENDING';
                 ''', (email_ids,))
                 pending_msgs = cur.fetchall()
 
+            affected_campaigns = set()
             success_count, error_count = 0, 0
             for msg in pending_msgs:
                 eid = msg['id']
+                if msg.get('campaign_id'):
+                    affected_campaigns.add(int(msg['campaign_id']))
                 if action == 'approve':
                     ok, reason = transmit_email(msg['recipient'], msg['subject'], msg['body'])
                     if ok:
@@ -5292,14 +5675,17 @@ def api_marketing_outbox_batch():
                             UPDATE "CampaignRecipients"
                             SET status = 'SENT', sent_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
                             WHERE outbox_id = %s OR tracking_token = %s
-                            RETURNING lead_id, facility_name;
+                            RETURNING lead_id, facility_name, campaign_id;
                         ''', (eid, msg.get('tracking_token')))
                         ret_recip = cur.fetchone()
-                        if ret_recip and ret_recip['lead_id']:
-                            cur.execute('''
-                                INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
-                                VALUES (%s, 'Lead', 'Email Sent', %s);
-                            ''', (ret_recip['lead_id'], f"Marketing outreach email sent to {msg['recipient']}: '{msg['subject']}'"))
+                        if ret_recip:
+                            if ret_recip.get('campaign_id'):
+                                affected_campaigns.add(int(ret_recip['campaign_id']))
+                            if ret_recip.get('lead_id'):
+                                cur.execute('''
+                                    INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
+                                    VALUES (%s, 'Lead', 'Email Sent', %s);
+                                ''', (ret_recip['lead_id'], f"Marketing outreach email sent to {msg['recipient']}: '{msg['subject']}'"))
                         success_count += 1
                     else:
                         error_count += 1
@@ -5308,9 +5694,23 @@ def api_marketing_outbox_batch():
                     cur.execute('''
                         UPDATE "CampaignRecipients"
                         SET status = 'CANCELLED', updated_at = CURRENT_TIMESTAMP
-                        WHERE outbox_id = %s OR tracking_token = %s;
+                        WHERE outbox_id = %s OR tracking_token = %s
+                        RETURNING campaign_id, lead_id;
                     ''', (eid, msg.get('tracking_token')))
+                    ret_cancel = cur.fetchone()
+                    if ret_cancel:
+                        if ret_cancel.get('campaign_id'):
+                            affected_campaigns.add(int(ret_cancel['campaign_id']))
+                        if ret_cancel.get('lead_id'):
+                            cur.execute('''
+                                UPDATE "Leads"
+                                SET status = 'New', updated_at = CURRENT_TIMESTAMP
+                                WHERE id = %s AND status = 'In Campaign';
+                            ''', (ret_cancel['lead_id'],))
                     success_count += 1
+
+            for cid in affected_campaigns:
+                sync_campaign_telemetry_counts(cur, cid)
 
             conn.commit()
             action_desc = "cancelled" if action in ('reject', 'cancel') else "processed"

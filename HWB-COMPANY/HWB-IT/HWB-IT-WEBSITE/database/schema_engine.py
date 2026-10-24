@@ -598,6 +598,16 @@ def apply_system_migrations(conn: Any, db_url: Optional[str] = None) -> None:
                 CREATE INDEX IF NOT EXISTS "idx_pending_outbox_token" ON "PendingOutbox" (tracking_token);
                 CREATE INDEX IF NOT EXISTS "idx_pending_outbox_campaign" ON "PendingOutbox" (campaign_id);
 
+                CREATE TABLE IF NOT EXISTS "EmailSuppressionList" (
+                    id SERIAL PRIMARY KEY,
+                    email_lower VARCHAR(255) UNIQUE NOT NULL,
+                    reason VARCHAR(100) DEFAULT 'UNSUBSCRIBED',
+                    source VARCHAR(100) DEFAULT 'ONE_CLICK_TOKEN',
+                    lead_id INTEGER,
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                );
+                ALTER TABLE "EmailSuppressionList" ADD COLUMN IF NOT EXISTS lead_id INTEGER;
+
                 -- AcademyPackages Table Parity (Curriculum Bundles)
                 CREATE TABLE IF NOT EXISTS "AcademyPackages" (
                     id SERIAL PRIMARY KEY,

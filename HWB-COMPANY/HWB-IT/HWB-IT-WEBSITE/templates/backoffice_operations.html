@@ -373,16 +373,21 @@
                         <button type="button" onclick="toggleBulkDropdown('bulk-status-menu')" class="isc-btn isc-btn-outline" style="padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.75rem; height: 36px; display: flex; align-items: center; gap: 0.5rem; font-weight: 700;" title="Bulk update: Change sales stage for all checked leads at once">
                             Status <i class="fas fa-chevron-down" style="font-size: 0.65rem;"></i>
                         </button>
-                        <div id="bulk-status-menu" class="bulk-dropdown-menu" style="display: none; position: absolute; left: 0; top: 110%; background: white; border: 1px solid var(--slate-200); border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 1000; width: 180px; padding: 0.5rem;">
-                            <button type="button" onclick="executeBulkAction('update_status', {status: 'NEW'})" class="isc-dropdown-btn" style="text-align: left; width: 100%;"><i class="fas fa-plus-circle" style="margin-right: 0.5rem;"></i> New</button>
-                            <button type="button" onclick="executeBulkAction('update_status', {status: 'In Campaign'})" class="isc-dropdown-btn" style="text-align: left; width: 100%;"><i class="fas fa-bullhorn" style="margin-right: 0.5rem; color: #4f46e5;"></i> Send to Campaign</button>
-                            <button type="button" onclick="executeBulkAction('update_status', {status: 'Engaged'})" class="isc-dropdown-btn" style="text-align: left; width: 100%;"><i class="fas fa-fire" style="margin-right: 0.5rem; color: #16a34a;"></i> Engaged</button>
-                            <button type="button" onclick="executeBulkAction('update_status', {status: 'CONTACTED'})" class="isc-dropdown-btn" style="text-align: left; width: 100%;"><i class="fas fa-phone" style="margin-right: 0.5rem;"></i> Contacted</button>
-                            <button type="button" onclick="executeBulkAction('update_status', {status: 'QUALIFIED'})" class="isc-dropdown-btn" style="text-align: left; width: 100%;"><i class="fas fa-check-circle" style="margin-right: 0.5rem;"></i> Qualified</button>
-                            <button type="button" onclick="executeBulkAction('update_status', {status: 'NURTURING'})" class="isc-dropdown-btn" style="text-align: left; width: 100%;"><i class="fas fa-heart" style="margin-right: 0.5rem;"></i> Nurturing</button>
+                        <div id="bulk-status-menu" class="bulk-dropdown-menu" style="display: none; position: absolute; left: 0; top: 110%; background: white; border: 1px solid var(--slate-200); border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 1000; width: 195px; padding: 0.5rem;">
+                            <button type="button" onclick="executeBulkAction('update_status', {status: 'New'})" class="isc-dropdown-btn" style="text-align: left; width: 100%;"><i class="fas fa-plus-circle" style="margin-right: 0.5rem;"></i> New</button>
+                            <button type="button" onclick="openEnrollSelectedLeadsModal()" class="isc-dropdown-btn" style="text-align: left; width: 100%; font-weight: 700; color: #4f46e5;"><i class="fas fa-bullhorn" style="margin-right: 0.5rem; color: #4f46e5;"></i> Send to Campaign...</button>
+                            <button type="button" onclick="executeBulkAction('update_status', {status: 'Engaged'})" class="isc-dropdown-btn" style="text-align: left; width: 100%;"><i class="fas fa-fire" style="margin-right: 0.5rem; color: #16a34a;"></i> Engaged 🔥</button>
+                            <button type="button" onclick="executeBulkAction('update_status', {status: 'Contacted'})" class="isc-dropdown-btn" style="text-align: left; width: 100%;"><i class="fas fa-phone" style="margin-right: 0.5rem;"></i> Contacted</button>
+                            <button type="button" onclick="executeBulkAction('update_status', {status: 'Qualified'})" class="isc-dropdown-btn" style="text-align: left; width: 100%;"><i class="fas fa-check-circle" style="margin-right: 0.5rem;"></i> Qualified</button>
+                            <button type="button" onclick="executeBulkAction('update_status', {status: 'Unsubscribed'})" class="isc-dropdown-btn" style="text-align: left; width: 100%; color: #c2410c; font-weight: 700;"><i class="fas fa-envelope-open" style="margin-right: 0.5rem;"></i> ✉️ Unsubscribed</button>
                             <button type="button" onclick="executeBulkAction('mark_dnc')" class="isc-dropdown-btn" style="text-align: left; width: 100%; color: #dc2626; font-weight: 700;"><i class="fas fa-ban" style="margin-right: 0.5rem;"></i> Do Not Call (DNC)</button>
                         </div>
                     </div>
+
+                    <!-- Direct Send to Campaign Button -->
+                    <button type="button" onclick="openEnrollSelectedLeadsModal()" class="isc-btn isc-btn-outline" style="padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.75rem; height: 36px; display: flex; align-items: center; gap: 0.5rem; font-weight: 800; color: #4f46e5; border-color: #a5b4fc; background: #eef2ff;" title="Enroll checked leads into an Email Marketing Campaign and stage Outbox drafts">
+                        <i class="fas fa-bullhorn"></i> Send to Campaign
+                    </button>
 
                     <!-- Direct Mark as DNC Button -->
                     <button type="button" onclick="executeBulkAction('mark_dnc')" class="isc-btn isc-btn-outline" style="padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.75rem; height: 36px; display: flex; align-items: center; gap: 0.5rem; font-weight: 700; color: #dc2626; border-color: #fca5a5;" title="Do Not Call: Mark all checked leads as Do Not Call and remove from calling lists">
@@ -522,15 +527,16 @@
                                     </td>
                                     {% elif col_key == 'status' %}
                                       <td class="sticky-2" onclick="event.stopPropagation();">
-                                          <select {% if not can_edit_leads %}disabled title="Editing lead status is restricted for your role" style="cursor: not-allowed; opacity: 0.85; {% else %}onchange="quickUpdateLead({{ lead.id }}, 'status', this.value, this)" title="Lead Stage: Click to update status" style="{% endif %}{% if lead.status == 'Do Not Call (DNC)' or lead.is_dnc %}background:#fee2e2; color:#991b1b; border-color:#fca5a5;{% elif lead.status == 'Active' %}background:#dcfce7; color:#15803d; border-color:#86efac;{% elif lead.status == 'In Campaign' %}background:#e0e7ff; color:#3730a3; border-color:#c7d2fe;{% elif lead.status == 'Engaged' %}background:#d1fae5; color:#065f46; border-color:#6ee7b7;{% elif lead.status == 'New' or lead.status == 'NEW' %}background:#e0f2fe; color:#0369a1; border-color:#7dd3fc;{% elif lead.status == 'Contacted' %}background:#f3e8ff; color:#7e22ce; border-color:#d8b4fe;{% elif lead.status == 'Qualified' %}background:#ccfbf1; color:#0f766e; border-color:#5eead4;{% elif lead.status == 'Trained' %}background:#fef3c7; color:#b45309; border-color:#fde047;{% else %}background:#f1f5f9; color:#64748b; border-color:#cbd5e1;{% endif %}" class="sigma-pill-select">
+                                          <select {% if not can_edit_leads %}disabled title="Editing lead status is restricted for your role" style="cursor: not-allowed; opacity: 0.85; {% else %}onchange="quickUpdateLead({{ lead.id }}, 'status', this.value, this)" title="Lead Stage: Click to update status" style="{% endif %}{% if lead.status == 'Do Not Call (DNC)' or lead.is_dnc %}background:#fee2e2; color:#991b1b; border-color:#fca5a5;{% elif lead.status == 'Unsubscribed' %}background:#ffedd5; color:#9a3412; border-color:#fdba74;{% elif lead.status == 'Active' %}background:#dcfce7; color:#15803d; border-color:#86efac;{% elif lead.status == 'In Campaign' %}background:#e0e7ff; color:#3730a3; border-color:#c7d2fe;{% elif lead.status == 'Engaged' %}background:#d1fae5; color:#065f46; border-color:#6ee7b7;{% elif lead.status == 'New' or lead.status == 'NEW' %}background:#e0f2fe; color:#0369a1; border-color:#7dd3fc;{% elif lead.status == 'Contacted' %}background:#f3e8ff; color:#7e22ce; border-color:#d8b4fe;{% elif lead.status == 'Qualified' %}background:#ccfbf1; color:#0f766e; border-color:#5eead4;{% elif lead.status == 'Trained' %}background:#fef3c7; color:#b45309; border-color:#fde047;{% else %}background:#f1f5f9; color:#64748b; border-color:#cbd5e1;{% endif %}" class="sigma-pill-select">
                                               <option value="New" title="New lead in pool - needs first phone call" {% if lead.status == 'New' or lead.status == 'NEW' %}selected{% endif %}>New</option>
                                               <option value="In Campaign" title="Active in email outreach - waiting for customer response" {% if lead.status == 'In Campaign' %}selected{% endif %}>In Email Outreach</option>
                                               <option value="Engaged" title="Customer opened email or replied - hot lead ready to call" {% if lead.status == 'Engaged' %}selected{% endif %}>Engaged 🔥</option>
                                               <option value="Active" title="Signed customer receiving regular cleaning service" {% if lead.status == 'Active' %}selected{% endif %}>Active</option>
-                                              <option value="Contacted" title="Spoke with gatekeeper or manager - follow-up needed" {% if lead.status == 'Contacted' %}selected{% endif %}>Contacted</option>
-                                              <option value="Qualified" title="Interest confirmed - walkthrough or quote scheduled" {% if lead.status == 'Qualified' %}selected{% endif %}>Qualified</option>
+                                              <option value="Contacted" title="Spoke with gatekeeper or email campaign completed - follow-up needed" {% if lead.status == 'Contacted' %}selected{% endif %}>Contacted</option>
+                                              <option value="Qualified" title="Interest confirmed or walkthrough link clicked" {% if lead.status == 'Qualified' %}selected{% endif %}>Qualified</option>
                                               <option value="Trained" title="Walkthrough completed - proposal delivered" {% if lead.status == 'Trained' %}selected{% endif %}>Trained</option>
-                                              <option value="Do Not Call (DNC)" title="Requested no calls - permanently excluded" {% if lead.status == 'Do Not Call (DNC)' or lead.is_dnc %}selected{% endif %}>🚫 DNC</option>
+                                              <option value="Unsubscribed" title="Opted out of marketing emails (CAN-SPAM suppressed)" {% if lead.status == 'Unsubscribed' and not lead.is_dnc %}selected{% endif %}>✉️ Unsubscribed</option>
+                                              <option value="Do Not Call (DNC)" title="Requested no phone calls - permanently excluded" {% if lead.status == 'Do Not Call (DNC)' or lead.is_dnc %}selected{% endif %}>🚫 DNC</option>
                                               <option value="Lost" title="Not interested or chose another cleaner" {% if lead.status == 'Lost' %}selected{% endif %}>Lost</option>
                                           </select>
                                       </td>
@@ -2956,11 +2962,16 @@
                                         {% endif %}
                                     </button>
                                     <a href="{{ url_for('admin_operations', view='marketing', campaign_id=c.id) }}" class="isc-btn isc-btn-outline" style="height: 28px; padding: 0 0.65rem; font-size: 0.72rem; border-radius: 4px; text-decoration: none; display: inline-flex; align-items: center; gap: 0.3rem; margin-right: 0.35rem; {% if active_campaign_id == c.id %}background: #eff6ff; border-color: #3b82f6; color: #1d4ed8; font-weight: 800;{% endif %}">
-                                        <i class="fas fa-list"></i> Targets ({{ c.staged_count or 0 }})
+                                        <i class="fas fa-list"></i> Targets ({{ c.total_targets or c.staged_count or 0 }})
                                     </a>
                                     <button type="button" onclick="generateCampaignDrafts({{ c.id }}, '{{ c.campaign_code }}')" class="isc-btn isc-btn-primary" style="height: 28px; padding: 0 0.65rem; font-size: 0.72rem; border-radius: 4px; background: #0284c7; border-color: #0369a1; margin-right: 0.35rem;" title="Generate personalized HWB-COM-001 letterhead drafts for Outbox review">
                                         <i class="fas fa-file-signature"></i> Stage Drafts
                                     </button>
+                                    {% if c.status|lower != 'completed' %}
+                                    <button type="button" onclick="completeCampaign({{ c.id }}, '{{ c.campaign_code }}')" class="isc-btn isc-btn-outline" style="height: 28px; padding: 0 0.65rem; font-size: 0.72rem; border-radius: 4px; color: #059669; border-color: #6ee7b7; background: #ecfdf5; margin-right: 0.35rem; font-weight: 700;" title="Complete campaign: moves sent unopened leads to Contacted for phone follow-up and returns unsent leads to New">
+                                        <i class="fas fa-flag-checkered"></i> Complete
+                                    </button>
+                                    {% endif %}
                                     <button type="button" onclick="deleteCampaign({{ c.id }}, '{{ c.campaign_code }}')" class="isc-btn isc-btn-outline" style="height: 28px; padding: 0 0.55rem; font-size: 0.72rem; border-radius: 4px; color: #dc2626; border-color: #fca5a5;" title="Delete Campaign and Return Leads to New">
                                         <i class="fas fa-trash-alt"></i>
                                     </button>
@@ -8517,6 +8528,7 @@
                                     <option value="Contacted">Contacted</option>
                                     <option value="Qualified">Qualified</option>
                                     <option value="Trained">Trained</option>
+                                    <option value="Unsubscribed">✉️ Unsubscribed</option>
                                     <option value="Do Not Call (DNC)">🚫 Do Not Call (DNC)</option>
                                     <option value="Lost">Lost</option>
                                 </select>
@@ -9226,6 +9238,58 @@ Owner &amp;amp; Operator | HWB Cleaning Services LLC&lt;br /&gt;
                 <button type="button" onclick="closeModal('modal-create-campaign')" class="isc-btn isc-btn-outline" style="height: 38px; padding: 0 1.25rem; font-size: 0.8rem;" aria-label="Close Create Campaign Modal">Cancel</button>
                 <button type="submit" class="isc-btn isc-btn-primary" style="height: 38px; padding: 0 1.5rem; font-size: 0.8rem; font-weight: 800; background: #ec4899; border-color: #db2777;">
                     <i class="fas fa-paper-plane"></i> Save &amp; Start Campaign
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ============================================================================== -->
+<!-- 1B. ENROLL SELECTED LEADS INTO EMAIL CAMPAIGN MODAL                            -->
+<!-- ============================================================================== -->
+<div id="modal-enroll-leads-campaign" class="isc-modal-overlay" style="display:none; z-index: 1200;">
+    <div class="isc-modal" style="max-width: 560px; width: 95%;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--slate-200); padding-bottom: 1rem; margin-bottom: 1.25rem;">
+            <div>
+                <h2 style="font-size: 1.25rem; font-weight: 900; color: var(--slate-900); margin: 0; display: flex; align-items: center; gap: 0.55rem;">
+                    <i class="fas fa-bullhorn" style="color: #4f46e5;"></i> Send Selected Leads to Email Campaign
+                </h2>
+                <p style="font-size: 0.78rem; color: var(--slate-500); margin: 0.25rem 0 0 0; font-weight: 600;">
+                    Enroll <strong id="enroll-leads-count-label" style="color: #4f46e5;">0</strong> selected lead(s) into an email campaign and stage Outbox drafts for CEO review.
+                </p>
+            </div>
+            <button type="button" onclick="closeModal('modal-enroll-leads-campaign')" class="isc-btn isc-btn-outline" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; padding: 0;" aria-label="Close Enroll Leads Modal">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <form id="form-enroll-selected-leads" onsubmit="event.preventDefault(); submitEnrollSelectedLeads();" class="sigma-form-container">
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: var(--slate-600); margin-bottom: 0.35rem;">Choose Campaign</label>
+                <select id="enroll-campaign-select" class="sigma-input" onchange="toggleEnrollNewCampaignName()">
+                    <option value="NEW">+ Create a New Campaign for Selected Leads</option>
+                </select>
+            </div>
+
+            <div id="enroll-new-campaign-name-group" style="margin-bottom: 1rem;">
+                <label style="display: block; font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: var(--slate-600); margin-bottom: 0.35rem;">New Campaign Name *</label>
+                <input type="text" id="enroll-campaign-name" class="sigma-input" placeholder="e.g. Selected Commercial Leads Outreach" />
+            </div>
+
+            <div style="background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 8px; padding: 0.85rem 1rem; margin-bottom: 1.25rem;">
+                <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer; font-size: 0.82rem; font-weight: 700; color: var(--slate-800); margin: 0;">
+                    <input type="checkbox" id="enroll-stage-drafts" checked style="width: 16px; height: 16px; accent-color: #4f46e5; cursor: pointer;" />
+                    <span>Immediately stage personalized Outbox drafts for CEO approval</span>
+                </label>
+                <div style="font-size: 0.72rem; color: var(--slate-500); margin-top: 0.35rem; padding-left: 1.6rem;">
+                    Enrolled leads are automatically labeled <strong>In Email Outreach</strong>. Unsubscribed or DNC leads are automatically skipped.
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 0.65rem; border-top: 1px solid var(--slate-200); padding-top: 1rem;">
+                <button type="button" onclick="closeModal('modal-enroll-leads-campaign')" class="isc-btn isc-btn-outline" style="height: 36px; padding: 0 1.15rem; font-size: 0.78rem;">Cancel</button>
+                <button type="submit" id="btn-submit-enroll-leads" class="isc-btn isc-btn-primary" style="height: 36px; padding: 0 1.35rem; font-size: 0.78rem; font-weight: 800; background: #4f46e5; border-color: #4338ca;">
+                    <i class="fas fa-paper-plane"></i> Enroll &amp; Stage Leads
                 </button>
             </div>
         </form>

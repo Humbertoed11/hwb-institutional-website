@@ -1595,6 +1595,12 @@
             } else if (col === 'status') {
                 if (lead.status === 'Do Not Call (DNC)' || lead.is_dnc) {
                     rowHtml += `<td class="sticky-2"><span class="sigma-unit-pill" style="background:#fee2e2; color:#991b1b; border: 1px solid #fca5a5; font-weight: 800;">🚫 Do Not Call</span></td>`;
+                } else if (lead.status === 'Unsubscribed') {
+                    rowHtml += `<td class="sticky-2"><span class="sigma-unit-pill" style="background:#ffedd5; color:#9a3412; border: 1px solid #fdba74; font-weight: 800;">✉️ Unsubscribed</span></td>`;
+                } else if (lead.status === 'In Campaign') {
+                    rowHtml += `<td class="sticky-2"><span class="sigma-unit-pill" style="background:#e0e7ff; color:#3730a3; border: 1px solid #c7d2fe; font-weight: 800;">In Email Outreach</span></td>`;
+                } else if (lead.status === 'Engaged') {
+                    rowHtml += `<td class="sticky-2"><span class="sigma-unit-pill" style="background:#d1fae5; color:#065f46; border: 1px solid #6ee7b7; font-weight: 800;">Engaged 🔥</span></td>`;
                 } else {
                     rowHtml += `<td class="sticky-2"><span class="sigma-unit-pill" style="background:#f1f5f9; color:#475569">${lead.status || 'New'}</span></td>`;
                 }
@@ -6496,6 +6502,128 @@
                 })
                 .catch(err => showToast('Error staging drafts: ' + err, 'error'));
             }
+        });
+    }
+
+    function completeCampaign(campaignId, code) {
+        if (!campaignId) return;
+        showDecision({
+            title: 'Complete Marketing Campaign',
+            text: `Mark campaign ${code} as Completed? Leads who were sent the email without opening will be moved from "In Email Outreach" to "Contacted" for phone follow-up, and any unsent drafts will be cancelled.`,
+            confirmText: 'Complete Campaign',
+            icon: 'fa-flag-checkered',
+            onConfirm: () => {
+                fetch('/api/v1/marketing/campaign/' + campaignId + '/complete', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest'}
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        showToast(data.message, 'success');
+                        setTimeout(() => { location.reload(); }, 900);
+                    } else {
+                        showToast(data.message || 'Failed to complete campaign.', 'error');
+                    }
+                })
+                .catch(err => showToast('Error completing campaign: ' + err, 'error'));
+            }
+        });
+    }
+
+    function openEnrollSelectedLeadsModal() {
+        const ids = typeof getSelectedLeadIds === 'function' ? getSelectedLeadIds() : [];
+        if (!ids || ids.length === 0) {
+            showToast('Please select at least one lead in the table first.', 'warning');
+            return;
+        }
+        const countLabel = document.getElementById('enroll-leads-count-label');
+        if (countLabel) countLabel.innerText = ids.length;
+        const nameInput = document.getElementById('enroll-campaign-name');
+        if (nameInput && !nameInput.value.trim()) {
+            const today = new Date().toLocaleDateString('en-US');
+            nameInput.value = `Selected Commercial Leads (${today})`;
+        }
+
+        const selectEl = document.getElementById('enroll-campaign-select');
+        if (selectEl) {
+            selectEl.innerHTML = '<option value="NEW">+ Create a New Campaign for Selected Leads</option>';
+            fetch('/api/v1/marketing/campaigns/list')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success' && Array.isArray(data.campaigns)) {
+                        data.campaigns.forEach(c => {
+                            if ((c.status || '').toLowerCase() !== 'completed') {
+                                const opt = document.createElement('option');
+                                opt.value = c.id;
+                                opt.textContent = `${c.campaign_code} — ${c.name} (${c.total_targets || 0} targets)`;
+                                selectEl.appendChild(opt);
+                            }
+                        });
+                        if (selectEl.options.length > 1) {
+                            selectEl.selectedIndex = 1;
+                        }
+                        toggleEnrollNewCampaignName();
+                    }
+                })
+                .catch(() => {});
+        }
+        toggleEnrollNewCampaignName();
+        openModal('modal-enroll-leads-campaign');
+    }
+
+    function toggleEnrollNewCampaignName() {
+        const selectEl = document.getElementById('enroll-campaign-select');
+        const groupEl = document.getElementById('enroll-new-campaign-name-group');
+        if (!selectEl || !groupEl) return;
+        groupEl.style.display = (selectEl.value === 'NEW') ? 'block' : 'none';
+    }
+
+    function submitEnrollSelectedLeads() {
+        const ids = typeof getSelectedLeadIds === 'function' ? getSelectedLeadIds() : [];
+        if (!ids || ids.length === 0) {
+            showToast('No leads selected.', 'error');
+            return;
+        }
+        const selectEl = document.getElementById('enroll-campaign-select');
+        const nameInput = document.getElementById('enroll-campaign-name');
+        const stageDraftsEl = document.getElementById('enroll-stage-drafts');
+        const submitBtn = document.getElementById('btn-submit-enroll-leads');
+
+        const isNew = !selectEl || selectEl.value === 'NEW';
+        const campaignName = nameInput ? nameInput.value.trim() : '';
+        if (isNew && !campaignName) {
+            showToast('Please enter a name for the new campaign.', 'error');
+            return;
+        }
+
+        if (submitBtn && window.spinAndLock) window.spinAndLock(submitBtn, 'Enrolling Leads...');
+        fetch('/api/v1/marketing/campaign/enroll-leads', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest'},
+            body: JSON.stringify({
+                lead_ids: ids,
+                campaign_id: isNew ? null : parseInt(selectEl.value),
+                campaign_name: campaignName,
+                stage_drafts: stageDraftsEl ? stageDraftsEl.checked : true
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                showToast(data.message, 'success');
+                closeModal('modal-enroll-leads-campaign');
+                setTimeout(() => {
+                    window.location.href = '/admin/operations?view=marketing&campaign_id=' + data.campaign_id;
+                }, 800);
+            } else {
+                showToast(data.message || 'Enrollment failed.', 'error');
+                if (submitBtn && window.restoreButton) window.restoreButton(submitBtn);
+            }
+        })
+        .catch(err => {
+            showToast('Error enrolling leads: ' + err, 'error');
+            if (submitBtn && window.restoreButton) window.restoreButton(submitBtn);
         });
     }
 

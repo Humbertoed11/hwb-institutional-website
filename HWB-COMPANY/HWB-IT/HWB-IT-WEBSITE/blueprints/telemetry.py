@@ -305,8 +305,17 @@ def track_email_click(tracking_token):
                 ''', (tracking_token,))
                 click_row = cur.fetchone()
                 if click_row:
+                    c_camp_id = click_row['campaign_id'] if isinstance(click_row, dict) else click_row[0]
                     c_lead_id = click_row['lead_id'] if isinstance(click_row, dict) else click_row[1]
                     c_facility = click_row['facility_name'] if isinstance(click_row, dict) else click_row[2]
+                    if c_camp_id:
+                        cur.execute('''
+                            UPDATE "MarketingCampaigns"
+                            SET walkthroughs_booked = (SELECT COUNT(DISTINCT id) FROM "CampaignRecipients" WHERE campaign_id = %s AND (COALESCE(click_count, 0) > 0 OR status = 'ENGAGED')),
+                                opened_count = (SELECT COUNT(DISTINCT id) FROM "CampaignRecipients" WHERE campaign_id = %s AND (COALESCE(open_count, 0) > 0 OR status IN ('OPENED', 'ENGAGED'))),
+                                updated_at = CURRENT_TIMESTAMP
+                            WHERE id = %s;
+                        ''', (c_camp_id, c_camp_id, c_camp_id))
                     if c_lead_id:
                         cur.execute('''
                             INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
