@@ -2,7 +2,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-8.3-WEB</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.1.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.2.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5 &amp; 8.2.1 (Web Architecture &amp; Compliance)</span></div>
     </div>
@@ -18,7 +18,7 @@
             <tbody>
                 <tr><td style="text-align: left;"><strong>Document Title</strong></td><td style="text-align: left;"><strong>Website Improvement, WCAG 2.2 AA Accessibility &amp; Consent-Gated Telemetry SOP</strong></td></tr>
                 <tr><td style="text-align: left;"><strong>Document ID</strong></td><td style="text-align: left;">HWB-QMS-8.3-WEB</td></tr>
-                <tr><td style="text-align: left;"><strong>Version</strong></td><td style="text-align: left;">3.1.0</td></tr>
+                <tr><td style="text-align: left;"><strong>Version</strong></td><td style="text-align: left;">3.2.0</td></tr>
                 <tr><td style="text-align: left;"><strong>Status</strong></td><td style="text-align: left;">APPROVED</td></tr>
                 <tr><td style="text-align: left;"><strong>Author</strong></td><td style="text-align: left;">George (Systems Architect &amp; Lead ISO Auditor)</td></tr>
                 <tr><td style="text-align: left;"><strong>Approved By</strong></td><td style="text-align: left;">Humberto Dominguez, CEO</td></tr>
@@ -47,6 +47,7 @@
                     <li>The global footer (<code>templates/base.html</code>), post-quote confirmation badge (<code>templates/quote_success.html</code>), and all 3 executive email signatures (<code>templates/executive_signature.html</code>) provide 1-click access to HWB's Google Review modal (<code>https://g.page/r/CYTq8OcJfsRDEBM/review</code>).</li>
                 </ul>
             </li>
+            <li><strong>Zero Internal Process Jargon on Public &amp; Client-Facing Surfaces (BUG-147):</strong> Public webpages, client/partner onboarding portals, training certificates, authentication screens, and outbound client emails must never expose internal engineering processes, internal audit control labels (e.g., <code>SOC 2 PROCESSING INTEGRITY COMPLIANCE</code>, <code>SOC 2 Privacy P2.1</code>, <code>IETF RFC 8058</code>, <code>ISO 9001 Clause 7.2</code>, <code>WORM</code>), database/architecture identifiers (<code>PostgreSQL</code>, <code>containerized</code>, <code>EmailSuppressionList</code>, <code>BYTEA</code>, <code>SHA-256</code>, <code>AES-256</code>), internal SOP document codes (<code>HWB-LEG-001</code>, <code>HWB-QMS-4.5</code>), or internal AI agent personas (<code>Super George</code>, <code>George, Systems Architect</code>, <code>SigmaFidelity&trade;</code>). The deployment version/commit badge in <code>base.html</code> is restricted strictly to authenticated staff via <code>{% if current_user and current_user.is_authenticated %}</code>.</li>
         </ol>
 
         <div class="callout callout-note">
@@ -57,6 +58,7 @@
         <h2 id="40-verification">4.0 Verification (Zero-Defect Check)</h2>
         <ul>
             <li><strong>Sovereign Compliance Code Linter:</strong> 87/87 templates scanned — 0 Critical, 0 High violations (100% Grade A+).</li>
+            <li><strong>Zero Internal Jargon Regression Gate (BUG-147):</strong> Verified by <code>test_26_zero_internal_process_references_on_public_surfaces_bug_147</code> in <code>scripts/test_web_performance_rack_14.py</code> (<code>26/26</code> tests passing).</li>
             <li><strong>Canonical Sitemap Verification:</strong> 29/29 URLs in <code>static/sitemap.xml</code> verified returning HTTP 200 with unique meta descriptions, OpenGraph tags, and JSON-LD schema.</li>
             <li><strong>WORM Audit Traceability:</strong> All template and SEO upgrades logged in PostgreSQL <code>"SecurityAuditLogs"</code> (Receipts <code>#2309–#2314</code>).</li>
         </ul>
@@ -72,6 +74,12 @@
                 </tr>
             </thead>
             <tbody>
+                <tr>
+                    <td style="text-align: left;">3.2.0</td>
+                    <td style="text-align: left;">10/24/2026</td>
+                    <td style="text-align: left;">George (Systems Architect)</td>
+                    <td style="text-align: left;">Codified Pillar 5 (Zero Internal Process Jargon on Public &amp; Client-Facing Surfaces — BUG-147), removing 28 client-facing internal engineering/database/SOP/cryptographic/persona references across 23 public templates, portals, certificates, and outbound email letterheads, gating the base.html footer commit badge to authenticated staff only, and adding test_26 in scripts/test_web_performance_rack_14.py (26/26 passing). Approved by Humberto Dominguez, CEO.</td>
+                </tr>
                 <tr>
                     <td style="text-align: left;">3.1.0</td>
                     <td style="text-align: left;">10/24/2026</td>

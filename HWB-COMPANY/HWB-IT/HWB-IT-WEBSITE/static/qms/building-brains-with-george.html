@@ -7,7 +7,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-IT-BOOK-001</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">15.1.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">15.2.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.1.6 (Organizational Knowledge)</span></div>
     </div>
@@ -23,7 +23,7 @@
             <tbody>
                 <tr><td><strong>Document Title</strong></td><td><strong>Building HWB Cleaning with George: An Operator's Manual for Cleaning Services, Marketing Automation, and Systems Architecture</strong></td></tr>
                 <tr><td><strong>Document ID</strong></td><td>HWB-IT-BOOK-001</td></tr>
-                <tr><td><strong>Version</strong></td><td>15.1.0</td></tr>
+                <tr><td><strong>Version</strong></td><td>15.2.0</td></tr>
                 <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
                 <tr><td><strong>Author</strong></td><td>George (Systems Architect)</td></tr>
                 <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
@@ -353,6 +353,16 @@
         </ul>
         </p>
 
+        <p><strong>22.5 The 28-Point Public &amp; Client-Facing Internal Jargon Purge &amp; Permanent Regression Gate (<code>BUG-147</code>):</strong><br>
+        After publishing the 37-route compliance upgrade, CEO Humberto Dominguez spotted an important customer-experience flaw on the live Terms of Service page—a clause header reading <code>(SOC 2 PROCESSING INTEGRITY COMPLIANCE)</code>—and issued a decisive institutional mandate: <em>"scan the entire application and website for references to internal processes that the client does not need to see... record as a mistake to be avoided in all present and future code."</em><br>
+        George scanned every public template, client/partner portal, training certificate, authentication view, PDF generator, and outbound email builder, discovering and remediating 28 internal process references across 5 categories:
+        <ul>
+            <li><strong>Category 1 — Public Legal &amp; Marketing Pages:</strong> Replaced internal audit control labels (<code>(SOC 2 PROCESSING INTEGRITY COMPLIANCE)</code>, <code>SOC 2 Privacy P2.1</code>, <code>IETF RFC 8058</code>), internal SOP document codes (<code>HWB-LEG-001</code>, <code>HWB-LEG-PRV-001</code>, <code>HWB-QMS-4.5</code>), internal tag IDs (<code>G-8BX5Q7THYR</code>, <code>AW-8622428739</code>), and internal database/architecture identifiers (<code>PostgreSQL</code>, <code>containerized</code>, <code>EmailSuppressionList</code>, <code>WORM</code>, <code>SHA-256</code>) across <code>terms.html</code>, <code>privacy_policy.html</code>, <code>quote_success.html</code>, <code>unsubscribe_success.html</code>, <code>accessibility.html</code>, <code>ehsq.html</code>, <code>trust_center.html</code>, and <code>methodology.html</code> with clean commercial business language, and gated the footer deployment badge in <code>base.html</code> behind <code>{% if current_user and current_user.is_authenticated %}</code>.</li>
+            <li><strong>Category 2 &amp; Category 3 — Client/Partner Portals, Training Certificates &amp; Authentication Views:</strong> Removed <code>SigmaFidelity&trade;</code>, <code>BYTEA</code>, <code>AES-256</code>, <code>SHA-256</code>, and <code>ISO 9001 Clause 7.2</code> from <code>academy_verify.html</code>, <code>academy_course.html</code>, <code>academy_catalog.html</code>, <code>subcontractor_onboarding.html</code>, <code>employee_onboarding_portal.html</code>, <code>subcontractor_doc_extractor.py</code>, <code>employee_doc_extractor.py</code>, <code>reset_password.html</code>, <code>bosanna_login.html</code>, <code>bosanna_onboarding.html</code>, <code>tma_estimator.html</code>, and <code>mobile/technician_app.html</code>.</li>
+            <li><strong>Category 4 &amp; Category 5 — Outbound Client Emails &amp; Permanent Regression Gate (<code>test_26</code>):</strong> Cleaned the outbound marketing letterhead in <code>blueprints/crm_api.py</code> and password recovery emails in <code>blueprints/auth.py</code>, recorded the mistake in <code>GEMINI.md</code>, <code>docs/PROBLEMS-TO-SOLVE.md</code>, and PostgreSQL <code>SigmaMistakeLog</code>, and codified <code>test_26_zero_internal_process_references_on_public_surfaces_bug_147</code> in <code>scripts/test_web_performance_rack_14.py</code> (<code>26/26</code> passing)—deployed live to Azure Production (<code>v5.5.0 / 173712f</code>).</li>
+        </ul>
+        </p>
+
         <hr />
         <p style="font-style: italic; text-align: center;">Note: This manual is the official technical guide for HWB Cleaning developer-operators. 100% Alignment verified.</p>
     </div>
@@ -444,6 +454,12 @@
                     <td style="text-align: left;">10/24/2026</td>
                     <td style="text-align: left;">George (Systems Architect) &amp; George Bytes</td>
                     <td style="text-align: left;">Added Section 22.4: The 37-Route Full-Website Compliance Audit &amp; 6-Pillar Enterprise Remediation (BUG-146), resolving all 12 compliance findings across TCPA quote consent, CIPA &sect; 631 universal cookie banner auto-injection, Privacy Policy v2.3.0 &amp; Terms v2.2.0 synchronization, WCAG 2.2 AA &amp; OWASP tabnabbing hardening, SOC 2 CC6.1 route/margin isolation, Permissions-Policy security header, and empirical GHS/EHSQ database integration, certified by 25/25 Rack 14 tests and 77/77 SOC 2 checks. Approved by Humberto Dominguez, CEO.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">15.2.0</td>
+                    <td style="text-align: left;">10/24/2026</td>
+                    <td style="text-align: left;">George (Systems Architect) &amp; George Bytes</td>
+                    <td style="text-align: left;">Added Section 22.5: The 28-Point Public &amp; Client-Facing Internal Jargon Purge &amp; Permanent Regression Gate (BUG-147), removing all client-facing internal engineering, database, SOP code, cryptographic algorithm, and AI persona references across 23 public templates, portals, certificates, and outbound client emails, gating the base.html footer commit badge to authenticated staff only, and certifying 26/26 passing Rack 14 tests (test_26). Approved by Humberto Dominguez, CEO.</td>
                 </tr>
             </tbody>
         </table>

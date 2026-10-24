@@ -2,7 +2,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-7.5-BO-CRM</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">4.9.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">5.0.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5 &amp; 8.1 (Operational Planning)</span></div>
     </div>
@@ -26,7 +26,7 @@
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>Version</strong></td>
-                    <td style="text-align: left;">4.9.0</td>
+                    <td style="text-align: left;">5.0.0</td>
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>Status</strong></td>
@@ -107,6 +107,7 @@
                     <li><strong>Secondary Portals &amp; Forms Hardening (<code>BUG-143</code>):</strong> Hardened Bosanna Technician Onboarding (<code>/onboard/bosanna</code>), SigmaAcademy Course Quiz (<code>/academy/course/&lt;code&gt;</code>), Takeoff &amp; Scope Configurator (<code>/tma/estimator</code> with on-screen Estimate Receipt Card), and Backoffice Scope Planner against form reloads and synthetic default values.</li>
                     <li><strong>Closed-Loop Lead &amp; Email Marketing Campaign State Machine (<code>BUG-144</code>):</strong> Connects Commercial Leads (<code>#view-leads</code>) and Email Marketing (<code>#view-marketing</code>) via the <strong>Enroll Selected Leads</strong> modal (<code>#modal-enroll-leads-campaign</code> &rarr; <code>POST /api/v1/marketing/campaign/enroll-leads</code>), real-time campaign telemetry synchronization (<code>sync_campaign_telemetry_counts</code> on outbox release, open pixel, and calendar booking click), channel-specific opt-out separation (<code>✉️ Unsubscribed</code> vs <code>🚫 DNC</code>), and 1-click campaign closeout (<code>POST /api/v1/marketing/campaign/&lt;id&gt;/complete</code> advancing sent unopened leads to <code>'Contacted'</code> for phone follow-up and returning unsent leads to <code>'New'</code>).</li>
                     <li><strong>5-Point Multi-Jurisdictional Email Compliance &amp; ISO Hardening (<code>BUG-145</code>):</strong> Enforces IETF RFC 8058 &amp; RFC 2369 native <code>List-Unsubscribe</code> and <code>List-Unsubscribe-Post: List-Unsubscribe=One-Click</code> headers and <code>POST /unsubscribe/&lt;token&gt;</code> opt-outs, universal CA/WA/International/Public-Sector (<code>.gov</code>/<code>.mil</code>/<code>.k12.tx.us</code>) geofence shields across all 4 campaign endpoints, a Dual-Table Outbound Suppression Gate in <code>transmit_email()</code>, and tamper-proof boot seeder protection in <code>main_app.py</code>.</li>
+                    <li><strong>37-Route Full-Website Compliance &amp; Zero Internal Process Jargon on Public Surfaces (<code>BUG-146</code> &amp; <code>BUG-147</code>):</strong> Enforces TCPA prior express written consent on quote forms, universal CIPA &sect; 631 cookie banner auto-injection, SOC 2 CC6.1 route/margin isolation, authenticated-only gating of the <code>base.html</code> footer commit badge, and zero exposure of internal SOP codes, database table names, cryptographic cipher labels, or internal AI agent personas across all public pages, portals, certificates, and outbound client emails—certified by <code>26/26</code> passing Rack 14 tests (including <code>test_26</code>).</li>
                 </ul>
             </li>
         </ol>
@@ -145,6 +146,12 @@
                 </tr>
             </thead>
             <tbody>
+                <tr>
+                    <td style="text-align: left;">5.0.0</td>
+                    <td style="text-align: left;">10/24/2026</td>
+                    <td style="text-align: left;">George (Systems Architect)</td>
+                    <td style="text-align: left;">Codified the 37-Route Full-Website Compliance Remediation (BUG-146) and the Zero Internal Process Jargon on Public &amp; Client-Facing Surfaces Mandate (BUG-147), removing all 28 client-facing internal engineering/database/SOP/cryptographic/persona references across 23 public templates, portals, certificates, and outbound client emails, gating the base.html footer commit badge to authenticated staff only, and certifying 26/26 passing Rack 14 tests (test_26). Approved by Humberto Dominguez, CEO.</td>
+                </tr>
                 <tr>
                     <td style="text-align: left;">4.9.0</td>
                     <td style="text-align: left;">10/24/2026</td>

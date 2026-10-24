@@ -1505,6 +1505,7 @@
         <ul>
             <li><strong>Tamper-Proof Role Presets:</strong> Custom changes are allowed for edge cases, but clicking <strong>Reset to Role Defaults</strong> instantly reverts checkboxes to verified corporate policy.</li>
             <li><strong>Strict Sales Territory Isolation (BUG-126–BUG-130):</strong> Accounts with the <code>Sales</code> role are automatically routed on login to their permitted workspace and strictly restricted at the database query level to leads (<code>owner_id</code>), clients (<code>assigned_rep_id</code>), and construction bids (<code>assigned_rep_id</code>) explicitly assigned to their user ID.</li>
+            <li><strong>Zero Internal Process Jargon on Public &amp; Client-Facing Surfaces (BUG-147):</strong> Public webpages, partner/employee onboarding portals, training certificates, authentication screens, and outbound client emails present clean, plain-spoken commercial business language without exposing internal SOP numbers, database table names, cryptographic cipher labels, or internal AI agent personas. The footer version and commit badge is visible only to signed-in staff.</li>
             <li><strong>Audit Logging:</strong> Every user role change and password reset event is written to immutable database logs with the administrator's timestamp and IP address.</li>
         </ul>
     </section>

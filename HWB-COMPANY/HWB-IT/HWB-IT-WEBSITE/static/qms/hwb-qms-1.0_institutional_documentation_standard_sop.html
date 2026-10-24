@@ -7,7 +7,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-1.0-DOC</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.1.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5.3 (Control of Documented Information)</span></div>
     </div>
@@ -23,11 +23,11 @@
             <tbody>
                 <tr><td><strong>Document Title</strong></td><td><strong>Institutional Documentation Standard SOP</strong></td></tr>
                 <tr><td><strong>Document ID</strong></td><td>HWB-QMS-1.0-DOC</td></tr>
-                <tr><td><strong>Version</strong></td><td>2.0.0</td></tr>
+                <tr><td><strong>Version</strong></td><td>2.1.0</td></tr>
                 <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
                 <tr><td><strong>Author</strong></td><td>George (Systems Architect)</td></tr>
                 <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
-                <tr><td><strong>Date</strong></td><td>09/21/2026</td></tr>
+                <tr><td><strong>Date</strong></td><td>10/24/2026</td></tr>
                 <tr><td><strong>ISO 9001 Clause</strong></td><td>7.5.3</td></tr>
             </tbody>
         </table>
@@ -48,6 +48,7 @@
             <li><strong>The May 1st Baseline:</strong> Any document dated before May 1st, 2026, is designated as <strong>OUTDATED</strong>.</li>
             <li><strong>No Synthetic Data:</strong> Real-world evidence only.</li>
             <li><strong>Surgical Continuity:</strong> Use the <code>replace</code> tool for surgical updates to prevent content erosion.</li>
+            <li><strong>Zero Internal Process Jargon on Public &amp; Client-Facing Surfaces (BUG-147):</strong> While internal QMS SOPs document technical architecture for staff and auditors, no public webpage, client/partner portal, onboarding receipt, training certificate, authentication screen, or outbound client email may ever expose internal engineering processes, internal audit control labels (<code>SOC 2 PROCESSING INTEGRITY COMPLIANCE</code>, <code>IETF RFC 8058</code>, <code>WORM</code>), database/architecture identifiers (<code>PostgreSQL</code>, <code>EmailSuppressionList</code>, <code>BYTEA</code>, <code>SHA-256</code>, <code>AES-256</code>), internal SOP document codes (<code>HWB-LEG-001</code>, <code>HWB-QMS-4.5</code>), or internal AI agent personas (<code>Super George</code>, <code>George, Systems Architect</code>, <code>SigmaFidelity&trade;</code>). Enforced permanently by <code>test_26_zero_internal_process_references_on_public_surfaces_bug_147</code> in <code>scripts/test_web_performance_rack_14.py</code>.</li>
         </ol>
 
         <h2>4.0 Prerequisites</h2>
@@ -85,6 +86,12 @@
                 </tr>
             </thead>
             <tbody>
+                <tr>
+                    <td>2.1.0</td>
+                    <td>10-24-2026</td>
+                    <td>George</td>
+                    <td>Added Mandate 5 (Zero Internal Process Jargon on Public &amp; Client-Facing Surfaces — BUG-147), prohibiting internal audit labels, database table names, cryptographic cipher labels, internal SOP numbers, and AI agent personas on all external client-facing pages, portals, certificates, and emails, enforced by test_26 in scripts/test_web_performance_rack_14.py (26/26 passing). Approved by Humberto Dominguez, CEO.</td>
+                </tr>
                 <tr>
                     <td>2.0.0</td>
                     <td>05-22-2026</td>
