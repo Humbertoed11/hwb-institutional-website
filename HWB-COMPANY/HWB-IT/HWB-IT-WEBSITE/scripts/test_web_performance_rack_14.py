@@ -2132,6 +2132,146 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
             finally:
                 conn.close()
 
+    def test_29_all_forms_buttons_scope_planner_and_smart_address_bug_150(self):
+        """
+        BUG-150 Full-Website Form, Button, Two-Way Scope Planner & Smart Address Sentinel:
+        1. Verify zero orphaned legacy scratch templates exist in templates/
+           (backoffice_operations_fixed.html, backoffice_scope_builder.html, HWB-WEB CRM Add Lead.html).
+        2. Verify all JS handlers in backoffice_operations_core.js (addToScope, clearScope,
+           onScopeBuildingChange, removeScopeArea, removeScopeTask, removeScopeItem, smartType,
+           applySmartAddress) exist and bind cleanly.
+        3. Verify /admin/operations?view=scope renders Two-Way PostgreSQL scope hydration
+           attributes (data-scope, onchange="onScopeBuildingChange(this)", #scope_tree_items)
+           and populated ScopeLibrary datalists (#lib_areas, #lib_tasks, #lib_items).
+        4. Verify POST /admin/scope-builder validates JSON structure, updates PostgreSQL
+           "Services".tasks_json, and records SCOPE_OF_WORK_UPDATED in "SecurityAuditLogs".
+        5. Verify GET /api/v1/crm/address-autocomplete returns live PostgreSQL + DFW commercial
+           address suggestions for smartType() auto-fill.
+        """
+        import json
+
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        templates_dir = os.path.join(base_dir, "templates")
+        for legacy_file in (
+            "backoffice_operations_fixed.html",
+            "backoffice_scope_builder.html",
+            "HWB-WEB CRM Add Lead.html",
+            "HWB-WEB CRM Edit Lead.html",
+        ):
+            self.assertFalse(
+                os.path.exists(os.path.join(templates_dir, legacy_file)),
+                f"Orphaned legacy template must not exist: {legacy_file}",
+            )
+
+        # Verify crm_edit_lead.html is valid Jinja HTML (not Python code)
+        with open(os.path.join(templates_dir, "crm_edit_lead.html"), encoding="utf-8") as fh:
+            crm_edit_content = fh.read()
+        self.assertIn('{% extends "base.html" %}', crm_edit_content)
+        self.assertNotIn("from flask import Flask", crm_edit_content)
+
+        # Verify JS functions in backoffice_operations_core.js
+        with open(
+            os.path.join(base_dir, "static", "js", "backoffice_operations_core.js"),
+            encoding="utf-8",
+        ) as fh:
+            core_js = fh.read()
+        for fn_name in (
+            "function initScopePlanner(",
+            "function onScopeBuildingChange(",
+            "function addToScope(",
+            "function removeScopeArea(",
+            "function removeScopeTask(",
+            "function removeScopeItem(",
+            "function renderTree(",
+            "function clearScope(",
+            "function smartType(",
+            "function applySmartAddress(",
+        ):
+            self.assertIn(fn_name, core_js, f"Missing JS handler in backoffice_operations_core.js: {fn_name}")
+
+        # Authenticate as Executive user
+        with self.client.session_transaction() as sess:
+            sess["_user_id"] = "1"
+            sess["_fresh"] = True
+
+        # 1. Verify /admin/operations?view=scope
+        r_scope = self.client.get("/admin/operations?view=scope")
+        self.assertEqual(r_scope.status_code, 200)
+        scope_html = r_scope.get_data(as_text=True)
+        self.assertIn('onchange="onScopeBuildingChange(this)"', scope_html)
+        self.assertIn('id="scope_tree_items"', scope_html)
+        self.assertIn('id="lib_areas"', scope_html)
+        self.assertIn("<option value=", scope_html)
+
+        # 2. Verify POST /admin/scope-builder updates PostgreSQL "Services".tasks_json and logs WORM audit
+        conn = get_db(self.db_url)
+        service_id = None
+        original_tasks_json = None
+        try:
+            with conn.cursor() as cur:
+                cur.execute('SELECT service_id, tasks_json FROM "Services" ORDER BY service_id ASC LIMIT 1;')
+                row = cur.fetchone()
+                if row:
+                    service_id = row[0]
+                    original_tasks_json = row[1]
+
+            if service_id is not None:
+                test_scope = [
+                    {
+                        "name": "Main Entrance & Lobby",
+                        "tasks": [
+                            {
+                                "name": "EPA Hospital-Grade Disinfection",
+                                "items": ["Entry Doors, Push Plates & Thresholds"],
+                            }
+                        ],
+                    }
+                ]
+                r_save = self.client.post(
+                    "/admin/scope-builder",
+                    json={"service_id": str(service_id), "scope_json": json.dumps(test_scope)},
+                )
+                self.assertEqual(r_save.status_code, 200)
+                save_data = r_save.get_json()
+                self.assertEqual(save_data["status"], "success")
+                self.assertEqual(save_data["areas_count"], 1)
+
+                with conn.cursor() as cur:
+                    cur.execute('SELECT tasks_json FROM "Services" WHERE service_id = %s;', (service_id,))
+                    updated_row = cur.fetchone()
+                    self.assertIsNotNone(updated_row)
+                    self.assertIn("Main Entrance & Lobby", updated_row[0] or "")
+
+                    cur.execute(
+                        '''
+                        SELECT event_action
+                        FROM "SecurityAuditLogs"
+                        WHERE event_category = 'OPERATIONS'
+                          AND event_action = 'SCOPE_OF_WORK_UPDATED'
+                        ORDER BY id DESC
+                        LIMIT 1;
+                        '''
+                    )
+                    self.assertIsNotNone(cur.fetchone(), "SCOPE_OF_WORK_UPDATED must be logged in SecurityAuditLogs")
+
+                    # Restore original tasks_json
+                    cur.execute(
+                        'UPDATE "Services" SET tasks_json = %s WHERE service_id = %s;',
+                        (original_tasks_json, service_id),
+                    )
+                conn.commit()
+        finally:
+            conn.close()
+
+        # 3. Verify GET /api/v1/crm/address-autocomplete
+        r_auto = self.client.get("/api/v1/crm/address-autocomplete?q=Plano")
+        self.assertEqual(r_auto.status_code, 200)
+        auto_json = r_auto.get_json()
+        self.assertEqual(auto_json["status"], "success")
+        self.assertTrue(len(auto_json["results"]) >= 1)
+        self.assertIn("city", auto_json["results"][0])
+        self.assertIn("zip", auto_json["results"][0])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -4449,7 +4449,7 @@
 
         <!-- View: Service Planner -->
         {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('monitor', 'view')) %}
-        <div id="view-scope" class="isc-view" style="display: {% if active_view == 'scope' %}block{% else %}none{% endif %};">
+        <div id="view-scope" class="isc-view" data-scope-library="{{ library | default('{}', true) | e }}" style="display: {% if active_view == 'scope' %}block{% else %}none{% endif %};">
             {% if active_view == 'scope' %}
             <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 3rem; align-items: start;">
                 <!-- Column 1: Data Entry -->
@@ -4458,11 +4458,11 @@
                     <form id="form-scope-intelligence" class="sigma-form-container" onsubmit="event.preventDefault(); addToScope();">
                         <div class="sigma-form-group">
                             <div class="sigma-field">
-                                <label>1. Select Client Building</label>
-                                <select id="service_id_select" class="sigma-input">
+                                <label for="service_id_select">1. Select Client Building</label>
+                                <select id="service_id_select" class="sigma-input" onchange="onScopeBuildingChange(this)">
                                     <option value="" disabled selected>-- Choose Building --</option>
                                     {% for s in services %}
-                                    <option value="{{ s.service_id }}">{{ s.company_name }} — {{ s.service_requested }}</option>
+                                    <option value="{{ s.service_id }}" data-scope="{{ (s.tasks_json or '[]') | e }}">{{ s.company_name }} — {{ s.service_requested }}</option>
                                     {% endfor %}
                                 </select>
                             </div>
@@ -4472,38 +4472,56 @@
 
                         <div class="sigma-form-group">
                             <div class="sigma-field">
-                                <label>Service Area</label>
+                                <label for="input_area">Service Area</label>
                                 <input type="text" id="input_area" list="lib_areas" placeholder="e.g. Main Operations Floor" class="sigma-input">
                             </div>
                             <div class="sigma-field">
-                                <label>Service Task</label>
+                                <label for="input_task">Service Task</label>
                                 <input type="text" id="input_task" list="lib_tasks" placeholder="e.g. High Volume Scrubbing" class="sigma-input">
                             </div>
                             <div class="sigma-field">
-                                <label>Section or Item</label>
+                                <label for="input_item">Section or Item</label>
                                 <input type="text" id="input_item" list="lib_items" placeholder="e.g. North Bay A" class="sigma-input">
                             </div>
                             <button type="button" onclick="addToScope()" class="isc-btn isc-btn-primary" style="width: 100%; margin-top: 1rem;">Add to Professional Scope</button>
                         </div>
-                        <datalist id="lib_areas"></datalist><datalist id="lib_tasks"></datalist><datalist id="lib_items"></datalist>
+                        <datalist id="lib_areas">
+                            {% if scope_library and scope_library.get('area') %}
+                                {% for v in scope_library.get('area') %}<option value="{{ v }}">{% endfor %}
+                            {% endif %}
+                        </datalist>
+                        <datalist id="lib_tasks">
+                            {% if scope_library and scope_library.get('task') %}
+                                {% for v in scope_library.get('task') %}<option value="{{ v }}">{% endfor %}
+                            {% endif %}
+                        </datalist>
+                        <datalist id="lib_items">
+                            {% if scope_library and scope_library.get('item') %}
+                                {% for v in scope_library.get('item') %}<option value="{{ v }}">{% endfor %}
+                            {% endif %}
+                        </datalist>
                     </form>
                 </div>
 
                 <!-- Column 2: Scope Preview -->
                 <div class="isc-card" style="padding: 0; overflow: hidden;">
                     <div style="padding: 2.5rem 2.5rem 1.5rem; display: flex; justify-content: space-between; align-items: center;">
-                        <h2 style="font-weight: 800; font-size: 1.1rem; color: var(--slate-900);">Plan Preview</h2>
+                        <div>
+                            <h2 style="font-weight: 800; font-size: 1.1rem; color: var(--slate-900); margin: 0;">Plan Preview</h2>
+                            <span id="scope_building_badge" style="font-size: 0.75rem; color: var(--slate-500); font-weight: 600;">Select a building to load or create its cleaning plan.</span>
+                        </div>
                         <button type="button" onclick="clearScope()" style="background: none; border: none; color: var(--muted-coral); font-weight: 700; font-size: 0.7rem; cursor: pointer; text-transform: uppercase; letter-spacing: 0.05em;">Clear Current Plan</button>
                     </div>
                     
                     <div style="padding: 0 2.5rem 2.5rem;">
                         <div id="scope_tree" style="min-height: 400px; border: 1px solid var(--slate-100); border-radius: 12px; padding: 2rem; background: #fcfdfe;">
                             <p id="empty_msg" style="color: var(--slate-400); text-align: center; margin-top: 8rem; font-style: italic; font-weight: 600; font-size: 0.9rem;">No items added to scope yet.</p>
+                            <div id="scope_tree_items"></div>
                         </div>
-                        <form action="{{ url_for('scope_builder') }}" method="POST" style="margin-top: 2rem;">
+                        <form id="form-scope-save" action="{{ url_for('scope_builder') }}" method="POST" style="margin-top: 2rem;">
                             <input type="hidden" name="service_id" id="final_service_id">
                             <input type="hidden" name="scope_json" id="final_scope_json">
-                            <button type="submit" id="submit_btn" disabled class="isc-btn isc-btn-primary" style="width: 100%; opacity: 0.5; padding: 1.25rem;">Secure & Save Planner</button>
+                            <button type="submit" id="submit_btn" disabled class="isc-btn isc-btn-primary" style="width: 100%; opacity: 0.5; padding: 1.25rem;">Secure &amp; Save Planner</button>
                         </form>
                     </div>
                 </div>
@@ -8733,12 +8751,12 @@
                         <div class="sigma-field"><label>Email Address</label><input type="email" name="email" required placeholder="billing@company.com" class="sigma-input"></div>
                         <div class="sigma-field"><label>Website</label><input type="url" name="website" placeholder="https://..." class="sigma-input"></div>
                     </div>
-                    <div class="sigma-field"><label>Billing Address</label><input type="text" name="company_address" required placeholder="Street Address" class="sigma-input" oninput="smartType(this, 'results-add-acc')"><div id="results-add-acc" class="address-results"></div></div>
+                    <div class="sigma-field" style="position: relative;"><label for="add-acc-address">Billing Address</label><input type="text" id="add-acc-address" name="company_address" required placeholder="Street Address" class="sigma-input" autocomplete="off" oninput="smartType(this, 'results-add-acc')"><div id="results-add-acc" class="address-results"></div></div>
                     <div class="sigma-row sigma-row-60-40">
-                        <div class="sigma-field"><label>City</label><input type="text" name="city" placeholder="City" class="sigma-input"></div>
+                        <div class="sigma-field"><label for="add-acc-city">City</label><input type="text" id="add-acc-city" name="city" placeholder="City" class="sigma-input"></div>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
-                            <div class="sigma-field"><label>State</label><input type="text" name="state" maxlength="2" oninput="maskStateInput(this)" placeholder="TX" class="sigma-input"></div>
-                            <div class="sigma-field"><label>Zip</label><input type="text" name="zip" maxlength="10" inputmode="numeric" oninput="maskZipInput(this)" placeholder="75024" class="sigma-input"></div>
+                            <div class="sigma-field"><label for="add-acc-state">State</label><input type="text" id="add-acc-state" name="state" maxlength="2" oninput="maskStateInput(this)" placeholder="TX" class="sigma-input"></div>
+                            <div class="sigma-field"><label for="add-acc-zip">Zip</label><input type="text" id="add-acc-zip" name="zip" maxlength="10" inputmode="numeric" oninput="maskZipInput(this)" placeholder="75024" class="sigma-input"></div>
                         </div>
                     </div>
                 </div>
@@ -8926,12 +8944,12 @@
                         <div class="sigma-field"><label>Email Address</label><input type="email" name="email" required placeholder="client@company.com" class="sigma-input"></div>
                         <div class="sigma-field"><label>Phone Number</label><input type="tel" name="phone" maxlength="14" inputmode="numeric" placeholder="(000)-000-0000" class="sigma-input" oninput="maskPhoneInput(this)"></div>
                     </div>
-                    <div class="sigma-field"><label>Building Address</label><input type="text" name="address" required placeholder="Street Address" class="sigma-input" oninput="smartType(this, 'results-add-lead')"><div id="results-add-lead" class="address-results"></div></div>
+                    <div class="sigma-field" style="position: relative;"><label for="add-lead-address">Building Address</label><input type="text" id="add-lead-address" name="address" required placeholder="Street Address" class="sigma-input" autocomplete="off" oninput="smartType(this, 'results-add-lead')"><div id="results-add-lead" class="address-results"></div></div>
                     <div class="sigma-row sigma-row-60-40">
-                        <div class="sigma-field"><label>City</label><input type="text" name="city" placeholder="City" class="sigma-input"></div>
+                        <div class="sigma-field"><label for="add-lead-city">City</label><input type="text" id="add-lead-city" name="city" placeholder="City" class="sigma-input"></div>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
-                            <div class="sigma-field"><label>State</label><input type="text" name="state" maxlength="2" oninput="maskStateInput(this)" placeholder="TX" class="sigma-input"></div>
-                            <div class="sigma-field"><label>Zip</label><input type="text" name="zipcode" maxlength="10" inputmode="numeric" oninput="maskZipInput(this)" placeholder="75024" class="sigma-input"></div>
+                            <div class="sigma-field"><label for="add-lead-state">State</label><input type="text" id="add-lead-state" name="state" maxlength="2" oninput="maskStateInput(this)" placeholder="TX" class="sigma-input"></div>
+                            <div class="sigma-field"><label for="add-lead-zip">Zip</label><input type="text" id="add-lead-zip" name="zipcode" maxlength="10" inputmode="numeric" oninput="maskZipInput(this)" placeholder="75024" class="sigma-input"></div>
                         </div>
                     </div>
                 </div>

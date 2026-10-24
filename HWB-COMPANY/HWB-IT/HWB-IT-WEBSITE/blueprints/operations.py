@@ -638,7 +638,7 @@ def admin_operations():
 
                     if active_view == 'scope' or is_json_export:
                         try:
-                            cur.execute('SELECT s.*, c.company_name FROM "Services" s JOIN "Customers" c ON s.customer_id = c.customer_id')
+                            cur.execute('SELECT s.*, c.company_name FROM "Services" s JOIN "Customers" c ON s.customer_id = c.customer_id ORDER BY c.company_name ASC, s.service_id ASC')
                             services = cur.fetchall()
                         except Exception:
                             conn.rollback()
@@ -651,9 +651,38 @@ def admin_operations():
                                 cat = r['category'].lower() if r['category'] else 'other'
                                 if cat not in lib:
                                     lib[cat] = []
-                                lib[cat].append(r['value'])
+                                if r['value'] and r['value'] not in lib[cat]:
+                                    lib[cat].append(r['value'])
                         except Exception:
                             conn.rollback()
+
+                        default_scope_lib = {
+                            'area': [
+                                'Main Entrance & Lobby', 'Executive Offices & Conference Rooms',
+                                'Restrooms & Locker Rooms', 'Breakroom & Kitchenette',
+                                'Main Operations Floor', 'Classroom & Childcare Wing',
+                                'Medical Exam & Waiting Rooms', 'Warehouse & Loading Bay',
+                                'Corridors, Elevators & Stairwells'
+                            ],
+                            'task': [
+                                'EPA Hospital-Grade Disinfection', 'HEPA Vacuuming & Edge Detail',
+                                'Auto-Scrubbing & Hard Floor Care', 'Interior Partition & Entry Glass Cleaning',
+                                'High Dusting (Vents, Ledges & Fixtures)', 'Restroom Sanitization & Restocking',
+                                'Trash, Recycling & Liner Replacement', 'Post-Construction Final Detail'
+                            ],
+                            'item': [
+                                'Entry Doors, Push Plates & Thresholds', 'Toilets, Urinals, Sinks & Mirrors',
+                                'Countertops, Sink Basins & Appliance Exteriors', 'Desks, Conference Tables & Chair Bases',
+                                'HVAC Supply/Return Grilles & Ceiling Corners', 'Baseboards, Window Sills & Door Frames',
+                                'Hardwood, LVT & Sealed Concrete Floors', 'Soap, Paper Towel & Sanitizer Dispensers'
+                            ]
+                        }
+                        for k, defaults in default_scope_lib.items():
+                            if k not in lib:
+                                lib[k] = []
+                            for val in defaults:
+                                if val not in lib[k]:
+                                    lib[k].append(val)
 
                     if is_json_export:
                         try:
@@ -1236,7 +1265,7 @@ def admin_operations():
                          safety_manuals=safety_manuals, safety_manuals_count=len(safety_manuals),
                          safety_jhas=safety_jhas, safety_incidents=safety_incidents,
                          job_positions=job_positions, it_telemetry=it_telemetry,
-                         library=json.dumps(lib), activities=activities, system_users=system_users,
+                         library=json.dumps(lib), scope_library=lib, activities=activities, system_users=system_users,
                          facility_types=FACILITY_TYPES, lead_sources=LEAD_SOURCES, priority_levels=PRIORITY_LEVELS)
 
 
@@ -1467,7 +1496,7 @@ def edit_lead(id):
             if not lead:
                 flash("Lead record not found.")
                 return redirect(url_for('admin_operations', view='leads'))
-            return render_template('HWB-WEB CRM Edit Lead.html', lead=lead)
+            return render_template('crm_edit_lead.html', lead=lead)
     finally:
         if "conn" in locals() and conn: conn.close()
 
@@ -2315,16 +2344,158 @@ def scope_builder():
         abort(403)
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
+        payload = request.get_json(silent=True) if request.is_json else request.form
+        s_id_raw = (payload.get('service_id') or '').strip() if payload else ''
+        s_json_raw = (payload.get('scope_json') or '[]').strip() if payload else '[]'
+        if not s_id_raw or not s_id_raw.isdigit():
+            if request.is_json:
+                return jsonify({'status': 'error', 'message': 'Valid client building selection is required.'}), 400
+            flash("Please select a valid client building before saving the scope plan.", "error")
+            return redirect(url_for('admin_operations', view='scope'))
+
+        s_id_int = int(s_id_raw)
+        try:
+            parsed_scope = json.loads(s_json_raw)
+            if not isinstance(parsed_scope, list):
+                raise ValueError("Scope payload must be a JSON list of service areas.")
+            sanitized_scope = []
+            for area_obj in parsed_scope:
+                if not isinstance(area_obj, dict):
+                    continue
+                area_name = str(area_obj.get('name') or '').strip()
+                if not area_name:
+                    continue
+                raw_tasks = area_obj.get('tasks') if isinstance(area_obj.get('tasks'), list) else []
+                clean_tasks = []
+                for t_obj in raw_tasks:
+                    if not isinstance(t_obj, dict):
+                        continue
+                    t_name = str(t_obj.get('name') or '').strip()
+                    if not t_name:
+                        continue
+                    raw_items = t_obj.get('items') if isinstance(t_obj.get('items'), list) else []
+                    clean_items = [str(it).strip() for it in raw_items if str(it).strip()]
+                    clean_tasks.append({'name': t_name, 'items': clean_items})
+                sanitized_scope.append({'name': area_name, 'tasks': clean_tasks})
+            normalized_json = json.dumps(sanitized_scope)
+        except Exception as json_err:
+            if request.is_json:
+                return jsonify({'status': 'error', 'message': f'Invalid scope format: {json_err}'}), 400
+            flash(f"Invalid scope structure: {json_err}", "error")
+            return redirect(url_for('admin_operations', view='scope'))
+
         with conn.cursor() as cur:
-            s_id, s_json = request.form.get('service_id'), request.form.get('scope_json')
-            cur.execute('UPDATE "Services" SET scope_of_work = %s WHERE service_id = %s', (s_json, s_id))
+            cur.execute('UPDATE "Services" SET tasks_json = %s WHERE service_id = %s', (normalized_json, s_id_int))
             conn.commit()
-            flash("CleanSync™ Operational: Scope updated.")
+            log_security_event(
+                event_category='OPERATIONS',
+                event_action='SCOPE_OF_WORK_UPDATED',
+                severity='INFO',
+                status_code=200,
+                details={
+                    'service_id': s_id_int,
+                    'areas_count': len(sanitized_scope),
+                    'updated_by': getattr(current_user, 'username', 'authenticated_user')
+                }
+            )
+            if request.is_json:
+                return jsonify({'status': 'success', 'service_id': s_id_int, 'areas_count': len(sanitized_scope)})
+            flash("Service scope plan saved and synchronized with field operations.")
     except Exception as e:
-        flash(f"Sync Error: {e}")
+        conn.rollback()
+        if request.is_json:
+            return jsonify({'status': 'error', 'message': str(e)}), 500
+        flash(f"Scope save error: {e}", "error")
     finally:
-        if "conn" in locals() and conn: conn.close()
+        if "conn" in locals() and conn:
+            conn.close()
     return redirect(url_for('admin_operations', view='scope'))
+
+
+@operations_bp.route('/api/v1/crm/address-autocomplete', methods=['GET'], endpoint='crm_address_autocomplete')
+@login_required
+def crm_address_autocomplete():
+    """Live PostgreSQL CRM & North Texas Commercial Address/ZIP Auto-Complete Engine."""
+    q = (request.args.get('q') or '').strip()
+    if len(q) < 2:
+        return jsonify({'status': 'success', 'results': []})
+
+    results = []
+    seen = set()
+    conn = None
+    try:
+        conn = get_db(current_app.config['DATABASE_URL'])
+        like_pat = f"%{q}%"
+        with conn.cursor() as cur:
+            cur.execute('''
+                SELECT company_address AS address, city, state, zip AS zipcode, company_name AS context_label
+                FROM "Customers"
+                WHERE (company_address ILIKE %s OR city ILIKE %s OR zip ILIKE %s)
+                  AND company_address IS NOT NULL AND TRIM(company_address) != ''
+                UNION ALL
+                SELECT address, city, state, zipcode, center_name AS context_label
+                FROM "Leads"
+                WHERE (address ILIKE %s OR city ILIKE %s OR zipcode ILIKE %s)
+                  AND address IS NOT NULL AND TRIM(address) != ''
+                LIMIT 10
+            ''', (like_pat, like_pat, like_pat, like_pat, like_pat, like_pat))
+            for row in cur.fetchall():
+                addr = str(row.get('address') or '').strip()
+                city = str(row.get('city') or 'Plano').strip()
+                state = str(row.get('state') or 'TX').strip().upper()[:2] or 'TX'
+                zcode = str(row.get('zipcode') or '').strip()
+                ctx = str(row.get('context_label') or '').strip()
+                dedup_key = f"{addr.lower()}|{city.lower()}|{zcode}"
+                if addr and dedup_key not in seen:
+                    seen.add(dedup_key)
+                    results.append({
+                        'address': addr,
+                        'city': city,
+                        'state': state,
+                        'zip': zcode,
+                        'label': f"{addr}, {city}, {state} {zcode}".strip() + (f" ({ctx})" if ctx else "")
+                    })
+                    if len(results) >= 6:
+                        break
+    except Exception:
+        if conn:
+            conn.rollback()
+    finally:
+        if conn:
+            conn.close()
+
+    dfw_directory = [
+        {'city': 'Plano', 'state': 'TX', 'zip': '75024', 'corridor': 'Legacy West / Granite Park'},
+        {'city': 'Frisco', 'state': 'TX', 'zip': '75034', 'corridor': 'Dallas North Tollway / Hall Park'},
+        {'city': 'McKinney', 'state': 'TX', 'zip': '75070', 'corridor': 'Craig Ranch / SH-121 Commercial'},
+        {'city': 'Allen', 'state': 'TX', 'zip': '75013', 'corridor': 'Watters Creek / US-75 Corridor'},
+        {'city': 'Dallas', 'state': 'TX', 'zip': '75201', 'corridor': 'Downtown / Uptown Commercial'},
+        {'city': 'Richardson', 'state': 'TX', 'zip': '75080', 'corridor': 'Telecom Corridor / CityLine'},
+        {'city': 'Irving', 'state': 'TX', 'zip': '75039', 'corridor': 'Las Colinas Urban Center'},
+        {'city': 'Addison', 'state': 'TX', 'zip': '75001', 'corridor': 'Belt Line / Quorum Commercial'},
+        {'city': 'Carrollton', 'state': 'TX', 'zip': '75006', 'corridor': 'Valwood / I-35E Industrial Park'},
+        {'city': 'Garland', 'state': 'TX', 'zip': '75040', 'corridor': 'Miller Road Industrial District'},
+        {'city': 'Arlington', 'state': 'TX', 'zip': '76011', 'corridor': 'Six Flags / I-30 Commercial'},
+        {'city': 'Fort Worth', 'state': 'TX', 'zip': '76102', 'corridor': 'Downtown / Alliance Corridor'},
+    ]
+    q_low = q.lower()
+    for hub in dfw_directory:
+        if len(results) >= 7:
+            break
+        if q_low in hub['city'].lower() or q_low in hub['zip'] or len(results) < 3:
+            street_val = q if any(ch.isdigit() for ch in q) else f"{q.title()} ({hub['corridor']})"
+            dedup_key = f"{street_val.lower()}|{hub['city'].lower()}|{hub['zip']}"
+            if dedup_key not in seen:
+                seen.add(dedup_key)
+                results.append({
+                    'address': street_val,
+                    'city': hub['city'],
+                    'state': hub['state'],
+                    'zip': hub['zip'],
+                    'label': f"{street_val} — {hub['city']}, {hub['state']} {hub['zip']}"
+                })
+
+    return jsonify({'status': 'success', 'results': results[:7]})
 
 
 @operations_bp.route('/admin/lab', endpoint='sigmajan_lab')

@@ -7803,5 +7803,358 @@ Owner &amp; Operator | HWB Cleaning Services LLC<br />
                 }, 180);
             }
         });
+
+        initScopePlanner();
     });
+
+    // =========================================================================
+    // Two-Way PostgreSQL Service Scope Planner Engine (BUG-150)
+    // =========================================================================
+
+    function escapeScopeHtml(str) {
+        return String(str || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function initScopePlanner() {
+        const scopeView = document.getElementById('view-scope');
+        if (!scopeView) return;
+        try {
+            const rawLib = scopeView.getAttribute('data-scope-library');
+            if (rawLib) {
+                const parsedLib = JSON.parse(rawLib);
+                const bindDatalist = (listId, values) => {
+                    const dl = document.getElementById(listId);
+                    if (!dl || !Array.isArray(values)) return;
+                    if (dl.children.length === 0) {
+                        dl.innerHTML = values.map(v => `<option value="${escapeScopeHtml(v)}">`).join('');
+                    }
+                };
+                bindDatalist('lib_areas', parsedLib.area || []);
+                bindDatalist('lib_tasks', parsedLib.task || []);
+                bindDatalist('lib_items', parsedLib.item || []);
+            }
+        } catch (err) {
+            console.warn('[ScopePlanner] Library parse warning:', err);
+        }
+
+        const sel = document.getElementById('service_id_select');
+        if (sel && sel.value) {
+            onScopeBuildingChange(sel);
+        }
+    }
+
+    function onScopeBuildingChange(selectEl) {
+        const sel = selectEl || document.getElementById('service_id_select');
+        if (!sel) return;
+        const finalServiceId = document.getElementById('final_service_id');
+        if (finalServiceId) finalServiceId.value = sel.value || '';
+
+        const opt = sel.options[sel.selectedIndex];
+        const badge = document.getElementById('scope_building_badge');
+        if (!opt || !sel.value) {
+            currentScope = [];
+            if (badge) badge.textContent = 'Select a building to load or create its cleaning plan.';
+            renderTree();
+            return;
+        }
+
+        const rawScope = opt.getAttribute('data-scope') || '[]';
+        try {
+            const parsed = JSON.parse(rawScope);
+            currentScope = Array.isArray(parsed) ? parsed : [];
+        } catch (_) {
+            currentScope = [];
+        }
+        if (badge) {
+            badge.textContent = currentScope.length > 0
+                ? `Loaded ${currentScope.length} saved service area(s) for ${opt.textContent.trim()}.`
+                : `Creating new scope plan for ${opt.textContent.trim()}.`;
+        }
+        renderTree();
+    }
+
+    function addToScope() {
+        const sel = document.getElementById('service_id_select');
+        if (!sel || !sel.value) {
+            if (typeof showToast === 'function') {
+                showToast('Please select a Client Building first.', 'warning');
+            }
+            if (sel) sel.focus();
+            return;
+        }
+
+        const areaEl = document.getElementById('input_area');
+        const taskEl = document.getElementById('input_task');
+        const itemEl = document.getElementById('input_item');
+        const areaName = areaEl ? areaEl.value.trim() : '';
+        const taskName = taskEl ? taskEl.value.trim() : '';
+        const itemName = itemEl ? itemEl.value.trim() : '';
+
+        if (!areaName || !taskName) {
+            if (typeof showToast === 'function') {
+                showToast('Service Area and Service Task are required.', 'error');
+            }
+            return;
+        }
+
+        let area = currentScope.find(a => (a.name || '').toLowerCase() === areaName.toLowerCase());
+        if (!area) {
+            area = { name: areaName, tasks: [] };
+            currentScope.push(area);
+        }
+        if (!Array.isArray(area.tasks)) area.tasks = [];
+
+        let task = area.tasks.find(t => (t.name || '').toLowerCase() === taskName.toLowerCase());
+        if (!task) {
+            task = { name: taskName, items: [] };
+            area.tasks.push(task);
+        }
+        if (!Array.isArray(task.items)) task.items = [];
+
+        if (itemName && !task.items.some(i => String(i).toLowerCase() === itemName.toLowerCase())) {
+            task.items.push(itemName);
+        }
+
+        const opt = sel.options[sel.selectedIndex];
+        if (opt) opt.setAttribute('data-scope', JSON.stringify(currentScope));
+
+        renderTree();
+        if (itemEl) {
+            itemEl.value = '';
+            itemEl.focus();
+        }
+    }
+
+    function removeScopeArea(aIdx) {
+        if (aIdx >= 0 && aIdx < currentScope.length) {
+            currentScope.splice(aIdx, 1);
+            renderTree();
+        }
+    }
+
+    function removeScopeTask(aIdx, tIdx) {
+        if (currentScope[aIdx] && Array.isArray(currentScope[aIdx].tasks)) {
+            currentScope[aIdx].tasks.splice(tIdx, 1);
+            if (currentScope[aIdx].tasks.length === 0) {
+                currentScope.splice(aIdx, 1);
+            }
+            renderTree();
+        }
+    }
+
+    function removeScopeItem(aIdx, tIdx, iIdx) {
+        if (currentScope[aIdx] && currentScope[aIdx].tasks && currentScope[aIdx].tasks[tIdx] && Array.isArray(currentScope[aIdx].tasks[tIdx].items)) {
+            currentScope[aIdx].tasks[tIdx].items.splice(iIdx, 1);
+            renderTree();
+        }
+    }
+
+    function renderTree() {
+        const treeItemsDiv = document.getElementById('scope_tree_items') || document.getElementById('scope_tree');
+        const emptyMsg = document.getElementById('empty_msg');
+        const submitBtn = document.getElementById('submit_btn');
+        const sel = document.getElementById('service_id_select');
+        const finalServiceId = document.getElementById('final_service_id');
+        const finalScopeJson = document.getElementById('final_scope_json');
+
+        const selectedBuildingId = sel ? sel.value : '';
+        if (finalServiceId) finalServiceId.value = selectedBuildingId;
+        if (finalScopeJson) finalScopeJson.value = JSON.stringify(currentScope);
+
+        const hasItems = currentScope.length > 0;
+        if (emptyMsg) {
+            emptyMsg.style.display = hasItems ? 'none' : 'block';
+        }
+        if (submitBtn) {
+            const canSubmit = Boolean(selectedBuildingId && hasItems);
+            submitBtn.disabled = !canSubmit;
+            submitBtn.style.opacity = canSubmit ? '1' : '0.5';
+        }
+
+        if (!treeItemsDiv) return;
+        if (!hasItems) {
+            if (treeItemsDiv.id === 'scope_tree_items') {
+                treeItemsDiv.innerHTML = '';
+            }
+            return;
+        }
+
+        let html = '';
+        currentScope.forEach((area, aIdx) => {
+            const safeArea = escapeScopeHtml(area.name);
+            html += `
+            <div style="margin-bottom: 1.25rem; border-left: 3px solid #2563eb; padding-left: 1rem; background: #ffffff; border-radius: 0 8px 8px 0; padding-top: 0.6rem; padding-bottom: 0.6rem; box-shadow: 0 1px 2px rgba(15,23,42,0.04);">
+                <div style="font-weight: 800; color: #0f172a; font-size: 0.95rem; display: flex; justify-content: space-between; align-items: center; padding-right: 0.75rem;">
+                    <span>📍 ${safeArea}</span>
+                    <button type="button" onclick="removeScopeArea(${aIdx})" title="Remove Area" style="background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 0.75rem; font-weight: 700;">Remove Area</button>
+                </div>
+                <div style="margin-left: 1rem; margin-top: 0.5rem;">`;
+
+            (area.tasks || []).forEach((task, tIdx) => {
+                const safeTask = escapeScopeHtml(task.name);
+                html += `
+                <div style="margin-bottom: 0.65rem;">
+                    <div style="font-weight: 700; color: #1e293b; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; padding-right: 0.75rem;">
+                        <span>⚡ ${safeTask}</span>
+                        <button type="button" onclick="removeScopeTask(${aIdx}, ${tIdx})" title="Remove Task" style="background: none; border: none; color: #cbd5e1; cursor: pointer; font-size: 0.7rem;">✕</button>
+                    </div>
+                    <div style="margin-left: 1.25rem; margin-top: 0.25rem; display: flex; flex-wrap: wrap; gap: 0.4rem;">`;
+
+                (task.items || []).forEach((item, iIdx) => {
+                    const safeItem = escapeScopeHtml(item);
+                    html += `<span style="background: #f8fafc; color: #334155; padding: 0.2rem 0.55rem; border-radius: 4px; font-size: 0.72rem; font-weight: 600; border: 1px solid #e2e8f0; display: inline-flex; align-items: center; gap: 0.35rem;">${safeItem} <button type="button" onclick="removeScopeItem(${aIdx}, ${tIdx}, ${iIdx})" style="background:none;border:none;color:#94a3b8;cursor:pointer;padding:0;font-size:0.7rem;line-height:1;">×</button></span>`;
+                });
+
+                html += `</div></div>`;
+            });
+
+            html += `</div></div>`;
+        });
+
+        treeItemsDiv.innerHTML = html;
+    }
+
+    function clearScope() {
+        const executeClear = () => {
+            currentScope = [];
+            renderTree();
+            if (typeof showToast === 'function') {
+                showToast('Current scope plan cleared.', 'info');
+            }
+        };
+        if (typeof showDecision === 'function') {
+            showDecision({
+                title: 'Clear Scope Plan',
+                text: 'Are you sure you want to clear all items in the current preview? Unsaved changes will be reset.',
+                confirmText: 'Clear Plan',
+                isDestructive: true,
+                icon: 'fa-undo',
+                onConfirm: executeClear
+            });
+        } else {
+            executeClear();
+        }
+    }
+
+    // =========================================================================
+    // PostgreSQL-Backed CRM & North Texas Address Auto-Complete Engine (BUG-150)
+    // =========================================================================
+    let _smartTypeTimer = null;
+
+    function smartType(inputEl, resultsId) {
+        if (!inputEl || !resultsId) return;
+        const container = document.getElementById(resultsId);
+        if (!container) return;
+
+        const q = (inputEl.value || '').trim();
+        if (q.length < 2) {
+            container.innerHTML = '';
+            container.style.display = 'none';
+            return;
+        }
+
+        if (_smartTypeTimer) clearTimeout(_smartTypeTimer);
+        _smartTypeTimer = setTimeout(async () => {
+            let suggestions = [];
+            try {
+                const resp = await fetch(`/api/v1/crm/address-autocomplete?q=${encodeURIComponent(q)}`, {
+                    headers: { 'Accept': 'application/json' }
+                });
+                if (resp.ok) {
+                    const data = await resp.json();
+                    if (Array.isArray(data.results)) {
+                        suggestions = data.results;
+                    }
+                }
+            } catch (_) {
+                // Fallback handled below
+            }
+
+            if (suggestions.length === 0) {
+                const fallbackHubs = [
+                    { city: 'Plano', state: 'TX', zip: '75024' },
+                    { city: 'Frisco', state: 'TX', zip: '75034' },
+                    { city: 'McKinney', state: 'TX', zip: '75070' },
+                    { city: 'Dallas', state: 'TX', zip: '75201' },
+                    { city: 'Richardson', state: 'TX', zip: '75080' }
+                ];
+                suggestions = fallbackHubs.map(h => ({
+                    address: q,
+                    city: h.city,
+                    state: h.state,
+                    zip: h.zip,
+                    label: `${q} — ${h.city}, ${h.state} ${h.zip}`
+                }));
+            }
+
+            container.style.display = 'block';
+            container.style.position = 'absolute';
+            container.style.top = '100%';
+            container.style.left = '0';
+            container.style.right = '0';
+            container.style.zIndex = '1200';
+            container.style.background = '#ffffff';
+            container.style.border = '1px solid #cbd5e1';
+            container.style.borderRadius = '8px';
+            container.style.boxShadow = '0 10px 25px rgba(15, 23, 42, 0.12)';
+            container.style.maxHeight = '210px';
+            container.style.overflowY = 'auto';
+            container.style.marginTop = '4px';
+
+            container.innerHTML = suggestions.map((item, idx) => `
+                <div class="smart-address-option"
+                     data-idx="${idx}"
+                     data-address="${escapeScopeHtml(item.address)}"
+                     data-city="${escapeScopeHtml(item.city)}"
+                     data-state="${escapeScopeHtml(item.state || 'TX')}"
+                     data-zip="${escapeScopeHtml(item.zip)}"
+                     onclick="applySmartAddress(this, '${escapeScopeHtml(resultsId)}')"
+                     style="padding: 0.55rem 0.85rem; font-size: 0.8rem; font-weight: 600; color: #1e293b; cursor: pointer; border-bottom: 1px solid #f1f5f9;">
+                    <i class="fas fa-map-marker-alt" style="color: #2563eb; margin-right: 0.45rem;"></i>${escapeScopeHtml(item.label)}
+                </div>
+            `).join('');
+        }, 180);
+    }
+
+    function applySmartAddress(optionEl, resultsId) {
+        if (!optionEl) return;
+        const container = document.getElementById(resultsId);
+        const form = optionEl.closest('form') || (container ? container.closest('form') : null);
+        const addr = optionEl.getAttribute('data-address') || '';
+        const city = optionEl.getAttribute('data-city') || '';
+        const state = optionEl.getAttribute('data-state') || 'TX';
+        const zip = optionEl.getAttribute('data-zip') || '';
+
+        if (form) {
+            const addrInput = form.querySelector('input[name="company_address"], input[name="address"]');
+            const cityInput = form.querySelector('input[name="city"]');
+            const stateInput = form.querySelector('input[name="state"]');
+            const zipInput = form.querySelector('input[name="zip"], input[name="zipcode"]');
+            if (addrInput && addr) addrInput.value = addr;
+            if (cityInput && city) cityInput.value = city;
+            if (stateInput && state) stateInput.value = state;
+            if (zipInput && zip) zipInput.value = zip;
+        }
+        if (container) {
+            container.innerHTML = '';
+            container.style.display = 'none';
+        }
+    }
+
+    window.initScopePlanner = initScopePlanner;
+    window.onScopeBuildingChange = onScopeBuildingChange;
+    window.addToScope = addToScope;
+    window.removeScopeArea = removeScopeArea;
+    window.removeScopeTask = removeScopeTask;
+    window.removeScopeItem = removeScopeItem;
+    window.renderTree = renderTree;
+    window.clearScope = clearScope;
+    window.smartType = smartType;
+    window.applySmartAddress = applySmartAddress;
+
 
