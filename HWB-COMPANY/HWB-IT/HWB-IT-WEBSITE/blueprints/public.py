@@ -608,6 +608,50 @@ WORKSPACE_CHAPTER_MAP = {
     'admin_master': ('chapter-6', 'Master Administration', 'users'),
 }
 
+LEGACY_QMS_FILE_ALIASES = {
+    'hwb-qms-7.6_backend_architecture.html': 'hwb-qms-7.6_backend_architecture_and_enterprise_standards_sop.html',
+    'website_improvement_sop.html': 'hwb-qms-7.5_website_improvement_sop.html',
+    'hwb-qms-11.10_v2.0,_neural_token_conservation_and_cli_efficiency_sop.html': 'hwb-qms-11.10_neural_token_conservation_and_cli_efficiency_sop.html',
+}
+
+
+def _resolve_canonical_qms_filename(filename: str) -> str:
+    """Normalizes legacy Title-Case or duplicate QMS filenames to canonical snake_case."""
+    raw = (filename or '').strip()
+    lower = raw.lower()
+    if lower in LEGACY_QMS_FILE_ALIASES:
+        return LEGACY_QMS_FILE_ALIASES[lower]
+    snake = lower.replace(' ', '_')
+    if snake in LEGACY_QMS_FILE_ALIASES:
+        return LEGACY_QMS_FILE_ALIASES[snake]
+    qms_root = os.path.join(current_app.root_path, 'static', 'qms')
+    if not os.path.exists(os.path.join(qms_root, raw)) and os.path.exists(os.path.join(qms_root, snake)):
+        return snake
+    return raw
+
+
+def _load_canonical_qms_index(index_path: str) -> list:
+    """Loads qms_index.json with strict canonical deduplication and filesystem verification (BUG-148)."""
+    if not os.path.exists(index_path):
+        return []
+    qms_root = os.path.join(current_app.root_path, 'static', 'qms')
+    with open(index_path, 'r', encoding='utf-8') as f:
+        raw_sops = json.load(f)
+    seen_files = set()
+    canonical_sops = []
+    for sop in raw_sops:
+        fn = (sop.get('file') or '').strip()
+        if not fn or not fn.endswith('.html') or '-desktop-' in fn.lower():
+            continue
+        fn_key = fn.lower()
+        if fn_key in seen_files:
+            continue
+        if os.path.exists(qms_root) and not os.path.isfile(os.path.join(qms_root, fn)):
+            continue
+        seen_files.add(fn_key)
+        canonical_sops.append(sop)
+    return canonical_sops
+
 
 @public_bp.route('/manual/app', endpoint='application_manual')
 @public_bp.route('/manual/application', endpoint='application_manual_alias')
@@ -672,8 +716,7 @@ def application_manual():
         try:
             index_path = os.path.join(current_app.root_path, 'qms_index.json')
             if os.path.exists(index_path):
-                with open(index_path, 'r', encoding='utf-8') as f:
-                    sops = json.load(f)
+                sops = _load_canonical_qms_index(index_path)
                 for sop in sops:
                     dept = sop['dept']
                     tier = sop.get('access_tier', 'STAFF')
@@ -731,8 +774,7 @@ def manual_index():
         index_path = os.path.join(current_app.root_path, 'qms_index.json')
         if not os.path.exists(index_path):
             index_path = 'qms_index.json'
-        with open(index_path, 'r', encoding='utf-8') as f:
-            sops = json.load(f)
+        sops = _load_canonical_qms_index(index_path)
 
         sops_by_dept = {}
         today_date = datetime.now().strftime("%m-%d-%Y")
@@ -789,6 +831,21 @@ def view_sop(filename):
     is_exec = user_role in ['Executive', 'Admin'] or user_name == 'admin'
     has_master_qms = user_has_master_qms_clearance(current_user)
 
+    # Security Guardrail: Prevent directory traversal
+    if '..' in filename or filename.startswith('/'):
+        log_security_event(
+            event_category='ACCESS_CONTROL',
+            event_action='PATH_TRAVERSAL_ATTEMPT',
+            severity='WARNING',
+            user_id=getattr(current_user, 'id', None),
+            username=user_name,
+            endpoint=request.path,
+            status_code=400,
+            details={'attempted_file': filename}
+        )
+        abort(400)
+
+    filename = _resolve_canonical_qms_filename(filename)
     is_app_manual = filename.lower() == APPLICATION_MANUAL_FILE.lower()
 
     # Default Employee Isolation: Non-executives without elevated master QMS clearance
@@ -806,20 +863,6 @@ def view_sop(filename):
         )
         abort(403)
 
-    # Security Guardrail: Prevent directory traversal
-    if '..' in filename or filename.startswith('/'):
-        log_security_event(
-            event_category='ACCESS_CONTROL',
-            event_action='PATH_TRAVERSAL_ATTEMPT',
-            severity='WARNING',
-            user_id=getattr(current_user, 'id', None),
-            username=user_name,
-            endpoint=request.path,
-            status_code=400,
-            details={'attempted_file': filename}
-        )
-        abort(400)
-
     # Check document classification in qms_index.json
     index_path = os.path.join(current_app.root_path, 'qms_index.json')
     if not os.path.exists(index_path):
@@ -827,12 +870,11 @@ def view_sop(filename):
     
     doc_entry = None
     try:
-        with open(index_path, 'r', encoding='utf-8') as f:
-            sops = json.load(f)
-            for s in sops:
-                if s.get('file', '').lower() == filename.lower():
-                    doc_entry = s
-                    break
+        sops = _load_canonical_qms_index(index_path)
+        for s in sops:
+            if s.get('file', '').lower() == filename.lower():
+                doc_entry = s
+                break
     except Exception:
         pass
 
@@ -874,8 +916,7 @@ def view_sop(filename):
 
         sops_by_dept = {}
         try:
-            with open(index_path, 'r', encoding='utf-8') as f:
-                sops = json.load(f)
+            sops = _load_canonical_qms_index(index_path)
             for sop in sops:
                 dept = sop['dept']
                 tier = sop.get('access_tier', 'STAFF')

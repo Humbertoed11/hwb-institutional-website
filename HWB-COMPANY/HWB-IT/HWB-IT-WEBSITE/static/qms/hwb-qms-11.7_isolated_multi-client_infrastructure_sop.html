@@ -50,7 +50,7 @@
         <p>Each client project must utilize a standalone <code>docker-compose.yml</code> file with the following constraints:</p>
         <ol>
             <li><strong>Private Network:</strong> A dedicated bridge network (e.g., <code>[client]-net</code>) to isolate internal traffic.</li>
-            <li><strong>Isolated Databases:</strong> A dedicated PostgreSQL or SQLite instance unique to the client. No cross-database sharing is permitted.</li>
+            <li><strong>Isolated Databases:</strong> A dedicated PostgreSQL 16.15 container instance unique to the client. No cross-database sharing is permitted.</li>
             <li><strong>Unique Container Names:</strong> Containers must be prefixed with the client ID (e.g., <code>clientx_web_app</code>).</li>
             <li><strong>Isolated Volumes:</strong> Permanent storage must be mapped to local paths within the client directory.</li>
         </ol>

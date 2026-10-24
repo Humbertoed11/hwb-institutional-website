@@ -1850,6 +1850,64 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
                 f"Forbidden internal reference '{match.group(0) if match else ''}' exposed in outbound email letterhead: {chunk[:120]}"
             )
 
+    def test_27_qms_library_integrity_and_zero_outdated_sop_contamination_bug_148(self):
+        """
+        BUG-148: Enforces Enterprise QMS Lifecycle, Deduplication & Neural Hygiene Architecture:
+        1. Every entry in qms_index.json maps to an existing HTML file in static/qms/ with 0 duplicate file entries.
+        2. Zero directories, truncated filenames, or Windows sync conflict files (-desktop-) in static/qms/.
+        3. Zero hollow 3-sentence boilerplate stubs, broken WikiLinks ([[Container]]), cross-company
+           HexGrowth leaks, or retired SQLite / Postgres:13 / HWB-WEB Index.html instructions in static/qms/.
+        4. Runtime /manual and /manual/<filename> gatekeeper serves canonical deduplicated catalog.
+        """
+        import json
+        import re
+
+        qms_dir = os.path.join(app.root_path, "static", "qms")
+        index_path = os.path.join(app.root_path, "qms_index.json")
+        self.assertTrue(os.path.exists(index_path), "qms_index.json must exist")
+        self.assertTrue(os.path.exists(qms_dir), "static/qms directory must exist")
+
+        with open(index_path, "r", encoding="utf-8") as f:
+            sops = json.load(f)
+
+        self.assertGreaterEqual(len(sops), 150, "Canonical QMS registry must contain active SOPs")
+        seen_files = set()
+        for entry in sops:
+            fn = entry.get("file", "")
+            self.assertTrue(fn.endswith(".html"), f"QMS index entry must be .html: {fn}")
+            self.assertEqual(fn, fn.lower(), f"QMS index entry must use lowercase canonical naming: {fn}")
+            self.assertNotIn(" ", fn, f"QMS index entry must use snake_case without spaces: {fn}")
+            self.assertNotIn("-desktop-", fn.lower(), f"Desktop sync conflict file prohibited: {fn}")
+            self.assertNotIn(fn.lower(), seen_files, f"Duplicate file entry in qms_index.json: {fn}")
+            seen_files.add(fn.lower())
+            full_path = os.path.join(qms_dir, fn)
+            self.assertTrue(os.path.isfile(full_path), f"Indexed SOP missing from static/qms/: {fn}")
+
+        banned_patterns = [
+            (r"defines the approved workflow, operational requirements, and quality standards for", "Hollow 3-sentence stub boilerplate"),
+            (r"\[\[Container\]\]", "Broken Obsidian WikiLink placeholder"),
+            (r"HexGrowth", "Cross-company HexGrowth contamination"),
+            (r"Postgres:13", "Retired Postgres 13 container reference"),
+            (r"HWB-WEB Index\.html", "Retired legacy template filename"),
+            (r"SQLite", "Retired SQLite database reference"),
+            (r"proxy_gateway\.py", "Retired proxy_gateway.py reference"),
+        ]
+
+        for fn in os.listdir(qms_dir):
+            fp = os.path.join(qms_dir, fn)
+            self.assertFalse(os.path.isdir(fp), f"Subdirectory prohibited inside static/qms/: {fn}")
+            self.assertNotIn("-desktop-", fn.lower(), f"Desktop sync conflict file prohibited in static/qms/: {fn}")
+            if not fn.endswith(".html"):
+                continue
+            with open(fp, "r", encoding="utf-8", errors="ignore") as f:
+                content = f.read()
+            for pat, reason in banned_patterns:
+                m = re.search(pat, content, re.IGNORECASE)
+                self.assertIsNone(
+                    m,
+                    f"Outdated/contaminating SOP content ({reason}) found in {fn}: '{m.group(0) if m else ''}'"
+                )
+
 
 if __name__ == "__main__":
     unittest.main()

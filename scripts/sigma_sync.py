@@ -49,26 +49,81 @@ def sync_walkthrough():
         print(f"Error syncing walkthrough: {e}")
 
 def sync_new_sops():
-    sop_dir = "HWB-COMPANY/HWB-QMS"
-    if not os.path.exists(sop_dir): return
-    
-    print("[SYNC] Scanning for new HTML SOPs...")
+    candidate_dirs = [
+        "/app/static/qms",
+        "HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/static/qms",
+        "static/qms",
+        "HWB-COMPANY/HWB-QMS",
+    ]
+    sop_dir = next((d for d in candidate_dirs if os.path.exists(d)), None)
+    if not sop_dir:
+        return
+
+    banned_markers = (
+        "defines the approved workflow, operational requirements, and quality standards for",
+        "[[Container]]",
+        "HexGrowth",
+        "Postgres:13",
+        "HWB-WEB Index.html",
+        "proxy_gateway.py",
+    )
+
+    print(f"[SYNC] Synchronizing canonical HTML SOPs from {sop_dir} (BUG-148 Quality Gate)...")
     try:
         conn = psycopg2.connect(DB_URL)
+        active_html_docs = set()
+        ingested_count = 0
+        skipped_count = 0
         with conn.cursor() as cur:
-            for f in os.listdir(sop_dir):
-                if f.endswith(".html") and f != "sop_template.html":
-                    file_path = os.path.join(sop_dir, f)
-                    with open(file_path, "r", encoding="utf-8") as file:
-                        content = file.read()
-                    
-                    cur.execute("""
-                        INSERT INTO sigma_kb (doc_id, content, metadata)
-                        VALUES (%s, %s, %s)
-                        ON CONFLICT (doc_id) DO UPDATE SET content = EXCLUDED.content;
-                    """, (f, content, Json({"source": "Automatic Sync", "path": file_path})))
+            for f in sorted(os.listdir(sop_dir)):
+                file_path = os.path.join(sop_dir, f)
+                if not os.path.isfile(file_path):
+                    continue
+                if not f.endswith(".html") or f == "sop_template.html" or "-desktop-" in f.lower():
+                    continue
+                with open(file_path, "r", encoding="utf-8", errors="ignore") as file:
+                    content = file.read()
+                if any(marker.lower() in content.lower() for marker in banned_markers):
+                    skipped_count += 1
+                    continue
+
+                active_html_docs.add(f)
+                ingested_count += 1
+                cur.execute("""
+                    INSERT INTO sigma_kb (doc_id, content, metadata)
+                    VALUES (%s, %s, %s)
+                    ON CONFLICT (doc_id) DO UPDATE
+                    SET content = EXCLUDED.content, metadata = EXCLUDED.metadata;
+                """, (
+                    f,
+                    content,
+                    Json({
+                        "source": "Canonical QMS Sync (BUG-148)",
+                        "path": file_path,
+                        "synced_at": datetime.now().isoformat(),
+                    }),
+                ))
+
+            # Purge retired/orphaned HTML SOPs, legacy book snapshots, and unindexed markdown bloat
+            cur.execute("SELECT doc_id FROM sigma_kb;")
+            existing_ids = [r[0] for r in cur.fetchall()]
+            purged_ids = []
+            for doc_id in existing_ids:
+                if doc_id.endswith(".html") and doc_id not in active_html_docs:
+                    purged_ids.append(doc_id)
+                elif doc_id == "HWB-ACADEMY-BOOK-001-V4.6.0" or ".md" in doc_id:
+                    purged_ids.append(doc_id)
+
+            if purged_ids:
+                cur.execute(
+                    "DELETE FROM sigma_kb WHERE doc_id = ANY(%s);",
+                    (purged_ids,),
+                )
+                print(f"[SYNC] Purged {len(purged_ids)} retired/orphaned rows from sigma_kb.")
+
         conn.commit()
         conn.close()
+        print(f"[SYNC] Canonical QMS Sync complete: {ingested_count} active SOPs synced ({skipped_count} rejected).")
     except Exception as e:
         print(f"Error syncing SOPs: {e}")
 
@@ -118,7 +173,7 @@ def parse_problems_to_solve(markdown_content):
     rows = []
     lines = markdown_content.split("\n")
     for line in lines:
-        if "|" in line:
+        if line.strip().startswith("|") and "|" in line:
             parts = [p.strip() for p in line.split("|")]
             if len(parts) >= 6:
                 date_val = parts[1]
@@ -198,11 +253,27 @@ def parse_problems_to_solve(markdown_content):
         })
     return results
 
+try:
+    from core.services.embedding import get_embedding as calculate_local_embedding
+except ImportError:
+    import hashlib
+    def calculate_local_embedding(text):
+        embedding = [0.0] * 1536
+        if not text:
+            return embedding
+        sha = hashlib.sha256(text.encode("utf-8")).digest()
+        for i in range(1536):
+            byte_val = sha[i % len(sha)]
+            val = (byte_val - 128) / 128.0
+            embedding[i] = round(val, 6)
+        return embedding
+
+
 def sync_problems_to_solve():
     problems_file = "docs/PROBLEMS-TO-SOLVE.md"
     if not os.path.exists(problems_file): return
     
-    print("[SYNC] Scanning for new problems to solve...")
+    print("[SYNC] Scanning for new problems to solve & generating vector embeddings...")
     with open(problems_file, "r", encoding="utf-8") as f:
         content = f.read()
         
@@ -210,6 +281,16 @@ def sync_problems_to_solve():
     
     try:
         conn = psycopg2.connect(DB_URL)
+        has_vector = False
+        with conn.cursor() as cur:
+            try:
+                cur.execute("SELECT '[1,2,3]'::vector;")
+                conn.commit()
+                has_vector = True
+            except Exception:
+                conn.rollback()
+                has_vector = False
+
         with conn.cursor() as cur:
             for item in parsed:
                 iid = item["issue_id"]
@@ -230,96 +311,162 @@ def sync_problems_to_solve():
                     resolved_dt = datetime.now()
                 
                 desc_val = f"{prefix} {item['description']}"
+                full_text = f"{desc_val} {item.get('root_cause', '')} {item.get('implemented_fix', '')} {item.get('preventative_rule', '')}"
+                embed_vector = calculate_local_embedding(full_text)
                 
                 if row:
                     db_id = row[0]
-                    print(f"[SYNC] Updating mistake log: {iid}")
-                    cur.execute("""
-                        UPDATE "SigmaKnowledgeScars"
-                        SET description = %s, category = %s, status = %s, impact_level = %s,
-                            root_cause = %s, implemented_fix = %s, preventative_rule = %s,
-                            resolved_at = COALESCE(resolved_at, %s)
-                        WHERE id = %s;
-                    """, (
-                        desc_val, item["category"], item["status"], item["impact_level"],
-                        item["root_cause"], item["implemented_fix"], item["preventative_rule"],
-                        resolved_dt, db_id
-                    ))
+                    if has_vector:
+                        print(f"[SYNC] Updating mistake log & embedding: {iid}")
+                        cur.execute("""
+                            UPDATE "SigmaKnowledgeScars"
+                            SET description = %s, category = %s, status = %s, impact_level = %s,
+                                root_cause = %s, implemented_fix = %s, preventative_rule = %s,
+                                resolved_at = COALESCE(resolved_at, %s),
+                                embedding = %s,
+                                search_vector = to_tsvector('english', %s)
+                            WHERE id = %s;
+                        """, (
+                            desc_val, item["category"], item["status"], item["impact_level"],
+                            item["root_cause"], item["implemented_fix"], item["preventative_rule"],
+                            resolved_dt, embed_vector, full_text, db_id
+                        ))
+                    else:
+                        print(f"[SYNC] Updating mistake log: {iid}")
+                        cur.execute("""
+                            UPDATE "SigmaKnowledgeScars"
+                            SET description = %s, category = %s, status = %s, impact_level = %s,
+                                root_cause = %s, implemented_fix = %s, preventative_rule = %s,
+                                resolved_at = COALESCE(resolved_at, %s),
+                                search_vector = to_tsvector('english', %s)
+                            WHERE id = %s;
+                        """, (
+                            desc_val, item["category"], item["status"], item["impact_level"],
+                            item["root_cause"], item["implemented_fix"], item["preventative_rule"],
+                            resolved_dt, full_text, db_id
+                        ))
                 else:
-                    print(f"[SYNC] Inserting new mistake log: {iid}")
-                    cur.execute("""
-                        INSERT INTO "SigmaKnowledgeScars" (
-                            description, category, status, impact_level, root_cause,
-                            implemented_fix, preventative_rule, created_at, resolved_at
-                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);
-                    """, (
-                        desc_val, item["category"], item["status"], item["impact_level"],
-                        item["root_cause"], item["implemented_fix"], item["preventative_rule"],
-                        created_dt or datetime.now(), resolved_dt
-                    ))
+                    if has_vector:
+                        print(f"[SYNC] Inserting new mistake log & embedding: {iid}")
+                        cur.execute("""
+                            INSERT INTO "SigmaKnowledgeScars" (
+                                description, category, status, impact_level, root_cause,
+                                implemented_fix, preventative_rule, created_at, resolved_at,
+                                embedding, search_vector
+                            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, to_tsvector('english', %s));
+                        """, (
+                            desc_val, item["category"], item["status"], item["impact_level"],
+                            item["root_cause"], item["implemented_fix"], item["preventative_rule"],
+                            created_dt or datetime.now(), resolved_dt, embed_vector, full_text
+                        ))
+                    else:
+                        print(f"[SYNC] Inserting new mistake log: {iid}")
+                        cur.execute("""
+                            INSERT INTO "SigmaKnowledgeScars" (
+                                description, category, status, impact_level, root_cause,
+                                implemented_fix, preventative_rule, created_at, resolved_at,
+                                search_vector
+                            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, to_tsvector('english', %s));
+                        """, (
+                            desc_val, item["category"], item["status"], item["impact_level"],
+                            item["root_cause"], item["implemented_fix"], item["preventative_rule"],
+                            created_dt or datetime.now(), resolved_dt, full_text
+                        ))
         conn.commit()
         conn.close()
     except Exception as e:
         print(f"Error syncing problems: {e}")
 
-def sync_chronicles_book():
-    chronicles_dir = "HWB-COMPANY/HWB-ACADEMY/THE-SIGMA-ACADEMY-CHRONICLES"
-    if not os.path.exists(chronicles_dir):
+def sync_cli_conversations():
+    brain_path = os.path.expanduser("~/.gemini/antigravity-cli/brain/")
+    if not os.path.exists(brain_path):
         return
     
-    print("[SYNC] Ingesting SigmaAcademy Master Chronicles into sigma_kb neural memory...")
+    print("[SYNC] Synchronizing CLI Conversations & Transcript Steps...")
     try:
         conn = psycopg2.connect(DB_URL)
         with conn.cursor() as cur:
-            for f in sorted(os.listdir(chronicles_dir)):
-                if f.endswith(".md"):
-                    file_path = os.path.join(chronicles_dir, f)
-                    with open(file_path, "r", encoding="utf-8") as file:
-                        content = file.read()
-                    
-                    doc_id = f"CHRONICLES_{f.replace('.md', '')}"
-                    metadata = {
-                        "type": "CHRONICLES_BOOK",
-                        "title": "From Mops to Machines: The Creation of SigmaAcademy™",
-                        "filename": f,
-                        "path": file_path,
-                        "author": "George (Systems Architect & mbB)",
-                        "approved_by": "Humberto Dominguez, CEO",
-                        "ingested_at": datetime.now().isoformat()
-                    }
-                    
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS "CliConversations" (
+                    conversation_id VARCHAR(128) PRIMARY KEY,
+                    total_steps INTEGER DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+
+                CREATE TABLE IF NOT EXISTS "CliSteps" (
+                    id SERIAL PRIMARY KEY,
+                    conversation_id VARCHAR(128) REFERENCES "CliConversations"(conversation_id) ON DELETE CASCADE,
+                    step_index INTEGER,
+                    step_type VARCHAR(64),
+                    role VARCHAR(64),
+                    content TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    CONSTRAINT unique_conv_step UNIQUE (conversation_id, step_index)
+                );
+            """)
+
+            conv_dirs = [d for d in os.listdir(brain_path) if os.path.isdir(os.path.join(brain_path, d))]
+            for conv_id in conv_dirs:
+                log_file = os.path.join(brain_path, conv_id, ".system_generated", "logs", "transcript.jsonl")
+                if not os.path.exists(log_file):
+                    continue
+
+                steps = []
+                with open(log_file, "r", encoding="utf-8") as f:
+                    for line in f:
+                        line = line.strip()
+                        if line:
+                            try:
+                                steps.append(json.loads(line))
+                            except Exception:
+                                pass
+
+                if not steps:
+                    continue
+
+                cur.execute("""
+                    INSERT INTO "CliConversations" (conversation_id, total_steps, updated_at)
+                    VALUES (%s, %s, NOW())
+                    ON CONFLICT (conversation_id) DO UPDATE 
+                    SET total_steps = EXCLUDED.total_steps, updated_at = NOW();
+                """, (conv_id, len(steps)))
+
+                for step in steps:
+                    step_idx = step.get("step_index", 0)
+                    step_type = str(step.get("type", "UNKNOWN"))
+                    role = str(step.get("source", step.get("role", "SYSTEM")))
+                    content_str = str(step.get("content", "")).replace("\x00", "")
+
                     cur.execute("""
-                        INSERT INTO sigma_kb (doc_id, content, metadata, search_vector, timestamp)
-                        VALUES (%s, %s, %s, to_tsvector('english', %s), CURRENT_TIMESTAMP)
-                        ON CONFLICT (doc_id) DO UPDATE 
-                        SET content = EXCLUDED.content, 
-                            metadata = EXCLUDED.metadata,
-                            search_vector = to_tsvector('english', EXCLUDED.content),
-                            timestamp = CURRENT_TIMESTAMP;
-                    """, (doc_id, content, Json(metadata), content))
-                    print(f"  -> Ingested Chapter: {doc_id}")
+                        INSERT INTO "CliSteps" (conversation_id, step_index, step_type, role, content)
+                        VALUES (%s, %s, %s, %s, %s)
+                        ON CONFLICT (conversation_id, step_index) DO UPDATE 
+                        SET step_type = EXCLUDED.step_type, role = EXCLUDED.role, content = EXCLUDED.content;
+                    """, (conv_id, step_idx, step_type, role, content_str))
+
         conn.commit()
         conn.close()
+        print("[SYNC] CLI Conversations successfully indexed to Postgres.")
     except Exception as e:
-        print(f"Error syncing chronicles book: {e}")
+        print(f"Error syncing CLI conversations: {e}")
 
 def sync_memory_rot():
     print("[SYNC] Analyzing live Memory Rot & Cognitive Health (Rack 1)...")
     try:
         import sys
-        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        rot_script_dir = os.path.join(base_dir, "HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/scripts")
-        if rot_script_dir not in sys.path:
-            sys.path.insert(0, rot_script_dir)
         if "/app/scripts" not in sys.path and os.path.exists("/app/scripts"):
             sys.path.insert(0, "/app/scripts")
+        scripts_dir = os.path.dirname(os.path.abspath(__file__))
+        if scripts_dir not in sys.path:
+            sys.path.insert(0, scripts_dir)
         from memory_rot_meter import record_memory_rot_to_db
         res = record_memory_rot_to_db(db_url=DB_URL)
         if res.get("status") == "success":
             d = res["data"]
             print(f"  -> SUCCESS: Memory Rot Index: {d['composite_score']}% ({d['status']})")
         else:
-            print(f"  -> [INFO] Memory rot analysis: {res.get('message')}")
+            print(f"  -> [INFO] Memory rot analysis note: {res.get('message')}")
     except Exception as e:
         print(f"  -> [WARNING] Failed to sync memory rot: {e}")
 
@@ -327,18 +474,13 @@ def sync_rack_telemetry_snapshot():
     print("[SYNC] Ingesting 8-Rack Historical Telemetry Snapshot into RackTelemetryHistory...")
     try:
         import sys
-        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        it_app_dir = os.path.join(base_dir, "HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE")
-        if it_app_dir not in sys.path:
-            sys.path.insert(0, it_app_dir)
         if "/app" not in sys.path and os.path.exists("/app"):
             sys.path.insert(0, "/app")
-
         from core.services.self_healing_engine import record_rack_telemetry_snapshot
         session_id = datetime.now().strftime("%Y-%m-%d-%H%M-PERSISTENCE-CLOSE")
         res = record_rack_telemetry_snapshot(session_id=session_id, db_url=DB_URL)
         if res.get("status") == "success":
-            print(f"  -> SUCCESS: Logged {res.get('racks_logged')} racks in {res.get('latency_ms')} ms (Session: {session_id})")
+            print(f"  -> SUCCESS: Logged {res.get('racks_logged')} racks into RackTelemetryHistory in {res.get('latency_ms')} ms (Session: {session_id})")
         else:
             print(f"  -> [WARNING] Snapshot failed: {res.get('message')}")
     except Exception as e:
@@ -348,13 +490,12 @@ def run_all():
     print("--- SigmaFidelity: Initiating Institutional Persistence Sync ---")
     sync_walkthrough()
     sync_new_sops()
-    sync_chronicles_book()
     sync_system_state()
     sync_problems_to_solve()
+    sync_cli_conversations()
     sync_memory_rot()
     sync_rack_telemetry_snapshot()
     print("--- SUCCESS: All neural cores synchronized. ---")
 
 if __name__ == "__main__":
     run_all()
-

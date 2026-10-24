@@ -49,26 +49,81 @@ def sync_walkthrough():
         print(f"Error syncing walkthrough: {e}")
 
 def sync_new_sops():
-    sop_dir = "HWB-COMPANY/HWB-QMS"
-    if not os.path.exists(sop_dir): return
-    
-    print("[SYNC] Scanning for new HTML SOPs...")
+    candidate_dirs = [
+        "/app/static/qms",
+        "HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/static/qms",
+        "static/qms",
+        "HWB-COMPANY/HWB-QMS",
+    ]
+    sop_dir = next((d for d in candidate_dirs if os.path.exists(d)), None)
+    if not sop_dir:
+        return
+
+    banned_markers = (
+        "defines the approved workflow, operational requirements, and quality standards for",
+        "[[Container]]",
+        "HexGrowth",
+        "Postgres:13",
+        "HWB-WEB Index.html",
+        "proxy_gateway.py",
+    )
+
+    print(f"[SYNC] Synchronizing canonical HTML SOPs from {sop_dir} (BUG-148 Quality Gate)...")
     try:
         conn = psycopg2.connect(DB_URL)
+        active_html_docs = set()
+        ingested_count = 0
+        skipped_count = 0
         with conn.cursor() as cur:
-            for f in os.listdir(sop_dir):
-                if f.endswith(".html") and f != "sop_template.html":
-                    file_path = os.path.join(sop_dir, f)
-                    with open(file_path, "r", encoding="utf-8") as file:
-                        content = file.read()
-                    
-                    cur.execute("""
-                        INSERT INTO sigma_kb (doc_id, content, metadata)
-                        VALUES (%s, %s, %s)
-                        ON CONFLICT (doc_id) DO UPDATE SET content = EXCLUDED.content;
-                    """, (f, content, Json({"source": "Automatic Sync", "path": file_path})))
+            for f in sorted(os.listdir(sop_dir)):
+                file_path = os.path.join(sop_dir, f)
+                if not os.path.isfile(file_path):
+                    continue
+                if not f.endswith(".html") or f == "sop_template.html" or "-desktop-" in f.lower():
+                    continue
+                with open(file_path, "r", encoding="utf-8", errors="ignore") as file:
+                    content = file.read()
+                if any(marker.lower() in content.lower() for marker in banned_markers):
+                    skipped_count += 1
+                    continue
+
+                active_html_docs.add(f)
+                ingested_count += 1
+                cur.execute("""
+                    INSERT INTO sigma_kb (doc_id, content, metadata)
+                    VALUES (%s, %s, %s)
+                    ON CONFLICT (doc_id) DO UPDATE
+                    SET content = EXCLUDED.content, metadata = EXCLUDED.metadata;
+                """, (
+                    f,
+                    content,
+                    Json({
+                        "source": "Canonical QMS Sync (BUG-148)",
+                        "path": file_path,
+                        "synced_at": datetime.now().isoformat(),
+                    }),
+                ))
+
+            # Purge retired/orphaned HTML SOPs, legacy book snapshots, and unindexed markdown bloat
+            cur.execute("SELECT doc_id FROM sigma_kb;")
+            existing_ids = [r[0] for r in cur.fetchall()]
+            purged_ids = []
+            for doc_id in existing_ids:
+                if doc_id.endswith(".html") and doc_id not in active_html_docs:
+                    purged_ids.append(doc_id)
+                elif doc_id == "HWB-ACADEMY-BOOK-001-V4.6.0" or ".md" in doc_id:
+                    purged_ids.append(doc_id)
+
+            if purged_ids:
+                cur.execute(
+                    "DELETE FROM sigma_kb WHERE doc_id = ANY(%s);",
+                    (purged_ids,),
+                )
+                print(f"[SYNC] Purged {len(purged_ids)} retired/orphaned rows from sigma_kb.")
+
         conn.commit()
         conn.close()
+        print(f"[SYNC] Canonical QMS Sync complete: {ingested_count} active SOPs synced ({skipped_count} rejected).")
     except Exception as e:
         print(f"Error syncing SOPs: {e}")
 

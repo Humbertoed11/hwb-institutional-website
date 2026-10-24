@@ -77,6 +77,13 @@
             timestamp: new Date().toISOString()
         });
 
+        // Mirror high-priority friction events to Microsoft Clarity (Cartridge UX-06)
+        if (typeof window.clarity === 'function') {
+            try {
+                window.clarity('event', String(eventType || 'interaction').toLowerCase());
+            } catch (e) {}
+        }
+
         // Instant flush on high-severity events
         if (eventType === 'RAGE_CLICK' || eventType === 'JS_ERROR') {
             flushQueue();
@@ -166,6 +173,28 @@
     });
 
     window.addEventListener('pagehide', flushQueue);
+
+    // 6. Microsoft Clarity Hybrid Session Binding & Deterministic DOM PII Masking (Cartridge UX-06)
+    function initClarityHybridSync() {
+        try {
+            const sensitiveNodes = document.querySelectorAll(
+                '.sigma-form-container, input[type="password"], input[type="email"], input[type="tel"], [data-sensitive]'
+            );
+            for (let i = 0; i < sensitiveNodes.length; i++) {
+                sensitiveNodes[i].setAttribute('data-clarity-mask', 'true');
+            }
+            if (typeof window.clarity === 'function') {
+                window.clarity('set', 'session_id', sessionId);
+                window.clarity('set', 'application', 'hwb_cleaning');
+            }
+        } catch (err) {}
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initClarityHybridSync);
+    } else {
+        initClarityHybridSync();
+    }
 
     // Initial page view event
     enqueueEvent('PAGE_VIEW', null, { referrer: document.referrer || '' });

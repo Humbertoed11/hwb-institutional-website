@@ -56,7 +56,7 @@
 <li><strong>Frontend:</strong> React (TypeScript) with Vanilla CSS for high-fidelity performance on low-end mobile devices.</li>
 <li><strong>State Management:</strong> Context API with <code>useReducer</code> for robust local state persistence.</li>
 <li><strong>Offline Protocol:</strong> Service Workers (PWA) + IndexedDB for local storage during zero-connectivity windows (Offline-First).</li>
-<li><strong>Backend Integration:</strong> RESTful API handshake with the SigmaFidelity™ Python/SQLite server.</li>
+<li><strong>Backend Integration:</strong> RESTful API handshake with the Python Flask / PostgreSQL 16.15 server.</li>
 </ul>
 <hr />
 <h2 id="20-critical-to-quality-ctq-logic-enforcement">2.0 Critical-to-Quality (CTQ) Logic Enforcement</h2>
@@ -68,7 +68,7 @@
 </ul>
 <h3 id="22-integrity-gps-geofencing-handshake">2.2 Integrity: GPS Geofencing Handshake</h3>
 <ul>
-<li><strong>Handshake:</strong> The <code>Clock-In</code> and <code>Clock-Out</code> functions are cryptographically disabled if the device GPS coordinates are &gt;50 meters from the facility centroid stored in <code>clients.db</code>.</li>
+<li><strong>Handshake:</strong> The <code>Clock-In</code> and <code>Clock-Out</code> functions are cryptographically disabled if the device GPS coordinates are &gt;50 meters from the facility centroid stored in PostgreSQL 16.15 (<code>"Customers"</code>).</li>
 <li><strong>Validation:</strong> Every task completion record includes a nested <code>lat/long</code> coordinate pair for post-process audit.</li>
 </ul>
 <hr />

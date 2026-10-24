@@ -3,8 +3,8 @@
 <div class="sop-card">
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
-        <div class="meta-unit"><span class="meta-label">ID</span><span class="meta-val">HWB-QMS-7.5</span></div>
-        <div class="meta-unit"><span class="meta-label">Ver</span><span class="meta-val">2.3.2</span></div>
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-7.5-UI</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.0.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Author</span><span class="meta-val">George (Architect)</span></div>
         <div class="meta-unit"><span class="meta-label">Approved By</span><span class="meta-val">Humberto Dominguez</span></div>
@@ -17,14 +17,15 @@
     <!-- 1.0 PROOF OF TRUTH -->
     <section style="margin-bottom: 5rem;">
         <h2 style="font-size: 1.6rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">1.0 Proof of Truth: The File Map</h2>
-        <p style="margin-bottom: 1.5rem;">These are the verified server folders. If a file is not in this location, the system is in a failed state.</p>
+        <p style="margin-bottom: 1.5rem;">These are the verified server folders. Every template and stylesheet adheres to the Webpage Naming Standard and 5-Layer Responsive Engine.</p>
         <div style="background: #0f172a; color: #fff; padding: 2rem; border-radius: 8px; font-family: monospace; font-size: 0.9rem; line-height: 2;">
             <span style="color: #10b981;">[VERIFIED]</span> HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/static/HWB-WEB Style.css<br>
-            <span style="color: #10b981;">[VERIFIED]</span> HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/templates/HWB-WEB Index.html<br>
+            <span style="color: #10b981;">[VERIFIED]</span> HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/templates/index.html<br>
             <span style="color: #10b981;">[VERIFIED]</span> HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/templates/components/mega_bar.html<br>
+            <span style="color: #10b981;">[VERIFIED]</span> HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/static/js/sigma_responsive_engine.js<br>
+            <span style="color: #10b981;">[VERIFIED]</span> HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/static/js/sigma_input_masks.js<br>
             <span style="color: #10b981;">[VERIFIED]</span> HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/static/logo_standard.png<br>
-            <span style="color: #10b981;">[VERIFIED]</span> HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/core/agents/ - (Intelligence Layer)<br>
-            <span style="color: #10b981;">[VERIFIED]</span> HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/scripts/ - (Automation & Safety)
+            <span style="color: #10b981;">[VERIFIED]</span> HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/scripts/ - (Automation &amp; Quality Gates)
         </div>
     </section>
 
@@ -100,7 +101,7 @@
             <div style="background: white; border: 1px solid #e2e8f0; padding: 1.5rem; border-radius: 12px;">
                 <strong style="display: block; font-size: 1rem; color: #0f172a; margin-bottom: 0.5rem;">Home Embedded Form</strong>
                 <div style="font-size: 0.85rem; color: #64748b;">
-                    <strong>Folder Path:</strong> <code>HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/templates/HWB-WEB Index.html</code><br>
+                    <strong>Folder Path:</strong> <code>HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/templates/index.html</code><br>
                     <strong>Logic:</strong> <code>POST /get-quote</code>. Simplified Name/Email/Phone capture.
                 </div>
             </div>
@@ -152,7 +153,7 @@
         <h2 style="font-size: 1.6rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">4.6 Institutional Interaction Log</h2>
         <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 2rem; border-radius: 12px;">
             <div style="font-size: 0.85rem; line-height: 1.8;">
-                <strong>Database Table:</strong> <code>"SigmaInteractionLog"</code><br>
+                <strong>Database Table:</strong> <code>"SigmaInteractionCore" (PostgreSQL 16.15)</code><br>
                 <strong>Logic:</strong> Records every command and AI explanation for absolute auditability.
             </div>
         </div>
@@ -186,7 +187,7 @@
                 <div style="max-width: 75%;">
                     <strong>3. High-Fidelity Hero</strong>
                     <div style="font-size: 0.85rem; color: #64748b; margin-top: 0.5rem;">
-                        <strong>Path:</strong> <code>HWB-IT-WEBSITE/templates/HWB-WEB Index.html</code><br>
+                        <strong>Path:</strong> <code>HWB-IT-WEBSITE/templates/index.html</code><br>
                         <strong>Logic:</strong> Centered 1000px content wrapper.
                     </div>
                 </div>
@@ -206,7 +207,7 @@
                 <div style="max-width: 75%;">
                     <strong>5. Lead Quote Form</strong>
                     <div style="font-size: 0.85rem; color: #64748b; margin-top: 0.5rem;">
-                        <strong>Path:</strong> <code>HWB-IT-WEBSITE/templates/HWB-WEB Index.html</code><br>
+                        <strong>Path:</strong> <code>HWB-IT-WEBSITE/templates/index.html</code><br>
                         <strong>Logic:</strong> Direct CRM ingestion (Name/Email/Phone).
                     </div>
                 </div>
@@ -216,7 +217,7 @@
                 <div style="max-width: 75%;">
                     <strong>6. Quality Formula Banner</strong>
                     <div style="font-size: 0.85rem; color: #64748b; margin-top: 0.5rem;">
-                        <strong>Path:</strong> <code>HWB-IT-WEBSITE/templates/HWB-WEB Index.html</code><br>
+                        <strong>Path:</strong> <code>HWB-IT-WEBSITE/templates/index.html</code><br>
                         <strong>Logic:</strong> Centered Mandate Text. Authoritative Dark-variant.
                     </div>
                 </div>

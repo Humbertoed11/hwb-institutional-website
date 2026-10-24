@@ -7,7 +7,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-11.1-MEM</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.1.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.2.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.1.6 (Organizational Knowledge)</span></div>
     </div>
@@ -21,44 +21,44 @@
                 </tr>
             </thead>
             <tbody>
-                <tr><td><strong>Document Title</strong></td><td><strong>Institutional Memory & Neural Integration SOP</strong></td></tr>
+                <tr><td><strong>Document Title</strong></td><td><strong>Institutional Memory &amp; Neural Integration SOP</strong></td></tr>
                 <tr><td><strong>Document ID</strong></td><td>HWB-QMS-11.1-MEM</td></tr>
-                <tr><td><strong>Version</strong></td><td>3.1.0</td></tr>
+                <tr><td><strong>Version</strong></td><td>3.2.0</td></tr>
                 <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
                 <tr><td><strong>Author</strong></td><td>George (Systems Architect)</td></tr>
                 <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
-                <tr><td><strong>Date</strong></td><td>09/21/2026</td></tr>
+                <tr><td><strong>Date</strong></td><td>10/24/2026</td></tr>
                 <tr><td><strong>ISO 9001 Clause</strong></td><td>7.1.6</td></tr>
             </tbody>
         </table>
 
         <hr />
 
-        <h1>Standard Operating Procedure: <strong>Institutional Memory & Neural Integration</strong></h1>
+        <h1>Standard Operating Procedure: <strong>Institutional Memory &amp; Neural Integration</strong></h1>
 
         <h2>1.0 Purpose</h2>
-        <p>To define the definitive "Neural Map" of the SigmaFidelity™ ecosystem for the Antigravity CLI. This SOP ensures 100% data continuity by instructing agents on how to digest, initialize, and maintain our multi-tier memory systems.</p>
+        <p>To define the definitive "Neural Map" of the SigmaFidelity™ ecosystem for the Antigravity CLI. This SOP ensures 100% data continuity by instructing agents on how to digest, initialize, and maintain our multi-tier memory systems on PostgreSQL 16.15.</p>
 
         <h2>2.0 The 4-Tier Memory Architecture</h2>
         <p>The agent MUST prioritize data retrieval according to this hierarchy:</p>
 
-        <h3>Tier 1: The Relational Core (PostgreSQL)</h3>
+        <h3>Tier 1: The Relational Core (PostgreSQL 16.15)</h3>
         <ul>
-            <li><strong>Engine:</strong> Docker Container <code>hwb_postgres_dev</code>.</li>
-            <li><strong>Database:</strong> <code>hwb_dev_db</code>.</li>
+            <li><strong>Engine:</strong> Local Docker Container <code>hwb_postgres_dev</code> (<code>pgvector/pgvector:pg16</code>) and Live Azure Database for PostgreSQL Flexible Server 16.15 (<code>sigmajan-server</code>).</li>
+            <li><strong>Database:</strong> <code>hwb_dev_db</code> (86 public tables, <code>vector 0.8.2</code>, <code>pg_trgm</code>, <code>fuzzystrmatch</code>).</li>
             <li><strong>Key Synapses (Monolithic):</strong>
                 <ul>
                     <li><code>SigmaInteractionCore</code>: Consolidated CEO/Agent audit logs and technical telemetry.</li>
-                    <li><code>SigmaKnowledgeScars</code>: Integrated bug registry and historical failure rules.</li>
-                    <li><code>SigmaSystemCore</code>: Authoritative system state (paritied with Markdown).</li>
-                    <li><code>Leads</code>: 37-column CRM engine.</li>
+                    <li><code>SigmaKnowledgeScars</code> &amp; <code>SigmaMistakeLog</code>: Integrated bug registry and historical failure rules.</li>
+                    <li><code>SigmaSystemCore</code>: Authoritative system state (synchronized with <code>HWB-SESSION-RECOVERY.md</code>).</li>
+                    <li><code>Leads</code>: Commercial Texas CRM engine with self-maintaining campaign readiness triggers.</li>
                 </ul>
             </li>
         </ul>
 
-        <h3>Tier 2: The Modular Store (SQLite)</h3>
+        <h3>Tier 2: Operational Task Queue &amp; Cross-Device Session State (PostgreSQL 16.15)</h3>
         <ul>
-            <li><strong>Engine:</strong> Local files in <code>HWB-COMPANY/HWB-DATA/*.db</code>.</li>
+            <li><strong>Engine:</strong> PostgreSQL 16.15 operational state tables (<code>SystemSettings</code>, <code>UserUiPreferences</code>, <code>RackTelemetryHistory</code>, and background task queues). All legacy PostgreSQL 16.15 (<code>*.db</code>) files are permanently retired.</li>
         </ul>
 
         <h3>Tier 3: Institutional Mandates (HTML/Git)</h3>

@@ -70,7 +70,7 @@
 </tr>
 <tr>
 <td style="text-align: left;"><strong>IT Dept</strong></td>
-<td style="text-align: left;">Azure Cloud &amp; SQLite DBs</td>
+<td style="text-align: left;">Azure Cloud &amp; PostgreSQL 16.15 DB</td>
 <td style="text-align: left;"><strong>2. Retrieval:</strong> Fetch 'Scope of Work' for site.</td>
 <td style="text-align: left;"><strong>Efficiency Data:</strong> Labor utilization vs. Budget.</td>
 <td style="text-align: left;"><strong>HWB Finance</strong></td>
@@ -102,7 +102,7 @@
 <h3 id="10-boundary-definitions">1.0 Boundary Definitions</h3>
 <ul>
 <li><strong>Start Point:</strong> Technician arrives at the designated GPS geofence and initiates login.</li>
-<li><strong>End Point:</strong> Data successfully synchronizes with the <code>clients.db</code> and <code>sigma_leads.db</code> servers and the technician clocks out.</li>
+<li><strong>End Point:</strong> Data successfully synchronizes with the PostgreSQL 16.15 production database (<code>"Customers"</code>, <code>"WorkOrders"</code>, and <code>"Leads"</code> tables) and the technician clocks out.</li>
 </ul>
 <h3 id="20-critical-to-quality-ctq-requirements">2.0 Critical-to-Quality (CTQ) Requirements</h3>
 <p>Based on initial VOC (Voice of Customer) analysis, the following are the primary "Must-Haves" for the process to be successful:

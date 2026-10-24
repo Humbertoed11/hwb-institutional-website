@@ -1,0 +1,176 @@
+<div class="sop-card">
+    <!-- 0.0 DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-8.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">4.2.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">8.2.1 (Customer Communication)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <table>
+            <thead>
+                <tr>
+                    <th style="text-align: left;"><strong>Document Control</strong></th>
+                    <th style="text-align: left;"><strong>Institutional Specification</strong></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="text-align: left;"><strong>Document Title</strong></td>
+                    <td style="text-align: left;"><strong>Sales Process SOP with Contact-First Intake, Territory Isolation &amp; Google Ecosystem Loop</strong></td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;"><strong>Document ID</strong></td>
+                    <td style="text-align: left;">HWB-QMS-8.0</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;"><strong>Version</strong></td>
+                    <td style="text-align: left;">4.2.0</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;"><strong>Status</strong></td>
+                    <td style="text-align: left;">APPROVED</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;"><strong>Author</strong></td>
+                    <td style="text-align: left;">George (Systems Architect &amp; mbB)</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;"><strong>Approved By</strong></td>
+                    <td style="text-align: left;">Humberto Dominguez, CEO</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;"><strong>Effective Date</strong></td>
+                    <td style="text-align: left;">10/17/2026</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;"><strong>ISO Standard</strong></td>
+                    <td style="text-align: left;">ISO 9001:2026 (ISO 9001:2015+Amd 1:2024) Clause 8.2.1 &amp; Clause 8.2.2 (Customer Requirements)</td>
+                </tr>
+            </tbody>
+        </table>
+        <hr />
+
+        <h1 id="standard-operating-procedure-sales-process-sop">Standard Operating Procedure: <strong>Sales Process SOP</strong></h1>
+
+        <h2 id="10-purpose">1.0 Purpose</h2>
+        <p>This SOP defines the institutional sales intake, qualification, territory assignment, walkthrough scheduling, proposal calibration, and post-quote Google Review loop for commercial janitorial and facility cleaning prospects across the Dallas-Fort Worth metroplex. It guarantees zero top-of-funnel conversion friction, strict sales territory protection, rapid executive response, and empirical pricing accuracy.</p>
+
+        <h2 id="20-scope">2.0 Scope</h2>
+        <p>Applies to all inbound digital quote inquiries (<code>/get-quote</code>), Google Maps Local Pack leads (<code>CID: 4883166476987591300</code>), Microsoft Bookings walkthrough appointments (<code>FacilityWalkthroughquote@NETORGFT3163094.onmicrosoft.com</code>), phone prospects (<code>+1-214-586-0257</code>), Calling Workstation outreach (<code>/sales-desk</code>), Commercial Construction Bids (<code>?view=construction_bids</code>), and CRM account conversions across the commercial cleaning pipeline.</p>
+
+        <h2 id="30-universal-mandates-2026-baseline">3.0 Universal Sales Mandates (2026 Baseline)</h2>
+        <ol>
+            <li><strong>Contact-First Architecture:</strong> Prospect contact credentials (Name and Email or Phone) must be secured first within 10 seconds of user interaction before requesting complex architectural details.</li>
+            <li><strong>Mobile Express Optimization:</strong> On mobile screens (&le; 768px), form fields must collapse to the essential 4-field intake, with automated removal of HTML <code>required</code> attributes to prevent client-side validation lockups.</li>
+            <li><strong>Empirical Insurance Representation:</strong> All public representations of commercial coverage must strictly state our verified $2,000,000 commercial liability policy (ACORD 25 certificate). Marketing figures must never cite unverified estimates.</li>
+            <li><strong>100% CRM &amp; Conversion Attribution Traceability:</strong> Every inbound quote submission must immediately persist to PostgreSQL, trigger automated multi-channel alert dispatch (Telegram Operations Gateway and Email), and fire CIPA/CPRA consent-gated conversion attribution to GA4 (<code>G-8BX5Q7THYR</code>) and Google Ads (<code>862-242-8739</code> / <code>AW-8622428739</code>).</li>
+            <li><strong>Strict Sales Territory Isolation:</strong> Accounts assigned the <code>Sales</code> role are strictly isolated to records explicitly assigned to their user ID across Commercial Leads (<code>owner_id = current_user.id</code>), Calling Workstation (<code>/sales-desk</code>), Active Clients (<code>assigned_rep_id = current_user.id</code>), and Commercial Construction Bids (<code>assigned_rep_id = current_user.id</code>).</li>
+        </ol>
+
+        <h2 id="40-the-sales-sequence">4.0 The Two-Phase Sales Sequence &amp; Local Prominence Loop</h2>
+        <h3 id="41-phase-1-intake">4.1 Phase 1: Contact-First 10-Second Intake &amp; HQ Map Handshake</h3>
+        <ul>
+            <li><strong>Desktop Intake:</strong> Captures Contact Name, Work Email, Phone (optional for email-preferred clients), Facility Type, and Service Scope alongside an interactive Google Maps embed of McKinney HQ (<code>3342 FM 1827 Ste 8d, McKinney, TX 75071</code>, <code>CID: 4883166476987591300</code>).</li>
+            <li><strong>Mobile Express Mode:</strong> Automatically active on viewports &le; 768px. Dynamically hides non-essential inputs (City/Zip, Cleaning Frequency, Company Name) and applies intelligent backend defaults (<code>lead_source = 'Website Quote Form (Mobile Express)'</code>).</li>
+            <li><strong>Bot Defense Shield:</strong> Inbound submissions pass through the honeypot trap (<code>hp_organization_url</code>) and submission timing filter (&gt; 3 seconds) to drop spam instantly.</li>
+        </ul>
+
+        <h3 id="42-phase-2-calibration">4.2 Phase 2: Post-Submission Pricing Calibration &amp; 1-Click Google Review Loop</h3>
+        <p>Upon initial submission, the prospect is immediately transitioned to the confirmation screen (<code>quote_success.html</code>) displaying the <strong>10-Second Pricing Calibration</strong> card and conversion telemetry:</p>
+        <ul>
+            <li><strong>Dual Conversion Telemetry:</strong> Fires <code>generate_lead</code> ($150.00 USD) on initial load and <code>pricing_calibrated</code> ($250.00 USD) on calibration submission to both GA4 (<code>G-8BX5Q7THYR</code>) and Google Ads (<code>AW-8622428739</code>).</li>
+            <li><strong>1-Touch City &amp; Frequency Chips:</strong> Immediate selection chips for Plano, Dallas, Frisco, Fort Worth, Irving, and neighboring North Texas hubs, plus 1x Weekly, 3x Weekly, 5x Weekly, or One-Time Deep Clean schedules updating PostgreSQL via AJAX (<code>POST /update-quote-details</code>).</li>
+            <li><strong>1-Click Google Review &amp; Executive Signature Handshake:</strong> Both the confirmation card footer on <code>quote_success.html</code> and all 3 executive email signatures in <code>executive_signature.html</code> feature a <code>"Verified on Google Maps &bull; Leave a Review"</code> badge linking directly to <code>https://g.page/r/CYTq8OcJfsRDEBM/review</code>.</li>
+        </ul>
+
+        <h3 id="43-workflow">4.3 Sales Intake, Walkthrough &amp; Conversion Flowchart</h3>
+        <div class="mermaid">
+graph TD
+    A[Visitor Enters via Google Maps CID 4883166476987591300 or /get-quote] --> B{Screen Size?}
+    B -- Desktop > 768px --> C[Full 10-Second Intake + HQ Map Embed]
+    B -- Mobile <= 768px --> D[Mobile Express Intake]
+    C --> E[Submit Contact Data]
+    D --> E
+    E --> F[Persist Lead to PostgreSQL + Telegram Alert + AW-8622428739 Conversion]
+    F --> G[Display Confirmation &amp; Pricing Calibration Card]
+    G --> H{Prospect Calibrates?}
+    H -- Yes: Tap City/Frequency Chips --> I[Enrich Lead Record via AJAX + $250 Calibrated Event]
+    H -- No: Exit Immediately --> J[Lead Safely Secured for CRM Outreach]
+    I --> K[Microsoft Bookings Walkthrough Scheduling<br/>FacilityWalkthroughquote@NETORGFT3163094.onmicrosoft.com]
+    J --> K
+    K --> L[Formal Walkthrough Assessment]
+    L --> M[Yamamoto Moto Bidding Calibration]
+    M --> N[CEO Approved Proposal Delivery + 1-Click Google Review Shortlink]
+        </div>
+
+        <h3 id="44-territory-isolation">4.4 Strict Sales Role Territory Isolation &amp; Calling Workstation (BUG-126–BUG-130 &amp; Migration 042)</h3>
+        <ul>
+            <li><strong>Commercial Leads &amp; Calling Workstation Isolation (<code>owner_id = current_user.id</code>):</strong> Representatives with the <code>Sales</code> role only view and dial leads explicitly assigned to their user ID on both the Operations Leads view (<code>?view=leads</code>) and the Calling Workstation (<code>/sales-desk</code>). Unassigned master leads remain invisible until assigned by an Executive, Admin, or Manager, or created directly by the sales representative.</li>
+            <li><strong>Dynamic Calling Script Personalization (<code>{Caller}</code> Tag):</strong> All calling scripts in the database (<code>user_scripts</code>) use the dynamic <code>{Caller}</code> placeholder, which automatically resolves at runtime to the logged-in representative's first name while allowing each representative to save custom personal script variations.</li>
+            <li><strong>Active Client Account Isolation (<code>assigned_rep_id = current_user.id</code>):</strong> On the Clients tab (<code>?view=accounts</code>), <code>Sales</code> role users only see active client facilities assigned to their territory or created by them.</li>
+            <li><strong>Commercial Construction Bid Ownership (<code>assigned_rep_id = current_user.id</code>, Option A):</strong> On the Commercial Construction Bidding pipeline (<code>?view=construction_bids</code>), <code>Sales</code> role users only view and manage construction bids assigned to their user ID via the inline <code>Assigned Rep</code> dropdown (<code>POST /api/v1/construction-bids/&lt;bid_id&gt;/assign-rep</code>), and can trigger live GC contact enrichment via the hardened <code>Enrich</code> button.</li>
+        </ul>
+
+        <h2 id="50-verification-zero-defect-check">5.0 Verification (Zero-Defect Quality Check)</h2>
+        <ul>
+            <li>All quote submissions trigger instant Telegram notification to the operations team within 1.5 seconds.</li>
+            <li>Lead records are verified in the PostgreSQL database with proper source tagging and Google Ads <code>AW-8622428739</code> conversion attribution.</li>
+            <li>Mobile form submissions complete without browser validation errors on both iOS Safari and Android Chrome.</li>
+            <li>Post-submission pricing calibration updates reflect accurately in the Lead detail pane in the backoffice.</li>
+            <li>All review badges and signature links point to the verified 1-click Google Review modal (<code>https://g.page/r/CYTq8OcJfsRDEBM/review</code>).</li>
+            <li>Sales role accounts strictly view only assigned rows across Leads, Calling Desk, Clients, and Commercial Construction Bids with zero unassigned leakage.</li>
+        </ul>
+
+        <h2 id="60-revision-history">6.0 Revision History</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th style="text-align: left;">Version</th>
+                    <th style="text-align: left;">Date</th>
+                    <th style="text-align: left;">Author</th>
+                    <th style="text-align: left;">Change Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="text-align: left;">4.2.0</td>
+                    <td style="text-align: left;">10/17/2026</td>
+                    <td style="text-align: left;">George (Systems Architect)</td>
+                    <td style="text-align: left;">Added Section 4.4: Strict Sales Role Territory Isolation &amp; Calling Workstation (BUG-126 through BUG-130 &amp; Migration 042). Enforced strict territory ownership (owner_id = current_user.id on Leads and /sales-desk; assigned_rep_id = current_user.id on CustomerAccounts and ConstructionBids), deployed dynamic {Caller} script personalization in user_scripts, and added inline Assigned Rep dropdown and Enrich button hardening on Commercial Construction Bidding. Approved by Humberto Dominguez, CEO.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">4.1.0</td>
+                    <td style="text-align: left;">10/16/2026</td>
+                    <td style="text-align: left;">George (Systems Architect)</td>
+                    <td style="text-align: left;">Integrated 5-Room Google Ecosystem into Sales Process (SO-COM-001-DIR-10B through DIR-10G): added interactive McKinney HQ Google Maps embed and CID (4883166476987591300) link on /get-quote, bound Google Ads Account ID 862-242-8739 (AW-8622428739) conversion events to quote_success.html ($150 generate_lead and $250 pricing_calibrated), and wired the official 1-Click Google Review modal shortlink (https://g.page/r/CYTq8OcJfsRDEBM/review) into quote_success.html and executive_signature.html. Approved by Humberto Dominguez, CEO.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">4.0.0</td>
+                    <td style="text-align: left;">10/01/2026</td>
+                    <td style="text-align: left;">George (Systems Architect)</td>
+                    <td style="text-align: left;">Major Architectural Overhaul (BUG-106–BUG-109): Replaced prototype slider widget with Contact-First 10-Second Intake. Deployed Mobile Express Mode (&le; 768px) with dynamic Poka-Yoke required attribute removal. Integrated Two-Phase Pricing Calibration card on confirmation screen with 1-touch City chips. Standardized insurance credentials to verified $2M ACORD 25 commercial liability policy. Approved by Humberto Dominguez, CEO.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">2.0.0</td>
+                    <td style="text-align: left;">05/21/2026</td>
+                    <td style="text-align: left;">George</td>
+                    <td style="text-align: left;">Modernized ID to HWB-QMS-8.0 and added Tier 6 mandates.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">1.0.0</td>
+                    <td style="text-align: left;">02/20/2026</td>
+                    <td style="text-align: left;">Gemini</td>
+                    <td style="text-align: left;">Initial Release.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="sop-card-footer">
+        <span>&copy; 2026 HWB Cleaning Services LLC</span>
+        <span>Controlled Document | HWB-QMS-8.0</span>
+        <span>Page <span class="page-number"></span></span>
+    </div>
+</div>

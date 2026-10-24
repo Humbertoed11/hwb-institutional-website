@@ -63,7 +63,7 @@
         <h2>3.0 System Architecture &amp; Database Foundation</h2>
         <p>The system operates on an immutable, enterprise-grade architecture:</p>
         <ul>
-            <li><strong>Database Engine:</strong> PostgreSQL 16.15 (pgvector/pgvector:pg16 locally on <code>hwb_postgres_dev</code> with volume <code>postgres_data_pg16</code> and Azure Database for PostgreSQL Flexible Server 16.15 on <code>sigmajan-server</code> in production; 86 public tables, 404,470+ rows, <code>vector 0.8.2</code>, <code>pg_trgm</code>, and <code>fuzzystrmatch</code>). All legacy SQLite files are officially retired.</li>
+            <li><strong>Database Engine:</strong> PostgreSQL 16.15 (pgvector/pgvector:pg16 locally on <code>hwb_postgres_dev</code> with volume <code>postgres_data_pg16</code> and Azure Database for PostgreSQL Flexible Server 16.15 on <code>sigmajan-server</code> in production; 86 public tables, 404,470+ rows, <code>vector 0.8.2</code>, <code>pg_trgm</code>, and <code>fuzzystrmatch</code>). All legacy PostgreSQL 16.15 files are officially retired.</li>
             <li><strong>Core Relational Tables:</strong>
                 <ul>
                     <li><code>"Customers"</code> / <code>"CustomerAccounts"</code>: Commercial client facilities, square footage, assigned sales representative (<code>assigned_rep_id</code>), assigned technicians, and contract values.</li>

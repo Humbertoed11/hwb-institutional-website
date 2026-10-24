@@ -1,0 +1,126 @@
+
+<div class="sop-card">
+    <!-- 0.0 DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-7.5-DAF</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">8.1 (Operational Planning)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <table>
+<thead>
+<tr>
+<th style="text-align: left;"><strong>Document Control</strong></th>
+<th style="text-align: left;"></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Document Title</strong></td>
+<td style="text-align: left;"><strong>Data Acquisition and Fidelity SOP</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Document ID</strong></td>
+<td style="text-align: left;">HWB-QMS-7.5-DAF</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Version</strong></td>
+<td style="text-align: left;">2.0.0</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Status</strong></td>
+<td style="text-align: left;">APPROVED</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Author</strong></td>
+<td style="text-align: left;">George (Systems Architect)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Approved By</strong></td>
+<td style="text-align: left;">Humberto Dominguez, CEO</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Date</strong></td>
+<td style="text-align: left;">09/21/2026</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>ISO 9001 Clause</strong></td>
+<td style="text-align: left;">8.1 (Operational Planning)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1 id="standard-operating-procedure-data-acquisition-and-fidelity">Standard Operating Procedure: <strong>Data Acquisition and Fidelity</strong></h1>
+<h2 id="10-purpose">1.0 Purpose</h2>
+<p>This SOP establishes strict protocols for the acquisition, validation, and injection of external datasets into the SigmaFidelity™ CRM. It ensures that only high-fidelity, verified, and non-synthetic data enters the institutional value chain.</p>
+<h2 id="20-universal-mandates-2026-baseline">2.0 Universal Mandates (2026 Baseline)</h2>
+<ol>
+<li><strong>The Operator Charter:</strong> strictly industrial execution—zero synthetic data.</li>
+<li><strong>Guidance First:</strong> If a dataset fails the fidelity gate (sampling), ASK the CEO before attempting manual repair.</li>
+<li><strong>Tier 6 Telemetry:</strong> Every ETL (Extract, Transform, Load) cycle must be logged in the Tactical DB.</li>
+</ol>
+<h2 id="30-procedure-the-fidelity-pipeline">3.0 Procedure: The Fidelity Pipeline</h2>
+<h3 id="31-acquisition-secure-transfer">3.1 Acquisition &amp; Secure Transfer</h3>
+<ol>
+<li><strong>Source Identification:</strong> Datasets must originate from official government (.gov) or verified institutional portals.</li>
+<li><strong>Secure Landing:</strong> Store raw files in <code>/HWB-DATA/HWB-RAW-DATA/</code>.</li>
+<li><strong>Integrity Check:</strong> Execute MD5 checksum to ensure no corruption occurred during transfer.</li>
+</ol>
+<h3 id="32-data-sampling-fidelity-gate">3.2 Data Sampling (Fidelity Gate)</h3>
+<ol>
+<li><strong>Sampling:</strong> Extract a 10-record random sample.</li>
+<li><strong>Verification:</strong> Physically verify that the 10 facilities exist at the listed addresses.</li>
+<li><strong>Gate:</strong> If &gt;1 record is unverified, the entire dataset is rejected.</li>
+</ol>
+<h3 id="33-relational-injection">3.3 Relational Injection</h3>
+<ol>
+<li><strong>Deduplication:</strong> Check for existing License Numbers in the Leads table.</li>
+<li><strong>Schema Alignment:</strong> Map data to the standardized 10-field SigmaFidelity™ schema.</li>
+<li><strong>Archival:</strong> Move raw files to the <code>/ARCHIVE</code> subfolder to maintain a "Zero-Muda" landing zone.</li>
+</ol>
+<h2 id="40-verification-zero-defect-check">4.0 Verification (Zero-Defect Check)</h2>
+<ul>
+<li>Registry Audit confirms 100% match between archived files and CRM records.</li>
+<li>Director names verified against LinkedIn decision-maker intelligence.</li>
+</ul>
+<h2 id="50-revision-history">5.0 Revision History</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Version</th>
+<th style="text-align: left;">Date</th>
+<th style="text-align: left;">Author</th>
+<th style="text-align: left;">Change Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">2.0.0</td>
+<td style="text-align: left;">05/21/2026</td>
+<td style="text-align: left;">George</td>
+<td style="text-align: left;">TOTAL MODERNIZATION. Added 2026 mandates and Tier 6 lifecycle tracking.</td>
+</tr>
+<tr>
+<td style="text-align: left;">1.1</td>
+<td style="text-align: left;">2026-03-05</td>
+<td style="text-align: left;">Nick Doria</td>
+<td style="text-align: left;">Initial Data Acquisition protocol.</td>
+</tr>
+<tr>
+<td style="text-align: left;">1.0</td>
+<td style="text-align: left;">2026-03-05</td>
+<td style="text-align: left;">George</td>
+<td style="text-align: left;">Initial Release.</td>
+</tr>
+</tbody>
+</table>
+    </div>
+
+    <div class="sop-card-footer">
+        <span>&copy; 2026 HWB Cleaning Services LLC</span>
+        <span>Controlled Document | HWB-QMS-7.5-DAF</span>
+        <span>Page <span class="page-number"></span></span>
+    </div>
+</div>

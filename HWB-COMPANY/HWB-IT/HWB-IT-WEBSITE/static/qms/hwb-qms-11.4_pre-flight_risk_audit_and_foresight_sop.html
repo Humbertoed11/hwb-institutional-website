@@ -48,7 +48,7 @@
         <ol>
             <li><strong>The Atomic Protocol:</strong> No more "Multi-Phase" deployments in a single turn. Changes must be executed and validated one logical unit at a time.</li>
             <li><strong>The Marker Rule (Code Injection):</strong> NEVER use regex for multi-line HTML code blocks. Agents must use precise start/end markers (or the <code>replace</code> tool) to prevent character escaping and content erosion (Mistake #9).</li>
-            <li><strong>The Cloud-Mirror Sync:</strong> Before any deployment or Git commit, the agent MUST run <code>git ls-files</code> to verify that critical database files (e.g., SQLite DBs) are not accidentally ignored (Mistake #14).</li>
+            <li><strong>The Cloud-Mirror Sync:</strong> Before any deployment or Git commit, the agent MUST run <code>git status</code> and verify that all PostgreSQL 16.15 schema migrations in <code>database/schema_engine.py</code> and static QMS assets are tracked and synchronized (Mistake #14).</li>
             <li><strong>The Route Gatekeeper:</strong> Before stating a URL or linking an asset, the agent MUST <code>grep</code> the <code>main_app.py</code> routes to ensure 100% parity (Mistake #3).</li>
         </ol>
 

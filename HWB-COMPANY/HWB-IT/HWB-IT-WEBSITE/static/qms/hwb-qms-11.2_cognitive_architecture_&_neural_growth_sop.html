@@ -6,8 +6,8 @@
 <div class="sop-card">
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
-        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-11.2</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-11.2-COG</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.1.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.1.6 (Organizational Knowledge)</span></div>
     </div>
@@ -22,12 +22,12 @@
             </thead>
             <tbody>
                 <tr><td><strong>Document Title</strong></td><td><strong>Cognitive Architecture &amp; Neural Growth SOP</strong></td></tr>
-                <tr><td><strong>Document ID</strong></td><td>HWB-QMS-11.2</td></tr>
-                <tr><td><strong>Version</strong></td><td>2.0.0</td></tr>
+                <tr><td><strong>Document ID</strong></td><td>HWB-QMS-11.2-COG</td></tr>
+                <tr><td><strong>Version</strong></td><td>2.1.0</td></tr>
                 <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
                 <tr><td><strong>Author</strong></td><td>George (Systems Architect)</td></tr>
                 <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
-                <tr><td><strong>Date</strong></td><td>09/21/2026</td></tr>
+                <tr><td><strong>Date</strong></td><td>10/24/2026</td></tr>
                 <tr><td><strong>ISO 9001 Clause</strong></td><td>7.1.6</td></tr>
             </tbody>
         </table>
@@ -53,11 +53,11 @@
             <li><strong>Mandate:</strong> The ultimate source of truth for physical transactions.</li>
         </ul>
 
-        <h3>Tier 2: The Modular Edge Store (SQLite) &amp; Active Task State</h3>
+        <h3>Tier 2: Operational Task State &amp; Edge Caching (PostgreSQL 16.15)</h3>
         <ul>
-            <li><strong>Engine:</strong> Database files in <code>HWB-COMPANY/HWB-DATA/*.db</code> and edge tables.</li>
-            <li><strong>Role:</strong> Manages temporary session files, whatsapp queues, data caching, and the active task tracker table (<code>agent_task_state</code>) for multi-step task recovery.</li>
-            <li><strong>Mandate:</strong> Keeps the system steady if the main internet connection drops.</li>
+            <li><strong>Engine:</strong> PostgreSQL 16.15 operational tables (<code>SystemSettings</code>, <code>UserUiPreferences</code>, and background task queues). All legacy PostgreSQL 16.15 (<code>*.db</code>) files are permanently retired.</li>
+            <li><strong>Role:</strong> Manages session state, UI preferences, data caching, and active task tracking for multi-step task recovery.</li>
+            <li><strong>Mandate:</strong> Keeps the system steady across stateless Gunicorn worker restarts.</li>
         </ul>
 
         <h3>Tier 3: Institutional Mandates &amp; Vector Database (RAG)</h3>
@@ -105,7 +105,7 @@ graph TD
         A[Client Web Form / CLI Input] -->|1. Ingest & Direct| B[Tier 3: Institutional Mandates & RAG]
         B -->|2. Validate Structure| C[Tier 4: Structured Operational Memory]
         C -->|3. Persist Physically| D[Tier 1: PostgreSQL Core - Leads, Customers]
-        C -->|3. Active Task Tracker| E[Tier 2: SQLite Edge Store - agent_task_state]
+        C -->|3. Active Task Tracker| E[Tier 2: PostgreSQL 16.15 Task State]
     end
 
     subgraph "Cognitive Telemetry & Wisdom Layers (Tiers 5 - 6)"

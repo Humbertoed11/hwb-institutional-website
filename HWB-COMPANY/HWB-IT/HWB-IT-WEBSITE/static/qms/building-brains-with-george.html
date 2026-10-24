@@ -7,7 +7,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-IT-BOOK-001</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">15.2.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">15.3.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.1.6 (Organizational Knowledge)</span></div>
     </div>
@@ -23,7 +23,7 @@
             <tbody>
                 <tr><td><strong>Document Title</strong></td><td><strong>Building HWB Cleaning with George: An Operator's Manual for Cleaning Services, Marketing Automation, and Systems Architecture</strong></td></tr>
                 <tr><td><strong>Document ID</strong></td><td>HWB-IT-BOOK-001</td></tr>
-                <tr><td><strong>Version</strong></td><td>15.2.0</td></tr>
+                <tr><td><strong>Version</strong></td><td>15.3.0</td></tr>
                 <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
                 <tr><td><strong>Author</strong></td><td>George (Systems Architect)</td></tr>
                 <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
@@ -363,6 +363,17 @@
         </ul>
         </p>
 
+        <p><strong>22.6 The 5-Pillar Enterprise QMS Lifecycle, Deduplication &amp; Neural Hygiene Architecture (<code>BUG-148</code>):</strong><br>
+        Immediately after updating the QMS library, CEO Humberto Dominguez asked a sharp architectural question: <em>"are there any SOP's outdated that contaminate or create more issues than they were created to resolve?"</em><br>
+        George audited all <code>225</code> HTML files in <code>static/qms/</code>, <code>227</code> index entries in <code>qms_index.json</code>, and <code>4,382</code> rows in PostgreSQL <code>sigma_kb</code>, uncovering 62 contaminating artifacts across 5 categories and executing a 5-Pillar Enterprise Remediation:
+        <ul>
+            <li><strong>Pillar 1 — Canonical Single-Source QMS Registry (<code>163</code> Unique Active SOPs):</strong> Purged 26 hollow 3-sentence boilerplate and personal hobby stubs, 6 Windows desktop sync conflict files and shadow versions, 2 cross-company sister-platform files, and 28 duplicate Title-Case HTML files across <code>static/qms/</code> and <code>HWB-COMPANY/HWB-QMS/</code>; upgraded <code>HWB-ACC-001</code> to a full v2.0.0 fiscal governance SOP; and deduplicated <code>qms_index.json</code> from <code>227</code> down to <code>163</code> unique canonical lowercase <code>snake_case.html</code> SOPs.</li>
+            <li><strong>Pillar 2 — Architecture Modernization to PostgreSQL 16.15:</strong> Upgraded all 11 architecture and Black Belt SOPs (<code>7.5-UI</code>, <code>7.7-SEQ</code>, <code>7.9</code>, <code>11.1</code>, <code>11.2</code>, <code>11.4</code>, <code>11.7</code>, <code>11.9</code>, <code>BB-002</code>, <code>BB-004</code>, <code>FORM-008</code>) to specify <strong>PostgreSQL 16.15</strong>, 24-channel Gunicorn concurrency, and <code>templates/index.html</code>, removing all references to retired legacy database engines and retired template names.</li>
+            <li><strong>Pillar 3 &amp; Pillar 4 — Self-Cleaning Neural Sync Engine (<code>scripts/sigma_sync.py</code>) &amp; Runtime QMS Gatekeeper (<code>blueprints/public.py</code>):</strong> Upgraded <code>sync_new_sops()</code> with a pre-ingestion Quality &amp; Isolation Gate that rejects conflict files, hollow boilerplate, or cross-company references and automatically purges retired HTML SOPs, stale book snapshots, and unindexed markdown bloat from PostgreSQL <code>sigma_kb</code>. Hardened <code>_load_canonical_qms_index()</code> and <code>_resolve_canonical_qms_filename()</code> on <code>/manual</code> and <code>/manual/&lt;filename&gt;</code>.</li>
+            <li><strong>Pillar 5 — Permanent CI/CD Regression Gate (<code>test_27</code>):</strong> Added <code>test_27_qms_library_integrity_and_zero_outdated_sop_contamination_bug_148</code> to <code>scripts/test_web_performance_rack_14.py</code> (<code>27/27</code> passing), permanently preventing hollow stubs, duplicate entries, or retired architecture references from re-entering the QMS catalog.</li>
+        </ul>
+        </p>
+
         <hr />
         <p style="font-style: italic; text-align: center;">Note: This manual is the official technical guide for HWB Cleaning developer-operators. 100% Alignment verified.</p>
     </div>
@@ -456,10 +467,16 @@
                     <td style="text-align: left;">Added Section 22.4: The 37-Route Full-Website Compliance Audit &amp; 6-Pillar Enterprise Remediation (BUG-146), resolving all 12 compliance findings across TCPA quote consent, CIPA &sect; 631 universal cookie banner auto-injection, Privacy Policy v2.3.0 &amp; Terms v2.2.0 synchronization, WCAG 2.2 AA &amp; OWASP tabnabbing hardening, SOC 2 CC6.1 route/margin isolation, Permissions-Policy security header, and empirical GHS/EHSQ database integration, certified by 25/25 Rack 14 tests and 77/77 SOC 2 checks. Approved by Humberto Dominguez, CEO.</td>
                 </tr>
                 <tr>
-                    <td style="text-align: left;">15.2.0</td>
+                    <td style="text-align: left;">15.3.0</td>
                     <td style="text-align: left;">10/24/2026</td>
                     <td style="text-align: left;">George (Systems Architect) &amp; George Bytes</td>
                     <td style="text-align: left;">Added Section 22.5: The 28-Point Public &amp; Client-Facing Internal Jargon Purge &amp; Permanent Regression Gate (BUG-147), removing all client-facing internal engineering, database, SOP code, cryptographic algorithm, and AI persona references across 23 public templates, portals, certificates, and outbound client emails, gating the base.html footer commit badge to authenticated staff only, and certifying 26/26 passing Rack 14 tests (test_26). Approved by Humberto Dominguez, CEO.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">15.3.0</td>
+                    <td style="text-align: left;">10/24/2026</td>
+                    <td style="text-align: left;">George (Systems Architect) &amp; George Bytes</td>
+                    <td style="text-align: left;">Added Section 22.6: The 5-Pillar Enterprise QMS Lifecycle, Deduplication &amp; Neural Hygiene Architecture (BUG-148), purging 62 hollow stubs, desktop sync conflicts, cross-company leaks, and Title-Case duplicates, deduplicating qms_index.json to 163 canonical SOPs, upgrading 11 architecture SOPs to PostgreSQL 16.15, hardening sigma_sync.py and blueprints/public.py, and certifying 27/27 passing Rack 14 tests (test_27). Approved by Humberto Dominguez, CEO.</td>
                 </tr>
             </tbody>
         </table>

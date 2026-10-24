@@ -1,0 +1,165 @@
+
+<div class="sop-card">
+    <!-- 0.0 DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-STRAT-005</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.1.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <table>
+<thead>
+<tr>
+<th style="text-align: left;"><strong>Document Control</strong></th>
+<th style="text-align: left;"></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Document Title</strong></td>
+<td style="text-align: left;"><strong>Management Planning Suite (ID, Tree Diagram &amp; Strategic Plan Table)</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Document ID</strong></td>
+<td style="text-align: left;">HWB-QMS-STRAT-005</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Version</strong></td>
+<td style="text-align: left;">2.1.0</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Status</strong></td>
+<td style="text-align: left;">APPROVED</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Author</strong></td>
+<td style="text-align: left;">George (Systems Architect)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Date</strong></td>
+<td style="text-align: left;">09/21/2026</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1 id="strategic-management-planning-tools">Strategic Management &amp; Planning Tools</h1>
+<h2 id="10-interrelationship-digraph-id-causality-mapping">1.0 Interrelationship Digraph (ID): Causality Mapping</h2>
+<p>This diagram identifies the "Drivers" and "Outcomes" of the SigmaFidelity™ ecosystem. Arrows indicate the direction of influence.</p>
+<div class="mermaid">
+graph LR
+    SOP[Standardized SOPs] --> FID[Information Fidelity]
+    TRN[Employee Training] --> FID
+    FID --> EFF[Operational Efficiency]
+    FID --> TST[Customer Trust]
+    EFF --> REV[Revenue Growth]
+    TST --> REV
+    NC[Nonconformity Control] --> TST
+    NC --> EFF
+
+    %% Analysis
+    style FID fill:#fff3e0,stroke:#e65100,stroke-width:4px
+    style REV fill:#dcfce7,stroke:#166534,stroke-width:2px
+</div>
+<p><strong>Strategic Insight:</strong> <em>Information Fidelity</em> has the highest "Out-Degree" (it influences the most factors), making it our primary <strong>KPIV</strong>.</p>
+<hr />
+<h2 id="20-tree-diagram-strategic-goal-breakdown">2.0 Tree Diagram: Strategic Goal Breakdown</h2>
+<p>This diagram breaks the high-level objective into actionable work streams.</p>
+<div class="mermaid">
+graph TD
+    Goal((SigmaFidelity™ 2026 Leadership)) --> GOV[Governance]
+    Goal --> OPS[Operations]
+    Goal --> MKT[Marketing]
+
+    %% Governance Branch
+    GOV --> ISO[ISO 9001 Certification]
+    GOV --> IEE[S4/IEE Data Standards]
+    ISO --> AUD[Internal Audit Cycles]
+    IEE --> DASH[Executive Dashboard]
+
+    %% Operations Branch
+    OPS --> STF[Staff Excellence]
+    OPS --> EQUIP[Asset Management]
+    STF --> COMPET[Competency Tracking]
+    EQUIP --> QR[QR Asset Tags]
+
+    %% Marketing Branch
+    MKT --> LNK[LinkedIn Series]
+    MKT --> LEAD[Lead Harvesting]
+    LNK --> VIRAL[1M Impressions Goal]
+    LEAD --> AUDIT[5,000 Verified Assets]
+
+    %% Styling
+    style Goal fill:#e1f5fe,stroke:#01579b
+    style GOV fill:#f3e5f5,stroke:#4a148c
+    style OPS fill:#f3e5f5,stroke:#4a148c
+    style MKT fill:#f3e5f5,stroke:#4a148c
+</div>
+
+<hr />
+<h2 id="30-strategic-assessment-plan-table">3.0 Strategic Technology Assessment &amp; Planning Table</h2>
+<p>This table catalogs strategic architectural assessments and technological initiatives evaluated for ecosystem resilience, scale, and operational risk mitigation.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Initiative ID</th>
+<th style="text-align: left;">Strategic Initiative</th>
+<th style="text-align: left;">Scale Horizon</th>
+<th style="text-align: left;">Primary Objective</th>
+<th style="text-align: left;">Technology Stack</th>
+<th style="text-align: left;">Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>ARCH-003</strong></td>
+<td style="text-align: left;">SigmaClient™ Progressive Web App (PWA) Enterprise Command Hub</td>
+<td style="text-align: left;">1,000+ Commercial Clients</td>
+<td style="text-align: left;">Eliminate third-party platform risk (Telegram policy/pricing shifts) via a 1-tap, zero-download, self-hosted web portal with offline caching and magic links.</td>
+<td style="text-align: left;">HTML5, CSS3, Service Worker (<code>sw.js</code>), Web Manifest, PostgreSQL, Python/Flask</td>
+<td style="text-align: left;"><span style="color: #2563eb; font-weight: 600;">STAGED FOR FUTURE ASSESSMENT</span></td>
+</tr>
+</tbody>
+</table>
+
+<hr />
+<h2 id="40-revision-history">4.0 Revision History</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Version</th>
+<th style="text-align: left;">Date</th>
+<th style="text-align: left;">Author</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1.0</td>
+<td style="text-align: left;">2026-02-21</td>
+<td style="text-align: left;">Gemini</td>
+<td style="text-align: left;">Initial Release of ID and Tree Diagram.</td>
+</tr>
+<tr>
+<td style="text-align: left;">2.0.0</td>
+<td style="text-align: left;">09/21/2026</td>
+<td style="text-align: left;">George (Systems Architect)</td>
+<td style="text-align: left;">Modernized and upgraded to post-May 1st, 2026 baseline. Standardized under HWB-QMS-1.0 v2.0 (Everyday Words) and approved by Humberto Dominguez, CEO.</td>
+</tr>
+<tr>
+<td style="text-align: left;">2.1.0</td>
+<td style="text-align: left;">09/21/2026</td>
+<td style="text-align: left;">George (Systems Architect)</td>
+<td style="text-align: left;">Added Section 3.0 Strategic Technology Assessment &amp; Planning Table staging ARCH-003 (SigmaClient™ PWA Enterprise Command Hub) for future executive assessment per CEO directive.</td>
+</tr>
+</tbody>
+</table>
+    </div>
+
+    <div class="sop-card-footer">
+        <span>&copy; 2026 HWB Cleaning Services LLC</span>
+        <span>Controlled Document | HWB-QMS-STRAT-005</span>
+        <span>Page <span class="page-number"></span></span>
+    </div>
+</div>

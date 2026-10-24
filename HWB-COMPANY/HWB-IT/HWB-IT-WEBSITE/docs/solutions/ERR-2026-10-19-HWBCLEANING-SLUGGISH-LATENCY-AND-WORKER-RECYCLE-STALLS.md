@@ -61,6 +61,10 @@
 - **Finding:** `templates/backoffice_operations.html` (`16,900` lines) rendered all 11 hidden department views, 28 modals, and `391 KB` of inline `<script>` on every click.
 - **Resolution (Pillar 4 — Server-Side Jinja DOM Pruning & Static JS Extraction):** Extracted `static/js/backoffice_operations_core.js` (`391 KB`, browser-cached) and wrapped inactive `<div id="view-...">` inner blocks and department-specific modals in server-side `{% if active_view == '...' %}` guards.
 
+### Root Cause 11 (`BUG-134`): Unclosed `#view-monitor` Container (`display: none`) Trapping Downstream Modals
+- **Finding:** In `templates/backoffice_operations.html` (line `4002`), `<div id="view-monitor" style="display: none;">` was opened outside `{% if active_view in ['monitor', 'dispatch'] %}`, while its matching closing `</div>` tag (line `4272`) was placed inside the conditional block. On non-Monitor tabs (`view=leads`, `view=accounts`, etc.), Jinja skipped the closing `</div>` tag, wrapping all downstream views (`#view-scope`, `#view-it-department`) and modals (`#modal-lead-command`, `#modal-account-command`, `#modal-commercial-takeoff`, etc.) inside `#view-monitor` (`display: none`).
+- **Resolution:** Closed `{% if active_view in ['monitor', 'dispatch'] %}` inside `#view-monitor` before its closing `</div>` tag, wrapped `#modal-dispatch-create` and `#modal-dispatch-detail` in a balanced block outside `#view-monitor`, replaced `ARRAY_AGG` in `ConstructionBids` with `LEFT JOIN LATERAL` (`147ms -> 30ms`), and added `test_11_backoffice_modal_dom_isolation_and_lead_click` in `scripts/test_web_performance_rack_14.py` (`11/11` passed).
+
 ---
 
 ## 4.0 Empirical Before vs. After Benchmark (`v5.4.4`)
@@ -82,8 +86,9 @@
 ---
 
 ## 5.0 5-Table Error & Audit Database Synchronization Ledger (Migration `044`)
-- **`"SigmaKnowledgeScars"`:** `BUG-132` (`id=224`) & `BUG-133` (`id=225`)
-- **`"GlobalActivities"`:** `[AUTO-HEALED-PERFORMANCE-BUG-132]` (`activity_id=208726`) & `[AUTO-HEALED-PERFORMANCE-BUG-133]` (`activity_id=208727`)
-- **`"Incidents"`:** `BUG-132` (`id=3`) & `BUG-133` (`id=4`)
+- **`"SigmaKnowledgeScars"`:** `BUG-132` (`id=224`), `BUG-133` (`id=225`), & `BUG-134` (`id=226`)
+- **`"GlobalActivities"`:** `[AUTO-HEALED-PERFORMANCE-BUG-132]` (`activity_id=208726`), `[AUTO-HEALED-PERFORMANCE-BUG-133]` (`activity_id=208727`), & `[AUTO-HEALED-DOM-BUG-134]` (`activity_id=209008`)
+- **`"Incidents"`:** `BUG-132` (`id=3`), `BUG-133` (`id=4`), & `BUG-134` (`id=5`)
 - **`"RackTelemetryHistory"`:** `session_id='HWB-QMS-11.14-V5.4.4-AUDIT'` (`id=3455`)
 - **`"SecurityAuditLogs"`:** `event_action='HWB_QMS_11_14_V5_4_4_BUG_132_133_REMEDIATED'` (`id=2646`)
+

@@ -100,6 +100,22 @@ def audit_database_schema() -> Dict[str, Any]:
             missing_cols = sorted(required_user_cols - user_cols)
             res["users_iam_columns_verified"] = (len(missing_cols) == 0)
             res["missing_user_columns"] = missing_cols
+
+            # Verify mandatory 1099 Subcontractor Onboarding & Extraction columns on "SubcontractorPartners"
+            cur.execute("""
+                SELECT column_name
+                FROM information_schema.columns
+                WHERE table_name = 'SubcontractorPartners' AND table_schema = 'public';
+            """)
+            sub_cols = {r[0] for r in cur.fetchall()}
+            required_sub_cols = {
+                "onboarding_token", "onboarding_status", "street_address", "zip_code",
+                "legal_entity_name", "tax_classification", "msa_file_url", "dwc83_file_url",
+                "coi_carrier", "coi_policy_number", "coi_coverage_amount", "msa_signed"
+            }
+            missing_sub_cols = sorted(required_sub_cols - sub_cols)
+            res["subcontractors_onboarding_columns_verified"] = (len(missing_sub_cols) == 0)
+            res["missing_subcontractor_columns"] = missing_sub_cols
         conn.close()
         return res
     except Exception as tcp_err:

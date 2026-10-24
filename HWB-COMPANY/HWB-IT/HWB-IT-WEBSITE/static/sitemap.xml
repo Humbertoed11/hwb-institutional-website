@@ -1,36 +1,43 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <!-- Core Conversion & Home Surface -->
-  <url><loc>https://www.hwbcleaning.com/</loc><priority>1.0</priority></url>
-  <url><loc>https://www.hwbcleaning.com/get-quote</loc><priority>0.95</priority></url>
+  <url><loc>https://www.hwbcleaning.com/</loc><lastmod>2026-10-16</lastmod><priority>1.0</priority></url>
+  <url><loc>https://www.hwbcleaning.com/get-quote</loc><lastmod>2026-10-16</lastmod><priority>0.95</priority></url>
 
   <!-- Specialized Commercial Cleaning Service Lines -->
-  <url><loc>https://www.hwbcleaning.com/services/janitorial</loc><priority>0.90</priority></url>
-  <url><loc>https://www.hwbcleaning.com/services/commercial</loc><priority>0.90</priority></url>
-  <url><loc>https://www.hwbcleaning.com/services/industrial</loc><priority>0.90</priority></url>
-  <url><loc>https://www.hwbcleaning.com/services/construction</loc><priority>0.90</priority></url>
+  <url><loc>https://www.hwbcleaning.com/services/janitorial</loc><lastmod>2026-10-16</lastmod><priority>0.90</priority></url>
+  <url><loc>https://www.hwbcleaning.com/services/commercial</loc><lastmod>2026-10-16</lastmod><priority>0.90</priority></url>
+  <url><loc>https://www.hwbcleaning.com/services/industrial</loc><lastmod>2026-10-16</lastmod><priority>0.90</priority></url>
+  <url><loc>https://www.hwbcleaning.com/services/construction</loc><lastmod>2026-10-16</lastmod><priority>0.90</priority></url>
 
-  <!-- Regional North Texas Metropolitan Corridors -->
-  <url><loc>https://www.hwbcleaning.com/locations/dallas</loc><priority>0.85</priority></url>
-  <url><loc>https://www.hwbcleaning.com/locations/plano</loc><priority>0.85</priority></url>
-  <url><loc>https://www.hwbcleaning.com/locations/fort-worth</loc><priority>0.85</priority></url>
-  <url><loc>https://www.hwbcleaning.com/locations/frisco</loc><priority>0.85</priority></url>
-  <url><loc>https://www.hwbcleaning.com/locations/mckinney</loc><priority>0.85</priority></url>
-  <url><loc>https://www.hwbcleaning.com/locations/waxahachie</loc><priority>0.85</priority></url>
+  <!-- Regional North Texas Metropolitan Corridors (11 Cities) -->
+  <url><loc>https://www.hwbcleaning.com/locations/dallas</loc><lastmod>2026-10-16</lastmod><priority>0.85</priority></url>
+  <url><loc>https://www.hwbcleaning.com/locations/plano</loc><lastmod>2026-10-16</lastmod><priority>0.85</priority></url>
+  <url><loc>https://www.hwbcleaning.com/locations/fort-worth</loc><lastmod>2026-10-16</lastmod><priority>0.85</priority></url>
+  <url><loc>https://www.hwbcleaning.com/locations/frisco</loc><lastmod>2026-10-16</lastmod><priority>0.85</priority></url>
+  <url><loc>https://www.hwbcleaning.com/locations/mckinney</loc><lastmod>2026-10-16</lastmod><priority>0.85</priority></url>
+  <url><loc>https://www.hwbcleaning.com/locations/waxahachie</loc><lastmod>2026-10-16</lastmod><priority>0.85</priority></url>
+  <url><loc>https://www.hwbcleaning.com/locations/irving</loc><lastmod>2026-10-16</lastmod><priority>0.85</priority></url>
+  <url><loc>https://www.hwbcleaning.com/locations/richardson</loc><lastmod>2026-10-16</lastmod><priority>0.85</priority></url>
+  <url><loc>https://www.hwbcleaning.com/locations/allen</loc><lastmod>2026-10-16</lastmod><priority>0.85</priority></url>
+  <url><loc>https://www.hwbcleaning.com/locations/arlington</loc><lastmod>2026-10-16</lastmod><priority>0.85</priority></url>
+  <url><loc>https://www.hwbcleaning.com/locations/addison</loc><lastmod>2026-10-16</lastmod><priority>0.85</priority></url>
 
   <!-- Commercial Trust, B2B Procurement & Prequalification -->
-  <url><loc>https://www.hwbcleaning.com/about</loc><priority>0.80</priority></url>
-  <url><loc>https://www.hwbcleaning.com/capability-statement</loc><priority>0.80</priority></url>
-  <url><loc>https://www.hwbcleaning.com/prequal</loc><priority>0.80</priority></url>
-  <url><loc>https://www.hwbcleaning.com/academy</loc><priority>0.75</priority></url>
+  <url><loc>https://www.hwbcleaning.com/about</loc><lastmod>2026-10-16</lastmod><priority>0.80</priority></url>
+  <url><loc>https://www.hwbcleaning.com/trust-center</loc><lastmod>2026-10-16</lastmod><priority>0.80</priority></url>
+  <url><loc>https://www.hwbcleaning.com/capability-statement</loc><lastmod>2026-10-16</lastmod><priority>0.80</priority></url>
+  <url><loc>https://www.hwbcleaning.com/prequal</loc><lastmod>2026-10-16</lastmod><priority>0.80</priority></url>
+  <url><loc>https://www.hwbcleaning.com/academy</loc><lastmod>2026-10-16</lastmod><priority>0.75</priority></url>
 
   <!-- Workforce Recruitment & Operational Methodology -->
-  <url><loc>https://www.hwbcleaning.com/work-with-us</loc><priority>0.70</priority></url>
-  <url><loc>https://www.hwbcleaning.com/careers</loc><priority>0.70</priority></url>
-  <url><loc>https://www.hwbcleaning.com/compliance</loc><priority>0.60</priority></url>
-  <url><loc>https://www.hwbcleaning.com/methodology</loc><priority>0.60</priority></url>
+  <url><loc>https://www.hwbcleaning.com/work-with-us</loc><lastmod>2026-10-16</lastmod><priority>0.70</priority></url>
+  <url><loc>https://www.hwbcleaning.com/compliance</loc><lastmod>2026-10-16</lastmod><priority>0.65</priority></url>
+  <url><loc>https://www.hwbcleaning.com/ehsq</loc><lastmod>2026-10-16</lastmod><priority>0.65</priority></url>
+  <url><loc>https://www.hwbcleaning.com/methodology</loc><lastmod>2026-10-16</lastmod><priority>0.65</priority></url>
 
   <!-- Legal & Institutional Standards -->
-  <url><loc>https://www.hwbcleaning.com/privacy-policy</loc><priority>0.50</priority></url>
-  <url><loc>https://www.hwbcleaning.com/terms</loc><priority>0.50</priority></url>
+  <url><loc>https://www.hwbcleaning.com/privacy-policy</loc><lastmod>2026-10-16</lastmod><priority>0.50</priority></url>
+  <url><loc>https://www.hwbcleaning.com/terms</loc><lastmod>2026-10-16</lastmod><priority>0.50</priority></url>
+  <url><loc>https://www.hwbcleaning.com/accessibility</loc><lastmod>2026-10-16</lastmod><priority>0.50</priority></url>
 </urlset>

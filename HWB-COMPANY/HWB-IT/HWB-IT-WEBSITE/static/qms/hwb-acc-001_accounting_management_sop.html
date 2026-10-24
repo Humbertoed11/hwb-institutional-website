@@ -1,130 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HWB-ACC-001 | Accounting, Fiscal Governance & Warchest Management SOP</title>
+    <style>
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; line-height: 1.6; color: #1e293b; max-width: 960px; margin: 2rem auto; padding: 0 2rem; background-color: #f8fafc; }
+        .sop-container { background: #ffffff; padding: 3rem; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid #e2e8f0; border-top: 6px solid #0f172a; }
+        h1 { font-size: 2rem; font-weight: 800; color: #0f172a; margin-bottom: 1.25rem; border-bottom: 3px solid #2563eb; padding-bottom: 0.75rem; }
+        h2 { font-size: 1.35rem; font-weight: 700; color: #1e40af; margin-top: 2rem; border-left: 4px solid #2563eb; padding-left: 0.75rem; }
+        table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; font-size: 0.9rem; }
+        th, td { border: 1px solid #cbd5e1; padding: 0.75rem 1rem; text-align: left; }
+        th { background-color: #f1f5f9; font-weight: 700; color: #334155; }
+        code { background: #f1f5f9; padding: 0.15rem 0.4rem; border-radius: 4px; font-family: monospace; color: #be123c; }
+    </style>
+</head>
+<body>
+<div class="sop-container">
+    <h1>HWB-ACC-001: Accounting, Fiscal Governance &amp; Warchest Management SOP</h1>
+    <table>
+        <tbody>
+            <tr><th>Document ID</th><td>HWB-ACC-001</td><th>Effective Date</th><td>10/24/2026</td></tr>
+            <tr><th>Version</th><td>2.0.0</td><th>Author</th><td>Maria Bolanos, VP of Finance</td></tr>
+            <tr><th>Department</th><td>ACCOUNTING (Executive Tier)</td><th>Approval</th><td>Humberto Dominguez, CEO</td></tr>
+        </tbody>
+    </table>
 
-<div class="sop-card">
-    <!-- 0.0 DOCUMENT CONTROL -->
-    <div class="sop-meta">
-        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-ACC-001</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.0.0</span></div>
-        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
-        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.1.3 (Infrastructure)</span></div>
-    </div>
+    <h2>1.0 Purpose &amp; Fiscal Authority</h2>
+    <p>This procedure establishes the financial controls, accounts receivable/payable workflows, 1099 subcontractor payout verification, and cloud cost governance for HWB Cleaning Services LLC. Maria Bolanos (VP of Finance) holds sole operational authority over fiscal oversight, development cost budgets, and Warchest capital reserves, with final executive approval by CEO Humberto Dominguez.</p>
 
-    <div class="sop-content-body">
-        <table>
-<thead>
-<tr>
-<th style="text-align: left;"><strong>Document Control</strong></th>
-<th style="text-align: left;"></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;"><strong>Document Title</strong></td>
-<td style="text-align: left;"><strong>Accounting Management SOP</strong></td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>Document ID</strong></td>
-<td style="text-align: left;">HWB-ACC-001</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>Version</strong></td>
-<td style="text-align: left;">2.0.0</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>Status</strong></td>
-<td style="text-align: left;">APPROVED</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>Author</strong></td>
-<td style="text-align: left;">George (Systems Architect)</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>Approved By</strong></td>
-<td style="text-align: left;">Humberto Dominguez, CEO</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>Date</strong></td>
-<td style="text-align: left;">09/21/2026</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>ISO 9001 Clause</strong></td>
-<td style="text-align: left;">7.1.3 (Infrastructure)</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h1 id="standard-operating-procedure-accounting-management-sop">Standard Operating Procedure: <strong>Accounting Management SOP</strong></h1>
-<h2 id="10-purpose">1.0 Purpose</h2>
-<p>This SOP defines the financial governance, invoicing, and tax compliance procedures for HWB Cleaning Services LLC, ensuring fiscal integrity and alignment with ISO 9001 operational standards.</p>
-<h2 id="20-scope">2.0 Scope</h2>
-<p>Applies to all financial transactions, including accounts receivable (AR), accounts payable (AP), and payroll processing.</p>
-<h2 id="30-universal-mandates-2026-baseline">3.0 Universal Mandates (2026 Baseline)</h2>
-<ol>
-<li><strong>Guidance First:</strong> If a financial discrepancy or missing file is found, ASK the CEO before searching.</li>
-<li><strong>Tier 6 Telemetry:</strong> Every major fiscal decision must be logged to the <code>SigmaInteractionLog</code>.</li>
-<li><strong>Physical Truth:</strong> Reference absolute server paths for all accounting exports.</li>
-</ol>
-<h2 id="40-prerequisites">4.0 Prerequisites</h2>
-<ul>
-<li>Access to QuickBooks/Accounting software.</li>
-<li>Verified empirical data from the <code>quote_app</code> for invoicing.</li>
-<li><code>HWB-ACC-002 Accounts Receivable SOP</code></li>
-<li><code>HWB-ACC-003 Accounts Payable SOP</code></li>
-</ul>
-<h2 id="50-procedure">5.0 Procedure</h2>
-<ol>
-<li><strong>Accounts Receivable:</strong> Manage client invoicing and collections per <code>HWB-ACC-002</code>.</li>
-<li><strong>Accounts Payable:</strong> Manage vendor obligations and payments per <code>HWB-ACC-003</code>.</li>
-<li><strong>Audit Readiness:</strong> Maintain all financial records for a minimum of 7 years in compliance with federal regulations.</li>
-</ol>
-<h3 id="51-process-flow-chart">5.1 [Process Flow Chart]</h3>
-<div class="mermaid">
-graph TD
-    A[Service Completion] --> B[Invoice Generation]
-    B --> C[Client Payment]
-    D[Vendor Invoice] --> E[AP Verification]
-    E --> F[Payment Release]
+    <h2>2.0 Commercial Billing &amp; Accounts Receivable</h2>
+    <ul>
+        <li><strong>Recurring Commercial Janitorial Contracts:</strong> Invoiced monthly in advance or net-15 per executed service agreement, tracked in PostgreSQL 16.15 (<code>"Invoices"</code> and <code>"Customers"</code> tables) and reconciled with QuickBooks Online.</li>
+        <li><strong>General Contractor Post-Construction Subcontracts:</strong> Billed per AIA G702/G703 schedule of values (rough clean, final detail clean, window wash, and touch-up puffy clean) with Conditional/Unconditional Texas Statutory Lien Waivers per <strong>HWB-QMS-8.6</strong>.</li>
+        <li><strong>Margin Floor Protection:</strong> All commercial proposals and construction takeoffs must meet a minimum <strong>35% gross margin</strong> floor prior to release.</li>
+    </ul>
+
+    <h2>3.0 Accounts Payable &amp; 1099 Subcontractor Payout Gate</h2>
+    <p>No disbursement may be issued to a 1099 subcontractor partner unless the PostgreSQL 16.15 <code>"SubcontractorPartners"</code> record confirms all four statutory prerequisites:</p>
+    <ol>
+        <li>Verified IRS Form W-9 with encrypted TIN/EIN on file (<code>w9_status = 'Verified'</code>).</li>
+        <li>Active General Liability Certificate of Insurance (<code>coi_status = 'Verified'</code> and non-expired <code>coi_expiration_date</code>).</li>
+        <li>Executed Master Subcontractor Agreement (<code>msa_signed = TRUE</code>).</li>
+        <li>Signed Texas DWC Form-83 Independent Contractor Affirmation (<code>dwc83_signed = TRUE</code>).</li>
+    </ol>
+
+    <h2>4.0 Cloud Infrastructure &amp; Warchest Cost Control</h2>
+    <ul>
+        <li><strong>Zero-Waste Cloud Operations:</strong> Production hosting on Microsoft Azure Web App for Containers and Azure Database for PostgreSQL Flexible Server 16.15 is continuously monitored against the monthly infrastructure budget.</li>
+        <li><strong>Executive Tier Access Control:</strong> All Accounting SOPs and financial forecasts are restricted strictly to <code>Executive</code> and <code>Admin</code> roles via attribute-based access control on <code>/manual</code>.</li>
+    </ul>
+
+    <h2>5.0 Revision History</h2>
+    <table>
+        <thead>
+            <tr><th>Version</th><th>Date</th><th>Author</th><th>Description of Changes</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>2.0.0</td><td>10/24/2026</td><td>Maria Bolanos &amp; George</td><td>Replaced initial stub with complete enterprise fiscal governance, AR/AP, 1099 payout verification, and PostgreSQL 16.15 financial reconciliation standard (BUG-148).</td></tr>
+        </tbody>
+    </table>
 </div>
-
-<h2 id="60-verification-zero-defect-check">6.0 Verification (Zero-Defect Check)</h2>
-<ul>
-<li>Monthly bank reconciliation reports verified by CEO.</li>
-<li>Annual financial audits by the Managing Director.</li>
-<li>Zero variance between Lead records and Invoices.</li>
-</ul>
-<h2 id="70-notes-and-cautions">7.0 Notes and Cautions</h2>
-<div class="callout callout-note"><strong>Note</strong>Use simple, everyday words for high readability.</div>
-<div class="callout callout-caution"><strong>Caution</strong>All financial entries must represent actual currency transactions. Zero Synthetic Data.</div>
-
-<h2 id="80-revision-history">8.0 Revision History</h2>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">Version</th>
-<th style="text-align: left;">Date</th>
-<th style="text-align: left;">Author</th>
-<th style="text-align: left;">Change Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;">2.0.0</td>
-<td style="text-align: left;">05/21/2026</td>
-<td style="text-align: left;">George</td>
-<td style="text-align: left;">TOTAL MODERNIZATION. Added 2026 Baseline mandates and Tier 6 integration.</td>
-</tr>
-<tr>
-<td style="text-align: left;">1.1</td>
-<td style="text-align: left;">2026-03-01</td>
-<td style="text-align: left;">Gemini</td>
-<td style="text-align: left;">Integrated specific AR and AP management SOPs.</td>
-</tr>
-</tbody>
-</table>
-    </div>
-
-    <div class="sop-card-footer">
-        <span>&copy; 2026 HWB Cleaning Services LLC</span>
-        <span>Controlled Document | HWB-ACC-001</span>
-        <span>Page <span class="page-number"></span></span>
-    </div>
-</div>
+</body>
+</html>

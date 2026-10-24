@@ -1,0 +1,127 @@
+
+<div class="sop-card">
+    <!-- 0.0 DOCUMENT CONTROL -->
+    <div class="sop-meta">
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-7.2-MGMT</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.1.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.1.2 (People) &amp; 7.2 (Competence)</span></div>
+    </div>
+
+    <div class="sop-content-body">
+        <table>
+<thead>
+<tr>
+<th style="text-align: left;"><strong>Document Control</strong></th>
+<th style="text-align: left;"></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Document Title</strong></td>
+<td style="text-align: left;"><strong>HR Management System SOP</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Document ID</strong></td>
+<td style="text-align: left;">HWB-QMS-7.2-MGMT</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Version</strong></td>
+<td style="text-align: left;">2.1.0</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Status</strong></td>
+<td style="text-align: left;">APPROVED</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Author</strong></td>
+<td style="text-align: left;">George (Systems Architect)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Approved By</strong></td>
+<td style="text-align: left;">Humberto Dominguez, CEO</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Date</strong></td>
+<td style="text-align: left;">10/17/2026</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>ISO 9001 Clause</strong></td>
+<td style="text-align: left;">7.1.2 (People) &amp; 7.2 (Competence)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1 id="standard-operating-procedure-hr-management-system-sop">Standard Operating Procedure: <strong>HR Management System SOP</strong></h1>
+<h2 id="10-purpose">1.0 Purpose</h2>
+<p>To define the structure and governance of the HR department, ensuring all W-2 personnel and 1099 subcontractor trade partners are recruited, deduplicated, onboarded, and trained according to ISO 9001:2026 (ISO 9001:2015+Amd 1:2024) Clause 7.2 (Competence) and Clause 8.4 (Control of Externally Provided Processes).</p>
+<h2 id="20-universal-mandates-2026-baseline">2.0 Universal Mandates (2026 Baseline)</h2>
+<ol>
+<li><strong>Third-Person Perspective:</strong> All HR documentation and system logs must use the objective 3rd-person standard and plain, everyday English.</li>
+<li><strong>Guidance First:</strong> If a worker certification is expired, notify executive leadership before suspending field duty.</li>
+<li><strong>Zero Duplicate Personnel Records (BUG-122):</strong> All workforce recruitment and HR onboarding endpoints must enforce the 5-Pillar Enterprise Deduplication &amp; Smart Merge Engine so returning applicants, subcontractors, and employees update their single master profile rather than creating duplicate database rows.</li>
+</ol>
+<h2 id="30-procedure">3.0 Procedure</h2>
+<ol>
+<li><strong>File Management:</strong> Maintain secure digital records for each employee (HWB-FORM-7.2-004) and subcontractor partner inside PostgreSQL 16.15.</li>
+<li><strong>Workforce &amp; Subcontractor Intake Deduplication:</strong>
+    <ul>
+        <li>When a W-2 candidate applies via <code>POST /api/v1/workforce/apply</code> or a 1099 subcontractor registers via <code>POST /api/v1/workforce/subcontractor</code>, the system checks existing records by 10-digit phone number, lowercase email, and normalized business name.</li>
+        <li>If the applicant or subcontractor is already registered, the system preserves the original record ID and registration date, merges any updated trade specialties, crew size, or shift preferences, sends an updated Reference ID receipt email (<code>APP-#00XX</code> or <code>SUB-#00XX</code>) to the registrant, and displays the privacy-safe <strong>Already Registered — Profile Updated</strong> banner on <code>/work-with-us</code>.</li>
+        <li>Manual backoffice subcontractor creation (<code>POST /api/v1/workforce/subcontractors</code>) blocks duplicate phone numbers, emails, or company names with an HTTP 409 Conflict notice.</li>
+    </ul>
+</li>
+<li><strong>Employee Onboarding &amp; Academy Assignment Deduplication:</strong>
+    <ul>
+        <li>Promoting a candidate via <code>POST /api/v1/hr/onboard</code> checks <code>"Employees"</code> by <code>applicant_id</code>, 10-digit phone, and email. Repeat calls update role and pay rate while preserving the existing employee badge (<code>HWB-EMP-####</code>).</li>
+        <li>Assigning training courses via <code>POST /api/v1/academy/assign</code> checks <code>"AcademyEnrollments"</code> for existing enrollments and reuses the active <code>magic_token</code> instead of creating duplicate training rows.</li>
+    </ul>
+</li>
+<li><strong>Certification Tracking:</strong> All equipment operators and field crews must complete assigned SigmaAcademy™ safety modules before deployment.</li>
+</ol>
+<h2 id="40-verification-zero-defect-check">4.0 Verification (Zero-Defect Check)</h2>
+<ul>
+<li>Quarterly audit of training records in <code>"AcademyEnrollments"</code>.</li>
+<li>100% compliance with GHS Hazard Communication training.</li>
+<li>Zero duplicate rows across <code>"SubcontractorPartners"</code>, <code>"JobApplicants"</code>, and <code>"Employees"</code> verified by <code>scripts/test_labor_recruitment_and_cyber_suite.py</code> (5/5 tests passing).</li>
+</ul>
+<hr />
+<h2 id="50-revision-history">5.0 Revision History</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Version</th>
+<th style="text-align: left;">Date</th>
+<th style="text-align: left;">Author</th>
+<th style="text-align: left;">Change Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">2.1.0</td>
+<td style="text-align: left;">10/17/2026</td>
+<td style="text-align: left;">George (Systems Architect)</td>
+<td style="text-align: left;">Integrated the 5-Pillar Enterprise Deduplication &amp; Smart Merge Engine (BUG-122) across W-2 job applications, 1099 subcontractor registrations, HR employee onboarding, and SigmaAcademy™ course assignments, including automated registrant receipt emails (APP-#00XX / SUB-#00XX) and PostgreSQL 16.15 unique phone digit indexing. Approved by Humberto Dominguez, CEO.</td>
+</tr>
+<tr>
+<td style="text-align: left;">2.0.0</td>
+<td style="text-align: left;">05/21/2026</td>
+<td style="text-align: left;">George</td>
+<td style="text-align: left;">TOTAL MODERNIZATION. Updated ID for clarity and added 2026 mandates.</td>
+</tr>
+<tr>
+<td style="text-align: left;">1.0</td>
+<td style="text-align: left;">2026-02-28</td>
+<td style="text-align: left;">Gemini</td>
+<td style="text-align: left;">Initial Release.</td>
+</tr>
+</tbody>
+</table>
+    </div>
+
+    <div class="sop-card-footer">
+        <span>&copy; 2026 HWB Cleaning Services LLC</span>
+        <span>Controlled Document | HWB-QMS-7.2-MGMT</span>
+        <span>Page <span class="page-number"></span></span>
+    </div>
+</div>
