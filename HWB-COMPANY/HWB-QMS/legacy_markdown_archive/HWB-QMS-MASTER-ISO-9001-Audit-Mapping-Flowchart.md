@@ -10,10 +10,10 @@
 
 ---
 
-# ISO 9001:2015 Master Audit Mapping Flowchart
+# ISO 9001:2026 (ISO 9001:2015+Amd 1:2024) Master Audit Mapping Flowchart
 
 ## 1.0 Purpose
-This document provides a comprehensive visual mapping of the HWB Cleaning Services Quality Management System against the ISO 9001:2015 standard.
+This document provides a comprehensive visual mapping of the HWB Cleaning Services Quality Management System against the ISO 9001:2026 (ISO 9001:2015+Amd 1:2024) standard.
 
 ## 2.0 Procedure: Master PDCA Mapping
 

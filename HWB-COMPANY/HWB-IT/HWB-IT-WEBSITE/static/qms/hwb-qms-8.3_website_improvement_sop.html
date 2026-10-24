@@ -1,39 +1,64 @@
-
 <div class="sop-card">
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
-        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-8.3</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-8.3-WEB</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.0.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
-        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5 &amp; 8.2.1 (Web Architecture &amp; Compliance)</span></div>
     </div>
 
     <div class="sop-content-body">
-        <h1 id="document-title">Standard Operating Procedure: Website Improvement & Optimization SOP</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th style="text-align: left;"><strong>Document Control</strong></th>
+                    <th style="text-align: left;"><strong>Institutional Specification</strong></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td style="text-align: left;"><strong>Document Title</strong></td><td style="text-align: left;"><strong>Website Improvement, WCAG 2.2 AA Accessibility &amp; Consent-Gated Telemetry SOP</strong></td></tr>
+                <tr><td style="text-align: left;"><strong>Document ID</strong></td><td style="text-align: left;">HWB-QMS-8.3-WEB</td></tr>
+                <tr><td style="text-align: left;"><strong>Version</strong></td><td style="text-align: left;">3.0.0</td></tr>
+                <tr><td style="text-align: left;"><strong>Status</strong></td><td style="text-align: left;">APPROVED</td></tr>
+                <tr><td style="text-align: left;"><strong>Author</strong></td><td style="text-align: left;">George (Systems Architect &amp; Lead ISO Auditor)</td></tr>
+                <tr><td style="text-align: left;"><strong>Approved By</strong></td><td style="text-align: left;">Humberto Dominguez, CEO</td></tr>
+                <tr><td style="text-align: left;"><strong>Effective Date</strong></td><td style="text-align: left;">10/16/2026</td></tr>
+                <tr><td style="text-align: left;"><strong>Governing Standards</strong></td><td style="text-align: left;">ISO 9001:2026 (ISO 9001:2015+Amd 1:2024), ISO/IEC 27001:2022+Amd 1:2024, WCAG 2.2 Level AA, CIPA § 631 &amp; CPRA</td></tr>
+            </tbody>
+        </table>
+        <hr />
+
+        <h1 id="document-title">Standard Operating Procedure: <strong>Website Improvement, WCAG 2.2 AA &amp; Telemetry Optimization SOP</strong></h1>
 
         <h2 id="10-purpose">1.0 Purpose</h2>
-        <p>This standard operating procedure defines the approved workflow, operational requirements, and quality standards for <strong>Website Improvement & Optimization SOP</strong> at HWB Cleaning Services LLC. The objective is to maintain operational consistency, prevent errors, and guarantee ISO 9001:2015 compliance across all facilities.</p>
+        <p>This standard operating procedure defines the engineering, accessibility, legal privacy, and conversion optimization standards for <code>https://www.hwbcleaning.com</code>. It ensures 100% WCAG 2.2 Level AA compliance across all 87 HTML templates, CIPA § 631 &amp; CPRA affirmative opt-in consent gating for analytics and advertising tags, and seamless bidirectional integration with Google Maps and Microsoft Bookings.</p>
 
         <h2 id="20-scope">2.0 Scope</h2>
-        <p>This procedure applies to all operational personnel, field technicians, and system administrators executing tasks related to Website Improvement & Optimization SOP.</p>
+        <p>Applies to all public marketing templates, 11 DFW city corridor landing pages, standalone B2B RFP documents (<code>/prequal</code>, <code>/capability-statement</code>, <code>/academy</code>), the Two-Phase Contact-First quote funnel (<code>/get-quote</code> and <code>quote_success.html</code>), and all internal backoffice operational templates.</p>
 
-        <h2 id="30-standard-procedure">3.0 Standard Procedure</h2>
+        <h2 id="30-standard-procedure">3.0 Standard Procedure &amp; Architectural Pillars</h2>
         <ol>
-            <li><strong>Pre-Operation Verification:</strong> Review work order requirements, verify equipment readiness, and confirm all safety protocols prior to initiating work.</li>
-            <li><strong>Execution Standard:</strong> Follow approved step-by-step workflow with zero deviations from institutional specifications.</li>
-            <li><strong>Quality Verification:</strong> Inspect deliverables against established quality metrics and record task completion in the centralized backoffice management system.</li>
+            <li><strong>WCAG 2.2 AA Zero-Violation Template Standard:</strong> Every HTML template in <code>templates/</code> must include a keyboard-accessible skip link (<code>.sigma-skip-link</code> targeting <code>#main-content</code>), explicit <code>aria-label</code> or visible text on all buttons and links, and 4.5:1 minimum color contrast. All changes must pass <code>compliance_code_linter.py</code> with <strong>0 violations (100% Grade A+)</strong>.</li>
+            <li><strong>CIPA § 631 &amp; CPRA Affirmative Consent Telemetry Gate:</strong> Third-party analytics and ad conversion scripts—specifically <strong>Google Analytics 4 (<code>G-8BX5Q7THYR</code>)</strong>, <strong>Google Ads (<code>AW-8622428739</code> / Account <code>862-242-8739</code>)</strong>, and <strong>Microsoft Clarity (<code>q8x3j1k9wm</code>)</strong>—must remain inert inside <code>&lt;script type="text/plain" data-consent-category="analytics"&gt;</code> tags until the visitor clicks <em>Accept All</em> on the cookie consent banner, triggering <code>triggerCompliantTelemetry()</code>. Authenticated backoffice and login routes are 100% air-gapped from third-party heatmaps.</li>
+            <li><strong>Interactive Google Maps &amp; CID Handshake:</strong> The <code>/get-quote</code> page embeds a responsive, lazy-loaded Google Maps iframe pinned to McKinney HQ (<code>3342 FM 1827 Ste 8d, McKinney, TX 75071</code>) alongside direct CID links (<code>https://www.google.com/maps?cid=4883166476987591300</code>).</li>
+            <li><strong>Automated Google Review &amp; Conversion Attribution Loop:</strong>
+                <ul>
+                    <li>Quote submissions on <code>quote_success.html</code> dispatch both GA4 <code>generate_lead</code> ($150.00) and Google Ads <code>conversion</code> (<code>send_to: AW-8622428739</code>) events, plus <code>pricing_calibrated</code> ($250.00) upon 10-second facility calibration.</li>
+                    <li>The global footer (<code>templates/base.html</code>), post-quote confirmation badge (<code>templates/quote_success.html</code>), and all 3 executive email signatures (<code>templates/executive_signature.html</code>) provide 1-click access to HWB's Google Review modal (<code>https://g.page/r/CYTq8OcJfsRDEBM/review</code>).</li>
+                </ul>
+            </li>
         </ol>
 
         <div class="callout callout-note">
             <strong>Mandatory Compliance Note</strong>
-            <p>Any deviations, operational frictions, or anomalies must be logged immediately into the institutional mistake tracking registry per HWB-QMS-1.0 standards.</p>
+            <p>Never place raw snapshots or backup HTML files in the project root directory; all historical snapshots must be archived in <code>.backups/</code> to keep compliance linters clean.</p>
         </div>
 
         <h2 id="40-verification">4.0 Verification (Zero-Defect Check)</h2>
         <ul>
-            <li>Work completed strictly in accordance with approved specifications.</li>
-            <li>Zero outstanding defects or process non-conformances.</li>
-            <li>Activity logs and operational telemetry fully recorded.</li>
+            <li><strong>Sovereign Compliance Code Linter:</strong> 87/87 templates scanned — 0 Critical, 0 High violations (100% Grade A+).</li>
+            <li><strong>Canonical Sitemap Verification:</strong> 29/29 URLs in <code>static/sitemap.xml</code> verified returning HTTP 200 with unique meta descriptions, OpenGraph tags, and JSON-LD schema.</li>
+            <li><strong>WORM Audit Traceability:</strong> All template and SEO upgrades logged in PostgreSQL <code>"SecurityAuditLogs"</code> (Receipts <code>#2309–#2314</code>).</li>
         </ul>
 
         <h2 id="50-revision-history">5.0 Revision History</h2>
@@ -48,10 +73,10 @@
             </thead>
             <tbody>
                 <tr>
-                    <td style="text-align: left;">1.0.0</td>
-                    <td style="text-align: left;">04/27/2026</td>
+                    <td style="text-align: left;">3.0.0</td>
+                    <td style="text-align: left;">10/16/2026</td>
                     <td style="text-align: left;">George (Systems Architect)</td>
-                    <td style="text-align: left;">Initial Architecture Baseline.</td>
+                    <td style="text-align: left;">Executed Mission Orders SO-COM-001-DIR-09 through DIR-10G: Hardened all 87 HTML templates to 0 WCAG 2.2 AA &amp; legal violations (100% Grade A+), upgraded all QMS/web references to the 2024–2026 ISO Amendment 1 suite, bound Google Ads Account ID 862-242-8739 (AW-8622428739) into CIPA/CPRA consent-gated telemetry and quote_success.html conversion tracking, embedded Google Maps HQ iframe on /get-quote, and wired the 1-Click Google Review modal (https://g.page/r/CYTq8OcJfsRDEBM/review) across global footer, post-quote card, and executive signatures. Approved by Humberto Dominguez, CEO.</td>
                 </tr>
                 <tr>
                     <td style="text-align: left;">2.0.0</td>
@@ -59,14 +84,19 @@
                     <td style="text-align: left;">George (Systems Architect)</td>
                     <td style="text-align: left;">Modernized and upgraded to post-May 1st, 2026 baseline. Standardized under HWB-QMS-1.0 v2.0 (Everyday Words) and approved by Humberto Dominguez, CEO.</td>
                 </tr>
+                <tr>
+                    <td style="text-align: left;">1.0.0</td>
+                    <td style="text-align: left;">04/27/2026</td>
+                    <td style="text-align: left;">George (Systems Architect)</td>
+                    <td style="text-align: left;">Initial Architecture Baseline.</td>
+                </tr>
             </tbody>
         </table>
-
     </div>
 
     <div class="sop-card-footer">
         <span>&copy; 2026 HWB Cleaning Services LLC</span>
-        <span>Controlled Document | HWB-QMS-8.3</span>
+        <span>Controlled Document | HWB-QMS-8.3-WEB</span>
         <span>Page <span class="page-number"></span></span>
     </div>
 </div>

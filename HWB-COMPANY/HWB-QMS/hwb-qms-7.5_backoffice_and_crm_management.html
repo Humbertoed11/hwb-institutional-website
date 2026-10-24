@@ -2,7 +2,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-7.5-BO-CRM</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">4.8.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">4.9.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5 &amp; 8.1 (Operational Planning)</span></div>
     </div>
@@ -26,7 +26,7 @@
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>Version</strong></td>
-                    <td style="text-align: left;">4.8.0</td>
+                    <td style="text-align: left;">4.9.0</td>
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>Status</strong></td>
@@ -42,7 +42,7 @@
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>Effective Date</strong></td>
-                    <td style="text-align: left;">10/21/2026</td>
+                    <td style="text-align: left;">10/24/2026</td>
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>ISO Standards</strong></td>
@@ -102,6 +102,13 @@
             <li><strong>Permanent 5-Layer Universal Phone, Tablet &amp; Adaptive Data-Table Engine (HWB-QMS-11.14 v1.2.0 / BUG-135–BUG-137):</strong> Global engine (<code>/static/js/sigma_responsive_engine.js</code> auto-injected by <code>main_app.py</code> <code>@app.after_request</code> across all HTML pages) enforces zero horizontal drift, single-bar phone headers, touch-swipe navigation ribbons (<code>.sigma-nav-ribbon</code>), automatic 2x2 KPI scorecard collapse on phones, and <code>SigmaResponsiveTableEngine</code> + <code>MutationObserver</code> converting all 28 tables into 2-column CRM Touch Cards on phones (<code>&lt;= 768px</code>) with a persistent <code>[Cards | Table]</code> switcher and single-sticky-column momentum scroll on tablets (<code>768px–1024px</code>).</li>
             <li><strong>4-Stage 1099 Subcontractor &amp; W-2 Employee Self-Service Onboarding Portals &amp; AES-256 BYTEA Document Vaults (BUG-139–BUG-141 / Migrations 047–049):</strong> Dedicated self-service portals (<code>/onboard/subcontractor/&lt;token&gt;</code> and <code>/onboard/employee/&lt;token&gt;</code>) with AI/PDF auto-extraction for IRS Form W-9, ACORD 25 COI, Form W-4, Form I-9, Government Photo ID, and Voided Check documents, AES-256 Fernet-encrypted PostgreSQL <code>BYTEA</code> storage (<code>"SubcontractorDocuments"</code> and <code>"EmployeeDocuments"</code>), locked ReportLab PDF certificate generation (MSA, TX DWC-83, and ISO 9001 Clause 7.2 Job Descriptions), and a Manual vs. Auto-Approve Initial Review Gate in <code>"SystemSettings"</code> (protected by <code>SAVEPOINT sp_sys_settings</code>).</li>
             <li><strong>5-Layer Universal Input Masking &amp; Tamper-Evident Transaction Receipt Cards (BUG-142 / Migration 050):</strong> Global client-side masking engine (<code>/static/js/sigma_input_masks.js</code> auto-injected via <code>main_app.py</code> <code>@app.after_request</code>) enforces live formatting and strict character ceilings across all EIN (<code>XX-XXXXXXX</code>), SSN/ITIN (<code>XXX-XX-XXXX</code>), Phone (<code>(###)-###-####</code>), ZIP (<code>#####-####</code>), 9-digit ABA Routing, and 2-letter State fields (with dynamic EIN/SSN switching on 1099 tax classification changes) paired with server-side sanitization in <code>core/services/sanitizer.py</code> and Tamper-Evident Transaction Receipt Cards (<code>#onboarding-receipt-card</code> / <code>#w2-receipt-card</code>) that collapse completed onboarding forms and prevent accidental double submissions.</li>
+            <li><strong>Secondary Portal Hardening, Closed-Loop Email Campaign Lifecycle &amp; Multi-Jurisdictional Email Compliance Shield (BUG-143–BUG-145):</strong>
+                <ul>
+                    <li><strong>Secondary Portals &amp; Forms Hardening (<code>BUG-143</code>):</strong> Hardened Bosanna Technician Onboarding (<code>/onboard/bosanna</code>), SigmaAcademy Course Quiz (<code>/academy/course/&lt;code&gt;</code>), Takeoff &amp; Scope Configurator (<code>/tma/estimator</code> with on-screen Estimate Receipt Card), and Backoffice Scope Planner against form reloads and synthetic default values.</li>
+                    <li><strong>Closed-Loop Lead &amp; Email Marketing Campaign State Machine (<code>BUG-144</code>):</strong> Connects Commercial Leads (<code>#view-leads</code>) and Email Marketing (<code>#view-marketing</code>) via the <strong>Enroll Selected Leads</strong> modal (<code>#modal-enroll-leads-campaign</code> &rarr; <code>POST /api/v1/marketing/campaign/enroll-leads</code>), real-time campaign telemetry synchronization (<code>sync_campaign_telemetry_counts</code> on outbox release, open pixel, and calendar booking click), channel-specific opt-out separation (<code>✉️ Unsubscribed</code> vs <code>🚫 DNC</code>), and 1-click campaign closeout (<code>POST /api/v1/marketing/campaign/&lt;id&gt;/complete</code> advancing sent unopened leads to <code>'Contacted'</code> for phone follow-up and returning unsent leads to <code>'New'</code>).</li>
+                    <li><strong>5-Point Multi-Jurisdictional Email Compliance &amp; ISO Hardening (<code>BUG-145</code>):</strong> Enforces IETF RFC 8058 &amp; RFC 2369 native <code>List-Unsubscribe</code> and <code>List-Unsubscribe-Post: List-Unsubscribe=One-Click</code> headers and <code>POST /unsubscribe/&lt;token&gt;</code> opt-outs, universal CA/WA/International/Public-Sector (<code>.gov</code>/<code>.mil</code>/<code>.k12.tx.us</code>) geofence shields across all 4 campaign endpoints, a Dual-Table Outbound Suppression Gate in <code>transmit_email()</code>, and tamper-proof boot seeder protection in <code>main_app.py</code>.</li>
+                </ul>
+            </li>
         </ol>
 
         <h2>5.0 Employee Master Profile &amp; PII Vault Security (SEC-001)</h2>
@@ -138,6 +145,12 @@
                 </tr>
             </thead>
             <tbody>
+                <tr>
+                    <td style="text-align: left;">4.9.0</td>
+                    <td style="text-align: left;">10/24/2026</td>
+                    <td style="text-align: left;">George (Systems Architect)</td>
+                    <td style="text-align: left;">Deployed Secondary Portal &amp; Form Enterprise Hardening (BUG-143), the Closed-Loop Lead &amp; Email Marketing Campaign Lifecycle State Machine (BUG-144: Direct Lead-to-Campaign Enrollment, Real-Time Outbox &amp; Click Telemetry Counter Sync, Channel-Specific ✉️ Unsubscribed vs 🚫 DNC Separation, and 1-Click Campaign Completion State Transition), and the 5-Point Multi-Jurisdictional Email Compliance &amp; ISO Hardening Architecture (BUG-145: RFC 8058 One-Click Unsubscribe Headers &amp; POST Handler, Universal Geofence &amp; Public-Sector Exclusion Shield, Dual-Table Outbound Suppression Gate, and Tamper-Proof Seeder Protection), certified by 24/24 Rack 14 tests. Approved by Humberto Dominguez, CEO.</td>
+                </tr>
                 <tr>
                     <td style="text-align: left;">4.8.0</td>
                     <td style="text-align: left;">10/21/2026</td>

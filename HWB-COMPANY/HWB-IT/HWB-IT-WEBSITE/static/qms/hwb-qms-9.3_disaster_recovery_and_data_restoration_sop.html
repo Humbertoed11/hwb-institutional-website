@@ -2,7 +2,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-9.3</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">4.2.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">4.3.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.1.3 (Infrastructure) &amp; ISO 27001 A.12.1</span></div>
     </div>
@@ -26,7 +26,7 @@
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>Version</strong></td>
-                    <td style="text-align: left;">4.2.0</td>
+                    <td style="text-align: left;">4.3.0</td>
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>Status</strong></td>
@@ -42,11 +42,11 @@
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>Effective Date</strong></td>
-                    <td style="text-align: left;">10/14/2026</td>
+                    <td style="text-align: left;">10/17/2026</td>
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>ISO Standard</strong></td>
-                    <td style="text-align: left;">ISO 9001:2015 Clause 7.1.3 &amp; ISO 27001:2022 A.12.1 (Operational Continuity)</td>
+                    <td style="text-align: left;">ISO 9001:2026 (ISO 9001:2015+Amd 1:2024) Clause 7.1.3 &amp; ISO/IEC 27001:2022+Amd 1:2024 A.12.1 (Operational Continuity)</td>
                 </tr>
             </tbody>
         </table>
@@ -104,10 +104,10 @@
         </table>
 
         <h2>4.0 System Dependencies &amp; Cryptographic Vault Configuration</h2>
-        <p>The system infrastructure relies on the following core dependencies (updated October 14, 2026):</p>
+        <p>The system infrastructure relies on the following core dependencies (updated October 17, 2026):</p>
         <ul>
             <li><strong>Operating System:</strong> Linux / WSL2 Ubuntu 22.04 LTS.</li>
-            <li><strong>Container Fleet:</strong> Docker 26+ running containers: <code>hwb_web_app</code> (Gunicorn Flask, Port 5000, 24 concurrency slots via 3 workers &times; 8 threads, 45s timeout, 1,000 max requests auto-recycle with 100 jitter), <code>hwb_postgres_dev</code> (PostgreSQL 13, Port 5432), <code>hwb_compliance_engine</code> (Nginx static QMS, Port 80), <code>hwb_traffic_director</code> (Port 8000), and <code>hwb_agent_worker</code> (Autonomous Worker Container).</li>
+            <li><strong>Container Fleet:</strong> Docker 26+ running containers: <code>hwb_web_app</code> (Gunicorn Flask, Port 5000, 24 concurrency slots via 3 workers &times; 8 threads, 45s timeout, 1,000 max requests auto-recycle with 100 jitter), <code>hwb_postgres_dev</code> (PostgreSQL 16.15, <code>pgvector/pgvector:pg16</code> locally with volume <code>postgres_data_pg16</code> and Azure Database for PostgreSQL Flexible Server 16.15 on <code>sigmajan-server</code> in production; Port 5432; 84 public tables, 404,470 rows, <code>vector 0.8.2</code>, <code>pg_trgm</code>, and <code>fuzzystrmatch</code>), <code>hwb_compliance_engine</code> (Nginx static QMS, Port 80), <code>hwb_traffic_director</code> (Port 8000), and <code>hwb_agent_worker</code> (Autonomous Worker Container).</li>
             <li><strong>Database Connection Pool:</strong> PostgreSQL <code>ThreadedConnectionPool</code> expanded to min=2, max=28 connections in <code>core/services/database.py</code> to ensure 100% thread coverage across all 24 web request channels.</li>
             <li><strong>Autonomous Worker Browser Engine:</strong> <code>playwright 1.63.0</code> and <strong>Chrome Headless Shell (v1243)</strong> installed natively in <code>hwb_agent_worker</code> for portal crawling.</li>
             <li><strong>Statewide Hunter Crawler Fleet:</strong> <code>scripts/hunter_portal_crawler.py</code> continuously scouts 35 Texas municipal and ISD procurement portals on an autonomous 6-hour cycle.</li>
@@ -191,6 +191,12 @@
                 </tr>
             </thead>
             <tbody>
+                <tr>
+                    <td style="text-align: left;">4.3.0</td>
+                    <td style="text-align: left;">10/17/2026</td>
+                    <td style="text-align: left;">Peter &amp; George</td>
+                    <td style="text-align: left;">Upgraded per Continuous Recovery Mandate following major database engine upgrade to PostgreSQL 16.15 across both Azure Cloud Production (sigmajan-server in HWB-SIGMAJAN-PROD, upgraded 10/16/2026 at 11:00 PM CDT) and Local Docker (hwb_postgres_dev on pgvector/pgvector:pg16 with volume postgres_data_pg16, upgraded 10/17/2026) with 100% parity verified across 84 public tables, 404,470 rows, vector 0.8.2, pg_trgm, and fuzzystrmatch. Approved by Humberto Dominguez, CEO.</td>
+                </tr>
                 <tr>
                     <td style="text-align: left;">4.2.0</td>
                     <td style="text-align: left;">10/14/2026</td>

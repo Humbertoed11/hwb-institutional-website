@@ -179,8 +179,8 @@ def unsubscribe(tracking_token=None):
     conn = None
     audit_ts = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
     
-    if request.method == 'POST':
-        raw_email = request.form.get('email', '').strip().lower()
+    if request.method == 'POST' and not tracking_token:
+        raw_email = (request.form.get('email') or (request.get_json(silent=True) or {}).get('email') or '').strip().lower()
         if not raw_email or '@' not in raw_email:
             return render_template('unsubscribe_success.html', unsubscribed=False, error_msg="Please provide a valid corporate email address.")
         
@@ -264,11 +264,12 @@ def unsubscribe(tracking_token=None):
                         lead_id = outbox_row['recipient_id'] if isinstance(outbox_row, dict) else outbox_row[2]
                 
                 if found_email:
+                    unsub_source = 'RFC8058_ONE_CLICK_POST' if request.method == 'POST' else 'ONE_CLICK_TOKEN'
                     cur.execute('''
                         INSERT INTO "EmailSuppressionList" (email_lower, reason, source)
-                        VALUES (LOWER(TRIM(%s)), 'UNSUBSCRIBED', 'ONE_CLICK_TOKEN')
-                        ON CONFLICT (email_lower) DO NOTHING;
-                    ''', (found_email,))
+                        VALUES (LOWER(TRIM(%s)), 'UNSUBSCRIBED', %s)
+                        ON CONFLICT (email_lower) DO UPDATE SET source = EXCLUDED.source;
+                    ''', (found_email, unsub_source))
 
                     cur.execute('''
                         UPDATE "Leads"

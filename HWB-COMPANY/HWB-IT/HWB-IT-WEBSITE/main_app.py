@@ -336,13 +336,24 @@ with app.app_context():
                                                     ) ON CONFLICT (id) DO UPDATE SET
                                                         center_name = EXCLUDED.center_name,
                                                         lead_source = EXCLUDED.lead_source,
-                                                        status = EXCLUDED.status,
+                                                        status = CASE
+                                                            WHEN "Leads".status IN ('Do Not Call (DNC)', 'Unsubscribed')
+                                                                 OR COALESCE("Leads".is_dnc, FALSE) = TRUE
+                                                                 OR UPPER(COALESCE("Leads".email_hygiene_status, '')) = 'DO_NOT_EMAIL'
+                                                                 OR EXISTS (SELECT 1 FROM "EmailSuppressionList" esl WHERE esl.email_lower = LOWER(TRIM(COALESCE("Leads".email, ''))))
+                                                            THEN "Leads".status
+                                                            ELSE EXCLUDED.status
+                                                        END,
                                                         phone = EXCLUDED.phone,
                                                         email = EXCLUDED.email,
                                                         sqf = EXCLUDED.sqf,
                                                         capacity = EXCLUDED.capacity,
                                                         estimated_annual_value = EXCLUDED.estimated_annual_value,
-                                                        is_dnc = EXCLUDED.is_dnc,
+                                                        is_dnc = CASE
+                                                            WHEN COALESCE("Leads".is_dnc, FALSE) = TRUE OR "Leads".status = 'Do Not Call (DNC)'
+                                                            THEN TRUE
+                                                            ELSE EXCLUDED.is_dnc
+                                                        END,
                                                         is_converted = EXCLUDED.is_converted;
                                                 ''', (
                                                     l.get('id'), l.get('center_name'), l.get('lead_source'), l.get('status'),

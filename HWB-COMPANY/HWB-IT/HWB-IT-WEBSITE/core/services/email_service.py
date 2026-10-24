@@ -5,10 +5,36 @@ Custodians: George (Systems Architect) & Humberto Dominguez (CEO)
 """
 
 import os
+import re
 import base64
 import requests
 import msal
 from flask import current_app
+
+UNSUB_URL_REGEX = re.compile(r'https://(?:www\.)?hwbcleaning\.com/unsubscribe(?:/[A-Za-z0-9_-]+)?', re.IGNORECASE)
+
+
+def build_rfc8058_headers(body_html: str = "", campaign_mode: bool = False) -> list:
+    """
+    Builds IETF RFC 8058 & RFC 2369 native One-Click List-Unsubscribe headers
+    for Microsoft Graph internetMessageHeaders whenever an email contains an
+    unsubscribe link or is sent in campaign_mode.
+    """
+    raw_body = body_html or ""
+    match = UNSUB_URL_REGEX.search(raw_body)
+    if not match and not campaign_mode and '/unsubscribe' not in raw_body:
+        return []
+    unsub_url = match.group(0) if match else "https://www.hwbcleaning.com/unsubscribe"
+    return [
+        {
+            "name": "List-Unsubscribe",
+            "value": f"<{unsub_url}>, <mailto:info@hwbcleaning.com?subject=Unsubscribe>"
+        },
+        {
+            "name": "List-Unsubscribe-Post",
+            "value": "List-Unsubscribe=One-Click"
+        }
+    ]
 
 def get_official_logo_bytes():
     """Locates and returns the official HWB logo bytes (the modern brand mark used on the current webpage)."""
@@ -110,10 +136,11 @@ def transmit_email(*args, **kwargs):
         print("[GRAPH] API Error: Missing configuration (Tenant/Client/Secret)", flush=True)
         return False, "Missing Credentials"
 
-    # Enterprise Outbound Suppression Gate: Check permanent EmailSuppressionList
+    # Enterprise Outbound Suppression Gate: Check permanent EmailSuppressionList AND Leads DNC/Unsubscribed flags
+    is_test_proof = str(subject or "").strip().startswith("[TEST PROOF]")
     try:
         db_url = (config.get("DATABASE_URL") if hasattr(config, 'get') else None) or os.environ.get("DATABASE_URL")
-        if db_url and recipient:
+        if db_url and recipient and not is_test_proof:
             import psycopg2
             raw_addrs = recipient if isinstance(recipient, list) else str(recipient).split(',')
             clean_addrs = [str(r).strip().lower() for r in raw_addrs if r and '@' in str(r)]
@@ -126,6 +153,24 @@ def transmit_email(*args, **kwargs):
                         s_conn.close()
                         print(f"[GRAPH SUPPRESSION GATE] Blocked outbound email to {sup_row[0]} ({sup_row[1]})", flush=True)
                         return False, f"Suppressed ({sup_row[1]}): {sup_row[0]}"
+
+                    s_cur.execute('''
+                        SELECT LOWER(TRIM(email)), status, COALESCE(is_dnc, FALSE), COALESCE(email_hygiene_status, '')
+                        FROM "Leads"
+                        WHERE LOWER(TRIM(email)) = ANY(%s)
+                          AND (
+                              COALESCE(is_dnc, FALSE) = TRUE
+                              OR status IN ('Do Not Call (DNC)', 'Unsubscribed')
+                              OR UPPER(COALESCE(email_hygiene_status, '')) = 'DO_NOT_EMAIL'
+                          )
+                        LIMIT 1;
+                    ''', (clean_addrs,))
+                    lead_sup = s_cur.fetchone()
+                    if lead_sup:
+                        s_conn.close()
+                        reason_lbl = lead_sup[1] or ('DNC' if lead_sup[2] else lead_sup[3]) or 'DO_NOT_EMAIL'
+                        print(f"[GRAPH SUPPRESSION GATE] Blocked outbound email to CRM-suppressed lead {lead_sup[0]} ({reason_lbl})", flush=True)
+                        return False, f"Suppressed (CRM {reason_lbl}): {lead_sup[0]}"
                 s_conn.close()
     except Exception as sup_err:
         print(f"[GRAPH SUPPRESSION CHECK NOTICE] {sup_err}", flush=True)
@@ -171,6 +216,9 @@ def transmit_email(*args, **kwargs):
                 "toRecipients": to_recipients
             }
         }
+        rfc8058_headers = build_rfc8058_headers(body_html=body_html, campaign_mode=campaign_mode)
+        if rfc8058_headers:
+            email_data["message"]["internetMessageHeaders"] = rfc8058_headers
         if attachments:
             email_data["message"]["attachments"] = attachments
         

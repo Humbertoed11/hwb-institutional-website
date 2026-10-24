@@ -4380,19 +4380,65 @@ def format_marketing_letterhead(body_html: str, tracking_token: str = None) -> s
         {body_html}
     </div>
 
-    <!-- 📜 FOOTER BLOCK (CAN-SPAM Act, Texas Anti-Spam & SOC 2 Privacy P2.1 Compliant) -->
+    <!-- 📜 FOOTER BLOCK (CAN-SPAM Act, RFC 8058, Texas Anti-Spam/TDPSA, Collin County Venue, CASL/GDPR Geofence & ISO/SOC 2 Compliant) -->
     <div style="border-top: 1px solid #e2e8f0; padding-top: 16px; margin-top: 20px; text-align: center; font-size: 11px; color: #64748b; line-height: 1.6;">
         <strong style="color: #0f172a; letter-spacing: 0.05em;">FIDELITY. SAFETY. RESPECT.</strong><br>
-        HWB Cleaning Services LLC • 3342 FM 1827 Ste 8d, McKinney, TX 75071 • Phone: (214) 586-0257<br>
-        Texas Charter #802920409 • CAGE (SAM) #082830635 • Commercial EMR: .43 • Insured & Bonded<br>
+        HWB Cleaning Services LLC • 3342 FM 1827 Ste 8d, McKinney, TX 75071 (Collin County, TX) • Phone: (214) 586-0257<br>
+        Texas Charter #802920409 • CAGE (SAM) #082830635 • Commercial EMR: .43 • Insured &amp; Bonded<br>
         <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #cbd5e1; font-size: 10.5px; color: #94a3b8;">
             You are receiving this commercial communication as an operational facility contact in Texas.<br>
             To stop receiving future marketing messages, you may <a href="{unsub_url}" style="color: #2563eb; text-decoration: underline; font-weight: 600;">Unsubscribe Instantly</a> or email <a href="mailto:info@hwbcleaning.com?subject=Unsubscribe" style="color: #2563eb; text-decoration: underline;">info@hwbcleaning.com</a>.<br>
-            <span style="font-size: 9.5px; color: #94a3b8; display: inline-block; margin-top: 4px;">Notice: This communication contains standard commercial delivery confirmation beacons. We respect your digital privacy.</span>
+            <span style="font-size: 9.5px; color: #94a3b8; display: inline-block; margin-top: 4px;">Compliance Standards: Federal CAN-SPAM (15 U.S.C. § 7701) &amp; IETF RFC 8058 One-Click Opt-Out • Texas Bus. &amp; Com. Code Ch. 321 &amp; Ch. 541 (TDPSA) • Collin County, TX Jurisdiction • ISO 9001:2015, ISO/IEC 27001:2022, ISO/IEC 27701:2019 &amp; SOC 2 Type II P2.1. Notice: This communication contains standard commercial delivery confirmation beacons.</span>
         </div>
     </div>
     {tracking_pixel_html}
 </div>"""
+
+
+COMPLIANCE_BLOCKED_STATES = ('CA', 'WA')
+COMPLIANCE_BLOCKED_DOMAIN_SUFFIXES = (
+    # International Anti-Spam Jurisdictions (CASL, GDPR, UK PECR, Australia Spam Act)
+    '.ca', '.ca.gov', '.uk', '.co.uk', '.eu', '.de', '.fr', '.es', '.it', '.nl', '.au', '.nz', '.jp', '.cn', '.in', '.mx', '.br',
+    # Public Sector, Government, Military & Public School Districts (Solicited exclusively via formal RFP/Institutional Bids)
+    '.gov', '.mil', '.k12.tx.us'
+)
+
+
+def get_email_compliance_where_clauses() -> list:
+    """
+    Returns standard multi-jurisdictional SQL WHERE clauses enforcing:
+    1. CAN-SPAM / Texas Ch. 321 & TDPSA opt-out suppression (EmailSuppressionList, is_dnc, status, email_hygiene_status)
+    2. State strict-liability geofence (CA B&P § 17529.5, WA RCW 19.190)
+    3. International anti-spam geofence (CASL, GDPR, UK PECR, Australia Spam Act)
+    4. County / Public-sector exclusion (.gov, .mil, .k12.tx.us handled via Institutional Bids)
+    """
+    clauses = [
+        "COALESCE(is_dnc, FALSE) = FALSE",
+        "COALESCE(status, '') NOT IN ('Do Not Call (DNC)', 'Unsubscribed')",
+        "UPPER(COALESCE(email_hygiene_status, '')) != 'DO_NOT_EMAIL'",
+        "(state IS NULL OR UPPER(TRIM(state)) NOT IN ('CA', 'WA'))",
+        "NOT EXISTS (SELECT 1 FROM \"EmailSuppressionList\" esl WHERE esl.email_lower = LOWER(TRIM(email)))"
+    ]
+    for suffix in COMPLIANCE_BLOCKED_DOMAIN_SUFFIXES:
+        clauses.append(f"LOWER(TRIM(email)) NOT LIKE '%{suffix}'")
+    return clauses
+
+
+def is_email_compliance_eligible(raw_email: str, raw_state: str = 'TX', is_dnc: bool = False, status: str = '', hygiene_status: str = '') -> bool:
+    """
+    Python-level verification of multi-jurisdictional email compliance for individual recipient rows.
+    """
+    clean_addr = (raw_email or '').strip().lower()
+    if not clean_addr or '@' not in clean_addr:
+        return False
+    if is_dnc or (status or '').strip() in ('Do Not Call (DNC)', 'Unsubscribed') or (hygiene_status or '').strip().upper() == 'DO_NOT_EMAIL':
+        return False
+    clean_state = (raw_state or 'TX').strip().upper()
+    if clean_state in COMPLIANCE_BLOCKED_STATES:
+        return False
+    if any(clean_addr.endswith(suffix) for suffix in COMPLIANCE_BLOCKED_DOMAIN_SUFFIXES):
+        return False
+    return True
 
 
 def replace_email_tokens(template: str, recipient: dict, tracking_token: str = None) -> str:
@@ -4486,11 +4532,9 @@ def api_marketing_leads_preview_count():
         "COALESCE(is_commercial, TRUE) = TRUE",
         "email IS NOT NULL",
         "POSITION('@' IN email) > 1",
-        "COALESCE(is_dnc, FALSE) = FALSE",
         "COALESCE(is_converted, FALSE) = FALSE",
         "COALESCE(is_duplicate, FALSE) = FALSE",
-        "NOT EXISTS (SELECT 1 FROM \"EmailSuppressionList\" esl WHERE esl.email_lower = LOWER(TRIM(email)))"
-    ]
+    ] + get_email_compliance_where_clauses()
     params = []
 
     if sector in ['child care', 'childcare', 'daycare', 'licensed childcare']:
@@ -4613,14 +4657,9 @@ def api_marketing_campaign_create():
                     "COALESCE(is_commercial, TRUE) = TRUE",
                     "email IS NOT NULL",
                     "POSITION('@' IN email) > 1",
-                    "COALESCE(is_dnc, FALSE) = FALSE",
                     "COALESCE(is_converted, FALSE) = FALSE",
                     "COALESCE(is_duplicate, FALSE) = FALSE",
-                    "(state IS NULL OR UPPER(state) NOT IN ('CA', 'WA'))",
-                    "LOWER(email) NOT LIKE '%.ca'",
-                    "LOWER(email) NOT LIKE '%.ca.gov'",
-                    "NOT EXISTS (SELECT 1 FROM \"EmailSuppressionList\" esl WHERE esl.email_lower = LOWER(TRIM(email)))"
-                ]
+                ] + get_email_compliance_where_clauses()
                 params = []
                 if 'child' in target_sector.lower() or 'daycare' in target_sector.lower():
                     where_clauses.append("(industry ILIKE %s OR facility_type ILIKE %s)")
@@ -4852,14 +4891,13 @@ Owner &amp; Operator | HWB Cleaning Services LLC<br />
                 lstatus = (lrow.get('status') or '').strip()
 
                 if (
-                    not raw_email
-                    or '@' not in raw_email
-                    or lrow.get('is_dnc')
-                    or lstatus in ('Do Not Call (DNC)', 'Unsubscribed')
-                    or (lrow.get('email_hygiene_status') or '').upper() == 'DO_NOT_EMAIL'
-                    or lstate in ('CA', 'WA')
-                    or raw_email.endswith('.ca')
-                    or raw_email.endswith('.ca.gov')
+                    not is_email_compliance_eligible(
+                        raw_email,
+                        raw_state=lstate,
+                        is_dnc=bool(lrow.get('is_dnc')),
+                        status=lstatus,
+                        hygiene_status=(lrow.get('email_hygiene_status') or '')
+                    )
                     or raw_email in seen_emails
                 ):
                     skipped_count += 1
@@ -5497,19 +5535,31 @@ Owner &amp; Operator | HWB Cleaning Services LLC<br />
                 if not recip_email or '@' not in recip_email:
                     continue
 
-                # Geofence Exclusion Shield: Block cold emails to CA (§ 17529.5), WA (RCW 19.190), and Canada (CASL)
-                if recip_email.endswith('.ca') or recip_email.endswith('.ca.gov'):
+                # Multi-Jurisdictional Geofence & Domain Compliance Shield (CAN-SPAM, CA/WA, CASL/GDPR, Public Sector)
+                if not is_email_compliance_eligible(recip_email):
                     cur.execute("UPDATE \"CampaignRecipients\" SET status = 'GEOFENCE_BLOCKED', updated_at = CURRENT_TIMESTAMP WHERE id = %s", (recip['id'],))
+                    continue
+
+                cur.execute('SELECT 1 FROM "EmailSuppressionList" WHERE email_lower = %s LIMIT 1;', (recip_email,))
+                if cur.fetchone():
+                    cur.execute("UPDATE \"CampaignRecipients\" SET status = 'UNSUBSCRIBED', updated_at = CURRENT_TIMESTAMP WHERE id = %s", (recip['id'],))
                     continue
 
                 lid = recip.get('lead_id')
                 if lid:
-                    cur.execute('SELECT state FROM "Leads" WHERE id = %s', (lid,))
+                    cur.execute('SELECT state, is_dnc, status, email_hygiene_status FROM "Leads" WHERE id = %s', (lid,))
                     lrow = cur.fetchone()
-                    lstate = (lrow.get('state') or 'TX').strip().upper() if lrow else 'TX'
-                    if lstate in ('CA', 'WA'):
-                        cur.execute("UPDATE \"CampaignRecipients\" SET status = 'GEOFENCE_BLOCKED', updated_at = CURRENT_TIMESTAMP WHERE id = %s", (recip['id'],))
-                        continue
+                    if lrow:
+                        lstate = (lrow.get('state') or 'TX').strip().upper()
+                        if not is_email_compliance_eligible(
+                            recip_email,
+                            raw_state=lstate,
+                            is_dnc=bool(lrow.get('is_dnc')),
+                            status=(lrow.get('status') or ''),
+                            hygiene_status=(lrow.get('email_hygiene_status') or '')
+                        ):
+                            cur.execute("UPDATE \"CampaignRecipients\" SET status = 'GEOFENCE_BLOCKED', updated_at = CURRENT_TIMESTAMP WHERE id = %s", (recip['id'],))
+                            continue
 
                 token = recip.get('tracking_token') or uuid.uuid4().hex
                 if not recip.get('tracking_token'):

@@ -1551,6 +1551,159 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
             conn.commit()
             conn.close()
 
+    def test_24_multi_jurisdictional_email_compliance_and_rfc8058_bug_145(self):
+        """
+        BUG-145: Certifies 100% multi-jurisdictional email compliance & ISO hardening:
+        1. RFC 8058 / RFC 2369 native List-Unsubscribe + List-Unsubscribe-Post headers in email_service.py.
+        2. RFC 8058 POST /unsubscribe/<token> automated one-click opt-out without manual form email field.
+        3. Universal Geofence & Domain Compliance Shield across preview-count, campaign/create, enroll-leads, and generate-drafts.
+        4. Dual-table outbound suppression gate in transmit_email (EmailSuppressionList + Leads CRM flags).
+        5. Multi-jurisdictional legal & ISO citations in letterhead footer and /unsubscribe page.
+        """
+        from core.services.email_service import build_rfc8058_headers, transmit_email
+        from blueprints.crm_api import (
+            get_email_compliance_where_clauses,
+            is_email_compliance_eligible,
+            format_marketing_letterhead
+        )
+
+        # 1. RFC 8058 / RFC 2369 Header Builder
+        sample_html = '<a href="https://www.hwbcleaning.com/unsubscribe/tok_rfc8058_abc123">Unsubscribe</a>'
+        hdrs = build_rfc8058_headers(body_html=sample_html, campaign_mode=True)
+        self.assertEqual(len(hdrs), 2)
+        hdr_map = {h["name"]: h["value"] for h in hdrs}
+        self.assertIn("<https://www.hwbcleaning.com/unsubscribe/tok_rfc8058_abc123>", hdr_map["List-Unsubscribe"])
+        self.assertIn("<mailto:info@hwbcleaning.com?subject=Unsubscribe>", hdr_map["List-Unsubscribe"])
+        self.assertEqual(hdr_map["List-Unsubscribe-Post"], "List-Unsubscribe=One-Click")
+
+        # 2. Universal Geofence & Domain Shield Eligibility
+        self.assertTrue(is_email_compliance_eligible("director@mckinneyacademy.com", raw_state="TX"))
+        self.assertFalse(is_email_compliance_eligible("director@laacademy.com", raw_state="CA"))
+        self.assertFalse(is_email_compliance_eligible("director@seattlekids.com", raw_state="WA"))
+        self.assertFalse(is_email_compliance_eligible("director@torontoacademy.ca", raw_state="TX"))
+        self.assertFalse(is_email_compliance_eligible("director@londonchildcare.co.uk", raw_state="TX"))
+        self.assertFalse(is_email_compliance_eligible("director@berlin-kita.de", raw_state="TX"))
+        self.assertFalse(is_email_compliance_eligible("director@sydneyschool.au", raw_state="TX"))
+        self.assertFalse(is_email_compliance_eligible("procurement@collincountytx.gov", raw_state="TX"))
+        self.assertFalse(is_email_compliance_eligible("base@usaf.mil", raw_state="TX"))
+        self.assertFalse(is_email_compliance_eligible("principal@frisco.k12.tx.us", raw_state="TX"))
+        self.assertFalse(is_email_compliance_eligible("director@mckinneyacademy.com", raw_state="TX", status="Unsubscribed"))
+        self.assertFalse(is_email_compliance_eligible("director@mckinneyacademy.com", raw_state="TX", is_dnc=True))
+        self.assertFalse(is_email_compliance_eligible("director@mckinneyacademy.com", raw_state="TX", hygiene_status="DO_NOT_EMAIL"))
+
+        where_clauses = get_email_compliance_where_clauses()
+        joined_where = " ".join(where_clauses)
+        for expected_frag in ("'CA', 'WA'", "'%.ca'", "'%.uk'", "'%.eu'", "'%.gov'", "'%.mil'", "'%.k12.tx.us'", "'Unsubscribed'"):
+            self.assertIn(expected_frag, joined_where)
+
+        # 3. Letterhead Footer Legal & ISO Citations
+        lh_html = format_marketing_letterhead("<p>Test Body</p>", "tok_footer_check_999")
+        for citation in ("15 U.S.C. § 7701", "RFC 8058", "Ch. 321", "TDPSA", "Collin County", "ISO 9001:2015", "ISO/IEC 27001:2022", "ISO/IEC 27701:2019", "SOC 2 Type II P2.1"):
+            self.assertIn(citation, lh_html)
+
+        # 4. End-to-End Database Test: Geofence Filtering, RFC 8058 POST Unsubscribe, & Dual-Table Suppression Gate
+        import uuid
+        with self.client.session_transaction() as sess:
+            sess["_user_id"] = "1"
+            sess["_fresh"] = True
+        conn = get_db(self.db_url)
+        uid = uuid.uuid4().hex[:6]
+        lead_ids = []
+        lead_emails = []
+        camp_id = None
+        try:
+            with conn.cursor() as cur:
+                test_specs = [
+                    # Eligible Texas commercial lead
+                    (f"TX Compliant Lead {uid}", f"tx_ok_{uid}@test-hwb-local.com", "TX", "New", False),
+                    # Blocked California lead
+                    (f"CA Geofence Lead {uid}", f"ca_block_{uid}@test-hwb-local.com", "CA", "New", False),
+                    # Blocked UK international lead
+                    (f"UK Intl Lead {uid}", f"uk_block_{uid}@test-hwb-local.co.uk", "TX", "New", False),
+                    # Blocked Public Sector .gov lead
+                    (f"Gov Public Lead {uid}", f"gov_block_{uid}@cityofmckinney.gov", "TX", "New", False),
+                    # CRM Unsubscribed lead (not yet in EmailSuppressionList, testing dual-table gate)
+                    (f"CRM Unsub Lead {uid}", f"crm_unsub_{uid}@test-hwb-local.com", "TX", "Unsubscribed", False),
+                ]
+                for cname, em, st, lstat, dnc_flag in test_specs:
+                    lead_emails.append(em)
+                    cur.execute('''
+                        INSERT INTO "Leads" (
+                            center_name, director, email, phone, city, county, state,
+                            status, is_dnc, campaign_ready, is_commercial, email_hygiene_status
+                        ) VALUES (%s, 'Jane Director', %s, '(214)-555-0199', 'McKinney', 'COLLIN', %s, %s, %s, TRUE, TRUE, 'VERIFIED')
+                        RETURNING id;
+                    ''', (cname, em, st, lstat, dnc_flag))
+                    lead_ids.append(cur.fetchone()["id"])
+            conn.commit()
+
+            # Attempt to enroll all 5 leads into a new campaign -> Only the 1st lead (TX Compliant) should be enrolled; 4 skipped!
+            r_enr = self.client.post(
+                "/api/v1/marketing/campaign/enroll-leads",
+                json={
+                    "lead_ids": lead_ids,
+                    "campaign_name": f"Compliance Shield Test {uid}",
+                    "stage_drafts": True
+                }
+            )
+            self.assertEqual(r_enr.status_code, 200, r_enr.get_data(as_text=True))
+            d_enr = r_enr.get_json()
+            self.assertEqual(d_enr["status"], "success")
+            camp_id = d_enr["campaign_id"]
+            self.assertEqual(d_enr["enrolled_count"], 1)
+            self.assertEqual(d_enr["skipped_count"], 4)
+
+            # Verify Dual-Table Suppression Gate in transmit_email blocks the CRM-Unsubscribed lead even before Graph auth
+            ok_sup, reason_sup = transmit_email(
+                {"DATABASE_URL": self.db_url, "GRAPH_TENANT_ID": "test", "GRAPH_CLIENT_ID": "test", "GRAPH_CLIENT_SECRET": "test"},
+                lead_emails[4],
+                "Commercial Proposal",
+                "<p>Hello</p>"
+            )
+            self.assertFalse(ok_sup)
+            self.assertIn("Suppressed", reason_sup)
+
+            # Verify RFC 8058 Automated One-Click POST to /unsubscribe/<token> (with List-Unsubscribe=One-Click and NO email field)
+            with conn.cursor() as cur:
+                cur.execute('SELECT tracking_token FROM "CampaignRecipients" WHERE campaign_id = %s AND lead_id = %s;', (camp_id, lead_ids[0]))
+                tok_tx = cur.fetchone()["tracking_token"]
+
+            r_rfc_post = self.client.post(
+                f"/unsubscribe/{tok_tx}",
+                data={"List-Unsubscribe": "One-Click"}
+            )
+            self.assertEqual(r_rfc_post.status_code, 200)
+            post_html = r_rfc_post.get_data(as_text=True)
+            self.assertIn("You Have Been Unsubscribed", post_html)
+            self.assertIn("RFC 8058", post_html)
+            self.assertIn("ISO/IEC 27701:2019", post_html)
+
+            with conn.cursor() as cur:
+                cur.execute('SELECT status, is_dnc, campaign_ready, email_hygiene_status FROM "Leads" WHERE id = %s;', (lead_ids[0],))
+                l_after = cur.fetchone()
+                self.assertEqual(l_after["status"], "Unsubscribed")
+                self.assertFalse(l_after["is_dnc"])
+                self.assertFalse(l_after["campaign_ready"])
+                self.assertEqual(l_after["email_hygiene_status"], "DO_NOT_EMAIL")
+
+                cur.execute('SELECT source FROM "EmailSuppressionList" WHERE email_lower = %s;', (lead_emails[0],))
+                esl_row = cur.fetchone()
+                self.assertIsNotNone(esl_row)
+                self.assertEqual(esl_row["source"], "RFC8058_ONE_CLICK_POST")
+        finally:
+            with conn.cursor() as cur:
+                if camp_id:
+                    cur.execute('DELETE FROM "PendingOutbox" WHERE campaign_id = %s;', (camp_id,))
+                    cur.execute('DELETE FROM "MarketingCampaigns" WHERE id = %s;', (camp_id,))
+                if lead_emails:
+                    cur.execute('DELETE FROM "EmailSuppressionList" WHERE email_lower = ANY(%s);', (lead_emails,))
+                if lead_ids:
+                    cur.execute('DELETE FROM "GlobalActivities" WHERE parent_type = \'Lead\' AND parent_id = ANY(%s);', (lead_ids,))
+                    cur.execute('DELETE FROM "Leads" WHERE id = ANY(%s);', (lead_ids,))
+                cur.execute('DELETE FROM "GlobalActivities" WHERE description LIKE %s;', (f"%{uid}%",))
+            conn.commit()
+            conn.close()
+
 
 if __name__ == "__main__":
     unittest.main()

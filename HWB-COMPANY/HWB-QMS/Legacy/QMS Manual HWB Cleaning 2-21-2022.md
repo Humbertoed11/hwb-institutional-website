@@ -73,7 +73,7 @@ Our company is built on a foundation of core beliefs that guide our operations a
 Our commitment is to excellence, client satisfaction, and the continual improvement of our services.
 
 #### 1.2 Scope of the QMS
-HWB Cleaning Services LLC has established, implemented, and maintains this Quality Management System in accordance with the requirements of the ISO 9001:2015 standard. This Quality Management System (QMS) applies to all processes and services provided by HWB Cleaning Services LLC, including:
+HWB Cleaning Services LLC has established, implemented, and maintains this Quality Management System in accordance with the requirements of the ISO 9001:2026 (ISO 9001:2015+Amd 1:2024) standard. This Quality Management System (QMS) applies to all processes and services provided by HWB Cleaning Services LLC, including:
 *   Provision of janitorial services for commercial properties.
 *   Specialized carpet and rug cleaning services.
 *   Client communication, service scheduling, and billing.
@@ -95,7 +95,7 @@ These objectives are reviewed annually during the management review process.
 
 ### 2.0 Normative References
 The following document is referenced for the application of this Quality Management System.
-*   **ISO 9001:2015:** Quality management systems — Requirements.
+*   **ISO 9001:2026 (ISO 9001:2015+Amd 1:2024):** Quality management systems — Requirements.
 
 #### 2.1 Federal Regulations (Conceptual Equivalents)
 *   **Fair Labor Standards Act (FLSA)**: Establishes minimum wage, overtime pay, recordkeeping, and youth employment standards.
@@ -108,7 +108,7 @@ The following document is referenced for the application of this Quality Managem
 ---
 
 ### 3.0 Terms and Definitions
-For the purpose of this document, the terms and definitions given in ISO 9000:2015 apply, along with the following:
+For the purpose of this document, the terms and definitions given in ISO 9000:2026 (ISO 9000:2015) apply, along with the following:
 
 #### 3.1 Acronyms
 *   **CAR:** Corrective Action Request
@@ -137,7 +137,7 @@ For the purpose of this document, the terms and definitions given in ISO 9000:20
 *   **Do:** Part of the PDCA cycle; implementing what was planned.
 *   **Engagement of People:** Competent, empowered and engaged people are essential to enhance the organization’s capability to create and deliver value.
 *   **Evidence-based Decision Making:** Decisions based on the analysis and evaluation of data and information are more likely to produce desired results.
-*   **Exclusions:** (In the context of ISO 9001:2015) Non-applicability of any requirement of the standard within the scope of the QMS, usually due to the nature of the organization's products or services.
+*   **Exclusions:** (In the context of ISO 9001:2026 (ISO 9001:2015+Amd 1:2024)) Non-applicability of any requirement of the standard within the scope of the QMS, usually due to the nature of the organization's products or services.
 *   **Improvement:** Continuous efforts to enhance the organization’s ability to create and deliver desired results.
 *   **Inclusions:** (In the context of this QMS) The specific processes, services, and locations covered by the scope of the quality management system.
 *   **Interested Party:** A person or organization that can affect, be affected by, or perceive themselves to be affected by a decision or activity of HWB Cleaning Services.
@@ -146,7 +146,7 @@ For the purpose of this document, the terms and definitions given in ISO 9000:20
 *   **Nonconformity:** Non-fulfillment of a requirement.
 *   **Opportunity:** A set of circumstances which makes it possible to do something; in the context of this QMS, a favorable situation that can be leveraged for improvement.
 *   **Plan:** Part of the PDCA cycle; establishing the objectives and processes necessary to deliver results in accordance with requirements and policies.
-*   **Preventive Action:** *Note: This term from previous standards is now encompassed within "risk-based thinking" in ISO 9001:2015. It refers to action taken to eliminate the cause of a potential nonconformity.*
+*   **Preventive Action:** *Note: This term from previous standards is now encompassed within "risk-based thinking" in ISO 9001:2026 (ISO 9001:2015+Amd 1:2024). It refers to action taken to eliminate the cause of a potential nonconformity.*
 *   **Process:** A set of interrelated or interacting activities that use inputs to deliver an intended result.
 *   **Process Approach:** Consistent and predictable results are achieved more effectively and efficiently when activities are understood and managed as interrelated processes that function as a coherent system.
 *   **Provider:** An organization that provides a product or a service (often referred to as a supplier).
@@ -207,10 +207,10 @@ Due to their effect or potential effect on the organization’s ability to consi
 The organization shall monitor and review information about these interested parties and their relevant requirements.
 
 #### 4.3 Scope and Applicability
-The scope of the HWB Cleaning Services QMS is defined in section 1.2 of this manual. The applicability of the ISO 9001:2015 requirements has been assessed for all services.
+The scope of the HWB Cleaning Services QMS is defined in section 1.2 of this manual. The applicability of the ISO 9001:2026 (ISO 9001:2015+Amd 1:2024) requirements has been assessed for all services.
 
 ##### 4.3.1 Non-Applicable Requirements (Exclusions)
-The following requirements of the ISO 9001:2015 standard have been deemed not applicable to the scope of this QMS.
+The following requirements of the ISO 9001:2026 (ISO 9001:2015+Amd 1:2024) standard have been deemed not applicable to the scope of this QMS.
 
 | Clause | Requirement | Justification |
 | :--- | :--- | :--- |
@@ -218,7 +218,7 @@ The following requirements of the ISO 9001:2015 standard have been deemed not ap
 | **7.1.5** | Monitoring and measuring resources | The conformity of our service is determined by direct visual inspection and adherence to service checklists. The organization does not use any equipment that requires calibration to verify service conformity. |
 
 #### 4.4 Quality Management System and its Processes
-In accordance with the requirements of ISO 9001:2015, HWB Cleaning Services has determined the processes needed for the QMS and their interactions. These processes are structured around the core functions of the business:
+In accordance with the requirements of ISO 9001:2026 (ISO 9001:2015+Amd 1:2024), HWB Cleaning Services has determined the processes needed for the QMS and their interactions. These processes are structured around the core functions of the business:
 
 *   **Executive:** The strategic leadership and decision-making function of the company. It defines the company’s vision, sets long-term goals (including the Quality Policy and Objectives), allocates resources, and ensures the company remains profitable and compliant. This function includes the **Leadership and Management Review** process.
 
@@ -324,7 +324,7 @@ All employees are made aware of:
 HWB Cleaning Services has established internal and external communication processes relevant to the QMS, including what, when, with whom, and how to communicate.
 
 #### 7.5 Documented Information
-The QMS includes documented information required by the ISO 9001:2015 standard and additional information deemed necessary by the organization. This includes the control of records containing sensitive client information (e.g., contact and billing data) to prevent unauthorized access or disclosure, in alignment with Federal Trade Commission (FTC) guidelines on data privacy. A master list of documents is maintained.
+The QMS includes documented information required by the ISO 9001:2026 (ISO 9001:2015+Amd 1:2024) standard and additional information deemed necessary by the organization. This includes the control of records containing sensitive client information (e.g., contact and billing data) to prevent unauthorized access or disclosure, in alignment with Federal Trade Commission (FTC) guidelines on data privacy. A master list of documents is maintained.
 
 ---
 
@@ -392,8 +392,8 @@ HWB Cleaning Services shall continually improve the suitability, adequacy, and e
 | 3.0 | 2026-02-20 | Expanded 'Terms and Definitions' section with acronyms and definitions. | 1.2 |
 | 3.2, 4.4, 3.1 | 2026-02-20 | Added PDCA acronym, definitions, and process model explanation. | 1.3 |
 | 3.2 | 2026-02-20 | Added definitions for modal verbs ("shall," "should," "may," "can"). | 1.4 |
-| 4.2 | 2026-02-20 | Incorporated language from ISO 9001:2015 Clause 4.2 regarding interested parties. | 1.5 |
-| 3.2 | 2026-02-20 | Expanded 'Definitions' section with key ISO 9001:2015 terms. | 1.6 |
+| 4.2 | 2026-02-20 | Incorporated language from ISO 9001:2026 (ISO 9001:2015+Amd 1:2024) Clause 4.2 regarding interested parties. | 1.5 |
+| 3.2 | 2026-02-20 | Expanded 'Definitions' section with key ISO 9001:2026 (ISO 9001:2015+Amd 1:2024) terms. | 1.6 |
 | 4.4.2 | 2026-02-20 | Added explanation of 'The Process Approach' with industry-specific example. | 1.7 |
 | 4.1 | 2026-02-20 | Replaced section with detailed PESTLE analysis of external issues. | 1.8 |
 | 4.1 | 2026-02-20 | Added table for Internal Issues (People). | 1.9 |

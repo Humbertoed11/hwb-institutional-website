@@ -28,7 +28,7 @@ This SOP defines the business alignment of HWB Cleaning Services LLC through the
 *   The synergy between autonomous AI orchestration and physical service excellence.
 
 ### 3.2 What We Are Good At (Passion & Profession)
-*   **ISO 9001:2015** auditing and quality governance.
+*   **ISO 9001:2026 (ISO 9001:2015+Amd 1:2024)** auditing and quality governance.
 *   High-precision software engineering and agent orchestration.
 *   Clinical-grade commercial and industrial sanitation.
 

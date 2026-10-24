@@ -7,9 +7,9 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-SEC-001</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.2.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
-        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">ISO 9001: 8.2 &amp; ISO 27001 / SOC 2 Type II</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">ISO 9001: 8.2 &amp; ISO 27001 / ISO 27701 / SOC 2 Type II</span></div>
     </div>
 
     <div class="sop-content-body">
@@ -23,12 +23,12 @@
             <tbody>
                 <tr><td><strong>Document Title</strong></td><td><strong>Master Vendor Security Assessment Packet (SIG / CAIQ / VSAQ Core Standard)</strong></td></tr>
                 <tr><td><strong>Document ID</strong></td><td>HWB-QMS-SEC-001</td></tr>
-                <tr><td><strong>Version</strong></td><td>1.0.0</td></tr>
+                <tr><td><strong>Version</strong></td><td>1.2.0</td></tr>
                 <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
                 <tr><td><strong>Author</strong></td><td>George (Systems Architect &amp; mbB, Senior ISO 9001 Auditor)</td></tr>
                 <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
-                <tr><td><strong>Date</strong></td><td>09/27/2026</td></tr>
-                <tr><td><strong>Applicable Standards</strong></td><td>ISO 9001:2015 Clause 8.2, ISO/IEC 27001:2022, AICPA SOC 2 Type II, Texas Bus. &amp; Com. Code § 521</td></tr>
+                <tr><td><strong>Date</strong></td><td>10/24/2026</td></tr>
+                <tr><td><strong>Applicable Standards</strong></td><td>ISO 9001:2026 (ISO 9001:2015+Amd 1:2024) Clause 8.2, ISO/IEC 27001:2022+Amd 1:2024, ISO/IEC 27701:2025, AICPA SOC 2 Type II, CAN-SPAM (15 U.S.C. &sect; 7701), IETF RFC 8058, Texas Bus. &amp; Com. Code Ch. 321, Ch. 521 &amp; Ch. 541 (TDPSA)</td></tr>
             </tbody>
         </table>
 
@@ -59,7 +59,7 @@
                 <tr><td><strong>Systems Architecture &amp; Security Authority</strong></td><td>George, Systems Architect (PhD, mbB, Senior ISO 9001 Auditor)</td></tr>
                 <tr><td><strong>Platform Architecture</strong></td><td>SigmaFidelity™ / SigmaJan™ Cloud SaaS &amp; Operations Suite</td></tr>
                 <tr><td><strong>Primary Cloud Infrastructure</strong></td><td>Microsoft Azure Cloud (US South Central / Texas) &amp; Containerized Linux Services</td></tr>
-                <tr><td><strong>Production Database</strong></td><td>PostgreSQL 13 (Azure Flexible Server inside Private Virtual Network)</td></tr>
+                <tr><td><strong>Production Database</strong></td><td>PostgreSQL 16.15 (pgvector/pgvector:pg16 locally and Azure Database for PostgreSQL Flexible Server 16.15 in production inside Private Virtual Network)</td></tr>
                 <tr><td><strong>Corporate Email &amp; Identity</strong></td><td>Microsoft 365 Enterprise (Azure Entra ID &amp; Microsoft Graph API)</td></tr>
             </tbody>
         </table>
@@ -186,6 +186,13 @@
                     <td><strong>YES.</strong> The platform enforces unique user identification, encrypted storage, automatic session timeouts, and role-based access restrictions. HWB enters into standard Business Associate Agreements (BAAs) for healthcare accounts.</td>
                     <td><span style="color: #16a34a; font-weight: 700;">● COMPLIANT</span></td>
                 </tr>
+                <tr>
+                    <td><strong>15.0</strong></td>
+                    <td><strong>Electronic Communications, Anti-Spam &amp; Multi-Jurisdictional Privacy Governance</strong></td>
+                    <td>How does the platform ensure 100% compliance with federal, state, county, and international email communication laws and opt-out rights?</td>
+                    <td><strong>5-POINT MULTI-JURISDICTIONAL COMPLIANCE ENGINE (BUG-144 &amp; BUG-145).</strong> (1) <strong>Federal CAN-SPAM (15 U.S.C. &sect; 7701) &amp; IETF RFC 8058 / RFC 2369:</strong> Every outbound commercial email injects native <code>List-Unsubscribe</code> and <code>List-Unsubscribe-Post: List-Unsubscribe=One-Click</code> headers and supports instant zero-login <code>GET</code> and <code>POST /unsubscribe/&lt;token&gt;</code> opt-outs. (2) <strong>State &amp; International Geofence Shield:</strong> Automatically blocks strict-liability states (<code>CA</code> B&amp;P &sect; 17529.5, <code>WA</code> RCW 19.190) and international TLDs (<code>.ca</code> CASL, <code>.uk</code>/<code>.eu</code>/<code>.de</code>/<code>.fr</code> GDPR/PECR, <code>.au</code> Spam Act). (3) <strong>County &amp; Public Sector Exclusion:</strong> Excludes government/public-official domains (<code>.gov</code>, <code>.mil</code>, <code>.k12.tx.us</code>), routing public solicitations strictly through formal RFP/Institutional Bids. (4) <strong>Dual-Table Outbound Suppression Gate &amp; Channel Separation:</strong> Cross-checks both <code>"EmailSuppressionList"</code> and <code>"Leads"</code> before every Microsoft Graph send, while separating email opt-outs (<code>✉️ Unsubscribed</code>) from telephone Do Not Call (<code>🚫 DNC</code>).</td>
+                    <td><span style="color: #16a34a; font-weight: 700;">● COMPLIANT</span></td>
+                </tr>
             </tbody>
         </table>
 
@@ -194,6 +201,7 @@
         <ul>
             <li><strong>RLS Verification:</strong> Verified by Tessa Test Module 8 (<code>test_08_multitenant_rls_and_quarantine_ingestion</code>) asserting 0 leaked records across tenant boundaries.</li>
             <li><strong>Input Cleansing Verification:</strong> Verified by the automated Quarantine Ingestion Engine requiring zero format defects before database commit.</li>
+            <li><strong>Multi-Jurisdictional Email &amp; Form Compliance Verification:</strong> Verified by Rack 14 Enterprise Suite (<code>scripts/test_web_performance_rack_14.py</code> — <code>24/24</code> passing tests covering secondary portals, closed-loop campaign state transitions, RFC 8058 one-click headers/POST opt-out, universal geofencing, and dual-table suppression).</li>
             <li><strong>Disaster Recovery Verification:</strong> Verified by Peter Sentinel's daily backup ledger and binary snapshot tracking.</li>
         </ul>
 
@@ -208,6 +216,18 @@
                 </tr>
             </thead>
             <tbody>
+                <tr>
+                    <td>1.2.0</td>
+                    <td>10/24/2026</td>
+                    <td>George (Systems Architect)</td>
+                    <td>Added Assessment Domain 15.0 (Electronic Communications, Anti-Spam &amp; Multi-Jurisdictional Privacy Governance — BUG-144 &amp; BUG-145) codifying CAN-SPAM (15 U.S.C. &sect; 7701), IETF RFC 8058 / RFC 2369 native One-Click List-Unsubscribe headers and POST handler, Texas Anti-Spam (Ch. 321) &amp; TDPSA (Ch. 541), CA/WA &amp; International CASL/GDPR geofence blocks, public-sector domain exclusions (.gov/.mil/.k12.tx.us), Dual-Table Outbound Suppression Gate, and Channel-Specific Opt-Out Separation (✉️ Unsubscribed vs 🚫 DNC), certified by 24/24 Rack 14 automated tests. Approved by Humberto Dominguez, CEO.</td>
+                </tr>
+                <tr>
+                    <td>1.1.0</td>
+                    <td>10/17/2026</td>
+                    <td>George (Systems Architect)</td>
+                    <td>Upgraded Production &amp; Local Database Engine specification to PostgreSQL 16.15 (pgvector/pgvector:pg16 locally and Azure Database for PostgreSQL Flexible Server 16.15 in production inside Private Virtual Network; 84 public tables, 404,470 rows, vector 0.8.2, pg_trgm, fuzzystrmatch). Approved by Humberto Dominguez, CEO.</td>
+                </tr>
                 <tr>
                     <td>1.0.0</td>
                     <td>09/27/2026</td>

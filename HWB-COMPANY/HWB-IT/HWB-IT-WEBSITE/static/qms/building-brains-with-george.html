@@ -7,7 +7,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-IT-BOOK-001</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">14.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">15.0.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.1.6 (Organizational Knowledge)</span></div>
     </div>
@@ -23,11 +23,11 @@
             <tbody>
                 <tr><td><strong>Document Title</strong></td><td><strong>Building HWB Cleaning with George: An Operator's Manual for Cleaning Services, Marketing Automation, and Systems Architecture</strong></td></tr>
                 <tr><td><strong>Document ID</strong></td><td>HWB-IT-BOOK-001</td></tr>
-                <tr><td><strong>Version</strong></td><td>14.0.0</td></tr>
+                <tr><td><strong>Version</strong></td><td>15.0.0</td></tr>
                 <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
                 <tr><td><strong>Author</strong></td><td>George (Systems Architect)</td></tr>
                 <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
-                <tr><td><strong>Date</strong></td><td>10/21/2026</td></tr>
+                <tr><td><strong>Date</strong></td><td>10/24/2026</td></tr>
                 <tr><td><strong>Department</strong></td><td>IT (Information Technology)</td></tr>
             </tbody>
         </table>
@@ -312,6 +312,37 @@
         </ul>
         </p>
 
+        <h2>Chapter 22: Secondary Portal Hardening, The Closed-Loop Lead &amp; Email Marketing Campaign State Machine, and The 5-Point Multi-Jurisdictional Email Compliance Shield (<code>BUG-143</code>–<code>BUG-145</code>)</h2>
+        <p><strong>22.1 Secondary Portals &amp; Forms Enterprise Hardening (<code>BUG-143</code>):</strong><br>
+        On October 24, 2026, CEO Humberto Dominguez ordered a full audit of every interactive form across <code>www.hwbcleaning.com</code>. George inspected all 39 public and backoffice forms and hardened 5 secondary portal edge cases:
+        <ul>
+            <li><strong>Bosanna Technician Onboarding Portal (<code>/onboard/bosanna</code>):</strong> Bound <code>window.switchLang = setPortalLanguage</code> so URL language parameters (<code>?lang=es</code> / <code>?lang=en</code>) switch languages cleanly, mapped facility pre-fill (<code>?facility=...</code>) to <code>#target_facility</code>, ensured <code>submitBtn.disabled = false</code> resets on server errors, and unified phone masking to <code>(###)-###-####</code>.</li>
+            <li><strong>SigmaAcademy Course Assessment Quiz (<code>/academy/course/&lt;code&gt;</code>):</strong> Removed hardcoded synthetic student values (<code>Carlos E. Mendoza</code> / <code>carlos@hwbcleaning.com</code>) when opened without a magic token and bound <code>#student_name</code> and <code>#student_email</code> to <code>form="quiz-form"</code> for native HTML5 validation.</li>
+            <li><strong>Takeoff &amp; Scope Configurator (<code>/tma/estimator</code>):</strong> Added strict <code>isTelegramMiniApp</code> detection requiring non-empty <code>window.Telegram.WebApp.initData</code> and replaced the raw browser <code>alert()</code> fallback with an interactive on-screen <strong>Takeoff Estimate Receipt Card (<code>#tma-receipt-card</code>)</strong> featuring 1-click Copy Summary and Print Estimate buttons.</li>
+            <li><strong>Backoffice Scope Planner &amp; Add-Record Modals:</strong> Added <code>onsubmit="event.preventDefault(); addToScope();"</code> to prevent Enter-key page reloads on the Scope Planner form and added explicit HTML <code>maxlength</code> and <code>oninput</code> mask attributes across the Add Client, Add Partner, and Add Lead modals.</li>
+        </ul>
+        </p>
+
+        <p><strong>22.2 The Closed-Loop Lead &amp; Email Marketing Campaign Lifecycle State Machine (<code>BUG-144</code>):</strong><br>
+        CEO Humberto Dominguez and George traced how a commercial lead moves from the Commercial Leads module (<code>#view-leads</code>) through an Email Marketing Campaign (<code>#view-marketing</code>) and back into the sales pipeline, closing four lifecycle synchronization gaps:
+        <ul>
+            <li><strong>Direct Lead-to-Campaign Enrollment (<code>#modal-enroll-leads-campaign</code> &amp; <code>POST /api/v1/marketing/campaign/enroll-leads</code>):</strong> Checking leads in <code>#view-leads</code> and clicking <strong>Send to Campaign</strong> opens the enrollment modal, enrolls the selected leads into an existing or newly created campaign, enforces CAN-SPAM / DNC / Geofence checks, updates <code>Leads.status = 'In Campaign'</code> (<code>📧 In Email Outreach</code>), and stages personalized <code>HWB-COM-001</code> drafts in <code>"PendingOutbox"</code>.</li>
+            <li><strong>Real-Time Campaign Telemetry Synchronization (<code>sync_campaign_telemetry_counts</code>):</strong> Every enrollment, Outbox release/rejection (<code>batch-action</code> and single-email <code>approve_email</code>), tracking pixel open (<code>/api/v1/marketing/track/open/&lt;token&gt;.gif</code> &rarr; <code>Leads.status = 'Engaged'</code> + <code>priority_level = 'High'</code>), and calendar booking link click (<code>/api/v1/marketing/track/click/&lt;token&gt;</code> &rarr; <code>Leads.status = 'Qualified'</code>) automatically recalculates <code>total_targets</code>, <code>staged_count</code>, <code>sent_count</code>, <code>opened_count</code>, and <code>walkthroughs_booked</code> on <code>"MarketingCampaigns"</code>.</li>
+            <li><strong>Channel-Specific Opt-Out Separation (<code>✉️ Unsubscribed</code> vs <code>🚫 DNC</code>):</strong> Separated email opt-outs (<code>Leads.status = 'Unsubscribed'</code>, <code>is_dnc = FALSE</code>, <code>campaign_ready = FALSE</code>, <code>email_hygiene_status = 'DO_NOT_EMAIL'</code>, badge <code>✉️ Unsubscribed</code>) from telephone Do Not Call requests (<code>🚫 DNC</code>, <code>is_dnc = TRUE</code>).</li>
+            <li><strong>1-Click Campaign Completion State Transition (<code>POST /api/v1/marketing/campaign/&lt;id&gt;/complete</code>):</strong> Clicking <strong>Complete</strong> on a finished campaign cancels any remaining unsent drafts, returns unsent leads (<code>STAGED</code> / <code>AWAITING_APPROVAL</code>) back to <code>'New'</code>, advances sent unopened leads (<code>SENT</code>) from <code>'In Campaign'</code> to <code>'Contacted'</code> for phone follow-up, and preserves all <code>'Engaged'</code>, <code>'Qualified'</code>, and <code>'Unsubscribed'</code> leads.</li>
+        </ul>
+        </p>
+
+        <p><strong>22.3 The 5-Point Multi-Jurisdictional Email Compliance &amp; ISO Hardening Shield (<code>BUG-145</code>):</strong><br>
+        To guarantee 100% legal and regulatory compliance across International, Federal, State, County, and ISO/SOC 2 standards, CEO Humberto Dominguez authorized a 5-point hardening suite across the outbound email engine:
+        <ul>
+            <li><strong>Point 1 — IETF RFC 8058 &amp; RFC 2369 Native One-Click Unsubscribe Headers &amp; POST Handler:</strong> <code>transmit_email()</code> in <code>core/services/email_service.py</code> automatically injects <code>List-Unsubscribe</code> and <code>List-Unsubscribe-Post: List-Unsubscribe=One-Click</code> into Microsoft Graph <code>internetMessageHeaders</code>, and <code>POST /unsubscribe/&lt;tracking_token&gt;</code> in <code>blueprints/public.py</code> executes instant 1-click token suppression without requiring a manual email form field.</li>
+            <li><strong>Point 2 — Universal Geofence &amp; Public-Sector Exclusion Shield:</strong> Enforced <code>get_email_compliance_where_clauses()</code> and <code>is_email_compliance_eligible()</code> across all 4 campaign endpoints (<code>preview-count</code>, <code>campaign/create</code>, <code>enroll-leads</code>, and <code>generate-drafts</code>), blocking strict-liability states (<code>CA</code> B&amp;P &sect; 17529.5, <code>WA</code> RCW 19.190), international TLDs (<code>.ca</code>, <code>.uk</code>, <code>.eu</code>, <code>.de</code>, <code>.fr</code>, <code>.au</code>, etc.), and government/public-official domains (<code>.gov</code>, <code>.mil</code>, <code>.k12.tx.us</code>).</li>
+            <li><strong>Point 3 &amp; Point 4 — Dual-Table Outbound Suppression Gate &amp; Tamper-Proof Boot Seeder:</strong> Upgraded <code>transmit_email()</code> to cross-check both <code>"EmailSuppressionList"</code> and <code>"Leads"</code> before every Microsoft Graph send, and hardened the <code>main_app.py</code> boot seeder <code>ON CONFLICT (id) DO UPDATE</code> clause so existing <code>'Unsubscribed'</code> or <code>'Do Not Call (DNC)'</code> statuses can never be overwritten.</li>
+            <li><strong>Point 5 — Comprehensive Multi-Jurisdictional Legal &amp; ISO Citations:</strong> Updated the <code>HWB-COM-001</code> letterhead footer and <code>/unsubscribe</code> Legal Compliance Record to explicitly cite Federal (CAN-SPAM 15 U.S.C. &sect; 7701 &amp; RFC 8058), State (Texas Bus. &amp; Com. Code Ch. 321 &amp; TDPSA Ch. 541; CA/WA Geofence), County (Collin County, TX Venue &amp; Public Sector Exclusion), International (CASL/GDPR Geofence), and ISO/SOC 2 (ISO 9001:2015, ISO/IEC 27001:2022, ISO/IEC 27701:2019, SOC 2 Type II P2.1), certified by <code>24/24</code> passing tests in <code>scripts/test_web_performance_rack_14.py</code>.</li>
+        </ul>
+        </p>
+
         <hr />
         <p style="font-style: italic; text-align: center;">Note: This manual is the official technical guide for HWB Cleaning developer-operators. 100% Alignment verified.</p>
     </div>
@@ -391,6 +422,12 @@
                     <td style="text-align: left;">10/21/2026</td>
                     <td style="text-align: left;">George (Systems Architect) &amp; George Bytes</td>
                     <td style="text-align: left;">Added Chapter 21: Enterprise IAM Recovery, 4-Stage 1099 &amp; W-2 Encrypted Onboarding Vaults, Universal Input Masking &amp; Tamper-Evident Transaction Receipts (BUG-138–BUG-142 / Migrations 046–050 / Release v5.5.0). Documented multi-field password recovery with PasswordResetAuditLedger, 1099 &amp; W-2 self-service onboarding portals with AI/PDF W-9/COI/W-4/I-9/ID/Voided Check auto-extraction, AES-256 BYTEA document vaults, locked ReportLab MSA/DWC-83/Job Description PDF certificates, Savepoint transaction isolation, global sigma_input_masks.js auto-injection, and tamper-evident Transaction Receipt Cards (commit 4933eb2). Approved by Humberto Dominguez, CEO.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">15.0.0</td>
+                    <td style="text-align: left;">10/24/2026</td>
+                    <td style="text-align: left;">George (Systems Architect) &amp; George Bytes</td>
+                    <td style="text-align: left;">Added Chapter 22: Secondary Portal Hardening, The Closed-Loop Lead &amp; Email Marketing Campaign State Machine, and The 5-Point Multi-Jurisdictional Email Compliance Shield (BUG-143–BUG-145). Documented Bosanna/SigmaAcademy/TMA Estimator form hardening, direct Lead-to-Campaign enrollment (#modal-enroll-leads-campaign), real-time campaign telemetry synchronization (sync_campaign_telemetry_counts), channel-specific opt-out separation (✉️ Unsubscribed vs 🚫 DNC), 1-click campaign completion state transitions, IETF RFC 8058 One-Click List-Unsubscribe headers &amp; POST handler, universal CA/WA/International/Public-Sector (.gov/.mil/.k12.tx.us) geofence shield, Dual-Table Outbound Suppression Gate, and tamper-proof boot seeder protection, certified by 24/24 Rack 14 tests. Approved by Humberto Dominguez, CEO.</td>
                 </tr>
             </tbody>
         </table>

@@ -45,7 +45,7 @@ HWB Cleaning Services LLC
 
 ---
 <!-- FOOTER START -->
-**SigmaFidelity™ Managed Site** | ISO 9001:2015 Standards in Implementation
+**SigmaFidelity™ Managed Site** | ISO 9001:2026 (ISO 9001:2015+Amd 1:2024) Standards in Implementation
 [Company Phone] | [Company Email] | [Website: www.hwbcleaning.com]
 <!-- FOOTER END -->
 ```
