@@ -593,7 +593,7 @@ def generate_signed_msa_dwc83_certificate_html(
                 Timestamp: {signed_at_display} &bull; Signer IP: {signer_ip} &bull; Partner Reference: {ref_code}
             </div>
             <div style="font-size: 11px; color: #475569; margin-top: 4px; font-family: monospace;">
-                SHA-256 Signature Fingerprint: {sig_hash}
+                Electronic Signature ID: {sig_hash}
             </div>
         </div>
     </div>
@@ -714,7 +714,7 @@ def generate_signed_msa_dwc83_certificate_pdf(
         f"BT /F1 8.5 Tf 0.20 0.25 0.33 rg 50 {sig_top + 25} Td (Executed Timestamp: {_pdf_escape(signed_at_display)}   |   Signer IP: {_pdf_escape(signer_ip)}   |   Ref: {_pdf_escape(ref_code)}) Tj ET"
     )
     ops.append(
-        f"BT /F1 7.8 Tf 0.28 0.33 0.41 rg 50 {sig_top + 10} Td (SHA-256 Cryptographic Fingerprint: {_pdf_escape(sig_hash)}) Tj ET"
+        f"BT /F1 7.8 Tf 0.28 0.33 0.41 rg 50 {sig_top + 10} Td (Electronic Signature ID: {_pdf_escape(sig_hash)}) Tj ET"
     )
 
     stream_bytes = "\n".join(ops).encode("latin-1", errors="replace")

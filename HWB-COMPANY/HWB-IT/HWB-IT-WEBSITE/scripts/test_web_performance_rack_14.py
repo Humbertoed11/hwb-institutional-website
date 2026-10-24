@@ -589,14 +589,14 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
             sub, sub["contact_name"], "Owner", "127.0.0.1", "10/20/2026 10:15 AM CST"
         )
         self.assertIn("TEXAS DWC-83 AFFIRMATION", cert_html)
-        self.assertIn("SHA-256 Signature Fingerprint:", cert_html)
+        self.assertIn("Electronic Signature ID:", cert_html)
         self.assertIn(sub["company_name"], cert_html)
 
         cert_pdf = generate_signed_msa_dwc83_certificate_pdf(
             sub, sub["contact_name"], "Owner", "127.0.0.1", "10/20/2026 10:15 AM CST"
         )
         self.assertTrue(cert_pdf.startswith(b"%PDF-1.4"))
-        self.assertIn(b"SHA-256 Cryptographic Fingerprint:", cert_pdf)
+        self.assertIn(b"Electronic Signature ID:", cert_pdf)
         self.assertIn(b"%%EOF", cert_pdf)
 
         # Verify Option C Tier-1 Hybrid Document Vault ("SubcontractorDocuments")
@@ -1596,10 +1596,10 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
         for expected_frag in ("'CA', 'WA'", "'%.ca'", "'%.uk'", "'%.eu'", "'%.gov'", "'%.mil'", "'%.k12.tx.us'", "'Unsubscribed'"):
             self.assertIn(expected_frag, joined_where)
 
-        # 3. Letterhead Footer Legal & ISO Citations
+        # 3. Letterhead Footer CAN-SPAM Physical Address & One-Click Unsubscribe Link (Zero Internal Jargon per BUG-147)
         lh_html = format_marketing_letterhead("<p>Test Body</p>", "tok_footer_check_999")
-        for citation in ("15 U.S.C. § 7701", "RFC 8058", "Ch. 321", "TDPSA", "Collin County", "ISO 9001:2015", "ISO/IEC 27001:2022", "ISO/IEC 27701:2019", "SOC 2 Type II P2.1"):
-            self.assertIn(citation, lh_html)
+        for required_element in ("3342 FM 1827 Ste 8d, McKinney, TX 75071", "Collin County, TX", "Unsubscribe Instantly", "tok_footer_check_999"):
+            self.assertIn(required_element, lh_html)
 
         # 4. End-to-End Database Test: Geofence Filtering, RFC 8058 POST Unsubscribe, & Dual-Table Suppression Gate
         import uuid
@@ -1675,8 +1675,8 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
             self.assertEqual(r_rfc_post.status_code, 200)
             post_html = r_rfc_post.get_data(as_text=True)
             self.assertIn("You Have Been Unsubscribed", post_html)
-            self.assertIn("RFC 8058", post_html)
-            self.assertIn("ISO/IEC 27701:2019", post_html)
+            self.assertIn("CAN-SPAM Act", post_html)
+            self.assertIn("Opt-Out Confirmation Record", post_html)
 
             with conn.cursor() as cur:
                 cur.execute('SELECT status, is_dnc, campaign_ready, email_hygiene_status FROM "Leads" WHERE id = %s;', (lead_ids[0],))
@@ -1735,16 +1735,16 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
             self.assertIn('id="hwb-cookie-banner"', st_html, standalone_url)
             self.assertNotIn("user-scalable=no", st_html, standalone_url)
 
-        # 3. Updated Privacy Policy (v2.3.0), Terms (v2.2.0), and Unsubscribe (ISO 9001:2026)
+        # 3. Updated Privacy Policy (v2.3.0), Terms (v2.2.0), and Unsubscribe
         r_prv = self.client.get("/privacy-policy")
         prv_html = r_prv.get_data(as_text=True)
-        self.assertIn("HWB-LEG-PRV-001 • v2.3.0", prv_html)
-        self.assertIn("RFC 8058", prv_html)
-        self.assertIn("EmailSuppressionList", prv_html)
+        self.assertIn("Privacy Policy • v2.3.0", prv_html)
+        self.assertIn("Native One-Click Unsubscribe", prv_html)
+        self.assertIn("Do Not Email list", prv_html)
 
         r_trm = self.client.get("/terms")
         trm_html = r_trm.get_data(as_text=True)
-        self.assertIn("HWB-LEG-001 • v2.2.0", trm_html)
+        self.assertIn("Commercial Terms • v2.2.0", trm_html)
         self.assertIn("6.1 Electronic Communications, TCPA", trm_html)
 
         r_uns = self.client.get("/unsubscribe")
@@ -1772,6 +1772,83 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
         self.assertIn("First-Pass Inspection Score", meth_html)
         self.assertNotIn(">Cpk<", meth_html)
         self.assertNotIn(">DPMO<", meth_html)
+
+    def test_26_zero_internal_process_references_on_public_surfaces_bug_147(self):
+        """
+        BUG-147 Permanent Regression Gate:
+        Enforces strict separation between internal backend compliance controls and
+        external client-facing copy across all 35 public, portal, and auth routes
+        plus outbound email letterheads. Prohibits rendering internal audit codes,
+        database engine/table names, cryptographic hash names, internal SOP IDs,
+        or internal agent personas to unauthenticated visitors or clients.
+        """
+        import re
+        from html.parser import HTMLParser
+        from blueprints.crm_api import format_marketing_letterhead
+
+        class _VisibleTextParser(HTMLParser):
+            def __init__(self):
+                super().__init__()
+                self.skip = 0
+                self.chunks = []
+            def handle_starttag(self, tag, attrs):
+                if tag in ("script", "style"):
+                    self.skip += 1
+            def handle_endtag(self, tag):
+                if tag in ("script", "style") and self.skip > 0:
+                    self.skip -= 1
+            def handle_data(self, data):
+                if self.skip == 0 and data.strip():
+                    self.chunks.append(data.strip())
+
+        forbidden_internal_terms = re.compile(
+            r"(SOC\s*2|PROCESSING\s*INTEGRITY|PI1\.\d+|CC\d+\.\d+|P2\.\d+|WORM|PostgreSQL|Postgres|SQL\s+Brain|"
+            r"EmailSuppressionList|ClientBreadcrumbs|SecurityAuditLog|SubcontractorDocuments|EmployeeDocuments|"
+            r"HWB-QMS-[0-9A-Z.\-]+|HWB-LEG-[0-9A-Z.\-]+|HWB-SEC-[0-9A-Z.\-]+|HWB-OPS-[0-9A-Z.\-]+|"
+            r"SHA-256|AES-256|HMAC|RFC\s*\d+|IETF|"
+            r"Super\s*George|SuperGeorge|George,\s*Systems\s*Architect|George\s*Bot|Yamamoto|Silas\s*Sync|Lauri\s*Tells|Peter|"
+            r"Rack\s*\d+|Pincer\s*Shield|Cloudflare|Containerized|BYTEA|Bcrypt|"
+            r"Clause\s*\d+|Amd\s*1:2024|SigmaFidelity|Zero-Defect|Poka-Yoke)",
+            re.IGNORECASE,
+        )
+
+        public_routes = [
+            "/", "/services", "/services/commercial-janitorial", "/services/daycare-preschool-cleaning",
+            "/services/post-construction-cleaning", "/services/floor-care-vct-waxing",
+            "/services/carpet-extraction", "/services/window-cleaning",
+            "/locations", "/locations/dallas-tx", "/locations/plano-tx", "/locations/frisco-tx",
+            "/locations/mckinney-tx", "/locations/fort-worth-tx", "/locations/arlington-tx",
+            "/about", "/contact", "/quote", "/work-with-us", "/methodology",
+            "/compliance", "/ehsq", "/trust-center", "/capability-statement", "/prequal",
+            "/privacy-policy", "/terms", "/accessibility", "/unsubscribe",
+            "/academy", "/academy/verify", "/login", "/forgot-password",
+            "/onboard/bosanna", "/tma/estimator",
+        ]
+
+        unauth_client = app.test_client()
+        for route in public_routes:
+            resp = unauth_client.get(route)
+            if resp.status_code != 200:
+                continue
+            parser = _VisibleTextParser()
+            parser.feed(resp.get_data(as_text=True))
+            for chunk in parser.chunks:
+                match = forbidden_internal_terms.search(chunk)
+                self.assertIsNone(
+                    match,
+                    f"Forbidden internal reference '{match.group(0) if match else ''}' exposed on {route}: {chunk[:120]}"
+                )
+
+        # Also verify outbound client email letterhead contains zero internal process jargon
+        letterhead_html = format_marketing_letterhead("<p>Thank you for your inquiry.</p>", tracking_token="tok123")
+        lh_parser = _VisibleTextParser()
+        lh_parser.feed(letterhead_html)
+        for chunk in lh_parser.chunks:
+            match = forbidden_internal_terms.search(chunk)
+            self.assertIsNone(
+                match,
+                f"Forbidden internal reference '{match.group(0) if match else ''}' exposed in outbound email letterhead: {chunk[:120]}"
+            )
 
 
 if __name__ == "__main__":

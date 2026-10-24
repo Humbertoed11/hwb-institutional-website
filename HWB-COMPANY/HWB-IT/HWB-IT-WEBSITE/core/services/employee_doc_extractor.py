@@ -1007,7 +1007,7 @@ def generate_signed_w2_onboarding_pdf(
     ops.append("0.06 0.09 0.16 rg 40 705 532 52 re f")
     ops.append("BT /F2 13 Tf 1 1 1 rg 52 734 Td (HWB CLEANING SERVICES LLC - W-2 EMPLOYEE ONBOARDING PACKET) Tj ET")
     ops.append(
-        f"BT /F1 8.5 Tf 0.75 0.85 0.98 rg 52 717 Td (ISO 9001:2015 Clause 7.2 Job Description [{_pdf_escape(pos_code)}]  |  Employee ID: {_pdf_escape(emp_num)}) Tj ET"
+        f"BT /F1 8.5 Tf 0.75 0.85 0.98 rg 52 717 Td (Official Job Description [{_pdf_escape(pos_code)}]  |  Employee ID: {_pdf_escape(emp_num)}) Tj ET"
     )
 
     y = 680
@@ -1016,7 +1016,7 @@ def generate_signed_w2_onboarding_pdf(
             f"Employee Name: {full_name}   |   Employee ID: {emp_num}   |   Role: {role_title}",
             f"Home Address: {addr_line}   |   Phone: {employee_record.get('phone') or 'N/A'}",
             f"W-4 Filing Status: {employee_record.get('w4_filing_status') or 'Single'}   |   Dependents: ${float(employee_record.get('w4_step3_dependents') or 0):,.2f}   |   Extra Withholding: ${float(employee_record.get('w4_step4c_extra_withholding') or 0):,.2f}",
-            f"SSN (AES-256 Encrypted): ***-**-{employee_record.get('ssn_last_four') or 'XXXX'}   |   State ID: {employee_record.get('state_id_number') or 'On File'} (Exp: {employee_record.get('state_id_expiration') or 'N/A'})",
+            f"SSN (Encrypted on File): ***-**-{employee_record.get('ssn_last_four') or 'XXXX'}   |   State ID: {employee_record.get('state_id_number') or 'On File'} (Exp: {employee_record.get('state_id_expiration') or 'N/A'})",
             f"Direct Deposit Bank: {employee_record.get('direct_deposit_bank') or 'On File'}   |   Account (Encrypted): ****{employee_record.get('direct_deposit_account_last_four') or 'XXXX'}",
         ]),
         (f"2. OFFICIAL JOB DESCRIPTION & COMPETENCE STANDARD ({pos_code} - {role_title})", textwrap.wrap(
@@ -1028,7 +1028,7 @@ def generate_signed_w2_onboarding_pdf(
         )),
         ("3. AT-WILL EMPLOYMENT, WORKPLACE SAFETY & CONFIDENTIALITY ACKNOWLEDGMENT", textwrap.wrap(
             "By signing below, the Employee acknowledges receipt and understanding of the official "
-            "ISO 9001 Clause 7.2 Job Description, OSHA Hazard Communication & PPE safety standards, "
+            "Job Description, OSHA Hazard Communication & PPE safety standards, "
             "client facility security badge rules, and confirms that employment with HWB Cleaning Services LLC "
             "is at-will under the laws of the State of Texas. The Employee certifies that all information "
             "and documents submitted (Form W-4, Form I-9, State ID, and Direct Deposit authorization) "
@@ -1048,7 +1048,7 @@ def generate_signed_w2_onboarding_pdf(
     sig_top = max(80, y - 82)
     ops.append(f"0.94 0.99 0.95 rg 40 {sig_top} 532 76 re f")
     ops.append(f"0.09 0.64 0.29 RG 1.5 w 40 {sig_top} 532 76 re S")
-    ops.append(f"BT /F2 9 Tf 0.09 0.40 0.20 rg 50 {sig_top + 58} Td (ELECTRONIC SIGNATURE & TAMPER-EVIDENT AUDIT CERTIFICATE) Tj ET")
+    ops.append(f"BT /F2 9 Tf 0.09 0.40 0.20 rg 50 {sig_top + 58} Td (ELECTRONIC SIGNATURE CONFIRMATION CERTIFICATE) Tj ET")
     ops.append(
         f"BT /F2 10.5 Tf 0.06 0.09 0.16 rg 50 {sig_top + 41} Td (Signed By: /s/ {_pdf_escape(signer_name)}   \\({_pdf_escape(emp_num)}\\)) Tj ET"
     )
@@ -1056,7 +1056,7 @@ def generate_signed_w2_onboarding_pdf(
         f"BT /F1 8.5 Tf 0.20 0.25 0.33 rg 50 {sig_top + 25} Td (Executed Timestamp: {_pdf_escape(signed_at_iso)}   |   Signer IP: {_pdf_escape(signer_ip)}) Tj ET"
     )
     ops.append(
-        f"BT /F1 7.8 Tf 0.28 0.33 0.41 rg 50 {sig_top + 10} Td (SHA-256 Cryptographic Fingerprint: {_pdf_escape(signature_hash)}) Tj ET"
+        f"BT /F1 7.8 Tf 0.28 0.33 0.41 rg 50 {sig_top + 10} Td (Electronic Signature ID: {_pdf_escape(signature_hash)}) Tj ET"
     )
 
     stream_bytes = "\n".join(ops).encode("latin-1", errors="replace")

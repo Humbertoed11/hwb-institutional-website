@@ -187,13 +187,13 @@
                             {{ employee.onboarding_signed_at or 'Encrypted in HR Vault' }}
                         {% endif %}
                     </div>
-                    <div style="font-size: 0.74rem; color: var(--slate-500);">AES-256 Encrypted Vault</div>
+                    <div style="font-size: 0.74rem; color: var(--slate-500);">Secure HR File</div>
                 </div>
             </div>
 
             <div style="background: #f8fafc; border: 1px solid var(--slate-300); border-radius: 8px; padding: 0.65rem 0.95rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
                 <span style="font-size: 0.72rem; font-weight: 800; color: var(--slate-700); text-transform: uppercase;">
-                    <i class="fas fa-fingerprint" style="color: var(--brand); margin-right: 0.35rem;"></i> SHA-256 Digital Signature Certificate
+                    <i class="fas fa-fingerprint" style="color: var(--brand); margin-right: 0.35rem;"></i> Electronic Signature Confirmation
                 </span>
                 <code id="w2-receipt-hash" style="font-size: 0.75rem; font-weight: 700; color: var(--slate-900); background: #e2e8f0; padding: 0.2rem 0.5rem; border-radius: 4px; word-break: break-all;">{{ employee.onboarding_signature_hash or 'Verified Signature Certificate on File' }}</code>
             </div>
@@ -330,7 +330,7 @@
                     <i class="fas fa-university" style="color: var(--brand);"></i>
                     Step 3: Tax Withholding (W-4), ID &amp; Direct Deposit
                 </h2>
-                <p class="section-sub">Your Social Security Number and Bank Account Number are encrypted with AES-256 before saving.</p>
+                <p class="section-sub">Your Social Security Number and Bank Account Number are encrypted and stored securely before saving.</p>
 
                 <div class="grid-3" style="margin-bottom: 0.85rem;">
                     <div>

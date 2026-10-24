@@ -1,19 +1,19 @@
 {% extends "base.html" %}
 
 {% block title %}Terms of Service | HWB Cleaning Services LLC{% endblock %}
-{% block og_description %}Official Commercial Terms of Service for HWB Cleaning Services LLC (HWB-LEG-001), governed under Collin County, Texas law and SOC 2 Processing Integrity.{% endblock %}
+{% block og_description %}Official Commercial Terms of Service for HWB Cleaning Services LLC, governed under Collin County, Texas law.{% endblock %}
 
 {% block head %}
-  <meta name="description" content="Official Commercial Terms of Service for HWB Cleaning Services LLC (HWB-LEG-001), governed under Collin County, Texas law and SOC 2 Processing Integrity.">
+  <meta name="description" content="Official Commercial Terms of Service for HWB Cleaning Services LLC, governed under Collin County, Texas law.">
 {% endblock %}
 
 {% block content %}
 <section class="terms-of-service" style="padding: 5rem 1.5rem; max-width: 860px; margin: 0 auto; line-height: 1.8; color: #1e293b; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;">
     <div style="margin-bottom: 2.5rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 1.5rem;">
         <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 0.5rem;">
-            <span style="font-size: 0.8rem; font-weight: 800; color: #2563eb; text-transform: uppercase; letter-spacing: 0.15em;">SigmaFidelity™ Institutional Governance</span>
+            <span style="font-size: 0.8rem; font-weight: 800; color: #2563eb; text-transform: uppercase; letter-spacing: 0.15em;">HWB Cleaning Services LLC</span>
             <span style="display: inline-flex; align-items: center; gap: 0.35rem; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-size: 0.75rem; font-weight: 800; padding: 0.25rem 0.65rem; border-radius: 9999px; letter-spacing: 0.05em;">
-                <i class="fas fa-shield-alt" style="font-size: 0.75rem;"></i> HWB-LEG-001 • v2.2.0
+                <i class="fas fa-shield-alt" style="font-size: 0.75rem;"></i> Commercial Terms • v2.2.0
             </span>
         </div>
         <h1 style="font-size: 2.75rem; font-weight: 900; color: #0f172a; margin: 0.5rem 0 0.5rem 0; letter-spacing: -0.02em;">Terms of Service</h1>
@@ -52,13 +52,13 @@
         </p>
     </div>
 
-    <!-- 3.0 Processing Integrity & Online Proposal Calculator Disclaimer (SOC 2 PI1.1) -->
+    <!-- 3.0 Online Proposal Calculator Disclaimer -->
     <div class="policy-section" style="margin-bottom: 3rem; background: #fffbeb; border: 1px solid #fef3c7; border-left: 5px solid #f59e0b; border-radius: 8px; padding: 1.5rem;">
         <h2 style="font-size: 1.45rem; font-weight: 800; color: #92400e; margin-bottom: 1rem;">
             <i class="fas fa-calculator" style="color: #d97706;"></i> 3.0 Proposal Calculators &amp; Estimation Disclaimer
         </h2>
         <p style="color: #78350f; font-weight: 600;">
-            IMPORTANT NOTICE REGARDING ONLINE PRICING ESTIMATES (SOC 2 PROCESSING INTEGRITY COMPLIANCE):
+            IMPORTANT NOTICE REGARDING ONLINE PRICING ESTIMATES:
         </p>
         <p style="color: #92400e;">
             Any interactive pricing calculator, square footage cost estimator, or automated proposal generator made available on this website is provided solely as an initial planning guide for informational and budgeting estimates. 
@@ -102,9 +102,9 @@
             Upon timely receipt of notice, our operations supervisor will inspect the facility and dispatch a remediation crew to re-clean the deficient area at no additional cost within 24 hours. This remedy represents the Client's sole and exclusive remedy for service quality discrepancies.
         </p>
 
-        <h3 style="font-size: 1.15rem; font-weight: 800; color: #0f172a; margin-top: 1.75rem; margin-bottom: 0.75rem;">6.1 Electronic Communications, TCPA &amp; Multi-Jurisdictional Email Governance</h3>
+        <h3 style="font-size: 1.15rem; font-weight: 800; color: #0f172a; margin-top: 1.75rem; margin-bottom: 0.75rem;">6.1 Electronic Communications, TCPA &amp; Commercial Email Preferences</h3>
         <p>
-            When you submit an inquiry or proposal request on our website, you may optionally provide a telephone number and consent to receive proposal updates by phone call or SMS text message under the Telephone Consumer Protection Act (TCPA, 47 U.S.C. § 227) and Texas Business &amp; Commerce Code Chapters 301–305. Providing telefonía/SMS consent is optional and never a condition of purchasing any service; you may opt out at any time by replying <strong>STOP</strong>. Commercial B2B email outreach is governed by the federal CAN-SPAM Act (15 U.S.C. § 7701), IETF RFC 8058 One-Click Unsubscribe standards, and Texas Business &amp; Commerce Code § 321.051, with instant suppression available at <a href="{{ url_for('public.unsubscribe_direct') }}" style="color: #2563eb; font-weight: 700;">hwbcleaning.com/unsubscribe</a>.
+            When you submit an inquiry or proposal request on our website, you may optionally provide a telephone number and consent to receive proposal updates by phone call or SMS text message under the Telephone Consumer Protection Act (TCPA, 47 U.S.C. § 227) and Texas Business &amp; Commerce Code Chapters 301–305. Providing phone or SMS consent is optional and never a condition of purchasing any service; you may opt out at any time by replying <strong>STOP</strong>. Commercial B2B email outreach is governed by the federal CAN-SPAM Act (15 U.S.C. § 7701), one-click unsubscribe standards, and Texas Business &amp; Commerce Code § 321.051, with instant opt-out available at <a href="{{ url_for('public.unsubscribe_direct') }}" style="color: #2563eb; font-weight: 700;">hwbcleaning.com/unsubscribe</a>.
         </p>
     </div>
 
@@ -112,7 +112,7 @@
     <div class="policy-section" style="margin-bottom: 3rem;">
         <h2 style="font-size: 1.45rem; font-weight: 800; color: #0f172a; margin-bottom: 1rem;">7.0 Intellectual Property & Trademarks</h2>
         <p>
-            The website, including its underlying code, database schemas, responsive engines, text, photography, graphic designs, algorithms, and registered trademarks—including <strong>SigmaFidelity™</strong>, <strong>SigmaQuality™</strong>, and the HWB crest logo—are the exclusive intellectual property of HWB Cleaning Services LLC and are protected by United States copyright, trademark, and trade secret laws.
+            The website, including its content, pricing calculators, text, photography, graphic designs, and registered trademarks—including <strong>SigmaQuality™</strong> and the HWB crest logo—are the exclusive intellectual property of HWB Cleaning Services LLC and are protected by United States copyright, trademark, and trade secret laws.
         </p>
         <p>
             You may not copy, reverse-engineer, scrape, mirror, or harvest any proprietary estimating logic, text, or brand assets without express written permission from Humberto Dominguez, Chief Executive Officer.

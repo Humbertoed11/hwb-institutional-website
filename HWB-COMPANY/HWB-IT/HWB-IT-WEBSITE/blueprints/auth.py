@@ -438,7 +438,7 @@ def forgot_password():
                     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 12px; margin-bottom: 18px;">
                         <div>
                             <div style="font-weight: 800; font-size: 13px; color: #0f172a;">HWB CLEANING SERVICES LLC</div>
-                            <div style="font-weight: 700; font-size: 9.5px; color: #2563eb; text-transform: uppercase;">Corporate Security • SOC 2 Authentication Desk</div>
+                            <div style="font-weight: 700; font-size: 9.5px; color: #2563eb; text-transform: uppercase;">Account Support • HWB Cleaning Services LLC</div>
                         </div>
                     </div>
                     <div style="padding: 10px 0 20px 0; line-height: 1.6; color: #1e293b; font-size: 14px;">

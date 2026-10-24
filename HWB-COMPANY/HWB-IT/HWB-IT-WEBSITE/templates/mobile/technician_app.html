@@ -599,10 +599,10 @@
                 <!-- Clock-Out Panel (Locked until 100% Tasks Complete) -->
                 <div class="clock-gate-panel" id="clockout-panel" style="margin-top: 1.5rem; display: none;">
                     <div style="font-size: 0.85rem; font-weight: 800; color: #065f46; margin-bottom: 0.5rem;">
-                        <i class="fas fa-check-double"></i> All Scope Tasks Verified Zero-Defect!
+                        <i class="fas fa-check-double"></i> All Scope Tasks Verified Complete!
                     </div>
                     <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 1rem;">
-                        Confirm building perimeter lockout and submit final shift completion audit to Azure SQL Brain.
+                        Confirm building perimeter lockout and submit your final shift checklist.
                     </p>
                     <button type="button" class="btn-touch-action btn-clockout" id="btn-clockout" onclick="handleClockOut()">
                         <i class="fas fa-file-signature"></i>
@@ -971,7 +971,7 @@
                 const result = await res.json();
 
                 if (result.status === 'success') {
-                    alert('✅ SHIFT COMPLETE: All records and photo evidence committed to the SigmaFidelity™ database.');
+                    alert('✅ SHIFT COMPLETE: All shift tasks and photo records have been saved to HWB Operations.');
                     localStorage.removeItem('HWB_CURRENT_SHIFT');
                     window.location.reload();
                 } else {

@@ -4364,7 +4364,7 @@ def format_marketing_letterhead(body_html: str, tracking_token: str = None) -> s
             <img src="https://www.hwbcleaning.com/static/logo_standard.png" alt="HWB Cleaning Services LLC" height="46" style="display: block; object-fit: contain;">
             <div>
                 <div style="font-weight: 800; font-size: 15px; color: #0f172a; letter-spacing: -0.01em;">HWB CLEANING SERVICES LLC</div>
-                <div style="font-weight: 700; font-size: 10.5px; color: #2563eb; letter-spacing: 0.05em; text-transform: uppercase;">Institutional Division • SigmaFidelity™</div>
+                <div style="font-weight: 700; font-size: 10.5px; color: #2563eb; letter-spacing: 0.05em; text-transform: uppercase;">Commercial &amp; Institutional Cleaning Services</div>
             </div>
         </div>
         <div style="text-align: right; font-size: 11px; color: #475569; line-height: 1.45;">
@@ -4380,15 +4380,14 @@ def format_marketing_letterhead(body_html: str, tracking_token: str = None) -> s
         {body_html}
     </div>
 
-    <!-- 📜 FOOTER BLOCK (CAN-SPAM Act, RFC 8058, Texas Anti-Spam/TDPSA, Collin County Venue, CASL/GDPR Geofence & ISO/SOC 2 Compliant) -->
+    <!-- 📜 FOOTER BLOCK -->
     <div style="border-top: 1px solid #e2e8f0; padding-top: 16px; margin-top: 20px; text-align: center; font-size: 11px; color: #64748b; line-height: 1.6;">
         <strong style="color: #0f172a; letter-spacing: 0.05em;">FIDELITY. SAFETY. RESPECT.</strong><br>
         HWB Cleaning Services LLC • 3342 FM 1827 Ste 8d, McKinney, TX 75071 (Collin County, TX) • Phone: (214) 586-0257<br>
         Texas Charter #802920409 • CAGE (SAM) #082830635 • Commercial EMR: .43 • Insured &amp; Bonded<br>
         <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #cbd5e1; font-size: 10.5px; color: #94a3b8;">
             You are receiving this commercial communication as an operational facility contact in Texas.<br>
-            To stop receiving future marketing messages, you may <a href="{unsub_url}" style="color: #2563eb; text-decoration: underline; font-weight: 600;">Unsubscribe Instantly</a> or email <a href="mailto:info@hwbcleaning.com?subject=Unsubscribe" style="color: #2563eb; text-decoration: underline;">info@hwbcleaning.com</a>.<br>
-            <span style="font-size: 9.5px; color: #94a3b8; display: inline-block; margin-top: 4px;">Compliance Standards: Federal CAN-SPAM (15 U.S.C. § 7701) &amp; IETF RFC 8058 One-Click Opt-Out • Texas Bus. &amp; Com. Code Ch. 321 &amp; Ch. 541 (TDPSA) • Collin County, TX Jurisdiction • ISO 9001:2015, ISO/IEC 27001:2022, ISO/IEC 27701:2019 &amp; SOC 2 Type II P2.1. Notice: This communication contains standard commercial delivery confirmation beacons.</span>
+            To stop receiving future marketing messages, you may <a href="{unsub_url}" style="color: #2563eb; text-decoration: underline; font-weight: 600;">Unsubscribe Instantly</a> or email <a href="mailto:info@hwbcleaning.com?subject=Unsubscribe" style="color: #2563eb; text-decoration: underline;">info@hwbcleaning.com</a>.
         </div>
     </div>
     {tracking_pixel_html}
