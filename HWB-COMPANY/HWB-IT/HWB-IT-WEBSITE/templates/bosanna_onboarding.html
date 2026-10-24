@@ -998,28 +998,28 @@
             <form id="form-step-1" onsubmit="handleStep1(event)">
                 <div class="form-grid">
                     <div class="form-group">
-                        <label class="form-label" id="t-f-fullname">Full Legal Name *</label>
+                        <label for="full_name" class="form-label" id="t-f-fullname">Full Legal Name *</label>
                         <input type="text" class="form-input" id="full_name" placeholder="e.g. Maria Rodriguez" required aria-label="Full Legal Name">
                     </div>
                     
                     <div class="form-group">
-                        <label class="form-label" id="t-f-phone">Mobile Phone (SMS Notifications) *</label>
+                        <label for="phone" class="form-label" id="t-f-phone">Mobile Phone (SMS Notifications) *</label>
                         <input type="tel" class="form-input" id="phone" placeholder="(214)-555-0199" maxlength="14" inputmode="numeric" oninput="maskPhone(this)" required aria-label="Mobile Phone Number">
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" id="t-f-email">Email Address *</label>
+                        <label for="email" class="form-label" id="t-f-email">Email Address *</label>
                         <input type="email" class="form-input" id="email" placeholder="maria.rodriguez@example.com" required aria-label="Email Address">
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" id="t-f-city">City of Residence *</label>
+                        <label for="city" class="form-label" id="t-f-city">City of Residence *</label>
                         <input type="text" class="form-input" id="city" placeholder="e.g. Frisco, Plano, McKinney" required aria-label="City of Residence">
                     </div>
 
                     <!-- Enhanced Driver License & State ID Section -->
                     <div class="form-group">
-                        <label class="form-label" id="t-f-state-origin">Issuing State (Driver License / ID) *</label>
+                        <label for="id_state" class="form-label" id="t-f-state-origin">Issuing State (Driver License / ID) *</label>
                         <select class="form-select" id="id_state" aria-label="Issuing State for ID">
                             <option value="TX" selected>Texas (TX)</option>
                             <option value="OK">Oklahoma (OK)</option>
@@ -1031,17 +1031,17 @@
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" id="t-f-id">Driver's License or State ID # *</label>
+                        <label for="state_id" class="form-label" id="t-f-id">Driver's License or State ID # *</label>
                         <input type="text" class="form-input" id="state_id" placeholder="e.g. 24891024" style="text-transform: uppercase;" required minlength="7" maxlength="16" aria-label="Driver License or State ID Number">
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" id="t-f-id-exp">ID Expiration Date *</label>
+                        <label for="id_expiration" class="form-label" id="t-f-id-exp">ID Expiration Date *</label>
                         <input type="month" class="form-input" id="id_expiration" required aria-label="ID Expiration Month and Year">
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" id="t-f-role">Desired Role / Classification</label>
+                        <label for="desired_role" class="form-label" id="t-f-role">Desired Role / Classification</label>
                         <select class="form-select" id="desired_role" aria-label="Desired Position">
                             <option value="Commercial Cleaning Technician" data-position-id="1" selected id="opt-role-1">Commercial Cleaning Technician</option>
                             <option value="Lead Campus Custodian" data-position-id="3" id="opt-role-2">Lead Campus Custodian</option>
@@ -1051,7 +1051,7 @@
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" id="t-f-shift">Shift Availability</label>
+                        <label for="desired_shift" class="form-label" id="t-f-shift">Shift Availability</label>
                         <select class="form-select" id="desired_shift" aria-label="Preferred Shift Availability">
                             <option value="Night (6:00 PM - 2:30 AM)" selected id="opt-shift-1">Night Shift (6:00 PM - 2:30 AM)</option>
                             <option value="Day Porter (7:00 AM - 3:30 PM)" id="opt-shift-2">Day Shift (7:00 AM - 3:30 PM)</option>
@@ -1060,7 +1060,7 @@
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" id="t-f-facility">Primary Facility Assignment</label>
+                        <label for="target_facility" class="form-label" id="t-f-facility">Primary Facility Assignment</label>
                         <select class="form-select" id="target_facility" aria-label="Target Campus Facility">
                             <option value="Collin College Frisco Campus" selected id="opt-fac-1">Collin College Frisco Campus (TIPS Prime)</option>
                             <option value="Sundance Square Commercial Network" id="opt-fac-2">Sundance Square Commercial Network</option>
@@ -1093,37 +1093,46 @@
             </div>
 
             <form id="form-step-2" onsubmit="handleStep2(event)">
-                <div style="margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.85rem;">
+                <div style="background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 10px; padding: 1rem 1.15rem; margin-bottom: 1.15rem;">
+                    <div style="font-size: 0.72rem; font-weight: 800; color: var(--bosanna-teal); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.45rem;">
+                        <i class="fas fa-file-shield"></i> Standalone Fair Credit Reporting Act (FCRA) Disclosure &amp; Authorization
+                    </div>
                     <label style="display: flex; gap: 0.75rem; align-items: flex-start; cursor: pointer; font-size: 0.88rem;">
                         <input type="checkbox" id="chk_bg_consent" required style="margin-top: 0.25rem; width: 18px; height: 18px;">
-                        <span id="t-c2-check-1"><strong>Criminal History Background Consent:</strong> I authorize Bosanna LLC and its verified operational partners to run a background check through Texas DPS and national registries.</span>
+                        <span id="t-c2-check-1"><strong>Criminal History Background Consent:</strong> I have read the standalone <a href="/fcra-disclosure" target="_blank" rel="noopener" style="color: var(--bosanna-teal); font-weight: 700; text-decoration: underline;">FCRA Consumer Report Disclosure &amp; Summary of Rights</a> and authorize Bosanna LLC and its verified operational partners to obtain a background check through Texas DPS and national registries.</span>
                     </label>
+                </div>
+
+                <div style="margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.85rem;">
                     <label style="display: flex; gap: 0.75rem; align-items: flex-start; cursor: pointer; font-size: 0.88rem;">
                         <input type="checkbox" id="chk_drug_policy" required style="margin-top: 0.25rem; width: 18px; height: 18px;">
                         <span id="t-c2-check-2"><strong>Drug-Free Campus Policy:</strong> I certify that I comply with the zero-tolerance drug and alcohol policy required for higher education facilities.</span>
                     </label>
                     <label style="display: flex; gap: 0.75rem; align-items: flex-start; cursor: pointer; font-size: 0.88rem;">
-                        <input type="checkbox" id="chk_work_auth" required style="margin-top: 0.25rem; width: 18px; height: 18px;" checked>
-                        <span id="t-c2-check-3"><strong>Legal Work Eligibility:</strong> I certify that I am legally authorized to work in the United States and can furnish I-9 documents.</span>
+                        <input type="checkbox" id="chk_work_auth" required style="margin-top: 0.25rem; width: 18px; height: 18px;">
+                        <span id="t-c2-check-3"><strong>Legal Work Eligibility:</strong> I certify that I am legally authorized to work in the United States and can furnish acceptable Form I-9 documents.</span>
                     </label>
                     <label style="display: flex; gap: 0.75rem; align-items: flex-start; cursor: pointer; font-size: 0.88rem;">
-                        <input type="checkbox" id="chk_weapons_policy" required style="margin-top: 0.25rem; width: 18px; height: 18px;" checked>
+                        <input type="checkbox" id="chk_weapons_policy" required style="margin-top: 0.25rem; width: 18px; height: 18px;">
                         <span id="t-c2-check-4"><strong>Zero-Tolerance Weapons &amp; Substance-Free Campus (T&amp;C §§ 143–151):</strong> I agree to strict prohibition of firearms, weapons, alcohol, drugs, and 100% smoke/vape-free campus rules.</span>
                     </label>
                     <label style="display: flex; gap: 0.75rem; align-items: flex-start; cursor: pointer; font-size: 0.88rem;">
-                        <input type="checkbox" id="chk_key_security" required style="margin-top: 0.25rem; width: 18px; height: 18px;" checked>
+                        <input type="checkbox" id="chk_key_security" required style="margin-top: 0.25rem; width: 18px; height: 18px;">
                         <span id="t-c2-check-5"><strong>Master Key Custody &amp; Police Desk Sign-In (T&amp;C §§ 145–150 &amp; SOW § 202):</strong> I agree to sign daily at the Collin College Police Desk, never leave keys in doors, lock exterior doors, and acknowledge the $100 lost key penalty.</span>
                     </label>
                     <label style="display: flex; gap: 0.75rem; align-items: flex-start; cursor: pointer; font-size: 0.88rem;">
-                        <input type="checkbox" id="chk_ferpa_privacy" required style="margin-top: 0.25rem; width: 18px; height: 18px;" checked>
+                        <input type="checkbox" id="chk_ferpa_privacy" required style="margin-top: 0.25rem; width: 18px; height: 18px;">
                         <span id="t-c2-check-6"><strong>FERPA Student Privacy &amp; Family Ban (RFP § 12.1 &amp; T&amp;C § 152):</strong> I certify that I will never handle or inspect student records and understand that unauthorized family, children, or visitors are strictly prohibited on campus.</span>
                     </label>
                 </div>
 
                 <div class="form-grid">
                     <div class="form-group-full">
-                        <label class="form-label" id="t-f-signature">Electronic Legal Signature (Type Full Legal Name) *</label>
+                        <label for="legal_signature" class="form-label" id="t-f-signature">Electronic Legal Signature (Type Full Legal Name) *</label>
                         <input type="text" class="form-input" id="legal_signature" placeholder="Type your full legal name as digital signature" required aria-label="Digital Legal Signature">
+                        <div style="font-size: 0.76rem; color: var(--slate-muted); margin-top: 0.45rem;">
+                            By submitting this onboarding profile, you agree to the <a href="/terms" target="_blank" rel="noopener" style="color: var(--bosanna-teal); font-weight: 700; text-decoration: underline;">Terms of Service</a> and <a href="/privacy-policy" target="_blank" rel="noopener" style="color: var(--bosanna-teal); font-weight: 700; text-decoration: underline;">Privacy Policy</a>.
+                        </div>
                     </div>
                 </div>
 

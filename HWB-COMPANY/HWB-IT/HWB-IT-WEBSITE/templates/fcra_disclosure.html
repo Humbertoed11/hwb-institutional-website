@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Standalone Consumer Report Disclosure (FCRA) | HWB Cleaning Services LLC{% endblock %}
+{% block og_description %}Standalone disclosure regarding background reports for employment purposes under the Fair Credit Reporting Act (15 U.S.C. § 1681b(b)(2)(A)).{% endblock %}
+
+{% block content %}
+<section class="section-white" style="padding: 4.5rem 1.25rem 6rem 1.25rem; background: #ffffff;">
+    <div style="max-width: 780px; margin: 0 auto; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; color: #1e293b; line-height: 1.75;">
+
+        <div style="border-bottom: 2px solid #e2e8f0; padding-bottom: 1.25rem; margin-bottom: 2rem;">
+            <span style="display: inline-block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: #1d4ed8; background: #eff6ff; border: 1px solid #bfdbfe; padding: 0.25rem 0.7rem; border-radius: 999px; margin-bottom: 0.65rem;">
+                Standalone Statutory Disclosure &bull; 15 U.S.C. &sect; 1681b(b)(2)(A)(i)
+            </span>
+            <h1 style="font-size: 2.1rem; font-weight: 900; color: #0f172a; margin: 0 0 0.4rem 0; letter-spacing: -0.02em;">
+                Disclosure Regarding Background Investigation
+            </h1>
+            <p style="font-size: 0.9rem; color: #64748b; margin: 0; font-weight: 600;">
+                Provided as a standalone document pursuant to the Fair Credit Reporting Act (FCRA)
+            </p>
+        </div>
+
+        <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 10px; padding: 1.75rem 2rem; margin-bottom: 2.25rem;">
+            <p style="margin: 0 0 1.15rem 0; font-size: 1rem; color: #0f172a; font-weight: 600;">
+                HWB Cleaning Services LLC ("the Company") may obtain information about you from a third-party consumer reporting agency for employment purposes.
+            </p>
+            <p style="margin: 0 0 1.15rem 0; font-size: 0.96rem; color: #334155;">
+                Thus, you may be the subject of a "consumer report" which may include information about your character, general reputation, personal characteristics, and/or mode of living. These reports may contain information regarding your criminal history, Social Security verification, motor vehicle records ("driving records"), verification of your education or employment history, or other background checks relevant to the position for which you are being considered.
+            </p>
+            <p style="margin: 0; font-size: 0.96rem; color: #334155;">
+                You have the right, upon written request made within a reasonable time, to request whether a consumer report has been run about you and to request a copy of your report. These searches will be conducted only after separate written authorization is provided during the conditional offer and background screening stage.
+            </p>
+        </div>
+
+        <div style="border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.5rem 1.75rem; background: #ffffff; margin-bottom: 2rem;">
+            <h2 style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin: 0 0 0.75rem 0;">
+                A Summary of Your Rights Under the Fair Credit Reporting Act
+            </h2>
+            <p style="font-size: 0.9rem; color: #475569; margin: 0 0 0.85rem 0;">
+                The federal Fair Credit Reporting Act (FCRA) promotes the accuracy, fairness, and privacy of information in the files of consumer reporting agencies. Key rights guaranteed to you under the FCRA include:
+            </p>
+            <ul style="margin: 0 0 1rem 1.25rem; font-size: 0.9rem; color: #334155; display: flex; flex-direction: column; gap: 0.45rem;">
+                <li><strong>Notice of Adverse Action:</strong> You must be told if information in your file has been used against you, and you must be provided with a copy of the report and this Summary of Rights before any final adverse employment decision is made.</li>
+                <li><strong>Right to Know What Is in Your File:</strong> You may request and obtain all the information about you in the files of a consumer reporting agency.</li>
+                <li><strong>Right to Dispute Inaccurate or Incomplete Information:</strong> If you identify information in your file that is incomplete or inaccurate and report it to the consumer reporting agency, the agency must investigate unless your dispute is frivolous.</li>
+                <li><strong>Written Consent Required for Employment Reports:</strong> A consumer reporting agency may not give out information about you to your employer, or a potential employer, without your written consent given to the employer.</li>
+            </ul>
+            <p style="font-size: 0.85rem; color: #64748b; margin: 0;">
+                For more information, including information about additional rights, visit the Consumer Financial Protection Bureau (CFPB) at
+                <a href="https://www.consumerfinance.gov/learnmore" target="_blank" rel="noopener noreferrer" style="color: #2563eb; font-weight: 700; text-decoration: underline;">www.consumerfinance.gov/learnmore</a>
+                or write to: Consumer Financial Protection Bureau, 1700 G Street N.W., Washington, DC 20552.
+            </p>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <a href="{{ url_for('public.work_with_us') }}" style="display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; font-weight: 700; color: #2563eb; text-decoration: none;">
+                &larr; Return to Careers &amp; Applications
+            </a>
+            <button type="button" onclick="window.print()" style="height: 38px; padding: 0 1.15rem; border-radius: 6px; border: 1px solid #cbd5e1; background: #f8fafc; color: #0f172a; font-size: 0.85rem; font-weight: 700; cursor: pointer;">
+                Print Standalone Disclosure
+            </button>
+        </div>
+
+    </div>
+</section>
+{% endblock %}

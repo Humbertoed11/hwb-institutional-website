@@ -1735,16 +1735,16 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
             self.assertIn('id="hwb-cookie-banner"', st_html, standalone_url)
             self.assertNotIn("user-scalable=no", st_html, standalone_url)
 
-        # 3. Updated Privacy Policy (v2.3.0), Terms (v2.2.0), and Unsubscribe
+        # 3. Updated Privacy Policy (v2.5.0), Terms (v2.4.0), and Unsubscribe
         r_prv = self.client.get("/privacy-policy")
         prv_html = r_prv.get_data(as_text=True)
-        self.assertIn("Privacy Policy • v2.3.0", prv_html)
+        self.assertIn("Privacy Policy • v2.5.0", prv_html)
         self.assertIn("Native One-Click Unsubscribe", prv_html)
         self.assertIn("Do Not Email list", prv_html)
 
         r_trm = self.client.get("/terms")
         trm_html = r_trm.get_data(as_text=True)
-        self.assertIn("Commercial Terms • v2.2.0", trm_html)
+        self.assertIn("Commercial Terms • v2.4.0", trm_html)
         self.assertIn("6.1 Electronic Communications, TCPA", trm_html)
 
         r_uns = self.client.get("/unsubscribe")
@@ -1820,7 +1820,7 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
             "/locations/mckinney-tx", "/locations/fort-worth-tx", "/locations/arlington-tx",
             "/about", "/contact", "/quote", "/work-with-us", "/methodology",
             "/compliance", "/ehsq", "/trust-center", "/capability-statement", "/prequal",
-            "/privacy-policy", "/terms", "/accessibility", "/unsubscribe",
+            "/privacy-policy", "/terms", "/accessibility", "/unsubscribe", "/fcra-disclosure",
             "/academy", "/academy/verify", "/login", "/forgot-password",
             "/onboard/bosanna", "/tma/estimator",
         ]
@@ -1952,6 +1952,185 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
             51,
             f"Expected at least 51 SOPs with active Mermaid diagrams, found {mermaid_file_count}"
         )
+
+    def test_28_adversarial_legal_audit_zero_prechecked_consents_fcra_i9_tdpsa_wcag_bug_149(self):
+        """
+        BUG-149: Enforces 7-Pillar Enterprise Legal Lawsuit Shield across all public & portal surfaces:
+        1. Zero pre-checked (checked) legal, TCPA, FCRA, MSA, DWC-83, or policy checkboxes across all public/portal templates.
+        2. Zero unbound <label> elements across all public/portal templates (WCAG 2.2 Level A 1.3.1 / 4.1.2).
+        3. Standalone /fcra-disclosure view (15 U.S.C. § 1681b(b)(2)(A)(i)) with zero bundled application inputs.
+        4. DOJ Form I-9 Anti-Discrimination Safe Harbor (8 U.S.C. § 1324b) in employee_onboarding_portal.html.
+        5. Binding Individual Arbitration, Class-Action Waiver & 30-Day Pre-Suit Cure Notice in /terms (v2.4.0).
+        6. TDPSA Texas Attorney General complaint URL, Sensitive Data notice, and Sec-GPC: 1 enforcement in /privacy-policy (v2.5.0).
+        7. WORM CONSENT_LEDGER (QUOTE_CONSENT_RECORDED) with SHA-256 disclosure digest on POST /get-quote.
+        """
+        from html.parser import HTMLParser
+        from unittest.mock import patch
+
+        class _LegalDomAuditor(HTMLParser):
+            def __init__(self):
+                super().__init__()
+                self.checked_checkboxes = []
+                self.unbound_labels = []
+                self.form_inputs = []
+                self._in_label = False
+                self._label_has_for = False
+                self._label_has_child_control = False
+                self._label_id = ""
+
+            def handle_starttag(self, tag, attrs):
+                attr_dict = {k.lower(): v for k, v in attrs}
+                if tag == "input":
+                    self.form_inputs.append(attr_dict)
+                    if (attr_dict.get("type") or "").lower() == "checkbox" and "checked" in attr_dict:
+                        self.checked_checkboxes.append(attr_dict.get("id") or attr_dict.get("name") or "checkbox")
+                elif tag in ("select", "textarea"):
+                    self.form_inputs.append(attr_dict)
+
+                if tag == "label":
+                    self._in_label = True
+                    self._label_has_for = bool((attr_dict.get("for") or "").strip())
+                    self._label_has_child_control = False
+                    self._label_id = attr_dict.get("id") or attr_dict.get("class") or "label"
+                elif self._in_label and tag in ("input", "select", "textarea"):
+                    self._label_has_child_control = True
+
+            def handle_endtag(self, tag):
+                if tag == "label" and self._in_label:
+                    if not self._label_has_for and not self._label_has_child_control:
+                        self.unbound_labels.append(self._label_id)
+                    self._in_label = False
+
+        templates_dir = os.path.join(app.root_path, "templates")
+        public_portal_templates = [
+            "index.html",
+            "quote_form.html",
+            "work_with_us.html",
+            "subcontractor_onboarding.html",
+            "employee_onboarding_portal.html",
+            "bosanna_onboarding.html",
+            "quote_success.html",
+            "academy_course.html",
+            "reset_password.html",
+            "tma_estimator.html",
+            "fcra_disclosure.html",
+            "terms.html",
+            "privacy_policy.html",
+            "accessibility.html",
+        ]
+
+        # Pillars 1 & 4: Zero pre-checked checkboxes & zero unbound <label> tags
+        for tpl_name in public_portal_templates:
+            tpl_path = os.path.join(templates_dir, tpl_name)
+            self.assertTrue(os.path.isfile(tpl_path), f"Template missing: {tpl_name}")
+            with open(tpl_path, "r", encoding="utf-8") as f:
+                raw_html = f.read()
+            auditor = _LegalDomAuditor()
+            auditor.feed(raw_html)
+            self.assertEqual(
+                auditor.checked_checkboxes,
+                [],
+                f"Pre-checked checkbox prohibited in {tpl_name} (TCPA/TDPSA/Contract law): {auditor.checked_checkboxes}",
+            )
+            self.assertEqual(
+                auditor.unbound_labels,
+                [],
+                f"Unbound <label> prohibited in {tpl_name} (ADA Title III / WCAG 2.2): {auditor.unbound_labels}",
+            )
+
+        # Pillar 2: Standalone FCRA Disclosure (/fcra-disclosure)
+        r_fcra = self.client.get("/fcra-disclosure")
+        self.assertEqual(r_fcra.status_code, 200)
+        fcra_html = r_fcra.get_data(as_text=True)
+        self.assertIn("15 U.S.C.", fcra_html)
+        self.assertIn("1681b(b)(2)(A)", fcra_html)
+        self.assertIn("A Summary of Your Rights Under the Fair Credit Reporting Act", fcra_html)
+        with open(os.path.join(templates_dir, "fcra_disclosure.html"), "r", encoding="utf-8") as f:
+            fcra_tpl = f.read()
+        fcra_auditor = _LegalDomAuditor()
+        fcra_auditor.feed(fcra_tpl)
+        self.assertEqual(
+            len(fcra_auditor.form_inputs),
+            0,
+            "Standalone FCRA disclosure must not contain bundled application inputs",
+        )
+
+        # Pillar 3: DOJ Form I-9 Anti-Discrimination Safe Harbor (8 U.S.C. § 1324b)
+        with open(os.path.join(templates_dir, "employee_onboarding_portal.html"), "r", encoding="utf-8") as f:
+            emp_tpl = f.read()
+        self.assertIn("8 U.S.C.", emp_tpl)
+        self.assertIn("1324b", emp_tpl)
+        self.assertIn("List A", emp_tpl)
+        self.assertIn("List B", emp_tpl)
+        self.assertIn("List C", emp_tpl)
+
+        # Pillar 5: Binding Individual Arbitration, Class-Action Waiver & 30-Day Pre-Suit Cure Notice in /terms
+        r_terms = self.client.get("/terms")
+        self.assertEqual(r_terms.status_code, 200)
+        terms_html = r_terms.get_data(as_text=True)
+        self.assertIn("v2.4.0", terms_html)
+        self.assertIn("Mandatory 30-Day Pre-Suit Notice", terms_html)
+        self.assertIn("Binding Individual Arbitration", terms_html)
+        self.assertIn("CLASS AND COLLECTIVE ACTION WAIVER", terms_html)
+        self.assertIn("Federal Arbitration Act", terms_html)
+
+        # Pillar 6: TDPSA Texas AG Complaint Link, Sensitive Data Notice & Sec-GPC: 1 Enforcement
+        r_priv = self.client.get("/privacy-policy")
+        self.assertEqual(r_priv.status_code, 200)
+        priv_html = r_priv.get_data(as_text=True)
+        self.assertIn("v2.5.0", priv_html)
+        self.assertIn("https://www.texasattorneygeneral.gov/consumer-protection/file-consumer-complaint", priv_html)
+        self.assertIn("541.102", priv_html)
+        self.assertIn("Sec-GPC: 1", priv_html)
+
+        r_gpc = self.client.get("/", headers={"Sec-GPC": "1"})
+        self.assertEqual(r_gpc.status_code, 200)
+        self.assertEqual(r_gpc.headers.get("X-GPC-Status"), "Honored")
+
+        # Pillar 7: WORM CONSENT_LEDGER (QUOTE_CONSENT_RECORDED) on POST /get-quote
+        with (
+            patch("blueprints.public.evaluate_bot_defense", return_value=(False, None)),
+            patch("blueprints.public.dispatch_lead_notifications", return_value=True),
+            patch("core.services.email_service.transmit_email", return_value=(True, "mocked")),
+        ):
+            r_quote = self.client.post(
+                "/get-quote",
+                data={
+                    "name": "Legal Shield Test Lead",
+                    "company": "Shield Verification Corp",
+                    "email": "shield.audit@example.com",
+                    "phone": "(214) 555-0192",
+                    "facility_type": "Commercial Office",
+                    "sqft": "15000",
+                    "frequency": "3x / Week",
+                    "tcpa_consent": "yes",
+                },
+            )
+            self.assertIn(r_quote.status_code, (200, 302))
+            conn = get_db(self.db_url)
+            try:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        '''
+                        SELECT details
+                        FROM "SecurityAuditLogs"
+                        WHERE event_category = 'CONSENT_LEDGER'
+                          AND event_action = 'QUOTE_CONSENT_RECORDED'
+                          AND details::text LIKE %s
+                        ORDER BY id DESC
+                        LIMIT 1;
+                        ''',
+                        ("%shield.audit@example.com%",),
+                    )
+                    consent_row = cur.fetchone()
+                    self.assertIsNotNone(consent_row, "WORM CONSENT_LEDGER receipt must be recorded on /get-quote")
+                    details_str = str(consent_row[0] or "")
+                    self.assertIn("disclosure_sha256", details_str)
+                    self.assertIn("TERMS-v2.4.0|PRIVACY-v2.5.0", details_str)
+                    cur.execute('DELETE FROM "Leads" WHERE LOWER(email) = %s;', ("shield.audit@example.com",))
+                conn.commit()
+            finally:
+                conn.close()
 
 
 if __name__ == "__main__":

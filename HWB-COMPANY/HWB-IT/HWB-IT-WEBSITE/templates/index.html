@@ -108,7 +108,7 @@
 
                     <!-- TCPA Prior Express Written Consent Safeguard (47 U.S.C. § 227) -->
                     <div class="tcpa-compliance-box" style="margin-top: 1.25rem; padding: 0.9rem 1rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; display: flex; align-items: flex-start; gap: 0.75rem; text-align: left;">
-                        <input type="checkbox" name="tcpa_consent" id="tcpa_consent_home" checked style="margin-top: 0.25rem; width: 18px; height: 18px; accent-color: #2563eb; flex-shrink: 0;">
+                        <input type="checkbox" name="tcpa_consent" id="tcpa_consent_home" style="margin-top: 0.25rem; width: 18px; height: 18px; accent-color: #2563eb; flex-shrink: 0;">
                         <label for="tcpa_consent_home" style="font-size: 0.78rem; color: #475569; line-height: 1.5; cursor: pointer;">
                             If providing a phone number, I authorize HWB Cleaning Services LLC to send my proposal and service updates by phone call or SMS text message to the number provided. Consent is not a condition of purchase. Message and data rates may apply; reply STOP to opt out. View our <a href="{{ url_for('public.privacy_policy') }}" style="color: #2563eb; font-weight: 600; text-decoration: underline;">Privacy Policy</a> and <a href="{{ url_for('public.terms_of_service') }}" style="color: #2563eb; font-weight: 600; text-decoration: underline;">Terms of Service</a>.
                         </label>
@@ -119,6 +119,9 @@
                     <button type="submit" id="submit-quote-btn" class="isc-btn isc-btn-primary" style="width: 100%; height: 52px; font-weight: 800; font-size: 1.05rem; border-radius: 8px;">
                         <span>Request Free Quote</span>
                     </button>
+                    <p style="font-size: 0.75rem; color: #64748b; margin-top: 0.65rem;">
+                        By clicking "Request Free Quote", you agree to our <a href="{{ url_for('public.terms_of_service') }}" style="color: #2563eb; font-weight: 600; text-decoration: underline;">Terms of Service</a> and <a href="{{ url_for('public.privacy_policy') }}" style="color: #2563eb; font-weight: 600; text-decoration: underline;">Privacy Policy</a>.
+                    </p>
                 </div>
             </form>
         </div>

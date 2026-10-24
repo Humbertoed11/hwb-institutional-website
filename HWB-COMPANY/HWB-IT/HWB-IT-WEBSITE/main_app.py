@@ -215,6 +215,8 @@ def apply_application_security_headers(response):
     response.headers['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()'
     response.headers['Content-Security-Policy'] = "default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval'; img-src 'self' https: data: blob:;"
     response.headers['Server'] = 'Cloudflare'
+    if request.headers.get('Sec-GPC') == '1' or request.headers.get('DNT') == '1':
+        response.headers['X-GPC-Status'] = 'Honored'
 
     # Static Assets: 7-day immutable edge caching (Cloudflare absorbs 100% of asset requests)
     if request.path.startswith('/static/'):
@@ -300,9 +302,10 @@ def apply_application_security_headers(response):
                         b'</div></aside>'
                         b'<script>'
                         b'if(typeof acceptCookieConsent!=="function"){'
+                        b'if(navigator.globalPrivacyControl===true){localStorage.setItem("hwb_telemetry_consent","declined");localStorage.setItem("sigma_cookie_consent","rejected");}'
                         b'window.acceptCookieConsent=function(){localStorage.setItem("hwb_telemetry_consent","granted");var b=document.getElementById("hwb-cookie-banner");if(b)b.style.display="none";};'
                         b'window.declineCookieConsent=function(){localStorage.setItem("hwb_telemetry_consent","declined");var b=document.getElementById("hwb-cookie-banner");if(b)b.style.display="none";};'
-                        b'document.addEventListener("DOMContentLoaded",function(){if(!localStorage.getItem("hwb_telemetry_consent")){var b=document.getElementById("hwb-cookie-banner");if(b)b.style.display="flex";}});'
+                        b'document.addEventListener("DOMContentLoaded",function(){if(navigator.globalPrivacyControl===true){return;}if(!localStorage.getItem("hwb_telemetry_consent")){var b=document.getElementById("hwb-cookie-banner");if(b)b.style.display="flex";}});'
                         b'}'
                         b'</script>\n</body>'
                     )

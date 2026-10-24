@@ -49,9 +49,9 @@
 
                         <!-- Facility Type Selection Chips -->
                         <div class="sigma-field" style="margin-bottom: 1.25rem;">
-                            <label class="sigma-label">What type of building do you have?</label>
+                            <div class="sigma-label" id="facility-type-group-label">What type of building do you have?</div>
                             <input type="hidden" name="facility_type" id="facility_type" value="office">
-                            <div class="facility-chips-container">
+                            <div class="facility-chips-container" role="group" aria-labelledby="facility-type-group-label">
                                 <button type="button" class="facility-chip active" data-val="office" onclick="setFacilityType('office', this)" aria-label="Select office facility" title="Office" aria-pressed="true">
                                     <i class="fas fa-building"></i> Office
                                 </button>
@@ -129,7 +129,7 @@
 
                         <!-- TCPA Prior Express Consent Safeguard -->
                         <div class="tcpa-compliance-box">
-                            <input type="checkbox" name="tcpa_consent" id="tcpa_consent" checked>
+                            <input type="checkbox" name="tcpa_consent" id="tcpa_consent">
                             <label for="tcpa_consent">
                                 If providing a phone number, I authorize HWB Cleaning Services LLC to send my proposal and service updates by phone call or SMS text message to the number provided. Consent is not a condition of purchase. Message and data rates may apply; reply STOP to opt out. If left blank, quotes will be sent strictly to your email. View our <a href="{{ url_for('public.privacy_policy') }}" style="color: #2563eb; font-weight: 600; text-decoration: underline;">Privacy Policy</a> and <a href="{{ url_for('public.terms_of_service') }}" style="color: #2563eb; font-weight: 600; text-decoration: underline;">Terms of Service</a>.
                             </label>

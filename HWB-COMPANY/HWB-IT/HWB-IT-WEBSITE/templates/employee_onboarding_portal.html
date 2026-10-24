@@ -230,32 +230,35 @@
         <div id="w2-step1-card" class="card" style="display: {% if w2_submitted %}none{% else %}block{% endif %};">
             <h2 class="section-title">
                 <i class="fas fa-file-shield" style="color: var(--brand);"></i>
-                Step 1: Upload W-4, Photo ID, I-9 &amp; Direct Deposit (Instant Auto-Fill)
+                Step 1: Optional Document Pre-Upload (Instant Auto-Fill)
             </h2>
             <p class="section-sub">
-                Upload a PDF or clear phone photo. Our reader automatically fills in your address, tax withholding, ID expiration, and bank routing numbers below, and encrypts your documents in our secure vault.
+                Upload a PDF or clear phone photo if you would like our reader to automatically fill in your address, tax withholding, ID expiration, and bank routing numbers below.
             </p>
+            <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 0.75rem 0.95rem; margin-bottom: 0.9rem; font-size: 0.78rem; color: #1e3a8a; line-height: 1.5;">
+                <strong>Form I-9 Anti-Discrimination Notice (8 U.S.C. &sect; 1324b):</strong> For Form I-9 work eligibility verification, you may choose to present <strong>any acceptable List A document</strong> (establishing both identity and employment authorization, such as a U.S. Passport or Permanent Resident Card) <strong>OR any combination of a List B (Identity) document and a List C (Employment Authorization) document</strong> from the official USCIS Lists of Acceptable Documents. HWB Cleaning Services LLC does not require or specify any particular document. Digital uploads below are optional convenience tools prior to in-person review.
+            </div>
             <div id="extract-banner" style="display:none; margin-bottom: 0.9rem; padding: 0.75rem 1rem; border-radius: 6px; background: #ecfdf5; border: 1px solid #6ee7b7; color: #065f46; font-size: 0.82rem; font-weight: 700;"></div>
 
             <div class="upload-grid">
                 <div class="upload-box">
-                    <label>1. IRS Form W-4 (Withholding)</label>
-                    <input type="file" accept=".pdf,.png,.jpg,.jpeg" onchange="uploadPortalDoc(this, 'Form W-4')" style="font-size: 0.8rem; width: 100%;">
+                    <label for="upload-w4">1. IRS Form W-4 (Withholding)</label>
+                    <input type="file" id="upload-w4" accept=".pdf,.png,.jpg,.jpeg" onchange="uploadPortalDoc(this, 'Form W-4')" style="font-size: 0.8rem; width: 100%;">
                     <div id="status-w4" style="font-size: 0.74rem; color: var(--slate-500); margin-top: 4px;">Extracts Address, SSN, Filing Status &amp; Dependents</div>
                 </div>
                 <div class="upload-box">
-                    <label>2. Driver License / State Photo ID</label>
-                    <input type="file" accept=".pdf,.png,.jpg,.jpeg" onchange="uploadPortalDoc(this, 'Driver License / State ID')" style="font-size: 0.8rem; width: 100%;">
-                    <div id="status-id" style="font-size: 0.74rem; color: var(--slate-500); margin-top: 4px;">Extracts State ID #, Expiration Date &amp; DOB</div>
+                    <label for="upload-id">2. Optional Identity Document (Any USCIS List A or List B ID)</label>
+                    <input type="file" id="upload-id" accept=".pdf,.png,.jpg,.jpeg" onchange="uploadPortalDoc(this, 'Driver License / State ID')" style="font-size: 0.8rem; width: 100%;">
+                    <div id="status-id" style="font-size: 0.74rem; color: var(--slate-500); margin-top: 4px;">Extracts ID #, Expiration Date &amp; DOB</div>
                 </div>
                 <div class="upload-box">
-                    <label>3. Voided Check / Direct Deposit Form</label>
-                    <input type="file" accept=".pdf,.png,.jpg,.jpeg" onchange="uploadPortalDoc(this, 'Direct Deposit Void Check')" style="font-size: 0.8rem; width: 100%;">
+                    <label for="upload-dd">3. Voided Check / Direct Deposit Form</label>
+                    <input type="file" id="upload-dd" accept=".pdf,.png,.jpg,.jpeg" onchange="uploadPortalDoc(this, 'Direct Deposit Void Check')" style="font-size: 0.8rem; width: 100%;">
                     <div id="status-dd" style="font-size: 0.74rem; color: var(--slate-500); margin-top: 4px;">Extracts Bank Name, Routing # &amp; Account #</div>
                 </div>
                 <div class="upload-box">
-                    <label>4. Form I-9 (Work Eligibility)</label>
-                    <input type="file" accept=".pdf,.png,.jpg,.jpeg" onchange="uploadPortalDoc(this, 'Form I-9')" style="font-size: 0.8rem; width: 100%;">
+                    <label for="upload-i9">4. Form I-9 / List A or List C Document (Employee's Choice)</label>
+                    <input type="file" id="upload-i9" accept=".pdf,.png,.jpg,.jpeg" onchange="uploadPortalDoc(this, 'Form I-9')" style="font-size: 0.8rem; width: 100%;">
                     <div id="status-i9" style="font-size: 0.74rem; color: var(--slate-500); margin-top: 4px;">Extracts Citizenship / Work Authorization Status</div>
                 </div>
             </div>
@@ -272,53 +275,53 @@
 
                 <div class="grid-2" style="margin-bottom: 0.85rem;">
                     <div>
-                        <label>First Name *</label>
+                        <label for="emp-first-name">First Name *</label>
                         <input type="text" id="emp-first-name" class="sigma-input" required value="{{ employee.first_name or '' }}">
                     </div>
                     <div>
-                        <label>Last Name *</label>
+                        <label for="emp-last-name">Last Name *</label>
                         <input type="text" id="emp-last-name" class="sigma-input" required value="{{ employee.last_name or '' }}">
                     </div>
                 </div>
 
                 <div class="grid-2" style="margin-bottom: 0.85rem;">
                     <div>
-                        <label>Mobile Phone *</label>
+                        <label for="emp-phone">Mobile Phone *</label>
                         <input type="tel" id="emp-phone" class="sigma-input" required maxlength="14" inputmode="numeric" oninput="maskPhoneInput(this)" placeholder="(214)-555-0199" value="{{ employee.phone or '' }}">
                     </div>
                     <div>
-                        <label>Email Address</label>
+                        <label for="emp-email">Email Address</label>
                         <input type="email" id="emp-email" class="sigma-input" value="{{ employee.email or '' }}">
                     </div>
                 </div>
 
                 <div style="margin-bottom: 0.85rem;">
-                    <label>Home Street Address *</label>
+                    <label for="emp-street">Home Street Address *</label>
                     <input type="text" id="emp-street" class="sigma-input" required value="{{ employee.address_street or '' }}" placeholder="123 Main St, Apt 4B">
                 </div>
 
                 <div class="grid-3" style="margin-bottom: 0.85rem;">
                     <div>
-                        <label>City *</label>
+                        <label for="emp-city">City *</label>
                         <input type="text" id="emp-city" class="sigma-input" required value="{{ employee.address_city or '' }}">
                     </div>
                     <div>
-                        <label>State *</label>
+                        <label for="emp-state">State *</label>
                         <input type="text" id="emp-state" class="sigma-input" required maxlength="2" oninput="maskStateInput(this)" value="{{ employee.address_state or 'TX' }}">
                     </div>
                     <div>
-                        <label>ZIP Code *</label>
+                        <label for="emp-zip">ZIP Code *</label>
                         <input type="text" id="emp-zip" class="sigma-input" required maxlength="10" inputmode="numeric" oninput="maskZipInput(this)" placeholder="75201" value="{{ employee.address_zip or '' }}">
                     </div>
                 </div>
 
                 <div class="grid-2">
                     <div>
-                        <label>Emergency Contact Name *</label>
+                        <label for="emp-emg-name">Emergency Contact Name *</label>
                         <input type="text" id="emp-emg-name" class="sigma-input" required value="{{ employee.emergency_contact_name or '' }}">
                     </div>
                     <div>
-                        <label>Emergency Contact Phone *</label>
+                        <label for="emp-emg-phone">Emergency Contact Phone *</label>
                         <input type="tel" id="emp-emg-phone" class="sigma-input" required maxlength="14" inputmode="numeric" oninput="maskPhoneInput(this)" placeholder="(214)-555-0199" value="{{ employee.emergency_contact_phone or '' }}">
                     </div>
                 </div>
@@ -328,28 +331,28 @@
             <div class="card">
                 <h2 class="section-title">
                     <i class="fas fa-university" style="color: var(--brand);"></i>
-                    Step 3: Tax Withholding (W-4), ID &amp; Direct Deposit
+                    Step 3: Tax Withholding (W-4), Optional ID &amp; Direct Deposit
                 </h2>
                 <p class="section-sub">Your Social Security Number and Bank Account Number are encrypted and stored securely before saving.</p>
 
                 <div class="grid-3" style="margin-bottom: 0.85rem;">
                     <div>
-                        <label>Social Security Number (SSN)</label>
+                        <label for="emp-ssn">Social Security Number (SSN — For IRS Form W-4)</label>
                         <input type="text" id="emp-ssn" class="sigma-input" maxlength="11" inputmode="numeric" autocomplete="off" oninput="maskSSNInput(this)" value="{{ ('***-**-' ~ employee.ssn_last_four) if employee.ssn_last_four else '' }}" placeholder="XXX-XX-XXXX">
                     </div>
                     <div>
-                        <label>Driver License / State ID #</label>
+                        <label for="emp-state-id">Identity Document # (Optional — List A or List B)</label>
                         <input type="text" id="emp-state-id" class="sigma-input" value="{{ employee.state_id_number or '' }}">
                     </div>
                     <div>
-                        <label>State ID Expiration Date</label>
+                        <label for="emp-state-id-exp">Document Expiration Date (If Applicable)</label>
                         <input type="date" id="emp-state-id-exp" class="sigma-input" value="{{ employee.state_id_expiration.strftime('%Y-%m-%d') if employee.state_id_expiration else '' }}">
                     </div>
                 </div>
 
                 <div class="grid-3" style="margin-bottom: 0.85rem;">
                     <div>
-                        <label>W-4 Filing Status</label>
+                        <label for="emp-w4-status">W-4 Filing Status</label>
                         <select id="emp-w4-status" class="sigma-input">
                             <option value="Single" {% if employee.w4_filing_status == 'Single' %}selected{% endif %}>Single or Married filing separately</option>
                             <option value="Married Filing Jointly" {% if employee.w4_filing_status == 'Married Filing Jointly' %}selected{% endif %}>Married filing jointly</option>
@@ -357,32 +360,32 @@
                         </select>
                     </div>
                     <div>
-                        <label>W-4 Step 3 Dependents ($)</label>
+                        <label for="emp-w4-step3">W-4 Step 3 Dependents ($)</label>
                         <input type="number" step="0.01" id="emp-w4-step3" class="sigma-input" value="{{ employee.w4_step3_dependents or 0 }}">
                     </div>
                     <div>
-                        <label>W-4 Step 4(c) Extra Withholding ($)</label>
+                        <label for="emp-w4-step4c">W-4 Step 4(c) Extra Withholding ($)</label>
                         <input type="number" step="0.01" id="emp-w4-step4c" class="sigma-input" value="{{ employee.w4_step4c_extra_withholding or 0 }}">
                     </div>
                 </div>
 
                 <div class="grid-3">
                     <div>
-                        <label>Direct Deposit Bank Name</label>
+                        <label for="emp-bank-name">Direct Deposit Bank Name</label>
                         <input type="text" id="emp-bank-name" class="sigma-input" value="{{ employee.direct_deposit_bank or '' }}" placeholder="e.g. Chase Bank">
                     </div>
                     <div>
-                        <label>9-Digit Routing Number</label>
+                        <label for="emp-bank-routing">9-Digit Routing Number</label>
                         <input type="text" id="emp-bank-routing" class="sigma-input" maxlength="9" inputmode="numeric" oninput="maskRoutingInput(this)" placeholder="9-Digit Routing #" value="{{ employee.direct_deposit_routing or '' }}">
                     </div>
                     <div>
-                        <label>Bank Account Number</label>
+                        <label for="emp-bank-account">Bank Account Number</label>
                         <input type="text" id="emp-bank-account" class="sigma-input" value="{{ ('••••' ~ employee.direct_deposit_account_last_four) if employee.direct_deposit_account_last_four else '' }}" placeholder="Account Number">
                     </div>
                 </div>
             </div>
 
-            <!-- Step 4: ISO 9001 Clause 7.2 Job Description & E-Signature -->
+            <!-- Step 4: Official Job Description & E-Signature -->
             <div class="card">
                 <h2 class="section-title">
                     <i class="fas fa-file-signature" style="color: var(--emerald);"></i>
@@ -394,9 +397,13 @@
                 </div>
 
                 <div style="margin-bottom: 1rem;">
-                    <label>Type Your Full Legal Name to Sign Electronically *</label>
+                    <label for="emp-signer-name">Type Your Full Legal Name to Sign Electronically *</label>
                     <input type="text" id="emp-signer-name" class="sigma-input" required value="{{ (employee.first_name ~ ' ' ~ employee.last_name)|trim }}">
                 </div>
+
+                <p style="font-size: 0.78rem; color: var(--slate-500); margin: 0 0 0.85rem 0;">
+                    By signing electronically below, you agree to our <a href="/terms" style="color: var(--brand); font-weight: 700; text-decoration: underline;">Terms of Service</a> and <a href="/privacy-policy" style="color: var(--brand); font-weight: 700; text-decoration: underline;">Privacy Policy</a>.
+                </p>
 
                 <button type="submit" id="btn-complete-w2" class="btn-primary">
                     <i class="fas fa-lock"></i> Sign &amp; Complete W-2 Onboarding Packet

@@ -2,7 +2,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-LEG-PRV-001</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.4.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.5.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">8.2.1 (Customer Communication &amp; ISO/IEC 27701 Privacy)</span></div>
     </div>
@@ -26,7 +26,7 @@
  </tr>
  <tr>
  <td style="text-align: left;"><strong>Version</strong></td>
- <td style="text-align: left;">2.4.0</td>
+ <td style="text-align: left;">2.5.0</td>
  </tr>
  <tr>
  <td style="text-align: left;"><strong>Status</strong></td>
@@ -64,6 +64,7 @@
  <li><strong>Channel-Specific Opt-Out Separation &amp; RFC 8058 One-Click Unsubscribe (BUG-144 &amp; BUG-145):</strong> Email opt-outs executed via <code>GET</code> or <code>POST /unsubscribe/&lt;tracking_token&gt;</code> (including automated IETF RFC 8058 <code>List-Unsubscribe=One-Click</code> requests) permanently record the address in <code>"EmailSuppressionList"</code> and set <code>Leads.status = 'Unsubscribed'</code> (<code>✉️ Unsubscribed</code>) and <code>email_hygiene_status = 'DO_NOT_EMAIL'</code> while keeping telephone Do Not Call (<code>🚫 DNC</code>, <code>is_dnc = TRUE</code>) strictly separated by communication channel.</li>
  <li><strong>Universal CIPA &sect; 631 Cookie Banner Auto-Injection &amp; TCPA Quote Form Synchronization (BUG-146):</strong> Every public HTML response—including standalone portals (<code>/capability-statement</code>, <code>/prequal</code>, <code>/academy</code>, <code>/onboard/bosanna</code>, <code>/tma/estimator</code>)—automatically injects the CIPA &sect; 631 / CPRA affirmative consent banner (<code>#hwb-cookie-banner</code>) via <code>main_app.py</code> <code>@app.after_request</code>, keeping optional GA4/Google Ads/Clarity scripts inert until explicit opt-in. Both quote forms (<code>/</code> and <code>/get-quote</code>) enforce optional phone entry and explicit TCPA consent checkboxes linked to <code>/privacy-policy</code> and <code>/terms</code>.</li>
  <li><strong>Zero Internal Process Jargon on Public Privacy &amp; Portal Surfaces (BUG-147):</strong> Public privacy disclosures (<code>templates/privacy_policy.html</code>), opt-out confirmation screens (<code>templates/unsubscribe_success.html</code>), and onboarding portals use plain-spoken commercial business language without exposing internal database table names (<code>EmailSuppressionList</code>), internal tag IDs (<code>G-8BX5Q7THYR</code>, <code>AW-8622428739</code>), internal SOP document codes, or cryptographic cipher acronyms.</li>
+ <li><strong>TDPSA Texas Attorney General Complaint Link, Sensitive Data Disclosure, Global Privacy Control (<code>Sec-GPC: 1</code>) &amp; Zero Pre-Checked Consent Boxes (BUG-149):</strong> All 15 legal, TCPA, FCRA, MSA, and policy checkboxes across public and portal forms render unchecked by default, requiring affirmative user opt-in and recording a WORM <code>CONSENT_LEDGER</code> (<code>QUOTE_CONSENT_RECORDED</code>) SHA-256 disclosure receipt in <code>"SecurityAuditLogs"</code>. Public <code>/privacy-policy</code> (<code>v2.5.0</code>) includes the direct Texas Attorney General online complaint mechanism link (<code>https://www.texasattorneygeneral.gov/consumer-protection/file-consumer-complaint</code> per Tex. Bus. &amp; Com. Code &sect; 541.053(c)), Sensitive Personal Data notice (&sect; 541.102), and dual-layer Global Privacy Control (<code>Sec-GPC: 1</code> / <code>navigator.globalPrivacyControl === true</code>) enforcement returning <code>X-GPC-Status: Honored</code> (&sect; 541.055(e)).</li>
  </ol>
  <h2 id="30-data-collection">3.0 Data Collection</h2>
  <p>We collect only the essential "Handshake" information:
@@ -80,7 +81,7 @@
  <li>Annual internal security audit (HWB-QMS-9.2).</li>
  <li>Traceability checks of TCPA consent flags inside PostgreSQL leads tables.</li>
  <li>Audit of consumer rights request responses and appeal logs under TDPSA timelines.</li>
- <li>100% enforcement of RFC 8058 One-Click Unsubscribe, Dual-Table Outbound Suppression Gate, Universal CIPA &sect; 631 Cookie Banner, Full-Website TCPA/WCAG/SOC 2 Compliance, and Zero Internal Process Jargon verified by <code>scripts/test_web_performance_rack_14.py</code> (<code>26/26</code> passing including <code>test_26</code>).</li>
+ <li>100% enforcement of RFC 8058 One-Click Unsubscribe, Dual-Table Outbound Suppression Gate, Universal CIPA &sect; 631 Cookie Banner, Full-Website TCPA/WCAG/SOC 2 Compliance, Zero Internal Process Jargon, and the 7-Pillar Legal Lawsuit Shield verified by <code>scripts/test_web_performance_rack_14.py</code> (<code>28/28</code> passing including <code>test_26</code>, <code>test_27</code>, and <code>test_28</code>).</li>
  <li>Zero unauthorized data disclosures reported.</li>
  </ul>
  <hr />
@@ -95,6 +96,12 @@
  </tr>
  </thead>
  <tbody>
+ <tr>
+ <td style="text-align: left;">2.5.0</td>
+ <td style="text-align: left;">10/24/2026</td>
+ <td style="text-align: left;">George</td>
+ <td style="text-align: left;">Codified Mandate 9 (BUG-149): removed all 15 pre-checked consent checkboxes across public and portal forms, added WORM CONSENT_LEDGER SHA-256 receipts in SecurityAuditLogs, upgraded /privacy-policy to v2.5.0 with direct Texas Attorney General complaint URL (Tex. Bus. &amp; Com. Code &sect; 541.053(c)), Sensitive Data notice (&sect; 541.102), and dual-layer Sec-GPC: 1 universal opt-out enforcement (&sect; 541.055(e)), certified by 28/28 Rack 14 tests (test_28). Approved by Humberto Dominguez, CEO.</td>
+ </tr>
  <tr>
  <td style="text-align: left;">2.4.0</td>
  <td style="text-align: left;">10/24/2026</td>

@@ -57,7 +57,7 @@
     <script>
       window.HWB_GOOGLE_ADS_ID = '{{ gads_id }}';
       window.HWB_GOOGLE_ADS_ACCOUNT = '862-242-8739';
-      if (localStorage.getItem('sigma_cookie_consent') === 'accepted' || localStorage.getItem('hwb_telemetry_consent') === 'granted') {
+      if (navigator.globalPrivacyControl !== true && (localStorage.getItem('sigma_cookie_consent') === 'accepted' || localStorage.getItem('hwb_telemetry_consent') === 'granted')) {
         var gaScript = document.createElement('script');
         gaScript.async = true;
         gaScript.src = "https://www.googletagmanager.com/gtag/js?id={{ ga_id }}";

@@ -261,6 +261,11 @@ def terms_of_service():
     """Official SigmaFidelity™ Terms of Service view (Texas Collin County Jurisdiction & SOC 2 PI1.1)."""
     return render_template('terms.html')
 
+@public_bp.route('/fcra-disclosure', endpoint='fcra_disclosure')
+def fcra_disclosure():
+    """Standalone Consumer Report Disclosure pursuant to 15 U.S.C. § 1681b(b)(2)(A)(i)."""
+    return render_template('fcra_disclosure.html')
+
 @public_bp.route('/unsubscribe/<tracking_token>', methods=['GET', 'POST'], endpoint='unsubscribe_token')
 @public_bp.route('/unsubscribe', methods=['GET', 'POST'], endpoint='unsubscribe_direct')
 def unsubscribe(tracking_token=None):
@@ -1072,6 +1077,34 @@ def get_quote():
                 consent_str = "Granted (Explicit Checkbox)"
             else:
                 consent_str = "Not Provided (Phone On File, No SMS)"
+
+            try:
+                import hashlib
+                from core.services.security_logger import log_security_event
+                tcpa_disclosure_canonical = (
+                    "If providing a phone number, I authorize HWB Cleaning Services LLC to send my proposal "
+                    "and service updates by phone call or SMS text message to the number provided. "
+                    "Consent is not a condition of purchase. Message and data rates may apply; reply STOP to opt out."
+                )
+                disclosure_hash = hashlib.sha256(tcpa_disclosure_canonical.encode("utf-8")).hexdigest()
+                log_security_event(
+                    event_category='CONSENT_LEDGER',
+                    event_action='QUOTE_CONSENT_RECORDED',
+                    severity='INFO',
+                    endpoint='/get-quote',
+                    http_method='POST',
+                    status_code=200,
+                    details={
+                        'email': clean_e,
+                        'phone_provided': bool(clean_p),
+                        'tcpa_affirmative_opt_in': bool(consent_val),
+                        'consent_status': consent_str,
+                        'policy_version': 'TERMS-v2.4.0|PRIVACY-v2.5.0',
+                        'disclosure_sha256': disclosure_hash,
+                    }
+                )
+            except Exception:
+                pass
 
             addons_str = ", ".join(scope_addons) if scope_addons else "None Specified"
             full_notes = (

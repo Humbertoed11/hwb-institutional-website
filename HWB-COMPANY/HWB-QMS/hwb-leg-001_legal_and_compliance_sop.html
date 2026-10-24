@@ -3,7 +3,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-LEG-001</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.3.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.4.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.1.3 &amp; 8.2.1 (Legal, Privacy &amp; Communications Compliance)</span></div>
     </div>
@@ -27,7 +27,7 @@
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Version</strong></td>
-<td style="text-align: left;">2.3.0</td>
+<td style="text-align: left;">2.4.0</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Status</strong></td>
@@ -84,12 +84,13 @@
 <li><strong>SOC 2 CC6.1 Route &amp; Margin Isolation:</strong> Internal reference routes (<code>/design-system</code> and <code>/csi</code>) require authentication (<code>@login_required</code>), internal gross margin sliders are hidden from unauthenticated users on <code>/tma/estimator</code>, and every HTTP response includes <code>Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()</code>.</li>
 <li><strong>OSHA 1910.1200 (GHS) &amp; ISO 45001 Empirical Transparency:</strong> <code>/compliance</code> and <code>/ehsq</code> render live verified GHS chemical records from PostgreSQL <code>"Chemicals"</code> and verified OSHA safety records from <code>"SafetyIncidents"</code> (0.00 TRIR), while <code>/methodology</code> presents plainspoken inspection KPIs.</li>
 <li><strong>Zero Internal Process Jargon on Public &amp; Client-Facing Surfaces (BUG-147):</strong> Public legal pages (<code>/terms</code>, <code>/privacy-policy</code>, <code>/unsubscribe</code>), client/partner portals, training certificates, authentication screens, and outbound client emails execute 100% of underlying compliance and cryptographic controls silently in the backend while presenting plain-spoken commercial business language without internal SOP numbers, database table names, cryptographic cipher labels, or internal AI agent personas.</li>
+<li><strong>7-Pillar Enterprise Legal Lawsuit Shield (BUG-149):</strong> (1) Zero pre-checked legal, TCPA, FCRA, MSA, DWC-83, or policy checkboxes across all public and portal forms (47 CFR &sect; 64.1200(f)(9) &amp; Tex. Bus. &amp; Com. Code &sect; 541.001(7)(C)), paired with WORM <code>CONSENT_LEDGER</code> (<code>QUOTE_CONSENT_RECORDED</code>) SHA-256 disclosure receipts in <code>"SecurityAuditLogs"</code>; (2) Standalone <code>/fcra-disclosure</code> Consumer Report Disclosure &amp; CFPB Summary of Rights (15 U.S.C. &sect; 1681b(b)(2)(A)(i)) unbundled from general employment covenants; (3) DOJ Form I-9 Anti-Discrimination Safe Harbor (8 U.S.C. &sect; 1324b(a)(6)) honoring any acceptable USCIS List A or List B + C documents; (4) 100% explicit <code>&lt;label for="..."&gt;</code> binding across all 48 form controls (ADA Title III / WCAG 2.2 Level A); (5) Mandatory 30-Day Pre-Suit Cure Notice, Binding Individual Arbitration &amp; Class/Collective Action Waiver (FAA, 9 U.S.C. &sect; 1 et seq.), and E-SIGN / Texas UETA electronic signature clause in <code>/terms</code> (<code>v2.4.0</code>) with universal Clickwrap links; (6) TDPSA &sect; 541.053(c) direct Texas Attorney General online complaint link, &sect; 541.102 Sensitive Personal Data notice, and dual-layer <code>Sec-GPC: 1</code> enforcement (<code>X-GPC-Status: Honored</code>) in <code>/privacy-policy</code> (<code>v2.5.0</code>); and (7) Permanent Automated Adversarial Lawyer Sentinel (<code>test_28</code> in <code>scripts/test_web_performance_rack_14.py</code> — <code>28/28</code> passing).</li>
 </ol>
 <h2 id="40-verification-zero-defect-check">4.0 Verification (Zero-Defect Check)</h2>
 <ul>
 <li>Annual compliance audit completed with zero non-conformities.</li>
 <li>All business permits and insurance certificates are active and unexpired.</li>
-<li>100% pass rate on Rack 14 Multi-Jurisdictional Email, Portal, Full-Website &amp; Zero Internal Jargon Compliance Test Suite (<code>scripts/test_web_performance_rack_14.py</code> — <code>26/26</code> passing including <code>test_26</code>) and SOC 2 Data Leakage Sentinel (<code>77/77</code> checks passing).</li>
+<li>100% pass rate on Rack 14 Multi-Jurisdictional Email, Portal, Full-Website, Zero Internal Jargon &amp; Adversarial Legal Audit Test Suite (<code>scripts/test_web_performance_rack_14.py</code> — <code>28/28</code> passing including <code>test_26</code>, <code>test_27</code>, and <code>test_28</code>) and SOC 2 Data Leakage Sentinel (<code>77/77</code> checks passing).</li>
 </ul>
 <hr />
 <h2 id="50-revision-history">5.0 Revision History</h2>
@@ -103,6 +104,12 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">2.4.0</td>
+<td style="text-align: left;">10/24/2026</td>
+<td style="text-align: left;">George</td>
+<td style="text-align: left;">Codified Pillar 7 of Section 3.4 (7-Pillar Enterprise Legal Lawsuit Shield — BUG-149): removed all 15 pre-checked checkboxes, recorded WORM CONSENT_LEDGER SHA-256 receipts, created standalone /fcra-disclosure route, added DOJ Form I-9 List A/B+C safe harbor, bound all 48 unbound form labels, upgraded /terms (v2.4.0) with Binding Individual Arbitration, Class-Action Waiver &amp; 30-Day Pre-Suit Cure Notice, upgraded /privacy-policy (v2.5.0) with Texas AG complaint portal URL &amp; Sec-GPC: 1 enforcement, and certified 28/28 Rack 14 tests (test_28). Approved by Humberto Dominguez, CEO.</td>
+</tr>
 <tr>
 <td style="text-align: left;">2.3.0</td>
 <td style="text-align: left;">10/24/2026</td>

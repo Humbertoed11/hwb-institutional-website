@@ -251,6 +251,10 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
+      if (navigator.globalPrivacyControl === true) {
+        localStorage.setItem('hwb_telemetry_consent', 'declined');
+        return;
+      }
       if (localStorage.getItem('hwb_telemetry_consent') === 'granted') {
         triggerCompliantTelemetry();
       } else if (localStorage.getItem('hwb_telemetry_consent') !== 'declined') {

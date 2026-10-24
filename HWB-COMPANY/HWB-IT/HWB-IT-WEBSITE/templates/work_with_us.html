@@ -431,23 +431,33 @@
                         <input type="text" id="tech-notes" name="notes" placeholder="Paste your LinkedIn URL, online resume link, or a brief note on your sales / operations background" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.88rem;">
                     </div>
 
-                    <!-- Qualifications & FCRA Authorization (SOC 2 Privacy P3.2) -->
-                    <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.75rem; padding: 1.25rem; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    <!-- Qualifications & At-Will Notice -->
+                    <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.25rem; padding: 1.25rem; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
                         <label style="display: flex; align-items: center; gap: 0.65rem; font-size: 0.85rem; font-weight: 600; color: #334155; cursor: pointer;">
-                            <input type="checkbox" name="has_transportation" value="true" checked style="accent-color: var(--brand); width: 16px; height: 16px;">
+                            <input type="checkbox" name="has_transportation" value="true" style="accent-color: var(--brand); width: 16px; height: 16px;">
                             I have reliable transportation to travel to assigned commercial job sites in North Texas
                         </label>
                         <label style="display: flex; align-items: center; gap: 0.65rem; font-size: 0.85rem; font-weight: 600; color: #334155; cursor: pointer;">
-                            <input type="checkbox" name="authorized_to_work_us" value="true" required checked style="accent-color: var(--brand); width: 16px; height: 16px;">
+                            <input type="checkbox" name="authorized_to_work_us" value="true" required style="accent-color: var(--brand); width: 16px; height: 16px;">
                             I am legally authorized to work in the United States (Form I-9 Verification)
                         </label>
                         <label style="display: flex; align-items: flex-start; gap: 0.65rem; font-size: 0.82rem; font-weight: 500; color: #334155; cursor: pointer; line-height: 1.45; padding-top: 0.5rem; border-top: 1px dashed #cbd5e1;">
-                            <input type="checkbox" name="fcra_consent" value="true" required checked style="accent-color: var(--brand); width: 16px; height: 16px; margin-top: 2px;">
-                            <span><strong style="color: #0f172a;">FCRA Screening Consent:</strong> I acknowledge and authorize HWB Cleaning Services LLC to obtain a consumer report / criminal background screening for employment evaluation purposes in accordance with the Fair Credit Reporting Act (15 U.S.C. § 1681 et seq.).</span>
+                            <input type="checkbox" name="at_will_consent" value="true" required style="accent-color: var(--brand); width: 16px; height: 16px; margin-top: 2px;">
+                            <span><strong style="color: #0f172a;">Application Acknowledgment &amp; At-Will Notice (No Guarantee of Hire):</strong> I understand that submitting this application is an expression of interest and does not guarantee an interview, a job offer, or employment with HWB Cleaning Services LLC. I understand that employment with HWB Cleaning Services LLC is at-will, meaning either I or the company may end employment at any time, with or without cause or advance notice. View our <a href="{{ url_for('public.terms_of_service') }}" style="color: #2563eb; font-weight: 600; text-decoration: underline;">Terms of Service</a> and <a href="{{ url_for('public.privacy_policy') }}" style="color: #2563eb; font-weight: 600; text-decoration: underline;">Privacy Policy</a>.</span>
                         </label>
-                        <label style="display: flex; align-items: flex-start; gap: 0.65rem; font-size: 0.82rem; font-weight: 500; color: #334155; cursor: pointer; line-height: 1.45; padding-top: 0.5rem; border-top: 1px dashed #cbd5e1;">
-                            <input type="checkbox" name="at_will_consent" value="true" required checked style="accent-color: var(--brand); width: 16px; height: 16px; margin-top: 2px;">
-                            <span><strong style="color: #0f172a;">Application Acknowledgment & At-Will Notice (No Guarantee of Hire):</strong> I understand that submitting this application is an expression of interest and does not guarantee an interview, a job offer, or employment with HWB Cleaning Services LLC. I understand that employment with HWB Cleaning Services LLC is at-will, meaning either I or the company may end employment at any time, with or without cause or advance notice.</span>
+                    </div>
+
+                    <!-- Isolated Standalone FCRA Disclosure Reference (15 U.S.C. § 1681b(b)(2)(A)(i)) -->
+                    <div id="fcra-standalone-box" style="margin-bottom: 1.5rem; padding: 1rem 1.25rem; background: #ffffff; border: 1.5px solid #bfdbfe; border-radius: 8px; font-size: 0.8rem; color: #334155; line-height: 1.5;">
+                        <div style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #1d4ed8; margin-bottom: 0.35rem;">
+                            Standalone Consumer Report Disclosure (15 U.S.C. &sect; 1681b(b)(2)(A)(i))
+                        </div>
+                        <p style="margin: 0 0 0.5rem 0;">
+                            If you receive a conditional job offer, HWB Cleaning Services LLC may obtain a consumer report (background investigation) for employment purposes pursuant to our <a href="{{ url_for('public.fcra_disclosure') }}" target="_blank" rel="noopener noreferrer" style="color: #2563eb; font-weight: 700; text-decoration: underline;">Standalone FCRA Disclosure &amp; Summary of Rights</a>.
+                        </p>
+                        <label style="display: flex; align-items: flex-start; gap: 0.6rem; font-weight: 600; color: #0f172a; cursor: pointer;">
+                            <input type="checkbox" name="fcra_consent" value="true" required style="accent-color: var(--brand); width: 16px; height: 16px; margin-top: 2px;">
+                            <span>I have received and reviewed the <a href="{{ url_for('public.fcra_disclosure') }}" target="_blank" rel="noopener noreferrer" style="color: #2563eb; text-decoration: underline;">Standalone Consumer Report Disclosure</a>.</span>
                         </label>
                     </div>
 
@@ -601,15 +611,15 @@
                     </div>
 
                     <div style="margin-bottom: 1.25rem;">
-                        <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Specialties & Equipment Owned (Select all that apply) *</label>
+                        <div style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Specialties &amp; Equipment Owned (Select all that apply) *</div>
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.6rem; padding: 0.75rem; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px;">
                             <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.82rem; color: #334155; cursor: pointer;">
-                                <input type="checkbox" name="specialties" value="Post-Construction Cleaning" checked style="accent-color: var(--brand);">
+                                <input type="checkbox" name="specialties" value="Post-Construction Cleaning" style="accent-color: var(--brand);">
                                 🏗️ Post-Construction Cleaning
                             </label>
                             <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.82rem; color: #334155; cursor: pointer;">
-                                <input type="checkbox" name="specialties" value="Floor Strip & Wax" checked style="accent-color: var(--brand);">
-                                🧹 Floor Strip & Wax (VCT)
+                                <input type="checkbox" name="specialties" value="Floor Strip & Wax" style="accent-color: var(--brand);">
+                                🧹 Floor Strip &amp; Wax (VCT)
                             </label>
                             <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.82rem; color: #334155; cursor: pointer;">
                                 <input type="checkbox" name="specialties" value="Commercial Carpet Extraction" style="accent-color: var(--brand);">
@@ -647,17 +657,17 @@
 
                     <div style="padding: 1rem; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 1.75rem;">
                         <label style="display: flex; align-items: flex-start; gap: 0.6rem; font-size: 0.82rem; font-weight: 600; color: #334155; cursor: pointer; margin-bottom: 0.75rem;">
-                            <input type="checkbox" name="dwc83_agreed" value="true" required checked style="accent-color: var(--brand); width: 18px; height: 18px; margin-top: 2px;">
+                            <input type="checkbox" name="dwc83_agreed" value="true" required style="accent-color: var(--brand); width: 18px; height: 18px; margin-top: 2px;">
                             <span>
                                 <strong>Independent Subcontractor Agreement (Texas DWC-83 Affirmation):</strong>
                                 We operate as an independent commercial cleaning trade business. We maintain our own tools, equipment, and commercial general liability insurance, and agree to standard project subcontract terms before dispatch.
                             </span>
                         </label>
                         <label style="display: flex; align-items: flex-start; gap: 0.6rem; font-size: 0.82rem; font-weight: 500; color: #475569; cursor: pointer; padding-top: 0.65rem; border-top: 1px dashed #cbd5e1;">
-                            <input type="checkbox" name="sub_no_guarantee_agreed" value="true" required checked style="accent-color: var(--brand); width: 18px; height: 18px; margin-top: 2px;">
+                            <input type="checkbox" name="sub_no_guarantee_agreed" value="true" required style="accent-color: var(--brand); width: 18px; height: 18px; margin-top: 2px;">
                             <span>
                                 <strong style="color: #0f172a;">No Guarantee of Project Award or Minimum Hours:</strong>
-                                Registration on our pre-qualified subcontractor roster does not guarantee project awards, minimum billable hours, or contract assignment. Subcontracts are awarded on a project-by-project basis upon mutual execution of a formal Scope of Work agreement.
+                                Registration on our pre-qualified subcontractor roster does not guarantee project awards, minimum billable hours, or contract assignment. Subcontracts are awarded on a project-by-project basis upon mutual execution of a formal Scope of Work agreement. View our <a href="{{ url_for('public.terms_of_service') }}" style="color: #2563eb; font-weight: 600; text-decoration: underline;">Terms of Service</a> and <a href="{{ url_for('public.privacy_policy') }}" style="color: #2563eb; font-weight: 600; text-decoration: underline;">Privacy Policy</a>.
                             </span>
                         </label>
                     </div>

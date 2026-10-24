@@ -67,21 +67,21 @@
                 <div class="quote-success-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; background: #f8fafc; padding: 2.5rem; border-radius: 12px; border: 1px solid #e2e8f0;">
                     <div>
                         <div style="margin-bottom: 1.5rem;">
-                            <label style="display: block; font-size: 0.65rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">Business</label>
+                            <div style="display: block; font-size: 0.65rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">Business</div>
                             <div style="font-size: 1rem; font-weight: 800; color: #1e293b;">{{ data['company'] }}</div>
                         </div>
                         <div>
-                            <label style="display: block; font-size: 0.65rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">Plan Type</label>
+                            <div style="display: block; font-size: 0.65rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">Plan Type</div>
                             <div style="font-size: 1rem; font-weight: 800; color: #1e293b;" id="disp-frequency">{{ data.get('frequency', 'Standard Cleaning') }}</div>
                         </div>
                     </div>
                     <div>
                         <div style="margin-bottom: 1.5rem;">
-                            <label style="display: block; font-size: 0.65rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">Your Phone</label>
+                            <div style="display: block; font-size: 0.65rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">Your Phone</div>
                             <div style="font-size: 1rem; font-weight: 800; color: #1e293b;">{{ data['phone'] or 'Not Provided (Email Only)' }}</div>
                         </div>
                         <div>
-                            <label style="display: block; font-size: 0.65rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">Your Email</label>
+                            <div style="display: block; font-size: 0.65rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">Your Email</div>
                             <div style="font-size: 1rem; font-weight: 800; color: #1e293b;">{{ data['email'] }}</div>
                         </div>
                     </div>
@@ -106,9 +106,9 @@
 
                         <!-- City Quick Chips -->
                         <div style="margin-bottom: 1.25rem;">
-                            <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: #334155; margin-bottom: 0.5rem;">
+                            <div style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: #334155; margin-bottom: 0.5rem;">
                                 Facility City
-                            </label>
+                            </div>
                             <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
                                 <button type="button" class="calib-city-btn" onclick="selectCalibCity('Plano', this)" style="padding: 0.4rem 0.85rem; border-radius: 6px; border: 1px solid #cbd5e1; background: #f8fafc; font-size: 0.82rem; font-weight: 700; color: #1e293b; cursor: pointer;">Plano</button>
                                 <button type="button" class="calib-city-btn" onclick="selectCalibCity('Dallas', this)" style="padding: 0.4rem 0.85rem; border-radius: 6px; border: 1px solid #cbd5e1; background: #f8fafc; font-size: 0.82rem; font-weight: 700; color: #1e293b; cursor: pointer;">Dallas</button>
@@ -121,9 +121,9 @@
 
                         <!-- Frequency Quick Chips -->
                         <div style="margin-bottom: 1.25rem;">
-                            <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: #334155; margin-bottom: 0.5rem;">
+                            <div style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: #334155; margin-bottom: 0.5rem;">
                                 Cleaning Schedule
-                            </label>
+                            </div>
                             <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
                                 <button type="button" class="calib-freq-btn" onclick="selectCalibFreq('Daily (5 Days/Week) - Standard Corporate', this)" style="padding: 0.4rem 0.85rem; border-radius: 6px; border: 1px solid #cbd5e1; background: #f8fafc; font-size: 0.82rem; font-weight: 700; color: #1e293b; cursor: pointer;">Daily (5x / Wk)</button>
                                 <button type="button" class="calib-freq-btn" onclick="selectCalibFreq('Periodic (3 Days/Week) - Mon/Wed/Fri', this)" style="padding: 0.4rem 0.85rem; border-radius: 6px; border: 1px solid #cbd5e1; background: #f8fafc; font-size: 0.82rem; font-weight: 700; color: #1e293b; cursor: pointer;">2 to 3x / Wk</button>
@@ -134,7 +134,7 @@
 
                         <!-- Approximate Square Footage -->
                         <div style="margin-bottom: 1.25rem;">
-                            <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: #334155; margin-bottom: 0.5rem;">
+                            <label for="opt_sqft" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: #334155; margin-bottom: 0.5rem;">
                                 Rough Square Footage (Approximate)
                             </label>
                             <div style="display: flex; gap: 0.75rem; align-items: center; max-width: 360px;">
