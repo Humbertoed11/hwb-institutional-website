@@ -3,7 +3,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-8.0-FLOW-001</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.0.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">8.2.1 (Customer Communication)</span></div>
     </div>
@@ -27,7 +27,7 @@
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Version</strong></td>
-<td style="text-align: left;">2.0.0</td>
+<td style="text-align: left;">3.0.0</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Status</strong></td>
@@ -43,7 +43,7 @@
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Date</strong></td>
-<td style="text-align: left;">09/21/2026</td>
+<td style="text-align: left;">10/24/2026</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>ISO 9001 Clause</strong></td>
@@ -54,38 +54,36 @@
 <hr />
 <h1 id="standard-operating-procedure-sales-process-flowchart">Standard Operating Procedure: <strong>Sales Process Flowchart</strong></h1>
 <h2 id="10-purpose">1.0 Purpose</h2>
-<p>This document provides a visual representation of the Sales Process at HWB Cleaning Services, ensuring all team members understand the sequence of activities from initial contact to client onboarding.</p>
+<p>This document provides a visual representation of the Commercial Sales &amp; Territory-Isolated Pipeline Process at HWB Cleaning Services LLC, covering lead ingestion, territory assignment (`assigned_rep_id`), calling workstation outreach, Microsoft Bookings walkthroughs, Yamamoto Moto takeoff calibration, and customer promotion.</p>
 <h2 id="20-scope">2.0 Scope</h2>
-<p>Applies to all sales activities within the Lead Pipeline and CRM modules.</p>
+<p>Applies to all sales activities within the Commercial Leads, Calling Workstation (`/sales-desk`), Commercial Bidding, and Customer Accounts modules.</p>
 <h2 id="30-universal-mandates-2026-baseline">3.0 Universal Mandates (2026 Baseline)</h2>
 <ol>
-<li><strong>Guidance First:</strong> If a lead's requirements are ambiguous, ASK the CEO before generating a quote.</li>
-<li><strong>Tier 6 Telemetry:</strong> Every transition in this flowchart must be traceable in the <code>SigmaInteractionLog</code>.</li>
-<li><strong>Physical Truth:</strong> Reference absolute paths for the quote generator logic (<code>quote_form.html</code>).</li>
+<li><strong>Strict Territory Isolation:</strong> Sales profiles only view leads, accounts, and construction bids explicitly assigned to their `assigned_rep_id`.</li>
+<li><strong>35% Margin Floor:</strong> Every commercial proposal and construction bid is calibrated by Yamamoto Moto to enforce a minimum 35% gross margin.</li>
+<li><strong>Physical Truth:</strong> Quote intake executes via `templates/quote_form.html` and `templates/index.html` with Smart Merge deduplication.</li>
 </ol>
 <h2 id="40-the-sales-sequence">4.0 The Sales Sequence</h2>
 <div class="mermaid">
-graph TD
-    Start((Contact)) --> Inquiry[Inquiry via Web/Phone]
-    Inquiry --> Qualify{Lead Qualification}
-    Qualify -- No --> LogStop[Log & Archive]
-    Qualify -- Yes --> Schedule[Schedule Site Visit]
-    Schedule --> Assessment[Conduct Assessment]
-    Assessment --> Proposal[Prepare SigmaQuote]
-    Proposal --> Delivery[Deliver to Client]
-    Delivery --> FollowUp{Follow-Up}
-    FollowUp --> Decision{Client Decision}
-    Decision -- Rejected --> Feedback[Gather Feedback]
-    Decision -- Negotiate --> Proposal
-    Decision -- Accepted --> Agreement[Sign Agreement]
-    Agreement --> Onboarding[Onboard via CRM]
-    Onboarding --> Finish((Complete))
+flowchart TD
+    Start(("Inbound Web Quote or<br/>Statewide TX Lead Miner")) --> SmartMerge["5-Pillar Smart Merge Deduplication<br/>(PostgreSQL 16.15 Leads)"]
+    SmartMerge --> Territory["Territory Assignment<br/>(assigned_rep_id Isolation)"]
+    Territory --> Outreach["Calling Workstation ({Caller} Script)<br/>&amp; Closed-Loop Email Campaign"]
+    Outreach --> Qualify{"Prospect Qualified?"}
+    Qualify -- "DNC / Unsubscribed" --> Suppress["Channel-Specific Opt-Out<br/>(🚫 DNC vs ✉️ Unsubscribed)"]
+    Qualify -- "Yes: Walkthrough" --> Schedule["Microsoft Bookings Walkthrough<br/>FacilityWalkthroughquote@NETORGFT3163094.onmicrosoft.com"]
+    Schedule --> Takeoff["Site Walkthrough &amp; Yamamoto Moto<br/>Takeoff Calibration (35%+ Margin)"]
+    Takeoff --> Proposal["CEO Approved Proposal Delivery"]
+    Proposal --> Decision{"Client Decision"}
+    Decision -- "Revise Scope" --> Takeoff
+    Decision -- "Accepted" --> Promote["Promote Lead to Active Account<br/>(POST /api/v1/leads/promote)"]
+    Promote --> Dispatch["Assign Work Orders &amp;<br/>Verified W-2 / 1099 Crew"]
 </div>
 
 <h2 id="50-verification-zero-defect-check">5.0 Verification (Zero-Defect Check)</h2>
 <ul>
-<li>The flowchart renders correctly in the Compliance Engine.</li>
-<li>Every accepted agreement results in a valid Account record.</li>
+<li>The flowchart renders cleanly in `/manual/hwb-qms-8.0_sales_process_flowchart.html`.</li>
+<li>Every accepted agreement promotes cleanly to `"Customers"` with full activity history preserved in `"GlobalActivities"`.</li>
 </ul>
 <h2 id="60-revision-history">6.0 Revision History</h2>
 <table>
@@ -99,10 +97,10 @@ graph TD
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">2.0.0</td>
-<td style="text-align: left;">05/21/2026</td>
-<td style="text-align: left;">George</td>
-<td style="text-align: left;">TOTAL MODERNIZATION. Added 2026 Baseline and Tier 6 mandates.</td>
+<td style="text-align: left;">3.0.0</td>
+<td style="text-align: left;">10/24/2026</td>
+<td style="text-align: left;">George (Systems Architect)</td>
+<td style="text-align: left;">Upgraded Sales Process Flowchart to include 5-Pillar Smart Merge deduplication, strict territory isolation (assigned_rep_id), dynamic {Caller} scripts, channel-specific DNC vs Unsubscribed separation, Microsoft Bookings, and Yamamoto Moto 35% margin calibration (BUG-148). Approved by Humberto Dominguez, CEO.</td>
 </tr>
 <tr>
 <td style="text-align: left;">1.1</td>

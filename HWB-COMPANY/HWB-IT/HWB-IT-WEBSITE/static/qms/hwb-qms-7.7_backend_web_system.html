@@ -1,3 +1,5 @@
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'loose' });</script>
 <div class="sop-card">
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
@@ -128,12 +130,37 @@
         </table>
     </section>
 
-    <!-- 3.0 REVISION HISTORY -->
+    
+    <!-- 2.5 ARCHITECTURE WORKFLOW DIAGRAM -->
+    <section style="margin-bottom: 2.5rem;">
+        <h2 style="font-size: 1.5rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">2.5 Enterprise Web Request &amp; Container Execution Flowchart</h2>
+        <p style="margin-bottom: 1rem;">The diagram below visualizes the 8-step request lifecycle from the Cloudflare Anycast perimeter into the 24-slot Gunicorn web container and PostgreSQL 16.15 database engine.</p>
+        <div class="mermaid-wrapper" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0;">
+            <div class="mermaid">
+flowchart TD
+    S1["Step 1: HTTPS Request Hits Cloudflare Anycast Edge (TLS 1.3)"] --> S2["Step 2: Azure Web App for Containers Verifies Cloudflare Origin CIDR"]
+    S2 --> S3["Step 3: Gunicorn (:5000) Assigns Request to 1 of 24 Concurrent Execution Slots"]
+    S3 --> S4["Step 4: main_app.py Security Gate Enforces RBAC, Session Auth &amp; CSRF Token"]
+    S4 --> S5["Step 5: Blueprint Controller Executes Service Layer Business Rules"]
+    S5 --> S6["Step 6: ThreadedConnectionPool Queries PostgreSQL 16.15 Over Encrypted SSL"]
+    S6 --> S7["Step 7: WORM Audit Logger Records State Mutation in SecurityAuditLogs"]
+    S7 --> S8["Step 8: HTML/JSON Response Returned with Responsive &amp; Masking Engines"]
+
+    style S1 fill:#eff6ff,stroke:#2563eb,stroke-width:2px
+    style S4 fill:#fefce8,stroke:#ca8a04,stroke-width:2px
+    style S6 fill:#f0fdf4,stroke:#16a34a,stroke-width:2px
+    style S8 fill:#f8fafc,stroke:#0f172a,stroke-width:2px
+            </div>
+        </div>
+    </section>
+
+        <!-- 3.0 REVISION HISTORY -->
     <section>
         <h2 style="font-size: 1.5rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">3.0 Revision History</h2>
         <table class="sigma-data-grid" style="width: 100%; border-collapse: collapse; background: white;">
             <thead><tr style="text-align: left; background: #f8fafc;"><th style="padding: 1rem;">Ver</th><th style="padding: 1rem;">Date</th><th style="padding: 1rem;">Author</th><th style="padding: 1rem;">Change Description</th></tr></thead>
             <tbody style="font-size: 0.85rem;">
+                <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 1rem;">3.1.0</td><td style="padding: 1rem;">10/24/2026</td><td style="padding: 1rem;">George (Systems Architect)</td><td style="padding: 1rem;">Added Section 2.5 Enterprise Web Request &amp; Container Execution Mermaid Flowchart (BUG-148 Phase 2). Approved by Humberto Dominguez, CEO.</td></tr>
                 <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 1rem;">3.0.0</td><td style="padding: 1rem;">10/24/2026</td><td style="padding: 1rem;">George (Systems Architect)</td><td style="padding: 1rem;">Upgraded container and database specifications to PostgreSQL 16.15 (pgvector/pgvector:pg16 locally and Azure Flexible Server 16.15 in production), Gunicorn 24-slot concurrency, and Pincer Shield edge routing (BUG-148). Approved by Humberto Dominguez, CEO.</td></tr>
                 <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 1rem;">1.0.0</td><td style="padding: 1rem;">05/20/2026</td><td style="padding: 1rem;">George</td><td style="padding: 1rem;">Initial Release. Established the 8-Step Backend Logic Sequence and Container Registry.</td></tr>
                             <tr>

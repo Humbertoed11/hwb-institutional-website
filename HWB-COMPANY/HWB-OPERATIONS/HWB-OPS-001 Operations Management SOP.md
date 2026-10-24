@@ -14,7 +14,7 @@
 # Standard Operating Procedure: **Operations Management SOP**
 
 ## 1.0 Purpose
-This SOP defines the procedures for the efficient execution and management of cleaning services at HWB Cleaning Services LLC. It ensures that field operations are standardized, safe, and aligned with ISO 9001:2015 requirements for service delivery.
+This SOP defines the procedures for the efficient execution and management of cleaning services at HWB Cleaning Services LLC. It ensures that field operations are standardized, safe, and aligned with ISO 9001:2026 (ISO 9001:2015+Amd 1:2024) requirements for service delivery.
 
 ## 2.0 Scope
 Applies to all field personnel, supervisors, and operations managers involved in the delivery of janitorial and specialized cleaning services.

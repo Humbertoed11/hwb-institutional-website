@@ -1,3 +1,5 @@
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'loose' });</script>
 <!-- 
     SigmaFidelity™ Institutional SOP: Statewide Autonomous Contract Hunter & Portal Crawler
     Standard: HWB-QMS-1.0 v3.0 / HWB-QMS-7.9 & 2026-07-22 Statewide Mandate
@@ -131,6 +133,24 @@
         <h2>9.0 Autonomous Worker Execution Schedule</h2>
         <p>The hunter crawler and scope parsing engine are registered in <code>sigma_orchestrator.py</code> inside <code>hwb_agent_worker</code> and execute on a <strong>recurring 6-hour cycle (21,600 seconds)</strong> alongside the Texas Daycare Registry sync and master contract mining tools.</p>
 
+        
+        <h2>9.5 Statewide Autonomous Contract Hunter &amp; Portal Crawler Flowchart</h2>
+        <p>The diagram below maps the autonomous procurement crawler across Texas municipal portals, school districts, and state agencies into the Institutional Bids pipeline.</p>
+        <div class="mermaid-wrapper" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0;">
+            <div class="mermaid">
+flowchart TD
+    PORTALS["Statewide TX Procurement Portals<br/>(ESBD / Bonfire / IonWave / BidNet / TX SmartBuy)"] --> CRAWL["Autonomous Portal Crawler Daemon<br/>(NAICS 561720 / NIGP 910-39 Filter)"]
+    CRAWL --> DEDUP["SHA-256 Solicitation Deduplication<br/>&amp; Addendum Change Detector"]
+    DEDUP --> SCORE["5-Pillar Qualification &amp; Coop Check<br/>(TIPS / BuyBoard / Choice Partners / HUB)"]
+    SCORE --> YAM["Yamamoto Moto Automated Bid Sizing<br/>(35% Gross Margin Floor &amp; Labor Matrix)"]
+    YAM --> BIDS["Persist in PostgreSQL 16.15 ConstructionBids<br/>&amp; Alert Executive Bid Board"]
+
+    style PORTALS fill:#eff6ff,stroke:#2563eb,stroke-width:2px
+    style SCORE fill:#fefce8,stroke:#ca8a04,stroke-width:2px
+    style BIDS fill:#f0fdf4,stroke:#16a34a,stroke-width:2px
+            </div>
+        </div>
+
         <h2>10.0 Verification &amp; Zero-Defect Check</h2>
         <ul>
             <li>Executing <code>python3 scripts/hunter_portal_crawler.py --harvest-only</code> returns exit code 0 without unhandled exceptions.</li>
@@ -152,6 +172,12 @@
                 </tr>
             </thead>
             <tbody>
+                <tr>
+                    <td style="text-align: left;">3.0.0</td>
+                    <td style="text-align: left;">10/24/2026</td>
+                    <td style="text-align: left;">Yamamoto Moto &amp; George</td>
+                    <td style="text-align: left;">Added Section 9.5 Statewide Autonomous Contract Hunter &amp; Portal Crawler Mermaid Flowchart (BUG-148 Phase 2). Approved by Humberto Dominguez, CEO.</td>
+                </tr>
                 <tr>
                     <td>1.0.0</td>
                     <td>09-22-2026</td>

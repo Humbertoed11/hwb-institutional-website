@@ -1,3 +1,5 @@
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'loose' });</script>
 <div class="sop-card">
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
@@ -55,6 +57,24 @@
             <p>Never place raw snapshots or backup HTML files in the project root directory; all historical snapshots must be archived in <code>.backups/</code> to keep compliance linters clean.</p>
         </div>
 
+        
+        <h2 id="35-ci-cd-deployment-flowchart">3.5 Zero-Defect Web Modification &amp; Azure Deployment Flowchart</h2>
+        <p>The diagram below illustrates the mandatory pre-deployment verification pipeline (Rack 14 27/27 tests, 77/77 security checks, Zero Internal Process Jargon gate, and QMS Library Integrity gate) required before pushing container images to Azure.</p>
+        <div class="mermaid-wrapper" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0;">
+            <div class="mermaid">
+flowchart TD
+    DEV["1. Code / Template / SOP Update<br/>in HWB-IT-WEBSITE"] --> RESTART["2. Flush Gunicorn Cache<br/>(docker restart hwb_web_app)"]
+    RESTART --> R14["3. Run Rack 14 Suite (27/27 Tests)<br/>(Responsive, Masking, Zero Jargon, QMS)"]
+    R14 --> SOC["4. Run Security Suite (77/77 Checks)<br/>+ Yamamoto Bid Suite (14/14 Checks)"]
+    SOC --> SYNC["5. Execute sigma_sync.py<br/>(Sync 163 SOPs &amp; 51 Diagrams to SQL Brain)"]
+    SYNC --> ACR["6. Build &amp; Push Docker Image to sigmajanacr<br/>&amp; Verify Live https://hwbcleaning.com"]
+
+    style DEV fill:#eff6ff,stroke:#2563eb,stroke-width:2px
+    style R14 fill:#fefce8,stroke:#ca8a04,stroke-width:2px
+    style ACR fill:#f0fdf4,stroke:#16a34a,stroke-width:2px
+            </div>
+        </div>
+
         <h2 id="40-verification">4.0 Verification (Zero-Defect Check)</h2>
         <ul>
             <li><strong>Sovereign Compliance Code Linter:</strong> 87/87 templates scanned — 0 Critical, 0 High violations (100% Grade A+).</li>
@@ -74,6 +94,12 @@
                 </tr>
             </thead>
             <tbody>
+                <tr>
+                    <td style="text-align: left;">3.0.0</td>
+                    <td style="text-align: left;">10/24/2026</td>
+                    <td style="text-align: left;">George (Systems Architect)</td>
+                    <td style="text-align: left;">Added Section 3.5 Zero-Defect Web Modification &amp; Azure Deployment Mermaid Flowchart (BUG-148 Phase 2). Approved by Humberto Dominguez, CEO.</td>
+                </tr>
                 <tr>
                     <td style="text-align: left;">3.2.0</td>
                     <td style="text-align: left;">10/24/2026</td>

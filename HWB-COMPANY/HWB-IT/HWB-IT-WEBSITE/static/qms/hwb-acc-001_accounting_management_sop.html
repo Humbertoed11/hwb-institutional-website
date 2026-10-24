@@ -14,6 +14,8 @@
         th { background-color: #f1f5f9; font-weight: 700; color: #334155; }
         code { background: #f1f5f9; padding: 0.15rem 0.4rem; border-radius: 4px; font-family: monospace; color: #be123c; }
     </style>
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'loose' });</script>
 </head>
 <body>
 <div class="sop-container">
@@ -51,12 +53,31 @@
         <li><strong>Executive Tier Access Control:</strong> All Accounting SOPs and financial forecasts are restricted strictly to <code>Executive</code> and <code>Admin</code> roles via attribute-based access control on <code>/manual</code>.</li>
     </ul>
 
-    <h2>5.0 Revision History</h2>
+    
+    <h2>4.5 Enterprise Financial Governance &amp; Reconciliation Flowchart</h2>
+    <p>The diagram below maps Maria Bolanos's end-to-end fiscal control loop across Commercial Bid Margin Verification, Accounts Receivable (AR), the 4-Gate Accounts Payable (AP) Subcontractor Lock, and Monthly PostgreSQL 16.15 General Ledger Reconciliation.</p>
+    <div class="mermaid-wrapper" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0;">
+        <div class="mermaid">
+flowchart TD
+    BID["1. Contract Pricing &amp; Bid Gate<br/>(Enforce >= 35.0% Gross Margin Floor)"] --> AR["2. Accounts Receivable (HWB-ACC-002)<br/>(Invoices Table + AIA G702/G703 + TX Lien Waivers)"]
+    BID --> AP["3. Accounts Payable (HWB-ACC-003)<br/>(4-Gate 1099 Lock: W-9 + COI + MSA + DWC-83)"]
+    AR --> GL["4. Monthly General Ledger Reconciliation<br/>(PostgreSQL 16.15 Invoices vs Bank Deposits)"]
+    AP --> GL
+    GL --> WAR["5. Executive Warchest &amp; Cloud Cost Audit<br/>(Maria Bolanos VP of Finance Sign-Off)"]
+
+    style BID fill:#eff6ff,stroke:#2563eb,stroke-width:2px
+    style AP fill:#fefce8,stroke:#ca8a04,stroke-width:2px
+    style WAR fill:#f0fdf4,stroke:#16a34a,stroke-width:2px
+        </div>
+    </div>
+
+        <h2>5.0 Revision History</h2>
     <table>
         <thead>
             <tr><th>Version</th><th>Date</th><th>Author</th><th>Description of Changes</th></tr>
         </thead>
         <tbody>
+            <tr><td>2.1.0</td><td>10/24/2026</td><td>Maria Bolanos &amp; George</td><td>Added Section 4.5 Enterprise Financial Governance &amp; Reconciliation Mermaid Flowchart (BUG-148 Phase 2). Approved by Humberto Dominguez, CEO.</td></tr>
             <tr><td>2.0.0</td><td>10/24/2026</td><td>Maria Bolanos &amp; George</td><td>Replaced initial stub with complete enterprise fiscal governance, AR/AP, 1099 payout verification, and PostgreSQL 16.15 financial reconciliation standard (BUG-148).</td></tr>
         </tbody>
     </table>

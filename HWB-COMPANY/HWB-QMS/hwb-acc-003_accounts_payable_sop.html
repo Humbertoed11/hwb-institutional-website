@@ -87,25 +87,28 @@
 <li><strong>Statement Review:</strong> Monthly comparison of vendor statements against QuickBooks account history.</li>
 <li><strong>Dispute Resolution:</strong> Immediate notification to the Purchasing Department regarding any billing discrepancies.</li>
 </ol>
-<h3 id="54-process-flow-chart">5.4 [Process Flow Chart]</h3>
+<h3 id="54-process-flow-chart">5.4 Accounts Payable &amp; 4-Gate 1099 Subcontractor Payout Flowchart</h3>
 <div class="mermaid">
-graph TD
-    A[Receive Vendor Invoice] --> B[Match with PO & Receipt]
-    B --> C[Enter Bill in QuickBooks]
-    C --> D[Finance Approval]
-    D --> E[Process Payment]
-    E --> F[Reconcile Bank Statement]
+flowchart TD
+    A["Receive Vendor Bill or<br/>1099 Subcontractor Invoice"] --> B{"Payee Classification?"}
+    B -- "Supply / Equipment Vendor" --> C["Match with Approved PO &amp;<br/>Packing Slip (HWB-QMS-8.4)"]
+    B -- "1099 Subcontractor Partner" --> D{"PostgreSQL 16.15 4-Gate Lock:<br/>W-9 + Active COI + Signed MSA + TX DWC-83?"}
+    D -- "Incomplete / Expired COI" --> E["HOLD PAYOUT: Auto-Send Self-Service<br/>Onboarding Portal Link (/onboard/subcontractor)"]
+    D -- "All 4 Gates Verified" --> F["Supervisor Work Order Inspection<br/>Sign-Off (&ge; 99.2% Quality)"]
+    C --> G["Maria Bolanos Fiscal Review &amp;<br/>CEO Approval"]
+    F --> G
+    G --> H["Execute Disbursement in QuickBooks &amp;<br/>Reconcile Bank Statement"]
 </div>
 
 <h2 id="60-verification-zero-defect-check">6.0 Verification (Zero-Defect Check)</h2>
 <ul>
-<li>Monthly "Profit &amp; Loss" statement review.</li>
-<li>Vendor statement reconciliation records verified.</li>
+<li>Monthly "Profit &amp; Loss" statement review by Maria Bolanos (VP of Finance).</li>
+<li>100% of 1099 disbursements verified against encrypted `SubcontractorDocuments` (`BYTEA`) vault records.</li>
 <li>Zero variance between physical receipts and digital entries.</li>
 </ul>
 <h2 id="70-notes-and-cautions">7.0 Notes and Cautions</h2>
-<div class="callout callout-note"><strong>Note</strong>Use everyday words when communicating with vendors about discrepancies.</div>
-<div class="callout callout-caution"><strong>Caution</strong>Check the "Vendor Invoice Number" to prevent double entry. No synthetic debt records.</div>
+<div class="callout callout-note"><strong>Note</strong>Use everyday words when communicating with vendors and trade partners about billing or compliance holds.</div>
+<div class="callout callout-caution"><strong>Caution</strong>Never disburse funds to a 1099 subcontractor without all 4 statutory compliance gates (`w9_status='Verified'`, `coi_status='Verified'`, `msa_signed=TRUE`, `dwc83_signed=TRUE`) active in PostgreSQL 16.15.</div>
 
 <h2 id="80-revision-history">8.0 Revision History</h2>
 <table>
@@ -119,10 +122,10 @@ graph TD
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">2.0.0</td>
-<td style="text-align: left;">05/21/2026</td>
-<td style="text-align: left;">George</td>
-<td style="text-align: left;">TOTAL MODERNIZATION. Added 2026 Baseline mandates and Tier 6 integration.</td>
+<td style="text-align: left;">3.0.0</td>
+<td style="text-align: left;">10/24/2026</td>
+<td style="text-align: left;">Maria Bolanos &amp; George</td>
+<td style="text-align: left;">Upgraded AP flowchart and procedure to enforce the 4-Gate 1099 Subcontractor Payout Lock (W-9, COI, MSA, TX DWC-83 in PostgreSQL 16.15 SubcontractorPartners &amp; SubcontractorDocuments BYTEA vault) (BUG-148). Approved by Humberto Dominguez, CEO.</td>
 </tr>
 <tr>
 <td style="text-align: left;">1.0</td>

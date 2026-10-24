@@ -3,7 +3,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-STRAT-004</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.0.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
     </div>
@@ -27,7 +27,7 @@
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Version</strong></td>
-<td style="text-align: left;">2.0.0</td>
+<td style="text-align: left;">3.0.0</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Status</strong></td>
@@ -39,40 +39,48 @@
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Date</strong></td>
-<td style="text-align: left;">09/21/2026</td>
+<td style="text-align: left;">10/24/2026</td>
 </tr>
 </tbody>
 </table>
 <hr />
-<h1 id="root-cause-analysis-general-quality-failure">Root Cause Analysis: General Quality Failure</h1>
-<p>This diagram provides the standard categorization for analyzing nonconformities (NCRs) and process defects within the HWB Quality Management System.</p>
+<h1 id="root-cause-analysis-general-quality-failure">Root Cause Analysis: General Quality Failure (6M Ishikawa Diagram)</h1>
+<p>This diagram provides the standard 6M categorization for analyzing nonconformities (NCRs) and process defects within the HWB Quality Management System.</p>
 <div class="mermaid">
-mindmap
-  root((Quality Failure))
-    Machines (Equipment)
-      Inadequate Maintenance
-      Wrong Tool for Task
-      Equipment Breakdown
-    Methods (SOPs)
-      Unclear Instructions
-      No Standardized Path
-      Bypassing QA Checks
-    Materials (Supplies)
-      Substandard Chemicals
-      Inaccurate SDS Logs
-      Supply Chain Delay
-    Measurement (Data)
-      Inaccurate Audit
-      Observer Bias
-      Missing KPI Tracking
-    Mother Nature (Env)
-      Site Constraints
-      Adverse Weather
-      Utility Failure
-    Personnel (People)
-      Training Gap
-      Communication Error
-      Fatigue/Burnout
+flowchart LR
+    subgraph M1["1. Machines (Equipment)"]
+        M1A["Deferred Auto-Scrubber Maintenance"]
+        M1B["Incorrect Pad / Extractor Selection"]
+    end
+    subgraph M2["2. Methods (SOPs)"]
+        M2A["Deviation from Scope of Work (SOW)"]
+        M2B["Bypassed Supervisor Walkthrough"]
+    end
+    subgraph M3["3. Materials (Supplies)"]
+        M3A["Improper EPA Disinfectant Dilution"]
+        M3B["Missing GHS Safety Data Sheet (SDS)"]
+    end
+    subgraph M4["4. Measurement (Telemetry)"]
+        M4A["Unlogged Inspection Scorecard"]
+        M4B["Missing Proof-of-Work Verification"]
+    end
+    subgraph M5["5. Environment (Site)"]
+        M5A["Unscheduled Construction Dust Load"]
+        M5B["After-Hours Utility / HVAC Lockout"]
+    end
+    subgraph M6["6. Personnel (Workforce)"]
+        M6A["Incomplete SigmaAcademy Course"]
+        M6B["Shift Handoff Communication Gap"]
+    end
+
+    M1 --> EFFECT(("QUALITY DEFECT /<br/>CAR TRIGGER"))
+    M2 --> EFFECT
+    M3 --> EFFECT
+    M4 --> EFFECT
+    M5 --> EFFECT
+    M6 --> EFFECT
+
+    style EFFECT fill:#ef4444,stroke:#991b1b,color:#fff,stroke-width:3px
 </div>
 
 <hr />

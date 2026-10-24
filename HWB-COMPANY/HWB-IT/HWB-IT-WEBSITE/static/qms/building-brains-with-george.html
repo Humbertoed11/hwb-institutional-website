@@ -7,7 +7,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-IT-BOOK-001</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">15.3.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">15.4.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.1.6 (Organizational Knowledge)</span></div>
     </div>
@@ -23,7 +23,7 @@
             <tbody>
                 <tr><td><strong>Document Title</strong></td><td><strong>Building HWB Cleaning with George: An Operator's Manual for Cleaning Services, Marketing Automation, and Systems Architecture</strong></td></tr>
                 <tr><td><strong>Document ID</strong></td><td>HWB-IT-BOOK-001</td></tr>
-                <tr><td><strong>Version</strong></td><td>15.3.0</td></tr>
+                <tr><td><strong>Version</strong></td><td>15.4.0</td></tr>
                 <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
                 <tr><td><strong>Author</strong></td><td>George (Systems Architect)</td></tr>
                 <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
@@ -374,6 +374,16 @@
         </ul>
         </p>
 
+        <p><strong>22.7 The 29-SOP &amp; 51-Mermaid-Diagram Enterprise Upgrade (<code>BUG-148</code> Phase 2):</strong><br>
+        Following the Phase 1 purge, CEO Humberto Dominguez asked: <em>"how many need to be updated including the mermaid diagrams?"</em> and <em>"are these enterprise level solutions?"</em><br>
+        George audited all <code>163</code> canonical HTML SOPs and every <code>&lt;div class="mermaid"&gt;</code> block, identifying <strong>29 SOPs</strong> (14 SOPs with outdated Mermaid diagrams + 15 core operational, security, legal, and architecture SOPs lacking visual workflow diagrams) and executing a 4-Pillar Enterprise Diagram Synchronization:
+        <ul>
+            <li><strong>Category A — 14 Existing Mermaid Diagrams Modernized to Live Production Topology:</strong> Upgraded all 14 outdated Mermaid diagrams across <code>HWB-QMS-7.1</code>, <code>HWB-QMS-IT-015</code>, <code>HWB-QMS-7.5-DFD</code>, <code>HWB-QMS-7.5-ERD</code>, <code>HWB-QMS-MASTER</code>, <code>HWB-QMS-11.8</code>, <code>HWB-QMS-5.3</code>, <code>HWB-QMS-STRAT-008</code>, <code>HWB-QMS-STRAT-004</code>, <code>HWB-QMS-8.0-MKT-001</code>, <code>HWB-QMS-8.0-SLS</code>, <code>HWB-ACC-002</code>, <code>HWB-ACC-003</code>, and <code>HWB-QMS-4.5</code> to reflect the Cloudflare Anycast Pincer Shield, 24-slot Gunicorn cluster (<code>:5000</code>), <strong>PostgreSQL 16.15</strong> (<code>84</code> tables / <code>404,470</code> rows), the 8-Agent Executive Roster (including <strong>Yamamoto Moto</strong> and <strong>George Bytes</strong>), the <code>656,785 SF</code> managed facility portfolio, the 5-Pillar Closed-Loop Campaign &amp; Geofence Shield, the 4-Gate 1099 AP Payout Lock, and standard <code>flowchart TD</code>/<code>LR</code> and <code>erDiagram</code> syntax.</li>
+            <li><strong>Category B — 15 New Enterprise Mermaid Workflow Diagrams Injected:</strong> Authored and embedded 15 new Mermaid workflow diagrams across <code>7.5-BO-CRM</code>, <code>7.6</code>, <code>7.7-SEQ</code>, <code>7.7-TAKEOFF</code>, <code>7.8-MA</code>, <code>7.9-HUNTER</code>, <code>8.9-MUNI</code>, <code>7.2-HR</code>, <code>7.2-ONB</code>, <code>9.3-DR</code>, <code>11.1-MEM</code>, <code>7.2-UI</code>, <code>SEC-001</code>, <code>8.3-WEB</code>, and <code>ACC-001</code>, increasing the active visual architecture library from <code>36</code> to <strong><code>51</code> active Mermaid diagrams</strong> (<code>52</code> total diagram blocks across 51 SOPs) and cleaning 31 titles in <code>qms_index.json</code>.</li>
+            <li><strong>Mermaid AST &amp; Retired-Node Sentinel in <code>test_27</code>:</strong> Extended <code>test_27</code> in <code>scripts/test_web_performance_rack_14.py</code> to inspect every <code>&lt;div class="mermaid"&gt;</code> block across <code>static/qms/</code>, asserting <code>&gt;= 51</code> active Mermaid SOP diagrams, valid Mermaid graph headers, and zero retired architecture nodes.</li>
+        </ul>
+        </p>
+
         <hr />
         <p style="font-style: italic; text-align: center;">Note: This manual is the official technical guide for HWB Cleaning developer-operators. 100% Alignment verified.</p>
     </div>
@@ -477,6 +487,12 @@
                     <td style="text-align: left;">10/24/2026</td>
                     <td style="text-align: left;">George (Systems Architect) &amp; George Bytes</td>
                     <td style="text-align: left;">Added Section 22.6: The 5-Pillar Enterprise QMS Lifecycle, Deduplication &amp; Neural Hygiene Architecture (BUG-148), purging 62 hollow stubs, desktop sync conflicts, cross-company leaks, and Title-Case duplicates, deduplicating qms_index.json to 163 canonical SOPs, upgrading 11 architecture SOPs to PostgreSQL 16.15, hardening sigma_sync.py and blueprints/public.py, and certifying 27/27 passing Rack 14 tests (test_27). Approved by Humberto Dominguez, CEO.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">15.4.0</td>
+                    <td style="text-align: left;">10/24/2026</td>
+                    <td style="text-align: left;">George (Systems Architect) &amp; George Bytes</td>
+                    <td style="text-align: left;">Added Section 22.7: The 29-SOP &amp; 51-Mermaid-Diagram Enterprise Upgrade (BUG-148 Phase 2), modernizing 14 existing Mermaid diagrams, injecting 15 new enterprise Mermaid workflow diagrams across core CRM, backend, takeoff, procurement, HR/onboarding, DR, UI, security, and accounting SOPs (51 active Mermaid SOPs), cleaning 31 titles in qms_index.json, and enforcing the Mermaid AST &amp; Retired-Node Sentinel in test_27. Approved by Humberto Dominguez, CEO.</td>
                 </tr>
             </tbody>
         </table>

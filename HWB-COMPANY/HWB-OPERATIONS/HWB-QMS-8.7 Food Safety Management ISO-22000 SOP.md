@@ -14,7 +14,7 @@
 # Standard Operating Procedure: **Food Safety Management System (ISO 22000)**
 
 ## 1.0 Purpose
-To define specialized cleaning protocols for commercial kitchens and food processing plants, ensuring compliance with **ISO 22000:2018** and local health department regulations.
+To define specialized cleaning protocols for commercial kitchens and food processing plants, ensuring compliance with **ISO 22000:2018+Amd 1:2024** and local health department regulations.
 
 ## 2.0 Scope
 Applies to all HWB operations in environments where food is prepared, processed, or packaged.

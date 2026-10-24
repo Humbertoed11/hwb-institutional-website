@@ -26,7 +26,7 @@ Maria Bolanos (VP of Finance) has completed a live API-driven cost audit for the
 
 ## 3.0 Fiscal Governance
 *   **Data Source:** Azure Cost Management API (Real-time).
-*   **Compliance:** ISO 9001:2015 Financial Traceability.
+*   **Compliance:** ISO 9001:2026 (ISO 9001:2015+Amd 1:2024) Financial Traceability.
 *   **Strategic Outlook:** Costs are stabilized. Maria Bolanos recommends continued monitoring as production traffic for **HWB-BABYSOP** increases in Q3.
 
 ---

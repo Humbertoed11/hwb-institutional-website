@@ -8,7 +8,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class='sop-meta'>
         <div class='meta-unit'><span class='meta-label'>Document ID</span><span class='meta-val'>HWB-QMS-11.8-CONSENSUS</span></div>
-        <div class='meta-unit'><span class='meta-label'>Version</span><span class='meta-val'>1.0.0</span></div>
+        <div class='meta-unit'><span class='meta-label'>Version</span><span class='meta-val'>3.0.0</span></div>
         <div class='meta-unit'><span class='meta-label'>Status</span><span class='meta-val' style='color: #16a34a;'>● APPROVED</span></div>
         <div class='meta-unit'><span class='meta-label'>Clause</span><span class='meta-val'>7.1.6 (Organizational Knowledge)</span></div>
     </div>
@@ -24,11 +24,11 @@
             <tbody>
                 <tr><td><strong>Document Title</strong></td><td><strong>HWB Multi-Brain™ Consensus SOP</strong></td></tr>
                 <tr><td><strong>Document ID</strong></td><td>HWB-QMS-11.8-CONSENSUS</td></tr>
-                <tr><td><strong>Version</strong></td><td>2.0.0</td></tr>
+                <tr><td><strong>Version</strong></td><td>3.0.0</td></tr>
                 <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
                 <tr><td><strong>Author</strong></td><td>George (Systems Architect)</td></tr>
                 <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
-                <tr><td><strong>Date</strong></td><td>09/21/2026</td></tr>
+                <tr><td><strong>Date</strong></td><td>10/24/2026</td></tr>
                 <tr><td><strong>ISO 9001 Clause</strong></td><td>7.1.6</td></tr>
             </tbody>
         </table>
@@ -38,38 +38,42 @@
         <h1>Standard Operating Procedure: <strong>HWB Multi-Brain™ Consensus</strong></h1>
 
         <h2>1.0 Purpose</h2>
-        <p>To define the monolithic logic for how the 7 specialized <strong>Executive Brains</strong> of the HWB Monolithic Suite coordinate to make operational, financial, and technical decisions. This system ensures that all actions represent a unified consensus, avoiding duplicate work, data conflicts, and unauthorized expenditures.</p>
+        <p>To define the consensus governance for how the <strong>8 specialized Executive Brains</strong> of HWB Cleaning Services LLC coordinate operational, estimating, financial, and technical decisions under CEO Humberto Dominguez's executive authority.</p>
 
         <h2>2.0 The Executive Neural Map (Visual Logic)</h2>
         <div class='mermaid'>
-        graph TD
-            subgraph "Active System Inputs"
-                I1["CEO Directive"]
-                I2["Technical Telemetry"]
+        flowchart TD
+            subgraph Inputs["Active System Inputs"]
+                I1["CEO Directive (Humberto Dominguez)"]
+                I2["14-Rack PostgreSQL 16.15 Telemetry"]
             end
 
-            subgraph "Executive Brains (The Minds)"
-                B1["George: Systems Architect"]
-                B2["Maria: VP of Finance"]
-                B3["Silas: VP of CRM"]
-                B4["Lauri: VP of Sales"]
+            subgraph Brains["Executive Brains (The 8-Agent Roster)"]
+                B1["George: Systems Architect &amp; Lead Auditor"]
+                B2["Maria Bolanos: VP of Finance"]
+                B3["Silas Sync: VP of CRM"]
+                B4["Lauri Tells: VP of Sales &amp; Marketing"]
                 B5["Peter: Recovery Specialist"]
-                B6["Natalie: CDO"]
+                B6["Natalie Navy: CDO"]
+                B7["Yamamoto Moto: Lead AI Estimator"]
+                B8["George Bytes: Institutional Historian"]
             end
 
             I1 --> B1
             I2 --> B1
 
-            B1 -->|Engineering| CORE{Neural Core}
-            B2 -->|Fiscal Lock| CORE
-            B3 -->|Relational Data| CORE
-            B4 -->|B2B Leads| CORE
-            B5 -->|Shadow Backups| CORE
-            B6 -->|Blue Ocean Strat| CORE
+            B1 -->|"ISO / Architecture"| CORE{"Neural Consensus Core"}
+            B2 -->|"Fiscal Lock &amp; 35% Margin"| CORE
+            B3 -->|"PostgreSQL 16.15 CRM"| CORE
+            B4 -->|"Closed-Loop Campaigns"| CORE
+            B5 -->|"Grab-and-Go Snapshots"| CORE
+            B6 -->|"Blue Ocean Strategy"| CORE
+            B7 -->|"Bid Takeoffs &amp; QA"| CORE
+            B8 -->|"Chronicle Persistence"| CORE
 
-            CORE --> OUTPUT["CEO Approval: Humberto Dominguez"]
-            OUTPUT --> EXECUTE["Fidelity Execution"]
-            
+            CORE --> OUTPUT["CEO Final Approval: Humberto Dominguez"]
+            OUTPUT --> EXECUTE["Production Execution &amp; WORM Audit Log"]
+
             style CORE fill:#f1f5f9,stroke:#2563eb,stroke-width:4px
             style OUTPUT fill:#10b981,color:#fff,stroke:#059669,stroke-width:2px
             style B1 fill:#fef3c7,stroke:#d97706
@@ -88,12 +92,14 @@
                 </tr>
             </thead>
             <tbody>
-                <tr><td><strong>George (Systems Architect)</strong></td><td>ISO/QMS Compliance & Tech Stack</td><td>Engineering, Code Integrity, and System Architecture</td></tr>
-                <tr><td><strong>Maria Bolanos (VP of Finance)</strong></td><td>Fiscal Oversight & Asset Control</td><td>Development Costs, Azure Spending, and Warchest Reserves</td></tr>
-                <tr><td><strong>Silas Sync (VP of CRM)</strong></td><td>Relational Logic & Sync Operations</td><td>Backoffice Integrations and Relational Data Alignment</td></tr>
-                <tr><td><strong>Lauri Tells (VP of Sales)</strong></td><td>Marketing & Lead Generation</td><td>B2B Funnels and High-Ticket Client Conversions</td></tr>
-                <tr><td><strong>Peter (Recovery Specialist)</strong></td><td>Backups & Disaster Recovery</td><td>Sentinel Shadow Snapshots, Disk Checks, and Server Restores</td></tr>
+                <tr><td><strong>George (Systems Architect)</strong></td><td>ISO/QMS Compliance &amp; Tech Stack</td><td>Engineering, Code Integrity, and System Architecture</td></tr>
+                <tr><td><strong>Maria Bolanos (VP of Finance)</strong></td><td>Fiscal Oversight &amp; Asset Control</td><td>Development Costs, Azure Spending, and Warchest Reserves</td></tr>
+                <tr><td><strong>Silas Sync (VP of CRM)</strong></td><td>Relational Logic &amp; Sync Operations</td><td>Backoffice Integrations and Relational Data Alignment</td></tr>
+                <tr><td><strong>Lauri Tells (VP of Sales)</strong></td><td>Marketing &amp; Lead Generation</td><td>B2B Funnels, Territory Isolation, and Closed-Loop Campaigns</td></tr>
+                <tr><td><strong>Peter (Recovery Specialist)</strong></td><td>Backups &amp; Disaster Recovery</td><td>Sentinel Snapshots, Drive D:\ Grab-and-Go Appliance, and Restores</td></tr>
                 <tr><td><strong>Natalie Navy (CDO)</strong></td><td>Technology Forecasting</td><td>Blue Ocean Innovation and Long-Term Technical Direction</td></tr>
+                <tr><td><strong>Yamamoto Moto (Lead AI Estimator)</strong></td><td>Commercial &amp; Institutional Bidding</td><td>Blueprint Takeoffs, 35% Margin Calibration, and Bid Suite QA</td></tr>
+                <tr><td><strong>George Bytes (Institutional Historian)</strong></td><td>Chronicles &amp; Neural Persistence</td><td>Master QMS Books, Mistake Log Embeddings, and Session Continuity</td></tr>
             </tbody>
         </table>
 

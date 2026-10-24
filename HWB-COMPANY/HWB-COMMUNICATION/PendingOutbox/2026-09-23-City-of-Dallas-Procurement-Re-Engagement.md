@@ -29,7 +29,7 @@ Dear Ms. Wells,
 
 HWB Cleaning Services LLC is writing to follow up on your correspondence regarding municipal vendor onboarding and the City of Dallas Business Enterprise Hub (BEH).
 
-HWB Cleaning Services LLC is an established commercial and institutional custodial firm based in the Dallas-Fort Worth metroplex. The organization operates under full ISO 9001:2015 quality management procedures and maintains a spotless safety rating with an Experience Modification Rate (EMR) of 0.43.
+HWB Cleaning Services LLC is an established commercial and institutional custodial firm based in the Dallas-Fort Worth metroplex. The organization operates under full ISO 9001:2026 (ISO 9001:2015+Amd 1:2024) quality management procedures and maintains a spotless safety rating with an Experience Modification Rate (EMR) of 0.43.
 
 The firm has completed its vendor profile alignment across the following primary NIGP commodity codes in the City of Dallas Bonfire procurement network:
 *   **910-39:** Janitorial and Custodial Services (Complete Facility Maintenance)

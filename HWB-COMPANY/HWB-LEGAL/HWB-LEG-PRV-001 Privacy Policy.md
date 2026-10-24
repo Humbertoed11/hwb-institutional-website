@@ -30,7 +30,7 @@ We collect only the essential "Handshake" information:
 ## 4.0 Data Usage
 Data is used strictly for:
 *   Generating accurate cleaning quotes.
-*   Maintaining the ISO 9001:2015 audit trail.
+*   Maintaining the ISO 9001:2026 (ISO 9001:2015+Amd 1:2024) audit trail.
 *   Managing automated agent interactions via the Tiered Memory system.
 
 ## 5.0 Verification (Zero-Defect Check)

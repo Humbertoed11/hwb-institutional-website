@@ -1,3 +1,5 @@
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'loose' });</script>
 <!-- 
     SigmaFidelity™ Institutional SOP: Institutional Memory & Neural Integration
     Standard: HWB-QMS-1.0 v2.0 (HTML Baseline)
@@ -93,6 +95,23 @@
             <li><strong>Confirm Alignment:</strong> Confirm synchronization in 3rd person.</li>
         </ol>
 
+        
+        <h2>4.5 Neural Handshake &amp; Self-Cleaning QMS Synchronization Flowchart</h2>
+        <p>The diagram below maps the startup Neural Handshake and session-finalization <code>sigma_sync.py</code> pipeline that keeps the 163 canonical HTML SOPs, <code>qms_index.json</code>, and PostgreSQL 16.15 <code>SigmaSystemCore</code> table 100% synchronized.</p>
+        <div class="mermaid-wrapper" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0;">
+            <div class="mermaid">
+flowchart LR
+    BOOT["1. Session Startup<br/>(startup_master.sh)"] --> HAND["2. Neural Handshake<br/>(Compare SigmaSystemCore vs Recovery Doc)"]
+    HAND --> WORK["3. Zero-Defect Engineering<br/>&amp; Canonical HTML SOP Authoring"]
+    WORK --> GATE["4. sigma_sync.py Quality Gate<br/>(Enforce 163 Lowercase snake_case SOPs)"]
+    GATE --> SYNC[("5. PostgreSQL 16.15 Sync<br/>(SigmaSystemCore + QMSDocuments + 51 Diagrams)")]
+
+    style BOOT fill:#eff6ff,stroke:#2563eb,stroke-width:2px
+    style GATE fill:#fefce8,stroke:#ca8a04,stroke-width:2px
+    style SYNC fill:#f0fdf4,stroke:#16a34a,stroke-width:2px
+            </div>
+        </div>
+
         <h2>5.0 Revision History</h2>
         <table>
             <thead>
@@ -104,6 +123,12 @@
                 </tr>
             </thead>
             <tbody>
+                <tr>
+                    <td style="text-align: left;">3.0.0</td>
+                    <td style="text-align: left;">10/24/2026</td>
+                    <td style="text-align: left;">George (Systems Architect)</td>
+                    <td style="text-align: left;">Added Section 4.5 Neural Handshake &amp; Self-Cleaning QMS Synchronization Mermaid Flowchart (BUG-148 Phase 2). Approved by Humberto Dominguez, CEO.</td>
+                </tr>
                 <tr>
                     <td>3.1.0</td>
                     <td>05-22-2026</td>

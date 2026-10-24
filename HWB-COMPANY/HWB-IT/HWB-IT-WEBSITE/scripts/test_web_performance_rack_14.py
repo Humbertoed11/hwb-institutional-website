@@ -1874,7 +1874,9 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
         seen_files = set()
         for entry in sops:
             fn = entry.get("file", "")
+            title = entry.get("title", "")
             self.assertTrue(fn.endswith(".html"), f"QMS index entry must be .html: {fn}")
+            self.assertFalse(title.lower().endswith(".html"), f"QMS index title must not be raw .html filename: {title}")
             self.assertEqual(fn, fn.lower(), f"QMS index entry must use lowercase canonical naming: {fn}")
             self.assertNotIn(" ", fn, f"QMS index entry must use snake_case without spaces: {fn}")
             self.assertNotIn("-desktop-", fn.lower(), f"Desktop sync conflict file prohibited: {fn}")
@@ -1893,6 +1895,26 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
             (r"proxy_gateway\.py", "Retired proxy_gateway.py reference"),
         ]
 
+        banned_mermaid_nodes = [
+            (r"Port\s*8000", "Retired Port 8000 node in Mermaid diagram"),
+            (r"Traffic\s*Director", "Retired Traffic Director node in Mermaid diagram"),
+            (r"Nginx", "Retired Nginx node in Mermaid diagram"),
+            (r"HubSpot", "Retired HubSpot node in Mermaid diagram"),
+            (r"Tony\s*Holiday", "Retired Tony Holiday node in Mermaid diagram"),
+            (r"516k\s*SF", "Outdated 516k SF footprint in Mermaid diagram"),
+            (r"sigma_leads\.db", "Retired sigma_leads.db in Mermaid diagram"),
+            (r"clients\.db", "Retired clients.db in Mermaid diagram"),
+            (r"^\s*mindmap\b", "Unsupported mindmap syntax in Mermaid diagram"),
+        ]
+
+        valid_mermaid_headers = re.compile(
+            r"^\s*(?:%%\{.*?\}%%\s*)?(flowchart\s+(?:TD|TB|BT|RL|LR)|graph\s+(?:TD|TB|BT|RL|LR)|sequenceDiagram|erDiagram|stateDiagram(?:-v2)?|classDiagram)\b",
+            re.IGNORECASE | re.DOTALL,
+        )
+
+        mermaid_file_count = 0
+        mermaid_block_count = 0
+
         for fn in os.listdir(qms_dir):
             fp = os.path.join(qms_dir, fn)
             self.assertFalse(os.path.isdir(fp), f"Subdirectory prohibited inside static/qms/: {fn}")
@@ -1907,6 +1929,29 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
                     m,
                     f"Outdated/contaminating SOP content ({reason}) found in {fn}: '{m.group(0) if m else ''}'"
                 )
+
+            blocks = re.findall(r'<div\s+class=["\']mermaid["\'][^>]*>(.*?)</div>', content, flags=re.S | re.I)
+            if blocks:
+                mermaid_file_count += 1
+                for blk in blocks:
+                    mermaid_block_count += 1
+                    clean_blk = blk.strip()
+                    self.assertIsNotNone(
+                        valid_mermaid_headers.match(clean_blk),
+                        f"Invalid or unsupported Mermaid diagram header in {fn}: {clean_blk[:80]}"
+                    )
+                    for m_pat, m_reason in banned_mermaid_nodes:
+                        mm = re.search(m_pat, clean_blk, re.IGNORECASE | re.MULTILINE)
+                        self.assertIsNone(
+                            mm,
+                            f"{m_reason} found in {fn}: '{mm.group(0) if mm else ''}'"
+                        )
+
+        self.assertGreaterEqual(
+            mermaid_file_count,
+            51,
+            f"Expected at least 51 SOPs with active Mermaid diagrams, found {mermaid_file_count}"
+        )
 
 
 if __name__ == "__main__":

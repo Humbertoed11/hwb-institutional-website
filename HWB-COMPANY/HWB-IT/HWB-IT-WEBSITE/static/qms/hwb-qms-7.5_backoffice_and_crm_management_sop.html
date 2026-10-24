@@ -1,3 +1,5 @@
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'loose' });</script>
 <div class="sop-card">
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
@@ -126,6 +128,36 @@
             <li><strong>Privacy-Safe Troubleshooting:</strong> Breadcrumbs automatically redact form inputs, allowing operators to diagnose client friction without exposing passwords or confidential banking numbers.</li>
         </ol>
 
+        
+        <h2>6.5 Enterprise Backoffice &amp; CRM Closed-Loop Architecture Diagram</h2>
+        <p>The diagram below maps the end-to-end CRM data flow from Statewide Texas Lead Miners through the 5-Pillar Readiness &amp; MX Gate, Closed-Loop Campaign Enrollment, 5-Point Geofence Shield, Calling Workstation, and Contract Close inside PostgreSQL 16.15.</p>
+        <div class="mermaid-wrapper" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0;">
+            <div class="mermaid">
+flowchart TD
+    subgraph INGEST["1. Statewide Texas Lead Ingestion &amp; Smart Merge"]
+        M1["Statewide TX Lead Miners<br/>(TDLR /HHSC / TEA / CAD / GIS)"] --> SM["5-Pillar Smart Merge &amp; Deduplication<br/>(PostgreSQL 16.15: 28,248 Leads)"]
+        SM --> MX["Automated MX / SMTP &amp; 5-Pillar<br/>Readiness Gate (Green / Amber / Red)"]
+    end
+
+    subgraph CAMPAIGN["2. Closed-Loop Campaign &amp; Geofence Shield"]
+        MX --> ENR["Closed-Loop Campaign Enrollment<br/>(MarketingCampaigns &amp; CampaignRecipients)"]
+        ENR --> GEO["5-Point Geofence Shield<br/>(HQ / Conroe / Sugar Land / Katy / Baytown)"]
+        GEO --> GATE["Dual-Table Suppression Gate<br/>(EmailSuppressionList + Leads Flags)"]
+    end
+
+    subgraph WORKSTATION["3. Calling Workstation &amp; Territory Execution"]
+        GATE --> CALL["Calling Workstation Split-Screen<br/>(Dynamic {Caller} Script &amp; Disposition)"]
+        CALL --> DNC["Channel-Specific Controls:<br/>🚫 Do Not Call vs ✉️ Unsubscribed"]
+        CALL --> BOOK["Walkthrough Booked -> Yamamoto Moto<br/>35% Gross Margin Proposal"]
+        BOOK --> WON["Closed-Won Contract -> Active Customer<br/>(656,785 SF Managed Portfolio)"]
+    end
+
+    style INGEST fill:#eff6ff,stroke:#2563eb,stroke-width:2px
+    style CAMPAIGN fill:#f0fdf4,stroke:#16a34a,stroke-width:2px
+    style WORKSTATION fill:#fefce8,stroke:#ca8a04,stroke-width:2px
+            </div>
+        </div>
+
         <h2>7.0 Verification &amp; Quality Control</h2>
         <ul>
             <li>All lead conversions, ecosystem updates, and employee onboardings must be verifiable in the <code>SecurityAuditLogs</code> WORM feed.</li>
@@ -146,6 +178,12 @@
                 </tr>
             </thead>
             <tbody>
+                <tr>
+                    <td style="text-align: left;">3.0.0</td>
+                    <td style="text-align: left;">10/24/2026</td>
+                    <td style="text-align: left;">Silas Sync &amp; George</td>
+                    <td style="text-align: left;">Added Section 6.5 Enterprise Backoffice &amp; CRM Closed-Loop Architecture Mermaid Diagram covering 5-Pillar Smart Merge, Campaign Enrollment, 5-Point Geofence Shield, Dual-Table Suppression Gate, and Calling Workstation (BUG-148 Phase 2). Approved by Humberto Dominguez, CEO.</td>
+                </tr>
                 <tr>
                     <td style="text-align: left;">5.0.0</td>
                     <td style="text-align: left;">10/24/2026</td>

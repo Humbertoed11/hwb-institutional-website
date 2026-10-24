@@ -64,18 +64,23 @@
 <li><strong>Sender Reputation Protection:</strong> Outbound B2B email campaigns must exclusively target records where <code>campaign_ready = TRUE</code> and <code>email_mx_verified = TRUE</code>, deduplicated by email address per campaign batch so multi-site owners receive one email per blast.</li>
 </ol>
 <h2 id="40-procedure">4.0 Procedure</h2>
-<h3 id="41-marketing-workflow">4.1 Unified Marketing, Conversion &amp; Local Review Loop</h3>
+<h3 id="41-marketing-workflow">4.1 Unified Marketing, Closed-Loop Campaign &amp; Local Review Flowchart</h3>
 <div class="mermaid">
-graph TD
-    Start((11-City DFW Search &amp; Outbound)) --> GBP[Google Maps Top-3 Local Pack<br/>CID: 4883166476987591300]
-    Start --> Web[29 Canonical Sitemap Routes<br/>hwbcleaning.com]
-    GBP --> Bookings[Microsoft Bookings Walkthrough<br/>FacilityWalkthroughquote@NETORGFT3163094.onmicrosoft.com]
-    GBP --> Quote[/get-quote 10-Second Intake]
+flowchart TD
+    Start(("11-City DFW Search &amp;<br/>Statewide TX Lead Miners")) --> GBP["Google Maps Top-3 Local Pack<br/>CID: 4883166476987591300"]
+    Start --> Web["29 Canonical Sitemap Routes<br/>hwbcleaning.com"]
+    Start --> Miners["5-Pillar Readiness &amp; MX Gate<br/>(campaign_ready = TRUE)"]
+    GBP --> Bookings["Microsoft Bookings Walkthrough<br/>FacilityWalkthroughquote@NETORGFT3163094.onmicrosoft.com"]
+    GBP --> Quote["/quote 10-Second Intake<br/>(TCPA &amp; CIPA Consent Gated)"]
     Web --> Quote
-    Quote --> Attribution[GA4 G-8BX5Q7THYR + Google Ads AW-8622428739<br/>generate_lead $150 / pricing_calibrated $250]
-    Bookings --> CRM[PostgreSQL CRM &amp; Telegram Dispatch]
+    Miners --> Enroll["Closed-Loop Campaign Enrollment<br/>5-Point Geofence &amp; .gov/.k12 Shield"]
+    Enroll --> Outbox["PendingOutbox CEO Approval<br/>&amp; Dual-Table Suppression Gate"]
+    Outbox -->|"Open / Click"| CRM["PostgreSQL 16.15 CRM &amp;<br/>Telegram Alert"]
+    Outbox -->|"Complete Campaign"| Contacted["Advance Sent Unopened<br/>to Contacted (Phone Queue)"]
+    Quote --> Attribution["GA4 G-8BX5Q7THYR + Google Ads AW-8622428739<br/>generate_lead $150 / pricing_calibrated $250"]
+    Bookings --> CRM
     Attribution --> CRM
-    CRM --> ReviewLoop[1-Click Google Review Modal<br/>https://g.page/r/CYTq8OcJfsRDEBM/review]
+    CRM --> ReviewLoop["1-Click Google Review Modal<br/>https://g.page/r/CYTq8OcJfsRDEBM/review"]
     ReviewLoop --> GBP
 </div>
 
@@ -134,6 +139,12 @@ graph TD
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">3.3.0</td>
+<td style="text-align: left;">10/24/2026</td>
+<td style="text-align: left;">Lauri Tells &amp; George</td>
+<td style="text-align: left;">Upgraded Section 4.1 Closed-Loop Marketing Process Mermaid Flowchart to reflect Statewide Texas Lead Miners, 5-Pillar Readiness &amp; MX Gate, Closed-Loop Campaign Enrollment, 5-Point Geofence Shield, PendingOutbox &amp; Dual-Table Suppression Gate, and 1-Click Campaign Completion (BUG-148 Phase 2). Approved by Humberto Dominguez, CEO.</td>
+</tr>
 <tr>
 <td style="text-align: left;">3.2.0</td>
 <td style="text-align: left;">10/24/2026</td>

@@ -3,7 +3,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-7.5-DFD</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.0.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5.3 (Control of Information)</span></div>
     </div>
@@ -27,7 +27,7 @@
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Version</strong></td>
-<td style="text-align: left;">2.0.0</td>
+<td style="text-align: left;">3.0.0</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Status</strong></td>
@@ -43,7 +43,7 @@
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Date</strong></td>
-<td style="text-align: left;">09/21/2026</td>
+<td style="text-align: left;">10/24/2026</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>ISO 9001 Clause</strong></td>
@@ -54,28 +54,28 @@
 <hr />
 <h1 id="standard-operating-procedure-data-flow-diagram">Standard Operating Procedure: <strong>Data Flow Diagram</strong></h1>
 <h2 id="10-purpose">1.0 Purpose</h2>
-<p>To define the path of information through the HWB system, from the first contact to long-term storage.</p>
+<p>To define the end-to-end flow of information through the HWB Cleaning Services LLC platform across public quote intake, 1099/W-2 self-service onboarding, commercial bidding, closed-loop email marketing, and the controlled QMS manual.</p>
 <h2 id="20-universal-mandates-2026-baseline">2.0 Universal Mandates (2026 Baseline)</h2>
 <ol>
-<li><strong>Physical Truth:</strong> Data flow steps show real software parts and database tables.</li>
-<li><strong>Activity Tracking:</strong> Every move between steps must be recorded.</li>
+<li><strong>Physical Truth:</strong> Data flow nodes map directly to active Flask blueprints and PostgreSQL 16.15 tables.</li>
+<li><strong>Audit Continuity:</strong> Every state transition is logged to <code>"GlobalActivities"</code> and tamper-proof WORM <code>"SecurityAuditLogs"</code>.</li>
 </ol>
 <h2 id="30-the-data-flow-architecture">3.0 The Data Flow Architecture</h2>
 <div class="mermaid">
-graph LR
-    A[Public Web Form] -->|POST /get-quote| B[Web App Engine]
-    B -->|SQL Insert| C[PostgreSQL: Leads]
-    C -->|Trigger| D[CRM Specialist: Client Management]
-    B -->|Log Action| E[PostgreSQL: Activity Logs]
-    D -->|Research| F[George: Strategy]
-    F -->|Document| G[Compliance System]
-    G -->|Fragment| H[Nginx: Manual]
+flowchart LR
+    A["Public Quote &amp; Workforce Forms"] -->|"Smart Merge Upsert"| B["Flask Engine (main_app.py)"]
+    C["1099 &amp; W-2 Self-Service Portals"] -->|"AI PDF Extractor + AES-256"| B
+    B -->|"SQL Write"| D["PostgreSQL 16.15: Leads, Partners, Employees &amp; BYTEA Vaults"]
+    D -->|"Territory Isolation"| E["Backoffice Operations &amp; Calling Desk"]
+    E -->|"Closed-Loop Enrollment"| F["Marketing Campaign &amp; Dual-Table Suppression Gate"]
+    B -->|"WORM Audit Trigger"| G["PostgreSQL 16.15: GlobalActivities &amp; SecurityAuditLogs"]
+    B -->|"RBAC / ABAC Gatekeeper"| H["Controlled QMS Reader (/manual)"]
 </div>
 
 <h2 id="40-verification-error-free-check">4.0 Verification (Error-Free Check)</h2>
 <ul>
-<li>Lead data is visible in the CRM Dashboard within &lt;2 seconds of submission.</li>
-<li>Work logs can be found in the <code>InteractionLog</code>.</li>
+<li>Lead and onboarding submissions persist in PostgreSQL 16.15 and trigger instant Telegram and email receipts.</li>
+<li>All security and audit events are recorded in <code>"GlobalActivities"</code> and <code>"SecurityAuditLogs"</code>.</li>
 </ul>
 <h2 id="50-revision-history">5.0 Revision History</h2>
 <table>
@@ -89,10 +89,10 @@ graph LR
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">2.0.0</td>
-<td style="text-align: left;">05/21/2026</td>
-<td style="text-align: left;">George</td>
-<td style="text-align: left;">TOTAL MODERNIZATION. Integrated the Compliance Engine and Tier 6 logic.</td>
+<td style="text-align: left;">3.0.0</td>
+<td style="text-align: left;">10/24/2026</td>
+<td style="text-align: left;">George (Systems Architect)</td>
+<td style="text-align: left;">Upgraded Data Flow Diagram to include 1099/W-2 AES-256 BYTEA onboarding vaults, Closed-Loop Campaign &amp; Dual-Table Suppression Gate, WORM SecurityAuditLogs, and unified /manual RBAC gatekeeper (BUG-148). Approved by Humberto Dominguez, CEO.</td>
 </tr>
 <tr>
 <td style="text-align: left;">1.0</td>

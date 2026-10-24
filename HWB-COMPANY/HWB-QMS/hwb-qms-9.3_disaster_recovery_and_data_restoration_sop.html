@@ -1,3 +1,5 @@
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'loose' });</script>
 <div class="sop-card">
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
@@ -170,6 +172,25 @@
             <li><strong>Pre-Storm Refresh Routine:</strong> Run <code>D:\run-backup.ps1</code> on primary workstation before major weather events to capture the latest relational database freeze and sync the virtual disk.</li>
         </ul>
 
+        
+        <h2>5.5 Peter's 6-Directive Disaster Recovery &amp; Failover Flowchart</h2>
+        <p>The diagram below maps Peter's 6 Recovery Directives, hourly PostgreSQL 16.15 binary snapshots, daily environment freezes, and automated container restoration workflow (RTO &lt; 4 Hours, RPO &lt; 1 Hour).</p>
+        <div class="mermaid-wrapper" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0;">
+            <div class="mermaid">
+flowchart TD
+    MON["Continuous 14-Rack Health Sentinel<br/>+ 15-Min Surge Protector (<500MB Logs)"] --> SNAP["Hourly pg_dump Binary Snapshot<br/>+ Azure 35-Day Geo-Redundant PITR"]
+    SNAP --> INC{"Outage or Data<br/>Drift Detected?"}
+    INC -- "Container / App Fault" --> ACR["Pull Immutable Image from sigmajanacr<br/>&amp; Restart 24-Slot Gunicorn Cluster (<5 Min)"]
+    INC -- "Database Corruption" --> PITR["Execute Point-in-Time Restore (PITR)<br/>to PostgreSQL 16.15 (84 Tables / 404,470 Rows)"]
+    ACR --> AUDIT["Run 27/27 Rack 14 + 77/77 SOC 2 Suite<br/>&amp; Log WORM Recovery Event"]
+    PITR --> AUDIT
+
+    style MON fill:#eff6ff,stroke:#2563eb,stroke-width:2px
+    style SNAP fill:#fefce8,stroke:#ca8a04,stroke-width:2px
+    style AUDIT fill:#f0fdf4,stroke:#16a34a,stroke-width:2px
+            </div>
+        </div>
+
         <h2>6.0 Verification &amp; Continuity Sign-Off</h2>
         <ul>
             <li>Web application responds with HTTP 200 at <code>http://mop.test:5000</code>.</li>
@@ -191,6 +212,12 @@
                 </tr>
             </thead>
             <tbody>
+                <tr>
+                    <td style="text-align: left;">3.1.0</td>
+                    <td style="text-align: left;">10/24/2026</td>
+                    <td style="text-align: left;">Peter (Recovery Specialist) &amp; George</td>
+                    <td style="text-align: left;">Added Section 5.5 Peter's 6-Directive Disaster Recovery &amp; PostgreSQL 16.15 PITR Failover Mermaid Flowchart (BUG-148 Phase 2). Approved by Humberto Dominguez, CEO.</td>
+                </tr>
                 <tr>
                     <td style="text-align: left;">4.3.0</td>
                     <td style="text-align: left;">10/17/2026</td>

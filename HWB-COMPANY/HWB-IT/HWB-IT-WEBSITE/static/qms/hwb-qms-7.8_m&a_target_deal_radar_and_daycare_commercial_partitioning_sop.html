@@ -1,3 +1,5 @@
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'loose' });</script>
 <!-- 
     SigmaFidelity™ Institutional SOP
     Standard: HWB-QMS-1.0 v2.0 (HTML Baseline)
@@ -99,6 +101,24 @@
             <li><strong>Telegram Progress Alerts:</strong> After each batch of 50 targets, the daemon sends a real-time progress message to executive mobile devices.</li>
         </ol>
 
+        
+        <h2>6.5 M&amp;A Target Deal Radar &amp; Commercial Partitioning Flowchart</h2>
+        <p>The diagram below illustrates how statewide Texas facility intelligence is partitioned between B2B Janitorial Prospects (Daycares, Medical, Industrial) and M&amp;A Acquisition Targets (Competitor Janitorial Operators with Succession Signals).</p>
+        <div class="mermaid-wrapper" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0;">
+            <div class="mermaid">
+flowchart TD
+    ING["Statewide TX Registry &amp; Entity Ingestion<br/>(TX HHSC / Comptroller / SOS / Public Filings)"] --> CLASS{"Facility vs Competitor<br/>Classification Gate"}
+    CLASS -- "Licensed Daycare / Commercial Facility" --> B2B["Route to Commercial CRM Pipeline<br/>(Leads Table: 28,248 Statewide Prospects)"]
+    CLASS -- "NAICS 561720 Janitorial Operator" --> MA["Route to M&amp;A Target Deal Radar<br/>(Owner Age / Tenure / Revenue Estimation)"]
+    B2B --> GEO["5-Point Geofence &amp; Calling Workstation<br/>(Daily B2B Janitorial Sales Outreach)"]
+    MA --> VAL["EBITDA Multiple &amp; Route Density Scoring<br/>(Executive Acquisition Dossier for CEO)"]
+
+    style ING fill:#eff6ff,stroke:#2563eb,stroke-width:2px
+    style B2B fill:#f0fdf4,stroke:#16a34a,stroke-width:2px
+    style MA fill:#fefce8,stroke:#ca8a04,stroke-width:2px
+            </div>
+        </div>
+
         <h2>7.0 Verification & Quality Audits</h2>
         <p>To guarantee zero defects across all business data:</p>
         <ul>
@@ -120,6 +140,12 @@
                 </tr>
             </thead>
             <tbody>
+                <tr>
+                    <td style="text-align: left;">3.0.0</td>
+                    <td style="text-align: left;">10/24/2026</td>
+                    <td style="text-align: left;">Natalie Navy &amp; George</td>
+                    <td style="text-align: left;">Added Section 6.5 M&amp;A Target Deal Radar &amp; Commercial Partitioning Mermaid Flowchart (BUG-148 Phase 2). Approved by Humberto Dominguez, CEO.</td>
+                </tr>
                 <tr>
                     <td>1.0.0</td>
                     <td>09-11-2026</td>

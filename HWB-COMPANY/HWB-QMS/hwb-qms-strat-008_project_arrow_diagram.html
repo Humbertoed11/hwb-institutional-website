@@ -3,7 +3,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-STRAT-008</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.1</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.0.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
     </div>
@@ -27,7 +27,7 @@
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Version</strong></td>
-<td style="text-align: left;">1.1</td>
+<td style="text-align: left;">3.0.0</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Status</strong></td>
@@ -39,53 +39,43 @@
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Date</strong></td>
-<td style="text-align: left;">09/21/2026</td>
+<td style="text-align: left;">10/24/2026</td>
 </tr>
 </tbody>
 </table>
 <hr />
-<h1 id="sigmafidelitytm-market-launch-arrow-diagram">SigmaFidelity™ Market Launch: Arrow Diagram</h1>
-<p>This diagram identifies the sequence of events and dependencies required for the successful launch of the SigmaFidelity™ brand.</p>
+<h1 id="sigmafidelitytm-market-launch-arrow-diagram">HWB Commercial Growth &amp; Platform Execution: Arrow Diagram</h1>
+<p>This activity network diagram defines the critical path from QMS governance and PostgreSQL 16.15 data ingestion through closed-loop commercial outreach, walkthrough scheduling, and contract execution.</p>
 <div class="mermaid">
-graph LR
-    %% Phase 1: Foundation
-    A["Finalize Charter <br> & QMS"] --> B["Build Web App <br> & Dashboard"]
-    A --> C["Execute Lead <br> Harvesting Cycles"]
-
-    %% Phase 2: Content
-    B --> D["Finalize LinkedIn <br> Post Payloads"]
+flowchart LR
+    A["Phase 1: QMS &amp; ISO 9001:2026<br/>163 Canonical SOPs"] --> B["Phase 2: 24-Slot Web App<br/>&amp; CQRS Backoffice Hub"]
+    A --> C["Phase 2: Statewide TX Lead<br/>&amp; Bid Miners (28,248 Leads)"]
+    B --> D["Phase 3: 5-Pillar Campaign<br/>Readiness &amp; Territory Lock"]
     C --> D
-
-    %% Phase 3: Launch (The Critical Path)
-    D --> E{"MARCH 2: <br> LINKEDIN LAUNCH"}
-
-    %% Phase 4: Execution
-    E --> F["HubSpot API <br> Integration"]
-    E --> G["Initiate Cold <br> Outreach (Tony Holiday)"]
-
-    %% Phase 5: Control
-    F --> H["30k-Foot <br> Performance Audit"]
+    D --> E{"Phase 4: Closed-Loop<br/>Outreach &amp; Calling Desk"}
+    E --> F["Microsoft Graph API<br/>Dual-Table Suppression Gate"]
+    E --> G["Microsoft Bookings Walkthrough<br/>&amp; Yamamoto Moto Takeoff"]
+    F --> H["Phase 5: 14-Rack Telemetry<br/>&amp; 35%+ Margin Contract"]
     G --> H
 
-    %% Styling the Critical Path
     style A fill:#dcfce7,stroke:#166534
     style B fill:#dcfce7,stroke:#166534
     style C fill:#dcfce7,stroke:#166534
     style D fill:#dcfce7,stroke:#166534
-    style E fill:#ef4444,stroke:#991b1b,color:#fff
+    style E fill:#2563eb,stroke:#1e40af,color:#fff
+    style H fill:#10b981,stroke:#059669,color:#fff
 </div>
 
 <hr />
 <h2 id="20-critical-path-analysis">2.0 Critical Path Analysis</h2>
-<p>The <strong>Critical Path</strong> for our 2026 launch is:
-<strong>A → B &amp; C → D → E</strong></p>
+<p>The <strong>Critical Path</strong> for HWB commercial pipeline velocity is:
+<strong>A → B &amp; C → D → E → F &amp; G → H</strong></p>
 <ul>
-<li><strong>A (Governance):</strong> Must be complete to ensure institutional integrity. (COMPLETE)</li>
-<li><strong>B &amp; C (Infrastructure):</strong> Lead harvesting and Web tools must be ready to catch the launch traffic. (COMPLETE)</li>
-<li><strong>D (Payload):</strong> Final creative and strategic messaging must be locked. (IN-PROGRESS)</li>
-<li><strong>E (Launch Event):</strong> The hard date of March 2, 2026.</li>
+<li><strong>A (Governance):</strong> 163 canonical SOPs and SOC 2 / ISO 9001:2026 controls verified.</li>
+<li><strong>B &amp; C (Infrastructure &amp; Ingestion):</strong> Sub-150ms CQRS backoffice paired with statewide Texas childcare, GC construction, and institutional solicitation miners.</li>
+<li><strong>D &amp; E (Qualification &amp; Outreach):</strong> DNS MX verification, territory isolation (`assigned_rep_id`), and dynamic calling scripts.</li>
+<li><strong>F, G &amp; H (Conversion &amp; Control):</strong> Compliant Microsoft Graph dispatch, walkthrough calibration, and 35% margin contract award.</li>
 </ul>
-<p><strong>Strategic Constraint:</strong> Any defect in the scraper logic (C) or the dashboard (B) before March 2nd will bottleneck the launch (E) and increase our <strong>CODND (Cost of Doing Nothing Differently).</strong></p>
 <hr />
 <h2 id="30-revision-history">3.0 Revision History</h2>
 <table>

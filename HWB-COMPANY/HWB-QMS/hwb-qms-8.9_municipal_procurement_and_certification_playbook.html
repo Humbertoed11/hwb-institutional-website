@@ -1,3 +1,5 @@
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'loose' });</script>
 <!-- 
     SigmaFidelity™ Institutional SOP: Municipal Procurement & Government Certification Playbook
     Standard: HWB-QMS-1.0 v3.0 / HWB-QMS-8.9
@@ -444,6 +446,24 @@
         </ol>
         <p><strong>Qualification Tiers:</strong> Platinum (&ge; 88 pts - Immediate Outbox Staging), Gold (75–87 pts - High-Yield Pursuit), Silver (60–74 pts - Opportunistic), Bronze (&lt; 60 pts - Disqualified). All outbound letters remain strictly staged in <code>PendingOutbox</code> under <code>HWB-COM-001</code> Letterhead awaiting CEO approval.</p>
 
+        
+        <h2>11.5 Municipal Procurement, Cooperative Vehicles &amp; Bid Execution Flowchart</h2>
+        <p>The diagram below illustrates the institutional bidding path from Certification Readiness (HUB / SBE / MBE) and Cooperative Vehicles (TIPS / BuyBoard / Choice Partners) to technical/price evaluation and contract award.</p>
+        <div class="mermaid-wrapper" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0;">
+            <div class="mermaid">
+flowchart LR
+    CERT["1. Certification &amp; Bonding Vault<br/>(TX HUB / SBE / COI / Bonding)"] --> COOP["2. Procurement Vehicle Selection<br/>(RFP / ITB / TIPS / BuyBoard)"]
+    COOP --> SCORE["3. 5-Pillar Go/No-Go Scoring<br/>(Geography, Margin, Scope, Bond, Term)"]
+    SCORE --> TECH["4. Technical &amp; Compliance Packet<br/>(ISO 9001/14001/45001 + 0.00 TRIR)"]
+    TECH --> PRICE["5. Yamamoto Moto Pricing Matrix<br/>(ISSA 612 + 35% Gross Margin Floor)"]
+    PRICE --> AWARD["6. Sealed Submission &amp; Award<br/>(Transition to 30-Day Mobilization SOP)"]
+
+    style CERT fill:#eff6ff,stroke:#2563eb,stroke-width:2px
+    style TECH fill:#fefce8,stroke:#ca8a04,stroke-width:2px
+    style AWARD fill:#f0fdf4,stroke:#16a34a,stroke-width:2px
+            </div>
+        </div>
+
         <h2>12.0 Revision History</h2>
         <table>
             <thead>
@@ -455,6 +475,12 @@
                 </tr>
             </thead>
             <tbody>
+                <tr>
+                    <td>3.0.0</td>
+                    <td>10/24/2026</td>
+                    <td>Yamamoto Moto &amp; George</td>
+                    <td>Added Section 11.5 Municipal Procurement, Cooperative Vehicles &amp; Bid Execution Mermaid Flowchart (BUG-148 Phase 2). Approved by Humberto Dominguez, CEO.</td>
+                </tr>
                 <tr>
                     <td>2.0.0</td>
                     <td>09-23-2026</td>

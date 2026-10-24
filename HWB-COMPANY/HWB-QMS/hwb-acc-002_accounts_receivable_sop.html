@@ -91,27 +91,28 @@
 </ul>
 </li>
 </ol>
-<h3 id="54-process-flow-chart">5.4 [Process Flow Chart]</h3>
+<h3 id="54-process-flow-chart">5.4 Accounts Receivable &amp; Construction Progress Billing Flowchart</h3>
 <div class="mermaid">
-graph TD
-    A[Service Completed] --> B[Export Data]
-    B --> C[Create QuickBooks Invoice]
-    C --> D[Email to Client]
-    D --> E{Payment Received?}
-    E -- Yes --> F[Record Payment & Reconcile]
-    E -- No --> G[Automated Reminder]
-    G --> H[Management Escalation]
+flowchart TD
+    A["Service / Construction Phase Completed"] --> B{"Contract Type?"}
+    B -- "Recurring Commercial Janitorial" --> C["Generate Invoice in PostgreSQL 16.15<br/>(Invoices Table) &amp; QuickBooks Online"]
+    B -- "GC Post-Construction Subcontract" --> D["Prepare AIA G702/G703 Pay App +<br/>Conditional Lien Waiver (HWB-QMS-8.6)"]
+    C --> E["Dispatch Invoice via Microsoft Graph"]
+    D --> E
+    E --> F{"Payment Received?"}
+    F -- "Yes (ACH / Check)" --> G["Record Payment, Issue Unconditional<br/>Waiver &amp; Reconcile Warchest"]
+    F -- "No (Net 30+)" --> H["Automated AR Aging Reminder &amp;<br/>Texas Ch. 53 Notice Protection"]
 </div>
 
 <h2 id="60-verification-zero-defect-check">6.0 Verification (Zero-Defect Check)</h2>
 <ul>
-<li>Monthly AR Aging Report signed by the Managing Director.</li>
-<li>Zero variance between system completions and QuickBooks invoices.</li>
-<li>All client data matches the "Source of Truth" Client Master File.</li>
+<li>Monthly AR Aging Report signed by Maria Bolanos (VP of Finance) and CEO Humberto Dominguez.</li>
+<li>Zero variance between PostgreSQL 16.15 <code>"Invoices"</code> and QuickBooks Online.</li>
+<li>All GC pay applications accompanied by statutory Texas Property Code Chapter 53 waivers.</li>
 </ul>
 <h2 id="70-notes-and-cautions">7.0 Notes and Cautions</h2>
 <div class="callout callout-note"><strong>Note</strong>Maintain a professional and helpful tone during collection calls.</div>
-<div class="callout callout-caution"><strong>Caution</strong>Never generate placeholder invoices. All billing must be based on real work.</div>
+<div class="callout callout-caution"><strong>Caution</strong>Never release an Unconditional Lien Waiver until cleared funds are verified in the bank account.</div>
 
 <h2 id="80-revision-history">8.0 Revision History</h2>
 <table>
@@ -125,10 +126,10 @@ graph TD
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">2.0.0</td>
-<td style="text-align: left;">05/21/2026</td>
-<td style="text-align: left;">George</td>
-<td style="text-align: left;">TOTAL MODERNIZATION. Added 2026 Baseline mandates and Tier 6 integration.</td>
+<td style="text-align: left;">3.0.0</td>
+<td style="text-align: left;">10/24/2026</td>
+<td style="text-align: left;">Maria Bolanos &amp; George</td>
+<td style="text-align: left;">Upgraded AR flowchart and procedure to include PostgreSQL 16.15 Invoices sync, AIA G702/G703 GC progress billing, and Texas Chapter 53 Conditional/Unconditional Lien Waivers (BUG-148). Approved by Humberto Dominguez, CEO.</td>
 </tr>
 <tr>
 <td style="text-align: left;">1.0</td>

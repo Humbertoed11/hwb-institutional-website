@@ -14,9 +14,9 @@
         "id": "HWB-ACC-001",
         "dept": "ACCOUNTING",
         "file": "hwb-acc-001_accounting_management_sop.html",
-        "version": "2.0.0",
+        "version": "2.1.0",
         "compliance": "UPDATED",
-        "date": "05/21/2026",
+        "date": "10/24/2026",
         "access_tier": "EXECUTIVE"
     },
     {
@@ -24,9 +24,9 @@
         "id": "HWB-ACC-003",
         "dept": "ACCOUNTING",
         "file": "hwb-acc-003_accounts_payable_sop.html",
-        "version": "2.0.0",
+        "version": "3.0.0",
         "compliance": "UPDATED",
-        "date": "05/21/2026",
+        "date": "10/24/2026",
         "access_tier": "EXECUTIVE"
     },
     {
@@ -34,9 +34,9 @@
         "id": "HWB-ACC-002",
         "dept": "ACCOUNTING",
         "file": "hwb-acc-002_accounts_receivable_sop.html",
-        "version": "2.0.0",
+        "version": "3.0.0",
         "compliance": "UPDATED",
-        "date": "05/21/2026",
+        "date": "10/24/2026",
         "access_tier": "EXECUTIVE"
     },
     {
@@ -70,7 +70,7 @@
         "access_tier": "EXECUTIVE"
     },
     {
-        "title": "hwb-acc-05-25-2026-live-audit.html",
+        "title": "Live Azure Cost Audit: May 2026",
         "id": "HWB-ACC-05-25-2026-LIVE-AUDIT.HTML",
         "dept": "ACCOUNTING",
         "file": "hwb-acc-05-25-2026-live-audit.html",
@@ -114,9 +114,9 @@
         "id": "HWB-QMS-4.5",
         "dept": "EHSQ",
         "file": "hwb-qms-4.5_ehsq_management_system_sop.html",
-        "version": "2.0.0",
+        "version": "3.0.0",
         "compliance": "UPDATED",
-        "date": "05/21/2026",
+        "date": "10/24/2026",
         "access_tier": "AUDITOR"
     },
     {
@@ -180,7 +180,7 @@
         "access_tier": "STAFF"
     },
     {
-        "title": "hwb-comms-2026-03-05-executive-skills-review.html",
+        "title": "1.0 Executive Memorandum",
         "id": "HWB-COMMS-2026-03-05-EXECUTIVE-SKILLS-REVIEW.HTML",
         "dept": "EXECUTIVE",
         "file": "hwb-comms-2026-03-05-executive-skills-review.html",
@@ -190,7 +190,7 @@
         "access_tier": "EXECUTIVE"
     },
     {
-        "title": "hwb-comms-2026-03-05-sigmafidelity-executive-summary.html",
+        "title": "SigmaFidelity\u2122 Daily Executive Summary",
         "id": "HWB-COMMS-2026-03-05-SIGMAFIDELITY-EXECUTIVE-SUMMARY.HTML",
         "dept": "EXECUTIVE",
         "file": "hwb-comms-2026-03-05-sigmafidelity-executive-summary.html",
@@ -200,7 +200,7 @@
         "access_tier": "EXECUTIVE"
     },
     {
-        "title": "hwb-comms-_2026-03-03_daily_stand-up.html",
+        "title": "Daily Stand-Up: Tuesday, March 3, 2026",
         "id": "HWB-COMMS-_2026-03-03_DAILY_STAND-UP.HTML",
         "dept": "EXECUTIVE",
         "file": "hwb-comms-_2026-03-03_daily_stand-up.html",
@@ -210,7 +210,7 @@
         "access_tier": "EXECUTIVE"
     },
     {
-        "title": "hwb-comms-_2026-03-03_strategic_review_agenda.html",
+        "title": "Strategic Review Agenda",
         "id": "HWB-COMMS-_2026-03-03_STRATEGIC_REVIEW_AGENDA.HTML",
         "dept": "EXECUTIVE",
         "file": "hwb-comms-_2026-03-03_strategic_review_agenda.html",
@@ -296,7 +296,7 @@
         "file": "hwb-qms-7.2_employee_onboarding_sop.html",
         "version": "3.0.0",
         "compliance": "UPDATED",
-        "date": "09-21-2026",
+        "date": "10/24/2026",
         "access_tier": "STAFF"
     },
     {
@@ -304,9 +304,9 @@
         "id": "HWB-QMS-7.2-MGMT",
         "dept": "HR",
         "file": "hwb-qms-7.2_hr_management_system_sop.html",
-        "version": "2.0.0",
+        "version": "3.0.0",
         "compliance": "UPDATED",
-        "date": "05/21/2026",
+        "date": "10/24/2026",
         "access_tier": "STAFF"
     },
     {
@@ -374,9 +374,9 @@
         "id": "HWB-QMS-7.6",
         "dept": "IT",
         "file": "hwb-qms-7.6_backend_architecture_and_enterprise_standards_sop.html",
-        "version": "3.1.0",
+        "version": "4.2.0",
         "compliance": "UPDATED",
-        "date": "09-21-2026",
+        "date": "10/24/2026",
         "access_tier": "STAFF"
     },
     {
@@ -404,9 +404,9 @@
         "id": "HWB-QMS-9.3",
         "dept": "IT",
         "file": "hwb-qms-9.3_disaster_recovery_and_data_restoration_sop.html",
-        "version": "4.1.0",
+        "version": "3.1.0",
         "compliance": "UPDATED",
-        "date": "10-01-2026",
+        "date": "10/24/2026",
         "access_tier": "AUDITOR"
     },
     {
@@ -430,7 +430,7 @@
         "access_tier": "STAFF"
     },
     {
-        "title": "Standard Operating Procedure: HWB-QMS-11.2 Cognitive Architecture & Neural Growth SOP.html",
+        "title": "Standard Operating Procedure: Cognitive Architecture &amp; Neural Growth",
         "id": "HWB-QMS-11.2",
         "dept": "IT",
         "file": "hwb-qms-11.2_cognitive_architecture_&_neural_growth_sop.html",
@@ -440,7 +440,7 @@
         "access_tier": "STAFF"
     },
     {
-        "title": "Standard Operating Procedure: HWB-QMS-9.1 Antigravity Master Setup SOP.html",
+        "title": "Standard Operating Procedure: Antigravity Master Setup",
         "id": "HWB-QMS-9.1",
         "dept": "IT",
         "file": "hwb-qms-9.1_antigravity_master_setup_sop.html",
@@ -464,9 +464,9 @@
         "id": "HWB-QMS-IT-015",
         "dept": "IT",
         "file": "hwb-qms-it-015_institutional_website_architecture_report.html",
-        "version": "2.0.0",
+        "version": "3.0.0",
         "compliance": "UPDATED",
-        "date": "09-21-2026",
+        "date": "10/24/2026",
         "access_tier": "STAFF"
     },
     {
@@ -514,9 +514,9 @@
         "id": "HWB-QMS-7.1-WEB-001",
         "dept": "IT",
         "file": "hwb-qms-7.1_website_architectural_flowchart_sop.html",
-        "version": "2.0.0",
+        "version": "3.0.0",
         "compliance": "UPDATED",
-        "date": "09-21-2026",
+        "date": "10/24/2026",
         "access_tier": "STAFF"
     },
     {
@@ -530,17 +530,17 @@
         "access_tier": "STAFF"
     },
     {
-        "title": "Standard Operating Procedure: hwb-qms-11.1_institutional_memory_neural_integration_sop.html",
+        "title": "Standard Operating Procedure: Institutional Memory & Neural Integration",
         "id": "HWB-QMS-11.1_INSTITUTIONAL_MEMORY_NEURAL_INTEGRATION_SOP.HTML",
         "dept": "IT",
         "file": "hwb-qms-11.1_institutional_memory_neural_integration_sop.html",
-        "version": "1.0.0",
+        "version": "3.0.0",
         "compliance": "UPDATED",
-        "date": "09-21-2026",
+        "date": "10/24/2026",
         "access_tier": "STAFF"
     },
     {
-        "title": "Standard Operating Procedure: hwb-qms-11.2_terminal_interaction_&_reporting_architecture_sop.html",
+        "title": "Standard Operating Procedure: Terminal Interaction & Reporting Architecture",
         "id": "HWB-QMS-11.2_TERMINAL_INTERACTION_",
         "dept": "IT",
         "file": "hwb-qms-11.2_terminal_interaction_reporting_architecture_sop.html",
@@ -550,7 +550,7 @@
         "access_tier": "STAFF"
     },
     {
-        "title": "Standard Operating Procedure: hwb-qms-11.6_memory_consolidation_&_monolithic_intelligence_sop.html",
+        "title": "Standard Operating Procedure: Memory Consolidation & Monolithic Intelligence",
         "id": "HWB-QMS-11.6_MEMORY_CONSOLIDATION_",
         "dept": "IT",
         "file": "hwb-qms-11.6_memory_consolidation_monolithic_intelligence_sop.html",
@@ -560,7 +560,7 @@
         "access_tier": "STAFF"
     },
     {
-        "title": "Standard Operating Procedure: hwb-qms-9.8_pre-execution_impact_study_for_babysop_terminal_integration.html",
+        "title": "Standard Operating Procedure / Report: Pre-Execution Impact Study for BabySOP Terminal Integration",
         "id": "HWB-QMS-9.8_PRE-EXECUTION_IMPACT_STUDY_FOR_BABYSOP_TERMINAL_INTEGRATION.HTML",
         "dept": "IT",
         "file": "hwb-qms-9.8_pre-execution_impact_study_for_babysop_terminal_integration.html",
@@ -570,7 +570,7 @@
         "access_tier": "STAFF"
     },
     {
-        "title": "hwb-qms-1.1_institutional_dictionary_and_architectural_lexicon.html",
+        "title": "Institutional Controlled Manual: Dictionary of Systems, Operations &amp; Cognitive Architecture",
         "id": "HWB-QMS-1.1_INSTITUTIONAL_DICTIONARY_AND_ARCHITECTURAL_LEXICON.HTML",
         "dept": "IT",
         "file": "hwb-qms-1.1_institutional_dictionary_and_architectural_lexicon.html",
@@ -580,17 +580,17 @@
         "access_tier": "STAFF"
     },
     {
-        "title": "hwb-qms-7.7_backend_web_system.html",
+        "title": "Standard Operating Procedure: Backend Web System Architecture",
         "id": "HWB-QMS-7.7_BACKEND_WEB_SYSTEM.HTML",
         "dept": "IT",
         "file": "hwb-qms-7.7_backend_web_system.html",
-        "version": "1.0.0",
+        "version": "3.1.0",
         "compliance": "UPDATED",
-        "date": "09-21-2026",
+        "date": "10/24/2026",
         "access_tier": "STAFF"
     },
     {
-        "title": "hwb-qms-7.9_backend_component_standard.html",
+        "title": "Backend Component Standard",
         "id": "HWB-QMS-7.9_BACKEND_COMPONENT_STANDARD.HTML",
         "dept": "IT",
         "file": "hwb-qms-7.9_backend_component_standard.html",
@@ -664,9 +664,9 @@
         "id": "HWB-QMS-8.9",
         "dept": "OPERATIONS",
         "file": "hwb-qms-8.9_municipal_procurement_and_certification_playbook.html",
-        "version": "1.2.0",
+        "version": "3.0.0",
         "compliance": "UPDATED",
-        "date": "09-22-2026",
+        "date": "10/24/2026",
         "access_tier": "STAFF"
     },
     {
@@ -710,17 +710,17 @@
         "access_tier": "STAFF"
     },
     {
-        "title": "Standard Operating Procedure: Statewide Autonomous Contract Hunter and Portal Crawler SOP",
+        "title": "Standard Operating Procedure: Statewide Autonomous Contract Hunter & Portal Crawler",
         "id": "HWB-QMS-7.9",
         "dept": "OPERATIONS",
         "file": "hwb-qms-7.9_statewide_autonomous_contract_hunter_and_portal_crawler_sop.html",
-        "version": "1.0.0",
+        "version": "3.0.0",
         "compliance": "UPDATED",
-        "date": "09-22-2026",
+        "date": "10/24/2026",
         "access_tier": "STAFF"
     },
     {
-        "title": "hwb-ops-calc-001_floor_finish_cost_calculator.html",
+        "title": "Industrial Reference: Floor Finish Cost Calculator",
         "id": "HWB-OPS-CALC-001_FLOOR_FINISH_COST_CALCULATOR.HTML",
         "dept": "OPERATIONS",
         "file": "hwb-ops-calc-001_floor_finish_cost_calculator.html",
@@ -834,9 +834,9 @@
         "id": "HWB-QMS-MASTER-MAP-001",
         "dept": "QMS",
         "file": "hwb-qms-master-iso-9001-audit-mapping-flowchart.html",
-        "version": "3.0.0",
+        "version": "4.0.0",
         "compliance": "UPDATED",
-        "date": "09-21-2026",
+        "date": "10/24/2026",
         "access_tier": "STAFF"
     },
     {
@@ -904,9 +904,9 @@
         "id": "HWB-QMS-STRAT-004",
         "dept": "QMS",
         "file": "hwb-qms-strat-004_quality_failure_fishbone.html",
-        "version": "2.0.0",
+        "version": "3.0.0",
         "compliance": "UPDATED",
-        "date": "09-21-2026",
+        "date": "10/24/2026",
         "access_tier": "STAFF"
     },
     {
@@ -964,9 +964,9 @@
         "id": "HWB-QMS-STRAT-008",
         "dept": "QMS",
         "file": "hwb-qms-strat-008_project_arrow_diagram.html",
-        "version": "1.1",
+        "version": "3.0.0",
         "compliance": "UPDATED",
-        "date": "09-21-2026",
+        "date": "10/24/2026",
         "access_tier": "STAFF"
     },
     {
@@ -1034,9 +1034,9 @@
         "id": "HWB-QMS-7.5-BO-CRM",
         "dept": "QMS",
         "file": "hwb-qms-7.5_backoffice_and_crm_management_sop.html",
-        "version": "4.0.0",
+        "version": "3.0.0",
         "compliance": "UPDATED",
-        "date": "10-01-2026",
+        "date": "10/24/2026",
         "access_tier": "STAFF"
     },
     {
@@ -1094,9 +1094,9 @@
         "id": "HWB-QMS-7.5-DFD",
         "dept": "QMS",
         "file": "hwb-qms-7.5_data_flow_diagram.html",
-        "version": "2.0.0",
+        "version": "3.0.0",
         "compliance": "UPDATED",
-        "date": "05/21/2026",
+        "date": "10/24/2026",
         "access_tier": "STAFF"
     },
     {
@@ -1114,9 +1114,9 @@
         "id": "HWB-QMS-7.5-ERD",
         "dept": "QMS",
         "file": "hwb-qms-7.5_entity_relationship_diagram.html",
-        "version": "2.0.0",
+        "version": "3.0.0",
         "compliance": "UPDATED",
-        "date": "05/21/2026",
+        "date": "10/24/2026",
         "access_tier": "STAFF"
     },
     {
@@ -1144,13 +1144,13 @@
         "id": "HWB-QMS-11.8-CONSENSUS",
         "dept": "QMS",
         "file": "hwb-qms-11.8_hwb_multi-brain_consensus_sop.html",
-        "version": "1.0.0 (HTML Baseline)",
+        "version": "3.0.0",
         "compliance": "UPDATED",
-        "date": "05-25-2026",
+        "date": "10/24/2026",
         "access_tier": "STAFF"
     },
     {
-        "title": "Standard Operating Procedure: HWB-QMS-1.0 Institutional Documentation Standard SOP.html",
+        "title": "Standard Operating Procedure: Institutional Documentation Standard",
         "id": "HWB-QMS-1.0",
         "dept": "QMS",
         "file": "hwb-qms-1.0_institutional_documentation_standard_sop.html",
@@ -1160,27 +1160,27 @@
         "access_tier": "STAFF"
     },
     {
-        "title": "Standard Operating Procedure: HWB-QMS-7.7 Commercial Construction Takeoff, Planroom Ingestion, and Estimating Engine SOP.html",
+        "title": "Standard Operating Procedure: Commercial Construction Takeoff, Planroom Ingestion & Estimating Engine",
         "id": "HWB-QMS-7.7",
         "dept": "QMS",
         "file": "hwb-qms-7.7_commercial_construction_takeoff_planroom_ingestion_and_estimating_engine_sop.html",
-        "version": "1.0.0",
+        "version": "3.0.0",
         "compliance": "UPDATED",
-        "date": "09-23-2026",
+        "date": "10/24/2026",
         "access_tier": "ESTIMATOR"
     },
     {
-        "title": "Standard Operating Procedure: HWB-QMS-7.8 M&A Target Deal Radar and Daycare Commercial Partitioning SOP.html",
+        "title": "Standard Operating Procedure: M&A Target Deal Radar & Daycare Commercial Partitioning",
         "id": "HWB-QMS-7.8",
         "dept": "QMS",
         "file": "hwb-qms-7.8_m&a_target_deal_radar_and_daycare_commercial_partitioning_sop.html",
-        "version": "1.0.0",
+        "version": "3.0.0",
         "compliance": "UPDATED",
-        "date": "09-21-2026",
+        "date": "10/24/2026",
         "access_tier": "EXECUTIVE"
     },
     {
-        "title": "Standard Operating Procedure: HWB-QMS-9.4 Intuition Engine and Pattern Recognition SOP.html",
+        "title": "Standard Operating Procedure: Intuition Engine & Pattern Recognition",
         "id": "HWB-QMS-9.4",
         "dept": "QMS",
         "file": "hwb-qms-9.4_intuition_engine_and_pattern_recognition_sop.html",
@@ -1224,9 +1224,9 @@
         "id": "HWB-QMS-5.3",
         "dept": "QMS",
         "file": "hwb-qms-5.3_organizational_structure_sop_with_flowchart.html",
-        "version": "2.0.0",
+        "version": "3.1.0",
         "compliance": "UPDATED",
-        "date": "05/21/2026",
+        "date": "10/24/2026",
         "access_tier": "AUDITOR"
     },
     {
@@ -1274,9 +1274,9 @@
         "id": "HWB-QMS-7.2",
         "dept": "QMS",
         "file": "hwb-qms-7.2_backoffice_ui_standardization_sop.html",
-        "version": "4.0",
+        "version": "3.0.0",
         "compliance": "UPDATED",
-        "date": "09-21-2026",
+        "date": "10/24/2026",
         "access_tier": "STAFF"
     },
     {
@@ -1284,13 +1284,13 @@
         "id": "HWB-QMS-8.3",
         "dept": "QMS",
         "file": "hwb-qms-8.3_website_improvement_sop.html",
-        "version": "2.0.0",
+        "version": "3.0.0",
         "compliance": "UPDATED",
-        "date": "09-21-2026",
+        "date": "10/24/2026",
         "access_tier": "STAFF"
     },
     {
-        "title": "Standard Operating Procedure: hwb-qms-11.4_pre-flight_risk_audit_and_foresight_sop.html",
+        "title": "Standard Operating Procedure: Pre-Flight Risk Audit & Foresight",
         "id": "HWB-QMS-11.4_PRE-FLIGHT_RISK_AUDIT_AND_FORESIGHT_SOP.HTML",
         "dept": "QMS",
         "file": "hwb-qms-11.4_pre-flight_risk_audit_and_foresight_sop.html",
@@ -1300,7 +1300,7 @@
         "access_tier": "STAFF"
     },
     {
-        "title": "Standard Operating Procedure: hwb-qms-11.5_pre-flight_risk_audit_&_foresight_sop.html",
+        "title": "Standard Operating Procedure: Preflight Risk Audit and Foresight SOP",
         "id": "HWB-QMS-11.5_PRE-FLIGHT_RISK_AUDIT_",
         "dept": "QMS",
         "file": "hwb-qms-11.5_pre-flight_risk_audit_&_foresight_sop.html",
@@ -1310,7 +1310,7 @@
         "access_tier": "STAFF"
     },
     {
-        "title": "Standard Operating Procedure: hwb-qms-11.7_big_brain_master_prompt_sop.html",
+        "title": "Standard Operating Procedure: Big Brain Master Prompt",
         "id": "HWB-QMS-11.7_BIG_BRAIN_MASTER_PROMPT_SOP.HTML",
         "dept": "QMS",
         "file": "hwb-qms-11.7_big_brain_master_prompt_sop.html",
@@ -1320,7 +1320,7 @@
         "access_tier": "EXECUTIVE"
     },
     {
-        "title": "Standard Operating Procedure: hwb-qms-11.7_isolated_multi-client_infrastructure_sop.html",
+        "title": "Standard Operating Procedure: Isolated Multi-Client Infrastructure",
         "id": "HWB-QMS-11.7_ISOLATED_MULTI-CLIENT_INFRASTRUCTURE_SOP.HTML",
         "dept": "QMS",
         "file": "hwb-qms-11.7_isolated_multi-client_infrastructure_sop.html",
@@ -1330,7 +1330,7 @@
         "access_tier": "STAFF"
     },
     {
-        "title": "Standard Operating Procedure: hwb-qms-7.5_sop_template.html",
+        "title": "Standard Operating Procedure: [Subject] [Process Name] SOP",
         "id": "HWB-QMS-7.5_SOP_TEMPLATE.HTML",
         "dept": "QMS",
         "file": "hwb-qms-7.5_sop_template.html",
@@ -1340,7 +1340,7 @@
         "access_tier": "STAFF"
     },
     {
-        "title": "Standard Operating Procedure: hwb-qms-9.3.1_emergency_database_replication_sop.html",
+        "title": "Standard Operating Procedure: Emergency Database Replication",
         "id": "HWB-QMS-9.3.1_EMERGENCY_DATABASE_REPLICATION_SOP.HTML",
         "dept": "QMS",
         "file": "hwb-qms-9.3.1_emergency_database_replication_sop.html",
@@ -1350,7 +1350,7 @@
         "access_tier": "AUDITOR"
     },
     {
-        "title": "Standard Operating Procedure: hwb-qms-9.3.2_disaster_recovery_-_the_panic_button_sop.html",
+        "title": "1.0 Objective",
         "id": "HWB-QMS-9.3.2_DISASTER_RECOVERY_-_THE_PANIC_BUTTON_SOP.HTML",
         "dept": "QMS",
         "file": "hwb-qms-9.3.2_disaster_recovery_-_the_panic_button_sop.html",
@@ -1360,7 +1360,7 @@
         "access_tier": "AUDITOR"
     },
     {
-        "title": "Standard Operating Procedure: hwb-qms-9.7_pre-execution_impact_study_for_babysop_deployment.html",
+        "title": "Standard Operating Procedure / Report: Pre-Execution Impact Study for BabySOP Deployment",
         "id": "HWB-QMS-9.7_PRE-EXECUTION_IMPACT_STUDY_FOR_BABYSOP_DEPLOYMENT.HTML",
         "dept": "QMS",
         "file": "hwb-qms-9.7_pre-execution_impact_study_for_babysop_deployment.html",
@@ -1410,7 +1410,7 @@
         "access_tier": "STAFF"
     },
     {
-        "title": "hwb-qms-7.5_web_design_rules.html",
+        "title": "HWB Website Design Rules",
         "id": "HWB-QMS-7.5_WEB_DESIGN_RULES.HTML",
         "dept": "QMS",
         "file": "hwb-qms-7.5_web_design_rules.html",
@@ -1420,7 +1420,7 @@
         "access_tier": "STAFF"
     },
     {
-        "title": "hwb-qms-form-006_2026_management_review_minutes.html",
+        "title": "Executive Management Review Meeting Minutes (2026)",
         "id": "HWB-QMS-FORM-006_2026_MANAGEMENT_REVIEW_MINUTES.HTML",
         "dept": "QMS",
         "file": "hwb-qms-form-006_2026_management_review_minutes.html",
@@ -1430,13 +1430,13 @@
         "access_tier": "AUDITOR"
     },
     {
-        "title": "hwb-qms-sec-001_master_vendor_security_assessment_packet.html",
+        "title": "Master Vendor Security Assessment Packet: SIG / CAIQ / VSAQ Response Standard",
         "id": "HWB-QMS-SEC-001_MASTER_VENDOR_SECURITY_ASSESSMENT_PACKET.HTML",
         "dept": "QMS",
         "file": "hwb-qms-sec-001_master_vendor_security_assessment_packet.html",
-        "version": "1.0.0",
+        "version": "2.0.0",
         "compliance": "UPDATED",
-        "date": "09-27-2026",
+        "date": "10/24/2026",
         "access_tier": "EXECUTIVE"
     },
     {
@@ -1554,9 +1554,9 @@
         "id": "HWB-QMS-8.0-MKT-001",
         "dept": "SALES-MARKETING",
         "file": "hwb-qms-8.0_marketing_process_sop_with_flowchart.html",
-        "version": "2.1.0",
+        "version": "3.3.0",
         "compliance": "UPDATED",
-        "date": "05/21/2026",
+        "date": "10/24/2026",
         "access_tier": "STAFF"
     },
     {
@@ -1584,9 +1584,9 @@
         "id": "HWB-QMS-8.0-FLOW-001",
         "dept": "SALES-MARKETING",
         "file": "hwb-qms-8.0_sales_process_flowchart.html",
-        "version": "2.0.0",
+        "version": "3.0.0",
         "compliance": "UPDATED",
-        "date": "05/21/2026",
+        "date": "10/24/2026",
         "access_tier": "STAFF"
     },
     {

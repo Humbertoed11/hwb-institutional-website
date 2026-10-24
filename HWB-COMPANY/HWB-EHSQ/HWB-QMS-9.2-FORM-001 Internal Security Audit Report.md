@@ -16,7 +16,7 @@
 *   **Audit Date:** 2026-03-01
 *   **Auditor:** Gemini (Lead Autonomous Agent / Senior ISO 9001 Auditor)
 *   **Scope:** Linux/WSL 2 Infrastructure, Flask Webserver, and Network Configuration.
-*   **Reference Standard:** ISO 9001:2015 Clause 9.2 (Internal Audit) and 7.1.3 (Infrastructure).
+*   **Reference Standard:** ISO 9001:2026 (ISO 9001:2015+Amd 1:2024) Clause 9.2 (Internal Audit) and 7.1.3 (Infrastructure).
 
 ## 2.0 Audit Tooling
 *   **System Audit:** Lynis 3.0.9 (Open Source Security Auditing)

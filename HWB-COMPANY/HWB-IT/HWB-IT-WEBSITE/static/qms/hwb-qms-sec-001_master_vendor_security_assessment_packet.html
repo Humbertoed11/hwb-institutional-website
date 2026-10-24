@@ -1,3 +1,5 @@
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'loose' });</script>
 <!-- 
     SigmaFidelity™ Institutional QMS Document
     Standard: HWB-QMS-1.0 v2.0 (HTML Baseline, Everyday Words)
@@ -203,6 +205,23 @@
             </tbody>
         </table>
 
+        
+        <h2>4.5 Defense-in-Depth Security &amp; Cryptographic Governance Flowchart</h2>
+        <p>The diagram below maps the 5-ring defense-in-depth security posture verified continuously by the 77-check Security Suite (<code>check_soc2_data_leakage.py</code>) and the 27-test Rack 14 Web Performance &amp; Compliance Suite.</p>
+        <div class="mermaid-wrapper" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0;">
+            <div class="mermaid">
+flowchart LR
+    R1["Ring 1: Edge Perimeter<br/>Cloudflare Anycast WAF +<br/>TLS 1.3 + 15 CIDR Lock"] --> R2["Ring 2: Access &amp; Auth<br/>Centralized RBAC + Argon2/Bcrypt<br/>+ CSRF + Session Hardening"]
+    R2 --> R3["Ring 3: Data-in-Transit &amp; Rest<br/>AES-256 Storage + Encrypted<br/>BYTEA Onboarding Vaults"]
+    R3 --> R4["Ring 4: Immutable Audit Trail<br/>PostgreSQL WORM Triggers on<br/>SecurityAuditLogs + SHA-256"]
+    R4 --> R5["Ring 5: Automated CI/CD Gate<br/>77 Security Checks + 27 Rack 14<br/>Tests + Credential Sentinel"]
+
+    style R1 fill:#eff6ff,stroke:#2563eb,stroke-width:2px
+    style R3 fill:#fefce8,stroke:#ca8a04,stroke-width:2px
+    style R5 fill:#f0fdf4,stroke:#16a34a,stroke-width:2px
+            </div>
+        </div>
+
         <h2>5.0 Verification &amp; Zero-Defect Inspection Gate</h2>
         <p>To satisfy ISO 9001 Clause 8.2 and enterprise customer audit requests, this security packet is continuously verified by autonomous software gates:</p>
         <ul>
@@ -223,6 +242,12 @@
                 </tr>
             </thead>
             <tbody>
+                <tr>
+                    <td>2.0.0</td>
+                    <td>10/24/2026</td>
+                    <td>George (Systems Architect)</td>
+                    <td>Added Section 4.5 Defense-in-Depth Security &amp; Cryptographic Governance Mermaid Flowchart (BUG-148 Phase 2). Approved by Humberto Dominguez, CEO.</td>
+                </tr>
                 <tr>
                     <td>1.4.0</td>
                     <td>10/24/2026</td>

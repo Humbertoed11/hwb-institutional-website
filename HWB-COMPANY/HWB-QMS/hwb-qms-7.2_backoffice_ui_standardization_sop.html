@@ -1,3 +1,5 @@
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'loose' });</script>
 <!-- 
     SigmaFidelity™ Institutional SOP
     Document ID: HWB-QMS-7.2
@@ -200,6 +202,37 @@
 - <strong>Label Position</strong>: All field labels MUST reside outside and directly above the data value or entry box. Labels inside card borders are strictly prohibited.
 - <strong>Label Style</strong>: Enforce Title Case (e.g., "Target Date") and a standard font-size of <code>0.85rem</code> or <code>0.8rem</code>.
 - <strong>Split Grid Unification</strong>: All views using split column configurations must share a standardized layout width (e.g., <code>300px 1fr</code>) and a uniform gap of <code>2.5rem</code>. This ensures that field lines and labels align horizontally across tabs, eliminating layout shifts when users toggle views.</p>
+        <h2>15.0 5-Layer Enterprise Responsive &amp; Adaptive Data-Table Engine Flowchart</h2>
+        <p>Every public page, compliance manual, and backoffice screen permanently enforces the 5-Layer Responsive &amp; Adaptive Display Architecture (<code>sigma_responsive_engine.js</code>) across Desktop, Tablet, and Phone viewports.</p>
+        <div class="mermaid-wrapper" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0;">
+            <div class="mermaid">
+flowchart TD
+    HTML["Flask @app.after_request HTML Response"] --> INJ["Auto-Inject sigma_responsive_engine.js<br/>+ sigma_input_mask.js"]
+    INJ --> VP{"Viewport Breakpoint<br/>Detection"}
+    VP -- "Desktop (> 1024px)" --> DESK["4-Column KPI Scorecards +<br/>Full Tight-Grid Data Tables (.sigma-data-grid)"]
+    VP -- "Tablet (768px - 1024px)" --> TAB["2-Column KPI Grid + Single-Row Touch Ribbon<br/>+ Sticky First-Column Momentum Table Scroll"]
+    VP -- "Phone (<= 768px)" --> MOB["2x2 Compact KPI Cards + 2-Column CRM Touch Cards<br/>with [Cards | Table] Switcher + 16px Touch Inputs"]
+
+    style HTML fill:#eff6ff,stroke:#2563eb,stroke-width:2px
+    style TAB fill:#fefce8,stroke:#ca8a04,stroke-width:2px
+    style MOB fill:#f0fdf4,stroke:#16a34a,stroke-width:2px
+            </div>
+        </div>
+
+        <h2>16.0 Revision History</h2>
+        <table class="sigma-table">
+            <thead>
+                <tr><th>Version</th><th>Date</th><th>Author</th><th>Description of Changes</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>3.0.0</td>
+                    <td>10/24/2026</td>
+                    <td>George (Systems Architect)</td>
+                    <td>Added Section 15.0 5-Layer Enterprise Responsive &amp; Adaptive Data-Table Engine Mermaid Flowchart and Section 16.0 Revision History (BUG-148 Phase 2). Approved by Humberto Dominguez, CEO.</td>
+                </tr>
+            </tbody>
+        </table>
     </div>
 
     <div class="sop-card-footer">

@@ -15,7 +15,7 @@
 **Project Target:** Universal Kids Resort (Austin Commercial)
 
 ## 1.0 Executive Summary
-HWB Cleaning Services LLC is a premier provider of high-fidelity janitorial and post-construction cleaning. Our commitment to ISO 9001:2015 standards ensures precision-driven cleaning solutions for large-scale commercial developments.
+HWB Cleaning Services LLC is a premier provider of high-fidelity janitorial and post-construction cleaning. Our commitment to ISO 9001:2026 (ISO 9001:2015+Amd 1:2024) standards ensures precision-driven cleaning solutions for large-scale commercial developments.
 
 ## 2.0 Universal Mandates (2026 Baseline)
 1. **Guidance First:** If site requirements for the Resort change, ASK the CEO before updating the SOW.
@@ -35,7 +35,7 @@ HWB Cleaning Services LLC is a premier provider of high-fidelity janitorial and 
 ## 5.0 Company Data
 *   **NAICS Code:** 561720 (Janitorial)
 *   **Service Region:** North Texas (DFW)
-*   **Quality Standards:** ISO 9001:2015 Compliant
+*   **Quality Standards:** ISO 9001:2026 (ISO 9001:2015+Amd 1:2024) Compliant
 
 ---
 

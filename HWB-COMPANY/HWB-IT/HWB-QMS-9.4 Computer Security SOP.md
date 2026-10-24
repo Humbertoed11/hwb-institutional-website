@@ -13,7 +13,7 @@
 # Standard Operating Procedure: **Computer Security SOP**
 
 ## 1.0 Purpose
-This SOP defines the technical and administrative controls required to secure the HWB Cleaning Services LLC computing environment. It ensures compliance with ISO 9001:2015 Clause 7.1.3 (Infrastructure) and 8.1 (Operational Planning and Control) by protecting the integrity, availability, and confidentiality of company data.
+This SOP defines the technical and administrative controls required to secure the HWB Cleaning Services LLC computing environment. It ensures compliance with ISO 9001:2026 (ISO 9001:2015+Amd 1:2024) Clause 7.1.3 (Infrastructure) and 8.1 (Operational Planning and Control) by protecting the integrity, availability, and confidentiality of company data.
 
 ## 2.0 Scope
 Applies to all workstations, servers, and WSL 2 environments utilized for company operations, including the management of the `quote_app` and QMS documentation.

@@ -1,3 +1,5 @@
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'loose' });</script>
 <div class="sop-card">
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
@@ -131,6 +133,23 @@
             <li><strong>Automated Security Lockout Protocol:</strong> When an employee's status changes to <code>Terminated</code> or <code>Fired</code>, the system automatically sets their badge status to <code>Revoked</code>, records the termination date, and marks linked candidate records as terminated.</li>
         </ol>
 
+        
+        <h2>6.5 4-Stage Self-Service Onboarding &amp; Encrypted Document Vault Flowchart</h2>
+        <p>Both the W-2 Employee Onboarding Portal (<code>/onboarding/employee</code>) and 1099 Partner Onboarding Portal (<code>/onboarding/partner</code>) enforce a 4-Stage Self-Service Wizard with AI document autofill (<code>/api/v1/onboarding/extract-document</code>), Universal Input Masking (Phone, EIN, SSN, ZIP, State), atomic PostgreSQL <code>SAVEPOINT</code> binary storage (<code>BYTEA</code>), and printable Tamper-Evident Onboarding Receipt Cards with SHA-256 verification stamps.</p>
+        <div class="mermaid-wrapper" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0;">
+            <div class="mermaid">
+flowchart LR
+    ST1["Stage 1: Identity &amp; Tax Profile<br/>(Universal Input Mask + AI Autofill)"] --> ST2["Stage 2: Statutory &amp; Insurance Vault<br/>(I-9 / W-4 or W-9 / COI / DWC-83 Upload)"]
+    ST2 --> ST3["Stage 3: Safety &amp; Quality Certification<br/>(5-Question 100% Pass Exam Gate)"]
+    ST3 --> ST4["Stage 4: Electronic Signature &amp; Lock<br/>(IP + Timestamp + SHA-256 Digest)"]
+    ST4 --> DB[("PostgreSQL 16.15 BYTEA Vault<br/>+ Printable Receipt Card")]
+
+    style ST1 fill:#eff6ff,stroke:#2563eb,stroke-width:2px
+    style ST3 fill:#fefce8,stroke:#ca8a04,stroke-width:2px
+    style DB fill:#f0fdf4,stroke:#16a34a,stroke-width:2px
+            </div>
+        </div>
+
         <h2>7.0 Verification (Zero-Defect Check)</h2>
         <ul>
             <li>Employee file contains signed Form W-4, verified I-9, and state ID expiration date.</li>
@@ -152,6 +171,12 @@
                 </tr>
             </thead>
             <tbody>
+                <tr>
+                    <td style="text-align: left;">3.0.0</td>
+                    <td style="text-align: left;">10/24/2026</td>
+                    <td style="text-align: left;">George (Systems Architect)</td>
+                    <td style="text-align: left;">Added Section 6.5 4-Stage Self-Service Onboarding, AI Document Extraction, SAVEPOINT BYTEA Vault, and Printable SHA-256 Receipt Card Mermaid Flowchart (BUG-148 Phase 2). Approved by Humberto Dominguez, CEO.</td>
+                </tr>
                 <tr>
                     <td style="text-align: left;">3.2.0</td>
                     <td style="text-align: left;">10/21/2026</td>

@@ -13,7 +13,7 @@
 ---
 
 ## 1.0 Purpose
-To define the governance, management, and organizational standards for the HWB Cleaning Services LLC **Official Corporate Intranet** (SharePoint Ecosystem). This SOP ensures data integrity, ISO 9001:2015 compliance, and the elimination of "Process Fog" across all digital portals.
+To define the governance, management, and organizational standards for the HWB Cleaning Services LLC **Official Corporate Intranet** (SharePoint Ecosystem). This SOP ensures data integrity, ISO 9001:2026 (ISO 9001:2015+Amd 1:2024) compliance, and the elimination of "Process Fog" across all digital portals.
 
 ## 2.0 Scope
 Applies to all SharePoint sites, document libraries, and communication portals operated under the `hwbcleaning.com` Microsoft 365 tenant.

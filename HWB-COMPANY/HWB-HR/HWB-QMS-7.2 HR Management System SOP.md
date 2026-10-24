@@ -14,7 +14,7 @@
 # Standard Operating Procedure: **HR Management System SOP**
 
 ## 1.0 Purpose
-To define the structure and governance of the HR department, ensuring all personnel are recruited and trained according to ISO 9001:2015 Clause 7.2 (Competence).
+To define the structure and governance of the HR department, ensuring all personnel are recruited and trained according to ISO 9001:2026 (ISO 9001:2015+Amd 1:2024) Clause 7.2 (Competence).
 
 ## 2.0 Universal Mandates (2026 Baseline)
 1. **Third-Person PERSPECTIVE:** All HR documentation must use the 3rd person standard.

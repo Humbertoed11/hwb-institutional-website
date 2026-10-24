@@ -14,7 +14,7 @@
 
 ## 1.0 Purpose
 
-The purpose of this SOP is to define the procedure for maintaining, monitoring, and reporting the availability of the SigmaFidelity™ Webserver (mop.test). This ensures high-fidelity data availability for executive decision-making and aligns with ISO 9001:2015 performance evaluation standards.
+The purpose of this SOP is to define the procedure for maintaining, monitoring, and reporting the availability of the SigmaFidelity™ Webserver (mop.test). This ensures high-fidelity data availability for executive decision-making and aligns with ISO 9001:2026 (ISO 9001:2015+Amd 1:2024) performance evaluation standards.
 
 ## 2.0 Scope
 

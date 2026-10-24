@@ -1,3 +1,5 @@
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'loose' });</script>
 <!-- 
     SigmaFidelity™ Institutional SOP
     Standard: HWB-QMS-1.0 v2.0 (HTML Baseline)
@@ -109,6 +111,27 @@
             <li><strong>Autonomous Profile Completer Protocol:</strong> When incoming ITBs have incomplete profiles (missing phone numbers, generic estimator titles, or blank square footage), the system autonomously retrieves full email bodies, parses email signatures and attachments, and enriches data from the Master <code>GeneralContractors</code> directory.</li>
         </ol>
 
+        
+        <h2>3.5 Yamamoto Moto Construction Takeoff &amp; 35% Margin Calibration Flowchart</h2>
+        <p>The diagram below maps the automated blueprint ingestion, Room Finish Schedule extraction, ISSA 612 production rate calculation, Discrepancy Sentinel tagging, and 4-Sheet Excel Proposal packaging workflow.</p>
+        <div class="mermaid-wrapper" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0;">
+            <div class="mermaid">
+flowchart TD
+    BP["1. Planroom Blueprint &amp; Spec Manual Ingestion<br/>(A000 / A101 / A601 / Division 01 74 23)"] --> PARSE["2. Yamamoto Moto AI Blueprint Parser<br/>(Room Finish Schedule &amp; Gross Interior SF)"]
+    PARSE --> CHECK{"Explicit Finish<br/>Schedule Present?"}
+    CHECK -- "Yes" --> ISSA["3A. Exact ISSA 612 Production Rate Engine<br/>(Rough / Final / Window / Floor Burnish)"]
+    CHECK -- "No / Civil vs Interior Conflict" --> DISC["3B. Tag [DATA DISCREPANCY: Heuristic Estimate]<br/>+ Amber Estimator Notice Block"]
+    DISC --> ISSA
+    ISSA --> MARGIN["4. Enforce 35.0% Minimum Gross Margin Floor<br/>+ Prevailing Wage / Davis-Bacon Check"]
+    MARGIN --> XLSX["5. Generate 4-Sheet Fortune 500 Excel Proposal<br/>+ Sync ConstructionBids in PostgreSQL 16.15"]
+
+    style BP fill:#eff6ff,stroke:#2563eb,stroke-width:2px
+    style DISC fill:#fef3c7,stroke:#d97706,stroke-width:2px
+    style MARGIN fill:#f0fdf4,stroke:#16a34a,stroke-width:2px
+    style XLSX fill:#f8fafc,stroke:#0f172a,stroke-width:2px
+            </div>
+        </div>
+
         <h2>4.0 Verification (Zero-Defect Check)</h2>
         <ul>
             <li><strong>Mathematical Verification:</strong> Sum of rough, final, touch-up, and specialty line items must exactly equal total proposal value without rounding drift.</li>
@@ -127,6 +150,12 @@
                 </tr>
             </thead>
             <tbody>
+                <tr>
+                    <td style="text-align: left;">3.0.0</td>
+                    <td style="text-align: left;">10/24/2026</td>
+                    <td style="text-align: left;">Yamamoto Moto &amp; George</td>
+                    <td style="text-align: left;">Added Section 3.5 Yamamoto Moto Construction Takeoff &amp; 35% Margin Calibration Mermaid Flowchart and Discrepancy Sentinel gate (BUG-148 Phase 2). Approved by Humberto Dominguez, CEO.</td>
+                </tr>
                 <tr>
                     <td>1.0.0</td>
                     <td>09-04-2026</td>

@@ -1,3 +1,5 @@
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'loose' });</script>
 
 <div class="sop-card">
     <!-- 0.0 DOCUMENT CONTROL -->
@@ -79,7 +81,30 @@
 </li>
 <li><strong>Certification Tracking:</strong> All equipment operators and field crews must complete assigned SigmaAcademy™ safety modules before deployment.</li>
 </ol>
-<h2 id="40-verification-zero-defect-check">4.0 Verification (Zero-Defect Check)</h2>
+
+        <h2 id="35-hr-architecture-flowchart">3.5 Dual-Track W-2 &amp; 1099 Human Resources Architecture Flowchart</h2>
+        <p>The diagram below maps the strict statutory separation and encrypted document storage between W-2 Employees (<code>/onboarding/employee</code>) and 1099 Subcontractor Partners (<code>/onboarding/partner</code>) inside PostgreSQL 16.15.</p>
+        <div class="mermaid-wrapper" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0;">
+            <div class="mermaid">
+flowchart TD
+    START["Workforce Candidate / Partner Intake"] --> TRACK{"Workforce Classification<br/>(W-2 vs 1099 Separation)"}
+    TRACK -- "W-2 Direct Employee" --> W2["4-Stage W-2 Employee Portal<br/>(/onboarding/employee)"]
+    TRACK -- "1099 Subcontractor Entity" --> P1099["4-Stage 1099 Partner Portal<br/>(/onboarding/partner)"]
+
+    W2 --> W2DOC["W-4, Form I-9, Direct Deposit &amp;<br/>GHS / Bloodborne Safety Exam (100%)"]
+    P1099 --> PDOC["W-9, ACORD 25 COI ($1M GL),<br/>Master Subcontract (MSA) &amp; TX DWC-83"]
+
+    W2DOC --> W2VAULT[("EmployeeDocuments Table<br/>AES-256 BYTEA + SHA-256 Receipt")]
+    PDOC --> PVAULT[("SubcontractorDocuments Table<br/>4-Gate AP Payout Lock Verified")]
+
+    style W2 fill:#eff6ff,stroke:#2563eb,stroke-width:2px
+    style P1099 fill:#fefce8,stroke:#ca8a04,stroke-width:2px
+    style W2VAULT fill:#f0fdf4,stroke:#16a34a,stroke-width:2px
+    style PVAULT fill:#f0fdf4,stroke:#16a34a,stroke-width:2px
+            </div>
+        </div>
+
+        <h2 id="40-verification-zero-defect-check">4.0 Verification (Zero-Defect Check)</h2>
 <ul>
 <li>Quarterly audit of training records in <code>"AcademyEnrollments"</code>.</li>
 <li>100% compliance with GHS Hazard Communication training.</li>
@@ -97,6 +122,12 @@
 </tr>
 </thead>
 <tbody>
+                <tr>
+                    <td style="text-align: left;">3.0.0</td>
+                    <td style="text-align: left;">10/24/2026</td>
+                    <td style="text-align: left;">George (Systems Architect)</td>
+                    <td style="text-align: left;">Added Section 3.5 Dual-Track W-2 &amp; 1099 Human Resources Architecture Mermaid Flowchart and encrypted BYTEA vault governance (BUG-148 Phase 2). Approved by Humberto Dominguez, CEO.</td>
+                </tr>
 <tr>
 <td style="text-align: left;">2.1.0</td>
 <td style="text-align: left;">10/17/2026</td>

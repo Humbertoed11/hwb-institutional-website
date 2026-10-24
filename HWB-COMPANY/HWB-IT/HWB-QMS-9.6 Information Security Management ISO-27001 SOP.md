@@ -11,7 +11,7 @@
 ---
 
 # 1.0 Purpose
-This SOP aligns the IT and Operational security protocols of HWB Cleaning Services LLC with the **ISO/IEC 27001:2022** standard. It ensures that both digital data (CRM, AI pipelines) and physical client infrastructure (Data Centers, Corporate Offices) are protected against unauthorized access, espionage, and compromise.
+This SOP aligns the IT and Operational security protocols of HWB Cleaning Services LLC with the **ISO/IEC 27001:2022+Amd 1:2024** standard. It ensures that both digital data (CRM, AI pipelines) and physical client infrastructure (Data Centers, Corporate Offices) are protected against unauthorized access, espionage, and compromise.
 
 # 2.0 Scope
 Applies to the entire IT infrastructure, all AI Vice Presidents, and all physical cleaning personnel operating in high-security environments.
@@ -40,7 +40,7 @@ Applies to the entire IT infrastructure, all AI Vice Presidents, and all physica
 ## 6.0 Revision History
 | Version | Date | Author | Change Description |
 | :--- | :--- | :--- | :--- |
-| 1.0 | 2026-03-08 | George | Initial ISMS framework established per ISO/IEC 27001:2022. |
+| 1.0 | 2026-03-08 | George | Initial ISMS framework established per ISO/IEC 27001:2022+Amd 1:2024. |
 
 ---
 *Standard Operating Procedure produced under the SigmaFidelity™ Quality Mandate.*

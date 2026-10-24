@@ -42,7 +42,7 @@ Dear **[Contact Name]**,
 
 HWB Cleaning Services LLC would like to thank you for the opportunity to submit our proposal in response to **[Solicitation Name/Number]**. We are eager to bring our specialized **SigmaFidelity™** standards to **[Location/Facility Name]**.
 
-HWB Cleaning Services LLC, headquartered in Plano, Texas, is a premier provider of janitorial and integrated facility management services for the DFW metroplex. Built on over 20 years of expertise and a foundational commitment to **ISO 9001:2015 Quality Management System** standards, we have established ourselves as the region's trusted provider for high-performance environments.
+HWB Cleaning Services LLC, headquartered in Plano, Texas, is a premier provider of janitorial and integrated facility management services for the DFW metroplex. Built on over 20 years of expertise and a foundational commitment to **ISO 9001:2026 (ISO 9001:2015+Amd 1:2024) Quality Management System** standards, we have established ourselves as the region's trusted provider for high-performance environments.
 
 Our approach differs from traditional janitorial models. While others offer a "Commodity Clean," HWB provides **Information Fidelity**. Our expertise in managing specialized sectors—including education, healthcare, and high-volume logistics—allows us to protect your facility’s health while eliminating the strategic waste of "Payroll Mopping."
 

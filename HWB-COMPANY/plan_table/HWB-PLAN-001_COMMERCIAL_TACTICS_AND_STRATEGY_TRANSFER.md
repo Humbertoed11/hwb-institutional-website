@@ -10,7 +10,7 @@
 | **Approved By**      | Humberto Dominguez (Chief Executive Officer)                       |
 | **Fiscal Authority** | Maria Bolanos (Vice President of Finance)                          |
 | **Effective Date**   | 10/09/2026                                                         |
-| **Standard Baseline**| ISO 9001:2015 Clause 8.2 • Mandate 1 (Empirical Truth) • Mandate 9 (Everyday Words) |
+| **Standard Baseline**| ISO 9001:2026 (ISO 9001:2015+Amd 1:2024) Clause 8.2 • Mandate 1 (Empirical Truth) • Mandate 9 (Everyday Words) |
 
 ---
 
@@ -20,7 +20,7 @@
 +─────────────────────────────────────────────────────────────────────────────────────────+
 |                                HWB CLEANING SERVICES LLC                                |
 |                        EXECUTIVE STRATEGY & PLANNING TABLE BRIEF                        |
-|        Fidelity • Safety • Respect • ISO 9001:2015 Certified • McKinney, Texas          |
+|        Fidelity • Safety • Respect • ISO 9001:2026 (ISO 9001:2015+Amd 1:2024) Certified • McKinney, Texas          |
 +─────────────────────────────────────────────────────────────────────────────────────────+
 ```
 
