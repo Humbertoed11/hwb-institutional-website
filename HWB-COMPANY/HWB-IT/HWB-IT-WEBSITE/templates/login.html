@@ -147,7 +147,7 @@
  <img src="{{ url_for('static', filename='logo_standard.png') }}" alt="HWB Cleaning Official Logo" class="logo-half logo-right">
  </div>
  
- <span class="vault-label">Login Required</span>
+ <h1 class="vault-label" style="margin: 0 0 2.5rem 0;">Login Required</h1>
  
  {% with messages = get_flashed_messages(with_categories=true) %}
    {% if messages %}
@@ -161,10 +161,12 @@
 
  <form method="POST" id="vault-form">
  <div class="sigma-field">
- <input type="text" name="username" required placeholder="Company ID" class="vault-input" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="username">
+ <label for="login-username" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;">Company ID</label>
+ <input type="text" name="username" id="login-username" aria-label="Company ID" required placeholder="Company ID" class="vault-input" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="username">
  </div>
  <div class="sigma-field">
- <input type="password" name="password" required placeholder="Password" class="vault-input" autocapitalize="none" autocorrect="off" autocomplete="current-password">
+ <label for="login-password" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;">Password</label>
+ <input type="password" name="password" id="login-password" aria-label="Password" required placeholder="Password" class="vault-input" autocapitalize="none" autocorrect="off" autocomplete="current-password">
  </div>
  <div style="display: flex; justify-content: flex-end; margin-top: -0.75rem; margin-bottom: 1.25rem;">
      <a href="{{ url_for('auth.forgot_password') }}" style="color: #60a5fa; font-size: 0.75rem; font-weight: 600; text-decoration: none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">Forgot Password?</a>

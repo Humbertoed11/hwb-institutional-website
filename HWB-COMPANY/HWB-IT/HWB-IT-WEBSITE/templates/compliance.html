@@ -24,7 +24,7 @@
             </div>
             <p>HWB Cleaning Services LLC strictly adheres to the <strong>Occupational Safety and Health Act</strong>. The team is trained on the Hazard Communication Standard (HazCom), ensuring every technician understands chemical risks and safety protocols.</p>
             <div class="pdf-viewer">
-                <iframe src="{{ url_for('static', filename='sds_files/zeppetshampoo.pdf') }}" width="100%" height="400px" style="border: none;"></iframe>
+                <iframe src="{{ url_for('static', filename='sds_files/zeppetshampoo.pdf') }}" title="Safety Data Sheet (SDS) — Zep Pet and Stain Carpet Shampoo" width="100%" height="400px" style="border: none;"></iframe>
             </div>
         </div>
 
@@ -35,7 +35,8 @@
             </div>
             <p>The centralized Safety Data Sheet (SDS) repository provides immediate access to critical chemical handling and first-aid information.</p>
             <div class="sds-search">
-                <input type="text" id="sdsSearch" placeholder="Search Chemical Inventory..." onkeyup="filterSDS()">
+                <label for="sdsSearch" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;">Search Chemical Inventory</label>
+                <input type="text" id="sdsSearch" aria-label="Search Chemical Inventory" placeholder="Search Chemical Inventory..." onkeyup="filterSDS()">
             </div>
             <div class="sds-results" id="sdsResults">
                 {% for chemical in chemicals %}
@@ -45,7 +46,7 @@
                         <span>{{ chemical.product_id }} | {{ chemical.intended_use }}</span>
                     </div>
                     <div class="hazard-tag {{ chemical.hazard_level.lower() }}">{{ chemical.hazard_level }}</div>
-                    <a href="{{ chemical.sds_link }}" target="_blank" class="btn-mini">View SDS</a>
+                    <a href="{{ chemical.sds_link }}" target="_blank" rel="noopener noreferrer" class="btn-mini">View SDS</a>
                 </div>
                 {% endfor %}
             </div>

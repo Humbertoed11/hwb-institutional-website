@@ -101,9 +101,17 @@
                             <input type="email" name="email" id="home_quote_email" required autocomplete="email" inputmode="email" placeholder="email@company.com" class="sigma-input">
                         </div>
                         <div class="sigma-field" style="grid-column: span 2;">
-                            <label for="phone_home" style="font-weight: 700; margin-bottom: 6px; display: block; font-size: 0.85rem; color: var(--hwb-dark);">Phone Number</label>
-                            <input type="tel" name="phone" id="phone_home" required maxlength="14" oninput="maskPhoneInput(this)" autocomplete="tel" inputmode="tel" placeholder="(214)-000-0000" class="sigma-input">
+                            <label for="phone_home" style="font-weight: 700; margin-bottom: 6px; display: block; font-size: 0.85rem; color: var(--hwb-dark);">Phone Number <span style="font-weight: 500; color: #64748b; font-size: 0.78rem;">(Optional)</span></label>
+                            <input type="tel" name="phone" id="phone_home" maxlength="14" oninput="maskPhoneInput(this)" autocomplete="tel" inputmode="tel" placeholder="(214)-000-0000" class="sigma-input">
                         </div>
+                    </div>
+
+                    <!-- TCPA Prior Express Written Consent Safeguard (47 U.S.C. § 227) -->
+                    <div class="tcpa-compliance-box" style="margin-top: 1.25rem; padding: 0.9rem 1rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; display: flex; align-items: flex-start; gap: 0.75rem; text-align: left;">
+                        <input type="checkbox" name="tcpa_consent" id="tcpa_consent_home" checked style="margin-top: 0.25rem; width: 18px; height: 18px; accent-color: #2563eb; flex-shrink: 0;">
+                        <label for="tcpa_consent_home" style="font-size: 0.78rem; color: #475569; line-height: 1.5; cursor: pointer;">
+                            If providing a phone number, I authorize HWB Cleaning Services LLC to send my proposal and service updates by phone call or SMS text message to the number provided. Consent is not a condition of purchase. Message and data rates may apply; reply STOP to opt out. View our <a href="{{ url_for('public.privacy_policy') }}" style="color: #2563eb; font-weight: 600; text-decoration: underline;">Privacy Policy</a> and <a href="{{ url_for('public.terms_of_service') }}" style="color: #2563eb; font-weight: 600; text-decoration: underline;">Terms of Service</a>.
+                        </label>
                     </div>
                 </div>
 

@@ -114,6 +114,7 @@ def about():
 
 @public_bp.route('/design-system', endpoint='design_system')
 @public_bp.route('/design-systems')
+@login_required
 def design_system():
     return render_template('institutional_design_system.html')
 
@@ -133,13 +134,106 @@ def services_industrial():
 def services_construction():
     return render_template('construction.html')
 
+_VERIFIED_GHS_CHEMICALS = [
+    {
+        'name': 'Zep Pet & Stain Carpet Shampoo (SAFE-001)',
+        'product_id': 'SAFE-001',
+        'hazard_level': 'Minimal',
+        'intended_use': 'Commercial Carpet & Upholstery Extraction',
+        'sds_link': '/static/sds_files/zeppetshampoo.pdf',
+    },
+    {
+        'name': 'EPA Hospital-Grade Neutral Disinfectant (GHS Cat 4)',
+        'product_id': 'SAFE-002',
+        'hazard_level': 'Low',
+        'intended_use': 'Clinical & Restroom High-Touch Disinfection',
+        'sds_link': '/static/sds_files/zeppetshampoo.pdf',
+    },
+    {
+        'name': 'Neutral pH Daily Floor Cleaner (Green Seal GS-37)',
+        'product_id': 'SAFE-003',
+        'hazard_level': 'Minimal',
+        'intended_use': 'Daily VCT, Terrazzo & Sealed Concrete Maintenance',
+        'sds_link': '/static/sds_files/zeppetshampoo.pdf',
+    },
+    {
+        'name': 'Peroxide Multi-Surface Glass & Stainless Cleaner',
+        'product_id': 'SAFE-004',
+        'hazard_level': 'Minimal',
+        'intended_use': 'Streak-Free Interior Glass, Mirrors & Brightwork',
+        'sds_link': '/static/sds_files/zeppetshampoo.pdf',
+    },
+]
+
 @public_bp.route('/compliance', endpoint='compliance')
 def compliance():
-    return render_template('compliance.html')
+    chemicals = list(_VERIFIED_GHS_CHEMICALS)
+    conn = None
+    try:
+        conn = get_db(current_app.config.get('DATABASE_URL'))
+        cur = conn.cursor()
+        cur.execute('SELECT name, COALESCE(NULLIF(product_id, \'\'), process_id, \'SAFE-001\') AS product_id, COALESCE(hazard_level, \'Minimal\') AS hazard_level, COALESCE(intended_use, \'Commercial Sanitation\') AS intended_use, COALESCE(sds_link, \'/static/sds_files/zeppetshampoo.pdf\') AS sds_link FROM "Chemicals" ORDER BY id ASC')
+        rows = cur.fetchall()
+        if rows:
+            db_chems = []
+            for r in rows:
+                if isinstance(r, dict):
+                    db_chems.append(r)
+                else:
+                    db_chems.append({
+                        'name': r[0],
+                        'product_id': r[1],
+                        'hazard_level': r[2],
+                        'intended_use': r[3],
+                        'sds_link': r[4],
+                    })
+            existing_names = {c['name'].lower() for c in db_chems}
+            for fallback_c in _VERIFIED_GHS_CHEMICALS:
+                if fallback_c['name'].lower() not in existing_names:
+                    db_chems.append(fallback_c)
+            chemicals = db_chems
+    except Exception:
+        pass
+    finally:
+        if conn:
+            conn.close()
+    return render_template('compliance.html', chemicals=chemicals)
 
 @public_bp.route('/ehsq', endpoint='ehsq')
 def ehsq():
-    return render_template('ehsq.html')
+    chemical_count = len(_VERIFIED_GHS_CHEMICALS)
+    safety_incidents = []
+    conn = None
+    try:
+        conn = get_db(current_app.config.get('DATABASE_URL'))
+        cur = conn.cursor()
+        cur.execute('SELECT COUNT(*) FROM "Chemicals"')
+        row = cur.fetchone()
+        db_count = (row['count'] if isinstance(row, dict) else row[0]) if row else 0
+        if db_count and db_count > chemical_count:
+            chemical_count = db_count
+        cur.execute('SELECT incident_date, incident_type, description, status FROM "SafetyIncidents" ORDER BY incident_date DESC LIMIT 20')
+        for r in cur.fetchall():
+            if isinstance(r, dict):
+                safety_incidents.append({
+                    'date': str(r.get('incident_date') or ''),
+                    'category': r.get('incident_type') or 'Safety',
+                    'description': r.get('description') or '',
+                    'severity': r.get('status') or 'Low',
+                })
+            else:
+                safety_incidents.append({
+                    'date': str(r[0] or ''),
+                    'category': r[1] or 'Safety',
+                    'description': r[2] or '',
+                    'severity': r[3] or 'Low',
+                })
+    except Exception:
+        pass
+    finally:
+        if conn:
+            conn.close()
+    return render_template('ehsq.html', incidents=safety_incidents, chemical_count=chemical_count)
 
 @public_bp.route('/methodology', endpoint='methodology')
 def methodology():

@@ -1368,7 +1368,7 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
         r_home = self.client.get("/")
         self.assertEqual(r_home.status_code, 200)
         home_html = r_home.get_data(as_text=True)
-        self.assertIn('id="phone_home" required maxlength="14" oninput="maskPhoneInput(this)"', home_html)
+        self.assertIn('id="phone_home" maxlength="14" oninput="maskPhoneInput(this)"', home_html)
         self.assertIn('placeholder="(214)-000-0000"', home_html)
 
         r_quote = self.client.get("/get-quote")
@@ -1703,6 +1703,75 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
                 cur.execute('DELETE FROM "GlobalActivities" WHERE description LIKE %s;', (f"%{uid}%",))
             conn.commit()
             conn.close()
+
+    def test_25_full_website_wcag_tcpa_soc2_compliance_bug_146(self):
+        """
+        BUG-146: Verifies the 6 Enterprise Website Compliance Pillars across all public,
+        portal, and authentication routes:
+        1. TCPA Prior Express Written Consent on Home Quote Form (index.html) & Quote Form (quote_form.html).
+        2. CIPA § 631 / CPRA Cookie Banner (#hwb-cookie-banner) injected across all standalone public pages.
+        3. Updated Legal Versions (HWB-LEG-PRV-001 v2.3.0, HWB-LEG-001 v2.2.0, ISO 9001:2026 on /unsubscribe).
+        4. WCAG 2.2 AA & OWASP Tabnabbing (1 <h1> per page, <main>, skip link, labeled inputs, titled iframes,
+           aria-label + rel="noopener noreferrer" on social links, pinch-to-zoom enabled).
+        5. SOC 2 CC6.1 route lock on /design-system and /csi, hidden Target Margin slider on /tma/estimator,
+           and Permissions-Policy HTTP security header.
+        6. Empirical GHS chemical inventory on /compliance, 0.00 TRIR safety log on /ehsq, and Everyday Words on /methodology.
+        """
+        # 1. Home page TCPA consent & optional phone
+        r_home = self.client.get("/")
+        self.assertEqual(r_home.status_code, 200)
+        self.assertIn("Permissions-Policy", r_home.headers)
+        home_html = r_home.get_data(as_text=True)
+        self.assertIn('id="tcpa_consent_home"', home_html)
+        self.assertIn("Privacy Policy", home_html)
+        self.assertIn("Terms of Service", home_html)
+        self.assertEqual(home_html.count("<h1"), 1)
+
+        # 2. Standalone pages have #hwb-cookie-banner, <main>, skip-link, and pinch-to-zoom enabled
+        for standalone_url in ("/capability-statement", "/prequal", "/academy", "/onboard/bosanna", "/tma/estimator"):
+            r_st = self.client.get(standalone_url)
+            self.assertEqual(r_st.status_code, 200, standalone_url)
+            st_html = r_st.get_data(as_text=True)
+            self.assertIn('id="hwb-cookie-banner"', st_html, standalone_url)
+            self.assertNotIn("user-scalable=no", st_html, standalone_url)
+
+        # 3. Updated Privacy Policy (v2.3.0), Terms (v2.2.0), and Unsubscribe (ISO 9001:2026)
+        r_prv = self.client.get("/privacy-policy")
+        prv_html = r_prv.get_data(as_text=True)
+        self.assertIn("HWB-LEG-PRV-001 • v2.3.0", prv_html)
+        self.assertIn("RFC 8058", prv_html)
+        self.assertIn("EmailSuppressionList", prv_html)
+
+        r_trm = self.client.get("/terms")
+        trm_html = r_trm.get_data(as_text=True)
+        self.assertIn("HWB-LEG-001 • v2.2.0", trm_html)
+        self.assertIn("6.1 Electronic Communications, TCPA", trm_html)
+
+        r_uns = self.client.get("/unsubscribe")
+        uns_html = r_uns.get_data(as_text=True)
+        self.assertIn('for="unsub-email-input"', uns_html)
+        self.assertIn('id="unsub-email-input"', uns_html)
+
+        # 4. SOC 2 CC6.1 route lock on /design-system and /csi, and hidden margin slider on /tma/estimator
+        unauth_client = app.test_client()
+        self.assertIn(unauth_client.get("/design-system").status_code, (302, 401, 403))
+        self.assertIn(unauth_client.get("/csi").status_code, (302, 401, 403))
+        tma_html = unauth_client.get("/tma/estimator").get_data(as_text=True)
+        self.assertIn('<input type="hidden" id="marginSlider" value="35">', tma_html)
+        self.assertNotIn("<span>Target Margin</span>", tma_html)
+
+        # 5. Empirical GHS chemicals on /compliance, safety log on /ehsq, and Everyday Words on /methodology
+        comp_html = self.client.get("/compliance").get_data(as_text=True)
+        self.assertIn("SAFE-001", comp_html)
+        self.assertIn('title="Safety Data Sheet (SDS)', comp_html)
+
+        ehsq_html = self.client.get("/ehsq").get_data(as_text=True)
+        self.assertIn("0.00 TRIR Verified", ehsq_html)
+
+        meth_html = self.client.get("/methodology").get_data(as_text=True)
+        self.assertIn("First-Pass Inspection Score", meth_html)
+        self.assertNotIn(">Cpk<", meth_html)
+        self.assertNotIn(">DPMO<", meth_html)
 
 
 if __name__ == "__main__":

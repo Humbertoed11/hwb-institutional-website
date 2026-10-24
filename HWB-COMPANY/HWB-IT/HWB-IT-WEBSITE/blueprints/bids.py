@@ -53,6 +53,7 @@ def prequal():
     return render_template('prequal.html')
 
 @bids_bp.route('/csi', endpoint='csi_map')
+@login_required
 def csi_map():
     """Construction Specifications Institute (CSI) MasterFormat Map."""
     return render_template('HWB-WEB Csi.html')

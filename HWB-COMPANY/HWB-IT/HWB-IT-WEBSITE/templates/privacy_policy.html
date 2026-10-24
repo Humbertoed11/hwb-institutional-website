@@ -12,11 +12,11 @@
     <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 0.75rem;">
         <span style="font-size: 0.8rem; font-weight: 800; color: #2563eb; text-transform: uppercase; letter-spacing: 0.15em;">SigmaFidelity™ Institutional Governance</span>
         <span style="display: inline-flex; align-items: center; gap: 0.35rem; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-size: 0.75rem; font-weight: 800; padding: 0.25rem 0.65rem; border-radius: 9999px; letter-spacing: 0.05em;">
-            <i class="fas fa-shield-alt" style="font-size: 0.75rem;"></i> HWB-LEG-PRV-001 • v2.0.0
+            <i class="fas fa-shield-alt" style="font-size: 0.75rem;"></i> HWB-LEG-PRV-001 • v2.3.0
         </span>
     </div>
     <h1 style="background: linear-gradient(135deg, var(--text-primary) 0%, #3b82f6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 3rem; margin-bottom: 0.5rem; font-weight: 900; letter-spacing: -0.02em;">Privacy Policy</h1>
-    <p style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 3rem; font-weight: 600;">Version 2.0.0 • Effective Date: June 1, 2026 • Last Updated: June 1, 2026</p>
+    <p style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 3rem; font-weight: 600;">Version 2.3.0 • Effective Date: June 1, 2026 • Last Updated: October 24, 2026</p>
 
     <!-- 1.0 Introduction -->
     <div class="policy-section" style="margin-bottom: 3.5rem;">
@@ -36,15 +36,15 @@
         </ul>
     </div>
 
-    <!-- 2.5 Cookies, Web Beacons & Analytics Technologies (SOC 2 Privacy P1.1) -->
-    <div class="policy-section" style="margin-bottom: 3.5rem;">
-        <h2 style="font-size: 1.5rem; margin-bottom: 1.15rem; font-weight: 800; color: #0f172a;">2.5 Cookies, Tracking Technologies & Google Analytics (GA4)</h2>
-        <p>In compliance with the Texas Data Privacy and Security Act (TDPSA) and AICPA SOC 2 Privacy Notice Criteria (P1.1), the Company provides transparent disclosure regarding web measurement technologies:</p>
+    <!-- 2.5 Cookies, Web Beacons & Analytics Technologies (SOC 2 Privacy P1.1 & CIPA § 631) -->
+    <div class="policy-section" id="opt-out" style="margin-bottom: 3.5rem;">
+        <h2 style="font-size: 1.5rem; margin-bottom: 1.15rem; font-weight: 800; color: #0f172a;">2.5 Cookies, CIPA § 631 Affirmative Consent &amp; Analytics Governance</h2>
+        <p>In compliance with the Texas Data Privacy and Security Act (TDPSA), the California Invasion of Privacy Act (CIPA Cal. Penal Code § 631), the California Privacy Rights Act (CPRA), and AICPA SOC 2 Privacy Notice Criteria (P1.1 &amp; P2.1), the Company enforces strict affirmative consent gating across all web measurement technologies:</p>
         <ul style="margin-left: 2rem; margin-top: 0.5rem; list-style-type: square; color: #334155;">
-            <li><strong>Google Analytics 4 (GA4):</strong> We use Google Analytics (Measurement ID: <code>G-8BX5Q7THYR</code>) to collect non-personally identifiable aggregated visitor usage data, including page dwell times, referral channels, browser types, and general geographic location. GA4 uses first-party cookies (such as <code>_ga</code> and <code>_ga_*</code>) to distinguish unique visitors without exposing personal identities.</li>
-            <li><strong>Session Cookies:</strong> Temporary technical cookies are used solely to maintain session state across quote forms and administrative portals. These expire when you close your browser.</li>
-            <li><strong>Internal Traffic Exclusion:</strong> To maintain strict data integrity, all internal staff sessions automatically suspend GA4 measurement tags upon logging in.</li>
-            <li><strong>Browser Opt-Out:</strong> Users may block or delete cookies at any time via browser settings, or install the official Google Analytics Opt-Out Browser Add-on. Disabling cookies will not impair access to informational service pages.</li>
+            <li><strong>Affirmative Opt-In Gate (Default Inert State):</strong> Optional analytics and session scripts (Google Analytics 4 <code>G-8BX5Q7THYR</code>, Google Ads <code>AW-8622428739</code>, and Microsoft Clarity) are rendered inert (<code>type="text/plain"</code>) on initial page load and never execute unless the visitor affirmatively clicks <strong>Accept All</strong> on the privacy banner.</li>
+            <li><strong>Essential Security Cookies Only:</strong> When a visitor selects <strong>Essential Only</strong> or takes no action, only strictly necessary first-party security and CSRF session tokens are used.</li>
+            <li><strong>Internal Traffic Exclusion:</strong> To maintain strict data integrity, all internal staff sessions automatically suspend analytics measurement tags upon logging in.</li>
+            <li><strong>Do Not Sell or Share Personal Information:</strong> HWB Cleaning Services LLC never sells or shares personal information for cross-context behavioral advertising. Visitors may reset cookie preferences at any time by clearing site storage or selecting <strong>Essential Only</strong> on the consent banner.</li>
         </ul>
     </div>
 
@@ -72,12 +72,13 @@
             <li><strong>Opt-Out Mechanism:</strong> Users and business contacts may request DNC placement at any time by replying "STOP" to any SMS message, verbally informing a representative, or emailing <a href="mailto:info@hwbcleaning.com?subject=Do%20Not%20Call%20Request" style="color: #2563eb; text-decoration: none; font-weight: 700;">info@hwbcleaning.com</a> with the subject "Do Not Call Request". DNC requests are processed within 24 hours.</li>
         </ul>
 
-        <h3 style="font-size: 1.15rem; margin-top: 1.75rem; margin-bottom: 0.75rem; font-weight: 700; color: #1e293b;">4.1 Email Marketing, CAN-SPAM Act & 1-Click Unsubscribe (SOC 2 Privacy P2.1)</h3>
-        <p>Under the federal CAN-SPAM Act (15 U.S.C. § 7701 et seq.) and Texas Business & Commerce Code § 321, all commercial email communications originating from HWB Cleaning Services LLC strictly enforce:</p>
+        <h3 style="font-size: 1.15rem; margin-top: 1.75rem; margin-bottom: 0.75rem; font-weight: 700; color: #1e293b;">4.1 Email Marketing, CAN-SPAM Act &amp; IETF RFC 8058 One-Click Unsubscribe (SOC 2 Privacy P2.1)</h3>
+        <p>Under the federal CAN-SPAM Act (15 U.S.C. § 7701 et seq.), Texas Business &amp; Commerce Code § 321.051, and ISO/IEC 27701:2019, all commercial email communications originating from HWB Cleaning Services LLC strictly enforce:</p>
         <ul style="margin-left: 2rem; margin-top: 0.5rem; list-style-type: square; color: #334155;">
-            <li><strong>Clear Identification & Physical Address:</strong> Every outbound email includes our verifiable physical corporate address (3342 FM 1827 Ste 8d, McKinney, TX 75071) and accurate non-deceptive subject headers.</li>
-            <li><strong>1-Click Automated Unsubscribe Mechanism:</strong> Every promotional or B2B email contains a prominent 1-click unsubscribe link. When clicked, the recipient address is immediately flagged as <code>UNSUBSCRIBED</code>, suppressed across all active outreach sequences, and blocked from future campaigns.</li>
-            <li><strong>Instant Suppression Processing:</strong> Opt-out requests are executed immediately upon token reception and permanently recorded within our SQL database, exceeding the legal 10-business-day standard. Recipients may also manage email preferences directly at <a href="{{ url_for('public.unsubscribe_direct') }}" style="color: #2563eb; font-weight: 700;">hwbcleaning.com/unsubscribe</a>.</li>
+            <li><strong>Clear Identification &amp; Physical Address:</strong> Every outbound email includes our verifiable physical corporate address (3342 FM 1827 Ste 8d, McKinney, TX 75071) and accurate non-deceptive subject headers.</li>
+            <li><strong>IETF RFC 8058 &amp; RFC 2369 Native One-Click Unsubscribe:</strong> Every outreach email embeds cryptographic <code>List-Unsubscribe</code> and <code>List-Unsubscribe-Post: List-Unsubscribe=One-Click</code> MIME headers alongside a visible 1-click footer link.</li>
+            <li><strong>Channel-Specific Opt-Out Separation &amp; Immutable WORM Ledger:</strong> Email opt-outs set the lead status to <code>Unsubscribed</code> and record the SHA-256 hash, timestamp, and legal basis in the immutable <code>EmailSuppressionList</code> table (blocking all future email campaigns while preserving distinct <code>Do Not Call (DNC)</code> telephony records). Explicit replies requesting zero phone/all-channel contact immediately enforce full <code>Do Not Call (DNC)</code> status across both phone and email.</li>
+            <li><strong>Multi-Jurisdictional Geofence &amp; Public-Sector Guard:</strong> Outbound B2B email marketing is strictly geofenced to commercial businesses in Texas, automatically blocking California (Cal. Bus. &amp; Prof. Code § 17529.5), Washington State (RCW 19.190), international domains (CASL/GDPR/PECR), and government/educational domains (<code>.gov</code>, <code>.mil</code>, <code>.edu</code>, <code>.tx.us</code>) unless prior written consent is on file. Recipients may manage preferences at <a href="{{ url_for('public.unsubscribe_direct') }}" style="color: #2563eb; font-weight: 700;">hwbcleaning.com/unsubscribe</a>.</li>
         </ul>
     </div>
 

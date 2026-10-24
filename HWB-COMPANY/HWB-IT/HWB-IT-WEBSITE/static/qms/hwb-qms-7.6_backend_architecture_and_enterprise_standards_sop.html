@@ -8,7 +8,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-7.6</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.5.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.6.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">8.1 &amp; 8.5.1 (Operational Control) &amp; ISO 27001 / ISO 27701</span></div>
     </div>
@@ -24,7 +24,7 @@
             <tbody>
                 <tr><td><strong>Document Title</strong></td><td><strong>Backend Architecture and Enterprise Standards SOP</strong></td></tr>
                 <tr><td><strong>Document ID</strong></td><td>HWB-QMS-7.6</td></tr>
-                <tr><td><strong>Version</strong></td><td>3.5.0</td></tr>
+                <tr><td><strong>Version</strong></td><td>3.6.0</td></tr>
                 <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
                 <tr><td><strong>Author</strong></td><td>George (Systems Architect)</td></tr>
                 <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
@@ -158,6 +158,14 @@
                     <li><strong>5-Point Multi-Jurisdictional Email Compliance Engine (<code>BUG-145</code>):</strong> Injects IETF RFC 8058 &amp; RFC 2369 <code>List-Unsubscribe</code> and <code>List-Unsubscribe-Post: List-Unsubscribe=One-Click</code> headers via <code>build_rfc8058_headers()</code> in <code>core/services/email_service.py</code>, handles automated <code>POST /unsubscribe/&lt;tracking_token&gt;</code> requests in <code>blueprints/public.py</code>, enforces <code>get_email_compliance_where_clauses()</code> and <code>is_email_compliance_eligible()</code> across all 4 campaign endpoints (blocking <code>CA</code>, <code>WA</code>, international TLDs, and <code>.gov</code>/<code>.mil</code>/<code>.k12.tx.us</code> public-sector domains), enforces a Dual-Table Outbound Suppression Gate in <code>transmit_email()</code>, and protects opt-out flags inside the <code>main_app.py</code> boot seeder.</li>
                 </ul>
             </li>
+            <li><strong>6-Pillar Full-Website WCAG 2.2 AA, TCPA, CIPA &sect; 631, OWASP &amp; SOC 2 Route-Isolation Architecture (<code>BUG-146</code>):</strong>
+                <ul>
+                    <li><strong>TCPA Prior Express Written Consent &amp; Legal Version Parity:</strong> Standardized optional phone entry and explicit TCPA consent checkboxes on <code>templates/index.html</code> and <code>templates/quote_form.html</code> linked to <code>/privacy-policy</code> (v2.3.0) and <code>/terms</code> (v2.2.0).</li>
+                    <li><strong>Universal CIPA &sect; 631 Cookie Banner Auto-Injection:</strong> Extended <code>apply_application_security_headers()</code> in <code>main_app.py</code> to automatically inject <code>#hwb-cookie-banner</code> onto any public HTML page lacking it, and added <code>Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()</code>.</li>
+                    <li><strong>WCAG 2.2 AA &amp; OWASP Tabnabbing Zero-Violation Guardrails:</strong> Removed the duplicate global <code>&lt;h1 class="sr-only"&gt;</code> and duplicate <code>FAQPage</code> JSON-LD from <code>base.html</code>, added <code>aria-label</code> and <code>rel="noopener noreferrer"</code> to all social icon links in <code>base.html</code> and <code>components/mega_bar.html</code>, added explicit labels/titles to <code>compliance.html</code>, <code>unsubscribe_success.html</code>, <code>login.html</code>, and <code>forgot_password.html</code>, and enabled pinch-to-zoom across all standalone/mobile templates.</li>
+                    <li><strong>SOC 2 CC6.1 Route &amp; Margin Isolation + Empirical GHS/EHSQ Data:</strong> Locked <code>/design-system</code> (<code>blueprints/public.py</code>) and <code>/csi</code> (<code>blueprints/bids.py</code>) behind <code>@login_required</code>, hid internal gross margin sliders from unauthenticated users on <code>/tma/estimator</code>, wired <code>/compliance</code> and <code>/ehsq</code> to live PostgreSQL <code>"Chemicals"</code> and <code>"SafetyIncidents"</code> (0.00 TRIR), and replaced statistical acronyms on <code>/methodology</code> with Everyday Words.</li>
+                </ul>
+            </li>
         </ol>
 
         <h2>10.0 Verification (Zero-Defect Check)</h2>
@@ -166,7 +174,7 @@
             <li>The centralized gatekeeper (<code>@app.before_request</code>) must automatically intercept out-of-bounds requests.</li>
             <li>Templates must receive permissions through <code>nav_access</code> context engine without scattered manual role checks.</li>
             <li>All employee queries must sanitize output dictionaries, ensuring no raw ciphertexts or unmasked bank accounts exist in memory.</li>
-            <li>Automated test suites verifying RBAC quarantine, PII encryption, 6-module enterprise deduplication, 5-pillar campaign readiness, 5-layer input masking / onboarding transaction receipts, closed-loop campaign lifecycle, and multi-jurisdictional RFC 8058 email compliance (<code>scripts/test_web_performance_rack_14.py</code> — <code>24/24</code> passing) must pass 100% prior to any container deployment.</li>
+            <li>Automated test suites verifying RBAC quarantine, PII encryption, 6-module enterprise deduplication, 5-pillar campaign readiness, 5-layer input masking / onboarding transaction receipts, closed-loop campaign lifecycle, multi-jurisdictional RFC 8058 email compliance, and full-website 37-route WCAG/TCPA/CIPA/SOC 2 compliance (<code>scripts/test_web_performance_rack_14.py</code> — <code>25/25</code> passing; <code>scripts/check_soc2_data_leakage.py</code> — <code>77/77</code> passing) must pass 100% prior to any container deployment.</li>
         </ul>
 
         <hr />
@@ -181,6 +189,12 @@
                 </tr>
             </thead>
             <tbody>
+                <tr>
+                    <td>10-24-2026</td>
+                    <td>3.6.0</td>
+                    <td>Added Section 9.5 (6-Pillar Full-Website WCAG 2.2 AA, TCPA, CIPA &sect; 631, OWASP &amp; SOC 2 Route-Isolation Architecture — BUG-146) documenting the remediation of all 12 full-website compliance findings across 37 routes, certified by 25/25 Rack 14 tests and 77/77 SOC 2 checks.</td>
+                    <td>Humberto Dominguez, CEO</td>
+                </tr>
                 <tr>
                     <td>10-24-2026</td>
                     <td>3.5.0</td>

@@ -73,7 +73,7 @@
                 <li><strong>State (Texas &amp; National):</strong> Texas Anti-Spam Act (Tex. Bus. &amp; Com. Code § 321.051), Texas Data Privacy and Security Act (TDPSA Ch. 541), and CA/WA Geofence Exclusion</li>
                 <li><strong>County &amp; Local:</strong> Collin County, Texas Exclusive Venue &amp; Public Sector Solicitation Rules</li>
                 <li><strong>International:</strong> CASL (Canada), GDPR (EU), UK PECR, and Australia Spam Act Geofence Protection</li>
-                <li><strong>ISO &amp; SOC 2 Governance:</strong> ISO 9001:2015, ISO/IEC 27001:2022, ISO/IEC 27701:2019 &amp; AICPA SOC 2 Type II Privacy Criteria P2.1 (Choice &amp; Consent)</li>
+                <li><strong>ISO &amp; SOC 2 Governance:</strong> ISO 9001:2026 (ISO 9001:2015+Amd 1:2024), ISO/IEC 27001:2022, ISO/IEC 27701:2019 &amp; AICPA SOC 2 Type II Privacy Criteria P2.1 (Choice &amp; Consent)</li>
             </ul>
             <div style="margin-top: 0.5rem; font-family: monospace; font-size: 0.75rem; color: #94a3b8;">
                 Audit Timestamp: {{ audit_timestamp }} | Reference Token: {{ token_ref }}
@@ -109,10 +109,10 @@
 
         <form action="{{ url_for('public.unsubscribe_direct') }}" method="POST" style="text-align: left;">
             <div style="margin-bottom: 1.5rem;">
-                <label style="display: block; font-size: 0.85rem; font-weight: 700; color: #334155; margin-bottom: 0.5rem;">
+                <label for="unsub-email-input" style="display: block; font-size: 0.85rem; font-weight: 700; color: #334155; margin-bottom: 0.5rem;">
                     Corporate Email Address *
                 </label>
-                <input type="email" name="email" required placeholder="director@facility.com" class="sigma-input" style="width: 100%; height: 46px; border: 1.5px solid #cbd5e1; border-radius: 6px; padding: 0 1rem; font-size: 0.95rem; box-sizing: border-box;">
+                <input type="email" name="email" id="unsub-email-input" aria-label="Corporate Email Address" required placeholder="director@facility.com" class="sigma-input" style="width: 100%; height: 46px; border: 1.5px solid #cbd5e1; border-radius: 6px; padding: 0 1rem; font-size: 0.95rem; box-sizing: border-box;">
             </div>
 
             <button type="submit" aria-label="Unsubscribe This Email Address" style="width: 100%; height: 48px; border-radius: 8px; font-weight: 800; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; gap: 8px; background: #2563eb !important; color: #ffffff !important; border: none !important; cursor: pointer; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25); text-decoration: none;">

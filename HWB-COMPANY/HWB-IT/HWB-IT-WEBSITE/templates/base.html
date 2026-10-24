@@ -62,7 +62,7 @@
  "https://www.facebook.com/cleaningdfw",
  "https://www.youtube.com/@hwbcleaning"
  ]
- },
+ }{% if not request.path.startswith(('/services/', '/locations/')) %},
  {
  "@type": "FAQPage",
  "@id": "https://www.hwbcleaning.com/#faq",
@@ -92,7 +92,7 @@
  }
  }
  ]
- }
+ }{% endif %}
  ]
  }
  </script>
@@ -270,7 +270,6 @@
   <div id="sigma-top-progress" class="sigma-top-progress" aria-hidden="true"></div>
 
  <a href="#main-content" class="sigma-skip-link">Skip to main content</a>
-    <h1 class="sr-only" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;">HWB Cleaning Services LLC</h1>
 
  {% if request.endpoint != 'login' %}
  {% include "components/mega_bar.html" %}
@@ -302,9 +301,9 @@
                     </a>
                     <p class="footer-formula">Proper Training + The Right Tools + Respect for Your Space = The SigmaQuality Clean</p>
                     <div class="social-links">
-                        <a href="https://www.linkedin.com/company/hwb-cleaning-services-llc/" target="_blank" class="social-icon"><i class="fa-brands fa-linkedin"></i></a>
-                        <a href="https://www.facebook.com/cleaningdfw" target="_blank" class="social-icon"><i class="fa-brands fa-facebook"></i></a>
-                        <a href="https://www.youtube.com/@hwbcleaning" target="_blank" class="social-icon"><i class="fa-brands fa-youtube"></i></a>
+                        <a href="https://www.linkedin.com/company/hwb-cleaning-services-llc/" target="_blank" rel="noopener noreferrer" aria-label="HWB Cleaning Services LLC on LinkedIn" class="social-icon"><i class="fa-brands fa-linkedin" aria-hidden="true"></i></a>
+                        <a href="https://www.facebook.com/cleaningdfw" target="_blank" rel="noopener noreferrer" aria-label="HWB Cleaning Services LLC on Facebook" class="social-icon"><i class="fa-brands fa-facebook" aria-hidden="true"></i></a>
+                        <a href="https://www.youtube.com/@hwbcleaning" target="_blank" rel="noopener noreferrer" aria-label="HWB Cleaning Services LLC on YouTube" class="social-icon"><i class="fa-brands fa-youtube" aria-hidden="true"></i></a>
                     </div>
                 </div>
 

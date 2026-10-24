@@ -212,6 +212,7 @@ def apply_application_security_headers(response):
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['X-Frame-Options'] = 'SAMEORIGIN'
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    response.headers['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()'
     response.headers['Content-Security-Policy'] = "default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval'; img-src 'self' https: data: blob:;"
     response.headers['Server'] = 'Cloudflare'
 
@@ -276,6 +277,36 @@ def apply_application_security_headers(response):
                         b'<script src="/static/js/sigma_input_masks.js" defer></script>\n</body>',
                         1,
                     )
+                    injected = True
+                if (
+                    b'id="hwb-cookie-banner"' not in body_bytes
+                    and not request.path.startswith(('/admin', '/api', '/sales-desk'))
+                ):
+                    cookie_banner_snippet = (
+                        b'<aside id="hwb-cookie-banner" class="sigma-consent-banner" '
+                        b'style="display:none;position:fixed;bottom:0;left:0;width:100%;background:#0f172a;color:#f8fafc;'
+                        b'padding:1rem 1.5rem;z-index:99999;box-shadow:0 -4px 20px rgba(0,0,0,0.3);'
+                        b'justify-content:space-between;align-items:center;gap:1rem;font-size:0.88rem;'
+                        b'border-top:1px solid rgba(255,255,255,0.1);box-sizing:border-box;" '
+                        b'role="dialog" aria-label="Cookie and Privacy Consent">'
+                        b'<div><strong>Privacy Choices:</strong> We use essential cookies to maintain system security. '
+                        b'You can accept optional analytics and session replay, or continue with essential cookies only.</div>'
+                        b'<div style="display:flex;align-items:center;gap:0.65rem;flex-shrink:0;">'
+                        b'<button type="button" onclick="acceptCookieConsent()" '
+                        b'style="padding:0.45rem 0.95rem;border-radius:4px;font-weight:700;font-size:0.8rem;cursor:pointer;border:none;background:#00796b;color:#ffffff;">Accept All</button>'
+                        b'<button type="button" onclick="declineCookieConsent()" '
+                        b'style="padding:0.45rem 0.95rem;border-radius:4px;font-weight:700;font-size:0.8rem;cursor:pointer;border:none;background:rgba(255,255,255,0.15);color:#f8fafc;">Essential Only</button>'
+                        b'<a href="/privacy-policy#opt-out" style="color:#94a3b8;text-decoration:underline;font-size:0.78rem;margin-left:0.35rem;">Do Not Sell My Info</a>'
+                        b'</div></aside>'
+                        b'<script>'
+                        b'if(typeof acceptCookieConsent!=="function"){'
+                        b'window.acceptCookieConsent=function(){localStorage.setItem("hwb_telemetry_consent","granted");var b=document.getElementById("hwb-cookie-banner");if(b)b.style.display="none";};'
+                        b'window.declineCookieConsent=function(){localStorage.setItem("hwb_telemetry_consent","declined");var b=document.getElementById("hwb-cookie-banner");if(b)b.style.display="none";};'
+                        b'document.addEventListener("DOMContentLoaded",function(){if(!localStorage.getItem("hwb_telemetry_consent")){var b=document.getElementById("hwb-cookie-banner");if(b)b.style.display="flex";}});'
+                        b'}'
+                        b'</script>\n</body>'
+                    )
+                    body_bytes = body_bytes.replace(b'</body>', cookie_banner_snippet, 1)
                     injected = True
                 if injected:
                     response.set_data(body_bytes)

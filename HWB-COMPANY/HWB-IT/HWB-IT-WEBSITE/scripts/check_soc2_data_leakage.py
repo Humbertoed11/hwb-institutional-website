@@ -82,6 +82,8 @@ def run_soc2_leakage_audit(test_app=None) -> Dict[str, Any]:
         ("/my-signature", "Executive Signature Vault"),
         ("/admin/operations", "Operations Command Center"),
         ("/admin/operations?view=gc_bids", "Bidding Pipeline Desk"),
+        ("/design-system", "Internal Design System Sandbox"),
+        ("/csi", "Internal CSI MasterFormat Map"),
     ]
 
     for url, desc in unauth_endpoints:

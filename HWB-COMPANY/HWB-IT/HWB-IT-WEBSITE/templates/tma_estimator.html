@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SigmaFidelity™ Scope & Pricing Configurator</title>
     <!-- Telegram WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -185,6 +185,7 @@
 </head>
 <body>
     <a href="#main-content" class="sigma-skip-link" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;">Skip to main content</a>
+    <main id="main-content" role="main">
     <div class="header">
         <h1>📐 Takeoff & Scope Configurator</h1>
         <p>HWB Cleaning Services LLC • SigmaFidelity™ Estimating Node</p>
@@ -209,7 +210,7 @@
 
     <!-- Facility Type & Margin -->
     <div class="card">
-        <div class="grid-2">
+        <div class="{% if current_user.is_authenticated %}grid-2{% endif %}">
             <div>
                 <div class="label-row"><span>Classification</span></div>
                 <select id="facilityType" onchange="calculate()" aria-label="Facility Classification Type">
@@ -219,6 +220,7 @@
                     <option value="retail">Retail / Showroom</option>
                 </select>
             </div>
+            {% if current_user.is_authenticated %}
             <div>
                 <div class="label-row">
                     <span>Target Margin</span>
@@ -226,6 +228,10 @@
                 </div>
                 <input type="range" id="marginSlider" min="20" max="50" step="1" value="35" oninput="calculate()" aria-label="Target Gross Margin Slider">
             </div>
+            {% else %}
+            <input type="hidden" id="marginSlider" value="35">
+            <span id="marginDisplay" style="display: none;">35%</span>
+            {% endif %}
         </div>
     </div>
 
@@ -366,7 +372,7 @@
             } else {
                 const refId = 'EST-' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '-' + String(sqft).slice(0, 4);
                 const activePhases = Object.entries(phases).filter(([_, v]) => v).map(([k]) => k.toUpperCase()).join(', ') || 'None';
-                lastTakeoffSummaryText = `HWB Takeoff Estimate (${refId})\nProject: ${project}\nFootprint: ${sqft.toLocaleString()} SF | Classification: ${facility.toUpperCase()}\nPhases: ${activePhases} | Est. Hours: ${hours} | Target Margin: ${margin}%\nBase Bid Valuation: ${total}`;
+                lastTakeoffSummaryText = `HWB Takeoff Estimate (${refId})\nProject: ${project}\nFootprint: ${sqft.toLocaleString()} SF | Classification: ${facility.toUpperCase()}\nPhases: ${activePhases} | Est. Hours: ${hours}\nBase Bid Valuation: ${total}`;
                 const refEl = document.getElementById('tma-receipt-ref');
                 const sumEl = document.getElementById('tma-receipt-summary');
                 const cardEl = document.getElementById('tma-receipt-card');
@@ -375,7 +381,7 @@
                     sumEl.innerHTML = `
                         <div><strong>Project:</strong> ${project}</div>
                         <div><strong>Cleanable Footprint:</strong> ${sqft.toLocaleString()} SF (${facility.toUpperCase()})</div>
-                        <div><strong>Active Phases:</strong> ${activePhases} &bull; <strong>Hours:</strong> ${hours} &bull; <strong>Margin:</strong> ${margin}%</div>
+                        <div><strong>Active Phases:</strong> ${activePhases} &bull; <strong>Hours:</strong> ${hours}</div>
                         <div style="margin-top: 4px; color: #38bdf8; font-weight: 800; font-size: 0.95rem;">Base Bid Valuation: ${total}</div>
                     `;
                 }
@@ -408,5 +414,6 @@
             window.Telegram.WebApp.expand();
         }
     </script>
+    </main>
 </body>
 </html>
