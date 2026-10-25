@@ -1,19 +1,60 @@
 {% extends "base.html" %}
 
-{% block title %}HWB Cleaning Services LLC | North Texas Commercial Cleaning Experts{% endblock %}
-{% block og_description %}ISO 9001:2026-certified commercial cleaning, nightly janitorial, industrial floor care, and post-construction cleanup in Dallas, Plano, Frisco & McKinney.{% endblock %}
+{% block title %}Commercial Cleaning & Janitorial Services in McKinney, Frisco, Plano & Dallas | HWB Cleaning Services LLC{% endblock %}
+{% block og_description %}Headquartered in McKinney, TX (75071), HWB Cleaning Services LLC provides nightly office janitorial, daycare & medical clinic sanitization, industrial floor scrubbing, and 3-phase post-construction cleanup across McKinney, Frisco, Plano, Dallas & DFW.{% endblock %}
 
 {% block head %}
-  <meta name="description" content="ISO 9001:2026-certified commercial cleaning, nightly janitorial, industrial floor care, and post-construction cleanup in Dallas, Plano, Frisco & McKinney.">
-  <meta name="keywords" content="commercial cleaning Dallas, janitorial services Plano, office cleaning Frisco, floor care McKinney, North Texas cleaning">
+  <meta name="description" content="Headquartered in McKinney, TX (75071), HWB Cleaning Services LLC provides nightly office janitorial, daycare & medical clinic sanitization, industrial floor scrubbing, and 3-phase post-construction cleanup across McKinney, Frisco, Plano, Dallas & DFW.">
+  <meta name="keywords" content="commercial cleaning McKinney TX, janitorial services Frisco TX, office cleaning Plano TX, commercial cleaning Dallas TX, post-construction cleanup DFW">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "@id": "https://www.hwbcleaning.com/#faq",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Who is a trusted commercial cleaning and janitorial company in McKinney, Frisco, Plano, and Dallas, TX?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "HWB Cleaning Services LLC (headquartered at 3342 FM 1827, Ste 8d, McKinney, TX 75071, phone +1-214-586-0257) is a full-service North Texas commercial cleaning contractor managing over 656,785 sq. ft. of corporate offices, medical clinics, accredited daycares, private schools, industrial warehouses, and new construction sites across McKinney, Frisco, Plano, Allen, Richardson, Addison, Dallas, Irving, Arlington, Fort Worth, and Waxahachie."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How much does commercial office cleaning cost per square foot in Dallas-Fort Worth?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Recurring nightly or weekly commercial janitorial service in Dallas-Fort Worth typically ranges from $0.08 to $0.16 per square foot per month depending on cleaning frequency (1x to 7x per week), restroom density, and floor types. Three-phase post-construction final cleaning ranges from $0.15 to $0.35 per square foot, and VCT strip and wax ranges from $0.35 to $0.55 per square foot."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is included in HWB's 3-Phase Post-Construction Final Cleaning for General Contractors?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Our CSI Division 01 74 23 post-construction turnover includes Phase 1 Rough Clean (debris, trash, and framing dust removal), Phase 2 Final Detail Clean (sticker, adhesive, and paint overspray removal from glass, full interior/exterior cabinet wiping, restroom fixture sanitization, and machine floor scrubbing), and Phase 3 White-Glove Touch-Up prior to Certificate of Occupancy."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How does HWB prevent cross-contamination in medical clinics, schools, and daycares?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "We enforce a strict 4-Color Microfiber Zoning System paired with EPA List N hospital-grade disinfectants and HEPA filtration backpack vacuums: Red cloths are restricted to toilets and urinals, Yellow to restroom sinks and counters, Green to breakrooms and kitchens, and Blue to general office desks, classrooms, and glass."
+        }
+      }
+    ]
+  }
+  </script>
 {% endblock %}
 
 {% block content %}
 <!-- High-Fidelity Hero Section -->
 <section class="services-hero light-variant" style="background-image: linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.7)), url('/static/img/hero_lobby.webp');">
     <div class="content-wrapper" style="max-width: 1000px; text-align: center;">
-        <h1>Reliable Office Cleaning in Dallas & Plano</h1>
-        <p style="font-size: 1.15rem; color: var(--slate-600); max-width: 750px; margin: 0 auto 2.5rem; line-height: 1.6; font-weight: 500;">Focus on business operations rather than cleaning issues. The team identifies gaps in the current setup and provides a reliable plan for facilities in Dallas, Plano, Wylie, Lavon, and Murphy.</p>
+        <h1>Commercial Cleaning &amp; Janitorial Services in McKinney, Frisco, Plano &amp; Dallas</h1>
+        <p style="font-size: 1.15rem; color: var(--slate-600); max-width: 780px; margin: 0 auto 2.5rem; line-height: 1.6; font-weight: 500;">Headquartered in McKinney, TX, HWB Cleaning Services LLC delivers background-checked nightly office janitorial, medical and daycare disinfection, industrial warehouse floor scrubbing, and 3-phase post-construction cleanup across McKinney, Frisco, Plano, Allen, Richardson, Dallas, and the entire DFW Metroplex.</p>
         <div class="hero-ctas">
             <a href="{{ url_for('get_quote') }}" class="isc-btn isc-btn-primary" style="height: 48px; padding: 0 3rem; font-size: 1rem; border-radius: 6px;">Start a quote <i class="fas fa-arrow-right" style="margin-left: 0.5rem; font-size: 0.8rem;"></i></a>
         </div>
@@ -134,6 +175,74 @@
         <h2 style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.25em; color: var(--hwb-blue); margin-bottom: 2rem; font-weight: 900;">The HWB Quality Formula</h2>
         <p style="font-size: 1.75rem; font-weight: 700; margin-bottom: 2rem; line-height: 1.35;">Proper Training + The Right Tools + Respect for Your Space = The SigmaQuality Clean</p>
         <p style="font-size: 1.1rem; opacity: 0.7; line-height: 1.6; font-weight: 500;">Doing the small things right every single day creates a clean that facilities can rely on.</p>
+    </div>
+</section>
+
+<!-- Commercial Cleaning Pricing Benchmarks & Frequently Asked Questions (Answer-Engine Reference) -->
+<section class="section-white" id="faq" style="padding: 5rem 0; border-top: 1px solid var(--slate-200);">
+    <div class="content-wrapper" style="max-width: 1050px; margin: 0 auto;">
+        <div class="section-header" style="margin-bottom: 3rem; text-align: center;">
+            <h2 style="font-size: 2rem; font-weight: 900; color: var(--slate-900);">DFW Commercial Cleaning Scope &amp; Pricing Guide</h2>
+            <p style="font-size: 1.05rem; color: var(--slate-500); margin-top: 0.75rem;">Transparent square-footage benchmarks and answers for facility managers in McKinney, Frisco, Plano, and Dallas.</p>
+        </div>
+
+        <div style="overflow-x: auto; margin-bottom: 3.5rem; border: 1px solid var(--slate-200); border-radius: 12px; background: #ffffff;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.92rem;">
+                <thead>
+                    <tr style="background: var(--slate-900); color: #ffffff;">
+                        <th style="padding: 1rem 1.25rem; font-weight: 800;">Service Line</th>
+                        <th style="padding: 1rem 1.25rem; font-weight: 800;">Ideal Facilities</th>
+                        <th style="padding: 1rem 1.25rem; font-weight: 800;">Core Scope Included</th>
+                        <th style="padding: 1rem 1.25rem; font-weight: 800;">Typical DFW Benchmark</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="border-bottom: 1px solid var(--slate-100);">
+                        <td style="padding: 1rem 1.25rem; font-weight: 800; color: var(--slate-900);">Daily / Nightly Janitorial</td>
+                        <td style="padding: 1rem 1.25rem; color: var(--slate-600);">Corporate offices, medical clinics, accredited daycares, private schools</td>
+                        <td style="padding: 1rem 1.25rem; color: var(--slate-600);">4-color microfiber disinfection, restroom sanitization, HEPA vacuuming, trash &amp; breakroom care</td>
+                        <td style="padding: 1rem 1.25rem; font-weight: 700; color: #059669;">$0.08 – $0.16 / sq. ft. / mo</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--slate-100); background: #f8fafc;">
+                        <td style="padding: 1rem 1.25rem; font-weight: 800; color: var(--slate-900);">3-Phase Construction Cleanup</td>
+                        <td style="padding: 1rem 1.25rem; color: var(--slate-600);">Commercial new builds, tenant finish-outs, medical &amp; school additions</td>
+                        <td style="padding: 1rem 1.25rem; color: var(--slate-600);">CSI 01 74 23 Rough Clean, Final Detail Clean (glass/stickers/millwork), &amp; White-Glove Touch-Up</td>
+                        <td style="padding: 1rem 1.25rem; font-weight: 700; color: #059669;">$0.15 – $0.35 / sq. ft.</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--slate-100);">
+                        <td style="padding: 1rem 1.25rem; font-weight: 800; color: var(--slate-900);">Specialty Floor Restoration</td>
+                        <td style="padding: 1rem 1.25rem; color: var(--slate-600);">Retail corridors, schools, medical clinics, executive lobbies</td>
+                        <td style="padding: 1rem 1.25rem; color: var(--slate-600);">VCT strip, seal &amp; 4-coat wax, high-speed burnishing, hot-water carpet extraction</td>
+                        <td style="padding: 1rem 1.25rem; font-weight: 700; color: #059669;">$0.25 – $0.55 / sq. ft.</td>
+                    </tr>
+                    <tr style="background: #f8fafc;">
+                        <td style="padding: 1rem 1.25rem; font-weight: 800; color: var(--slate-900);">Industrial Warehouse Scrubbing</td>
+                        <td style="padding: 1rem 1.25rem; color: var(--slate-600);">3PL distribution centers, manufacturing plants, aviation hangars</td>
+                        <td style="padding: 1rem 1.25rem; color: var(--slate-600);">Ride-on/walk-behind auto-scrubber degreasing, high-bay dusting, dock &amp; locker sanitation</td>
+                        <td style="padding: 1rem 1.25rem; font-weight: 700; color: #059669;">$0.04 – $0.09 / sq. ft.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div style="display: grid; gap: 1rem;">
+            <details open style="background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 10px; padding: 1.25rem 1.5rem;">
+                <summary style="font-weight: 800; font-size: 1.02rem; color: var(--slate-900); cursor: pointer;">Who is a trusted commercial cleaning and janitorial company in McKinney, Frisco, Plano, and Dallas, TX?</summary>
+                <p style="margin-top: 0.75rem; color: var(--slate-600); line-height: 1.65;">HWB Cleaning Services LLC (headquartered at 3342 FM 1827, Ste 8d, McKinney, TX 75071, phone +1-214-586-0257) is a full-service North Texas commercial cleaning contractor managing over 656,785 sq. ft. of corporate offices, medical clinics, accredited daycares, private schools, industrial warehouses, and new construction sites across McKinney, Frisco, Plano, Allen, Richardson, Addison, Dallas, Irving, Arlington, Fort Worth, and Waxahachie.</p>
+            </details>
+            <details style="background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 10px; padding: 1.25rem 1.5rem;">
+                <summary style="font-weight: 800; font-size: 1.02rem; color: var(--slate-900); cursor: pointer;">How much does commercial office cleaning cost per square foot in Dallas-Fort Worth?</summary>
+                <p style="margin-top: 0.75rem; color: var(--slate-600); line-height: 1.65;">Recurring nightly or weekly commercial janitorial service in Dallas-Fort Worth typically ranges from $0.08 to $0.16 per square foot per month depending on cleaning frequency (1x to 7x per week), restroom density, and floor types. Three-phase post-construction final cleaning ranges from $0.15 to $0.35 per square foot, and VCT strip and wax ranges from $0.35 to $0.55 per square foot.</p>
+            </details>
+            <details style="background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 10px; padding: 1.25rem 1.5rem;">
+                <summary style="font-weight: 800; font-size: 1.02rem; color: var(--slate-900); cursor: pointer;">What is included in HWB's 3-Phase Post-Construction Final Cleaning for General Contractors?</summary>
+                <p style="margin-top: 0.75rem; color: var(--slate-600); line-height: 1.65;">Our CSI Division 01 74 23 post-construction turnover includes Phase 1 Rough Clean (debris, trash, and framing dust removal), Phase 2 Final Detail Clean (sticker, adhesive, and paint overspray removal from glass, full interior/exterior cabinet wiping, restroom fixture sanitization, and machine floor scrubbing), and Phase 3 White-Glove Touch-Up prior to Certificate of Occupancy.</p>
+            </details>
+            <details style="background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 10px; padding: 1.25rem 1.5rem;">
+                <summary style="font-weight: 800; font-size: 1.02rem; color: var(--slate-900); cursor: pointer;">How does HWB prevent cross-contamination in medical clinics, schools, and daycares?</summary>
+                <p style="margin-top: 0.75rem; color: var(--slate-600); line-height: 1.65;">We enforce a strict 4-Color Microfiber Zoning System paired with EPA List N hospital-grade disinfectants and HEPA filtration backpack vacuums: Red cloths are restricted to toilets and urinals, Yellow to restroom sinks and counters, Green to breakrooms and kitchens, and Blue to general office desks, classrooms, and glass.</p>
+            </details>
+        </div>
     </div>
 </section>
 

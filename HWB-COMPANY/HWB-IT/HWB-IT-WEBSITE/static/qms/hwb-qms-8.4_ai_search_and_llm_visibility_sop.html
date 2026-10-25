@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HWB-QMS-8.4 AI Search, LLM Visibility & Generative Engine Optimization (GEO) SOP</title>
+    <link rel="stylesheet" href="/static/css/qms_shared.css">
+    <style>
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #f8fafc; color: #0f172a; margin: 0; padding: 2rem; line-height: 1.65; }
+        .sop-shell { max-width: 1080px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 2.5rem; box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05); }
+        h1 { font-size: 1.85rem; font-weight: 900; color: #0f172a; margin-top: 0; }
+        h2 { font-size: 1.3rem; font-weight: 800; color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-top: 2.25rem; }
+        .meta-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; background: #f1f5f9; padding: 1rem 1.25rem; border-radius: 8px; margin-bottom: 2rem; font-size: 0.85rem; }
+        table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; font-size: 0.9rem; }
+        th, td { border: 1px solid #cbd5e1; padding: 0.75rem 1rem; text-align: left; }
+        th { background: #0f172a; color: #ffffff; font-weight: 700; }
+    </style>
+</head>
+<body>
+<div class="sop-shell">
+    <h1>HWB-QMS-8.4: AI Search, LLM Visibility &amp; Generative Engine Optimization (GEO) SOP</h1>
+    <div class="meta-grid">
+        <div><strong>Document Code:</strong> HWB-QMS-8.4</div>
+        <div><strong>Version:</strong> v2.0.0 (BUG-151)</div>
+        <div><strong>Effective Date:</strong> 10/24/2026</div>
+        <div><strong>Approval Authority:</strong> Humberto Dominguez (CEO)</div>
+    </div>
+
+    <h2>1. Purpose &amp; Operational Scope</h2>
+    <p>This Standard Operating Procedure defines the technical and off-site citation standards required so that <strong>HWB Cleaning Services LLC</strong> (headquartered at 3342 FM 1827, Ste 8d, McKinney, TX 75071) is consistently indexed, cited, and recommended by AI search and answer engines—including OpenAI ChatGPT Search (<code>OAI-SearchBot</code> / <code>ChatGPT-User</code>), Perplexity (<code>PerplexityBot</code>), Anthropic Claude (<code>ClaudeBot</code>), Google AI Overviews (<code>Google-Extended</code>), and Microsoft Bing (<code>bingbot</code> / <code>IndexNow</code>)—across all 11 North Texas commercial corridors.</p>
+
+    <h2>2. End-to-End AI Retrieval &amp; Citation Architecture</h2>
+    <div class="mermaid">
+flowchart LR
+    A["Public Web Surface\nwww.hwbcleaning.com"] --> B["/llms.txt & /llms-full.txt\nMarkdown AI Fact Sheets"]
+    A --> C["1:1 Visible-to-JSON-LD\nFAQPage & OfferCatalog Schema"]
+    A --> D["IndexNow Push Engine\napi.indexnow.org"]
+    B --> E["AI Search Crawlers\nOAI-SearchBot / PerplexityBot / ClaudeBot"]
+    C --> E
+    D --> F["Microsoft Bing Index &\nBing Places Knowledge Graph"]
+    F --> E
+    E --> G["PostgreSQL 16.15\nSecurityAuditLogs AI_CRAWLER_TELEMETRY"]
+    </div>
+
+    <h2>3. Mandatory On-Site GEO Technical Controls (8 Pillars)</h2>
+    <ol>
+        <li><strong>Machine-Readable AI Manifests (<code>/llms.txt</code> &amp; <code>/llms-full.txt</code>):</strong> The application serves structured Markdown fact sheets at the root domain detailing HWB's McKinney headquarters, phone number, NAICS <code>561720</code> and CSI <code>01 74 23</code> codes, square-footage pricing benchmarks, 11 DFW cities and ZIP codes, and OSHA <code>0.00 TRIR</code> safety record.</li>
+        <li><strong>AI Crawler <code>robots.txt</code> Permissions:</strong> <code>/static/robots.txt</code> explicitly permits <code>OAI-SearchBot</code>, <code>ChatGPT-User</code>, <code>GPTBot</code>, <code>PerplexityBot</code>, <code>ClaudeBot</code>, <code>Google-Extended</code>, <code>Applebot-Extended</code>, and <code>bingbot</code> across all public service, city, and safety pages (including <code>/compliance</code> and <code>/ehsq</code>).</li>
+        <li><strong>1:1 Visible-to-JSON-LD FAQ Parity:</strong> Every <code>FAQPage</code> JSON-LD block on <code>/</code>, <code>/services/*</code>, and <code>/locations/*</code> must match visible HTML <code>&lt;details&gt;</code> FAQ accordions rendered on the same page. Global invisible duplicate <code>FAQPage</code> markup in <code>base.html</code> is prohibited.</li>
+        <li><strong>High-Information-Gain City &amp; Service Pages:</strong> All 11 city pages (<code>McKinney</code>, <code>Frisco</code>, <code>Plano</code>, <code>Dallas</code>, <code>Allen</code>, <code>Richardson</code>, <code>Addison</code>, <code>Irving</code>, <code>Fort Worth</code>, <code>Arlington</code>, <code>Waxahachie</code>) must display unique commercial corridors, ZIP codes, and city-specific FAQs.</li>
+        <li><strong>Instant IndexNow Submission &amp; PostgreSQL AI Bot Telemetry:</strong> All 32 canonical URLs in <code>sitemap.xml</code> are pushed via <code>scripts/push_indexnow.py</code>, and every incoming AI bot request is logged in PostgreSQL 16.15 <code>"SecurityAuditLogs"</code> under <code>AI_CRAWLER_TELEMETRY</code>.</li>
+    </ol>
+
+    <h2>4. Canonical Off-Site Entity &amp; Directory Registration Sheet (NAP Standard)</h2>
+    <p>Because ChatGPT Search and Perplexity cross-verify local contractors against third-party directories (especially <strong>Bing Places for Business</strong>, <strong>Yelp</strong>, and the <strong>Better Business Bureau</strong>), all external profiles must match the following exact NAP (Name, Address, Phone) specification character-for-character:</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Field</th>
+                <th>Exact Canonical Value</th>
+                <th>Priority External Directories for LLM Consensus</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Legal Business Name</strong></td>
+                <td>HWB Cleaning Services LLC</td>
+                <td>1. Bing Places for Business (<code>bingplaces.com</code> — Import directly from Google Business Profile)<br>2. Google Business Profile (<code>cid=4883166476987591300</code>)</td>
+            </tr>
+            <tr>
+                <td><strong>Headquarters Address</strong></td>
+                <td>3342 FM 1827, Ste 8d, McKinney, TX 75071</td>
+                <td>3. Yelp for Business (Commercial Cleaning / Janitorial Services)<br>4. Better Business Bureau (BBB North Central Texas)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary Telephone</strong></td>
+                <td>(214) 586-0257</td>
+                <td>5. Apple Business Connect (Powers Siri / Apple Intelligence)<br>6. McKinney, Frisco &amp; Plano Chambers of Commerce</td>
+            </tr>
+            <tr>
+                <td><strong>Canonical Website</strong></td>
+                <td>https://www.hwbcleaning.com</td>
+                <td>7. Clutch.co / Expertise.com / ISSA Member Directory / Texas CMBL</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

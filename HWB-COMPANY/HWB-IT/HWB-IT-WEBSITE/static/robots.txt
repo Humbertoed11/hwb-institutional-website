@@ -1,9 +1,74 @@
 User-agent: *
 Allow: /
+Allow: /llms.txt
+Allow: /llms-full.txt
+Allow: /compliance
+Allow: /ehsq
+Allow: /capability-statement
+Allow: /prequal
+Allow: /trust-center
 Disallow: /admin/
 Disallow: /login
-Disallow: /compliance
-Disallow: /ehsq
+Disallow: /forgot-password
+Disallow: /reset-password/
 Disallow: /portal/
+Disallow: /onboard/
+Disallow: /api/
+
+User-agent: OAI-SearchBot
+Allow: /
+Disallow: /admin/
+Disallow: /login
+Disallow: /portal/
+Disallow: /onboard/
+
+User-agent: ChatGPT-User
+Allow: /
+Disallow: /admin/
+Disallow: /login
+Disallow: /portal/
+Disallow: /onboard/
+
+User-agent: GPTBot
+Allow: /
+Disallow: /admin/
+Disallow: /login
+Disallow: /portal/
+Disallow: /onboard/
+
+User-agent: PerplexityBot
+Allow: /
+Disallow: /admin/
+Disallow: /login
+Disallow: /portal/
+Disallow: /onboard/
+
+User-agent: ClaudeBot
+Allow: /
+Disallow: /admin/
+Disallow: /login
+Disallow: /portal/
+Disallow: /onboard/
+
+User-agent: Google-Extended
+Allow: /
+Disallow: /admin/
+Disallow: /login
+Disallow: /portal/
+Disallow: /onboard/
+
+User-agent: Applebot-Extended
+Allow: /
+Disallow: /admin/
+Disallow: /login
+Disallow: /portal/
+Disallow: /onboard/
+
+User-agent: bingbot
+Allow: /
+Disallow: /admin/
+Disallow: /login
+Disallow: /portal/
+Disallow: /onboard/
 
 Sitemap: https://www.hwbcleaning.com/sitemap.xml

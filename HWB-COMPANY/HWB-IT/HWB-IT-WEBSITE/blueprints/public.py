@@ -25,82 +25,269 @@ from core.services.security_logger import log_security_event, extract_client_ip
 public_bp = Blueprint('public', __name__)
 
 LOCATIONS_DATA = {
-    'dallas': {
-        'name': 'Dallas',
-        'title': 'Commercial Cleaning & Janitorial Services in Dallas | HWB Cleaning',
-        'h1': 'Commercial Cleaning & Janitorial Services in Dallas',
-        'meta_desc': 'HWB Cleaning Services LLC provides OSHA-compliant commercial cleaning and janitorial services in Dallas, TX. Request a custom quote today.',
-        'desc': 'Focus on business operations rather than cleaning issues. The team identifies gaps in current setups and provides reliable plans for facilities in Dallas and surrounding Dallas County corridors.'
-    },
-    'plano': {
-        'name': 'Plano',
-        'title': 'Commercial Cleaning & Janitorial Services in Plano | HWB Cleaning',
-        'h1': 'Commercial Cleaning & Janitorial Services in Plano',
-        'meta_desc': 'HWB Cleaning Services LLC provides OSHA-compliant commercial cleaning and janitorial services in Plano, TX. Request a custom quote today.',
-        'desc': 'Focus on business operations rather than cleaning issues. The team identifies gaps in current setups and provides reliable plans for facilities in Plano, Legacy West, and Collin County corridors.'
-    },
-    'fort-worth': {
-        'name': 'Fort Worth',
-        'title': 'Commercial Cleaning & Janitorial Services in Fort Worth | HWB Cleaning',
-        'h1': 'Commercial Cleaning & Janitorial Services in Fort Worth',
-        'meta_desc': 'HWB Cleaning Services LLC provides OSHA-compliant commercial cleaning and janitorial services in Fort Worth, TX. Request a custom quote today.',
-        'desc': 'Focus on business operations rather than cleaning issues. The team identifies gaps in current setups and provides reliable plans for facilities in Fort Worth and surrounding Tarrant County corridors.'
-    },
-    'waxahachie': {
-        'name': 'Waxahachie',
-        'title': 'Commercial Cleaning & Janitorial Services in Waxahachie | HWB Cleaning',
-        'h1': 'Commercial Cleaning & Janitorial Services in Waxahachie',
-        'meta_desc': 'HWB Cleaning Services LLC provides OSHA-compliant commercial cleaning and janitorial services in Waxahachie, TX. Request a custom quote today.',
-        'desc': 'Focus on business operations rather than cleaning issues. The team identifies gaps in current setups and provides reliable plans for facilities in Waxahachie and surrounding Ellis County corridors.'
+    'mckinney': {
+        'name': 'McKinney',
+        'county': 'Collin County',
+        'zip_codes': ['75069', '75070', '75071', '75072'],
+        'corridors': ['Craig Ranch Corporate Center', 'SH-121 Sam Rayburn Tollway', 'US-75 Central Expressway', 'Historic Downtown McKinney', 'McKinney National Airport Industrial Park'],
+        'title': 'Commercial Cleaning & Janitorial Services in McKinney, TX | HWB Cleaning',
+        'h1': 'Commercial Cleaning & Janitorial Services in McKinney, TX',
+        'meta_desc': 'Headquartered in McKinney, TX (75071), HWB Cleaning Services LLC provides nightly office janitorial, daycare sanitization, floor waxing, and 3-phase post-construction cleanup across Collin County.',
+        'desc': 'Headquartered at 3342 FM 1827 Ste 8d in McKinney, HWB Cleaning Services LLC delivers rapid local supervisor dispatch, nightly commercial janitorial, medical clinic disinfection, and 3-phase post-construction cleanup across Craig Ranch, SH-121, US-75, and McKinney industrial parks.',
+        'faqs': [
+            {
+                'q': 'Where is HWB Cleaning Services LLC headquartered in McKinney, TX?',
+                'a': 'HWB Cleaning Services LLC is headquartered locally at 3342 FM 1827, Ste 8d, McKinney, TX 75071 (phone +1-214-586-0257). Because our operations hub is in McKinney, our field supervisors reach commercial buildings in 75069, 75070, 75071, and 75072 in under 30 minutes.'
+            },
+            {
+                'q': 'What types of commercial buildings does HWB clean in McKinney?',
+                'a': 'We clean corporate offices in Craig Ranch, medical and dental clinics along SH-121 and Eldorado Parkway, accredited child care centers and private schools, industrial warehouses near McKinney National Airport, and new commercial construction projects.'
+            },
+            {
+                'q': 'How much does commercial office cleaning cost in McKinney, TX?',
+                'a': 'Recurring nightly or weekly office janitorial service in McKinney typically ranges from $0.08 to $0.16 per square foot per month depending on cleaning frequency (1x to 7x per week) and restroom density. Post-construction final cleaning ranges from $0.15 to $0.35 per square foot.'
+            }
+        ]
     },
     'frisco': {
         'name': 'Frisco',
-        'title': 'Commercial Cleaning & Janitorial Services in Frisco | HWB Cleaning',
-        'h1': 'Commercial Cleaning & Janitorial Services in Frisco',
-        'meta_desc': 'HWB Cleaning Services LLC provides OSHA-compliant commercial cleaning and janitorial services in Frisco, TX. Request a custom quote today.',
-        'desc': 'Focus on business operations rather than cleaning issues. The team identifies gaps in current setups and provides reliable plans for facilities in Frisco and surrounding Collin County corridors.'
+        'county': 'Collin & Denton Counties',
+        'zip_codes': ['75033', '75034', '75035', '75036'],
+        'corridors': ['Hall Park', 'The Star & Frisco Station', 'Dallas North Tollway Corridor', 'PGA Parkway & Fields', 'SH-121 & Stonebriar District'],
+        'title': 'Commercial Cleaning & Janitorial Services in Frisco, TX | HWB Cleaning',
+        'h1': 'Commercial Cleaning & Janitorial Services in Frisco, TX',
+        'meta_desc': 'Reliable commercial office cleaning, medical clinic sanitization, daycare cleaning, and post-construction cleanup in Frisco, TX (Hall Park, The Star & DNT). Request a quote.',
+        'desc': 'Supporting fast-growing corporate campuses in Hall Park and Frisco Station, medical offices along the Dallas North Tollway, private academies, and new retail build-outs near PGA Parkway with background-checked nightly crews and day porters.',
+        'faqs': [
+            {
+                'q': 'Do you provide commercial cleaning for Hall Park and Dallas North Tollway offices in Frisco?',
+                'a': 'Yes. HWB Cleaning Services LLC provides nightly janitorial, day porter staffing, carpet extraction, and hard-floor care for Class-A office suites, medical plazas, and corporate campuses throughout Hall Park, Frisco Station, Stonebriar, and the Dallas North Tollway corridor (75034, 75035).'
+            },
+            {
+                'q': 'Does HWB handle 3-phase post-construction cleanup for new builds in Frisco, TX?',
+                'a': 'Yes. Our OSHA-10/30 trained construction cleaning crews execute CSI Division 01 74 23 Rough Clean, Final Detail Clean, and White-Glove Touch-Up for General Contractors building medical offices, schools, retail centers, and corporate finish-outs across Frisco.'
+            },
+            {
+                'q': 'Are HWB cleaning crews background-checked for Frisco schools and medical clinics?',
+                'a': 'Every technician is vetted, badged, and trained in our 4-color microfiber cross-contamination prevention system and EPA List N hospital-grade disinfection protocols suitable for Frisco pediatric clinics, dental offices, and private schools.'
+            }
+        ]
     },
-    'mckinney': {
-        'name': 'McKinney',
-        'title': 'Commercial Cleaning & Janitorial Services in McKinney | HWB Cleaning',
-        'h1': 'Commercial Cleaning & Janitorial Services in McKinney',
-        'meta_desc': 'HWB Cleaning Services LLC provides OSHA-compliant commercial cleaning and janitorial services in McKinney, TX. Request a custom quote today.',
-        'desc': 'Focus on business operations rather than cleaning issues. The team identifies gaps in current setups and provides reliable plans for facilities in McKinney and surrounding North Texas corridors.'
+    'plano': {
+        'name': 'Plano',
+        'county': 'Collin County',
+        'zip_codes': ['75023', '75024', '75025', '75074', '75075', '75093'],
+        'corridors': ['Legacy West & Legacy Town Center', 'Granite Park', 'President George Bush Turnpike (PGBT)', 'US-75 Central Expressway', 'East Plano Industrial & Research District'],
+        'title': 'Commercial Cleaning & Janitorial Services in Plano, TX | HWB Cleaning',
+        'h1': 'Commercial Cleaning & Janitorial Services in Plano, TX',
+        'meta_desc': 'Commercial office cleaning, corporate day porters, VCT floor care, and post-construction cleanup in Plano, TX (Legacy West, Granite Park & US-75). Get a custom quote.',
+        'desc': 'Delivering enterprise-grade nightly janitorial, day porter coverage, and specialty floor restoration for corporate headquarters in Legacy West and Granite Park, medical plazas along Preston Road, and light industrial facilities in East Plano.',
+        'faqs': [
+            {
+                'q': 'Which Plano commercial districts does HWB Cleaning Services LLC cover?',
+                'a': 'We serve all of Plano including Legacy West, Granite Park, Legacy Business Park (75024, 75093), Central Plano along Preston Road and Coit Road (75023, 75025, 75075), and East Plano technology and industrial corridors along US-75 and Plano Parkway (75074).'
+            },
+            {
+                'q': 'Can HWB provide both daytime porters and nightly janitorial crews for Plano office buildings?',
+                'a': 'Yes. We staff uniformed Day Porters for high-traffic lobbies, restrooms, and conference room resets during business hours, paired with after-hours Night Crews for full trash removal, HEPA vacuuming, and clinical restroom sanitization.'
+            },
+            {
+                'q': 'What specialty floor care services are available in Plano, TX?',
+                'a': 'We provide VCT tile stripping, sealing, and 4-coat waxing, high-speed burnishing, natural stone and terrazzo polishing, ceramic tile and grout scrubbing, and commercial hot-water carpet extraction.'
+            }
+        ]
+    },
+    'dallas': {
+        'name': 'Dallas',
+        'county': 'Dallas County',
+        'zip_codes': ['75201', '75202', '75204', '75207', '75219', '75234', '75240', '75243', '75247', '75287'],
+        'corridors': ['Downtown & Uptown Dallas', 'Stemmons Corridor & Design District', 'Southwestern Medical District', 'LBJ Freeway (I-635) & Galleria', 'North Central Expressway (US-75)'],
+        'title': 'Commercial Cleaning & Janitorial Services in Dallas, TX | HWB Cleaning',
+        'h1': 'Commercial Cleaning & Janitorial Services in Dallas, TX',
+        'meta_desc': 'OSHA-compliant commercial cleaning, nightly office janitorial, warehouse floor scrubbing, and 3-phase post-construction cleanup in Dallas, TX. Request a quote.',
+        'desc': 'Serving multi-tenant office towers, medical clinics, private schools, and distribution centers across Downtown and Uptown Dallas, the Stemmons Corridor, the Medical District, LBJ Freeway, and North Dallas with verifiable checklists and insured crews.',
+        'faqs': [
+            {
+                'q': 'What areas of Dallas does HWB Cleaning Services LLC cover?',
+                'a': 'We cover Downtown Dallas (75201, 75202), Uptown and Oak Lawn (75204, 75219), the Stemmons Corridor and Design District (75207, 75247), North Dallas and LBJ Freeway (75234, 75240, 75243, 75287), and industrial corridors throughout Dallas County.'
+            },
+            {
+                'q': 'Does HWB provide commercial post-construction final cleaning in Dallas?',
+                'a': 'Yes. We partner with commercial General Contractors across Dallas for CSI Division 01 74 23 three-phase construction cleanup—Phase 1 Rough Clean, Phase 2 Final Detail Clean, and Phase 3 White-Glove Touch-Up prior to tenant occupancy.'
+            },
+            {
+                'q': 'How quickly can HWB prepare a commercial cleaning quote in Dallas?',
+                'a': 'Our online calculator at hwbcleaning.com/get-quote generates an instant square-footage estimate in under 60 seconds, and our estimating team completes on-site walkthroughs and formal written proposals within 24 hours.'
+            }
+        ]
+    },
+    'fort-worth': {
+        'name': 'Fort Worth',
+        'county': 'Tarrant County',
+        'zip_codes': ['76102', '76104', '76107', '76116', '76155', '76177'],
+        'corridors': ['Downtown Fort Worth & Sundance Square', 'AllianceTexas & I-35W Logistics Corridor', 'Near Southside Medical District', 'Centreport Business Park', 'Cultural District & West 7th'],
+        'title': 'Commercial & Industrial Cleaning Services in Fort Worth, TX | HWB Cleaning',
+        'h1': 'Commercial & Industrial Cleaning Services in Fort Worth, TX',
+        'meta_desc': 'Industrial warehouse floor scrubbing, nightly commercial janitorial, and 3-phase post-construction cleanup in Fort Worth and AllianceTexas, TX. Request a quote.',
+        'desc': 'Built for Fort Worth commercial offices, Near Southside medical facilities, Centreport corporate hubs, and heavy-duty 3PL logistics centers along the AllianceTexas I-35W industrial corridor.',
+        'faqs': [
+            {
+                'q': 'Do you provide industrial warehouse floor scrubbing in AllianceTexas and Fort Worth?',
+                'a': 'Yes. HWB deploys heavy-duty auto-scrubbers and OSHA-certified crews for concrete floor degreasing, dock bay sweeping, high-bay dusting, and 24/7 restroom sanitation across AllianceTexas (76177), Centreport (76155), and Fort Worth industrial parks.'
+            },
+            {
+                'q': 'Can HWB service medical offices in the Fort Worth Near Southside Medical District?',
+                'a': 'Yes. Our crews use EPA List N hospital-grade disinfectants, HEPA filtration vacuums, and 4-color microfiber zoning for medical clinics, surgical centers, and professional offices in 76104 and Downtown Fort Worth (76102).'
+            },
+            {
+                'q': 'Do you offer post-construction cleanup for new commercial buildings in Tarrant County?',
+                'a': 'Yes. We execute 3-phase Rough, Final, and Touch-Up construction cleaning for commercial, retail, industrial, and institutional projects across Fort Worth and Tarrant County.'
+            }
+        ]
+    },
+    'waxahachie': {
+        'name': 'Waxahachie',
+        'county': 'Ellis County',
+        'zip_codes': ['75165', '75167'],
+        'corridors': ['I-35E Industrial & Manufacturing Corridor', 'US-287 Commercial & Logistics Hub', 'Downtown Waxahachie & Civic Center', 'Northgate Business Park'],
+        'title': 'Commercial & Industrial Cleaning Services in Waxahachie, TX | HWB Cleaning',
+        'h1': 'Commercial & Industrial Cleaning Services in Waxahachie, TX',
+        'meta_desc': 'Reliable commercial janitorial, manufacturing plant sanitation, and post-construction cleanup in Waxahachie and Ellis County, TX. Request a custom quote today.',
+        'desc': 'Delivering dependable nightly office janitorial, industrial plant restroom and breakroom sanitation, VCT floor waxing, and post-construction cleanup along the I-35E and US-287 corridors in Waxahachie and Ellis County.',
+        'faqs': [
+            {
+                'q': 'What types of facilities does HWB clean in Waxahachie and Ellis County?',
+                'a': 'We service manufacturing and distribution facilities along I-35E and US-287, medical and dental offices, private schools and daycares, banks, and municipal/commercial office buildings in Waxahachie (75165).'
+            },
+            {
+                'q': 'Does HWB provide industrial floor scrubbing and VCT waxing in Waxahachie?',
+                'a': 'Yes. We provide machine auto-scrubbing for warehouse concrete floors as well as VCT strip, seal, and wax services for commercial lobbies, breakrooms, and corridors in Ellis County.'
+            },
+            {
+                'q': 'How do I schedule a site walkthrough in Waxahachie?',
+                'a': 'Submit your building square footage at hwbcleaning.com/get-quote or call (214) 586-0257 to schedule a complimentary on-site scope walkthrough.'
+            }
+        ]
     },
     'irving': {
         'name': 'Irving',
+        'county': 'Dallas County',
+        'zip_codes': ['75038', '75039', '75061', '75062', '75063'],
+        'corridors': ['Las Colinas Urban Center', 'DFW Airport Freeport Logistics Corridor', 'SH-114 & John Carpenter Freeway', 'Royal Lane & Valley Ranch', 'SH-183 Commercial Corridor'],
         'title': 'Commercial Cleaning & Janitorial Services in Irving & Las Colinas | HWB Cleaning',
         'h1': 'Commercial Cleaning & Janitorial Services in Irving & Las Colinas',
         'meta_desc': 'ISO 9001:2026 & OSHA-compliant commercial cleaning, corporate janitorial, and post-construction cleanup in Irving and Las Colinas, TX. Get a quote today.',
-        'desc': 'Delivering clinical-grade nightly janitorial, day porter staffing, and specialty floor care for corporate headquarters, medical plazas, and logistics hubs across Irving, Las Colinas, and DFW Airport corridors.'
+        'desc': 'Delivering clinical-grade nightly janitorial, day porter staffing, and specialty floor care for corporate headquarters, medical plazas, and logistics hubs across Irving, Las Colinas, and DFW Airport corridors.',
+        'faqs': [
+            {
+                'q': 'Do you service corporate offices in Las Colinas and Valley Ranch?',
+                'a': 'Yes. HWB Cleaning Services LLC provides nightly janitorial, executive restroom detailing, day porter services, and carpet care for corporate offices across Las Colinas (75038, 75039) and Valley Ranch (75063).'
+            },
+            {
+                'q': 'Does HWB clean airfreight and logistics warehouses near DFW Airport in Irving?',
+                'a': 'Yes. We provide industrial concrete scrubbing, breakroom/locker room sanitization, and 24/7 shift janitorial for logistics and distribution centers along the Freeport Parkway and SH-114/SH-161 corridors.'
+            },
+            {
+                'q': 'Can HWB provide Certificate of Insurance (COI) for Class-A property managers in Las Colinas?',
+                'a': 'Yes. We issue property-specific Certificates of Insurance with Additional Insured and Waiver of Subrogation endorsements required by Class-A commercial property management firms.'
+            }
+        ]
     },
     'richardson': {
         'name': 'Richardson',
+        'county': 'Dallas & Collin Counties',
+        'zip_codes': ['75080', '75081', '75082'],
+        'corridors': ['Telecom Corridor (US-75)', 'CityLine Mixed-Use Corporate District', 'Campbell Road & Arapaho Tech Parks', 'President George Bush Turnpike (SH-190)'],
         'title': 'Commercial Cleaning & Janitorial Services in Richardson | HWB Cleaning',
         'h1': 'Commercial Cleaning & Janitorial Services in Richardson',
         'meta_desc': 'ISO 9001:2026 commercial cleaning, data center sanitation, and office janitorial services in Richardson and the Telecom Corridor, TX. Request a quote.',
-        'desc': 'Supporting technology campuses, defense contractors, and Class-A office buildings across Richardson, the Telecom Corridor, and CityLine with vetted, badged cleaning technicians.'
+        'desc': 'Supporting technology campuses, defense contractors, and Class-A office buildings across Richardson, the Telecom Corridor, and CityLine with vetted, badged cleaning technicians.',
+        'faqs': [
+            {
+                'q': 'Does HWB serve technology campuses and offices in CityLine and the Richardson Telecom Corridor?',
+                'a': 'Yes. We provide vetted, badged nightly janitorial and day porter crews for corporate buildings, engineering labs, and medical offices across CityLine (75082), Campbell Road (75080), and the US-75 Telecom Corridor (75081).'
+            },
+            {
+                'q': 'What dust-control methods do you use for tech and electronics facilities in Richardson?',
+                'a': 'We use CRI-certified HEPA backpack vacuums, damp microfiber dust capture, and zero-residue neutral floor cleaners to protect sensitive server rooms, labs, and office equipment.'
+            },
+            {
+                'q': 'Do you offer flexible after-hours cleaning schedules in Richardson?',
+                'a': 'Yes. We customize cleaning schedules for 1x to 7x per week, including evening, overnight, and weekend windows tailored to your building security protocols.'
+            }
+        ]
     },
     'allen': {
         'name': 'Allen',
-        'title': 'Commercial Cleaning & Janitorial Services in Allen | HWB Cleaning',
-        'h1': 'Commercial Cleaning & Janitorial Services in Allen',
-        'meta_desc': 'Reliable commercial office cleaning, educational facility sanitization, and floor care in Allen, TX along US-75 & SH-121. Request a custom quote today.',
-        'desc': 'Providing dependable nightly office cleaning, daycare and school sanitization, and post-construction final cleans throughout Allen, Watters Creek, and the US-75 commercial corridor.'
+        'county': 'Collin County',
+        'zip_codes': ['75002', '75013'],
+        'corridors': ['Watters Creek District', 'US-75 Central Expressway Corridor', 'Exchange Parkway & Stacy Road Plazas', 'SH-121 North Commercial Corridor'],
+        'title': 'Commercial Cleaning & Janitorial Services in Allen, TX | HWB Cleaning',
+        'h1': 'Commercial Cleaning & Janitorial Services in Allen, TX',
+        'meta_desc': 'Reliable commercial office cleaning, educational facility sanitization, and floor care in Allen, TX along US-75 & Watters Creek. Request a custom quote today.',
+        'desc': 'Providing dependable nightly office cleaning, daycare and school sanitization, medical clinic disinfection, and post-construction final cleans throughout Allen, Watters Creek, and the US-75 commercial corridor.',
+        'faqs': [
+            {
+                'q': 'How close is HWB Cleaning Services LLC to commercial buildings in Allen, TX?',
+                'a': 'Our headquarters in neighboring McKinney is less than 10 minutes north on US-75, allowing rapid daily supervision, supply restocking, and emergency response for all commercial properties in Allen (75002, 75013).'
+            },
+            {
+                'q': 'Do you clean child care centers, Montessori schools, and medical offices in Allen?',
+                'a': 'Yes. We specialize in pediatric-safe, EPA List N disinfection and 4-color microfiber zoning for Allen daycares, private schools, dental clinics, and professional office suites along Exchange Parkway, McDermott Drive, and Watters Creek.'
+            },
+            {
+                'q': 'Can we bundle nightly janitorial with periodic carpet and floor waxing in Allen?',
+                'a': 'Yes. We offer integrated maintenance programs combining nightly janitorial with quarterly VCT scrubbing/burnishing, carpet extraction, and interior/exterior glass cleaning.'
+            }
+        ]
     },
     'arlington': {
         'name': 'Arlington',
-        'title': 'Commercial & Industrial Cleaning Services in Arlington | HWB Cleaning',
-        'h1': 'Commercial & Industrial Cleaning Services in Arlington',
+        'county': 'Tarrant County',
+        'zip_codes': ['76001', '76006', '76010', '76011', '76014', '76017'],
+        'corridors': ['Great Southwest Industrial District (SH-360)', 'I-30 Entertainment & Corporate District', 'I-20 Parks Commercial & Medical Corridor', 'Cooper Street & US-287 Corridor'],
+        'title': 'Commercial & Industrial Cleaning Services in Arlington, TX | HWB Cleaning',
+        'h1': 'Commercial & Industrial Cleaning Services in Arlington, TX',
         'meta_desc': 'Heavy-duty industrial warehouse scrubbing, commercial janitorial, and post-construction cleanup in Arlington, TX. OSHA-trained crews. Request a quote.',
-        'desc': 'Engineered for high-volume manufacturing plants, distribution centers, medical offices, and commercial venues across Arlington and the Mid-Cities industrial corridor.'
+        'desc': 'Engineered for high-volume manufacturing plants, distribution centers in the Great Southwest Industrial District, medical offices, and commercial venues across Arlington and the Mid-Cities corridor.',
+        'faqs': [
+            {
+                'q': 'Do you service warehouses in the Great Southwest Industrial District in Arlington?',
+                'a': 'Yes. HWB provides ride-on and walk-behind auto-scrubber floor cleaning, high-volume employee restroom sanitization, breakroom cleaning, and trash handling across the SH-360 Great Southwest Industrial District (76010, 76011).'
+            },
+            {
+                'q': 'Does HWB provide commercial office and medical cleaning in North and South Arlington?',
+                'a': 'Yes. We service corporate offices near I-30 (76006, 76011) as well as medical plazas, clinics, and educational facilities along Cooper Street and I-20 (76014, 76017).'
+            },
+            {
+                'q': 'Are your crews OSHA-trained for industrial and construction sites in Arlington?',
+                'a': 'Yes. Our field supervisors hold OSHA 10/30 certifications and our company maintains a verified 0.00 TRIR safety record with full SDS chemical compliance.'
+            }
+        ]
     },
     'addison': {
         'name': 'Addison',
-        'title': 'Commercial Office Cleaning & Janitorial Services in Addison | HWB Cleaning',
-        'h1': 'Commercial Office Cleaning & Janitorial Services in Addison',
-        'meta_desc': 'Executive office cleaning, commercial floor care, and day porter services in Addison and the Dallas North Tollway corridor, TX. Request a free quote.',
-        'desc': 'Maintaining pristine executive suites, financial institutions, and multi-tenant commercial buildings throughout Addison, Quorum Drive, and the Dallas North Tollway corridor.'
+        'county': 'Dallas County',
+        'zip_codes': ['75001'],
+        'corridors': ['Quorum Drive & Dallas North Tollway', 'Belt Line Road Commercial Corridor', 'Addison Airport Business & Aviation Park', 'Midway Road Office Plazas'],
+        'title': 'Commercial Office Cleaning & Janitorial Services in Addison, TX | HWB Cleaning',
+        'h1': 'Commercial Office Cleaning & Janitorial Services in Addison, TX',
+        'meta_desc': 'Executive office cleaning, commercial floor care, and day porter services in Addison and the Dallas North Tollway corridor, TX (75001). Request a free quote.',
+        'desc': 'Maintaining pristine executive suites, financial institutions, aviation hangars, and multi-tenant commercial buildings throughout Addison, Quorum Drive, Belt Line Road, and the Dallas North Tollway corridor.',
+        'faqs': [
+            {
+                'q': 'What types of businesses does HWB clean in Addison, TX (75001)?',
+                'a': 'We clean executive office suites, financial and legal firms along Quorum Drive and the Dallas North Tollway, corporate hangars and offices at Addison Airport, and commercial plazas along Belt Line Road and Midway Road.'
+            },
+            {
+                'q': 'Can HWB provide high-detail executive suite and conference room cleaning in Addison?',
+                'a': 'Yes. Our Addison crews specialize in streak-free interior glass partition cleaning, conference table and leather/wood care, breakroom appliance sanitization, and white-glove restroom maintenance.'
+            },
+            {
+                'q': 'How are quality inspections handled for Addison office accounts?',
+                'a': 'Field supervisors conduct regular digital quality audits scored against room-by-room scope checklists to ensure consistent morning readiness.'
+            }
+        ]
     }
 }
 
@@ -1376,6 +1563,26 @@ def protect_staging_indexing(response):
 @public_bp.route('/sitemap.xml', endpoint='sitemap_xml')
 def sitemap_xml():
     return send_from_directory(current_app.static_folder, 'sitemap.xml')
+
+@public_bp.route('/llms.txt', endpoint='llms_txt')
+@public_bp.route('/.well-known/llms.txt')
+@public_bp.route('/ai.txt')
+def llms_txt():
+    resp = send_from_directory(current_app.static_folder, 'llms.txt')
+    resp.headers['Content-Type'] = 'text/plain; charset=utf-8'
+    return resp
+
+@public_bp.route('/llms-full.txt', endpoint='llms_full_txt')
+def llms_full_txt():
+    resp = send_from_directory(current_app.static_folder, 'llms-full.txt')
+    resp.headers['Content-Type'] = 'text/plain; charset=utf-8'
+    return resp
+
+@public_bp.route('/hwb8f4e2a9c1b7d3e5f6a0b2c4d8e1f3.txt', endpoint='indexnow_key_txt')
+def indexnow_key_txt():
+    resp = send_from_directory(current_app.static_folder, 'hwb8f4e2a9c1b7d3e5f6a0b2c4d8e1f3.txt')
+    resp.headers['Content-Type'] = 'text/plain; charset=utf-8'
+    return resp
 
 @public_bp.route('/favicon.ico', endpoint='favicon')
 def favicon():

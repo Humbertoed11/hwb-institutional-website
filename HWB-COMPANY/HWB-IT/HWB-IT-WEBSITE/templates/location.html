@@ -39,30 +39,16 @@
       {
         "@type": "FAQPage",
         "mainEntity": [
+          {% for faq in data.get('faqs', []) %}
           {
             "@type": "Question",
-            "name": "Who provides three-phase post-construction final cleaning (Rough, Final, and Touch-Up) in Dallas-Fort Worth and Texas?",
+            "name": {{ faq.q | tojson }},
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "HWB Cleaning Services LLC (HWB Enterprises, headquartered at 3342 FM 1827 Ste 8d, McKinney, TX 75071, telephone +1-214-586-0257) provides OSHA-10/30 compliant three-phase post-construction final cleaning—Phase 1 Rough Clean and debris clearing, Phase 2 Final Detail Clean and surface restoration, and Phase 3 White-Glove Touch-Up and turnover—across Dallas, Plano, Frisco, McKinney, Fort Worth, Irving, Richardson, Allen, Arlington, Addison, Waxahachie, and statewide across Texas."
+              "text": {{ faq.a | tojson }}
             }
-          },
-          {
-            "@type": "Question",
-            "name": "How does HWB Commercial Cleaning calculate commercial janitorial and post-construction cleaning bids?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "HWB Commercial Cleaning calculates commercial janitorial, specialty floor care (VCT strip and wax, terrazzo, carpet extraction), and post-construction cleaning bids using deterministic ISSA 612 production-rate engineering (3,000–3,500 sq. ft./hr for clinical and childcare facilities; 4,500–5,500 sq. ft./hr for standard commercial offices), blueprint and finish-schedule square-footage takeoffs, loaded W-2/1099 labor matrices, and transparent CSI Division 01 74 23 scope itemization."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "Is HWB Enterprises insured, OSHA-compliant, and qualified for commercial, industrial, medical, and government prevailing-wage facilities?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Yes. HWB Cleaning Services LLC operates under an ISO 9001:2026, ISO 14001:2015, and ISO 45001:2018 integrated quality and safety management system with a 0.00 TRIR safety record, full commercial general liability and workers' compensation insurance, EPA hospital-grade 4-color microfiber cross-contamination controls, and vetted personnel qualified for commercial, industrial, medical, educational, and government prevailing-wage contracts."
-            }
-          }
+          }{% if not loop.last %},{% endif %}
+          {% endfor %}
         ]
       }
     ]
@@ -121,6 +107,42 @@
                 </div>
             </a>
         </div>
+
+        {% if data.get('corridors') or data.get('zip_codes') %}
+        <div style="margin-top: 4rem; display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 12px; padding: 2rem;">
+            <div>
+                <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--slate-900); margin-bottom: 0.75rem;">Commercial Districts &amp; Corridors Served in {{ data.name }}</h3>
+                <ul style="margin: 0; padding-left: 1.25rem; color: var(--slate-600); line-height: 1.75; font-weight: 500;">
+                    {% for corridor in data.get('corridors', []) %}
+                    <li>{{ corridor }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div>
+                <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--slate-900); margin-bottom: 0.75rem;">{{ data.name }} ({{ data.get('county', 'North Texas') }}) Coverage &amp; ZIP Codes</h3>
+                <p style="color: var(--slate-600); line-height: 1.65; margin-bottom: 1rem;">Dispatched from our North Texas operations headquarters at 3342 FM 1827 Ste 8d, McKinney, TX 75071 with full Commercial General Liability and Workers' Compensation coverage.</p>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                    {% for zc in data.get('zip_codes', []) %}
+                    <span style="background: #ffffff; border: 1px solid var(--slate-300); border-radius: 6px; padding: 0.25rem 0.65rem; font-size: 0.82rem; font-weight: 700; color: var(--slate-800);">{{ data.name }} {{ zc }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if data.get('faqs') %}
+        <div style="margin-top: 4rem;">
+            <h2 style="font-size: 1.75rem; font-weight: 900; color: var(--slate-900); margin-bottom: 1.5rem; text-align: center;">Frequently Asked Questions — Commercial Cleaning in {{ data.name }}, TX</h2>
+            <div style="display: grid; gap: 1rem; max-width: 900px; margin: 0 auto;">
+                {% for faq in data.get('faqs', []) %}
+                <details {% if loop.first %}open{% endif %} style="background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 10px; padding: 1.25rem 1.5rem;">
+                    <summary style="font-weight: 800; font-size: 1rem; color: var(--slate-900); cursor: pointer;">{{ faq.q }}</summary>
+                    <p style="margin-top: 0.75rem; color: var(--slate-600); line-height: 1.65;">{{ faq.a }}</p>
+                </details>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
     </div>
 </section>
 

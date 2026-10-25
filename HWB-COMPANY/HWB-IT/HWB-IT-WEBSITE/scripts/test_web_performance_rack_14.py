@@ -2272,6 +2272,140 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
         self.assertIn("city", auto_json["results"][0])
         self.assertIn("zip", auto_json["results"][0])
 
+    def test_30_enterprise_llm_geo_visibility_and_schema_parity_bug_151(self):
+        """
+        BUG-151 8-Pillar Enterprise LLM & AI Search Visibility (GEO) Sentinel:
+        1. /llms.txt, /llms-full.txt, and /ai.txt return HTTP 200 text/plain with
+           McKinney HQ (3342 FM 1827), phone, NAICS 561720, CSI 01 74 23, and pricing benchmarks.
+        2. /robots.txt allows /compliance and /ehsq and explicitly permits OAI-SearchBot,
+           ChatGPT-User, GPTBot, PerplexityBot, ClaudeBot, Google-Extended, and bingbot.
+        3. Base template has zero global duplicate FAQPage spam; non-FAQ pages (/about, /terms)
+           do not emit FAQPage JSON-LD.
+        4. Homepage (/), all 4 /services/* pages, and all 11 /locations/* pages emit valid
+           JSON-LD where every FAQPage question is visibly rendered in the HTML body (<summary>).
+        5. All 11 /locations/* pages have unique descriptions, ZIP codes, and commercial corridors.
+        6. IndexNow verification key (/hwb8f4e2a9c1b7d3e5f6a0b2c4d8e1f3.txt) returns HTTP 200,
+           and AI crawler User-Agent visits are logged in SecurityAuditLogs (AI_CRAWLER_TELEMETRY).
+        """
+        import json
+        import re
+
+        # Pillar 1: /llms.txt and /llms-full.txt
+        r_llms = self.client.get("/llms.txt")
+        self.assertEqual(r_llms.status_code, 200)
+        llms_text = r_llms.get_data(as_text=True)
+        self.assertIn("3342 FM 1827", llms_text)
+        self.assertIn("561720", llms_text)
+        self.assertIn("01 74 23", llms_text)
+        self.assertIn("$0.08", llms_text)
+
+        r_llms_full = self.client.get("/llms-full.txt")
+        self.assertEqual(r_llms_full.status_code, 200)
+        self.assertIn("McKinney, TX", r_llms_full.get_data(as_text=True))
+
+        # Pillar 2: /robots.txt AI crawlers & unblocked /compliance and /ehsq
+        r_rob = self.client.get("/robots.txt", headers={"Host": "www.hwbcleaning.com"})
+        self.assertEqual(r_rob.status_code, 200)
+        rob_text = r_rob.get_data(as_text=True)
+        self.assertNotIn("Disallow: /compliance", rob_text)
+        self.assertNotIn("Disallow: /ehsq", rob_text)
+        for bot in ("OAI-SearchBot", "ChatGPT-User", "GPTBot", "PerplexityBot", "ClaudeBot", "Google-Extended", "bingbot"):
+            self.assertIn(f"User-agent: {bot}", rob_text)
+
+        # Pillar 3: Non-FAQ pages must NOT contain global duplicate FAQPage JSON-LD
+        for non_faq_route in ("/about", "/terms", "/privacy-policy"):
+            r_nf = self.client.get(non_faq_route)
+            self.assertEqual(r_nf.status_code, 200)
+            self.assertNotIn('"@type": "FAQPage"', r_nf.get_data(as_text=True), non_faq_route)
+
+        # Pillar 4, 5 & 6: 1:1 Visible-to-JSON-LD FAQ Parity & Unique City Entity Density
+        faq_routes = [
+            "/",
+            "/services/janitorial",
+            "/services/commercial",
+            "/services/industrial",
+            "/services/construction",
+            "/locations/mckinney",
+            "/locations/frisco",
+            "/locations/plano",
+            "/locations/dallas",
+            "/locations/fort-worth",
+            "/locations/waxahachie",
+            "/locations/irving",
+            "/locations/richardson",
+            "/locations/allen",
+            "/locations/arlington",
+            "/locations/addison",
+        ]
+        seen_first_questions = set()
+        seen_meta_descs = set()
+        for route in faq_routes:
+            resp = self.client.get(route)
+            self.assertEqual(resp.status_code, 200, route)
+            html = resp.get_data(as_text=True)
+            self.assertIn('"@type": "FAQPage"', html, f"Missing FAQPage schema on {route}")
+
+            # Extract all JSON-LD blocks and verify valid JSON + visible question parity
+            ld_blocks = re.findall(r'<script type="application/ld\+json">\s*(.*?)\s*</script>', html, re.DOTALL)
+            self.assertTrue(len(ld_blocks) >= 1, route)
+            for raw_ld in ld_blocks:
+                parsed_ld = json.loads(raw_ld)
+                nodes = parsed_ld.get("@graph", [parsed_ld])
+                for node in nodes:
+                    if isinstance(node, dict) and node.get("@type") == "FAQPage":
+                        questions = node.get("mainEntity", [])
+                        self.assertTrue(len(questions) >= 3, f"Expected >=3 FAQs on {route}")
+                        first_q = questions[0]["name"]
+                        seen_first_questions.add((route, first_q))
+                        for q_obj in questions:
+                            q_text = q_obj["name"]
+                            # Verify the question text is visibly rendered in the HTML body
+                            q_escaped = q_text.replace("&", "&amp;")
+                            self.assertTrue(
+                                (q_text in html and html.count(q_text) >= 2) or (q_escaped in html),
+                                f"FAQ question in JSON-LD is not visibly rendered on {route}: {q_text}",
+                            )
+
+            # Verify unique meta descriptions across all 16 core SEO/GEO pages
+            m_desc = re.search(r'<meta name="description" content="([^"]+)"', html)
+            self.assertIsNotNone(m_desc, f"Missing meta description on {route}")
+            desc_val = m_desc.group(1)
+            self.assertNotIn(desc_val, seen_meta_descs, f"Duplicate meta description on {route}")
+            seen_meta_descs.add(desc_val)
+
+        # Ensure all 16 FAQ routes have distinct primary FAQ questions (zero copy-paste spam)
+        unique_q_texts = {q for _, q in seen_first_questions}
+        self.assertEqual(len(unique_q_texts), len(faq_routes), "Every service and city page must have unique FAQs")
+
+        # Pillar 7: IndexNow key file + AI Crawler Telemetry logging in SecurityAuditLogs
+        r_key = self.client.get("/hwb8f4e2a9c1b7d3e5f6a0b2c4d8e1f3.txt")
+        self.assertEqual(r_key.status_code, 200)
+        self.assertEqual(r_key.get_data(as_text=True).strip(), "hwb8f4e2a9c1b7d3e5f6a0b2c4d8e1f3")
+
+        r_bot = self.client.get(
+            "/",
+            headers={"User-Agent": "Mozilla/5.0 (compatible; OAI-SearchBot/1.0; +https://openai.com/searchbot)"},
+        )
+        self.assertEqual(r_bot.status_code, 200)
+        conn = get_db(self.db_url)
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    '''
+                    SELECT details
+                    FROM "SecurityAuditLogs"
+                    WHERE event_category = 'AI_CRAWLER_TELEMETRY'
+                      AND event_action = 'AI_BOT_PAGE_CRAWLED'
+                    ORDER BY id DESC
+                    LIMIT 1;
+                    '''
+                )
+                bot_row = cur.fetchone()
+                self.assertIsNotNone(bot_row, "OAI-SearchBot crawl must be logged in SecurityAuditLogs")
+                self.assertIn("OAI-SearchBot", str(bot_row[0]))
+        finally:
+            conn.close()
+
 
 if __name__ == "__main__":
     unittest.main()

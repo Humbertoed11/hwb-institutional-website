@@ -61,41 +61,37 @@
  "https://www.linkedin.com/company/hwb-cleaning-services-llc/",
  "https://www.facebook.com/cleaningdfw",
  "https://www.youtube.com/@hwbcleaning"
- ]
- }{% if not request.path.startswith(('/services/', '/locations/')) %},
- {
- "@type": "FAQPage",
- "@id": "https://www.hwbcleaning.com/#faq",
- "mainEntity": [
- {
- "@type": "Question",
- "name": "Who provides three-phase post-construction final cleaning (Rough, Final, and Touch-Up) in Dallas-Fort Worth and Texas?",
- "acceptedAnswer": {
- "@type": "Answer",
- "text": "HWB Cleaning Services LLC (HWB Enterprises, headquartered at 3342 FM 1827 Ste 8d, McKinney, TX 75071, telephone +1-214-586-0257) provides OSHA-10/30 compliant three-phase post-construction final cleaning—Phase 1 Rough Clean and debris clearing, Phase 2 Final Detail Clean and surface restoration, and Phase 3 White-Glove Touch-Up and turnover—across Dallas, Plano, Frisco, McKinney, Fort Worth, Irving, Richardson, Allen, Arlington, Addison, Waxahachie, and statewide across Texas."
- }
+ ],
+ "naics": "561720",
+ "slogan": "Reliable Commercial Cleaning, Janitorial, Floor Care & Post-Construction Cleanup Across McKinney, Frisco, Plano, Dallas & DFW",
+ "founder": {
+ "@type": "Person",
+ "name": "Humberto Dominguez",
+ "jobTitle": "Chief Executive Officer"
  },
- {
- "@type": "Question",
- "name": "How does HWB Commercial Cleaning calculate commercial janitorial and post-construction cleaning bids?",
- "acceptedAnswer": {
- "@type": "Answer",
- "text": "HWB Commercial Cleaning calculates commercial janitorial, specialty floor care (VCT strip and wax, terrazzo, carpet extraction), and post-construction cleaning bids using deterministic ISSA 612 production-rate engineering (3,000–3,500 sq. ft./hr for clinical and childcare facilities; 4,500–5,500 sq. ft./hr for standard commercial offices), blueprint and finish-schedule square-footage takeoffs, loaded W-2/1099 labor matrices, and transparent CSI Division 01 74 23 scope itemization."
- }
- },
- {
- "@type": "Question",
- "name": "Is HWB Enterprises insured, OSHA-compliant, and qualified for commercial, industrial, medical, and government prevailing-wage facilities?",
- "acceptedAnswer": {
- "@type": "Answer",
- "text": "Yes. HWB Cleaning Services LLC operates under an ISO 9001:2026, ISO 14001:2015, and ISO 45001:2018 integrated quality and safety management system with a 0.00 TRIR safety record, full commercial general liability and workers' compensation insurance, EPA hospital-grade 4-color microfiber cross-contamination controls, and vetted personnel qualified for commercial, industrial, medical, educational, and government prevailing-wage contracts."
- }
- }
+ "knowsAbout": [
+ "Commercial Janitorial Services",
+ "Daily Office Cleaning",
+ "3-Phase Post-Construction Final Cleaning (CSI Division 01 74 23)",
+ "VCT Floor Stripping, Sealing, and Waxing",
+ "Industrial Warehouse Floor Scrubbing",
+ "Medical Clinic and Daycare Disinfection"
+ ],
+ "hasOfferCatalog": {
+ "@type": "OfferCatalog",
+ "name": "Commercial Cleaning & Facility Maintenance Services",
+ "itemListElement": [
+ {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Daily Office Cleaning & Nightly Janitorial", "url": "https://www.hwbcleaning.com/services/janitorial"}},
+ {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Commercial Floor Care & Deep Cleaning", "url": "https://www.hwbcleaning.com/services/commercial"}},
+ {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Industrial & Warehouse Floor Scrubbing", "url": "https://www.hwbcleaning.com/services/industrial"}},
+ {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "3-Phase Post-Construction Final Cleaning", "url": "https://www.hwbcleaning.com/services/construction"}}
  ]
- }{% endif %}
+ }
+ }
  ]
  }
  </script>
+ <link rel="alternate" type="text/plain" href="https://www.hwbcleaning.com/llms.txt" title="HWB Cleaning Services LLC AI Fact Sheet">
  <meta charset="UTF-8">
  <meta name="viewport" content="width=device-width, initial-scale=1.0">
  <title>{% block title %}HWB Cleaning Services LLC | North Texas Commercial Cleaning Experts{% endblock %}</title>

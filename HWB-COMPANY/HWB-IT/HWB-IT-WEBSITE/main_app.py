@@ -218,6 +218,24 @@ def apply_application_security_headers(response):
     if request.headers.get('Sec-GPC') == '1' or request.headers.get('DNT') == '1':
         response.headers['X-GPC-Status'] = 'Honored'
 
+    # AI Search Crawler Telemetry (BUG-151: OAI-SearchBot, ChatGPT-User, GPTBot, PerplexityBot, ClaudeBot, Google-Extended, bingbot)
+    ua_str = request.headers.get('User-Agent', '')
+    if ua_str and not request.path.startswith('/static/'):
+        for bot_token in ('OAI-SearchBot', 'ChatGPT-User', 'GPTBot', 'PerplexityBot', 'ClaudeBot', 'Google-Extended', 'Applebot-Extended', 'bingbot'):
+            if bot_token.lower() in ua_str.lower():
+                try:
+                    from core.services.security_logger import log_security_event
+                    log_security_event(
+                        event_category='AI_CRAWLER_TELEMETRY',
+                        event_action='AI_BOT_PAGE_CRAWLED',
+                        severity='INFO',
+                        status_code=response.status_code,
+                        details={'bot': bot_token, 'path': request.path, 'ua': ua_str[:180]}
+                    )
+                except Exception:
+                    pass
+                break
+
     # Static Assets: 7-day immutable edge caching (Cloudflare absorbs 100% of asset requests)
     if request.path.startswith('/static/'):
         response.headers['Cache-Control'] = 'public, max-age=604800, immutable'
