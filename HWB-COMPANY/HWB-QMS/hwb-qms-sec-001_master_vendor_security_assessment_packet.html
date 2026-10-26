@@ -9,7 +9,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-SEC-001</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">1.4.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.1.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">ISO 9001: 8.2 &amp; ISO 27001 / ISO 27701 / SOC 2 Type II</span></div>
     </div>
@@ -25,11 +25,11 @@
             <tbody>
                 <tr><td><strong>Document Title</strong></td><td><strong>Master Vendor Security Assessment Packet (SIG / CAIQ / VSAQ Core Standard)</strong></td></tr>
                 <tr><td><strong>Document ID</strong></td><td>HWB-QMS-SEC-001</td></tr>
-                <tr><td><strong>Version</strong></td><td>1.4.0</td></tr>
+                <tr><td><strong>Version</strong></td><td>2.1.0</td></tr>
                 <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
                 <tr><td><strong>Author</strong></td><td>George (Systems Architect &amp; mbB, Senior ISO 9001 Auditor)</td></tr>
                 <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
-                <tr><td><strong>Date</strong></td><td>10/24/2026</td></tr>
+                <tr><td><strong>Date</strong></td><td>10/26/2026</td></tr>
                 <tr><td><strong>Applicable Standards</strong></td><td>ISO 9001:2026 (ISO 9001:2015+Amd 1:2024) Clause 8.2, ISO/IEC 27001:2022+Amd 1:2024, ISO/IEC 27701:2025, AICPA SOC 2 Type II, CAN-SPAM (15 U.S.C. &sect; 7701), IETF RFC 8058, Texas Bus. &amp; Com. Code Ch. 321, Ch. 521 &amp; Ch. 541 (TDPSA)</td></tr>
             </tbody>
         </table>
@@ -202,19 +202,26 @@
                     <td><strong>6-PILLAR FULL-WEBSITE COMPLIANCE &amp; ZERO INTERNAL JARGON ARCHITECTURE (BUG-146 &amp; BUG-147).</strong> (1) <strong>TCPA Prior Express Written Consent (47 U.S.C. &sect; 227):</strong> All quote forms (<code>/</code> and <code>/get-quote</code>) make telephone numbers optional and include an explicit TCPA call/SMS consent checkbox linked to <code>/privacy-policy</code> (v2.4.0) and <code>/terms</code> (v2.3.0). (2) <strong>Universal CIPA &sect; 631 / CPRA Cookie Banner Auto-Injection:</strong> <code>main_app.py</code> <code>@app.after_request</code> automatically injects <code>#hwb-cookie-banner</code> across all standalone public pages (<code>/capability-statement</code>, <code>/prequal</code>, <code>/academy</code>, <code>/onboard/bosanna</code>, <code>/tma/estimator</code>). (3) <strong>WCAG 2.2 AA &amp; OWASP Tabnabbing Zero-Violation Standard:</strong> Enforces exactly 1 <code>&lt;h1&gt;</code> per page, explicit <code>&lt;label for&gt;</code>/<code>aria-label</code> on all inputs, titled PDF iframes, pinch-to-zoom enabled on all mobile viewports, and <code>rel="noopener noreferrer"</code> + <code>aria-label</code> on all external social links. (4) <strong>SOC 2 CC6.1 Route, Margin &amp; Internal Metadata Isolation (BUG-147):</strong> Locks internal routes (<code>/design-system</code>, <code>/csi</code>) behind <code>@login_required</code>, hides internal gross margin controls on public <code>/tma/estimator</code>, gates the footer commit badge behind <code>current_user.is_authenticated</code>, strips all internal engineering/database/cryptographic/SOP/persona references from public pages, portals, certificates, and outbound client emails, and enforces <code>Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()</code>.</td>
                     <td><span style="color: #16a34a; font-weight: 700;">● COMPLIANT</span></td>
                 </tr>
+                <tr>
+                    <td><strong>17.0</strong></td>
+                    <td><strong>Dual-Wing (External Perimeter + Internal Post-Exploitation) Security Audit &amp; Zero-Disk Vault Governance (BUG-152)</strong></td>
+                    <td>How does HWB verify both external perimeter defenses and internal container/root-level defenses assuming an attacker has gained shell or filesystem access?</td>
+                    <td><strong>2-WING EXTERNAL &amp; INTERNAL SECURITY AUDIT ARCHITECTURE (BUG-152).</strong> Every build and security inspection executes both: (1) <strong>Wing 1 — External Perimeter Audit (Outside-In / Black-Box):</strong> Verifies unauthenticated route blocks, RBAC/ABAC department isolation (<code>HTTP 403</code>), 3-Tier Public Credential Lockdown (zero raw policy numbers, EINs, tax IDs, charter numbers, DUNS/CAGE codes, bank/vendor accounts, or home addresses on public routes), rate limiting (<code>HTTP 429</code>), and zero pre-checked legal consent boxes. (2) <strong>Wing 2 — Internal &amp; Root Post-Exploitation Audit (Inside-Out / White-Box / Assume-Breach):</strong> Inspects Python source files, container configuration, and container disk directories to enforce zero hardcoded fallback passwords or magic-login bypasses, zero case-insensitive <code>.lower()</code> password checks, <code>scrypt:32768:8:1</code> per-user salted hashes, immediate session revocation in <code>load_user()</code> when <code>status != 'Active'</code>, domain-separated <code>MultiFernet</code> key rings (<code>core/security.py</code>), zero plaintext PDF/HTML/TXT files in <code>vault/hr_documents/</code> (1099 and W-2 files live exclusively in AES-256 encrypted PostgreSQL <code>BYTEA</code> columns), <code>.dockerignore</code> exclusion of <code>.env</code> and <code>vault/</code>, and non-root container execution (<code>USER hwbapp</code>, <code>uid=1000</code>).</td>
+                    <td><span style="color: #16a34a; font-weight: 700;">● COMPLIANT</span></td>
+                </tr>
             </tbody>
         </table>
 
         
-        <h2>4.5 Defense-in-Depth Security &amp; Cryptographic Governance Flowchart</h2>
-        <p>The diagram below maps the 5-ring defense-in-depth security posture verified continuously by the 77-check Security Suite (<code>check_soc2_data_leakage.py</code>) and the 27-test Rack 14 Web Performance &amp; Compliance Suite.</p>
+        <h2>4.5 Defense-in-Depth Dual-Wing Security &amp; Cryptographic Governance Flowchart</h2>
+        <p>The diagram below maps the 5-ring defense-in-depth security posture and Dual-Wing (External + Internal) Audit Gate verified continuously by the 85-check Security Suite (<code>check_soc2_data_leakage.py</code>) and the 31-test Rack 14 Web Performance &amp; Compliance Suite.</p>
         <div class="mermaid-wrapper" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0;">
             <div class="mermaid">
 flowchart LR
-    R1["Ring 1: Edge Perimeter<br/>Cloudflare Anycast WAF +<br/>TLS 1.3 + 15 CIDR Lock"] --> R2["Ring 2: Access &amp; Auth<br/>Centralized RBAC + Argon2/Bcrypt<br/>+ CSRF + Session Hardening"]
-    R2 --> R3["Ring 3: Data-in-Transit &amp; Rest<br/>AES-256 Storage + Encrypted<br/>BYTEA Onboarding Vaults"]
-    R3 --> R4["Ring 4: Immutable Audit Trail<br/>PostgreSQL WORM Triggers on<br/>SecurityAuditLogs + SHA-256"]
-    R4 --> R5["Ring 5: Automated CI/CD Gate<br/>77 Security Checks + 27 Rack 14<br/>Tests + Credential Sentinel"]
+    R1["Ring 1: Edge Perimeter<br/>Cloudflare Anycast WAF +<br/>TLS 1.3 + 15 CIDR Lock"] --> R2["Ring 2: Access &amp; Auth<br/>scrypt:32768:8:1 + RBAC/ABAC<br/>+ Instant Session Revocation"]
+    R2 --> R3["Ring 3: Zero-Disk Vault<br/>MultiFernet AES-256 +<br/>PostgreSQL BYTEA Only"]
+    R3 --> R4["Ring 4: Non-Root &amp; WORM<br/>USER hwbapp (uid=1000) +<br/>Immutable SecurityAuditLogs"]
+    R4 --> R5["Ring 5: Dual-Wing Audit Gate<br/>85 SOC 2 Checks (Ext + Int)<br/>+ 31 Rack 14 Tests"]
 
     style R1 fill:#eff6ff,stroke:#2563eb,stroke-width:2px
     style R3 fill:#fefce8,stroke:#ca8a04,stroke-width:2px
@@ -227,7 +234,7 @@ flowchart LR
         <ul>
             <li><strong>RLS Verification:</strong> Verified by Tessa Test Module 8 (<code>test_08_multitenant_rls_and_quarantine_ingestion</code>) asserting 0 leaked records across tenant boundaries.</li>
             <li><strong>Input Cleansing Verification:</strong> Verified by the automated Quarantine Ingestion Engine requiring zero format defects before database commit.</li>
-            <li><strong>Multi-Jurisdictional Email, Website WCAG/TCPA/CIPA, Zero Internal Jargon &amp; SOC 2 Compliance Verification:</strong> Verified by Rack 14 Enterprise Suite (<code>scripts/test_web_performance_rack_14.py</code> — <code>26/26</code> passing tests including <code>test_26_zero_internal_process_references_on_public_surfaces_bug_147</code>), SOC 2 Data Leakage Sentinel (<code>scripts/check_soc2_data_leakage.py</code> — <code>77/77</code> checks passing), and Legal &amp; HR Employment Compliance Audit Suite (<code>scripts/audit_hwb_legal_compliance.py</code> — <code>15/15</code> passing).</li>
+            <li><strong>Dual-Wing External Perimeter &amp; Internal Post-Exploitation Security Verification:</strong> Verified by Rack 14 Enterprise Suite (<code>scripts/test_web_performance_rack_14.py</code> — <code>31/31</code> passing tests including <code>test_31_enterprise_root_exploitation_and_credential_hardening_bug_152</code>), SOC 2 Data Leakage &amp; Source Sentinel (<code>scripts/check_soc2_data_leakage.py</code> — <code>85/85</code> checks passing across Check 1–Check 8), Rack 9 Site Security Suite (<code>scripts/test_site_security_rack_09.py</code> — <code>11/11</code> passing), and Workforce &amp; Cyber Suite (<code>scripts/test_labor_recruitment_and_cyber_suite.py</code> — <code>5/5</code> passing).</li>
             <li><strong>Disaster Recovery Verification:</strong> Verified by Peter Sentinel's daily backup ledger and binary snapshot tracking.</li>
         </ul>
 
@@ -242,6 +249,12 @@ flowchart LR
                 </tr>
             </thead>
             <tbody>
+                <tr>
+                    <td>2.1.0</td>
+                    <td>10/26/2026</td>
+                    <td>George (Systems Architect)</td>
+                    <td>Added Assessment Domain 17.0 and upgraded Section 4.5 &amp; Section 5.0 to codify the Mandatory Dual-Wing (External Perimeter + Internal Post-Exploitation) Security Audit Standard (BUG-152): zero hardcoded fallback passwords or magic-login bypasses, scrypt:32768:8:1 salted hashing, zero-disk plaintext vaulting (MultiFernet AES-256 BYTEA only), non-root container execution (USER hwbapp, uid=1000), 3-Tier Public Credential Lockdown, and immediate session revocation—certified by 85/85 SOC 2 checks and 31/31 Rack 14 tests. Approved by Humberto Dominguez, CEO.</td>
+                </tr>
                 <tr>
                     <td>2.0.0</td>
                     <td>10/24/2026</td>

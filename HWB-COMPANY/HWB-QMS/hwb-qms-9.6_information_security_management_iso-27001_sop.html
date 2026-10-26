@@ -2,7 +2,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-9.6</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">4.1.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">4.3.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">ISO/IEC 27001:2022+Amd 1:2024 &amp; SOC 2 Type II</span></div>
     </div>
@@ -26,7 +26,7 @@
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>Version</strong></td>
-                    <td style="text-align: left;">4.1.0</td>
+                    <td style="text-align: left;">4.3.0</td>
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>Status</strong></td>
@@ -42,7 +42,7 @@
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>Effective Date</strong></td>
-                    <td style="text-align: left;">10/05/2026</td>
+                    <td style="text-align: left;">10/26/2026</td>
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>Regulatory Standards</strong></td>
@@ -137,10 +137,17 @@
             <li><strong>AI &amp; Digital Governance (ISO/IEC 42001:2023):</strong> All autonomous agents, LLM estimating engines, and automated communications operate under strict human-in-the-loop executive gates, zero-PII prompt filtering, and WORM audit logging (<code>SecurityAuditLogs</code>).</li>
         </ul>
 
+        <h3 id="37-dual-wing-security-audit-standard">3.7 Mandatory Dual-Wing (External Perimeter + Internal Post-Exploitation) Security Audit Standard (BUG-152)</h3>
+        <p>Every security audit, compliance inspection, and pre-deployment gate across HWB Cleaning Services LLC must execute <strong>both</strong> External Perimeter ("Black-Box") and Internal Post-Exploitation ("White-Box" / Assume-Breach) audits:</p>
+        <ol>
+            <li><strong>Wing 1 — External Perimeter Audit (Outside-In / Black-Box):</strong> Tests the application from the perspective of an external visitor, competitor, automated scraper, or restricted staff account. Verifies unauthenticated route blocks, RBAC/ABAC department isolation (<code>HTTP 403</code>), 3-Tier Public Credential Lockdown (zero raw policy numbers, EINs, tax IDs, charter numbers, DUNS/CAGE codes, bank/vendor accounts, or personal addresses on public pages or outbound emails), rate limiting (<code>HTTP 429</code>), zero internal process jargon (<code>test_26</code>), and zero pre-checked legal consent boxes (<code>test_28</code>).</li>
+            <li><strong>Wing 2 — Internal &amp; Root Post-Exploitation Audit (Inside-Out / White-Box / Assume-Breach):</strong> Inspects Python source files, container configuration, and container disk directories assuming an attacker already has shell access inside the server container. Enforces zero hardcoded fallback passwords or magic-login bypasses in <code>blueprints/auth.py</code> and <code>blueprints/partner.py</code>, zero case-insensitive <code>.lower()</code> password checks, <code>scrypt:32768:8:1</code> per-user salted hashes, immediate session revocation in <code>load_user()</code> when <code>status != 'Active'</code>, domain-separated <code>MultiFernet</code> key rings (<code>core/security.py</code>) with zero hardcoded fallback secret strings, zero plaintext PDF/HTML/TXT files in <code>vault/hr_documents/</code> (all 1099 and W-2 documents live exclusively in AES-256 encrypted PostgreSQL <code>BYTEA</code> columns), <code>.dockerignore</code> exclusion of <code>.env</code>/<code>vault/</code>/<code>logs/</code>/<code>*.pem</code>, and non-root container execution (<code>USER hwbapp</code>, <code>uid=1000</code> in <code>Dockerfile</code>).</li>
+        </ol>
+
         <h2>4.0 Verification &amp; Compliance Audit</h2>
         <ul>
-            <li><strong>Automated Regression Testing:</strong> <code>scripts/tessa_regression_suite.py</code> verifies RBAC gates, PostgreSQL connection pool latency, and security audit integrity.</li>
-            <li><strong>Cryptographic Verification:</strong> Direct SQL queries confirm that all SSN and banking columns contain exclusively AES-256 ciphertext blobs with zero plaintext leaks.</li>
+            <li><strong>Dual-Wing Automated Regression Gate:</strong> <code>scripts/check_soc2_data_leakage.py</code> (<code>85/85</code> checks across Check 1–Check 8) and <code>scripts/test_web_performance_rack_14.py</code> (<code>31/31</code> tests including <code>test_31_enterprise_root_exploitation_and_credential_hardening_bug_152</code>) verify both external perimeter boundaries and internal source/container/vault post-exploitation hardening prior to every deployment.</li>
+            <li><strong>Cryptographic &amp; Zero-Disk Vault Verification:</strong> Direct SQL and filesystem inspections confirm that all SSN, TIN, banking, W-9, COI, MSA, DWC-83, W-4, I-9, and ID records are stored exclusively as AES-256 ciphertext in PostgreSQL 16.15 with zero plaintext files in <code>vault/hr_documents/</code>.</li>
             <li><strong>Air-Gap Verification:</strong> Automated browser tests confirm third-party script tags do not exist in the DOM on <code>/admin/*</code> and <code>/login</code> routes.</li>
             <li><strong>WORM Immutability Verification:</strong> Direct SQL tests confirm that attempts to mutate <code>SecurityAuditLogs</code> are rejected with PostgreSQL exception <code>SECURITY AUDIT LOG IS IMMUTABLE (WORM)</code>.</li>
             <li><strong>Granular Authorization Verification:</strong> <code>scripts/check_soc2_data_leakage.py</code> verifies that restricted Custom users are blocked (HTTP 403) from all unassigned views and direct QMS manual routes.</li>
@@ -164,6 +171,12 @@
                 </tr>
             </thead>
             <tbody>
+                <tr>
+                    <td style="text-align: left;">4.3.0</td>
+                    <td style="text-align: left;">10/26/2026</td>
+                    <td style="text-align: left;">George (Systems Architect)</td>
+                    <td style="text-align: left;">Codified Section 3.7 Mandatory Dual-Wing (External Perimeter + Internal Post-Exploitation) Security Audit Standard (BUG-152): zero hardcoded fallback passwords or magic-login bypasses, scrypt:32768:8:1 salted hashing, MultiFernet key separation, zero-disk plaintext vaulting, non-root USER hwbapp container execution, 3-Tier Public Credential Lockdown, and immediate session revocation—certified by 85/85 SOC 2 checks and 31/31 Rack 14 tests. Approved by Humberto Dominguez, CEO.</td>
+                </tr>
                 <tr>
                     <td style="text-align: left;">4.2.0</td>
                     <td style="text-align: left;">10/16/2026</td>

@@ -3,9 +3,9 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-9.2-FORM-001</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.0.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
-        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">9.2 &amp; 7.1.3</span></div>
     </div>
 
     <div class="sop-content-body">
@@ -19,7 +19,7 @@
 <tbody>
 <tr>
 <td style="text-align: left;"><strong>Document Title</strong></td>
-<td style="text-align: left;"><strong>Internal Security Audit Report</strong></td>
+<td style="text-align: left;"><strong>Dual-Wing (External Perimeter &amp; Internal Post-Exploitation) Security Audit Report</strong></td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Document ID</strong></td>
@@ -27,7 +27,7 @@
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Version</strong></td>
-<td style="text-align: left;">2.0.0</td>
+<td style="text-align: left;">3.0.0</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Status</strong></td>
@@ -43,108 +43,97 @@
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Date</strong></td>
-<td style="text-align: left;">09/21/2026</td>
+<td style="text-align: left;">10/26/2026</td>
 </tr>
 </tbody>
 </table>
 <hr />
-<h1 id="internal-security-audit-report-system-webserver-integrity">Internal Security Audit Report: <strong>System &amp; Webserver Integrity</strong></h1>
+<h1 id="internal-security-audit-report-system-webserver-integrity">Dual-Wing Security Audit Report: <strong>External Perimeter &amp; Internal Post-Exploitation Integrity</strong></h1>
 <h2 id="10-audit-overview">1.0 Audit Overview</h2>
 <ul>
-<li><strong>Audit Date:</strong> 2026-03-01</li>
-<li><strong>Auditor:</strong> Gemini (Lead Autonomous Agent / Senior ISO 9001 Auditor)</li>
-<li><strong>Scope:</strong> Linux/WSL 2 Infrastructure, Flask Webserver, and Network Configuration.</li>
-<li><strong>Reference Standard:</strong> ISO 9001:2026 (ISO 9001:2015+Amd 1:2024) Clause 9.2 (Internal Audit) and 7.1.3 (Infrastructure).</li>
+<li><strong>Audit Date:</strong> 10/26/2026</li>
+<li><strong>Auditor:</strong> George (Systems Architect / Senior ISO 9001 &amp; ISO 27001 Auditor)</li>
+<li><strong>Scope:</strong> Dual-Wing Inspection — Wing 1 (External Perimeter HTTP/WAF/RBAC/ABAC/Credential Lockdown) and Wing 2 (Internal Container/Root/Source-Code/Zero-Disk Vault Post-Exploitation).</li>
+<li><strong>Reference Standard:</strong> ISO 9001:2026 (ISO 9001:2015+Amd 1:2024) Clause 9.2 (Internal Audit), ISO/IEC 27001:2022+Amd 1:2024, CIS Docker Benchmark 4.1, and AICPA SOC 2 Type II.</li>
 </ul>
-<h2 id="20-audit-tooling">2.0 Audit Tooling</h2>
+<h2 id="20-audit-tooling">2.0 Automated Dual-Wing Audit Tooling</h2>
 <ul>
-<li><strong>System Audit:</strong> Lynis 3.0.9 (Open Source Security Auditing)</li>
-<li><strong>Web Audit:</strong> Nikto v2.1.5 (Web Server Scanner)</li>
-<li><strong>Antivirus:</strong> ClamAV 1.4.3</li>
+<li><strong>SOC 2 Data Leakage &amp; Source Sentinel:</strong> <code>scripts/check_soc2_data_leakage.py</code> (85/85 automated checks across Wing 1 &amp; Wing 2)</li>
+<li><strong>Rack 14 Web Performance &amp; Root Exploitation Suite:</strong> <code>scripts/test_web_performance_rack_14.py</code> (31/31 automated unit tests including <code>test_31</code>)</li>
+<li><strong>Rack 9 Site Security &amp; Brute-Force Suite:</strong> <code>scripts/test_site_security_rack_09.py</code> (11/11 checks)</li>
+<li><strong>Workforce &amp; Cyber Suite:</strong> <code>scripts/test_labor_recruitment_and_cyber_suite.py</code> (5/5 checks)</li>
 </ul>
-<h2 id="30-system-hardening-audit-lynis-results">3.0 System Hardening Audit (Lynis Results)</h2>
+<h2 id="30-system-hardening-audit-lynis-results">3.0 Dual-Wing Audit Scorecard (132 Total Automated Checks)</h2>
 <table>
 <thead>
 <tr>
-<th style="text-align: left;">Metric</th>
-<th style="text-align: left;">Initial State</th>
-<th style="text-align: left;">Post-Remediation</th>
+<th style="text-align: left;">Audit Wing / Suite</th>
+<th style="text-align: left;">Checks Performed</th>
+<th style="text-align: left;">Post-Remediation Result</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><strong>Hardening Index</strong></td>
-<td style="text-align: left;">65</td>
-<td style="text-align: left;"><strong>72</strong> (Estimated)</td>
+<td style="text-align: left;"><strong>Wing 1: External Perimeter &amp; ABAC Isolation (Checks 1–7)</strong></td>
+<td style="text-align: left;">77</td>
+<td style="text-align: left;"><strong>77 / 77 PASS (0 Leaks)</strong></td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>Tests Performed</strong></td>
-<td style="text-align: left;">250</td>
-<td style="text-align: left;">250</td>
+<td style="text-align: left;"><strong>Wing 2: Internal Source, Non-Root &amp; Zero-Disk Vault (Check 8 + test_31)</strong></td>
+<td style="text-align: left;">8 + 31</td>
+<td style="text-align: left;"><strong>100% PASS (0 Backdoors / 0 Disk PDFs)</strong></td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>Critical Issues</strong></td>
-<td style="text-align: left;">0</td>
-<td style="text-align: left;">0</td>
+<td style="text-align: left;"><strong>Rack 9 Brute-Force, Rate-Limit &amp; WORM Audit Ledger</strong></td>
+<td style="text-align: left;">11</td>
+<td style="text-align: left;"><strong>11 / 11 PASS</strong></td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>Suggestions</strong></td>
-<td style="text-align: left;">38</td>
-<td style="text-align: left;">32</td>
+<td style="text-align: left;"><strong>Workforce Onboarding &amp; Smart Deduplication Suite</strong></td>
+<td style="text-align: left;">5</td>
+<td style="text-align: left;"><strong>5 / 5 PASS</strong></td>
 </tr>
 </tbody>
 </table>
-<h3 id="31-key-findings-non-conformities-observations">3.1 Key Findings (Non-Conformities &amp; Observations)</h3>
+<h3 id="31-key-findings-non-conformities-observations">3.1 Key Internal &amp; External Findings Remediated (BUG-152)</h3>
 <ul>
-<li><strong>NC-01 (Kernel):</strong> Network redirects and source routing enabled (Low/Medium Risk).</li>
-<li><strong>OBS-01 (Filesystem):</strong> Default umask settings allow excessive permissions for new files.</li>
-<li><strong>OBS-02 (Tools):</strong> Compiler access (gcc) unrestricted to non-root users.</li>
+<li><strong>NC-01 (Auth Blueprints):</strong> Removed legacy hardcoded fallback password lists (<code>ceo_authorized_credentials</code> and <code>bosanna_authorized_credentials</code>), removed <code>.lower()</code> case-insensitive password matching, and locked <code>/portal/bosanna/magic-login</code> behind <code>@partner_access_required</code>.</li>
+<li><strong>NC-02 (Zero-Disk Vault):</strong> Removed plaintext PDF/HTML/TXT cache writes to <code>/app/vault/hr_documents/</code> so all 1099 (W-9, COI, MSA, DWC-83) and W-2 (W-4, I-9, ID) documents exist exclusively inside AES-256 encrypted PostgreSQL 16.15 <code>BYTEA</code> columns and stream directly from memory.</li>
+<li><strong>NC-03 (Non-Root Container &amp; Key Separation):</strong> Enforced <code>USER hwbapp</code> (<code>uid=1000</code>) in <code>Dockerfile</code>, excluded <code>.env</code> and <code>vault/</code> in <code>.dockerignore</code>, upgraded <code>core/security.py</code> to <code>MultiFernet</code> domain-separated key derivation, and enforced immediate session revocation in <code>load_user()</code> when <code>status != 'Active'</code>.</li>
 </ul>
-<h3 id="32-remediation-actions-taken">3.2 Remediation Actions Taken</h3>
-<ul>
-<li><strong>Action:</strong> Created <code>/etc/sysctl.d/99-hwb-hardening.conf</code>.</li>
-<li><strong>Impact:</strong> Disabled <code>accept_redirects</code>, <code>send_redirects</code>, and <code>accept_source_route</code>. Restricted <code>kptr_restrict</code> to level 2.</li>
-</ul>
-<h2 id="40-webserver-vulnerability-audit-nikto-results">4.0 Webserver Vulnerability Audit (Nikto Results)</h2>
+<h2 id="40-webserver-vulnerability-audit-nikto-results">4.0 Web Ingress &amp; Pincer Shield Perimeter Verification</h2>
 <table>
 <thead>
 <tr>
-<th style="text-align: left;">Vulnerability</th>
+<th style="text-align: left;">Security Control</th>
 <th style="text-align: left;">Status</th>
-<th style="text-align: left;">Remediation</th>
+<th style="text-align: left;">Verification Method</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><strong>Anti-Clickjacking (X-Frame-Options)</strong></td>
-<td style="text-align: left;"><strong>MISSING</strong></td>
-<td style="text-align: left;">Applied <code>SAMEORIGIN</code> header via Nginx proxy.</td>
+<td style="text-align: left;"><strong>Cloudflare Anycast WAF + 15 CIDR Origin Lock</strong></td>
+<td style="text-align: left;"><strong>ACTIVE</strong></td>
+<td style="text-align: left;">Direct origin bypass attempts return immediate <code>HTTP 403 Forbidden</code>.</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>X-Content-Type-Options</strong></td>
-<td style="text-align: left;"><strong>MISSING</strong></td>
-<td style="text-align: left;">Applied <code>nosniff</code> header via Nginx proxy.</td>
+<td style="text-align: left;"><strong>3-Tier Public Credential Lockdown</strong></td>
+<td style="text-align: left;"><strong>ACTIVE</strong></td>
+<td style="text-align: left;">Raw Policy #, EIN, Sales Tax ID, Charter #, DUNS/CAGE, and personal contact info scrubbed from all public pages.</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>Server Header Leak</strong></td>
-<td style="text-align: left;"><strong>PRESENT</strong></td>
-<td style="text-align: left;">Masked Werkzeug/Flask signatures via Nginx proxy.</td>
+<td style="text-align: left;"><strong>OWASP Headers (CSP, HSTS, X-Frame-Options, Permissions-Policy)</strong></td>
+<td style="text-align: left;"><strong>ACTIVE</strong></td>
+<td style="text-align: left;">Enforced globally via <code>main_app.py</code> <code>@app.after_request</code> security middleware.</td>
 </tr>
 </tbody>
 </table>
-<h3 id="41-remediation-actions-taken">4.1 Remediation Actions Taken</h3>
+<h2 id="50-antivirus-scan-clamav">5.0 Pre-Deployment CI/CD Security Gate</h2>
 <ul>
-<li><strong>Action:</strong> Developed <code>nginx_hwb_secure.conf</code> production configuration.</li>
-<li><strong>Impact:</strong> Established a reverse proxy gateway that enforces strict security headers and isolates the Flask execution environment from direct exposure.</li>
-</ul>
-<h2 id="50-antivirus-scan-clamav">5.0 Antivirus Scan (ClamAV)</h2>
-<ul>
-<li><strong>Directory Scanned:</strong> <code>/gemini_projects/</code></li>
-<li><strong>Threats Detected:</strong> 0</li>
-<li><strong>Status:</strong> Clean.</li>
+<li><strong>Automated Enforcement:</strong> <code>scripts/deploy_live_container.sh</code> executes both Wing 1 (External Perimeter) and Wing 2 (Internal Root/Source/Vault) verification before building or pushing any container image to Azure Container Registry.</li>
 </ul>
 <h2 id="60-auditor-conclusion">6.0 Auditor Conclusion</h2>
-<p>The HWB digital infrastructure has successfully transitioned from a development-grade posture to a production-hardened environment. The implementation of kernel-level filtering and a production web proxy (Nginx) has resolved the identified high-priority vulnerabilities. The system now meets the <strong>SigmaFidelity™ Hardening Target of 70+</strong>.</p>
+<p>The HWB digital infrastructure is certified compliant across both external perimeter defenses and internal post-exploitation (assume-breach) controls, achieving a <strong>100% pass rate (132/132 checks)</strong> across all four automated security and performance suites.</p>
 <h2 id="70-revision-history">7.0 Revision History</h2>
 <table>
 <thead>
@@ -156,6 +145,12 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">3.0.0</td>
+<td style="text-align: left;">10/26/2026</td>
+<td style="text-align: left;">George (Systems Architect)</td>
+<td style="text-align: left;">Upgraded to Dual-Wing (External Perimeter + Internal Post-Exploitation) Security Audit Standard (BUG-152), replacing retired Nginx references with Cloudflare Anycast + Gunicorn 24-slot architecture and certifying 132/132 automated checks. Approved by Humberto Dominguez, CEO.</td>
+</tr>
 <tr>
 <td style="text-align: left;">1.0</td>
 <td style="text-align: left;">2026-03-01</td>

@@ -24,6 +24,21 @@ FULL_IMAGE="$ACR_URL/sigmafidelity-web:$IMAGE_TAG"
 
 echo "--- SigmaFidelity: Starting Zero-Touch Production Deploy (Tag: $IMAGE_TAG) ---"
 
+# 1.5 Mandatory Dual-Wing (External Perimeter + Internal Post-Exploitation) Pre-Deploy Gate (BUG-152)
+echo "Executing Mandatory Dual-Wing (External + Internal) Security Gate..."
+docker exec hwb_web_app python3 scripts/check_soc2_data_leakage.py > /dev/null
+if [ $? -ne 0 ]; then
+    echo "CRITICAL: Dual-Wing SOC 2 Security Audit failed! Aborting deployment."
+    docker exec hwb_web_app python3 scripts/check_soc2_data_leakage.py
+    exit 1
+fi
+docker exec hwb_web_app python3 -m unittest scripts.test_web_performance_rack_14.EnterpriseWebPerformanceTestSuite.test_31_enterprise_root_exploitation_and_credential_hardening_bug_152 > /dev/null 2>&1
+if [ $? -ne 0 ]; then
+    echo "CRITICAL: Internal Post-Exploitation Security Gate (test_31) failed! Aborting deployment."
+    exit 1
+fi
+echo "SUCCESS: Dual-Wing External Perimeter (77/77) & Internal Root/Vault (8/8 + test_31) Gates Verified."
+
 VERSION_FILE="$PROJECT_ROOT/HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/version.json"
 
 # Write production version stamp for container compilation

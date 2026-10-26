@@ -4,7 +4,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-8.3-WEB</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.2.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.3.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5 &amp; 8.2.1 (Web Architecture &amp; Compliance)</span></div>
     </div>
@@ -20,11 +20,11 @@
             <tbody>
                 <tr><td style="text-align: left;"><strong>Document Title</strong></td><td style="text-align: left;"><strong>Website Improvement, WCAG 2.2 AA Accessibility &amp; Consent-Gated Telemetry SOP</strong></td></tr>
                 <tr><td style="text-align: left;"><strong>Document ID</strong></td><td style="text-align: left;">HWB-QMS-8.3-WEB</td></tr>
-                <tr><td style="text-align: left;"><strong>Version</strong></td><td style="text-align: left;">3.2.0</td></tr>
+                <tr><td style="text-align: left;"><strong>Version</strong></td><td style="text-align: left;">3.3.0</td></tr>
                 <tr><td style="text-align: left;"><strong>Status</strong></td><td style="text-align: left;">APPROVED</td></tr>
                 <tr><td style="text-align: left;"><strong>Author</strong></td><td style="text-align: left;">George (Systems Architect &amp; Lead ISO Auditor)</td></tr>
                 <tr><td style="text-align: left;"><strong>Approved By</strong></td><td style="text-align: left;">Humberto Dominguez, CEO</td></tr>
-                <tr><td style="text-align: left;"><strong>Effective Date</strong></td><td style="text-align: left;">10/24/2026</td></tr>
+                <tr><td style="text-align: left;"><strong>Effective Date</strong></td><td style="text-align: left;">10/26/2026</td></tr>
                 <tr><td style="text-align: left;"><strong>Governing Standards</strong></td><td style="text-align: left;">ISO 9001:2026 (ISO 9001:2015+Amd 1:2024), ISO/IEC 27001:2022+Amd 1:2024, WCAG 2.2 Level AA, CIPA § 631 &amp; CPRA</td></tr>
             </tbody>
         </table>
@@ -50,6 +50,7 @@
                 </ul>
             </li>
             <li><strong>Zero Internal Process Jargon on Public &amp; Client-Facing Surfaces (BUG-147):</strong> Public webpages, client/partner onboarding portals, training certificates, authentication screens, and outbound client emails must never expose internal engineering processes, internal audit control labels (e.g., <code>SOC 2 PROCESSING INTEGRITY COMPLIANCE</code>, <code>SOC 2 Privacy P2.1</code>, <code>IETF RFC 8058</code>, <code>ISO 9001 Clause 7.2</code>, <code>WORM</code>), database/architecture identifiers (<code>PostgreSQL</code>, <code>containerized</code>, <code>EmailSuppressionList</code>, <code>BYTEA</code>, <code>SHA-256</code>, <code>AES-256</code>), internal SOP document codes (<code>HWB-LEG-001</code>, <code>HWB-QMS-4.5</code>), or internal AI agent personas (<code>Super George</code>, <code>George, Systems Architect</code>, <code>SigmaFidelity&trade;</code>). The deployment version/commit badge in <code>base.html</code> is restricted strictly to authenticated staff via <code>{% if current_user and current_user.is_authenticated %}</code>.</li>
+            <li><strong>Walkthrough-First Custom Quotes, Official Mailing Address &amp; Dual-Wing Security Gate (BUG-152):</strong> All public pages quote pricing exclusively following a custom facility walkthrough (zero published $/SF rates or fixed monthly packages), route all corporate correspondence to <strong>P.O. Box 38465, Dallas, TX 75238</strong> and <code>legal@hwbcleaning.com</code>, enforce the 3-Tier Public Credential Lockdown (zero raw policy numbers, EINs, tax IDs, charter numbers, DUNS/CAGE codes, or personal phone/email addresses on public pages), and pass the Dual-Wing (External Perimeter + Internal Post-Exploitation) CI/CD Gate prior to deployment.</li>
         </ol>
 
         <div class="callout callout-note">
@@ -58,16 +59,16 @@
         </div>
 
         
-        <h2 id="35-ci-cd-deployment-flowchart">3.5 Zero-Defect Web Modification &amp; Azure Deployment Flowchart</h2>
-        <p>The diagram below illustrates the mandatory pre-deployment verification pipeline (Rack 14 27/27 tests, 77/77 security checks, Zero Internal Process Jargon gate, and QMS Library Integrity gate) required before pushing container images to Azure.</p>
+        <h2 id="35-ci-cd-deployment-flowchart">3.5 Zero-Defect Dual-Wing Web Modification &amp; Azure Deployment Flowchart</h2>
+        <p>The diagram below illustrates the mandatory pre-deployment verification pipeline (Rack 14 31/31 tests, 85/85 Dual-Wing External + Internal security checks, Zero Internal Process Jargon gate, and QMS Library Integrity gate) required before pushing container images to Azure.</p>
         <div class="mermaid-wrapper" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0;">
             <div class="mermaid">
 flowchart TD
     DEV["1. Code / Template / SOP Update<br/>in HWB-IT-WEBSITE"] --> RESTART["2. Flush Gunicorn Cache<br/>(docker restart hwb_web_app)"]
-    RESTART --> R14["3. Run Rack 14 Suite (27/27 Tests)<br/>(Responsive, Masking, Zero Jargon, QMS)"]
-    R14 --> SOC["4. Run Security Suite (77/77 Checks)<br/>+ Yamamoto Bid Suite (14/14 Checks)"]
-    SOC --> SYNC["5. Execute sigma_sync.py<br/>(Sync 163 SOPs &amp; 51 Diagrams to SQL Brain)"]
-    SYNC --> ACR["6. Build &amp; Push Docker Image to sigmajanacr<br/>&amp; Verify Live https://hwbcleaning.com"]
+    RESTART --> R14["3. Run Rack 14 Suite (31/31 Tests)<br/>(Responsive, Masking, Zero Jargon, QMS, Root)"]
+    R14 --> SOC["4. Run Dual-Wing Security Suite (85/85 Checks)<br/>(Wing 1 External + Wing 2 Internal Root)"]
+    SOC --> SYNC["5. Execute sigma_sync.py<br/>(Sync 165 SOPs &amp; 51 Diagrams to SQL Brain)"]
+    SYNC --> ACR["6. Build Non-Root Image (USER hwbapp) &amp; Push<br/>to Azure + Verify https://hwbcleaning.com"]
 
     style DEV fill:#eff6ff,stroke:#2563eb,stroke-width:2px
     style R14 fill:#fefce8,stroke:#ca8a04,stroke-width:2px
@@ -78,7 +79,7 @@ flowchart TD
         <h2 id="40-verification">4.0 Verification (Zero-Defect Check)</h2>
         <ul>
             <li><strong>Sovereign Compliance Code Linter:</strong> 87/87 templates scanned — 0 Critical, 0 High violations (100% Grade A+).</li>
-            <li><strong>Zero Internal Jargon Regression Gate (BUG-147):</strong> Verified by <code>test_26_zero_internal_process_references_on_public_surfaces_bug_147</code> in <code>scripts/test_web_performance_rack_14.py</code> (<code>26/26</code> tests passing).</li>
+            <li><strong>Dual-Wing External &amp; Internal Security Regression Gate (BUG-152):</strong> Verified by <code>test_31_enterprise_root_exploitation_and_credential_hardening_bug_152</code> in <code>scripts/test_web_performance_rack_14.py</code> (<code>31/31</code> tests passing) and <code>scripts/check_soc2_data_leakage.py</code> (<code>85/85</code> checks passing).</li>
             <li><strong>Canonical Sitemap Verification:</strong> 29/29 URLs in <code>static/sitemap.xml</code> verified returning HTTP 200 with unique meta descriptions, OpenGraph tags, and JSON-LD schema.</li>
             <li><strong>WORM Audit Traceability:</strong> All template and SEO upgrades logged in PostgreSQL <code>"SecurityAuditLogs"</code> (Receipts <code>#2309–#2314</code>).</li>
         </ul>
@@ -94,6 +95,12 @@ flowchart TD
                 </tr>
             </thead>
             <tbody>
+                <tr>
+                    <td style="text-align: left;">3.3.0</td>
+                    <td style="text-align: left;">10/26/2026</td>
+                    <td style="text-align: left;">George (Systems Architect)</td>
+                    <td style="text-align: left;">Codified Pillar 6 (Walkthrough-First Custom Quotes, Official Mailing Address P.O. Box 38465, 3-Tier Public Credential Lockdown, and Dual-Wing External + Internal Security Gate — BUG-152), upgrading Section 3.5 Mermaid Flowchart and Section 4.0 to 31/31 Rack 14 tests and 85/85 SOC 2 checks. Approved by Humberto Dominguez, CEO.</td>
+                </tr>
                 <tr>
                     <td style="text-align: left;">3.0.0</td>
                     <td style="text-align: left;">10/24/2026</td>
