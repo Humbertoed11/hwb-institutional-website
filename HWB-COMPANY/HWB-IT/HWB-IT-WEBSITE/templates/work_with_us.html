@@ -479,10 +479,10 @@
             <div class="isc-card" style="padding: 2.5rem; border-radius: 12px; border: 1px solid #e2e8f0; background: #ffffff; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);">
                 <div style="margin-bottom: 1.75rem;">
                     <h2 style="font-size: 1.5rem; font-weight: 900; color: #0f172a; margin-bottom: 0.35rem;">
-                        Subcontractor & Cleaning Crew Partner Network
+                        Subcontractor Partner Network (1099 Crews)
                     </h2>
                     <p style="font-size: 0.9rem; color: #64748b;">
-                        Partner with HWB Cleaning Services LLC on large commercial construction bids, multi-story buildings, and specialized floor/window projects. We handle the client acquisition; your crew delivers high-capacity execution.
+                        Partner with HWB on commercial facilities, post-construction cleanups, and floor care projects across North Texas.
                     </p>
                 </div>
 
@@ -605,7 +605,7 @@
                                 <option value="2">2 - 3 Workers (Small Jobs / Office)</option>
                                 <option value="5" selected>4 - 6 Workers (Medium Commercial / Daycares)</option>
                                 <option value="8">7 - 10 Workers (Post-Construction Surge)</option>
-                                <option value="15">10+ Workers (Large Commercial Takeoffs)</option>
+                                <option value="15">10+ Workers (Large Commercial Projects)</option>
                             </select>
                         </div>
                     </div>
@@ -613,6 +613,18 @@
                     <div style="margin-bottom: 1.25rem;">
                         <div style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Specialties &amp; Equipment Owned (Select all that apply) *</div>
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.6rem; padding: 0.75rem; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px;">
+                            <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.82rem; color: #334155; cursor: pointer;">
+                                <input type="checkbox" name="specialties" value="Facility Cleaning" style="accent-color: var(--brand);">
+                                🏢 Facility Cleaning (Offices &amp; Commercial)
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.82rem; color: #334155; cursor: pointer;">
+                                <input type="checkbox" name="specialties" value="Medical Office Cleaning" style="accent-color: var(--brand);">
+                                🏥 Medical Office Cleaning
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.82rem; color: #334155; cursor: pointer;">
+                                <input type="checkbox" name="specialties" value="School & Daycare Cleaning" style="accent-color: var(--brand);">
+                                🏫 School &amp; Daycare Cleaning
+                            </label>
                             <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.82rem; color: #334155; cursor: pointer;">
                                 <input type="checkbox" name="specialties" value="Post-Construction Cleaning" style="accent-color: var(--brand);">
                                 🏗️ Post-Construction Cleaning
@@ -626,16 +638,12 @@
                                 🧼 Carpet Extraction
                             </label>
                             <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.82rem; color: #334155; cursor: pointer;">
-                                <input type="checkbox" name="specialties" value="Pressure Washing" style="accent-color: var(--brand);">
-                                💦 Commercial Pressure Washing
+                                <input type="checkbox" name="specialties" value="Warehouse & Industrial Scrubbing" style="accent-color: var(--brand);">
+                                🏭 Warehouse &amp; Industrial Scrubbing
                             </label>
                             <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.82rem; color: #334155; cursor: pointer;">
-                                <input type="checkbox" name="specialties" value="Window Cleaning" style="accent-color: var(--brand);">
-                                🪟 Exterior / High Window Cleaning
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.82rem; color: #334155; cursor: pointer;">
-                                <input type="checkbox" name="specialties" value="Disinfection / Healthcare" style="accent-color: var(--brand);">
-                                🏥 Healthcare Terminal Cleaning
+                                <input type="checkbox" name="specialties" value="Window & Pressure Washing" style="accent-color: var(--brand);">
+                                🪟 Window &amp; Pressure Washing
                             </label>
                         </div>
                     </div>
@@ -644,14 +652,19 @@
                         <div>
                             <label for="sub-coi-status" style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">General Liability Insurance Status *</label>
                             <select name="coi_status" id="sub-coi-status" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem; background: #fff;">
-                                <option value="Self-Reported">Active $1,000,000+ General Liability Policy (Will Upload COI)</option>
-                                <option value="Pending">Policy in Place (Will Send COI)</option>
-                                <option value="Needs Assistance">Need Assistance Setting Up Coverage</option>
+                                <option value="Self-Reported">Active $1,000,000+ General Liability Policy (Ready to Upload COI)</option>
+                                <option value="Pending">Active General Liability Policy (Under $1,000,000 Limit)</option>
+                                <option value="In Process">In Process of Obtaining Commercial Insurance Policy</option>
                             </select>
                         </div>
                         <div>
-                            <label for="sub-hourly-rate" style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Expected Crew Hourly Rate or Subcontract Target</label>
-                            <input type="text" id="sub-hourly-rate" name="hourly_rate_range" placeholder="e.g. Hourly rate or project target" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
+                            <label for="sub-hourly-rate" style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Available Work Schedule / Shift *</label>
+                            <select id="sub-hourly-rate" name="hourly_rate_range" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem; background: #fff;">
+                                <option value="Nightly / After-Hours & Daytime (Flexible)" selected>Nightly / After-Hours &amp; Daytime (Flexible)</option>
+                                <option value="Nightly / After-Hours Only">Nightly / After-Hours (Offices, Schools &amp; Medical)</option>
+                                <option value="Daytime / Business Hours">Daytime / Business Hours (Post-Construction &amp; Floors)</option>
+                                <option value="Weekends & Project Surges">Weekends &amp; Project Surges</option>
+                            </select>
                         </div>
                     </div>
 
