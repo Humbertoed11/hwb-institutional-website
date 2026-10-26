@@ -5039,49 +5039,81 @@
         const btnInHouse = document.getElementById('btn-cadence-cm-inhouse');
         const btnOutsourced = document.getElementById('btn-cadence-cm-outsourced');
 
+        // 1. Instant Optimistic Segmented Radio-Button Visual State (BUG-159)
         if (btnUnknown) {
-            btnUnknown.style.background = resolved === 'UNKNOWN' ? '#e2e8f0' : '#ffffff';
-            btnUnknown.style.color = resolved === 'UNKNOWN' ? '#0f172a' : '#475569';
-            btnUnknown.style.borderColor = resolved === 'UNKNOWN' ? '#94a3b8' : '#cbd5e1';
+            const isActive = resolved === 'UNKNOWN';
+            btnUnknown.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+            btnUnknown.innerText = isActive ? '✓ ⚪ Unknown' : '⚪ Unknown';
+            btnUnknown.style.background = isActive ? '#334155' : '#ffffff';
+            btnUnknown.style.color = isActive ? '#ffffff' : '#475569';
+            btnUnknown.style.border = isActive ? '2px solid #0f172a' : '1px solid #cbd5e1';
+            btnUnknown.style.fontWeight = isActive ? '800' : '700';
+            btnUnknown.style.boxShadow = isActive ? '0 0 0 2px rgba(51, 65, 85, 0.25)' : 'none';
         }
         if (btnInHouse) {
-            btnInHouse.style.background = resolved === 'IN_HOUSE' ? '#fef3c7' : '#ffffff';
-            btnInHouse.style.color = resolved === 'IN_HOUSE' ? '#b45309' : '#475569';
-            btnInHouse.style.borderColor = resolved === 'IN_HOUSE' ? '#f59e0b' : '#cbd5e1';
+            const isActive = resolved === 'IN_HOUSE';
+            btnInHouse.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+            btnInHouse.innerText = isActive ? '✓ 🏠 In-House Cleaning' : '🏠 In-House Cleaning';
+            btnInHouse.style.background = isActive ? '#d97706' : '#ffffff';
+            btnInHouse.style.color = isActive ? '#ffffff' : '#b45309';
+            btnInHouse.style.border = isActive ? '2px solid #92400e' : '1px solid #f59e0b';
+            btnInHouse.style.fontWeight = isActive ? '800' : '700';
+            btnInHouse.style.boxShadow = isActive ? '0 0 0 2px rgba(217, 119, 6, 0.28)' : 'none';
         }
         if (btnOutsourced) {
-            btnOutsourced.style.background = resolved === 'OUTSOURCED' ? '#cffafe' : '#ffffff';
-            btnOutsourced.style.color = resolved === 'OUTSOURCED' ? '#0e7490' : '#475569';
-            btnOutsourced.style.borderColor = resolved === 'OUTSOURCED' ? '#06b6d4' : '#cbd5e1';
+            const isActive = resolved === 'OUTSOURCED';
+            btnOutsourced.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+            btnOutsourced.innerText = isActive ? '✓ 🤝 Contract Cleaning' : '🤝 Contract Cleaning';
+            btnOutsourced.style.background = isActive ? '#0891b2' : '#ffffff';
+            btnOutsourced.style.color = isActive ? '#ffffff' : '#0e7490';
+            btnOutsourced.style.border = isActive ? '2px solid #155e75' : '1px solid #06b6d4';
+            btnOutsourced.style.fontWeight = isActive ? '800' : '700';
+            btnOutsourced.style.boxShadow = isActive ? '0 0 0 2px rgba(8, 145, 178, 0.28)' : 'none';
         }
 
+        // 2. Synchronize in-memory lead object, Lead Details modal dropdown, and background table row immediately
         if (activeCadenceLead) {
             activeCadenceLead.cleaning_delivery_model = resolved;
         }
+        const detailModalSelect = document.getElementById('lead-cleaning-model');
+        if (detailModalSelect) {
+            detailModalSelect.value = resolved;
+        }
+        if (activeCadenceLead && activeCadenceLead.id) {
+            const row = document.querySelector(`.leads-row[data-id="${activeCadenceLead.id}"]`);
+            if (row) {
+                const cmSelect = row.querySelector('select[onchange*="cleaning_delivery_model"]');
+                if (cmSelect) {
+                    cmSelect.value = resolved;
+                    applyCleaningModelSelectStyle(cmSelect, resolved);
+                }
+            }
+        }
 
+        // 3. Smart Call-Script Auto-Switch when clicked interactively during a live phone call
+        if (saveImmediately) {
+            if ((resolved === 'IN_HOUSE' || resolved === 'OUTSOURCED') && typeof switchLeadScriptTab === 'function') {
+                switchLeadScriptTab('obj-cleaner');
+            }
+        }
+
+        // 4. Persist immediately to database so selection is saved even if workstation is closed without logging a call
         if (saveImmediately && activeCadenceLead && activeCadenceLead.id) {
             try {
-                await fetch(`/api/v1/leads/${activeCadenceLead.id}`, {
+                const res = await fetch(`/api/v1/leads/${activeCadenceLead.id}`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ cleaning_delivery_model: resolved })
                 });
-                const row = document.querySelector(`.leads-row[data-id="${activeCadenceLead.id}"]`);
-                if (row) {
-                    const cmSelect = row.querySelector('select[onchange*="cleaning_delivery_model"]');
-                    if (cmSelect) {
-                        cmSelect.value = resolved;
-                        applyCleaningModelSelectStyle(cmSelect, resolved);
-                    }
-                }
-                if (typeof showToast === 'function') {
-                    showToast(`Who Cleans updated: ${formatCleaningModelLabel(resolved)}`, "success");
+                if (res.ok && typeof showToast === 'function') {
+                    showToast(`Saved: ${formatCleaningModelLabel(resolved)}`, "success");
                 }
             } catch (err) {
                 console.error("Error saving Who Cleans in calling session:", err);
             }
         }
     }
+    window.setCadenceCleaningModel = setCadenceCleaningModel;
 
     async function submitLeadCadenceOutcome(activityType, targetStatus = null, autoAdvance = true, targetPriority = null) {
         if (!activeCadenceLead) return;

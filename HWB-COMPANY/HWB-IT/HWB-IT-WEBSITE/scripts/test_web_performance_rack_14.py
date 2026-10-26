@@ -3074,6 +3074,18 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
             self.assertIn(lead_id_1, wt_ids)
             self.assertIn(lead_id_2, wt_ids)
             self.assertIn(lead_id_old, wt_ids)
+
+            # 5. Verify Automatic Content-Fingerprint Cache Busting & High-Contrast Calling Workstation Pills (BUG-159)
+            r_html = auth_client.get("/admin/operations?view=leads")
+            self.assertEqual(r_html.status_code, 200)
+            html_body = r_html.get_data(as_text=True)
+            self.assertRegex(
+                html_body,
+                r'/static/js/backoffice_operations_core\.js\?f=[0-9a-f]{8}',
+                "Static JS URL must automatically include an 8-char SHA-256 content fingerprint (?f=...)",
+            )
+            self.assertIn('role="radiogroup" aria-label="Who Cleans Right Now"', html_body)
+            self.assertIn('✓ ⚪ Unknown', html_body)
         finally:
             conn = get_db(self.db_url)
             try:

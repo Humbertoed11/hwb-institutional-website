@@ -142,6 +142,7 @@ Responsibility: George (Architect)
 | 10/26/2026 | BUG-156 | 3-Workflow Enterprise Lead Intake, Universal Address/State Hygiene (`TX` vs `tx`/`Texas`/`Tejas`), Standard `Lead Owner` Column Out of the Box, & Bulk Owner/Round-Robin Assignment Architecture Across All Forms. | **RESOLVED** | HIGH |
 | 10/26/2026 | BUG-157 | Enterprise Lead Status Lifecycle (`New`, `In Campaign`, `Engaged`, `Contacted`, `Qualified`, `Walkthrough Completed`), Separate `🧹 Who Cleans` (`cleaning_delivery_model`) Column, Stage-Date History Tracking (`"LeadStageHistory"`), Record Activities Reorganization, & Calling Workstation Upgrade. | **RESOLVED** | HIGH |
 | 10/26/2026 | BUG-158 | 5-Part Enterprise Lead Protection, Placeholder/Internal Email Hygiene (`000000000@oooo` / `hwbcleaning11@gmail.com` Overwrite Prevention), Automatic Unassigned Lead Owner Attribution, Default Sort by Most Recently Added/Worked (`GREATEST(updated_at, input_date)`), `📅 Worked Today` Filter, & PITR/Heap Forensic Recovery. | **RESOLVED** | CRITICAL |
+| 10/26/2026 | BUG-159 | Calling Workstation `🧹 Who Cleans Right Now` Button Unresponsiveness Due to Stale Browser/Cloudflare Static JS Cache (`?v=v5.5.0`) & Low-Contrast Active State — Remediated via Automatic SHA-256 Content-Fingerprint Cache Busting (`?f=<hash>`), High-Contrast Segmented Radio Group (`✓` Checkmark + Solid Fill), & Smart Call-Script Auto-Switch. | **RESOLVED** | HIGH |
 
 
 ## BUG-122: App Manual Static Routing Deficit (Lacks Automatic Active Workspace Detection & Deep-Link Chapter Navigation)
@@ -3089,6 +3090,24 @@ Verified continuously on every build by `test_34_enterprise_lead_intake_universa
    - Added a 1-click `🧹 Who Cleans Right Now` bar (`setCadenceCleaningModel`) in `#modal-lead-cadence` and enforced stage-protection rules so `Left Voicemail` / `Left Message w/ Staff` / `No Answer` never downgrade `Engaged`, `Qualified`, or `Walkthrough Completed` leads or falsely mark `New` leads as `Contacted`.
 **Preventative:**
 Verified continuously on every build by `test_35_enterprise_lead_status_who_cleans_stage_dates_and_calling_workstation_bug_157` in `scripts/test_web_performance_rack_14.py` (`35/35` PASS).
+
+
+## BUG-158 & BUG-159: Enterprise Lead Protection, Placeholder Email Hygiene, `📅 Worked Today` Attribution, Automatic SHA-256 Static Asset Fingerprinting & Calling Workstation `🧹 Who Cleans Right Now` Upgrade
+**Detected:** 10/26/2026
+**Status:** **RESOLVED** (10/26/2026 — Verified by `test_36_enterprise_lead_protection_placeholder_email_hygiene_and_worked_today_bug_158` in `scripts/test_web_performance_rack_14.py` `36/36` passing)
+**Symptoms:**
+1. Leads entered or worked by Mirna Rondinella (`user_id=3`) appeared missing from the top of the Lead View or had `owner_id = NULL`, and typing placeholder emails (`000000000@oooo` or `hwbcleaning11@gmail.com`) triggered a silent email-collision overwrite of `ID=1004659`.
+2. Clicking the `🧹 Who Cleans Right Now` pills (`⚪ Unknown`, `🏠 In-House Cleaning`, `🤝 Contract Cleaning`) in the Commercial Lead Calling Workstation (`#modal-lead-cadence`) showed no visual selection on live `www.hwbcleaning.com` because browsers and Cloudflare Edge served a cached pre-`BUG-157` copy of `backoffice_operations_core.js?v=v5.5.0`.
+**Solution:**
+1. **Placeholder & Internal Email Sanitization (`core/services/sanitizer.py`) + Silent Overwrite Prevention (`blueprints/operations.py`):**
+   - Upgraded `clean_email()` to strip placeholder emails (`000000000@oooo`, `none@none.com`, `na@na.com`) and internal company emails (`hwbcleaning11@gmail.com`, `@hwbcleaning.com`) to `None`.
+   - Hardened `add_manual_lead` so a new lead with a different company name never silently overwrites an existing lead, and stores a full `profile_snapshot` in `"LeadStageHistory"`.
+2. **Default Sort by Most Recently Added/Worked + `📅 Worked Today` Filter + Automatic Unassigned Lead Attribution (`blueprints/operations.py`, `blueprints/crm_api.py`, `database/schema_engine.py`):**
+   - Updated the default Lead View sort to `GREATEST(COALESCE(TO_CHAR(updated_at, 'YYYY-MM-DD HH24:MI:SS'), ''), COALESCE(input_date::text, '')) DESC, id DESC`, added the `📅 Worked Today` (`worked_today=true`) filter pill, and auto-assigned `owner_id = current_user.id` whenever a team member adds or works an unassigned lead.
+3. **Automatic Content-Hash Static Asset Fingerprinting (`main_app.py`) & High-Contrast Calling Workstation Pills (`templates/backoffice_operations.html`, `static/js/backoffice_operations_core.js`):**
+   - Added `@app.url_defaults` (`inject_static_asset_fingerprint`) in `main_app.py` to automatically append `?f=<8-char-sha256>` to all `/static/...` URLs based on file contents on disk.
+   - Upgraded `setCadenceCleaningModel()` to apply an instant high-contrast active fill (`✓ ⚪ Unknown` in Slate `#334155`, `✓ 🏠 In-House Cleaning` in Amber `#d97706`, `✓ 🤝 Contract Cleaning` in Teal `#0891b2`), synchronize the Lead Details modal and table row, and automatically switch the Call Script box to `🧹 "Have cleaner"` (`obj-cleaner`) when `In-House` or `Contract Cleaning` is clicked.
+
 
 
 

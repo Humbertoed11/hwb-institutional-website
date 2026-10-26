@@ -7,6 +7,7 @@ Custodians: George (Systems Architect) & Humberto Dominguez (CEO)
 import os
 import json
 import time
+import hashlib
 import datetime
 import threading
 from typing import Optional
@@ -95,6 +96,33 @@ def format_phone_filter(phone: Optional[str]) -> str:
     return formatted if formatted else str(phone).strip()
 
 app.jinja_env.filters['format_mdy'] = format_to_mdy
+
+# --- Enterprise Automatic Static Asset Content Fingerprinting (BUG-159) ---
+_STATIC_ASSET_HASH_CACHE = {}
+
+def _get_static_asset_fingerprint(filename: str) -> str:
+    """Computes an 8-character SHA-256 content fingerprint for any static file on disk."""
+    if not filename:
+        return "v1"
+    full_path = os.path.join(app.static_folder, filename)
+    try:
+        mtime = os.path.getmtime(full_path)
+        cached = _STATIC_ASSET_HASH_CACHE.get(filename)
+        if cached and cached[0] == mtime:
+            return cached[1]
+        with open(full_path, 'rb') as f:
+            digest = hashlib.sha256(f.read()).hexdigest()[:8]
+        _STATIC_ASSET_HASH_CACHE[filename] = (mtime, digest)
+        return digest
+    except Exception:
+        return "v1"
+
+@app.url_defaults
+def inject_static_asset_fingerprint(endpoint, values):
+    """Automatically appends ?f=<sha256_8> to all url_for('static', filename=...) URLs."""
+    if endpoint == 'static' and values and 'filename' in values and 'f' not in values:
+        values['f'] = _get_static_asset_fingerprint(values['filename'])
+
 
 # --- 12-Factor Compliance: Startup Verification ---
 required_configs = ['SECRET_KEY', 'DATABASE_URL', 'CLIENT_DATABASE_URL']
