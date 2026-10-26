@@ -19,9 +19,11 @@ from werkzeug.utils import secure_filename
 from flask_login import login_required, current_user
 from core.services.database import get_db
 from core.services.email_service import transmit_email
+from core.services.search import parse_advanced_search
 from core.services.sanitizer import (
     clean_phone, clean_currency, clean_sqft, clean_zip, clean_email, clean_city,
-    extract_phone_digits, normalize_business_name, merge_comma_list
+    extract_phone_digits, normalize_business_name, merge_comma_list,
+    clean_state, clean_website, split_address_lines
 )
 from core.security import (
     encrypt_pii,
@@ -212,9 +214,20 @@ def api_account_hub(id):
                     termination_reason = None
 
                 cur.execute('''
+                    ALTER TABLE "Customers" ADD COLUMN IF NOT EXISTS address_line_2 VARCHAR(100);
+                    ALTER TABLE "Customers" ADD COLUMN IF NOT EXISTS website TEXT;
+                ''')
+                raw_acc_addr = resolve('company_address', current_acc.get('company_address'))
+                raw_acc_line2 = resolve('address_line_2', current_acc.get('address_line_2'))
+                acc_addr_1, acc_addr_2 = split_address_lines(raw_acc_addr, raw_acc_line2)
+                resolved_acc_email = clean_email(resolve('email', current_acc['email'])) or resolve('email', current_acc['email'])
+                resolved_acc_state = clean_state(resolve('state', current_acc['state']), default='TX')
+                resolved_acc_web = clean_website(resolve('website', current_acc.get('website')), fallback_email=resolved_acc_email)
+
+                cur.execute('''
                     UPDATE "Customers" SET 
                         company_name = %s, contact_person_name = %s, email = %s, phone = %s, 
-                        company_address = %s, city = %s, state = %s, zip = %s, website = %s, 
+                        company_address = %s, address_line_2 = %s, city = %s, state = %s, zip = %s, website = %s, 
                         sqf = %s, cleanable_sqft = %s, annual_revenue = %s,
                         monthly_billing_rate = %s, overtime_billing_rate = %s, payment_terms = %s,
                         accounts_payable_email = %s, accounts_payable_phone = %s,
@@ -230,13 +243,14 @@ def api_account_hub(id):
                 ''', (
                     resolve('company_name', current_acc['company_name']), 
                     resolve('contact_person_name', current_acc['contact_person_name']), 
-                    clean_email(resolve('email', current_acc['email'])) or resolve('email', current_acc['email']), 
+                    resolved_acc_email, 
                     clean_phone(resolve('phone', current_acc['phone'])) or resolve('phone', current_acc['phone']),
-                    resolve('company_address', current_acc['company_address']), 
+                    acc_addr_1,
+                    acc_addr_2,
                     clean_city(resolve('city', current_acc['city'])) or resolve('city', current_acc['city']), 
-                    resolve('state', current_acc['state']), 
+                    resolved_acc_state, 
                     clean_zip(resolve('zip', current_acc['zip'])) or resolve('zip', current_acc['zip']), 
-                    resolve('website', current_acc['website']), 
+                    resolved_acc_web, 
                     sqf_val, cleanable_sqft, revenue_val,
                     monthly_billing_rate, overtime_billing_rate, payment_terms,
                     accounts_payable_email, accounts_payable_phone,
@@ -298,7 +312,7 @@ def api_batch_account_action():
     account_ids = data.get('account_ids', [])
     params = data.get('params', {})
 
-    if not account_ids:
+    if not account_ids and action != 'undo_assign_owner':
         return jsonify({'status': 'error', 'message': 'No account IDs provided'}), 400
 
     conn = get_db(current_app.config['DATABASE_URL'])
@@ -314,6 +328,53 @@ def api_batch_account_action():
                     return log_and_abort_abac('accounts', 'edit')
                 new_status = params.get('status', 'Active')
                 cur.execute('UPDATE "Customers" SET status = %s WHERE customer_id = ANY(%s);', (new_status, account_ids))
+            elif action == 'assign_owner':
+                if not current_user.has_permission('accounts', 'edit'):
+                    return log_and_abort_abac('accounts', 'edit')
+                account_ids = [int(x) for x in account_ids if str(x).isdigit()]
+                only_unassigned = bool(params.get('only_unassigned', False))
+                cur.execute('SELECT customer_id, assigned_rep_id FROM "Customers" WHERE customer_id = ANY(%s) ORDER BY customer_id ASC;', (account_ids,))
+                current_rows = cur.fetchall()
+                previous_owners = {}
+                eligible_ids = []
+                for r in current_rows:
+                    cid = r['customer_id'] if isinstance(r, dict) else r[0]
+                    prev_rep = r['assigned_rep_id'] if isinstance(r, dict) else r[1]
+                    if only_unassigned and prev_rep is not None:
+                        continue
+                    previous_owners[str(cid)] = prev_rep
+                    eligible_ids.append(cid)
+
+                owner_ids_list = params.get('owner_ids')
+                if isinstance(owner_ids_list, list) and len(owner_ids_list) > 0:
+                    clean_owner_ids = [int(x) for x in owner_ids_list if str(x).isdigit()]
+                else:
+                    raw_owner_id = params.get('owner_id')
+                    clean_owner_ids = [int(raw_owner_id)] if (raw_owner_id not in (None, '', 'null', 'None') and str(raw_owner_id).isdigit()) else [None]
+
+                for idx, cid in enumerate(eligible_ids):
+                    assigned_uid = clean_owner_ids[idx % len(clean_owner_ids)]
+                    cur.execute('UPDATE "Customers" SET assigned_rep_id = %s WHERE customer_id = %s;', (assigned_uid, cid))
+
+                conn.commit()
+                return jsonify({
+                    'status': 'success',
+                    'affected_count': len(eligible_ids),
+                    'skipped_count': len(account_ids) - len(eligible_ids),
+                    'previous_owners': previous_owners,
+                })
+            elif action == 'undo_assign_owner':
+                if not current_user.has_permission('accounts', 'edit'):
+                    return log_and_abort_abac('accounts', 'edit')
+                prev_map = params.get('previous_owners') or {}
+                restored = 0
+                for cid_str, prev_uid in prev_map.items():
+                    if str(cid_str).isdigit():
+                        uid_val = int(prev_uid) if (prev_uid is not None and str(prev_uid).isdigit()) else None
+                        cur.execute('UPDATE "Customers" SET assigned_rep_id = %s WHERE customer_id = %s;', (uid_val, int(cid_str)))
+                        restored += 1
+                conn.commit()
+                return jsonify({'status': 'success', 'affected_count': restored})
             else:
                 return jsonify({'status': 'error', 'message': f'Unknown action: {action}'}), 400
             
@@ -449,8 +510,9 @@ def api_lead_hub(id):
                     return val if val != "" else None
 
                 # Self-healing schema check in case worker receives PUT/PATCH before boot DDL completes
-                if 'website' not in current_lead or 'student_enrollment' not in current_lead:
+                if 'website' not in current_lead or 'student_enrollment' not in current_lead or 'address_line_2' not in current_lead:
                     cur.execute('''
+                        ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS address_line_2 VARCHAR(100);
                         ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS website TEXT;
                         ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS county TEXT;
                         ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS student_enrollment INTEGER;
@@ -534,12 +596,19 @@ def api_lead_hub(id):
                         is_dnc_val = False
 
                 resolved_center_name = resolve('company_name', current_lead.get('center_name'))
-                resolved_address = resolve('address', current_lead.get('address'))
+                raw_addr_in = resolve('address', current_lead.get('address'))
+                raw_addr2_in = resolve('address_line_2', current_lead.get('address_line_2'))
+                resolved_address, resolved_address_line_2 = split_address_lines(raw_addr_in, raw_addr2_in)
                 raw_city_in = resolve('city', current_lead.get('city'))
                 if 'city' in data and (str(data.get('city') or '').strip() != str(current_lead.get('city') or '').strip()):
                     resolved_city = clean_city(raw_city_in) or raw_city_in
                 else:
                     resolved_city = current_lead.get('city')
+
+                resolved_email = clean_email(resolve('email', current_lead.get('email'))) or resolve('email', current_lead.get('email'))
+                resolved_state = clean_state(resolve('state', current_lead.get('state')), default='TX')
+                if 'website' in data or not website_val:
+                    website_val = clean_website(website_val, fallback_email=resolved_email)
 
                 # Prevent unique index collision on idx_leads_unique_location (lower(btrim(center_name)), lower(btrim(address)), lower(btrim(city)))
                 if resolved_center_name and resolved_address and resolved_city:
@@ -561,7 +630,7 @@ def api_lead_hub(id):
                 cur.execute('''
                     UPDATE "Leads" SET 
                         center_name = %s, decision_maker = %s, job_title = %s, email = %s, phone = %s, 
-                        address = %s, city = %s, state = %s, zipcode = %s, industry = %s, sqf = %s, 
+                        address = %s, address_line_2 = %s, city = %s, state = %s, zipcode = %s, industry = %s, sqf = %s, 
                         status = %s, estimated_annual_value = %s, next_action_date = %s, notes = %s,
                         facility_type = %s, lead_source = %s, service_interest = %s, priority_level = %s, traffic_cycle = %s,
                         capacity = %s, umbrella_name = %s, cleaning_delivery_model = %s,
@@ -574,11 +643,12 @@ def api_lead_hub(id):
                 ''', (resolved_center_name, 
                       resolve('decision_maker', current_lead.get('decision_maker')), 
                       resolve('job_title', current_lead.get('job_title')), 
-                      clean_email(resolve('email', current_lead.get('email'))) or resolve('email', current_lead.get('email')), 
+                      resolved_email, 
                       clean_phone(resolve('phone', current_lead.get('phone'))) or resolve('phone', current_lead.get('phone')), 
-                      resolved_address, 
+                      resolved_address,
+                      resolved_address_line_2,
                       resolved_city, 
-                      resolve('state', current_lead.get('state')), 
+                      resolved_state, 
                       clean_zip(resolve('zipcode', current_lead.get('zipcode'))) or resolve('zipcode', current_lead.get('zipcode')), 
                       resolve('industry', current_lead.get('industry')),
                       sqf_val, resolved_status, revenue_val, 
@@ -594,6 +664,13 @@ def api_lead_hub(id):
                       website_val, county_val, enrollment_val,
                       verification_val, pref_date_val, pref_time_val,
                       budget_val, is_dnc_val, campaign_ready_val, email_hygiene_val, id))
+
+                if 'owner_id' in data and owner_id_val != current_lead.get('owner_id'):
+                    actor_name = getattr(current_user, 'full_name', None) or getattr(current_user, 'username', 'Operator')
+                    cur.execute('''
+                        INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
+                        VALUES (%s, 'Lead', 'OWNER_ASSIGNED', %s);
+                    ''', (id, f"Lead owner updated to user ID {owner_id_val or 'Unassigned'} by {actor_name}."))
 
                 if (
                     'cleaning_delivery_model' in data
@@ -801,6 +878,114 @@ def api_lead_cadence_save(id):
         if 'conn' in locals() and conn: conn.close()
 
 
+@crm_api_bp.route('/api/v1/leads/check-duplicate', methods=['GET'])
+@login_required
+def api_leads_check_duplicate():
+    if not current_user.has_permission('leads', 'view'):
+        return jsonify({'status': 'error', 'duplicates': []}), 403
+    phone_raw = (request.args.get('phone') or '').strip()
+    email_raw = (request.args.get('email') or '').strip()
+    company_raw = (request.args.get('company_name') or request.args.get('company') or '').strip()
+    city_raw = (request.args.get('city') or '').strip()
+
+    phone_digits = extract_phone_digits(phone_raw)
+    email_clean = clean_email(email_raw)
+
+    if not phone_digits and not email_clean and len(company_raw) < 4:
+        return jsonify({'status': 'success', 'has_duplicates': False, 'matches': [], 'duplicates': []})
+
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            matches = []
+            seen_ids = set()
+            if phone_digits and len(phone_digits) == 10:
+                cur.execute('''
+                    SELECT l.id, l.center_name, l.city, l.state, l.phone, l.email, l.status, u.full_name as owner_name
+                    FROM "Leads" l
+                    LEFT JOIN "Users" u ON l.owner_id = u.id
+                    WHERE COALESCE(l.is_duplicate, FALSE) = FALSE
+                      AND RIGHT(REGEXP_REPLACE(COALESCE(l.phone, ''), '[^0-9]', '', 'g'), 10) = %s
+                    ORDER BY l.id ASC LIMIT 3;
+                ''', (phone_digits,))
+                for r in cur.fetchall():
+                    row_d = dict(r) if isinstance(r, dict) else {
+                        'id': r[0], 'center_name': r[1], 'city': r[2], 'state': r[3],
+                        'phone': r[4], 'email': r[5], 'status': r[6], 'owner_name': r[7]
+                    }
+                    row_d['match_reason'] = 'Phone Match'
+                    seen_ids.add(row_d['id'])
+                    matches.append(row_d)
+
+            if email_clean and len(matches) < 3:
+                cur.execute('''
+                    SELECT l.id, l.center_name, l.city, l.state, l.phone, l.email, l.status, u.full_name as owner_name
+                    FROM "Leads" l
+                    LEFT JOIN "Users" u ON l.owner_id = u.id
+                    WHERE COALESCE(l.is_duplicate, FALSE) = FALSE
+                      AND LOWER(BTRIM(COALESCE(l.email, ''))) = LOWER(%s)
+                    ORDER BY l.id ASC LIMIT 3;
+                ''', (email_clean,))
+                for r in cur.fetchall():
+                    row_d = dict(r) if isinstance(r, dict) else {
+                        'id': r[0], 'center_name': r[1], 'city': r[2], 'state': r[3],
+                        'phone': r[4], 'email': r[5], 'status': r[6], 'owner_name': r[7]
+                    }
+                    if row_d['id'] not in seen_ids:
+                        row_d['match_reason'] = 'Email Match'
+                        seen_ids.add(row_d['id'])
+                        matches.append(row_d)
+
+            if len(company_raw) >= 4 and len(matches) < 3:
+                if city_raw:
+                    cur.execute('''
+                        SELECT l.id, l.center_name, l.city, l.state, l.phone, l.email, l.status, u.full_name as owner_name
+                        FROM "Leads" l
+                        LEFT JOIN "Users" u ON l.owner_id = u.id
+                        WHERE COALESCE(l.is_duplicate, FALSE) = FALSE
+                          AND COALESCE(l.center_name, '') ILIKE %s
+                          AND LOWER(BTRIM(COALESCE(l.city, ''))) = LOWER(BTRIM(%s))
+                        ORDER BY l.id ASC LIMIT 3;
+                    ''', (f"%{company_raw.strip()}%", clean_city(city_raw) or city_raw))
+                else:
+                    cur.execute('''
+                        SELECT l.id, l.center_name, l.city, l.state, l.phone, l.email, l.status, u.full_name as owner_name
+                        FROM "Leads" l
+                        LEFT JOIN "Users" u ON l.owner_id = u.id
+                        WHERE COALESCE(l.is_duplicate, FALSE) = FALSE
+                          AND COALESCE(l.center_name, '') ILIKE %s
+                        ORDER BY l.id ASC LIMIT 3;
+                    ''', (f"%{company_raw.strip()}%",))
+                for r in cur.fetchall():
+                    row_d = dict(r) if isinstance(r, dict) else {
+                        'id': r[0], 'center_name': r[1], 'city': r[2], 'state': r[3],
+                        'phone': r[4], 'email': r[5], 'status': r[6], 'owner_name': r[7]
+                    }
+                    row_d['company_name'] = row_d.get('center_name') or ''
+                    row_d['owner_name'] = row_d.get('owner_name') or 'Unassigned'
+                    if row_d['id'] not in seen_ids:
+                        row_d['match_reason'] = 'Company Name Match'
+                        seen_ids.add(row_d['id'])
+                        matches.append(row_d)
+
+            for m in matches:
+                if 'company_name' not in m:
+                    m['company_name'] = m.get('center_name') or ''
+                if not m.get('owner_name'):
+                    m['owner_name'] = 'Unassigned'
+
+            return jsonify({
+                'status': 'success',
+                'has_duplicates': len(matches) > 0,
+                'matches': matches,
+                'duplicates': matches,
+            })
+    except Exception as e:
+        return jsonify({'status': 'error', 'duplicates': [], 'message': str(e)}), 500
+    finally:
+        conn.close()
+
+
 @crm_api_bp.route('/api/v1/leads/batch-action', methods=['POST'])
 @login_required
 def api_batch_lead_action():
@@ -809,16 +994,81 @@ def api_batch_lead_action():
     lead_ids = data.get('lead_ids', [])
     recipient_ids = data.get('recipient_ids', [])
     params = data.get('params', {})
+    select_all_matching = bool(data.get('select_all_matching', False) or params.get('select_all_matching', False))
+    filter_params = data.get('filter_params') or params.get('filter_params') or {}
 
-    if not lead_ids and not recipient_ids:
+    if not lead_ids and not recipient_ids and not select_all_matching and action != 'undo_assign_owner':
         return jsonify({'status': 'error', 'message': 'No lead IDs or recipient IDs provided'}), 400
 
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
         with conn.cursor() as cur:
             is_sales_user = (getattr(current_user, 'role', '') == 'Sales')
-            if is_sales_user and action in ('delete', 'assign_owner', 'auto_merge', 'dismiss_duplicates'):
+            if is_sales_user and action in ('delete', 'assign_owner', 'undo_assign_owner', 'auto_merge', 'dismiss_duplicates'):
                 return jsonify({'status': 'error', 'message': 'This bulk action is restricted for Sales personnel.'}), 403
+
+            # Resolve 'select_all_matching' across all pages using the active filter criteria
+            if select_all_matching and not lead_ids:
+                where_parts = ['l.is_converted = FALSE', 'l.is_commercial = TRUE']
+                where_vals = []
+                q_str = (filter_params.get('q') or '').strip()
+                owner_filter = str(filter_params.get('owner_id') or '').strip()
+                m_and_a_flag = str(filter_params.get('m_and_a') or '').lower() == 'true'
+                dup_flag = str(filter_params.get('duplicates_only') or '').lower() == 'true'
+                camp_flag = str(filter_params.get('campaign_filter') or '').strip()
+                active_flag = str(filter_params.get('active_only') or '').lower() == 'true'
+
+                if dup_flag:
+                    where_parts.append('COALESCE(l.is_duplicate, FALSE) = TRUE')
+                else:
+                    where_parts.append('COALESCE(l.is_duplicate, FALSE) = FALSE')
+
+                if m_and_a_flag:
+                    where_parts.append("l.acquisition_tier IN ('Tier 1 Prime (10k+ SF)', 'Tier 2 Growth (5k-10k SF)', 'Tier 3 Bolt-On (<5k SF)')")
+
+                if camp_flag == 'in_campaign':
+                    where_parts.append("(l.status = 'In Campaign' OR EXISTS (SELECT 1 FROM \"CampaignRecipients\" cr WHERE cr.lead_id = l.id AND UPPER(COALESCE(cr.status, '')) IN ('SENT', 'OPENED', 'CLICKED', 'REPLIED', 'STAGED', 'QUEUED', 'ENROLLED')))")
+                elif camp_flag == 'ready_not_enrolled':
+                    where_parts.append("l.campaign_ready = TRUE AND COALESCE(l.is_dnc, FALSE) = FALSE AND COALESCE(l.status, '') != 'In Campaign'")
+
+                if owner_filter:
+                    if owner_filter.lower() in ('unassigned', 'none', 'null', '0'):
+                        where_parts.append('l.owner_id IS NULL')
+                    elif owner_filter.isdigit():
+                        where_parts.append('l.owner_id = %s')
+                        where_vals.append(int(owner_filter))
+
+                if active_flag:
+                    where_parts.append('''EXISTS (
+                        SELECT 1 FROM "GlobalActivities" ga_f
+                        WHERE ga_f.parent_type = 'Lead' AND ga_f.parent_id = l.id
+                          AND COALESCE(ga_f.description, '') NOT ILIKE '%%Auto-ingested%%'
+                          AND COALESCE(ga_f.description, '') NOT ILIKE '%%Bulk Import%%'
+                    )''')
+
+                if q_str:
+                    search_map = {
+                        'company': 'l.center_name', 'name': 'l.center_name',
+                        'contact': 'l.decision_maker', 'dm': 'l.decision_maker',
+                        'city': 'l.city', 'state': 'l.state', 'zip': 'l.zipcode',
+                        'status': 'l.status', 'industry': 'l.industry',
+                        'facility': 'l.facility_type', 'source': 'l.lead_source',
+                        'priority': 'l.priority_level', 'phone': 'l.phone',
+                        'email': 'l.email', 'sqf': 'l.sqf', 'value': 'l.estimated_annual_value',
+                        'owner': 'l.owner_id', 'rep': 'l.owner_id', 'assigned': 'l.owner_id'
+                    }
+                    s_sql, s_params = parse_advanced_search(
+                        q_str,
+                        search_map,
+                        ['l.center_name', 'l.decision_maker', 'l.city', 'l.status', 'l.phone', 'l.email', 'l.address', 'l.zipcode', 'l.umbrella_name']
+                    )
+                    if s_sql:
+                        where_parts.append(s_sql.lstrip().removeprefix('AND ').strip())
+                        where_vals.extend(s_params)
+
+                sql_match = f'SELECT l.id FROM "Leads" l WHERE {" AND ".join(where_parts)} ORDER BY l.id ASC LIMIT 5000;'
+                cur.execute(sql_match, tuple(where_vals))
+                lead_ids = [r[0] if isinstance(r, tuple) else r['id'] for r in cur.fetchall()]
 
             if is_sales_user and lead_ids:
                 cur.execute('SELECT id FROM "Leads" WHERE id = ANY(%s) AND owner_id = %s;', (lead_ids, current_user.id))
@@ -831,7 +1081,7 @@ def api_batch_lead_action():
                     return log_and_abort_abac('leads', 'delete')
                 cur.execute('DELETE FROM "Leads" WHERE id = ANY(%s);', (lead_ids,))
                 cur.execute('DELETE FROM "GlobalActivities" WHERE parent_id = ANY(%s) AND parent_type = %s;', (lead_ids, "Lead"))
-            elif action in ['update_status', 'mark_dnc', 'assign_owner', 'dismiss_duplicates', 'auto_merge', 'remove_from_campaign']:
+            elif action in ['update_status', 'mark_dnc', 'assign_owner', 'undo_assign_owner', 'dismiss_duplicates', 'auto_merge', 'remove_from_campaign']:
                 if not current_user.has_permission('leads', 'edit'):
                     return log_and_abort_abac('leads', 'edit')
                 if action == 'update_status':
@@ -845,15 +1095,155 @@ def api_batch_lead_action():
                 elif action == 'mark_dnc':
                     cur.execute("UPDATE \"Leads\" SET status = %s, is_dnc = TRUE, campaign_ready = FALSE, email_hygiene_status = 'DO_NOT_EMAIL', updated_at = CURRENT_DATE WHERE id = ANY(%s);", ('Do Not Call (DNC)', lead_ids))
                 elif action == 'assign_owner':
-                    raw_owner_id = params.get('owner_id')
-                    if raw_owner_id in (None, '', 'null', 'None'):
-                        new_owner_id = None
+                    lead_ids = [int(x) for x in lead_ids if str(x).isdigit()]
+                    only_unassigned = bool(params.get('only_unassigned', False))
+                    next_action_date = (params.get('next_action_date') or '').strip() or None
+
+                    # Capture previous owner snapshot for 1-click Undo & Overwrite Protection
+                    cur.execute('SELECT id, owner_id FROM "Leads" WHERE id = ANY(%s) ORDER BY id ASC;', (lead_ids,))
+                    existing_rows = cur.fetchall()
+                    previous_owners = {}
+                    eligible_lead_ids = []
+                    for r in existing_rows:
+                        lid = r['id'] if isinstance(r, dict) else r[0]
+                        prev_uid = r['owner_id'] if isinstance(r, dict) else r[1]
+                        if only_unassigned and prev_uid is not None:
+                            continue
+                        previous_owners[str(lid)] = prev_uid
+                        eligible_lead_ids.append(lid)
+
+                    # Support single owner_id OR multi-rep Round-Robin owner_ids list
+                    owner_ids_list = params.get('owner_ids')
+                    if isinstance(owner_ids_list, list) and len(owner_ids_list) > 0:
+                        clean_owner_ids = []
+                        for x in owner_ids_list:
+                            if x in (None, '', 'null', 'None'):
+                                clean_owner_ids.append(None)
+                            elif str(x).isdigit():
+                                clean_owner_ids.append(int(x))
+                        if not clean_owner_ids:
+                            clean_owner_ids = [None]
                     else:
-                        try:
-                            new_owner_id = int(raw_owner_id)
-                        except (ValueError, TypeError):
-                            new_owner_id = None
-                    cur.execute('UPDATE "Leads" SET owner_id = %s, updated_at = CURRENT_DATE WHERE id = ANY(%s);', (new_owner_id, lead_ids))
+                        raw_owner_id = params.get('owner_id')
+                        if raw_owner_id in (None, '', 'null', 'None'):
+                            clean_owner_ids = [None]
+                        else:
+                            try:
+                                clean_owner_ids = [int(raw_owner_id)]
+                            except (ValueError, TypeError):
+                                clean_owner_ids = [None]
+
+                    # Build user full_name lookup for audit description
+                    cur.execute('SELECT id, full_name, username FROM "Users";')
+                    user_lookup = {}
+                    for ur in cur.fetchall():
+                        uid_k = ur['id'] if isinstance(ur, dict) else ur[0]
+                        ufull = ur['full_name'] if isinstance(ur, dict) else ur[1]
+                        uuser = ur['username'] if isinstance(ur, dict) else ur[2]
+                        user_lookup[uid_k] = ufull or uuser or f"User #{uid_k}"
+
+                    actor_label = getattr(current_user, 'full_name', None) or getattr(current_user, 'username', 'Operator')
+                    assigned_map = {}
+
+                    if len(clean_owner_ids) == 1 and eligible_lead_ids:
+                        target_uid = clean_owner_ids[0]
+                        if next_action_date:
+                            cur.execute(
+                                'UPDATE "Leads" SET owner_id = %s, next_action_date = %s, updated_at = CURRENT_TIMESTAMP WHERE id = ANY(%s);',
+                                (target_uid, next_action_date, eligible_lead_ids)
+                            )
+                        else:
+                            cur.execute(
+                                'UPDATE "Leads" SET owner_id = %s, updated_at = CURRENT_TIMESTAMP WHERE id = ANY(%s);',
+                                (target_uid, eligible_lead_ids)
+                            )
+                        for lid in eligible_lead_ids:
+                            assigned_map[str(lid)] = target_uid
+                    elif len(clean_owner_ids) > 1 and eligible_lead_ids:
+                        # Round-Robin bucket distribution
+                        buckets = {uid: [] for uid in clean_owner_ids}
+                        for idx, lid in enumerate(eligible_lead_ids):
+                            target_uid = clean_owner_ids[idx % len(clean_owner_ids)]
+                            buckets[target_uid].append(lid)
+                            assigned_map[str(lid)] = target_uid
+                        for target_uid, bucket_ids in buckets.items():
+                            if not bucket_ids:
+                                continue
+                            if next_action_date:
+                                cur.execute(
+                                    'UPDATE "Leads" SET owner_id = %s, next_action_date = %s, updated_at = CURRENT_TIMESTAMP WHERE id = ANY(%s);',
+                                    (target_uid, next_action_date, bucket_ids)
+                                )
+                            else:
+                                cur.execute(
+                                    'UPDATE "Leads" SET owner_id = %s, updated_at = CURRENT_TIMESTAMP WHERE id = ANY(%s);',
+                                    (target_uid, bucket_ids)
+                                )
+
+                    # Log activity on updated leads (capped to 250 individual rows to keep bulk operation fast)
+                    for lid in eligible_lead_ids[:250]:
+                        t_uid = assigned_map.get(str(lid))
+                        t_name = user_lookup.get(t_uid, 'Unassigned') if t_uid else 'Unassigned'
+                        cur.execute('''
+                            INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
+                            VALUES (%s, 'Lead', 'OWNER_ASSIGNED', %s);
+                        ''', (lid, f"Lead owner assigned to {t_name} by {actor_label}."))
+
+                    log_security_event(
+                        event_category='CRM_OPERATIONS',
+                        event_action='BULK_LEAD_OWNER_ASSIGNED',
+                        severity='INFO',
+                        details={
+                            'affected_count': len(eligible_lead_ids),
+                            'skipped_count': len(lead_ids) - len(eligible_lead_ids),
+                            'owner_ids': clean_owner_ids,
+                            'only_unassigned': only_unassigned,
+                            'select_all_matching': select_all_matching,
+                            'actor': actor_label
+                        }
+                    )
+
+                    # Query updated owner lead counts for live UI badge refresh
+                    cur.execute('''
+                        SELECT owner_id, COUNT(*) as cnt
+                        FROM "Leads"
+                        WHERE is_converted = FALSE AND is_commercial = TRUE AND COALESCE(is_duplicate, FALSE) = FALSE
+                        GROUP BY owner_id;
+                    ''')
+                    updated_owner_counts = {}
+                    unassigned_count = 0
+                    for cr in cur.fetchall():
+                        ouid = cr['owner_id'] if isinstance(cr, dict) else cr[0]
+                        ocnt = int((cr['cnt'] if isinstance(cr, dict) else cr[1]) or 0)
+                        if ouid is None:
+                            unassigned_count = ocnt
+                        else:
+                            updated_owner_counts[str(ouid)] = ocnt
+
+                    conn.commit()
+                    return jsonify({
+                        'status': 'success',
+                        'affected_count': len(eligible_lead_ids),
+                        'skipped_count': len(lead_ids) - len(eligible_lead_ids),
+                        'skipped_already_assigned': len(lead_ids) - len(eligible_lead_ids),
+                        'previous_owners': previous_owners,
+                        'assigned_map': assigned_map,
+                        'updated_owner_counts': updated_owner_counts,
+                        'unassigned_count': unassigned_count,
+                    })
+                elif action == 'undo_assign_owner':
+                    prev_map = params.get('previous_owners') or {}
+                    restored = 0
+                    for lid_str, prev_uid in prev_map.items():
+                        if str(lid_str).isdigit():
+                            uid_val = int(prev_uid) if (prev_uid not in (None, '', 'null', 'None') and str(prev_uid).isdigit()) else None
+                            cur.execute(
+                                'UPDATE "Leads" SET owner_id = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s;',
+                                (uid_val, int(lid_str))
+                            )
+                            restored += 1
+                    conn.commit()
+                    return jsonify({'status': 'success', 'affected_count': restored})
             elif action == 'dismiss_duplicates':
                 cur.execute('UPDATE "Leads" SET is_duplicate = FALSE, duplicate_group_id = NULL WHERE id = ANY(%s);', (lead_ids,))
             elif action == 'auto_merge':
@@ -1067,9 +1457,11 @@ def api_lead_promote(id):
                             email = COALESCE(NULLIF(%s, ''), email),
                             phone = COALESCE(NULLIF(%s, ''), phone),
                             company_address = COALESCE(NULLIF(%s, ''), company_address),
+                            address_line_2 = COALESCE(NULLIF(%s, ''), address_line_2),
                             city = COALESCE(NULLIF(%s, ''), city),
                             state = COALESCE(NULLIF(%s, ''), state),
                             zip = COALESCE(NULLIF(%s, ''), zip),
+                            website = COALESCE(NULLIF(%s, ''), website),
                             sqf = CASE WHEN %s > 0 THEN %s ELSE sqf END,
                             traffic_cycle = COALESCE(NULLIF(%s, ''), traffic_cycle),
                             annual_revenue = CASE WHEN %s > 0 THEN %s ELSE annual_revenue END,
@@ -1078,7 +1470,8 @@ def api_lead_promote(id):
                         WHERE customer_id = %s;
                     ''', (
                         contact_name, lead_email, lead['phone'], lead['address'],
-                        lead['city'], lead['state'], lead['zipcode'],
+                        lead.get('address_line_2'), lead['city'], clean_state(lead.get('state'), default='TX'), lead['zipcode'],
+                        lead.get('website'),
                         lead['sqf'] or 0, lead['sqf'] or 0, lead['traffic_cycle'],
                         lead['estimated_annual_value'] or 0.0, lead['estimated_annual_value'] or 0.0,
                         rep_id, lead.get('umbrella_name'), new_acc_id
@@ -1086,9 +1479,16 @@ def api_lead_promote(id):
                     is_dup_cust = True
                 else:
                     cur.execute('''
-                        INSERT INTO "Customers" (company_name, contact_person_name, email, phone, company_address, city, state, zip, sqf, traffic_cycle, annual_revenue, status, assigned_rep_id, umbrella_name, cleaning_delivery_model)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'Active', %s, %s, %s) RETURNING customer_id
-                    ''', (lead['center_name'], contact_name, lead['email'], lead['phone'], lead['address'] or 'PENDING_ENTRY', lead['city'], lead['state'], lead['zipcode'], lead['sqf'] or 0, lead['traffic_cycle'], lead['estimated_annual_value'] or 0.0, rep_id, lead.get('umbrella_name'), lead.get('cleaning_delivery_model') or 'Model C Institutional Prime (Bosanna)'))
+                        INSERT INTO "Customers" (company_name, contact_person_name, email, phone, company_address, address_line_2, city, state, zip, website, sqf, traffic_cycle, annual_revenue, status, assigned_rep_id, umbrella_name, cleaning_delivery_model)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'Active', %s, %s, %s) RETURNING customer_id
+                    ''', (
+                        lead['center_name'], contact_name, lead['email'], lead['phone'],
+                        lead['address'] or 'PENDING_ENTRY', lead.get('address_line_2'),
+                        lead['city'], clean_state(lead.get('state'), default='TX'), lead['zipcode'],
+                        lead.get('website'), lead['sqf'] or 0, lead['traffic_cycle'],
+                        lead['estimated_annual_value'] or 0.0, rep_id, lead.get('umbrella_name'),
+                        lead.get('cleaning_delivery_model') or 'Model C Institutional Prime (Bosanna)'
+                    ))
                     res_row = cur.fetchone()
                     new_acc_id = res_row['customer_id'] if isinstance(res_row, dict) else res_row[0]
                     is_dup_cust = False

@@ -138,6 +138,8 @@ Responsibility: George (Architect)
 | 10/26/2026 | BUG-152 | Post-Exploitation & Root-Access Security Audit Findings: Hardcoded Plaintext Transition Password Lists in `auth.py`/`partner.py`, Unauthenticated `/portal/bosanna/magic-login` Bypass, Case-Insensitive `.lower()` Password Check, Plaintext `HR_VAULT_DIR` Disk Cache Duplicating Encrypted Vault Files, Root `uid=0` Container Execution, Shared `SECRET_KEY` Fallback in `core/security.py`, Hardcoded Deployment Script Tokens, & Delayed Session Revocation in `load_user()`. | **RESOLVED** | CRITICAL |
 | 10/26/2026 | BUG-153 | Cloudflare Edge Security & Performance Audit Findings: Missing `spf.protection.outlook.com` in SPF TXT, Missing DNS CAA Records, Uncached `/services/*` & `/locations/*` HTML (`DYNAMIC` `273ms` vs `HIT` `46ms`), Missing Apex-to-WWW 301 Redirect, & Disabled Smart Tiered Cache / Early Hints / 0-RTT / HSTS Preload / Hotlink Protection / DNSSEC. | **RESOLVED** | HIGH |
 | 10/26/2026 | BUG-154 | Commercial Leads Search Bar Returning `0` Results on Assigned Sales Rep Names (`beabe wiley`), Entity Collision Between Rep Names & Texas Cities/Streets (`Beabe Wiley` vs `Wylie, TX` / `Wiley Post Rd`), Missing Dedicated `owner_id` Toolbar Filter, & Missing Faceted Typeahead Autocomplete. | **RESOLVED** | HIGH |
+| 10/26/2026 | BUG-155 | "Save Lead Changes" (`PUT /api/v1/leads/<id>`) Throwing `HTTP 500` on Live Azure Due to Missing `website` & `student_enrollment` Columns on `"Leads"` in `schema_engine.py`, Plus Unreturned Connection in `/api/v1/leads/search-suggest`. | **RESOLVED** | CRITICAL |
+| 10/26/2026 | BUG-156 | 3-Workflow Enterprise Lead Intake, Universal Address/State Hygiene (`TX` vs `tx`/`Texas`/`Tejas`), Standard `Lead Owner` Column Out of the Box, & Bulk Owner/Round-Robin Assignment Architecture Across All Forms. | **RESOLVED** | HIGH |
 
 
 ## BUG-122: App Manual Static Routing Deficit (Lacks Automatic Active Workspace Detection & Deep-Link Chapter Navigation)
@@ -3034,6 +3036,30 @@ Record ownership (`owner_id`) and geographic/building search (`q`) are cleanly d
    - Added `test_33_lead_update_save_schema_parity_and_pool_hygiene_bug_155` (`33/33` PASS).
 **Preventative:**
 Every column referenced in `PUT`/`PATCH /api/v1/leads/<id>` is enforced both in `database/schema_engine.py` at boot and by the self-healing guard in `blueprints/crm_api.py`, verified continuously by `test_33` in `scripts/test_web_performance_rack_14.py`.
+
+
+## BUG-156: 3-Workflow Enterprise Lead Intake, Universal Address/State Hygiene (`TX` vs `tx`/`Texas`/`Tejas`), Standard `Lead Owner` Column Out of the Box, & Bulk Owner/Round-Robin Assignment Architecture Across All Forms
+**Detected:** 10/26/2026
+**Status:** **RESOLVED** (10/26/2026 — Verified by `test_34_enterprise_lead_intake_universal_state_address_and_bulk_owner_bug_156` in `scripts/test_web_performance_rack_14.py` `34/34` passing)
+**Symptoms:**
+1. **Workflow A (`Lead Owner` Hidden Behind Optional Column Picker):** `Lead Owner` (`owner`) was omitted from `default_cols_leads` (`company,status,sqf,value,priority,activities`) and standard view presets (`Calling Sprint`, `Building Facts`, `Big Chains`, `Large Centers`, `Executive`), requiring operators to open `Columns` and manually check `Lead Owner` before seeing who owned a record.
+2. **Workflow B (Bulk Owner Assignment Buried in Sub-Menu & Limited to Single Page):** Bulk owner assignment in `#leads-bulk-controls` was tucked inside a secondary dropdown without cross-page selection memory (`sessionStorage`), `"Select All Matching Filter"` support, Round-Robin multi-rep split, overwrite protection (`only_unassigned`), workload preview, or 1-click undo.
+3. **Workflow C (Missing `website` & `address_line_2` on Add Lead + Free-Text State Input Drift):**
+   - `#modal-add-lead` lacked an Official Website input (`website`) and Address Line 2 (`address_line_2` for Suite / Bldg / Unit), and required `email` even when a commercial prospect only had a phone number and website.
+   - Free-text `<input name="state">` fields across forms allowed operators and external visitors to type `"TX"`, `"tx"`, `"Texas"`, or `"Tejas"`, fragmenting state filters and SQL grouping.
+**Solution:**
+1. **Workflow A — Permanent Standard `Lead Owner` Column & 1-Click Avatar Badge (`blueprints/operations.py`, `templates/backoffice_operations.html`, `static/js/backoffice_operations_core.js`):**
+   - Updated `default_cols_leads = 'company,status,owner,sqf,value,priority,activities'` and added an automatic session upgrade in `blueprints/operations.py` plus preset inclusion in `setLeadPreset()` so `Lead Owner` is permanently visible out of the box across all sessions and presets.
+   - Replaced raw `<select>` dropdowns in the `Lead Owner` cell with a high-contrast **Owner Avatar Badge** (`.sigma-owner-badge-btn`: `[BW] Beabe Wiley` or `[+ Assign]`) paired with a 1-click floating **Assign Rep Popover** (`#quick-owner-popover`).
+2. **Workflow B — Enterprise Bulk Owner & Round-Robin Assignment (`templates/backoffice_operations.html`, `static/js/backoffice_operations_core.js`, `blueprints/crm_api.py`):**
+   - Placed a primary **`👤 Assign Owner`** button at the front of `#leads-bulk-controls` (and **`👤 Assign Rep`** in `#acc-bulk-controls`).
+   - Added cross-page selection persistence (`sessionStorage: sigma_selected_lead_ids_v1`), a **"Select All `N` Matching Leads"** banner (`select_all_matching: true`), and `#modal-bulk-assign-owner` supporting **Single-Rep Assignment** OR **Even Round-Robin Split** (`owner_ids`), **Overwrite Protection** (`only_unassigned`), **Optional Next Call Date**, **Live Workload Preview** (`50 → 75 (+25)`), and **1-Click Undo** (`undo_assign_owner`).
+3. **Workflow C — Universal 5-Pillar Form, Website, Address Line 2, & 3-Layer USPS State Enforcement (`core/services/sanitizer.py`, `database/schema_engine.py`, `static/js/sigma_input_masks.js`, `templates/backoffice_operations.html`, `blueprints/operations.py`, `blueprints/crm_api.py`):**
+   - Added `address_line_2 VARCHAR(100)` to `"Leads"` and `"Customers"` in `database/schema_engine.py`, plus `clean_state()`, `clean_website()`, and `split_address_lines()` (USPS Pub 28 secondary unit extractor) in `core/services/sanitizer.py`.
+   - Enforced 3-Layer USPS 2-Letter State Codes (`TX — Texas` default) across **all forms** via: (1) standardized `<select name="state">` in HTML templates, (2) global `upgradeStateInputToSelect()` + smart `.value` property descriptor in `/static/js/sigma_input_masks.js`, and (3) `clean_state()` + PostgreSQL `BEFORE INSERT OR UPDATE` triggers (`trg_leads_normalize_state`, `trg_customers_normalize_state`).
+   - Added bidirectional Texas ZIP $\leftrightarrow$ City/County auto-fill, email-to-website domain inference, `↗ Verify Link` button, live pre-save duplicate detection (`GET /api/v1/leads/check-duplicate`), and async `submitAddLeadForm(event)`.
+**Preventative:**
+Verified continuously on every build by `test_34_enterprise_lead_intake_universal_state_address_and_bulk_owner_bug_156` in `scripts/test_web_performance_rack_14.py` (`34/34` PASS).
 
 
 

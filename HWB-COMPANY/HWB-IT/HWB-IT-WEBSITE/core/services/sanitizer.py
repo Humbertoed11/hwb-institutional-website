@@ -268,4 +268,212 @@ def clean_routing_number(raw_routing: Optional[Union[str, int]]) -> Optional[str
     return digits[:9] if digits else None
 
 
+US_STATES_MAP: dict[str, str] = {
+    "AL": "Alabama",
+    "AK": "Alaska",
+    "AZ": "Arizona",
+    "AR": "Arkansas",
+    "CA": "California",
+    "CO": "Colorado",
+    "CT": "Connecticut",
+    "DE": "Delaware",
+    "DC": "District of Columbia",
+    "FL": "Florida",
+    "GA": "Georgia",
+    "HI": "Hawaii",
+    "ID": "Idaho",
+    "IL": "Illinois",
+    "IN": "Indiana",
+    "IA": "Iowa",
+    "KS": "Kansas",
+    "KY": "Kentucky",
+    "LA": "Louisiana",
+    "ME": "Maine",
+    "MD": "Maryland",
+    "MA": "Massachusetts",
+    "MI": "Michigan",
+    "MN": "Minnesota",
+    "MS": "Mississippi",
+    "MO": "Missouri",
+    "MT": "Montana",
+    "NE": "Nebraska",
+    "NV": "Nevada",
+    "NH": "New Hampshire",
+    "NJ": "New Jersey",
+    "NM": "New Mexico",
+    "NY": "New York",
+    "NC": "North Carolina",
+    "ND": "North Dakota",
+    "OH": "Ohio",
+    "OK": "Oklahoma",
+    "OR": "Oregon",
+    "PA": "Pennsylvania",
+    "RI": "Rhode Island",
+    "SC": "South Carolina",
+    "SD": "South Dakota",
+    "TN": "Tennessee",
+    "TX": "Texas",
+    "UT": "Utah",
+    "VT": "Vermont",
+    "VA": "Virginia",
+    "WA": "Washington",
+    "WV": "West Virginia",
+    "WI": "Wisconsin",
+    "WY": "Wyoming",
+}
+
+STATE_ALIAS_MAP: dict[str, str] = {
+    **{code.lower(): code for code in US_STATES_MAP},
+    **{name.lower(): code for code, name in US_STATES_MAP.items()},
+    "tejas": "TX",
+    "tex": "TX",
+    "tx.": "TX",
+    "t.x.": "TX",
+    "texas, usa": "TX",
+    "tx - texas": "TX",
+    "tx — texas": "TX",
+    "okla": "OK",
+    "ok.": "OK",
+    "la.": "LA",
+    "ark": "AR",
+    "n.m.": "NM",
+    "new mex": "NM",
+    "calif": "CA",
+    "fla": "FL",
+    "wash": "WA",
+    "d.c.": "DC",
+    "washington dc": "DC",
+    "washington d.c.": "DC",
+}
+
+CONSUMER_EMAIL_DOMAINS: set[str] = {
+    "gmail.com",
+    "yahoo.com",
+    "outlook.com",
+    "hotmail.com",
+    "icloud.com",
+    "aol.com",
+    "msn.com",
+    "live.com",
+    "me.com",
+    "sbcglobal.net",
+    "att.net",
+    "comcast.net",
+    "verizon.net",
+    "protonmail.com",
+    "proton.me",
+    "ymail.com",
+    "mail.com",
+    "zoho.com",
+}
+
+
+def clean_state(raw_state: Optional[str], default: str = "TX") -> str:
+    """
+    Normalizes any US state input ('TX', 'tx', 'Texas', 'Tejas', 'TX.')
+    into its canonical 2-letter uppercase USPS state code.
+    """
+    if not raw_state:
+        return default
+    s = str(raw_state).strip()
+    if not s:
+        return default
+    # Handle 'TX — Texas' or 'TX - Texas'
+    if "—" in s or " - " in s:
+        prefix = re.split(r"\s*[—-]\s*", s)[0].strip().upper()
+        if prefix in US_STATES_MAP:
+            return prefix
+    cleaned = re.sub(r"[^a-zA-Z\s.]", "", s).strip().lower()
+    cleaned_no_dots = cleaned.replace(".", "").strip()
+    if cleaned in STATE_ALIAS_MAP:
+        return STATE_ALIAS_MAP[cleaned]
+    if cleaned_no_dots in STATE_ALIAS_MAP:
+        return STATE_ALIAS_MAP[cleaned_no_dots]
+    upper = cleaned_no_dots.upper()
+    if len(upper) == 2 and upper in US_STATES_MAP:
+        return upper
+    return default
+
+
+def clean_website(
+    raw_url: Optional[str],
+    fallback_email: Optional[str] = None,
+) -> Optional[str]:
+    """
+    Normalizes a corporate website URL into canonical https:// format, or
+    infers the corporate website from a business email address when blank.
+    """
+    val = str(raw_url or "").strip()
+    if val and val.lower() not in {"none", "null", "n/a", "na", "-"}:
+        # Strip accidental mailto: or whitespace
+        val = re.sub(r"^mailto:", "", val, flags=re.IGNORECASE).strip()
+        val = val.split()[0]
+        if not re.match(r"^https?://", val, flags=re.IGNORECASE):
+            val = "https://" + val.lstrip("/")
+        # Lowercase the scheme + host portion
+        m = re.match(r"^(https?://)([^/]+)(/.*)?$", val, flags=re.IGNORECASE)
+        if m:
+            scheme = m.group(1).lower()
+            host = m.group(2).lower()
+            rest = m.group(3) or ""
+            if "." in host and len(host) >= 4:
+                return f"{scheme}{host}{rest}"
+        return val
+
+    # Attempt fallback inference from corporate email domain
+    email_clean = clean_email(fallback_email)
+    if email_clean and "@" in email_clean:
+        domain = email_clean.split("@", 1)[1].strip().lower()
+        if domain and domain not in CONSUMER_EMAIL_DOMAINS and "." in domain:
+            if not domain.startswith("www."):
+                return f"https://www.{domain}"
+            return f"https://{domain}"
+    return None
+
+
+def split_address_lines(
+    raw_addr: Optional[str],
+    raw_line2: Optional[str] = None,
+) -> tuple[str, Optional[str]]:
+    """
+    USPS Publication 28 secondary unit splitter.
+    Extracts Suite / Ste / Bldg / Unit / Apt / Floor / Rm / # from Address Line 1
+    into Address Line 2 when Address Line 2 is empty.
+    Returns (street_line_1, address_line_2).
+    """
+    addr1 = re.sub(r"\s+", " ", str(raw_addr or "").strip())
+    addr2 = re.sub(r"\s+", " ", str(raw_line2 or "").strip()) or None
+    if not addr1:
+        return ("", addr2)
+
+    if not addr2:
+        pattern = re.compile(
+            r"^(.*?)(?:,|\s+)\b("
+            r"(?:suite|ste\.?|bldg\.?|building|unit|apt\.?|apartment|fl\.?|floor|rm\.?|room|spc\.?|space)\s*[#a-zA-Z0-9-]+"
+            r"|#\s*[a-zA-Z0-9-]+"
+            r")\s*$",
+            re.IGNORECASE,
+        )
+        match = pattern.match(addr1)
+        if match and match.group(1).strip():
+            addr1 = match.group(1).strip().rstrip(",")
+            extracted = match.group(2).strip()
+            # Normalize 'ste 200' -> 'Suite 200'
+            extracted = re.sub(
+                r"^ste\.?\s+",
+                "Suite ",
+                extracted,
+                flags=re.IGNORECASE,
+            )
+            extracted = re.sub(
+                r"^bldg\.?\s+",
+                "Bldg ",
+                extracted,
+                flags=re.IGNORECASE,
+            )
+            addr2 = extracted
+    return (addr1, addr2)
+
+
+
 

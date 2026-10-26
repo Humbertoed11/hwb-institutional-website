@@ -21,7 +21,18 @@ from core.constants import FACILITY_TYPES, LEAD_SOURCES, PRIORITY_LEVELS
 from core.security import roles_required
 from core.services.database import get_db
 from core.services.search import parse_advanced_search
-from core.services.sanitizer import clean_phone, clean_currency, clean_sqft, clean_zip, clean_email, clean_city, extract_phone_digits
+from core.services.sanitizer import (
+    clean_phone,
+    clean_currency,
+    clean_sqft,
+    clean_zip,
+    clean_email,
+    clean_city,
+    extract_phone_digits,
+    clean_state,
+    clean_website,
+    split_address_lines,
+)
 from core.services.email_service import transmit_email
 from core.services.security_logger import get_site_security_telemetry, log_security_event
 
@@ -297,8 +308,8 @@ def admin_operations():
     active_technicians = []
     total_weekly_labor_hours, total_biweekly_payroll = 0.0, 0.0
 
-    # --- Dynamic Column Architecture ---
-    default_cols_leads = 'company,status,sqf,value,priority,activities'
+    # --- Dynamic Column Architecture (BUG-156: 'owner' is a permanent standard column on Leads) ---
+    default_cols_leads = 'company,status,owner,sqf,value,priority,activities'
     default_cols_accounts = 'company,city,phone,revenue,rep,activities'
     default_cols_bids = 'project,status,due_date,created,sqf,value,scope,estimator,phone,owner,actions'
 
@@ -332,6 +343,10 @@ def admin_operations():
     active_cols = [c.strip() for c in active_cols_str.split(',') if c.strip() and c.strip() != 'on']
     if anchor_col not in active_cols:
         active_cols.insert(0, anchor_col)
+    if active_view == 'leads' and 'owner' not in active_cols:
+        insert_idx = (active_cols.index('status') + 1) if 'status' in active_cols else 1
+        active_cols.insert(insert_idx, 'owner')
+        session[session_key] = ','.join(active_cols)
 
     per_page = 50
     offset = (page - 1) * per_page
@@ -1535,16 +1550,34 @@ def add_manual_lead():
     if not current_user.has_permission('leads', 'edit'):
         log_security_event('AUTHORIZATION', 'UNAUTHORIZED_ACTION_BLOCKED', severity='WARNING', status_code=403, details={'action': 'add_lead', 'username': getattr(current_user, 'username', 'anonymous')})
         abort(403)
+    wants_json = (
+        request.is_json
+        or 'application/json' in (request.headers.get('Accept') or '')
+        or request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+    )
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
         with conn.cursor() as cur:
-            data = request.form
+            # Inline schema hygiene guard for address_line_2 and website
+            cur.execute('''
+                ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS address_line_2 VARCHAR(100);
+                ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS website TEXT;
+                ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS county TEXT;
+                ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS capacity INTEGER;
+                ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS student_enrollment INTEGER;
+            ''')
+
+            data = request.get_json(silent=True) if request.is_json else request.form
             sqf = float(clean_sqft(data.get('sqf', '0')))
             traffic = data.get('traffic_cycle', 'Slow')
             multiplier = 1.0
-            if traffic == 'High': multiplier = 1.5
-            elif traffic == '24/7 Production': multiplier = 2.5
-            annual_value = (sqf * 0.12) * multiplier * 12
+            if traffic == 'High':
+                multiplier = 1.5
+            elif traffic == '24/7 Production':
+                multiplier = 2.5
+
+            explicit_val = clean_currency(data.get('estimated_annual_value'))
+            annual_value = explicit_val if explicit_val > 0 else ((sqf * 0.12) * multiplier * 12)
 
             owner_id_raw = data.get('owner_id')
             owner_id = int(owner_id_raw) if owner_id_raw and str(owner_id_raw).isdigit() else None
@@ -1553,10 +1586,24 @@ def add_manual_lead():
 
             user_attribution = (current_user.full_name or current_user.username) if (current_user.is_authenticated and (current_user.full_name or current_user.username)) else 'Operations System'
 
-            company_name = (data.get('company_name') or '').strip()
-            cleaned_email = clean_email(data.get('email')) or (data.get('email') or '').strip()
+            company_name = (data.get('company_name') or data.get('center_name') or '').strip()
+            cleaned_email = clean_email(data.get('email')) or (data.get('email') or '').strip() or None
             cleaned_phone = clean_phone(data.get('phone')) or (data.get('phone') or '').strip()
             cleaned_city = clean_city(data.get('city')) or (data.get('city') or '').strip()
+            cleaned_state = clean_state(data.get('state'), default='TX')
+            cleaned_zip = clean_zip(data.get('zipcode') or data.get('zip'))
+            addr_line_1, addr_line_2 = split_address_lines(data.get('address'), data.get('address_line_2'))
+            cleaned_web = clean_website(data.get('website'), fallback_email=cleaned_email)
+            county_val = (data.get('county') or '').strip() or None
+            capacity_val = clean_sqft(data.get('capacity')) or None
+            enrollment_val = clean_sqft(data.get('student_enrollment')) or None
+            ownership_type = (data.get('ownership_type') or 'Independent Commercial').strip()
+            cleaning_model = (data.get('cleaning_delivery_model') or 'UNKNOWN').strip()
+            next_action_date = (data.get('next_action_date') or '').strip() or None
+            preferred_date = (data.get('preferred_date') or '').strip() or None
+            preferred_time = (data.get('preferred_time') or '').strip() or None
+            budget_range = (data.get('budget_range') or '').strip() or None
+
             phone_digits = extract_phone_digits(cleaned_phone)
 
             existing_lead_id = None
@@ -1603,12 +1650,17 @@ def add_manual_lead():
                         email = COALESCE(NULLIF(%s, ''), email),
                         phone = COALESCE(NULLIF(%s, ''), phone),
                         address = COALESCE(NULLIF(%s, ''), address),
+                        address_line_2 = COALESCE(NULLIF(%s, ''), address_line_2),
                         city = COALESCE(NULLIF(%s, ''), city),
                         state = COALESCE(NULLIF(%s, ''), state),
                         zipcode = COALESCE(NULLIF(%s, ''), zipcode),
+                        county = COALESCE(NULLIF(%s, ''), county),
+                        website = COALESCE(NULLIF(%s, ''), website),
                         industry = COALESCE(NULLIF(%s, ''), industry),
                         facility_type = COALESCE(NULLIF(%s, ''), facility_type),
                         sqf = CASE WHEN %s > 0 THEN %s ELSE sqf END,
+                        capacity = COALESCE(%s, capacity),
+                        student_enrollment = COALESCE(%s, student_enrollment),
                         traffic_cycle = COALESCE(NULLIF(%s, ''), traffic_cycle),
                         service_interest = COALESCE(NULLIF(%s, ''), service_interest),
                         lead_source = COALESCE(NULLIF(%s, ''), lead_source),
@@ -1617,45 +1669,87 @@ def add_manual_lead():
                         notes = CASE WHEN %s IS NOT NULL AND %s != '' THEN COALESCE(notes, '') || E'\n[UPDATED]: ' || %s ELSE notes END,
                         last_contacted_by = COALESCE(%s, last_contacted_by),
                         owner_id = COALESCE(%s, owner_id),
-                        umbrella_name = COALESCE(NULLIF(%s, ''), umbrella_name)
+                        umbrella_name = COALESCE(NULLIF(%s, ''), umbrella_name),
+                        ownership_type = COALESCE(NULLIF(%s, ''), ownership_type),
+                        cleaning_delivery_model = COALESCE(NULLIF(%s, ''), cleaning_delivery_model),
+                        next_action_date = COALESCE(NULLIF(%s, ''), next_action_date)
                     WHERE id = %s;
                 ''', (
                     company_name, data.get('decision_maker'), data.get('job_title'),
-                    cleaned_email, cleaned_phone, data.get('address'),
-                    cleaned_city, data.get('state'), clean_zip(data.get('zipcode')), data.get('industry'),
-                    data.get('facility_type'), sqf, sqf, traffic, data.get('service_interest'),
+                    cleaned_email, cleaned_phone, addr_line_1, addr_line_2,
+                    cleaned_city, cleaned_state, cleaned_zip, county_val, cleaned_web,
+                    data.get('industry'), data.get('facility_type'), sqf, sqf,
+                    capacity_val, enrollment_val, traffic, data.get('service_interest'),
                     data.get('lead_source'), data.get('priority_level'), annual_value, annual_value,
                     data.get('notes'), data.get('notes'), data.get('notes'),
                     user_attribution, owner_id, data.get('umbrella_name') or None,
+                    ownership_type, cleaning_model, next_action_date,
                     existing_lead_id
                 ))
-                conn.commit()
-                flash(f"Existing lead recognized (LEAD-#{existing_lead_id:05d}) — profile updated without creating a duplicate.")
+                final_lead_id = existing_lead_id
+                msg = f"Existing lead recognized (LEAD-#{existing_lead_id:05d}) — profile updated without creating a duplicate."
             else:
                 cur.execute('''
                     INSERT INTO "Leads" (
-                        center_name, decision_maker, job_title, email, phone, address, 
-                        city, state, zipcode, industry, facility_type, sqf, 
-                        traffic_cycle, service_interest, lead_source, priority_level, 
-                        estimated_annual_value, status, notes, input_date, last_contacted_by,
-                        owner_id, umbrella_name
+                        center_name, decision_maker, job_title, email, phone, address, address_line_2,
+                        city, state, zipcode, county, website, industry, facility_type, sqf,
+                        capacity, student_enrollment, traffic_cycle, service_interest, lead_source,
+                        priority_level, estimated_annual_value, status, notes, input_date,
+                        last_contacted_by, owner_id, umbrella_name, ownership_type,
+                        cleaning_delivery_model, next_action_date, preferred_date, preferred_time, budget_range
                     )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    VALUES (
+                        %s, %s, %s, %s, %s, %s, %s,
+                        %s, %s, %s, %s, %s, %s, %s, %s,
+                        %s, %s, %s, %s, %s,
+                        %s, %s, %s, %s, %s,
+                        %s, %s, %s, %s,
+                        %s, %s, %s, %s, %s
+                    )
+                    RETURNING id;
                 ''', (
                     company_name, data.get('decision_maker'), data.get('job_title'),
-                    cleaned_email, cleaned_phone, data.get('address'),
-                    cleaned_city, data.get('state'), clean_zip(data.get('zipcode')), data.get('industry'),
-                    data.get('facility_type'), sqf, traffic, data.get('service_interest'), 
-                    data.get('lead_source'), data.get('priority_level'), annual_value,
-                    'New', data.get('notes'), datetime.date.today().isoformat(), user_attribution,
-                    owner_id, data.get('umbrella_name') or None
+                    cleaned_email, cleaned_phone, addr_line_1, addr_line_2,
+                    cleaned_city, cleaned_state, cleaned_zip, county_val, cleaned_web,
+                    data.get('industry'), data.get('facility_type'), sqf,
+                    capacity_val, enrollment_val, traffic, data.get('service_interest'),
+                    data.get('lead_source'), data.get('priority_level') or 'Medium', annual_value,
+                    data.get('status') or 'New', data.get('notes'), datetime.date.today().isoformat(),
+                    user_attribution, owner_id, data.get('umbrella_name') or None, ownership_type,
+                    cleaning_model, next_action_date, preferred_date, preferred_time, budget_range
                 ))
-                conn.commit()
-                flash("Lead saved successfully.")
+                final_lead_id = cur.fetchone()[0]
+                msg = f"Lead saved successfully (LEAD-#{final_lead_id:05d})."
+
+            cur.execute('''
+                INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
+                VALUES (%s, 'Lead', %s, %s);
+            ''', (
+                final_lead_id,
+                'LEAD_UPDATED' if existing_lead_id else 'LEAD_CREATED',
+                f"{msg} (By {user_attribution})",
+            ))
+            conn.commit()
+            if wants_json:
+                return jsonify({
+                    'status': 'success',
+                    'message': msg,
+                    'lead_id': final_lead_id,
+                    'is_existing': bool(existing_lead_id),
+                    'company_name': company_name,
+                    'state': cleaned_state,
+                    'website': cleaned_web,
+                    'address': addr_line_1,
+                    'address_line_2': addr_line_2,
+                })
+            flash(msg)
     except Exception as e:
+        if wants_json:
+            return jsonify({'status': 'error', 'message': str(e)}), 400
         flash(f"Error: {e}")
     finally:
-        if "conn" in locals() and conn: conn.close()
+        if "conn" in locals() and conn:
+            conn.close()
     return redirect(url_for('admin_operations', view='leads'))
 
 
@@ -1668,6 +1762,10 @@ def add_account():
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
         with conn.cursor() as cur:
+            cur.execute('''
+                ALTER TABLE "Customers" ADD COLUMN IF NOT EXISTS address_line_2 VARCHAR(100);
+                ALTER TABLE "Customers" ADD COLUMN IF NOT EXISTS website TEXT;
+            ''')
             data = request.form
 
             sqf = clean_sqft(data.get('sqf'))
@@ -1682,6 +1780,10 @@ def add_account():
             cleaned_email = clean_email(data.get('email')) or (data.get('email') or '').strip()
             cleaned_phone = clean_phone(data.get('phone')) or (data.get('phone') or '').strip()
             cleaned_city = clean_city(data.get('city')) or (data.get('city') or '').strip()
+            cleaned_state = clean_state(data.get('state'), default='TX')
+            cleaned_zip = clean_zip(data.get('zip') or data.get('zipcode'))
+            addr_line_1, addr_line_2 = split_address_lines(data.get('company_address') or data.get('address'), data.get('address_line_2'))
+            cleaned_web = clean_website(data.get('website'), fallback_email=cleaned_email)
             phone_digits = extract_phone_digits(cleaned_phone)
 
             existing_customer_id = None
@@ -1723,6 +1825,7 @@ def add_account():
                         email = COALESCE(NULLIF(%s, ''), email),
                         phone = COALESCE(NULLIF(%s, ''), phone),
                         company_address = COALESCE(NULLIF(%s, ''), company_address),
+                        address_line_2 = COALESCE(NULLIF(%s, ''), address_line_2),
                         city = COALESCE(NULLIF(%s, ''), city),
                         state = COALESCE(NULLIF(%s, ''), state),
                         zip = COALESCE(NULLIF(%s, ''), zip),
@@ -1739,8 +1842,8 @@ def add_account():
                 ''', (
                     company_name, data.get('contact_person_name'),
                     cleaned_email, cleaned_phone,
-                    data.get('company_address'), cleaned_city, data.get('state'), clean_zip(data.get('zip')),
-                    data.get('website'), sqf, sqf, revenue, revenue,
+                    addr_line_1, addr_line_2, cleaned_city, cleaned_state, cleaned_zip,
+                    cleaned_web, sqf, sqf, revenue, revenue,
                     data.get('traffic_cycle'), data.get('quote_number'),
                     data.get('frequency'), data.get('notes'), data.get('notes'), data.get('notes'),
                     assigned_rep_id, data.get('umbrella_name') or None,
@@ -1752,7 +1855,7 @@ def add_account():
                 cur.execute('''
                     INSERT INTO "Customers" (
                         company_name, contact_person_name, email, phone, 
-                        company_address, city, state, zip, website, sqf, annual_revenue, 
+                        company_address, address_line_2, city, state, zip, website, sqf, annual_revenue, 
                         traffic_cycle, quote_number, frequency, notes, status, assigned_rep_id,
                         umbrella_name
                     )
@@ -1760,8 +1863,8 @@ def add_account():
                 ''', (company_name, data.get('contact_person_name'), 
                       cleaned_email, 
                       cleaned_phone, 
-                      data.get('company_address'), cleaned_city, data.get('state'), clean_zip(data.get('zip')), 
-                      data.get('website'), sqf, revenue, 
+                      addr_line_1, addr_line_2, cleaned_city, cleaned_state, cleaned_zip, 
+                      cleaned_web, sqf, revenue, 
                       data.get('traffic_cycle'), data.get('quote_number'),
                       data.get('frequency'), data.get('notes'), assigned_rep_id,
                       data.get('umbrella_name') or None))

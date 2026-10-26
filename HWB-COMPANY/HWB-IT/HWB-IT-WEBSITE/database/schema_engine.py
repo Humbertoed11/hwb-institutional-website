@@ -214,9 +214,62 @@ def apply_system_migrations(conn: Any, db_url: Optional[str] = None) -> None:
                 ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS email_inbox_type VARCHAR(50) DEFAULT 'NONE';
                 ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS email_mx_verified BOOLEAN DEFAULT FALSE;
                 ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS last_campaigned_at TIMESTAMP WITH TIME ZONE;
+                ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS address_line_2 VARCHAR(100);
 
                 ALTER TABLE "Customers" ADD COLUMN IF NOT EXISTS cleaning_delivery_model VARCHAR(50) DEFAULT 'DIRECT_W2';
                 ALTER TABLE "Customers" ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'Active';
+                ALTER TABLE "Customers" ADD COLUMN IF NOT EXISTS address_line_2 VARCHAR(100);
+                ALTER TABLE "Customers" ADD COLUMN IF NOT EXISTS website TEXT;
+
+                -- BUG-156: Normalize drifted state values ('tx', '', 'texas', 'tejas' -> 'TX') and enforce via trigger
+                UPDATE "Leads"
+                SET state = 'TX'
+                WHERE state IS NULL
+                   OR BTRIM(state) = ''
+                   OR LOWER(BTRIM(state)) IN ('tx', 'texas', 'tejas', 'tx.', 't.x.');
+
+                UPDATE "Customers"
+                SET state = 'TX'
+                WHERE state IS NULL
+                   OR BTRIM(state) = ''
+                   OR LOWER(BTRIM(state)) IN ('tx', 'texas', 'tejas', 'tx.', 't.x.');
+
+                CREATE OR REPLACE FUNCTION fn_normalize_usps_state_and_website()
+                RETURNS TRIGGER AS $$
+                DECLARE
+                    v_state TEXT;
+                BEGIN
+                    v_state := LOWER(REGEXP_REPLACE(COALESCE(NEW.state, ''), '[^a-zA-Z]', '', 'g'));
+                    IF v_state = '' OR v_state IN ('tx', 'texas', 'tejas', 'tex') THEN
+                        NEW.state := 'TX';
+                    ELSIF v_state IN ('ok', 'oklahoma', 'okla') THEN
+                        NEW.state := 'OK';
+                    ELSIF v_state IN ('la', 'louisiana') THEN
+                        NEW.state := 'LA';
+                    ELSIF v_state IN ('ar', 'arkansas', 'ark') THEN
+                        NEW.state := 'AR';
+                    ELSIF v_state IN ('nm', 'newmexico') THEN
+                        NEW.state := 'NM';
+                    ELSIF LENGTH(v_state) = 2 THEN
+                        NEW.state := UPPER(v_state);
+                    ELSE
+                        NEW.state := UPPER(SUBSTRING(v_state FROM 1 FOR 2));
+                    END IF;
+                    RETURN NEW;
+                END;
+                $$ LANGUAGE plpgsql;
+
+                DROP TRIGGER IF EXISTS trg_leads_normalize_state ON "Leads";
+                CREATE TRIGGER trg_leads_normalize_state
+                BEFORE INSERT OR UPDATE OF state ON "Leads"
+                FOR EACH ROW
+                EXECUTE FUNCTION fn_normalize_usps_state_and_website();
+
+                DROP TRIGGER IF EXISTS trg_customers_normalize_state ON "Customers";
+                CREATE TRIGGER trg_customers_normalize_state
+                BEFORE INSERT OR UPDATE OF state ON "Customers"
+                FOR EACH ROW
+                EXECUTE FUNCTION fn_normalize_usps_state_and_website();
 
                 -- WorkOrders Parity
                 CREATE TABLE IF NOT EXISTS "WorkOrders" (

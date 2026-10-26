@@ -224,8 +224,8 @@
                                             <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.4rem;">
                                                 <label class="sigma-col-label" title="Always visible: Center name, street address, and email badge"><input type="checkbox" checked disabled> 🏢 Center / Name</label>
                                                 <label class="sigma-col-label" title="Sales status (New, In Email Outreach, Engaged, Contacted, Qualified, etc.)"><input type="checkbox" name="cols" value="status" {% if 'status' in active_cols %}checked{% endif %}> Status</label>
+                                                <label class="sigma-col-label" title="Standard Column: Assigned sales rep or account owner"><input type="checkbox" name="cols" value="owner" {% if 'owner' in active_cols or not active_cols %}checked{% endif %}> 👤 Lead Owner</label>
                                                 <label class="sigma-col-label" title="Director or manager who hires cleaning services"><input type="checkbox" name="cols" value="dm" {% if 'dm' in active_cols %}checked{% endif %}> 👤 Decision Maker</label>
-                                                <label class="sigma-col-label" title="Assigned sales rep or account owner"><input type="checkbox" name="cols" value="owner" {% if 'owner' in active_cols %}checked{% endif %}> Lead Owner</label>
                                                 <label class="sigma-col-label" title="Lead priority level (High, Medium, Low)"><input type="checkbox" name="cols" value="priority" {% if 'priority' in active_cols %}checked{% endif %}> Priority</label>
                                                 <label class="sigma-col-label" title="Specific cleaning service requested"><input type="checkbox" name="cols" value="interest" {% if 'interest' in active_cols %}checked{% endif %}> Service Interest</label>
                                                 <label class="sigma-col-label" title="Where this lead came from (State Registry, Google, Referral)"><input type="checkbox" name="cols" value="source" {% if 'source' in active_cols %}checked{% endif %}> Lead Source</label>
@@ -372,16 +372,52 @@
                     </div>
                 </div>
 
-                <!-- Bulk Actions Toolbar (SigmaFidelity Floating Rack) -->
-                <div id="leads-bulk-controls" style="display: none; gap: 1rem; align-items: center; background: #ffffff; border: 1px solid #cbd5e1; padding: 0.6rem 1.5rem; border-radius: 1rem; height: 56px; margin-bottom: 1.5rem; position: sticky; top: 1rem; z-index: 1040; box-shadow: 0 10px 25px -5px rgba(15,23,42,0.15);">
+                <!-- Bulk Actions Toolbar (SigmaFidelity Floating Rack - BUG-156) -->
+                <div id="leads-bulk-controls" style="display: none; gap: 0.75rem; align-items: center; flex-wrap: wrap; background: #ffffff; border: 1px solid #cbd5e1; padding: 0.65rem 1.25rem; border-radius: 1rem; min-height: 56px; height: auto; margin-bottom: 1.5rem; position: sticky; top: 1rem; z-index: 1040; box-shadow: 0 10px 25px -5px rgba(15,23,42,0.15);" data-total-matching="{{ leads_count | default(0) }}">
                     <span id="leads-selected-count" style="font-size: 0.75rem; font-weight: 900; color: var(--slate-700); text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap;">0 selected</span>
+                    <button type="button" id="btn-clear-lead-selection" onclick="clearCrossPageLeadSelection()" style="display: none; background: #f1f5f9; border: 1px solid #cbd5e1; color: #475569; border-radius: 6px; padding: 2px 8px; font-size: 0.68rem; font-weight: 800; cursor: pointer;" title="Clear all selected leads across pages">Clear</button>
+                    <div id="leads-select-all-matching-banner" style="display: none; align-items: center; gap: 0.5rem; background: #eff6ff; border: 1px solid #bfdbfe; padding: 0.25rem 0.75rem; border-radius: 6px; font-size: 0.73rem; font-weight: 700; color: #1e40af;">
+                        <span id="leads-select-all-matching-text">All 50 on this page selected.</span>
+                        <button type="button" id="btn-select-all-matching-leads" onclick="toggleSelectAllMatchingFilterLeads()" style="background: none; border: none; color: #2563eb; font-weight: 800; text-decoration: underline; cursor: pointer; padding: 0; font-size: 0.73rem;">Select all {{ "{:,}".format(leads_count) if leads_count else 0 }} matching leads</button>
+                    </div>
                     <div style="height: 20px; width: 1px; background: var(--slate-200);"></div>
+
+                    {% if current_user.role != 'Sales' %}
+                    <!-- Primary Bulk Assign Owner Button + Quick Dropdown (BUG-156) -->
+                    <div style="position: relative; display: inline-flex; align-items: center;" class="bulk-dropdown-container">
+                        <button type="button" id="btn-bulk-assign-owner-leads" onclick="openBulkAssignOwnerModal('leads')" class="isc-btn isc-btn-primary" style="padding: 0.5rem 1rem; border-radius: 0.5rem 0 0 0.5rem; font-size: 0.75rem; height: 36px; display: flex; align-items: center; gap: 0.45rem; font-weight: 800; background: #1e40af; border: 1px solid #1e3a8a; color: white;" title="Assign Lead Owner in Bulk (Single Rep or Even Round-Robin Split)">
+                            <i class="fas fa-user-check"></i> Assign Owner
+                        </button>
+                        <button type="button" onclick="toggleBulkDropdown('bulk-owner-menu')" class="isc-btn isc-btn-primary" style="padding: 0 0.6rem; border-radius: 0 0.5rem 0.5rem 0; font-size: 0.72rem; height: 36px; display: flex; align-items: center; background: #1d4ed8; border: 1px solid #1e3a8a; border-left: 1px solid rgba(255,255,255,0.25); color: white;" title="Quick 1-Click Owner Assignment Menu" aria-label="Quick Assign Owner Dropdown">
+                            <i class="fas fa-chevron-down" style="font-size: 0.65rem;"></i>
+                        </button>
+                        <div id="bulk-owner-menu" class="bulk-dropdown-menu" style="display: none; position: absolute; left: 0; top: 110%; background: white; border: 1px solid var(--slate-200); border-radius: 8px; box-shadow: 0 12px 28px rgba(15,23,42,0.16); z-index: 1050; width: 260px; padding: 0.5rem;">
+                            <button type="button" onclick="openBulkAssignOwnerModal('leads')" class="isc-dropdown-btn" style="text-align: left; width: 100%; font-weight: 800; color: #1d4ed8; background: #eff6ff; border-radius: 6px; margin-bottom: 0.35rem;">
+                                <i class="fas fa-sliders-h" style="margin-right: 0.5rem;"></i> Bulk Assign / Round-Robin Split...
+                            </button>
+                            <div style="font-size: 0.65rem; font-weight: 800; color: var(--slate-400); text-transform: uppercase; padding: 0.25rem 0.5rem;">Quick 1-Click Assign</div>
+                            {% for u in system_users %}
+                            {% set u_cnt = u.assigned_leads_count if u.assigned_leads_count is defined else (u[4] if u|length > 4 else 0) %}
+                            <button type="button" onclick="executeBulkAction('assign_owner', {owner_id: {{ u.id }}})" class="isc-dropdown-btn" style="text-align: left; width: 100%; display: flex; align-items: center; justify-content: space-between;">
+                                <span>
+                                    <i class="fas {% if u.role == 'Executive' %}fa-crown{% elif u.role == 'Sales' %}fa-user-tie{% else %}fa-user{% endif %}" style="margin-right: 0.5rem; color: {% if u.role == 'Sales' %}#2563eb{% elif u.role == 'Executive' %}#d97706{% else %}#64748b{% endif %};"></i>
+                                    {{ u.full_name or u.username }}
+                                </span>
+                                <small style="color: var(--slate-400); font-size: 0.68rem; font-weight: 700;">{{ u_cnt or 0 }} leads</small>
+                            </button>
+                            {% endfor %}
+                            <div style="height: 1px; background: var(--slate-100); margin: 0.35rem 0;"></div>
+                            <button type="button" onclick="executeBulkAction('assign_owner', {owner_id: null})" class="isc-dropdown-btn" style="text-align: left; width: 100%; color: var(--slate-500);">
+                                <i class="fas fa-user-slash" style="margin-right: 0.5rem;"></i> -- Unassign Selected --
+                            </button>
+                        </div>
+                    </div>
+                    {% endif %}
                     
                     <!-- Start Calling Session Button -->
-                    <button type="button" onclick="startLeadCallingQueue()" class="isc-btn isc-btn-primary" style="padding: 0.5rem 1.25rem; border-radius: 0.5rem; font-size: 0.75rem; height: 36px; display: flex; align-items: center; gap: 0.5rem; font-weight: 800; background: #0284c7; border: 1px solid #0369a1; color: white;" title="Start calling session: Open 2-minute phone script for all checked leads in order">
+                    <button type="button" onclick="startLeadCallingQueue()" class="isc-btn isc-btn-primary" style="padding: 0.5rem 1.15rem; border-radius: 0.5rem; font-size: 0.75rem; height: 36px; display: flex; align-items: center; gap: 0.5rem; font-weight: 800; background: #0284c7; border: 1px solid #0369a1; color: white;" title="Start calling session: Open 2-minute phone script for all checked leads in order">
                         <i class="fas fa-phone-volume"></i> Start Calling Session
                     </button>
-                    <div style="height: 20px; width: 1px; background: var(--slate-200);"></div>
                     
                     <!-- Change Status Dropdown -->
                     <div style="position: relative; display: inline-block;" class="bulk-dropdown-container">
@@ -415,28 +451,6 @@
                     </button>
 
                     {% if current_user.role != 'Sales' %}
-                    <!-- Assign Owner Dropdown -->
-                    <div style="position: relative; display: inline-block;" class="bulk-dropdown-container">
-                        <button type="button" onclick="toggleBulkDropdown('bulk-owner-menu')" class="isc-btn isc-btn-outline" style="padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.75rem; height: 36px; display: flex; align-items: center; gap: 0.5rem; font-weight: 700;">
-                            Owner <i class="fas fa-chevron-down" style="font-size: 0.65rem;"></i>
-                        </button>
-                        <div id="bulk-owner-menu" class="bulk-dropdown-menu" style="display: none; position: absolute; left: 0; top: 110%; background: white; border: 1px solid var(--slate-200); border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 1000; width: 220px; padding: 0.5rem;">
-                            {% for u in system_users %}
-                            <button type="button" onclick="executeBulkAction('assign_owner', {owner_id: {{ u.id }}})" class="isc-dropdown-btn" style="text-align: left; width: 100%; display: flex; align-items: center; justify-content: space-between;">
-                                <span>
-                                    <i class="fas {% if u.role == 'Executive' %}fa-crown{% elif u.role == 'Sales' %}fa-user-tie{% else %}fa-user{% endif %}" style="margin-right: 0.5rem; color: {% if u.role == 'Sales' %}#2563eb{% elif u.role == 'Executive' %}#d97706{% else %}#64748b{% endif %};"></i>
-                                    {{ u.full_name or u.username }}
-                                </span>
-                                <small style="color: var(--slate-400); font-size: 0.7rem; font-weight: 700;">{{ u.role }}</small>
-                            </button>
-                            {% endfor %}
-                            <div style="height: 1px; background: var(--slate-100); margin: 0.35rem 0;"></div>
-                            <button type="button" onclick="executeBulkAction('assign_owner', {owner_id: null})" class="isc-dropdown-btn" style="text-align: left; width: 100%; color: var(--slate-500);">
-                                <i class="fas fa-user-slash" style="margin-right: 0.5rem;"></i> -- Unassign --
-                            </button>
-                        </div>
-                    </div>
-
                     <!-- Export Button -->
                     <button type="button" onclick="exportSelectedLeads()" class="isc-btn isc-btn-outline" style="padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.75rem; height: 36px; display: flex; align-items: center; gap: 0.5rem; font-weight: 700;">
                         <i class="fas fa-download"></i> Export
@@ -728,16 +742,34 @@
                                          </select>
                                      </td>
                                      {% elif col_key == 'owner' %}
-                                     <td onclick="event.stopPropagation();">
+                                     <td onclick="event.stopPropagation();" data-col="owner">
+                                         {% set ns_owner = namespace(name='', initials='', role='') %}
+                                         {% for u in system_users %}
+                                             {% if lead.owner_id == u.id %}
+                                                 {% set ns_owner.name = u.full_name or u.username %}
+                                                 {% set parts = ns_owner.name.split() %}
+                                                 {% set ns_owner.initials = (parts[0][0] ~ (parts[1][0] if parts|length > 1 else '')) | upper %}
+                                                 {% set ns_owner.role = u.role %}
+                                             {% endif %}
+                                         {% endfor %}
                                          {% if current_user.role != 'Sales' %}
-                                         <select onchange="quickUpdateLead({{ lead.id }}, 'owner_id', this.value, this)" class="sigma-inline-select">
-                                             <option value="" {% if not lead.owner_id %}selected{% endif %}>-- Unassigned --</option>
-                                             {% for u in system_users %}
-                                             <option value="{{ u.id }}" {% if lead.owner_id == u.id %}selected{% endif %}>{{ u.full_name or u.username }} ({{ u.role }})</option>
-                                             {% endfor %}
-                                         </select>
+                                             {% if ns_owner.name %}
+                                             <button type="button" id="lead-owner-badge-{{ lead.id }}" class="sigma-owner-badge sigma-owner-badge-btn assigned" data-lead-id="{{ lead.id }}" data-owner-id="{{ lead.owner_id }}" onclick="openQuickOwnerPopover(event, {{ lead.id }}, {{ lead.owner_id }})" style="display: inline-flex; align-items: center; gap: 0.4rem; background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 3px 9px 3px 4px; border-radius: 999px; font-size: 0.74rem; font-weight: 800; cursor: pointer; white-space: nowrap; transition: all 0.15s;" title="Assigned to {{ ns_owner.name }} ({{ ns_owner.role }}) — Click to reassign">
+                                                 <span style="width: 20px; height: 20px; border-radius: 999px; background: #1d4ed8; color: #ffffff; font-size: 0.62rem; font-weight: 900; display: inline-flex; align-items: center; justify-content: center; letter-spacing: 0.02em;">{{ ns_owner.initials }}</span>
+                                                 <span>{{ ns_owner.name }}</span>
+                                                 <i class="fas fa-caret-down" style="font-size: 0.65rem; color: #60a5fa; margin-left: 1px;"></i>
+                                             </button>
+                                             {% else %}
+                                             <button type="button" id="lead-owner-badge-{{ lead.id }}" class="sigma-owner-badge sigma-owner-badge-btn unassigned" data-lead-id="{{ lead.id }}" data-owner-id="" onclick="openQuickOwnerPopover(event, {{ lead.id }}, null)" style="display: inline-flex; align-items: center; gap: 0.35rem; background: #f8fafc; border: 1px dashed #cbd5e1; color: #64748b; padding: 3px 9px; border-radius: 999px; font-size: 0.72rem; font-weight: 700; cursor: pointer; white-space: nowrap; transition: all 0.15s;" title="Unassigned — Click to assign a sales rep">
+                                                 <i class="fas fa-user-plus" style="font-size: 0.64rem; color: #94a3b8;"></i>
+                                                 <span>+ Assign</span>
+                                             </button>
+                                             {% endif %}
                                          {% else %}
-                                         <span style="font-size: 0.78rem; font-weight: 700; color: var(--slate-700);">{{ current_user.full_name or current_user.username }}</span>
+                                         <span style="display: inline-flex; align-items: center; gap: 0.35rem; background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 3px 9px; border-radius: 999px; font-size: 0.74rem; font-weight: 800; white-space: nowrap;">
+                                             <i class="fas fa-user-check" style="font-size: 0.65rem;"></i>
+                                             {{ ns_owner.name or current_user.full_name or current_user.username }}
+                                         </span>
                                          {% endif %}
                                      </td>
                                      {% elif col_key == 'quick_log' %}
@@ -1012,9 +1044,15 @@
                 </div>
 
                 <!-- Bulk Actions Toolbar (Accounts Floating Rack) -->
-                <div id="acc-bulk-controls" style="display: none; gap: 1rem; align-items: center; background: #ffffff; border: 1px solid #cbd5e1; padding: 0.6rem 1.5rem; border-radius: 1rem; height: 56px; margin-bottom: 1.5rem; position: sticky; top: 1rem; z-index: 1040; box-shadow: 0 10px 25px -5px rgba(15,23,42,0.15);">
+                <div id="acc-bulk-controls" style="display: none; gap: 0.75rem; align-items: center; flex-wrap: wrap; background: #ffffff; border: 1px solid #cbd5e1; padding: 0.6rem 1.5rem; border-radius: 1rem; min-height: 56px; height: auto; margin-bottom: 1.5rem; position: sticky; top: 1rem; z-index: 1040; box-shadow: 0 10px 25px -5px rgba(15,23,42,0.15);">
                     <span id="acc-selected-count" style="font-size: 0.75rem; font-weight: 900; color: var(--slate-700); text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap;">0 selected</span>
                     <div style="height: 20px; width: 1px; background: var(--slate-200);"></div>
+
+                    {% if current_user.role != 'Sales' %}
+                    <button type="button" onclick="openBulkAssignOwnerModal('accounts')" class="isc-btn isc-btn-primary" style="padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.75rem; height: 36px; display: flex; align-items: center; gap: 0.45rem; font-weight: 800; background: #1e40af; border: 1px solid #1e3a8a; color: white;" title="Assign Account Rep in Bulk">
+                        <i class="fas fa-user-check"></i> Assign Rep
+                    </button>
+                    {% endif %}
                     
                     <!-- Change Status Dropdown -->
                     <div style="position: relative; display: inline-block;" class="bulk-dropdown-container">
@@ -7477,17 +7515,23 @@
                 <input type="text" name="project_name" required placeholder="E.g., Stacked Industrial, Barnes & Noble" style="width: 100%; padding: 0.55rem 0.75rem; border: 1px solid var(--slate-200); border-radius: 6px; font-size: 0.82rem;">
             </div>
             <div style="grid-column: span 1;">
-                <label style="font-size: 0.75rem; font-weight: 700; color: var(--slate-600); display: block; margin-bottom: 0.25rem;">Project Address</label>
-                <input type="text" name="project_address" placeholder="E.g., 751 E Rendon Crowley Rd" style="width: 100%; padding: 0.55rem 0.75rem; border: 1px solid var(--slate-200); border-radius: 6px; font-size: 0.82rem;">
+                <label for="bid-project-address" style="font-size: 0.75rem; font-weight: 700; color: var(--slate-600); display: block; margin-bottom: 0.25rem;">Project Street Address</label>
+                <input type="text" id="bid-project-address" name="project_address" placeholder="E.g., 751 E Rendon Crowley Rd" data-address-line2-target="bid-address-line2" style="width: 100%; padding: 0.55rem 0.75rem; border: 1px solid var(--slate-200); border-radius: 6px; font-size: 0.82rem;">
+            </div>
+            <div style="grid-column: span 1;">
+                <label for="bid-address-line2" style="font-size: 0.75rem; font-weight: 700; color: var(--slate-600); display: block; margin-bottom: 0.25rem;">Address Line 2 (Suite / Bldg / Phase)</label>
+                <input type="text" id="bid-address-line2" name="address_line_2" placeholder="Suite, Building, or Phase" style="width: 100%; padding: 0.55rem 0.75rem; border: 1px solid var(--slate-200); border-radius: 6px; font-size: 0.82rem;">
             </div>
             <div style="grid-column: span 1; display: grid; grid-template-columns: 2fr 1fr; gap: 0.5rem;">
                 <div>
-                    <label style="font-size: 0.75rem; font-weight: 700; color: var(--slate-600); display: block; margin-bottom: 0.25rem;">City</label>
-                    <input type="text" name="city" placeholder="Burleson" style="width: 100%; padding: 0.55rem 0.75rem; border: 1px solid var(--slate-200); border-radius: 6px; font-size: 0.82rem;">
+                    <label for="bid-city" style="font-size: 0.75rem; font-weight: 700; color: var(--slate-600); display: block; margin-bottom: 0.25rem;">City</label>
+                    <input type="text" id="bid-city" name="city" placeholder="Burleson" style="width: 100%; padding: 0.55rem 0.75rem; border: 1px solid var(--slate-200); border-radius: 6px; font-size: 0.82rem;">
                 </div>
                 <div>
-                    <label style="font-size: 0.75rem; font-weight: 700; color: var(--slate-600); display: block; margin-bottom: 0.25rem;">State</label>
-                    <input type="text" name="state" value="TX" style="width: 100%; padding: 0.55rem 0.75rem; border: 1px solid var(--slate-200); border-radius: 6px; font-size: 0.82rem;">
+                    <label for="bid-state" style="font-size: 0.75rem; font-weight: 700; color: var(--slate-600); display: block; margin-bottom: 0.25rem;">State</label>
+                    <select id="bid-state" name="state" data-mask="state" data-initial-state="TX" style="width: 100%; padding: 0.55rem 0.5rem; border: 1px solid var(--slate-200); border-radius: 6px; font-size: 0.82rem; background: #fff;">
+                        <option value="TX" selected>TX — Texas</option>
+                    </select>
                 </div>
             </div>
             <div style="grid-column: span 1;">
@@ -7915,21 +7959,27 @@
                         </div>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div style="display: grid; grid-template-columns: 2fr 1.2fr 1.2fr 1fr 0.9fr; gap: 0.75rem; margin-bottom: 1rem;">
                         <div>
-                            <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Building Address *</label>
-                            <input type="text" id="form-acc-address" name="company_address" required class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
+                            <label for="form-acc-address" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Building Address *</label>
+                            <input type="text" id="form-acc-address" name="company_address" required data-address-line2-target="form-acc-address-line2" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
                         </div>
                         <div>
-                            <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">City</label>
+                            <label for="form-acc-address-line2" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Suite / Bldg (Line 2)</label>
+                            <input type="text" id="form-acc-address-line2" name="address_line_2" placeholder="Suite, Bldg, Unit" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
+                        </div>
+                        <div>
+                            <label for="form-acc-city" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">City</label>
                             <input type="text" id="form-acc-city" name="city" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
                         </div>
                         <div>
-                            <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">State</label>
-                            <input type="text" id="form-acc-state" name="state" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
+                            <label for="form-acc-state" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">State</label>
+                            <select id="form-acc-state" name="state" data-mask="state" data-initial-state="TX" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.5rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; background: #fff; box-sizing: border-box;">
+                                <option value="TX" selected>TX — Texas</option>
+                            </select>
                         </div>
                         <div>
-                            <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Zip Code</label>
+                            <label for="form-acc-zip" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Zip Code</label>
                             <input type="text" id="form-acc-zip" name="zip" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
                         </div>
                     </div>
@@ -8479,8 +8529,11 @@
                             </div>
                         </div>
                         <div class="sigma-field">
-                            <label style="font-weight: 600; font-size: 0.75rem; color: var(--slate-700); margin-bottom: 4px;">Official Website</label>
-                            <input type="text" id="edit-lead-website" name="website" placeholder="https://www.facilityname.com" class="sigma-input" style="height: 36px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                <label for="edit-lead-website" style="font-weight: 600; font-size: 0.75rem; color: var(--slate-700); margin: 0;">Official Website</label>
+                                <a href="#" id="edit-lead-website-verify" onclick="verifyWebsiteField('edit-lead-website'); return false;" style="font-size: 0.7rem; font-weight: 700; color: #2563eb; text-decoration: none;">↗ Verify Link</a>
+                            </div>
+                            <input type="url" id="edit-lead-website" name="website" placeholder="https://www.facilityname.com" class="sigma-input" style="height: 36px;">
                         </div>
                     </div>
 
@@ -8489,21 +8542,29 @@
                         <div style="font-size: 0.75rem; font-weight: 800; color: var(--slate-700); text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.4rem; border-bottom: 1px solid var(--slate-200); padding-bottom: 0.5rem; margin-bottom: 0.25rem;">
                             <i class="fas fa-map-marker-alt" style="color: #ea580c;"></i> Building &amp; Location
                         </div>
-                        <div class="sigma-field">
-                            <label style="font-weight: 600; font-size: 0.75rem; color: var(--slate-700); margin-bottom: 4px;">Street Address</label>
-                            <input type="text" id="edit-lead-address" name="address" placeholder="Physical Facility Address" class="sigma-input" style="height: 36px;">
-                        </div>
-                        <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 0.6rem;">
+                        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 0.6rem;">
                             <div class="sigma-field">
-                                <label style="font-weight: 600; font-size: 0.75rem; color: var(--slate-700); margin-bottom: 4px;">City</label>
+                                <label for="edit-lead-address" style="font-weight: 600; font-size: 0.75rem; color: var(--slate-700); margin-bottom: 4px;">Street Address</label>
+                                <input type="text" id="edit-lead-address" name="address" data-address-line2-target="edit-lead-address-line2" placeholder="Physical Facility Street Address" class="sigma-input" style="height: 36px;">
+                            </div>
+                            <div class="sigma-field">
+                                <label for="edit-lead-address-line2" style="font-weight: 600; font-size: 0.75rem; color: var(--slate-700); margin-bottom: 4px;">Suite / Bldg / Unit (Line 2)</label>
+                                <input type="text" id="edit-lead-address-line2" name="address_line_2" placeholder="Suite 200, Bldg B" class="sigma-input" style="height: 36px;">
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1.6fr 1.2fr 1fr; gap: 0.6rem;">
+                            <div class="sigma-field">
+                                <label for="edit-lead-city" style="font-weight: 600; font-size: 0.75rem; color: var(--slate-700); margin-bottom: 4px;">City</label>
                                 <input type="text" id="edit-lead-city" name="city" placeholder="City" class="sigma-input" style="height: 36px;">
                             </div>
                             <div class="sigma-field">
-                                <label style="font-weight: 600; font-size: 0.75rem; color: var(--slate-700); margin-bottom: 4px;">State</label>
-                                <input type="text" id="edit-lead-state" name="state" placeholder="TX" class="sigma-input" style="height: 36px;">
+                                <label for="edit-lead-state" style="font-weight: 600; font-size: 0.75rem; color: var(--slate-700); margin-bottom: 4px;">State (USPS)</label>
+                                <select id="edit-lead-state" name="state" data-mask="state" data-initial-state="TX" class="sigma-input" style="height: 36px; background: #fff;">
+                                    <option value="TX" selected>TX — Texas</option>
+                                </select>
                             </div>
                             <div class="sigma-field">
-                                <label style="font-weight: 600; font-size: 0.75rem; color: var(--slate-700); margin-bottom: 4px;">Zip Code</label>
+                                <label for="edit-lead-zip" style="font-weight: 600; font-size: 0.75rem; color: var(--slate-700); margin-bottom: 4px;">Zip Code</label>
                                 <input type="text" id="edit-lead-zip" name="zipcode" placeholder="75001" class="sigma-input" style="height: 36px;">
                             </div>
                         </div>
@@ -8767,11 +8828,19 @@
                         <div class="sigma-field"><label>Email Address</label><input type="email" name="email" required placeholder="billing@company.com" class="sigma-input"></div>
                         <div class="sigma-field"><label>Website</label><input type="url" name="website" placeholder="https://..." class="sigma-input"></div>
                     </div>
-                    <div class="sigma-field" style="position: relative;"><label for="add-acc-address">Billing Address</label><input type="text" id="add-acc-address" name="company_address" required placeholder="Street Address" class="sigma-input" autocomplete="off" oninput="smartType(this, 'results-add-acc')"><div id="results-add-acc" class="address-results"></div></div>
+                    <div class="sigma-row sigma-row-60-40">
+                        <div class="sigma-field" style="position: relative;"><label for="add-acc-address">Billing Street Address</label><input type="text" id="add-acc-address" name="company_address" required placeholder="Street Address" data-address-line2-target="add-acc-address-line2" class="sigma-input" autocomplete="off" oninput="smartType(this, 'results-add-acc')"><div id="results-add-acc" class="address-results"></div></div>
+                        <div class="sigma-field"><label for="add-acc-address-line2">Suite / Bldg / Unit (Line 2)</label><input type="text" id="add-acc-address-line2" name="address_line_2" placeholder="Suite 200, Bldg B" class="sigma-input"></div>
+                    </div>
                     <div class="sigma-row sigma-row-60-40">
                         <div class="sigma-field"><label for="add-acc-city">City</label><input type="text" id="add-acc-city" name="city" placeholder="City" class="sigma-input"></div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
-                            <div class="sigma-field"><label for="add-acc-state">State</label><input type="text" id="add-acc-state" name="state" maxlength="2" oninput="maskStateInput(this)" placeholder="TX" class="sigma-input"></div>
+                        <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 0.5rem;">
+                            <div class="sigma-field">
+                                <label for="add-acc-state">State (USPS)</label>
+                                <select id="add-acc-state" name="state" data-mask="state" data-initial-state="TX" class="sigma-input" style="background: #fff;">
+                                    <option value="TX" selected>TX — Texas</option>
+                                </select>
+                            </div>
                             <div class="sigma-field"><label for="add-acc-zip">Zip</label><input type="text" id="add-acc-zip" name="zip" maxlength="10" inputmode="numeric" oninput="maskZipInput(this)" placeholder="75024" class="sigma-input"></div>
                         </div>
                     </div>
@@ -8865,18 +8934,29 @@
                         <label>Executive Email (Magic Link Destination)</label>
                         <input type="email" name="email" required placeholder="ahudgins@bosanna.com" class="sigma-input">
                     </div>
-                    <div class="sigma-field">
-                        <label>Headquarters Street Address</label>
-                        <input type="text" name="company_address" placeholder="4514 Travis St, Suite 200" class="sigma-input">
+                    <div class="sigma-row sigma-row-60-40">
+                        <div class="sigma-field">
+                            <label for="partner-address">Headquarters Street Address</label>
+                            <input type="text" id="partner-address" name="company_address" data-address-line2-target="partner-address-line2" placeholder="4514 Travis St" class="sigma-input">
+                        </div>
+                        <div class="sigma-field">
+                            <label for="partner-address-line2">Suite / Bldg (Line 2)</label>
+                            <input type="text" id="partner-address-line2" name="address_line_2" placeholder="Suite 200" class="sigma-input">
+                        </div>
                     </div>
                     <div class="sigma-row sigma-row-60-40">
                         <div class="sigma-field">
-                            <label>City</label>
-                            <input type="text" name="city" placeholder="Dallas" class="sigma-input">
+                            <label for="partner-city">City</label>
+                            <input type="text" id="partner-city" name="city" placeholder="Dallas" class="sigma-input">
                         </div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
-                            <div class="sigma-field"><label>State</label><input type="text" name="state" maxlength="2" oninput="maskStateInput(this)" value="TX" class="sigma-input"></div>
-                            <div class="sigma-field"><label>Zip</label><input type="text" name="zip" maxlength="10" inputmode="numeric" oninput="maskZipInput(this)" placeholder="75205" class="sigma-input"></div>
+                        <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 0.5rem;">
+                            <div class="sigma-field">
+                                <label for="partner-state">State (USPS)</label>
+                                <select id="partner-state" name="state" data-mask="state" data-initial-state="TX" class="sigma-input" style="background: #fff;">
+                                    <option value="TX" selected>TX — Texas</option>
+                                </select>
+                            </div>
+                            <div class="sigma-field"><label for="partner-zip">Zip</label><input type="text" id="partner-zip" name="zip" maxlength="10" inputmode="numeric" oninput="maskZipInput(this)" placeholder="75205" class="sigma-input"></div>
                         </div>
                     </div>
                     <div class="sigma-field">
@@ -8933,68 +9013,131 @@
 </div>
 
 <div id="modal-add-lead" class="isc-modal-overlay" style="display:none;">
-    <div class="isc-modal" style="max-width: 1100px;">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem;">
+    <div class="isc-modal" style="max-width: 1120px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem;">
             <div>
                 <h2 style="font-weight: 900; font-size: 1.5rem; color: var(--slate-900); letter-spacing: -0.01em; margin: 0;">Add New Lead</h2>
                 <p style="color: var(--slate-500); font-size: 0.825rem; font-weight: 500; margin: 0.25rem 0 0 0;">
-                    Enter contact details, cleanable square footage, and facility requirements to add a new account to the lead pool.
+                    Enter contact details, official website, suite/building address, and facility requirements to add a new account to the lead pool.
                 </p>
             </div>
             <button type="button" onclick="closeModal('modal-add-lead')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; color: var(--slate-400); transition: all 0.2s;" aria-label="Close Add Lead Modal">
                 <i class="fas fa-times" style="font-size: 0.9rem;"></i>
             </button>
         </div>
-        <form action="{{ url_for('add_manual_lead') }}" method="POST" class="sigma-form-container">
+
+        <!-- Pre-Save Live Duplicate Detection Banner (BUG-156) -->
+        <div id="add-lead-duplicate-banner" style="display: none; background: #fffbeb; border: 1px solid #f59e0b; border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1rem;">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap;">
+                <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 700; color: #92400e;">
+                    <i class="fas fa-exclamation-triangle" style="color: #d97706;"></i>
+                    <span id="add-lead-duplicate-text">Existing lead detected with matching phone, email, or building name.</span>
+                </div>
+                <button type="button" id="btn-open-existing-duplicate-lead" onclick="openDetectedDuplicateLead()" class="isc-btn isc-btn-outline" style="height: 30px; padding: 0 0.75rem; font-size: 0.72rem; font-weight: 800; color: #92400e; border-color: #f59e0b; background: #ffffff; border-radius: 6px;">Open Existing Lead</button>
+            </div>
+        </div>
+
+        <form id="form-add-manual-lead" action="{{ url_for('add_manual_lead') }}" method="POST" onsubmit="submitAddLeadForm(event)" class="sigma-form-container">
             <div class="sigma-form-section">
-                <!-- Column 1: Contact Information -->
+                <!-- Column 1: Contact & Location Information -->
                 <div class="sigma-form-group">
-                    <span class="sigma-form-header">Contact Information</span>
-                    <div class="sigma-field"><label>Company Name</label><input type="text" name="company_name" required placeholder="Legal Entity Name" class="sigma-input"></div>
-                    <div class="sigma-field"><label>Umbrella / Corporate Parent</label><input type="text" name="umbrella_name" placeholder="e.g. Fractal Education Group" class="sigma-input"></div>
-                    <div class="sigma-row sigma-row-60-40">
-                        <div class="sigma-field"><label>Main Manager</label><input type="text" name="decision_maker" placeholder="Full Name" class="sigma-input"></div>
-                        <div class="sigma-field"><label>Manager Title</label><input type="text" name="job_title" placeholder="e.g. Facilities Manager" class="sigma-input"></div>
+                    <span class="sigma-form-header">Contact &amp; Location</span>
+                    <div class="sigma-field">
+                        <label for="add-lead-company">Company / Building Name *</label>
+                        <input type="text" id="add-lead-company" name="company_name" required placeholder="Legal Entity or Facility Name" oninput="scheduleAddLeadDuplicateCheck()" class="sigma-input">
+                    </div>
+                    <div class="sigma-field">
+                        <label for="add-lead-umbrella">Umbrella / Corporate Parent</label>
+                        <input type="text" id="add-lead-umbrella" name="umbrella_name" placeholder="e.g. Fractal Education Group" class="sigma-input">
                     </div>
                     <div class="sigma-row sigma-row-60-40">
-                        <div class="sigma-field"><label>Email Address</label><input type="email" name="email" required placeholder="client@company.com" class="sigma-input"></div>
-                        <div class="sigma-field"><label>Phone Number</label><input type="tel" name="phone" maxlength="14" inputmode="numeric" placeholder="(000)-000-0000" class="sigma-input" oninput="maskPhoneInput(this)"></div>
+                        <div class="sigma-field">
+                            <label for="add-lead-dm">Main Manager / Decision Maker</label>
+                            <input type="text" id="add-lead-dm" name="decision_maker" placeholder="Full Name" class="sigma-input">
+                        </div>
+                        <div class="sigma-field">
+                            <label for="add-lead-job-title">Manager Title</label>
+                            <input type="text" id="add-lead-job-title" name="job_title" placeholder="e.g. Facilities Manager" class="sigma-input">
+                        </div>
                     </div>
-                    <div class="sigma-field" style="position: relative;"><label for="add-lead-address">Building Address</label><input type="text" id="add-lead-address" name="address" required placeholder="Street Address" class="sigma-input" autocomplete="off" oninput="smartType(this, 'results-add-lead')"><div id="results-add-lead" class="address-results"></div></div>
                     <div class="sigma-row sigma-row-60-40">
-                        <div class="sigma-field"><label for="add-lead-city">City</label><input type="text" id="add-lead-city" name="city" placeholder="City" class="sigma-input"></div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
-                            <div class="sigma-field"><label for="add-lead-state">State</label><input type="text" id="add-lead-state" name="state" maxlength="2" oninput="maskStateInput(this)" placeholder="TX" class="sigma-input"></div>
-                            <div class="sigma-field"><label for="add-lead-zip">Zip</label><input type="text" id="add-lead-zip" name="zipcode" maxlength="10" inputmode="numeric" oninput="maskZipInput(this)" placeholder="75024" class="sigma-input"></div>
+                        <div class="sigma-field">
+                            <label for="add-lead-phone">Phone Number</label>
+                            <input type="tel" id="add-lead-phone" name="phone" maxlength="14" inputmode="numeric" placeholder="(000)-000-0000" class="sigma-input" oninput="maskPhoneInput(this); scheduleAddLeadDuplicateCheck();">
+                        </div>
+                        <div class="sigma-field">
+                            <label for="add-lead-email">Email Address <small style="font-weight:500; color:var(--slate-400);">(Optional)</small></label>
+                            <input type="email" id="add-lead-email" name="email" placeholder="director@company.com" oninput="scheduleAddLeadDuplicateCheck()" class="sigma-input">
+                        </div>
+                    </div>
+                    <div class="sigma-field">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <label for="add-lead-website">Official Website</label>
+                            <a href="#" onclick="verifyWebsiteField('add-lead-website'); return false;" style="font-size: 0.7rem; font-weight: 700; color: #2563eb; text-decoration: none;">↗ Verify Link</a>
+                        </div>
+                        <input type="url" id="add-lead-website" name="website" placeholder="https://www.company.com" class="sigma-input">
+                    </div>
+                    <div class="sigma-row sigma-row-60-40">
+                        <div class="sigma-field" style="position: relative;">
+                            <label for="add-lead-address">Building Street Address *</label>
+                            <input type="text" id="add-lead-address" name="address" required placeholder="Street Address" data-address-line2-target="add-lead-address-line2" class="sigma-input" autocomplete="off" oninput="smartType(this, 'results-add-lead')">
+                            <div id="results-add-lead" class="address-results"></div>
+                        </div>
+                        <div class="sigma-field">
+                            <label for="add-lead-address-line2">Suite / Bldg / Unit (Line 2)</label>
+                            <input type="text" id="add-lead-address-line2" name="address_line_2" placeholder="Suite 200, Bldg B" class="sigma-input">
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1.4fr 1.15fr 0.9fr 1fr; gap: 0.5rem;">
+                        <div class="sigma-field">
+                            <label for="add-lead-city">City</label>
+                            <input type="text" id="add-lead-city" name="city" placeholder="City" oninput="scheduleAddLeadDuplicateCheck()" class="sigma-input">
+                        </div>
+                        <div class="sigma-field">
+                            <label for="add-lead-state">State (USPS)</label>
+                            <select id="add-lead-state" name="state" data-mask="state" data-initial-state="TX" class="sigma-input" style="background: #fff;">
+                                <option value="TX" selected>TX — Texas</option>
+                            </select>
+                        </div>
+                        <div class="sigma-field">
+                            <label for="add-lead-zip">Zip Code</label>
+                            <input type="text" id="add-lead-zip" name="zipcode" maxlength="10" inputmode="numeric" oninput="maskZipInput(this)" placeholder="75024" class="sigma-input">
+                        </div>
+                        <div class="sigma-field">
+                            <label for="add-lead-county">County</label>
+                            <input type="text" id="add-lead-county" name="county" placeholder="Collin" class="sigma-input">
                         </div>
                     </div>
                 </div>
                 <!-- Column 2: Building Details -->
                 <div class="sigma-form-group">
-                    <span class="sigma-form-header">Building Details</span>
+                    <span class="sigma-form-header">Building Details &amp; Ownership</span>
                     <div class="sigma-row sigma-row-60-40">
                         <div class="sigma-field">
-                            <label>Building Type</label>
-                            <select name="facility_type" required class="sigma-input">
+                            <label for="add-lead-facility-type">Building Type</label>
+                            <select id="add-lead-facility-type" name="facility_type" required class="sigma-input">
                                 {% for ft in facility_types %}
                                 <option value="{{ ft.value }}">{{ ft.label }}</option>
                                 {% endfor %}
                             </select>
                         </div>
-                        <div class="sigma-field"><label>Building SQF</label><input type="number" name="sqf" placeholder="e.g. 5000" class="sigma-input"></div>
+                        <div class="sigma-field">
+                            <label for="add-lead-sqf">Building SQF</label>
+                            <input type="number" id="add-lead-sqf" name="sqf" placeholder="e.g. 5000" class="sigma-input">
+                        </div>
                     </div>
                     <div class="sigma-row sigma-row-60-40">
                         <div class="sigma-field">
-                            <label>Foot Traffic Level</label>
-                            <select name="traffic_cycle" required class="sigma-input">
+                            <label for="add-lead-traffic">Foot Traffic Level</label>
+                            <select id="add-lead-traffic" name="traffic_cycle" required class="sigma-input">
                                 <option value="Slow">Slow Traffic</option>
                                 <option value="High" selected>High Traffic</option>
                                 <option value="24/7 Production">24/7 Production</option>
                             </select>
                         </div>
                         <div class="sigma-field">
-                            <label>Service Type</label>
-                            <select name="service_interest" required class="sigma-input">
+                            <label for="add-lead-service-interest">Service Type</label>
+                            <select id="add-lead-service-interest" name="service_interest" required class="sigma-input">
                                 <option value="Janitorial">Janitorial Cleaning</option>
                                 <option value="Post-Construction">Post-Construction</option>
                                 <option value="Window Cleaning">Window Cleaning</option>
@@ -9004,39 +9147,163 @@
                     </div>
                     <div class="sigma-row sigma-row-60-40">
                         <div class="sigma-field">
-                            <label>How they found us</label>
-                            <select name="lead_source" class="sigma-input">
+                            <label for="add-lead-source">How they found us</label>
+                            <select id="add-lead-source" name="lead_source" class="sigma-input">
                                 {% for src in lead_sources %}
                                 <option value="{{ src.value }}">{{ src.label }}</option>
                                 {% endfor %}
                             </select>
                         </div>
                         <div class="sigma-field">
-                            <label>Importance</label>
-                            <select name="priority_level" class="sigma-input">
+                            <label for="add-lead-priority">Importance</label>
+                            <select id="add-lead-priority" name="priority_level" class="sigma-input">
                                 {% for p in priority_levels %}
                                 <option value="{{ p.value }}">{{ p.label }}</option>
                                 {% endfor %}
                             </select>
                         </div>
                     </div>
-                    <div class="sigma-field">
-                        <label>Assigned Lead Owner</label>
-                        <select name="owner_id" class="sigma-input">
-                            <option value="">-- Unassigned --</option>
-                            {% for u in system_users %}
-                            <option value="{{ u.id }}" {% if current_user.id == u.id %}selected{% endif %}>{{ u.full_name or u.username }} ({{ u.role }})</option>
-                            {% endfor %}
-                        </select>
+                    <div class="sigma-row sigma-row-60-40">
+                        <div class="sigma-field">
+                            <label for="add-lead-owner">Assigned Lead Owner</label>
+                            <select id="add-lead-owner" name="owner_id" class="sigma-input">
+                                <option value="">-- Unassigned --</option>
+                                {% for u in system_users %}
+                                <option value="{{ u.id }}" {% if current_user.id == u.id %}selected{% endif %}>{{ u.full_name or u.username }} ({{ u.role }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="sigma-field">
+                            <label for="add-lead-next-action">Next Follow-Up Date</label>
+                            <input type="date" id="add-lead-next-action" name="next_action_date" class="sigma-input">
+                        </div>
                     </div>
-                    <div class="sigma-field"><label>Work Notes</label><textarea name="notes" placeholder="Initial company insights..." class="sigma-input" style="height: 100px; resize: none;"></textarea></div>
+                    <div class="sigma-field">
+                        <label for="add-lead-notes">Work Notes</label>
+                        <textarea id="add-lead-notes" name="notes" placeholder="Initial company insights, gatekeeper notes, or walkthrough details..." class="sigma-input" style="height: 100px; resize: none;"></textarea>
+                    </div>
                 </div>
             </div>
             <div class="sigma-form-actions" style="margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 0.75rem; border-top: 1px solid var(--slate-100); padding-top: 1.25rem;">
                 <button type="button" onclick="closeModal('modal-add-lead')" class="isc-btn isc-btn-outline" style="height: 38px; padding: 0 1.5rem; font-size: 0.8rem; border-radius: 6px; font-weight: 700;" aria-label="Close Add Lead Modal">Cancel</button>
-                <button type="submit" class="isc-btn isc-btn-primary" style="height: 38px; padding: 0 2rem; font-size: 0.8rem; border-radius: 6px; font-weight: 800;">Add Lead</button>
+                <button type="submit" id="btn-submit-add-lead" class="isc-btn isc-btn-primary" style="height: 38px; padding: 0 2rem; font-size: 0.8rem; border-radius: 6px; font-weight: 800;">Add Lead</button>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- 1-Click Quick Owner Popover for Standard Lead Owner Column (BUG-156) -->
+<div id="quick-owner-popover" style="display: none; position: fixed; background: #ffffff; border: 1px solid var(--slate-200); border-radius: 10px; box-shadow: 0 16px 36px rgba(15,23,42,0.18); z-index: 2200; width: 250px; padding: 0.5rem;">
+    <div style="font-size: 0.68rem; font-weight: 800; color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.05em; padding: 0.35rem 0.6rem; border-bottom: 1px solid var(--slate-100); margin-bottom: 0.3rem; display: flex; justify-content: space-between; align-items: center;">
+        <span>Assign Lead Owner</span>
+        <button type="button" onclick="closeQuickOwnerPopover()" style="background: none; border: none; color: var(--slate-400); cursor: pointer; font-size: 0.8rem;" aria-label="Close Assign Owner Popover">✕</button>
+    </div>
+    <div style="max-height: 260px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px;">
+        {% for u in system_users %}
+        {% set u_cnt = u.assigned_leads_count if u.assigned_leads_count is defined else (u[4] if u|length > 4 else 0) %}
+        <button type="button" class="isc-dropdown-btn quick-owner-opt" data-owner-id="{{ u.id }}" data-owner-name="{{ u.full_name or u.username }}" data-owner-role="{{ u.role }}" onclick="applyQuickOwnerPopoverSelection({{ u.id }}, '{{ (u.full_name or u.username) | replace("'", "\\'") }}', '{{ u.role }}')" style="text-align: left; width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 0.45rem 0.6rem; border-radius: 6px;">
+            <span style="display: flex; align-items: center; gap: 0.45rem; font-weight: 700; font-size: 0.78rem; color: var(--slate-800);">
+                <i class="fas {% if u.role == 'Executive' %}fa-crown{% elif u.role == 'Sales' %}fa-user-tie{% else %}fa-user{% endif %}" style="color: {% if u.role == 'Sales' %}#2563eb{% elif u.role == 'Executive' %}#d97706{% else %}#64748b{% endif %}; width: 14px;"></i>
+                {{ u.full_name or u.username }}
+            </span>
+            <small class="owner-opt-count-badge" data-user-id="{{ u.id }}" style="color: var(--slate-400); font-size: 0.68rem; font-weight: 700;">{{ u_cnt or 0 }} leads</small>
+        </button>
+        {% endfor %}
+        <div style="height: 1px; background: var(--slate-100); margin: 0.25rem 0;"></div>
+        <button type="button" class="isc-dropdown-btn" onclick="applyQuickOwnerPopoverSelection(null, '', '')" style="text-align: left; width: 100%; color: var(--slate-500); padding: 0.45rem 0.6rem; border-radius: 6px; font-size: 0.76rem; font-weight: 700;">
+            <i class="fas fa-user-slash" style="margin-right: 0.45rem;"></i> -- Unassign Lead --
+        </button>
+    </div>
+</div>
+
+<!-- Modal: Enterprise Bulk Owner Assignment & Round-Robin Split (BUG-156) -->
+<div id="modal-bulk-assign-owner" class="isc-modal-overlay" style="display:none; z-index: 1400;">
+    <div class="isc-modal" style="max-width: 620px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem; border-bottom: 1px solid var(--slate-100); padding-bottom: 0.85rem;">
+            <div>
+                <h2 id="bulk-assign-modal-title" style="font-weight: 900; font-size: 1.35rem; color: var(--slate-900); margin: 0;">Bulk Assign Lead Owners</h2>
+                <p id="bulk-assign-modal-subtitle" style="color: var(--slate-500); font-size: 0.8rem; font-weight: 600; margin: 0.25rem 0 0 0;">
+                    Assign selected records to a single sales representative or split them evenly across multiple reps.
+                </p>
+            </div>
+            <button type="button" onclick="closeModal('modal-bulk-assign-owner')" style="background: var(--slate-50); border: 1px solid var(--slate-200); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; color: var(--slate-500);" aria-label="Close Bulk Assign Owner Modal">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <input type="hidden" id="bulk-assign-entity-mode" value="leads">
+
+        <!-- Mode Selector: Single Rep vs Even Round-Robin Split -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-bottom: 1rem;">
+            <button type="button" id="btn-bulk-mode-single" onclick="setBulkOwnerAssignMode('single')" style="padding: 0.65rem 0.85rem; border-radius: 8px; border: 2px solid #2563eb; background: #eff6ff; color: #1e40af; font-size: 0.8rem; font-weight: 800; cursor: pointer; text-align: left; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fas fa-user-check"></i>
+                <div>
+                    <div>Single Sales Rep</div>
+                    <div style="font-size: 0.68rem; font-weight: 600; color: #3b82f6;">Assign 100% to one owner</div>
+                </div>
+            </button>
+            <button type="button" id="btn-bulk-mode-split" onclick="setBulkOwnerAssignMode('split')" style="padding: 0.65rem 0.85rem; border-radius: 8px; border: 1px solid var(--slate-200); background: #ffffff; color: var(--slate-700); font-size: 0.8rem; font-weight: 800; cursor: pointer; text-align: left; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fas fa-balance-scale"></i>
+                <div>
+                    <div>Even Round-Robin Split</div>
+                    <div style="font-size: 0.68rem; font-weight: 600; color: var(--slate-500);">Distribute evenly across reps</div>
+                </div>
+            </button>
+        </div>
+
+        <!-- Single Rep Selector -->
+        <div id="bulk-assign-single-pane" style="margin-bottom: 1rem;">
+            <label for="bulk-assign-single-owner-select" style="display: block; font-size: 0.75rem; font-weight: 800; color: var(--slate-700); text-transform: uppercase; margin-bottom: 0.35rem;">Select Target Owner</label>
+            <select id="bulk-assign-single-owner-select" onchange="updateBulkOwnerWorkloadPreview()" class="sigma-input" style="width: 100%; height: 40px; font-weight: 700;">
+                {% for u in system_users %}
+                {% set u_cnt = u.assigned_leads_count if u.assigned_leads_count is defined else (u[4] if u|length > 4 else 0) %}
+                <option value="{{ u.id }}" data-current-count="{{ u_cnt or 0 }}" data-full-name="{{ u.full_name or u.username }}">{{ u.full_name or u.username }} ({{ u.role }} — Currently {{ u_cnt or 0 }} leads)</option>
+                {% endfor %}
+                <option value="unassign" data-current-count="0" data-full-name="Unassigned">-- Unassign Selected Records --</option>
+            </select>
+        </div>
+
+        <!-- Multi-Rep Round-Robin Selector -->
+        <div id="bulk-assign-split-pane" style="display: none; margin-bottom: 1rem;">
+            <div style="font-size: 0.75rem; font-weight: 800; color: var(--slate-700); text-transform: uppercase; margin-bottom: 0.35rem;">Check Reps to Include in Round-Robin Split</div>
+            <div style="max-height: 200px; overflow-y: auto; border: 1px solid var(--slate-200); border-radius: 8px; padding: 0.5rem; background: #f8fafc; display: flex; flex-direction: column; gap: 0.35rem;">
+                {% for u in system_users %}
+                {% set u_cnt = u.assigned_leads_count if u.assigned_leads_count is defined else (u[4] if u|length > 4 else 0) %}
+                <label for="bulk-split-rep-{{ u.id }}" style="display: flex; align-items: center; justify-content: space-between; background: #ffffff; border: 1px solid var(--slate-200); border-radius: 6px; padding: 0.45rem 0.75rem; cursor: pointer; font-size: 0.8rem; font-weight: 700; color: var(--slate-800);">
+                    <span style="display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox" id="bulk-split-rep-{{ u.id }}" class="bulk-split-rep-cb" value="{{ u.id }}" data-current-count="{{ u_cnt or 0 }}" data-full-name="{{ u.full_name or u.username }}" onchange="updateBulkOwnerWorkloadPreview()" style="accent-color: #2563eb; width: 15px; height: 15px;">
+                        <span>{{ u.full_name or u.username }}</span>
+                        <small style="color: var(--slate-400); font-weight: 600;">({{ u.role }})</small>
+                    </span>
+                    <span style="font-size: 0.72rem; color: var(--slate-500); font-weight: 700;">{{ u_cnt or 0 }} leads</span>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Overwrite Protection & Optional Next Action Date -->
+        <div style="background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 8px; padding: 0.85rem 1rem; margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.65rem;">
+            <label for="bulk-assign-only-unassigned" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.8rem; font-weight: 700; color: var(--slate-800);">
+                <input type="checkbox" id="bulk-assign-only-unassigned" onchange="updateBulkOwnerWorkloadPreview()" style="accent-color: #2563eb; width: 15px; height: 15px;">
+                <span>Overwrite Protection: Only assign currently <strong>Unassigned</strong> records (skip leads already owned by another rep)</span>
+            </label>
+            <div id="bulk-assign-next-date-wrap" style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; border-top: 1px solid var(--slate-200); padding-top: 0.6rem;">
+                <label for="bulk-assign-next-action-date" style="font-size: 0.76rem; font-weight: 700; color: var(--slate-600);">Optional Next Call / Follow-Up Date:</label>
+                <input type="date" id="bulk-assign-next-action-date" class="sigma-input" style="height: 34px; width: 180px; font-size: 0.78rem;">
+            </div>
+        </div>
+
+        <!-- Live Workload Preview Box -->
+        <div id="bulk-assign-workload-preview" style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1.25rem; font-size: 0.78rem; color: #1e40af; font-weight: 700;">
+            Select a sales representative above to preview the assignment distribution.
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 0.75rem; border-top: 1px solid var(--slate-100); padding-top: 1rem;">
+            <button type="button" onclick="closeModal('modal-bulk-assign-owner')" class="isc-btn isc-btn-outline" style="height: 38px; padding: 0 1.25rem; font-size: 0.8rem; border-radius: 6px; font-weight: 700;">Cancel</button>
+            <button type="button" id="btn-confirm-bulk-assign-owner" onclick="submitBulkAssignOwnerModal()" class="isc-btn isc-btn-primary" style="height: 38px; padding: 0 1.5rem; font-size: 0.8rem; border-radius: 6px; font-weight: 800; background: #1e40af; border-color: #1e3a8a;">
+                <i class="fas fa-check-circle" style="margin-right: 0.4rem;"></i> Confirm Bulk Assignment
+            </button>
+        </div>
     </div>
 </div>
 
@@ -9621,6 +9888,13 @@ Click here to book a 5-minute walkthrough: [Calendar Link]"></textarea>
         {% if system_users %}
         {% for u in system_users %}
         {{ u.id }}: "{{ (u.full_name or u.username)|replace('\"', '\\\"') }}",
+        {% endfor %}
+        {% endif %}
+    };
+    const LEAD_OWNER_COUNTS = {
+        {% if system_users %}
+        {% for u in system_users %}
+        {{ u.id }}: {{ u.assigned_leads_count if u.assigned_leads_count is defined else (u[4] if u|length > 4 else 0) }},
         {% endfor %}
         {% endif %}
     };

@@ -220,16 +220,552 @@
     }
 
     /**
-     * US 2-Letter State Code Mask: Uppercase AA (maxlength 2)
+     * US 2-Letter State Code Canonical Dictionary & Normalizer (BUG-156)
+     * Eliminates 'tx', 'Texas', 'Tejas', 'TX.' variations across all forms.
+     */
+    const US_STATES_LIST = [
+        { code: "TX", name: "Texas", group: "Primary" },
+        { code: "OK", name: "Oklahoma", group: "Regional" },
+        { code: "LA", name: "Louisiana", group: "Regional" },
+        { code: "AR", name: "Arkansas", group: "Regional" },
+        { code: "NM", name: "New Mexico", group: "Regional" },
+        { code: "AL", name: "Alabama", group: "All" },
+        { code: "AK", name: "Alaska", group: "All" },
+        { code: "AZ", name: "Arizona", group: "All" },
+        { code: "CA", name: "California", group: "All" },
+        { code: "CO", name: "Colorado", group: "All" },
+        { code: "CT", name: "Connecticut", group: "All" },
+        { code: "DE", name: "Delaware", group: "All" },
+        { code: "DC", name: "District of Columbia", group: "All" },
+        { code: "FL", name: "Florida", group: "All" },
+        { code: "GA", name: "Georgia", group: "All" },
+        { code: "HI", name: "Hawaii", group: "All" },
+        { code: "ID", name: "Idaho", group: "All" },
+        { code: "IL", name: "Illinois", group: "All" },
+        { code: "IN", name: "Indiana", group: "All" },
+        { code: "IA", name: "Iowa", group: "All" },
+        { code: "KS", name: "Kansas", group: "All" },
+        { code: "KY", name: "Kentucky", group: "All" },
+        { code: "ME", name: "Maine", group: "All" },
+        { code: "MD", name: "Maryland", group: "All" },
+        { code: "MA", name: "Massachusetts", group: "All" },
+        { code: "MI", name: "Michigan", group: "All" },
+        { code: "MN", name: "Minnesota", group: "All" },
+        { code: "MS", name: "Mississippi", group: "All" },
+        { code: "MO", name: "Missouri", group: "All" },
+        { code: "MT", name: "Montana", group: "All" },
+        { code: "NE", name: "Nebraska", group: "All" },
+        { code: "NV", name: "Nevada", group: "All" },
+        { code: "NH", name: "New Hampshire", group: "All" },
+        { code: "NJ", name: "New Jersey", group: "All" },
+        { code: "NY", name: "New York", group: "All" },
+        { code: "NC", name: "North Carolina", group: "All" },
+        { code: "ND", name: "North Dakota", group: "All" },
+        { code: "OH", name: "Ohio", group: "All" },
+        { code: "OR", name: "Oregon", group: "All" },
+        { code: "PA", name: "Pennsylvania", group: "All" },
+        { code: "RI", name: "Rhode Island", group: "All" },
+        { code: "SC", name: "South Carolina", group: "All" },
+        { code: "SD", name: "South Dakota", group: "All" },
+        { code: "TN", name: "Tennessee", group: "All" },
+        { code: "UT", name: "Utah", group: "All" },
+        { code: "VT", name: "Vermont", group: "All" },
+        { code: "VA", name: "Virginia", group: "All" },
+        { code: "WA", name: "Washington", group: "All" },
+        { code: "WV", name: "West Virginia", group: "All" },
+        { code: "WI", name: "Wisconsin", group: "All" },
+        { code: "WY", name: "Wyoming", group: "All" }
+    ];
+
+    const STATE_ALIAS_LOOKUP = (function () {
+        const map = {
+            tejas: "TX",
+            tex: "TX",
+            "tx.": "TX",
+            "t.x.": "TX",
+            "texas, usa": "TX",
+            "tx - texas": "TX",
+            "tx — texas": "TX",
+            okla: "OK",
+            "ok.": "OK",
+            "la.": "LA",
+            ark: "AR",
+            "n.m.": "NM",
+            "new mex": "NM",
+            calif: "CA",
+            fla: "FL",
+            wash: "WA",
+            "d.c.": "DC",
+            "washington dc": "DC"
+        };
+        US_STATES_LIST.forEach(function (item) {
+            map[item.code.toLowerCase()] = item.code;
+            map[item.name.toLowerCase()] = item.code;
+            map[(item.code + " — " + item.name).toLowerCase()] = item.code;
+            map[(item.code + " - " + item.name).toLowerCase()] = item.code;
+        });
+        return map;
+    })();
+
+    function normalizeUspsStateCode(rawVal, fallback) {
+        const def = fallback !== undefined ? fallback : "TX";
+        if (!rawVal) return def;
+        const s = String(rawVal).trim();
+        if (!s) return def;
+        if (s.indexOf("—") !== -1 || s.indexOf(" - ") !== -1) {
+            const prefix = s.split(/\s*[—-]\s*/)[0].trim().toUpperCase();
+            if (STATE_ALIAS_LOOKUP[prefix.toLowerCase()]) {
+                return STATE_ALIAS_LOOKUP[prefix.toLowerCase()];
+            }
+        }
+        const cleaned = s.replace(/[^a-zA-Z\s.]/g, "").trim().toLowerCase();
+        const noDots = cleaned.replace(/\./g, "").trim();
+        if (STATE_ALIAS_LOOKUP[cleaned]) return STATE_ALIAS_LOOKUP[cleaned];
+        if (STATE_ALIAS_LOOKUP[noDots]) return STATE_ALIAS_LOOKUP[noDots];
+        const up = noDots.toUpperCase();
+        if (up.length === 2 && STATE_ALIAS_LOOKUP[up.toLowerCase()]) {
+            return up;
+        }
+        return def;
+    }
+
+    function installSmartStateValueDescriptor(selectEl) {
+        if (!selectEl || selectEl.dataset.sigmaStateDescriptorBound === "1") return;
+        selectEl.dataset.sigmaStateDescriptorBound = "1";
+        const proto = Object.getPrototypeOf(selectEl);
+        const desc = Object.getOwnPropertyDescriptor(proto, "value") ||
+            Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value");
+        if (!desc || !desc.get || !desc.set) return;
+        Object.defineProperty(selectEl, "value", {
+            configurable: true,
+            enumerable: true,
+            get: function () {
+                return desc.get.call(this);
+            },
+            set: function (v) {
+                const norm = normalizeUspsStateCode(v, "TX");
+                desc.set.call(this, norm);
+            }
+        });
+    }
+
+    function populateStateSelectOptions(selectEl, initialValue) {
+        if (!selectEl) return;
+        const targetCode = normalizeUspsStateCode(initialValue || selectEl.value || "TX", "TX");
+        if (selectEl.dataset.sigmaStatePopulated !== "1") {
+            selectEl.innerHTML = "";
+            const optGroupPrimary = document.createElement("optgroup");
+            optGroupPrimary.label = "Primary Operating State";
+            const optGroupRegional = document.createElement("optgroup");
+            optGroupRegional.label = "Regional States";
+            const optGroupAll = document.createElement("optgroup");
+            optGroupAll.label = "All US States & DC";
+
+            US_STATES_LIST.forEach(function (st) {
+                const opt = document.createElement("option");
+                opt.value = st.code;
+                opt.textContent = st.code + " — " + st.name;
+                if (st.group === "Primary") {
+                    optGroupPrimary.appendChild(opt);
+                } else if (st.group === "Regional") {
+                    optGroupRegional.appendChild(opt);
+                } else {
+                    optGroupAll.appendChild(opt);
+                }
+            });
+            selectEl.appendChild(optGroupPrimary);
+            selectEl.appendChild(optGroupRegional);
+            selectEl.appendChild(optGroupAll);
+            selectEl.dataset.sigmaStatePopulated = "1";
+        }
+        installSmartStateValueDescriptor(selectEl);
+        selectEl.value = targetCode;
+    }
+
+    function upgradeStateInputToSelect(el) {
+        if (!el) return null;
+        if (el.tagName === "SELECT") {
+            populateStateSelectOptions(el, el.getAttribute("data-initial-state") || el.value || "TX");
+            return el;
+        }
+        if (el.tagName !== "INPUT") return el;
+        if (el.type === "hidden") {
+            el.value = normalizeUspsStateCode(el.value, "TX");
+            return el;
+        }
+
+        const selectEl = document.createElement("select");
+        if (el.id) selectEl.id = el.id;
+        if (el.name) selectEl.name = el.name;
+        selectEl.className = el.className || "sigma-input";
+        if (el.style && el.style.cssText) {
+            selectEl.style.cssText = el.style.cssText;
+        }
+        if (el.required) selectEl.required = true;
+        if (el.disabled) selectEl.disabled = true;
+        const ariaLabel = el.getAttribute("aria-label") || "State (2-Letter USPS Code)";
+        selectEl.setAttribute("aria-label", ariaLabel);
+        selectEl.setAttribute("data-mask", "state");
+
+        Array.from(el.attributes).forEach(function (attr) {
+            if (attr.name.indexOf("data-") === 0 && attr.name !== "data-sigma-mask-bound") {
+                selectEl.setAttribute(attr.name, attr.value);
+            }
+        });
+
+        populateStateSelectOptions(selectEl, el.value || "TX");
+
+        if (el.parentNode) {
+            el.parentNode.replaceChild(selectEl, el);
+        }
+        return selectEl;
+    }
+
+    /**
+     * US 2-Letter State Code Mask: Normalizes any state input or select to canonical 2-letter code
      */
     function maskStateInput(elOrEvent) {
         const input = resolveInput(elOrEvent);
         if (!input) return;
-        input.setAttribute("maxlength", "2");
-        input.value = (input.value || "")
-            .replace(/[^a-zA-Z]/g, "")
-            .toUpperCase()
-            .slice(0, 2);
+        if (input.tagName === "SELECT") {
+            input.value = normalizeUspsStateCode(input.value, "TX");
+            return;
+        }
+        const raw = (input.value || "").trim();
+        if (raw.length > 2) {
+            input.value = normalizeUspsStateCode(raw, "TX");
+        } else {
+            input.value = raw.replace(/[^a-zA-Z]/g, "").toUpperCase().slice(0, 2);
+        }
+    }
+
+    /**
+     * USPS Publication 28 Address Line 1 -> Address Line 2 Auto-Splitter & Full Address Paste Parser
+     */
+    function splitAddressLine1Value(rawAddr1, rawAddr2) {
+        let addr1 = String(rawAddr1 || "").replace(/\s+/g, " ").trim();
+        let addr2 = String(rawAddr2 || "").replace(/\s+/g, " ").trim();
+        let parsedCity = "";
+        let parsedState = "";
+        let parsedZip = "";
+
+        if (!addr1) {
+            return { addr1: "", addr2: addr2, city: "", state: "", zip: "" };
+        }
+
+        // 1. Check if a full single-line Google Maps address was pasted:
+        // e.g. "5800 Granite Pkwy Ste 250, Plano, TX 75024"
+        const fullPasteRegex = /^(.*?),\s*([A-Za-z.\s'-]{2,35}),\s*([A-Za-z.]{2,15})\s+(\d{5}(?:-\d{4})?)$/;
+        const fullMatch = addr1.match(fullPasteRegex);
+        if (fullMatch) {
+            addr1 = fullMatch[1].trim();
+            parsedCity = fullMatch[2].trim();
+            parsedState = normalizeUspsStateCode(fullMatch[3].trim(), "TX");
+            parsedZip = fullMatch[4].trim();
+        }
+
+        // 2. Check for secondary unit designators (Suite, Ste, Bldg, Unit, Apt, Floor, Rm, #)
+        if (!addr2) {
+            const unitRegex = /^(.*?)(?:,|\s+)\b((?:suite|ste\.?|bldg\.?|building|unit|apt\.?|apartment|fl\.?|floor|rm\.?|room|spc\.?|space)\s*[#a-zA-Z0-9-]+|#\s*[a-zA-Z0-9-]+)\s*$/i;
+            const unitMatch = addr1.match(unitRegex);
+            if (unitMatch && unitMatch[1].trim()) {
+                addr1 = unitMatch[1].trim().replace(/,+$/, "").trim();
+                let extracted = unitMatch[2].trim();
+                extracted = extracted.replace(/^ste\.?\s+/i, "Suite ");
+                extracted = extracted.replace(/^bldg\.?\s+/i, "Bldg ");
+                addr2 = extracted;
+            }
+        }
+
+        return {
+            addr1: addr1,
+            addr2: addr2,
+            city: parsedCity,
+            state: parsedState,
+            zip: parsedZip
+        };
+    }
+
+    function findSiblingAddressLine2(addr1El) {
+        if (!addr1El) return null;
+        const explicitTarget = addr1El.getAttribute("data-address-line2-target");
+        if (explicitTarget) {
+            const byId = document.getElementById(explicitTarget);
+            if (byId) return byId;
+        }
+        const scope = addr1El.closest("form, .sigma-modal, .lead-tab-pane, .acc-tab-pane, .sigma-card") || document;
+        return scope.querySelector(
+            'input[name="address_line_2"], input[data-mask="address-line-2"], #add-lead-address-line2, #edit-lead-address-line2, #add-acc-address-line2, #form-acc-address-line2, #bid-address-line2, #sub-address-line2, #onb-address-line2'
+        );
+    }
+
+    function bindAddressLineAutoSplit(addr1El) {
+        if (!addr1El || addr1El.dataset.sigmaAddrSplitBound === "1") return;
+        addr1El.dataset.sigmaAddrSplitBound = "1";
+
+        function runSplit() {
+            const addr2El = findSiblingAddressLine2(addr1El);
+            const currentAddr2 = addr2El ? addr2El.value : "";
+            const res = splitAddressLine1Value(addr1El.value, currentAddr2);
+            if (res.addr1 && res.addr1 !== addr1El.value) {
+                addr1El.value = res.addr1;
+            }
+            if (addr2El && res.addr2 && !addr2El.value) {
+                addr2El.value = res.addr2;
+            }
+            const scope = addr1El.closest("form, .sigma-modal, .lead-tab-pane, .acc-tab-pane, .sigma-card");
+            if (scope) {
+                if (res.city) {
+                    const cityEl = scope.querySelector('input[name="city"], #edit-lead-city, #add-lead-city, #form-acc-city, #add-acc-city');
+                    if (cityEl && !cityEl.value) cityEl.value = res.city;
+                }
+                if (res.state) {
+                    const stateEl = scope.querySelector('select[name="state"], input[name="state"], #edit-lead-state, #add-lead-state, #form-acc-state, #add-acc-state');
+                    if (stateEl) stateEl.value = res.state;
+                }
+                if (res.zip) {
+                    const zipEl = scope.querySelector('input[name="zipcode"], input[name="zip"], #edit-lead-zip, #add-lead-zip, #form-acc-zip, #add-acc-zip');
+                    if (zipEl && !zipEl.value) {
+                        zipEl.value = res.zip;
+                        zipEl.dispatchEvent(new Event("change", { bubbles: true }));
+                    }
+                }
+            }
+        }
+
+        addr1El.addEventListener("blur", runSplit);
+        addr1El.addEventListener("paste", function () {
+            setTimeout(runSplit, 25);
+        });
+    }
+
+    /**
+     * Texas ZIP <-> City / State / County Bidirectional Lookup Table
+     */
+    const TX_ZIP_GEO_MAP = {
+        "75001": { city: "Addison", county: "Dallas" },
+        "75002": { city: "Allen", county: "Collin" },
+        "75006": { city: "Carrollton", county: "Dallas" },
+        "75007": { city: "Carrollton", county: "Denton" },
+        "75010": { city: "Carrollton", county: "Denton" },
+        "75013": { city: "Allen", county: "Collin" },
+        "75019": { city: "Coppell", county: "Dallas" },
+        "75023": { city: "Plano", county: "Collin" },
+        "75024": { city: "Plano", county: "Collin" },
+        "75025": { city: "Plano", county: "Collin" },
+        "75028": { city: "Flower Mound", county: "Denton" },
+        "75032": { city: "Rockwall", county: "Rockwall" },
+        "75033": { city: "Frisco", county: "Collin" },
+        "75034": { city: "Frisco", county: "Collin" },
+        "75035": { city: "Frisco", county: "Collin" },
+        "75038": { city: "Irving", county: "Dallas" },
+        "75039": { city: "Irving", county: "Dallas" },
+        "75040": { city: "Garland", county: "Dallas" },
+        "75041": { city: "Garland", county: "Dallas" },
+        "75042": { city: "Garland", county: "Dallas" },
+        "75043": { city: "Garland", county: "Dallas" },
+        "75044": { city: "Garland", county: "Dallas" },
+        "75048": { city: "Sachse", county: "Dallas" },
+        "75050": { city: "Grand Prairie", county: "Dallas" },
+        "75051": { city: "Grand Prairie", county: "Dallas" },
+        "75052": { city: "Grand Prairie", county: "Dallas" },
+        "75056": { city: "The Colony", county: "Denton" },
+        "75057": { city: "Lewisville", county: "Denton" },
+        "75060": { city: "Irving", county: "Dallas" },
+        "75061": { city: "Irving", county: "Dallas" },
+        "75062": { city: "Irving", county: "Dallas" },
+        "75063": { city: "Irving", county: "Dallas" },
+        "75067": { city: "Lewisville", county: "Denton" },
+        "75068": { city: "Little Elm", county: "Denton" },
+        "75069": { city: "McKinney", county: "Collin" },
+        "75070": { city: "McKinney", county: "Collin" },
+        "75071": { city: "McKinney", county: "Collin" },
+        "75072": { city: "McKinney", county: "Collin" },
+        "75074": { city: "Plano", county: "Collin" },
+        "75075": { city: "Plano", county: "Collin" },
+        "75078": { city: "Prosper", county: "Collin" },
+        "75080": { city: "Richardson", county: "Dallas" },
+        "75081": { city: "Richardson", county: "Dallas" },
+        "75082": { city: "Richardson", county: "Collin" },
+        "75087": { city: "Rockwall", county: "Rockwall" },
+        "75088": { city: "Rowlett", county: "Dallas" },
+        "75089": { city: "Rowlett", county: "Dallas" },
+        "75093": { city: "Plano", county: "Collin" },
+        "75094": { city: "Murphy", county: "Collin" },
+        "75098": { city: "Wylie", county: "Collin" },
+        "75104": { city: "Cedar Hill", county: "Dallas" },
+        "75115": { city: "DeSoto", county: "Dallas" },
+        "75116": { city: "Duncanville", county: "Dallas" },
+        "75126": { city: "Forney", county: "Kaufman" },
+        "75149": { city: "Mesquite", county: "Dallas" },
+        "75150": { city: "Mesquite", county: "Dallas" },
+        "75154": { city: "Red Oak", county: "Ellis" },
+        "75165": { city: "Waxahachie", county: "Ellis" },
+        "75189": { city: "Royse City", county: "Rockwall" },
+        "75201": { city: "Dallas", county: "Dallas" },
+        "75202": { city: "Dallas", county: "Dallas" },
+        "75204": { city: "Dallas", county: "Dallas" },
+        "75205": { city: "Dallas", county: "Dallas" },
+        "75206": { city: "Dallas", county: "Dallas" },
+        "75207": { city: "Dallas", county: "Dallas" },
+        "75219": { city: "Dallas", county: "Dallas" },
+        "75220": { city: "Dallas", county: "Dallas" },
+        "75225": { city: "Dallas", county: "Dallas" },
+        "75230": { city: "Dallas", county: "Dallas" },
+        "75231": { city: "Dallas", county: "Dallas" },
+        "75234": { city: "Farmers Branch", county: "Dallas" },
+        "75235": { city: "Dallas", county: "Dallas" },
+        "75240": { city: "Dallas", county: "Dallas" },
+        "75243": { city: "Dallas", county: "Dallas" },
+        "75244": { city: "Dallas", county: "Dallas" },
+        "75247": { city: "Dallas", county: "Dallas" },
+        "75248": { city: "Dallas", county: "Dallas" },
+        "75251": { city: "Dallas", county: "Dallas" },
+        "75252": { city: "Dallas", county: "Collin" },
+        "75254": { city: "Dallas", county: "Dallas" },
+        "75287": { city: "Dallas", county: "Denton" },
+        "76001": { city: "Arlington", county: "Tarrant" },
+        "76002": { city: "Arlington", county: "Tarrant" },
+        "76006": { city: "Arlington", county: "Tarrant" },
+        "76010": { city: "Arlington", county: "Tarrant" },
+        "76011": { city: "Arlington", county: "Tarrant" },
+        "76012": { city: "Arlington", county: "Tarrant" },
+        "76013": { city: "Arlington", county: "Tarrant" },
+        "76014": { city: "Arlington", county: "Tarrant" },
+        "76015": { city: "Arlington", county: "Tarrant" },
+        "76016": { city: "Arlington", county: "Tarrant" },
+        "76017": { city: "Arlington", county: "Tarrant" },
+        "76018": { city: "Arlington", county: "Tarrant" },
+        "76021": { city: "Bedford", county: "Tarrant" },
+        "76022": { city: "Bedford", county: "Tarrant" },
+        "76028": { city: "Burleson", county: "Johnson" },
+        "76034": { city: "Colleyville", county: "Tarrant" },
+        "76039": { city: "Euless", county: "Tarrant" },
+        "76040": { city: "Euless", county: "Tarrant" },
+        "76051": { city: "Grapevine", county: "Tarrant" },
+        "76053": { city: "Hurst", county: "Tarrant" },
+        "76054": { city: "Hurst", county: "Tarrant" },
+        "76063": { city: "Mansfield", county: "Tarrant" },
+        "76092": { city: "Southlake", county: "Tarrant" },
+        "76102": { city: "Fort Worth", county: "Tarrant" },
+        "76104": { city: "Fort Worth", county: "Tarrant" },
+        "76107": { city: "Fort Worth", county: "Tarrant" },
+        "76109": { city: "Fort Worth", county: "Tarrant" },
+        "76116": { city: "Fort Worth", county: "Tarrant" },
+        "76132": { city: "Fort Worth", county: "Tarrant" },
+        "76137": { city: "Fort Worth", county: "Tarrant" },
+        "76155": { city: "Fort Worth", county: "Tarrant" },
+        "76177": { city: "Fort Worth", county: "Tarrant" },
+        "76180": { city: "North Richland Hills", county: "Tarrant" },
+        "76201": { city: "Denton", county: "Denton" },
+        "76205": { city: "Denton", county: "Denton" },
+        "76210": { city: "Denton", county: "Denton" },
+        "76226": { city: "Argyle", county: "Denton" },
+        "76244": { city: "Keller", county: "Tarrant" },
+        "76248": { city: "Keller", county: "Tarrant" },
+        "76262": { city: "Roanoke", county: "Denton" },
+        "77002": { city: "Houston", county: "Harris" },
+        "77056": { city: "Houston", county: "Harris" },
+        "78205": { city: "San Antonio", county: "Bexar" },
+        "78701": { city: "Austin", county: "Travis" }
+    };
+
+    function bindZipGeoAutoFill(zipEl) {
+        if (!zipEl || zipEl.dataset.sigmaZipGeoBound === "1") return;
+        zipEl.dataset.sigmaZipGeoBound = "1";
+
+        function enrichFromZip() {
+            const digits = (zipEl.value || "").replace(/\D/g, "").slice(0, 5);
+            if (digits.length !== 5) return;
+            const scope = zipEl.closest("form, .sigma-modal, .lead-tab-pane, .acc-tab-pane, .sigma-card");
+            if (!scope) return;
+
+            const geo = TX_ZIP_GEO_MAP[digits];
+            const cityEl = scope.querySelector('input[name="city"], #edit-lead-city, #add-lead-city, #form-acc-city, #add-acc-city, #onb-city, #emp-city');
+            const stateEl = scope.querySelector('select[name="state"], input[name="state"], #edit-lead-state, #add-lead-state, #form-acc-state, #add-acc-state, #onb-state, #emp-state');
+            const countyEl = scope.querySelector('input[name="county"], #edit-lead-county, #add-lead-county');
+
+            if (geo) {
+                if (cityEl && !cityEl.value.trim()) {
+                    cityEl.value = geo.city;
+                }
+                if (stateEl) {
+                    stateEl.value = "TX";
+                }
+                if (countyEl && !countyEl.value.trim()) {
+                    countyEl.value = geo.county;
+                }
+            } else if (/^7[5-9]\d{3}$/.test(digits) && stateEl) {
+                stateEl.value = "TX";
+            }
+        }
+
+        zipEl.addEventListener("change", enrichFromZip);
+        zipEl.addEventListener("blur", enrichFromZip);
+        zipEl.addEventListener("input", function () {
+            const d = (zipEl.value || "").replace(/\D/g, "");
+            if (d.length === 5) enrichFromZip();
+        });
+    }
+
+    /**
+     * Website URL Normalizer & Corporate Email Domain Inference
+     */
+    const CONSUMER_EMAIL_DOMAINS_JS = {
+        "gmail.com": 1,
+        "yahoo.com": 1,
+        "outlook.com": 1,
+        "hotmail.com": 1,
+        "icloud.com": 1,
+        "aol.com": 1,
+        "msn.com": 1,
+        "live.com": 1,
+        "me.com": 1,
+        "sbcglobal.net": 1,
+        "att.net": 1,
+        "comcast.net": 1,
+        "verizon.net": 1,
+        "protonmail.com": 1,
+        "proton.me": 1,
+        "ymail.com": 1,
+        "mail.com": 1
+    };
+
+    function normalizeWebsiteUrl(rawVal) {
+        let v = String(rawVal || "").trim();
+        if (!v) return "";
+        v = v.replace(/^mailto:/i, "").trim().split(/\s+/)[0];
+        if (!/^https?:\/\//i.test(v)) {
+            v = "https://" + v.replace(/^\/+/, "");
+        }
+        return v;
+    }
+
+    function bindWebsiteInputHygiene(webEl) {
+        if (!webEl || webEl.dataset.sigmaWebBound === "1") return;
+        webEl.dataset.sigmaWebBound = "1";
+        webEl.addEventListener("blur", function () {
+            if (webEl.value && webEl.value.trim()) {
+                webEl.value = normalizeWebsiteUrl(webEl.value);
+            }
+        });
+    }
+
+    function bindEmailToWebsiteInference(emailEl) {
+        if (!emailEl || emailEl.dataset.sigmaEmailWebBound === "1") return;
+        emailEl.dataset.sigmaEmailWebBound = "1";
+        emailEl.addEventListener("blur", function () {
+            const val = (emailEl.value || "").trim().toLowerCase();
+            if (!val || val.indexOf("@") === -1) return;
+            const domain = val.split("@")[1];
+            if (!domain || CONSUMER_EMAIL_DOMAINS_JS[domain] || domain.indexOf(".") === -1) return;
+            const scope = emailEl.closest("form, .sigma-modal, .lead-tab-pane, .acc-tab-pane, .sigma-card");
+            if (!scope) return;
+            const webEl = scope.querySelector('input[name="website"], #add-lead-website, #edit-lead-website, #add-acc-website, #form-acc-website');
+            if (webEl && !webEl.value.trim()) {
+                webEl.value = domain.indexOf("www.") === 0 ? "https://" + domain : "https://www." + domain;
+            }
+        });
     }
 
     const PHONE_IDS = [
@@ -266,7 +802,9 @@
         "edit-emp-zip",
         "quote-zipcode",
         "edit-lead-zip",
+        "add-lead-zip",
         "form-acc-zip",
+        "add-acc-zip",
         "zipcode"
     ];
 
@@ -280,8 +818,23 @@
         "emp-state",
         "sub-onboard-state",
         "edit-lead-state",
-        "form-acc-state"
+        "add-lead-state",
+        "form-acc-state",
+        "add-acc-state",
+        "bid-state",
+        "sub-state"
     ];
+
+    const ADDRESS_LINE1_SELECTORS = [
+        'input[name="address"]',
+        'input[name="street_address"]',
+        "#add-lead-address",
+        "#edit-lead-address",
+        "#add-acc-address",
+        "#form-acc-address",
+        "#onb-address",
+        "#emp-address"
+    ].join(", ");
 
     function attachHandlerOnce(el, fn) {
         if (!el || el.dataset.sigmaMaskBound === "1") return;
@@ -329,10 +882,14 @@
 
         ZIP_IDS.forEach(function (id) {
             const el = document.getElementById(id);
-            if (el) attachHandlerOnce(el, maskZipInput);
+            if (el) {
+                attachHandlerOnce(el, maskZipInput);
+                bindZipGeoAutoFill(el);
+            }
         });
-        document.querySelectorAll('input[data-mask="zip"]').forEach(function (el) {
+        document.querySelectorAll('input[data-mask="zip"], input[name="zipcode"], input[name="zip"]').forEach(function (el) {
             attachHandlerOnce(el, maskZipInput);
+            bindZipGeoAutoFill(el);
         });
 
         ROUTING_IDS.forEach(function (id) {
@@ -343,12 +900,30 @@
             attachHandlerOnce(el, maskRoutingInput);
         });
 
+        // Upgrade all State inputs/selects to standardized USPS 2-Letter State dropdowns
         STATE_IDS.forEach(function (id) {
             const el = document.getElementById(id);
-            if (el) attachHandlerOnce(el, maskStateInput);
+            if (el) {
+                const upgraded = upgradeStateInputToSelect(el);
+                if (upgraded) attachHandlerOnce(upgraded, maskStateInput);
+            }
         });
-        document.querySelectorAll('input[data-mask="state"]').forEach(function (el) {
-            attachHandlerOnce(el, maskStateInput);
+        document.querySelectorAll('input[name="state"], select[name="state"], input[data-mask="state"], select[data-mask="state"]').forEach(function (el) {
+            const upgraded = upgradeStateInputToSelect(el);
+            if (upgraded) attachHandlerOnce(upgraded, maskStateInput);
+        });
+
+        // Address Line 1 -> Address Line 2 USPS Pub 28 auto-splitter
+        document.querySelectorAll(ADDRESS_LINE1_SELECTORS).forEach(function (el) {
+            bindAddressLineAutoSplit(el);
+        });
+
+        // Website URL normalization & corporate email domain inference
+        document.querySelectorAll('input[name="website"], input[type="url"], #add-lead-website, #edit-lead-website, #add-acc-website, #form-acc-website').forEach(function (el) {
+            bindWebsiteInputHygiene(el);
+        });
+        document.querySelectorAll('input[name="email"], input[type="email"], #add-lead-email, #edit-lead-email, #add-acc-email, #form-acc-email').forEach(function (el) {
+            bindEmailToWebsiteInference(el);
         });
 
         const taxClassSel = document.getElementById("onb-tax-class");
@@ -370,6 +945,11 @@
         maskZipInput: maskZipInput,
         maskRoutingInput: maskRoutingInput,
         maskStateInput: maskStateInput,
+        normalizeUspsStateCode: normalizeUspsStateCode,
+        upgradeStateInputToSelect: upgradeStateInputToSelect,
+        splitAddressLine1Value: splitAddressLine1Value,
+        normalizeWebsiteUrl: normalizeWebsiteUrl,
+        US_STATES_LIST: US_STATES_LIST,
         bindAll: bindAllSigmaInputMasks
     };
 
@@ -386,10 +966,33 @@
     window.maskZipInput = maskZipInput;
     window.maskRoutingInput = maskRoutingInput;
     window.maskStateInput = maskStateInput;
+    window.normalizeUspsStateCode = normalizeUspsStateCode;
+
+    function startInputMaskMutationObserver() {
+        bindAllSigmaInputMasks();
+        if (typeof MutationObserver !== "undefined" && document.body && !window.__sigmaInputMaskObserverActive) {
+            window.__sigmaInputMaskObserverActive = true;
+            let debounceTimer = null;
+            const obs = new MutationObserver(function (mutations) {
+                let hasAddedNodes = false;
+                for (let i = 0; i < mutations.length; i++) {
+                    if (mutations[i].addedNodes && mutations[i].addedNodes.length > 0) {
+                        hasAddedNodes = true;
+                        break;
+                    }
+                }
+                if (hasAddedNodes) {
+                    if (debounceTimer) clearTimeout(debounceTimer);
+                    debounceTimer = setTimeout(bindAllSigmaInputMasks, 60);
+                }
+            });
+            obs.observe(document.body, { childList: true, subtree: true });
+        }
+    }
 
     if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", bindAllSigmaInputMasks);
+        document.addEventListener("DOMContentLoaded", startInputMaskMutationObserver);
     } else {
-        bindAllSigmaInputMasks();
+        startInputMaskMutationObserver();
     }
 })();

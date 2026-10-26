@@ -585,11 +585,11 @@
         }
 
         const presets = {
-            'cold_call': ['status', 'dm', 'phone', 'quick_log', 'last_note', 'next_action'],
-            'facility': ['status', 'facility', 'sqf', 'capacity', 'value', 'address', 'city', 'state'],
-            'enterprise': ['umbrella', 'cleaning_model', 'status', 'dm', 'facility', 'capacity', 'value', 'phone', 'city'],
-            'm_and_a': ['m_and_a', 'ownership', 'capacity', 'sqf', 'dm', 'value', 'phone', 'email', 'city', 'status'],
-            'executive': ['status', 'umbrella', 'cleaning_model', 'dm', 'facility', 'value', 'priority', 'source', 'owner', 'input_date'],
+            'cold_call': ['status', 'owner', 'dm', 'phone', 'quick_log', 'last_note', 'next_action'],
+            'facility': ['status', 'owner', 'facility', 'sqf', 'capacity', 'value', 'address', 'city', 'state'],
+            'enterprise': ['umbrella', 'cleaning_model', 'status', 'owner', 'dm', 'facility', 'capacity', 'value', 'phone', 'city'],
+            'm_and_a': ['m_and_a', 'ownership', 'owner', 'capacity', 'sqf', 'dm', 'value', 'phone', 'email', 'city', 'status'],
+            'executive': ['status', 'owner', 'umbrella', 'cleaning_model', 'dm', 'facility', 'value', 'priority', 'source', 'input_date'],
             'personal': personalCols || [],
             'all': Array.from(checkboxes).map(cb => cb.value)
         };
@@ -1146,7 +1146,7 @@
                 { label: 'Main Manager', val: (lead.decision_maker || '--') + (lead.job_title ? ' (' + lead.job_title + ')' : '') },
                 { label: 'Contact Details', val: (lead.phone || '--') + ' | ' + (lead.email || '--') },
                 { label: '🌐 Website', val: lead.website ? `<a href="${lead.website.startsWith('http') ? lead.website : 'https://' + lead.website}" target="_blank" style="color:var(--brand); text-decoration:underline;">${lead.website}</a>` : '--' },
-                { label: 'Building Address', val: (lead.address || '--') + ' | ' + (lead.city || '') + ', ' + (lead.state || '') + ' ' + (lead.zipcode || '') },
+                { label: 'Building Address', val: (lead.address || '--') + (lead.address_line_2 ? `, ${lead.address_line_2}` : '') + ' | ' + (lead.city || '') + ', ' + (lead.state || '') + ' ' + (lead.zipcode || '') },
                 { label: 'Texas County', val: lead.county || '--' },
                 { label: 'Building Type', val: lead.facility_type || '--' },
                 { label: 'Square Footage', val: (lead.sqf || 0).toLocaleString() + ' SQF' },
@@ -1207,8 +1207,9 @@
             setVal('edit-lead-phone', lead.phone);
             setVal('edit-lead-website', lead.website);
             setVal('edit-lead-address', lead.address);
+            setVal('edit-lead-address-line2', lead.address_line_2);
             setVal('edit-lead-city', lead.city);
-            setVal('edit-lead-state', lead.state);
+            setVal('edit-lead-state', lead.state || 'TX');
             setVal('edit-lead-zip', lead.zipcode);
             setVal('edit-lead-county', lead.county);
             setVal('edit-lead-sqf', lead.sqf);
@@ -1434,7 +1435,7 @@
                 { label: '🏢 Corporate Umbrella', val: acc.umbrella_name || '--' },
                 { label: 'Main Manager', val: acc.contact_person_name || '--' },
                 { label: 'Contact Details', val: (formatPhoneJS(acc.phone)) + ' | ' + (acc.email || '--') },
-                { label: 'Building Address', val: (acc.company_address || '--') + ' | ' + (acc.city || '') + ', ' + (acc.state || '') + ' ' + (acc.zip || '') },
+                { label: 'Building Address', val: (acc.company_address || '--') + (acc.address_line_2 ? `, ${acc.address_line_2}` : '') + ' | ' + (acc.city || '') + ', ' + (acc.state || '') + ' ' + (acc.zip || '') },
                 { label: 'Square Footage', val: ((acc.cleanable_sqft ? acc.cleanable_sqft.toLocaleString() + ' Cleanable / ' : '') + (acc.sqf || 0).toLocaleString() + ' Gross SQF') },
                 { label: 'Delivery Model & Shift', val: (acc.cleaning_delivery_model || 'Model C') + ' | ' + (acc.service_shift_window || 'Evening') },
                 { label: 'Client Status', val: acc.status || 'Active' },
@@ -1458,8 +1459,9 @@
             setVal('form-acc-email', acc.email);
             setVal('form-acc-phone', acc.phone);
             setVal('form-acc-address', acc.company_address);
+            setVal('form-acc-address-line2', acc.address_line_2);
             setVal('form-acc-city', acc.city);
-            setVal('form-acc-state', acc.state);
+            setVal('form-acc-state', acc.state || 'TX');
             setVal('form-acc-zip', acc.zip);
             setVal('form-acc-status', acc.status || 'Active');
             setVal('form-acc-website', acc.website);
@@ -1768,8 +1770,34 @@
             } else if (col === 'interest') {
                 rowHtml += `<td>${lead.service_interest || '--'}</td>`;
             } else if (col === 'owner') {
-                const ownerName = (typeof SYSTEM_USERS_MAP !== 'undefined' && SYSTEM_USERS_MAP[lead.owner_id]) ? SYSTEM_USERS_MAP[lead.owner_id] : (lead.owner_id ? ('User #' + lead.owner_id) : '--');
-                rowHtml += `<td><span style="font-weight: 600; color: var(--slate-700);">${ownerName}</span></td>`;
+                const ownerIdNum = lead.owner_id ? parseInt(lead.owner_id, 10) : null;
+                const ownerName = (typeof SYSTEM_USERS_MAP !== 'undefined' && ownerIdNum && SYSTEM_USERS_MAP[ownerIdNum]) ? SYSTEM_USERS_MAP[ownerIdNum] : (ownerIdNum ? ('User #' + ownerIdNum) : '');
+                if (ownerName) {
+                    const nameParts = ownerName.trim().split(/\s+/);
+                    const initials = ((nameParts[0] ? nameParts[0][0] : 'U') + (nameParts.length > 1 ? nameParts[nameParts.length - 1][0] : '')).toUpperCase();
+                    rowHtml += `<td style="white-space: nowrap;" onclick="event.stopPropagation();">
+                        <button type="button" class="sigma-owner-badge-btn" id="lead-owner-badge-${lead.id}"
+                                data-lead-id="${lead.id}" data-owner-id="${ownerIdNum}"
+                                onclick="openQuickOwnerPopover(event, ${lead.id}, ${ownerIdNum})"
+                                title="Lead Owner: ${ownerName} — Click to reassign"
+                                style="display: inline-flex; align-items: center; gap: 0.4rem; padding: 3px 8px 3px 4px; border-radius: 999px; border: 1px solid #bfdbfe; background: #eff6ff; color: #1e3a8a; font-size: 0.74rem; font-weight: 700; cursor: pointer;">
+                            <span style="width: 20px; height: 20px; border-radius: 50%; background: #2563eb; color: #ffffff; display: inline-flex; align-items: center; justify-content: center; font-size: 0.62rem; font-weight: 800; letter-spacing: 0.02em; flex-shrink: 0;">${initials}</span>
+                            <span class="owner-badge-label" style="max-width: 115px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${ownerName}</span>
+                            <i class="fas fa-chevron-down" style="font-size: 0.55rem; color: #60a5fa; margin-left: 1px;"></i>
+                        </button>
+                    </td>`;
+                } else {
+                    rowHtml += `<td style="white-space: nowrap;" onclick="event.stopPropagation();">
+                        <button type="button" class="sigma-owner-badge-btn is-unassigned" id="lead-owner-badge-${lead.id}"
+                                data-lead-id="${lead.id}" data-owner-id=""
+                                onclick="openQuickOwnerPopover(event, ${lead.id}, null)"
+                                title="Unassigned Lead — Click to assign an owner"
+                                style="display: inline-flex; align-items: center; gap: 0.35rem; padding: 3px 9px; border-radius: 999px; border: 1px dashed #cbd5e1; background: #f8fafc; color: #64748b; font-size: 0.72rem; font-weight: 700; cursor: pointer;">
+                            <i class="fas fa-user-plus" style="font-size: 0.65rem; color: #94a3b8;"></i>
+                            <span class="owner-badge-label">+ Assign</span>
+                        </button>
+                    </td>`;
+                }
             }
         });
 
@@ -2203,86 +2231,597 @@
         }});
     }
 
-    // --- SigmaFidelity™ Bulk Leads Actions ---
-    
+    // --- Enterprise Bulk Leads, Cross-Page Selection, Quick Owner Popover & Round-Robin Modal (BUG-156) ---
+    const LEAD_SELECTION_STORAGE_KEY = 'sigma_selected_lead_ids_v1';
+    let _selectAllMatchingFilterLeads = false;
+    let _activeQuickOwnerLeadId = null;
+    let _bulkAssignEntityMode = 'leads'; // 'leads' | 'accounts'
+    let _bulkAssignMode = 'single'; // 'single' | 'round_robin'
+    let _lastBulkOwnerUndoSnapshot = null;
+    let _addLeadDuplicateCheckTimer = null;
+    let _detectedDuplicateLeadId = null;
+
+    function getPersistedSelectedLeadSet() {
+        try {
+            const raw = sessionStorage.getItem(LEAD_SELECTION_STORAGE_KEY);
+            if (!raw) return new Set();
+            const arr = JSON.parse(raw);
+            if (!Array.isArray(arr)) return new Set();
+            return new Set(arr.map(x => parseInt(x, 10)).filter(x => !isNaN(x) && x > 0));
+        } catch (_) {
+            return new Set();
+        }
+    }
+
+    function savePersistedSelectedLeadSet(setObj) {
+        try {
+            sessionStorage.setItem(LEAD_SELECTION_STORAGE_KEY, JSON.stringify(Array.from(setObj)));
+        } catch (_) {}
+    }
+
+    function getActiveLeadsFilterSnapshot() {
+        const params = new URLSearchParams(window.location.search);
+        const searchInput = document.getElementById('leads-search-input');
+        const qVal = (searchInput && searchInput.value ? searchInput.value.trim() : (params.get('q') || '')).trim();
+        return {
+            q: qVal,
+            owner_id: params.get('owner_id') || '',
+            m_and_a: (params.get('m_and_a') || '').toLowerCase() === 'true',
+            duplicates_only: (params.get('duplicates_only') || '').toLowerCase() === 'true',
+            campaign_filter: params.get('campaign_filter') || '',
+            active_only: (params.get('active_only') || 'false').toLowerCase() === 'true'
+        };
+    }
+
     function toggleSelectAllLeads(masterCheckbox) {
         const checkboxes = document.querySelectorAll('.lead-row-select');
+        const persisted = getPersistedSelectedLeadSet();
         checkboxes.forEach(cb => {
             cb.checked = masterCheckbox.checked;
+            const idNum = parseInt(cb.value, 10);
+            if (!isNaN(idNum)) {
+                if (masterCheckbox.checked) persisted.add(idNum);
+                else persisted.delete(idNum);
+            }
         });
+        if (!masterCheckbox.checked) {
+            _selectAllMatchingFilterLeads = false;
+        }
+        savePersistedSelectedLeadSet(persisted);
         handleLeadSelectChange();
     }
 
     function handleLeadSelectChange() {
-        const selectedCheckboxes = document.querySelectorAll('.lead-row-select:checked');
-        const selectedCount = selectedCheckboxes.length;
-        
+        const allCheckboxes = document.querySelectorAll('.lead-row-select');
+        const persisted = getPersistedSelectedLeadSet();
+        allCheckboxes.forEach(cb => {
+            const idNum = parseInt(cb.value, 10);
+            if (!isNaN(idNum)) {
+                if (cb.checked) persisted.add(idNum);
+                else persisted.delete(idNum);
+            }
+        });
+        savePersistedSelectedLeadSet(persisted);
+
+        const pageSelectedCount = document.querySelectorAll('.lead-row-select:checked').length;
+        const totalSelectedCount = persisted.size;
         const bulkControls = document.getElementById('leads-bulk-controls');
         const countLabel = document.getElementById('leads-selected-count');
         const selectAllCheckbox = document.getElementById('select-all-leads');
-        const allCheckboxes = document.querySelectorAll('.lead-row-select');
-        
+        const selectAllBannerBtn = document.getElementById('btn-select-all-matching-leads');
+        const clearBtn = document.getElementById('btn-clear-lead-selection');
+
+        const allOnPageChecked = (allCheckboxes.length > 0 && pageSelectedCount === allCheckboxes.length);
         if (selectAllCheckbox && allCheckboxes.length > 0) {
-            selectAllCheckbox.checked = (selectedCount === allCheckboxes.length);
+            selectAllCheckbox.checked = allOnPageChecked;
         }
-        
-        if (selectedCount > 0) {
+        if (!allOnPageChecked) {
+            _selectAllMatchingFilterLeads = false;
+        }
+
+        const totalMatching = bulkControls ? parseInt(bulkControls.getAttribute('data-total-matching') || '0', 10) : 0;
+
+        if (totalSelectedCount > 0) {
             if (bulkControls) bulkControls.style.display = 'flex';
-            if (countLabel) countLabel.innerText = `${selectedCount} selected`;
+            if (_selectAllMatchingFilterLeads && totalMatching > 0) {
+                if (countLabel) countLabel.innerText = `All ${totalMatching.toLocaleString()} matching selected`;
+            } else if (totalSelectedCount > pageSelectedCount && pageSelectedCount > 0) {
+                if (countLabel) countLabel.innerText = `${totalSelectedCount} selected (${pageSelectedCount} on page)`;
+            } else {
+                if (countLabel) countLabel.innerText = `${totalSelectedCount} selected`;
+            }
+
+            if (selectAllBannerBtn) {
+                if (allOnPageChecked && totalMatching > pageSelectedCount) {
+                    selectAllBannerBtn.style.display = 'inline-flex';
+                    if (_selectAllMatchingFilterLeads) {
+                        selectAllBannerBtn.innerText = `✓ All ${totalMatching.toLocaleString()} matching leads selected (Click to keep page only)`;
+                        selectAllBannerBtn.style.background = '#1e40af';
+                        selectAllBannerBtn.style.color = '#ffffff';
+                    } else {
+                        selectAllBannerBtn.innerText = `Select all ${totalMatching.toLocaleString()} matching leads across pages`;
+                        selectAllBannerBtn.style.background = '#eff6ff';
+                        selectAllBannerBtn.style.color = '#1d4ed8';
+                    }
+                } else {
+                    selectAllBannerBtn.style.display = 'none';
+                }
+            }
+            if (clearBtn) {
+                clearBtn.style.display = (totalSelectedCount > pageSelectedCount || _selectAllMatchingFilterLeads) ? 'inline-flex' : 'none';
+            }
         } else {
             if (bulkControls) bulkControls.style.display = 'none';
+            if (selectAllBannerBtn) selectAllBannerBtn.style.display = 'none';
+            if (clearBtn) clearBtn.style.display = 'none';
         }
     }
 
+    function toggleSelectAllMatchingFilterLeads() {
+        _selectAllMatchingFilterLeads = !_selectAllMatchingFilterLeads;
+        handleLeadSelectChange();
+    }
+
+    function clearCrossPageLeadSelection() {
+        _selectAllMatchingFilterLeads = false;
+        savePersistedSelectedLeadSet(new Set());
+        document.querySelectorAll('.lead-row-select').forEach(cb => { cb.checked = false; });
+        const selectAllCheckbox = document.getElementById('select-all-leads');
+        if (selectAllCheckbox) selectAllCheckbox.checked = false;
+        handleLeadSelectChange();
+    }
+
+    function restoreCrossPageLeadSelectionOnLoad() {
+        const persisted = getPersistedSelectedLeadSet();
+        if (persisted.size === 0) return;
+        let anyRestored = false;
+        document.querySelectorAll('.lead-row-select').forEach(cb => {
+            const idNum = parseInt(cb.value, 10);
+            if (!isNaN(idNum) && persisted.has(idNum)) {
+                cb.checked = true;
+                anyRestored = true;
+            }
+        });
+        if (anyRestored || persisted.size > 0) {
+            handleLeadSelectChange();
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', restoreCrossPageLeadSelectionOnLoad);
+
     function toggleBulkDropdown(menuId) {
-        // Hide other dropdowns
         document.querySelectorAll('.bulk-dropdown-menu').forEach(menu => {
             if (menu.id !== menuId) menu.style.display = 'none';
         });
-        
+
         const menu = document.getElementById(menuId);
         if (menu) {
             menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
         }
     }
 
-    // Hide dropdowns when clicking outside
     document.addEventListener('click', function(event) {
         if (!event.target.closest('.bulk-dropdown-container')) {
             document.querySelectorAll('.bulk-dropdown-menu').forEach(menu => {
                 menu.style.display = 'none';
             });
         }
+        const quickPop = document.getElementById('quick-owner-popover');
+        if (quickPop && quickPop.style.display !== 'none') {
+            if (!event.target.closest('#quick-owner-popover') && !event.target.closest('.sigma-owner-badge-btn')) {
+                closeQuickOwnerPopover();
+            }
+        }
     });
 
     function getSelectedLeadIds() {
-        return Array.from(document.querySelectorAll('.lead-row-select:checked')).map(cb => parseInt(cb.value));
+        const persisted = getPersistedSelectedLeadSet();
+        document.querySelectorAll('.lead-row-select:checked').forEach(cb => {
+            const idNum = parseInt(cb.value, 10);
+            if (!isNaN(idNum)) persisted.add(idNum);
+        });
+        return Array.from(persisted);
+    }
+
+    function refreshOwnerBadgeInDom(leadId, ownerId, ownerName) {
+        const badge = document.getElementById(`lead-owner-badge-${leadId}`);
+        if (!badge) return;
+        const cleanId = (ownerId !== null && ownerId !== undefined && ownerId !== '' && ownerId !== 'unassigned') ? parseInt(ownerId, 10) : null;
+        const resolvedName = cleanId ? (ownerName || (typeof SYSTEM_USERS_MAP !== 'undefined' && SYSTEM_USERS_MAP[cleanId] ? SYSTEM_USERS_MAP[cleanId] : `User #${cleanId}`)) : '';
+        if (cleanId && resolvedName) {
+            const parts = resolvedName.trim().split(/\s+/);
+            const initials = ((parts[0] ? parts[0][0] : 'U') + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();
+            badge.className = 'sigma-owner-badge-btn';
+            badge.setAttribute('data-owner-id', String(cleanId));
+            badge.setAttribute('onclick', `openQuickOwnerPopover(event, ${leadId}, ${cleanId})`);
+            badge.setAttribute('title', `Lead Owner: ${resolvedName} — Click to reassign`);
+            badge.style.cssText = 'display: inline-flex; align-items: center; gap: 0.4rem; padding: 3px 8px 3px 4px; border-radius: 999px; border: 1px solid #bfdbfe; background: #eff6ff; color: #1e3a8a; font-size: 0.74rem; font-weight: 700; cursor: pointer; transition: all 0.15s ease;';
+            badge.innerHTML = `
+                <span style="width: 20px; height: 20px; border-radius: 50%; background: #2563eb; color: #ffffff; display: inline-flex; align-items: center; justify-content: center; font-size: 0.62rem; font-weight: 800; letter-spacing: 0.02em; flex-shrink: 0;">${initials}</span>
+                <span class="owner-badge-label" style="max-width: 115px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${resolvedName}</span>
+                <i class="fas fa-chevron-down" style="font-size: 0.55rem; color: #60a5fa; margin-left: 1px;"></i>
+            `;
+        } else {
+            badge.className = 'sigma-owner-badge-btn is-unassigned';
+            badge.setAttribute('data-owner-id', '');
+            badge.setAttribute('onclick', `openQuickOwnerPopover(event, ${leadId}, null)`);
+            badge.setAttribute('title', 'Unassigned Lead — Click to assign an owner');
+            badge.style.cssText = 'display: inline-flex; align-items: center; gap: 0.35rem; padding: 3px 9px; border-radius: 999px; border: 1px dashed #cbd5e1; background: #f8fafc; color: #64748b; font-size: 0.72rem; font-weight: 700; cursor: pointer; transition: all 0.15s ease;';
+            badge.innerHTML = `
+                <i class="fas fa-user-plus" style="font-size: 0.65rem; color: #94a3b8;"></i>
+                <span class="owner-badge-label">+ Assign</span>
+            `;
+        }
+    }
+
+    function openQuickOwnerPopover(event, leadId, currentOwnerId) {
+        if (event) event.stopPropagation();
+        _activeQuickOwnerLeadId = leadId;
+        const pop = document.getElementById('quick-owner-popover');
+        if (!pop) return;
+
+        document.querySelectorAll('#quick-owner-popover .quick-owner-option').forEach(btn => {
+            const uid = btn.getAttribute('data-owner-id');
+            const checkIcon = btn.querySelector('.quick-owner-check');
+            const isMatch = (currentOwnerId && String(currentOwnerId) === String(uid));
+            btn.style.background = isMatch ? '#eff6ff' : 'transparent';
+            if (checkIcon) checkIcon.style.display = isMatch ? 'inline-block' : 'none';
+        });
+
+        pop.style.display = 'block';
+        const anchor = (event && event.currentTarget) ? event.currentTarget : document.getElementById(`lead-owner-badge-${leadId}`);
+        if (anchor) {
+            const rect = anchor.getBoundingClientRect();
+            const popWidth = 255;
+            const popHeight = 310;
+            let left = rect.left;
+            let top = rect.bottom + 6;
+            if (left + popWidth > window.innerWidth - 12) {
+                left = Math.max(12, window.innerWidth - popWidth - 12);
+            }
+            if (top + popHeight > window.innerHeight - 12) {
+                top = Math.max(12, rect.top - popHeight - 6);
+            }
+            pop.style.left = `${left}px`;
+            pop.style.top = `${top}px`;
+        }
+    }
+
+    function closeQuickOwnerPopover() {
+        const pop = document.getElementById('quick-owner-popover');
+        if (pop) pop.style.display = 'none';
+        _activeQuickOwnerLeadId = null;
+    }
+
+    async function applyQuickOwnerPopoverSelection(ownerId, ownerName, ownerRole) {
+        const leadId = _activeQuickOwnerLeadId;
+        closeQuickOwnerPopover();
+        if (!leadId) return;
+
+        try {
+            const res = await fetch('/api/v1/leads/batch-action', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    action: 'assign_owner',
+                    lead_ids: [leadId],
+                    params: { owner_id: ownerId === null ? 'unassigned' : ownerId }
+                })
+            });
+            const result = await res.json().catch(() => ({ status: 'error' }));
+            if (res.ok && result.status === 'success') {
+                refreshOwnerBadgeInDom(leadId, ownerId, ownerName);
+                if (typeof LEADS_DATA !== 'undefined' && LEADS_DATA[leadId]) {
+                    LEADS_DATA[leadId].owner_id = ownerId ? parseInt(ownerId, 10) : null;
+                }
+                showToast(ownerId ? `Assigned lead to ${ownerName}${ownerRole ? ' (' + ownerRole + ')' : ''}.` : 'Lead marked Unassigned.', 'success');
+            } else {
+                showToast('Could not update lead owner: ' + (result.message || 'Error'), 'error');
+            }
+        } catch (err) {
+            console.error('Quick Owner Popover Error:', err);
+            showToast('Network error updating lead owner.', 'error');
+        }
+    }
+
+    function openBulkAssignOwnerModal(entityMode = 'leads') {
+        _bulkAssignEntityMode = (entityMode === 'accounts') ? 'accounts' : 'leads';
+        const isAcc = (_bulkAssignEntityMode === 'accounts');
+        const ids = isAcc ? getSelectedAccountIds() : getSelectedLeadIds();
+        const bulkControls = document.getElementById('leads-bulk-controls');
+        const totalMatching = (!isAcc && bulkControls) ? parseInt(bulkControls.getAttribute('data-total-matching') || '0', 10) : 0;
+        const effectiveCount = (!isAcc && _selectAllMatchingFilterLeads && totalMatching > 0) ? totalMatching : ids.length;
+
+        if (effectiveCount === 0) {
+            showToast(`Select at least one ${isAcc ? 'client account' : 'lead'} first.`, 'error');
+            return;
+        }
+
+        const titleText = document.getElementById('bulk-assign-modal-title') || document.getElementById('bulk-assign-modal-title-text');
+        const subtitle = document.getElementById('bulk-assign-modal-subtitle');
+        if (titleText) {
+            titleText.innerText = isAcc ? `Assign Account Rep (${effectiveCount} Selected)` : `Assign Lead Owner (${effectiveCount.toLocaleString()} Selected)`;
+        }
+        if (subtitle) {
+            subtitle.innerText = (!isAcc && _selectAllMatchingFilterLeads)
+                ? `Assigning across ALL ${effectiveCount.toLocaleString()} leads matching your active search/filter criteria.`
+                : `Assigning ${effectiveCount.toLocaleString()} selected ${isAcc ? 'client account(s)' : 'lead(s)'} with full audit logging.`;
+        }
+
+        const onlyUnassignedCb = document.getElementById('bulk-assign-only-unassigned');
+        if (onlyUnassignedCb) onlyUnassignedCb.checked = false;
+        const nextActionInput = document.getElementById('bulk-assign-next-action-date');
+        if (nextActionInput) nextActionInput.value = '';
+
+        setBulkOwnerAssignMode('single');
+        const modal = document.getElementById('modal-bulk-assign-owner');
+        if (modal) modal.style.display = 'flex';
+        updateBulkOwnerWorkloadPreview();
+    }
+
+    function setBulkOwnerAssignMode(mode) {
+        _bulkAssignMode = (mode === 'round_robin' || mode === 'split') ? 'round_robin' : 'single';
+        const btnSingle = document.getElementById('btn-bulk-mode-single') || document.getElementById('btn-mode-single-owner');
+        const btnRr = document.getElementById('btn-bulk-mode-split') || document.getElementById('btn-mode-round-robin');
+        const paneSingle = document.getElementById('bulk-assign-single-pane') || document.getElementById('bulk-owner-single-pane');
+        const paneRr = document.getElementById('bulk-assign-split-pane') || document.getElementById('bulk-owner-round-robin-pane');
+
+        if (_bulkAssignMode === 'single') {
+            if (btnSingle) {
+                btnSingle.style.background = '#eff6ff';
+                btnSingle.style.borderColor = '#2563eb';
+                btnSingle.style.color = '#1e40af';
+            }
+            if (btnRr) {
+                btnRr.style.background = '#ffffff';
+                btnRr.style.borderColor = '#cbd5e1';
+                btnRr.style.color = '#475569';
+            }
+            if (paneSingle) paneSingle.style.display = 'block';
+            if (paneRr) paneRr.style.display = 'none';
+        } else {
+            if (btnRr) {
+                btnRr.style.background = '#eff6ff';
+                btnRr.style.borderColor = '#2563eb';
+                btnRr.style.color = '#1e40af';
+            }
+            if (btnSingle) {
+                btnSingle.style.background = '#ffffff';
+                btnSingle.style.borderColor = '#cbd5e1';
+                btnSingle.style.color = '#475569';
+            }
+            if (paneSingle) paneSingle.style.display = 'none';
+            if (paneRr) paneRr.style.display = 'block';
+        }
+        updateBulkOwnerWorkloadPreview();
+    }
+
+    function updateBulkOwnerWorkloadPreview() {
+        const previewList = document.getElementById('bulk-assign-workload-preview') || document.getElementById('bulk-assign-workload-preview-list');
+        if (!previewList) return;
+
+        const isAcc = (_bulkAssignEntityMode === 'accounts');
+        const ids = isAcc ? getSelectedAccountIds() : getSelectedLeadIds();
+        const bulkControls = document.getElementById('leads-bulk-controls');
+        const totalMatching = (!isAcc && bulkControls) ? parseInt(bulkControls.getAttribute('data-total-matching') || '0', 10) : 0;
+        const effectiveCount = (!isAcc && _selectAllMatchingFilterLeads && totalMatching > 0) ? totalMatching : ids.length;
+        const countsMap = (typeof LEAD_OWNER_COUNTS !== 'undefined' && LEAD_OWNER_COUNTS) ? LEAD_OWNER_COUNTS : {};
+
+        if (_bulkAssignMode === 'single') {
+            const sel = document.getElementById('bulk-assign-single-owner-select');
+            if (!sel || !sel.value) {
+                previewList.innerHTML = '<div>Select a team member above to preview workload impact.</div>';
+                return;
+            }
+            if (sel.value === 'unassigned' || sel.value === 'unassign') {
+                previewList.innerHTML = `<div style="color:#b45309;">• <strong>${effectiveCount.toLocaleString()}</strong> record(s) will be moved to the <strong>Unassigned Queue</strong>.</div>`;
+                return;
+            }
+            const opt = sel.options[sel.selectedIndex];
+            const repName = opt ? (opt.getAttribute('data-full-name') || opt.getAttribute('data-name') || opt.text) : 'Selected Rep';
+            const currentCount = parseInt(opt?.getAttribute('data-current-count') || countsMap[sel.value] || countsMap[parseInt(sel.value, 10)] || 0, 10);
+            const projectedCount = currentCount + effectiveCount;
+            previewList.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span><i class="fas fa-user-check" style="color:#2563eb; margin-right:0.35rem;"></i><strong>${repName}</strong></span>
+                    <span style="font-family:monospace; font-weight:800; color:#1e40af;">${currentCount.toLocaleString()} &rarr; ${projectedCount.toLocaleString()} (+${effectiveCount.toLocaleString()})</span>
+                </div>
+            `;
+        } else {
+            const checkedBoxes = Array.from(document.querySelectorAll('.bulk-split-rep-cb:checked, .bulk-rr-user-cb:checked'));
+            if (checkedBoxes.length === 0) {
+                previewList.innerHTML = '<div style="color:#dc2626;">Select at least 1 team member for Round-Robin distribution.</div>';
+                return;
+            }
+            const baseShare = Math.floor(effectiveCount / checkedBoxes.length);
+            const remainder = effectiveCount % checkedBoxes.length;
+            previewList.innerHTML = checkedBoxes.map((cb, idx) => {
+                const uid = cb.value;
+                const repName = cb.getAttribute('data-full-name') || cb.getAttribute('data-name') || `User #${uid}`;
+                const share = baseShare + (idx < remainder ? 1 : 0);
+                const currentCount = parseInt(cb.getAttribute('data-current-count') || countsMap[uid] || countsMap[parseInt(uid, 10)] || 0, 10);
+                const projectedCount = currentCount + share;
+                return `
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
+                        <span><i class="fas fa-sync-alt" style="color:#0284c7; margin-right:0.35rem;"></i><strong>${repName}</strong></span>
+                        <span style="font-family:monospace; font-weight:800; color:#0369a1;">${currentCount.toLocaleString()} &rarr; ${projectedCount.toLocaleString()} (+${share.toLocaleString()})</span>
+                    </div>
+                `;
+            }).join('');
+        }
+    }
+
+    async function submitBulkAssignOwnerModal() {
+        const isAcc = (_bulkAssignEntityMode === 'accounts');
+        const ids = isAcc ? getSelectedAccountIds() : getSelectedLeadIds();
+        if (ids.length === 0 && !_selectAllMatchingFilterLeads) {
+            showToast('No records selected.', 'error');
+            return;
+        }
+
+        const onlyUnassigned = Boolean(document.getElementById('bulk-assign-only-unassigned')?.checked);
+        const nextActionDate = (document.getElementById('bulk-assign-next-action-date')?.value || '').trim();
+        const params = {
+            only_unassigned: onlyUnassigned
+        };
+        if (nextActionDate) {
+            params.next_action_date = nextActionDate;
+        }
+
+        if (_bulkAssignMode === 'single') {
+            const sel = document.getElementById('bulk-assign-single-owner-select');
+            if (!sel || !sel.value) {
+                showToast('Please select a lead owner.', 'error');
+                return;
+            }
+            params.owner_id = (sel.value === 'unassign') ? 'unassigned' : sel.value;
+        } else {
+            const checkedIds = Array.from(document.querySelectorAll('.bulk-split-rep-cb:checked, .bulk-rr-user-cb:checked')).map(cb => parseInt(cb.value, 10)).filter(n => !isNaN(n));
+            if (checkedIds.length === 0) {
+                showToast('Select at least one team member for Round-Robin distribution.', 'error');
+                return;
+            }
+            params.owner_ids = checkedIds;
+            params.distribution = 'round_robin';
+        }
+
+        const btn = document.getElementById('btn-confirm-bulk-assign-owner');
+        if (btn) btn.disabled = true;
+
+        try {
+            const endpoint = isAcc ? '/api/v1/accounts/batch-action' : '/api/v1/leads/batch-action';
+            const payload = isAcc
+                ? { action: 'assign_owner', account_ids: ids, params: params }
+                : {
+                    action: 'assign_owner',
+                    lead_ids: ids,
+                    select_all_matching: _selectAllMatchingFilterLeads,
+                    filter_params: _selectAllMatchingFilterLeads ? getActiveLeadsFilterSnapshot() : {},
+                    params: params
+                };
+
+            const res = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(payload)
+            });
+            const result = await res.json().catch(() => ({ status: 'error', message: 'Invalid JSON response' }));
+            if (res.ok && result.status === 'success') {
+                closeModal('modal-bulk-assign-owner');
+                if (!isAcc && result.previous_owners && Object.keys(result.previous_owners).length > 0) {
+                    _lastBulkOwnerUndoSnapshot = result.previous_owners;
+                }
+                if (result.updated_owner_counts && typeof LEAD_OWNER_COUNTS !== 'undefined') {
+                    Object.assign(LEAD_OWNER_COUNTS, result.updated_owner_counts);
+                }
+                if (!isAcc && _bulkAssignMode === 'single') {
+                    const targetOwnerId = params.owner_id === 'unassigned' ? null : parseInt(params.owner_id, 10);
+                    const targetOwnerName = (targetOwnerId && typeof SYSTEM_USERS_MAP !== 'undefined') ? SYSTEM_USERS_MAP[targetOwnerId] : '';
+                    ids.forEach(lid => {
+                        if (!onlyUnassigned || !document.getElementById(`lead-owner-badge-${lid}`)?.getAttribute('data-owner-id')) {
+                            refreshOwnerBadgeInDom(lid, targetOwnerId, targetOwnerName);
+                        }
+                    });
+                }
+                const summaryText = result.assignment_summary || 'Selected Owner';
+                const skippedNote = result.skipped_already_assigned ? ` (${result.skipped_already_assigned} already-assigned skipped)` : '';
+                showToast(`Assigned ${result.affected_count} ${isAcc ? 'account(s)' : 'lead(s)'} → ${summaryText}${skippedNote}.`, 'success');
+
+                if (isAcc) {
+                    const selectAllAcc = document.getElementById('select-all-accounts');
+                    if (selectAllAcc) selectAllAcc.checked = false;
+                    document.querySelectorAll('.acc-row-select').forEach(cb => { cb.checked = false; });
+                    handleAccSelectChange();
+                } else {
+                    clearCrossPageLeadSelection();
+                }
+                await syncOperationalData();
+            } else {
+                showToast('Assignment failed: ' + (result.message || 'Unknown error'), 'error');
+            }
+        } catch (err) {
+            console.error('Bulk Assign Owner Modal Error:', err);
+            showToast('Network error during bulk owner assignment.', 'error');
+        } finally {
+            if (btn) btn.disabled = false;
+        }
+    }
+
+    async function undoLastBulkOwnerAssign() {
+        if (!_lastBulkOwnerUndoSnapshot || Object.keys(_lastBulkOwnerUndoSnapshot).length === 0) {
+            showToast('No recent bulk owner assignment to undo.', 'info');
+            return;
+        }
+        try {
+            const res = await fetch('/api/v1/leads/batch-action', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    action: 'undo_assign_owner',
+                    lead_ids: Object.keys(_lastBulkOwnerUndoSnapshot).map(k => parseInt(k, 10)),
+                    params: { previous_owners: _lastBulkOwnerUndoSnapshot }
+                })
+            });
+            const result = await res.json().catch(() => ({ status: 'error' }));
+            if (res.ok && result.status === 'success') {
+                Object.entries(_lastBulkOwnerUndoSnapshot).forEach(([lid, prevOwner]) => {
+                    const ownerName = (prevOwner && typeof SYSTEM_USERS_MAP !== 'undefined') ? SYSTEM_USERS_MAP[prevOwner] : '';
+                    refreshOwnerBadgeInDom(parseInt(lid, 10), prevOwner, ownerName);
+                });
+                _lastBulkOwnerUndoSnapshot = null;
+                showToast(`Reverted owner assignment on ${result.affected_count} lead(s).`, 'success');
+                await syncOperationalData();
+            }
+        } catch (err) {
+            console.error('Undo Bulk Owner Assign Error:', err);
+            showToast('Could not undo owner assignment.', 'error');
+        }
     }
 
     async function executeBulkAction(action, params = {}) {
         const ids = getSelectedLeadIds();
-        if (ids.length === 0) return;
-        
-        let confirmText = `Are you sure you want to run this batch action on ${ids.length} leads?`;
+        if (ids.length === 0 && !_selectAllMatchingFilterLeads) return;
+
+        const bulkControls = document.getElementById('leads-bulk-controls');
+        const totalMatching = bulkControls ? parseInt(bulkControls.getAttribute('data-total-matching') || '0', 10) : 0;
+        const effectiveCount = (_selectAllMatchingFilterLeads && totalMatching > 0) ? totalMatching : ids.length;
+
+        let confirmText = `Are you sure you want to run this batch action on ${effectiveCount.toLocaleString()} leads?`;
         let confirmBtn = "Run Batch Action";
         let isDestructive = false;
-        
+
         if (action === 'delete') {
-            confirmText = `This will permanently delete ${ids.length} leads and all associated activities. This action is irreversible.`;
+            confirmText = `This will permanently delete ${effectiveCount.toLocaleString()} leads and all associated activities. This action is irreversible.`;
             confirmBtn = "Delete Leads";
             isDestructive = true;
         } else if (action === 'remove_from_campaign') {
-            confirmText = `Remove ${ids.length} selected lead(s) from email campaigns? All unsent email drafts in the outbox will be canceled immediately.`;
+            confirmText = `Remove ${effectiveCount.toLocaleString()} selected lead(s) from email campaigns? All unsent email drafts in the outbox will be canceled immediately.`;
             confirmBtn = "Remove from Campaign";
             isDestructive = true;
+        } else if (action === 'assign_owner') {
+            const targetVal = params.owner_id;
+            const targetName = (targetVal === 'unassigned' || targetVal === null)
+                ? 'Unassigned Queue'
+                : ((typeof SYSTEM_USERS_MAP !== 'undefined' && SYSTEM_USERS_MAP[targetVal]) ? SYSTEM_USERS_MAP[targetVal] : 'Selected Owner');
+            confirmText = `Assign ${effectiveCount.toLocaleString()} selected lead(s) to ${targetName}?`;
+            confirmBtn = "Assign Owner";
         }
-        
+
         showDecision({
-            title: action === 'delete' ? 'Delete Selected Leads?' : (action === 'remove_from_campaign' ? 'Remove from Campaign?' : 'Confirm Bulk Action'),
+            title: action === 'delete' ? 'Delete Selected Leads?' : (action === 'remove_from_campaign' ? 'Remove from Campaign?' : (action === 'assign_owner' ? 'Assign Lead Owner?' : 'Confirm Bulk Action')),
             text: confirmText,
             confirmText: confirmBtn,
             isDestructive: isDestructive,
-            icon: action === 'delete' ? 'fa-trash-alt' : (action === 'remove_from_campaign' ? 'fa-envelope-open-text' : 'fa-cog'),
+            icon: action === 'delete' ? 'fa-trash-alt' : (action === 'remove_from_campaign' ? 'fa-envelope-open-text' : (action === 'assign_owner' ? 'fa-user-check' : 'fa-cog')),
             onConfirm: async () => {
                 showToast("Executing bulk action...", "success");
                 try {
@@ -2295,20 +2834,26 @@
                         body: JSON.stringify({
                             action: action,
                             lead_ids: ids,
+                            select_all_matching: _selectAllMatchingFilterLeads,
+                            filter_params: _selectAllMatchingFilterLeads ? getActiveLeadsFilterSnapshot() : {},
                             params: params
                         })
                     });
-                    
+
                     const result = await res.json().catch(() => ({status: 'error', message: 'Invalid JSON response'}));
                     if (res.ok && result.status === 'success') {
+                        if (action === 'assign_owner') {
+                            if (result.previous_owners) _lastBulkOwnerUndoSnapshot = result.previous_owners;
+                            if (result.updated_owner_counts && typeof LEAD_OWNER_COUNTS !== 'undefined') {
+                                Object.assign(LEAD_OWNER_COUNTS, result.updated_owner_counts);
+                            }
+                            const targetOwnerId = (params.owner_id === 'unassigned' || params.owner_id === null) ? null : parseInt(params.owner_id, 10);
+                            const targetOwnerName = (targetOwnerId && typeof SYSTEM_USERS_MAP !== 'undefined') ? SYSTEM_USERS_MAP[targetOwnerId] : '';
+                            ids.forEach(lid => refreshOwnerBadgeInDom(lid, targetOwnerId, targetOwnerName));
+                        }
                         showToast(`Successfully processed ${result.affected_count} records.`, "success");
-                        // Reset select all checkbox
-                        const selectAllCheckbox = document.getElementById('select-all-leads');
-                        if (selectAllCheckbox) selectAllCheckbox.checked = false;
-                        
-                        // Sync data
+                        clearCrossPageLeadSelection();
                         await syncOperationalData();
-                        handleLeadSelectChange();
                     } else {
                         showToast("Batch action failed: " + (result.message || "Unknown error"), "error");
                     }
@@ -2318,6 +2863,110 @@
                 }
             }
         });
+    }
+
+    // --- Add Lead Live Pre-Save Duplicate Check, Website Verify & Async Submit (BUG-156) ---
+    function verifyWebsiteField(inputId) {
+        const el = document.getElementById(inputId);
+        if (!el) return;
+        let raw = (el.value || '').trim();
+        if (!raw) {
+            showToast('Enter a website URL first to verify.', 'info');
+            return;
+        }
+        if (window.SigmaInputMasks && typeof window.SigmaInputMasks.normalizeWebsiteUrl === 'function') {
+            raw = window.SigmaInputMasks.normalizeWebsiteUrl(raw);
+            el.value = raw;
+        } else if (!/^https?:\/\//i.test(raw)) {
+            raw = 'https://' + raw;
+            el.value = raw;
+        }
+        window.open(raw, '_blank', 'noopener,noreferrer');
+    }
+
+    function scheduleAddLeadDuplicateCheck() {
+        if (_addLeadDuplicateCheckTimer) clearTimeout(_addLeadDuplicateCheckTimer);
+        _addLeadDuplicateCheckTimer = setTimeout(runAddLeadDuplicateCheck, 260);
+    }
+
+    async function runAddLeadDuplicateCheck() {
+        const company = (document.getElementById('add-lead-company-name')?.value || '').trim();
+        const phone = (document.getElementById('add-lead-phone')?.value || '').trim();
+        const address = (document.getElementById('add-lead-address-line1')?.value || '').trim();
+        const website = (document.getElementById('add-lead-website')?.value || '').trim();
+        const banner = document.getElementById('add-lead-duplicate-banner');
+        const detail = document.getElementById('add-lead-duplicate-detail');
+        if (!banner || !detail) return;
+
+        if (company.length < 3 && phone.length < 7 && address.length < 5 && website.length < 4) {
+            banner.style.display = 'none';
+            _detectedDuplicateLeadId = null;
+            return;
+        }
+
+        try {
+            const qs = new URLSearchParams({ company, phone, address, website });
+            const res = await fetch(`/api/v1/leads/check-duplicate?${qs.toString()}`, {
+                headers: { 'Accept': 'application/json' }
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+            if (data.has_duplicates && Array.isArray(data.matches) && data.matches.length > 0) {
+                const top = data.matches[0];
+                _detectedDuplicateLeadId = top.id;
+                detail.innerText = `#${top.id} ${top.company_name} (${top.city || 'TX'} • Status: ${top.status} • Owner: ${top.owner_name})`;
+                banner.style.display = 'flex';
+            } else {
+                banner.style.display = 'none';
+                _detectedDuplicateLeadId = null;
+            }
+        } catch (_) {}
+    }
+
+    function openDetectedDuplicateLead() {
+        if (!_detectedDuplicateLeadId) return;
+        closeModal('modal-add-lead');
+        openLeadCommand(String(_detectedDuplicateLeadId), 'overview');
+    }
+
+    async function submitAddLeadForm(event) {
+        if (!event || !event.target) return true;
+        event.preventDefault();
+        const form = event.target;
+        const submitBtn = document.getElementById('btn-submit-add-lead');
+        if (submitBtn) submitBtn.disabled = true;
+
+        try {
+            const formData = new FormData(form);
+            const res = await fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            });
+            const data = await res.json().catch(() => null);
+            if (res.ok && data && data.status === 'success') {
+                closeModal('modal-add-lead');
+                form.reset();
+                const stateSel = document.getElementById('add-lead-state');
+                if (stateSel) stateSel.value = 'TX';
+                const dupBanner = document.getElementById('add-lead-duplicate-banner');
+                if (dupBanner) dupBanner.style.display = 'none';
+                showToast(`Created Lead #${data.lead_id}: ${data.company_name} (${data.state}).`, 'success');
+                await syncOperationalData();
+                setTimeout(() => window.location.reload(), 350);
+            } else {
+                showToast((data && data.message) ? data.message : 'Could not save new lead.', 'error');
+            }
+        } catch (err) {
+            console.error('Submit Add Lead Error:', err);
+            form.submit();
+        } finally {
+            if (submitBtn) submitBtn.disabled = false;
+        }
+        return false;
     }
 
     function exportSelectedLeads() {
@@ -8262,7 +8911,7 @@ Owner &amp; Operator | HWB Cleaning Services LLC<br />
         if (form) {
             const addrInput = form.querySelector('input[name="company_address"], input[name="address"]');
             const cityInput = form.querySelector('input[name="city"]');
-            const stateInput = form.querySelector('input[name="state"]');
+            const stateInput = form.querySelector('input[name="state"], select[name="state"]');
             const zipInput = form.querySelector('input[name="zip"], input[name="zipcode"]');
             if (addrInput && addr) addrInput.value = addr;
             if (cityInput && city) cityInput.value = city;
@@ -8285,5 +8934,19 @@ Owner &amp; Operator | HWB Cleaning Services LLC<br />
     window.clearScope = clearScope;
     window.smartType = smartType;
     window.applySmartAddress = applySmartAddress;
+    window.toggleSelectAllMatchingFilterLeads = toggleSelectAllMatchingFilterLeads;
+    window.clearCrossPageLeadSelection = clearCrossPageLeadSelection;
+    window.openQuickOwnerPopover = openQuickOwnerPopover;
+    window.closeQuickOwnerPopover = closeQuickOwnerPopover;
+    window.applyQuickOwnerPopoverSelection = applyQuickOwnerPopoverSelection;
+    window.openBulkAssignOwnerModal = openBulkAssignOwnerModal;
+    window.setBulkOwnerAssignMode = setBulkOwnerAssignMode;
+    window.updateBulkOwnerWorkloadPreview = updateBulkOwnerWorkloadPreview;
+    window.submitBulkAssignOwnerModal = submitBulkAssignOwnerModal;
+    window.undoLastBulkOwnerAssign = undoLastBulkOwnerAssign;
+    window.verifyWebsiteField = verifyWebsiteField;
+    window.scheduleAddLeadDuplicateCheck = scheduleAddLeadDuplicateCheck;
+    window.openDetectedDuplicateLead = openDetectedDuplicateLead;
+    window.submitAddLeadForm = submitAddLeadForm;
 
 

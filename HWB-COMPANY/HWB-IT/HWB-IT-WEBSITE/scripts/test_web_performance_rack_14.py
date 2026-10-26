@@ -2622,6 +2622,158 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
             r_s = auth_client.get("/api/v1/leads/search-suggest?q=kiddie")
             self.assertEqual(r_s.status_code, 200)
 
+    def test_34_enterprise_lead_intake_universal_state_address_and_bulk_owner_bug_156(self):
+        """
+        BUG-156: Verifies the 3-Workflow Enterprise Lead Intake, Universal Address/State Hygiene,
+        Standard Lead Owner Column, & Bulk Owner Assignment Architecture:
+        1. Workflow A: Lead Owner ('owner') is a permanent standard column in default_cols_leads and rendered
+           as an Owner Avatar Badge (.sigma-owner-badge-btn) with 1-click popover (#quick-owner-popover).
+        2. Workflow B: Bulk Owner Assignment supports Single-Rep, Multi-Rep Round-Robin distribution,
+           only_unassigned overwrite protection, undo_assign_owner snapshot restoration, and Accounts assign_owner.
+        3. Workflow C: Universal State normalization ('Tejas', 'texas', 'tx', '' -> 'TX' via clean_state()
+           and PostgreSQL trigger), USPS Pub 28 Address Line 1/Line 2 auto-splitting, Website URL normalization
+           and email-domain inference, and live pre-save duplicate detection (/api/v1/leads/check-duplicate).
+        """
+        from core.services.sanitizer import clean_state, clean_website, split_address_lines
+
+        # 1. Unit-verify sanitizer functions
+        for variant in ("TX", "tx", "Texas", "TEXAS", "tejas", "Tejas", "tx.", ""):
+            self.assertEqual(clean_state(variant), "TX", f"Variant '{variant}' must normalize to 'TX'")
+        self.assertEqual(clean_state("Oklahoma"), "OK")
+        self.assertEqual(clean_state("california"), "CA")
+
+        self.assertEqual(clean_website("www.kiddieacademy.com/plano"), "https://www.kiddieacademy.com/plano")
+        self.assertEqual(clean_website("", fallback_email="director@primroseschools.com"), "https://www.primroseschools.com")
+        self.assertIsNone(clean_website("", fallback_email="owner@gmail.com"))
+
+        l1, l2 = split_address_lines("5800 Granite Pkwy Suite 250", "")
+        self.assertEqual(l1, "5800 Granite Pkwy")
+        self.assertEqual(l2, "Suite 250")
+
+        auth_client = self.get_auth_client()
+
+        # 2. Verify Lead Owner is a standard column in /admin/operations?view=leads and renders .sigma-owner-badge-btn
+        r_ops = auth_client.get("/admin/operations?view=leads")
+        self.assertEqual(r_ops.status_code, 200)
+        html_ops = r_ops.get_data(as_text=True)
+        self.assertIn("Lead Owner", html_ops)
+        self.assertIn("sigma-owner-badge-btn", html_ops)
+        self.assertIn("id=\"quick-owner-popover\"", html_ops)
+        self.assertIn("id=\"modal-bulk-assign-owner\"", html_ops)
+
+        # 3. Verify Add Lead (POST /admin/add-lead with JSON response) normalizes state 'Tejas', splits Suite into address_line_2, and infers website
+        r_add = auth_client.post(
+            "/admin/add-lead",
+            data={
+                "company_name": "BUG156 Enterprise Verification Center",
+                "contact_person": "Elena Vance",
+                "email": "evance@bug156enterprise.com",
+                "phone": "(972) 555-0196",
+                "website": "",
+                "address": "7200 Preston Rd Ste 310",
+                "address_line_2": "",
+                "city": "Plano",
+                "state": "Tejas",
+                "zipcode": "75024",
+                "county": "Collin",
+                "sqf": "14500",
+                "status": "New",
+            },
+            headers={"Accept": "application/json", "X-Requested-With": "XMLHttpRequest"},
+        )
+        self.assertEqual(r_add.status_code, 200, f"POST /admin/add-lead failed: {r_add.get_data(as_text=True)}")
+        add_json = r_add.get_json()
+        self.assertEqual(add_json.get("status"), "success")
+        new_lead_id = add_json.get("lead_id")
+        self.assertIsNotNone(new_lead_id)
+
+        try:
+            # Verify stored fields via GET /api/v1/leads/<id>
+            r_lead = auth_client.get(f"/api/v1/leads/{new_lead_id}")
+            self.assertEqual(r_lead.status_code, 200)
+            ld = r_lead.get_json()["lead"]
+            self.assertEqual(ld.get("state"), "TX")
+            self.assertEqual(ld.get("address"), "7200 Preston Rd")
+            self.assertEqual(ld.get("address_line_2"), "Suite 310")
+            self.assertEqual(ld.get("website"), "https://www.bug156enterprise.com")
+
+            # 4. Verify live pre-save duplicate check API detects the newly created lead
+            r_dup = auth_client.get("/api/v1/leads/check-duplicate?company=BUG156+Enterprise+Verification")
+            self.assertEqual(r_dup.status_code, 200)
+            dup_data = r_dup.get_json()
+            self.assertTrue(dup_data.get("has_duplicates"))
+            matched_ids = [m["id"] for m in dup_data.get("matches", [])]
+            self.assertIn(new_lead_id, matched_ids)
+
+            # 5. Verify Bulk Owner Assignment (Single Rep + Overwrite Protection + Undo Snapshot)
+            conn = get_db(self.db_url)
+            try:
+                with conn.cursor() as cur:
+                    cur.execute('SELECT id FROM "Users" WHERE status = %s ORDER BY id ASC LIMIT 2;', ("Active",))
+                    active_users = [row["id"] for row in cur.fetchall()]
+            finally:
+                conn.close()
+
+            rep_a = active_users[0]
+            rep_b = active_users[-1]
+
+            # Assign to rep_a
+            r_assign = auth_client.post(
+                "/api/v1/leads/batch-action",
+                json={"action": "assign_owner", "lead_ids": [new_lead_id], "params": {"owner_id": rep_a}},
+            )
+            self.assertEqual(r_assign.status_code, 200)
+            assign_data = r_assign.get_json()
+            self.assertEqual(assign_data.get("affected_count"), 1)
+            prev_snapshot = assign_data.get("previous_owners", {})
+
+            # Attempt assign to rep_b with only_unassigned=True -> should skip because already assigned to rep_a
+            r_skip = auth_client.post(
+                "/api/v1/leads/batch-action",
+                json={
+                    "action": "assign_owner",
+                    "lead_ids": [new_lead_id],
+                    "params": {"owner_id": rep_b, "only_unassigned": True},
+                },
+            )
+            self.assertEqual(r_skip.status_code, 200)
+            self.assertEqual(r_skip.get_json().get("affected_count"), 0)
+            self.assertEqual(r_skip.get_json().get("skipped_already_assigned"), 1)
+
+            # Test Round-Robin distribution across [rep_a, rep_b]
+            r_rr = auth_client.post(
+                "/api/v1/leads/batch-action",
+                json={
+                    "action": "assign_owner",
+                    "lead_ids": [new_lead_id],
+                    "params": {"owner_ids": [rep_b, rep_a], "distribution": "round_robin"},
+                },
+            )
+            self.assertEqual(r_rr.status_code, 200)
+            self.assertEqual(r_rr.get_json().get("affected_count"), 1)
+
+            # Test Undo snapshot restoration
+            r_undo = auth_client.post(
+                "/api/v1/leads/batch-action",
+                json={
+                    "action": "undo_assign_owner",
+                    "lead_ids": [new_lead_id],
+                    "params": {"previous_owners": prev_snapshot},
+                },
+            )
+            self.assertEqual(r_undo.status_code, 200)
+            self.assertEqual(r_undo.get_json().get("status"), "success")
+        finally:
+            # Clean up test lead
+            conn = get_db(self.db_url)
+            try:
+                with conn.cursor() as cur:
+                    cur.execute('DELETE FROM "GlobalActivities" WHERE parent_type = %s AND parent_id = %s;', ("Lead", new_lead_id))
+                    cur.execute('DELETE FROM "Leads" WHERE id = %s;', (new_lead_id,))
+                    conn.commit()
+            finally:
+                conn.close()
+
 
 if __name__ == "__main__":
     unittest.main()
