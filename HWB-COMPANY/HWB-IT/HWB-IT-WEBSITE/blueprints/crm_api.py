@@ -455,7 +455,208 @@ def api_account_add_contact(id):
         if conn: conn.close()
 
 
-# --- Leads REST Endpoints ---
+# --- Leads REST Endpoints & Stage History Engine (BUG-157) ---
+
+_CLEANING_MODEL_LABELS = {
+    'UNKNOWN': 'Unknown',
+    'IN_HOUSE': 'In-House Cleaning',
+    'OUTSOURCED': 'Contract Cleaning',
+}
+
+
+def _normalize_cleaning_model(val: str) -> str:
+    raw = str(val or '').strip()
+    upper = raw.upper().replace('-', '_').replace(' ', '_')
+    if upper in ('IN_HOUSE', 'IN_HOUSE_CLEANING', 'INHOUSE'):
+        return 'IN_HOUSE'
+    if upper in ('OUTSOURCED', 'CONTRACT', 'CONTRACT_CLEANING'):
+        return 'OUTSOURCED'
+    return 'UNKNOWN'
+
+
+def _normalize_lead_status_and_cleaning_model(raw_status, raw_cleaning_model, current_lead: dict) -> tuple:
+    """
+    Normalizes Lead Status and Who Cleans (cleaning_delivery_model).
+    Also provides backward compatibility if 'In-House Cleaning' or 'Contract Cleaning'
+    is passed inside the status parameter.
+    """
+    curr_status_raw = str(current_lead.get('status') or 'New').strip()
+    if curr_status_raw.upper() == 'NEW' or not curr_status_raw:
+        curr_status = 'New'
+    elif curr_status_raw == 'Trained':
+        curr_status = 'Walkthrough Completed'
+    elif curr_status_raw == 'Lost':
+        curr_status = 'Not Interested'
+    else:
+        curr_status = curr_status_raw
+
+    curr_model = _normalize_cleaning_model(current_lead.get('cleaning_delivery_model') or 'UNKNOWN')
+    eff_model = _normalize_cleaning_model(raw_cleaning_model) if raw_cleaning_model is not None else curr_model
+
+    if raw_status is None or str(raw_status).strip() == '':
+        eff_status = curr_status
+    else:
+        s_in = str(raw_status).strip()
+        if s_in.upper() == 'NEW':
+            eff_status = 'New'
+        elif s_in == 'Trained':
+            eff_status = 'Walkthrough Completed'
+        elif s_in == 'Lost':
+            eff_status = 'Not Interested'
+        elif s_in == 'In-House Cleaning':
+            eff_model = 'IN_HOUSE'
+            eff_status = curr_status if curr_status not in ('New', 'In-House Cleaning', 'Contract Cleaning') else 'Contacted'
+        elif s_in == 'Contract Cleaning':
+            eff_model = 'OUTSOURCED'
+            eff_status = curr_status if curr_status not in ('New', 'In-House Cleaning', 'Contract Cleaning') else 'Contacted'
+        else:
+            eff_status = s_in
+
+    return eff_status, eff_model
+
+
+def _sync_email_suppression_if_needed(cur, email_val: str, status_val: str, actor_name: str) -> None:
+    clean_em = clean_email(email_val or '')
+    if not clean_em or status_val not in ('Unsubscribed', 'Do Not Call (DNC)'):
+        return
+    reason_label = 'Unsubscribed by Lead' if status_val == 'Unsubscribed' else 'Do Not Call / Do Not Contact (DNC)'
+    try:
+        cur.execute('''
+            INSERT INTO "EmailSuppressionList" (email, reason, source)
+            SELECT %s, %s, %s
+            WHERE NOT EXISTS (
+                SELECT 1 FROM "EmailSuppressionList" WHERE LOWER(BTRIM(email)) = LOWER(%s)
+            );
+        ''', (clean_em, f"{reason_label} ({actor_name})", 'CRM_LEAD_STATUS', clean_em))
+    except Exception:
+        pass
+
+
+def _record_lead_stage_and_model_history(
+    cur,
+    lead_id: int,
+    current_lead: dict,
+    new_status: str,
+    new_cleaning_model: str,
+    actor_name: str,
+    actor_id=None,
+    disqualified_reason: str = None,
+) -> None:
+    """
+    Records stage and Who Cleans transitions in LeadStageHistory, updates milestone timestamps
+    on Leads, and writes plain-English entries to GlobalActivities.
+    """
+    old_status, old_model = _normalize_lead_status_and_cleaning_model(
+        current_lead.get('status'),
+        current_lead.get('cleaning_delivery_model'),
+        current_lead,
+    )
+
+    if new_status and new_status != old_status:
+        duration_sec = 0
+        prev_ts = current_lead.get('status_changed_at') or current_lead.get('updated_at') or current_lead.get('created_at')
+        if prev_ts and hasattr(prev_ts, 'timestamp'):
+            try:
+                now_epoch = datetime.datetime.now(prev_ts.tzinfo).timestamp() if getattr(prev_ts, 'tzinfo', None) else datetime.datetime.now().timestamp()
+                duration_sec = max(0, int(now_epoch - prev_ts.timestamp()))
+            except Exception:
+                duration_sec = 0
+
+        cur.execute('''
+            INSERT INTO "LeadStageHistory" (
+                lead_id, field_name, old_value, new_value,
+                changed_by_user_id, changed_by_name, duration_seconds, changed_at
+            )
+            VALUES (%s, 'status', %s, %s, %s, %s, %s, CURRENT_TIMESTAMP);
+        ''', (lead_id, old_status, new_status, actor_id, actor_name, duration_sec))
+
+        cur.execute('UPDATE "Leads" SET status_changed_at = CURRENT_TIMESTAMP WHERE id = %s;', (lead_id,))
+        if new_status == 'In Campaign':
+            cur.execute('UPDATE "Leads" SET outreach_started_at = COALESCE(outreach_started_at, CURRENT_TIMESTAMP) WHERE id = %s;', (lead_id,))
+        elif new_status == 'Engaged':
+            cur.execute('UPDATE "Leads" SET engaged_at = COALESCE(engaged_at, CURRENT_TIMESTAMP) WHERE id = %s;', (lead_id,))
+        elif new_status == 'Contacted':
+            cur.execute('UPDATE "Leads" SET contacted_at = COALESCE(contacted_at, CURRENT_TIMESTAMP) WHERE id = %s;', (lead_id,))
+        elif new_status == 'Qualified':
+            cur.execute('UPDATE "Leads" SET qualified_at = COALESCE(qualified_at, CURRENT_TIMESTAMP) WHERE id = %s;', (lead_id,))
+        elif new_status == 'Walkthrough Completed':
+            cur.execute('UPDATE "Leads" SET walkthrough_completed_at = COALESCE(walkthrough_completed_at, CURRENT_TIMESTAMP) WHERE id = %s;', (lead_id,))
+        elif new_status in ('Not Interested', 'Unsubscribed', 'Do Not Call (DNC)'):
+            eff_reason = (disqualified_reason or new_status)[:100]
+            cur.execute('''
+                UPDATE "Leads"
+                SET disqualified_at = CURRENT_TIMESTAMP,
+                    disqualified_reason = %s
+                WHERE id = %s;
+            ''', (eff_reason, lead_id))
+
+        stage_label_map = {
+            'In Campaign': 'In Email Outreach',
+            'Upgraded to Account': 'Upgraded to Client Account',
+        }
+        old_disp = stage_label_map.get(old_status, old_status)
+        new_disp = stage_label_map.get(new_status, new_status)
+        cur.execute('''
+            INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
+            VALUES (%s, 'Lead', 'STAGE_CHANGE', %s);
+        ''', (lead_id, f"Lead stage changed from {old_disp} to {new_disp} by {actor_name}."))
+
+    if new_cleaning_model and new_cleaning_model != old_model:
+        cur.execute('''
+            INSERT INTO "LeadStageHistory" (
+                lead_id, field_name, old_value, new_value,
+                changed_by_user_id, changed_by_name, duration_seconds, changed_at
+            )
+            VALUES (%s, 'cleaning_delivery_model', %s, %s, %s, %s, 0, CURRENT_TIMESTAMP);
+        ''', (lead_id, old_model, new_cleaning_model, actor_id, actor_name))
+        new_model_label = _CLEANING_MODEL_LABELS.get(new_cleaning_model, new_cleaning_model)
+        cur.execute('''
+            INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
+            VALUES (%s, 'Lead', 'CLEANING_SETUP_UPDATED', %s);
+        ''', (lead_id, f"Who Cleans set to {new_model_label} by {actor_name}."))
+
+
+def _build_lead_stage_milestones(lead_row: dict, stage_history: list) -> dict:
+    """Builds a clean dictionary of stage dates and days-in-stage for the Lead Details modal."""
+    def fmt_ts(val):
+        if not val:
+            return None
+        if hasattr(val, 'isoformat'):
+            return val.isoformat()
+        return str(val)
+
+    history_dates = {}
+    for sh in reversed(stage_history or []):
+        fn = sh.get('field_name') if isinstance(sh, dict) else None
+        nv = sh.get('new_value') if isinstance(sh, dict) else None
+        ca = sh.get('changed_at') if isinstance(sh, dict) else None
+        if fn == 'status' and nv and ca and nv not in history_dates:
+            history_dates[nv] = fmt_ts(ca)
+
+    created_val = fmt_ts(lead_row.get('created_at')) or fmt_ts(lead_row.get('input_date'))
+    status_changed = lead_row.get('status_changed_at') or lead_row.get('updated_at') or lead_row.get('created_at')
+    days_in_stage = 0
+    if status_changed and hasattr(status_changed, 'timestamp'):
+        try:
+            now_epoch = datetime.datetime.now(status_changed.tzinfo).timestamp() if getattr(status_changed, 'tzinfo', None) else datetime.datetime.now().timestamp()
+            days_in_stage = max(0, int((now_epoch - status_changed.timestamp()) // 86400))
+        except Exception:
+            days_in_stage = 0
+
+    return {
+        'new_at': history_dates.get('New') or created_val,
+        'outreach_started_at': fmt_ts(lead_row.get('outreach_started_at')) or history_dates.get('In Campaign') or fmt_ts(lead_row.get('last_campaigned_at')),
+        'engaged_at': fmt_ts(lead_row.get('engaged_at')) or history_dates.get('Engaged'),
+        'contacted_at': fmt_ts(lead_row.get('contacted_at')) or history_dates.get('Contacted'),
+        'qualified_at': fmt_ts(lead_row.get('qualified_at')) or history_dates.get('Qualified'),
+        'walkthrough_completed_at': fmt_ts(lead_row.get('walkthrough_completed_at')) or history_dates.get('Walkthrough Completed'),
+        'converted_at': fmt_ts(lead_row.get('converted_at')) or history_dates.get('Upgraded to Account'),
+        'disqualified_at': fmt_ts(lead_row.get('disqualified_at')) or history_dates.get('Not Interested') or history_dates.get('Unsubscribed') or history_dates.get('Do Not Call (DNC)'),
+        'disqualified_reason': lead_row.get('disqualified_reason'),
+        'status_changed_at': fmt_ts(status_changed),
+        'days_in_current_stage': days_in_stage,
+    }
+
 
 @crm_api_bp.route('/api/v1/leads/<int:id>', methods=['GET', 'PUT', 'PATCH', 'DELETE'])
 @login_required
@@ -486,12 +687,32 @@ def api_lead_hub(id):
                     ORDER BY cr.id DESC;
                 ''', (id,))
                 campaigns = cur.fetchall()
+                stage_history = []
+                try:
+                    cur.execute('''
+                        SELECT id, lead_id, field_name, old_value, new_value,
+                               old_value AS from_status, new_value AS to_status,
+                               changed_by_user_id, changed_by_name, changed_by_name AS changed_by,
+                               duration_seconds, changed_at
+                        FROM "LeadStageHistory"
+                        WHERE lead_id = %s
+                        ORDER BY changed_at DESC, id DESC
+                        LIMIT 50;
+                    ''', (id,))
+                    stage_history = [serialize_row(sh) for sh in cur.fetchall()]
+                except Exception:
+                    conn.rollback()
+
+                serialized_lead = serialize_row(lead)
+                stage_milestones = _build_lead_stage_milestones(lead, stage_history)
 
                 return jsonify({
-                    'lead': serialize_row(lead),
+                    'lead': serialized_lead,
                     'contacts': [serialize_row(c) for c in contacts],
                     'activities': [serialize_row(a) for a in activities],
-                    'campaigns': [serialize_row(c) for c in campaigns]
+                    'campaigns': [serialize_row(c) for c in campaigns],
+                    'stage_history': stage_history,
+                    'stage_milestones': stage_milestones,
                 })
 
             elif request.method in ['PUT', 'PATCH']:
@@ -579,7 +800,17 @@ def api_lead_hub(id):
                         except (ValueError, TypeError):
                             owner_id_val = None
 
-                resolved_status = resolve('status', current_lead.get('status'))
+                raw_status_in = data.get('status') if 'status' in data else None
+                raw_model_in = data.get('cleaning_delivery_model') if 'cleaning_delivery_model' in data else None
+                resolved_status, cleaning_model_val = _normalize_lead_status_and_cleaning_model(
+                    raw_status_in,
+                    raw_model_in,
+                    current_lead,
+                )
+
+                actor_name = getattr(current_user, 'full_name', None) or getattr(current_user, 'username', 'Operator')
+                actor_id = getattr(current_user, 'id', None)
+
                 is_dnc_val = current_lead.get('is_dnc', False)
                 campaign_ready_val = current_lead.get('campaign_ready', False)
                 email_hygiene_val = current_lead.get('email_hygiene_status')
@@ -592,6 +823,10 @@ def api_lead_hub(id):
                         is_dnc_val = False
                         campaign_ready_val = False
                         email_hygiene_val = 'DO_NOT_EMAIL'
+                    elif resolved_status == 'Not Interested':
+                        campaign_ready_val = False
+                        if current_lead.get('status') in ('Do Not Call (DNC)', 'Unsubscribed'):
+                            is_dnc_val = False
                     elif current_lead.get('status') in ('Do Not Call (DNC)', 'Unsubscribed'):
                         is_dnc_val = False
 
@@ -665,15 +900,26 @@ def api_lead_hub(id):
                       verification_val, pref_date_val, pref_time_val,
                       budget_val, is_dnc_val, campaign_ready_val, email_hygiene_val, id))
 
+                _sync_email_suppression_if_needed(cur, resolved_email, resolved_status, actor_name)
+                _record_lead_stage_and_model_history(
+                    cur,
+                    id,
+                    current_lead,
+                    resolved_status,
+                    cleaning_model_val,
+                    actor_name,
+                    actor_id,
+                    disqualified_reason=data.get('disqualified_reason'),
+                )
+
                 if 'owner_id' in data and owner_id_val != current_lead.get('owner_id'):
-                    actor_name = getattr(current_user, 'full_name', None) or getattr(current_user, 'username', 'Operator')
                     cur.execute('''
                         INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
                         VALUES (%s, 'Lead', 'OWNER_ASSIGNED', %s);
                     ''', (id, f"Lead owner updated to user ID {owner_id_val or 'Unassigned'} by {actor_name}."))
 
                 if (
-                    'cleaning_delivery_model' in data
+                    ('cleaning_delivery_model' in data or raw_status_in in ('In-House Cleaning', 'Contract Cleaning'))
                     and cleaning_model_val not in (None, '', 'UNKNOWN')
                     and cleaning_model_val != current_lead.get('cleaning_delivery_model')
                     and (umbrella_val or current_lead.get('umbrella_name'))
@@ -687,14 +933,18 @@ def api_lead_hub(id):
 
                 if 'next_action_date' in data or 'notes' in data:
                     activity_type = 'SITE_VISIT' if 'VISIT SCHEDULED' in (data.get('notes') or '') else 'NOTE'
-                    description = data.get('notes') or "Strategic lead update."
+                    description = data.get('notes') or "Lead profile note updated."
                     cur.execute('''
                         INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
                         VALUES (%s, %s, %s, %s)
                     ''', (id, 'Lead', activity_type, description))
 
                 conn.commit()
-                return jsonify({'status': 'success'})
+                return jsonify({
+                    'status': 'success',
+                    'resolved_status': resolved_status,
+                    'cleaning_delivery_model': cleaning_model_val,
+                })
 
             elif request.method == 'DELETE':
                 if not current_user.has_permission('leads', 'delete'):
@@ -734,8 +984,71 @@ def api_lead_cadence_save(id):
             phone = clean_phone(phone_raw) or phone_raw
             email_raw = data.get('email') if 'email' in data else current_lead['email']
             email = clean_email(email_raw) or email_raw
-            status = data.get('status') if 'status' in data else current_lead['status']
-            
+
+            note_text = (data.get('note') or '').strip()
+            activity_type = data.get('activity_type') or 'Phone Call'
+
+            raw_status_in = data.get('status') if 'status' in data else None
+            raw_model_in = data.get('cleaning_delivery_model') if 'cleaning_delivery_model' in data else None
+            status, cleaning_model_val = _normalize_lead_status_and_cleaning_model(
+                raw_status_in,
+                raw_model_in,
+                current_lead,
+            )
+
+            # Stage-Protection Rule: Voicemail / Left Message with Staff / No Answer never downgrades
+            # an advanced stage (Engaged, Contacted, Qualified, Walkthrough Completed) and never falsely
+            # promotes 'New' to 'Contacted' when no decision maker was reached.
+            curr_norm_status, _ = _normalize_lead_status_and_cleaning_model(
+                current_lead.get('status'),
+                current_lead.get('cleaning_delivery_model'),
+                current_lead,
+            )
+            non_contact_outcomes = {
+                'left voicemail',
+                'voicemail left',
+                'voicemail',
+                'gatekeeper blocked',
+                'gatekeeper / receptionist',
+                'gatekeeper',
+                'left message with staff',
+                'left message w/ staff',
+                'no answer',
+                'no answer / busy',
+            }
+            act_lower = str(activity_type or '').strip().lower()
+            is_non_contact = (
+                act_lower in non_contact_outcomes
+                or 'voicemail' in act_lower
+                or 'gatekeeper' in act_lower
+                or 'left message' in act_lower
+                or 'no answer' in act_lower
+                or bool(data.get('preserve_stage'))
+            )
+            if is_non_contact and not data.get('force_status_change'):
+                if status not in ('Not Interested', 'Unsubscribed', 'Do Not Call (DNC)'):
+                    status = curr_norm_status
+            elif status == 'Contacted' and curr_norm_status in ('Qualified', 'Walkthrough Completed') and not data.get('force_status_change'):
+                status = curr_norm_status
+
+            is_dnc_val = current_lead.get('is_dnc', False)
+            campaign_ready_val = current_lead.get('campaign_ready', False)
+            email_hygiene_val = current_lead.get('email_hygiene_status')
+            if status == 'Do Not Call (DNC)':
+                is_dnc_val = True
+                campaign_ready_val = False
+                email_hygiene_val = 'DO_NOT_EMAIL'
+            elif status == 'Unsubscribed':
+                is_dnc_val = False
+                campaign_ready_val = False
+                email_hygiene_val = 'DO_NOT_EMAIL'
+            elif status == 'Not Interested':
+                campaign_ready_val = False
+                if curr_norm_status in ('Do Not Call (DNC)', 'Unsubscribed'):
+                    is_dnc_val = False
+            elif curr_norm_status in ('Do Not Call (DNC)', 'Unsubscribed'):
+                is_dnc_val = False
+
             raw_next_date = data.get('next_action_date')
             next_date = raw_next_date if raw_next_date and str(raw_next_date).strip() != '' else current_lead['next_action_date']
             
@@ -744,13 +1057,24 @@ def api_lead_cadence_save(id):
             pref_time = data.get('preferred_time') or data.get('walkthrough_time') or current_lead['preferred_time']
 
             priority = data.get('priority_level') if 'priority_level' in data else current_lead['priority_level']
-            note_text = (data.get('note') or '').strip()
-            activity_type = data.get('activity_type') or 'Phone Call'
+            sqf_val = current_lead.get('sqf') or 0
+            if 'sqf' in data and data.get('sqf') not in (None, ''):
+                try:
+                    sqf_val = int(round(float(clean_sqft(data.get('sqf')))))
+                except Exception:
+                    sqf_val = current_lead.get('sqf') or 0
+            est_val = current_lead.get('estimated_annual_value') or 0.0
+            if 'estimated_annual_value' in data and data.get('estimated_annual_value') not in (None, ''):
+                try:
+                    est_val = clean_currency(data.get('estimated_annual_value'))
+                except Exception:
+                    est_val = current_lead.get('estimated_annual_value') or 0.0
 
             conductor = (data.get('conductor') or 'Humberto Dominguez').strip()
             rep_email_raw = data.get('rep_email') or ''
             rep_email = clean_email(rep_email_raw) or (rep_email_raw.strip() if '@' in rep_email_raw else '')
             rep_name = (data.get('rep_name') or '').strip()
+            actor_name = getattr(current_user, 'full_name', None) or getattr(current_user, 'username', None) or rep_name or conductor
 
             cur.execute('''
                 UPDATE "Leads" SET 
@@ -759,13 +1083,48 @@ def api_lead_cadence_save(id):
                     phone = %s,
                     email = %s,
                     status = %s,
+                    cleaning_delivery_model = %s,
+                    is_dnc = %s,
+                    campaign_ready = %s,
+                    email_hygiene_status = %s,
+                    sqf = %s,
+                    estimated_annual_value = %s,
                     next_action_date = %s,
                     preferred_date = %s,
                     preferred_time = %s,
                     priority_level = %s,
+                    last_contacted_by = %s,
                     updated_at = CURRENT_TIMESTAMP
                 WHERE id = %s
-            ''', (dm, title, phone, email, status, next_date, pref_date, pref_time, priority, id))
+            ''', (
+                dm, title, phone, email, status, cleaning_model_val,
+                is_dnc_val, campaign_ready_val, email_hygiene_val,
+                sqf_val, est_val, next_date, pref_date, pref_time, priority,
+                actor_name, id
+            ))
+
+            _sync_email_suppression_if_needed(cur, email, status, actor_name)
+            _record_lead_stage_and_model_history(
+                cur,
+                id,
+                current_lead,
+                status,
+                cleaning_model_val,
+                actor_name,
+                getattr(current_user, 'id', None),
+                disqualified_reason=data.get('disqualified_reason'),
+            )
+
+            if (
+                cleaning_model_val not in (None, '', 'UNKNOWN')
+                and cleaning_model_val != current_lead.get('cleaning_delivery_model')
+                and current_lead.get('umbrella_name')
+            ):
+                cur.execute('''
+                    UPDATE "Leads"
+                    SET cleaning_delivery_model = %s, updated_at = CURRENT_TIMESTAMP
+                    WHERE umbrella_name = %s AND id != %s;
+                ''', (cleaning_model_val, current_lead.get('umbrella_name'), id))
 
             calendar_created = False
             calendar_message = None
@@ -865,7 +1224,10 @@ def api_lead_cadence_save(id):
             conn.commit()
             return jsonify({
                 'status': 'success', 
-                'message': 'Lead cadence recorded successfully.',
+                'message': 'Call and activity details saved.',
+                'resolved_status': status,
+                'cleaning_delivery_model': cleaning_model_val,
+                'is_dnc': is_dnc_val,
                 'calendar_created': calendar_created,
                 'calendar_message': calendar_message,
                 'preferred_date': pref_date,
@@ -1081,19 +1443,76 @@ def api_batch_lead_action():
                     return log_and_abort_abac('leads', 'delete')
                 cur.execute('DELETE FROM "Leads" WHERE id = ANY(%s);', (lead_ids,))
                 cur.execute('DELETE FROM "GlobalActivities" WHERE parent_id = ANY(%s) AND parent_type = %s;', (lead_ids, "Lead"))
-            elif action in ['update_status', 'mark_dnc', 'assign_owner', 'undo_assign_owner', 'dismiss_duplicates', 'auto_merge', 'remove_from_campaign']:
+            elif action in ['update_status', 'update_cleaning_model', 'mark_dnc', 'assign_owner', 'undo_assign_owner', 'dismiss_duplicates', 'auto_merge', 'remove_from_campaign']:
                 if not current_user.has_permission('leads', 'edit'):
                     return log_and_abort_abac('leads', 'edit')
+                actor_name = getattr(current_user, 'full_name', None) or getattr(current_user, 'username', 'Operator')
+                actor_id = getattr(current_user, 'id', None)
                 if action == 'update_status':
-                    new_status = params.get('status', 'NEW')
-                    if new_status == 'Do Not Call (DNC)':
-                        cur.execute("UPDATE \"Leads\" SET status = %s, is_dnc = TRUE, campaign_ready = FALSE, email_hygiene_status = 'DO_NOT_EMAIL', updated_at = CURRENT_DATE WHERE id = ANY(%s);", (new_status, lead_ids))
-                    elif new_status == 'Unsubscribed':
-                        cur.execute("UPDATE \"Leads\" SET status = %s, is_dnc = FALSE, campaign_ready = FALSE, email_hygiene_status = 'DO_NOT_EMAIL', updated_at = CURRENT_DATE WHERE id = ANY(%s);", (new_status, lead_ids))
+                    raw_status = params.get('status', 'New')
+                    norm_status, inferred_model = _normalize_lead_status_and_cleaning_model(raw_status, None, {'status': 'New'})
+                    if raw_status in ('In-House Cleaning', 'Contract Cleaning'):
+                        cur.execute(
+                            'UPDATE "Leads" SET cleaning_delivery_model = %s, updated_at = CURRENT_TIMESTAMP WHERE id = ANY(%s);',
+                            (inferred_model, lead_ids),
+                        )
                     else:
-                        cur.execute('UPDATE "Leads" SET status = %s, is_dnc = FALSE, updated_at = CURRENT_DATE WHERE id = ANY(%s);', (new_status, lead_ids))
+                        if norm_status == 'Do Not Call (DNC)':
+                            cur.execute(
+                                'UPDATE "Leads" SET status = %s, is_dnc = TRUE, campaign_ready = FALSE, email_hygiene_status = \'DO_NOT_EMAIL\', status_changed_at = CURRENT_TIMESTAMP, disqualified_at = CURRENT_TIMESTAMP, disqualified_reason = %s, updated_at = CURRENT_TIMESTAMP WHERE id = ANY(%s);',
+                                (norm_status, norm_status, lead_ids),
+                            )
+                        elif norm_status == 'Unsubscribed':
+                            cur.execute(
+                                'UPDATE "Leads" SET status = %s, is_dnc = FALSE, campaign_ready = FALSE, email_hygiene_status = \'DO_NOT_EMAIL\', status_changed_at = CURRENT_TIMESTAMP, disqualified_at = CURRENT_TIMESTAMP, disqualified_reason = %s, updated_at = CURRENT_TIMESTAMP WHERE id = ANY(%s);',
+                                (norm_status, norm_status, lead_ids),
+                            )
+                        elif norm_status == 'Not Interested':
+                            cur.execute(
+                                'UPDATE "Leads" SET status = %s, is_dnc = FALSE, campaign_ready = FALSE, status_changed_at = CURRENT_TIMESTAMP, disqualified_at = CURRENT_TIMESTAMP, disqualified_reason = %s, updated_at = CURRENT_TIMESTAMP WHERE id = ANY(%s);',
+                                (norm_status, norm_status, lead_ids),
+                            )
+                        else:
+                            cur.execute(
+                                'UPDATE "Leads" SET status = %s, is_dnc = FALSE, status_changed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = ANY(%s);',
+                                (norm_status, lead_ids),
+                            )
+                            if norm_status == 'In Campaign':
+                                cur.execute('UPDATE "Leads" SET outreach_started_at = COALESCE(outreach_started_at, CURRENT_TIMESTAMP) WHERE id = ANY(%s);', (lead_ids,))
+                            elif norm_status == 'Engaged':
+                                cur.execute('UPDATE "Leads" SET engaged_at = COALESCE(engaged_at, CURRENT_TIMESTAMP) WHERE id = ANY(%s);', (lead_ids,))
+                            elif norm_status == 'Contacted':
+                                cur.execute('UPDATE "Leads" SET contacted_at = COALESCE(contacted_at, CURRENT_TIMESTAMP) WHERE id = ANY(%s);', (lead_ids,))
+                            elif norm_status == 'Qualified':
+                                cur.execute('UPDATE "Leads" SET qualified_at = COALESCE(qualified_at, CURRENT_TIMESTAMP) WHERE id = ANY(%s);', (lead_ids,))
+                            elif norm_status == 'Walkthrough Completed':
+                                cur.execute('UPDATE "Leads" SET walkthrough_completed_at = COALESCE(walkthrough_completed_at, CURRENT_TIMESTAMP) WHERE id = ANY(%s);', (lead_ids,))
+                        for lid in lead_ids[:250]:
+                            cur.execute('''
+                                INSERT INTO "LeadStageHistory" (lead_id, field_name, old_value, new_value, changed_by_user_id, changed_by_name, duration_seconds)
+                                VALUES (%s, 'status', NULL, %s, %s, %s, 0);
+                            ''', (lid, norm_status, actor_id, actor_name))
+                elif action == 'update_cleaning_model':
+                    norm_model = _normalize_cleaning_model(params.get('cleaning_delivery_model') or 'UNKNOWN')
+                    cur.execute(
+                        'UPDATE "Leads" SET cleaning_delivery_model = %s, updated_at = CURRENT_TIMESTAMP WHERE id = ANY(%s);',
+                        (norm_model, lead_ids),
+                    )
+                    for lid in lead_ids[:250]:
+                        cur.execute('''
+                            INSERT INTO "LeadStageHistory" (lead_id, field_name, old_value, new_value, changed_by_user_id, changed_by_name, duration_seconds)
+                            VALUES (%s, 'cleaning_delivery_model', NULL, %s, %s, %s, 0);
+                        ''', (lid, norm_model, actor_id, actor_name))
                 elif action == 'mark_dnc':
-                    cur.execute("UPDATE \"Leads\" SET status = %s, is_dnc = TRUE, campaign_ready = FALSE, email_hygiene_status = 'DO_NOT_EMAIL', updated_at = CURRENT_DATE WHERE id = ANY(%s);", ('Do Not Call (DNC)', lead_ids))
+                    cur.execute(
+                        'UPDATE "Leads" SET status = %s, is_dnc = TRUE, campaign_ready = FALSE, email_hygiene_status = \'DO_NOT_EMAIL\', status_changed_at = CURRENT_TIMESTAMP, disqualified_at = CURRENT_TIMESTAMP, disqualified_reason = %s, updated_at = CURRENT_TIMESTAMP WHERE id = ANY(%s);',
+                        ('Do Not Call (DNC)', 'Do Not Call (DNC)', lead_ids),
+                    )
+                    for lid in lead_ids[:250]:
+                        cur.execute('''
+                            INSERT INTO "LeadStageHistory" (lead_id, field_name, old_value, new_value, changed_by_user_id, changed_by_name, duration_seconds)
+                            VALUES (%s, 'status', NULL, 'Do Not Call (DNC)', %s, %s, 0);
+                        ''', (lid, actor_id, actor_name))
                 elif action == 'assign_owner':
                     lead_ids = [int(x) for x in lead_ids if str(x).isdigit()]
                     only_unassigned = bool(params.get('only_unassigned', False))
@@ -1339,6 +1758,11 @@ def api_batch_lead_action():
                 return jsonify({'status': 'error', 'message': f'Unknown action: {action}'}), 400
             
             conn.commit()
+            try:
+                from blueprints.operations import invalidate_operations_caches
+                invalidate_operations_caches()
+            except Exception:
+                pass
             return jsonify({'status': 'success', 'affected_count': len(lead_ids)})
     except Exception as e:
         conn.rollback()
@@ -1413,12 +1837,28 @@ def api_lead_promote(id):
             if getattr(current_user, 'role', '') == 'Sales' and lead.get('owner_id') != current_user.id:
                 return jsonify({'status': 'error', 'message': 'Access denied: Lead is not assigned to your account.'}), 403
 
-            contact_name = (lead['director'] or lead['decision_maker'] or 'PRIMARY_CONTACT')
-            
+            body_data = request.get_json(silent=True) or {}
+            contact_name = (body_data.get('contact_person_name') or lead['director'] or lead['decision_maker'] or 'PRIMARY_CONTACT')
+            eff_sqf = lead['sqf'] or 0
+            if body_data.get('sqf') not in (None, ''):
+                try:
+                    eff_sqf = int(round(float(clean_sqft(body_data.get('sqf')))))
+                except Exception:
+                    eff_sqf = lead['sqf'] or 0
+            eff_rev = lead['estimated_annual_value'] or 0.0
+            if body_data.get('annual_revenue') not in (None, ''):
+                try:
+                    eff_rev = clean_currency(body_data.get('annual_revenue'))
+                except Exception:
+                    eff_rev = lead['estimated_annual_value'] or 0.0
+            eff_traffic = body_data.get('traffic_cycle') or lead['traffic_cycle']
+
             rep_id = lead.get('owner_id')
             if not rep_id and current_user.is_authenticated and current_user.role == 'Sales':
                 rep_id = current_user.id
-            
+            actor_name = getattr(current_user, 'full_name', None) or getattr(current_user, 'username', 'Operator')
+            actor_id = getattr(current_user, 'id', None)
+
             try:
                 lead_phone_digits = extract_phone_digits(lead['phone'] or '')
                 lead_email = clean_email(lead['email'] or '') or (lead['email'] or '').strip()
@@ -1465,6 +1905,7 @@ def api_lead_promote(id):
                             sqf = CASE WHEN %s > 0 THEN %s ELSE sqf END,
                             traffic_cycle = COALESCE(NULLIF(%s, ''), traffic_cycle),
                             annual_revenue = CASE WHEN %s > 0 THEN %s ELSE annual_revenue END,
+                            status = 'Active',
                             assigned_rep_id = COALESCE(%s, assigned_rep_id),
                             umbrella_name = COALESCE(NULLIF(%s, ''), umbrella_name)
                         WHERE customer_id = %s;
@@ -1472,8 +1913,8 @@ def api_lead_promote(id):
                         contact_name, lead_email, lead['phone'], lead['address'],
                         lead.get('address_line_2'), lead['city'], clean_state(lead.get('state'), default='TX'), lead['zipcode'],
                         lead.get('website'),
-                        lead['sqf'] or 0, lead['sqf'] or 0, lead['traffic_cycle'],
-                        lead['estimated_annual_value'] or 0.0, lead['estimated_annual_value'] or 0.0,
+                        eff_sqf, eff_sqf, eff_traffic,
+                        eff_rev, eff_rev,
                         rep_id, lead.get('umbrella_name'), new_acc_id
                     ))
                     is_dup_cust = True
@@ -1485,24 +1926,54 @@ def api_lead_promote(id):
                         lead['center_name'], contact_name, lead['email'], lead['phone'],
                         lead['address'] or 'PENDING_ENTRY', lead.get('address_line_2'),
                         lead['city'], clean_state(lead.get('state'), default='TX'), lead['zipcode'],
-                        lead.get('website'), lead['sqf'] or 0, lead['traffic_cycle'],
-                        lead['estimated_annual_value'] or 0.0, rep_id, lead.get('umbrella_name'),
-                        lead.get('cleaning_delivery_model') or 'Model C Institutional Prime (Bosanna)'
+                        lead.get('website'), eff_sqf, eff_traffic,
+                        eff_rev, rep_id, lead.get('umbrella_name'),
+                        lead.get('cleaning_delivery_model') or 'DIRECT_W2'
                     ))
                     res_row = cur.fetchone()
                     new_acc_id = res_row['customer_id'] if isinstance(res_row, dict) else res_row[0]
                     is_dup_cust = False
                 
-                cur.execute('UPDATE "Leads" SET is_converted = true WHERE id = %s', (id,))
+                old_lead_status = lead.get('status') or 'Walkthrough Completed'
+                cur.execute('''
+                    UPDATE "Leads"
+                    SET is_converted = TRUE,
+                        converted_at = CURRENT_TIMESTAMP,
+                        converted_to_customer_id = %s,
+                        status = 'Upgraded to Account',
+                        status_changed_at = CURRENT_TIMESTAMP,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE id = %s;
+                ''', (new_acc_id, id))
+
+                cur.execute('''
+                    INSERT INTO "LeadStageHistory" (
+                        lead_id, field_name, old_value, new_value,
+                        changed_by_user_id, changed_by_name, duration_seconds, changed_at
+                    )
+                    VALUES (%s, 'status', %s, 'Upgraded to Account', %s, %s, 0, CURRENT_TIMESTAMP);
+                ''', (id, old_lead_status, actor_id, actor_name))
                 
                 cur.execute('INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description) VALUES (%s, %s, %s, %s)', 
-                              (id, "Lead", "CONVERTED", f"Lead moved to Account ACC-{new_acc_id} (Rep ID: {rep_id})"))
+                              (id, "Lead", "CONVERTED", f"Upgraded to Active Client Account ACC-{new_acc_id} by {actor_name} (Rep ID: {rep_id})."))
 
                 cur.execute('INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description) VALUES (%s, %s, %s, %s)', 
-                              (new_acc_id, "Account", "CONVERTED", f"Account {'merged from' if is_dup_cust else 'created from'} Lead #{id} (Assigned Rep ID: {rep_id})"))
+                              (new_acc_id, "Account", "CONVERTED", f"Client Account {'updated from' if is_dup_cust else 'created from'} Lead #{id} by {actor_name} (Assigned Rep ID: {rep_id})."))
                 
                 conn.commit()
-                return jsonify({'status': 'success', 'customer_id': new_acc_id, 'assigned_rep_id': rep_id, 'is_duplicate': is_dup_cust})
+                try:
+                    from blueprints.operations import invalidate_operations_caches
+                    invalidate_operations_caches()
+                except Exception:
+                    pass
+                return jsonify({
+                    'status': 'success',
+                    'customer_id': new_acc_id,
+                    'account_id': new_acc_id,
+                    'company_name': lead['center_name'],
+                    'assigned_rep_id': rep_id,
+                    'is_duplicate': is_dup_cust,
+                })
             except Exception as db_e:
                 conn.rollback()
                 return jsonify({'status': 'error', 'message': f"Database Error: {str(db_e)}"}), 500
@@ -2034,6 +2505,11 @@ def api_dismiss_duplicates():
         with conn.cursor() as cur:
             cur.execute('UPDATE "Leads" SET is_duplicate = FALSE, duplicate_group_id = NULL WHERE id = ANY(%s);', (lead_ids,))
             conn.commit()
+            try:
+                from blueprints.operations import invalidate_operations_caches
+                invalidate_operations_caches()
+            except Exception:
+                pass
             return jsonify({'status': 'success', 'affected_count': len(lead_ids)})
     except Exception as e:
         conn.rollback()

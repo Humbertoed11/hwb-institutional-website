@@ -3062,5 +3062,33 @@ Every column referenced in `PUT`/`PATCH /api/v1/leads/<id>` is enforced both in 
 Verified continuously on every build by `test_34_enterprise_lead_intake_universal_state_address_and_bulk_owner_bug_156` in `scripts/test_web_performance_rack_14.py` (`34/34` PASS).
 
 
+## BUG-157: Enterprise Lead Status vs. `🧹 Who Cleans` Separation, Stage-Date History Tracking (`"LeadStageHistory"`), Record Activities Reorganization & Commercial Lead Calling Workstation Stage-Protection
+**Detected:** 10/26/2026
+**Status:** **RESOLVED** (10/26/2026 — Verified by `test_35_enterprise_lead_status_who_cleans_stage_dates_and_calling_workstation_bug_157` in `scripts/test_web_performance_rack_14.py` `35/35` passing)
+**Symptoms:**
+1. **Conflated `Status` vs. `Who Cleans` & Legacy Status Labels:**
+   - Legacy status options `'Trained'` and `'Lost'` needed to be replaced with plain-English `'Walkthrough Completed'` and `'Not Interested'`, and stop statuses (`'Not Interested'`, `'Unsubscribed'`, `'Do Not Call (DNC)'`) needed uniform Red (`#fee2e2` / `#991b1b`) visual warning styling.
+   - Facility cleaning setup (`🏠 In-House Cleaning` vs. `🤝 Contract Cleaning`) is a building attribute that remains true across every sales stage, whereas `Status` tracks where the lead is in the sales process. Putting both in one dropdown forced reps to overwrite one to record the other.
+   - Upgrading a lead to an active Client Account needed to remove the record from the active Leads table (`COALESCE(is_converted, FALSE) = FALSE`) and move it into Clients (`#view-accounts`).
+2. **Missing Stage-Date History Tracking:**
+   - `"Leads"` only stored a single `updated_at` timestamp, losing the dates when a lead was set to `New`, moved to `In Email Outreach`, `Engaged`, `Contacted`, `Qualified`, `Walkthrough Completed`, `Upgraded to Account`, or `Not Interested`/`Unsubscribed`/`DNC`.
+3. **Disconnected "Record Activities" Form (`#lead-pane-activities`) & Calling Workstation Stage Downgrades:**
+   - `#lead-pane-activities` had an orphaned "Quick Profile Update" contact box with no Save button and `saveVisitRequest` bypassed `/api/v1/leads/<id>/cadence-save`.
+   - In the Commercial Lead Calling Workstation (`#modal-lead-cadence`), clicking `Voicemail` or `Gatekeeper` sent `status: 'Contacted'`, which could falsely mark a `New` lead as `Contacted` or downgrade an `Engaged`/`Qualified` lead back to `Contacted`.
+**Solution:**
+1. **Separation of `Status` (Col #2) and `🧹 Who Cleans` (`cleaning_model` — Col #3) (`blueprints/operations.py`, `templates/backoffice_operations.html`, `static/js/backoffice_operations_core.js`):**
+   - Updated `default_cols_leads = 'company,status,cleaning_model,owner,sqf,value,priority,activities'` so `Status`, `🧹 Who Cleans` (`⚪ Unknown`, `🏠 In-House Cleaning`, `🤝 Contract Cleaning`), and `Lead Owner` appear side-by-side by default.
+   - Replaced `'Trained'` with `'📋 Walkthrough Completed'`, replaced `'Lost'` with `'🛑 Not Interested'`, styled all 3 stop statuses (`Not Interested`, `Unsubscribed`, `Do Not Call (DNC)`) in Red (`#fee2e2` / `#991b1b`), and wired `✅ Upgrade to Client Account ➔` (`UPGRADE_TO_ACCOUNT`) to `promoteLead()` with `AND COALESCE(is_converted, FALSE) = FALSE` across all Leads queries and counts.
+2. **Stage-Date History Ledger (`"LeadStageHistory"`) & Milestone Columns (`database/schema_engine.py`, `blueprints/crm_api.py`):**
+   - Added `"LeadStageHistory"` and milestone date columns (`status_changed_at`, `outreach_started_at`, `engaged_at`, `contacted_at`, `qualified_at`, `walkthrough_completed_at`, `converted_at`, `converted_to_customer_id`, `disqualified_at`, `disqualified_reason`) on `"Leads"`.
+   - Added `#lead-stage-date-tracker` and `#lead-stage-history-summary` inside `#modal-lead-command` displaying the exact date each stage was reached and days in current stage.
+3. **Unified Record Activities Form & Calling Workstation Upgrade (`templates/backoffice_operations.html`, `static/js/backoffice_operations_core.js`, `blueprints/crm_api.py`):**
+   - Reorganized `#lead-pane-activities` so contact corrections, `Lead Stage`, `🧹 Who Cleans`, `Next Follow-Up Date`, and `Schedule Building Walkthrough` save cleanly via `/api/v1/leads/<id>/cadence-save`.
+   - Added a 1-click `🧹 Who Cleans Right Now` bar (`setCadenceCleaningModel`) in `#modal-lead-cadence` and enforced stage-protection rules so `Left Voicemail` / `Left Message w/ Staff` / `No Answer` never downgrade `Engaged`, `Qualified`, or `Walkthrough Completed` leads or falsely mark `New` leads as `Contacted`.
+**Preventative:**
+Verified continuously on every build by `test_35_enterprise_lead_status_who_cleans_stage_dates_and_calling_workstation_bug_157` in `scripts/test_web_performance_rack_14.py` (`35/35` PASS).
+
+
+
 
 

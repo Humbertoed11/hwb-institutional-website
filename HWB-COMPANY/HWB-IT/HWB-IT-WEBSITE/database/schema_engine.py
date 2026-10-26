@@ -215,6 +215,87 @@ def apply_system_migrations(conn: Any, db_url: Optional[str] = None) -> None:
                 ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS email_mx_verified BOOLEAN DEFAULT FALSE;
                 ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS last_campaigned_at TIMESTAMP WITH TIME ZONE;
                 ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS address_line_2 VARCHAR(100);
+                ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS status_changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+                ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS outreach_started_at TIMESTAMP;
+                ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS engaged_at TIMESTAMP;
+                ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS contacted_at TIMESTAMP;
+                ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS qualified_at TIMESTAMP;
+                ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS walkthrough_completed_at TIMESTAMP;
+                ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS converted_at TIMESTAMP;
+                ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS converted_to_customer_id INTEGER;
+                ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS disqualified_at TIMESTAMP;
+                ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS disqualified_reason VARCHAR(100);
+
+                CREATE TABLE IF NOT EXISTS "LeadStageHistory" (
+                    id SERIAL PRIMARY KEY,
+                    lead_id INTEGER NOT NULL,
+                    field_name VARCHAR(50) NOT NULL DEFAULT 'status',
+                    old_value VARCHAR(100),
+                    new_value VARCHAR(100) NOT NULL,
+                    changed_by_user_id INTEGER,
+                    changed_by_name VARCHAR(120),
+                    duration_seconds INTEGER,
+                    changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+                CREATE INDEX IF NOT EXISTS idx_lead_stage_history_lead_id
+                    ON "LeadStageHistory" (lead_id, changed_at DESC);
+
+                -- BUG-157: Normalize legacy lead statuses & separate Who Cleans (cleaning_delivery_model) from Lead Status
+                UPDATE "Leads"
+                SET status = 'New'
+                WHERE status = 'NEW' OR status IS NULL OR BTRIM(status) = '';
+
+                UPDATE "Leads"
+                SET status = 'Walkthrough Completed',
+                    walkthrough_completed_at = COALESCE(walkthrough_completed_at, updated_at, CURRENT_TIMESTAMP)
+                WHERE status = 'Trained';
+
+                UPDATE "Leads"
+                SET status = 'Not Interested',
+                    disqualified_at = COALESCE(disqualified_at, updated_at, CURRENT_TIMESTAMP),
+                    disqualified_reason = COALESCE(disqualified_reason, 'Not Interested')
+                WHERE status = 'Lost';
+
+                UPDATE "Leads"
+                SET cleaning_delivery_model = 'IN_HOUSE',
+                    status = 'Contacted',
+                    contacted_at = COALESCE(contacted_at, updated_at, CURRENT_TIMESTAMP)
+                WHERE status = 'In-House Cleaning';
+
+                UPDATE "Leads"
+                SET cleaning_delivery_model = 'OUTSOURCED',
+                    status = 'Contacted',
+                    contacted_at = COALESCE(contacted_at, updated_at, CURRENT_TIMESTAMP)
+                WHERE status = 'Contract Cleaning';
+
+                UPDATE "Leads"
+                SET status_changed_at = COALESCE(updated_at, CURRENT_TIMESTAMP)
+                WHERE status_changed_at IS NULL;
+
+                UPDATE "Leads"
+                SET outreach_started_at = COALESCE(outreach_started_at, last_campaigned_at, status_changed_at, CURRENT_TIMESTAMP)
+                WHERE status = 'In Campaign' AND outreach_started_at IS NULL;
+
+                UPDATE "Leads"
+                SET engaged_at = COALESCE(engaged_at, status_changed_at, CURRENT_TIMESTAMP)
+                WHERE status = 'Engaged' AND engaged_at IS NULL;
+
+                UPDATE "Leads"
+                SET contacted_at = COALESCE(contacted_at, status_changed_at, CURRENT_TIMESTAMP)
+                WHERE status = 'Contacted' AND contacted_at IS NULL;
+
+                UPDATE "Leads"
+                SET qualified_at = COALESCE(qualified_at, status_changed_at, CURRENT_TIMESTAMP)
+                WHERE status = 'Qualified' AND qualified_at IS NULL;
+
+                UPDATE "Leads"
+                SET walkthrough_completed_at = COALESCE(walkthrough_completed_at, status_changed_at, CURRENT_TIMESTAMP)
+                WHERE status = 'Walkthrough Completed' AND walkthrough_completed_at IS NULL;
+
+                UPDATE "Leads"
+                SET disqualified_at = COALESCE(disqualified_at, status_changed_at, CURRENT_TIMESTAMP),
+                    disqualified_reason = COALESCE(disqualified_reason, status)
+                WHERE status IN ('Not Interested', 'Unsubscribed', 'Do Not Call (DNC)') AND disqualified_at IS NULL;
 
                 ALTER TABLE "Customers" ADD COLUMN IF NOT EXISTS cleaning_delivery_model VARCHAR(50) DEFAULT 'DIRECT_W2';
                 ALTER TABLE "Customers" ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'Active';

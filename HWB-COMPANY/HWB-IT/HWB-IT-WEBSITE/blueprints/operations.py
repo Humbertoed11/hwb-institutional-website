@@ -81,6 +81,7 @@ def _get_active_system_users(conn) -> list:
                     SELECT owner_id, COUNT(*) AS lead_cnt
                     FROM "Leads"
                     WHERE owner_id IS NOT NULL
+                      AND COALESCE(is_converted, FALSE) = FALSE
                       AND COALESCE(is_commercial, TRUE) = TRUE
                       AND COALESCE(is_duplicate, FALSE) = FALSE
                       AND COALESCE(status, '') != 'ARCHIVED'
@@ -97,6 +98,14 @@ def _get_active_system_users(conn) -> list:
     except Exception:
         conn.rollback()
         return []
+
+
+def invalidate_operations_caches() -> None:
+    """Flushes cached sidebar lead/account counts and owner badge counts after promotions or bulk actions."""
+    with _OPS_CACHE_LOCK:
+        _SIDEBAR_COUNTS_CACHE.clear()
+        _SYSTEM_USERS_CACHE["data"] = None
+        _SYSTEM_USERS_CACHE["timestamp"] = 0.0
 
 
 def _get_operations_sidebar_counts(conn, user_id, role: str) -> dict:
@@ -142,18 +151,18 @@ def _get_operations_sidebar_counts(conn, user_id, role: str) -> dict:
             if is_sales:
                 cur.execute('''
                     SELECT
-                        COUNT(*) FILTER (WHERE COALESCE(is_commercial, TRUE) = TRUE AND COALESCE(is_duplicate, FALSE) = FALSE AND COALESCE(status, '') != 'ARCHIVED') AS active_leads,
-                        COUNT(*) FILTER (WHERE is_duplicate = TRUE) AS dup_cnt,
-                        COUNT(*) FILTER (WHERE COALESCE(campaign_ready, FALSE) = TRUE AND COALESCE(is_commercial, TRUE) = TRUE AND COALESCE(is_duplicate, FALSE) = FALSE) AS cr_cnt
+                        COUNT(*) FILTER (WHERE COALESCE(is_converted, FALSE) = FALSE AND COALESCE(is_commercial, TRUE) = TRUE AND COALESCE(is_duplicate, FALSE) = FALSE AND COALESCE(status, '') != 'ARCHIVED') AS active_leads,
+                        COUNT(*) FILTER (WHERE COALESCE(is_converted, FALSE) = FALSE AND is_duplicate = TRUE) AS dup_cnt,
+                        COUNT(*) FILTER (WHERE COALESCE(is_converted, FALSE) = FALSE AND COALESCE(campaign_ready, FALSE) = TRUE AND COALESCE(is_commercial, TRUE) = TRUE AND COALESCE(is_duplicate, FALSE) = FALSE) AS cr_cnt
                     FROM "Leads"
                     WHERE owner_id = %s;
                 ''', (user_id,))
             else:
                 cur.execute('''
                     SELECT
-                        COUNT(*) FILTER (WHERE COALESCE(is_commercial, TRUE) = TRUE AND COALESCE(is_duplicate, FALSE) = FALSE AND COALESCE(status, '') != 'ARCHIVED') AS active_leads,
-                        COUNT(*) FILTER (WHERE is_duplicate = TRUE) AS dup_cnt,
-                        COUNT(*) FILTER (WHERE COALESCE(campaign_ready, FALSE) = TRUE AND COALESCE(is_commercial, TRUE) = TRUE AND COALESCE(is_duplicate, FALSE) = FALSE) AS cr_cnt
+                        COUNT(*) FILTER (WHERE COALESCE(is_converted, FALSE) = FALSE AND COALESCE(is_commercial, TRUE) = TRUE AND COALESCE(is_duplicate, FALSE) = FALSE AND COALESCE(status, '') != 'ARCHIVED') AS active_leads,
+                        COUNT(*) FILTER (WHERE COALESCE(is_converted, FALSE) = FALSE AND is_duplicate = TRUE) AS dup_cnt,
+                        COUNT(*) FILTER (WHERE COALESCE(is_converted, FALSE) = FALSE AND COALESCE(campaign_ready, FALSE) = TRUE AND COALESCE(is_commercial, TRUE) = TRUE AND COALESCE(is_duplicate, FALSE) = FALSE) AS cr_cnt
                     FROM "Leads";
                 ''')
             l_row = cur.fetchone()
@@ -308,8 +317,8 @@ def admin_operations():
     active_technicians = []
     total_weekly_labor_hours, total_biweekly_payroll = 0.0, 0.0
 
-    # --- Dynamic Column Architecture (BUG-156: 'owner' is a permanent standard column on Leads) ---
-    default_cols_leads = 'company,status,owner,sqf,value,priority,activities'
+    # --- Dynamic Column Architecture (BUG-156 & BUG-157: 'status', 'cleaning_model', and 'owner' are permanent standard columns on Leads) ---
+    default_cols_leads = 'company,status,cleaning_model,owner,sqf,value,priority,activities'
     default_cols_accounts = 'company,city,phone,revenue,rep,activities'
     default_cols_bids = 'project,status,due_date,created,sqf,value,scope,estimator,phone,owner,actions'
 
@@ -343,10 +352,23 @@ def admin_operations():
     active_cols = [c.strip() for c in active_cols_str.split(',') if c.strip() and c.strip() != 'on']
     if anchor_col not in active_cols:
         active_cols.insert(0, anchor_col)
-    if active_view == 'leads' and 'owner' not in active_cols:
-        insert_idx = (active_cols.index('status') + 1) if 'status' in active_cols else 1
-        active_cols.insert(insert_idx, 'owner')
-        session[session_key] = ','.join(active_cols)
+    if active_view == 'leads':
+        updated_session_cols = False
+        if 'cols' not in request.args and 'cleaning_model' not in active_cols:
+            insert_cm_idx = (active_cols.index('status') + 1) if 'status' in active_cols else 1
+            active_cols.insert(insert_cm_idx, 'cleaning_model')
+            updated_session_cols = True
+        if 'owner' not in active_cols:
+            if 'cleaning_model' in active_cols:
+                insert_idx = active_cols.index('cleaning_model') + 1
+            elif 'status' in active_cols:
+                insert_idx = active_cols.index('status') + 1
+            else:
+                insert_idx = 1
+            active_cols.insert(insert_idx, 'owner')
+            updated_session_cols = True
+        if updated_session_cols:
+            session[session_key] = ','.join(active_cols)
 
     per_page = 50
     offset = (page - 1) * per_page
@@ -528,12 +550,16 @@ def admin_operations():
                     duplicates_only = request.args.get('duplicates_only') == 'true'
 
                     if duplicates_only and active_view == 'leads':
+                        lead_where_clauses.append("COALESCE(l.is_converted, FALSE) = FALSE")
                         lead_where_clauses.append("l.is_duplicate = TRUE")
                         l_sort, l_dir = "duplicate_group_id ASC, id", "ASC"
                     elif not include_archived and active_view == 'leads':
+                        lead_where_clauses.append("COALESCE(l.is_converted, FALSE) = FALSE")
                         lead_where_clauses.append("l.is_commercial = TRUE")
                         lead_where_clauses.append("(l.is_duplicate = FALSE OR l.is_duplicate IS NULL)")
                         lead_where_clauses.append("(l.status != 'ARCHIVED' OR l.status IS NULL)")
+                    else:
+                        lead_where_clauses.append("COALESCE(l.is_converted, FALSE) = FALSE")
 
                     m_and_a_filter = request.args.get('m_and_a') == 'true'
                     if m_and_a_filter and active_view == 'leads':
@@ -1586,7 +1612,7 @@ def add_manual_lead():
 
             user_attribution = (current_user.full_name or current_user.username) if (current_user.is_authenticated and (current_user.full_name or current_user.username)) else 'Operations System'
 
-            company_name = (data.get('company_name') or data.get('center_name') or '').strip()
+            company_name = (data.get('company_name') or data.get('center_name') or data.get('company') or '').strip()
             cleaned_email = clean_email(data.get('email')) or (data.get('email') or '').strip() or None
             cleaned_phone = clean_phone(data.get('phone')) or (data.get('phone') or '').strip()
             cleaned_city = clean_city(data.get('city')) or (data.get('city') or '').strip()
@@ -1720,7 +1746,20 @@ def add_manual_lead():
                 ))
                 final_lead_id = cur.fetchone()[0]
                 msg = f"Lead saved successfully (LEAD-#{final_lead_id:05d})."
+                initial_status = data.get('status') or 'New'
+                if initial_status == 'NEW':
+                    initial_status = 'New'
+                cur.execute('''
+                    INSERT INTO "LeadStageHistory" (lead_id, field_name, old_value, new_value, changed_by_user_id, changed_by_name, duration_seconds)
+                    VALUES (%s, 'status', NULL, %s, %s, %s, 0);
+                ''', (final_lead_id, initial_status, getattr(current_user, 'id', None), user_attribution))
+                if cleaning_model and cleaning_model != 'UNKNOWN':
+                    cur.execute('''
+                        INSERT INTO "LeadStageHistory" (lead_id, field_name, old_value, new_value, changed_by_user_id, changed_by_name, duration_seconds)
+                        VALUES (%s, 'cleaning_delivery_model', 'UNKNOWN', %s, %s, %s, 0);
+                    ''', (final_lead_id, cleaning_model, getattr(current_user, 'id', None), user_attribution))
 
+            invalidate_operations_caches()
             cur.execute('''
                 INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
                 VALUES (%s, 'Lead', %s, %s);

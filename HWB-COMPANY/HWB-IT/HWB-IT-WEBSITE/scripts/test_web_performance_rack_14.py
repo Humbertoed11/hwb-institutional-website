@@ -2768,8 +2768,191 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
             conn = get_db(self.db_url)
             try:
                 with conn.cursor() as cur:
+                    cur.execute('DELETE FROM "LeadStageHistory" WHERE lead_id = %s;', (new_lead_id,))
                     cur.execute('DELETE FROM "GlobalActivities" WHERE parent_type = %s AND parent_id = %s;', ("Lead", new_lead_id))
                     cur.execute('DELETE FROM "Leads" WHERE id = %s;', (new_lead_id,))
+                    conn.commit()
+            finally:
+                conn.close()
+
+    def test_35_enterprise_lead_status_who_cleans_stage_dates_and_calling_workstation_bug_157(self) -> None:
+        """
+        BUG-157: Enterprise Lead Status, 'Who Cleans' Separation, Stage-Date History Tracking,
+        Record Activities Reorganization & Commercial Lead Calling Workstation Upgrade.
+        """
+        auth_client = self.get_auth_client()
+
+        # 1. Verify database schema & zero legacy 'Trained'/'Lost' rows
+        conn = get_db(self.db_url)
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT column_name
+                    FROM information_schema.columns
+                    WHERE table_name = 'Leads'
+                      AND column_name IN (
+                          'status_changed_at', 'outreach_started_at', 'engaged_at',
+                          'contacted_at', 'qualified_at', 'walkthrough_completed_at',
+                          'converted_at', 'converted_to_customer_id', 'disqualified_at',
+                          'disqualified_reason', 'cleaning_delivery_model'
+                      );
+                    """
+                )
+                cols = {r["column_name"] for r in cur.fetchall()}
+                self.assertEqual(len(cols), 11, f"Missing milestone/cleaning columns on Leads: {cols}")
+
+                cur.execute(
+                    """
+                    SELECT COUNT(*) AS cnt
+                    FROM "Leads"
+                    WHERE status IN ('Trained', 'Lost', 'NEW', 'In-House Cleaning', 'Contract Cleaning');
+                    """
+                )
+                legacy_cnt = int(cur.fetchone()["cnt"])
+                self.assertEqual(legacy_cnt, 0, "Legacy status values must be migrated to canonical statuses/Who Cleans")
+        finally:
+            conn.close()
+
+        # 2. Verify /admin/operations?view=leads renders Status + Who Cleans columns, Red pills, and Calling Session buttons
+        resp = auth_client.get("/admin/operations?view=leads")
+        self.assertEqual(resp.status_code, 200)
+        html = resp.get_data(as_text=True)
+        self.assertIn("🧹 Who Cleans", html)
+        self.assertIn("🏠 In-House Cleaning", html)
+        self.assertIn("🤝 Contract Cleaning", html)
+        self.assertIn("📋 Walkthrough Completed", html)
+        self.assertIn("🛑 Not Interested", html)
+        self.assertIn("✉️ Unsubscribed", html)
+        self.assertIn("🚫 Do Not Call (DNC)", html)
+        self.assertIn("✅ Upgrade to Client Account", html)
+        self.assertIn("lead-stage-date-tracker", html)
+        self.assertIn("setCadenceCleaningModel", html)
+
+        # 3. Create a test lead and verify Stage-Date Tracking, Stage-Protection, Who Cleans, and Upgrade to Account
+        r_create = auth_client.post(
+            "/admin/add-lead",
+            json={
+                "company_name": "BUG157 Stage Date & Who Cleans Test Facility",
+                "decision_maker": "Patricia Vance",
+                "job_title": "Facility Director",
+                "email": "pvance@bug157facility.com",
+                "phone": "2145550199",
+                "address": "8100 Belt Line Rd",
+                "city": "Dallas",
+                "state": "TX",
+                "zipcode": "75254",
+                "sqf": "22000",
+                "cleaning_delivery_model": "IN_HOUSE",
+            },
+        )
+        self.assertEqual(r_create.status_code, 200)
+        lead_id = int(r_create.get_json()["lead_id"])
+        promoted_customer_id = None
+        conn = get_db(self.db_url)
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    'SELECT id, status, cleaning_delivery_model, status_changed_at FROM "Leads" WHERE id = %s;',
+                    (lead_id,),
+                )
+                row = cur.fetchone()
+                self.assertIsNotNone(row)
+                self.assertEqual(row["status"], "New")
+                self.assertEqual(row["cleaning_delivery_model"], "IN_HOUSE")
+                self.assertIsNotNone(row["status_changed_at"])
+        finally:
+            conn.close()
+
+        try:
+            # Verify Voicemail on 'New' lead does NOT falsely advance stage to 'Contacted'
+            r_vm = auth_client.post(
+                f"/api/v1/leads/{lead_id}/cadence-save",
+                json={
+                    "activity_type": "Voicemail Left",
+                    "status": "New",
+                    "note": "Left intro voicemail with front desk extension",
+                    "next_action_date": "2026-11-02",
+                },
+            )
+            self.assertEqual(r_vm.status_code, 200)
+            self.assertEqual(r_vm.get_json().get("resolved_status"), "New")
+
+            # Advance stage to 'Engaged', then verify 'Gatekeeper / Receptionist' does NOT downgrade 'Engaged' to 'Contacted'
+            r_eng = auth_client.patch(f"/api/v1/leads/{lead_id}", json={"status": "Engaged"})
+            self.assertEqual(r_eng.status_code, 200)
+            self.assertEqual(r_eng.get_json().get("resolved_status"), "Engaged")
+
+            r_gk = auth_client.post(
+                f"/api/v1/leads/{lead_id}/cadence-save",
+                json={
+                    "activity_type": "Gatekeeper / Receptionist",
+                    "status": "Contacted",
+                    "cleaning_delivery_model": "OUTSOURCED",
+                    "note": "Receptionist confirmed they use a contract cleaning crew",
+                },
+            )
+            self.assertEqual(r_gk.status_code, 200)
+            self.assertEqual(
+                r_gk.get_json().get("resolved_status"),
+                "Engaged",
+                "Gatekeeper call must not downgrade Engaged lead to Contacted",
+            )
+            self.assertEqual(r_gk.get_json().get("cleaning_delivery_model"), "OUTSOURCED")
+
+            # Advance to 'Walkthrough Completed' and inspect GET /api/v1/leads/<id> stage_history & stage_milestones
+            r_wt = auth_client.patch(f"/api/v1/leads/{lead_id}", json={"status": "Walkthrough Completed"})
+            self.assertEqual(r_wt.status_code, 200)
+
+            r_detail = auth_client.get(f"/api/v1/leads/{lead_id}")
+            self.assertEqual(r_detail.status_code, 200)
+            detail_json = r_detail.get_json()
+            milestones = detail_json.get("stage_milestones", {})
+            self.assertIsNotNone(milestones.get("engaged_at"))
+            self.assertIsNotNone(milestones.get("walkthrough_completed_at"))
+            stage_hist = detail_json.get("stage_history", [])
+            recorded_stages = [h.get("to_status") for h in stage_hist]
+            self.assertIn("New", recorded_stages)
+            self.assertIn("Engaged", recorded_stages)
+            self.assertIn("Walkthrough Completed", recorded_stages)
+
+            # Test Upgrade to Client Account (/api/v1/leads/<id>/promote)
+            r_promo = auth_client.post(f"/api/v1/leads/{lead_id}/promote")
+            self.assertEqual(r_promo.status_code, 200)
+            promo_data = r_promo.get_json()
+            self.assertEqual(promo_data.get("status"), "success")
+            promoted_customer_id = promo_data.get("account_id")
+            self.assertIsNotNone(promoted_customer_id)
+
+            # Verify promoted lead is marked is_converted=TRUE and excluded from active Leads query
+            conn = get_db(self.db_url)
+            try:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        'SELECT is_converted, converted_at, converted_to_customer_id FROM "Leads" WHERE id = %s;',
+                        (lead_id,),
+                    )
+                    l_after = cur.fetchone()
+                    self.assertTrue(l_after["is_converted"])
+                    self.assertIsNotNone(l_after["converted_at"])
+                    self.assertEqual(int(l_after["converted_to_customer_id"]), int(promoted_customer_id))
+            finally:
+                conn.close()
+
+            resp_after = auth_client.get("/admin/operations?view=leads&q=BUG157+Stage+Date")
+            self.assertEqual(resp_after.status_code, 200)
+            self.assertNotIn("BUG157 Stage Date &amp; Who Cleans Test Facility", resp_after.get_data(as_text=True))
+        finally:
+            conn = get_db(self.db_url)
+            try:
+                with conn.cursor() as cur:
+                    if lead_id:
+                        cur.execute('DELETE FROM "LeadStageHistory" WHERE lead_id = %s;', (lead_id,))
+                        cur.execute('DELETE FROM "GlobalActivities" WHERE parent_type = %s AND parent_id = %s;', ("Lead", lead_id))
+                        cur.execute('DELETE FROM "Leads" WHERE id = %s;', (lead_id,))
+                    if promoted_customer_id:
+                        cur.execute('DELETE FROM "GlobalActivities" WHERE parent_type = %s AND parent_id = %s;', ("Account", promoted_customer_id))
+                        cur.execute('DELETE FROM "Customers" WHERE customer_id = %s;', (promoted_customer_id,))
                     conn.commit()
             finally:
                 conn.close()

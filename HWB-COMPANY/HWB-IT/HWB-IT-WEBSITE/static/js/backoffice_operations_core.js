@@ -126,7 +126,70 @@
         const popover = document.getElementById('sigma-hover-card-popover');
         if (popover) popover.style.display = 'none';
     }
+    function applyLeadStatusSelectStyle(selectEl, statusVal) {
+        if (!selectEl) return;
+        const s = String(statusVal || 'New');
+        if (s === 'Do Not Call (DNC)' || s === 'Unsubscribed' || s === 'Not Interested') {
+            selectEl.style.background = '#fee2e2';
+            selectEl.style.color = '#991b1b';
+            selectEl.style.borderColor = '#fca5a5';
+        } else if (s === 'Walkthrough Completed') {
+            selectEl.style.background = '#fef9c3';
+            selectEl.style.color = '#854d0e';
+            selectEl.style.borderColor = '#fde047';
+        } else if (s === 'Qualified') {
+            selectEl.style.background = '#ccfbf1';
+            selectEl.style.color = '#0f766e';
+            selectEl.style.borderColor = '#5eead4';
+        } else if (s === 'Contacted') {
+            selectEl.style.background = '#f3e8ff';
+            selectEl.style.color = '#7e22ce';
+            selectEl.style.borderColor = '#d8b4fe';
+        } else if (s === 'Engaged') {
+            selectEl.style.background = '#d1fae5';
+            selectEl.style.color = '#065f46';
+            selectEl.style.borderColor = '#6ee7b7';
+        } else if (s === 'In Campaign') {
+            selectEl.style.background = '#e0e7ff';
+            selectEl.style.color = '#3730a3';
+            selectEl.style.borderColor = '#c7d2fe';
+        } else {
+            selectEl.style.background = '#e0f2fe';
+            selectEl.style.color = '#0369a1';
+            selectEl.style.borderColor = '#bae6fd';
+        }
+    }
+
+    function applyCleaningModelSelectStyle(selectEl, modelVal) {
+        if (!selectEl) return;
+        const m = String(modelVal || 'UNKNOWN').toUpperCase();
+        if (m === 'IN_HOUSE') {
+            selectEl.style.background = '#fef3c7';
+            selectEl.style.color = '#b45309';
+            selectEl.style.borderColor = '#fde68a';
+        } else if (m === 'OUTSOURCED') {
+            selectEl.style.background = '#cffafe';
+            selectEl.style.color = '#0e7490';
+            selectEl.style.borderColor = '#67e8f9';
+        } else {
+            selectEl.style.background = '#f8fafc';
+            selectEl.style.color = '#64748b';
+            selectEl.style.borderColor = '#e2e8f0';
+        }
+    }
+
+    function formatCleaningModelLabel(modelVal) {
+        const m = String(modelVal || 'UNKNOWN').toUpperCase();
+        if (m === 'IN_HOUSE') return '🏠 In-House Cleaning';
+        if (m === 'OUTSOURCED') return '🤝 Contract Cleaning';
+        return '⚪ Unknown';
+    }
+
     async function quickUpdateLead(leadId, field, value, element) {
+        if (field === 'status' && value === 'UPGRADE_TO_ACCOUNT') {
+            promoteLead(leadId, element);
+            return;
+        }
         try {
             const body = {};
             body[field] = value;
@@ -140,14 +203,29 @@
                     showToast("Access Restricted: You do not have permission to edit leads.", "error");
                 }
                 if (element) {
+                    if (element.dataset && element.dataset.prevValue) {
+                        element.value = element.dataset.prevValue;
+                    }
                     element.style.boxShadow = '0 0 0 3px #fca5a5';
                     setTimeout(() => { element.style.boxShadow = 'none'; }, 2000);
                 }
                 return;
             }
             if (!res.ok) throw new Error("Update failed: " + res.status);
+            const result = await res.json().catch(() => ({}));
             
             if (element) {
+                if (field === 'status') {
+                    const resolvedStatus = result.resolved_status || value;
+                    element.value = resolvedStatus;
+                    element.setAttribute('data-prev-value', resolvedStatus);
+                    applyLeadStatusSelectStyle(element, resolvedStatus);
+                } else if (field === 'cleaning_delivery_model') {
+                    const resolvedModel = result.cleaning_delivery_model || value;
+                    element.value = resolvedModel;
+                    element.setAttribute('data-prev-value', resolvedModel);
+                    applyCleaningModelSelectStyle(element, resolvedModel);
+                }
                 const origShadow = element.style.boxShadow;
                 element.style.transition = 'all 0.2s ease';
                 element.style.boxShadow = '0 0 0 3px #86efac';
@@ -1165,7 +1243,7 @@
                 { label: '🎯 M&A Acquisition Tier', val: lead.acquisition_tier || '--' },
                 { label: '🏷️ Ownership Classification', val: lead.ownership_type || '--' },
                 { label: 'Owner Verification', val: lead.owner_verification_status || '--' },
-                { label: 'Cleaning Delivery Model', val: lead.cleaning_delivery_model || 'Model C Institutional Prime (Bosanna)' },
+                { label: '🧹 Who Cleans', val: formatCleaningModelLabel(lead.cleaning_delivery_model) },
                 { label: 'Lead Owner', val: lead.owner_id ? (SYSTEM_USERS_MAP[lead.owner_id] || ('User #' + lead.owner_id)) : '-- Unassigned --' }
             ];
 
@@ -1179,6 +1257,8 @@
 
             const listOverview = document.getElementById('lead-list-overview');
             if (listOverview) { listOverview.innerHTML = overview.map(o => `<div class="sigma-read-field"><label style="font-size:0.8rem; font-weight:500; color:var(--slate-600); text-transform:none; margin-bottom:0.25rem;">${o.label}</label><div style="font-weight:600; color:var(--slate-900); font-size:0.9rem;">${o.val}</div></div>`).join(''); }
+
+            renderLeadStageDateTracker(lead, data.stage_milestones, data.stage_history);
 
             const dncBtn = document.getElementById('btn-modal-lead-dnc');
             if (dncBtn) {
@@ -1245,13 +1325,16 @@
             setVal('lead-action-manager', lead.decision_maker);
             setVal('lead-action-phone', lead.phone);
             setVal('lead-action-email', lead.email);
+            setVal('lead-activity-status', '');
+            setVal('lead-activity-cleaning-model', lead.cleaning_delivery_model || 'UNKNOWN');
+            setVal('lead-activity-next-date', lead.next_action_date ? String(lead.next_action_date).slice(0, 10) : '');
 
             const contactList = document.getElementById('lead-list-contacts');
             if (contactList) {
                 contactList.innerHTML = (data.contacts || []).map(c => `<div class="isc-list-item"><div style="font-weight:900; font-size:1.1rem">${c.full_name}</div><div style="font-size:0.75rem; color:var(--brand); font-weight:800; text-transform:uppercase;">${c.role || 'Lead Contact'}</div><div style="height:1px; background:var(--slate-100); margin:1rem 0;"></div><div style="display:flex; gap:1.5rem;"><div style="font-size:0.85rem; color:var(--slate-600);"><i class="fas fa-phone"></i> ${c.phone || '--'}</div><div style="font-size:0.85rem; color:var(--slate-600);"><i class="fas fa-envelope"></i> ${c.email || '--'}</div></div></div>`).join('') || '<p style="text-align:center; padding:2rem; color:var(--slate-400);">No additional contacts.</p>';
             }
 
-            const typeMap = { 'LEAD_CREATED': 'Lead added', 'PHONE_CALL': 'Phone call', 'EMAIL_SENT': 'Email sent', 'SITE_VISIT': 'Building visit', 'NOTE': 'Note added' };
+            const typeMap = { 'LEAD_CREATED': 'Lead added', 'PHONE_CALL': 'Phone call', 'EMAIL_SENT': 'Email sent', 'SITE_VISIT': 'Building visit', 'NOTE': 'Note added', 'STAGE_CHANGE': 'Stage updated', 'CLEANING_SETUP_UPDATED': 'Who Cleans updated', 'CONVERTED': 'Upgraded to Client Account' };
             const timeline = document.getElementById('lead-list-timeline');
             if (timeline) {
                 timeline.innerHTML = (data.activities || []).map(a => `<div class="timeline-node"><div style="font-size:0.7rem; font-weight:900; color:var(--brand); text-transform:uppercase"><i class="fas fa-stream"></i> ${formatDashboardDate(a.timestamp)}</div><div style="font-weight:800; margin:0.5rem 0;">${typeMap[a.activity_type] || a.activity_type}</div><div style="font-size:0.9rem; color:var(--slate-600)">${a.description}</div></div>`).join('') || '<p style="text-align:center; padding:2rem; color:var(--slate-400);">No history.</p>';
@@ -1279,6 +1362,176 @@
             }
             openModal('modal-lead-command');
         } catch (err) { console.error("Lead Error:", err); showToast("Failed to load Lead.", "error"); }
+    }
+
+    function renderLeadStageDateTracker(lead, stageMilestones, stageHistory) {
+        const stepsContainer = document.getElementById('lead-stage-date-steps');
+        const whoCleansBadge = document.getElementById('lead-stage-who-cleans-badge');
+        const daysBadge = document.getElementById('lead-stage-days-badge');
+        const historySummary = document.getElementById('lead-stage-history-summary');
+        const historySummaryList = document.getElementById('lead-stage-history-summary-list');
+
+        const cm = String(lead.cleaning_delivery_model || 'UNKNOWN').toUpperCase();
+        if (whoCleansBadge) {
+            whoCleansBadge.innerText = '🧹 Who Cleans: ' + formatCleaningModelLabel(cm);
+            if (cm === 'IN_HOUSE') {
+                whoCleansBadge.style.background = '#fef3c7';
+                whoCleansBadge.style.color = '#b45309';
+                whoCleansBadge.style.borderColor = '#fde68a';
+            } else if (cm === 'OUTSOURCED') {
+                whoCleansBadge.style.background = '#cffafe';
+                whoCleansBadge.style.color = '#0e7490';
+                whoCleansBadge.style.borderColor = '#67e8f9';
+            } else {
+                whoCleansBadge.style.background = '#f1f5f9';
+                whoCleansBadge.style.color = '#475569';
+                whoCleansBadge.style.borderColor = '#cbd5e1';
+            }
+        }
+
+        const m = stageMilestones || {};
+        if (daysBadge) {
+            const daysVal = (typeof m.days_in_current_stage === 'number') ? m.days_in_current_stage : 0;
+            const stageLabel = (lead.status === 'In Campaign') ? 'In Email Outreach' : (lead.status || 'New');
+            daysBadge.innerText = `⏱️ ${daysVal} day${daysVal === 1 ? '' : 's'} in ${stageLabel}`;
+        }
+
+        if (stepsContainer) {
+            const currentStatus = lead.status || 'New';
+            const stages = [
+                { key: 'New', label: 'New', date: m.new_at || lead.input_date },
+                { key: 'In Campaign', label: '📬 Email Outreach', date: m.outreach_started_at },
+                { key: 'Engaged', label: '🔥 Engaged', date: m.engaged_at },
+                { key: 'Contacted', label: 'Contacted', date: m.contacted_at },
+                { key: 'Qualified', label: 'Qualified', date: m.qualified_at },
+                { key: 'Walkthrough Completed', label: '📋 Walkthrough Completed', date: m.walkthrough_completed_at }
+            ];
+            if (['Not Interested', 'Unsubscribed', 'Do Not Call (DNC)'].includes(currentStatus) || m.disqualified_at) {
+                stages.push({
+                    key: currentStatus,
+                    label: currentStatus === 'Do Not Call (DNC)' ? '🚫 Do Not Call (DNC)' : (currentStatus === 'Unsubscribed' ? '✉️ Unsubscribed' : '🛑 Not Interested'),
+                    date: m.disqualified_at || m.status_changed_at,
+                    isStop: true
+                });
+            }
+
+            stepsContainer.innerHTML = stages.map(s => {
+                const isCurrent = (currentStatus === s.key);
+                const hasDate = Boolean(s.date);
+                const dateText = hasDate ? formatDashboardDate(s.date) : '--';
+                let bg = '#ffffff';
+                let border = '#e2e8f0';
+                let textCol = '#64748b';
+                if (s.isStop && (isCurrent || hasDate)) {
+                    bg = '#fee2e2'; border = '#fca5a5'; textCol = '#991b1b';
+                } else if (isCurrent) {
+                    bg = '#eff6ff'; border = '#3b82f6'; textCol = '#1d4ed8';
+                } else if (hasDate) {
+                    bg = '#f0fdf4'; border = '#86efac'; textCol = '#15803d';
+                }
+                return `<div style="display:flex; flex-direction:column; padding:4px 10px; border-radius:6px; background:${bg}; border:1px solid ${border}; min-width:112px;">
+                    <span style="font-size:0.7rem; font-weight:800; color:${textCol};">${hasDate ? '✓ ' : ''}${s.label}</span>
+                    <span style="font-size:0.68rem; font-weight:600; color:#475569;">${dateText}</span>
+                </div>`;
+            }).join('');
+        }
+
+        if (historySummary && historySummaryList) {
+            const hist = Array.isArray(stageHistory) ? stageHistory : [];
+            if (hist.length > 0) {
+                historySummary.style.display = 'block';
+                historySummaryList.innerHTML = hist.map(h => {
+                    const dt = formatDashboardDate(h.changed_at);
+                    const rawTo = h.new_value || h.to_status || '';
+                    const rawFrom = h.old_value || h.from_status || '';
+                    const isCleaningModel = (h.field_name === 'cleaning_delivery_model');
+                    const toLabel = isCleaningModel ? formatCleaningModelLabel(rawTo) : (rawTo === 'In Campaign' ? 'In Email Outreach' : rawTo);
+                    const fromLabel = rawFrom ? (isCleaningModel ? formatCleaningModelLabel(rawFrom) : (rawFrom === 'In Campaign' ? 'In Email Outreach' : rawFrom)) : 'Initial Record';
+                    const isRed = ['Not Interested', 'Unsubscribed', 'Do Not Call (DNC)'].includes(rawTo);
+                    const badgeBg = isRed ? '#fee2e2' : (isCleaningModel ? '#fef3c7' : '#dbeafe');
+                    const badgeCol = isRed ? '#991b1b' : (isCleaningModel ? '#b45309' : '#1e40af');
+                    const byName = h.changed_by_name || h.changed_by || '';
+                    return `<div style="display:flex; justify-content:space-between; align-items:center; background:#ffffff; padding:6px 10px; border-radius:6px; border:1px solid #e2e8f0; font-size:0.78rem;">
+                        <div>
+                            <span style="font-weight:700; color:#475569;">${isCleaningModel ? 'Who Cleans: ' : ''}${fromLabel}</span>
+                            <span style="color:#94a3b8; margin:0 6px;">➔</span>
+                            <span style="font-weight:800; padding:2px 8px; border-radius:999px; background:${badgeBg}; color:${badgeCol};">${toLabel}</span>
+                        </div>
+                        <div style="font-size:0.72rem; font-weight:700; color:#64748b;">${dt}${byName ? ' • ' + byName : ''}</div>
+                    </div>`;
+                }).join('');
+            } else {
+                historySummary.style.display = 'none';
+                historySummaryList.innerHTML = '';
+            }
+        }
+    }
+
+    function handleActivityResultChange(resultVal) {
+        const stageSelect = document.getElementById('lead-activity-status');
+        if (!stageSelect) return;
+        if (resultVal === 'Spoke with Manager - Interested' || resultVal === 'Walkthrough Requested') {
+            stageSelect.value = 'Qualified';
+        } else if (resultVal === 'Spoke with Manager - Follow Up') {
+            stageSelect.value = 'Contacted';
+        } else if (resultVal === 'Walkthrough Completed') {
+            stageSelect.value = 'Walkthrough Completed';
+        } else if (resultVal === 'Not Interested') {
+            stageSelect.value = 'Not Interested';
+        } else if (resultVal === 'Unsubscribed') {
+            stageSelect.value = 'Unsubscribed';
+        } else if (resultVal === 'Do Not Call (DNC)') {
+            stageSelect.value = 'Do Not Call (DNC)';
+        } else {
+            // Voicemail / Gatekeeper / No Answer: keep current stage so higher stages are not downgraded
+            stageSelect.value = '';
+        }
+    }
+
+    function setActivityNextDateOffset(offsetDays) {
+        const d = new Date();
+        d.setDate(d.getDate() + offsetDays);
+        if (d.getDay() === 6) d.setDate(d.getDate() + 2);
+        if (d.getDay() === 0) d.setDate(d.getDate() + 1);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        const el = document.getElementById('lead-activity-next-date');
+        if (el) el.value = `${yyyy}-${mm}-${dd}`;
+    }
+
+    async function saveQuickLeadContactFromActivities() {
+        const id = currentLeadId;
+        if (!id) { showToast("No lead selected.", "error"); return; }
+        const dm = (document.getElementById('lead-action-manager')?.value || '').trim();
+        const phone = (document.getElementById('lead-action-phone')?.value || '').trim();
+        const email = (document.getElementById('lead-action-email')?.value || '').trim();
+        const cm = (document.getElementById('lead-activity-cleaning-model')?.value || 'UNKNOWN').trim();
+        const stageVal = (document.getElementById('lead-activity-status')?.value || '').trim();
+        const payload = {
+            decision_maker: dm,
+            phone: phone,
+            email: email,
+            cleaning_delivery_model: cm
+        };
+        if (stageVal && stageVal !== 'UPGRADE_TO_ACCOUNT') {
+            payload.status = stageVal;
+        }
+        try {
+            const res = await fetch(`/api/v1/leads/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+                showToast("Contact info & Who Cleans saved.", "success");
+                syncOperationalData();
+            } else {
+                showToast("Failed to save contact info.", "error");
+            }
+        } catch (err) {
+            showToast("Network error saving contact info.", "error");
+        }
     }
 
     function handleRowClick(event, id) {
@@ -1602,33 +1855,53 @@
 
         const type = document.getElementById('lead-activity-type').value;
         const resultVal = document.getElementById('lead-activity-result').value;
+        const explicitStatus = document.getElementById('lead-activity-status') ? document.getElementById('lead-activity-status').value : '';
+        const cleaningModel = document.getElementById('lead-activity-cleaning-model') ? document.getElementById('lead-activity-cleaning-model').value : '';
+        const dm = document.getElementById('lead-action-manager') ? document.getElementById('lead-action-manager').value.trim() : '';
+        const phone = document.getElementById('lead-action-phone') ? document.getElementById('lead-action-phone').value.trim() : '';
+        const email = document.getElementById('lead-action-email') ? document.getElementById('lead-action-email').value.trim() : '';
+        const nextDate = document.getElementById('lead-activity-next-date') ? document.getElementById('lead-activity-next-date').value.trim() : '';
         let desc = document.getElementById('lead-activity-desc').value;
-        const autoFollow = document.getElementById('update-next-action').checked;
+
+        if (explicitStatus === 'UPGRADE_TO_ACCOUNT') {
+            promoteLead(id);
+            return;
+        }
 
         if (resultVal) {
             desc = `[Result: ${resultVal}] ${desc}`;
         }
 
-        showToast("Synchronizing note...", "success");
+        showToast("Saving activity & lead updates...", "success");
 
         try {
-            const res = await fetch('/api/v1/activities', { 
+            const payload = {
+                decision_maker: dm,
+                phone: phone,
+                email: email,
+                note: desc,
+                activity_type: resultVal || type,
+                next_action_date: nextDate || null
+            };
+            if (explicitStatus) {
+                payload.status = explicitStatus;
+            }
+            if (cleaningModel) {
+                payload.cleaning_delivery_model = cleaningModel;
+            }
+            const res = await fetch(`/api/v1/leads/${id}/cadence-save`, { 
                 method: 'POST', 
                 headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify({ parent_id: id, parent_type: 'Lead', activity_type: type, description: desc, auto_followup: autoFollow }) 
+                body: JSON.stringify(payload) 
             });
             
             const result = res.ok ? await res.json().catch(() => ({})) : null;
 
             if (res.ok) { 
                 document.getElementById('lead-activity-desc').value = ''; 
-                if (resultVal === 'Do Not Call (DNC)') {
-                    await markLeadDNCFromModal();
-                } else {
-                    showToast("Note finalized.", "success"); 
-                    await openLeadCommand(id, 'timeline');
-                    syncOperationalData();
-                }
+                showToast("Activity and stage dates saved.", "success"); 
+                await openLeadCommand(id, 'timeline');
+                syncOperationalData();
             } else {
                 const err = result || {message: "Submission failed"};
                 showToast("System Error: " + (err.message || "Failed to save"), "error");
@@ -1725,15 +1998,28 @@
                 rowHtml += `<td class="sticky-1"><div class="sigma-unit-data"><div class="sigma-unit-primary">${lead.center_name || 'Unnamed'}</div><div class="sigma-unit-secondary" style="font-weight: 500;">${lead.address || '--'}</div></div></td>`;
             } else if (col === 'status') {
                 if (lead.status === 'Do Not Call (DNC)' || lead.is_dnc) {
-                    rowHtml += `<td class="sticky-2"><span class="sigma-unit-pill" style="background:#fee2e2; color:#991b1b; border: 1px solid #fca5a5; font-weight: 800;">🚫 Do Not Call</span></td>`;
+                    rowHtml += `<td class="sticky-2"><span class="sigma-unit-pill" style="background:#fee2e2; color:#991b1b; border: 1px solid #fca5a5; font-weight: 800;">🚫 Do Not Call (DNC)</span></td>`;
                 } else if (lead.status === 'Unsubscribed') {
-                    rowHtml += `<td class="sticky-2"><span class="sigma-unit-pill" style="background:#ffedd5; color:#9a3412; border: 1px solid #fdba74; font-weight: 800;">✉️ Unsubscribed</span></td>`;
+                    rowHtml += `<td class="sticky-2"><span class="sigma-unit-pill" style="background:#fee2e2; color:#991b1b; border: 1px solid #fca5a5; font-weight: 800;">✉️ Unsubscribed</span></td>`;
+                } else if (lead.status === 'Not Interested') {
+                    rowHtml += `<td class="sticky-2"><span class="sigma-unit-pill" style="background:#fee2e2; color:#991b1b; border: 1px solid #fca5a5; font-weight: 800;">🛑 Not Interested</span></td>`;
+                } else if (lead.status === 'Walkthrough Completed') {
+                    rowHtml += `<td class="sticky-2"><span class="sigma-unit-pill" style="background:#fef9c3; color:#854d0e; border: 1px solid #fde047; font-weight: 800;">📋 Walkthrough Completed</span></td>`;
                 } else if (lead.status === 'In Campaign') {
-                    rowHtml += `<td class="sticky-2"><span class="sigma-unit-pill" style="background:#e0e7ff; color:#3730a3; border: 1px solid #c7d2fe; font-weight: 800;">In Email Outreach</span></td>`;
+                    rowHtml += `<td class="sticky-2"><span class="sigma-unit-pill" style="background:#e0e7ff; color:#3730a3; border: 1px solid #c7d2fe; font-weight: 800;">📬 In Email Outreach</span></td>`;
                 } else if (lead.status === 'Engaged') {
-                    rowHtml += `<td class="sticky-2"><span class="sigma-unit-pill" style="background:#d1fae5; color:#065f46; border: 1px solid #6ee7b7; font-weight: 800;">Engaged 🔥</span></td>`;
+                    rowHtml += `<td class="sticky-2"><span class="sigma-unit-pill" style="background:#d1fae5; color:#065f46; border: 1px solid #6ee7b7; font-weight: 800;">🔥 Engaged</span></td>`;
                 } else {
                     rowHtml += `<td class="sticky-2"><span class="sigma-unit-pill" style="background:#f1f5f9; color:#475569">${lead.status || 'New'}</span></td>`;
+                }
+            } else if (col === 'cleaning_model') {
+                const cm = String(lead.cleaning_delivery_model || 'UNKNOWN').toUpperCase();
+                if (cm === 'IN_HOUSE') {
+                    rowHtml += `<td onclick="event.stopPropagation();"><span class="sigma-unit-pill" style="background:#fef3c7; color:#b45309; border: 1px solid #fde68a; font-weight: 800;">🏠 In-House Cleaning</span></td>`;
+                } else if (cm === 'OUTSOURCED') {
+                    rowHtml += `<td onclick="event.stopPropagation();"><span class="sigma-unit-pill" style="background:#cffafe; color:#0e7490; border: 1px solid #67e8f9; font-weight: 800;">🤝 Contract Cleaning</span></td>`;
+                } else {
+                    rowHtml += `<td onclick="event.stopPropagation();"><span class="sigma-unit-pill" style="background:#f8fafc; color:#64748b; border: 1px solid #e2e8f0; font-weight: 700;">⚪ Unknown</span></td>`;
                 }
             } else if (col === 'dm') {
                 rowHtml += `<td class="sticky-3"><div class="sigma-unit-data"><div class="sigma-unit-primary" style="font-size:0.85rem">${lead.decision_maker || '--'}</div><div class="sigma-unit-secondary" style="font-weight: 500;">${lead.job_title || 'Owner/Manager'}</div></div></td>`;
@@ -2152,23 +2438,35 @@
         }
     }
 
-    async function promoteLead(rowId) {
+    async function promoteLead(rowId, selectEl = null) {
         const id = rowId || currentLeadId;
-        showDecision({ title: 'Change to Client?', text: 'This will move the lead to your active client list.', confirmText: 'Move to Clients', icon: 'fa-exchange-alt', onConfirm: async () => {
-            showToast("Promoting lead to Account...", "success");
-            try {
-                const res = await fetch(`/api/v1/leads/${id}/promote`, { method: 'POST' });
-                const result = await res.json().catch(() => ({status: 'error', message: 'Invalid JSON response'}));
-                if (res.ok) { 
-                    showToast("Lead moved to Clients.", "success"); 
-                    syncOperationalData(); 
-                } else {
-                    showToast("Promotion failed: " + (result.message || "Unknown error"), "error");
+        if (selectEl) {
+            selectEl.value = selectEl.getAttribute('data-prev-value') || 'Walkthrough Completed';
+        }
+        showDecision({
+            title: 'Upgrade Lead to Client Account?',
+            text: 'This moves the facility out of the Leads list and creates an active Client Account with all contact details, square footage, and activity history preserved.',
+            confirmText: 'Upgrade to Client Account',
+            icon: 'fa-exchange-alt',
+            onConfirm: async () => {
+                showToast("Upgrading lead to Client Account...", "success");
+                try {
+                    const res = await fetch(`/api/v1/leads/${id}/promote`, { method: 'POST' });
+                    const result = await res.json().catch(() => ({status: 'error', message: 'Invalid JSON response'}));
+                    if (res.ok) { 
+                        const row = document.querySelector(`.leads-row[data-id="${id}"]`);
+                        if (row) row.remove();
+                        closeModal('modal-lead-command');
+                        showToast("Upgraded to Client Account! Removed from Leads.", "success"); 
+                        syncOperationalData(); 
+                    } else {
+                        showToast("Upgrade failed: " + (result.message || "Unknown error"), "error");
+                    }
+                } catch (err) {
+                    showToast("Network error during account upgrade.", "error");
                 }
-            } catch (err) {
-                showToast("Network error during promotion.", "error");
             }
-        }});
+        });
     }
 
     async function deleteLead(rowId) {
@@ -3111,18 +3409,26 @@
         if (!id) { showToast("Error: No Lead identified", "error"); return; }
         
         const date = document.getElementById('visit-date').value;
-        const time = document.getElementById('visit-time').value || 'Not specified';
+        const time = document.getElementById('visit-time').value || '10:00 AM';
         const manager = document.getElementById('visit-manager').value || '--';
         const phone = document.getElementById('visit-phone').value || '--';
         const instructions = document.getElementById('visit-instructions').value;
+        const syncCal = document.getElementById('visit-sync-cal') ? document.getElementById('visit-sync-cal').checked : true;
         
         try {
-            const res = await fetch(`/api/v1/leads/${id}`, { 
-                method: 'PUT', 
+            const res = await fetch(`/api/v1/leads/${id}/cadence-save`, { 
+                method: 'POST', 
                 headers: { 'Content-Type': 'application/json' }, 
                 body: JSON.stringify({ 
-                    next_action_date: date, 
-                    notes: `[VISIT SCHEDULED] Manager: ${manager} | ${instructions}` 
+                    decision_maker: manager !== '--' ? manager : undefined,
+                    phone: phone !== '--' ? phone : undefined,
+                    status: 'Qualified',
+                    preferred_date: date,
+                    preferred_time: time,
+                    next_action_date: date,
+                    activity_type: 'Walkthrough Booked',
+                    sync_calendar: syncCal,
+                    note: `Walkthrough scheduled for ${date} at ${time}. Manager: ${manager}. ${instructions || ''}`.trim()
                 }) 
             });
             
@@ -3134,12 +3440,13 @@
                 setElText('confirm-visit-manager', manager);
                 setElText('confirm-visit-phone', phone);
                 
-                showToast(`Visit scheduled for ${formatDashboardDate(date)}.`, "success");
+                showToast(`Walkthrough scheduled for ${formatDashboardDate(date)}.`, "success");
                 
                 // Background Sync: Refresh history/timeline without closing modal
                 openLeadCommand(id, 'visit-confirm'); 
+                syncOperationalData();
             } else {
-                showToast("System Error: Failed to schedule visit.", "error");
+                showToast("System Error: Failed to schedule walkthrough.", "error");
             }
         } catch (err) {
             console.error("Visit Error:", err);
@@ -4165,6 +4472,16 @@
                 cadenceRemoveBtn.style.display = hasCampaign ? 'inline-flex' : 'none';
             }
 
+            // Populate Who Cleans toggle & Stage Date info
+            setCadenceCleaningModel(activeCadenceLead.cleaning_delivery_model || 'UNKNOWN', false);
+            const stageDateInfoEl = document.getElementById('cadence-lead-stage-date-info');
+            if (stageDateInfoEl) {
+                const ms = data.stage_milestones || {};
+                const daysInStage = typeof ms.days_in_current_stage === 'number' ? ms.days_in_current_stage : 0;
+                const stageName = hasCampaign ? 'In Email Outreach' : (activeCadenceLead.status || 'New');
+                stageDateInfoEl.innerText = `Stage: ${stageName} (${daysInStage} day${daysInStage === 1 ? '' : 's'})`;
+            }
+
             // Reset notes & follow up
             document.getElementById('cadence-lead-notes').value = '';
             document.getElementById('cadence-lead-next-date').value = activeCadenceLead.next_action_date || '';
@@ -4713,6 +5030,59 @@
         }
     }
 
+    async function setCadenceCleaningModel(modelVal, saveImmediately = true) {
+        const resolved = String(modelVal || 'UNKNOWN').toUpperCase();
+        const hiddenEl = document.getElementById('cadence-lead-cleaning-model');
+        if (hiddenEl) hiddenEl.value = resolved;
+
+        const btnUnknown = document.getElementById('btn-cadence-cm-unknown');
+        const btnInHouse = document.getElementById('btn-cadence-cm-inhouse');
+        const btnOutsourced = document.getElementById('btn-cadence-cm-outsourced');
+
+        if (btnUnknown) {
+            btnUnknown.style.background = resolved === 'UNKNOWN' ? '#e2e8f0' : '#ffffff';
+            btnUnknown.style.color = resolved === 'UNKNOWN' ? '#0f172a' : '#475569';
+            btnUnknown.style.borderColor = resolved === 'UNKNOWN' ? '#94a3b8' : '#cbd5e1';
+        }
+        if (btnInHouse) {
+            btnInHouse.style.background = resolved === 'IN_HOUSE' ? '#fef3c7' : '#ffffff';
+            btnInHouse.style.color = resolved === 'IN_HOUSE' ? '#b45309' : '#475569';
+            btnInHouse.style.borderColor = resolved === 'IN_HOUSE' ? '#f59e0b' : '#cbd5e1';
+        }
+        if (btnOutsourced) {
+            btnOutsourced.style.background = resolved === 'OUTSOURCED' ? '#cffafe' : '#ffffff';
+            btnOutsourced.style.color = resolved === 'OUTSOURCED' ? '#0e7490' : '#475569';
+            btnOutsourced.style.borderColor = resolved === 'OUTSOURCED' ? '#06b6d4' : '#cbd5e1';
+        }
+
+        if (activeCadenceLead) {
+            activeCadenceLead.cleaning_delivery_model = resolved;
+        }
+
+        if (saveImmediately && activeCadenceLead && activeCadenceLead.id) {
+            try {
+                await fetch(`/api/v1/leads/${activeCadenceLead.id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cleaning_delivery_model: resolved })
+                });
+                const row = document.querySelector(`.leads-row[data-id="${activeCadenceLead.id}"]`);
+                if (row) {
+                    const cmSelect = row.querySelector('select[onchange*="cleaning_delivery_model"]');
+                    if (cmSelect) {
+                        cmSelect.value = resolved;
+                        applyCleaningModelSelectStyle(cmSelect, resolved);
+                    }
+                }
+                if (typeof showToast === 'function') {
+                    showToast(`Who Cleans updated: ${formatCleaningModelLabel(resolved)}`, "success");
+                }
+            } catch (err) {
+                console.error("Error saving Who Cleans in calling session:", err);
+            }
+        }
+    }
+
     async function submitLeadCadenceOutcome(activityType, targetStatus = null, autoAdvance = true, targetPriority = null) {
         if (!activeCadenceLead) return;
 
@@ -4722,6 +5092,7 @@
         const email = document.getElementById('cadence-lead-email').value.trim();
         const note = document.getElementById('cadence-lead-notes').value.trim();
         const nextDate = document.getElementById('cadence-lead-next-date').value.trim();
+        const cleaningModel = document.getElementById('cadence-lead-cleaning-model') ? document.getElementById('cadence-lead-cleaning-model').value : (activeCadenceLead.cleaning_delivery_model || 'UNKNOWN');
 
         const payload = {
             decision_maker: dm,
@@ -4732,7 +5103,8 @@
             next_action_date: nextDate || null,
             activity_type: activityType,
             status: targetStatus || activeCadenceLead.status,
-            priority_level: targetPriority || activeCadenceLead.priority_level
+            priority_level: targetPriority || activeCadenceLead.priority_level,
+            cleaning_delivery_model: cleaningModel
         };
 
         try {
@@ -4751,9 +5123,18 @@
                 // Update table row if visible in DOM
                 const row = document.querySelector(`.leads-row[data-id="${activeCadenceLead.id}"]`);
                 if (row) {
-                    if (targetStatus) {
-                        const statusSelect = row.querySelector('select.sigma-pill-select');
-                        if (statusSelect) statusSelect.value = targetStatus;
+                    const resolvedStatus = data.resolved_status || targetStatus;
+                    if (resolvedStatus) {
+                        const statusSelect = row.querySelector('select[onchange*="\'status\'"]');
+                        if (statusSelect) {
+                            statusSelect.value = resolvedStatus;
+                            applyLeadStatusSelectStyle(statusSelect, resolvedStatus);
+                        }
+                    }
+                    const cmSelect = row.querySelector('select[onchange*="cleaning_delivery_model"]');
+                    if (cmSelect && cleaningModel) {
+                        cmSelect.value = cleaningModel;
+                        applyCleaningModelSelectStyle(cmSelect, cleaningModel);
                     }
                 }
 

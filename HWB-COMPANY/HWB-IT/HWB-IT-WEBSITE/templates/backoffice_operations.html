@@ -424,14 +424,29 @@
                         <button type="button" onclick="toggleBulkDropdown('bulk-status-menu')" class="isc-btn isc-btn-outline" style="padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.75rem; height: 36px; display: flex; align-items: center; gap: 0.5rem; font-weight: 700;" title="Bulk update: Change sales stage for all checked leads at once">
                             Status <i class="fas fa-chevron-down" style="font-size: 0.65rem;"></i>
                         </button>
-                        <div id="bulk-status-menu" class="bulk-dropdown-menu" style="display: none; position: absolute; left: 0; top: 110%; background: white; border: 1px solid var(--slate-200); border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 1000; width: 195px; padding: 0.5rem;">
-                            <button type="button" onclick="executeBulkAction('update_status', {status: 'New'})" class="isc-dropdown-btn" style="text-align: left; width: 100%;"><i class="fas fa-plus-circle" style="margin-right: 0.5rem;"></i> New</button>
-                            <button type="button" onclick="openEnrollSelectedLeadsModal()" class="isc-dropdown-btn" style="text-align: left; width: 100%; font-weight: 700; color: #4f46e5;"><i class="fas fa-bullhorn" style="margin-right: 0.5rem; color: #4f46e5;"></i> Send to Campaign...</button>
-                            <button type="button" onclick="executeBulkAction('update_status', {status: 'Engaged'})" class="isc-dropdown-btn" style="text-align: left; width: 100%;"><i class="fas fa-fire" style="margin-right: 0.5rem; color: #16a34a;"></i> Engaged 🔥</button>
-                            <button type="button" onclick="executeBulkAction('update_status', {status: 'Contacted'})" class="isc-dropdown-btn" style="text-align: left; width: 100%;"><i class="fas fa-phone" style="margin-right: 0.5rem;"></i> Contacted</button>
-                            <button type="button" onclick="executeBulkAction('update_status', {status: 'Qualified'})" class="isc-dropdown-btn" style="text-align: left; width: 100%;"><i class="fas fa-check-circle" style="margin-right: 0.5rem;"></i> Qualified</button>
-                            <button type="button" onclick="executeBulkAction('update_status', {status: 'Unsubscribed'})" class="isc-dropdown-btn" style="text-align: left; width: 100%; color: #c2410c; font-weight: 700;"><i class="fas fa-envelope-open" style="margin-right: 0.5rem;"></i> ✉️ Unsubscribed</button>
-                            <button type="button" onclick="executeBulkAction('mark_dnc')" class="isc-dropdown-btn" style="text-align: left; width: 100%; color: #dc2626; font-weight: 700;"><i class="fas fa-ban" style="margin-right: 0.5rem;"></i> Do Not Call (DNC)</button>
+                        <div id="bulk-status-menu" class="bulk-dropdown-menu" style="display: none; position: absolute; left: 0; top: 110%; background: white; border: 1px solid var(--slate-200); border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 1000; width: 225px; padding: 0.5rem;">
+                            <button type="button" onclick="executeBulkAction('update_status', {status: 'New'})" class="isc-dropdown-btn" style="text-align: left; width: 100%;"><i class="fas fa-plus-circle" style="margin-right: 0.5rem; color: #0284c7;"></i> New</button>
+                            <button type="button" onclick="openEnrollSelectedLeadsModal()" class="isc-dropdown-btn" style="text-align: left; width: 100%; font-weight: 700; color: #4f46e5;"><i class="fas fa-bullhorn" style="margin-right: 0.5rem; color: #4f46e5;"></i> 📬 In Email Outreach...</button>
+                            <button type="button" onclick="executeBulkAction('update_status', {status: 'Engaged'})" class="isc-dropdown-btn" style="text-align: left; width: 100%;"><i class="fas fa-fire" style="margin-right: 0.5rem; color: #16a34a;"></i> 🔥 Engaged</button>
+                            <button type="button" onclick="executeBulkAction('update_status', {status: 'Contacted'})" class="isc-dropdown-btn" style="text-align: left; width: 100%;"><i class="fas fa-phone" style="margin-right: 0.5rem; color: #7e22ce;"></i> Contacted</button>
+                            <button type="button" onclick="executeBulkAction('update_status', {status: 'Qualified'})" class="isc-dropdown-btn" style="text-align: left; width: 100%;"><i class="fas fa-check-circle" style="margin-right: 0.5rem; color: #0f766e;"></i> Qualified</button>
+                            <button type="button" onclick="executeBulkAction('update_status', {status: 'Walkthrough Completed'})" class="isc-dropdown-btn" style="text-align: left; width: 100%; font-weight: 700; color: #854d0e;"><i class="fas fa-clipboard-check" style="margin-right: 0.5rem; color: #ca8a04;"></i> 📋 Walkthrough Completed</button>
+                            <div style="border-top: 1px solid var(--slate-100); margin: 0.35rem 0;"></div>
+                            <button type="button" onclick="executeBulkAction('update_status', {status: 'Not Interested'})" class="isc-dropdown-btn" style="text-align: left; width: 100%; color: #991b1b; background: #fef2f2; font-weight: 700; border-radius: 4px; margin-bottom: 2px;">🛑 Not Interested</button>
+                            <button type="button" onclick="executeBulkAction('update_status', {status: 'Unsubscribed'})" class="isc-dropdown-btn" style="text-align: left; width: 100%; color: #991b1b; background: #fef2f2; font-weight: 700; border-radius: 4px; margin-bottom: 2px;">✉️ Unsubscribed</button>
+                            <button type="button" onclick="executeBulkAction('mark_dnc')" class="isc-dropdown-btn" style="text-align: left; width: 100%; color: #991b1b; background: #fef2f2; font-weight: 700; border-radius: 4px;">🚫 Do Not Call (DNC)</button>
+                        </div>
+                    </div>
+
+                    <!-- Change Who Cleans Dropdown -->
+                    <div style="position: relative; display: inline-block;" class="bulk-dropdown-container">
+                        <button type="button" onclick="toggleBulkDropdown('bulk-cleaning-model-menu')" class="isc-btn isc-btn-outline" style="padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.75rem; height: 36px; display: flex; align-items: center; gap: 0.5rem; font-weight: 700;" title="Bulk update: Set Who Cleans (In-House vs. Contract Cleaning) for all checked leads">
+                            🧹 Who Cleans <i class="fas fa-chevron-down" style="font-size: 0.65rem;"></i>
+                        </button>
+                        <div id="bulk-cleaning-model-menu" class="bulk-dropdown-menu" style="display: none; position: absolute; left: 0; top: 110%; background: white; border: 1px solid var(--slate-200); border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 1000; width: 210px; padding: 0.5rem;">
+                            <button type="button" onclick="executeBulkAction('update_cleaning_model', {cleaning_delivery_model: 'IN_HOUSE'})" class="isc-dropdown-btn" style="text-align: left; width: 100%; font-weight: 700; color: #b45309;">🏠 In-House Cleaning</button>
+                            <button type="button" onclick="executeBulkAction('update_cleaning_model', {cleaning_delivery_model: 'OUTSOURCED'})" class="isc-dropdown-btn" style="text-align: left; width: 100%; font-weight: 700; color: #0e7490;">🤝 Contract Cleaning</button>
+                            <button type="button" onclick="executeBulkAction('update_cleaning_model', {cleaning_delivery_model: 'UNKNOWN'})" class="isc-dropdown-btn" style="text-align: left; width: 100%; color: var(--slate-600);">⚪ Unknown</button>
                         </div>
                     </div>
 
@@ -556,24 +571,24 @@
                                     </td>
                                     {% elif col_key == 'status' %}
                                       <td class="sticky-2" onclick="event.stopPropagation();">
-                                          <select {% if not can_edit_leads %}disabled title="Editing lead status is restricted for your role" style="cursor: not-allowed; opacity: 0.85; {% else %}onchange="quickUpdateLead({{ lead.id }}, 'status', this.value, this)" title="Lead Stage: Click to update status" style="{% endif %}{% if lead.status == 'Do Not Call (DNC)' or lead.is_dnc %}background:#fee2e2; color:#991b1b; border-color:#fca5a5;{% elif lead.status == 'Unsubscribed' %}background:#ffedd5; color:#9a3412; border-color:#fdba74;{% elif lead.status == 'Active' %}background:#dcfce7; color:#15803d; border-color:#86efac;{% elif lead.status == 'In Campaign' %}background:#e0e7ff; color:#3730a3; border-color:#c7d2fe;{% elif lead.status == 'Engaged' %}background:#d1fae5; color:#065f46; border-color:#6ee7b7;{% elif lead.status == 'New' or lead.status == 'NEW' %}background:#e0f2fe; color:#0369a1; border-color:#7dd3fc;{% elif lead.status == 'Contacted' %}background:#f3e8ff; color:#7e22ce; border-color:#d8b4fe;{% elif lead.status == 'Qualified' %}background:#ccfbf1; color:#0f766e; border-color:#5eead4;{% elif lead.status == 'Trained' %}background:#fef3c7; color:#b45309; border-color:#fde047;{% else %}background:#f1f5f9; color:#64748b; border-color:#cbd5e1;{% endif %}" class="sigma-pill-select">
-                                              <option value="New" title="New lead in pool - needs first phone call" {% if lead.status == 'New' or lead.status == 'NEW' %}selected{% endif %}>New</option>
-                                              <option value="In Campaign" title="Active in email outreach - waiting for customer response" {% if lead.status == 'In Campaign' %}selected{% endif %}>In Email Outreach</option>
-                                              <option value="Engaged" title="Customer opened email or replied - hot lead ready to call" {% if lead.status == 'Engaged' %}selected{% endif %}>Engaged 🔥</option>
-                                              <option value="Active" title="Signed customer receiving regular cleaning service" {% if lead.status == 'Active' %}selected{% endif %}>Active</option>
-                                              <option value="Contacted" title="Spoke with gatekeeper or email campaign completed - follow-up needed" {% if lead.status == 'Contacted' %}selected{% endif %}>Contacted</option>
-                                              <option value="Qualified" title="Interest confirmed or walkthrough link clicked" {% if lead.status == 'Qualified' %}selected{% endif %}>Qualified</option>
-                                              <option value="Trained" title="Walkthrough completed - proposal delivered" {% if lead.status == 'Trained' %}selected{% endif %}>Trained</option>
-                                              <option value="Unsubscribed" title="Opted out of marketing emails (CAN-SPAM suppressed)" {% if lead.status == 'Unsubscribed' and not lead.is_dnc %}selected{% endif %}>✉️ Unsubscribed</option>
-                                              <option value="Do Not Call (DNC)" title="Requested no phone calls - permanently excluded" {% if lead.status == 'Do Not Call (DNC)' or lead.is_dnc %}selected{% endif %}>🚫 DNC</option>
-                                              <option value="Lost" title="Not interested or chose another cleaner" {% if lead.status == 'Lost' %}selected{% endif %}>Lost</option>
+                                          <select data-prev-value="{{ lead.status or 'New' }}" {% if not can_edit_leads %}disabled title="Editing lead status is restricted for your role" style="cursor: not-allowed; opacity: 0.85; {% else %}onchange="quickUpdateLead({{ lead.id }}, 'status', this.value, this)" title="Lead Stage: Click to update status or upgrade to a Client Account" style="{% endif %}{% if lead.status in ('Do Not Call (DNC)', 'Unsubscribed', 'Not Interested', 'Lost') or lead.is_dnc %}background:#fee2e2; color:#991b1b; border-color:#fca5a5;{% elif lead.status in ('Walkthrough Completed', 'Trained') %}background:#fef9c3; color:#854d0e; border-color:#fde047;{% elif lead.status == 'In Campaign' %}background:#e0e7ff; color:#3730a3; border-color:#c7d2fe;{% elif lead.status == 'Engaged' %}background:#d1fae5; color:#065f46; border-color:#6ee7b7;{% elif lead.status == 'New' or lead.status == 'NEW' or not lead.status %}background:#e0f2fe; color:#0369a1; border-color:#7dd3fc;{% elif lead.status == 'Contacted' %}background:#f3e8ff; color:#7e22ce; border-color:#d8b4fe;{% elif lead.status == 'Qualified' %}background:#ccfbf1; color:#0f766e; border-color:#5eead4;{% else %}background:#f1f5f9; color:#64748b; border-color:#cbd5e1;{% endif %}" class="sigma-pill-select">
+                                              <option value="New" title="New lead in pool - needs first phone call" {% if lead.status == 'New' or lead.status == 'NEW' or not lead.status %}selected{% endif %}>New</option>
+                                              <option value="In Campaign" title="Active in email outreach - waiting for response" {% if lead.status == 'In Campaign' %}selected{% endif %}>📬 In Email Outreach</option>
+                                              <option value="Engaged" title="Opened email or replied - hot lead ready to call" {% if lead.status == 'Engaged' %}selected{% endif %}>🔥 Engaged</option>
+                                              <option value="Contacted" title="Spoke with decision maker - follow-up in progress" {% if lead.status == 'Contacted' %}selected{% endif %}>Contacted</option>
+                                              <option value="Qualified" title="Interest confirmed or walkthrough scheduled" {% if lead.status == 'Qualified' %}selected{% endif %}>Qualified</option>
+                                              <option value="Walkthrough Completed" title="Building walkthrough completed - proposal ready or delivered" {% if lead.status in ('Walkthrough Completed', 'Trained') %}selected{% endif %}>📋 Walkthrough Completed</option>
+                                              <option value="UPGRADE_TO_ACCOUNT" title="Active client receiving service - move to Client Accounts" style="background:#dcfce7; color:#15803d; font-weight:800;">✅ Upgrade to Client Account ➔</option>
+                                              <option value="Not Interested" title="Not interested right now" style="background:#fee2e2; color:#991b1b; font-weight:700;" {% if lead.status in ('Not Interested', 'Lost') %}selected{% endif %}>🛑 Not Interested</option>
+                                              <option value="Unsubscribed" title="Opted out of marketing emails" style="background:#fee2e2; color:#991b1b; font-weight:700;" {% if lead.status == 'Unsubscribed' and not lead.is_dnc %}selected{% endif %}>✉️ Unsubscribed</option>
+                                              <option value="Do Not Call (DNC)" title="Requested no phone calls - do not contact" style="background:#fee2e2; color:#991b1b; font-weight:700;" {% if lead.status == 'Do Not Call (DNC)' or lead.is_dnc %}selected{% endif %}>🚫 Do Not Call (DNC)</option>
                                           </select>
                                       </td>
                                     {% elif col_key == 'dm' %}<td class="sticky-3"><div class="sigma-unit-data"><div class="sigma-unit-primary" style="font-size:0.85rem">{{ lead.decision_maker or '--' }}</div><div class="sigma-unit-secondary" style="font-weight: 500;">{{ lead.job_title or 'Owner/Manager' }}</div></div></td>
                                     {% elif col_key == 'umbrella' %}
                                      <td onclick="event.stopPropagation();">
                                          {% if lead.umbrella_name %}
-                                         <a href="{{ url_for('admin_operations', view='leads', q=lead.umbrella_name) }}" class="sigma-pill" style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.65rem; border-radius: 9999px; font-size: 0.75rem; white-space: nowrap;" title="Filter sister schools under {{ lead.umbrella_name }}">
+                                         <a href="{{ url_for('admin_operations', view='leads', q=lead.umbrella_name) }}" class="sigma-pill" style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.65rem; border-radius: 9999px; font-size: 0.75rem; white-space: nowrap;" title="Filter sister locations under {{ lead.umbrella_name }}">
                                              🏢 {{ lead.umbrella_name }}
                                          </a>
                                          {% else %}
@@ -582,11 +597,10 @@
                                      </td>
                                     {% elif col_key == 'cleaning_model' %}
                                      <td onclick="event.stopPropagation();">
-                                         <select {% if not can_edit_leads %}disabled title="Editing cleaning setup is restricted for your role" style="cursor: not-allowed; opacity: 0.85; {% else %}onchange="quickUpdateLead({{ lead.id }}, 'cleaning_delivery_model', this.value, this)" title="Cleaning Setup: Who cleans this building currently" style="{% endif %}{% if lead.cleaning_delivery_model == 'IN_HOUSE' %}background:#fee2e2; color:#991b1b; border-color:#fca5a5;{% elif lead.cleaning_delivery_model == 'OUTSOURCED' %}background:#dcfce7; color:#15803d; border-color:#86efac;{% elif lead.cleaning_delivery_model == 'HYBRID' %}background:#fef3c7; color:#b45309; border-color:#fde047;{% else %}background:#f1f5f9; color:#64748b; border-color:#cbd5e1;{% endif %} font-size: 0.75rem; padding: 0.25rem 0.5rem;" class="sigma-pill-select">
-                                             <option value="UNKNOWN" title="Cleaning setup not verified yet" {% if lead.cleaning_delivery_model == 'UNKNOWN' or not lead.cleaning_delivery_model %}selected{% endif %}>⚪ Unknown</option>
-                                             <option value="IN_HOUSE" title="In-House: Their own internal staff cleans (teachers, maintenance, or front desk)" {% if lead.cleaning_delivery_model == 'IN_HOUSE' %}selected{% endif %}>🔴 In-House Staff</option>
-                                             <option value="OUTSOURCED" title="Outsourced: They hire an outside commercial cleaning company" {% if lead.cleaning_delivery_model == 'OUTSOURCED' %}selected{% endif %}>🟢 Outsourced</option>
-                                             <option value="HYBRID" title="Hybrid: Shared work - internal staff does day cleaning, outside company does deep cleaning" {% if lead.cleaning_delivery_model == 'HYBRID' %}selected{% endif %}>🟡 Hybrid</option>
+                                         <select {% if not can_edit_leads %}disabled title="Editing cleaning setup is restricted for your role" style="cursor: not-allowed; opacity: 0.85; {% else %}onchange="quickUpdateLead({{ lead.id }}, 'cleaning_delivery_model', this.value, this)" title="Who Cleans: Does this building use In-House Staff or an outside Contract Cleaning company?" style="{% endif %}{% if lead.cleaning_delivery_model == 'IN_HOUSE' %}background:#fef3c7; color:#b45309; border-color:#fde047;{% elif lead.cleaning_delivery_model == 'OUTSOURCED' %}background:#cffafe; color:#0e7490; border-color:#67e8f9;{% else %}background:#f1f5f9; color:#64748b; border-color:#cbd5e1;{% endif %} font-size: 0.75rem; padding: 0.25rem 0.5rem;" class="sigma-pill-select">
+                                             <option value="UNKNOWN" title="Not verified yet" {% if lead.cleaning_delivery_model == 'UNKNOWN' or not lead.cleaning_delivery_model %}selected{% endif %}>⚪ Unknown</option>
+                                             <option value="IN_HOUSE" title="In-House Cleaning: Their own internal staff cleans the building" {% if lead.cleaning_delivery_model == 'IN_HOUSE' %}selected{% endif %}>🏠 In-House Cleaning</option>
+                                             <option value="OUTSOURCED" title="Contract Cleaning: They hire an outside commercial cleaning company" {% if lead.cleaning_delivery_model == 'OUTSOURCED' %}selected{% endif %}>🤝 Contract Cleaning</option>
                                          </select>
                                      </td>
                                     {% elif col_key == 'm_and_a' %}
@@ -6957,10 +6971,30 @@
                             <div><span style="color: var(--slate-400); font-weight: 600;">Capacity:</span> <strong id="cadence-lead-capacity">--</strong> <span style="color: var(--slate-400);">Kids</span></div>
                             <div><span style="color: var(--slate-400); font-weight: 600;">Area:</span> <strong id="cadence-lead-sqf">--</strong> <span style="color: var(--slate-400);">SF</span></div>
                             <div><span style="color: var(--slate-400); font-weight: 600;">Est. Value:</span> <strong id="cadence-lead-value" style="color: #047857; font-weight: 800;">$--</strong></div>
-                            <div style="display: flex; align-items: center; gap: 0.35rem;">
+                            <div style="display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap;">
                                 <span id="cadence-lead-status-pill" style="font-weight: 800; font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 4px; background: #e0f2fe; color: #0369a1;">New</span>
+                                <span id="cadence-lead-stage-date-info" style="font-size: 0.68rem; color: var(--slate-500); font-weight: 600;"></span>
                                 <button type="button" id="btn-cadence-remove-campaign" onclick="removeLeadFromCampaignFromCadence()" class="sigma-mini-btn" style="display: none; background: #fff5f5; color: #dc2626; border: 1px solid #fca5a5; font-size: 0.68rem; font-weight: 700; height: 22px; padding: 0 0.45rem; cursor: pointer;" title="Stop email outreach sequence for this lead">
                                     <i class="fas fa-times-circle"></i> Remove from Campaign
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 1-Click Who Cleans Selector inside Calling Workstation (BUG-157) -->
+                        <div style="margin-top: 0.55rem; padding-top: 0.55rem; border-top: 1px dashed var(--slate-200); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                            <span style="font-size: 0.7rem; font-weight: 800; color: var(--slate-600); text-transform: uppercase; letter-spacing: 0.04em;">
+                                🧹 Who Cleans Right Now:
+                            </span>
+                            <input type="hidden" id="cadence-lead-cleaning-model" value="UNKNOWN">
+                            <div style="display: inline-flex; gap: 0.35rem; flex-wrap: wrap;">
+                                <button type="button" id="btn-cadence-cm-unknown" onclick="setCadenceCleaningModel('UNKNOWN')" class="sigma-mini-btn" style="height: 26px; padding: 0 0.55rem; font-size: 0.7rem; font-weight: 700; border-radius: 999px; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;">
+                                    ⚪ Unknown
+                                </button>
+                                <button type="button" id="btn-cadence-cm-inhouse" onclick="setCadenceCleaningModel('IN_HOUSE')" class="sigma-mini-btn" style="height: 26px; padding: 0 0.65rem; font-size: 0.7rem; font-weight: 700; border-radius: 999px; background: #ffffff; color: #b45309; border: 1px solid #fde047;">
+                                    🏠 In-House Cleaning
+                                </button>
+                                <button type="button" id="btn-cadence-cm-outsourced" onclick="setCadenceCleaningModel('OUTSOURCED')" class="sigma-mini-btn" style="height: 26px; padding: 0 0.65rem; font-size: 0.7rem; font-weight: 700; border-radius: 999px; background: #ffffff; color: #0e7490; border: 1px solid #67e8f9;">
+                                    🤝 Contract Cleaning
                                 </button>
                             </div>
                         </div>
@@ -7182,26 +7216,32 @@
                         <!-- Standardized Call Outcome Buttons (2-Column Grid) -->
                         <div style="margin-bottom: 0.5rem;">
                             <div style="font-size: 0.68rem; font-weight: 700; color: var(--slate-400); text-transform: uppercase; margin-bottom: 0.35rem;">
-                                Log Outcome & Auto-Advance:
+                                Log Call Result &amp; Next Lead:
                             </div>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem;">
-                                <button type="button" onclick="submitLeadCadenceOutcome('Spoke to Director', 'Contacted', true)" class="sigma-mini-btn" style="height: 36px; font-weight: 800; background: #f0fdf4; color: #15803d; border-color: #bbf7d0; justify-content: center; display: flex; align-items: center; gap: 0.35rem;" title="Spoke directly with Director">
+                                <button type="button" onclick="submitLeadCadenceOutcome('Spoke to Director', 'Contacted', true)" class="sigma-mini-btn" style="height: 36px; font-weight: 800; background: #f0fdf4; color: #15803d; border-color: #bbf7d0; justify-content: center; display: flex; align-items: center; gap: 0.35rem;" title="Spoke directly with decision maker - sets stage to Contacted">
                                     📞 Spoke - Follow Up
                                 </button>
                                 <button type="button" onclick="openCadenceWalkthroughDrawer()" class="sigma-mini-btn" style="height: 36px; font-weight: 900; background: #047857; color: #ffffff; border-color: #065f46; justify-content: center; display: flex; align-items: center; gap: 0.35rem;" title="Schedule Walkthrough Appointment on Calendar">
                                     🎉 Book Walkthrough
                                 </button>
-                                <button type="button" onclick="submitLeadCadenceOutcome('Gatekeeper Blocked', 'Contacted', true)" class="sigma-mini-btn" style="height: 36px; font-weight: 700; background: #f8fafc; color: var(--slate-700); border-color: var(--slate-200); justify-content: center; display: flex; align-items: center; gap: 0.35rem;" title="Receptionist refused transfer or left message">
-                                    🛡️ Gatekeeper Blocked
+                                <button type="button" onclick="submitLeadCadenceOutcome('Left Message with Staff', null, true)" class="sigma-mini-btn" style="height: 36px; font-weight: 700; background: #f8fafc; color: var(--slate-700); border-color: var(--slate-200); justify-content: center; display: flex; align-items: center; gap: 0.35rem;" title="Receptionist took a message - logs call without changing current sales stage">
+                                    🛡️ Left Message w/ Staff
                                 </button>
-                                <button type="button" onclick="submitLeadCadenceOutcome('Left Voicemail', 'Contacted', true)" class="sigma-mini-btn" style="height: 36px; font-weight: 700; background: #f8fafc; color: var(--slate-700); border-color: var(--slate-200); justify-content: center; display: flex; align-items: center; gap: 0.35rem;" title="Left a phone voicemail message">
+                                <button type="button" onclick="submitLeadCadenceOutcome('Left Voicemail', null, true)" class="sigma-mini-btn" style="height: 36px; font-weight: 700; background: #f8fafc; color: var(--slate-700); border-color: var(--slate-200); justify-content: center; display: flex; align-items: center; gap: 0.35rem;" title="Left a voicemail - logs call without changing current sales stage">
                                     📼 Left Voicemail
                                 </button>
-                                <button type="button" onclick="submitLeadCadenceOutcome('DNC Requested', 'Do Not Call (DNC)', true)" class="sigma-mini-btn" style="height: 36px; font-weight: 700; background: #fef2f2; color: #991b1b; border-color: #fecaca; justify-content: center; display: flex; align-items: center; gap: 0.35rem;" title="Facility requested Do Not Call">
-                                    🚫 Do Not Call (DNC)
+                                <button type="button" onclick="submitLeadCadenceOutcome('Walkthrough Completed', 'Walkthrough Completed', true)" class="sigma-mini-btn" style="height: 36px; font-weight: 800; background: #fef9c3; color: #854d0e; border-color: #fde047; justify-content: center; display: flex; align-items: center; gap: 0.35rem;" title="Building walkthrough completed - ready for proposal">
+                                    📋 Walkthrough Completed
                                 </button>
-                                <button type="button" onclick="submitLeadCadenceOutcome('Bad Number / Lost', 'Lost', true)" class="sigma-mini-btn" style="height: 36px; font-weight: 700; background: #f1f5f9; color: #64748b; border-color: #cbd5e1; justify-content: center; display: flex; align-items: center; gap: 0.35rem;" title="Disconnected or invalid phone number">
-                                    ❌ Wrong / Bad #
+                                <button type="button" onclick="submitLeadCadenceOutcome('Not Interested', 'Not Interested', true)" class="sigma-mini-btn" style="height: 36px; font-weight: 700; background: #fee2e2; color: #991b1b; border-color: #fca5a5; justify-content: center; display: flex; align-items: center; gap: 0.35rem;" title="Not interested or invalid number">
+                                    🛑 Not Interested
+                                </button>
+                                <button type="button" onclick="submitLeadCadenceOutcome('Unsubscribed from Outreach', 'Unsubscribed', true)" class="sigma-mini-btn" style="height: 36px; font-weight: 700; background: #fee2e2; color: #991b1b; border-color: #fca5a5; justify-content: center; display: flex; align-items: center; gap: 0.35rem;" title="Requested to unsubscribe from emails">
+                                    ✉️ Unsubscribed
+                                </button>
+                                <button type="button" onclick="submitLeadCadenceOutcome('DNC Requested', 'Do Not Call (DNC)', true)" class="sigma-mini-btn" style="height: 36px; font-weight: 700; background: #fee2e2; color: #991b1b; border-color: #fca5a5; justify-content: center; display: flex; align-items: center; gap: 0.35rem;" title="Facility requested Do Not Call">
+                                    🚫 Do Not Call (DNC)
                                 </button>
                             </div>
                         </div>
@@ -8383,19 +8423,33 @@
             </div>
         </div>
 
-        <div id="lead-modal-tabs" style="display: flex; gap: 2rem; border-bottom: 1px solid var(--slate-100); margin-bottom: 2.5rem;">
+        <!-- Stage Date Tracker Bar (BUG-157: Records exact dates when lead reached New, Outreach, Engaged, Contacted, Qualified, Walkthrough Completed, etc.) -->
+        <div id="lead-stage-date-tracker" style="background: #ffffff; border: 1px solid var(--slate-200); border-radius: 10px; padding: 0.85rem 1.1rem; margin-bottom: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem; flex-wrap: wrap; gap: 0.5rem;">
+                <span style="font-size: 0.72rem; font-weight: 800; color: var(--slate-700); text-transform: uppercase; letter-spacing: 0.04em;">
+                    📅 Lead Stage &amp; Date History
+                </span>
+                <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                    <span id="lead-stage-who-cleans-badge" style="font-size: 0.72rem; font-weight: 800; padding: 2px 8px; border-radius: 999px; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;">🧹 Who Cleans: Unknown</span>
+                    <span id="lead-stage-days-badge" style="font-size: 0.72rem; font-weight: 700; color: var(--slate-600); background: #f8fafc; border: 1px solid var(--slate-200); padding: 2px 8px; border-radius: 6px;">In current stage: --</span>
+                </div>
+            </div>
+            <div id="lead-stage-date-steps" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(125px, 1fr)); gap: 0.5rem;"></div>
+        </div>
+
+        <div id="lead-modal-tabs" style="display: flex; gap: 2rem; border-bottom: 1px solid var(--slate-100); margin-bottom: 2rem;">
             <button onclick="iscLeadTab('overview')" class="isc-tab-trigger active" id="lead-tab-btn-overview">Overview</button>
-            <button onclick="iscLeadTab('activities')" class="isc-tab-trigger" id="lead-tab-btn-activities">Activities</button>
+            <button onclick="iscLeadTab('activities')" class="isc-tab-trigger" id="lead-tab-btn-activities">Record Activities</button>
             <button onclick="iscLeadTab('contacts')" class="isc-tab-trigger" id="lead-tab-btn-contacts">Contacts</button>
-            <button onclick="iscLeadTab('timeline')" class="isc-tab-trigger" id="lead-tab-btn-timeline">History</button>
+            <button onclick="iscLeadTab('timeline')" class="isc-tab-trigger" id="lead-tab-btn-timeline">Stage &amp; Call History</button>
         </div>
                 <div id="lead-pane-overview" class="isc-lead-pane">
             <div id="lead-campaign-banner" style="display:none; margin-bottom: 1.5rem;"></div>
             <div id="lead-list-overview" style="display: grid; grid-template-columns: 1fr 1fr 1fr !important; gap: 1.5rem;"></div>
             <div style="margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid var(--slate-200); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-                <div>
-                    <button type="button" id="btn-modal-lead-dnc" onclick="markLeadDNCFromModal()" class="isc-btn isc-btn-outline" style="color: #dc2626; border-color: #fca5a5; background: #fff5f5; font-weight: 700; display: inline-flex; align-items: center; gap: 0.45rem; height: 36px; padding: 0 1rem; border-radius: 6px; font-size: 0.78rem;" title="Mark lead as Do Not Call and stop outreach">
-                        <i class="fas fa-ban"></i> Mark as DNC
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    <button type="button" id="btn-modal-lead-dnc" onclick="markLeadDNCFromModal()" class="isc-btn isc-btn-outline" style="color: #991b1b; border-color: #fca5a5; background: #fee2e2; font-weight: 700; display: inline-flex; align-items: center; gap: 0.45rem; height: 36px; padding: 0 1rem; border-radius: 6px; font-size: 0.78rem;" title="Mark lead as Do Not Call and stop outreach">
+                        🚫 Do Not Call (DNC)
                     </button>
                 </div>
                 <div style="display: flex; gap: 0.65rem; align-items: center; flex-wrap: wrap;">
@@ -8405,65 +8459,151 @@
                     <button type="button" onclick="toggleEditLead()" class="isc-btn isc-btn-outline" style="height: 36px; padding: 0 1rem; font-size: 0.78rem; border-radius: 6px; font-weight: 700; color: var(--slate-700); border-color: var(--slate-300); background: #ffffff; display: inline-flex; align-items: center; gap: 0.45rem;" title="Edit facility, contact, and calling details">
                         <i class="fas fa-edit" style="color: var(--brand);"></i> Edit Lead
                     </button>
-                    <button type="button" onclick="promoteLead()" class="isc-btn isc-btn-primary" id="btn-promote-lead" style="height: 36px; padding: 0 1.25rem; font-size: 0.8rem; border-radius: 6px; font-weight: 800; background: #059669; border-color: #047857; display: inline-flex; align-items: center; gap: 0.45rem;" title="Promote this lead to an active client account">
-                        <i class="fas fa-handshake"></i> Move to Clients
+                    <button type="button" onclick="promoteLead()" class="isc-btn isc-btn-primary" id="btn-promote-lead" style="height: 36px; padding: 0 1.25rem; font-size: 0.8rem; border-radius: 6px; font-weight: 800; background: #059669; border-color: #047857; display: inline-flex; align-items: center; gap: 0.45rem;" title="Upgrade this lead to an active Client Account and remove it from the Leads list">
+                        <i class="fas fa-handshake"></i> ✅ Upgrade to Client Account
                     </button>
                 </div>
             </div>
         </div>
 
         <div id="lead-pane-activities" class="isc-lead-pane" style="display:none; flex-direction: column;">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; align-items: start; width: 100%;">
-                <!-- Left Column: Record Activity -->
-                <div>
-                    <span class="sigma-form-header" style="margin-bottom: 1.5rem;">Record Activity</span>
+            <div style="display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 2rem; align-items: start; width: 100%;">
+                <!-- Left Column: Unified Record Activity, Stage & Contact Update -->
+                <div style="background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 10px; padding: 1.25rem;">
+                    <span class="sigma-form-header" style="margin-bottom: 1rem; display: block;">Log Call or Activity &amp; Update Stage</span>
                     <form onsubmit="logLeadActivity(event)" class="sigma-form-container">
-                        <div class="sigma-row sigma-row-60-40" style="margin-bottom: 1.5rem;">
-                            <div class="sigma-field"><label>Action Type</label><select id="lead-activity-type" required class="sigma-input"><option value="Phone Call">Phone Call</option><option value="Email Sent">Email Sent</option><option value="Site Visit">Site Visit</option><option value="Note">Internal Note</option></select></div>
-                            <div class="sigma-field"><label>Result</label><select id="lead-activity-result" class="sigma-input"><option value="">-- No Result --</option><option value="Spoke to them">Spoke to them</option><option value="Left message">Left message</option><option value="No Answer / Busy">No Answer / Busy</option><option value="Do Not Call (DNC)">🚫 Do Not Call (DNC)</option></select></div>
-                        </div>
-                        <div class="sigma-field"><label>Details</label><textarea id="lead-activity-desc" required class="sigma-input" style="height: 120px; resize: none;" placeholder="Interaction notes..."></textarea></div>
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2rem;">
-                            <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer; font-size: 0.85rem; font-weight: 500; color: var(--slate-600);">
-                                <input type="checkbox" id="update-next-action" checked style="width: 18px; height: 18px; border-radius: 4px; border: 1px solid var(--slate-300);">
-                                Update next action date automatically
-                            </label>
-                            <button type="submit" class="isc-btn isc-btn-primary" style="padding: 0 3rem;">Save Activity</button>
-                        </div>
-                    </form>
-
-                    <!-- Profile Quick Update Panel -->
-                    <div class="isc-card" style="padding: 1.5rem; background: var(--slate-50); border: 1px solid var(--slate-100); margin-top: 3rem;">
-                        <span class="sigma-form-header" style="margin-bottom: 1.5rem;">Quick Profile Update</span>
-                        <div class="sigma-field"><label style="font-size: 0.65rem;">Main Manager</label><input type="text" id="lead-action-manager" class="sigma-input" style="height: 36px; font-size: 0.85rem;"></div>
-                        <div class="sigma-field"><label style="font-size: 0.65rem;">Phone Number</label><input type="text" id="lead-action-phone" class="sigma-input" style="height: 36px; font-size: 0.85rem;" oninput="maskPhone(event)"></div>
-                        <div class="sigma-field"><label style="font-size: 0.65rem;">Email Address</label><input type="email" id="lead-action-email" class="sigma-input" style="height: 36px; font-size: 0.85rem;"></div>
-                    </div>
-                </div>
-
-                <!-- Right Column: Schedule Next Step -->
-                <div>
-                    <span class="sigma-form-header" style="margin-bottom: 1.5rem;">Schedule Next Step</span>
-                    <form onsubmit="saveVisitRequest(event)" class="sigma-form-container">
-                        <div class="sigma-row sigma-row-60-40">
-                            <div class="sigma-field"><label>Target Date</label><input type="date" id="visit-date" required class="sigma-input"></div>
-                            <div class="sigma-field"><label>Preferred Time</label><input type="time" id="visit-time" class="sigma-input"></div>
-                        </div>
-                        <div class="sigma-row sigma-row-75-25">
-                            <div class="sigma-field"><label>Manager to Meet</label><input type="text" id="visit-manager" placeholder="Full Name" class="sigma-input"></div>
-                            <div class="sigma-field"><label>Phone</label><input type="text" id="visit-phone" placeholder="Phone" class="sigma-input" oninput="maskPhone(event)"></div>
-                        </div>
-                        <div class="sigma-field" style="margin-top: 1.5rem;">
-                            <label>Google Maps Link</label>
-                            <div style="display: flex; gap: 0.5rem;">
-                                <input type="url" id="visit-map-link" placeholder="https://maps.google.com/..." class="sigma-input" style="flex-grow: 1;">
-                                <button type="button" onclick="pasteFromClipboard('visit-map-link')" class="isc-btn isc-btn-outline" style="height: 44px; width: 44px; padding: 0; border-radius: 12px;" aria-label="Paste Google Maps URL" title="Paste from Clipboard"><i class="fas fa-clipboard"></i></button>
-                                <button type="button" onclick="verifyMapLink()" class="isc-btn isc-btn-outline" style="height: 44px; width: 44px; padding: 0; border-radius: 12px;" aria-label="Verify and Open Google Maps" title="Verify and Open Map"><i class="fas fa-external-link-alt"></i></button>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.85rem;">
+                            <div class="sigma-field">
+                                <label for="lead-activity-type">Action Type</label>
+                                <select id="lead-activity-type" required class="sigma-input" style="height: 36px; background: #fff;">
+                                    <option value="Phone Call">📞 Phone Call</option>
+                                    <option value="Email Sent">✉️ Email Sent</option>
+                                    <option value="Site Visit">🏢 In-Person Visit / Walkthrough</option>
+                                    <option value="Note">📝 General Note</option>
+                                </select>
+                            </div>
+                            <div class="sigma-field">
+                                <label for="lead-activity-result">Call / Visit Outcome</label>
+                                <select id="lead-activity-result" class="sigma-input" style="height: 36px; background: #fff;" onchange="handleActivityResultChange(this.value)">
+                                    <option value="">-- Select Outcome --</option>
+                                    <option value="Spoke to them">📞 Spoke with Decision Maker</option>
+                                    <option value="Left message">🛡️ Left Message with Staff</option>
+                                    <option value="Left Voicemail">📼 Left Voicemail</option>
+                                    <option value="No Answer / Busy">⏳ No Answer / Busy</option>
+                                    <option value="Walkthrough Completed">📋 Walkthrough Completed</option>
+                                    <option value="Not Interested">🛑 Not Interested</option>
+                                    <option value="Unsubscribed">✉️ Unsubscribed</option>
+                                    <option value="Do Not Call (DNC)">🚫 Do Not Call (DNC)</option>
+                                </select>
                             </div>
                         </div>
-                        <div class="sigma-field"><label>Gate Access / Special Instructions</label><textarea id="visit-instructions" placeholder="Codes..." class="sigma-input" style="height: 80px; resize: none;"></textarea></div>
-                        <div style="display: flex; justify-content: flex-end; margin-top: 2rem;">
-                            <button type="submit" class="isc-btn isc-btn-primary" style="padding: 0 3rem;">Schedule Next Step</button>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.85rem;">
+                            <div class="sigma-field">
+                                <label for="lead-activity-status">Lead Stage</label>
+                                <select id="lead-activity-status" class="sigma-input" style="height: 36px; background: #fff; font-weight: 700;">
+                                    <option value="">-- Keep Current Stage --</option>
+                                    <option value="New">New</option>
+                                    <option value="In Campaign">📬 In Email Outreach</option>
+                                    <option value="Engaged">🔥 Engaged</option>
+                                    <option value="Contacted">Contacted</option>
+                                    <option value="Qualified">Qualified</option>
+                                    <option value="Walkthrough Completed">📋 Walkthrough Completed</option>
+                                    <option value="Not Interested">🛑 Not Interested</option>
+                                    <option value="Unsubscribed">✉️ Unsubscribed</option>
+                                    <option value="Do Not Call (DNC)">🚫 Do Not Call (DNC)</option>
+                                </select>
+                            </div>
+                            <div class="sigma-field">
+                                <label for="lead-activity-cleaning-model">🧹 Who Cleans Right Now</label>
+                                <select id="lead-activity-cleaning-model" class="sigma-input" style="height: 36px; background: #fff; font-weight: 700;">
+                                    <option value="UNKNOWN">⚪ Unknown</option>
+                                    <option value="IN_HOUSE">🏠 In-House Cleaning</option>
+                                    <option value="OUTSOURCED">🤝 Contract Cleaning</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="sigma-field" style="margin-bottom: 0.85rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; flex-wrap: wrap; gap: 0.35rem;">
+                                <label for="lead-activity-next-date" style="margin: 0;">Next Follow-Up Date</label>
+                                <div style="display: flex; gap: 0.25rem;">
+                                    <button type="button" onclick="setActivityNextDateOffset(1)" class="sigma-mini-btn" style="height: 22px; padding: 0 0.4rem; font-size: 0.68rem;">+1d</button>
+                                    <button type="button" onclick="setActivityNextDateOffset(3)" class="sigma-mini-btn" style="height: 22px; padding: 0 0.4rem; font-size: 0.68rem;">+3d</button>
+                                    <button type="button" onclick="setActivityNextDateOffset(7)" class="sigma-mini-btn" style="height: 22px; padding: 0 0.4rem; font-size: 0.68rem;">+1w</button>
+                                </div>
+                            </div>
+                            <input type="date" id="lead-activity-next-date" class="sigma-input" style="height: 36px; background: #fff;">
+                        </div>
+
+                        <div class="sigma-field" style="margin-bottom: 0.85rem;">
+                            <label for="lead-activity-desc">Call &amp; Activity Notes</label>
+                            <textarea id="lead-activity-desc" required class="sigma-input" style="height: 95px; resize: vertical; background: #fff;" placeholder="Enter call summary, current cleaning schedule, or follow-up details..."></textarea>
+                        </div>
+
+                        <!-- Integrated Quick Contact Update (Saved automatically with Activity or via Quick Save button) -->
+                        <div style="background: #ffffff; border: 1px solid var(--slate-200); border-radius: 8px; padding: 0.85rem; margin-bottom: 1rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                <span style="font-size: 0.7rem; font-weight: 800; color: var(--slate-600); text-transform: uppercase;">Quick Contact Corrections</span>
+                                <button type="button" onclick="saveQuickLeadContactFromActivities()" class="sigma-mini-btn" style="height: 24px; padding: 0 0.6rem; font-size: 0.7rem; font-weight: 700; background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe;">
+                                    <i class="fas fa-save"></i> Save Contact Info Only
+                                </button>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem;">
+                                <div class="sigma-field" style="margin: 0;">
+                                    <label for="lead-action-manager" style="font-size: 0.65rem;">Main Manager</label>
+                                    <input type="text" id="lead-action-manager" class="sigma-input" style="height: 34px; font-size: 0.8rem;">
+                                </div>
+                                <div class="sigma-field" style="margin: 0;">
+                                    <label for="lead-action-phone" style="font-size: 0.65rem;">Phone Number</label>
+                                    <input type="text" id="lead-action-phone" class="sigma-input" style="height: 34px; font-size: 0.8rem;" oninput="maskPhone(event)">
+                                </div>
+                                <div class="sigma-field" style="margin: 0;">
+                                    <label for="lead-action-email" style="font-size: 0.65rem;">Email Address</label>
+                                    <input type="email" id="lead-action-email" class="sigma-input" style="height: 34px; font-size: 0.8rem;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.8rem; font-weight: 600; color: var(--slate-600); margin: 0;">
+                                <input type="checkbox" id="update-next-action" checked style="width: 16px; height: 16px; border-radius: 4px; border: 1px solid var(--slate-300);">
+                                Set follow-up date (+3 days if blank)
+                            </label>
+                            <button type="submit" class="isc-btn isc-btn-primary" style="height: 38px; padding: 0 1.75rem; font-weight: 800;">Save Activity &amp; Update Lead</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Right Column: Schedule Building Walkthrough -->
+                <div style="background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 10px; padding: 1.25rem;">
+                    <span class="sigma-form-header" style="margin-bottom: 1rem; display: block;">Schedule Building Walkthrough</span>
+                    <form onsubmit="saveVisitRequest(event)" class="sigma-form-container">
+                        <div class="sigma-row sigma-row-60-40">
+                            <div class="sigma-field"><label for="visit-date">Walkthrough Date</label><input type="date" id="visit-date" required class="sigma-input" style="height: 36px; background: #fff;"></div>
+                            <div class="sigma-field"><label for="visit-time">Walkthrough Time</label><input type="time" id="visit-time" class="sigma-input" style="height: 36px; background: #fff;"></div>
+                        </div>
+                        <div class="sigma-row sigma-row-75-25">
+                            <div class="sigma-field"><label for="visit-manager">Manager to Meet</label><input type="text" id="visit-manager" placeholder="Full Name" class="sigma-input" style="height: 36px; background: #fff;"></div>
+                            <div class="sigma-field"><label for="visit-phone">Phone</label><input type="text" id="visit-phone" placeholder="Phone" class="sigma-input" style="height: 36px; background: #fff;" oninput="maskPhone(event)"></div>
+                        </div>
+                        <div class="sigma-field" style="margin-top: 1rem;">
+                            <label for="visit-map-link">Google Maps Link</label>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <input type="url" id="visit-map-link" placeholder="https://maps.google.com/..." class="sigma-input" style="flex-grow: 1; height: 36px; background: #fff;">
+                                <button type="button" onclick="pasteFromClipboard('visit-map-link')" class="isc-btn isc-btn-outline" style="height: 36px; width: 36px; padding: 0; border-radius: 8px; background: #fff;" aria-label="Paste Google Maps URL" title="Paste from Clipboard"><i class="fas fa-clipboard"></i></button>
+                                <button type="button" onclick="verifyMapLink()" class="isc-btn isc-btn-outline" style="height: 36px; width: 36px; padding: 0; border-radius: 8px; background: #fff;" aria-label="Verify and Open Google Maps" title="Verify and Open Map"><i class="fas fa-external-link-alt"></i></button>
+                            </div>
+                        </div>
+                        <div class="sigma-field"><label for="visit-instructions">Entry Instructions / Notes</label><textarea id="visit-instructions" placeholder="Front desk check-in, gate code, or areas to measure..." class="sigma-input" style="height: 80px; resize: vertical; background: #fff;"></textarea></div>
+                        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 0.5rem 0.75rem; margin-top: 0.75rem;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.78rem; font-weight: 700; color: #166534; cursor: pointer; margin: 0;">
+                                <input type="checkbox" id="visit-sync-cal" checked style="accent-color: #047857; width: 15px; height: 15px;">
+                                <span>Add to Microsoft 365 Calendar &amp; Set Stage to Qualified</span>
+                            </label>
+                        </div>
+                        <div style="display: flex; justify-content: flex-end; margin-top: 1.25rem;">
+                            <button type="submit" class="isc-btn isc-btn-primary" style="height: 38px; padding: 0 2rem; font-weight: 800; background: #047857; border-color: #065f46;">Schedule Walkthrough</button>
                         </div>
                     </form>
                 </div>
@@ -8616,15 +8756,14 @@
                                 <label style="font-weight: 600; font-size: 0.75rem; color: var(--slate-700); margin-bottom: 4px;">Lead Status</label>
                                 <select id="edit-lead-status" name="status" class="sigma-input" style="height: 36px;">
                                     <option value="New">New</option>
-                                    <option value="In Campaign">In Email Outreach</option>
-                                    <option value="Engaged">Engaged 🔥</option>
-                                    <option value="Active">Active</option>
+                                    <option value="In Campaign">📬 In Email Outreach</option>
+                                    <option value="Engaged">🔥 Engaged</option>
                                     <option value="Contacted">Contacted</option>
                                     <option value="Qualified">Qualified</option>
-                                    <option value="Trained">Trained</option>
+                                    <option value="Walkthrough Completed">📋 Walkthrough Completed</option>
+                                    <option value="Not Interested">🛑 Not Interested</option>
                                     <option value="Unsubscribed">✉️ Unsubscribed</option>
                                     <option value="Do Not Call (DNC)">🚫 Do Not Call (DNC)</option>
-                                    <option value="Lost">Lost</option>
                                 </select>
                             </div>
                             <div class="sigma-field">
@@ -8730,13 +8869,11 @@
                                 </select>
                             </div>
                             <div class="sigma-field">
-                                <label style="font-weight: 600; font-size: 0.75rem; color: var(--slate-700); margin-bottom: 4px;">Who Cleans the Building</label>
+                                <label style="font-weight: 600; font-size: 0.75rem; color: var(--slate-700); margin-bottom: 4px;">🧹 Who Cleans the Building</label>
                                 <select id="edit-lead-delivery-model" name="cleaning_delivery_model" class="sigma-input" style="height: 36px;">
-                                    <option value="UNKNOWN">-- Unknown / Not Verified --</option>
-                                    <option value="OUTSOURCED">OUTSOURCED (Trade Partner 1099)</option>
-                                    <option value="Model C Institutional Prime (Bosanna)">Model C Institutional Prime (Bosanna)</option>
-                                    <option value="SELF_PERFORMED">SELF_PERFORMED (W-2 Crew)</option>
-                                    <option value="IN_HOUSE">IN_HOUSE (Facility Staff Cleans)</option>
+                                    <option value="UNKNOWN">⚪ Unknown — Not Verified Yet</option>
+                                    <option value="IN_HOUSE">🏠 In-House Cleaning — Own Staff Cleans</option>
+                                    <option value="OUTSOURCED">🤝 Contract Cleaning — Outside Cleaning Company</option>
                                 </select>
                             </div>
                         </div>
@@ -8791,10 +8928,14 @@
         </div>
 
         <div id="lead-pane-timeline" class="isc-lead-pane" style="display:none;">
-            <div style="margin-bottom: 2rem;">
-                <span class="sigma-form-header">Activity History</span>
+            <div style="margin-bottom: 1.25rem;">
+                <span class="sigma-form-header">Stage Progression &amp; Date Log</span>
+                <div id="lead-stage-history-summary" style="margin-top: 0.75rem;"></div>
             </div>
-            <div id="lead-list-timeline" style="display: grid; gap: 2.5rem; border-left: 2px solid var(--slate-100); padding-left: 2.5rem; margin-left: 1rem; max-height: 500px; overflow-y: auto; padding-right: 1.5rem;"></div>
+            <div style="margin-bottom: 1.25rem;">
+                <span class="sigma-form-header">Call &amp; Activity History</span>
+            </div>
+            <div id="lead-list-timeline" style="display: grid; gap: 2rem; border-left: 2px solid var(--slate-100); padding-left: 2rem; margin-left: 0.75rem; max-height: 440px; overflow-y: auto; padding-right: 1rem;"></div>
         </div>
     </div>
 </div>
@@ -9163,7 +9304,15 @@
                             </select>
                         </div>
                     </div>
-                    <div class="sigma-row sigma-row-60-40">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.6rem;">
+                        <div class="sigma-field">
+                            <label for="add-lead-cleaning-model">🧹 Who Cleans Right Now</label>
+                            <select id="add-lead-cleaning-model" name="cleaning_delivery_model" class="sigma-input">
+                                <option value="UNKNOWN" selected>⚪ Unknown</option>
+                                <option value="IN_HOUSE">🏠 In-House Cleaning</option>
+                                <option value="OUTSOURCED">🤝 Contract Cleaning</option>
+                            </select>
+                        </div>
                         <div class="sigma-field">
                             <label for="add-lead-owner">Assigned Lead Owner</label>
                             <select id="add-lead-owner" name="owner_id" class="sigma-input">
