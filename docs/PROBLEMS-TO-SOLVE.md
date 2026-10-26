@@ -118,7 +118,6 @@ Responsibility: George (Architect)
 | 10/19/2026 | BUG-132 | Public Website & Origin Worker Latency Stalls (Duplicate Boot Daemon Spawning on Every Gunicorn Worker Recycle, Synchronous Cloudflare Cache-Bypass, & Uncompressed Assets). | **RESOLVED** | HIGH |
 | 10/19/2026 | BUG-133 | Backoffice Operations (`/admin/operations`) Multi-Second Tab Switching Latency (`2,440ms–9,050ms`) Due to Monolithic 12-Department SQL Execution, Live 11-Rack Self-Healing Queries, & 940KB Unpruned Jinja DOM. | **RESOLVED** | CRITICAL |
 | 10/19/2026 | BUG-134 | Unclosed `#view-monitor` Container (`display: none`) During Jinja Active-View Pruning Trapping Downstream Views & Modals (`#modal-lead-command`) and Preventing Lead Row Click Display. | **RESOLVED** | HIGH |
-| 10/26/2026 | BUG-152 | Post-Exploitation & Root-Access Security Audit Findings: Hardcoded Plaintext Transition Password Lists in `auth.py`/`partner.py`, Unauthenticated `/portal/bosanna/magic-login` Bypass, Case-Insensitive `.lower()` Password Check, Plaintext `HR_VAULT_DIR` Disk Cache Duplicating Encrypted Vault Files, Root `uid=0` Container Execution, Shared `SECRET_KEY` Fallback in `core/security.py`, Hardcoded Deployment Script Tokens, & Delayed Session Revocation in `load_user()`. | **RESOLVED** | CRITICAL |
 | 10/19/2026 | BUG-135 | Tablet Off-Screen Column Popover Clipping (`#col-mgr-menu` `right: 0; width: 640px;`), Unscrollable `.isc-modal` (`overflow: hidden`), Multi-Sticky Column Overlap, & Touch Header Drag Collision. | **RESOLVED** | HIGH |
 | 10/19/2026 | BUG-136 | Smartphone (`390px` Apple iPhone iOS Safari & `412px` Google Pixel 9 Android Chrome) Public & Backend Form Ergonomics: `<16px` Input Auto-Zoom, Uncollapsed Multi-Column Form Grids (`2fr 1fr 1fr`), Heavy Vault Paddings (`4rem`), Static `100vh` vs `100dvh` Keyboard Clipping, & Flyout/Bulk Bar Overflow. | **RESOLVED** | HIGH |
 | 10/19/2026 | BUG-137 | Full-Site Public & Backend Phone (`390px–430px`), Tablet (`768px–1024px`), & Data-Table Display Deficits: `.top-utility-bar` `720px` Viewport Blowout, Uncollapsed `repeat(4, 1fr)` KPI Scorecards, 28 Wide Data Tables Without Phone CRM Card Mode, & Fixed `320px` QMS Manual Sidebar Crushing Mobile Text. | **RESOLVED** | HIGH |
@@ -136,6 +135,9 @@ Responsibility: George (Architect)
 | 10/24/2026 | BUG-149 | Adversarial Plaintiff's Counsel Website Audit Findings — 15 Pre-Checked (`checked`) Legal/TCPA/FCRA/MSA Checkboxes, Bundled FCRA Disclosures, DOJ Form I-9 Document Abuse Exposure, 48 Unbound WCAG Form Labels, Missing FAA Individual Arbitration & Class-Action Waiver in `/terms`, & TDPSA Texas AG Complaint URL / `Sec-GPC: 1` Gaps. | **RESOLVED** | CRITICAL |
 | 10/24/2026 | BUG-150 | Full-Website Form, Button, & Interactive Control Audit Findings — Missing Two-Way PostgreSQL Service Scope Planner JS Handlers (`addToScope`, `clearScope`, `onScopeBuildingChange`), SQL Column Mismatch (`scope_of_work` vs `tasks_json`) in `/admin/scope-builder`, Missing PostgreSQL-Backed `smartType()` Address Auto-Complete in Add Client/Lead Modals, and 4 Orphaned Legacy Templates. | **RESOLVED** | HIGH |
 | 10/24/2026 | BUG-151 | LLM & AI Search Visibility Gaps (`OAI-SearchBot` / ChatGPT Search, Perplexity, Claude, & Google AI Overviews) — Missing `/llms.txt` & `/llms-full.txt` (`HTTP 404`), `robots.txt` Blocking `/compliance` & `/ehsq` While Listed in `sitemap.xml`, Global Invisible Duplicate `FAQPage` Schema Spam Across All 38 Pages, 25-Word Duplicate City Boilerplate, & Missing IndexNow / AI Bot Telemetry. | **RESOLVED** | CRITICAL |
+| 10/26/2026 | BUG-152 | Post-Exploitation & Root-Access Security Audit Findings: Hardcoded Plaintext Transition Password Lists in `auth.py`/`partner.py`, Unauthenticated `/portal/bosanna/magic-login` Bypass, Case-Insensitive `.lower()` Password Check, Plaintext `HR_VAULT_DIR` Disk Cache Duplicating Encrypted Vault Files, Root `uid=0` Container Execution, Shared `SECRET_KEY` Fallback in `core/security.py`, Hardcoded Deployment Script Tokens, & Delayed Session Revocation in `load_user()`. | **RESOLVED** | CRITICAL |
+| 10/26/2026 | BUG-153 | Cloudflare Edge Security & Performance Audit Findings: Missing `spf.protection.outlook.com` in SPF TXT, Missing DNS CAA Records, Uncached `/services/*` & `/locations/*` HTML (`DYNAMIC` `273ms` vs `HIT` `46ms`), Missing Apex-to-WWW 301 Redirect, & Disabled Smart Tiered Cache / Early Hints / 0-RTT / HSTS Preload / Hotlink Protection / DNSSEC. | **RESOLVED** | HIGH |
+| 10/26/2026 | BUG-154 | Commercial Leads Search Bar Returning `0` Results on Assigned Sales Rep Names (`beabe wiley`), Entity Collision Between Rep Names & Texas Cities/Streets (`Beabe Wiley` vs `Wylie, TX` / `Wiley Post Rd`), Missing Dedicated `owner_id` Toolbar Filter, & Missing Faceted Typeahead Autocomplete. | **RESOLVED** | HIGH |
 
 
 ## BUG-122: App Manual Static Routing Deficit (Lacks Automatic Active Workspace Detection & Deep-Link Chapter Navigation)
@@ -2950,4 +2952,62 @@ Every public service and location page must pass `test_30_enterprise_llm_geo_vis
    - Added `test_31_enterprise_root_exploitation_and_credential_hardening_bug_152` to `scripts/test_web_performance_rack_14.py` (`31/31` PASS) and Check 8 to `scripts/check_soc2_data_leakage.py` (`85/85` PASS) to continuously scan backend source files, container configuration, and `vault/hr_documents/` on every build.
 **Preventative:**
 Every deployment must pass both black-box HTTP boundary tests AND white-box post-exploitation source/container checks (`test_31` in `scripts/test_web_performance_rack_14.py`, `scripts/check_soc2_data_leakage.py`, `scripts/test_site_security_rack_09.py`, and `scripts/test_labor_recruitment_and_cyber_suite.py`). Temporary credential transition bridges are permanently prohibited across all authentication blueprints.
+
+
+## BUG-153: Cloudflare Edge Security & Performance Audit Findings — Missing `spf.protection.outlook.com` in SPF TXT, Missing DNS CAA Records, Uncached `/services/*` & `/locations/*` HTML (`DYNAMIC` `273ms` vs `HIT` `46ms`), Missing Apex-to-WWW 301 Redirect, & Disabled Smart Tiered Cache / Early Hints / 0-RTT / HSTS Preload / Hotlink Protection / DNSSEC
+**Detected:** 10/26/2026
+**Status:** **RESOLVED** (10/26/2026 — Deployed live via Cloudflare v4 API on Zone `hwbcleaning.com` `f0e80320a87150c1fa049c9492bd14d8`)
+**Symptoms (Identified During Live Cloudflare v4 API & Edge Telemetry Audit):**
+1. **Email Authentication & DNS Gaps (`DNS` Records on `hwbcleaning.com`):**
+   - The SPF TXT records on `hwbcleaning.com` (`717a9f25aaf05fe4473ed8d0fbe91998`) and `www.hwbcleaning.com` (`75e7a2edb1e997f092d2e8c8e02dbf02`) were set to `v=spf1 include:_spf-usg1.ppe-hosted.com include:secureserver.net -all`, omitting `include:spf.protection.outlook.com` even though outbound HWB emails are transmitted through the Microsoft 365 Graph API.
+   - Zero `CAA` (Certification Authority Authorization) DNS records existed on `hwbcleaning.com` to restrict which Certificate Authorities may issue TLS certificates for the domain.
+   - `DNSSEC` was `disabled` on the zone.
+2. **Missing HSTS `preload` Directive & Hotlink Protection:**
+   - Cloudflare `strict_transport_security` had `enabled: true`, `max_age: 31536000`, `include_subdomains: true`, and `nosniff: true`, but `preload` was set to `false`.
+   - `hotlink_protection` was `off`.
+3. **Suboptimal Edge Caching & Transport Acceleration (`CF-Cache-Status: DYNAMIC` on Public Service/City Pages):**
+   - Although the Flask origin (`main_app.py`) emitted `Cache-Control: public, max-age=300, s-maxage=3600, stale-while-revalidate=86400` on public HTML routes, Cloudflare's default behavior only caches static file extensions (`.css`, `.js`, `.png`, `.webp`) and marks HTML routes as `CF-Cache-Status: DYNAMIC` unless instructed via Cache Rules / Page Rules. As a result, every visitor to `/services/*` and `/locations/*` traversed the origin Azure container (`256ms–273ms` TTFB).
+   - `tiered_cache_smart_topology_enable`, `early_hints`, `0rtt`, and `always_online` were all set to `off`.
+4. **Dual-Host Apex vs. WWW Split (`https://hwbcleaning.com` vs. `https://www.hwbcleaning.com`):**
+   - Both `https://hwbcleaning.com` and `https://www.hwbcleaning.com` returned `HTTP 200 OK` independently instead of enforcing an edge-level `301 Permanent Redirect` from the apex domain to the canonical `https://www.hwbcleaning.com/$1` host.
+**Solution:**
+1. **SPF TXT Hardening for Microsoft 365 Graph API & 10 DNS `CAA` Records + DNSSEC (`Cloudflare DNS API`):**
+   - Updated both `hwbcleaning.com` and `www.hwbcleaning.com` SPF TXT records to `v=spf1 include:spf.protection.outlook.com include:_spf-usg1.ppe-hosted.com include:secureserver.net -all`.
+   - Created 10 DNS `CAA` (`issue` and `issuewild`) records authorizing `letsencrypt.org`, `pki.goog`, `ssl.com`, `digicert.com`, and `sectigo.com`.
+   - Activated `DNSSEC` signing on `hwbcleaning.com`.
+2. **HSTS Preload & Hotlink Protection Enabled (`Cloudflare Zone Settings API`):**
+   - Enabled `preload: true` on `security_header.strict_transport_security` (`strict-transport-security: max-age=31536000; includeSubDomains; preload` verified live) and enabled `hotlink_protection: "on"`.
+3. **Smart Tiered Cache, Early Hints (`103`), `0-RTT`, & Always Online Enabled:**
+   - Activated `tiered_cache_smart_topology_enable: "on"`, `early_hints: "on"`, `0rtt: "on"`, and `always_online: "on"`.
+4. **3 Edge Page Rules Deployed (`Apex 301 Redirect` & `Cache Everything` on `/services/*` and `/locations/*`):**
+   - Priority 3: `https://hwbcleaning.com/*` -> `301 Permanent Redirect` to `https://www.hwbcleaning.com/$1` (verified live `301` redirect with `0ms` origin load).
+   - Priority 2: `https://www.hwbcleaning.com/services/*` -> `Cache Level: Cache Everything`, `Edge Cache TTL: 7200s` (verified live `CF-Cache-Status: HIT`, reducing TTFB from `273.5ms` to **`46.2ms–53.2ms`**).
+   - Priority 1: `https://www.hwbcleaning.com/locations/*` -> `Cache Level: Cache Everything`, `Edge Cache TTL: 7200s` (verified live `CF-Cache-Status: HIT`, reducing TTFB from `256.4ms` to **`61.0ms–64.2ms`**).
+   - Verified `/login`, `/api/v1/*`, and `/admin/*` remain strictly `CF-Cache-Status: DYNAMIC` (`Cache-Control: no-store, no-cache, must-revalidate, private`).
+**Preventative:**
+All future public route additions under `/services/*` and `/locations/*` automatically inherit Cloudflare Edge `HIT` caching (`7,200s` Edge TTL) and Smart Tiered Cache topology, while dynamic/authenticated routes remain strictly `DYNAMIC` (`no-store`).
+
+
+## BUG-154: Commercial Leads Search Bar Returning `0` Results on Assigned Sales Rep Names (`beabe wiley`), Entity Collision Between Rep Names & Texas Cities/Streets (`Beabe Wiley` vs `Wylie, TX` / `Wiley Post Rd`), Missing Dedicated `owner_id` Toolbar Filter, & Missing Faceted Typeahead Autocomplete
+**Detected:** 10/26/2026
+**Status:** **RESOLVED** (10/26/2026 — Verified by `test_32_enterprise_leads_faceted_search_and_owner_filter_bug_154` in `scripts/test_web_performance_rack_14.py` `32/32` passing)
+**Symptoms:**
+1. Searching for **`beabe wiley`** in the Commercial Leads search bar (`/admin/operations?view=leads`) returned **`0` results**, even though Beabe Wiley (`Bwiley`) had **`50` assigned commercial leads** (`owner_id`).
+2. `parse_advanced_search()` in `core/services/search.py` only checked `"Users"` when an explicit single-word prefix (`rep:Wiley` or `owner:Wiley`) was typed. Typing an unprefixed full name (`beabe wiley`) or an unquoted multi-word prefix (`rep:Beabe Wiley`) split the string on whitespace into `AND` tokens across lead building text columns (`center_name`, `city`, `address`), where `"Beabe"` did not exist.
+3. Conversely, blindly adding `Users.full_name` to every single-word token would cause entity collision between rep names and Texas cities or streets (e.g., `Beabe Wiley` vs. `Wylie, TX` — often spelled `Wiley TX` — or `Wiley Post Rd` in Addison/Carrollton).
+4. Local Dev PostgreSQL (`hwb_postgres_dev`) had `0` leads assigned to Beabe Wiley (`owner_id = 5`), whereas Live Azure Production had `50` leads assigned to Beabe Wiley (`owner_id = 6`).
+**Solution:**
+1. **4-Pillar Enterprise Faceted Search & Owner-Filtering Architecture (`core/services/search.py`, `blueprints/operations.py`, `templates/backoffice_operations.html`, `static/js/backoffice_operations_core.js`):**
+   - **Pillar 1 — Dedicated `👤 All Owners` Toolbar Filter (`owner_id`):** Added `#lead-owner-filter-select` next to the Leads search input displaying each active user and their live assigned lead count (`Beabe Wiley (50 leads)`, `-- Unassigned Only --`, etc.), wired to `?view=leads&owner_id=<id>` in `blueprints/operations.py` and preserved across pagination and status filter toggles.
+   - **Pillar 2 — Categorized Live Typeahead Autocomplete (`GET /api/v1/leads/search-suggest`):** Built a fast faceted suggestion dropdown (`#lead-search-suggest-menu`) that categorizes matches as the operator types into **👤 Assigned Sales Rep / Owner** (`Beabe Wiley — 50 Leads`), **📍 Cities & Streets** (`Wylie, TX — 27 Leads`, spell-corrected from `'wiley'`), and **🏢 Matching Buildings**.
+   - **Pillar 3 — Full-Name Entity Recognition Without Single-Word City Collision (`core/services/search.py`):** Upgraded `parse_advanced_search()` with cached entity metadata (`get_search_entity_metadata()`) so typing an active user's full name (`beabe wiley`), unquoted `rep:Beabe Wiley` / `owner:Beabe Wiley`, or exact username (`bwiley`) automatically resolves to `owner_id`, while single ambiguous words keep searching building/city/street columns cleanly.
+   - **Pillar 4 — Texas City Spell-Correction (`TX_CITY_MISSPELLING_MAP`):** Added automatic Texas city spell-correction (`wiley tx` or `city:wiley` $\rightarrow$ `Wylie, TX`; `carrolton tx` $\rightarrow$ `Carrollton, TX`; `mckiney tx` $\rightarrow$ `McKinney, TX`) so operators never hit dead-end `0` results on DFW city spelling variants.
+2. **Synchronized All 50 Live Beabe Wiley Lead Assignments to Local Dev:**
+   - Synchronized all 50 commercial leads assigned to Beabe Wiley on Live Azure Production into Local Dev PostgreSQL (`owner_id = 5`).
+3. **Permanent Regression Gate (`test_32` in `scripts/test_web_performance_rack_14.py`):**
+   - Added `test_32_enterprise_leads_faceted_search_and_owner_filter_bug_154` verifying full-name rep search, `owner_id` filtering, `wiley tx` $\rightarrow$ `Wylie, TX` city spell-correction isolation, and `/api/v1/leads/search-suggest`.
+**Preventative:**
+Record ownership (`owner_id`) and geographic/building search (`q`) are cleanly disambiguated via faceted typeahead suggestions, full-name entity recognition, and the dedicated `owner_id` toolbar selector, verified on every build by `test_32` (`32/32` Rack 14 tests passing).
+
+
 

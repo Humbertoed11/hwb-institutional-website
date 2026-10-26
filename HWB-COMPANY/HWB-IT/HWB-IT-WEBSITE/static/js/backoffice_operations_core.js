@@ -389,6 +389,14 @@
         const searchInput = document.querySelector('#form-search-leads input[name="q"]');
         if (searchInput && searchInput.value.trim()) {
             url.searchParams.set('q', searchInput.value.trim());
+        } else if (searchInput && !searchInput.value.trim()) {
+            url.searchParams.delete('q');
+        }
+        const ownerSelect = document.getElementById('lead-owner-filter-select');
+        if (ownerSelect && ownerSelect.value) {
+            url.searchParams.set('owner_id', ownerSelect.value);
+        } else if (ownerSelect && !ownerSelect.value) {
+            url.searchParams.delete('owner_id');
         }
         const activeOnlyCb = document.querySelector('#form-search-leads input[name="active_only"]');
         if (activeOnlyCb && activeOnlyCb.checked) {
@@ -413,6 +421,127 @@
         url.searchParams.delete('page');
         window.location.href = url.href;
     }
+
+    function onLeadOwnerFilterChange(ownerVal) {
+        const url = new URL(window.location.href);
+        const searchInput = document.querySelector('#form-search-leads input[name="q"]');
+        if (searchInput && searchInput.value.trim()) {
+            url.searchParams.set('q', searchInput.value.trim());
+        } else {
+            url.searchParams.delete('q');
+        }
+        if (ownerVal) {
+            url.searchParams.set('owner_id', ownerVal);
+        } else {
+            url.searchParams.delete('owner_id');
+        }
+        url.searchParams.set('view', 'leads');
+        url.searchParams.delete('offset');
+        url.searchParams.delete('page');
+        window.location.href = url.href;
+    }
+
+    let _leadTypeaheadTimer = null;
+    function onLeadSearchTypeahead(rawVal) {
+        const menu = document.getElementById('lead-search-suggest-menu');
+        if (!menu) return;
+        const val = (rawVal || '').trim();
+        if (val.length < 2) {
+            menu.style.display = 'none';
+            menu.innerHTML = '';
+            return;
+        }
+        if (_leadTypeaheadTimer) clearTimeout(_leadTypeaheadTimer);
+        _leadTypeaheadTimer = setTimeout(async () => {
+            try {
+                const resp = await fetch('/api/v1/leads/search-suggest?q=' + encodeURIComponent(val), {
+                    headers: { 'Accept': 'application/json' }
+                });
+                if (!resp.ok) return;
+                const data = await resp.json();
+                const owners = data.owners || [];
+                const locations = data.locations || [];
+                const buildings = data.buildings || [];
+                if (!owners.length && !locations.length && !buildings.length) {
+                    menu.style.display = 'none';
+                    return;
+                }
+                let html = '';
+                if (owners.length) {
+                    html += '<div style="padding: 0.35rem 0.5rem; font-size: 0.65rem; font-weight: 900; color: #4f46e5; text-transform: uppercase; letter-spacing: 0.05em;">👤 Assigned Sales Rep / Owner</div>';
+                    owners.forEach(o => {
+                        const safeName = (o.full_name || o.username || '').replace(/'/g, "\\'");
+                        html += `<button type="button" onclick="applyLeadOwnerSuggestion('${o.id}')" style="display:flex; width:100%; align-items:center; justify-content:space-between; padding:0.45rem 0.6rem; border:none; background:transparent; border-radius:6px; cursor:pointer; text-align:left;" onmouseover="this.style.background='#eef2ff'" onmouseout="this.style.background='transparent'">
+                            <div>
+                                <div style="font-size:0.8rem; font-weight:800; color:#1e293b;">${o.full_name || o.username}</div>
+                                <div style="font-size:0.68rem; color:#64748b;">@${o.username} • ${o.role}</div>
+                            </div>
+                            <span style="font-size:0.7rem; font-weight:800; background:#e0e7ff; color:#3730a3; padding:0.15rem 0.5rem; border-radius:999px;">${o.lead_count} Leads</span>
+                        </button>`;
+                    });
+                }
+                if (locations.length) {
+                    html += '<div style="padding: 0.35rem 0.5rem; margin-top: 0.2rem; font-size: 0.65rem; font-weight: 900; color: #059669; text-transform: uppercase; letter-spacing: 0.05em;">📍 Cities & Streets</div>';
+                    locations.forEach(loc => {
+                        const encodedQ = encodeURIComponent(loc.query);
+                        html += `<button type="button" onclick="applyLeadQuerySuggestion(decodeURIComponent('${encodedQ}'))" style="display:flex; width:100%; align-items:center; justify-content:space-between; padding:0.45rem 0.6rem; border:none; background:transparent; border-radius:6px; cursor:pointer; text-align:left;" onmouseover="this.style.background='#ecfdf5'" onmouseout="this.style.background='transparent'">
+                            <div>
+                                <div style="font-size:0.8rem; font-weight:800; color:#1e293b;">${loc.label}</div>
+                                <div style="font-size:0.68rem; color:#059669;">${loc.note || 'Location'}</div>
+                            </div>
+                            <span style="font-size:0.7rem; font-weight:800; background:#d1fae5; color:#065f46; padding:0.15rem 0.5rem; border-radius:999px;">${loc.count} Leads</span>
+                        </button>`;
+                    });
+                }
+                if (buildings.length) {
+                    html += '<div style="padding: 0.35rem 0.5rem; margin-top: 0.2rem; font-size: 0.65rem; font-weight: 900; color: #0284c7; text-transform: uppercase; letter-spacing: 0.05em;">🏢 Matching Buildings</div>';
+                    buildings.forEach(b => {
+                        const encodedQ = encodeURIComponent(b.query);
+                        html += `<button type="button" onclick="applyLeadQuerySuggestion(decodeURIComponent('${encodedQ}'))" style="display:flex; width:100%; align-items:center; justify-content:space-between; padding:0.45rem 0.6rem; border:none; background:transparent; border-radius:6px; cursor:pointer; text-align:left;" onmouseover="this.style.background='#f0f9ff'" onmouseout="this.style.background='transparent'">
+                            <div style="overflow:hidden; padding-right:0.5rem;">
+                                <div style="font-size:0.78rem; font-weight:800; color:#1e293b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${b.name}</div>
+                                <div style="font-size:0.68rem; color:#64748b;">${b.city} • ${b.facility_type}</div>
+                            </div>
+                            <span style="font-size:0.68rem; font-weight:700; color:#0369a1; white-space:nowrap;">${b.status}</span>
+                        </button>`;
+                    });
+                }
+                menu.innerHTML = html;
+                menu.style.display = 'block';
+            } catch (err) {
+                console.warn('[LEADS TYPEAHEAD]', err);
+            }
+        }, 160);
+    }
+
+    function applyLeadOwnerSuggestion(ownerId) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('view', 'leads');
+        url.searchParams.set('owner_id', ownerId);
+        url.searchParams.delete('q');
+        url.searchParams.delete('page');
+        url.searchParams.delete('offset');
+        window.location.href = url.href;
+    }
+
+    function applyLeadQuerySuggestion(queryStr) {
+        const input = document.getElementById('lead-search-q-input');
+        const form = document.getElementById('form-search-leads');
+        const menu = document.getElementById('lead-search-suggest-menu');
+        if (menu) menu.style.display = 'none';
+        if (input && form) {
+            input.value = queryStr;
+            form.submit();
+        }
+    }
+
+    document.addEventListener('click', function(ev) {
+        const wrap = document.getElementById('lead-search-autocomplete-wrap');
+        const menu = document.getElementById('lead-search-suggest-menu');
+        if (wrap && menu && !wrap.contains(ev.target)) {
+            menu.style.display = 'none';
+        }
+    });
     
     function savePersonalLeadPreset() {
         const form = document.getElementById('col-form');

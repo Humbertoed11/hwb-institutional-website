@@ -2502,6 +2502,53 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
         finally:
             conn.close()
 
+    def test_32_enterprise_leads_faceted_search_and_owner_filter_bug_154(self):
+        """
+        BUG-154: Verifies the 4-Pillar Enterprise Leads Faceted Search & Owner-Filtering Workflow:
+        1. Full-Name Entity Recognition (`q=beabe wiley` & `q=rep:Beabe Wiley` & `q=bwiley` -> resolves to Beabe Wiley's 50 assigned leads).
+        2. Dedicated `owner_id` Parameter (`?view=leads&owner_id=<id>` & `?view=leads&owner_id=unassigned`).
+        3. Fuzzy Texas City Spell-Correction (`q=wiley tx` & `q=city:wiley` -> resolves to Wylie, TX without mixing in Beabe Wiley's leads).
+        4. Faceted Typeahead Autocomplete API (`/api/v1/leads/search-suggest?q=wiley` returns both 👤 Assigned Rep and 📍 Wylie, TX).
+        """
+        auth_client = self.get_auth_client()
+
+        # 1. Verify full-name and rep-prefixed search for Beabe Wiley
+        for q_str in ("beabe wiley", "Beabe Wiley", "rep:Beabe Wiley", "bwiley"):
+            r = auth_client.get(f"/admin/operations?view=leads&q={q_str}&format=json")
+            self.assertEqual(r.status_code, 200)
+            data = r.get_json()
+            self.assertEqual(len(data.get("leads", [])), 50, f"Query '{q_str}' must return all 50 leads assigned to Beabe Wiley")
+
+        # 2. Verify dedicated owner_id parameter
+        conn = get_db(self.db_url)
+        try:
+            with conn.cursor() as cur:
+                cur.execute('SELECT id FROM "Users" WHERE LOWER(username) = %s LIMIT 1;', ("bwiley",))
+                bw_id = cur.fetchone()["id"]
+        finally:
+            conn.close()
+
+        r_owner = auth_client.get(f"/admin/operations?view=leads&owner_id={bw_id}&format=json")
+        self.assertEqual(r_owner.status_code, 200)
+        self.assertEqual(len(r_owner.get_json().get("leads", [])), 50)
+
+        # 3. Verify Texas city spell-correction (`wiley tx` -> `Wylie, TX` without mixing in Beabe Wiley's Dallas/Plano leads)
+        r_city = auth_client.get("/admin/operations?view=leads&q=wiley+tx&format=json")
+        self.assertEqual(r_city.status_code, 200)
+        city_leads = r_city.get_json().get("leads", [])
+        self.assertGreater(len(city_leads), 0, "'wiley tx' must spell-correct to Wylie, TX and return leads")
+        for ld in city_leads:
+            self.assertEqual((ld.get("city") or "").lower(), "wylie")
+
+        # 4. Verify Faceted Typeahead API (`/api/v1/leads/search-suggest?q=wiley`)
+        r_sug = auth_client.get("/api/v1/leads/search-suggest?q=wiley")
+        self.assertEqual(r_sug.status_code, 200)
+        sug = r_sug.get_json()
+        owner_names = [o.get("full_name") for o in sug.get("owners", [])]
+        loc_labels = [l.get("label") for l in sug.get("locations", [])]
+        self.assertIn("Beabe Wiley", owner_names)
+        self.assertIn("Wylie, TX", loc_labels)
+
 
 if __name__ == "__main__":
     unittest.main()

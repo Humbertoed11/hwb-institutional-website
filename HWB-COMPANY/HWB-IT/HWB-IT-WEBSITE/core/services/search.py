@@ -5,8 +5,142 @@ Custodians: George (Systems Architect) & Silas Sync (VP of CRM)
 Enterprise Boolean Logic: AND, OR, NOT, Parentheses, Quoted Phrases, Field Targeting, Numeric & Date Ranges
 """
 
+import os
 import re
+import time
+import threading
+import psycopg2
 from typing import List, Tuple, Any, Optional, Dict
+
+_SEARCH_META_LOCK = threading.Lock()
+_SEARCH_META_CACHE: Dict[str, Any] = {"users": None, "cities": None, "timestamp": 0.0}
+_SEARCH_META_TTL = 120.0
+
+# Known DFW / Texas phonetic & spelling variants mapped to canonical city names
+TX_CITY_MISSPELLING_MAP: Dict[str, str] = {
+    'wiley': 'Wylie',
+    'wyley': 'Wylie',
+    'carrolton': 'Carrollton',
+    'carolton': 'Carrollton',
+    'carrollten': 'Carrollton',
+    'mckiney': 'McKinney',
+    'mckinny': 'McKinney',
+    'mac kinney': 'McKinney',
+    'lewisvile': 'Lewisville',
+    'flower mound': 'Flower Mound',
+    'flowermound': 'Flower Mound',
+    'ft worth': 'Fort Worth',
+    'ft. worth': 'Fort Worth',
+    'grand prarie': 'Grand Prairie',
+    'grandprairie': 'Grand Prairie',
+    'waxahachie': 'Waxahachie',
+    'waxahatchie': 'Waxahachie',
+    'weatherford': 'Weatherford',
+    'burleson': 'Burleson',
+    'grapevine': 'Grapevine',
+    'southlake': 'Southlake',
+    'westlake': 'Westlake',
+    'rockwall': 'Rockwall',
+    'forney': 'Forney',
+    'sachse': 'Sachse',
+    'rowlett': 'Rowlett',
+    'mesquite': 'Mesquite',
+    'desoto': 'DeSoto',
+    'cedar hill': 'Cedar Hill',
+    'duncanville': 'Duncanville',
+    'lancaster': 'Lancaster',
+    'coppell': 'Coppell',
+    'colleyville': 'Colleyville',
+    'euless': 'Euless',
+    'bedford': 'Bedford',
+    'hurst': 'Hurst',
+    'keller': 'Keller',
+    'mansfield': 'Mansfield',
+    'midlothian': 'Midlothian',
+    'prosper': 'Prosper',
+    'celina': 'Celina',
+    'anna': 'Anna',
+    'melissa': 'Melissa',
+    'little elm': 'Little Elm',
+    'the colony': 'The Colony',
+    'farmers branch': 'Farmers Branch',
+    'highland park': 'Highland Park',
+    'university park': 'University Park',
+}
+
+
+def get_search_entity_metadata() -> Tuple[List[Dict[str, Any]], List[str]]:
+    """
+    Returns cached active system users (id, username, full_name, role) and distinct Texas cities
+    so parse_advanced_search can perform zero-latency entity recognition without extra DB round-trips.
+    """
+    now_ts = time.time()
+    with _SEARCH_META_LOCK:
+        if (
+            _SEARCH_META_CACHE["users"] is not None
+            and _SEARCH_META_CACHE["cities"] is not None
+            and (now_ts - _SEARCH_META_CACHE["timestamp"]) < _SEARCH_META_TTL
+        ):
+            return _SEARCH_META_CACHE["users"], _SEARCH_META_CACHE["cities"]
+
+    users: List[Dict[str, Any]] = []
+    cities: List[str] = []
+    db_url = os.environ.get("DATABASE_URL")
+    if db_url:
+        conn = None
+        try:
+            conn = psycopg2.connect(db_url)
+            with conn.cursor() as cur:
+                cur.execute(
+                    'SELECT id, username, COALESCE(full_name, \'\'), COALESCE(role, \'\') '
+                    'FROM "Users" WHERE COALESCE(status, \'Active\') = \'Active\' ORDER BY id ASC'
+                )
+                for row in cur.fetchall():
+                    users.append({
+                        "id": row[0],
+                        "username": (row[1] or "").strip(),
+                        "full_name": (row[2] or "").strip(),
+                        "role": (row[3] or "").strip(),
+                    })
+                cur.execute(
+                    'SELECT DISTINCT city FROM "Leads" '
+                    'WHERE city IS NOT NULL AND BTRIM(city) != \'\' '
+                    'ORDER BY city ASC LIMIT 500'
+                )
+                cities = [r[0].strip() for r in cur.fetchall() if r[0] and r[0].strip()]
+        except Exception:
+            pass
+        finally:
+            if conn:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+
+    with _SEARCH_META_LOCK:
+        if users:
+            _SEARCH_META_CACHE["users"] = users
+        if cities:
+            _SEARCH_META_CACHE["cities"] = cities
+        _SEARCH_META_CACHE["timestamp"] = now_ts
+    return users or (_SEARCH_META_CACHE["users"] or []), cities or (_SEARCH_META_CACHE["cities"] or [])
+
+
+def resolve_fuzzy_tx_city(raw_city: str, known_cities: Optional[List[str]] = None) -> Optional[str]:
+    """
+    Resolves common Texas city spelling variants (e.g. 'Wiley' -> 'Wylie', 'Carrolton' -> 'Carrollton')
+    without false-positive collisions.
+    """
+    clean = (raw_city or "").strip().lower()
+    if not clean:
+        return None
+    if clean in TX_CITY_MISSPELLING_MAP:
+        return TX_CITY_MISSPELLING_MAP[clean]
+    if known_cities:
+        for kc in known_cities:
+            if kc.lower() == clean:
+                return kc
+    return None
 
 
 def parse_advanced_search(search_q: str, view: str = 'leads') -> Tuple[List[str], List[Any]]:
@@ -187,6 +321,8 @@ def parse_advanced_search(search_q: str, view: str = 'leads') -> Tuple[List[str]
             'scope': ('cb.scope_phase', 'text'),
             'date': ('cb.bid_due_date', 'date'),
             'due': ('cb.bid_due_date', 'date'),
+            'rep': ('cb.assigned_rep_id', 'user_ref'),
+            'owner': ('cb.assigned_rep_id', 'user_ref'),
             'id': ('cb.id', 'num'),
             'bid': ('cb.id', 'num'),
         }
@@ -194,7 +330,55 @@ def parse_advanced_search(search_q: str, view: str = 'leads') -> Tuple[List[str]
             'cb.project_name', 'cb.gc_name', 'cb.city', 'cb.project_address',
             'cb.platform', 'cb.estimator_name', 'cb.estimator_phone', 'cb.estimator_email', 'cb.scope_phase'
         ]
-        user_table_fk = None
+        user_table_fk = 'cb.assigned_rep_id'
+
+    known_users, known_cities = get_search_entity_metadata()
+
+    # Pre-normalize search_q for exact user full-name recognition, unquoted rep:First Last, and Texas city spell-correction
+    # 1. Convert unquoted `rep:First Last` or `owner:First Last` where First Last matches a known user's full_name into `rep:"First Last"`
+    for u in known_users:
+        fn = (u.get("full_name") or "").strip()
+        un = (u.get("username") or "").strip()
+        if fn and " " in fn:
+            # Match explicit prefix `rep:Beabe Wiley` or `owner:Beabe Wiley`
+            search_q = re.sub(
+                rf'\b(rep|owner):{re.escape(fn)}\b',
+                lambda m: f'{m.group(1)}:"{fn}"',
+                search_q,
+                flags=re.IGNORECASE,
+            )
+            # Match standalone multi-word full name `beabe wiley` -> `rep:"Beabe Wiley"` when user_table_fk is active
+            if user_table_fk:
+                search_q = re.sub(
+                    rf'(?<![:"\w])\b{re.escape(fn)}\b(?![:"\w])',
+                    f'rep:"{fn}"',
+                    search_q,
+                    flags=re.IGNORECASE,
+                )
+        if un and len(un) >= 4 and user_table_fk:
+            # Match exact non-dictionary username (e.g. `bwiley`, `hdominguez`, `mrondinella`)
+            if un.lower() not in ('admin', 'sales', 'custom', 'operator'):
+                search_q = re.sub(
+                    rf'(?<![:"\w])\b{re.escape(un)}\b(?![:"\w])',
+                    f'rep:"{un}"',
+                    search_q,
+                    flags=re.IGNORECASE,
+                )
+
+    # 2. Normalize `<city_variant>, TX` or `<city_variant> TX` (e.g. `wiley tx` -> `city:Wylie state:TX`)
+    def _replace_tx_city_pattern(match: re.Match) -> str:
+        raw_c = match.group(1).strip().rstrip(',').strip()
+        canonical_city = resolve_fuzzy_tx_city(raw_c, known_cities)
+        if canonical_city:
+            return f'city:"{canonical_city}" state:TX'
+        return match.group(0)
+
+    search_q = re.sub(
+        r'(?<![:"\w])\b([a-zA-Z]+(?:\s+[a-zA-Z]+)?)\s*,?\s+\b(?:TX|Texas)\b',
+        _replace_tx_city_pattern,
+        search_q,
+        flags=re.IGNORECASE,
+    )
 
     def compile_leaf(token_str: str) -> Tuple[Optional[str], List[Any]]:
         # 1. Field Targeting (field:op?val)
@@ -218,10 +402,18 @@ def parse_advanced_search(search_q: str, view: str = 'leads') -> Tuple[List[str]
                     valid_op = op if op in ['>=', '<=', '>', '<', '='] else '='
                     return f'{col}::date {valid_op} %s::date', [norm_date]
                 elif col_type == 'user_ref' and user_table_fk:
+                    if raw_val.lower() in ('unassigned', 'none', 'null', 'open'):
+                        return f'{user_table_fk} IS NULL', []
                     if raw_val.isdigit():
                         return f'{user_table_fk} = %s', [int(raw_val)]
                     pat = f'%{raw_val}%'
                     return f'{user_table_fk} IN (SELECT id FROM "Users" WHERE full_name ILIKE %s OR username ILIKE %s)', [pat, pat]
+                elif f_key in ('city', 'location'):
+                    canonical_city = resolve_fuzzy_tx_city(raw_val, known_cities)
+                    if canonical_city and canonical_city.lower() != raw_val.lower():
+                        return f'({col} ILIKE %s OR {col} ILIKE %s)', [f'%{raw_val}%', f'%{canonical_city}%']
+                    pat = raw_val.replace('*', '%') if '*' in raw_val else f'%{raw_val}%'
+                    return f'{col} ILIKE %s', [pat]
                 elif f_key in ('phone', 'estimator_phone'):
                     digits = re.sub(r'\D', '', raw_val)
                     if len(digits) >= 4:

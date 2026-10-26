@@ -303,7 +303,7 @@
                         </div>
 
                         <!-- Search & Core Filter Group -->
-                        <form action="{{ url_for('admin_operations') }}" method="GET" style="display: flex; gap: 0.5rem; align-items: center; margin: 0;" id="form-search-leads">
+                        <form action="{{ url_for('admin_operations') }}" method="GET" style="display: flex; gap: 0.5rem; align-items: center; margin: 0; flex-wrap: wrap;" id="form-search-leads" autocomplete="off">
                             <input type="hidden" name="view" value="leads">
                             <input type="hidden" name="sort" value="{{ sort_by }}">
                             <input type="hidden" name="dir" value="{{ sort_dir }}">
@@ -318,11 +318,26 @@
                             <input type="hidden" name="campaign_filter" value="{{ request.args.get('campaign_filter') }}">
                             {% endif %}
 
-                            <div style="position: relative;">
-                                <input type="text" name="q" value="{{ search_q }}" placeholder="Search Buildings..." style="height: 36px; padding: 0 2rem 0 0.85rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.82rem; background: var(--white); width: 220px; font-weight: 600; outline: none;">
+                            <div style="position: relative;" id="lead-search-autocomplete-wrap">
+                                <label for="lead-search-q-input" class="sr-only" style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0;">Search Commercial Leads</label>
+                                <input type="text" id="lead-search-q-input" name="q" value="{{ search_q }}" placeholder="Search buildings, cities, or reps..." oninput="onLeadSearchTypeahead(this.value)" onfocus="if(this.value.trim().length>=2) onLeadSearchTypeahead(this.value)" style="height: 36px; padding: 0 2.1rem 0 0.85rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.82rem; background: var(--white); width: 255px; font-weight: 600; outline: none;">
                                 <button type="button" onclick="openModal('modal-search-help')" style="position: absolute; right: 0.6rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--slate-400); cursor: pointer; font-size: 0.8rem;" title="Search tips and filters">ⓘ</button>
+                                <div id="lead-search-suggest-menu" style="display: none; position: absolute; left: 0; top: calc(100% + 4px); width: 380px; max-width: 92vw; background: #ffffff; border: 1px solid var(--slate-200); border-radius: 8px; box-shadow: 0 12px 28px rgba(15, 23, 42, 0.16); z-index: 1200; max-height: 380px; overflow-y: auto; padding: 0.35rem;"></div>
                             </div>
-                            <button type="submit" class="isc-btn isc-btn-primary" style="height: 36px; padding: 0 1.15rem; border-radius: 6px; font-size: 0.8rem; font-weight: 700;" title="Search leads by building name, city, address, or phone number">Search</button>
+                            <button type="submit" class="isc-btn isc-btn-primary" style="height: 36px; padding: 0 1.15rem; border-radius: 6px; font-size: 0.8rem; font-weight: 700;" title="Search leads by building name, city, address, phone number, or assigned rep">Search</button>
+
+                            {% if current_user.role != 'Sales' %}
+                            <label for="lead-owner-filter-select" class="sr-only" style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0;">Filter by Assigned Sales Rep</label>
+                            <select id="lead-owner-filter-select" name="owner_id" onchange="onLeadOwnerFilterChange(this.value)" style="height: 36px; padding: 0 0.65rem; border-radius: 6px; border: 1px solid {% if request.args.get('owner_id') %}#3b82f6{% else %}var(--slate-300){% endif %}; background: {% if request.args.get('owner_id') %}#eff6ff{% else %}var(--white){% endif %}; color: {% if request.args.get('owner_id') %}#1d4ed8{% else %}var(--slate-700){% endif %}; font-size: 0.76rem; font-weight: 800; cursor: pointer; outline: none;" title="Filter leads by assigned rep or view unassigned leads">
+                                <option value="">👤 All Owners</option>
+                                <option value="unassigned" {% if request.args.get('owner_id') == 'unassigned' %}selected{% endif %}>-- Unassigned Only --</option>
+                                {% for u in system_users %}
+                                {% set u_cnt = u.assigned_leads_count if u.assigned_leads_count is defined else (u[4] if u|length > 4 else 0) %}
+                                <option value="{{ u.id }}" {% if request.args.get('owner_id') == (u.id | string) %}selected{% endif %}>{{ u.full_name or u.username }} ({% if u_cnt %}{{ u_cnt }} leads{% else %}{{ u.role }}{% endif %})</option>
+                                {% endfor %}
+                            </select>
+                            {% endif %}
+
                             <label style="display: flex; align-items: center; gap: 0.4rem; background: {% if request.args.get('active_only') == 'true' %}#eff6ff{% else %}var(--white){% endif %}; border: 1px solid {% if request.args.get('active_only') == 'true' %}#3b82f6{% else %}var(--slate-300){% endif %}; padding: 0 0.75rem; border-radius: 6px; height: 36px; cursor: pointer; user-select: none;" title="Show only open leads that are ready to call or nurture">
                                 <input type="checkbox" name="active_only" value="true" {% if request.args.get('active_only') == 'true' %}checked{% endif %} onchange="document.getElementById('form-search-leads').submit()" style="accent-color: var(--brand); width: 14px; height: 14px;">
                                 <span style="font-size: 0.72rem; font-weight: 800; color: {% if request.args.get('active_only') == 'true' %}#1d4ed8{% else %}var(--slate-600){% endif %}; text-transform: uppercase;">Active</span>
@@ -348,7 +363,7 @@
                             <button type="button" onclick="toggleLeadFilter('duplicates_only', 'true')" style="display: inline-flex; align-items: center; gap: 0.4rem; background: {% if request.args.get('duplicates_only') == 'true' %}#fff7ed{% else %}var(--white){% endif %}; border: 1px solid {% if request.args.get('duplicates_only') == 'true' %}#f97316{% else %}var(--slate-300){% endif %}; padding: 0 0.75rem; border-radius: 6px; height: 36px; cursor: pointer; user-select: none;" title="Show possible duplicate records with matching phone or address">
                                 <span style="font-size: 0.72rem; font-weight: 800; color: {% if request.args.get('duplicates_only') == 'true' %}#c2410c{% else %}var(--slate-700){% endif %}; text-transform: uppercase;">⚠️ Dups ({{ dup_count }})</span>
                             </button>
-                            {% if search_q or request.args.get('m_and_a') == 'true' or request.args.get('duplicates_only') == 'true' or request.args.get('campaign_filter') or request.args.get('active_only') == 'true' %}
+                            {% if search_q or request.args.get('owner_id') or request.args.get('m_and_a') == 'true' or request.args.get('duplicates_only') == 'true' or request.args.get('campaign_filter') or request.args.get('active_only') == 'true' %}
                             <a href="{{ url_for('admin_operations', view='leads', cols=active_cols_str) }}" class="isc-btn isc-btn-outline" style="height: 36px; padding: 0 0.75rem; border-radius: 6px; font-size: 0.72rem; font-weight: 700; color: var(--slate-500); display: inline-flex; align-items: center; gap: 0.3rem;" title="Reset all search terms and status filters back to standard view">
                                 <i class="fas fa-times-circle" style="font-size: 0.75rem;"></i> Clear
                             </a>
@@ -800,12 +815,12 @@
                     <div style="display: flex; gap: 0.75rem;">
                         {% if active_view == 'leads' %}
                             {% if page > 1 %}
-                            <a href="{{ url_for('admin_operations', view='leads', page=page-1, q=search_q, sort=sort_by, dir=sort_dir, active_only=request.args.get('active_only'), cols=active_cols_str) }}" class="isc-btn isc-btn-outline" style="height: 36px; padding: 0 1.25rem; font-size: 0.75rem; border-radius: 6px;">
+                            <a href="{{ url_for('admin_operations', view='leads', page=page-1, q=search_q, owner_id=request.args.get('owner_id'), sort=sort_by, dir=sort_dir, active_only=request.args.get('active_only'), campaign_filter=request.args.get('campaign_filter'), m_and_a=request.args.get('m_and_a'), duplicates_only=request.args.get('duplicates_only'), cols=active_cols_str) }}" class="isc-btn isc-btn-outline" style="height: 36px; padding: 0 1.25rem; font-size: 0.75rem; border-radius: 6px;">
                                 <i class="fas fa-chevron-left" style="margin-right: 0.5rem;"></i> Previous
                             </a>
                             {% endif %}
                             {% if page < total_pages %}
-                            <a href="{{ url_for('admin_operations', view='leads', page=page+1, q=search_q, sort=sort_by, dir=sort_dir, active_only=request.args.get('active_only'), cols=active_cols_str) }}" class="isc-btn isc-btn-outline" style="height: 36px; padding: 0 1.25rem; font-size: 0.75rem; border-radius: 6px;">
+                            <a href="{{ url_for('admin_operations', view='leads', page=page+1, q=search_q, owner_id=request.args.get('owner_id'), sort=sort_by, dir=sort_dir, active_only=request.args.get('active_only'), campaign_filter=request.args.get('campaign_filter'), m_and_a=request.args.get('m_and_a'), duplicates_only=request.args.get('duplicates_only'), cols=active_cols_str) }}" class="isc-btn isc-btn-outline" style="height: 36px; padding: 0 1.25rem; font-size: 0.75rem; border-radius: 6px;">
                                 Next <i class="fas fa-chevron-right" style="margin-left: 0.5rem;"></i>
                             </a>
                             {% endif %}
@@ -9082,11 +9097,11 @@
                 <p style="font-size: 0.8rem; color: var(--slate-600); margin-top: 0.4rem;">The asterisk matches any following characters.</p>
             </div>
 
-            <!-- Intelligent Card 7: Field Targeting -->
+            <!-- Intelligent Card 7: Field Targeting & Assigned Rep Search -->
             <div class="isc-list-item" style="padding: 1.15rem;">
-                <div style="font-weight: 900; color: var(--brand); font-size: 0.7rem; margin-bottom: 0.4rem; text-transform: uppercase;">FIELD TARGETING</div>
-                <code style="background: var(--slate-100); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem; font-weight: 700;">city:Plano industry:Medical</code>
-                <p style="font-size: 0.8rem; color: var(--slate-600); margin-top: 0.4rem;">Search specific columns directly (city, industry, status, sqf, value, contact, rep).</p>
+                <div style="font-weight: 900; color: var(--brand); font-size: 0.7rem; margin-bottom: 0.4rem; text-transform: uppercase;">FIELD TARGETING &amp; ASSIGNED REPS</div>
+                <code style="background: var(--slate-100); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem; font-weight: 700;">Beabe Wiley</code> &nbsp;or&nbsp; <code style="background: var(--slate-100); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem; font-weight: 700;">rep:Wiley</code> &nbsp;or&nbsp; <code style="background: var(--slate-100); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem; font-weight: 700;">city:Plano industry:Medical</code>
+                <p style="font-size: 0.8rem; color: var(--slate-600); margin-top: 0.4rem;">Type a rep's full name (e.g., <strong>Beabe Wiley</strong>), use the <strong>👤 All Owners</strong> dropdown, or target specific columns directly (city, industry, status, sqf, value, contact, rep, owner:unassigned).</p>
             </div>
 
             <!-- Intelligent Card 8: American Dates -->

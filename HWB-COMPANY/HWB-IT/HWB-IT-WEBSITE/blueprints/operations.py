@@ -55,14 +55,29 @@ _SYSTEM_USERS_TTL = 60.0
 
 
 def _get_active_system_users(conn) -> list:
-    """Returns active system users with a 60-second in-memory cache."""
+    """Returns active system users with a 60-second in-memory cache, including assigned commercial lead counts."""
     now_ts = time.time()
     with _OPS_CACHE_LOCK:
         if _SYSTEM_USERS_CACHE["data"] is not None and (now_ts - _SYSTEM_USERS_CACHE["timestamp"]) < _SYSTEM_USERS_TTL:
             return _SYSTEM_USERS_CACHE["data"]
     try:
         with conn.cursor() as cur:
-            cur.execute('SELECT id, username, full_name, role FROM "Users" WHERE status = \'Active\' ORDER BY id ASC')
+            cur.execute('''
+                SELECT u.id, u.username, u.full_name, u.role,
+                       COALESCE(lc.lead_cnt, 0) AS assigned_leads_count
+                FROM "Users" u
+                LEFT JOIN (
+                    SELECT owner_id, COUNT(*) AS lead_cnt
+                    FROM "Leads"
+                    WHERE owner_id IS NOT NULL
+                      AND COALESCE(is_commercial, TRUE) = TRUE
+                      AND COALESCE(is_duplicate, FALSE) = FALSE
+                      AND COALESCE(status, '') != 'ARCHIVED'
+                    GROUP BY owner_id
+                ) lc ON lc.owner_id = u.id
+                WHERE u.status = 'Active'
+                ORDER BY u.id ASC
+            ''')
             users = cur.fetchall()
         with _OPS_CACHE_LOCK:
             _SYSTEM_USERS_CACHE["data"] = users
@@ -477,9 +492,22 @@ def admin_operations():
                     lead_params = []
                     is_sales_lead_scope = (user_role == 'Sales')
 
+                    owner_filter = (request.args.get('owner_id') or '').strip()
+
                     if is_sales_lead_scope:
                         lead_where_clauses.append("l.owner_id = %s")
                         lead_params.append(current_user.id)
+                    elif owner_filter and active_view == 'leads':
+                        if owner_filter.lower() in ('unassigned', 'none', 'null', '0'):
+                            lead_where_clauses.append("l.owner_id IS NULL")
+                        elif owner_filter.isdigit():
+                            lead_where_clauses.append("l.owner_id = %s")
+                            lead_params.append(int(owner_filter))
+                        else:
+                            lead_where_clauses.append(
+                                'l.owner_id IN (SELECT id FROM "Users" WHERE full_name ILIKE %s OR username ILIKE %s)'
+                            )
+                            lead_params.extend([f'%{owner_filter}%', f'%{owner_filter}%'])
 
                     include_archived = request.args.get('include_archived') == 'true'
                     duplicates_only = request.args.get('duplicates_only') == 'true'
@@ -516,7 +544,7 @@ def admin_operations():
                     lead_where_str = ("WHERE " + " AND ".join(lead_where_clauses)) if lead_where_clauses else ""
 
                     # Only run filtered COUNT(*) if non-default filters are active; otherwise use 30s cached leads_count
-                    has_custom_lead_filters = bool(search_q or duplicates_only or include_archived or m_and_a_filter or active_only or campaign_filter)
+                    has_custom_lead_filters = bool(search_q or owner_filter or duplicates_only or include_archived or m_and_a_filter or active_only or campaign_filter)
                     if has_custom_lead_filters:
                         cur.execute(f'SELECT COUNT(*) FROM "Leads" l {lead_where_str}', tuple(lead_params))
                         leads_count = cur.fetchone()[0]
@@ -3100,6 +3128,186 @@ def api_compliance_audit():
         'waiver_memo': memo,
         'evidence_vault': evidence_items
     }), 200
+
+
+@operations_bp.route('/api/v1/leads/search-suggest', methods=['GET'])
+@login_required
+@roles_required('Executive', 'Admin', 'Manager', 'Operator', 'Sales', 'Custom')
+def api_leads_search_suggest():
+    """
+    Faceted Typeahead Autocomplete for the Commercial Leads Search Bar.
+    Returns categorized suggestions:
+      1. Assigned Reps / Owners (from "Users" with active commercial lead counts)
+      2. Cities & Streets (including Texas city spell-correction e.g. Wiley -> Wylie, TX)
+      3. Direct Building Matches (from "Leads")
+    """
+    from core.services.search import resolve_fuzzy_tx_city
+    raw_q = (request.args.get('q') or '').strip()
+    if len(raw_q) < 2:
+        return jsonify({'status': 'success', 'owners': [], 'locations': [], 'buildings': []}), 200
+
+    # Strip trailing ", tx" or " tx" for city matching while preserving raw_q
+    clean_city_candidate = re.sub(r'\s*,?\s*\b(?:tx|texas)\b$', '', raw_q, flags=re.IGNORECASE).strip()
+    fuzzy_city = resolve_fuzzy_tx_city(clean_city_candidate) or resolve_fuzzy_tx_city(raw_q)
+
+    is_sales = (getattr(current_user, 'role', '') == 'Sales')
+    user_id = getattr(current_user, 'id', None)
+
+    owners_out = []
+    locations_out = []
+    buildings_out = []
+
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            # 1. Match System Users / Assigned Owners (for non-Sales or matching current user)
+            pat = f'%{raw_q}%'
+            token_parts = [p for p in re.split(r'\s+', raw_q) if p]
+            if not is_sales:
+                cur.execute('''
+                    SELECT u.id, u.username, COALESCE(u.full_name, u.username) AS display_name, u.role,
+                           COUNT(l.id) AS lead_cnt
+                    FROM "Users" u
+                    LEFT JOIN "Leads" l
+                      ON l.owner_id = u.id
+                     AND COALESCE(l.is_commercial, TRUE) = TRUE
+                     AND COALESCE(l.is_duplicate, FALSE) = FALSE
+                     AND COALESCE(l.status, '') != 'ARCHIVED'
+                    WHERE u.status = 'Active'
+                      AND (
+                          u.full_name ILIKE %s
+                          OR u.username ILIKE %s
+                          OR (%s != '' AND u.full_name ILIKE %s)
+                      )
+                    GROUP BY u.id, u.username, u.full_name, u.role
+                    ORDER BY lead_cnt DESC, u.id ASC
+                    LIMIT 5;
+                ''', (
+                    pat,
+                    pat,
+                    token_parts[0] if token_parts else '',
+                    f'%{token_parts[0]}%' if token_parts else pat
+                ))
+                for u_row in cur.fetchall():
+                    uid = u_row['id'] if isinstance(u_row, dict) else u_row[0]
+                    uname = u_row['username'] if isinstance(u_row, dict) else u_row[1]
+                    dname = u_row['display_name'] if isinstance(u_row, dict) else u_row[2]
+                    urole = u_row['role'] if isinstance(u_row, dict) else u_row[3]
+                    lcnt = u_row['lead_cnt'] if isinstance(u_row, dict) else u_row[4]
+                    owners_out.append({
+                        'id': uid,
+                        'username': uname,
+                        'full_name': dname,
+                        'role': urole,
+                        'lead_count': int(lcnt or 0),
+                    })
+
+            # 2. Match Texas Cities (including fuzzy spelling variant e.g. Wiley -> Wylie)
+            owner_scope_sql = "AND owner_id = %s" if is_sales else ""
+            city_params = [f'%{clean_city_candidate}%']
+            fuzzy_sql = ""
+            if fuzzy_city and fuzzy_city.lower() != clean_city_candidate.lower():
+                fuzzy_sql = "OR LOWER(city) = LOWER(%s)"
+                city_params.append(fuzzy_city)
+            if is_sales:
+                city_params.append(user_id)
+
+            cur.execute(f'''
+                SELECT city, COUNT(*) AS cnt
+                FROM "Leads"
+                WHERE COALESCE(is_commercial, TRUE) = TRUE
+                  AND COALESCE(is_duplicate, FALSE) = FALSE
+                  AND COALESCE(status, '') != 'ARCHIVED'
+                  AND city IS NOT NULL AND BTRIM(city) != ''
+                  AND (city ILIKE %s {fuzzy_sql})
+                  {owner_scope_sql}
+                GROUP BY city
+                ORDER BY cnt DESC
+                LIMIT 4;
+            ''', tuple(city_params))
+            for c_row in cur.fetchall():
+                c_name = c_row['city'] if isinstance(c_row, dict) else c_row[0]
+                c_cnt = c_row['cnt'] if isinstance(c_row, dict) else c_row[1]
+                note = f"Spell-corrected from '{clean_city_candidate}'" if (fuzzy_city and c_name.lower() == fuzzy_city.lower() and clean_city_candidate.lower() != fuzzy_city.lower()) else "Texas City"
+                locations_out.append({
+                    'type': 'city',
+                    'label': f"{c_name}, TX",
+                    'query': f'city:"{c_name}"',
+                    'count': int(c_cnt or 0),
+                    'note': note
+                })
+
+            # 3. Match Streets / Addresses if query has 3+ chars
+            if len(raw_q) >= 3:
+                addr_params = [pat]
+                if is_sales:
+                    addr_params.append(user_id)
+                cur.execute(f'''
+                    SELECT address, city, COUNT(*) AS cnt
+                    FROM "Leads"
+                    WHERE COALESCE(is_commercial, TRUE) = TRUE
+                      AND COALESCE(is_duplicate, FALSE) = FALSE
+                      AND COALESCE(status, '') != 'ARCHIVED'
+                      AND address ILIKE %s
+                      {owner_scope_sql}
+                    GROUP BY address, city
+                    ORDER BY cnt DESC
+                    LIMIT 3;
+                ''', tuple(addr_params))
+                for a_row in cur.fetchall():
+                    a_str = a_row['address'] if isinstance(a_row, dict) else a_row[0]
+                    a_city = a_row['city'] if isinstance(a_row, dict) else a_row[1]
+                    a_cnt = a_row['cnt'] if isinstance(a_row, dict) else a_row[2]
+                    if a_str:
+                        locations_out.append({
+                            'type': 'address',
+                            'label': f"{a_str} ({a_city or 'TX'})",
+                            'query': f'address:"{a_str}"',
+                            'count': int(a_cnt or 0),
+                            'note': 'Street Address'
+                        })
+
+            # 4. Direct Building / Facility Matches
+            b_params = [pat, pat]
+            if is_sales:
+                b_params.append(user_id)
+            cur.execute(f'''
+                SELECT id, center_name, city, facility_type, status
+                FROM "Leads"
+                WHERE COALESCE(is_commercial, TRUE) = TRUE
+                  AND COALESCE(is_duplicate, FALSE) = FALSE
+                  AND COALESCE(status, '') != 'ARCHIVED'
+                  AND (center_name ILIKE %s OR decision_maker ILIKE %s)
+                  {owner_scope_sql}
+                ORDER BY estimated_annual_value DESC NULLS LAST, id ASC
+                LIMIT 5;
+            ''', tuple(b_params))
+            for b_row in cur.fetchall():
+                bid = b_row['id'] if isinstance(b_row, dict) else b_row[0]
+                bname = b_row['center_name'] if isinstance(b_row, dict) else b_row[1]
+                bcity = b_row['city'] if isinstance(b_row, dict) else b_row[2]
+                bfac = b_row['facility_type'] if isinstance(b_row, dict) else b_row[3]
+                bstat = b_row['status'] if isinstance(b_row, dict) else b_row[4]
+                buildings_out.append({
+                    'id': bid,
+                    'name': bname,
+                    'city': bcity or 'TX',
+                    'facility_type': bfac or 'Commercial',
+                    'status': bstat or 'New',
+                    'query': f'"{bname}"'
+                })
+    except Exception as e:
+        conn.rollback()
+        current_app.logger.warning(f"[LEADS SUGGEST] Warning: {e}")
+
+    return jsonify({
+        'status': 'success',
+        'query': raw_q,
+        'owners': owners_out,
+        'locations': locations_out,
+        'buildings': buildings_out
+    }), 200
+
 
 
 
