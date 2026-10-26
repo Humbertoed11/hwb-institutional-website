@@ -40,6 +40,7 @@ services:
       - ./HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE:/app
       - ./HWB-COMPANY/HWB-IT/HWB-IT-SYSTEM-LOGS:/app/logs
       - /home/humbertoed/.gemini/antigravity-cli/brain:/root/.gemini/antigravity-cli/brain:ro
+      - /home/humbertoed/.gemini/antigravity-cli/brain:/home/hwbapp/.gemini/antigravity-cli/brain:ro
 
   worker:
     build:
@@ -62,6 +63,7 @@ services:
       - ./HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE:/app
       - ./HWB-COMPANY/HWB-IT/HWB-IT-SYSTEM-LOGS:/app/logs
       - /home/humbertoed/.gemini/antigravity-cli/brain:/root/.gemini/antigravity-cli/brain:ro
+      - /home/humbertoed/.gemini/antigravity-cli/brain:/home/hwbapp/.gemini/antigravity-cli/brain:ro
 
   gateway:
     image: python:3.12-slim
