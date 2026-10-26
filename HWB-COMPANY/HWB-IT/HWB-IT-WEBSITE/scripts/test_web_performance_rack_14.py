@@ -1596,10 +1596,11 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
         for expected_frag in ("'CA', 'WA'", "'%.ca'", "'%.uk'", "'%.eu'", "'%.gov'", "'%.mil'", "'%.k12.tx.us'", "'Unsubscribed'"):
             self.assertIn(expected_frag, joined_where)
 
-        # 3. Letterhead Footer CAN-SPAM Physical Address & One-Click Unsubscribe Link (Zero Internal Jargon per BUG-147)
+        # 3. Letterhead Footer CAN-SPAM Postal Address & One-Click Unsubscribe Link (Zero Internal Jargon per BUG-147)
         lh_html = format_marketing_letterhead("<p>Test Body</p>", "tok_footer_check_999")
-        for required_element in ("3342 FM 1827 Ste 8d, McKinney, TX 75071", "Collin County, TX", "Unsubscribe Instantly", "tok_footer_check_999"):
+        for required_element in ("P.O. Box 38465, Dallas, TX 75238", "Collin County", "Unsubscribe Instantly", "tok_footer_check_999"):
             self.assertIn(required_element, lh_html)
+        self.assertNotIn("3342 FM 1827", lh_html)
 
         # 4. End-to-End Database Test: Geofence Filtering, RFC 8058 POST Unsubscribe, & Dual-Table Suppression Gate
         import uuid
@@ -1808,17 +1809,20 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
             r"SHA-256|AES-256|HMAC|RFC\s*\d+|IETF|"
             r"Super\s*George|SuperGeorge|George,\s*Systems\s*Architect|George\s*Bot|Yamamoto|Silas\s*Sync|Lauri\s*Tells|Peter|"
             r"Rack\s*\d+|Pincer\s*Shield|Cloudflare|Containerized|BYTEA|Bcrypt|"
-            r"Clause\s*\d+|Amd\s*1:2024|SigmaFidelity|Zero-Defect|Poka-Yoke)",
+            r"Clause\s*\d+|Amd\s*1:2024|SigmaFidelity|Zero-Defect|Poka-Yoke|"
+            r"GHF000742|82-4377459|32005785756|802920409|082830635|08-283-0635|"
+            r"Carlos\s*Aguirre|Insurance\s*Risk\s*Consultants|682-667-3863|\(682\)\s*667-3863|"
+            r"Sunbelt\s*Rentals|Jon-Don|MaximMart|972-800-7808|\(972\)\s*800-7808|hdominguez@hwbcleaning\.com|"
+            r"Staff\s+Login\s+to\s+Operating\s+Manual)",
             re.IGNORECASE,
         )
 
         public_routes = [
-            "/", "/services", "/services/commercial-janitorial", "/services/daycare-preschool-cleaning",
-            "/services/post-construction-cleaning", "/services/floor-care-vct-waxing",
-            "/services/carpet-extraction", "/services/window-cleaning",
-            "/locations", "/locations/dallas-tx", "/locations/plano-tx", "/locations/frisco-tx",
-            "/locations/mckinney-tx", "/locations/fort-worth-tx", "/locations/arlington-tx",
-            "/about", "/contact", "/quote", "/work-with-us", "/methodology",
+            "/", "/services", "/services/janitorial", "/services/commercial",
+            "/services/industrial", "/services/construction",
+            "/locations", "/locations/dallas", "/locations/plano", "/locations/frisco",
+            "/locations/mckinney", "/locations/fort-worth", "/locations/arlington",
+            "/about", "/contact", "/get-quote", "/work-with-us", "/methodology",
             "/compliance", "/ehsq", "/trust-center", "/capability-statement", "/prequal",
             "/privacy-policy", "/terms", "/accessibility", "/unsubscribe", "/fcra-disclosure",
             "/academy", "/academy/verify", "/login", "/forgot-password",
@@ -2290,18 +2294,27 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
         import json
         import re
 
-        # Pillar 1: /llms.txt and /llms-full.txt
+        # Pillar 1: /llms.txt and /llms-full.txt (Walkthrough-First Custom Quotes, P.O. Box 38465, Zero Published Dollar Rates & Zero Street Address)
         r_llms = self.client.get("/llms.txt")
         self.assertEqual(r_llms.status_code, 200)
         llms_text = r_llms.get_data(as_text=True)
-        self.assertIn("3342 FM 1827", llms_text)
+        self.assertIn("P.O. Box 38465, Dallas, TX 75238", llms_text)
+        self.assertIn("legal@hwbcleaning.com", llms_text)
+        self.assertNotIn("3342 FM 1827", llms_text)
         self.assertIn("561720", llms_text)
         self.assertIn("01 74 23", llms_text)
-        self.assertIn("$0.08", llms_text)
+        self.assertIn("walkthrough", llms_text.lower())
+        for forbidden_rate in ("$0.08", "$0.16", "$0.15", "$0.35", "$0.55", "$0.04"):
+            self.assertNotIn(forbidden_rate, llms_text)
 
         r_llms_full = self.client.get("/llms-full.txt")
         self.assertEqual(r_llms_full.status_code, 200)
-        self.assertIn("McKinney, TX", r_llms_full.get_data(as_text=True))
+        llms_full_text = r_llms_full.get_data(as_text=True)
+        self.assertIn("P.O. Box 38465, Dallas, TX 75238", llms_full_text)
+        self.assertNotIn("3342 FM 1827", llms_full_text)
+        self.assertIn("McKinney, TX", llms_full_text)
+        for forbidden_rate in ("$0.08", "$0.16", "$0.15", "$0.35", "$0.55", "$0.04", "$350"):
+            self.assertNotIn(forbidden_rate, llms_full_text)
 
         # Pillar 2: /robots.txt AI crawlers & unblocked /compliance and /ehsq
         r_rob = self.client.get("/robots.txt", headers={"Host": "www.hwbcleaning.com"})
@@ -2344,6 +2357,9 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
             self.assertEqual(resp.status_code, 200, route)
             html = resp.get_data(as_text=True)
             self.assertIn('"@type": "FAQPage"', html, f"Missing FAQPage schema on {route}")
+            self.assertNotIn("3342 FM 1827", html, f"Physical street address must not appear on {route}")
+            for forbidden_rate in ("$0.08", "$0.16", "$0.15", "$0.35", "$0.55", "$0.04"):
+                self.assertNotIn(forbidden_rate, html, f"Published dollar rate {forbidden_rate} must not appear on {route}")
 
             # Extract all JSON-LD blocks and verify valid JSON + visible question parity
             ld_blocks = re.findall(r'<script type="application/ld\+json">\s*(.*?)\s*</script>', html, re.DOTALL)

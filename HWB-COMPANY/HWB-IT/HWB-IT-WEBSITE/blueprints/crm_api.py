@@ -4368,9 +4368,9 @@ def format_marketing_letterhead(body_html: str, tracking_token: str = None) -> s
             </div>
         </div>
         <div style="text-align: right; font-size: 11px; color: #475569; line-height: 1.45;">
-            <strong style="color: #0f172a;">Corporate Headquarters:</strong><br>
-            3342 FM 1827 Ste 8d, McKinney, TX 75071<br>
-            Office: (214) 586-0257 | Mobile: (972) 800-7808<br>
+            <strong style="color: #0f172a;">Mailing Address:</strong><br>
+            P.O. Box 38465, Dallas, TX 75238<br>
+            Office: (214) 586-0257 | Email: sales@hwbcleaning.com<br>
             <a href="https://www.hwbcleaning.com" style="color: #2563eb; text-decoration: none; font-weight: 600;">www.hwbcleaning.com</a>
         </div>
     </div>
@@ -4383,8 +4383,8 @@ def format_marketing_letterhead(body_html: str, tracking_token: str = None) -> s
     <!-- 📜 FOOTER BLOCK -->
     <div style="border-top: 1px solid #e2e8f0; padding-top: 16px; margin-top: 20px; text-align: center; font-size: 11px; color: #64748b; line-height: 1.6;">
         <strong style="color: #0f172a; letter-spacing: 0.05em;">FIDELITY. SAFETY. RESPECT.</strong><br>
-        HWB Cleaning Services LLC • 3342 FM 1827 Ste 8d, McKinney, TX 75071 (Collin County, TX) • Phone: (214) 586-0257<br>
-        Texas Charter #802920409 • CAGE (SAM) #082830635 • Commercial EMR: .43 • Insured &amp; Bonded<br>
+        HWB Cleaning Services LLC • P.O. Box 38465, Dallas, TX 75238 (Collin County &amp; DFW, TX) • Phone: (214) 586-0257<br>
+        NAICS 561720 • CSI Division 01 74 23 • Commercial EMR: .43 • $2M Insured &amp; Bonded<br>
         <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #cbd5e1; font-size: 10.5px; color: #94a3b8;">
             You are receiving this commercial communication as an operational facility contact in Texas.<br>
             To stop receiving future marketing messages, you may <a href="{unsub_url}" style="color: #2563eb; text-decoration: underline; font-weight: 600;">Unsubscribe Instantly</a> or email <a href="mailto:info@hwbcleaning.com?subject=Unsubscribe" style="color: #2563eb; text-decoration: underline;">info@hwbcleaning.com</a>.
@@ -4874,7 +4874,7 @@ def api_marketing_campaign_enroll_leads():
 <p>Sincerely,<br />
 <strong>Humberto Dominguez</strong><br />
 Owner &amp; Operator | HWB Cleaning Services LLC<br />
-(972) 800-7808 | hdominguez@hwbcleaning.com</p>"""
+(214) 586-0257 | sales@hwbcleaning.com</p>"""
 
             seen_emails = set()
             cur.execute('SELECT LOWER(TRIM(recipient_email)) FROM "CampaignRecipients" WHERE campaign_id = %s;', (campaign_id,))
@@ -5514,7 +5514,7 @@ def api_marketing_generate_drafts(campaign_id):
 <p>Sincerely,<br />
 <strong>Humberto Dominguez</strong><br />
 Owner &amp; Operator | HWB Cleaning Services LLC<br />
-(972) 800-7808 | hdominguez@hwbcleaning.com</p>"""
+(214) 586-0257 | sales@hwbcleaning.com</p>"""
 
             limit = 50
             if request.is_json and request.json:

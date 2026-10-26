@@ -455,8 +455,8 @@ def forgot_password():
                     </div>
                     <div style="border-top: 1px solid #e2e8f0; padding-top: 14px; margin-top: 18px; text-align: center; font-size: 10px; color: #64748b; line-height: 1.5;">
                         <strong style="color: #0f172a;">FIDELITY. SAFETY. RESPECT.</strong><br>
-                        HWB Cleaning Services LLC • 3342 FM 1827 Ste 8d, McKinney, TX 75071 • Phone: (214) 586-0257<br>
-                        Texas Charter #802920409 • CAGE #082830635 • Commercial EMR: .43 • Insured & Bonded
+                        HWB Cleaning Services LLC • P.O. Box 38465, Dallas, TX 75238 • Phone: (214) 586-0257<br>
+                        NAICS 561720 • Commercial EMR: .43 • $2M Insured & Bonded
                     </div>
                 </div>
                 """

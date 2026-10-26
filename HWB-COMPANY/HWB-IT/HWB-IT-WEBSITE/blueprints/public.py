@@ -32,20 +32,20 @@ LOCATIONS_DATA = {
         'corridors': ['Craig Ranch Corporate Center', 'SH-121 Sam Rayburn Tollway', 'US-75 Central Expressway', 'Historic Downtown McKinney', 'McKinney National Airport Industrial Park'],
         'title': 'Commercial Cleaning & Janitorial Services in McKinney, TX | HWB Cleaning',
         'h1': 'Commercial Cleaning & Janitorial Services in McKinney, TX',
-        'meta_desc': 'Headquartered in McKinney, TX (75071), HWB Cleaning Services LLC provides nightly office janitorial, daycare sanitization, floor waxing, and 3-phase post-construction cleanup across Collin County.',
-        'desc': 'Headquartered at 3342 FM 1827 Ste 8d in McKinney, HWB Cleaning Services LLC delivers rapid local supervisor dispatch, nightly commercial janitorial, medical clinic disinfection, and 3-phase post-construction cleanup across Craig Ranch, SH-121, US-75, and McKinney industrial parks.',
+        'meta_desc': 'HWB Cleaning Services LLC provides nightly office janitorial, daycare sanitization, floor waxing, and 3-phase post-construction cleanup across McKinney, TX and Collin County.',
+        'desc': 'HWB Cleaning Services LLC delivers rapid local supervisor dispatch, nightly commercial janitorial, medical clinic disinfection, and 3-phase post-construction cleanup across Craig Ranch, SH-121, US-75, and McKinney industrial parks.',
         'faqs': [
             {
-                'q': 'Where is HWB Cleaning Services LLC headquartered in McKinney, TX?',
-                'a': 'HWB Cleaning Services LLC is headquartered locally at 3342 FM 1827, Ste 8d, McKinney, TX 75071 (phone +1-214-586-0257). Because our operations hub is in McKinney, our field supervisors reach commercial buildings in 75069, 75070, 75071, and 75072 in under 30 minutes.'
+                'q': 'What areas of McKinney, TX does HWB Cleaning Services LLC cover?',
+                'a': 'HWB Cleaning Services LLC serves commercial facilities throughout McKinney, TX across ZIP codes 75069, 75070, 75071, and 75072 (phone +1-214-586-0257), with local field supervisors covering Craig Ranch, SH-121, US-75, and Historic Downtown McKinney.'
             },
             {
                 'q': 'What types of commercial buildings does HWB clean in McKinney?',
                 'a': 'We clean corporate offices in Craig Ranch, medical and dental clinics along SH-121 and Eldorado Parkway, accredited child care centers and private schools, industrial warehouses near McKinney National Airport, and new commercial construction projects.'
             },
             {
-                'q': 'How much does commercial office cleaning cost in McKinney, TX?',
-                'a': 'Recurring nightly or weekly office janitorial service in McKinney typically ranges from $0.08 to $0.16 per square foot per month depending on cleaning frequency (1x to 7x per week) and restroom density. Post-construction final cleaning ranges from $0.15 to $0.35 per square foot.'
+                'q': 'How do you price commercial office cleaning in McKinney, TX?',
+                'a': 'We do not use one-size-fits-all square-foot rates. Because our headquarters is right here in McKinney, we meet with you at your building for a quick walkthrough to review your offices, restrooms, floors, and weekly schedule, then deliver a clear written quote within 24 hours.'
             }
         ]
     },
@@ -69,7 +69,7 @@ LOCATIONS_DATA = {
             },
             {
                 'q': 'Are HWB cleaning crews background-checked for Frisco schools and medical clinics?',
-                'a': 'Every technician is vetted, badged, and trained in our 4-color microfiber cross-contamination prevention system and EPA List N hospital-grade disinfection protocols suitable for Frisco pediatric clinics, dental offices, and private schools.'
+                'a': 'Every technician is vetted, badged, and trained in our color-coded microfiber cloth system and EPA List N hospital-grade disinfection procedures suitable for Frisco pediatric clinics, dental offices, and private schools.'
             }
         ]
     },
@@ -117,7 +117,7 @@ LOCATIONS_DATA = {
             },
             {
                 'q': 'How quickly can HWB prepare a commercial cleaning quote in Dallas?',
-                'a': 'Our online calculator at hwbcleaning.com/get-quote generates an instant square-footage estimate in under 60 seconds, and our estimating team completes on-site walkthroughs and formal written proposals within 24 hours.'
+                'a': 'Submit your building details at hwbcleaning.com/get-quote or call (214) 586-0257. We schedule an on-site walkthrough with you and deliver a clear written proposal within 24 hours.'
             }
         ]
     },
@@ -137,7 +137,7 @@ LOCATIONS_DATA = {
             },
             {
                 'q': 'Can HWB service medical offices in the Fort Worth Near Southside Medical District?',
-                'a': 'Yes. Our crews use EPA List N hospital-grade disinfectants, HEPA filtration vacuums, and 4-color microfiber zoning for medical clinics, surgical centers, and professional offices in 76104 and Downtown Fort Worth (76102).'
+                'a': 'Yes. Our crews use EPA List N hospital-grade disinfectants, HEPA filtration vacuums, and color-coded microfiber cloths for medical clinics, surgical centers, and professional offices in 76104 and Downtown Fort Worth (76102).'
             },
             {
                 'q': 'Do you offer post-construction cleanup for new commercial buildings in Tarrant County?',
@@ -233,7 +233,7 @@ LOCATIONS_DATA = {
             },
             {
                 'q': 'Do you clean child care centers, Montessori schools, and medical offices in Allen?',
-                'a': 'Yes. We specialize in pediatric-safe, EPA List N disinfection and 4-color microfiber zoning for Allen daycares, private schools, dental clinics, and professional office suites along Exchange Parkway, McDermott Drive, and Watters Creek.'
+                'a': 'Yes. We specialize in pediatric-safe, EPA List N disinfection and color-coded microfiber cloths for Allen daycares, private schools, dental clinics, and professional office suites along Exchange Parkway, McDermott Drive, and Watters Creek.'
             },
             {
                 'q': 'Can we bundle nightly janitorial with periodic carpet and floor waxing in Allen?',

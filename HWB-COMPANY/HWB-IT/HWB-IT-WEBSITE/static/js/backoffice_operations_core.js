@@ -7067,7 +7067,7 @@
 <p>Sincerely,<br />
 <strong>Humberto Dominguez</strong><br />
 Owner &amp; Operator | HWB Cleaning Services LLC<br />
-(972) 800-7808 | hdominguez@hwbcleaning.com</p>`
+(214) 586-0257 | sales@hwbcleaning.com</p>`
             },
             office: {
                 subject: "After-hours commercial janitorial scope for your facility in {city}",
@@ -7094,7 +7094,7 @@ Owner &amp; Operator | HWB Cleaning Services LLC<br />
 <p>Sincerely,<br />
 <strong>Humberto Dominguez</strong><br />
 Owner &amp; Operator | HWB Cleaning Services LLC<br />
-(972) 800-7808 | hdominguez@hwbcleaning.com</p>`
+(214) 586-0257 | sales@hwbcleaning.com</p>`
             },
             medical: {
                 subject: "Clinical terminal disinfection and medical cleaning standard for {facility_name}",
@@ -7119,7 +7119,7 @@ Owner &amp; Operator | HWB Cleaning Services LLC<br />
 <p>Sincerely,<br />
 <strong>Humberto Dominguez</strong><br />
 Owner &amp; Operator | HWB Cleaning Services LLC<br />
-(972) 800-7808 | hdominguez@hwbcleaning.com</p>`
+(214) 586-0257 | sales@hwbcleaning.com</p>`
             },
             construction: {
                 subject: "Post-construction final clean proposal & rough clean scope for {facility_name}",
@@ -7142,7 +7142,7 @@ Owner &amp; Operator | HWB Cleaning Services LLC<br />
 <p>Sincerely,<br />
 <strong>Humberto Dominguez</strong><br />
 Owner &amp; Operator | HWB Cleaning Services LLC<br />
-(972) 800-7808 | hdominguez@hwbcleaning.com</p>`
+(214) 586-0257 | sales@hwbcleaning.com</p>`
             }
         };
 
@@ -7185,9 +7185,9 @@ Owner &amp; Operator | HWB Cleaning Services LLC<br />
                         </div>
                     </div>
                     <div style="text-align: right; font-size: 10px; color: #475569; line-height: 1.4;">
-                        <strong>Corporate Headquarters:</strong><br>
-                        3342 FM 1827 Ste 8d, McKinney, TX 75071<br>
-                        Office: (214) 586-0257 | (972) 800-7808
+                        <strong>Mailing Address:</strong><br>
+                        P.O. Box 38465, Dallas, TX 75238<br>
+                        Office: (214) 586-0257 | sales@hwbcleaning.com
                     </div>
                 </div>
                 <div style="padding: 6px 0 18px 0; min-height: 200px; line-height: 1.6; color: #1e293b; font-size: 13.5px;">
@@ -7195,8 +7195,8 @@ Owner &amp; Operator | HWB Cleaning Services LLC<br />
                 </div>
                 <div style="border-top: 1px solid #e2e8f0; padding-top: 14px; margin-top: 18px; text-align: center; font-size: 10px; color: #64748b; line-height: 1.5;">
                     <strong style="color: #0f172a;">FIDELITY. SAFETY. RESPECT.</strong><br>
-                    HWB Cleaning Services LLC • 3342 FM 1827 Ste 8d, McKinney, TX 75071 • Phone: (214) 586-0257<br>
-                    Texas Charter #802920409 • CAGE #082830635 • Commercial EMR: .43 • ISO 9001 Compliant<br>
+                    HWB Cleaning Services LLC • P.O. Box 38465, Dallas, TX 75238 • Phone: (214) 586-0257<br>
+                    NAICS 561720 • CSI Division 01 74 23 • Commercial EMR: .43 • ISO 9001 Compliant<br>
                     <div style="margin-top: 8px; padding-top: 6px; border-top: 1px dashed #cbd5e1; font-size: 9.5px; color: #94a3b8;">
                         You are receiving this commercial communication as an operational facility contact in Texas.<br>
                         To stop receiving future marketing messages, you may <a href="#" style="color: #2563eb; text-decoration: underline;">Unsubscribe Instantly</a>.

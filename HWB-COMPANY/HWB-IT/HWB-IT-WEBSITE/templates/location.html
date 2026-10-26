@@ -120,7 +120,7 @@
             </div>
             <div>
                 <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--slate-900); margin-bottom: 0.75rem;">{{ data.name }} ({{ data.get('county', 'North Texas') }}) Coverage &amp; ZIP Codes</h3>
-                <p style="color: var(--slate-600); line-height: 1.65; margin-bottom: 1rem;">Dispatched from our North Texas operations headquarters at 3342 FM 1827 Ste 8d, McKinney, TX 75071 with full Commercial General Liability and Workers' Compensation coverage.</p>
+                <p style="color: var(--slate-600); line-height: 1.65; margin-bottom: 1rem;">Serving {{ data.name }} and surrounding North Texas commercial corridors with background-checked crews, local field supervisors, and full Commercial General Liability and Workers' Compensation coverage.</p>
                 <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
                     {% for zc in data.get('zip_codes', []) %}
                     <span style="background: #ffffff; border: 1px solid var(--slate-300); border-radius: 6px; padding: 0.25rem 0.65rem; font-size: 0.82rem; font-weight: 700; color: var(--slate-800);">{{ data.name }} {{ zc }}</span>
