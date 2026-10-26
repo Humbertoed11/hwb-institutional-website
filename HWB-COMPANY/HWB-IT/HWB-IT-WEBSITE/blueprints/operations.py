@@ -283,6 +283,7 @@ def admin_operations():
     page = request.args.get('page', 1, type=int)
     search_q = request.args.get('q', '').strip()
     active_only = request.args.get('active_only') == 'true'
+    worked_today = request.args.get('worked_today') == 'true'
     sort_by = request.args.get('sort')
     sort_dir = request.args.get('dir', '').upper()
     campaign_filter = request.args.get('campaign_filter', '').strip()
@@ -373,8 +374,11 @@ def admin_operations():
     per_page = 50
     offset = (page - 1) * per_page
 
+    default_lead_sort_expr = "GREATEST(COALESCE(TO_CHAR(updated_at, 'YYYY-MM-DD HH24:MI:SS'), ''), COALESCE(input_date::text, ''))"
     leads_sort_map = {
         'company': 'center_name', 'industry': 'industry', 'input_date': 'input_date',
+        'date': default_lead_sort_expr, 'recent': default_lead_sort_expr,
+        'updated': 'COALESCE(updated_at, timestamp)',
         'status': 'status', 'phone': 'phone', 'email': 'email', 'city': 'city',
         'zipcode': 'zipcode', 'sqf': 'sqf', 'capacity': 'capacity', 'value': 'estimated_annual_value',
         'priority': 'priority_level', 'facility': 'facility_type', 'contact': 'decision_maker',
@@ -422,7 +426,7 @@ def admin_operations():
 
     ib_sort, ib_dir = 'ib.bid_due_date', 'ASC'
     if active_view == 'leads':
-        l_sort = leads_sort_map.get(sort_by, 'input_date')
+        l_sort = leads_sort_map.get(sort_by, default_lead_sort_expr)
         l_dir = sort_dir if sort_dir in ['ASC', 'DESC'] else 'DESC'
         a_sort, a_dir = 'company_name', 'ASC'
         b_sort, b_dir = 'cb.bid_due_date', 'ASC'
@@ -538,13 +542,15 @@ def admin_operations():
                         if owner_filter.lower() in ('unassigned', 'none', 'null', '0'):
                             lead_where_clauses.append("l.owner_id IS NULL")
                         elif owner_filter.isdigit():
-                            lead_where_clauses.append("l.owner_id = %s")
-                            lead_params.append(int(owner_filter))
+                            lead_where_clauses.append(
+                                '(l.owner_id = %s OR (l.owner_id IS NULL AND l.last_contacted_by IN (SELECT full_name FROM "Users" WHERE id = %s UNION SELECT username FROM "Users" WHERE id = %s)))'
+                            )
+                            lead_params.extend([int(owner_filter), int(owner_filter), int(owner_filter)])
                         else:
                             lead_where_clauses.append(
-                                'l.owner_id IN (SELECT id FROM "Users" WHERE full_name ILIKE %s OR username ILIKE %s)'
+                                '(l.owner_id IN (SELECT id FROM "Users" WHERE full_name ILIKE %s OR username ILIKE %s) OR l.last_contacted_by ILIKE %s)'
                             )
-                            lead_params.extend([f'%{owner_filter}%', f'%{owner_filter}%'])
+                            lead_params.extend([f'%{owner_filter}%', f'%{owner_filter}%', f'%{owner_filter}%'])
 
                     include_archived = request.args.get('include_archived') == 'true'
                     duplicates_only = request.args.get('duplicates_only') == 'true'
@@ -564,6 +570,21 @@ def admin_operations():
                     m_and_a_filter = request.args.get('m_and_a') == 'true'
                     if m_and_a_filter and active_view == 'leads':
                         lead_where_clauses.append("l.acquisition_tier IN ('Tier 1 - Mega Institutional', 'Tier 2 - Regional Commercial')")
+
+                    if worked_today and active_view == 'leads':
+                        lead_where_clauses.append(
+                            """(
+                                l.input_date::text = CURRENT_DATE::text
+                                OR l.updated_at::date = CURRENT_DATE
+                                OR l.timestamp::date = CURRENT_DATE
+                                OR EXISTS (
+                                    SELECT 1 FROM "GlobalActivities" ga_wt
+                                    WHERE ga_wt.parent_id = l.id
+                                      AND ga_wt.parent_type = 'Lead'
+                                      AND ga_wt.timestamp::date = CURRENT_DATE
+                                )
+                            )"""
+                        )
 
                     if active_only:
                         lead_where_clauses.append("EXISTS (SELECT 1 FROM \"GlobalActivities\" ga_f WHERE ga_f.parent_id = l.id AND ga_f.parent_type = 'Lead')")
@@ -585,11 +606,12 @@ def admin_operations():
                     lead_where_str = ("WHERE " + " AND ".join(lead_where_clauses)) if lead_where_clauses else ""
 
                     # Only run filtered COUNT(*) if non-default filters are active; otherwise use 30s cached leads_count
-                    has_custom_lead_filters = bool(search_q or owner_filter or duplicates_only or include_archived or m_and_a_filter or active_only or campaign_filter)
+                    has_custom_lead_filters = bool(search_q or owner_filter or duplicates_only or include_archived or m_and_a_filter or worked_today or active_only or campaign_filter)
                     if has_custom_lead_filters:
                         cur.execute(f'SELECT COUNT(*) FROM "Leads" l {lead_where_str}', tuple(lead_params))
                         leads_count = cur.fetchone()[0]
 
+                    id_tie_dir = 'DESC' if l_dir == 'DESC' else 'ASC'
                     # Set-based CTE: paginate 50 leads first, then LEFT JOIN GlobalActivities & CampaignRecipients only for those 50 IDs
                     if sort_by in ('activities', 'last_contact'):
                         lead_sql = f'''
@@ -610,7 +632,7 @@ def admin_operations():
                                 FROM "Leads" l
                                 LEFT JOIN ga_all ga ON ga.parent_id = l.id
                                 {lead_where_str}
-                                ORDER BY {l_sort} {l_dir} NULLS LAST, l.id ASC
+                                ORDER BY {l_sort} {l_dir} NULLS LAST, l.id {id_tie_dir}
                                 LIMIT %s OFFSET %s
                             ),
                             cr_latest AS (
@@ -625,7 +647,7 @@ def admin_operations():
                             SELECT pl.*, cr_latest.campaign_info
                             FROM paged_leads pl
                             LEFT JOIN cr_latest ON cr_latest.lead_id = pl.id
-                            ORDER BY {l_sort.replace('ga.', 'pl.')} {l_dir} NULLS LAST, pl.id ASC;
+                            ORDER BY {l_sort.replace('ga.', 'pl.')} {l_dir} NULLS LAST, pl.id {id_tie_dir};
                         '''
                     else:
                         lead_sql = f'''
@@ -633,7 +655,7 @@ def admin_operations():
                                 SELECT l.*
                                 FROM "Leads" l
                                 {lead_where_str}
-                                ORDER BY {l_sort} {l_dir} NULLS LAST, l.id ASC
+                                ORDER BY {l_sort} {l_dir} NULLS LAST, l.id {id_tie_dir}
                                 LIMIT %s OFFSET %s
                             ),
                             ga_agg AS (
@@ -663,7 +685,7 @@ def admin_operations():
                             FROM paged_leads pl
                             LEFT JOIN ga_agg ga ON ga.parent_id = pl.id
                             LEFT JOIN cr_latest ON cr_latest.lead_id = pl.id
-                            ORDER BY {l_sort} {l_dir} NULLS LAST, pl.id ASC;
+                            ORDER BY {l_sort} {l_dir} NULLS LAST, pl.id {id_tie_dir};
                         '''
 
                     cur.execute(lead_sql, tuple(lead_params + [per_page, offset]))
@@ -1312,7 +1334,7 @@ def admin_operations():
                          in_campaign_count=in_campaign_count, opened_leads_count=opened_leads_count,
                          campaign_ready_count=campaign_ready_count,
 
-                         campaign_filter=campaign_filter,
+                         campaign_filter=campaign_filter, worked_today=worked_today,
                          page=page, total_pages=total_pages, search_q=search_q,
                          sort_by=sort_by or '', sort_dir=sort_dir, active_cols=active_cols,
                          active_cols_str=active_cols_str, portfolio_total=portfolio_total,
@@ -1607,13 +1629,13 @@ def add_manual_lead():
 
             owner_id_raw = data.get('owner_id')
             owner_id = int(owner_id_raw) if owner_id_raw and str(owner_id_raw).isdigit() else None
-            if not owner_id and current_user.is_authenticated and current_user.role == 'Sales':
+            if not owner_id and current_user.is_authenticated:
                 owner_id = current_user.id
 
             user_attribution = (current_user.full_name or current_user.username) if (current_user.is_authenticated and (current_user.full_name or current_user.username)) else 'Operations System'
 
             company_name = (data.get('company_name') or data.get('center_name') or data.get('company') or '').strip()
-            cleaned_email = clean_email(data.get('email')) or (data.get('email') or '').strip() or None
+            cleaned_email = clean_email(data.get('email'))
             cleaned_phone = clean_phone(data.get('phone')) or (data.get('phone') or '').strip()
             cleaned_city = clean_city(data.get('city')) or (data.get('city') or '').strip()
             cleaned_state = clean_state(data.get('state'), default='TX')
@@ -1632,42 +1654,69 @@ def add_manual_lead():
 
             phone_digits = extract_phone_digits(cleaned_phone)
 
+            # BUG-158 Pillar 1: Never silently overwrite a different company name when adding a lead.
+            # Only update an existing row if overwrite_lead_id is explicitly provided OR if the company_name
+            # matches AND shares the same city, phone, email, or street address.
             existing_lead_id = None
-            if phone_digits and len(phone_digits) == 10:
-                cur.execute('''
-                    SELECT id FROM "Leads"
-                    WHERE COALESCE(is_duplicate, FALSE) = FALSE
-                      AND RIGHT(REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g'), 10) = %s
-                    ORDER BY id ASC LIMIT 1;
-                ''', (phone_digits,))
+            explicit_overwrite_id = data.get('overwrite_lead_id') or data.get('existing_lead_id')
+            if explicit_overwrite_id and str(explicit_overwrite_id).isdigit():
+                cur.execute('SELECT id FROM "Leads" WHERE id = %s;', (int(explicit_overwrite_id),))
                 row = cur.fetchone()
                 if row:
                     existing_lead_id = row[0]
 
-            if not existing_lead_id and cleaned_email:
-                cur.execute('''
-                    SELECT id FROM "Leads"
-                    WHERE COALESCE(is_duplicate, FALSE) = FALSE
-                      AND LOWER(TRIM(COALESCE(email, ''))) = LOWER(%s)
-                    ORDER BY id ASC LIMIT 1;
-                ''', (cleaned_email,))
-                row = cur.fetchone()
-                if row:
-                    existing_lead_id = row[0]
+            if not existing_lead_id and company_name:
+                if cleaned_city:
+                    cur.execute('''
+                        SELECT id FROM "Leads"
+                        WHERE COALESCE(is_duplicate, FALSE) = FALSE
+                          AND LOWER(TRIM(COALESCE(center_name, ''))) = LOWER(TRIM(%s))
+                          AND LOWER(TRIM(COALESCE(city, ''))) = LOWER(TRIM(%s))
+                        ORDER BY id ASC LIMIT 1;
+                    ''', (company_name, cleaned_city))
+                    row = cur.fetchone()
+                    if row:
+                        existing_lead_id = row[0]
 
-            if not existing_lead_id and company_name and cleaned_city:
-                cur.execute('''
-                    SELECT id FROM "Leads"
-                    WHERE COALESCE(is_duplicate, FALSE) = FALSE
-                      AND LOWER(TRIM(COALESCE(center_name, ''))) = LOWER(TRIM(%s))
-                      AND LOWER(TRIM(COALESCE(city, ''))) = LOWER(TRIM(%s))
-                    ORDER BY id ASC LIMIT 1;
-                ''', (company_name, cleaned_city))
-                row = cur.fetchone()
-                if row:
-                    existing_lead_id = row[0]
+                if not existing_lead_id and phone_digits and len(phone_digits) == 10:
+                    cur.execute('''
+                        SELECT id FROM "Leads"
+                        WHERE COALESCE(is_duplicate, FALSE) = FALSE
+                          AND LOWER(TRIM(COALESCE(center_name, ''))) = LOWER(TRIM(%s))
+                          AND RIGHT(REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g'), 10) = %s
+                        ORDER BY id ASC LIMIT 1;
+                    ''', (company_name, phone_digits))
+                    row = cur.fetchone()
+                    if row:
+                        existing_lead_id = row[0]
+
+                if not existing_lead_id and cleaned_email:
+                    cur.execute('''
+                        SELECT id FROM "Leads"
+                        WHERE COALESCE(is_duplicate, FALSE) = FALSE
+                          AND LOWER(TRIM(COALESCE(center_name, ''))) = LOWER(TRIM(%s))
+                          AND LOWER(TRIM(COALESCE(email, ''))) = LOWER(%s)
+                        ORDER BY id ASC LIMIT 1;
+                    ''', (company_name, cleaned_email))
+                    row = cur.fetchone()
+                    if row:
+                        existing_lead_id = row[0]
 
             if existing_lead_id:
+                cur.execute('''
+                    SELECT center_name, decision_maker, phone, email, address, city, status, owner_id
+                    FROM "Leads" WHERE id = %s;
+                ''', (existing_lead_id,))
+                prev_row = cur.fetchone()
+                if prev_row:
+                    prev_summary = f"{prev_row[0] or ''} | DM: {prev_row[1] or ''} | Phone: {prev_row[2] or ''} | Email: {prev_row[3] or ''} | Addr: {prev_row[4] or ''}, {prev_row[5] or ''}"
+                    new_summary = f"{company_name or prev_row[0] or ''} | DM: {data.get('decision_maker') or prev_row[1] or ''} | Phone: {cleaned_phone or prev_row[2] or ''} | Email: {cleaned_email or prev_row[3] or ''} | Addr: {addr_line_1 or prev_row[4] or ''}, {cleaned_city or prev_row[5] or ''}"
+                    if prev_summary != new_summary:
+                        cur.execute('''
+                            INSERT INTO "LeadStageHistory" (lead_id, field_name, old_value, new_value, changed_by_user_id, changed_by_name, reason, duration_seconds)
+                            VALUES (%s, 'profile_snapshot', %s, %s, %s, %s, 'Updated via Add Lead form', 0);
+                        ''', (existing_lead_id, prev_summary[:500], new_summary[:500], getattr(current_user, 'id', None), user_attribution))
+
                 cur.execute('''
                     UPDATE "Leads"
                     SET center_name = COALESCE(NULLIF(%s, ''), center_name),
@@ -1694,11 +1743,15 @@ def add_manual_lead():
                         estimated_annual_value = CASE WHEN %s > 0 THEN %s ELSE estimated_annual_value END,
                         notes = CASE WHEN %s IS NOT NULL AND %s != '' THEN COALESCE(notes, '') || E'\n[UPDATED]: ' || %s ELSE notes END,
                         last_contacted_by = COALESCE(%s, last_contacted_by),
-                        owner_id = COALESCE(%s, owner_id),
+                        owner_id = COALESCE(owner_id, %s),
                         umbrella_name = COALESCE(NULLIF(%s, ''), umbrella_name),
                         ownership_type = COALESCE(NULLIF(%s, ''), ownership_type),
                         cleaning_delivery_model = COALESCE(NULLIF(%s, ''), cleaning_delivery_model),
-                        next_action_date = COALESCE(NULLIF(%s, ''), next_action_date)
+                        next_action_date = COALESCE(NULLIF(%s, ''), next_action_date),
+                        is_commercial = TRUE,
+                        is_duplicate = FALSE,
+                        is_converted = FALSE,
+                        updated_at = CURRENT_TIMESTAMP
                     WHERE id = %s;
                 ''', (
                     company_name, data.get('decision_maker'), data.get('job_title'),
@@ -1722,7 +1775,8 @@ def add_manual_lead():
                         capacity, student_enrollment, traffic_cycle, service_interest, lead_source,
                         priority_level, estimated_annual_value, status, notes, input_date,
                         last_contacted_by, owner_id, umbrella_name, ownership_type,
-                        cleaning_delivery_model, next_action_date, preferred_date, preferred_time, budget_range
+                        cleaning_delivery_model, next_action_date, preferred_date, preferred_time, budget_range,
+                        is_commercial, updated_at
                     )
                     VALUES (
                         %s, %s, %s, %s, %s, %s, %s,
@@ -1730,7 +1784,8 @@ def add_manual_lead():
                         %s, %s, %s, %s, %s,
                         %s, %s, %s, %s, %s,
                         %s, %s, %s, %s,
-                        %s, %s, %s, %s, %s
+                        %s, %s, %s, %s, %s,
+                        TRUE, CURRENT_TIMESTAMP
                     )
                     RETURNING id;
                 ''', (

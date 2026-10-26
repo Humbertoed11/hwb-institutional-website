@@ -222,16 +222,23 @@ def parse_advanced_search(search_q: str, view: str = 'leads') -> Tuple[List[str]
             'ownership': ('ownership_type', 'text'),
             'rep': ('owner_id', 'user_ref'),
             'owner': ('owner_id', 'user_ref'),
+            'by': ('last_contacted_by', 'text'),
+            'last_contacted_by': ('last_contacted_by', 'text'),
+            'notes': ('notes', 'text'),
+            'note': ('notes', 'text'),
             'date': ('input_date', 'date'),
             'created': ('input_date', 'date'),
             'input_date': ('input_date', 'date'),
+            'updated': ('updated_at', 'date'),
+            'worked': ('updated_at', 'date'),
             'id': ('id', 'num'),
             'ld': ('id', 'num'),
         }
         general_cols = [
             'center_name', 'facility_type', 'city', 'state', 'zipcode', 
             'phone', 'email', 'address', 'lead_source', 'decision_maker', 
-            'status', 'umbrella_name', 'acquisition_tier', 'ownership_type'
+            'status', 'umbrella_name', 'acquisition_tier', 'ownership_type',
+            'last_contacted_by', 'notes'
         ]
         user_table_fk = 'owner_id'
 
@@ -429,6 +436,8 @@ def parse_advanced_search(search_q: str, view: str = 'leads') -> Tuple[List[str]
                     if raw_val.isdigit():
                         return f'{user_table_fk} = %s', [int(raw_val)]
                     pat = f'%{raw_val}%'
+                    if view in ('leads', 'sales_desk'):
+                        return f'({user_table_fk} IN (SELECT id FROM "Users" WHERE full_name ILIKE %s OR username ILIKE %s) OR last_contacted_by ILIKE %s)', [pat, pat, pat]
                     return f'{user_table_fk} IN (SELECT id FROM "Users" WHERE full_name ILIKE %s OR username ILIKE %s)', [pat, pat]
                 elif f_key in ('city', 'location'):
                     canonical_city = resolve_fuzzy_tx_city(raw_val, known_cities)

@@ -793,12 +793,21 @@ def api_lead_hub(id):
                 if 'owner_id' in data and getattr(current_user, 'role', '') != 'Sales':
                     raw_owner = data.get('owner_id')
                     if raw_owner in ('', None, 'null', 'None'):
-                        owner_id_val = None
+                        # Only clear owner_id if explicitly unassigning an already-owned lead;
+                        # if the lead was previously unassigned and the user is editing/working it, auto-claim ownership.
+                        if current_lead.get('owner_id') is not None and data.get('explicit_unassign'):
+                            owner_id_val = None
+                        elif current_lead.get('owner_id') is None and getattr(current_user, 'id', None):
+                            owner_id_val = getattr(current_user, 'id', None)
+                        else:
+                            owner_id_val = None
                     else:
                         try:
                             owner_id_val = int(raw_owner)
                         except (ValueError, TypeError):
                             owner_id_val = None
+                elif owner_id_val is None and getattr(current_user, 'id', None):
+                    owner_id_val = getattr(current_user, 'id', None)
 
                 raw_status_in = data.get('status') if 'status' in data else None
                 raw_model_in = data.get('cleaning_delivery_model') if 'cleaning_delivery_model' in data else None
@@ -840,7 +849,7 @@ def api_lead_hub(id):
                 else:
                     resolved_city = current_lead.get('city')
 
-                resolved_email = clean_email(resolve('email', current_lead.get('email'))) or resolve('email', current_lead.get('email'))
+                resolved_email = clean_email(resolve('email', current_lead.get('email')))
                 resolved_state = clean_state(resolve('state', current_lead.get('state')), default='TX')
                 if 'website' in data or not website_val:
                     website_val = clean_website(website_val, fallback_email=resolved_email)
@@ -873,6 +882,7 @@ def api_lead_hub(id):
                         website = %s, county = %s, student_enrollment = %s,
                         owner_verification_status = %s, preferred_date = %s, preferred_time = %s,
                         budget_range = %s, is_dnc = %s, campaign_ready = %s, email_hygiene_status = %s,
+                        last_contacted_by = COALESCE(%s, last_contacted_by),
                         updated_at = CURRENT_TIMESTAMP
                     WHERE id = %s
                 ''', (resolved_center_name, 
@@ -898,7 +908,8 @@ def api_lead_hub(id):
                       acquisition_tier_val, ownership_type_val, owner_id_val,
                       website_val, county_val, enrollment_val,
                       verification_val, pref_date_val, pref_time_val,
-                      budget_val, is_dnc_val, campaign_ready_val, email_hygiene_val, id))
+                      budget_val, is_dnc_val, campaign_ready_val, email_hygiene_val,
+                      actor_name, id))
 
                 _sync_email_suppression_if_needed(cur, resolved_email, resolved_status, actor_name)
                 _record_lead_stage_and_model_history(
@@ -940,6 +951,11 @@ def api_lead_hub(id):
                     ''', (id, 'Lead', activity_type, description))
 
                 conn.commit()
+                try:
+                    from blueprints.operations import invalidate_operations_caches
+                    invalidate_operations_caches()
+                except Exception:
+                    pass
                 return jsonify({
                     'status': 'success',
                     'resolved_status': resolved_status,
@@ -983,7 +999,7 @@ def api_lead_cadence_save(id):
             phone_raw = data.get('phone') if 'phone' in data else current_lead['phone']
             phone = clean_phone(phone_raw) or phone_raw
             email_raw = data.get('email') if 'email' in data else current_lead['email']
-            email = clean_email(email_raw) or email_raw
+            email = clean_email(email_raw)
 
             note_text = (data.get('note') or '').strip()
             activity_type = data.get('activity_type') or 'Phone Call'
@@ -1076,6 +1092,7 @@ def api_lead_cadence_save(id):
             rep_name = (data.get('rep_name') or '').strip()
             actor_name = getattr(current_user, 'full_name', None) or getattr(current_user, 'username', None) or rep_name or conductor
 
+            actor_id = getattr(current_user, 'id', None)
             cur.execute('''
                 UPDATE "Leads" SET 
                     decision_maker = %s,
@@ -1094,13 +1111,14 @@ def api_lead_cadence_save(id):
                     preferred_time = %s,
                     priority_level = %s,
                     last_contacted_by = %s,
+                    owner_id = COALESCE(owner_id, %s),
                     updated_at = CURRENT_TIMESTAMP
                 WHERE id = %s
             ''', (
                 dm, title, phone, email, status, cleaning_model_val,
                 is_dnc_val, campaign_ready_val, email_hygiene_val,
                 sqf_val, est_val, next_date, pref_date, pref_time, priority,
-                actor_name, id
+                actor_name, actor_id, id
             ))
 
             _sync_email_suppression_if_needed(cur, email, status, actor_name)
@@ -1222,6 +1240,11 @@ def api_lead_cadence_save(id):
                 ''', (id, activity_type, log_desc))
 
             conn.commit()
+            try:
+                from blueprints.operations import invalidate_operations_caches
+                invalidate_operations_caches()
+            except Exception:
+                pass
             return jsonify({
                 'status': 'success', 
                 'message': 'Call and activity details saved.',
@@ -1238,6 +1261,222 @@ def api_lead_cadence_save(id):
         return jsonify({'status': 'error', 'message': str(e)}), 500
     finally:
         if 'conn' in locals() and conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/admin/leads/forensic-recovery-1026', methods=['GET', 'POST'])
+@login_required
+def api_admin_leads_forensic_recovery_1026():
+    """
+    Executive forensic inspection & Point-In-Time Recovery (PITR) reconciliation for BUG-158.
+    Inspects live Leads, PostgreSQL MVCC heap dead tuples (pageinspect), and optional PITR clone.
+    """
+    if getattr(current_user, 'role', '') != 'Executive':
+        return jsonify({'status': 'error', 'message': 'Executive access required.'}), 403
+
+    pitr_host = (request.args.get('pitr_host') or 'sigmajan-pitr-1026.postgres.database.azure.com').strip()
+    auto_restore = (request.args.get('restore') == 'true') or (request.method == 'POST')
+    db_url = current_app.config['DATABASE_URL']
+    conn = get_db(db_url)
+    report = {
+        'live_mirna_leads': [],
+        'updated_notes_leads': [],
+        'heap_dead_tuples': [],
+        'pitr_leads': [],
+        'restored_leads': [],
+        'errors': [],
+    }
+    try:
+        with conn.cursor() as cur:
+            cur.execute('''
+                SELECT id, center_name, decision_maker, job_title, phone, email, address, city, zipcode,
+                       status, cleaning_delivery_model, owner_id, last_contacted_by, input_date,
+                       timestamp::text AS created_ts, updated_at::text AS updated_ts, notes,
+                       ctid::text AS ctid_str
+                FROM "Leads"
+                WHERE owner_id = 3
+                   OR last_contacted_by ILIKE '%Mirna%'
+                   OR input_date::text = '2026-10-26'
+                   OR updated_at::date = '2026-10-26'
+                   OR timestamp::date = '2026-10-26'
+                   OR id >= 1004658
+                ORDER BY id DESC;
+            ''')
+            cols = [desc[0] for desc in cur.description]
+            for r in cur.fetchall():
+                report['live_mirna_leads'].append(dict(zip(cols, r) if not isinstance(r, dict) else r))
+
+            cur.execute('''
+                SELECT id, center_name, decision_maker, phone, email, address, city, owner_id,
+                       last_contacted_by, input_date, updated_at::text AS updated_ts, notes, ctid::text AS ctid_str
+                FROM "Leads"
+                WHERE notes ILIKE '%[UPDATED]%'
+                ORDER BY id DESC LIMIT 50;
+            ''')
+            u_cols = [desc[0] for desc in cur.description]
+            for r in cur.fetchall():
+                report['updated_notes_leads'].append(dict(zip(u_cols, r) if not isinstance(r, dict) else r))
+
+            # Inspect PostgreSQL MVCC heap tuples via pageinspect on blocks holding today's leads
+            try:
+                cur.execute('CREATE EXTENSION IF NOT EXISTS pageinspect;')
+                conn.commit()
+                cur.execute('''
+                    SELECT DISTINCT (SPLIT_PART(BTRIM(ctid::text, '()'), ',', 1))::int AS blkno
+                    FROM "Leads"
+                    WHERE id >= 1004655
+                       OR input_date::text = '2026-10-26'
+                       OR last_contacted_by ILIKE '%Mirna%';
+                ''')
+                blk_rows = cur.fetchall()
+                blocks = [ (r['blkno'] if isinstance(r, dict) else r[0]) for r in blk_rows if (r['blkno'] if isinstance(r, dict) else r[0]) is not None ]
+                cur.execute('''
+                    SELECT attnum, attname, atttypid::regtype::text AS typname
+                    FROM pg_attribute
+                    WHERE attrelid = '"Leads"'::regclass AND attnum > 0 AND NOT attisdropped
+                    ORDER BY attnum ASC;
+                ''')
+                att_rows = cur.fetchall()
+                att_names = [ (r['attname'] if isinstance(r, dict) else r[1]) for r in att_rows ]
+
+                for blk in blocks:
+                    cur.execute('''
+                        SELECT lp, t_xmin::text AS xmin, t_xmax::text AS xmax, t_ctid::text AS ctid,
+                               tuple_data_split('"Leads"'::regclass, t_data, t_infomask, t_infomask2, t_bits) AS raw_attrs
+                        FROM heap_page_items(get_raw_page('"Leads"', %s))
+                        WHERE t_data IS NOT NULL;
+                    ''', (blk,))
+                    for h_row in cur.fetchall():
+                        hd = h_row if isinstance(h_row, dict) else {
+                            'lp': h_row[0], 'xmin': h_row[1], 'xmax': h_row[2], 'ctid': h_row[3], 'raw_attrs': h_row[4]
+                        }
+                        raw_attrs = hd.get('raw_attrs') or []
+                        decoded = {}
+                        for idx, val_bytes in enumerate(raw_attrs):
+                            col_name = att_names[idx] if idx < len(att_names) else f'col_{idx}'
+                            if val_bytes is None:
+                                decoded[col_name] = None
+                            elif col_name in ('center_name', 'decision_maker', 'job_title', 'phone', 'email', 'address', 'city', 'state', 'zipcode', 'notes', 'last_contacted_by', 'input_date', 'status', 'facility_type', 'lead_source'):
+                                try:
+                                    b = bytes(val_bytes)
+                                    # PostgreSQL varlena text: strip 1-byte or 4-byte varlena header
+                                    if len(b) > 0:
+                                        if (b[0] & 1) == 1:
+                                            txt = b[1:].decode('utf-8', errors='replace')
+                                        else:
+                                            txt = b[4:].decode('utf-8', errors='replace')
+                                    else:
+                                        txt = ''
+                                    decoded[col_name] = txt
+                                except Exception:
+                                    decoded[col_name] = str(val_bytes)
+                            elif col_name == 'id':
+                                try:
+                                    b = bytes(val_bytes)
+                                    if len(b) == 4:
+                                        decoded['id'] = int.from_bytes(b, byteorder='little', signed=True)
+                                except Exception:
+                                    pass
+                        if decoded.get('id') and (decoded.get('id') >= 1004658 or hd.get('xmax') != '0'):
+                            report['heap_dead_tuples'].append({
+                                'block': blk,
+                                'lp': hd.get('lp'),
+                                'xmin': hd.get('xmin'),
+                                'xmax': hd.get('xmax'),
+                                'ctid': hd.get('ctid'),
+                                'decoded': decoded,
+                            })
+            except Exception as pi_err:
+                conn.rollback()
+                report['errors'].append(f"pageinspect warning: {pi_err}")
+
+            # Optional PITR server inspection if sigmajan-pitr-1026 is online
+            if pitr_host and 'sigmajan-server.postgres.database.azure.com' in db_url:
+                pitr_url = db_url.replace('sigmajan-server.postgres.database.azure.com', pitr_host)
+                try:
+                    import psycopg2
+                    import psycopg2.extras
+                    p_conn = psycopg2.connect(pitr_url, connect_timeout=4)
+                    try:
+                        with p_conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as p_cur:
+                            p_cur.execute('''
+                                SELECT id, center_name, decision_maker, job_title, phone, email, address, address_line_2,
+                                       city, state, zipcode, county, website, industry, facility_type, sqf,
+                                       status, cleaning_delivery_model, owner_id, last_contacted_by, input_date,
+                                       timestamp::text AS created_ts, updated_at::text AS updated_ts, notes
+                                FROM "Leads"
+                                WHERE id >= 1004658
+                                   OR input_date::text = '2026-10-26'
+                                   OR last_contacted_by ILIKE '%Mirna%'
+                                   OR updated_at::date = '2026-10-26'
+                                   OR timestamp::date = '2026-10-26'
+                                ORDER BY id DESC;
+                            ''')
+                            report['pitr_leads'] = [dict(r) for r in p_cur.fetchall()]
+                    finally:
+                        p_conn.close()
+                except Exception as p_err:
+                    report['errors'].append(f"PITR connection notice ({pitr_host}): {p_err}")
+
+            # Restore any overwritten facility discovered via heap_dead_tuples or pitr_leads
+            if auto_restore:
+                candidates = []
+                for ht in report['heap_dead_tuples']:
+                    dec = ht.get('decoded') or {}
+                    if dec.get('center_name'):
+                        candidates.append(dec)
+                for pl in report['pitr_leads']:
+                    if pl.get('center_name'):
+                        candidates.append(pl)
+
+                for cand in candidates:
+                    cname = (cand.get('center_name') or '').strip()
+                    if not cname:
+                        continue
+                    cur.execute('''
+                        SELECT id FROM "Leads"
+                        WHERE LOWER(BTRIM(COALESCE(center_name, ''))) = LOWER(BTRIM(%s))
+                        LIMIT 1;
+                    ''', (cname,))
+                    if not cur.fetchone():
+                        c_email = clean_email(cand.get('email'))
+                        c_phone = clean_phone(cand.get('phone')) or cand.get('phone')
+                        c_city = clean_city(cand.get('city')) or cand.get('city')
+                        c_state = clean_state(cand.get('state'), default='TX')
+                        c_zip = clean_zip(cand.get('zipcode')) or cand.get('zipcode')
+                        cur.execute('''
+                            INSERT INTO "Leads" (
+                                center_name, decision_maker, job_title, email, phone, address,
+                                city, state, zipcode, facility_type, status, notes, input_date,
+                                last_contacted_by, owner_id, is_commercial, updated_at
+                            )
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 3, TRUE, CURRENT_TIMESTAMP)
+                            RETURNING id;
+                        ''', (
+                            cname,
+                            cand.get('decision_maker'),
+                            cand.get('job_title'),
+                            c_email,
+                            c_phone,
+                            cand.get('address'),
+                            c_city,
+                            c_state,
+                            c_zip,
+                            cand.get('facility_type') or 'Commercial',
+                            cand.get('status') or 'New',
+                            cand.get('notes'),
+                            cand.get('input_date') or '2026-10-26',
+                            cand.get('last_contacted_by') or 'Mirna Rondinella',
+                        ))
+                        new_id_row = cur.fetchone()
+                        new_lid = new_id_row['id'] if isinstance(new_id_row, dict) else new_id_row[0]
+                        report['restored_leads'].append({'id': new_lid, 'center_name': cname, 'phone': c_phone, 'city': c_city})
+                conn.commit()
+    except Exception as e:
+        conn.rollback()
+        report['errors'].append(str(e))
+    finally:
+        conn.close()
+    return jsonify(report)
 
 
 @crm_api_bp.route('/api/v1/leads/check-duplicate', methods=['GET'])
@@ -2089,14 +2328,24 @@ def api_quick_log_activity():
                 VALUES (%s, %s, %s, %s)
             ''', (parent_id, ptype, activity_type, note_text))
             
+            actor_name = getattr(current_user, 'full_name', None) or getattr(current_user, 'username', 'Operator')
+            actor_id = getattr(current_user, 'id', None)
             if ptype == 'Lead':
-                cur.execute('UPDATE "Leads" SET updated_at = CURRENT_TIMESTAMP WHERE id = %s', (parent_id,))
+                cur.execute(
+                    'UPDATE "Leads" SET updated_at = CURRENT_TIMESTAMP, last_contacted_by = %s, owner_id = COALESCE(owner_id, %s) WHERE id = %s',
+                    (actor_name, actor_id, parent_id),
+                )
             elif ptype == 'ConstructionBid':
                 cur.execute('UPDATE "ConstructionBids" SET updated_at = CURRENT_TIMESTAMP, last_contact_date = CURRENT_TIMESTAMP WHERE id = %s', (parent_id,))
             else:
                 cur.execute('UPDATE "Customers" SET updated_at = CURRENT_TIMESTAMP WHERE customer_id = %s', (parent_id,))
                 
             conn.commit()
+            try:
+                from blueprints.operations import invalidate_operations_caches
+                invalidate_operations_caches()
+            except Exception:
+                pass
             return jsonify({'status': 'success', 'message': 'Touchpoint logged.'})
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
@@ -2117,7 +2366,19 @@ def api_activities():
                 INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
                 VALUES (%s, %s, %s, %s)
             ''', (p_id, p_type, a_type, desc))
+            if str(p_type or '').lower() == 'lead' and p_id:
+                actor_name = getattr(current_user, 'full_name', None) or getattr(current_user, 'username', 'Operator')
+                actor_id = getattr(current_user, 'id', None)
+                cur.execute(
+                    'UPDATE "Leads" SET updated_at = CURRENT_TIMESTAMP, last_contacted_by = %s, owner_id = COALESCE(owner_id, %s) WHERE id = %s',
+                    (actor_name, actor_id, p_id),
+                )
             conn.commit()
+            try:
+                from blueprints.operations import invalidate_operations_caches
+                invalidate_operations_caches()
+            except Exception:
+                pass
             return jsonify({'status': 'success', 'updates_applied': []})
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500

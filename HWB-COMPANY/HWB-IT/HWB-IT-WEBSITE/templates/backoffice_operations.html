@@ -348,6 +348,9 @@
 
                         <!-- Specialized Status Filter Pills (State-Preserving Toggles) -->
                         <div style="display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap;">
+                            <button type="button" onclick="toggleLeadFilter('worked_today', 'true')" style="display: inline-flex; align-items: center; gap: 0.4rem; background: {% if request.args.get('worked_today') == 'true' %}#eff6ff{% else %}var(--white){% endif %}; border: 1px solid {% if request.args.get('worked_today') == 'true' %}#2563eb{% else %}var(--slate-300){% endif %}; padding: 0 0.75rem; border-radius: 6px; height: 36px; cursor: pointer; user-select: none;" title="Show leads added, called, or updated today">
+                                <span style="font-size: 0.72rem; font-weight: 800; color: {% if request.args.get('worked_today') == 'true' %}#1d4ed8{% else %}var(--slate-700){% endif %}; text-transform: uppercase;">📅 Worked Today</span>
+                            </button>
                             <button type="button" onclick="toggleLeadFilter('campaign_filter', 'campaign_ready')" style="display: inline-flex; align-items: center; gap: 0.4rem; background: {% if request.args.get('campaign_filter') == 'campaign_ready' %}#ecfdf5{% else %}var(--white){% endif %}; border: 1px solid {% if request.args.get('campaign_filter') == 'campaign_ready' %}#10b981{% else %}var(--slate-300){% endif %}; padding: 0 0.75rem; border-radius: 6px; height: 36px; cursor: pointer; user-select: none;" title="Show verified commercial leads with live email addresses and active mail servers ready for email outreach">
                                 <span style="font-size: 0.72rem; font-weight: 800; color: {% if request.args.get('campaign_filter') == 'campaign_ready' %}#047857{% else %}var(--slate-700){% endif %}; text-transform: uppercase;">✅ Campaign Ready ({{ campaign_ready_count | default(0) }})</span>
                             </button>
@@ -363,7 +366,7 @@
                             <button type="button" onclick="toggleLeadFilter('duplicates_only', 'true')" style="display: inline-flex; align-items: center; gap: 0.4rem; background: {% if request.args.get('duplicates_only') == 'true' %}#fff7ed{% else %}var(--white){% endif %}; border: 1px solid {% if request.args.get('duplicates_only') == 'true' %}#f97316{% else %}var(--slate-300){% endif %}; padding: 0 0.75rem; border-radius: 6px; height: 36px; cursor: pointer; user-select: none;" title="Show possible duplicate records with matching phone or address">
                                 <span style="font-size: 0.72rem; font-weight: 800; color: {% if request.args.get('duplicates_only') == 'true' %}#c2410c{% else %}var(--slate-700){% endif %}; text-transform: uppercase;">⚠️ Dups ({{ dup_count }})</span>
                             </button>
-                            {% if search_q or request.args.get('owner_id') or request.args.get('m_and_a') == 'true' or request.args.get('duplicates_only') == 'true' or request.args.get('campaign_filter') or request.args.get('active_only') == 'true' %}
+                            {% if search_q or request.args.get('owner_id') or request.args.get('worked_today') == 'true' or request.args.get('m_and_a') == 'true' or request.args.get('duplicates_only') == 'true' or request.args.get('campaign_filter') or request.args.get('active_only') == 'true' %}
                             <a href="{{ url_for('admin_operations', view='leads', cols=active_cols_str) }}" class="isc-btn isc-btn-outline" style="height: 36px; padding: 0 0.75rem; border-radius: 6px; font-size: 0.72rem; font-weight: 700; color: var(--slate-500); display: inline-flex; align-items: center; gap: 0.3rem;" title="Reset all search terms and status filters back to standard view">
                                 <i class="fas fa-times-circle" style="font-size: 0.75rem;"></i> Clear
                             </a>
@@ -861,12 +864,12 @@
                     <div style="display: flex; gap: 0.75rem;">
                         {% if active_view == 'leads' %}
                             {% if page > 1 %}
-                            <a href="{{ url_for('admin_operations', view='leads', page=page-1, q=search_q, owner_id=request.args.get('owner_id'), sort=sort_by, dir=sort_dir, active_only=request.args.get('active_only'), campaign_filter=request.args.get('campaign_filter'), m_and_a=request.args.get('m_and_a'), duplicates_only=request.args.get('duplicates_only'), cols=active_cols_str) }}" class="isc-btn isc-btn-outline" style="height: 36px; padding: 0 1.25rem; font-size: 0.75rem; border-radius: 6px;">
+                            <a href="{{ url_for('admin_operations', view='leads', page=page-1, q=search_q, owner_id=request.args.get('owner_id'), sort=sort_by, dir=sort_dir, active_only=request.args.get('active_only'), worked_today=request.args.get('worked_today'), campaign_filter=request.args.get('campaign_filter'), m_and_a=request.args.get('m_and_a'), duplicates_only=request.args.get('duplicates_only'), cols=active_cols_str) }}" class="isc-btn isc-btn-outline" style="height: 36px; padding: 0 1.25rem; font-size: 0.75rem; border-radius: 6px;">
                                 <i class="fas fa-chevron-left" style="margin-right: 0.5rem;"></i> Previous
                             </a>
                             {% endif %}
                             {% if page < total_pages %}
-                            <a href="{{ url_for('admin_operations', view='leads', page=page+1, q=search_q, owner_id=request.args.get('owner_id'), sort=sort_by, dir=sort_dir, active_only=request.args.get('active_only'), campaign_filter=request.args.get('campaign_filter'), m_and_a=request.args.get('m_and_a'), duplicates_only=request.args.get('duplicates_only'), cols=active_cols_str) }}" class="isc-btn isc-btn-outline" style="height: 36px; padding: 0 1.25rem; font-size: 0.75rem; border-radius: 6px;">
+                            <a href="{{ url_for('admin_operations', view='leads', page=page+1, q=search_q, owner_id=request.args.get('owner_id'), sort=sort_by, dir=sort_dir, active_only=request.args.get('active_only'), worked_today=request.args.get('worked_today'), campaign_filter=request.args.get('campaign_filter'), m_and_a=request.args.get('m_and_a'), duplicates_only=request.args.get('duplicates_only'), cols=active_cols_str) }}" class="isc-btn isc-btn-outline" style="height: 36px; padding: 0 1.25rem; font-size: 0.75rem; border-radius: 6px;">
                                 Next <i class="fas fa-chevron-right" style="margin-left: 0.5rem;"></i>
                             </a>
                             {% endif %}

@@ -140,6 +140,8 @@ Responsibility: George (Architect)
 | 10/26/2026 | BUG-154 | Commercial Leads Search Bar Returning `0` Results on Assigned Sales Rep Names (`beabe wiley`), Entity Collision Between Rep Names & Texas Cities/Streets (`Beabe Wiley` vs `Wylie, TX` / `Wiley Post Rd`), Missing Dedicated `owner_id` Toolbar Filter, & Missing Faceted Typeahead Autocomplete. | **RESOLVED** | HIGH |
 | 10/26/2026 | BUG-155 | "Save Lead Changes" (`PUT /api/v1/leads/<id>`) Throwing `HTTP 500` on Live Azure Due to Missing `website` & `student_enrollment` Columns on `"Leads"` in `schema_engine.py`, Plus Unreturned Connection in `/api/v1/leads/search-suggest`. | **RESOLVED** | CRITICAL |
 | 10/26/2026 | BUG-156 | 3-Workflow Enterprise Lead Intake, Universal Address/State Hygiene (`TX` vs `tx`/`Texas`/`Tejas`), Standard `Lead Owner` Column Out of the Box, & Bulk Owner/Round-Robin Assignment Architecture Across All Forms. | **RESOLVED** | HIGH |
+| 10/26/2026 | BUG-157 | Enterprise Lead Status Lifecycle (`New`, `In Campaign`, `Engaged`, `Contacted`, `Qualified`, `Walkthrough Completed`), Separate `🧹 Who Cleans` (`cleaning_delivery_model`) Column, Stage-Date History Tracking (`"LeadStageHistory"`), Record Activities Reorganization, & Calling Workstation Upgrade. | **RESOLVED** | HIGH |
+| 10/26/2026 | BUG-158 | 5-Part Enterprise Lead Protection, Placeholder/Internal Email Hygiene (`000000000@oooo` / `hwbcleaning11@gmail.com` Overwrite Prevention), Automatic Unassigned Lead Owner Attribution, Default Sort by Most Recently Added/Worked (`GREATEST(updated_at, input_date)`), `📅 Worked Today` Filter, & PITR/Heap Forensic Recovery. | **RESOLVED** | CRITICAL |
 
 
 ## BUG-122: App Manual Static Routing Deficit (Lacks Automatic Active Workspace Detection & Deep-Link Chapter Navigation)

@@ -2957,6 +2957,137 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
             finally:
                 conn.close()
 
+    def test_36_enterprise_lead_protection_placeholder_email_hygiene_and_worked_today_bug_158(self):
+        """
+        BUG-158: Verifies the 5-Part Enterprise Lead Protection & Attribution Architecture:
+        1. Placeholder & internal emails ('000000000@oooo', '000000000@oooo.com', 'none@none.com',
+           'hwbcleaning11@gmail.com', 'sales@hwbcleaning.com') are sanitized to None.
+        2. Adding two different companies via POST /admin/add-lead (even with placeholder emails or shared phone)
+           creates two independent Lead records and never overwrites the first company.
+        3. Unassigned leads automatically claim owner_id of the logged-in team member when added or worked.
+        4. Calling/working an older lead (input_date='2026-10-18') preserves its original input_date while
+           updating updated_at and surfacing it under the '📅 Worked Today' filter (worked_today=true).
+        """
+        from core.services.sanitizer import clean_email
+        from core.services.database import get_db
+
+        self.assertIsNone(clean_email("000000000@oooo"))
+        self.assertIsNone(clean_email("000000000@oooo.com"))
+        self.assertIsNone(clean_email("none@none.com"))
+        self.assertIsNone(clean_email("noemail@noemail.com"))
+        self.assertIsNone(clean_email("hwbcleaning11@gmail.com"))
+        self.assertIsNone(clean_email("sales@hwbcleaning.com"))
+        self.assertEqual(clean_email("director@stjosephschool.org"), "director@stjosephschool.org")
+
+        auth_client = self.get_auth_client()
+
+        lead_id_1 = None
+        lead_id_2 = None
+        lead_id_old = None
+        try:
+            # 1. Add first company with placeholder email 000000000@oooo and no explicit owner_id
+            r1 = auth_client.post(
+                "/admin/add-lead",
+                json={
+                    "company_name": "BUG158 First Academy Richardson",
+                    "decision_maker": "Alice Director",
+                    "phone": "972-555-0181",
+                    "email": "000000000@oooo",
+                    "address": "101 Main St",
+                    "city": "Richardson",
+                    "state": "TX",
+                    "zipcode": "75081",
+                },
+                headers={"Accept": "application/json"},
+            )
+            self.assertEqual(r1.status_code, 200)
+            j1 = r1.get_json()
+            lead_id_1 = j1.get("lead_id")
+            self.assertIsNotNone(lead_id_1)
+            self.assertFalse(j1.get("is_existing"))
+
+            # 2. Add second company with same placeholder email AND same phone number -> MUST NOT overwrite company 1!
+            r2 = auth_client.post(
+                "/admin/add-lead",
+                json={
+                    "company_name": "BUG158 Second School Richardson",
+                    "decision_maker": "Steve Manager",
+                    "phone": "972-555-0181",
+                    "email": "000000000@oooo",
+                    "address": "600 S Jupiter Rd",
+                    "city": "Richardson",
+                    "state": "TX",
+                    "zipcode": "75081",
+                },
+                headers={"Accept": "application/json"},
+            )
+            self.assertEqual(r2.status_code, 200)
+            j2 = r2.get_json()
+            lead_id_2 = j2.get("lead_id")
+            self.assertIsNotNone(lead_id_2)
+            self.assertNotEqual(lead_id_1, lead_id_2, "Different company name must never overwrite existing lead")
+
+            # Verify first company is untouched, email is NULL, and owner_id was auto-assigned to user 1
+            d1 = auth_client.get(f"/api/v1/leads/{lead_id_1}").get_json().get("lead", {})
+            self.assertEqual(d1.get("center_name"), "BUG158 First Academy Richardson")
+            self.assertIsNone(d1.get("email"))
+            self.assertEqual(int(d1.get("owner_id")), 1)
+
+            # 3. Create an older unassigned lead (input_date='2026-10-18', owner_id=NULL) and work it via cadence-save
+            conn = get_db(self.db_url)
+            try:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        '''
+                        INSERT INTO "Leads" (center_name, phone, city, state, status, input_date, owner_id, is_commercial)
+                        VALUES (%s, %s, %s, 'TX', 'New', '2026-10-18', NULL, TRUE)
+                        RETURNING id;
+                        ''',
+                        ("BUG158 Older Unassigned Plano School", "(972)-555-0189", "Plano"),
+                    )
+                    row_old = cur.fetchone()
+                    lead_id_old = row_old["id"] if isinstance(row_old, dict) else row_old[0]
+                    conn.commit()
+            finally:
+                conn.close()
+
+            r_work = auth_client.post(
+                f"/api/v1/leads/{lead_id_old}/cadence-save",
+                json={
+                    "activity_type": "Connected - Spoke to Decision Maker",
+                    "status": "Contacted",
+                    "cleaning_delivery_model": "IN_HOUSE",
+                    "note": "Spoke with director regarding evening janitorial",
+                },
+            )
+            self.assertEqual(r_work.status_code, 200)
+
+            d_old = auth_client.get(f"/api/v1/leads/{lead_id_old}").get_json().get("lead", {})
+            self.assertEqual(d_old.get("input_date"), "2026-10-18", "Original Date Added (input_date) must remain immutable")
+            self.assertEqual(int(d_old.get("owner_id")), 1, "Working an unassigned lead must auto-claim owner_id")
+            self.assertIsNotNone(d_old.get("updated_at"))
+
+            # 4. Verify Worked Today filter (worked_today=true) surfaces all 3 leads
+            r_wt = auth_client.get("/admin/operations?view=leads&worked_today=true&format=json")
+            self.assertEqual(r_wt.status_code, 200)
+            wt_ids = [l.get("id") for l in r_wt.get_json().get("leads", [])]
+            self.assertIn(lead_id_1, wt_ids)
+            self.assertIn(lead_id_2, wt_ids)
+            self.assertIn(lead_id_old, wt_ids)
+        finally:
+            conn = get_db(self.db_url)
+            try:
+                with conn.cursor() as cur:
+                    for lid in (lead_id_1, lead_id_2, lead_id_old):
+                        if lid:
+                            cur.execute('DELETE FROM "LeadStageHistory" WHERE lead_id = %s;', (lid,))
+                            cur.execute('DELETE FROM "GlobalActivities" WHERE parent_type = %s AND parent_id = %s;', ("Lead", lid))
+                            cur.execute('DELETE FROM "Leads" WHERE id = %s;', (lid,))
+                    conn.commit()
+            finally:
+                conn.close()
+
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -94,16 +94,54 @@ def clean_zip(raw_zip: Optional[Union[str, int]]) -> Optional[str]:
         return digits[:5]
     return digits if digits else None
 
-def clean_email(raw_email: Optional[str]) -> Optional[str]:
+_PLACEHOLDER_EMAIL_LOCAL_PARTS = {
+    'none', 'noemail', 'no-email', 'no_email', 'na', 'n/a', 'null', 'nil',
+    'unknown', 'blank', 'empty', 'placeholder', 'dummy', 'fake', '0', '00', '000',
+}
+_PLACEHOLDER_EMAIL_DOMAINS = {
+    'none.com', 'noemail.com', 'no-email.com', 'na.com', 'null.com',
+    'unknown.com', 'oooo.com', 'oooo.org', 'oooo.net', '0000.com',
+    'fake.com', 'invalid.com', 'placeholder.com', 'dummy.com',
+}
+_INTERNAL_COMPANY_EMAILS = {
+    'hwbcleaning11@gmail.com',
+}
+_INTERNAL_COMPANY_DOMAINS = {
+    'hwbcleaning.com', 'www.hwbcleaning.com',
+}
+
+
+def clean_email(raw_email: Optional[str], allow_internal: bool = False) -> Optional[str]:
     """
-    Sanitizes and lowercases email address.
+    Sanitizes and lowercases an email address while filtering out placeholder values
+    (such as '000000000@oooo', 'none@none.com', 'na@na.com') and internal company addresses
+    on prospect records unless allow_internal is True.
     """
     if not raw_email:
         return None
     cleaned = str(raw_email).strip().lower()
-    if re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', cleaned):
-        return cleaned
-    return None
+    if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', cleaned):
+        return None
+    local_part, domain_part = cleaned.split('@', 1)
+    if local_part in _PLACEHOLDER_EMAIL_LOCAL_PARTS or domain_part in _PLACEHOLDER_EMAIL_DOMAINS:
+        return None
+    # Reject repeated identical digits/characters such as 000000000@..., 11111@..., aaaaa@...
+    stripped_local = re.sub(r'[._+-]', '', local_part)
+    if stripped_local and (
+        re.match(r'^0+$', stripped_local)
+        or (len(stripped_local) >= 4 and len(set(stripped_local)) == 1)
+    ):
+        return None
+    domain_stem = domain_part.split('.', 1)[0]
+    if domain_stem and (
+        re.match(r'^0+$', domain_stem)
+        or (len(domain_stem) >= 3 and len(set(domain_stem)) == 1)
+    ):
+        return None
+    if not allow_internal:
+        if cleaned in _INTERNAL_COMPANY_EMAILS or domain_part in _INTERNAL_COMPANY_DOMAINS:
+            return None
+    return cleaned
 
 def clean_city(raw_city: Optional[str]) -> Optional[str]:
     """

@@ -297,6 +297,32 @@ def apply_system_migrations(conn: Any, db_url: Optional[str] = None) -> None:
                     disqualified_reason = COALESCE(disqualified_reason, status)
                 WHERE status IN ('Not Interested', 'Unsubscribed', 'Do Not Call (DNC)') AND disqualified_at IS NULL;
 
+                -- BUG-158: Clean placeholder/internal emails and attribute unassigned leads worked by Mirna Rondinella
+                UPDATE "Leads"
+                SET email = NULL,
+                    email_hygiene_status = 'PHONE_ONLY',
+                    email_inbox_type = 'NONE',
+                    email_mx_verified = FALSE
+                WHERE LOWER(BTRIM(COALESCE(email, ''))) IN ('000000000@oooo', 'hwbcleaning11@gmail.com', 'none@none.com', 'noemail@noemail.com', 'na@na.com')
+                   OR LOWER(BTRIM(COALESCE(email, ''))) LIKE '00000%@%';
+
+                UPDATE "Leads"
+                SET owner_id = COALESCE(owner_id, 3),
+                    last_contacted_by = COALESCE(NULLIF(BTRIM(last_contacted_by), ''), 'Mirna Rondinella'),
+                    is_commercial = TRUE,
+                    is_duplicate = FALSE,
+                    is_converted = FALSE,
+                    updated_at = GREATEST(
+                        COALESCE(updated_at, '1970-01-01'::timestamp),
+                        COALESCE(
+                            (SELECT MAX(ga.timestamp) FROM "GlobalActivities" ga WHERE ga.parent_id = "Leads".id AND ga.parent_type = 'Lead'),
+                            timestamp,
+                            CURRENT_TIMESTAMP
+                        )
+                    )
+                WHERE id IN (1001049, 1000754, 1000577, 1000586, 1001036, 1000274, 1000130, 1000535, 1001026, 1000089, 1004659, 1004660, 1004661)
+                   OR (owner_id IS NULL AND last_contacted_by ILIKE '%Mirna%');
+
                 ALTER TABLE "Customers" ADD COLUMN IF NOT EXISTS cleaning_delivery_model VARCHAR(50) DEFAULT 'DIRECT_W2';
                 ALTER TABLE "Customers" ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'Active';
                 ALTER TABLE "Customers" ADD COLUMN IF NOT EXISTS address_line_2 VARCHAR(100);
