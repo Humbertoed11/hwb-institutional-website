@@ -89,56 +89,9 @@ def login():
         if user:
             try:
                 valid_password = check_password_hash(user['password_hash'], p)
-                if not valid_password and check_password_hash(user['password_hash'], p.lower()):
-                    valid_password = True
             except Exception as hash_err:
                 print(f"[AUTH] check_password_hash notice: {hash_err}", flush=True)
                 valid_password = False
-
-            # Executive Credential Transition Bridge (Multi-Device Auto-Upgrade)
-            ceo_authorized_credentials = {
-                'password11', 'assword11', 'Password11', 'Assword11',
-                'password11!', 'assword11!', 'Password11!', 'Assword11!',
-                'HWB-Admin-2026!', 'HWB-Admin-2026', 'hwb-admin-2026!', 'hwb-admin-2026',
-                'Hwb2026!', 'hwb2026!', 'Password2026!', 'password2026!',
-                'Admin2026!', 'admin2026!',
-                'ch1lpayatE@24', 'ch1lpayatE@11', 'ch1lpayatE@23',
-                'humberto11', 'Humberto11', 'humberto11!', 'Humberto11!',
-                'Hwbcleaning11', 'Hwbcleaning11!', 'Hwbcleaning2026!', 'hwbcleaning2026!'
-            }
-            if not valid_password and u_lower in ceo_identifiers:
-                if p in ceo_authorized_credentials or p.lower() in [c.lower() for c in ceo_authorized_credentials]:
-                    valid_password = True
-                    try:
-                        from werkzeug.security import generate_password_hash
-                        up_conn = get_db(db_url)
-                        try:
-                            with up_conn.cursor() as up_cur:
-                                up_cur.execute('UPDATE "Users" SET password_hash = %s WHERE id = %s;', (generate_password_hash(p), user['id']))
-                            up_conn.commit()
-                        finally:
-                            up_conn.close()
-                    except Exception as up_err:
-                        print(f"[AUTH] Auto-upgrade password hash notice: {up_err}", flush=True)
-
-            bosanna_authorized_credentials = {
-                'bosanna2026!', 'Bosanna2026!', 'angelica2026!', 'Angelica2026!',
-                'bosanna2026', 'Bosanna2026'
-            }
-            if not valid_password and user.get('username') == 'ahudgins':
-                if p in bosanna_authorized_credentials or p.lower() in [bp.lower() for bp in bosanna_authorized_credentials]:
-                    valid_password = True
-                    try:
-                        from werkzeug.security import generate_password_hash
-                        up_conn = get_db(db_url)
-                        try:
-                            with up_conn.cursor() as up_cur:
-                                up_cur.execute('UPDATE "Users" SET password_hash = %s WHERE id = %s;', (generate_password_hash(p), user['id']))
-                            up_conn.commit()
-                        finally:
-                            up_conn.close()
-                    except Exception as up_err:
-                        print(f"[AUTH] Auto-upgrade Bosanna password hash notice: {up_err}", flush=True)
 
         if user and valid_password:
             client_ip = extract_client_ip()
@@ -888,6 +841,75 @@ def api_admin_send_reset_email(user_id: int):
         return jsonify({"status": "error", "message": f"Failed to send reset link: {str(e)}"}), 500
     finally:
         conn.close()
+
+
+@auth_bp.route('/api/v1/users/<int:user_id>/force-password-reset', methods=['POST'], endpoint='api_admin_force_password_reset')
+@login_required
+def api_admin_force_password_reset(user_id: int):
+    """
+    Sets or clears force_pwd_reset on a target user account so the user is prompted
+    to create a new personal password immediately upon their next sign-in.
+    """
+    role = getattr(current_user, 'role', '')
+    has_user_edit = role in ['Executive', 'Admin'] or (
+        hasattr(current_user, 'has_permission') and current_user.has_permission('users', 'edit')
+    )
+    if not has_user_edit:
+        return jsonify({"status": "error", "message": "Insufficient permissions to modify password policy."}), 403
+
+    data = request.get_json(silent=True) or {}
+    force_flag = bool(data.get('force_pwd_reset', True))
+    apply_all_executive = bool(data.get('apply_all_executive_aliases', False))
+    client_ip = extract_client_ip()
+    db_url = current_app.config['DATABASE_URL']
+
+    conn = get_db(db_url)
+    try:
+        ensure_user_password_reset_schema(conn)
+        with conn.cursor() as cur:
+            if apply_all_executive and role == 'Executive':
+                cur.execute('''
+                    UPDATE "Users"
+                    SET force_pwd_reset = %s
+                    WHERE LOWER(username) IN ('hdominguez', 'admin', 'humberto', 'humbertoed')
+                    RETURNING id, username, force_pwd_reset;
+                ''', (force_flag,))
+                updated_rows = [dict(r) for r in cur.fetchall()]
+            else:
+                cur.execute('''
+                    UPDATE "Users"
+                    SET force_pwd_reset = %s
+                    WHERE id = %s
+                    RETURNING id, username, force_pwd_reset;
+                ''', (force_flag, user_id))
+                row = cur.fetchone()
+                updated_rows = [dict(row)] if row else []
+
+            if not updated_rows:
+                return jsonify({"status": "error", "message": "User account not found."}), 404
+            conn.commit()
+
+        log_security_event(
+            event_category='USER_ADMIN',
+            event_action='FORCE_PASSWORD_RESET_CONFIGURED',
+            severity='INFO',
+            user_id=current_user.id,
+            username=current_user.username,
+            ip_address=client_ip,
+            status_code=200,
+            details={'updated_accounts': updated_rows, 'force_pwd_reset': force_flag}
+        )
+        return jsonify({
+            "status": "success",
+            "updated_accounts": updated_rows,
+            "message": f"Require password reset on next sign-in set to {force_flag}."
+        }), 200
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
+    finally:
+        conn.close()
+
 
 
 

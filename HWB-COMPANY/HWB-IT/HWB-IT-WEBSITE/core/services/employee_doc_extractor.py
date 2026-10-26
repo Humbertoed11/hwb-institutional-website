@@ -47,16 +47,9 @@ def generate_employee_onboarding_token() -> str:
 
 
 def _get_vault_fernet() -> Any:
-    """Returns a Fernet cipher derived from PII_ENCRYPTION_KEY or SECRET_KEY."""
-    from cryptography.fernet import Fernet
-    raw_secret = (
-        os.environ.get("PII_ENCRYPTION_KEY")
-        or os.environ.get("SECRET_KEY")
-        or "sigmafidelity-default-enterprise-pii-vault-key-2026"
-    )
-    digest = hashlib.sha256(raw_secret.encode("utf-8")).digest()
-    fernet_key = base64.urlsafe_b64encode(digest)
-    return Fernet(fernet_key)
+    """Returns the unified MultiFernet cipher from core.security.get_pii_cipher()."""
+    from core.security import get_pii_cipher
+    return get_pii_cipher()
 
 
 def encrypt_hr_document_bytes(raw_bytes: bytes) -> bytes:
@@ -810,12 +803,6 @@ def deposit_employee_document_vault(
     safe_orig = re.sub(r"[^A-Za-z0-9_.\-]", "_", original_filename or "document.pdf")
     ts = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
     file_key = f"emp_{employee_id}_{ts}_{safe_orig}"
-    local_path = os.path.join(HR_VAULT_DIR, file_key)
-    try:
-        with open(local_path, "wb") as fh:
-            fh.write(raw_bytes)
-    except Exception as disk_err:
-        print(f"[HR_VAULT_WARN] Local cache write notice: {disk_err}", flush=True)
 
     safe_meta = {}
     if extracted_metadata:
@@ -924,9 +911,6 @@ def retrieve_employee_document_vault(
         if enc_payload:
             try:
                 raw_bytes = decrypt_hr_document_bytes(enc_payload)
-                if not os.path.exists(local_full_path) and raw_bytes:
-                    with open(local_full_path, "wb") as fh:
-                        fh.write(raw_bytes)
             except Exception as dec_err:
                 print(f"[HR_VAULT_WARN] Decrypt error for doc #{doc_id}: {dec_err}", flush=True)
 

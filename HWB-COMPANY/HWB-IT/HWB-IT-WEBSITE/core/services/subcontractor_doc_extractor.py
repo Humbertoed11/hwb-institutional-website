@@ -944,14 +944,6 @@ def deposit_subcontractor_document_vault(
     file_size = len(raw_bytes)
     encrypted_payload = _encrypt_vault_payload(raw_bytes)
 
-    if vault_dir:
-        try:
-            os.makedirs(vault_dir, exist_ok=True)
-            with open(os.path.join(vault_dir, file_key), "wb") as out_f:
-                out_f.write(raw_bytes)
-        except Exception:
-            pass
-
     storage_provider = "pg_encrypted_vault"
     blob_url = None
     az_conn_str = os.environ.get("AZURE_STORAGE_CONNECTION_STRING", "").strip()
@@ -1133,16 +1125,6 @@ def retrieve_subcontractor_document_vault(
         raw_bytes = _decrypt_vault_payload(bytes(enc_payload))
         computed_sha = hashlib.sha256(raw_bytes).hexdigest()
         checksum_verified = computed_sha == (rec.get("sha256_checksum") or "")
-
-        if vault_dir and rec.get("file_key"):
-            try:
-                os.makedirs(vault_dir, exist_ok=True)
-                target_path = os.path.join(vault_dir, rec["file_key"])
-                if not os.path.exists(target_path):
-                    with open(target_path, "wb") as heal_f:
-                        heal_f.write(raw_bytes)
-            except Exception:
-                pass
 
         return {
             "document_id": rec["id"],

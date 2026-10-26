@@ -116,14 +116,19 @@ else:
     print(f'FAILED: Azure config update returned {res_config.status_code}: {res_config.text}')
     exit(1)
 
-# 2. Update WEBSITES_PORT in App Settings
+# 2. Update WEBSITES_PORT in App Settings (load optional tokens strictly from .env)
 url_settings_list = f'https://management.azure.com/subscriptions/{SUBSCRIPTION_ID}/resourceGroups/{RG}/providers/Microsoft.Web/sites/{APP_NAME}/config/appsettings/list?api-version=2022-03-01'
 res_settings_list = requests.post(url_settings_list, headers=headers)
 settings = res_settings_list.json().get('properties', {})
 settings['WEBSITES_PORT'] = '5000'
-settings['TELEGRAM_BOT_TOKEN'] = '8690678270:AAHWXbs6bnh84-htoIE3F9gy1YgqefN2vA0'
-settings['TELEGRAM_CHAT_ID'] = '8564340073,8443354512'
-settings['CEO_PERSONAL_EMAIL'] = 'humbertoed@gmail.com'
+if os.getenv('TELEGRAM_BOT_TOKEN'):
+    settings['TELEGRAM_BOT_TOKEN'] = os.getenv('TELEGRAM_BOT_TOKEN')
+if os.getenv('TELEGRAM_CHAT_ID'):
+    settings['TELEGRAM_CHAT_ID'] = os.getenv('TELEGRAM_CHAT_ID')
+if os.getenv('CEO_PERSONAL_EMAIL'):
+    settings['CEO_PERSONAL_EMAIL'] = os.getenv('CEO_PERSONAL_EMAIL')
+if os.getenv('PII_ENCRYPTION_KEY'):
+    settings['PII_ENCRYPTION_KEY'] = os.getenv('PII_ENCRYPTION_KEY')
 
 url_settings_put = f'https://management.azure.com/subscriptions/{SUBSCRIPTION_ID}/resourceGroups/{RG}/providers/Microsoft.Web/sites/{APP_NAME}/config/appsettings?api-version=2022-03-01'
 res_settings_put = requests.put(url_settings_put, headers=headers, json={'properties': settings})

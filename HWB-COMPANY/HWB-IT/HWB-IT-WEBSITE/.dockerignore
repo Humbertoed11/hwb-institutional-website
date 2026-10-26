@@ -12,3 +12,11 @@ backup/
 HWB-COMPANY/
 trash-out/
 *.sql
+.env
+.env.*
+vault/
+logs/
+*.log
+*.pem
+*.key
+

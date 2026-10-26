@@ -2048,10 +2048,7 @@ def subcontractor_onboarding_submit(token: str):
             cert_pdf_bytes = generate_signed_msa_dwc83_certificate_pdf(
                 cert_context, msa_signer_name, msa_signer_title, signer_ip, signed_at_display, signature_hash=sig_hash
             )
-            msa_html_filename = f"sub_{sub_id}_MSA_DWC83_Signed_{ts_int}.html"
             msa_pdf_filename = f"sub_{sub_id}_MSA_DWC83_Signed_{ts_int}.pdf"
-            with open(os.path.join(vault_dir, msa_html_filename), 'w', encoding='utf-8') as cf_out:
-                cf_out.write(cert_html)
             deposit_subcontractor_document_vault(
                 conn=conn,
                 subcontractor_id=sub_id,

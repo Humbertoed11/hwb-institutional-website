@@ -121,6 +121,8 @@ def load_user(user_id):
             cur.execute('SELECT * FROM "Users" WHERE id = %s', (user_id,))
             u = cur.fetchone()
             if u:
+                if u.get('status') and u.get('status') != 'Active':
+                    return None
                 role = u.get('role') or ('Executive' if u.get('username') in ['admin', 'hdominguez'] else 'Operator')
                 return User(u['id'], u['username'], role, u.get('full_name'), u.get('custom_permissions'), email=u.get('email'))
     except Exception as e:
@@ -443,7 +445,7 @@ with app.app_context():
                                         except Exception:
                                             pass
                                     
-                                    # Seed Users Table
+                                    # Seed Users Table (Preserve live password_hash and force_pwd_reset state on conflict)
                                     for u in sdata.get('users', []):
                                         try:
                                             cur.execute('''
@@ -451,12 +453,12 @@ with app.app_context():
                                                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                                                 ON CONFLICT (id) DO UPDATE SET
                                                     username = EXCLUDED.username,
-                                                    password_hash = EXCLUDED.password_hash,
+                                                    password_hash = COALESCE(NULLIF("Users".password_hash, ''), EXCLUDED.password_hash),
                                                     full_name = EXCLUDED.full_name,
                                                     email = EXCLUDED.email,
                                                     role = EXCLUDED.role,
-                                                    status = EXCLUDED.status,
-                                                    force_pwd_reset = EXCLUDED.force_pwd_reset,
+                                                    status = COALESCE("Users".status, EXCLUDED.status),
+                                                    force_pwd_reset = COALESCE("Users".force_pwd_reset, EXCLUDED.force_pwd_reset),
                                                     custom_permissions = COALESCE("Users".custom_permissions, EXCLUDED.custom_permissions);
                                             ''', (
                                                 u.get('id'), u.get('username'), u.get('password_hash'), u.get('full_name'), u.get('email'), u.get('role'),

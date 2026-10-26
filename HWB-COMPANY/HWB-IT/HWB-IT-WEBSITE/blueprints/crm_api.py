@@ -2375,10 +2375,6 @@ def api_upload_subcontractor_document(id):
 
     filename = secure_filename(file.filename)
     safe_name = f"sub_{id}_{doc_type.replace(' ', '_')}_{int(dt_cls.now().timestamp())}_{filename}"
-    os.makedirs(HR_VAULT_DIR, exist_ok=True)
-    file_path = os.path.join(HR_VAULT_DIR, safe_name)
-    with open(file_path, 'wb') as out_f:
-        out_f.write(raw_bytes)
 
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
@@ -3088,7 +3084,8 @@ def api_hr_onboard_candidate():
                     pay_rate_hourly, overtime_rate_hourly, pay_frequency, primary_language,
                     emergency_contact_name, emergency_contact_phone, address_city, address_state,
                     assigned_customer_id, weekly_hours_allocated, notes,
-                    job_position_id, onboarding_token, onboarding_token_expires_at, onboarding_status,
+                    job_position_id, job_description_acknowledged_at,
+                    onboarding_token, onboarding_token_expires_at, onboarding_status,
                     ssn_encrypted, ssn_last_four
                 ) VALUES (
                     %s, %s, %s, %s, %s, %s,
@@ -3096,7 +3093,8 @@ def api_hr_onboard_candidate():
                     %s, %s, %s, %s,
                     %s, %s, %s, %s,
                     %s, %s, %s,
-                    %s, %s, CURRENT_TIMESTAMP + INTERVAL '30 days', 'Pending Onboarding',
+                    %s, CURRENT_TIMESTAMP,
+                    %s, CURRENT_TIMESTAMP + INTERVAL '30 days', 'Pending Onboarding',
                     %s, %s
                 ) RETURNING id, employee_number;
             ''', (

@@ -222,12 +222,22 @@ def run_soc2_leakage_audit(test_app=None) -> Dict[str, Any]:
             ("ISO 9001", "ISO 9001 Compliance status"),
             (".43", "0.43 Experience Modification Rate"),
             ("2,000,000", "$2,000,000 General Liability coverage"),
-            ("802920409", "Texas Secretary of State Charter"),
+            ("Verified", "Texas Secretary of State Active Good Standing status"),
         ]
         missing_trust = []
         for needle, label in checks:
             if needle not in trust_body:
                 missing_trust.append(label)
+
+        # Verify sensitive registration numbers are NOT exposed on public /trust-center (3-Tier Credential Lockdown)
+        for forbidden_public_id, id_label in [
+            ("802920409", "Raw Texas SOS Charter Number"),
+            ("82-4377459", "Raw Federal EIN"),
+            ("32005785756", "Raw Texas Sales Tax Permit ID"),
+            ("GHF000742", "Raw GL Policy Number"),
+        ]:
+            if forbidden_public_id in trust_body:
+                missing_trust.append(f"Leaked {id_label} ({forbidden_public_id}) on public /trust-center")
         
         if missing_trust:
             failures.append(f"Trust Center missing credentials: {missing_trust}")
@@ -379,6 +389,42 @@ def run_soc2_leakage_audit(test_app=None) -> Dict[str, Any]:
         else:
             checks_passed += 1
             print(f"  ✅ PASS: {mod} {mth} {ep} defended -> HTTP 403 Forbidden")
+
+    # -------------------------------------------------------------
+    # [CHECK 8] Source-Code & Container Post-Exploitation Audit (BUG-152)
+    # -------------------------------------------------------------
+    print("\n[CHECK 8] Scanning Backend Source Code & Container Config for Hardcoded Backdoors & Root Execution (BUG-152)...")
+    auth_src = open(os.path.join(BASE_DIR, "blueprints", "auth.py"), encoding="utf-8").read()
+    partner_src = open(os.path.join(BASE_DIR, "blueprints", "partner.py"), encoding="utf-8").read()
+    sec_src = open(os.path.join(BASE_DIR, "core", "security.py"), encoding="utf-8").read()
+    dockerfile_src = open(os.path.join(BASE_DIR, "Dockerfile"), encoding="utf-8").read()
+    dockerignore_src = open(os.path.join(BASE_DIR, ".dockerignore"), encoding="utf-8").read()
+
+    source_security_checks = [
+        ("ceo_authorized_credentials" not in auth_src, "Zero hardcoded CEO fallback passwords in blueprints/auth.py"),
+        ("bosanna_authorized_credentials" not in auth_src, "Zero hardcoded Bosanna fallback passwords in blueprints/auth.py"),
+        ("check_password_hash(user['password_hash'], p.lower())" not in auth_src, "Zero case-insensitive password checks in blueprints/auth.py"),
+        ("bosanna2026!" not in partner_src and "angelica2026!" not in partner_src, "Zero hardcoded partner passwords in blueprints/partner.py"),
+        ("hwb_default_fallback_secret_key_2026" not in sec_src, "Zero hardcoded fallback AES key in core/security.py"),
+        ("USER hwbapp" in dockerfile_src, "Non-root container execution (USER hwbapp) in Dockerfile"),
+        (".env" in dockerignore_src and "vault/" in dockerignore_src, ".env and vault/ excluded in .dockerignore"),
+    ]
+    for cond, label in source_security_checks:
+        if not cond:
+            failures.append(f"Post-exploitation control failure: {label}")
+            print(f"  ❌ FAIL: {label}")
+        else:
+            checks_passed += 1
+            print(f"  ✅ PASS: {label}")
+
+    anon_client = target_app.test_client()
+    res_magic = anon_client.get("/portal/bosanna/magic-login", follow_redirects=False)
+    if res_magic.status_code in (302, 401, 403) and "/portal/bosanna/portal" not in res_magic.headers.get("Location", ""):
+        checks_passed += 1
+        print(f"  ✅ PASS: Unauthenticated /portal/bosanna/magic-login blocked -> HTTP {res_magic.status_code}")
+    else:
+        failures.append("Unauthenticated /portal/bosanna/magic-login allowed passwordless session creation!")
+        print(f"  ❌ FAIL: /portal/bosanna/magic-login allowed unauthenticated login!")
 
     print("\n" + "=" * 80)
     if not failures:

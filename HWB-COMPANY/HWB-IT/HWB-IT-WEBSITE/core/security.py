@@ -71,17 +71,46 @@ import os
 import re
 import base64
 import hashlib
-from cryptography.fernet import Fernet
+from cryptography.fernet import Fernet, MultiFernet
+
+
+def _derive_fernet_key(secret_material: str) -> bytes:
+    """Derives a 32-byte URL-safe base64 Fernet key from raw secret material."""
+    raw = (secret_material or "").strip()
+    if len(raw) == 44 and raw.endswith("="):
+        try:
+            decoded = base64.urlsafe_b64decode(raw.encode("utf-8"))
+            if len(decoded) == 32:
+                return raw.encode("utf-8")
+        except Exception:
+            pass
+    derived = hashlib.sha256(raw.encode("utf-8")).digest()
+    return base64.urlsafe_b64encode(derived)
 
 
 def get_pii_cipher():
-    """Derives a deterministic Fernet key for AES-256 PII column encryption."""
-    key = os.getenv("PII_ENCRYPTION_KEY")
-    if not key:
-        secret = os.getenv("SECRET_KEY", "hwb_default_fallback_secret_key_2026")
-        derived = hashlib.sha256(secret.encode()).digest()
-        key = base64.urlsafe_b64encode(derived).decode()
-    return Fernet(key.encode())
+    """
+    Returns an AES-256 MultiFernet cipher for PII and HR/1099 document encryption.
+    Uses dedicated PII_ENCRYPTION_KEY as primary cipher while retaining seamless
+    decryption compatibility with existing SECRET_KEY-derived ciphertexts.
+    """
+    fernets = []
+    pii_key = (os.getenv("PII_ENCRYPTION_KEY") or "").strip()
+    secret_key = (os.getenv("SECRET_KEY") or "").strip()
+
+    if pii_key:
+        fernets.append(Fernet(_derive_fernet_key(pii_key)))
+    if secret_key:
+        # Derive a domain-separated PII key from SECRET_KEY when PII_ENCRYPTION_KEY is not separately set
+        if not pii_key:
+            fernets.append(Fernet(_derive_fernet_key(f"hwb-pii-vault-v2::{secret_key}")))
+        # Always include direct SHA-256(SECRET_KEY) in MultiFernet key ring for legacy ciphertext decryption
+        fernets.append(Fernet(_derive_fernet_key(secret_key)))
+
+    if not fernets:
+        raise RuntimeError("Cryptographic configuration error: PII_ENCRYPTION_KEY or SECRET_KEY must be set.")
+
+    return MultiFernet(fernets) if len(fernets) > 1 else fernets[0]
 
 
 def encrypt_pii(plaintext: str) -> str:

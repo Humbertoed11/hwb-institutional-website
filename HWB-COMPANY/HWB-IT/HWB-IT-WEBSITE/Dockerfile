@@ -28,11 +28,16 @@ RUN pip install --no-cache-dir pandas numpy
 # Copy application code
 COPY . .
 
-# Create directory for logs if it doesn't exist
-RUN mkdir -p /app/logs
+# Create unprivileged application user and writable runtime directories (CIS Docker Benchmark 4.1)
+RUN groupadd -g 1000 hwbapp && \
+    useradd -m -u 1000 -g hwbapp -s /usr/sbin/nologin hwbapp && \
+    mkdir -p /app/logs /app/vault/hr_documents && \
+    chown -R hwbapp:hwbapp /app
+
+USER hwbapp
 
 # Expose institutional port
 EXPOSE 5000
 
 # Start the application using Gunicorn for commercial reliability (HWB-QMS-11.14: preloaded right-sized workers)
-CMD ["gunicorn", "--preload", "--bind", "0.0.0.0:5000", "--workers", "2", "--threads", "8", "--worker-class", "gthread", "--timeout", "45", "--keep-alive", "5", "--max-requests", "1000", "--max-requests-jitter", "100", "main_app:app"]
+CMD ["gunicorn", "--preload", "--bind", "0.0.0.0:5000", "--workers", "2", "--threads", "8", "--worker-class", "gthread", "--timeout", "45", "--keep-alive", "65", "--max-requests", "10000", "--max-requests-jitter", "500", "main_app:app"]

