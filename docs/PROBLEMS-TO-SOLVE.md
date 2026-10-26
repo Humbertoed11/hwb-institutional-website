@@ -3010,4 +3010,31 @@ All future public route additions under `/services/*` and `/locations/*` automat
 Record ownership (`owner_id`) and geographic/building search (`q`) are cleanly disambiguated via faceted typeahead suggestions, full-name entity recognition, and the dedicated `owner_id` toolbar selector, verified on every build by `test_32` (`32/32` Rack 14 tests passing).
 
 
+## BUG-155: "Save Lead Changes" (`PUT /api/v1/leads/<id>`) Throwing `HTTP 500` on Live Azure Due to Missing `website` & `student_enrollment` Columns on `"Leads"` in `schema_engine.py`, Plus Unreturned Connection in `/api/v1/leads/search-suggest`
+**Detected:** 10/26/2026
+**Status:** **RESOLVED** (10/26/2026 — Verified by `test_33_lead_update_save_schema_parity_and_pool_hygiene_bug_155` in `scripts/test_web_performance_rack_14.py` `33/33` passing)
+**Symptoms:**
+1. When Operator **Mirna Rondinella (`mrondinella`, User ID `#3`)** edited a lead on `https://www.hwbcleaning.com` and clicked **"Save Lead Changes"** (`#btn-save-lead-update` $\rightarrow$ `saveLeadUpdate(event)` $\rightarrow$ `PUT /api/v1/leads/<id>`), the request failed with `HTTP 500` (`"System Error: Update failed"`).
+2. Live reproduction against `https://www.hwbcleaning.com/api/v1/leads/82375` returned:
+   `{"message": "column \"website\" of relation \"Leads\" does not exist\nLINE 9: website = NULL, county = 'HARRIS', s...", "status": "error"}`
+3. Comparing `information_schema.columns` on `"Leads"` between Local Dev and Live Azure revealed that `database/schema_engine.py` (`apply_system_migrations`) had not included `ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS` for `website`, `student_enrollment`, `tenant_id`, `cdcn`, `region_priority`, `esc_region`, or `charter_parent`.
+4. Additionally:
+   - `api_leads_search_suggest()` in `blueprints/operations.py` was missing `finally: if 'conn' in locals() and conn: conn.close()`, which could hold pooled connections across repeated typeahead keystrokes.
+   - `saveLeadUpdate(e)` in `static/js/backoffice_operations_core.js` only parsed `await res.json()` when `res.ok` was true, masking the backend error message behind a generic `"Update failed"` string.
+   - `#edit-lead-delivery-model` in `templates/backoffice_operations.html` lacked `<option value="UNKNOWN">-- Unknown / Not Verified --</option>`, causing `setVal` to fall back to `'Model C Institutional Prime (Bosanna)'` and cascade across `umbrella_name` leads.
+**Solution:**
+1. **100% `"Leads"` Column Parity in `database/schema_engine.py` & Self-Healing Guard in `blueprints/crm_api.py`:**
+   - Added idempotent `ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS` statements for `website`, `county`, `capacity`, `student_enrollment`, `preferred_date`, `preferred_time`, `budget_range`, `next_action_date`, `updated_at`, `tenant_id`, `cdcn`, `region_priority`, `esc_region`, `charter_parent`, `campaign_ready`, `email_hygiene_status`, `email_inbox_type`, `email_mx_verified`, and `last_campaigned_at` in `database/schema_engine.py`.
+   - Added an inline self-healing schema guard in `api_lead_hub` (`PUT`/`PATCH /api/v1/leads/<id>` in `blueprints/crm_api.py`), safe integer/float coercion for `sqf`, `capacity`, and `student_enrollment`, collision protection on `idx_leads_unique_location`, and guarded `cleaning_delivery_model` umbrella cascading so it only triggers when explicitly changed to a non-`UNKNOWN` value.
+2. **Connection Pool Return Hygiene (`blueprints/operations.py` & `core/services/search.py`):**
+   - Added `finally: if 'conn' in locals() and conn: conn.close()` to `api_leads_search_suggest()` in `blueprints/operations.py` and updated `get_search_entity_metadata()` in `core/services/search.py` to resolve `current_app.config["DATABASE_URL"]` / `sys_config.DATABASE_URL` via `get_db(db_url)` with guaranteed pool return.
+3. **Frontend Error Surfacing & Delivery Model Option Parity (`templates/backoffice_operations.html` & `static/js/backoffice_operations_core.js`):**
+   - Added `<option value="UNKNOWN">-- Unknown / Not Verified --</option>` to `#edit-lead-delivery-model` and updated `saveLeadUpdate(e)` to parse error JSON responses on non-200 status codes.
+4. **Permanent Regression Gate (`test_33` in `scripts/test_web_performance_rack_14.py`):**
+   - Added `test_33_lead_update_save_schema_parity_and_pool_hygiene_bug_155` (`33/33` PASS).
+**Preventative:**
+Every column referenced in `PUT`/`PATCH /api/v1/leads/<id>` is enforced both in `database/schema_engine.py` at boot and by the self-healing guard in `blueprints/crm_api.py`, verified continuously by `test_33` in `scripts/test_web_performance_rack_14.py`.
+
+
+
 

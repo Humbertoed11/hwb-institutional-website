@@ -135,6 +135,9 @@ Responsibility: George (Architect)
 | 10/24/2026 | BUG-149 | Adversarial Plaintiff's Counsel Website Audit Findings — 15 Pre-Checked (`checked`) Legal/TCPA/FCRA/MSA Checkboxes, Bundled FCRA Disclosures, DOJ Form I-9 Document Abuse Exposure, 48 Unbound WCAG Form Labels, Missing FAA Individual Arbitration & Class-Action Waiver in `/terms`, & TDPSA Texas AG Complaint URL / `Sec-GPC: 1` Gaps. | **RESOLVED** | CRITICAL |
 | 10/24/2026 | BUG-150 | Full-Website Form, Button, & Interactive Control Audit Findings — Missing Two-Way PostgreSQL Service Scope Planner JS Handlers (`addToScope`, `clearScope`, `onScopeBuildingChange`), SQL Column Mismatch (`scope_of_work` vs `tasks_json`) in `/admin/scope-builder`, Missing PostgreSQL-Backed `smartType()` Address Auto-Complete in Add Client/Lead Modals, and 4 Orphaned Legacy Templates. | **RESOLVED** | HIGH |
 | 10/24/2026 | BUG-151 | LLM & AI Search Visibility Gaps (`OAI-SearchBot` / ChatGPT Search, Perplexity, Claude, & Google AI Overviews) — Missing `/llms.txt` & `/llms-full.txt` (`HTTP 404`), `robots.txt` Blocking `/compliance` & `/ehsq` While Listed in `sitemap.xml`, Global Invisible Duplicate `FAQPage` Schema Spam Across All 38 Pages, 25-Word Duplicate City Boilerplate, & Missing IndexNow / AI Bot Telemetry. | **RESOLVED** | CRITICAL |
+| 10/26/2026 | BUG-152 | Post-Exploitation & Root-Access Security Audit Findings: Hardcoded Plaintext Transition Password Lists in `auth.py`/`partner.py`, Unauthenticated `/portal/bosanna/magic-login` Bypass, Case-Insensitive `.lower()` Password Check, Plaintext `HR_VAULT_DIR` Disk Cache Duplicating Encrypted Vault Files, Root `uid=0` Container Execution, Shared `SECRET_KEY` Fallback in `core/security.py`, Hardcoded Deployment Script Tokens, & Delayed Session Revocation in `load_user()`. | **RESOLVED** | CRITICAL |
+| 10/26/2026 | BUG-153 | Cloudflare Edge Security & Performance Audit Findings: Missing `spf.protection.outlook.com` in SPF TXT, Missing DNS CAA Records, Uncached `/services/*` & `/locations/*` HTML (`DYNAMIC` `273ms` vs `HIT` `46ms`), Missing Apex-to-WWW 301 Redirect, & Disabled Smart Tiered Cache / Early Hints / 0-RTT / HSTS Preload / Hotlink Protection / DNSSEC. | **RESOLVED** | HIGH |
+| 10/26/2026 | BUG-154 | Commercial Leads Search Bar Returning `0` Results on Assigned Sales Rep Names (`beabe wiley`), Entity Collision Between Rep Names & Texas Cities/Streets (`Beabe Wiley` vs `Wylie, TX` / `Wiley Post Rd`), Missing Dedicated `owner_id` Toolbar Filter, & Missing Faceted Typeahead Autocomplete. | **RESOLVED** | HIGH |
 
 
 ## BUG-122: App Manual Static Routing Deficit (Lacks Automatic Active Workspace Detection & Deep-Link Chapter Navigation)
@@ -2901,3 +2904,137 @@ Initial SEO templates focused on traditional keyword meta tags and static schema
 8. **Pillar 8 — Permanent GEO & Schema Parity Sentinel (`test_30` in `scripts/test_web_performance_rack_14.py`):** Added `test_30_enterprise_llm_geo_visibility_and_schema_parity_bug_151` (`30/30` PASS).
 **Preventative:**
 Every public service and location page must pass `test_30_enterprise_llm_geo_visibility_and_schema_parity_bug_151` with unique metadata, 1:1 visible-to-JSON-LD FAQ parity, and active `/llms.txt` + `IndexNow` endpoints.
+
+
+## BUG-152: Post-Exploitation & Root-Access Security Audit Findings — Hardcoded Transition Password Lists in `auth.py`/`partner.py`, Unauthenticated `/portal/bosanna/magic-login` Bypass, Case-Insensitive `.lower()` Password Check, Plaintext `HR_VAULT_DIR` Disk Cache Duplicating Encrypted Vault Files, Root `uid=0` Container Execution, Shared `SECRET_KEY` Fallback in `core/security.py`, Hardcoded Deployment Script Tokens, & Delayed Session Revocation in `load_user()`
+**Detected:** 10/26/2026
+**Status:** **RESOLVED** (10/26/2026 — Deployed across local Docker and Azure Cloud Production `https://www.hwbcleaning.com`, permanently enforced by `test_31_enterprise_root_exploitation_and_credential_hardening_bug_152` in `scripts/test_web_performance_rack_14.py` `31/31` passing and Check 8 in `scripts/check_soc2_data_leakage.py` `85/85` passing)
+**Symptoms (Identified During Root & Post-Exploitation Security Audit):**
+1. **Hardcoded Plaintext Fallback Password Lists & Unauthenticated Partner Magic Login (`blueprints/auth.py` lines 92–141 & `blueprints/partner.py` lines 335–385):**
+   - `blueprints/auth.py` retained a temporary migration bridge (`ceo_authorized_credentials` with 27 plaintext password strings and `bosanna_authorized_credentials` with 6 strings) from `BUG-082` (09/21/2026) that automatically accepted any listed password and overwrote `"Users".password_hash` on login.
+   - `blueprints/auth.py` line 92 checked `check_password_hash(user['password_hash'], p.lower())`, allowing case-insensitive password matches if a user's stored password had been all-lowercase.
+   - `blueprints/partner.py` exposed `/portal/bosanna/magic-login` (`/bosanna`, `/bosanna-portal`, `/bosanna-cockpit`) without `@partner_access_required`, allowing an unauthenticated visitor to establish a session for `ahudgins` (`Partner_Bosanna`).
+   - `main_app.py` line 454 boot seeder included `password_hash = EXCLUDED.password_hash` on conflict instead of preserving live password hashes via `COALESCE`.
+2. **Plaintext Disk Cache Duplicating Encrypted PostgreSQL Vault Files (`HR_VAULT_DIR`) & `.dockerignore` Gaps:**
+   - Although `"SubcontractorDocuments"` and `"EmployeeDocuments"` encrypted all W-9, COI, MSA, DWC-83, W-4, I-9, and ID PDFs using `zlib` + `AES-256 Fernet` (`encrypted_payload BYTEA`), `blueprints/crm_api.py`, `blueprints/public.py`, `core/services/subcontractor_doc_extractor.py`, and `core/services/employee_doc_extractor.py` also wrote unencrypted local cache copies into `/app/vault/hr_documents/` (`HR_VAULT_DIR`).
+   - `HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/.dockerignore` omitted `.env`, `.env.*`, `vault/`, `logs/`, `*.pem`, and `*.key`.
+3. **Container Running as `uid=0 (root)` (`Dockerfile`):**
+   - `HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/Dockerfile` did not declare a non-root `USER`, causing Gunicorn workers to run as `uid=0 (root)` inside the container instead of an unprivileged service account (CIS Docker Benchmark 4.1).
+4. **Hardcoded Fallback Secret String & Shared Key Derivation (`core/security.py` & `core/services/employee_doc_extractor.py`):**
+   - `get_pii_cipher()` in `core/security.py` contained a hardcoded fallback string (`"hwb_default_fallback_secret_key_2026"`) and `employee_doc_extractor.py` contained `"sigmafidelity-default-enterprise-pii-vault-key-2026"` instead of using `MultiFernet` with domain-separated key derivation.
+5. **Hardcoded Operational Tokens in `scripts/deploy_live_container.sh` (lines 124–126):**
+   - `scripts/deploy_live_container.sh` contained hardcoded `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, and `CEO_PERSONAL_EMAIL` values instead of reading them exclusively from `.env`.
+6. **Delayed Session Revocation on User Deactivation (`main_app.py` `load_user()`):**
+   - `load_user(user_id)` in `main_app.py` (line 123) checked whether the user row existed in `"Users"` on each request, but did not check `u.get('status') != 'Active'`, meaning a deactivated user with an existing browser cookie could remain logged in until the 30-minute inactivity timer expired.
+7. **Missing `job_description_acknowledged_at` Timestamp in `POST /api/v1/hr/onboard` (`blueprints/crm_api.py` line 3080):**
+   - `api_hr_onboard_candidate` omitted `job_description_acknowledged_at = CURRENT_TIMESTAMP` on initial `INSERT INTO "Employees"`, causing `test_04_hr_onboard_applicant_to_employee_workflow` in `scripts/test_labor_recruitment_and_cyber_suite.py` to fail.
+**Root Cause (Why Past SOC 2, ISO 9001, and Rack 9/14 Audits Missed These Issues):**
+1. **Black-Box HTTP Response Auditing vs. White-Box Source & Container Inspection:** Past automated audits (`scripts/check_soc2_data_leakage.py`, `scripts/test_site_security_rack_09.py`, and `scripts/test_web_performance_rack_14.py`) tested the application from the **outside** as an HTTP client (verifying that `/admin/operations` returned `403` to unauthorized roles, that public HTML did not leak `SECRET_KEY=`, and that rate limiting blocked brute-force attempts). None of those tests inspected the Python source code or container filesystem from the **inside** (white-box post-exploitation analysis assuming an attacker already gained container shell access).
+2. **Unexpired Emergency Transition Bridges (`BUG-082`):** When `ceo_authorized_credentials` and `bosanna_magic_login` were added on `09/21/2026` (`BUG-082`) as temporary emergency login bridges during the Azure domain cutover, no automated expiration test was added to fail the build if hardcoded fallback credentials remained in `blueprints/auth.py` or `blueprints/partner.py`.
+3. **Performance Cache vs. Zero-Disk Plaintext Conflict (`BUG-139`):** Earlier versions of `test_17` explicitly asserted `self.assertTrue(os.path.exists(cached_file))` to test local disk caching in `HR_VAULT_DIR`, inadvertently codifying plaintext disk writes alongside the encrypted PostgreSQL `BYTEA` vault.
+**Solution:**
+1. **Zero Hardcoded Passwords & Mandatory Next-Login Password Reset (`blueprints/auth.py`, `blueprints/partner.py`, `templates/bosanna_login.html`, `main_app.py`):**
+   - Removed `ceo_authorized_credentials`, `bosanna_authorized_credentials`, and `.lower()` password checks from `blueprints/auth.py` and `blueprints/partner.py`.
+   - Locked `/portal/bosanna/magic-login` (`/bosanna`, `/bosanna-portal`, `/bosanna-cockpit`) behind `@partner_access_required` and replaced the public magic-login button on `bosanna_login.html` with `/forgot-password`.
+   - Hardened `main_app.py` boot seeder to preserve live `password_hash`, `status`, and `force_pwd_reset` columns via `COALESCE`.
+   - Added `POST /api/v1/users/<id>/force-password-reset` and enabled `force_pwd_reset = TRUE` on the CEO's executive accounts on live Azure production so the very next sign-in prompts for a new personal `scrypt:32768:8:1` password.
+2. **Zero-Disk Plaintext Vault & `.dockerignore` Lockdown (`blueprints/crm_api.py`, `blueprints/public.py`, `subcontractor_doc_extractor.py`, `employee_doc_extractor.py`, `.dockerignore`):**
+   - Removed all plaintext disk writes to `HR_VAULT_DIR` across `crm_api.py`, `public.py`, `subcontractor_doc_extractor.py`, and `employee_doc_extractor.py` so W-9, COI, MSA, DWC-83, W-4, I-9, and ID documents exist **only** inside PostgreSQL 16.15 `encrypted_payload BYTEA` (zlib + AES-256 Fernet) and stream directly from memory (`io.BytesIO`).
+   - Purged all legacy cached `.pdf`, `.html`, and `.txt` files from `vault/hr_documents/` and added `.env`, `.env.*`, `vault/`, `logs/`, `*.log`, `*.pem`, and `*.key` to `.dockerignore`.
+3. **Non-Root Container Execution (`Dockerfile` — CIS Docker Benchmark 4.1):**
+   - Created unprivileged user and group `hwbapp` (`uid=1000`, `gid=1000`, `/usr/sbin/nologin`), assigned ownership of `/app`, and enforced `USER hwbapp` before `CMD ["gunicorn", ...]`.
+4. **Domain-Separated `MultiFernet` Key Ring (`core/security.py` & `employee_doc_extractor.py`):**
+   - Removed hardcoded fallback key strings (`"hwb_default_fallback_secret_key_2026"` and `"sigmafidelity-default-enterprise-pii-vault-key-2026"`) and upgraded `get_pii_cipher()` to use `MultiFernet` with `PII_ENCRYPTION_KEY` (or domain-separated `hwb-pii-vault-v2::{SECRET_KEY}`) as primary and legacy `SECRET_KEY` as secondary for seamless decryption of existing records.
+5. **Secret Scrubbing in `scripts/deploy_live_container.sh` & Immediate Session Revocation in `main_app.py`:**
+   - Removed hardcoded Telegram and email strings from `scripts/deploy_live_container.sh`, loading them strictly from `.env`.
+   - Updated `load_user(user_id)` in `main_app.py` to enforce `if u.get('status') and u.get('status') != 'Active': return None`.
+6. **Permanent White-Box Source & Post-Exploitation Regression Gates (`test_31` in `test_web_performance_rack_14.py` & Check 8 in `check_soc2_data_leakage.py`):**
+   - Added `test_31_enterprise_root_exploitation_and_credential_hardening_bug_152` to `scripts/test_web_performance_rack_14.py` (`31/31` PASS) and Check 8 to `scripts/check_soc2_data_leakage.py` (`85/85` PASS) to continuously scan backend source files, container configuration, and `vault/hr_documents/` on every build.
+**Preventative:**
+Every deployment must pass both black-box HTTP boundary tests AND white-box post-exploitation source/container checks (`test_31` in `scripts/test_web_performance_rack_14.py`, `scripts/check_soc2_data_leakage.py`, `scripts/test_site_security_rack_09.py`, and `scripts/test_labor_recruitment_and_cyber_suite.py`). Temporary credential transition bridges are permanently prohibited across all authentication blueprints.
+
+
+## BUG-153: Cloudflare Edge Security & Performance Audit Findings — Missing `spf.protection.outlook.com` in SPF TXT, Missing DNS CAA Records, Uncached `/services/*` & `/locations/*` HTML (`DYNAMIC` `273ms` vs `HIT` `46ms`), Missing Apex-to-WWW 301 Redirect, & Disabled Smart Tiered Cache / Early Hints / 0-RTT / HSTS Preload / Hotlink Protection / DNSSEC
+**Detected:** 10/26/2026
+**Status:** **RESOLVED** (10/26/2026 — Deployed live via Cloudflare v4 API on Zone `hwbcleaning.com` `f0e80320a87150c1fa049c9492bd14d8`)
+**Symptoms (Identified During Live Cloudflare v4 API & Edge Telemetry Audit):**
+1. **Email Authentication & DNS Gaps (`DNS` Records on `hwbcleaning.com`):**
+   - The SPF TXT records on `hwbcleaning.com` (`717a9f25aaf05fe4473ed8d0fbe91998`) and `www.hwbcleaning.com` (`75e7a2edb1e997f092d2e8c8e02dbf02`) were set to `v=spf1 include:_spf-usg1.ppe-hosted.com include:secureserver.net -all`, omitting `include:spf.protection.outlook.com` even though outbound HWB emails are transmitted through the Microsoft 365 Graph API.
+   - Zero `CAA` (Certification Authority Authorization) DNS records existed on `hwbcleaning.com` to restrict which Certificate Authorities may issue TLS certificates for the domain.
+   - `DNSSEC` was `disabled` on the zone.
+2. **Missing HSTS `preload` Directive & Hotlink Protection:**
+   - Cloudflare `strict_transport_security` had `enabled: true`, `max_age: 31536000`, `include_subdomains: true`, and `nosniff: true`, but `preload` was set to `false`.
+   - `hotlink_protection` was `off`.
+3. **Suboptimal Edge Caching & Transport Acceleration (`CF-Cache-Status: DYNAMIC` on Public Service/City Pages):**
+   - Although the Flask origin (`main_app.py`) emitted `Cache-Control: public, max-age=300, s-maxage=3600, stale-while-revalidate=86400` on public HTML routes, Cloudflare's default behavior only caches static file extensions (`.css`, `.js`, `.png`, `.webp`) and marks HTML routes as `CF-Cache-Status: DYNAMIC` unless instructed via Cache Rules / Page Rules. As a result, every visitor to `/services/*` and `/locations/*` traversed the origin Azure container (`256ms–273ms` TTFB).
+   - `tiered_cache_smart_topology_enable`, `early_hints`, `0rtt`, and `always_online` were all set to `off`.
+4. **Dual-Host Apex vs. WWW Split (`https://hwbcleaning.com` vs. `https://www.hwbcleaning.com`):**
+   - Both `https://hwbcleaning.com` and `https://www.hwbcleaning.com` returned `HTTP 200 OK` independently instead of enforcing an edge-level `301 Permanent Redirect` from the apex domain to the canonical `https://www.hwbcleaning.com/$1` host.
+**Solution:**
+1. **SPF TXT Hardening for Microsoft 365 Graph API & 10 DNS `CAA` Records + DNSSEC (`Cloudflare DNS API`):**
+   - Updated both `hwbcleaning.com` and `www.hwbcleaning.com` SPF TXT records to `v=spf1 include:spf.protection.outlook.com include:_spf-usg1.ppe-hosted.com include:secureserver.net -all`.
+   - Created 10 DNS `CAA` (`issue` and `issuewild`) records authorizing `letsencrypt.org`, `pki.goog`, `ssl.com`, `digicert.com`, and `sectigo.com`.
+   - Activated `DNSSEC` signing on `hwbcleaning.com`.
+2. **HSTS Preload & Hotlink Protection Enabled (`Cloudflare Zone Settings API`):**
+   - Enabled `preload: true` on `security_header.strict_transport_security` (`strict-transport-security: max-age=31536000; includeSubDomains; preload` verified live) and enabled `hotlink_protection: "on"`.
+3. **Smart Tiered Cache, Early Hints (`103`), `0-RTT`, & Always Online Enabled:**
+   - Activated `tiered_cache_smart_topology_enable: "on"`, `early_hints: "on"`, `0rtt: "on"`, and `always_online: "on"`.
+4. **3 Edge Page Rules Deployed (`Apex 301 Redirect` & `Cache Everything` on `/services/*` and `/locations/*`):**
+   - Priority 3: `https://hwbcleaning.com/*` -> `301 Permanent Redirect` to `https://www.hwbcleaning.com/$1` (verified live `301` redirect with `0ms` origin load).
+   - Priority 2: `https://www.hwbcleaning.com/services/*` -> `Cache Level: Cache Everything`, `Edge Cache TTL: 7200s` (verified live `CF-Cache-Status: HIT`, reducing TTFB from `273.5ms` to **`46.2ms–53.2ms`**).
+   - Priority 1: `https://www.hwbcleaning.com/locations/*` -> `Cache Level: Cache Everything`, `Edge Cache TTL: 7200s` (verified live `CF-Cache-Status: HIT`, reducing TTFB from `256.4ms` to **`61.0ms–64.2ms`**).
+   - Verified `/login`, `/api/v1/*`, and `/admin/*` remain strictly `CF-Cache-Status: DYNAMIC` (`Cache-Control: no-store, no-cache, must-revalidate, private`).
+**Preventative:**
+All future public route additions under `/services/*` and `/locations/*` automatically inherit Cloudflare Edge `HIT` caching (`7,200s` Edge TTL) and Smart Tiered Cache topology, while dynamic/authenticated routes remain strictly `DYNAMIC` (`no-store`).
+
+
+## BUG-154: Commercial Leads Search Bar Returning `0` Results on Assigned Sales Rep Names (`beabe wiley`), Entity Collision Between Rep Names & Texas Cities/Streets (`Beabe Wiley` vs `Wylie, TX` / `Wiley Post Rd`), Missing Dedicated `owner_id` Toolbar Filter, & Missing Faceted Typeahead Autocomplete
+**Detected:** 10/26/2026
+**Status:** **RESOLVED** (10/26/2026 — Verified by `test_32_enterprise_leads_faceted_search_and_owner_filter_bug_154` in `scripts/test_web_performance_rack_14.py` `32/32` passing)
+**Symptoms:**
+1. Searching for **`beabe wiley`** in the Commercial Leads search bar (`/admin/operations?view=leads`) returned **`0` results**, even though Beabe Wiley (`Bwiley`) had **`50` assigned commercial leads** (`owner_id`).
+2. `parse_advanced_search()` in `core/services/search.py` only checked `"Users"` when an explicit single-word prefix (`rep:Wiley` or `owner:Wiley`) was typed. Typing an unprefixed full name (`beabe wiley`) or an unquoted multi-word prefix (`rep:Beabe Wiley`) split the string on whitespace into `AND` tokens across lead building text columns (`center_name`, `city`, `address`), where `"Beabe"` did not exist.
+3. Conversely, blindly adding `Users.full_name` to every single-word token would cause entity collision between rep names and Texas cities or streets (e.g., `Beabe Wiley` vs. `Wylie, TX` — often spelled `Wiley TX` — or `Wiley Post Rd` in Addison/Carrollton).
+4. Local Dev PostgreSQL (`hwb_postgres_dev`) had `0` leads assigned to Beabe Wiley (`owner_id = 5`), whereas Live Azure Production had `50` leads assigned to Beabe Wiley (`owner_id = 6`).
+**Solution:**
+1. **4-Pillar Enterprise Faceted Search & Owner-Filtering Architecture (`core/services/search.py`, `blueprints/operations.py`, `templates/backoffice_operations.html`, `static/js/backoffice_operations_core.js`):**
+   - **Pillar 1 — Dedicated `👤 All Owners` Toolbar Filter (`owner_id`):** Added `#lead-owner-filter-select` next to the Leads search input displaying each active user and their live assigned lead count (`Beabe Wiley (50 leads)`, `-- Unassigned Only --`, etc.), wired to `?view=leads&owner_id=<id>` in `blueprints/operations.py` and preserved across pagination and status filter toggles.
+   - **Pillar 2 — Categorized Live Typeahead Autocomplete (`GET /api/v1/leads/search-suggest`):** Built a fast faceted suggestion dropdown (`#lead-search-suggest-menu`) that categorizes matches as the operator types into **👤 Assigned Sales Rep / Owner** (`Beabe Wiley — 50 Leads`), **📍 Cities & Streets** (`Wylie, TX — 27 Leads`, spell-corrected from `'wiley'`), and **🏢 Matching Buildings**.
+   - **Pillar 3 — Full-Name Entity Recognition Without Single-Word City Collision (`core/services/search.py`):** Upgraded `parse_advanced_search()` with cached entity metadata (`get_search_entity_metadata()`) so typing an active user's full name (`beabe wiley`), unquoted `rep:Beabe Wiley` / `owner:Beabe Wiley`, or exact username (`bwiley`) automatically resolves to `owner_id`, while single ambiguous words keep searching building/city/street columns cleanly.
+   - **Pillar 4 — Texas City Spell-Correction (`TX_CITY_MISSPELLING_MAP`):** Added automatic Texas city spell-correction (`wiley tx` or `city:wiley` $\rightarrow$ `Wylie, TX`; `carrolton tx` $\rightarrow$ `Carrollton, TX`; `mckiney tx` $\rightarrow$ `McKinney, TX`) so operators never hit dead-end `0` results on DFW city spelling variants.
+2. **Synchronized All 50 Live Beabe Wiley Lead Assignments to Local Dev:**
+   - Synchronized all 50 commercial leads assigned to Beabe Wiley on Live Azure Production into Local Dev PostgreSQL (`owner_id = 5`).
+3. **Permanent Regression Gate (`test_32` in `scripts/test_web_performance_rack_14.py`):**
+   - Added `test_32_enterprise_leads_faceted_search_and_owner_filter_bug_154` verifying full-name rep search, `owner_id` filtering, `wiley tx` $\rightarrow$ `Wylie, TX` city spell-correction isolation, and `/api/v1/leads/search-suggest`.
+**Preventative:**
+Record ownership (`owner_id`) and geographic/building search (`q`) are cleanly disambiguated via faceted typeahead suggestions, full-name entity recognition, and the dedicated `owner_id` toolbar selector, verified on every build by `test_32` (`32/32` Rack 14 tests passing).
+
+
+## BUG-155: "Save Lead Changes" (`PUT /api/v1/leads/<id>`) Throwing `HTTP 500` on Live Azure Due to Missing `website` & `student_enrollment` Columns on `"Leads"` in `schema_engine.py`, Plus Unreturned Connection in `/api/v1/leads/search-suggest`
+**Detected:** 10/26/2026
+**Status:** **RESOLVED** (10/26/2026 — Verified by `test_33_lead_update_save_schema_parity_and_pool_hygiene_bug_155` in `scripts/test_web_performance_rack_14.py` `33/33` passing)
+**Symptoms:**
+1. When Operator **Mirna Rondinella (`mrondinella`, User ID `#3`)** edited a lead on `https://www.hwbcleaning.com` and clicked **"Save Lead Changes"** (`#btn-save-lead-update` $\rightarrow$ `saveLeadUpdate(event)` $\rightarrow$ `PUT /api/v1/leads/<id>`), the request failed with `HTTP 500` (`"System Error: Update failed"`).
+2. Live reproduction against `https://www.hwbcleaning.com/api/v1/leads/82375` returned:
+   `{"message": "column \"website\" of relation \"Leads\" does not exist\nLINE 9: website = NULL, county = 'HARRIS', s...", "status": "error"}`
+3. Comparing `information_schema.columns` on `"Leads"` between Local Dev and Live Azure revealed that `database/schema_engine.py` (`apply_system_migrations`) had not included `ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS` for `website`, `student_enrollment`, `tenant_id`, `cdcn`, `region_priority`, `esc_region`, or `charter_parent`.
+4. Additionally:
+   - `api_leads_search_suggest()` in `blueprints/operations.py` was missing `finally: if 'conn' in locals() and conn: conn.close()`, which could hold pooled connections across repeated typeahead keystrokes.
+   - `saveLeadUpdate(e)` in `static/js/backoffice_operations_core.js` only parsed `await res.json()` when `res.ok` was true, masking the backend error message behind a generic `"Update failed"` string.
+   - `#edit-lead-delivery-model` in `templates/backoffice_operations.html` lacked `<option value="UNKNOWN">-- Unknown / Not Verified --</option>`, causing `setVal` to fall back to `'Model C Institutional Prime (Bosanna)'` and cascade across `umbrella_name` leads.
+**Solution:**
+1. **100% `"Leads"` Column Parity in `database/schema_engine.py` & Self-Healing Guard in `blueprints/crm_api.py`:**
+   - Added idempotent `ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS` statements for `website`, `county`, `capacity`, `student_enrollment`, `preferred_date`, `preferred_time`, `budget_range`, `next_action_date`, `updated_at`, `tenant_id`, `cdcn`, `region_priority`, `esc_region`, `charter_parent`, `campaign_ready`, `email_hygiene_status`, `email_inbox_type`, `email_mx_verified`, and `last_campaigned_at` in `database/schema_engine.py`.
+   - Added an inline self-healing schema guard in `api_lead_hub` (`PUT`/`PATCH /api/v1/leads/<id>` in `blueprints/crm_api.py`), safe integer/float coercion for `sqf`, `capacity`, and `student_enrollment`, collision protection on `idx_leads_unique_location`, and guarded `cleaning_delivery_model` umbrella cascading so it only triggers when explicitly changed to a non-`UNKNOWN` value.
+2. **Connection Pool Return Hygiene (`blueprints/operations.py` & `core/services/search.py`):**
+   - Added `finally: if 'conn' in locals() and conn: conn.close()` to `api_leads_search_suggest()` in `blueprints/operations.py` and updated `get_search_entity_metadata()` in `core/services/search.py` to resolve `current_app.config["DATABASE_URL"]` / `sys_config.DATABASE_URL` via `get_db(db_url)` with guaranteed pool return.
+3. **Frontend Error Surfacing & Delivery Model Option Parity (`templates/backoffice_operations.html` & `static/js/backoffice_operations_core.js`):**
+   - Added `<option value="UNKNOWN">-- Unknown / Not Verified --</option>` to `#edit-lead-delivery-model` and updated `saveLeadUpdate(e)` to parse error JSON responses on non-200 status codes.
+4. **Permanent Regression Gate (`test_33` in `scripts/test_web_performance_rack_14.py`):**
+   - Added `test_33_lead_update_save_schema_parity_and_pool_hygiene_bug_155` (`33/33` PASS).
+**Preventative:**
+Every column referenced in `PUT`/`PATCH /api/v1/leads/<id>` is enforced both in `database/schema_engine.py` at boot and by the self-healing guard in `blueprints/crm_api.py`, verified continuously by `test_33` in `scripts/test_web_performance_rack_14.py`.
+
+
+
+

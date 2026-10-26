@@ -3297,8 +3297,12 @@ def api_leads_search_suggest():
                     'query': f'"{bname}"'
                 })
     except Exception as e:
-        conn.rollback()
+        if 'conn' in locals() and conn:
+            conn.rollback()
         current_app.logger.warning(f"[LEADS SUGGEST] Warning: {e}")
+    finally:
+        if 'conn' in locals() and conn:
+            conn.close()
 
     return jsonify({
         'status': 'success',

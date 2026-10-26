@@ -195,6 +195,25 @@ def apply_system_migrations(conn: Any, db_url: Optional[str] = None) -> None:
                 ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS is_duplicate BOOLEAN DEFAULT FALSE;
                 ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS duplicate_group_id VARCHAR(64);
                 ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS umbrella_name VARCHAR(100);
+                ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS website TEXT;
+                ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS county TEXT;
+                ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS capacity INTEGER;
+                ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS student_enrollment INTEGER;
+                ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS preferred_date TEXT;
+                ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS preferred_time TEXT;
+                ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS budget_range TEXT;
+                ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS next_action_date TEXT;
+                ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;
+                ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS tenant_id INTEGER DEFAULT 1;
+                ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS cdcn VARCHAR(32);
+                ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS region_priority VARCHAR(32);
+                ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS esc_region INTEGER;
+                ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS charter_parent VARCHAR(128);
+                ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS campaign_ready BOOLEAN DEFAULT FALSE;
+                ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS email_hygiene_status VARCHAR(50) DEFAULT 'PHONE_ONLY';
+                ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS email_inbox_type VARCHAR(50) DEFAULT 'NONE';
+                ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS email_mx_verified BOOLEAN DEFAULT FALSE;
+                ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS last_campaigned_at TIMESTAMP WITH TIME ZONE;
 
                 ALTER TABLE "Customers" ADD COLUMN IF NOT EXISTS cleaning_delivery_model VARCHAR(50) DEFAULT 'DIRECT_W2';
                 ALTER TABLE "Customers" ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'Active';

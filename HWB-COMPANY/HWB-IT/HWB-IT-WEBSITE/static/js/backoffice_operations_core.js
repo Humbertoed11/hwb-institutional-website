@@ -1230,7 +1230,7 @@
             setVal('edit-lead-tier', lead.acquisition_tier);
             setVal('edit-lead-ownership', lead.ownership_type);
             setVal('edit-lead-verification', lead.owner_verification_status);
-            setVal('edit-lead-delivery-model', lead.cleaning_delivery_model || 'Model C Institutional Prime (Bosanna)');
+            setVal('edit-lead-delivery-model', lead.cleaning_delivery_model || 'UNKNOWN');
             setVal('edit-lead-id', id);
             
             setVal('visit-manager', lead.decision_maker);
@@ -2108,7 +2108,7 @@
                 body: JSON.stringify(payload) 
             });
             
-            const result = res.ok ? await res.json().catch(() => ({status: 'error', message: 'Invalid JSON response'})) : null;
+            const result = await res.json().catch(() => ({status: 'error', message: `Server returned status ${res.status}`}));
 
             if (res.ok) { 
                 showToast("Lead updated successfully.", "success"); 

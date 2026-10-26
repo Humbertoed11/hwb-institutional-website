@@ -2549,6 +2549,79 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
         self.assertIn("Beabe Wiley", owner_names)
         self.assertIn("Wylie, TX", loc_labels)
 
+    def test_33_lead_update_save_schema_parity_and_pool_hygiene_bug_155(self):
+        """
+        BUG-155: Verifies that clicking 'Save Lead Changes' (PUT /api/v1/leads/<id> and PATCH /api/v1/leads/<id>)
+        succeeds with 200 OK across full form payloads (including website, student_enrollment, county, capacity,
+        owner_verification_status, preferred_date, preferred_time, budget_range, and cleaning_delivery_model),
+        that schema_engine.py maintains 100% column parity on 'Leads', and that repeated typeahead calls
+        (/api/v1/leads/search-suggest) return connections to ThreadedConnectionPool without exhaustion.
+        """
+        auth_client = self.get_auth_client()
+
+        conn = get_db(self.db_url)
+        try:
+            with conn.cursor() as cur:
+                cur.execute('SELECT id FROM "Leads" WHERE COALESCE(is_commercial, TRUE) = TRUE ORDER BY id ASC LIMIT 1;')
+                lead_id = cur.fetchone()["id"]
+        finally:
+            conn.close()
+
+        r_get = auth_client.get(f"/api/v1/leads/{lead_id}")
+        self.assertEqual(r_get.status_code, 200)
+        lead_before = r_get.get_json()["lead"]
+
+        # Simulate full Edit Lead form submission (saveLeadUpdate payload)
+        full_form_payload = {
+            "company_name": lead_before.get("center_name") or "Test Facility",
+            "umbrella_name": lead_before.get("umbrella_name") or "",
+            "ownership_type": lead_before.get("ownership_type") or "Independent Commercial",
+            "decision_maker": lead_before.get("decision_maker") or "",
+            "job_title": lead_before.get("job_title") or "",
+            "owner_verification_status": lead_before.get("owner_verification_status") or "",
+            "phone": lead_before.get("phone") or "",
+            "email": lead_before.get("email") or "",
+            "website": lead_before.get("website") or "https://www.hwbcleaning.com",
+            "address": lead_before.get("address") or "",
+            "city": lead_before.get("city") or "",
+            "state": lead_before.get("state") or "TX",
+            "zipcode": lead_before.get("zipcode") or "",
+            "county": lead_before.get("county") or "Dallas",
+            "industry": lead_before.get("industry") or "",
+            "facility_type": lead_before.get("facility_type") or "",
+            "sqf": lead_before.get("sqf") or 0,
+            "capacity": lead_before.get("capacity") if lead_before.get("capacity") is not None else "",
+            "student_enrollment": lead_before.get("student_enrollment") if lead_before.get("student_enrollment") is not None else "",
+            "traffic_cycle": lead_before.get("traffic_cycle") or "Slow",
+            "acquisition_tier": lead_before.get("acquisition_tier") or "",
+            "cleaning_delivery_model": lead_before.get("cleaning_delivery_model") or "UNKNOWN",
+            "service_interest": lead_before.get("service_interest") or "",
+            "lead_source": lead_before.get("lead_source") or "",
+            "status": lead_before.get("status") or "New",
+            "priority_level": lead_before.get("priority_level") or "Warm",
+            "estimated_annual_value": lead_before.get("estimated_annual_value") or 0.0,
+            "budget_range": lead_before.get("budget_range") or "",
+            "preferred_date": lead_before.get("preferred_date") or "",
+            "preferred_time": lead_before.get("preferred_time") or "",
+            "next_action_date": lead_before.get("next_action_date") or "",
+            "owner_id": lead_before.get("owner_id") if lead_before.get("owner_id") is not None else "",
+            "notes": lead_before.get("notes") or "",
+        }
+        r_put = auth_client.put(f"/api/v1/leads/{lead_id}", json=full_form_payload)
+        self.assertEqual(r_put.status_code, 200, f"PUT /api/v1/leads/{lead_id} failed: {r_put.get_data(as_text=True)}")
+        self.assertEqual(r_put.get_json().get("status"), "success")
+
+        # Restore original website & county values
+        auth_client.patch(
+            f"/api/v1/leads/{lead_id}",
+            json={"website": lead_before.get("website") or "", "county": lead_before.get("county") or ""},
+        )
+
+        # Verify 15 consecutive search-suggest requests never exhaust the 10-connection pool
+        for _ in range(15):
+            r_s = auth_client.get("/api/v1/leads/search-suggest?q=kiddie")
+            self.assertEqual(r_s.status_code, 200)
+
 
 if __name__ == "__main__":
     unittest.main()

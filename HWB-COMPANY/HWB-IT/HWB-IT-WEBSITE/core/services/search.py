@@ -85,29 +85,51 @@ def get_search_entity_metadata() -> Tuple[List[Dict[str, Any]], List[str]]:
 
     users: List[Dict[str, Any]] = []
     cities: List[str] = []
-    db_url = os.environ.get("DATABASE_URL")
+    db_url = None
+    try:
+        from flask import has_app_context, current_app
+        if has_app_context():
+            db_url = current_app.config.get("DATABASE_URL")
+    except Exception:
+        pass
+    if not db_url:
+        try:
+            from config import sys_config
+            db_url = getattr(sys_config, "DATABASE_URL", None)
+        except Exception:
+            pass
+    if not db_url:
+        db_url = os.environ.get("DATABASE_URL")
     if db_url:
         conn = None
         try:
-            conn = psycopg2.connect(db_url)
+            from core.services.database import get_db
+            conn = get_db(db_url)
             with conn.cursor() as cur:
                 cur.execute(
-                    'SELECT id, username, COALESCE(full_name, \'\'), COALESCE(role, \'\') '
+                    'SELECT id, username, COALESCE(full_name, \'\') AS full_name, COALESCE(role, \'\') AS role '
                     'FROM "Users" WHERE COALESCE(status, \'Active\') = \'Active\' ORDER BY id ASC'
                 )
                 for row in cur.fetchall():
+                    uid = row['id'] if isinstance(row, dict) else row[0]
+                    uname = row['username'] if isinstance(row, dict) else row[1]
+                    fname = row['full_name'] if isinstance(row, dict) else row[2]
+                    urole = row['role'] if isinstance(row, dict) else row[3]
                     users.append({
-                        "id": row[0],
-                        "username": (row[1] or "").strip(),
-                        "full_name": (row[2] or "").strip(),
-                        "role": (row[3] or "").strip(),
+                        "id": uid,
+                        "username": (uname or "").strip(),
+                        "full_name": (fname or "").strip(),
+                        "role": (urole or "").strip(),
                     })
                 cur.execute(
                     'SELECT DISTINCT city FROM "Leads" '
                     'WHERE city IS NOT NULL AND BTRIM(city) != \'\' '
                     'ORDER BY city ASC LIMIT 500'
                 )
-                cities = [r[0].strip() for r in cur.fetchall() if r[0] and r[0].strip()]
+                for r in cur.fetchall():
+                    c_val = r['city'] if isinstance(r, dict) else r[0]
+                    if c_val and str(c_val).strip():
+                        cities.append(str(c_val).strip())
         except Exception:
             pass
         finally:

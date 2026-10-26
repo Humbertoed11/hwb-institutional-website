@@ -448,13 +448,33 @@ def api_lead_hub(id):
                     val = data.get(key) if key in data else db_val
                     return val if val != "" else None
 
-                sqf_val = data.get('sqf') if 'sqf' in data else current_lead['sqf']
-                revenue_val = data.get('estimated_annual_value') if 'estimated_annual_value' in data else current_lead['estimated_annual_value']
-                capacity_val = data.get('capacity') if 'capacity' in data else current_lead['capacity']
+                # Self-healing schema check in case worker receives PUT/PATCH before boot DDL completes
+                if 'website' not in current_lead or 'student_enrollment' not in current_lead:
+                    cur.execute('''
+                        ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS website TEXT;
+                        ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS county TEXT;
+                        ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS student_enrollment INTEGER;
+                        ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS owner_verification_status VARCHAR(50) DEFAULT 'PENDING_PROOF';
+                        ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS preferred_date TEXT;
+                        ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS preferred_time TEXT;
+                        ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS budget_range TEXT;
+                        ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS is_dnc BOOLEAN DEFAULT FALSE;
+                        ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS campaign_ready BOOLEAN DEFAULT FALSE;
+                        ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS email_hygiene_status VARCHAR(50) DEFAULT 'PHONE_ONLY';
+                        ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;
+                    ''')
+                    conn.commit()
+
+                sqf_val = data.get('sqf') if 'sqf' in data else current_lead.get('sqf')
+                revenue_val = data.get('estimated_annual_value') if 'estimated_annual_value' in data else current_lead.get('estimated_annual_value')
+                capacity_val = data.get('capacity') if 'capacity' in data else current_lead.get('capacity')
                 if sqf_val == '' or sqf_val is None:
                     sqf_val = 0
                 else:
-                    sqf_val = clean_sqft(sqf_val)
+                    try:
+                        sqf_val = int(round(float(clean_sqft(sqf_val))))
+                    except (ValueError, TypeError):
+                        sqf_val = int(current_lead.get('sqf') or 0)
                 if revenue_val == '' or revenue_val is None:
                     revenue_val = 0.0
                 else:
@@ -462,12 +482,15 @@ def api_lead_hub(id):
                 if capacity_val == '' or capacity_val is None:
                     capacity_val = None
                 else:
-                    capacity_val = int(capacity_val)
+                    try:
+                        capacity_val = int(round(float(str(capacity_val).replace(',', '').strip())))
+                    except (ValueError, TypeError):
+                        capacity_val = current_lead.get('capacity')
 
-                umbrella_val = resolve('umbrella_name', current_lead['umbrella_name'])
-                cleaning_model_val = resolve('cleaning_delivery_model', current_lead['cleaning_delivery_model'])
-                acquisition_tier_val = resolve('acquisition_tier', current_lead['acquisition_tier'])
-                ownership_type_val = resolve('ownership_type', current_lead['ownership_type'])
+                umbrella_val = resolve('umbrella_name', current_lead.get('umbrella_name'))
+                cleaning_model_val = resolve('cleaning_delivery_model', current_lead.get('cleaning_delivery_model'))
+                acquisition_tier_val = resolve('acquisition_tier', current_lead.get('acquisition_tier'))
+                ownership_type_val = resolve('ownership_type', current_lead.get('ownership_type'))
                 website_val = resolve('website', current_lead.get('website'))
                 county_val = resolve('county', current_lead.get('county'))
                 enrollment_val = data.get('student_enrollment') if 'student_enrollment' in data else current_lead.get('student_enrollment')
@@ -475,7 +498,7 @@ def api_lead_hub(id):
                     enrollment_val = None
                 else:
                     try:
-                        enrollment_val = int(enrollment_val)
+                        enrollment_val = int(round(float(str(enrollment_val).replace(',', '').strip())))
                     except (ValueError, TypeError):
                         enrollment_val = None
                 verification_val = resolve('owner_verification_status', current_lead.get('owner_verification_status'))
@@ -483,7 +506,7 @@ def api_lead_hub(id):
                 pref_time_val = resolve('preferred_time', current_lead.get('preferred_time'))
                 budget_val = resolve('budget_range', current_lead.get('budget_range'))
 
-                owner_id_val = current_lead['owner_id']
+                owner_id_val = current_lead.get('owner_id')
                 if 'owner_id' in data and getattr(current_user, 'role', '') != 'Sales':
                     raw_owner = data.get('owner_id')
                     if raw_owner in ('', None, 'null', 'None'):
@@ -494,7 +517,7 @@ def api_lead_hub(id):
                         except (ValueError, TypeError):
                             owner_id_val = None
 
-                resolved_status = resolve('status', current_lead['status'])
+                resolved_status = resolve('status', current_lead.get('status'))
                 is_dnc_val = current_lead.get('is_dnc', False)
                 campaign_ready_val = current_lead.get('campaign_ready', False)
                 email_hygiene_val = current_lead.get('email_hygiene_status')
@@ -510,6 +533,31 @@ def api_lead_hub(id):
                     elif current_lead.get('status') in ('Do Not Call (DNC)', 'Unsubscribed'):
                         is_dnc_val = False
 
+                resolved_center_name = resolve('company_name', current_lead.get('center_name'))
+                resolved_address = resolve('address', current_lead.get('address'))
+                raw_city_in = resolve('city', current_lead.get('city'))
+                if 'city' in data and (str(data.get('city') or '').strip() != str(current_lead.get('city') or '').strip()):
+                    resolved_city = clean_city(raw_city_in) or raw_city_in
+                else:
+                    resolved_city = current_lead.get('city')
+
+                # Prevent unique index collision on idx_leads_unique_location (lower(btrim(center_name)), lower(btrim(address)), lower(btrim(city)))
+                if resolved_center_name and resolved_address and resolved_city:
+                    cur.execute('''
+                        SELECT id FROM "Leads"
+                        WHERE id != %s
+                          AND LOWER(BTRIM(COALESCE(center_name, ''))) = LOWER(BTRIM(%s))
+                          AND LOWER(BTRIM(COALESCE(address, ''))) = LOWER(BTRIM(%s))
+                          AND LOWER(BTRIM(COALESCE(city, ''))) = LOWER(BTRIM(%s))
+                        LIMIT 1;
+                    ''', (id, resolved_center_name, resolved_address, resolved_city))
+                    dup_loc = cur.fetchone()
+                    if dup_loc:
+                        # Keep existing location tuple if it would collide with another record
+                        resolved_center_name = current_lead.get('center_name')
+                        resolved_address = current_lead.get('address')
+                        resolved_city = current_lead.get('city')
+
                 cur.execute('''
                     UPDATE "Leads" SET 
                         center_name = %s, decision_maker = %s, job_title = %s, email = %s, phone = %s, 
@@ -523,32 +571,37 @@ def api_lead_hub(id):
                         budget_range = %s, is_dnc = %s, campaign_ready = %s, email_hygiene_status = %s,
                         updated_at = CURRENT_TIMESTAMP
                     WHERE id = %s
-                ''', (resolve('company_name', current_lead['center_name']), 
-                      resolve('decision_maker', current_lead['decision_maker']), 
-                      resolve('job_title', current_lead['job_title']), 
-                      clean_email(resolve('email', current_lead['email'])) or resolve('email', current_lead['email']), 
-                      clean_phone(resolve('phone', current_lead['phone'])) or resolve('phone', current_lead['phone']), 
-                      resolve('address', current_lead['address']), 
-                      clean_city(resolve('city', current_lead['city'])) or resolve('city', current_lead['city']), 
-                      resolve('state', current_lead['state']), 
-                      clean_zip(resolve('zipcode', current_lead['zipcode'])) or resolve('zipcode', current_lead['zipcode']), 
-                      resolve('industry', current_lead['industry']),
+                ''', (resolved_center_name, 
+                      resolve('decision_maker', current_lead.get('decision_maker')), 
+                      resolve('job_title', current_lead.get('job_title')), 
+                      clean_email(resolve('email', current_lead.get('email'))) or resolve('email', current_lead.get('email')), 
+                      clean_phone(resolve('phone', current_lead.get('phone'))) or resolve('phone', current_lead.get('phone')), 
+                      resolved_address, 
+                      resolved_city, 
+                      resolve('state', current_lead.get('state')), 
+                      clean_zip(resolve('zipcode', current_lead.get('zipcode'))) or resolve('zipcode', current_lead.get('zipcode')), 
+                      resolve('industry', current_lead.get('industry')),
                       sqf_val, resolved_status, revenue_val, 
-                      resolve('next_action_date', current_lead['next_action_date']), 
-                      resolve('notes', current_lead['notes']),
-                      resolve('facility_type', current_lead['facility_type']), 
-                      resolve('lead_source', current_lead['lead_source']), 
-                      resolve('service_interest', current_lead['service_interest']), 
-                      resolve('priority_level', current_lead['priority_level']), 
-                      resolve('traffic_cycle', current_lead['traffic_cycle']), 
+                      resolve('next_action_date', current_lead.get('next_action_date')), 
+                      resolve('notes', current_lead.get('notes')),
+                      resolve('facility_type', current_lead.get('facility_type')), 
+                      resolve('lead_source', current_lead.get('lead_source')), 
+                      resolve('service_interest', current_lead.get('service_interest')), 
+                      resolve('priority_level', current_lead.get('priority_level')), 
+                      resolve('traffic_cycle', current_lead.get('traffic_cycle')), 
                       capacity_val, umbrella_val, cleaning_model_val,
                       acquisition_tier_val, ownership_type_val, owner_id_val,
                       website_val, county_val, enrollment_val,
                       verification_val, pref_date_val, pref_time_val,
                       budget_val, is_dnc_val, campaign_ready_val, email_hygiene_val, id))
 
-                if 'cleaning_delivery_model' in data and (umbrella_val or current_lead['umbrella_name']):
-                    eff_umbrella = umbrella_val or current_lead['umbrella_name']
+                if (
+                    'cleaning_delivery_model' in data
+                    and cleaning_model_val not in (None, '', 'UNKNOWN')
+                    and cleaning_model_val != current_lead.get('cleaning_delivery_model')
+                    and (umbrella_val or current_lead.get('umbrella_name'))
+                ):
+                    eff_umbrella = umbrella_val or current_lead.get('umbrella_name')
                     cur.execute('''
                         UPDATE "Leads"
                         SET cleaning_delivery_model = %s, updated_at = CURRENT_TIMESTAMP
