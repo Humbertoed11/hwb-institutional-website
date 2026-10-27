@@ -4,7 +4,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-7.5-BO-CRM</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">5.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">6.0.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5 &amp; 8.1 (Operational Planning)</span></div>
     </div>
@@ -28,7 +28,7 @@
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>Version</strong></td>
-                    <td style="text-align: left;">5.0.0</td>
+                    <td style="text-align: left;">6.0.0</td>
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>Status</strong></td>
@@ -158,12 +158,21 @@ flowchart TD
             </div>
         </div>
 
+        <h2>6.6 Enterprise Lead Intake, 6-Stage Lifecycle, Calling Workstation &amp; Atomic Delete/Undo Architecture (<code>BUG-154</code>–<code>BUG-160</code>)</h2>
+        <ul>
+            <li><strong>Faceted Search, Word-Boundary Rep Filtering &amp; Dedicated <code>👤 Lead Owner</code> Filter (<code>BUG-154</code>–<code>BUG-155</code>):</strong> The Commercial Leads search bar queries assigned sales representative names via word-boundary regex matching (preventing rep last names from colliding with Texas cities/streets), supports a dedicated <strong>👤 Lead Owner</strong> toolbar dropdown (including <code>Unassigned Leads</code>), and renders a real-time faceted autocomplete popover (<code>/api/v1/leads/search-suggest</code>).</li>
+            <li><strong>Universal US State Hygiene, 2-Line Address Split &amp; Bulk/Round-Robin Owner Assignment (<code>BUG-156</code>):</strong> All lead and client forms enforce canonical 2-letter US State dropdowns backed by <code>clean_state()</code> (normalizing <code>tx</code>, <code>Texas</code>, <code>Tejas</code> &rarr; <code>TX</code>), split Street Address Line 1 and Suite/Bldg Line 2, run live pre-save duplicate checks (<code>/api/v1/leads/check-duplicate</code>), and support 1-click inline Owner Badge reassignment plus Equal Round-Robin Bulk Assignment with 1-click Undo.</li>
+            <li><strong>6-Stage Sales Lifecycle, Separate <code>🧹 Who Cleans</code> Column &amp; Stage-Date History (<code>BUG-157</code>):</strong> Lead progression follows 6 sequential stages (<code>New &rarr; In Campaign &rarr; Engaged &rarr; Contacted &rarr; Qualified &rarr; Walkthrough Completed</code>, plus <code>Upgrade to Client Account</code> and disqualifiers <code>Not Interested / Unsubscribed / Do Not Call (DNC)</code>), recorded with timestamps and actor attribution in <code>"LeadStageHistory"</code>. The facility's current cleaning arrangement is tracked independently in the <strong>🧹 Who Cleans</strong> column (<code>⚪ Unknown</code>, <code>🏠 In-House Cleaning</code>, <code>🤝 Contract Cleaning</code>).</li>
+            <li><strong>Placeholder Email Protection, <code>📅 Worked Today</code> Filter &amp; Calling Workstation High-Contrast Selector (<code>BUG-158</code>–<code>BUG-159</code>):</strong> Placeholder and internal emails (<code>000000000@oooo</code>, <code>none@none.com</code>, <code>hwbcleaning11@gmail.com</code>) are automatically stripped to <code>NULL</code> so two different businesses never overwrite each other. Unassigned leads automatically claim the logged-in user as <code>owner_id</code> when added or worked, while preserving the original <code>input_date</code> and surfacing under the <strong>📅 Worked Today</strong> filter pill. Clicking <code>🏠 In-House Cleaning</code> or <code>🤝 Contract Cleaning</code> inside the Calling Workstation highlights the active selection with a bold checkmark and switches the Call Script box to <code>🧹 "Have cleaner"</code>.</li>
+            <li><strong>5-Layer Enterprise Button, Gear Menu (<code>⚙️</code>), &amp; Atomic Delete/Undo Lifecycle (<code>BUG-160</code>):</strong> Deleting a Lead, Client Account, Candidate, or Subcontractor Partner saves a recoverable JSON snapshot in <code>"SecurityAuditLogs"</code> (<code>RECORD_DELETED_SNAPSHOT</code>), cleans up all child tables (<code>"PendingOutbox"</code>, <code>"CampaignRecipients"</code>, <code>"LeadStageHistory"</code>, <code>"Contacts"</code>, <code>"GlobalActivities"</code>) in foreign-key-safe order, removes the row in <code>0ms</code> without stripping dropdowns on remaining rows, and displays a 1-click <strong><code>[↩ Undo]</code></strong> button on the confirmation toast wired to <code>POST /api/v1/crm/restore-deleted</code>.</li>
+        </ul>
+
         <h2>7.0 Verification &amp; Quality Control</h2>
         <ul>
             <li>All lead conversions, ecosystem updates, and employee onboardings must be verifiable in the <code>SecurityAuditLogs</code> WORM feed.</li>
             <li>All 87 templates in <code>templates/</code> must pass <code>compliance_code_linter.py</code> with 0 violations (100% Grade A+ WCAG 2.2 AA &amp; CIPA/CPRA compliance).</li>
             <li>Subtab transitions in the Workforce view must synchronize with URL parameters without page reloads.</li>
-            <li>Zero synthetic data and zero duplicate intake rows across all 6 core modules verified by <code>scripts/test_labor_recruitment_and_cyber_suite.py</code> (5/5 passing).</li>
+            <li>Zero synthetic data, zero duplicate intake rows, and 100% pass rate across <code>scripts/test_web_performance_rack_14.py</code> (<code>37/37</code> passing) and <code>scripts/yamamoto_bid_test_suite.py</code> (<code>9/9</code> Grade A+).</li>
         </ul>
 
         <hr />
@@ -178,6 +187,12 @@ flowchart TD
                 </tr>
             </thead>
             <tbody>
+                <tr>
+                    <td style="text-align: left;">6.0.0</td>
+                    <td style="text-align: left;">10/26/2026</td>
+                    <td style="text-align: left;">George (Systems Architect)</td>
+                    <td style="text-align: left;">Added Section 6.6 codifying Faceted Lead Search &amp; Owner Filtering (BUG-154–BUG-155), Universal US State/Address Hygiene &amp; Round-Robin Owner Assignment (BUG-156), 6-Stage Lead Lifecycle &amp; Separate Who Cleans Column with LeadStageHistory (BUG-157), Placeholder Email Overwrite Protection &amp; Worked Today Filter (BUG-158), High-Contrast Calling Workstation Who Cleans Selector &amp; SHA-256 Asset Fingerprinting (BUG-159), and the 5-Layer Enterprise Button, Gear Menu &amp; Atomic Delete/Undo Lifecycle Architecture (BUG-160 / POST /api/v1/crm/restore-deleted), certified by 37/37 Rack 14 tests. Approved by Humberto Dominguez, CEO.</td>
+                </tr>
                 <tr>
                     <td style="text-align: left;">3.0.0</td>
                     <td style="text-align: left;">10/24/2026</td>

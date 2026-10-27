@@ -8,7 +8,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-7.2</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">5.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">6.0.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">6.1</span></div>
     </div>
@@ -33,7 +33,7 @@
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Version</strong></td>
-<td style="text-align: left;">5.0</td>
+<td style="text-align: left;">6.0.0</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Status</strong></td>
@@ -219,12 +219,27 @@ flowchart TD
             </div>
         </div>
 
+        <h2>15.5 The 5-Layer Enterprise Button, Gear Menu (<code>⚙️</code>), &amp; Delete/Undo Lifecycle Standard (<code>BUG-159</code> &amp; <code>BUG-160</code>)</h2>
+        <p>Every interactive button, confirmation modal, row Gear menu (<code>⚙️</code>), and table refresh across the Backoffice permanently enforces the 5-Layer Enterprise Button &amp; Delete Lifecycle Standard:</p>
+        <ul>
+            <li><strong>Layer 1 — Network-Aware Fetch Auto-Unlock Engine (<code>/static/js/sigma_button_lock.js</code>):</strong> Wraps <code>window.fetch</code> to track <code>activeFetchCount</code> and <code>pendingAjaxButtons</code>, and listens to form <code>submit</code> in bubble phase (<code>false</code>) with <code>e.defaultPrevented</code> detection so all in-page AJAX forms (and purely local forms like <code>addToScope</code>) unlock automatically within <code>60ms</code> of network completion instead of waiting for a fallback timer. Automatic SHA-256 content-fingerprint cache busting (<code>?f=&lt;8-char-hash&gt;</code>) ensures browsers always load the latest script immediately after any deployment.</li>
+            <li><strong>Layer 2 — Unified Async <code>showDecision()</code> &amp; Interactive <code>[↩ Undo]</code> Toast:</strong> All destructive actions must use <code>showDecision()</code> (raw browser <code>confirm()</code> dialogs are strictly prohibited). <code>showDecision()</code> resets <code>#btn-decision-confirm</code> on open, <code>await</code>s <code>options.onConfirm(confirmBtn)</code> inside <code>try / catch / finally</code>, and guarantees <code>restoreButton(confirmBtn)</code> + <code>closeModal('modal-decision')</code> inside <code>finally</code>. Every delete confirmation toast displays an interactive <strong><code>[↩ Undo]</code></strong> button wired to <code>restoreDeletedCrmRecord(restoreToken)</code> (<code>POST /api/v1/crm/restore-deleted</code>).</li>
+            <li><strong>Layer 3 — Zero-Destruction Server-HTML Table Sync &amp; Instant <code>0ms</code> Row Removal:</strong> Single and bulk deletes remove table rows in <code>0ms</code> via <code>removeTableRowsAndSyncCounts()</code> without touching remaining rows, and background table synchronization (<code>syncOperationalData</code>) uses a <code>DOMParser</code> server-HTML swap so 100% of server-rendered <code>&lt;select&gt;</code> dropdowns (<code>Status</code>, <code>🧹 Who Cleans</code>, <code>Priority</code>, <code>Assigned Rep</code>), custom columns, and role permissions remain intact.</li>
+            <li><strong>Layer 4 — Gear Menu (<code>⚙️</code>) Auto-Close &amp; Smart Form Focus:</strong> Clicking any item inside a row Gear menu (<code>.isc-row-menu</code>) closes the dropdown immediately, and selecting <code>Add Note</code> or <code>Request Visit</code> automatically scrolls to, highlights, and focuses the target input field (<code>#lead-activity-desc</code> / <code>#visit-date</code>).</li>
+        </ul>
+
         <h2>16.0 Revision History</h2>
         <table class="sigma-table">
             <thead>
                 <tr><th>Version</th><th>Date</th><th>Author</th><th>Description of Changes</th></tr>
             </thead>
             <tbody>
+                <tr>
+                    <td>6.0.0</td>
+                    <td>10/26/2026</td>
+                    <td>George (Systems Architect)</td>
+                    <td>Added Section 15.5 codifying the 5-Layer Enterprise Button, Gear Menu, &amp; Delete/Undo Lifecycle Standard (BUG-159 &amp; BUG-160: Network-Aware Fetch Auto-Unlock Engine in sigma_button_lock.js, Unified Async showDecision() finally auto-unlock, DOMParser Server-HTML Table Sync, Gear Menu Auto-Close &amp; Smart Form Focus, Interactive [↩ Undo] Toast Restore, and Automatic SHA-256 Static Asset Fingerprinting). Approved by Humberto Dominguez, CEO.</td>
+                </tr>
                 <tr>
                     <td>3.0.0</td>
                     <td>10/24/2026</td>

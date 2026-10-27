@@ -508,9 +508,9 @@
             <div>
                 <div class="doc-meta-bar">
                     <span class="doc-badge doc-badge-blue">Official Application Manual</span>
-                    <span class="doc-badge doc-badge-green">● Release 3.4.0-Enterprise</span>
+                    <span class="doc-badge doc-badge-green">● Release 3.5.0-Enterprise</span>
                     <span class="doc-badge doc-badge-slate">ISO 9001:2026 (ISO 9001:2015+Amd 1:2024) &amp; SOC 2 Type II</span>
-                    <span class="doc-badge doc-badge-slate">Updated October 2026</span>
+                    <span class="doc-badge doc-badge-slate">Updated October 26, 2026</span>
                 </div>
                 <h1>HWB Application Operating Manual</h1>
                 <p style="color: #64748b; font-size: 0.95rem; margin: 0; max-width: 820px;">
@@ -994,6 +994,18 @@
             <li><strong>Persistent <code>[Cards | Table]</code> View Switcher:</strong> A compact <strong>View Mode: [Cards | Table]</strong> toggle bar appears above every table on phones. Tapping <strong>Table</strong> switches into a horizontally scrollable spreadsheet with the primary facility column pinned on the left; tapping <strong>Cards</strong> returns to CRM Touch Cards. Your choice is saved across pages.</li>
             <li><strong>Cross-Device Column Preferences (Migration 045):</strong> Clicking <strong>💾 Save My View</strong> inside the <strong>Columns</strong> drawer saves your custom column checkmarks and active preset to the PostgreSQL <code>"UserUiPreferences"</code> table so your layout follows you across desktop, tablet, and phone.</li>
             <li><strong>QMS Manual Slide-Over Drawer:</strong> On phones and tablets, tap the floating <strong>☰ Manual Sections &amp; Search</strong> button at the bottom-right corner of any QMS SOP or Book page to jump between chapters or filter procedures.</li>
+        </ul>
+
+        <h3>2.6 Enterprise Lead Lifecycle, Calling Workstation <code>🧹 Who Cleans Right Now</code>, Gear Menu (<code>⚙️</code>), &amp; 1-Click <code>[↩ Undo]</code> Delete Recovery</h3>
+        <p style="color: #475569; font-size: 0.9rem; line-height: 1.6; margin-bottom: 1rem;">
+            The Commercial Leads Pipeline and Calling Workstation include five built-in safeguards and productivity controls to keep daily calling sprints fast, accurate, and error-free:
+        </p>
+        <ul>
+            <li><strong>6-Stage Sales Lifecycle vs. <code>🧹 Who Cleans</code> Column:</strong> Every lead tracks its sales progress in the <strong>Status</strong> column (<code>New &rarr; In Campaign &rarr; Engaged &rarr; Contacted &rarr; Qualified &rarr; Walkthrough Completed</code>, plus <code>Upgrade to Client Account</code> and disqualifiers <code>Not Interested / Unsubscribed / Do Not Call (DNC)</code>) with automatic date-and-time milestones in the Lead Details timeline. Separately, the <strong>🧹 Who Cleans</strong> column tracks the building's current cleaning setup (<code>⚪ Unknown</code>, <code>🏠 In-House Cleaning</code>, or <code>🤝 Contract Cleaning</code>).</li>
+            <li><strong>Calling Workstation High-Contrast <code>🧹 Who Cleans Right Now</code> Bar:</strong> Inside the Calling Workstation (<code>📞 Call Steps</code>), clicking <strong>🏠 In-House Cleaning</strong> (Amber) or <strong>🤝 Contract Cleaning</strong> (Teal) highlights your choice with a bold checkmark (<code>✓</code>), saves it immediately to the database, and automatically switches the Call Script box to the <strong>🧹 "Have cleaner"</strong> objection-handling pitch.</li>
+            <li><strong>Automatic Lead Attribution &amp; <code>📅 Worked Today</code> Filter:</strong> Whenever you add a new lead or log a call on an unassigned lead, the platform automatically assigns you as the <strong>Lead Owner</strong> while keeping the original <strong>Date Added</strong> intact. Click the <strong>📅 Worked Today</strong> filter button on the toolbar at any time to review every lead added or worked today.</li>
+            <li><strong>Row Gear Menu (<code>⚙️</code>) Smart Actions:</strong> Clicking the Gear button (<code>⚙️</code>) at the right end of any Lead or Client Account row opens quick actions (<em>Calling Schedule</em>, <em>Lead Details</em>, <em>Edit Profile</em>, <em>Add Note</em>, <em>Request Visit</em>, <em>Move to Clients</em>, and <em>Delete</em>). Selecting <strong>Add Note</strong> or <strong>Request Visit</strong> closes the menu automatically and scrolls straight to the Call Notes box or Schedule Building Walkthrough date picker with the cursor ready.</li>
+            <li><strong>Instant Row Deletion &amp; 1-Click <code>[↩ Undo]</code> Recovery:</strong> When an authorized manager or executive deletes a Lead, Client Account, Candidate, or Subcontractor Partner, the row disappears immediately without locking the screen or resetting dropdowns on other rows, and the green confirmation banner displays a <strong><code>[↩ Undo]</code></strong> button for 9 seconds. Clicking <strong><code>[↩ Undo]</code></strong> restores the deleted record and all of its contacts and activity notes in one click.</li>
         </ul>
     </section>
 
