@@ -77,11 +77,11 @@
         // Render spinner + loading label
         btn.innerHTML = `<span class="sigma-spin-circle" aria-hidden="true"></span><span class="sigma-btn-label">${loadingText}</span>`;
 
-        // Safety fallback: auto-restore if page doesn't unload within 25 seconds
+        // Safety fallback: auto-restore if page doesn't unload within 12 seconds
         if (btn._spinSafetyTimer) clearTimeout(btn._spinSafetyTimer);
         btn._spinSafetyTimer = setTimeout(() => {
             restoreButton(btn);
-        }, 25000);
+        }, 12000);
 
         return true;
     }
@@ -157,9 +157,53 @@
     window.startTopProgress = startTopProgress;
     window.finishTopProgress = finishTopProgress;
 
+    // --- Network-Aware Fetch Auto-Unlock Engine (BUG-160) ---
+    let activeFetchCount = 0;
+    let isPageUnloading = false;
+    const pendingAjaxButtons = new Set();
+
+    window.addEventListener('beforeunload', function() {
+        isPageUnloading = true;
+    });
+
+    function flushPendingAjaxButtons() {
+        if (activeFetchCount > 0 || isPageUnloading) return;
+        pendingAjaxButtons.forEach(function(btn) {
+            restoreButton(btn);
+        });
+        pendingAjaxButtons.clear();
+        finishTopProgress();
+    }
+
+    if (typeof window.fetch === 'function' && !window.fetch._sigmaWrapped) {
+        const nativeFetch = window.fetch.bind(window);
+        const wrappedFetch = function(...args) {
+            activeFetchCount++;
+            try {
+                const promise = nativeFetch(...args);
+                if (promise && typeof promise.finally === 'function') {
+                    return promise.finally(function() {
+                        activeFetchCount = Math.max(0, activeFetchCount - 1);
+                        if (activeFetchCount === 0) {
+                            setTimeout(flushPendingAjaxButtons, 60);
+                        }
+                    });
+                }
+                activeFetchCount = Math.max(0, activeFetchCount - 1);
+                return promise;
+            } catch (err) {
+                activeFetchCount = Math.max(0, activeFetchCount - 1);
+                setTimeout(flushPendingAjaxButtons, 60);
+                throw err;
+            }
+        };
+        wrappedFetch._sigmaWrapped = true;
+        window.fetch = wrappedFetch;
+    }
+
     // --- Automatic Universal Event Listeners ---
 
-    // 1. Automatic Form Submit Handler (Capture Phase: catches all standard & JS-handled forms)
+    // 1. Automatic Form Submit Handler (Bubble Phase: runs after onsubmit handlers so e.defaultPrevented & origHtml are respected)
     document.addEventListener('submit', function(e) {
         const form = e.target;
         if (!form || !(form instanceof HTMLFormElement)) return;
@@ -172,31 +216,54 @@
         // Identify the submit button (modern submitter API with fallback)
         let submitBtn = e.submitter;
         if (!submitBtn) {
-            submitBtn = form.querySelector('button[type="submit"]:not([disabled]), input[type="submit"]:not([disabled])');
+            submitBtn = form.querySelector('button[type="submit"]:not([disabled]), input[type="submit"]:not([disabled]), button.is-spinning-lock');
         }
 
-        if (submitBtn) {
+        if (!submitBtn) return;
+
+        // If form submission was intercepted by an in-page JS handler (e.preventDefault()):
+        if (e.defaultPrevented) {
             spinAndLock(submitBtn);
-
-            // Special handling for file exports and downloads (where page does not reload)
-            const action = (form.getAttribute('action') || '').toLowerCase();
-            const isDownload = action.includes('export') || action.includes('download') || 
-                               form.target === '_blank' || submitBtn.classList.contains('js-download-btn');
-            if (isDownload) {
-                setTimeout(() => restoreButton(submitBtn), 4000);
-            } else {
-                startTopProgress();
-            }
+            pendingAjaxButtons.add(submitBtn);
+            // If the handler was purely local (like addToScope) or exited early without starting a fetch, unlock immediately:
+            setTimeout(function() {
+                if (activeFetchCount === 0) {
+                    restoreButton(submitBtn);
+                    pendingAjaxButtons.delete(submitBtn);
+                    finishTopProgress();
+                }
+            }, 65);
+            return;
         }
-    }, true);
+
+        // Standard full-page form submission:
+        spinAndLock(submitBtn);
+
+        // Special handling for file exports and downloads (where page does not reload)
+        const action = (form.getAttribute('action') || '').toLowerCase();
+        const isDownload = action.includes('export') || action.includes('download') || 
+                           form.target === '_blank' || submitBtn.classList.contains('js-download-btn');
+        if (isDownload) {
+            setTimeout(() => restoreButton(submitBtn), 4000);
+        } else {
+            startTopProgress();
+        }
+    }, false);
 
     // 2. Click Handler for Explicit Spin Buttons (buttons with data-spin="true" or .js-spin-lock)
     document.addEventListener('click', function(e) {
         const btn = e.target.closest('button[data-spin="true"], .js-spin-lock, .sigma-spin-on-click');
         if (btn && btn.type !== 'submit') {
             spinAndLock(btn);
+            pendingAjaxButtons.add(btn);
+            setTimeout(function() {
+                if (activeFetchCount === 0 && !isPageUnloading) {
+                    restoreButton(btn);
+                    pendingAjaxButtons.delete(btn);
+                }
+            }, 400);
         }
-    }, true);
+    }, false);
 
     // 3. Navigation Ribbon & Menu Tab Click Handler (Technique A)
     document.addEventListener('click', function(e) {
@@ -239,9 +306,11 @@
 
     // 4. Page Show Handler (restores buttons and tabs if user presses browser back button / bfcache)
     window.addEventListener('pageshow', function(event) {
+        isPageUnloading = false;
         document.querySelectorAll('.is-spinning-lock').forEach(function(lockedBtn) {
             restoreButton(lockedBtn);
         });
+        pendingAjaxButtons.clear();
         document.querySelectorAll('.tab-is-loading').forEach(function(tab) {
             tab.classList.remove('tab-is-loading');
             tab.style.pointerEvents = '';
@@ -251,16 +320,6 @@
             mainContent.classList.remove('table-view-fading');
         }
         finishTopProgress();
-    });
-
-    // 5. Global Decision Modal Integration
-    document.addEventListener('DOMContentLoaded', function() {
-        const confirmBtn = document.getElementById('btn-decision-confirm');
-        if (confirmBtn) {
-            confirmBtn.addEventListener('click', function() {
-                spinAndLock(confirmBtn);
-            });
-        }
     });
 
 })();

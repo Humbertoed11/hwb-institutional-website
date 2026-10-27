@@ -1288,6 +1288,7 @@
                                             <button onclick="openAccountCommand('{{ client.customer_id }}', 'edit')" class="isc-dropdown-btn"><i class="fas fa-edit" style="margin-right:0.75rem; color: var(--slate-400); width: 14px;"></i> Edit Client</button>
                                             <div style="height: 1px; background: var(--slate-100); margin: 0.5rem 0;"></div>
                                             <button onclick="openAccountCommand('{{ client.customer_id }}', 'actions')" class="isc-dropdown-btn"><i class="fas fa-plus-circle" style="margin-right:0.75rem; color: #10b981; width: 14px;"></i> Add Note</button>
+                                            <button onclick="openAccountCommand('{{ client.customer_id }}', 'visit')" class="isc-dropdown-btn"><i class="fas fa-calendar-alt" style="margin-right:0.75rem; color: #f59e0b; width: 14px;"></i> Request Visit</button>
                                             {% endif %}
                                             <button onclick="openAccountCommand('{{ client.customer_id }}', 'contacts')" class="isc-dropdown-btn"><i class="fas fa-users" style="margin-right:0.75rem; color: #6366f1; width: 14px;"></i> Contacts</button>
                                             {% if can_del_acc %}

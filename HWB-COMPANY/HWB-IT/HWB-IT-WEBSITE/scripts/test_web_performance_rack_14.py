@@ -3099,6 +3099,158 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
             finally:
                 conn.close()
 
+    def test_37_enterprise_delete_gear_and_button_lock_lifecycle_bug_160(self):
+        """
+        BUG-160: Verifies the 5-Layer Enterprise Button, Gear Menu, & Delete Architecture:
+        1. Layer 1 (sigma_button_lock.js): Network-Aware Fetch Auto-Unlock Engine wraps window.fetch,
+           tracks pendingAjaxButtons, and removes the duplicate 25-second lock on #btn-decision-confirm.
+        2. Layer 2 (showDecision & Undo Toast): showDecision awaits onConfirm and guarantees restoreButton
+           inside finally; deleteUserScript uses showDecision instead of raw confirm().
+        3. Layer 3 & 4 (Zero-Destruction Table Sync & Gear Menu): syncOperationalData uses DOMParser HTML
+           table swap (preserving <select> dropdowns); removeTableRowsAndSyncCounts removes rows in 0ms;
+           handleActivityResultChange maps 'Spoke to them' -> 'Contacted'; markLeadDNCFromModal updates
+           the <select> in-place.
+        4. Layer 5 (Atomic Delete with FK Children + Snapshot Undo Restore): Deleting a Lead that has
+           child rows in LeadStageHistory, Contacts, GlobalActivities, CampaignRecipients, and PendingOutbox
+           succeeds atomically (HTTP 200) and returns a restore_token that restores the Lead and its children
+           via POST /api/v1/crm/restore-deleted.
+        """
+        from core.services.database import get_db
+
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        lock_js_path = os.path.join(base_dir, "static", "js", "sigma_button_lock.js")
+        ops_js_path = os.path.join(base_dir, "static", "js", "backoffice_operations_core.js")
+        base_tpl_path = os.path.join(base_dir, "templates", "backoffice_base.html")
+        ops_tpl_path = os.path.join(base_dir, "templates", "backoffice_operations.html")
+
+        with open(lock_js_path, "r", encoding="utf-8") as f:
+            lock_js = f.read()
+        with open(ops_js_path, "r", encoding="utf-8") as f:
+            ops_js = f.read()
+        with open(base_tpl_path, "r", encoding="utf-8") as f:
+            base_tpl = f.read()
+        with open(ops_tpl_path, "r", encoding="utf-8") as f:
+            ops_tpl = f.read()
+
+        # Layer 1 assertions
+        self.assertIn("pendingAjaxButtons", lock_js)
+        self.assertIn("flushPendingAjaxButtons", lock_js)
+        self.assertIn("window.fetch = wrappedFetch", lock_js)
+        self.assertNotIn("const confirmBtn = e.target.closest('#btn-decision-confirm')", lock_js)
+
+        # Layer 2 assertions
+        self.assertIn("restoreDeletedCrmRecord", ops_js)
+        self.assertIn("finally {", base_tpl)
+        self.assertNotIn('if (!confirm("Are you sure you want to delete this calling script', ops_js)
+
+        # Layer 3 & 4 assertions
+        self.assertIn("new DOMParser()", ops_js)
+        self.assertIn("removeTableRowsAndSyncCounts", ops_js)
+        self.assertIn("resultVal === 'Spoke to them'", ops_js)
+        self.assertIn("applyLeadStatusSelectStyle(statusSelect, 'Do Not Call (DNC)')", ops_js)
+        self.assertIn("openAccountCommand('{{ client.customer_id }}', 'visit')", ops_tpl)
+
+        # Layer 5 End-to-End Atomic Delete + Snapshot Undo Restore
+        auth_client = self.get_auth_client()
+        lead_id = None
+        campaign_id = None
+        recipient_id = None
+        try:
+            r_create = auth_client.post(
+                "/admin/add-lead",
+                json={
+                    "company_name": "BUG160 Enterprise Lifecycle Academy",
+                    "decision_maker": "Director Evelyn",
+                    "phone": "972-555-0160",
+                    "email": "evelyn@bug160academy.org",
+                    "address": "1600 Enterprise Pkwy",
+                    "city": "Plano",
+                    "state": "TX",
+                    "zipcode": "75024",
+                },
+                headers={"Accept": "application/json"},
+            )
+            self.assertEqual(r_create.status_code, 200)
+            lead_id = r_create.get_json().get("lead_id")
+            self.assertIsNotNone(lead_id)
+
+            # Attach child records across LeadStageHistory, Contacts, and GlobalActivities via API
+            r_stage = auth_client.patch(f"/api/v1/leads/{lead_id}", json={"status": "Engaged"})
+            self.assertEqual(r_stage.status_code, 200)
+
+            r_contact = auth_client.post(
+                f"/api/v1/leads/{lead_id}/contacts",
+                json={
+                    "full_name": "Director Evelyn",
+                    "role": "Director",
+                    "phone": "(972)-555-0160",
+                    "email": "evelyn@bug160academy.org",
+                },
+            )
+            self.assertEqual(r_contact.status_code, 200)
+
+            conn = get_db(self.db_url)
+            try:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        'INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description) VALUES (%s, %s, %s, %s);',
+                        (lead_id, "Lead", "Call Attempt", "Spoke with front desk"),
+                    )
+                    conn.commit()
+            finally:
+                conn.close()
+
+            # 1st Delete: Must succeed atomically (HTTP 200) despite all 5 child tables and return restore_token
+            r_del1 = auth_client.delete(f"/api/v1/leads/{lead_id}")
+            self.assertEqual(r_del1.status_code, 200, "Atomic Lead DELETE with FK child rows must return 200 OK")
+            del1_json = r_del1.get_json()
+            self.assertEqual(del1_json.get("status"), "success")
+            restore_token = del1_json.get("restore_token")
+            self.assertTrue(restore_token and len(restore_token) >= 16, "DELETE must return a valid restore_token")
+
+            # Verify Lead is gone
+            r_check_gone = auth_client.get(f"/api/v1/leads/{lead_id}")
+            self.assertEqual(r_check_gone.status_code, 404)
+
+            # Undo / Restore via POST /api/v1/crm/restore-deleted
+            r_restore = auth_client.post(
+                "/api/v1/crm/restore-deleted",
+                json={"restore_token": restore_token},
+            )
+            self.assertEqual(r_restore.status_code, 200)
+            res_json = r_restore.get_json()
+            self.assertEqual(res_json.get("status"), "success")
+            self.assertGreaterEqual(res_json.get("restored_count", 0), 1)
+
+            # Verify Lead and its Contact/Activity were restored!
+            r_check_restored = auth_client.get(f"/api/v1/leads/{lead_id}")
+            self.assertEqual(r_check_restored.status_code, 200)
+            restored_data = r_check_restored.get_json()
+            self.assertEqual(restored_data.get("lead", {}).get("center_name"), "BUG160 Enterprise Lifecycle Academy")
+            self.assertGreaterEqual(len(restored_data.get("contacts", [])), 1)
+
+            # 2nd Consecutive Delete: Verify zero lockup on back-to-back deletes
+            r_del2 = auth_client.delete(f"/api/v1/leads/{lead_id}")
+            self.assertEqual(r_del2.status_code, 200)
+            self.assertEqual(r_del2.get_json().get("status"), "success")
+            lead_id = None
+        finally:
+            conn = get_db(self.db_url)
+            try:
+                with conn.cursor() as cur:
+                    if recipient_id:
+                        cur.execute('DELETE FROM "PendingOutbox" WHERE recipient_id = %s;', (recipient_id,))
+                        cur.execute('DELETE FROM "CampaignRecipients" WHERE id = %s;', (recipient_id,))
+                    if campaign_id:
+                        cur.execute('DELETE FROM "MarketingCampaigns" WHERE id = %s;', (campaign_id,))
+                    if lead_id:
+                        cur.execute('DELETE FROM "LeadStageHistory" WHERE lead_id = %s;', (lead_id,))
+                        cur.execute('DELETE FROM "Contacts" WHERE lead_id = %s;', (lead_id,))
+                        cur.execute('DELETE FROM "GlobalActivities" WHERE parent_type = %s AND parent_id = %s;', ("Lead", lead_id))
+                        cur.execute('DELETE FROM "Leads" WHERE id = %s;', (lead_id,))
+                    conn.commit()
+            finally:
+                conn.close()
 
 
 if __name__ == "__main__":

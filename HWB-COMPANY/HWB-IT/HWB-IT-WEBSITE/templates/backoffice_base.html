@@ -666,33 +666,49 @@
       }
   }
 
-  // --- SigmaFidelity™ Global Decision Modal Engine ---
+  // --- SigmaFidelity™ Global Decision Modal Engine (BUG-160 Async Auto-Unlock & Close) ---
   function showDecision(options) {
       const modal = document.getElementById('modal-decision');
       const title = document.getElementById('decision-title');
       const text = document.getElementById('decision-text');
       const icon = document.getElementById('decision-icon');
       const confirmBtn = document.getElementById('btn-decision-confirm');
-      if (!modal) return;
+      if (!modal || !confirmBtn) return;
 
-      title.innerText = options.title || 'Are you sure?';
-      text.innerText = options.text || 'Please confirm this action to proceed.';
+      // Always reset any prior lock state before configuring new modal labels
+      if (window.restoreButton) {
+          window.restoreButton(confirmBtn);
+      }
+      confirmBtn.classList.remove('is-spinning-lock');
+      confirmBtn.disabled = false;
+      delete confirmBtn.dataset.originalHtml;
+      delete confirmBtn.dataset.originalWidth;
+
+      if (title) title.innerText = options.title || 'Are you sure?';
+      if (text) text.innerText = options.text || 'Please confirm this action to proceed.';
       confirmBtn.innerText = options.confirmText || 'Confirm';
       confirmBtn.style.background = options.isDestructive ? '#ef4444' : 'var(--brand-gradient, #2563eb)';
-      icon.style.color = options.isDestructive ? '#ef4444' : 'var(--brand, #2563eb)';
-      icon.innerHTML = `<i class="fas ${options.icon || 'fa-question-circle'}"></i>`;
+      if (icon) {
+          icon.style.color = options.isDestructive ? '#ef4444' : 'var(--brand, #2563eb)';
+          icon.innerHTML = `<i class="fas ${options.icon || 'fa-question-circle'}"></i>`;
+      }
 
-      confirmBtn.onclick = () => {
-          if (typeof options.onConfirm === 'function') {
-              options.onConfirm();
+      confirmBtn.onclick = async () => {
+          if (window.spinAndLock) window.spinAndLock(confirmBtn);
+          try {
+              if (typeof options.onConfirm === 'function') {
+                  await options.onConfirm(confirmBtn);
+              }
+          } finally {
+              if (window.restoreButton) window.restoreButton(confirmBtn);
+              closeModal('modal-decision');
           }
-          closeModal('modal-decision');
       };
       openModal('modal-decision');
   }
 
-  // --- SigmaFidelity™ Global Toast Notification System ---
-  function showToast(message, type = 'success') {
+  // --- SigmaFidelity™ Global Toast Notification System (Supports 1-Click Undo Action) ---
+  function showToast(message, type = 'success', actionOptions = null) {
       const container = document.getElementById('isc-toast-container') || (function() {
           const div = document.createElement('div');
           div.id = 'isc-toast-container';
@@ -701,16 +717,38 @@
           return div;
       })();
       const toast = document.createElement('div');
-      const icon = type === 'success' ? '<i class="fas fa-check-circle" style="color: #10b981;"></i>' : '<i class="fas fa-exclamation-circle" style="color: #ef4444;"></i>';
-      const borderColor = type === 'success' ? '#10b981' : '#ef4444';
+      const icon = type === 'success' ? '<i class="fas fa-check-circle" style="color: #10b981;"></i>' : (type === 'info' ? '<i class="fas fa-info-circle" style="color: #0284c7;"></i>' : '<i class="fas fa-exclamation-circle" style="color: #ef4444;"></i>');
+      const borderColor = type === 'success' ? '#10b981' : (type === 'info' ? '#0284c7' : '#ef4444');
       toast.style.cssText = `background: white; border-left: 4px solid ${borderColor}; padding: 1rem 1.5rem; border-radius: 6px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); font-weight: 700; font-size: 0.875rem; color: var(--slate-800, #1e293b); display: flex; align-items: center; gap: 0.75rem; pointer-events: auto; animation: slideInUp 0.3s ease forwards;`;
-      toast.innerHTML = `${icon} <span>${message}</span>`;
+      const span = document.createElement('span');
+      span.innerHTML = `${icon} <span style="margin-left:0.35rem;">${message}</span>`;
+      toast.appendChild(span);
+
+      if (actionOptions && typeof actionOptions.onAction === 'function') {
+          const actionBtn = document.createElement('button');
+          actionBtn.type = 'button';
+          actionBtn.innerHTML = actionOptions.actionLabel || '↩ Undo';
+          actionBtn.style.cssText = 'margin-left: 0.5rem; padding: 0.3rem 0.75rem; border-radius: 6px; border: 1px solid #cbd5e1; background: #f8fafc; color: #0f172a; font-weight: 800; font-size: 0.78rem; cursor: pointer; white-space: nowrap;';
+          actionBtn.onclick = async (ev) => {
+              ev.stopPropagation();
+              actionBtn.disabled = true;
+              actionBtn.innerText = 'Restoring...';
+              try {
+                  await actionOptions.onAction();
+              } finally {
+                  toast.remove();
+              }
+          };
+          toast.appendChild(actionBtn);
+      }
+
       container.appendChild(toast);
+      const duration = (actionOptions && actionOptions.durationMs) ? actionOptions.durationMs : (actionOptions ? 10000 : 4000);
       setTimeout(() => {
           toast.style.opacity = '0';
           toast.style.transition = 'opacity 0.3s ease';
           setTimeout(() => toast.remove(), 300);
-      }, 4000);
+      }, duration);
   }
 
   // --- Sigmaquality™ Connection Sequence ---

@@ -944,45 +944,103 @@
         const text = document.getElementById('decision-text');
         const icon = document.getElementById('decision-icon');
         const confirmBtn = document.getElementById('btn-decision-confirm');
-        if(!modal) return;
-        
-        // Restore button state in case it was previously locked
-        if (window.restoreButton) window.restoreButton(confirmBtn);
+        if (!modal || !confirmBtn) return;
 
-        title.innerText = options.title || 'Are you sure?';
-        text.innerText = options.text || 'Please confirm to proceed.';
+        // Always reset any prior lock state before configuring new modal labels
+        if (window.restoreButton) window.restoreButton(confirmBtn);
+        confirmBtn.classList.remove('is-spinning-lock');
+        confirmBtn.disabled = false;
+        delete confirmBtn.dataset.originalHtml;
+        delete confirmBtn.dataset.originalWidth;
+
+        if (title) title.innerText = options.title || 'Are you sure?';
+        if (text) text.innerText = options.text || 'Please confirm to proceed.';
         confirmBtn.innerText = options.confirmText || 'Confirm';
         confirmBtn.style.background = options.isDestructive ? '#ef4444' : 'var(--brand-gradient)';
-        icon.style.color = options.isDestructive ? '#ef4444' : 'var(--brand)';
-        icon.innerHTML = `<i class="fas ${options.icon || 'fa-question-circle'}"></i>`;
+        if (icon) {
+            icon.style.color = options.isDestructive ? '#ef4444' : 'var(--brand)';
+            icon.innerHTML = `<i class="fas ${options.icon || 'fa-question-circle'}"></i>`;
+        }
 
-        confirmBtn.onclick = () => {
+        confirmBtn.onclick = async () => {
             if (window.spinAndLock) window.spinAndLock(confirmBtn);
-            if (typeof options.onConfirm === 'function') {
-                options.onConfirm(confirmBtn);
+            try {
+                if (typeof options.onConfirm === 'function') {
+                    await options.onConfirm(confirmBtn);
+                }
+            } finally {
+                if (window.restoreButton) window.restoreButton(confirmBtn);
+                closeModal('modal-decision');
             }
         };
         openModal('modal-decision');
     }
 
-    function showToast(message, type = 'success') {
+    function showToast(message, type = 'success', actionOptions = null) {
         const container = document.getElementById('isc-toast-container') || (function() {
             const div = document.createElement('div');
             div.id = 'isc-toast-container';
-            div.style.cssText = 'position: fixed; bottom: 2rem; right: 2rem; z-index: 9999; display: flex; flex-direction: column; gap: 1rem; pointer-events: none;';
+            div.style.cssText = 'position: fixed; bottom: 2rem; right: 2rem; z-index: 99999; display: flex; flex-direction: column; gap: 1rem; pointer-events: none;';
             document.body.appendChild(div);
             return div;
         })();
         const toast = document.createElement('div');
-        const icon = type === 'success' ? '<i class="fas fa-check-circle" style="color: #10b981;"></i>' : '<i class="fas fa-exclamation-circle" style="color: #ef4444;"></i>';
-        const borderColor = type === 'success' ? '#10b981' : '#ef4444';
-        toast.style.cssText = `background: white; border-left: 4px solid ${borderColor}; padding: 1.25rem 2rem; border-radius: 0.5rem; box-shadow: 0 10px 25px rgba(0,0,0,0.1); font-weight: 700; color: var(--slate-800); display: flex; align-items: center; gap: 1rem; animation: slideInUp 0.3s ease forwards;`;
-        toast.innerHTML = `${icon} <span>${message}</span>`;
+        const icon = type === 'success' ? '<i class="fas fa-check-circle" style="color: #10b981;"></i>' : (type === 'info' ? '<i class="fas fa-info-circle" style="color: #0284c7;"></i>' : '<i class="fas fa-exclamation-circle" style="color: #ef4444;"></i>');
+        const borderColor = type === 'success' ? '#10b981' : (type === 'info' ? '#0284c7' : '#ef4444');
+        toast.style.cssText = `background: white; border-left: 4px solid ${borderColor}; padding: 1.1rem 1.5rem; border-radius: 0.5rem; box-shadow: 0 10px 25px rgba(0,0,0,0.14); font-weight: 700; color: var(--slate-800); display: flex; align-items: center; gap: 0.85rem; pointer-events: auto; animation: slideInUp 0.3s ease forwards;`;
+        const msgWrap = document.createElement('span');
+        msgWrap.innerHTML = `${icon} <span style="margin-left:0.35rem;">${message}</span>`;
+        toast.appendChild(msgWrap);
+
+        if (actionOptions && typeof actionOptions.onAction === 'function') {
+            const actionBtn = document.createElement('button');
+            actionBtn.type = 'button';
+            actionBtn.innerHTML = actionOptions.actionLabel || '↩ Undo';
+            actionBtn.style.cssText = 'margin-left: 0.4rem; padding: 0.35rem 0.75rem; border-radius: 6px; border: 1px solid #cbd5e1; background: #f8fafc; color: #0f172a; font-weight: 800; font-size: 0.78rem; cursor: pointer; white-space: nowrap;';
+            actionBtn.onclick = async (ev) => {
+                ev.stopPropagation();
+                actionBtn.disabled = true;
+                actionBtn.innerText = 'Restoring...';
+                try {
+                    await actionOptions.onAction();
+                } finally {
+                    toast.remove();
+                }
+            };
+            toast.appendChild(actionBtn);
+        }
+
         container.appendChild(toast);
+        const duration = (actionOptions && actionOptions.durationMs) ? actionOptions.durationMs : (actionOptions ? 10000 : 4000);
         setTimeout(() => {
             toast.style.animation = 'fadeOut 0.3s ease forwards';
             setTimeout(() => toast.remove(), 300);
-        }, 4000);
+        }, duration);
+    }
+
+    async function restoreDeletedCrmRecord(restoreToken, onRestoredCallback) {
+        if (!restoreToken) return;
+        try {
+            const res = await fetch('/api/v1/crm/restore-deleted', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                body: JSON.stringify({ restore_token: restoreToken })
+            });
+            const data = await res.json().catch(() => ({}));
+            if (res.ok && data.status === 'success') {
+                showToast(data.message || 'Record restored.', 'success');
+                if (typeof onRestoredCallback === 'function') {
+                    await onRestoredCallback(data);
+                } else {
+                    await syncOperationalData();
+                }
+            } else {
+                showToast('Could not restore record: ' + (data.message || 'Error'), 'error');
+            }
+        } catch (err) {
+            console.error('Restore Deleted Record Error:', err);
+            showToast('Network error restoring record.', 'error');
+        }
     }
 
     function copySigmaId(event, text) {
@@ -1134,6 +1192,14 @@
         const m = document.getElementById(id);
         document.querySelectorAll('.isc-row-menu').forEach(x => { if(x.id !== id) x.style.display = 'none'; });
         if (!m) return;
+        if (!m.dataset.autoCloseBound) {
+            m.addEventListener('click', function(e) {
+                if (e.target.closest('button, a')) {
+                    m.style.display = 'none';
+                }
+            });
+            m.dataset.autoCloseBound = 'true';
+        }
         const isOpening = (m.style.display !== 'block');
         m.style.display = isOpening ? 'block' : 'none';
         if (isOpening) {
@@ -1160,6 +1226,8 @@
     const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = val || ''; };
 
     async function openLeadCommand(id, mode = 'overview') {
+        const requestedMode = mode;
+        document.querySelectorAll('.isc-row-menu').forEach(x => { x.style.display = 'none'; });
         if (mode === 'visit' || mode === 'actions') {
             mode = 'activities';
         }
@@ -1354,6 +1422,33 @@
                 if(leadTitle) leadTitle.innerText = 'Lead Details';
                 if(leadDesc) leadDesc.innerText = 'Review facility specifications, update decision-maker contacts, schedule building walkthroughs, and log outreach calls.';
                 iscLeadTab(mode);
+                if (requestedMode === 'visit') {
+                    setTimeout(() => {
+                        const vInput = document.getElementById('visit-date');
+                        if (vInput) {
+                            vInput.focus();
+                            const card = vInput.closest('div[style*="background"]');
+                            if (card) {
+                                card.style.transition = 'box-shadow 0.25s ease';
+                                card.style.boxShadow = '0 0 0 3px #10b981';
+                                setTimeout(() => { card.style.boxShadow = 'none'; }, 1800);
+                            }
+                        }
+                    }, 80);
+                } else if (requestedMode === 'actions') {
+                    setTimeout(() => {
+                        const aInput = document.getElementById('lead-activity-desc');
+                        if (aInput) {
+                            aInput.focus();
+                            const card = aInput.closest('div[style*="background"]');
+                            if (card) {
+                                card.style.transition = 'box-shadow 0.25s ease';
+                                card.style.boxShadow = '0 0 0 3px #3b82f6';
+                                setTimeout(() => { card.style.boxShadow = 'none'; }, 1800);
+                            }
+                        }
+                    }, 80);
+                }
             } else {
                 if(paneEdit) paneEdit.style.display = 'none'; if(paneOverview) paneOverview.style.display = 'flex'; if(tabs) tabs.style.display = 'flex';
                 if(leadTitle) leadTitle.innerText = 'Lead Details';
@@ -1472,7 +1567,7 @@
         if (!stageSelect) return;
         if (resultVal === 'Spoke with Manager - Interested' || resultVal === 'Walkthrough Requested') {
             stageSelect.value = 'Qualified';
-        } else if (resultVal === 'Spoke with Manager - Follow Up') {
+        } else if (resultVal === 'Spoke to them' || resultVal === 'Spoke with Manager - Follow Up') {
             stageSelect.value = 'Contacted';
         } else if (resultVal === 'Walkthrough Completed') {
             stageSelect.value = 'Walkthrough Completed';
@@ -1661,6 +1756,8 @@
     }
 
     async function openAccountCommand(id, mode = 'overview') {
+        const requestedMode = mode;
+        document.querySelectorAll('.isc-row-menu').forEach(x => { x.style.display = 'none'; });
         if (mode === 'visit' || mode === 'actions') {
             mode = 'activities';
         }
@@ -1802,6 +1899,33 @@
                 if(accTitle) accTitle.innerText = 'Client Details';
                 if(accDesc) accDesc.innerText = 'Review facility specifications, billing terms, insurance compliance, and cleaning service schedules.';
                 iscTab(mode);
+                if (requestedMode === 'visit') {
+                    setTimeout(() => {
+                        const vInput = document.getElementById('visit-date-acc');
+                        if (vInput) {
+                            vInput.focus();
+                            const card = vInput.closest('div[style*="background"]');
+                            if (card) {
+                                card.style.transition = 'box-shadow 0.25s ease';
+                                card.style.boxShadow = '0 0 0 3px #10b981';
+                                setTimeout(() => { card.style.boxShadow = 'none'; }, 1800);
+                            }
+                        }
+                    }, 80);
+                } else if (requestedMode === 'actions') {
+                    setTimeout(() => {
+                        const aInput = document.getElementById('activity-desc');
+                        if (aInput) {
+                            aInput.focus();
+                            const card = aInput.closest('div[style*="background"]');
+                            if (card) {
+                                card.style.transition = 'box-shadow 0.25s ease';
+                                card.style.boxShadow = '0 0 0 3px #3b82f6';
+                                setTimeout(() => { card.style.boxShadow = 'none'; }, 1800);
+                            }
+                        }
+                    }, 80);
+                }
             } else {
                 if(paneEdit) paneEdit.style.display = 'none'; if(paneOverview) paneOverview.style.display = 'flex'; if(tabs) tabs.style.display = 'flex';
                 if(accTitle) accTitle.innerText = 'Client Details';
@@ -1912,59 +2036,92 @@
         }
     }
 
-    // --- SigmaFidelity™ Grid Re-hydration Engine ---
-    async function syncOperationalData() {
-        console.log("[SYNC] Initiating high-fidelity data synchronization...");
+    // --- SigmaFidelity™ Grid Re-hydration Engine (Zero-Destruction Server-HTML Swap — BUG-160) ---
+    function removeTableRowsAndSyncCounts(entityType, idsArray) {
+        const ids = (Array.isArray(idsArray) ? idsArray : [idsArray]).map(x => String(x));
+        let removedCount = 0;
+        const selectorPrefix = entityType === 'account' ? '.accounts-row' : '.leads-row';
+        ids.forEach(idStr => {
+            const row = document.querySelector(`${selectorPrefix}[data-id="${idStr}"]`);
+            if (row) {
+                row.remove();
+                removedCount++;
+            }
+        });
+        if (removedCount > 0) {
+            const btnId = entityType === 'account' ? 'btn-accounts' : 'btn-leads';
+            const btn = document.getElementById(btnId);
+            if (btn) {
+                const match = (btn.innerText || '').match(/\((\d[\d,]*)\)/);
+                if (match) {
+                    const currentTotal = parseInt(match[1].replace(/,/g, ''), 10);
+                    if (!isNaN(currentTotal) && currentTotal >= removedCount) {
+                        const nextTotal = Math.max(0, currentTotal - removedCount);
+                        btn.innerText = `${entityType === 'account' ? 'Accounts' : 'Leads'} (${nextTotal})`;
+                    }
+                }
+            }
+        }
+        return removedCount;
+    }
+
+    async function syncOperationalData(options = {}) {
+        const silent = Boolean(options && options.silent);
+        console.log("[SYNC] Initiating zero-destruction HTML table synchronization...");
         const url = new URL(window.location.href);
-        url.searchParams.set('format', 'json');
-        
+        url.searchParams.delete('format');
+        url.searchParams.set('_sync_ts', Date.now().toString());
+
         try {
-            const res = await fetch(url.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-            
-            const contentType = res.headers.get("content-type");
-            console.log("[SYNC] Content-Type:", contentType);
+            const res = await fetch(url.toString(), {
+                headers: {
+                    'Accept': 'text/html',
+                    'Cache-Control': 'no-cache'
+                }
+            });
 
             if (!res.ok) {
-                const text = await res.text();
-                throw new Error(`Server returned ${res.status}: ${text.substring(0, 100)}`);
+                throw new Error(`Server returned ${res.status}`);
             }
 
-            if (!contentType || !contentType.includes("application/json")) {
-                const text = await res.text();
-                console.error("[SYNC] Received non-JSON response:", text.substring(0, 200));
-                throw new Error("Received HTML instead of JSON. Check session status.");
+            const htmlText = await res.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlText, 'text/html');
+
+            // 1. Swap Leads Table tbody while preserving server-rendered <select> dropdowns & role permissions
+            const currentLeadsBody = document.querySelector('#table-leads tbody');
+            const newLeadsBody = doc.querySelector('#table-leads tbody');
+            if (currentLeadsBody && newLeadsBody) {
+                currentLeadsBody.innerHTML = newLeadsBody.innerHTML;
+                if (typeof syncCheckboxesWithPersistedSelection === 'function') {
+                    syncCheckboxesWithPersistedSelection();
+                }
             }
 
-            const data = await res.json();
-            
-            if (!data || !data.leads || !data.clients) throw new Error("Incomplete data payload received");
-
-            // 1. Update Leads Table
-            const leadsBody = document.querySelector('#table-leads tbody');
-            if (leadsBody) {
-                leadsBody.innerHTML = data.leads.map(lead => {
-                    try { return buildLeadRow(lead); } catch(e) { console.error("Lead Row Error:", e, lead); return ''; }
-                }).join('');
-            }
-            
-            // 2. Update Accounts Table
-            const accBody = document.querySelector('#table-accounts tbody');
-            if (accBody) {
-                accBody.innerHTML = data.clients.map(client => {
-                    try { return buildAccountRow(client); } catch(e) { console.error("Account Row Error:", e, client); return ''; }
-                }).join('');
+            // 2. Swap Accounts Table tbody while preserving server-rendered <select> dropdowns & role permissions
+            const currentAccBody = document.querySelector('#table-accounts tbody');
+            const newAccBody = doc.querySelector('#table-accounts tbody');
+            if (currentAccBody && newAccBody) {
+                currentAccBody.innerHTML = newAccBody.innerHTML;
             }
 
-            // 3. Update Global Tab Counts
+            // 3. Update Global Tab Counts & Pagination Badges
             const btnLeads = document.getElementById('btn-leads');
-            const btnAccounts = document.getElementById('btn-accounts');
-            if (btnLeads && data.counts) btnLeads.innerText = `Leads (${data.counts.leads})`;
-            if (btnAccounts && data.counts) btnAccounts.innerText = `Accounts (${data.counts.accounts})`;
+            const newBtnLeads = doc.getElementById('btn-leads');
+            if (btnLeads && newBtnLeads) btnLeads.innerHTML = newBtnLeads.innerHTML;
 
-            showToast("System state synchronized.", "success");
+            const btnAccounts = document.getElementById('btn-accounts');
+            const newBtnAccounts = doc.getElementById('btn-accounts');
+            if (btnAccounts && newBtnAccounts) btnAccounts.innerHTML = newBtnAccounts.innerHTML;
+
+            if (!silent) {
+                showToast("System state synchronized.", "success");
+            }
         } catch (err) {
             console.error("[SYNC] Fatal Error:", err);
-            showToast("Sync Error: " + err.message, "error");
+            if (!silent) {
+                showToast("Sync Error: " + err.message, "error");
+            }
         }
     }
 
@@ -2184,6 +2341,7 @@
                     <button onclick="openAccountCommand('${client.customer_id}', 'edit')" class="isc-dropdown-btn"><i class="fas fa-edit" style="margin-right:0.75rem; color: var(--slate-400); width: 14px;"></i> Edit Account</button>
                     <div style="height: 1px; background: var(--slate-100); margin: 0.5rem 0;"></div>
                     <button onclick="openAccountCommand('${client.customer_id}', 'actions')" class="isc-dropdown-btn"><i class="fas fa-plus-circle" style="margin-right:0.75rem; color: #10b981; width: 14px;"></i> Add Note</button>
+                    <button onclick="openAccountCommand('${client.customer_id}', 'visit')" class="isc-dropdown-btn"><i class="fas fa-calendar-alt" style="margin-right:0.75rem; color: #f59e0b; width: 14px;"></i> Request Visit</button>
                     <button onclick="openAccountCommand('${client.customer_id}', 'contacts')" class="isc-dropdown-btn"><i class="fas fa-users" style="margin-right:0.75rem; color: #6366f1; width: 14px;"></i> Contacts</button>
                     <div style="height: 1px; background: var(--slate-100); margin: 0.5rem 0;"></div>
                     <button onclick="deleteAccount('${client.customer_id}')" class="isc-dropdown-btn" style="color: #ef4444;"><i class="fas fa-trash-alt" style="margin-right:0.75rem; width: 14px;"></i> Delete Account</button>
@@ -2276,7 +2434,16 @@
                 const row = document.querySelector(`.leads-row[data-id="${currentLeadId}"]`);
                 if (row) {
                     const statusTd = row.querySelector('.sticky-2');
-                    if (statusTd) statusTd.innerHTML = '<span class="sigma-unit-pill" style="background:#fee2e2; color:#991b1b; border: 1px solid #fca5a5; font-weight: 800;">🚫 Do Not Call</span>';
+                    const statusSelect = statusTd ? statusTd.querySelector('select') : null;
+                    if (statusSelect) {
+                        statusSelect.value = 'Do Not Call (DNC)';
+                        statusSelect.setAttribute('data-prev-value', 'Do Not Call (DNC)');
+                        if (typeof applyLeadStatusSelectStyle === 'function') {
+                            applyLeadStatusSelectStyle(statusSelect, 'Do Not Call (DNC)');
+                        }
+                    } else if (statusTd) {
+                        statusTd.innerHTML = '<span class="sigma-unit-pill" style="background:#fee2e2; color:#991b1b; border: 1px solid #fca5a5; font-weight: 800;">🚫 Do Not Call</span>';
+                    }
                 }
             } else {
                 showToast(res.message || 'Failed to mark lead as DNC', 'error');
@@ -2454,11 +2621,11 @@
                     const res = await fetch(`/api/v1/leads/${id}/promote`, { method: 'POST' });
                     const result = await res.json().catch(() => ({status: 'error', message: 'Invalid JSON response'}));
                     if (res.ok) { 
-                        const row = document.querySelector(`.leads-row[data-id="${id}"]`);
-                        if (row) row.remove();
+                        removeTableRowsAndSyncCounts('lead', [id]);
                         closeModal('modal-lead-command');
+                        closeModal('modal-lead-cadence');
                         showToast("Upgraded to Client Account! Removed from Leads.", "success"); 
-                        syncOperationalData(); 
+                        syncOperationalData({ silent: true }); 
                     } else {
                         showToast("Upgrade failed: " + (result.message || "Unknown error"), "error");
                     }
@@ -2471,62 +2638,109 @@
 
     async function deleteLead(rowId) {
         const id = rowId || currentLeadId;
-        showDecision({ title: 'Delete this Lead?', text: 'This action is permanent.', confirmText: 'Delete Lead', isDestructive: true, icon: 'fa-trash-alt', onConfirm: async () => {
-            const res = await fetch(`/api/v1/leads/${id}`, { method: 'DELETE' });
-            if (res.ok) { 
-                showToast("Record deleted.", "success"); 
-                
-                const modal = document.getElementById('modal-lead-command');
-                if (modal && modal.style.display !== 'none') {
-                    const rows = Array.from(document.querySelectorAll('.leads-row'));
-                    const ids = rows.map(r => r.getAttribute('data-id'));
-                    const idx = ids.indexOf(id.toString());
-                    
-                    if (ids.length > 1) {
-                        let nextIdx = (idx + 1 < ids.length) ? (idx + 1) : (idx - 1);
-                        if (nextIdx >= 0 && nextIdx < ids.length) {
-                            openLeadCommand(ids[nextIdx], 'overview');
-                        } else {
-                            closeModal('modal-lead-command');
+        if (!id) return;
+        document.querySelectorAll('.isc-row-menu').forEach(m => { m.style.display = 'none'; });
+        showDecision({
+            title: 'Delete this Lead?',
+            text: 'This removes the lead and its linked contacts/activities from the active pipeline. You can undo this action immediately from the confirmation banner.',
+            confirmText: 'Delete Lead',
+            isDestructive: true,
+            icon: 'fa-trash-alt',
+            onConfirm: async () => {
+                try {
+                    const res = await fetch(`/api/v1/leads/${id}`, { method: 'DELETE' });
+                    const data = await res.json().catch(() => ({}));
+                    if (res.ok && data.status !== 'error') {
+                        const modal = document.getElementById('modal-lead-command');
+                        if (modal && modal.style.display !== 'none' && String(currentLeadId) === String(id)) {
+                            const rows = Array.from(document.querySelectorAll('.leads-row'));
+                            const ids = rows.map(r => r.getAttribute('data-id'));
+                            const idx = ids.indexOf(id.toString());
+
+                            if (ids.length > 1) {
+                                let nextIdx = (idx + 1 < ids.length) ? (idx + 1) : (idx - 1);
+                                if (nextIdx >= 0 && nextIdx < ids.length) {
+                                    openLeadCommand(ids[nextIdx], 'overview');
+                                } else {
+                                    closeModal('modal-lead-command');
+                                }
+                            } else {
+                                closeModal('modal-lead-command');
+                            }
                         }
+
+                        const cadenceModal = document.getElementById('modal-lead-cadence');
+                        if (cadenceModal && cadenceModal.style.display !== 'none' && activeCadenceLead && String(activeCadenceLead.id) === String(id)) {
+                            closeModal('modal-lead-cadence');
+                        }
+
+                        removeTableRowsAndSyncCounts('lead', [id]);
+                        const toastOpts = data.restore_token ? {
+                            actionLabel: '↩ Undo',
+                            onAction: () => restoreDeletedCrmRecord(data.restore_token),
+                            durationMs: 9000
+                        } : null;
+                        showToast(`Lead #${id} deleted.`, "success", toastOpts);
                     } else {
-                        closeModal('modal-lead-command');
+                        showToast("Delete failed: " + (data.message || `Server returned ${res.status}`), "error");
                     }
+                } catch (err) {
+                    console.error("Delete Lead Error:", err);
+                    showToast("Network error while deleting lead.", "error");
                 }
-                
-                syncOperationalData(); 
             }
-        }});
+        });
     }
 
     async function deleteAccount(rowId) {
         const id = rowId || currentAccountId;
-        showDecision({ title: 'Delete this Account?', text: 'This action is permanent.', confirmText: 'Delete Account', isDestructive: true, icon: 'fa-trash-alt', onConfirm: async () => {
-            const res = await fetch(`/api/v1/accounts/${id}`, { method: 'DELETE' });
-            if (res.ok) { 
-                showToast("Account deleted.", "success"); 
-                
-                const modal = document.getElementById('modal-account-command');
-                if (modal && modal.style.display !== 'none') {
-                    const rows = Array.from(document.querySelectorAll('.accounts-row'));
-                    const ids = rows.map(r => r.getAttribute('data-id'));
-                    const idx = ids.indexOf(id.toString());
-                    
-                    if (ids.length > 1) {
-                        let nextIdx = (idx + 1 < ids.length) ? (idx + 1) : (idx - 1);
-                        if (nextIdx >= 0 && nextIdx < ids.length) {
-                            openAccountCommand(ids[nextIdx], 'overview');
-                        } else {
-                            closeModal('modal-account-command');
+        if (!id) return;
+        document.querySelectorAll('.isc-row-menu').forEach(m => { m.style.display = 'none'; });
+        showDecision({
+            title: 'Delete this Account?',
+            text: 'This removes the client account and its linked contacts/activities. You can undo this action immediately from the confirmation banner.',
+            confirmText: 'Delete Account',
+            isDestructive: true,
+            icon: 'fa-trash-alt',
+            onConfirm: async () => {
+                try {
+                    const res = await fetch(`/api/v1/accounts/${id}`, { method: 'DELETE' });
+                    const data = await res.json().catch(() => ({}));
+                    if (res.ok && data.status !== 'error') {
+                        const modal = document.getElementById('modal-account-command');
+                        if (modal && modal.style.display !== 'none' && String(currentAccountId) === String(id)) {
+                            const rows = Array.from(document.querySelectorAll('.accounts-row'));
+                            const ids = rows.map(r => r.getAttribute('data-id'));
+                            const idx = ids.indexOf(id.toString());
+
+                            if (ids.length > 1) {
+                                let nextIdx = (idx + 1 < ids.length) ? (idx + 1) : (idx - 1);
+                                if (nextIdx >= 0 && nextIdx < ids.length) {
+                                    openAccountCommand(ids[nextIdx], 'overview');
+                                } else {
+                                    closeModal('modal-account-command');
+                                }
+                            } else {
+                                closeModal('modal-account-command');
+                            }
                         }
+
+                        removeTableRowsAndSyncCounts('account', [id]);
+                        const toastOpts = data.restore_token ? {
+                            actionLabel: '↩ Undo',
+                            onAction: () => restoreDeletedCrmRecord(data.restore_token),
+                            durationMs: 9000
+                        } : null;
+                        showToast(`Account #${id} deleted.`, "success", toastOpts);
                     } else {
-                        closeModal('modal-account-command');
+                        showToast("Delete failed: " + (data.message || `Server returned ${res.status}`), "error");
                     }
+                } catch (err) {
+                    console.error("Delete Account Error:", err);
+                    showToast("Network error while deleting account.", "error");
                 }
-                
-                syncOperationalData(); 
             }
-        }});
+        });
     }
 
     // --- Enterprise Bulk Leads, Cross-Page Selection, Quick Owner Popover & Round-Robin Modal (BUG-156) ---
@@ -3149,9 +3363,17 @@
                             const targetOwnerName = (targetOwnerId && typeof SYSTEM_USERS_MAP !== 'undefined') ? SYSTEM_USERS_MAP[targetOwnerId] : '';
                             ids.forEach(lid => refreshOwnerBadgeInDom(lid, targetOwnerId, targetOwnerName));
                         }
-                        showToast(`Successfully processed ${result.affected_count} records.`, "success");
+                        if (action === 'delete') {
+                            removeTableRowsAndSyncCounts('lead', ids);
+                        }
+                        const toastOpts = result.restore_token ? {
+                            actionLabel: '↩ Undo',
+                            onAction: () => restoreDeletedCrmRecord(result.restore_token),
+                            durationMs: 9000
+                        } : null;
+                        showToast(`Successfully processed ${result.affected_count} records.`, "success", toastOpts);
                         clearCrossPageLeadSelection();
-                        await syncOperationalData();
+                        await syncOperationalData({ silent: true });
                     } else {
                         showToast("Batch action failed: " + (result.message || "Unknown error"), "error");
                     }
@@ -3362,13 +3584,21 @@
                     
                     const result = await res.json().catch(() => ({status: 'error', message: 'Invalid JSON response'}));
                     if (res.ok && result.status === 'success') {
-                        showToast(`Successfully processed ${result.affected_count} accounts.`, "success");
+                        if (action === 'delete') {
+                            removeTableRowsAndSyncCounts('account', ids);
+                        }
+                        const toastOpts = result.restore_token ? {
+                            actionLabel: '↩ Undo',
+                            onAction: () => restoreDeletedCrmRecord(result.restore_token),
+                            durationMs: 9000
+                        } : null;
+                        showToast(`Successfully processed ${result.affected_count} accounts.`, "success", toastOpts);
                         // Reset select all checkbox
                         const selectAllCheckbox = document.getElementById('select-all-accounts');
                         if (selectAllCheckbox) selectAllCheckbox.checked = false;
                         
                         // Sync data
-                        await syncOperationalData();
+                        await syncOperationalData({ silent: true });
                         handleAccSelectChange();
                     } else {
                         showToast("Batch action failed: " + (result.message || "Unknown error"), "error");
@@ -4934,40 +5164,45 @@
         const id = document.getElementById('user-script-id').value.trim();
         if (!id) return;
 
-        if (!confirm("Are you sure you want to delete this calling script from your profile?")) {
-            return;
-        }
+        showDecision({
+            title: 'Delete Calling Script?',
+            text: 'Are you sure you want to delete this calling script from your profile?',
+            confirmText: 'Delete Script',
+            isDestructive: true,
+            icon: 'fa-trash-alt',
+            onConfirm: async () => {
+                const delBtn = document.getElementById('btn-delete-user-script');
+                if (delBtn) {
+                    delBtn.disabled = true;
+                    delBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
+                }
 
-        const delBtn = document.getElementById('btn-delete-user-script');
-        if (delBtn) {
-            delBtn.disabled = true;
-            delBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
-        }
+                try {
+                    const res = await fetch(`/api/v1/user/scripts/${id}`, {
+                        method: 'DELETE'
+                    });
+                    const data = await res.json();
+                    if (!res.ok || data.status === 'error') {
+                        if (typeof showToast === 'function') showToast(data.message || "Failed to delete script.", "error");
+                        return;
+                    }
 
-        try {
-            const res = await fetch(`/api/v1/user/scripts/${id}`, {
-                method: 'DELETE'
-            });
-            const data = await res.json();
-            if (!res.ok || data.status === 'error') {
-                if (typeof showToast === 'function') showToast(data.message || "Failed to delete script.", "error");
-                return;
+                    if (typeof showToast === 'function') showToast("Script deleted from your profile.", "info");
+                    closeModal('modal-user-script-editor');
+
+                    await fetchUserScripts();
+                    switchLeadScriptTab('gatekeeper');
+                } catch (err) {
+                    console.error("Delete Script Error:", err);
+                    if (typeof showToast === 'function') showToast("Network error deleting script.", "error");
+                } finally {
+                    if (delBtn) {
+                        delBtn.disabled = false;
+                        delBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Delete Script';
+                    }
+                }
             }
-
-            if (typeof showToast === 'function') showToast("Script deleted from your profile.", "info");
-            closeModal('modal-user-script-editor');
-
-            await fetchUserScripts();
-            switchLeadScriptTab('gatekeeper');
-        } catch (err) {
-            console.error("Delete Script Error:", err);
-            if (typeof showToast === 'function') showToast("Network error deleting script.", "error");
-        } finally {
-            if (delBtn) {
-                delBtn.disabled = false;
-                delBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Delete Script';
-            }
-        }
+        });
     }
 
     function openLeadCommandFromCadence() {
@@ -6654,7 +6889,12 @@
                     if (data.status === 'success') {
                         const row = document.getElementById(`applicant-row-${id}`);
                         if (row) row.remove();
-                        showToast(`Applicant #${id} removed.`, "info");
+                        const toastOpts = data.restore_token ? {
+                            actionLabel: '↩ Undo',
+                            onAction: () => restoreDeletedCrmRecord(data.restore_token, () => window.location.reload()),
+                            durationMs: 9000
+                        } : null;
+                        showToast(`Applicant #${id} removed.`, "info", toastOpts);
                         filterApplicantsTable();
                     } else {
                         showToast("Could not delete: " + (data.message || 'Error'), "error");
@@ -6817,7 +7057,12 @@
                     if (data.status === 'success') {
                         const row = document.getElementById(`subcontractor-row-${id}`);
                         if (row) row.remove();
-                        showToast(`Subcontractor #${id} removed.`, "info");
+                        const toastOpts = data.restore_token ? {
+                            actionLabel: '↩ Undo',
+                            onAction: () => restoreDeletedCrmRecord(data.restore_token, () => window.location.reload()),
+                            durationMs: 9000
+                        } : null;
+                        showToast(`Subcontractor #${id} removed.`, "info", toastOpts);
                         filterSubcontractorsTable();
                     } else {
                         showToast("Could not delete: " + (data.message || 'Error'), "error");

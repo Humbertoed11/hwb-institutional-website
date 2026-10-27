@@ -89,6 +89,213 @@ def log_and_abort_abac(module: str, action: str):
     }), 403
 
 
+def _sanitize_snapshot_row(row):
+    """Converts a database row dict into a JSON-safe snapshot dict (excluding binary/vector blobs)."""
+    if not row:
+        return None
+    d = dict(row)
+    clean = {}
+    for k, v in d.items():
+        if k in ('embedding', 'w9_tin_encrypted'):
+            continue
+        if isinstance(v, (bytes, memoryview)):
+            continue
+        if isinstance(v, (datetime.date, datetime.datetime)):
+            clean[k] = v.isoformat()
+        elif hasattr(v, '__str__') and 'Decimal' in str(type(v)):
+            clean[k] = float(v)
+        else:
+            clean[k] = v
+    return clean
+
+
+def _create_delete_snapshot(cur, entity_type: str, table_name: str, pk_col: str, ids_list: list, child_records: dict = None) -> str:
+    """Stores a recoverable JSON snapshot in SecurityAuditLogs before deleting records and returns a restore_token."""
+    clean_ids = [int(x) for x in ids_list if str(x).isdigit()][:200]
+    if not clean_ids:
+        return ''
+    cur.execute(f'SELECT * FROM "{table_name}" WHERE "{pk_col}" = ANY(%s);', (clean_ids,))
+    rows = [_sanitize_snapshot_row(r) for r in cur.fetchall() if r]
+    if not rows:
+        return ''
+    restore_token = uuid.uuid4().hex
+    log_security_event(
+        event_category='DATA_LIFECYCLE',
+        event_action='RECORD_DELETED_SNAPSHOT',
+        severity='WARNING',
+        details={
+            'restore_token': restore_token,
+            'entity_type': entity_type,
+            'table_name': table_name,
+            'pk_col': pk_col,
+            'records': rows,
+            'child_records': child_records or {},
+            'deleted_by': getattr(current_user, 'username', 'operator'),
+        }
+    )
+    return restore_token
+
+
+def _delete_leads_atomic(cur, lead_ids: list) -> str:
+    """Snapshots Lead(s) and their Contacts/Activities, cleans up all FK/child tables, and deletes from Leads."""
+    clean_ids = [int(x) for x in lead_ids if str(x).isdigit()]
+    if not clean_ids:
+        return ''
+    child_payload = {}
+    try:
+        cur.execute('SELECT * FROM "Contacts" WHERE lead_id = ANY(%s) LIMIT 500;', (clean_ids,))
+        child_payload['Contacts'] = [_sanitize_snapshot_row(r) for r in cur.fetchall() if r]
+        cur.execute('SELECT * FROM "GlobalActivities" WHERE parent_id = ANY(%s) AND parent_type = %s LIMIT 500;', (clean_ids, 'Lead'))
+        child_payload['GlobalActivities'] = [_sanitize_snapshot_row(r) for r in cur.fetchall() if r]
+    except Exception:
+        pass
+
+    restore_token = _create_delete_snapshot(cur, 'lead', 'Leads', 'id', clean_ids, child_payload)
+
+    # Clean up child tables in FK-safe order before deleting parent Lead rows
+    cur.execute(
+        'DELETE FROM "PendingOutbox" WHERE recipient_id IN (SELECT id FROM "CampaignRecipients" WHERE lead_id = ANY(%s));',
+        (clean_ids,)
+    )
+    cur.execute('DELETE FROM "CampaignRecipients" WHERE lead_id = ANY(%s);', (clean_ids,))
+    cur.execute('DELETE FROM "LeadStageHistory" WHERE lead_id = ANY(%s);', (clean_ids,))
+    cur.execute('DELETE FROM "Contacts" WHERE lead_id = ANY(%s);', (clean_ids,))
+    cur.execute('DELETE FROM "GlobalActivities" WHERE parent_id = ANY(%s) AND parent_type = %s;', (clean_ids, 'Lead'))
+    cur.execute('DELETE FROM "Leads" WHERE id = ANY(%s);', (clean_ids,))
+    return restore_token
+
+
+def _delete_accounts_atomic(cur, account_ids: list) -> str:
+    """Snapshots Account(s) and their Contacts/Activities, cleans up child tables, and deletes from Customers."""
+    clean_ids = [int(x) for x in account_ids if str(x).isdigit()]
+    if not clean_ids:
+        return ''
+    child_payload = {}
+    try:
+        cur.execute('SELECT * FROM "Contacts" WHERE account_id = ANY(%s) LIMIT 500;', (clean_ids,))
+        child_payload['Contacts'] = [_sanitize_snapshot_row(r) for r in cur.fetchall() if r]
+        cur.execute('SELECT * FROM "GlobalActivities" WHERE parent_id = ANY(%s) AND parent_type = %s LIMIT 500;', (clean_ids, 'Account'))
+        child_payload['GlobalActivities'] = [_sanitize_snapshot_row(r) for r in cur.fetchall() if r]
+    except Exception:
+        pass
+
+    restore_token = _create_delete_snapshot(cur, 'account', 'Customers', 'customer_id', clean_ids, child_payload)
+    cur.execute('DELETE FROM "Contacts" WHERE account_id = ANY(%s);', (clean_ids,))
+    cur.execute('DELETE FROM "GlobalActivities" WHERE parent_id = ANY(%s) AND parent_type = %s;', (clean_ids, 'Account'))
+    cur.execute('DELETE FROM "Customers" WHERE customer_id = ANY(%s);', (clean_ids,))
+    return restore_token
+
+
+def _reinsert_snapshot_rows(cur, table_name: str, pk_col: str, rows: list) -> int:
+    """Re-inserts snapshot rows into a whitelisted CRM table using existing column intersection."""
+    allowed_tables = {
+        'Leads': 'id',
+        'Customers': 'customer_id',
+        'JobApplicants': 'id',
+        'SubcontractorPartners': 'id',
+        'Contacts': 'contact_id',
+        'GlobalActivities': 'id',
+    }
+    if table_name not in allowed_tables or not rows:
+        return 0
+
+    cur.execute(
+        'SELECT column_name FROM information_schema.columns WHERE table_schema = %s AND table_name = %s;',
+        ('public', table_name)
+    )
+    valid_cols = {
+        (r['column_name'] if isinstance(r, dict) else r[0])
+        for r in cur.fetchall()
+    }
+    restored = 0
+    for rec in rows:
+        if not isinstance(rec, dict):
+            continue
+        cols = [c for c in rec.keys() if c in valid_cols and c not in ('embedding', 'w9_tin_encrypted')]
+        if not cols:
+            continue
+        col_sql = ', '.join(f'"{c}"' for c in cols)
+        val_placeholders = ', '.join(['%s'] * len(cols))
+        vals = [rec[c] for c in cols]
+        cur.execute(
+            f'INSERT INTO "{table_name}" ({col_sql}) VALUES ({val_placeholders}) ON CONFLICT DO NOTHING;',
+            tuple(vals)
+        )
+        restored += cur.rowcount if cur.rowcount > 0 else 1
+    return restored
+
+
+@crm_api_bp.route('/api/v1/crm/restore-deleted', methods=['POST'])
+@login_required
+def api_restore_deleted_crm_record():
+    """Restores a deleted Lead, Account, Applicant, or Subcontractor from its SecurityAuditLogs snapshot token."""
+    data = request.get_json() or {}
+    restore_token = (data.get('restore_token') or '').strip()
+    if not restore_token or not re.match(r'^[a-f0-9]{16,64}$', restore_token):
+        return jsonify({'status': 'error', 'message': 'Invalid or missing restore token.'}), 400
+
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            cur.execute('''
+                SELECT details FROM "SecurityAuditLogs"
+                WHERE event_action = 'RECORD_DELETED_SNAPSHOT'
+                  AND details::text LIKE %s
+                ORDER BY id DESC LIMIT 1;
+            ''', (f'%{restore_token}%',))
+            row = cur.fetchone()
+            if not row:
+                return jsonify({'status': 'error', 'message': 'Restore snapshot not found or expired.'}), 404
+
+            raw_details = row['details'] if isinstance(row, dict) else row[0]
+            details = json.loads(raw_details) if isinstance(raw_details, str) else (raw_details or {})
+            if details.get('restore_token') != restore_token:
+                return jsonify({'status': 'error', 'message': 'Restore token mismatch.'}), 404
+
+            table_name = details.get('table_name')
+            pk_col = details.get('pk_col')
+            entity_type = details.get('entity_type', 'record')
+            records = details.get('records') or []
+            child_records = details.get('child_records') or {}
+
+            restored_count = _reinsert_snapshot_rows(cur, table_name, pk_col, records)
+            for child_table, child_rows in child_records.items():
+                if child_rows:
+                    _reinsert_snapshot_rows(cur, child_table, 'id', child_rows)
+
+            conn.commit()
+            try:
+                from blueprints.operations import invalidate_operations_caches
+                invalidate_operations_caches()
+            except Exception:
+                pass
+
+            log_security_event(
+                event_category='DATA_LIFECYCLE',
+                event_action='RECORD_RESTORED_FROM_SNAPSHOT',
+                severity='INFO',
+                details={
+                    'restore_token': restore_token,
+                    'entity_type': entity_type,
+                    'table_name': table_name,
+                    'restored_count': restored_count,
+                    'restored_by': getattr(current_user, 'username', 'operator'),
+                }
+            )
+            return jsonify({
+                'status': 'success',
+                'entity_type': entity_type,
+                'restored_count': restored_count,
+                'message': f'Restored {restored_count} {entity_type} record(s).'
+            })
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        conn.close()
+
+
+
 # --- Accounts REST Endpoints ---
 
 @crm_api_bp.route('/api/v1/accounts/<int:id>', methods=['GET', 'PUT', 'PATCH', 'DELETE'])
@@ -296,10 +503,14 @@ def api_account_hub(id):
                     return log_and_abort_abac('accounts', 'delete')
                 if current_user.role == 'Sales':
                     return jsonify({'status': 'error', 'message': 'Deleting customer accounts is restricted for Sales personnel.'}), 403
-                cur.execute('DELETE FROM "Customers" WHERE customer_id = %s', (id,))
-                cur.execute('DELETE FROM "Contacts" WHERE account_id = %s', (id,))
+                restore_token = _delete_accounts_atomic(cur, [id])
                 conn.commit()
-                return jsonify({'status': 'success'})
+                try:
+                    from blueprints.operations import invalidate_operations_caches
+                    invalidate_operations_caches()
+                except Exception:
+                    pass
+                return jsonify({'status': 'success', 'deleted_id': id, 'restore_token': restore_token})
     finally:
         conn.close()
 
@@ -318,11 +529,11 @@ def api_batch_account_action():
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
         with conn.cursor() as cur:
+            restore_token = ''
             if action == 'delete':
                 if not current_user.has_permission('accounts', 'delete'):
                     return log_and_abort_abac('accounts', 'delete')
-                cur.execute('DELETE FROM "Customers" WHERE customer_id = ANY(%s);', (account_ids,))
-                cur.execute('DELETE FROM "Contacts" WHERE account_id = ANY(%s);', (account_ids,))
+                restore_token = _delete_accounts_atomic(cur, account_ids)
             elif action == 'update_status':
                 if not current_user.has_permission('accounts', 'edit'):
                     return log_and_abort_abac('accounts', 'edit')
@@ -379,7 +590,12 @@ def api_batch_account_action():
                 return jsonify({'status': 'error', 'message': f'Unknown action: {action}'}), 400
             
             conn.commit()
-            return jsonify({'status': 'success', 'affected_count': len(account_ids)})
+            try:
+                from blueprints.operations import invalidate_operations_caches
+                invalidate_operations_caches()
+            except Exception:
+                pass
+            return jsonify({'status': 'success', 'affected_count': len(account_ids), 'restore_token': restore_token})
     except Exception as e:
         conn.rollback()
         return jsonify({'status': 'error', 'message': str(e)}), 500
@@ -967,10 +1183,14 @@ def api_lead_hub(id):
                     return log_and_abort_abac('leads', 'delete')
                 if current_user.role == 'Sales':
                     return jsonify({'status': 'error', 'message': 'Deleting lead records is restricted for Sales personnel.'}), 403
-                cur.execute('DELETE FROM "Leads" WHERE id = %s', (id,))
-                cur.execute('DELETE FROM "GlobalActivities" WHERE parent_id = %s AND parent_type = %s', (id, "Lead"))
+                restore_token = _delete_leads_atomic(cur, [id])
                 conn.commit()
-                return jsonify({'status': 'success'})
+                try:
+                    from blueprints.operations import invalidate_operations_caches
+                    invalidate_operations_caches()
+                except Exception:
+                    pass
+                return jsonify({'status': 'success', 'deleted_id': id, 'restore_token': restore_token})
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
     finally:
@@ -1677,11 +1897,11 @@ def api_batch_lead_action():
                 if not lead_ids and not recipient_ids:
                     return jsonify({'status': 'error', 'message': 'Access restricted: You may only update leads assigned to your profile.'}), 403
 
+            restore_token = ''
             if action == 'delete':
                 if not current_user.has_permission('leads', 'delete'):
                     return log_and_abort_abac('leads', 'delete')
-                cur.execute('DELETE FROM "Leads" WHERE id = ANY(%s);', (lead_ids,))
-                cur.execute('DELETE FROM "GlobalActivities" WHERE parent_id = ANY(%s) AND parent_type = %s;', (lead_ids, "Lead"))
+                restore_token = _delete_leads_atomic(cur, lead_ids)
             elif action in ['update_status', 'update_cleaning_model', 'mark_dnc', 'assign_owner', 'undo_assign_owner', 'dismiss_duplicates', 'auto_merge', 'remove_from_campaign']:
                 if not current_user.has_permission('leads', 'edit'):
                     return log_and_abort_abac('leads', 'edit')
@@ -2002,7 +2222,7 @@ def api_batch_lead_action():
                 invalidate_operations_caches()
             except Exception:
                 pass
-            return jsonify({'status': 'success', 'affected_count': len(lead_ids)})
+            return jsonify({'status': 'success', 'affected_count': len(lead_ids), 'restore_token': restore_token})
     except Exception as e:
         conn.rollback()
         return jsonify({'status': 'error', 'message': str(e)}), 500
@@ -2714,6 +2934,10 @@ def api_merge_duplicates():
     try:
         with conn.cursor() as cur:
             cur.execute('UPDATE "GlobalActivities" SET parent_id = %s WHERE parent_id = %s AND parent_type = %s;', (primary_id, secondary_id, 'Lead'))
+            cur.execute('UPDATE "Contacts" SET lead_id = %s WHERE lead_id = %s;', (primary_id, secondary_id))
+            cur.execute('UPDATE "LeadStageHistory" SET lead_id = %s WHERE lead_id = %s;', (primary_id, secondary_id))
+            cur.execute('DELETE FROM "PendingOutbox" WHERE recipient_id IN (SELECT id FROM "CampaignRecipients" WHERE lead_id = %s);', (secondary_id,))
+            cur.execute('DELETE FROM "CampaignRecipients" WHERE lead_id = %s;', (secondary_id,))
             
             cur.execute('SELECT * FROM "Leads" WHERE id = %s;', (secondary_id,))
             sec_row = cur.fetchone()
@@ -3317,9 +3541,15 @@ def api_manage_applicant(id):
     try:
         with conn.cursor() as cur:
             if request.method == 'DELETE':
+                restore_token = _create_delete_snapshot(cur, 'applicant', 'JobApplicants', 'id', [id])
                 cur.execute('DELETE FROM "JobApplicants" WHERE id = %s;', (id,))
                 conn.commit()
-                return jsonify({'status': 'success', 'deleted_id': id})
+                try:
+                    from blueprints.operations import invalidate_operations_caches
+                    invalidate_operations_caches()
+                except Exception:
+                    pass
+                return jsonify({'status': 'success', 'deleted_id': id, 'restore_token': restore_token})
 
             data = request.get_json() or {}
             cur.execute('SELECT * FROM "JobApplicants" WHERE id = %s;', (id,))
@@ -3493,9 +3723,15 @@ def api_manage_subcontractor(id):
                 return jsonify({'status': 'success', 'subcontractor': s_sub})
 
             elif request.method == 'DELETE':
+                restore_token = _create_delete_snapshot(cur, 'subcontractor', 'SubcontractorPartners', 'id', [id])
                 cur.execute('DELETE FROM "SubcontractorPartners" WHERE id = %s;', (id,))
                 conn.commit()
-                return jsonify({'status': 'success', 'deleted_id': id})
+                try:
+                    from blueprints.operations import invalidate_operations_caches
+                    invalidate_operations_caches()
+                except Exception:
+                    pass
+                return jsonify({'status': 'success', 'deleted_id': id, 'restore_token': restore_token})
 
             elif request.method == 'PATCH':
                 data = request.get_json() or {}

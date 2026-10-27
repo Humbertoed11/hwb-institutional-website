@@ -143,6 +143,8 @@ Responsibility: George (Architect)
 | 10/26/2026 | BUG-157 | Enterprise Lead Status Lifecycle (`New`, `In Campaign`, `Engaged`, `Contacted`, `Qualified`, `Walkthrough Completed`), Separate `🧹 Who Cleans` (`cleaning_delivery_model`) Column, Stage-Date History Tracking (`"LeadStageHistory"`), Record Activities Reorganization, & Calling Workstation Upgrade. | **RESOLVED** | HIGH |
 | 10/26/2026 | BUG-158 | 5-Part Enterprise Lead Protection, Placeholder/Internal Email Hygiene (`000000000@oooo` / `hwbcleaning11@gmail.com` Overwrite Prevention), Automatic Unassigned Lead Owner Attribution, Default Sort by Most Recently Added/Worked (`GREATEST(updated_at, input_date)`), `📅 Worked Today` Filter, & PITR/Heap Forensic Recovery. | **RESOLVED** | CRITICAL |
 | 10/26/2026 | BUG-159 | Calling Workstation `🧹 Who Cleans Right Now` Button Unresponsiveness Due to Stale Browser/Cloudflare Static JS Cache (`?v=v5.5.0`) & Low-Contrast Active State — Remediated via Automatic SHA-256 Content-Fingerprint Cache Busting (`?f=<hash>`), High-Contrast Segmented Radio Group (`✓` Checkmark + Solid Fill), & Smart Call-Script Auto-Switch. | **RESOLVED** | HIGH |
+| 10/26/2026 | ARCH-016 | Enterprise High-Conversion Lead Funnel Architecture (Benchmarked Against `mattchristou.com` / *Big League Clean* & `hyperstacking.com`): Positioning HWB as a Technology-Driven Commercial Cleaning Operator ("Old Broken Janitorial Way vs. HWB Automated Standard", Interactive Live Shift & No-Show Prevention Walkthrough, GC 24-Hour Video Bid Turnaround, & Zero-Distraction Campaign Funnel Route). | **STAGED FOR FUTURE ASSESSMENT** | STRATEGIC |
+| 10/26/2026 | BUG-160 | 5-Layer Enterprise Button, Gear Menu, & Delete Lifecycle Architecture — Fixed 25-Second Confirmation Button Freeze (`#btn-decision-confirm` & 24 AJAX Forms in `sigma_button_lock.js`), Replaced Destructive `syncOperationalData` JSON Table Rebuild with `DOMParser` Server-HTML Swap, Fixed Foreign-Key Delete Crashes (`"LeadStageHistory"`, `"Contacts"`, `"CampaignRecipients"`, `"PendingOutbox"`), & Added Snapshot `[↩ Undo]` Restore (`POST /api/v1/crm/restore-deleted`). | **RESOLVED** | CRITICAL |
 
 
 ## BUG-122: App Manual Static Routing Deficit (Lacks Automatic Active Workspace Detection & Deep-Link Chapter Navigation)
@@ -3107,6 +3109,60 @@ Verified continuously on every build by `test_35_enterprise_lead_status_who_clea
 3. **Automatic Content-Hash Static Asset Fingerprinting (`main_app.py`) & High-Contrast Calling Workstation Pills (`templates/backoffice_operations.html`, `static/js/backoffice_operations_core.js`):**
    - Added `@app.url_defaults` (`inject_static_asset_fingerprint`) in `main_app.py` to automatically append `?f=<8-char-sha256>` to all `/static/...` URLs based on file contents on disk.
    - Upgraded `setCadenceCleaningModel()` to apply an instant high-contrast active fill (`✓ ⚪ Unknown` in Slate `#334155`, `✓ 🏠 In-House Cleaning` in Amber `#d97706`, `✓ 🤝 Contract Cleaning` in Teal `#0891b2`), synchronize the Lead Details modal and table row, and automatically switch the Call Script box to `🧹 "Have cleaner"` (`obj-cleaner`) when `In-House` or `Contract Cleaning` is clicked.
+
+
+## ARCH-016: Enterprise High-Conversion Commercial Cleaning Lead Funnel Architecture (Benchmarked Against `mattchristou.com` / *Big League Clean* & `hyperstacking.com`)
+**Detected / Staged:** 10/26/2026
+**Status:** **STAGED FOR FUTURE ASSESSMENT** (Strategic Plan Table)
+**Executive Discovery:**
+CEO Humberto Dominguez identified that Matt Christou operates a **two-page funnel ecosystem**:
+1. **`mattchristou.com` (*Big League Clean* Funnel):** Sells commercial cleaning and post-construction final cleaning to Property Managers, Facility Directors, and General Contractors by proving *Big League Clean* is **"a software-driven company that cleans buildings"**—using their custom internal operating platform as the ultimate proof that crews will never no-show and issues are caught before the client ever notices.
+2. **`hyperstacking.com` (Software Funnel):** Sells that internal operating concept to other cleaning business owners.
+
+**7 Core Funnel Conversion Pillars Staged on the HWB Plan Table (`ARCH-016`):**
+1. **The "Technology-Driven Commercial Cleaning Operator" Positioning Hook:**
+   - Frame HWB Cleaning Services not as a traditional janitorial vendor running on clipboards and crossed fingers, but as **Texas's most accountable, system-driven commercial cleaning company**—where every shift, checklist, supply restock, and walkthrough is tracked on HWB's own in-house platform (`www.hwbcleaning.com`).
+2. **"Most Cleaning Companies (Crossed Fingers) vs. HWB Cleaning Services" Visual Contrast Block:**
+   - **Left Column (`✕ Most Cleaning Companies`):** Clipboards and manual check-ins; no idea what happened at your building last night; you have to call them to find out if the crew showed; surprise $2,500 invoices for floor waxing; one manager buried under 80 accounts.
+   - **Right Column (`✓ HWB Cleaning Services`):** GPS & time-stamped shift check-ins; photo-verified nightly room checklists; backup crew dispatched automatically within 15 minutes of a missed clock-in window; twice-a-year floor stripping/waxing & carpet cleaning included in one flat monthly price; direct executive accountability.
+3. **Two High-Ticket Specialty Tracks Above the Fold (Recurring Janitorial + Post-Construction GC Final Clean):**
+   - **Track 1 — Nightly Recurring Janitorial (Childcare, Medical, Schools, Offices, Dealerships):** Dedicated account oversight, every visit documented, flat monthly pricing with floor & carpet care included.
+   - **Track 2 — Post-Construction Final Cleaning for General Contractors (`10,000+ SF`):** Rough clean, final clean, and touch-up before punch-list walk. Includes a **"Send a Walkthrough Video or Blueprints → Same-Day Price & 24-Hour Proposal"** fast-lane intake for GCs facing compressed turnover schedules.
+4. **Interactive "How Our System Protects Your Building Tonight" Live Showcase:**
+   - Visitors click through two real automated workflows running inside HWB's platform:
+     - **Workflow 1 — The No-Show Eliminator:** Watches every shift clock-in window -> alerts backup crew automatically if a punch is missed -> notifies field supervisor -> zero client calls about a missed night.
+     - **Workflow 2 — The Facility Quality Watchdog:** Tracks nightly room checklists, restroom sanitization, paper/soap restock, and inspection scores -> flags any drift before the Facility Director ever has to send an email.
+5. **Continuous Social Proof & Industry Credentials Ribbon:**
+   - Scrolling verified client & superintendent testimonials paired with empirical credentials (`$2M Commercial General Liability`, `0.00 Safety Incident Rate`, `OSHA 1910.1200 Compliant`, `SAM.gov / HUB / Construction Bid Ready`).
+6. **Founder Authority Section (Humberto Dominguez, CEO):**
+   - Plain-spoken, proactive operator message explaining why HWB built its own operations and estimating platform in-house so Facility Directors and Project Superintendents never have to babysit a cleaning crew again.
+7. **Zero-Distraction Campaign Funnel Route (`/why-hwb` or `/commercial-cleaning-audit`) + `/get-quote` Integration:**
+   - Dedicated single-goal funnel landing page for all outbound Email Campaigns (`#view-marketing`), LinkedIn outreach, and Calling Workstation follow-ups that feeds leads directly into `#view-leads` with instant Telegram and Outlook notifications.
+
+
+## BUG-160: 5-Layer Enterprise Button, Gear Menu (`⚙️`), & Delete Lifecycle Architecture (Elimination of 25-Second Button Freeze, Destructive Table Rebuilds, & Foreign-Key Delete Crashes + Snapshot `[↩ Undo]` Restore)
+**Detected:** 10/26/2026
+**Status:** **RESOLVED** (10/26/2026 — Verified by `test_37_enterprise_delete_gear_and_button_lock_lifecycle_bug_160` in `scripts/test_web_performance_rack_14.py` `37/37` passing & `scripts/yamamoto_bid_test_suite.py` `9/9` Grade A+)
+**Symptoms:**
+1. After deleting one lead via the Gear menu (`⚙️ -> Delete Lead`), attempting to delete a second lead froze the confirmation modal (`#btn-decision-confirm` stuck on `"Deleting..."` with `disabled=true`) for 25 seconds.
+2. Submitting any of the 24 in-page AJAX `<form onsubmit="...; return false;">` forms (`saveLeadUpdate`, `logLeadActivity`, `saveVisitRequest`, `addLeadContact`, `addToScope`, etc.) locked the submit button in `"Saving..."` for 25 seconds because `sigma_button_lock.js` intercepted the `submit` event in capture phase (`true`) before `e.preventDefault()` ran.
+3. After any single/bulk delete or modal save, `syncOperationalData()` (`?format=json` + `buildLeadRow()` / `buildAccountRow()`) overwrote all 50 table rows with simplified HTML that stripped out interactive `<select>` dropdowns (`Status`, `🧹 Who Cleans`, `Priority`, `Assigned Rep`), dropped 9 custom columns, and re-exposed `Delete` buttons to `Sales` users until a manual page refresh.
+4. Deleting any Lead that had a row in `"LeadStageHistory"` (`ON DELETE RESTRICT`), `"Contacts"`, or `"CampaignRecipients"` / `"PendingOutbox"` threw a PostgreSQL Foreign-Key Constraint `500` error, which was swallowed silently by `deleteLead()`.
+**Solution:**
+1. **Layer 1 — Network-Aware Fetch Auto-Unlock Engine (`static/js/sigma_button_lock.js`):**
+   - Wrapped `window.fetch` to track `activeFetchCount` and `pendingAjaxButtons`, switched the form `submit` listener to bubble phase (`false`) with `e.defaultPrevented` detection so in-page AJAX forms unlock automatically within `60ms` of `fetch` completion (or `65ms` for purely local forms like `addToScope`), and removed the duplicate `#btn-decision-confirm` 25-second click lock.
+2. **Layer 2 — Unified Async `showDecision()` & Interactive `[↩ Undo]` Toast (`templates/backoffice_base.html` & `static/js/backoffice_operations_core.js`):**
+   - Upgraded `showDecision(options)` across both files to reset `#btn-decision-confirm` on open, `await options.onConfirm(confirmBtn)` inside `try / catch / finally`, and guarantee `restoreButton(confirmBtn)` + `closeModal('modal-decision')` inside `finally`.
+   - Upgraded `showToast(message, type, actionOptions)` with an interactive `[↩ Undo]` button wired to `restoreDeletedCrmRecord(restoreToken)`, and replaced raw browser `confirm()` in `deleteUserScript()`.
+3. **Layer 3 — Zero-Destruction Server-HTML Table Sync (`syncOperationalData`) & Instant `0ms` Row Removal (`static/js/backoffice_operations_core.js`):**
+   - Replaced the destructive JSON `buildLeadRow()` / `buildAccountRow()` rebuild inside `syncOperationalData()` with a `DOMParser` HTML swap of `#table-leads tbody` and `#table-accounts tbody` so 100% of server-rendered `<select>` dropdowns, role permissions, and all 30 columns remain intact.
+   - Added `removeTableRowsAndSyncCounts(entityType, idsArray)` so single and bulk deletes remove `<tr>` rows and update tab counts in `0ms` without touching the remaining rows.
+4. **Layer 4 — Gear Menu (`⚙️`) Auto-Close, Smart Form Focus, `handleActivityResultChange`, & In-Place DNC Select (`static/js/backoffice_operations_core.js` & `templates/backoffice_operations.html`):**
+   - Updated `toggleRowMenu()` to close `.isc-row-menu` immediately when any menu item is clicked; added smart scroll/focus/highlight for `Add Note` (`#lead-activity-desc` / `#activity-desc`) and `Request Visit` (`#visit-date` / `#visit-date-acc`); added `Request Visit` to the Client Accounts Gear menu; fixed `handleActivityResultChange('Spoke to them')` to select `'Contacted'`; and updated `markLeadDNCFromModal()` to update `.sticky-2 select` in-place.
+5. **Layer 5 — Backend Atomic Foreign-Key Cleanup, Snapshot Backup, & `POST /api/v1/crm/restore-deleted` (`blueprints/crm_api.py`):**
+   - Added `_create_delete_snapshot()`, `_delete_leads_atomic()`, `_delete_accounts_atomic()`, and `POST /api/v1/crm/restore-deleted` across Lead, Account, Applicant, and Subcontractor delete endpoints so deletes clean up all child tables in FK-safe order, invalidate operations caches, and return a `restore_token` for 1-click `[↩ Undo]` recovery.
+
+
 
 
 
